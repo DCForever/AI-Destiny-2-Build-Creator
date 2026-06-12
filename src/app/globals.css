@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+/*
+ * Vault Terminal design system — dark, angular, Destiny-flavored.
+ * Panels use notched corners (see .panel-notch); amber is the single
+ * dominant accent, element colors appear only on element-typed data.
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0c10;
+  --surface: #11151d;
+  --surface-raised: #161b25;
+  --line: #232b3a;
+  --line-strong: #36415677;
+  --foreground: #d9dee8;
+  --muted: #8b94a7;
+  --accent: #e8b86d;
+  --accent-strong: #f5cf8e;
+  --accent-dim: #e8b86d2c;
+  --danger: #e2654f;
+  --success: #6fc28b;
+  --warning: #d9a93f;
+
+  --element-kinetic: #d8d8d8;
+  --element-arc: #7ad1f5;
+  --element-solar: #f0793e;
+  --element-void: #b184c5;
+  --element-stasis: #4d88ff;
+  --element-strand: #3fd680;
+  --element-prismatic: #d67ee2;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-arc: var(--element-arc);
+  --color-solar: var(--element-solar);
+  --color-void: var(--element-void);
+  --color-stasis: var(--element-stasis);
+  --color-strand: var(--element-strand);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1100px 500px at 75% -10%, #1a2030 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, #14181f 0%, transparent 55%),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Signature panel: top-left and bottom-right corners notched at 45°. */
+.panel-notch {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  clip-path: polygon(
+    12px 0,
+    100% 0,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    0 100%,
+    0 12px
+  );
+}
+
+.panel-notch-raised {
+  background: var(--surface-raised);
+}
+
+/* Thin amber keyline used under section headers. */
+.keyline {
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
+}
+
+/* Status badges */
+.badge {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.675rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid;
+}
+
+.badge-verified {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+
+.badge-fuzzy {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+
+.badge-unresolved,
+.badge-illegal {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+/* Staged progress shimmer for the generation pipeline indicator. */
+@keyframes pulse-line {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pulse-line {
+  animation: pulse-line 1.6s ease-in-out infinite;
 }
