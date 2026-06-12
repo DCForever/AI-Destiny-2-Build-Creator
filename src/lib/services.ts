@@ -6,6 +6,8 @@
 
 import { resolveBuild } from "@/lib/build/resolveBuild";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
+import { buildLoParams, renderLoParamsText } from "@/lib/dim/loParams";
+import { buildWishlist } from "@/lib/dim/wishlist";
 import type { BuildRequest, GeneratedBuild } from "@/lib/llm/buildSchema";
 import { generateBuild } from "@/lib/llm/generateBuild";
 import { createOllamaClient, type OllamaClient } from "@/lib/llm/ollamaClient";
@@ -84,11 +86,27 @@ export async function refreshManifest(): Promise<ManifestStatus> {
   return manifest.getStatus();
 }
 
+export interface BuildExports {
+  wishlistText: string;
+  loParamsText: string;
+  skipped: string[];
+}
+
 export interface BuildGenerationOutcome {
   build: GeneratedBuild;
   sheet: ResolvedBuildSheet;
   toolCallCount: number;
   researchSummary: string;
+  exports: BuildExports;
+}
+
+function renderExports(sheet: ResolvedBuildSheet): BuildExports {
+  const wishlist = buildWishlist(sheet);
+  return {
+    wishlistText: wishlist.text,
+    loParamsText: renderLoParamsText(buildLoParams(sheet)),
+    skipped: wishlist.skipped,
+  };
 }
 
 /** Full pipeline: research loop -> composition -> manifest resolution. */
@@ -113,6 +131,7 @@ export async function runBuildGeneration(
     sheet,
     toolCallCount: generated.toolCallCount,
     researchSummary: generated.researchSummary,
+    exports: renderExports(sheet),
   };
 }
 
