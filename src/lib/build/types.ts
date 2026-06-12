@@ -32,6 +32,9 @@ export interface ResolvedWeapon {
   reference: ResolvedReference;
   isExotic: boolean;
   frame: string | null;
+  /** Element and ammo from the resolved manifest record, null if unresolved. */
+  element: string | null;
+  ammo: string | null;
   /** Intrinsic champion counter computed from frame + weapon type. */
   championCounter: ChampionType | null;
   perks: ResolvedPerkPick[];

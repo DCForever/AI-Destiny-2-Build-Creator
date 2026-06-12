@@ -159,6 +159,15 @@ function extractFrame(result: BaseResolveResult): string | null {
   return (result.record as unknown as { frame: string }).frame;
 }
 
+function extractElementAndAmmo(result: BaseResolveResult): {
+  element: string | null;
+  ammo: string | null;
+} {
+  if (!result) return { element: null, ammo: null };
+  const record = result.record as unknown as { element?: string; ammo?: string };
+  return { element: record.element ?? null, ammo: record.ammo ?? null };
+}
+
 function extractChampionCounter(
   frame: string | null,
   result: BaseResolveResult,
@@ -203,7 +212,18 @@ export async function resolveWeapon(
   const frame = extractFrame(result as BaseResolveResult);
   const championCounter = extractChampionCounter(frame, result as BaseResolveResult, weapon.isExotic);
   const perks = await resolveWeaponPerks(weapon, ref.resolved?.hash ?? null, deps);
-  return { slot: weapon.slot, reference: ref, isExotic: weapon.isExotic, frame, championCounter, perks, rationale: weapon.rationale };
+  const { element, ammo } = extractElementAndAmmo(result as BaseResolveResult);
+  return {
+    slot: weapon.slot,
+    reference: ref,
+    isExotic: weapon.isExotic,
+    frame,
+    element,
+    ammo,
+    championCounter,
+    perks,
+    rationale: weapon.rationale,
+  };
 }
 
 // --- Mods ---

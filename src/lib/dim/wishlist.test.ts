@@ -98,6 +98,8 @@ describe("buildWishlist", () => {
         },
         isExotic: false,
         frame: "Adaptive Frame",
+        element: "Kinetic",
+        ammo: "Primary",
         championCounter: null,
         perks: [
           {
@@ -134,6 +136,8 @@ describe("buildWishlist", () => {
         },
         isExotic: false,
         frame: null,
+        element: null,
+        ammo: null,
         championCounter: null,
         perks: [],
         rationale: "Should be skipped.",
@@ -148,6 +152,8 @@ describe("buildWishlist", () => {
         },
         isExotic: true,
         frame: "Aggressive Frame",
+        element: "Solar",
+        ammo: "Heavy",
         championCounter: null,
         perks: [],
         rationale: "Wolfpack rounds for boss DPS.",
