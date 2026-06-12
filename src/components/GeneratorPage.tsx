@@ -196,7 +196,12 @@ export function GeneratorPage() {
               />
             )}
             <BuildSheet sheet={state.response.sheet} />
-            <ExportPanel exports={state.response.exports} build={state.response.build} />
+            <ExportPanel
+              exports={state.response.exports}
+              build={state.response.build}
+              sheet={state.response.sheet}
+              shareClassName={lastRequest?.className}
+            />
           </>
         )}
       </div>

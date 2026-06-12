@@ -101,9 +101,12 @@ export function AnalyzerPage() {
   const [state, setState] = useState<AnalyzerState>({ phase: "idle" });
   const [loadoutText, setLoadoutText] = useState("");
   const [className, setClassName] = useState<AnalyzeRequest["className"]>("Titan");
+  const [submittedClassName, setSubmittedClassName] =
+    useState<AnalyzeRequest["className"]>("Titan");
 
   const handleSubmit = async (req: AnalyzeRequest) => {
     const ac = new AbortController();
+    setSubmittedClassName(req.className);
     setState({ phase: "analyzing", abortController: ac });
 
     try {
@@ -192,6 +195,8 @@ export function AnalyzerPage() {
             <ExportPanel
               exports={state.response.exports}
               build={state.response.sheet.build}
+              sheet={state.response.sheet}
+              shareClassName={submittedClassName}
             />
           </>
         )}
