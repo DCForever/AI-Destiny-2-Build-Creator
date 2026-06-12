@@ -8,6 +8,8 @@ import { resolveBuild } from "@/lib/build/resolveBuild";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import { buildLoParams, renderLoParamsText } from "@/lib/dim/loParams";
 import { buildWishlist } from "@/lib/dim/wishlist";
+import { analyzeLoadout } from "@/lib/llm/analyzeLoadout";
+import type { AnalyzeRequest, LoadoutAnalysis } from "@/lib/llm/analyzeSchema";
 import type { BuildRequest, GeneratedBuild } from "@/lib/llm/buildSchema";
 import { generateBuild } from "@/lib/llm/generateBuild";
 import { createOllamaClient, type OllamaClient } from "@/lib/llm/ollamaClient";
@@ -131,6 +133,41 @@ export async function runBuildGeneration(
     sheet,
     toolCallCount: generated.toolCallCount,
     researchSummary: generated.researchSummary,
+    exports: renderExports(sheet),
+  };
+}
+
+export interface LoadoutAnalysisOutcome {
+  analysis: LoadoutAnalysis;
+  /** The optimized build resolved against the manifest, same as the generator. */
+  sheet: ResolvedBuildSheet;
+  toolCallCount: number;
+  researchSummary: string;
+  exports: BuildExports;
+}
+
+/** Analyzer pipeline: research loop -> composition -> manifest resolution. */
+export async function runLoadoutAnalysis(
+  request: AnalyzeRequest,
+): Promise<LoadoutAnalysisOutcome> {
+  const { entityCache, resolver, validator, ollama, searxng } = await getServices();
+  const meta = await entityCache.getMeta();
+  if (!meta) {
+    throw new ManifestNotReadyError();
+  }
+
+  const executor = createToolExecutor({ resolver, cache: entityCache, searcher: searxng });
+  const result = await analyzeLoadout(request, { client: ollama, executor });
+  const sheet = await resolveBuild(result.analysis.optimizedBuild, request.activity, {
+    resolver,
+    validator,
+    cache: entityCache,
+  });
+  return {
+    analysis: result.analysis,
+    sheet,
+    toolCallCount: result.toolCallCount,
+    researchSummary: result.researchSummary,
     exports: renderExports(sheet),
   };
 }

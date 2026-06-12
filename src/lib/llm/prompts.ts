@@ -22,7 +22,7 @@ import {
 
 import type { BuildRequest } from "./buildSchema";
 
-const ROLE = `You are an expert Destiny 2 build crafter working on the final, frozen sandbox: Update 9.7.0 "Monument of Triumph" (June 9, 2026). You produce one complete, synergistic build per request, with clear rationale for every major choice (synergies, ability uptime, survivability, damage profile, activity fit).
+export const ROLE = `You are an expert Destiny 2 build crafter working on the final, frozen sandbox: Update 9.7.0 "Monument of Triumph" (June 9, 2026). You produce one complete, synergistic build per request, with clear rationale for every major choice (synergies, ability uptime, survivability, damage profile, activity fit).
 
 Critical rules:
 - Use exact in-game display names for every item, perk, aspect, fragment, mod, and artifact. Never invent names and never output numeric hashes; the app resolves names against the game database and flags anything it cannot verify.
