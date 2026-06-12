@@ -98,7 +98,7 @@ export interface WeaponRecord extends EntityRecordBase {
   perkColumns: WeaponPerkColumn[];
 }
 
-export interface OriginTraitRecord extends PerkRecord {}
+export type OriginTraitRecord = PerkRecord;
 
 export interface ArtifactPerkRecord extends PerkRecord {
   /** 0-based column within the artifact grid. */
