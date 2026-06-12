@@ -1,0 +1,566 @@
+# Destiny 2 Monument of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, and Exotics
+
+Destiny 2
+
+All
+
+By:
+
+Dina
+
+Posted 31 minutes ago
+
+7
+
+22 min read
+
+ 0 comments 
+
+Table of Contents
+
+Toggle
+
+Share this post:
+
+ [ ](https://www.facebook.com/sharer/sharer.php?u=https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/&title=Destiny 2 Monument of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, and Exotics) [ ](https://twitter.com/intent/tweet?original%5Freferer=https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/&text=Destiny 2 Monument of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, and Exotics&url=https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/)
+
+Monument of Triumph isn’t just adding new armor bonuses — it’s changing how Destiny 2 builds get judged from the ground up. Ability uptime is down, Super generation is toned back, Armor 3.0 is expanded, Exotic armor has been reworked across the board, and Champion counters have moved permanently onto weapon frames. The builds that hold up will be the ones combining survivability, weapon value, set bonuses, and ability loops — not the ones leaning hardest on cooldown spam.
+
+### In this guide, we’ll cover:
+
+- Armor 3.0 archetypes and best stat pairings
+- All major Monument of Triumph armor set bonuses
+- Best PvE, PvP, and solo armor combinations
+- New abilities, Aspects, melees, and grenades
+- Exotic armor reworks worth building around
+- Artifact 2.0 and Anti-Champion 2.0 build synergy
+- Early Hunter, Titan, and Warlock build ideas
+- What still needs post-launch testing
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 14
+
+Dive deeper into the article to find a special promo code for a discount to save on all your boosts.
+
+## Quick Verdict
+
+- Best early PvE set: Shattered Throne
+- Best Trials set: Cruel Electrum
+- Best Super uptime set: Iron Battalion
+- Best movement set: SRL
+- Best solo survival picks: Shattered Throne, Exodus Down, The Lament
+- Biggest testing targets: Truth to Power, Supercyclical, Dielectric Drift, Crown of Tempests, Skull of Dire Ahamkara
+
+Buy Destiny 2 Renegades Campaign Boost
+
+Leave the grind to us!
+
+Buy now!
+
+## Ability Cooldown Economy Explained
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 15
+
+Before anything else, understand what Monument of Triumph does to the ability sandbox — because every build decision flows from it.
+
+Passive cooldown stat bonuses are cut by ~20%. Active cooldown bonuses are capped at 125% (down from 190%). Super generation from boss damage is down 60%. Multi-charge abilities start PvP matches with one charge instead of full stacks.
+
+This means some old builds may still function, but they will feel slower unless they gain energy through kills, set bonuses, Artifact mods, Exotic effects, or weapon-driven loops.
+
+Several new tools — Truth to Power, Supercyclical, Soul Siphon — exist specifically to offset this. If a new ability or set bonus looks underwhelming in isolation, check whether it’s compensating for something the economy took away.
+
+## Armor 3.0 Archetypes
+
+Six archetypes replace the old stat-bucket system. Ghost mods can improve archetype targeting during farming.
+
+| Archetype | Focus |
+| --- | --- |
+| Siegebreaker | Health + Grenade — survivability, grenade builds, solo play, defensive PvE setups |
+| Skirmisher | Melee and weapon hybrid |
+| Demolitionist | Grenade and class ability |
+| Colossus | Super and survivability |
+| Reaver | Class ability and melee loops |
+| Powerhouse | Weapon and Super |
+
+Archetypes matter most when chasing a specific set bonus. Natural fits: Powerhouse into Iron Battalion, Reaver into Shattered Throne, Skirmisher into SRL or Per Audacia, Colossus into Shattered Throne for survivability builds.
+
+Buy Destiny 2 Onslaught Farm Boost
+
+Leave the grind to us!
+
+Buy now!
+
+## Monument of Triumph Armor Set Bonuses
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 16
+
+### Quick Reference
+
+| Set | Source | 2-Piece | 4-Piece |
+| --- | --- | --- | --- |
+| SRL | Sparrow Racing League | Revving Up | Dielectric Drift |
+| Triumphal Anthem | Crucible | Scoot to Loot | Shoot to Scoot |
+| Per Audacia | Competitive Crucible | Primary Chain | Sublime Transit |
+| Cruel Electrum | Trials of Osiris | Primary Survivor | Primary Phantom |
+| Iron Battalion | Iron Banner | Primary Honing | Supercyclical |
+| Shattered Throne | Shattered Throne dungeon | Queensfoil Rush | Truth to Power |
+
+### Existing Set Bonus Tuning
+
+Smoke Jumper — Ride Together, Die Together: DR ceiling drops from 50% to 40%. Still defensive, less dominant as a general safety pick.
+
+Wayward Psyche — Superluminal Motion: Health while moving increases from 15 to 30 HP per second outside Crucible. Significantly more attractive for mobile PvE builds. PvP behavior unchanged.
+
+### SRL — Revving Up / Dielectric Drift
+
+Movement charges health regen and builds toward the Speed Booster buff. Activating Speed Booster while sliding jolts everything in front of you.
+
+Dielectric Drift requires Speed Booster, not Revving Up — Arc subclasses that can trigger Speed Booster through abilities may access the 4-piece without the 2-piece charge investment. Internal cooldown on the jolt is the key unknown at launch. If it’s generous, slide-jolt loops are real — especially on Arc Warlock if Dielectric Drift’s jolt can feed Crown of Tempests’ Conduction Tines loop. Crown also gains a new Ionic Sentry / Storm Grenade interaction, so this is one of the first Arc tests to run after launch.
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 17
+
+### Triumphal Anthem — Scoot to Loot / Shoot to Scoot
+
+Sliding collects nearby ammo and boosts reload and handling. Dealing weapon damage briefly increases slide distance and grants damage resistance while sliding.
+
+The 2-piece is clean PvP utility — collecting special ammo without exposing yourself matters on tight sightline maps. The 4-piece is better suited for aggressive PvP play than PvE. Mixing 2-piece Triumphal Anthem with 2-piece from a more PvE-relevant set is usually the better call outside Crucible.
+
+Buy Trials of Osiris 2+2 Bundle
+
+Leave the grind to us!
+
+Buy now!
+
+### Per Audacia — Primary Chain / Sublime Transit
+
+Primary weapon kills build stacking mobility, range, and handling — resets on death. The 4-piece increases base mobility, sprint speed, and slide distance but does not stack with speed Exotics like Transversive Steps or Stompees.
+
+Primary Chain is effectively a loadout-wide Killing Wind. In 6v6, range and handling breakpoints compound quickly after the first kill. Sublime Transit’s non-stack clause with speed Exotics is the trade-off — but it opens the Exotic slot. Warlocks running Ophidian Aspect instead of a speed Exotic get handling in a slot that Sublime Transit already covers for movement.
+
+### Cruel Electrum — Primary Survivor / Primary Phantom
+
+When an ally is down, primary weapons gain handling, reload, target acquisition, and significantly reduced flinch. The bonus scales with multiple allies down, peaking exactly when it’s most needed. Securing a primary kill removes you from enemy radar briefly — drawing any non-primary immediately ends the effect.
+
+Primary Phantom looks like one of the more dangerous PvP 4-piece bonuses in the update. A radar-free repositioning window after a pick, with no tell on your movement, is a genuine advantage in 3v3 play.
+
+### Iron Battalion — Primary Honing / Supercyclical
+
+Primaries gain handling, reload speed, and scaling damage against non-boss combatants. Final blows during a Super refund a portion of that Super’s energy when it ends.
+
+Primary Honing lands differently now that anti-Champion counters are permanently tied to weapon frames — strong primaries can handle add-clear, Champion coverage, and this damage bonus simultaneously. Supercyclical directly addresses the 60% reduction in Super generation from boss damage. Whether it stacks with Super-refunding Exotics is the most important unknown at launch — if it does, the upside is significant for builds running Raiden Flux, Orpheus Rig, or Heart of Inmost Light.
+
+### Shattered Throne — Queensfoil Rush / Truth to Power
+
+Performing a finisher grants an overshield and releases a Stasis slowing burst. Dealing damage builds stacking damage resistance; finishers accelerate stack progress; at max stacks, all ability recharge rates increase significantly.
+
+Truth to Power looks like the strongest general-use 4-piece bonus in the update. Dealing damage and occasionally using finishers is baseline behavior — the ability recharge at max stacks is meaningful compensation for the sandbox’s slower cooldown floor. Both bonuses push the same loop without requiring a specific subclass or weapon type.
+
+Exotic pairings: Felwinter’s Helm and Severance Enclosure both extend the Queensfoil Rush slow burst. Truth to Power’s ability recovery works across all three classes without needing a specific subclass Exotic — it does the heavy lifting, freeing the Exotic slot for offensive choices.
+
+### Destination Sets Worth Watching
+
+Exodus Down and Veritas aren’t part of the six headline sets, but both matter for survivability builds. Exodus Down leans into armor charge healing and damage resistance. Veritas generates an elemental pickup based on your Light subclass on finishers or successive powered melee final blows, and its 4-piece heals you and creates loyal Void moths after finishers on powerful combatants — a natural test set for finisher-heavy PvE builds alongside Truth to Power.
+
+Buy Destiny 2 Banner’s Bearer Shader Boost
+
+Leave the grind to us!
+
+Buy now!
+
+## Best 2-Piece Armor Combos
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 18
+
+Running a full 4-piece isn’t always the right call. These cross-set pairings cover the most useful combinations:
+
+- Queensfoil Rush + Scoot to Loot — safest general PvE utility; finisher overshield plus ammo on slide
+- Primary Chain + Primary Honing — best primary weapon package; stacking handling and damage bonuses across both sets
+- Revving Up + Shoot to Scoot — movement and slide-focused play; charge health regen while extending slide distance and DR
+- Primary Survivor + Primary Chain — safer Trials primary package; flinch resistance when allies are down plus stacking range and handling after kills
+- Veritas + Queensfoil Rush — finisher-heavy PvE testing combo; both sets reward the same behavior
+- Exodus Down + Truth to Power — solo survivability combo; armor charge healing paired with DR and ability uptime at max stacks
+
+## Abilities and Subclass Changes That Affect Builds
+
+### New Abilities
+
+Shieldburst (Solar Titan): Towering Barricade slides forward as mobile cover. Rally Barricade grants scorching rounds to allies. The barricade detonates for Class-stat-scaling area damage — builds heavy on Resilience may want to rebalance toward Class stat. First Exotic to test: Hallowfire Heart, whose Solar ability loops tie directly into Supercharged and Shieldburst interactions.
+
+Crack Shot (Solar Hunter): Uses the class ability slot instead of functioning like a normal dodge. ADS marks targets and fires up to three scorching shots; landing all three cures the Hunter. The execution window is tighter in PvP, and trading mobility-on-demand for an offensive pattern costs more in 6v6 than in Trials. Best Exotic overlap: Caliban’s Hand, whose scorch-to-melee-energy loop may extend into the class ability slot through Crack Shot’s scorching shots — needs testing.
+
+Soul Siphon (Void Warlock): Two-step powered melee that drains targets, deals Void damage, grants a Void overshield, and returns class ability energy. The class ability energy return is the important part in this economy — it creates a melee-to-class-ability loop without requiring kills or specific fragments. Strength investment increases both the drain damage and the return. First Exotic: Nezarec’s Sin, whose ability regen loop feeds directly off Void ability kills generated by Soul Siphon.
+
+Phantom Surge (Void Hunter): Dash-and-slash melee dealing bonus damage to Void-debuffed or marked targets. Grants a Void overshield; refunds melee energy on defeats. It’s a follow-up tool, not an opener — weaken or mark first, then close. Worth testing: whether Trapper’s Ambush suppression qualifies targets for the damage bonus. That sequence would be one of the stronger PvP combos in the update if confirmed.
+
+Shatter Grenade (Stasis): Sticky projectile that ricochets shrapnel and instantly shatters frozen targets, collapsing the freeze-then-shatter two-step into a single throw. If the shrapnel also shatters frozen targets it contacts, the add-clear ceiling in frozen groups is high. Critical test: whether Frostpulse’s freeze timing is reliable enough for a single-ability cycle.
+
+Slicewire Grenade (Strand): Bouncing grenade that severs on contact. The bounce mechanic extends coverage in enclosed spaces and frees Sever sourcing from other ability slots — Titan can run Banner of War, Hunter can run Widow’s Silk, without dedicating a Sever aspect.
+
+Buy Pantheon Boost
+
+Leave the grind to us!
+
+Buy now!
+
+### Important Reworks
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 19
+
+| Class | Change | Build Impact |
+| --- | --- | --- |
+| Hunter | Trapper’s Ambush uses class ability energy, heals on damage, grants Devour on kills | Mobility/class-ability builds gain survivability; Devour makes it a solo-content tool |
+| Hunter | Ascension counts as class ability; damage scales with Class stat above 100 | Works with class-ability perks and Exotics; Mobility investment pays off harder |
+| Hunter | Blade Barrage: faster knives, better tracking, scorch on detonation | Improves Shards of Galanor charge return; opens Solar ignition hooks |
+| Titan | Shoulder Charge melees (Shield Bash, Seismic Strike, Hammer Strike): major PvE damage increases | Legitimate damage tools, not just gap-closers |
+| Titan | Cryoclasm: sliding with Frost Armor launches a Stasis wave | Feeds Shatter Shard economy; pairs directly with Shatter Grenade setup |
+| Titan | Drengr’s Lash: debuffed kills grant class ability energy; damage scales with Class stat | Strand Titan stat investment more deliberate |
+| Titan | Unbreakable: final blows grant Devour | Adds survivability to an ability that previously had none |
+| Warlock | Frostpulse grants five stacks of Frost Armor on freeze | Directly feeds Stasis Shatter Shard economy; every Rift cast matters |
+| Warlock | Chain Lightning: two charges by default, major PvE damage increase | Arc Warlock ability damage ceiling is meaningfully higher |
+| Warlock | Child of the Old Gods: suppresses combatants after attaching | Adds utility in suppression-relevant encounters |
+
+### Stasis and Frost Armor
+
+Shattering crystals or frozen enemies, or defeating slowed and frozen enemies, now creates Shatter Shards. Picking them up grants Frost Armor. While Frost Armor is active, Stasis or Kinetic weapon kills can shatter enemies, and taking damage grants class-specific ability energy — melee for Titan, grenade for Warlock, class ability for Hunter.
+
+Frost Armor is no longer just passive DR. It’s an ability economy engine, and builds that generate it consistently will feel noticeably faster in this slower-cooldown sandbox.
+
+## Exotic Armor Reworks Worth Building Around
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 20
+
+### Highest Priority
+
+Hallowfire Heart: Stronger Solar ability loops tied to Super charge and Shieldburst. The natural first Exotic for Solar Titan at launch — Supercharge feeding ability loops is more valuable now that passive cooldown stats are reduced.
+
+Shards of Galanor: Charge return now scales with how many Blade Barrage knives connect. With Blade Barrage’s improved tracking and larger detonations, landing more knives is more reliable than before — genuinely competitive as a Super-uptime tool in high-damage phases.
+
+Nezarec’s Sin: Direct Soul Siphon synergy confirmed. Both tools are explicitly designed to work together and this is one of the first interactions to verify at launch.
+
+Skull of Dire Ahamkara: Nova Bomb Lance follow-up triggers a Cataclysm-scale secondary detonation. If the damage numbers hold, this becomes build-defining for Void Warlock. Combined with Soul Siphon’s class ability return and Nezarec’s ability regen, Void Warlock has a three-Exotic ecosystem to work through at launch — Skull is the highest-ceiling option.
+
+Crown of Tempests: Conduction Tines lasts longer in PvE; Ionic Sentry creates a Storm Grenade while Conduction Tines is active. Whether Dielectric Drift’s jolt can feed the Conduction Tines proc is the first Arc Warlock test after launch. If it holds, Crown anchors one of the flashiest builds in the update.
+
+No Backup Plans: Redesigned around Shotgun and melee final blows with cross-subclass compatibility. The old version was narrowly useful for Void Overshield generation. The new version opens Solar, Arc, and Prismatic Shotgun builds that weren’t viable before.
+
+Helm of Saint-14: Reworked around Ward of Dawn — adds Void Overshield and weapon damage inside the dome, weakens targets within it, and allows the Ward core to be repositioned up to twice. Helm extends Ward duration and grants Weapons of Light outside the dome. Ward of Dawn is no longer a last-resort panic button. See the Void Titan build idea below.
+
+Mothkeeper’s Wraps: Now a conditional override rather than a full grenade replacement; kills build toward two Moth Grenade charges; moth movement improved. Less all-or-nothing, which makes it easier to slot without fully committing your grenade loop.
+
+Buy Destiny 2 The Desert Perpetual Boost
+
+Leave the grind to us!
+
+Buy now!
+
+### Worth Testing
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 21
+
+Caliban’s Hand: Scorch damage feeds melee energy; ignition final blows refund Proximity Knife. Crack Shot’s scorching shots may extend the loop across all three ability types — needs testing to confirm.
+
+Wormhusk Crown: Solar multikills grant Burning Souls; using your class ability greatly cures you and nearby allies. This gives Solar Hunter a stronger survivability angle, especially if Crack Shot’s offensive class ability pattern proves harder to use safely in PvP or solo content.
+
+FR0ST-EE5: Sprinting grants Frost Armor; Stasis weapons deal increased damage while Frost Armor is active. Plugs directly into the Shatter Shard economy — Stasis Hunter should feel noticeably more consistent after launch.
+
+Shinobu’s Vow: Skip Grenade and Bolt Charge loop with enhanced Skip Grenades at full Bolt Charge. Arc Staff kills building Bolt Charge creates a natural feed worth testing as part of an Arc ability loop.
+
+Pyrogale Gauntlets: Stronger Super Cyclone scorch, explosion damage, and tracking. Worth testing alongside Shieldburst’s scorching rounds for a stacked scorch-into-ignition setup.
+
+Cadmus Ridge Lancecap: Reworked alongside the broader Stasis and Frost Armor changes. Rapid Stasis weapon damage and final blows can now create Diamond Lances even without standing behind a Rally Barricade, and Lance damage scales with Frost Armor stacks. Strong early Stasis Titan candidate, especially with Cryoclasm and Shatter Grenade.
+
+Point-Contact Cannon Brace: Thunderclap releases lightning strikes during windup and scales harder with charge time. The windup damage adds a new phase to an ability that previously rewarded only the release.
+
+Dawn Chorus: Now makes scorch build toward stronger ignitions, grants melee energy from ignition damage, and makes Daybreak projectiles immediately trigger ignition. Clearly defined Solar Warlock Super build identity — worth slotting on day one if the numbers hold.
+
+Mantle of Battle Harmony: Sustained weapon damage can trigger Super energy or damage bonuses, with post-Super surges and detonations. Primary weapons being stronger in PvE makes the weapon-matching identity more valuable — one of the cleaner weapon-first Warlock options if trigger conditions are generous.
+
+Astrocyte Verse: Grants directional dark blink and volatile rounds after blinking. The volatile rounds proc adds a damage layer to an Exotic that previously existed purely for mobility.
+
+### Nerfs and Caution Picks
+
+Contraverse Hold: Magnetic Grenade and Handheld Supernova energy returns are specifically reduced by 15%. Confirm what the return amount feels like at the new value before building around grenade spam. Siegebreaker archetype is still a natural pairing if uptime remains competitive.
+
+Nothing Manacles: Fewer seekers, less chaining, lower range and lifetime. The tracking ceiling is lower than it was — confirm how much the reduction affects real-world coverage before committing.
+
+Lucky Pants: Reworked around Hand Cannon draw and hip-fire. Worth watching alongside the new Exotic Hand Cannon from the Monument trailer, but confirm actual damage values before committing to a Hand Cannon build around it.
+
+Buy Destiny 2 Ascendant Alloy Shards Boost
+
+Leave the grind to us!
+
+Buy now!
+
+## Artifact 2.0 and Champion Coverage — Build Impact
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 22
+
+Artifact mods now save into loadouts and sync through DIM with no swap cost. Artifact mods are disabled in Competitive Crucible and Trials of Osiris — design those loadouts without them.
+
+The bigger build change is Champion coverage. Counter mods are gone from the artifact entirely — counters are now permanent and tied to weapon frames:
+
+| Frame Type | Champion Counter |
+| --- | --- |
+| Aggressive / High-Impact / Heavy Burst / Wave / Micro-Missile / Rocket-Assisted | Unstoppable |
+| Precision / Adaptive / Legacy / Caster / Support | Barrier |
+| Lightweight / Rapid-Fire / Support AR / Vortex / Overheat | Overload |
+
+Your Champion counter weapon can now also be a strong add-clear tool, especially with the Primary weapon PvE buffs.
+
+One important status-effect change: Radiant and Volatile Rounds no longer stun Barrier Champions, but both now increase weapon damage against Champions by 10%. Treat them as Champion damage buffs going forward, not Champion counters.
+
+Artifact and set bonus overlaps worth knowing: jolt and ability-energy mods extend the Dielectric Drift slide-jolt loop; finisher-buffing mods accelerate Queensfoil Rush overshield uptime; ability recharge mods stack naturally with Truth to Power’s max-stack bonus and can be slotted per-activity at no cost.
+
+## Weapon Tier Upgrading
+
+Good rolls are no longer automatically dead because they dropped at a lower tier. You can upgrade weapons into stronger tier benefits, while crafted weapons gain their own tier-upgrade path through weapon levels. For build testing, keep strong rolls first and worry about perfect tier optimization second.
+
+## Exotic Weapons That Actually Affect Builds
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 23
+
+Jade Rabbit: One of the biggest Exotic Primary winners. Shoot to Loot and Firefly make it more useful in PvE, while the new Fate of All Fools stack behavior and Micro Missile catalyst give it actual build-crafting value. Pair with Primary Honing, Precision Equity-style Artifact setups, or any armor combo built around safe primary play.
+
+Vex Mythoclast: A major Solar-adjacent build-crafting weapon now that Linear Fusion precision kills trigger ignitions. Gives Solar builds another ignition source that doesn’t depend on grenades or melees. Watch it with Shieldburst Solar Titan, Dawn Chorus Warlock, and any set bonus that rewards primary damage or sustained weapon uptime.
+
+Tarrabah: Damaging Scorched enemies now feeds Ravenous Beast progress. Shieldburst, Crack Shot, and scorch-heavy Warlock setups can all help Tarrabah reach its burst window faster — it slots naturally into any Solar scorch build that can sustain weapon pressure.
+
+Centrifuse: Better magazine refill makes it worth testing with SRL movement builds and Arc setups that want to stay mobile. It fits the “move fast, keep firing, jolt things, pretend this was all planned” fantasy and doesn’t fight the SRL 4-piece for the Exotic slot.
+
+The Lament: A major solo and close-range PvE winner if the partially reverted damage and healing nerfs hold up in practice. Pair it with Shattered Throne survivability, Exodus Down sustain, or any build that can safely reach melee range without becoming a very confident corpse.
+
+Divinity: Better support uptime and faster cage activation make it easier to justify in raid and Pantheon builds. Support weapons that become smoother usually gain more real value than their patch-note line suggests.
+
+Anarchy is back on the watchlist for endgame PvE thanks to longer trap duration and stronger combatant damage.
+
+Buy Destiny 2 Spoils of Conquest Boost
+
+Leave the grind to us!
+
+Buy now!
+
+## Best Monument of Triumph Builds by Activity
+
+Best General PvE: Shattered Throne 4-piece + ability-focused Exotic. Truth to Power’s DR and ability uptime at max stacks covers the widest range of PvE content without requiring a specific subclass.
+
+Best Solo: Shattered Throne or Exodus Down + survivability Exotic. Both sets reward staying in the fight — Shattered Throne through Truth to Power, Exodus Down through shield and armor charge healing on pickup. Your subclass breaks the tie.
+
+Best Trials: Cruel Electrum 4-piece + primary duel Exotic. Primary Phantom’s radar removal after a pick is the defining advantage in 3v3 — pair it with whatever Exotic extends your primary’s effectiveness in a slow, methodical engagement.
+
+Best Add-Clear: Iron Battalion 2-piece + weapon or ability Exotic. Primary Honing’s damage scaling against non-boss combatants stacks cleanly with permanent frame-based Champion coverage. Jade Rabbit is worth testing here given its new Firefly and Shoot to Loot behavior.
+
+Best Super Uptime: Iron Battalion 4-piece + Super-refund Exotic. Supercyclical’s final-blow refund during a Super directly counters the sandbox’s 60% reduction in boss Super generation. Stack it with a refunding Exotic if the stacking behavior confirms at launch.
+
+Best Movement: SRL 4-piece + Arc subclass with Speed Booster access. Dielectric Drift’s slide-jolt loop is the flashiest build in the update — and if Crown of Tempests’ Conduction Tines feed survives testing, Arc Warlock runs away with this category.
+
+## Build Ideas for Launch
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 24
+
+### Void Warlock — Soul Loop
+
+Soul Siphon into class ability return, Nezarec’s Sin feeding ability regen on Void kills, Shattered Throne armor for Truth to Power DR and ability uptime. Skull of Dire Ahamkara if the Nova Bomb Lance numbers hold. Strong in Pantheon and Grandmaster where sustained ability uptime matters most.
+
+### Solar Titan — Shieldburst Ignition
+
+Hallowfire Heart, Shattered Throne armor for Queensfoil Rush and Truth to Power, Precision or Adaptive frame primary for Barrier coverage. Shieldburst’s scorching rounds on Rally Barricade create ignition feed for the team. Shieldburst detonation as a Class-stat-scaling damage option in encounter phases that allow repositioning. Vex Mythoclast or Tarrabah are worth testing as scorch feeders that extend the ignition chain without additional ability investment.
+
+### Trials Primary Duelist
+
+Cruel Electrum full 4-piece. Crack Shot on Solar Hunter for the cure-on-full-hit in slow 3v3 engagements. Primary Phantom’s radar removal after a pick extends the post-round survival window. Per Audacia 2-piece as a swap option in modes outside Trials where Phantom Surge’s radar removal isn’t available.
+
+### Arc Slide Build
+
+SRL 4-piece (Dielectric Drift), Crown of Tempests if the Conduction Tines loop survives testing, Lightweight or Rapid-Fire primary for Overload coverage and add-clear. Speed Booster via Arc subclass abilities rather than Revving Up charge where possible — makes the 4-piece accessible without the 2-piece investment. Centrifuse is the natural Exotic weapon pairing: it fits the movement fantasy and keeps magazine pressure off during the slide loop.
+
+### Stasis Titan — Freeze-Shatter
+
+Cryoclasm now launches a Stasis wave while you have Frost Armor, letting Titan shatter crystals and frozen targets through movement. Pair this with Shatter Grenade, Shatter Shards, and Cadmus Ridge Lancecap for a freeze-shatter loop built around Frost Armor uptime. Shattered Throne armor adds Queensfoil Rush’s Stasis slow burst and Truth to Power survivability. Covers Unstoppable with an Aggressive-frame Heavy while your primary handles Barrier.
+
+### Void Titan — Mobile Bubble Support
+
+Ward of Dawn is no longer a static safety dome. The rework adds Void Overshield and weapon damage inside, weakens targets within the dome, grants the owner melee damage, and allows the Ward core to be picked up and repositioned up to twice. Helm of Saint-14 extends Ward duration and grants Weapons of Light outside the dome. For coordinated raid and Pantheon play, this is one of the most significant build shifts in the update.
+
+Buy Destiny 2 Vanguard Alerts Boost
+
+Leave the grind to us!
+
+Buy now!
+
+## Builds That Need Retesting
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 25
+
+Some setups are running on outdated assumptions after this update:
+
+- Grapple Melee: Boss damage scaling reduced — the ceiling is lower than previous testing suggested.
+- Golden Gun (Deadshot): Less Super energy from player kills — affects PvP Super snowballing.
+- Moebius Quiver: Crossbow weapon buff reduced — recheck damage numbers before relying on it.
+- Arc Soul jolt loops: Spark of Shock and Facet of Dominance now have an Arc Soul jolt internal cooldown — the loop speed is capped.
+- Radiant and Volatile for Barrier: No longer stuns Barrier Champions. Any build relying on these for Barrier coverage needs a frame-based replacement.
+- Whisper of Rime: Max Frost Armor stacks reduced from eight to seven, though max DR is rescaled. Stacks-based synergies need re-verification.
+
+## What Needs Testing at Launch
+
+- Truth to Power DR values and stack cap
+- Supercyclical refund amount and whether it stacks with Super-refunding Exotics
+- Dielectric Drift internal cooldown and whether the jolt feeds Crown of Tempests’ Conduction Tines
+- Soul Siphon class ability energy return amount and Melee stat scaling
+- Crack Shot scorching shots and Caliban’s Hand melee energy contribution
+- Shieldburst detonation and whether it counts as an ability kill for Hallowfire Heart
+- Primary Phantom radar removal duration and whether ability use ends the effect
+- Whether Frostpulse can reliably set up Warlock freeze-shatter cycles with Shatter Grenade
+- Shatter Shard generation rates and Frost Armor stack uptime across classes
+- Prismatic behavior across all six set bonuses
+- Skull of Dire Ahamkara Nova Bomb Lance damage numbers
+- Contraverse Hold grenade return after its 15% reduction
+- Whether Trapper’s Ambush class ability energy interacts with class-ability Exotic perks
+- All reworked Exotic values across Hunter, Titan, and Warlock
+
+Buy Destiny 2 Seasonal Conquest Boost
+
+Leave the grind to us!
+
+Buy now!
+
+Destiny 2 Monument Of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, And Exotics 26
+
+Promo code: Dina_Blog
+
+Use this discount as my thank you for your attention!
+
+## Final Thoughts
+
+Monument of Triumph build-crafting is not about finding one universal best build on day one. The strongest setups will come from matching an armor archetype, set bonus, Exotic, subclass loop, and Champion weapon frame into one working engine. Shattered Throne looks like the safest early PvE winner, Cruel Electrum has serious Trials potential, Iron Battalion may define Super-uptime setups, and SRL is the flashy movement pick if the jolt loop survives testing.
+
+Keep strong Tier 5 rolls, test both 4-piece and double 2-piece setups, and don’t delete strange archetype combinations too quickly. In this sandbox, the weird roll in your vault might become the build everyone copies next week.
+
+Share this post:
+
+ [ ](https://www.facebook.com/sharer/sharer.php?u=https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/&title=Destiny 2 Monument of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, and Exotics) [ ](https://twitter.com/intent/tweet?original%5Freferer=https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/&text=Destiny 2 Monument of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, and Exotics&url=https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/)
+
+Author
+
+Dina
+
+Has a passion for turning tangled topics into clean explanations that actually make sense. She believes any subject can be interesting — if you cut the fluff and add a little spark. With a knack for clarity (and the occasional well-placed metaphor), she helps readers feel smart without making them yawn. Basically, if it’s confusing, she’ll fix it.
+
+View all posts
+
+## Epiccarry: best wow boost and coaching services
+
+## Frequently Asked Questions
+
+### What are the best builds in Destiny 2 Monument of Triumph?
+
+The best early Monument of Triumph builds are the ones that combine armor set bonuses, Exotic armor, subclass loops, and Champion weapon-frame coverage instead of relying only on ability cooldown spam. Early standouts include Shattered Throne 4-piece builds for general PvE, Cruel Electrum for Trials, Iron Battalion for Super uptime, SRL armor for Arc movement builds, and Shattered Throne or Exodus Down setups for solo survivability.
+
+### What is the best Armor 3.0 set in Destiny 2 Monument of Triumph?
+
+Shattered Throne looks like the safest early PvE armor set because Queensfoil Rush gives finisher safety, while Truth to Power builds damage resistance and boosts ability recharge at max stacks. It does not require a specific subclass or weapon type, making it one of the most flexible early 4-piece options. For PvP, Cruel Electrum looks stronger because Primary Phantom gives radar removal after primary kills.
+
+### How does Armor 3.0 work in Destiny 2 Monument of Triumph?
+
+Armor 3.0 uses archetypes that push armor toward specific stat pairings. Instead of every armor piece feeling like a random stat bucket, archetypes such as Siegebreaker, Skirmisher, Demolitionist, Colossus, Reaver, and Powerhouse help players target builds around Health, Grenade, Melee, Weapon, Class, or Super investment. Ghost mods can also improve archetype targeting while farming.
+
+### What are the new Armor 3.0 archetypes in Destiny 2?
+
+The six new Armor 3.0 archetypes are Siegebreaker, Skirmisher, Demolitionist, Colossus, Reaver, and Powerhouse. Siegebreaker focuses on Health and Grenade, Skirmisher on Melee and Weapons, Demolitionist on Grenade and Class, Colossus on Super and Health, Reaver on Class and Melee, and Powerhouse on Weapons and Super.
+
+### What is the best Armor 3.0 archetype for PvE in Destiny 2?
+
+For general PvE, Siegebreaker, Colossus, Reaver, and Powerhouse all have strong early cases. Siegebreaker works well for survivability and grenade builds, Colossus supports Super and health-heavy setups, Reaver fits class ability and melee loops, and Powerhouse pairs naturally with weapon and Super-focused armor sets like Iron Battalion. The best choice depends on whether your build needs survival, ability uptime, or damage windows.
+
+### What is the best Armor 3.0 archetype for PvP in Destiny 2?
+
+Skirmisher, Reaver, and Powerhouse look like the strongest early PvP archetypes. Skirmisher supports melee and weapon hybrid play, Reaver helps class ability and melee loops, and Powerhouse works well for weapon and Super-focused setups. For Trials specifically, Cruel Electrum paired with a primary-focused stat setup looks especially promising because Primary Survivor and Primary Phantom reward clutch primary duels.
+
+### What are the best armor set bonuses in Destiny 2 Monument of Triumph?
+
+The best early armor set bonuses are Truth to Power from Shattered Throne, Primary Phantom from Cruel Electrum, Supercyclical from Iron Battalion, and Dielectric Drift from SRL. Truth to Power is the safest PvE pick, Primary Phantom has strong Trials potential, Supercyclical helps offset lower Super generation, and Dielectric Drift enables flashy Arc slide-jolt builds if its cooldown and perk interactions test well.
+
+### Is Shattered Throne armor worth farming in Destiny 2 Monument of Triumph?
+
+Yes, Shattered Throne armor looks very worth farming early. Queensfoil Rush gives an overshield and Stasis slow burst on finishers, while Truth to Power builds damage resistance and boosts ability recharge at max stacks. Because it rewards normal combat behavior rather than a narrow gimmick, Shattered Throne is one of the safest early PvE sets for solo, Grandmaster, Pantheon, and general endgame play.
+
+### How does Truth to Power work in Destiny 2?
+
+Truth to Power builds stacking damage resistance as you deal damage, with finishers accelerating stack progress. At max stacks, all ability recharge rates increase significantly. This makes it especially valuable in Monument of Triumph because passive cooldown bonuses are reduced and active cooldown bonuses are capped lower. Exact DR values, stack caps, and cooldown behavior still need post-launch testing.
+
+### Is Iron Battalion good for Super uptime in Destiny 2?
+
+Iron Battalion looks strong for Super uptime because its 4-piece bonus, Supercyclical, refunds part of your Super energy after final blows during a Super. This matters more in Monument of Triumph because Super generation from boss damage is reduced by 60%. If Supercyclical stacks well with Super-refunding Exotics like Shards of Galanor, Raiden Flux, or Orpheus Rig, it could become a major Super-loop setup.
+
+### Is Cruel Electrum good for Trials of Osiris?
+
+Yes, Cruel Electrum looks like one of the strongest early Trials armor sets. Its 2-piece bonus improves primary weapon handling, reload, target acquisition, and flinch resistance when allies are down. Its 4-piece bonus, Primary Phantom, briefly removes you from radar after securing a primary kill. In 3v3, that radar-free repositioning window can be a major advantage after a pick.
+
+### What are the best 2-piece armor set bonus combos in Destiny 2?
+
+The best early 2-piece armor combos include Queensfoil Rush + Scoot to Loot for PvE utility, Primary Chain + Primary Honing for primary weapon builds, Revving Up + Shoot to Scoot for movement and slide play, Primary Survivor + Primary Chain for Trials dueling, Veritas + Queensfoil Rush for finisher-heavy PvE, and Exodus Down + Truth to Power for solo survivability.
+
+### How do Artifact 2.0 mods work in Destiny 2 Monument of Triumph?
+
+Artifact 2.0 makes artifact mods easier to manage by allowing them to save into loadouts and sync through tools like DIM. Mods can be swapped freely without old-style friction, but artifact mods are disabled in Competitive Crucible and Trials of Osiris. In Monument of Triumph, Artifact mods are more about supporting builds than providing mandatory Champion counters.
+
+### How do Champion counters work after the Monument of Triumph update?
+
+Champion counters are now permanent and tied to weapon frames instead of seasonal Artifact mods. Aggressive, High-Impact, Heavy Burst, Wave, Micro-Missile, and Rocket-Assisted frames counter Unstoppable Champions. Precision, Adaptive, Legacy, Caster, and Support frames counter Barrier Champions. Lightweight, Rapid-Fire, Support AR, Vortex, and Overheat frames counter Overload Champions.
+
+### Do Radiant and Volatile Rounds still stun Barrier Champions in Destiny 2?
+
+No. Radiant and Volatile Rounds no longer stun Barrier Champions in Monument of Triumph. Instead, both now increase weapon damage against Champions by 10%. Treat Radiant and Volatile Rounds as Champion damage buffs, not Champion counters. If your old build relied on them for Barrier coverage, you need a proper frame-based Barrier weapon instead.
+
+### What Exotic armor reworks matter most in Destiny 2 Monument of Triumph?
+
+The highest-priority Exotic armor reworks to watch are Hallowfire Heart, Shards of Galanor, Nezarec’s Sin, Skull of Dire Ahamkara, Crown of Tempests, No Backup Plans, Helm of Saint-14, and Mothkeeper’s Wraps. These Exotics directly interact with new ability loops, Super uptime, defensive buffs, subclass reworks, or armor set bonuses, making them more important than simple stat-stick changes.
+
+### What are the best Hunter Exotic armor reworks in Monument of Triumph?
+
+The best Hunter Exotic armor reworks to watch are Shards of Galanor, Caliban’s Hand, Wormhusk Crown, FR0ST-EE5, Shinobu’s Vow, Mothkeeper’s Wraps, and Lucky Pants. Shards benefits from improved Blade Barrage consistency, Caliban’s Hand supports scorch and ignition loops, Wormhusk Crown adds Solar survivability, FR0ST-EE5 connects to Frost Armor, and Mothkeeper’s Wraps is easier to slot now that it is less all-or-nothing.
+
+### What are the best Titan Exotic armor reworks in Monument of Triumph?
+
+The most important Titan Exotic armor reworks are Hallowfire Heart, No Backup Plans, Helm of Saint-14, Pyrogale Gauntlets, Cadmus Ridge Lancecap, and Point Contact Cannon Brace. Hallowfire Heart supports Solar Shieldburst builds, No Backup Plans opens cross-subclass Shotgun and melee setups, Helm of Saint-14 upgrades Ward of Dawn support, and Cadmus Ridge Lancecap fits Stasis Titan Frost Armor and Diamond Lance loops.
+
+### What are the best Warlock Exotic armor reworks in Monument of Triumph?
+
+The best Warlock Exotic armor reworks to watch are Nezarec’s Sin, Skull of Dire Ahamkara, Crown of Tempests, Dawn Chorus, Mantle of Battle Harmony, and Astrocyte Verse. Nezarec’s Sin directly supports Soul Siphon, Skull adds a Nova Bomb Lance follow-up, Crown of Tempests may anchor Arc slide-jolt builds, Dawn Chorus improves Solar ignition play, and Mantle of Battle Harmony could become a strong weapon-first Warlock option.
+
+### What should players test first after Destiny 2 Monument of Triumph launches?
+
+The first things to test are Truth to Power’s DR values and stack cap, Supercyclical’s refund amount, Dielectric Drift’s internal cooldown, Crown of Tempests jolt interactions, Soul Siphon’s class ability return, Crack Shot and Caliban’s Hand synergy, Shieldburst and Hallowfire Heart interactions, Primary Phantom radar duration, Shatter Grenade behavior, Frost Armor uptime, and Prismatic behavior across the new armor set bonuses.
+
+Comments
+
+Cancel reply
+
+Save my name in this browser for the next time I comment.
+
+## Related Posts
+
+ All Destiny 2 Guides Season Overview Destiny 2 Monument of Triumph Guide: Armor Sets, SRL, Pantheon, Weapons, Vendors, and Sandbox Changes Destiny 2 Monument of Triumph launches with Update 9.7.0 on June 9, 2026, bringing SRL, Pantheon, Armor 3.0, weapon tier upgrades, Artifacts 2.0, Legendary Marks, Exotic transmog, and major reward changes. This guide breaks down everything players need to know before launch, including activity updates, armor set bonuses, vendor systems, sandbox changes, and what to test first after the update goes live. 8 June, 2026 16 17 min 
+
+ All Guides PoE 2 Tier lists & ranks PoE 2 0.5 League Starter Builds Tier List – 15 Best Builds for Return of the Ancients This PoE 2 0.5 league starter tier list ranks the best builds for Return of the Ancients, covering safe beginner picks, fast meta starters, budget options, Hardcore choices, and Day 1 vs Day 2 transitions for campaign, early maps, and Tier 15 progression. 4 June, 2026 24 18 min 
+
+ All class Guides PoE 2 PoE 2 Martial Artist Guide (0.5 Return of the Ancients) Master the Martial Artist in Path of Exile 2: Return of the Ancients with our complete 0.5 guide covering the best ascendancy nodes, Hollow Palm leveling, Tempest Bell mechanics, Whirling Assault builds, Chaos Inoculation setups, Power Charge sustain, and endgame gearing strategies. Learn how Martial Artist scales through combo generation, stun interactions, Runic Meridians rune sockets, and unique glove transformations to become one of the strongest Monk league starters in PoE 2. 29 May, 2026 66 18 min 
+
+ All dungeons & raids Guides WoW WoW Midnight Voidspire Guide (Season 1): Every Boss, Best Tactics, Loot, and Rewards Master the Voidspire raid in World of Warcraft: Midnight Season 1 with this complete guide covering all 6 bosses, core mechanics, role responsibilities, and progression strategies. Learn how to handle massive raid damage, optimize positioning, and execute key mechanics across Normal and Heroic difficulty, with detailed breakdowns of each encounter, loot tables, and tier set rewards. Whether you're pushing Mythic progression or clearing for the first time, this guide gives you everything you need to succeed in Voidspire. 18 March, 2026 197 20 min 
+
+ All Diablo IV Guides Season Overview Diablo 4 Lord of Hatred Explained: Massive 2.0 Changes, New Classes, Endgame Overhaul Uncover everything Diablo IV: Lord of Hatred has in store—from the Paladin class and Skovos Isles to Mephisto’s endgame arc, system reworks, and new modes like War Plans and Echoing Hatred. This definitive guide breaks down confirmed features, speculation, pricing, and what players need to know before the April 2026 launch. 10 April, 2026 1799 20 min 
+
+ All Guides Marvel Rivals Tier lists & ranks Marvel Rivals Blood Hunt Tier List: Best Characters for Nightmare Difficulty Master Blood Hunt Nightmare in Marvel Rivals with this complete tier list and build guide. Discover the best heroes, fastest clear strategies, optimal stats, and proven setups to beat Nightmare 160 consistently and farm rewards efficiently. 5 May, 2026 230 14 min 
+
+ All Guides PoE 2 Season Overview PoE 2 Atlas of Worlds Guide 0.5 — Best Masters, Waystone Sustain & Atlas Passive Tree Progression This **PoE 2 Atlas of Worlds Guide for Patch 0.5** explains everything you need to know about the new Return of the Ancients endgame, including how to unlock mapping, sustain Waystones, use Precursor Tablets, progress through the Atlas Passive Tree, and push into the Precursor Fortress and Citadels. We also break down all three Masters of the Atlas — Hilda, Doryani, and Jado — with their best uses, strongest mechanics, and which one you should choose first for boss farming, Atlas control, or early-league economy. 2 June, 2026 81 22 min 
+
+ All Call of Duty: Black Ops 7 Guides Season Overview Call of Duty Black Ops 7 Season 3 Guide: Patch Notes, Meta Weapons, Maps & Zombies A complete breakdown of Call of Duty Black Ops 7 Season 03, covering patch notes, new multiplayer maps, weapons, and major balance changes. This guide also includes the current meta, best loadouts, Ranked updates, Zombies content, Battle Pass rewards, and optimized settings to help you stay competitive across every mode. 3 April, 2026 217 21 min 
+
+ All Diablo IV Guides Season Overview Diablo 4 Season 12 Guide: Season of Slaughter Mechanics, Killstreak System, Best Builds & Tier List Diablo 4 Season 12, Season of Slaughter, introduces a new momentum-based combat system featuring Killstreak mechanics, Blooded gear, and the ability to temporarily transform into the Butcher. This guide covers everything you need to know about the new season, including Bloodstained Sigils, the Butcher Lair Boss, Seasonal Journey rewards, leveling strategies, and the best builds in the Season 12 tier list, helping you progress efficiently and dominate the latest Diablo 4 content. 10 March, 2026 202 12 min 
+
+ All Apex Legends Event Guides Guides Season Overview Apex Legends Aftershock Event Guide: All Rewards, Vortex Shield, Wildcards & Best Builds The Aftershock event is one of the biggest mid-season updates in Apex Legends, introducing major Legend reworks, the Elite Hemlok, and the Wildcard: Charged Up mode with the Vortex Shield mechanic. This guide covers everything you need to know, including all nine Wildcards, best loadouts and strategies, map and audio changes, and a full breakdown of event rewards like the Fuse Prestige skin, along with how to progress efficiently and unlock everything at the lowest cost. 9 April, 2026 165 17 min 
+
+```json
+{"@context":"https://schema.org","@graph":[{"@type":"Place","@id":"https://epiccarry.com/blogs/#place","address":{"@type":"PostalAddress","streetAddress":"12 Mulberry Place, Pinnell Road","addressLocality":"Eltham","addressRegion":"London","postalCode":"SE9 6AR","addressCountry":"GB"}},{"@type":["Organization"],"@id":"https://epiccarry.com/blogs/#organization","name":"Epiccarry","url":"https://epiccarry.com/blogs/","sameAs":["https://www.instagram.com/epiccarry/","https://www.pinterest.com/epiccarry/"],"email":"epiccarry.com@gmail.com","address":{"@type":"PostalAddress","streetAddress":"12 Mulberry Place, Pinnell Road","addressLocality":"Eltham","addressRegion":"London","postalCode":"SE9 6AR","addressCountry":"GB"},"logo":{"@type":"ImageObject","@id":"https://epiccarry.com/blogs/#logo","url":"https://epiccarry.com/blogs/wp-content/uploads/2025/07/site-icon-transparent.webp","contentUrl":"https://epiccarry.com/blogs/wp-content/uploads/2025/07/site-icon-transparent.webp","caption":"All-in-One Guide Hub for Boosting, Builds &amp; Game Progression","inLanguage":"en-US","width":"512","height":"512"},"openingHours":["Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday 09:00-17:00"],"legalName":"Epiccarry","location":{"@id":"https://epiccarry.com/blogs/#place"}},{"@type":"WebSite","@id":"https://epiccarry.com/blogs/#website","url":"https://epiccarry.com/blogs","name":"All-in-One Guide Hub for Boosting, Builds & Game Progression","alternateName":"Guides and Gaming News from Epiccarry","publisher":{"@id":"https://epiccarry.com/blogs/#organization"},"inLanguage":"en-US"},{"@type":"ImageObject","@id":"https://epiccarry.com/blogs/wp-content/uploads/2026/06/destiny-renegades-5.webp","url":"https://epiccarry.com/blogs/wp-content/uploads/2026/06/destiny-renegades-5.webp","width":"1071","height":"600","caption":"Destiny 2 Monument of Triumph Build Guide: Solar Ability Damage, Super Knives, and Exotic Armor Reworks","inLanguage":"en-US"},{"@type":"WebPage","@id":"https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/#webpage","url":"https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/","name":"Destiny 2 Monument Of Triumph Build-Crafting Guide | Epiccarry","datePublished":"2026-06-09T06:25:02+00:00","dateModified":"2026-06-09T06:25:05+00:00","isPartOf":{"@id":"https://epiccarry.com/blogs/#website"},"primaryImageOfPage":{"@id":"https://epiccarry.com/blogs/wp-content/uploads/2026/06/destiny-renegades-5.webp"},"inLanguage":"en-US"},{"@type":"Person","@id":"https://epiccarry.com/blogs/author/dina/","name":"Dina","description":"Has a passion for turning tangled topics into clean explanations that actually make sense. She believes any subject can be interesting \u2014 if you cut the fluff and add a little spark. With a knack for clarity (and the occasional well-placed metaphor), she helps readers feel smart without making them yawn. Basically, if it\u2019s confusing, she\u2019ll fix it.","url":"https://epiccarry.com/blogs/author/dina/","image":{"@type":"ImageObject","@id":"https://epiccarry.com/blogs/wp-content/uploads/2025/07/Dina-avatar.webp","url":"https://epiccarry.com/blogs/wp-content/uploads/2025/07/Dina-avatar.webp","caption":"Dina","inLanguage":"en-US"},"sameAs":["https://x.com/DeeLightDi"]},{"@type":"BlogPosting","headline":"Destiny 2 Monument Of Triumph Build-Crafting Guide | Epiccarry","datePublished":"2026-06-09T06:25:02+00:00","dateModified":"2026-06-09T06:25:05+00:00","articleSection":"All, Destiny 2","author":{"@id":"https://epiccarry.com/blogs/author/dina/","name":"Dina"},"publisher":{"@id":"https://epiccarry.com/blogs/#organization"},"description":"Destiny 2 Monument of Triumph build guide: Armor 3.0, set bonuses, Exotic reworks, Artifact 2.0 & best PvE/PvP builds \u2694\ufe0f\ud83d\udee1\ufe0f\u2728","name":"Destiny 2 Monument Of Triumph Build-Crafting Guide | Epiccarry","@id":"https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/#richSnippet","isPartOf":{"@id":"https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/#webpage"},"image":{"@id":"https://epiccarry.com/blogs/wp-content/uploads/2026/06/destiny-renegades-5.webp"},"inLanguage":"en-US","mainEntityOfPage":{"@id":"https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/#webpage"}}]}
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Epiccarry Blog","item":"https://epiccarry.com/blogs/"},{"@type":"ListItem","position":2,"name":"Destiny 2","item":"https://epiccarry.com/blogs/all/d2/"},{"@type":"ListItem","position":3,"name":"Destiny 2 Monument of Triumph Build-Crafting Guide: Armor 3.0, Set Bonuses, Abilities, and Exotics","item":"https://epiccarry.com/blogs/destiny-2-monument-of-triumph-build-crafting-guide/"}]}
+{"@context": "https://schema.org","@type": "FAQPage","mainEntity": [{"@type": "Question","name": "<h3>What are the best builds in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The best early Monument of Triumph builds are the ones that combine armor set bonuses, Exotic armor, subclass loops, and Champion weapon-frame coverage instead of relying only on ability cooldown spam. Early standouts include Shattered Throne 4-piece builds for general PvE, Cruel Electrum for Trials, Iron Battalion for Super uptime, SRL armor for Arc movement builds, and Shattered Throne or Exodus Down setups for solo survivability.</p>"}},{"@type": "Question","name": "<h3>What is the best Armor 3.0 set in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Shattered Throne looks like the safest early PvE armor set because Queensfoil Rush gives finisher safety, while Truth to Power builds damage resistance and boosts ability recharge at max stacks. It does not require a specific subclass or weapon type, making it one of the most flexible early 4-piece options. For PvP, Cruel Electrum looks stronger because Primary Phantom gives radar removal after primary kills.</p>"}},{"@type": "Question","name": "<h3>How does Armor 3.0 work in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Armor 3.0 uses archetypes that push armor toward specific stat pairings. Instead of every armor piece feeling like a random stat bucket, archetypes such as Siegebreaker, Skirmisher, Demolitionist, Colossus, Reaver, and Powerhouse help players target builds around Health, Grenade, Melee, Weapon, Class, or Super investment. Ghost mods can also improve archetype targeting while farming.</p>"}},{"@type": "Question","name": "<h3>What are the new Armor 3.0 archetypes in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The six new Armor 3.0 archetypes are Siegebreaker, Skirmisher, Demolitionist, Colossus, Reaver, and Powerhouse. Siegebreaker focuses on Health and Grenade, Skirmisher on Melee and Weapons, Demolitionist on Grenade and Class, Colossus on Super and Health, Reaver on Class and Melee, and Powerhouse on Weapons and Super.</p>"}},{"@type": "Question","name": "<h3>What is the best Armor 3.0 archetype for PvE in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>For general PvE, Siegebreaker, Colossus, Reaver, and Powerhouse all have strong early cases. Siegebreaker works well for survivability and grenade builds, Colossus supports Super and health-heavy setups, Reaver fits class ability and melee loops, and Powerhouse pairs naturally with weapon and Super-focused armor sets like Iron Battalion. The best choice depends on whether your build needs survival, ability uptime, or damage windows.</p>"}},{"@type": "Question","name": "<h3>What is the best Armor 3.0 archetype for PvP in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Skirmisher, Reaver, and Powerhouse look like the strongest early PvP archetypes. Skirmisher supports melee and weapon hybrid play, Reaver helps class ability and melee loops, and Powerhouse works well for weapon and Super-focused setups. For Trials specifically, Cruel Electrum paired with a primary-focused stat setup looks especially promising because Primary Survivor and Primary Phantom reward clutch primary duels.</p>"}},{"@type": "Question","name": "<h3>What are the best armor set bonuses in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The best early armor set bonuses are Truth to Power from Shattered Throne, Primary Phantom from Cruel Electrum, Supercyclical from Iron Battalion, and Dielectric Drift from SRL. Truth to Power is the safest PvE pick, Primary Phantom has strong Trials potential, Supercyclical helps offset lower Super generation, and Dielectric Drift enables flashy Arc slide-jolt builds if its cooldown and perk interactions test well.</p>"}},{"@type": "Question","name": "<h3>Is Shattered Throne armor worth farming in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Yes, Shattered Throne armor looks very worth farming early. Queensfoil Rush gives an overshield and Stasis slow burst on finishers, while Truth to Power builds damage resistance and boosts ability recharge at max stacks. Because it rewards normal combat behavior rather than a narrow gimmick, Shattered Throne is one of the safest early PvE sets for solo, Grandmaster, Pantheon, and general endgame play.</p>"}},{"@type": "Question","name": "<h3>How does Truth to Power work in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Truth to Power builds stacking damage resistance as you deal damage, with finishers accelerating stack progress. At max stacks, all ability recharge rates increase significantly. This makes it especially valuable in Monument of Triumph because passive cooldown bonuses are reduced and active cooldown bonuses are capped lower. Exact DR values, stack caps, and cooldown behavior still need post-launch testing.</p>"}},{"@type": "Question","name": "<h3>Is Iron Battalion good for Super uptime in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Iron Battalion looks strong for Super uptime because its 4-piece bonus, Supercyclical, refunds part of your Super energy after final blows during a Super. This matters more in Monument of Triumph because Super generation from boss damage is reduced by 60%. If Supercyclical stacks well with Super-refunding Exotics like Shards of Galanor, Raiden Flux, or Orpheus Rig, it could become a major Super-loop setup.</p>"}},{"@type": "Question","name": "<h3>Is Cruel Electrum good for Trials of Osiris?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Yes, Cruel Electrum looks like one of the strongest early Trials armor sets. Its 2-piece bonus improves primary weapon handling, reload, target acquisition, and flinch resistance when allies are down. Its 4-piece bonus, Primary Phantom, briefly removes you from radar after securing a primary kill. In 3v3, that radar-free repositioning window can be a major advantage after a pick.</p>"}},{"@type": "Question","name": "<h3>What are the best 2-piece armor set bonus combos in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The best early 2-piece armor combos include Queensfoil Rush + Scoot to Loot for PvE utility, Primary Chain + Primary Honing for primary weapon builds, Revving Up + Shoot to Scoot for movement and slide play, Primary Survivor + Primary Chain for Trials dueling, Veritas + Queensfoil Rush for finisher-heavy PvE, and Exodus Down + Truth to Power for solo survivability.</p>"}},{"@type": "Question","name": "<h3>How do Artifact 2.0 mods work in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Artifact 2.0 makes artifact mods easier to manage by allowing them to save into loadouts and sync through tools like DIM. Mods can be swapped freely without old-style friction, but artifact mods are disabled in Competitive Crucible and Trials of Osiris. In Monument of Triumph, Artifact mods are more about supporting builds than providing mandatory Champion counters.</p>"}},{"@type": "Question","name": "<h3>How do Champion counters work after the Monument of Triumph update?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>Champion counters are now permanent and tied to weapon frames instead of seasonal Artifact mods. Aggressive, High-Impact, Heavy Burst, Wave, Micro-Missile, and Rocket-Assisted frames counter Unstoppable Champions. Precision, Adaptive, Legacy, Caster, and Support frames counter Barrier Champions. Lightweight, Rapid-Fire, Support AR, Vortex, and Overheat frames counter Overload Champions.</p>"}},{"@type": "Question","name": "<h3>Do Radiant and Volatile Rounds still stun Barrier Champions in Destiny 2?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>No. Radiant and Volatile Rounds no longer stun Barrier Champions in Monument of Triumph. Instead, both now increase weapon damage against Champions by 10%. Treat Radiant and Volatile Rounds as Champion damage buffs, not Champion counters. If your old build relied on them for Barrier coverage, you need a proper frame-based Barrier weapon instead.</p>"}},{"@type": "Question","name": "<h3>What Exotic armor reworks matter most in Destiny 2 Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The highest-priority Exotic armor reworks to watch are Hallowfire Heart, Shards of Galanor, Nezarec’s Sin, Skull of Dire Ahamkara, Crown of Tempests, No Backup Plans, Helm of Saint-14, and Mothkeeper’s Wraps. These Exotics directly interact with new ability loops, Super uptime, defensive buffs, subclass reworks, or armor set bonuses, making them more important than simple stat-stick changes.</p>"}},{"@type": "Question","name": "<h3>What are the best Hunter Exotic armor reworks in Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The best Hunter Exotic armor reworks to watch are Shards of Galanor, Caliban’s Hand, Wormhusk Crown, FR0ST-EE5, Shinobu’s Vow, Mothkeeper’s Wraps, and Lucky Pants. Shards benefits from improved Blade Barrage consistency, Caliban’s Hand supports scorch and ignition loops, Wormhusk Crown adds Solar survivability, FR0ST-EE5 connects to Frost Armor, and Mothkeeper’s Wraps is easier to slot now that it is less all-or-nothing.</p>"}},{"@type": "Question","name": "<h3>What are the best Titan Exotic armor reworks in Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The most important Titan Exotic armor reworks are Hallowfire Heart, No Backup Plans, Helm of Saint-14, Pyrogale Gauntlets, Cadmus Ridge Lancecap, and Point Contact Cannon Brace. Hallowfire Heart supports Solar Shieldburst builds, No Backup Plans opens cross-subclass Shotgun and melee setups, Helm of Saint-14 upgrades Ward of Dawn support, and Cadmus Ridge Lancecap fits Stasis Titan Frost Armor and Diamond Lance loops.</p>"}},{"@type": "Question","name": "<h3>What are the best Warlock Exotic armor reworks in Monument of Triumph?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The best Warlock Exotic armor reworks to watch are Nezarec’s Sin, Skull of Dire Ahamkara, Crown of Tempests, Dawn Chorus, Mantle of Battle Harmony, and Astrocyte Verse. Nezarec’s Sin directly supports Soul Siphon, Skull adds a Nova Bomb Lance follow-up, Crown of Tempests may anchor Arc slide-jolt builds, Dawn Chorus improves Solar ignition play, and Mantle of Battle Harmony could become a strong weapon-first Warlock option.</p>"}},{"@type": "Question","name": "<h3>What should players test first after Destiny 2 Monument of Triumph launches?</h3>","acceptedAnswer": {"@type": "Answer","text": "<p>The first things to test are Truth to Power’s DR values and stack cap, Supercyclical’s refund amount, Dielectric Drift’s internal cooldown, Crown of Tempests jolt interactions, Soul Siphon’s class ability return, Crack Shot and Caliban’s Hand synergy, Shieldburst and Hallowfire Heart interactions, Primary Phantom radar duration, Shatter Grenade behavior, Frost Armor uptime, and Prismatic behavior across the new armor set bonuses.</p>"}}]}
+
+```

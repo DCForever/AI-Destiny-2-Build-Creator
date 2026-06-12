@@ -1,0 +1,365 @@
+Destiny 2: Monument of Triumph Sandbox, Abilities & Armor Preview
+
+Monument of Triumph launches June 9, 2026, bringing one of Destiny 2’s largest sandbox updates, including new subclass abilities, ability reworks, Armor 3.0 additions, new armor archetypes, Exotic armor updates, and major balance changes.
+
+This guide covers Bungie’s Dev Insights: Abilities & Armor Preview for Update 9.7.0.
+
+## Quick Look
+
+## Quick Look
+
+▸ 3 new subclass Aspects
+
+▸ 2 new Darkness grenades
+
+▸ 1 new Nightstalker melee
+
+▸ Ward of Dawn rework
+
+▸ Stasis & Frost Armor overhaul
+
+▸ 6 new Armor 3.0 archetypes
+
+▸ Tier 5 Exotic armor stats
+
+▸ New armor set bonuses
+
+▸ Extensive Exotic armor updates
+
+▸ Reduced ability spam & Super generation
+
+## New Subclass Abilities
+
+### Titan Sunbreaker: Shieldburst
+
+Shieldburst is a new Solar Titan Aspect that enhances Barricade with Solar functionality.
+
+Towering Barricade ↓▸ Barricade slides forward across the ground before stopping▸ Lets Titans advance while protected
+
+Rally Barricade ↓▸ Standing behind the barricade grants scorching rounds▸ Applies to Solar and Kinetic weapons for you and allies
+
+Detonation Effect ↓▸ While the barricade is deployed, activate class ability again to detonate it▸ Detonation scorches enemies caught in the blast▸ Dealing damage increases the power of the explosion
+
+Build Notes ↓▸ Works with Arbor Warden, Hallowfire Heart, and Khepri’s Horn▸ Damage is buffed by Roaring Flames▸ Can create Sunspots with Sol Invictus▸ Damage scales with Class stat above 100
+
+## Hunter Gunslinger: Crackshot
+
+Crackshot is a new Solar Hunter Aspect built around a quickdraw gunslinger fantasy.
+
+How It Works ↓▸ Aim at targets to mark them▸ Activate class ability to fire up to three scorching shots▸ If one target is marked, all three shots hit that target▸ If multiple targets are marked, shots split between them▸ Landing all three shots cures you
+
+Build Notes ↓▸ Can be used while airborne▸ Damage scales with Class stat above 100▸ Strong pairings include Radiant Dance Machines and The Sixth Coyote▸ Scorch can combine with other scorch sources to trigger Ignitions▸ Counts toward On Your Mark and Gunpowder Gamble progress
+
+## Warlock Voidwalker: Soul Siphon
+
+Soul Siphon is a new Void Warlock Aspect focused on draining enemies and gaining survivability.
+
+How It Works ↓▸ Ready the Aspect by hitting an enemy with a powered melee▸ Once ready, press melee again to siphon energy from enemies in front of you▸ Deals damage while gathering Void Overshield and class ability energy
+
+Build Notes ↓▸ Pocket Singularity has two charges by default, improving uptime▸ Building into Melee increases uptime and damage▸ Pairs with Felwinter’s Helm, Claws of Ahamkara, Karnstein Armlets, and Nezarec’s Sin▸ Works well with Feed the Void for Devour uptime▸ Class energy gain pairs well with Child of the Old Gods
+
+## New Darkness Grenades
+
+### Stasis Shatter Grenade
+
+A Stasis grenade that sticks to enemies before exploding into ricocheting Stasis shrapnel.
+
+Effects ↓▸ Sticks to combatants▸ Explodes into Stasis shrapnel▸ Shrapnel ricochets off surfaces▸ Direct hits freeze combatants▸ Slows enemy players▸ Frozen targets shatter instantly and take bonus damage
+
+Important Champion Update ↓▸ Stasis Shatter will once again stun Unstoppable Champions▸ Shatter Grenade can stun Unstoppable Champions immediately on detonation
+
+Build Notes ↓▸ Strong in enclosed spaces▸ Effective against grouped enemies▸ Has unique interaction with Hunter Revenant’s Touch of Winter Aspect
+
+### Strand Slicewire Grenade
+
+A Strand grenade that bounces and releases whirling threads.
+
+Effects ↓▸ Bounces along the ground▸ Releases multiple whirling Strand lashes▸ Damages enemies up to four times▸ Severs targets, reducing their damage output
+
+Build Notes ↓▸ Strong damage option when multiple lashes connect▸ Effective against grouped enemies▸ Has unique functionality with Broodweaver’s Mindspun Invocation Aspect
+
+## New Hunter Nightstalker Melee
+
+### Phantom Surge
+
+Phantom Surge gives Nightstalker Hunters a new aggressive melee option beyond Smoke Bomb.
+
+How It Works ↓▸ Dash forward through enemies▸ Slash combatants as you pass through them▸ Deals increased damage to Void-debuffed targets▸ Deals increased damage to targets marked by On the Prowl▸ Generates Void Overshield for each combatant hit▸ Defeating at least one combatant grants more Overshield and refunds melee energy
+
+Important Smoke Bomb Update ↓▸ Smoke Bomb now makes you and nearby allies invisible by default▸ Vanishing Step is no longer required for Smoke Bomb invisibility
+
+## Major Ability Reworks
+
+### Hunter Nightstalker: Trapper’s Ambush
+
+Trapper’s Ambush has been reworked into a more aggressive Void damage tool.
+
+New Functionality ↓▸ Uses class ability energy instead of melee energy▸ Activate air move to dive to the ground▸ Damages targets on impact▸ Damage is greatly increased while you have a positive Void status effect▸ Damaging enemies heals you▸ Defeating combatants grants Devour▸ Casting while invisible refreshes invisibility on impact
+
+Build Notes ↓▸ Activates class ability perks such as Marksman’s Dodge and Gambler’s Dodge▸ Can combo with Phantom Surge▸ Retains smoke-cloud behavior when paired with Vanishing Step
+
+### Titan Sentinel: Ward of Dawn
+
+Ward of Dawn has been fully reworked into a larger offensive and defensive combat space.
+
+New Functionality ↓▸ Bubble is more than twice its previous size▸ Allies inside gain Void Overshield▸ Allies inside gain increased weapon damage▸ Enemies inside are weakened▸ Ward owner gains increased melee damage inside▸ Nearby enemies are pulled into the dome on deployment▸ Base combatants are taunted by players inside▸ Ward core can be picked up and thrown to reposition the Ward up to two times
+
+PvP Note ↓▸ Ward’s core acts as its weak point in Crucible
+
+Helm of Saint-14 Synergy ↓▸ Reworked to support the new Ward of Dawn▸ Extends Ward duration▸ Lets allies take Weapons of Light outside the dome
+
+### Warlock Broodweaver: Mindspun Invocation
+
+Mindspun Invocation now changes charged Threadling Grenade into a Threadling Nest.
+
+New Functionality ↓▸ Hold grenade input to charge Threadling Grenade▸ Creates a Threadling Nest at the impact location▸ Nest repeatedly spawns Threadlings▸ Acts like a Threadling turret on the battlefield
+
+Build Notes ↓▸ Interacts with Service of Luzaku Exotic Machine Gun
+
+## Stasis Harvest & Frost Armor Updates
+
+### Shatter Shards
+
+All Stasis subclasses can now create Shatter Shards intrinsically.
+
+Shatter Shards are created when ↓▸ A Stasis Guardian shatters a Stasis Crystal▸ A Stasis Guardian shatters a frozen enemy▸ A Stasis Guardian defeats a slowed or frozen enemy
+
+### Harvest Aspects
+
+Tectonic Harvest, Grim Harvest, and Glacial Harvest have been reworked.
+
+Updated Harvest Benefits ↓▸ Picking up a Shatter Shard grants Frost Armor▸ While you have Frost Armor, Stasis or Kinetic weapon kills can shatter enemies▸ While you have Frost Armor, taking damage grants ability energy
+
+Class Energy Gains ↓▸ Titan: Melee energy▸ Warlock: Grenade energy▸ Hunter: Class ability energy
+
+Important Change ↓▸ Harvest Aspects reduced from three Fragment slots to two
+
+### Frost Armor
+
+Frost Armor now has better uptime and smoother decay.
+
+Changes ↓▸ Frost Armor stacks melt off one at a time instead of all at once▸ Each stack gives slightly more damage resistance▸ Damage resistance at five stacks increased from about 31% to 35%▸ Whisper of Rime extends stack duration from five seconds to six seconds
+
+## Ability Balance Highlights
+
+### Global Ability Stat Changes
+
+Bungie is reducing the ceiling for highly optimized ability uptime.
+
+Changes ↓▸ Maximum passive ability cooldown bonus from stats reduced by about 20%▸ Maximum active ability cooldown bonus from stats reduced from 190% to 125%▸ Ability uptime floor remains similar for less optimized builds▸ Highly optimized builds will see the largest reduction
+
+### Super Energy Changes
+
+Boss Damage Super Energy ↓▸ Super energy gained from dealing damage to bosses reduced by 60%
+
+Bungie says this is intended to reduce Super spam during boss damage phases and shift more focus back toward weapons and full damage rotations.
+
+## Class Ability Balance Highlights
+
+### Warlock
+
+Dawnblade ↓▸ Heat Rises reduces PvE enemy accuracy against the Warlock▸ Heat Rises no longer reduces Burst Glide’s initial burst speed▸ Icarus Dash increased from two to three Fragment slots
+
+Stormcaller ↓▸ Chain Lightning damage against combatants increased by 100%▸ Chain Lightning now has two charges by default▸ Lightning Surge increased from two to three Fragment slots
+
+Voidwalker ↓▸ Child of the Old Gods suppresses combatants after initial attach▸ Child speed and acceleration increased by 100%▸ Child of the Old Gods increased from two to three Fragment slots▸ Nova Bomb: Cataclysm no longer blocks allied projectiles
+
+Shadebinder ↓▸ Frostpulse grants five stacks of Frost Armor if it freezes a target▸ Frostpulse increased from two to three Fragment slots
+
+Broodweaver ↓▸ The Wanderer: Threadling final blows reduce Tangle cooldown by one second
+
+### Titan
+
+Sentinel ↓▸ Offensive Bulwark final blows grant melee energy while you have Void Overshield▸ Unbreakable final blows grant Devour▸ Unbreakable blast size slightly increased▸ Bastion increased from two to three Fragment slots▸ Shield Bash damage against combatants increased by 100%
+
+Striker ↓▸ Thruster can now be activated while airborne▸ Knockout no longer grants increased lunge range against players▸ Lightning Grenade grants five Bolt Charge stacks per hit with Touch of Thunder▸ Flashbang Grenade explodes on initial bounce▸ Storm Grenade duration increased▸ Seismic Strike damage against combatants increased by 100%
+
+Sunbreaker ↓▸ Hammer Strike damage against combatants increased by 100%
+
+Behemoth ↓▸ Diamond Lance freeze detonation size reduced against players▸ Cryoclasm launches a Stasis wave while sliding with Frost Armor▸ Glacial Quake heavy attacks deal additional area damage in front of the Titan
+
+Berserker ↓▸ Drengr’s Lash grants class ability energy from defeating elementally debuffed targets▸ Drengr’s Lash increased from two to three Fragment slots▸ Drengr’s Lash impact damage scales with Class stat above 100
+
+### Hunter
+
+Nightstalker ↓▸ On the Prowl can now passively acquire targets after a short time when not invisible▸ Passive acquisition does not occur against enemy Guardians▸ Moebius Quiver Crossbow weapon buff reduced by 50%
+
+Gunslinger ↓▸ Acrobat’s Dodge can be activated while airborne▸ Proximity Explosive Knife detonation radius increased from 5m to 6m▸ Proximity Explosive Knife detonation damage increased by 11%▸ On Your Mark grants Solar Restoration x1 for three seconds instead of Cure at ten stacks▸ Knock ’em Down grants Cure on Super activation▸ Blade Barrage knife speed, tracking, detonation size, and detonation damage increased▸ Blade Barrage knife detonations now Scorch enemies▸ Golden Gun: Deadshot Super energy from player kills reduced by 40%
+
+Arcstrider ↓▸ Arc Staff grants Bolt Charge stacks on kill▸ Lethal Current jolts and creates an aftershock with Tempest Strike▸ Lethal Current can be activated while in Super▸ Ascension damage scales with Class stat above 100▸ Ascension now counts as a class ability
+
+Threadrunner ↓▸ Catching Rope Dart grants Woven Mail based on defeated targets▸ Widow’s Silk increased from two to three Fragment slots▸ Threaded Specter damage scales with Class stat above 100▸ Ensnaring Slam now counts as a class ability
+
+Revenant ↓▸ Shatterdive increased from two to three Fragment slots▸ Winter’s Shroud increased from two to three Fragment slots
+
+## General Ability Changes
+
+### Grenades
+
+▸ Lightning Grenade detonation damage increased by 25%▸ Scatter Grenade chase distance against players reduced by 50%▸ Scatter Grenade energy gains from perks reduced by 12.5%▸ Grapple Melee boss damage bonus from Grenade stat reduced by 50%▸ Grapple Melee boss damage bonus from Grenade and Melee stats is now additive instead of multiplicative
+
+### PvP Multi-Charge Abilities
+
+▸ In PvP, multi-charge abilities now start matches with one charge instead of all charges
+
+#### Void
+
+▸ Void Invisibility is more visible in Crucible▸ Volatile Rounds now increase weapon damage against Champions by 10%▸ Volatile Rounds no longer stun Barrier Champions
+
+#### Solar
+
+▸ Radiant now increases weapon damage against Champions by 10%▸ Radiant weapon damage no longer stuns Barrier Champions
+
+#### Arc
+
+▸ Spark of Shock now has a four-second internal cooldown when Jolt is applied by Arc Soul or Ionic Sentry
+
+#### Prismatic
+
+▸ Facet of Dominance now has a four-second internal cooldown when Jolt is applied by Arc Soul
+
+## Armor 3.0 Updates
+
+### New Armor Archetypes
+
+Monument of Triumph adds six new Armor 3.0 archetypes.
+
+| Archetype | Primary Stat | Secondary Stat |
+| --- | --- | --- |
+| Siegebreaker | Health | Grenade |
+| Skirmisher | Melee | Weapons |
+| Demolitionist | Grenade | Class |
+| Colossus | Super | Health |
+| Reaver | Class | Melee |
+| Powerhouse | Weapons | Super |
+
+Important Details ↓▸ Almost any new Armor 3.0 drop can roll with the new archetypes▸ Exotic class items keep their existing stat roll behavior▸ Bungie does not want one archetype to dominate all builds▸ Ghost Armorer mods are improved▸ Chosen archetype odds improve to 1 in 2 instead of 1 in 3
+
+### Exotic Armor Stats
+
+All Armor 3.0 Exotic armor will have Tier 5 stats and access to all tuning mods.
+
+Important Details ↓▸ Applies retroactively to Armor 3.0 Exotics▸ Does not apply to Collections rolls▸ Players do not need to reacquire existing Armor 3.0 Exotics unless they want new archetypes
+
+## Armor Set Bonus Updates
+
+### Adjusted Set Bonuses
+
+Ride Together, Die Together▸ Smoke Jumper two-piece perk▸ Maximum damage resistance reduced from 50% to 40%
+
+Superluminal Motion▸ Wayward Psyche four-piece perk▸ Health while moving increased from 15 to 30 health per second outside Crucible▸ PvP behavior unchanged
+
+### New Destination Set Bonus Examples
+
+| Armor Set | Two-Piece Perk | Four-Piece Perk |
+| --- | --- | --- |
+| Exodus Down (Nessus) | Emergency Electromagnet: When your shields become broken, collect all nearby Orbs of Power and ammo bricks. | Repurposed Charge: Whenever you gain, lose, or spend an Armor Charge, heal and gain damage reduction for a short time. This effect scales with the amount of Armor Charge gained, lost, or spent. |
+| Veritas (Throneworld) | Lucent Transmutation: Performing a finisher on a combatant, or landing successive powered melee final blows, generates an Elemental pickup based on your Light subclass. | Lucent Tithes: Performing a finisher on powerful combatants heals you and generates loyal Void moths. |
+
+Table via Bungie
+
+### Raid Armor Mod Note
+
+Armor 3.0 raid armor will not have raid mod slots.
+
+Important Details ↓▸ Raid mods remain exclusive to Armor 2.0▸ Armor 2.0 raid armor can be focused at Hawthorne▸ Cost: 10 Spoils of Conquest each
+
+## Exotic Armor Balance Preview
+
+### Hunter Exotics
+
+Wormhusk Crown ↓▸ Reworked around Solar multikills▸ Solar multikills grant Burning Souls▸ Burning Souls increases Solar ability damage▸ Dodging greatly cures you and nearby allies
+
+Shards of Galanor ↓▸ Landing enough Blade Barrage knives creates delayed Solar explosions▸ Can trigger on each volley▸ Landing both explosions is roughly comparable to Cuirass Thundercrash
+
+Caliban’s Hand ↓▸ Melee recharge bonus increased by 25%▸ Scorch damage refunds melee energy▸ Ignition final blows fully refund knife energy and can overflow into an extra charge
+
+FR0ST-EE5 ↓▸ Sprinting grants Frost Armor stacks▸ Stasis weapons deal increased damage while you have Frost Armor
+
+Shinobu’s Vow ↓▸ Gains Skip Grenade energy from Bolt Charge▸ Skip Grenade damage grants Bolt Charge▸ Full Bolt Charge heals you and nearby allies▸ Enables enhanced Skip Grenades
+
+Raiden Flux ↓▸ Arc Staff hits jolt targets▸ Combo finisher palm blast gets stronger damage bonus and counts as critical damage
+
+Mothkeeper’s Wraps ↓▸ Moth Grenades become a conditional override instead of full grenade replacement▸ Kills build toward Moth Grenade charges▸ Arc and Void moth movement speed increased
+
+Lucky Pants ↓▸ Eriana’s Vow max damage bonus increased to 4.5x▸ Uncivil Discourse max damage bonus reduced to 2.5x▸ Lucky Pants boss bonus damage reduced by 33%
+
+### Titan Exotics
+
+Hallowfire Heart ↓▸ Reworked around Sunfire Furnace▸ Solar ability final blows cure you and build stacks▸ Grenade and Shieldburst final blows can trigger Ignitions▸ Stacks increase grenade regeneration, class ability regeneration, and Super damage▸ Exiting Super converts stacks into Super energy
+
+Pyrogale Gauntlets ↓▸ Super Cyclone Scorch increased▸ Super Cyclone explosion damage increased by 10%▸ Super Cyclone tracking increased by about 40%
+
+Stoicism / Spirit of Star-Eater ↓▸ Twilight Arsenal benefit increased from 25% to 50%
+
+Severance Enclosure ↓▸ Improved detonation reliability▸ Enemies can be hit by multiple shockwaves again▸ Enemies hit are disoriented
+
+Praxic Vestments ↓▸ Melee attack damage increased by 500%▸ Jetpack fuel gains improved▸ Knockout kills count as powered melee kills▸ Jetpack flight improved
+
+No Backup Plans ↓▸ Works with both Shotgun and melee final blows▸ Triggers health regeneration instead of Void Overshield▸ Extends active defensive buffs▸ Supports Void Overshield, Restoration, Amplified, Frost Armor, and Woven Mail
+
+Cadmus Ridge Lancecap ↓▸ Can spawn Stasis Lances from rapid Stasis weapon damage and kills▸ Stasis Lance damage scales with Frost Armor stacks
+
+Point-Contact Cannon Brace ↓▸ Thunderclap releases lightning during windup▸ Lightning damage scales with charge time▸ Melee energy return reworked
+
+Helm of Saint-14 ↓▸ Reworked for new Ward of Dawn▸ Weapons of Light still persists after leaving Ward▸ No longer disorients enemies▸ Void and Kinetic damage can suppress while Weapons of Light is active▸ Picking up Ward consumes stacks of The Saint to extend Ward duration
+
+ACD/0 Feedback Fence ↓▸ No longer grants melee damage resistance against players
+
+Blastwave Striders ↓▸ Improved Stasis detonation behavior▸ Charge requirements reduced▸ Stasis Shrapnel tracking improved▸ Shiver Strike hits now activate the effect
+
+### Warlock Exotics
+
+Nezarec’s Sin ↓▸ Soul Siphon damages suppress targets▸ Defeating suppressed targets or defeating with Soul Siphon extends Abyssal Extractors
+
+Mataiodoxia ↓▸ Super supercombine suspending burst damage increased by about 22%▸ Bungie says this makes it equal to Cuirass Thundercrash
+
+Skull of Dire Ahamkara ↓▸ After casting Nova Bomb, gain a short window to cast Nova Bomb: Lance▸ Nova Lance can detonate Cataclysm Nova Bomb to create a Nova Vortex▸ Still grants Super energy from Nova Bomb final blows and weapon kills while Devour is active
+
+Crown of Tempests ↓▸ Conduction Tines duration increased from 7 to 10 seconds in PvE▸ Ionic Sentry creates a Storm Grenade when deployed while Conduction Tines is active
+
+Mantle of Battle Harmony ↓▸ Super energy and weapon damage bonuses can trigger from sustained weapon damage▸ After casting Super, gain surges for all elements▸ Weapons matching Super damage type cause detonations for a limited time
+
+Astrocyte Verse ↓▸ Adds a dark blink air move while Blink is equipped▸ Blink and dark blink grant Volatile Rounds▸ Dark blink has a longer cooldown in Crucible
+
+Dawn Chorus ↓▸ Scorch builds to stronger Ignitions▸ Ignition damage grants melee energy▸ Daybreak projectiles immediately trigger Ignitions
+
+Nothing Manacles ↓▸ Extra seekers can no longer chain off themselves▸ Extra seekers reduced from four to three▸ Extra seeker range and lifetime reduced
+
+Contraverse Hold ↓▸ Energy returns with Magnetic Grenade / Handheld Supernova reduced by 15%
+
+Deimosuffusion ↓▸ PvP damage tick interval increased from 0.1 seconds to 0.3 seconds
+
+## Buildcrafting Highlights
+
+Key Takeaways ↓
+
+▸ Class stat is more important than ever, with several damage-dealing class abilities now scaling when your Class stat exceeds 100
+
+▸ Stasis builds receive major improvements through intrinsic Shatter Shards, Harvest Aspect reworks, and Frost Armor buffs
+
+▸ Armor 3.0 gains six new archetypes, making it easier to target specific stat combinations
+
+▸ Ghost Armorer mods now have improved odds of rolling your preferred archetype
+
+▸ All Armor 3.0 Exotic armor now has Tier 5 stats and access to all tuning mods
+
+▸ New armor set bonuses provide more buildcrafting options across destinations, raids, dungeons, and core activities
+
+▸ Ability uptime has been reduced for highly optimized builds, while weapon damage becomes a larger part of endgame combat
+
+▸ Super generation from boss damage has been reduced, making damage phases less dependent on chaining multiple Supers
+
+▸ New subclass abilities and reworks create fresh build opportunities across Solar, Void, Stasis, and Strand subclasses
+
+SOURCES
+
+▸ Bungie Dev Insights: Abilities & Armor Preview↗▸ This Week in Destiny — June 4, 2026↗
+
+> Destiny 2: Monument of Triumph – Complete Guide (Update 9.7.0)
+
+### Leave a ReplyCancel reply
+
+This site uses Akismet to reduce spam. Learn how your comment data is processed.
+
+Up ↑

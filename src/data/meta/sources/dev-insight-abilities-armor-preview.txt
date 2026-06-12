@@ -1,0 +1,745 @@
+Dev Insights - Abilities & Armor Preview | Destiny 2 | patchtracker.gg
+
+This is an archive of patch notes originally posted on 04 Jun 2026.
+
+Get notified on Discord
+
+# Dev Insights - Abilities & Armor Preview
+
+Posted by Destiny 2 Gameplay Team on 04 Jun 2026
+
+Welcome back for our third and final Dev Insights article before Monument of Triumph launches on June 9. Last Thursday was all about our weapons sandbox and today we’ll be focusing on Guardian abilities, armor, and Exotic updates.
+
+Abilities Sandbox Update
+
+- New subclass abilities
+- Ability reworks
+- Ability balance changes
+
+Armor 3.0 Updates
+
+- Armor archetypes
+- Armor set bonuses
+- Exotic armor stats
+- Exotic armor balance preview
+
+If you missed our previous articles on the return of the Director, weapons and artifact changes, and all the other news, be sure to check out the articles before next Tuesday.
+
+## Abilities Sandbox Update
+
+Hey there, Guardians. Gameplay Team here with an update on the abilities sandbox for the upcoming Monument of Triumph release. We’ve been heads-down dreaming up new abilities and refining existing ones, and we’ve got some juicy changes to talk about today.
+
+Let’s get right into it.
+
+### New Subclass Abilities
+
+New Solar and Void Aspects
+
+For too long, certain subclasses have lagged behind others in the number of Aspects available to them. Monument of Triumph will remedy that imbalance with three new Aspects, bringing every non-Prismatic subclass up to four. First up, Titans:
+
+Titan Sunbreaker: Shieldburst
+
+Enhances your equipped barricade with Solar capabilities.
+
+Towering Barricade: Your barricade slides forward across the ground before stopping, allowing you to advance in safety.
+
+Rally Barricade: Standing behind your barricade grants scorching rounds to you and your allies' Solar and Kinetic weapons.
+
+While your barricade is deployed, activate your class ability again to remotely detonate it, scorching combatants caught in the detonation. Dealing damage increases the power of the blast.
+
+The Shieldburst Aspect essentially turns your Barricade into a wall of glass with a C4 charge strapped to it. It’ll charge up over time, when it takes damage, and when you deal damage while it’s active. The more charged up it is, the more damage it’ll do and the more projectiles it’ll throw out. The Towering and Rally Barricades have their own unique functionality, and it plays nicely with Exotic armor like Arbor Warden, Hallowfire Heart, and Khepri’s Horn. This ability’s damage is buffed by the Roaring Flames Aspect and can create Sunspots when paired with the Sol Invictus Aspect. Damage for this ability also scales with your Class stat when your Class stat is over 100.
+
+In addition, with Monument of Triumph you’ll find that other class-ability Aspects that directly deal damage now scale their damage with the Class stat. Note that Warlock construct damage continues to scale with the Grenade stat instead.
+
+Next, let’s take a look at the new Hunter Aspect:
+
+Hunter Gunslinger: Crackshot
+
+Activate your class ability to fire up to three scorching shots at targets you've marked. Aim at targets to mark them.
+
+Landing all three shots cures you.
+
+Crackshot is the ultimate gunslinger fantasy. Mark up to three targets, then dodge to quickdraw a flaming pistol and light ‘em up with deadeye precision. If you have a single target marked, it’ll fire all three shots at them. If you have multiple targets marked, it will split the shots between them. Landing all three shots will cure you, providing some breathing room mid-combat. It can also be used while airborne, and damage from this ability scales with your Class stat when your Class stat is over 100.
+
+There are some strong Exotic armor combos with this one, including Radiant Dance Machines and Sixth Coyote, and you can combo the scorch stacks with other scorch sources to cause Ignitions. It also pairs well with the On Your Mark and Gunpowder Gamble Aspects, as Crackshot damage counts toward their progress.
+
+Last but not least, the new Warlock Aspect:
+
+Warlock Voidwalker: Soul Siphon
+
+Ready this aspect by striking a foe with your powered melee ability.
+
+Once readied, press your melee ability to begin siphoning energy from all enemies in front of you, dealing damage and gathering Overshield and class ability energy from each target.
+
+Soul Siphon turns you into the life-draining vampire mage you were always meant to be. The Voidwalker’s Pocket Singularity melee has two charges by default, making the baseline uptime for this Aspect high, but building into melee regeneration will make it pay off even more. Building into the Melee stat can increase both the uptime and damage of Soul Siphon, and it pairs well with Exotic armor like Felwinter’s Helm, Claws of Ahamkara, and Karnstein Armlets. The Overshield this ability provides allows you to stay in the fight longer, and it pairs well with the Feed the Void Aspect to give you higher Devour uptime. The class energy that you gain from draining enemies also pairs well with the Child of the Old Gods Aspect.
+
+### New Darkness Grenades
+
+Stasis and Strand are near and dear to our hearts, and they deserve some love. We’re adding two new grenades to the game with Monument of Triumph.
+
+Stasis Shatter Grenade
+
+A grenade that sticks to combatants before exploding into razor-sharp Stasis shrapnel. The shrapnel ricochets off surfaces, dealing damage to all in its path. Hitting a frozen target shatters it instantly and deals bonus damage.
+
+The Shatter Grenade’s primary function is dealing damage, though direct hits will freeze combatants and slow enemy players. It’s more effective in enclosed spaces where the shrapnel can bounce around multiple times to shred targets, but it’s also effective against loosely grouped enemies. If you throw it at an enemy who is already frozen, it’ll explode immediately and deal extra damage. Hunter Revenant enjoyers will be happy to hear that the Touch of Winter Aspect also has a unique interaction with this grenade.
+
+On a related note, a while back we changed Stasis Shatter damage to stun Overload Champions instead of Unstoppable Champions. We’re reverting that change in Monument of Triumph, so Stasis Shatter will again stun Unstops instead of Overloads. As the Shatter Grenade’s name implies, it’ll stun Unstoppable Champions immediately on detonation.
+
+Strand Slicewire Grenade
+
+A grenade that bounces and releases multiple whirling threads, severing targets.
+
+The Strand Slicewire Grenade is a damage dealer, first and foremost. It also severs targets, lowering their damage output. After being thrown, the grenade bounces along the ground unleashing coiled strands that whip around, striking enemies up to four times. The damage can really pile up if you’re able to land all four lashes on a group of enemies. This grenade also has unique functionality when paired with the Warlock Broodweaver’s Mindspun Invocation Aspect, which we’ll let you discover on your own.
+
+### New Nightstalker Melee
+
+Through countless battles, Nightstalkers have known Smoke Bomb as their only melee option. That’s about to change.
+
+Hunter Nightstalker: Phantom Surge
+
+Dash forward, slashing combatants as you pass through them. Deals significantly increased damage to Void-debuffed targets and targets marked by On The Prowl.
+
+Generate Void Overshield for each combatant hit. Defeating at least one combatant grants additional Overshield and refunds some melee ability energy.
+
+Phantom Surge ushers in a new age of Nightstalker aggression. Whereas tossing a Smoke Bomb is a relatively passive action, Phantom Surge asks a Nightstalker to cut straight through their enemies, emerging stronger on the other side. The overshield you gain from hitting enemies is substantial, and our brilliant engineering team created new tech for this ability that enables you to phase straight through enemy units. The damage is increased versus Void-debuffed targets, giving it strong combo potential with other abilities, and weapons.
+
+While it’s easy to dote on the new abilities, let’s not forget the classics. Smoke Bomb is getting some love too — it now makes you and other allies invisible by default on deployment. No Vanishing Step required. Other elements of the Nightstalker kit are also being reworked, some of which we’ll talk about in the next section.
+
+## Ability Reworks
+
+We’ve reworked a few abilities to make them fit better in their kits or enhance them in general. Let’s talk about the Hunter’s Trapper’s Ambush Aspect first.
+
+Hunter Nightstalker: Trapper’s Ambush
+
+Activate your air move to consume your class ability energy and dive to the ground, damaging targets on impact. Damage is greatly increased if striking while you have any positive Void status effect. Damaging enemies with this ability heals you and defeating combatants with this ability grants Devour.
+
+Nightstalker previously had several ways to go invisible, but not many ways to capitalize on invisibility. Trapper’s Ambush is now a substantial damage dealer, and that damage is increased if you cast it while invisible or under the effect of another Void buff. Casting it while invisible will refresh your invisibility when you hit the ground, and it retains its previous smoke-cloud behavior when paired with the Vanishing Step Aspect. Trapper’s Ambush now uses class-ability energy instead of melee energy and thus activates class-ability perks like Marksman’s Dodge and Gambler’s Dodge. This enables you to combo it with the new Phantom Surge melee in creative ways. Finally, defeating enemies with Trapper’s Ambush grants Devour, giving the Nightstalker more survivability than ever before. It also has a new animation, new VFX, and features a Void blade instead of a smoke bomb!
+
+A big change for Titans coming up next:
+
+Titan Sentinel: Ward of Dawn
+
+Create a large protective dome for you and your allies. While inside Ward of Dawn, allies gain Void overshield and increased weapon damage, while targets inside the Ward are weakened.
+
+The Ward's owner also gains increased melee damage while inside and can pick up and throw the Ward's core to reposition the Ward up to two times.
+
+Ward of Dawn is now a giant thunderdome that you fight inside. At more than twice its previous size, this new bubble is the Sentinel’s domain, expanding their sphere of influence on the battlefield. You and your allies are buffed both offensively and defensively inside, while your enemies are debuffed, giving you a huge advantage in a wide range of combat scenarios. Once you’ve bested your enemies inside the bubble, simply pick up the core and throw it somewhere else to reposition the thunderdome. On deployment, nearby enemies are pulled into the dome and base combatants are taunted by the players inside. The Helm of Saint-14 Exotic armor has also been reworked to extend the time that the Ward lives, and it allows you and your allies to take Weapons of Light outside of the dome. In the crucible, make sure to protect the Ward’s core, as it serves as the Ward’s weak point. The new bubble holds a couple of other secrets but we’ll let you discover those on your own.
+
+For our final highlighted ability rework, let’s look at the Warlock:
+
+Warlock Broodweaver: Mindspun Invocation: Threadling Grenade
+
+Hold the grenade input to charge your Threadling Grenade, causing it to weave a Threadling Nest at the impact location that repeatedly spawns Threadlings.
+
+The Mindspun Invocation Aspect currently causes Threadling Grenade to create perched Threadlings, but starting in the Monument of Triumph release, this Aspect will cause your charged Threadling Grenade to spawn a Threadling Nest in the world. This essentially allows you to weave a Threadling turret on the battlefield that gives you an additional angle of attack. The nest also interacts with the Service of Luzaku Exotic Machine Gun to enhance its productivity.
+
+### Stasis: Harvest Aspects
+
+The three Stasis “Harvest” Aspects - Tectonic Harvest, Grim Harvest, and Glacial Harvest - needed some love, so we’ve reworked them. We’ve also reworked Frost Armor and the way Stasis subclasses create Shatter Shards.
+
+Shatter Shards
+
+All Stasis subclasses now create Shatter Shards intrinsically.
+
+- Shatter Shards are created when a Stasis Guardian shatters a Stasis Crystal or a frozen enemy, or when they defeat a slowed or frozen enemy.
+
+Harvest Aspects
+
+While you have Frost Armor, taking damage now grants ability energy.
+
+- Titan: Melee energy.
+- Warlock: Grenade energy.
+- Hunter: Class-ability energy.
+
+Frost Armor
+
+Each stack now gives slightly more damage resistance.
+
+- Damage resistance at five stacks is increased by ~31% to ~35%
+
+When using a Stasis subclass, you can now create Shatter Shards without equipping the Harvest Aspects. The Harvest Aspects will continue to give Frost Armor when you pick up a Stasis shard and grant a powerful benefit while you have Frost Armor. Meanwhile, Frost Armor stacks now fall off one-at-a-time (one stack falls off every five seconds by default or every six seconds with Whisper of Rime) allowing for much higher Frost Armor uptime.
+
+## Ability Balance Changes
+
+Alongside the above new abilities and reworks, we’ve packed a ton of other ability balance changes into this release. If we talked in-depth about all of them, we’d be here all day... not to mention we have a TWID coming after this, so we’ll just list them below. We’re going to omit some of the more minor changes to avoid bogging down the blog, instead listing only the substantial changes. It’s mostly buffs, but there are some nerfs sprinkled in as well to keep things balanced. Look for the full list of patch notes when Monument of Triumph launches on June 9.
+
+Warlock
+
+Dawnblade
+
+Heat Rises (Aspect)
+
+- While Heat Rises is active, it now reduces the accuracy of combatant attacks versus the Warlock (in PvE only).
+- Heat Rises no longer decreases the initial burst of speed provided by activating Burst Glide.
+
+Icarus Dash (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Stormcaller
+
+Chain Lightning (Melee)
+
+- Increased damage versus combatants by 100%.
+- Now has two ability charges by default.
+
+Lightning Surge (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Voidwalker
+
+Child of the Old Gods (Aspect)
+
+- Now suppresses combatants for a short time after initial attach.
+- Increased the Child's max speed and acceleration by 100%.
+- Increased Fragment slots from two to three.
+
+Nova Bomb: Cataclysm (Super)
+
+- Allied projectiles now pass through the Nova Bomb projectile instead of colliding with it.
+
+Shadebinder
+
+Frostpulse (Aspect)
+
+- Now grants five stacks of Frost Armor if this ability freezes a target.
+- Increased Fragment slots from two to three.
+
+Broodweaver
+
+The Wanderer (Aspect)
+
+- Threadling final blows now reduce your Tangle cooldown by one second.
+
+Titan
+
+Sentinel
+
+Offensive Bulwark (Aspect)
+
+- While the player has a Void Overshield, final blows now grant melee ability energy.
+
+Unbreakable (Aspect)
+
+- Final blows with Unbreakable's blast now grant Devour.
+- Slightly increased the size of Unbreakable's blast.
+
+Bastion (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Shield Bash (Melee)
+
+- Increased damage versus combatants by 100%.
+
+Striker
+
+Thruster (Class Ability)
+
+- Can now be activated while airborne.
+
+Knockout (Aspect)
+
+No longer grants a lunge-range increase versus enemy players.
+
+- Note: This change should reduce some awkward “rubber banding” in Crucible melee battles .
+
+Touch of Thunder (Aspect)
+
+Lightning Grenade
+
+- Now grants five stacks of Bolt Charge per hit.
+
+Flashbang Grenade
+
+- Now explodes on initial bounce in addition to its existing detonation.
+
+Storm Grenade
+
+- Increased storm duration by 0.5 seconds.
+- Increased maximum tracking speed versus combatants by 38%.
+- Increased time to reach max tracking speed by 25%.
+
+Seismic Strike (Melee)
+
+- Increased damage versus combatants by 100%.
+
+Sunbreaker
+
+Hammer Strike (Melee)
+
+- Increased damage versus combatants by 100%.
+
+Behemoth
+
+Diamond Lance (Aspect)
+
+- Reduced size of the freeze detonation from thrown Diamond Lance versus players.
+
+Cryoclasm (Aspect)
+
+- Sliding while you have Frost Armor now launches a Stasis wave that shatters Stasis Crystals and frozen enemies in front of you.
+
+Glacial Quake (Super)
+
+- Heavy attacks now deal additional damage in an area in front of the Titan.
+
+Berserker
+
+Drengr's Lash (Aspect)
+
+- Defeating elementally debuffed targets now grants class ability energy.
+- Increased Fragment slots from two to three.
+- The suspending wave's impact damage now scales with your Class stat when your Class stat is above 100.
+
+Hunter
+
+Nightstalker
+
+On the Prowl (Aspect)
+
+- In addition to acquiring a target when you become invisible, will now also passively acquire a target after a short time if you're not invisible. This passive acquisition does not occur against enemy Guardians.
+
+Mobius Quiver (Super)
+
+- Reduced maximum Moebius Quiver buff to Crossbow weapons by 50%.
+
+Gunslinger
+
+Acrobat's Dodge (Class Ability)
+
+- Can now be activated while airborne.
+
+Proximity Explosive Knife (Melee)
+
+- Increased detonation size from five to six meters.
+- Increased detonation damage by 11%.
+
+On Your Mark (Aspect)
+
+- Now grants Solar Restoration x1 for three seconds instead of Cure after final blows at ten stacks.
+
+Knock 'em Down (Aspect)
+
+- Now grants Cure on Super activation.
+
+Blade Barrage (Super)
+
+- Increased knife projectile speed and tracking.
+- Increased knife detonation size from three to 4.25 meters.
+- Increased knife detonation damage by 10%.
+- Knife detonations now Scorch enemies.
+
+Golden Gun: Deadshot (Super)
+
+- Reduced Super energy gain from player kills by 40%.
+
+Arcstrider
+
+Arc Staff (Super)
+
+- Now grants Bolt Charge stacks on kill.
+
+Lethal Current (Aspect)
+
+- Now jolts and creates an aftershock when used with Tempest Strike.
+- Can now be activated while in Super.
+
+Ascension (Aspect)
+
+- Ascension detonation damage now scales with your Class stat when your Class stat is above 100.
+- Now counts as a class ability for all perks and abilities.
+
+Threadrunner
+
+Rope Dart (Melee)
+
+- Successfully catching the rope dart now grants Woven Mail based on the number of targets it defeated.
+
+Widow's Silk (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Threaded Specter (Aspect)
+
+- The specter's detonation damage now scales with your Class stat when your Class stat is above 100.
+
+Ensnaring Slam
+
+- Now counts as a class ability for all perks and abilities.
+
+Revenant
+
+Shatterdive (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Winter's Shroud (Aspect)
+
+- Increased Fragment slots from two to three.
+
+General Abilities
+
+Grenades
+
+Lightning Grenade
+
+- Increased detonation damage by 25%.
+
+Scatter Grenades
+
+- Reduced chase distance versus players by 50%.
+- Reduced the amount of grenade energy this ability gains from perks by 12.5%.
+
+Grapple
+
+- Against boss combatants, reduced max Grapple Melee damage bonus granted by grenade stat by 50%.
+- Against boss combatants, damage bonus granted by Grenade stat and Melee stat is now additive instead of multiplicative.
+
+Multi-Charge Abilities
+
+- In PvP only, when the match begins, multi-charge abilities now start with one charge instead of all charges.
+
+Stasis
+
+Whisper of Rime (Fragment)
+
+Max Frost Armor stacks reduced from eight to seven.
+
+- Note: Damage resistance has been rescaled to provide the same max benefit.
+
+Arc
+
+Spark of Shock (Fragment)
+
+- When Jolt is applied via an Arc Soul or an Ionic Sentry, there is now a four-second internal cooldown for applying Jolt again via these constructs.
+
+Void
+
+Invisibility (Status Effect)
+
+- Made Void Invisibility more visible in the Crucible.
+
+Volatile Rounds (Status Effect)
+
+Weapon damage with volatile rounds no longer stuns Barrier Champions.
+
+- Note: Weapon archetypes now govern weapon-based Champion stuns. See last week’s Dev Insights article for more information.
+
+Solar
+
+Radiant (Status Effect)
+
+Weapon damage while radiant no longer stuns Barrier Champions.
+
+- Note: Weapon archetypes now govern weapon-based Champion stuns. See last week’s Dev Insights article for more information.
+
+Prismatic
+
+Facet of Dominance (Fragment)
+
+- When Jolt is applied via an Arc Soul, there is now a four-second internal cooldown for applying Jolt again via this construct.
+
+Ability Stats
+
+- Reduced maximum passive ability cooldown bonus granted by ability stats by ~20%.
+- Reduced maximum active ability cooldown bonus granted by ability stats from 190% to 125%.
+
+Regarding this change to ability stats, we feel Destiny combat has leaned slightly too far in favor of using abilities to resolve encounters, and we’d like to shift it further in favor of using weapons. This reduction in ability uptime is paired with a general increase to Primary and Special weapon damage that we detailed in last week’s article about weapons changes. The floor for ability uptime remains where it is in the live game but the ceiling has brought down to avoid highly optimized builds from trivializing combat. Abilities remain incredibly potent and powerful, especially with the new and adjusted abilities detailed above.
+
+Another change we want to provide some context for is this:
+
+Supers
+
+- Reduced Super energy generation from dealing damage to bosses by 60%.
+
+With the changes to Super generation and the Super stat in The Edge of Fate, the boss damage meta shifted hard into Super spam. It became possible to cast more than six Supers in a single boss damage phase which isn’t the place we want Supers to live. We worked with our internal raid and dungeon test group to refine Super generation to a healthier place. Supers remain incredibly effective for boss damage but Guardians will now need to think more about their weapons and other abilities to make the most of a damage phase.
+
+That represents most of the ability changes coming in this release. There are some other minor tuning adjustments and bug fixes that we omitted for the sake of brevity, but you’ll find those in the patch notes when Monument of Triumph launches.
+
+## Armor 3.0 Updates
+
+Ever since the release of the Armor 3.0 system rework, we’ve seen increased variety in how players make their builds and leverage stats. However, there were always a couple of things that felt… missing from the full picture. It’s about time we fit those missing pieces in with Monument of Triumph.
+
+### Armor Archetypes
+
+Our general goals for armor archetypes are as follows:
+
+There should be as few armor archetypes as possible.
+
+- Adding too many bloats the amount of armor you may want to keep in your vault and the size of the random roll pool – on top of making it harder to learn, understand, and communicate the stats for a build.
+
+No single armor archetype should dominate the buildcrafting space across the game.
+
+- We expect that the nature of stats means that some archetypes will be more popular in specific types of activities – this is more about not making a “best” armor archetype for all non-Crucible activities or vice-versa.
+
+We think that the original six archetypes have fulfilled these goals admirably. However, certain builds require significantly more tools to get the stats they need. Since this doesn’t usually limit the power of a build and instead primarily limits build variety, we plan on addressing this by adding six new armor archetypes (click on each for a sample armor)!
+
+Our goal is that – despite exciting options for those that want them (looking at you, Powerhouse) – your current builds won’t be so outclassed that you feel like you must replace the rolls you already have to be effective. But if you want to experiment with new builds, or further fine-tune your stats, there are more options to build the distribution you want.
+
+Before we move on, we wanted to tackle a few questions we’re expecting from our buildcrafters out there:
+
+Will the new archetypes be available on all armor?
+
+Almost any new Armor 3.0 drop from anywhere in the game can drop with the new archetypes. The only exceptions are the Exotic class items, which will keep their existing stat roll behavior.
+
+What about the missing stat combinations? Aren’t there 30 possible archetypes?
+
+As mentioned above, we want to avoid bloating the pool, making a clear “best choice” for all of the Crucible or all PvE, and we want to keep each stat equally represented. We believe this is the right number and combination of archetypes to introduce to fit those goals – especially when combined with armor mods and subclass bonuses. Not counting “mirrors”, there will be only three armor stat pairs that are not available.
+
+Is it going to be harder to grind armor now?
+
+No. With the combination of six new archetypes and the sheer number of armor set bonuses available, it made sense to give the Armorer mods on your Ghost a boost. Each one will now improve the odds of your chosen archetype dropping to one in two (previously one in three). In combination with a larger number of ways to get the stat combinations you want, we believe this will make it significantly easier to get the stats you need for your build.
+
+Now, let’s talk Exotic armor stats.
+
+### Exotic Armor Stats
+
+When we originally released Armor 3.0, we had longer-term plans to give Exotic armor a way to access higher tier behavior. Originally, we planned to give them a deterministic route for upgrading. However, we’ve ultimately realized that it was healthier for the game to take the most straightforward approach.
+
+Moving forward, all Exotic armor will have Tier 5 stats and will have access to all tuning mods. This applies retroactively to all Armor 3.0 Exotics (other than Collections rolls) so if you don’t want to trade your armor out for one of the new archetypes, you won’t have to acquire them again.
+
+### Armor Set Bonuses
+
+As they’ve settled into the sandbox, we’ve seen Guardians leverage armor set bonuses in a lot of different ways. Overall, we’re happy with how they’ve fit into their role as a more flexible element of buildcrafting across the game. However, there’s a couple things we felt like we should address:
+
+First, there’s a two set bonus perks that were big enough outliers that they needed balance adjustments:
+
+Ride Together, Die Together (Smoke Jumper two-piece set perk)
+
+Decreased the maximum damage resistance (DR) granted from 50% to 40%.
+
+- While the rapid-decay nature of this DR means that it can provide a high bonus without being a problem, the easy availability of Orbs of Power combined with stacking with other DR sources makes this set more valuable when mixed-and-matched than we’d like.
+- We believe this adjustment hits a sweet spot where it is still potent but not a must-pick for all content.
+
+Superluminal Motion (Wayward Psyche four-piece set perk)
+
+Increased the health granted while moving from 15 to 30 health per second outside of the Crucible.
+
+- The power of the Wayward Psyche set bonus fell short of our goals for what a raid armor set bonus should feel like – especially Epic Desert Perpetual – so we’ve doubled its effective healing.
+
+The second issue is simultaneously more straightforward and harder to solve. The current available list set bonuses – while often fun to buildcraft with – can sometimes feel like they provide very few options. Many builds, even for Guardians seeking something outside the standard setups, end up not having enough options to pick from – instead defaulting to a small number of two-piece set bonus combinations.
+
+The solution is simple: as we’ve previously noted, we’re refreshing a massive amount of gear across the game. That includes more set bonuses than we’ve previously made compressed into a single release. We don’t expect these to fully replace the existing options (which will still be available to earn!), but you can look forward to a wide array of options. From elemental effects, ability synergies, and survivability to explosions, movement, and echoes of armor mods past – there’s something for everyone. To whet your appetite (in addition to some sets we’ve already announced), let’s preview a pair of destination armor sets:
+
+Repurposed Charge: Whenever you gain, lose, or spend an Armor Charge, heal and gain damage reduction for a short time.
+
+This effect scales with the amount of Armor Charge gained, lost, or spent.
+
+| Armor Set | Two-Piece Perk | Four-Piece Perk |
+| --- | --- | --- |
+| Exodus Down (Nessus) | Emergency Electromagnet: When your shields become broken, collect all nearby Orbs of Power and ammo bricks. |
+| Veritas (Throneworld) | Lucent Transmutation: Performing a finisher on a combatant, or landing successive powered melee final blows, generates an Elemental pickup based on your Light subclass. | Lucent Tithes: Performing a finisher on powerful combatants heals you and generates loyal Void moths. |
+
+Before we move on, we have seen one question coming up since our Monument of Triumph reveal that we’d like to address:
+
+Will the Armor 3.0 versions of raid armor still have access to raid mods?
+
+No. Raid mods are a feature exclusive to Armor 2.0 due to technical limitations.
+
+However, since we know certain raid mods can sometimes be more valuable than a set bonus in specific situations, Armor 2.0 for all available raids will be focusable at Hawthorne for ten Spoils of Conquest each.
+
+We hope that new set bonuses tied to each raid activity provide meaningful benefits that give you a fun choice in picking between combinations of Armor 2.0 and Armor 3.0.
+
+### Exotic Armor Balance Preview
+
+Alongside the above ability and armor changes, we took some time to update a handful of Exotics from each class, spanning multiple years of Destiny 2 releases. Some have straightforward changes that lean into the fantasy while others are being reworked. Let’s dive in.
+
+Hunter Exotics
+
+Wormhusk CrownAt one point Wormhusk was a genuine scourge upon PvP but within the modern sandbox it has fallen by the wayside, especially in PvE, where it has always struggled. So, we are giving it a facelift with some buildcrafting hooks. This also comes with an update to Spirit of the Wormhusk to match these changes.
+
+Reworked effect:
+
+- Solar multikills grant Burning Souls. While active, Solar Ability damage is increased and dodging greatly cures the player and nearby allies.
+
+Shards of GalanorWe looked at all classes’ capabilities when it came to Super damage output with Exotics. Since Hunter has fewer options than the other classes, we figured it was worth adding another. It's no Celestial Knifehawk but we figure embedding large solar bombs in your foes is a close second.
+
+Landing 5/7 knives in a volley during Super causes a delayed Solar Explosion and releases Solar Shrapnel.
+
+- This can happen with each volley of Super knives. Landing both explosions is approximately comparable to a Cuirass Thundercrash.
+
+Caliban's HandCaliban’s has proved a strong option for the Prismatic class item but has largely fallen behind on the base Exotic. To help, we are leaning further into what it does best: letting you chain proximity knives with ignitions.
+
+- Increased the melee recharge bonus by 25%.
+- Dealing damage with scorch now refunds a small amount of melee energy.
+- Ignition final blows fully refund knife energy and can overflow into an additional charge.
+
+FR0ST-EE5Frostees have been begging for a buff for some time and what better way to do it than finally looping it into Stasis buildcrafting? Tonight’s forecast... a freeze is coming!
+
+- Gain stacks of Frost Armor while sprinting.
+- When you have Frost Armor, Stasis weapons deal increased damage.
+
+Shinobu's VowShinobu’s Vow has not seen much PvE play over the years. With the introduction of Bolt Charge to the game and its popularity in other builds, this particular Exotic seemed a good candidate for opening up some new gameplay for Hunters. The changes we’ve made here are similar to those made recently to Lucky Raspberry; hooking in its existing loop to more recent gameplay atoms, plus a bit of extra support play.
+
+When you gain full Bolt charge, heal yourself and nearby allies and enable an enhanced Skip Grenade.
+
+- Enhanced Skip Grenades bounce two additional times before detonating, releasing bonus Skip Seekers per bounce.
+
+Raiden FluxRoaming Supers have long felt a bit rough to use in Champion-heavy content. These changes to Raiden Flux allow you to use it as a potent anti-Overload option and reward opting into the combo finisher.
+
+- Arc Staff hits now jolt targets.
+- Combo finisher palm blast now gets 1.5x the base Exotic's damage bonus, and reports as critical damage (yellow numbers).
+
+Mothkeeper's WrapsIn order to encourage more diverse buildcrafting with Mothkeeper’s, we opted to turn it into a conditional grenade override, similar to Gunpowder Gamble. This allows the use of your base grenade in addition to Moth Grenades, without lowering the downtime of Moth Grenades compared to current high uptime builds in the live game (which also means increased uptime if you weren’t invested into grenade generation).
+
+Mothkeeper’s Wraps now provides Moth Grenades as a conditional override instead of a complete override.
+
+- Getting kills from any source increments a counter; the amount added to the counter per kill depends on the rank of the enemy killed. Once the counter reaches six, you gain two Moth Grenade charges until they are used.
+- All current functionality and synergies with Moth Grenades remain the same (for example, Arc moths still blind, having your Grenade stat over 100 still increases their damage, they still synergize with subclass fragments, etc.).
+
+Lucky PantsOh, Lucky Pants... you’ve always been pretty good. But with so many powerful Hand Cannons, it’s become hard to justify the incredible magnitude of the damage bonus versus bosses. We are making some targeted adjustments to Hand Cannons that we had considered outliers as well as pushing Lucky Pants into a more non-bossing combat role for it to live on sustainably in perpetuity. This is a fancy way of saying we don’t want to live in a Lucky Pants meta forever.
+
+- Increased Eriana's Vow's maximum damage bonus to 4.5x.
+- Decreased Uncivil Discourse's maximum damage bonus to 2.5x.
+- Reduced Lucky Pants bonus damage versus bosses by 33%.
+
+Titan Exotics
+
+Hallowfire HeartHallowfire has been a very simple Exotic for a long time, offering clear-cut benefits. However, its effects are largely vestigial of Destiny 2's first year. To bring it into the modern sandbox, it now leans deep into "I am a mobile sunspot" - offering the effects of a Sol Invictus sunspot and then some while roaming and defeating enemies with your abilities.
+
+Reworked effect:
+
+- While your Solar Super is charged, ability final blows cure you and give stacks of Sunfire Furnace. While Sunfire Furnace is active, grenade and Shieldburst final blows trigger an ignition. Each stack increases grenade regeneration, class ability regeneration, and Super damage. Upon exiting your Super, all stacks are converted into Super energy.
+- Decreased ability regen bonus from 3.5x to 2.5x.
+
+Pyrogale GauntletsAs part of reexamining Super damage Exotics, we wanted to bring up Pyrogale Gauntlets. However, it is already quite a competitive option with Roaring Flames. Because of this, we have instead improved its ability to find its mark as well as its damage ever so slightly to reduce the necessity for Roaring Flames x3.
+
+Increased Super Cyclone tracking by approximately 40%.
+
+- It should be remarkably easier to get the projectiles to track to a target at range.
+
+Stoicism
+
+Spirit of Star EaterIn comparing Super damage, we believe that it’s safe in the modern Super damage climate to increase Spirit of Star Eater’s benefit for Twilight Arsenal back to its former values.
+
+- Increased Spirit of Star Eater benefit for Twilight Arsenal from 25% to 50%.
+
+Severance EnclosureWe figured it was high time to give back Severance Enclosure some of its potency while also helping it bind into the few Kinetic-aligned keywords we use.
+
+- Improved occlusion on the detonation, making it easier to hit with.
+- Removed effect that prevents combatants from being hit by multiple shock waves in a short period of time.
+- Enemies hit by the shockwave are disoriented for a short time.
+
+Praxic VestmentsThe Praxic Vestments has a cool fantasy but its tuning at Renegades launch prevented it from being the exciting new option that we wanted it to be. In this release, we’ve given it a significant tune up by improving its value, uptime, and usability.
+
+Increased melee attack damage by 500%.
+
+- BIG slam.
+
+Improved the jetpack flight experience.
+
+- Decreased the windup time for maximum flight duration from 0.8 to 0.5 seconds.
+- Removed the behavior that caused jetpack flight to end early when contact is detected with the floor or a wall.
+- Fixed a bug that caused the jetpack kick to target dead enemies, ending flight early.
+- Updated camera to better convey your speed.
+
+No Backup PlansLong have players asked to have No Backup Plans to work on non-Void to go with the Exotic’s visuals shifting to match. We are happy to say that it now does! It operates a bit differently than it used to, but it still leans into aggressive close-range play built around your defensive buffs. Additionally, we’ve opened up the triggers to melees as well as Shotguns to allow clean up punches to also keep the engine going.
+
+Shotgun or melee final blows extend the timer of any active defensive buffs on you.
+
+- This includes Void Overshield, Restoration, Amplified, Frost Armor, and Woven Mail.
+- Will partially heal Void Overshield upon activation of this extension if the player has one.
+
+Cadmus Ridge LancecapLancecap has struggled to find a niche since its release. We’ve made some adjustments to it that open up its trigger conditions a bit and add more value to leaning into other stasis build elements.
+
+- Now also can spawn Stasis Lances with rapid Stasis weapon damage and final blows even when not behind their rally barricade.
+- Now grants bonus Stasis Lance damage based on your current stacks of Frost Armor.
+
+Point Contact Cannon BracePoint Contact has routinely been at its best when you are just tap firing Thunderclap instead of charging it, which neglects the awesome fantasy of the ability. So, we are making a couple changes targeted at making the user experience of charging Thunderclap with Point Contact better... which of course means MORE lightning.
+
+Lightning strike damage now scales further based on how long thunderclap is charged for, up to 2x.
+
+- This stacks with the bonus damage from casting while amplified.
+
+Helm of Saint-14The current output of Helm of Saint-14's disorient in PvE is completely overshadowed by Weapons of Light and, alongside the rework to Ward of Dawn, we also found that the disorient posed concerns in PvP. We took the opportunity to give this Exotic a complete facelift that integrates it with the Ward changes, provides a more appropriate replacement to the disorient, and bolsters the fantasy of being Saint-14 inspired by his “infinite bubbles” from old story missions.
+
+Unchanged: Weapons of Light continues to persist for the wearer and for allies upon leaving your Ward of Dawn.
+
+- Added new VFX to Ward of Dawn to indicate if it will provide Weapons of Light upon leaving.
+
+New functionality:
+
+- While Weapons of Light is active, kills or sustained damage from any source grant stacks of The Saint. Under the same circumstances, Void and Kinetic damage sources will also Suppress in a radius around the victim.
+- Picking up your Ward of Dawn consumes all accrued stacks of The Saint and then extends your Ward's duration based on how many stacks were consumed.
+
+ACD/0 Feedback FenceFeedback Fence has been a recurring point of feedback in the crucible, even when not charged up. This should help.
+
+- No longer provides any melee damage resist versus players.
+
+Blastwave StridersWith many changes coming to the base Stasis kit, we looked back on how our dedicated Stasis Exotics were performing and saw a spot to help improve the performance, consistency, and potency of Blastwave Striders all in one fell swoop. This should help shift it from a highly situational tool to an on demand Stasis explosion for aggressive Behemoth playstyles.
+
+Increased tracking strength of Stasis Shrapnel on detonation.
+
+- Should more effectively track frozen targets.
+
+Warlock Exotics
+
+Nezarec's SinFor a lot of players, Nezarec’s Sin has been a solid workhorse Exotic when all else fails to suffice. We didn’t want to modify this use case but we did see an opportunity to tie it into the new Void Walker aspect. Tithe away to the Final God of Pain, it’s your turn to devour your enemies’ fear. Who knows... maybe he’s still listening?
+
+New effect:
+
+- Targets damaged by Soul Siphon are suppressed. Defeating suppressed targets or with Soul Siphon grants an additional 1.5 seconds to Abyssal Extractors.
+
+MataiodoxiaIn our Super damage Exotic audit we found a couple issues in how Mataiodoxia was dealing its bonus damage which was leading to lower values than expected.
+
+Increased suspending burst damage from Super supercombine by ~22%.
+
+- This makes it equal to a Cuirass Thundercrash, have at it!
+
+Skull of Dire AhamkaraThis ahamkara bone helm is a classic Exotic but that’s no reason to let it ossify – returning energy on Super final blows is so 2017. Last year, Voidwalker got a second melee charge and a second grenade charge with Chaos Accelerant. Why not a second cast of a Nova Bomb? Better yet, how about we bring back Nova Bomb: Lance? Why stop there? Maybe you could detonate your Cataclysm Nova Bomb with Nova Lance for massive boss damage... if you time it right. But you’re special, and you can time it right every time – can't you, o player mine?
+
+- New effect: After casting a Nova Bomb, you get a short period during which you can cast a Nova Bomb: Lance. Destroying a Cataclysm Nova Bomb with a Nova Lance creates a Nova Vortex alongside the Cataclysm Nova Bomb seekers.
+- Unchanged: Super energy on Nova Bomb final blows and weapon final blows while you have Devour.
+- The additional damage resistance while casting Nova Bomb has been removed from the perk text but remains as hidden functionality to help the new play pattern sing.
+
+Crown of TempestsCrown of Tempests is an Exotic that is decently powerful but rather demanding to maintain and unexciting to use compared to other options in today’s sandbox. Plus, Crown of Tempests on Stormcaller Warlock deserves a bit more thunder, don’t you think?
+
+- Increased the duration of Conduction Tines in PvE from seven to ten seconds.
+- New effect: While you have at least one stack of Conduction Tines, Ionic Sentry creates a Storm Grenade when it is deployed.
+
+Mantle of Battle HarmonyBattle Harmony has been left a bit in the dust over the years. The changes here allow it to function even when fighting bosses as well as give it a nice bonus for actually choosing to use your Super (instead of holding onto it for the damage bonus).
+
+- Now can trigger its Super energy gain or weapon damage bonuses on sustained weapon damage in addition to final blows.
+- After casting your Super, now gain surges for all elements and weapons matching your Super's damage type cause detonations when hitting targets for a moderate duration.
+
+Astrocyte VerseBecause of the natural limitations of blink and the small area of effect of the volatile burst that this Exotic grants, it has struggled to see much use. To address these issues, we’ve added a new air move ability which should help add some flexibility to link both in and out of combat and expanded its ability to apply volatile.
+
+New effects:
+
+While both this helmet and blink are equipped, you can now use your air move input to perform a dark blink horizontally in any direction.
+
+- This ability has a longer cooldown in Crucible.
+
+Dawn ChorusDawn Chorus’s various benefits didn’t quite come together into a strong build, which limited its viability. To address this, we’ve expanded its scorch benefits to also affect ignitions which should synergize well with Incinerator Snap and further improve its interaction with Daybreak.
+
+- Now causes your scorch to build to an even more intense ignition.
+- Now grants melee energy for dealing ignition damage in addition to scorch damage.
+- Removed the internal cooldown on energy gains from scorch damage and retuned gains to return slightly more energy overall.
+- Now causes Daybreak projectiles to always immediately trigger an ignition.
+
+Nothing ManaclesScatter Grenades and Nothing Manacles got a bit too much love in Renegades so we’re toning them back a bit.
+
+- Extra seekers can no longer chain off themselves, just the initial grenade.
+- Reduced extra seekers generated from four to three.
+- Reduced range and lifetime of extra seekers.
+
+Contraverse HoldWhile it was nice seeing Handheld Supernova back in the spotlight again, the value for the effort of using it with Contraverse was a bit too free.
+
+Reduced energy returns when used with Magnetic Grenade/Handheld Supernova by 15%.
+
+- This is in addition to fixing the "health chunking" bug.
+
+Deimosuffusion
+
+- Deimosuffusion has been a recurring point of feedback in Crucible, allowing far too easy kills while being completely safe. This should help in reducing that.
+- Increased the time between damage ticks against players from 0.1 to 0.3 seconds.
+
+---
+
+That’s all from us for now. Thank you for your continued support and feedback over the years. We hope you enjoy playing in this new sandbox as much as we have internally, and we’re excited to get all of this in your hands on June 9.
+
+<3,
+
+The Destiny 2 Gameplay Team

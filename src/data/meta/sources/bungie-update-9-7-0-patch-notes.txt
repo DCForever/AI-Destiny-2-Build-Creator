@@ -1,0 +1,2646 @@
+Destiny 2 Update 9.7.0 | Bungie.net
+
+# Destiny 2 Update 9.7.0
+
+### Jun 9, 2026 - Destiny 2 Team
+
+Before we dig into our final slate of patch notes (which is over 17,000 words...), a message from the Destiny 2 Dev Team:
+
+Hey, all. Welcome to our final patch notes article for Destiny 2. Well, that's a bit of a fib. We'll still have a few maintenance patches and smaller hotfixes after today... but this is our final major patch for Destiny 2.
+
+It's been an incredible ride. Thousands of patch notes shipped. A ridiculous amount of bugs squashed (released AND unreleased). Hundreds of typos fixed after publish (our bad...). Countless hours in triage meetings looking to do what's best by our players. Years of overnight shifts in the BNOC (formerly DOC). All for you.
+
+There were a few things that were unrelated... like emails about snacks missing from the studio kitchen or messages to our IT team apologizing for forgetting our passwords for the fifth time in a calendar year, but that's beside the point.
+
+Thank you for showing up with each release. Thank you for kicking down the doors and putting the servers under stress. Thank you for every bug uncovered and reported. Thank you for your patience (even if it was sometimes thin) while we dug into connection issues, crashing bugs, anteaters, weasels, guitars, or other hiccups along the way. Destiny wouldn't be what it is without every single one of you, and we will forever be grateful for your time.
+
+We hope you enjoy Monument of Triumph and we'll see you out there in the wilds.
+
+## Activities
+
+### Monument of Triumph
+
+Earn Legendary Marks by completing Triumphs across the new Monument of Triumph category.
+
+- These Legendary Marks can be exchanged at the four different Guardian Tenet vendors in the Tower for a wide selection of free armor ornaments, accessories, weapon engrams, and more.
+
+### Distortions
+
+Distortions have spread across destinations in the Sol System, bringing a higher level of challenge and unique rewards while they are active.
+
+- These Distortions will rotate through a single destination every hour.
+- The current active destination and remaining time will be visually marked on the Destinations screen.
+
+### Raids & Dungeons
+
+#### Pantheon 2.0
+
+The first two Pantheon activities are now available!
+
+- Calus Resplendent and Morgeth Surpassing will each feature a unique lineup of bosses.
+- These can be accessed through the new Raids and Dungeons node on the Destinations screen.
+
+#### Updated Rewards
+
+All pre-The Edge of Fate raids and dungeons have been updated to drop tiered rewards.
+
+- Tiered armor from all raids and dungeons with unique set bonuses.
+- Tiered weapons from dungeons with new origin traits.
+- Craftable raid weapons have received updated perk pools and can be upgraded to match tiered weapons.
+
+#### Raids & Dungeons Rotator
+
+Featured Raid
+
+- Standard: Deepsight weapons or Tier 5 armor from encounters and challenges.
+- Master: Same as Standard plus Adept weapons from challenges.
+- Director Challenge: Deepsight weapon or Tier 5 armor, weekly lockout.
+- Hidden Chests: Tier 5 armor, weekly lockout.
+- Deepsight Chest: Deepsight weapon or Tier 5 armor if all patterns complete.
+- Vendor: Weekly Deepsight purchase, Master offers Adepts for 25 Spoils.
+
+Non-Featured Raid
+
+- Standard: Chance for Deepsight weapons and Tier 3 armor.
+- Master / Challenges / Deepsight Chest: Deepsight weapons and Tier 5 armor.
+
+Featured Dungeon
+
+- Standard: Tier 5 weapons and armor.
+- Master: Tier 5 weapons and armor.
+- Director Challenge: Tier 5 weapons and armor, weekly lockout.
+- Hidden Chests: Tier 5 weapons and armor, weekly lockout.
+
+Non-Featured Dungeon
+
+- Standard: Tier 3 weapons and armor.
+- Master: Tier 5 weapons and armor.
+
+#### Feat Updates
+
+Reworked the amount and quality of rewards dropped when completing encounters with Feats active. Encounter completions with Feats will grant the following rewards and will be farmable.
+
+- Grade 0: 1x Tier 3.
+- Grade 1: 1x Tier 3, 1x Tier 4.
+- Grade 2: 1x Tier 4, 1x Tier 5.
+- Grade 3: 2x Tier 5.
+- Grade 4: 1x Tier 4, 2x Tier 5.
+- Grade 5: 3x Tier 5.
+
+Adjusted the reward grades that each Feat will add to an activity.
+
+- Cutthroat Combatants: +4 Reward Grade.
+- Challenges: +3 Reward Grade.
+- Shocktroopers: +2 Reward Grade.
+- Token Limit, Phase Limit: +1 Reward Grade.
+
+#### Raids
+
+The Desert Perpetual
+
+- The Simulant Ansible vendor in The Desert Perpetual now allows you to purchase gear at the highest tier available from your current Feat selection. However, you must complete any encounter first in order to activate the ability to purchase gear.
+
+Epic The Desert Perpetual
+
+- Fixed an issue preventing players from equipping the Mediant Flourish shader from Death Defiant II Triumph.
+
+Deep Stone Crypt
+
+- Fixed an issue where Taniks could soft lock the encounter at specific times.
+
+Vow of the Disciple
+
+- Fixed an issue where a player could pick up additional knowledge beyond max, soft-locking the encounter.
+
+Root of Nightmares
+
+- Fixed an issue where Nezarec's crit spots could be shot early and fail to register correctly as destroyed.
+- Fixed an issue where Explicator defeating a Colossus would soft lock the encounter.
+
+Salvations Edge
+
+- Fixed an issue in the Repository encounter where closing all three pylons at the same time would cause a soft lock.
+
+#### Dungeons
+
+Prophecy
+
+- Fixed an issue where Kell Echo would not vanish before first encounter.
+
+Grasp of Avarice
+
+- Fixed areas where death would cause player ghosts to be placed in inaccessible areas preventing revive by a fireteam member.
+
+### Ops Categories
+
+The Portal screen has been deprecated. Ops now live at the bottom of the Director.
+
+#### Fireteam Ops
+
+Reduced the damage of Vex Laser traps in Battleground Heist: Mars and Operation: Seraph's Shield.
+
+- They now deal the same damage that they would have for someone with full seasonal upgrades.
+
+#### Pinnacle Ops
+
+Added The Whisper and Zero Hour. Their Exotic rewards are now awarded on activity completion like other Exotic missions in Pinnacle Ops.
+
+- Their secrets are still completable for the associated Triumphs.
+- The quests associated with these missions have been deprecated.
+
+#### Arena Ops
+
+- The Coil and Contest of Elders: Added reprised World Pool rewards to mid-activity and activity complete chests.
+- Added Override: The Moon, Override: Europa, Override: Tangled Shore, and Override: Last City Crater.
+- Override: Fixed an issue where players could get stuck at the bottom of traversal vortexes.
+- Override: Vex laser traps are now less lethal.
+- Astral Alignment: Fixed an issue where abominations' shields may not be removed upon objective completion.
+- Astral Alignment: Moved the exhausted debuff to the top of the HUD.
+
+#### Solo Ops
+
+- Solo Ops Bonus Objectives are now all generic kill based rather than precision/ability/etc.
+- Destroying all drones in a Solo Ops activity will now properly award bonus points.
+- Fixed an issue in Caldera Solo Ops where enemies could unintentionally stop spawning early.
+
+#### Exotic Rotator
+
+Since most of the missions in the Exotic Rotator have already been added to Pinnacle Ops, we have decided to deprecate the Rotator in favor of the Pinnacle Ops versions.
+
+- Operation: Seraph’s Shield has been moved into Pinnacle Ops along with its associated weapon/Catalyst/Intrinsic rewards.
+
+### Activity Scoring Simplification
+
+Complexity removed from scoring bonuses:
+
+- Removed Power as a source of score bonuses.
+- Removed season pass as a source of score bonuses.
+- Net result: Everyone in the fireteam will get the same score. Fight as one, Guardians.
+
+Converted score bonuses to flat bonuses:
+
+- Difficulty now gives a flat score bonus.
+- Modifiers now give a flat score bonus per "triangle".
+
+Difficulty = Grade = Reward Tier
+
+Each difficulty will now grant enough flat bonus to hit a reward grade without player modification, assuming a normal volume of kills and objective completion.
+
+- Normal = B
+- Advanced = B+
+- Expert = A
+- Master = A+
+- Grand Master = S
+- Ultimate = S+
+
+Each reward grade grants a fixed tier of rewards (primes are still +1).
+
+- B = Tier 1
+- B+ = Tier 2
+- A = Tier 3
+- A+ = Tier 4
+- S = Tier 5
+- S+ = Tier 5
+
+Rank Up button
+
+- A "rank up" button has been implemented that selects random mods to bump players up one grade, for those times when you want a surprise.
+- A "reset" button will remove selected mods.
+
+Matchmaking and scores
+
+- Matchmade versions of Ops will automatically have a few modifiers applied.
+- Fireteams can rank up their reward grade through time bonuses.
+
+Matchmaking Portal difficulties now range from Expert to Grandmaster. Ultimate is no longer available in matchmaking.
+
+- All of these difficulties now require Power 300 to enter.
+
+Added the Medusa bane.
+
+- Looking directly at an affected enemy combatant builds up Stasis slow stacks on you until you freeze.
+
+#### Bane Updates
+
+Gravity
+
+- Added the Focused Fire modifier to the Player Stakes category.
+- Retuned the Gravity bane hitboxes to better match the visuals.
+
+Shock
+
+- Fixed a bug where Shock would damage players if they entered line of sight just after the Shock fires.
+
+Drain
+
+- Drain no longer damages the player the moment they enter line of sight. There will now be a slight delay before it does any damage.
+
+Cascade
+
+- Reduced Cascade arming shape to match VFX.
+- Increased time between projectiles by 1.5 seconds.
+
+Hypernova
+
+No longer knocks back players in cover but the cover requirements to be safe have been increased.
+
+- You can no longer hide behind streetlamps or poles.
+
+Rage
+
+- All players in the detonation zone are scorched regardless of cover status.
+- Increased combatant damage as health decreases now scales up over time. From full health, it takes two seconds for the maximum damage buff to kick in.
+
+Mines
+
+- Reduced the hitbox size of the mine detonations to better match the visuals.
+- Reduced the minimum damage dealt by the mines from 70 to 50.
+- Increased the maximum damage from 135 to 200.
+
+Screeber
+
+- Mini-Screebs will now select a new target if the target they are tracking dies.
+
+Caltrops
+
+- Updated VFX to be clearer.
+- Damage volume is now only active after the spikes come out and until the spikes fade.
+
+Zealous
+
+- Tuned area damage impulses to better match VFX.
+- Made player feedback between sources more consistent.
+- Zealous-buffed combatant detonations now have damage falloff.
+- Reduced minimum damage from 50 (same as max) to 15.
+- Fixed a bug where explosions would sometimes happen at incorrect locations when a zealous-buffed combatant is killed.
+
+### Crucible
+
+- Updated matchmaking settings for small team (3v3 and 4v4) quickplay modes to allow for early start without full lobbies.
+- Fixed an issue where Trials shaders were not dropping correctly from the Lighthouse rewards chest.
+- Fixed an issue where certain Heavy ammo crates were overlapping with Special ammo crates in Momentum Control and Collision playlists.
+- Fixed an issue where certain capture points were floating in Lockdown on Eventide Labs and Multiplex.
+- Fixed an issue where teams could spawn on top of a capture zone in Lockdown playlist on Cathedral of Dusk.
+- Fixed an issue where the round tracker UI indicated the incorrect total number of rounds for Showdown playlists.
+- Fixed an issue where the efficiency stat was non-functional for Rift playlists.
+- Fixed an issue where the Close Call medal was unobtainable in Zone Control playlists.
+- Removed MVP and Additional Loot from Heavy Metal matches as part of a broader rewards balance pass.
+
+#### Crucible Ops
+
+Updated the gear tier for rewards per performance grade:
+
+- C = Tier 3
+- B = Tier 4
+- A and above = Tier 5
+
+Activity scoring formula updated to reflect new performance grade thresholds:
+
+- Power does not affect thresholds and score multiplier.
+- Multiplier only affects Performance and Bonus scores.
+- Reduced multiplier at max Crucible Rank (or 1x reset) from 1.25x to 1.23x.
+- Each subsequent rank reset increases multiplier by 0.02x, up to 1.31x.
+
+6v6 rotator, 3v3 rotator, Rumble, and Private Match have been integrated into Crucible Ops.
+
+- Private Match does not give Portal rewards.
+- 6v6 rotator modes: Mayhem, Rift, Relic, Momentum, Scorched, Supremacy, Clash, Zone Control, Hardware Mix (6v6), Iron Banner: Eruption, Fortress, Tribute
+- 3v3 rotator modes: Survival, Heavy Metal, Elimination, Hardware Mix (3v3), Arena Collision (4v4), Lockdown, Clash
+
+#### Competitive
+
+Added a new Competitive emblem.
+
+- Will require 77 Competitive playlist wins.
+
+#### Trials
+
+- Removed the following maps: Exodus Blue Clash, Multiplex Collision, Twilight Gap Clash, and Vostok (both Clash and Collision).
+- Updated the weekly featured map to a random set of maps (three random selections from three map pools, between one and three active maps each week).
+- Updated the weekly featured weapon (Lighthouse chest reward) to pull from a weekly featured pool of weapons.
+
+#### Iron Banner
+
+Updated Iron Banner Focusing:
+
+Now includes focusing for all tiered Iron Banner gear.
+
+- Gear Additions.
+- Includes Tiered gear from The Edge of Fate, Ash & Iron, and Renegades.
+- Focusing will utilize Iron Banner Ciphers, obtained through Iron Banner match completions.
+
+### Shooting Range
+
+Fixed an issue where the "Run:// Single Combatant" button would sometimes seem usable when the target range was already full but not work.
+
+- The kiosk will now display a message when the range has the maximum number of targets in it.
+
+When spawning a single combatant target, they will always use the closest location that isn't occupied instead of always spawning further back than the previous one.
+
+- They will still spawn further back based on the closer locations being occupied by another target.
+
+The rally banner could only be used every ten seconds, so one player using it would prevent others from using it.
+
+- This has been changed to a cooldown of three seconds that is applied only to the player using it.
+
+Added five new combatants to the target lineup:
+
+- Fallen - Corsair
+- Vex - Imp Swarm
+- Scorn - Abomination
+- Cabal - Phalanx
+- Taken - Vandal
+
+Added two Dread Champions:
+
+- Barrier Grim
+- Unstoppable Husk
+
+Added static damageable target objects at the end of the main range and on the raised platform to the left.
+
+- These static targets are set to take either base damage (red target) or precision damage (yellow target).
+- The targets to the left have another instance of the DPS scoreboard to make it easier to test Swords, Shotguns, Fusion Rifles on them and see the DPS nearby.
+- Damage done to these Targets is scaled as though they are a boss combatant and the damage is reflected in the team-wide DPS scoreboard.
+
+Art / Environment:
+
+Fixed an issue where the Hive Ogre hologram would fall over sometimes.
+
+- They are doing their best.
+
+### Renegades
+
+Removed dialogue from Zavala granting the Renegades intro.
+
+- The Renegades milestone quest is still added automatically from orbit once you've completed the New Light campaign, and interacting with the Renegades node on the Director can launch the first mission.
+
+Fixed an issue where Campaign Quest completion wasn't distributing the Modified NLS Courier (Exotic ship).
+
+- Added a pickup option on Spider in the Tharsis Outpost Cantina for players who have already completed the quest.
+
+### Witch Queen:
+
+- Fixed an issue where Exotic rewards from Renegades keycard chests favored incorrect, older gear in some instances instead of new Exotics in Renegades.
+- Fixed an issue where boss of the post-campaign mission “Altar of the Reflection: Catalyst”, Witch’s Eye, Keeper of Memory, was not opening, blocking player progression. The boss now opens and players can continue the Exotic glaive quest.
+
+### Sparrow Racing League
+
+SRL has returned, featuring all four original maps from Destiny 1.
+
+- Added the Quantum Circuit Track.
+- Added the ability to race with Skimmers alongside Sparrows.
+- Added Rocket Start. Press the boost button at the correct time during the race start countdown to get a boost.
+- Added Trick Boost. Perform an air trick to get a boost when you land.
+- Overall speed in these activities is much faster.
+- Improved Sparrow handling and camera.
+- Improved race balancing for more intense racing battles.
+
+### Heavy Metal
+
+Players can now switch between Heavy Metal and classic tank mouse and keyboard controls in the gameplay options.
+
+- Note: This option affects all tanks across the game.
+
+## UI/UX
+
+Director Destinations Tab:
+
+Ops Category Content has been moved to the Destinations tab.
+
+The original Vanguard Ops and Nightfall playlists have been deprecated and replaced with Ops activities (Solo, Fireteam, Arena, and Pinnacle Ops).
+
+- Quest objectives previously requiring players to complete activities in these playlists can now be completed in the Ops versions.
+
+The previous Crucible node activities have been deprecated and replaced with their Crucible Ops counterparts.
+
+- Private Crucible matches are playable in the Crucible Ops node.
+
+Gambit Ops
+
+- Gambit has been updated with tiered rewards and scoring to maintain parity with the other Ritual Ops nodes.
+- Private Gambit matches are playable in the Gambit Ops node.
+
+Legends Node
+
+The Legends Node is being deprecated and replaced by the Raids and Dungeons node in the Destinations tab. These raids and dungeons that were available in the Legends node have been moved to the new Raids and Dungeons node on the Destinations tab.
+
+- Ghosts of the Deep
+- Prophecy
+- Vault of Glass
+- Crota’s End
+- King’s Fall
+
+Other Director-Related Fixes
+
+- Fixed an issue where an extraneous line was rendering at the top of some Director-related screens.
+- Fixed an issue where sheening elements in the Director were not synced with each other.
+- Fixed an issue where a pink dot was appearing on Neomuna's Hall of Heroes Landing Zone.
+- Fixed an issue where the Featured Quest tab was sheening when there were no featured quests.
+
+Ops Activities
+
+- Time limits for Ops activities are now visible in the pre-launch UI near combatant difficulty, when applicable.
+- Score predictions prior to launching activities now visualize the minimum time bonus you can receive for completing the activity under the time limit.
+- Mid-activity score bar has been updated to indicate which Performance Grade's score target is marked on the bar.
+- The end of activity scoring toast has been streamlined.
+- The score breakdown tab of the PGCR has been updated to reflect scoring model updates.
+
+Activity Customization
+
+- Added error messaging to selectable modifiers that cannot be selected to indicate why they cannot be selected.
+
+Modifier Selection
+
+- Fixed an issue where some players would soft-lock while navigating in and out of the activity rewards screens.
+- Updated Stakes category icons to differentiate them better.
+- Improved tooltip sub header text explaining why similar modifiers can't be selected.
+
+Fireteam Finder
+
+A Fireteam Finder group host can now see if Guardians are actively joining them or not.
+
+- Host will see "Incoming Guardian" nameplates in the lobby for the actively joining fireteam members.
+
+HUD
+
+- Fixed an issue where in-world informational tooltips were rendering too wide.
+- Fixed empty waypoints for public activities like Altars of Sorrow, Blind Well, and Terminal Overload.
+- Fixed a visual issue with the HUD weapon tray animation after exiting Nav Mode.
+- Fixed an issue with ammo pickups not displaying on the HUD weapon tray for Overheat weapons.
+
+In-World Narrative Text Display
+
+- Page back functionality added.
+- Visuals for the box have been refined.
+
+Character Screen
+
+- The Anti-Champion display tooltip on the Character screen has been updated to show exactly which equipped weapons are providing a specific Anti-Champion effect.
+
+Loadouts
+
+- Added 8 more Loadout slots, bringing the total to 20, which are immediately available to all players upon login.
+- The Artifact and its perk selections will now be saved to Loadouts.
+
+General Inventory & Items
+
+- The item tooltip will now display unequipped barrels, magazines, and traits, making it easier to distinguish a weapon roll without entering the details screen.
+- Anti Champion information about a weapon can now be seen by pressing and holding the 'Gear Stats' button.
+- Fixed a visual issue with item equipping animations.
+- Fixed a minor visual issue with the Weapon Level display in the Weapon Details screen.
+- The intrinsic perk display on the expanded “More Info” item tooltip for both Armor and Weapons has been updated to be easier to read.
+- Updated the armor archetype icon on Armor Details screens to be larger.
+
+- Triumphs & Metrics
+- Switched the Triumphs and Titles sections’ placement on Journey tab for easier access to Monument of Triumph categories.
+- Added the 'View Featured' shortcut to quickly navigate to the Monument of Triumph page from the Journey Screen when hovering over the Triumphs button.
+
+- Fixed an issue to accurately reflect the maximum achievable Triumph scores. Since previously removed triumphs have had their points removed, the maximum active triumph and maximum lifetime triumph scores have now been adjusted accordingly.
+- Fixed an issue where Pale Heart secret Triumphs were obscured even if completed. They now show their descriptions and can be claimed if/when completed.
+- Any Nightfall related Triumphs and metrics have been deprecated and are no longer obtainable. Existing progress has been preserved.
+
+Vault
+
+- Added a filtering option for the Vault based on a weapon's anti-champion capabilities.
+- Vault Mode now works with Vehicles, Ships, and Sparrows. Please note that Emblems and Finishers continue to be stored and retrieved from Collections.
+- Vault Mode visuals have been updated to be darker, so that it is easier to recognize when one is depositing items into the Vault versus equipping them.
+- Fixed inconsistent locked text on the Armor Vault filter screen.
+- Fixed some minor inconsistencies with the appearance of items inside of the Vault.
+- Fixed a visual issue where the number of empty vault pages were not displayed correctly.
+- Fixed an issue where Vault Mode was not activated after entering the Character screen from the Tower Vault.
+- Fixed visual issues when using utlrawide displays or a gamepad with the Vault Sorting panel.
+
+Commendations
+
+- Fixed an issue where the commendation count in tooltips wouldn't render more than three digits correctly.
+
+Collections
+
+- Fixed an issue where some completed badges wouldn't display their item counts correctly.
+
+Quest Notifications
+
+- Fixed an issue where some mission or quest notification backgrounds didn't extend to the edge of the screen.
+
+Nav Mode
+
+- Fixed cases where Tracked Content would not display properly in Nav Mode if more than three Triumphs are tracked.
+
+Settings
+
+- Tank Control Mode can now be changed between Heavy Metal and Classic in the Settings menu under Gameplay. By default, the Heavy Metal mode is selected which allows for rotation to be driven by aim. Classic uses separate controls for rotation.
+
+## Gameplay and Investment
+
+### Attune Anywhere
+
+Added the ability for players to attune to specific rewards from a new menu in their Inventory.
+
+- Attunement will give the selected weapon significantly higher drop chances from that activity’s rewards.
+- This will be available in the Accessories section of the Inventory, above Consumables.
+- Players will be able to freely change their attunement selections at any time.
+
+### Destination Rewards
+
+Public Events are one of the best sources of tiered destination gear:
+
+- Base completion: Tier 3 rewards (with a chance at Tier 4 or 5)
+- Heroic completion: Tier 4 rewards (with a chance at a Tier 5)
+- During a Distortion, these tiers will be increased by 1 Tier each.
+
+Updated the following loot pools to avoid dropping weapons after all crafting patterns are unlocked.
+
+Neomuna
+
+- Terminal Overload weapons will begin to drop from more sources when all crafting patterns are found.
+
+### Armor
+
+#### Hunter Exotics
+
+Wormhusk Crown
+
+- Reworked effect: Activating class ability grants cure. Solar multikills grant Burning Souls. While active, Solar Ability damage is increased and dodging greatly cures the player and nearby allies.
+
+Shards of Galanor
+
+- Landing most Blade Barrage knives in a volley causes a delayed Solar Explosion and releases Solar Shrapnel.
+
+Relativism
+
+- Spirit of the Wormhusk
+- Reworked effect: Multikills grant Burning Souls. While active, dodging greatly cures the player and nearby allies.
+
+Caliban's Hand
+
+- Increased melee recharge bonus by 25%.
+- Dealing damage with scorch now refunds a small amount of melee energy.
+- Ignition final blows fully refund knife energy and can overflow into an additional charge.
+
+Fr0st-EE5
+
+- Gain stacks of Frost Armor while sprinting.
+- When you have Frost Armor, Stasis weapons deal increased damage.
+
+Shinobu's Vow
+
+- Enhanced Skip Grenade bounces two additional times before detonating, releasing bonus Skip seekers per bounce.
+- Now grants Skip Grenade energy whenever you gain stacks of Bolt Charge.
+- Skip Grenade damage now grants Bolt Charge.
+- When you gain full Bolt charge, heal yourself and nearby allies and enable an enhanced Skip Grenade.
+
+Raiden Flux
+
+- Now makes successful Arc Staff hits jolt targets.
+- Combo finisher palm blast now gets 1.5x the base Exotic's damage bonus, and reports as critical damage.
+
+Mothkeeper's Wraps
+
+Reworked effect: Getting kills from any source charges up moth grenades. After generating six charges, convert your grenade into two moth grenades.
+
+- Red bars = one charge
+- Orange bars = two charges
+- Players, Minibosses, and up = three charges
+
+All current functionality and synergies of the moth grenades themselves remains the same.
+
+- Arc moths still Arc blind enemies and Void moths still provide Void Overshield to allies.
+- Arc moths are still considered to be Arc grenades, and will continue to synergize with the same subclass fragments, weapon perks, etc. that they synergized with before.
+- Investing your Grenade stat higher than 100 will still increase moth grenade damage.
+
+Lucky Pants
+
+- Both moths from the same grenade will now attempt to target separate enemies/allies if possible.
+- Increased Eriana's Vow's maximum damage bonus to 4.5x.
+- Decreased Uncivil Discourse's maximum damage bonus to 3x.
+- Decreased Lucky Pants bonus damage when dealing damage to Bosses by ~33%.
+
+#### Titan Exotics
+
+Hallowfire Heart
+
+- Reworked effect: While your Solar Super is charged, ability defeats cure the player and give stacks of Sunfire Furnace; granting increased grenade and class ability regeneration, increased Super damage, and cause grenade and Remote Detonator Barricade defeats to ignite targets. Upon exiting your super, Sunfire Furnace stacks are converted into Super energy.
+- Ability regen bonus reduced to 2.5x down from 3.5x.
+
+Pyrogale Gauntlets
+
+Increased Super Cyclone tracking by ~40%.
+
+- It should be significantly easier to get the projectiles to track to a target at range.
+
+Stoicism
+
+- Increased Spirit of Star Eater benefit for Twilight Arsenal to 50% (from 25%).
+
+Peregrine Greaves
+
+Shoulder charge impact damage increase reduced from 400% to 250% against non-Champion, non-miniboss combatants, and reduced from 1000% to 550% against Champions and minibosses.
+
+- Note: In this update, shoulder charge base damage in PvE has been doubled, so a Titan with Peregrine Greaves equipped will deal more damage after this update, not less.
+
+Severance Enclosure
+
+- Removed "Line of Sight" requirement caused by occlusion cross being too large, added smaller occlusion cross that matches standard AoE effects.
+- Removed effect that prevents combatants from being hit by multiple shock waves in a short period of time.
+- Enemies hit by the shockwave are disoriented for a short time.
+
+Praxic Vestments
+
+- Increased damage of the melee attack by 500%.
+- Increased jetpack fuel gained per weapon kill in PvE from 10% to 20%.
+- Increased jetpack fuel gained per powered melee kill in all modes from 35% to 50%.
+- Updated the Exotic perk to recognize knockout kills as powered melee kills.
+- Decreased the windup time for a maximum flight duration from 0.8 seconds to 0.5 seconds.
+- Removed the behavior that caused jetpack flight to end early when contact is detected with the floor or a wall.
+- Fixed a bug that caused the jetpack kick to target dead enemies, ending flight early.
+- Updated camera to convey speed and remaining flight time a little better.
+
+No Backup Plans
+
+Shotgun or melee final blows extend the timer of any active defensive buffs on you.
+
+- This includes Void Overshield, Restoration, Amplified, Frost Armor, and Woven Mail.
+- Will partially heal Void Overshield upon activation of this extension if the player has one.
+
+Cadmus Ridge Lancecap
+
+- The damage bonus is now active when you have any of the above noted defensive debuffs.
+- Now also can spawn Stasis Lances with rapid Stasis weapon damage and final blows even when not behind their rally barricade.
+- Now grants bonus Stasis Lance damage based on your current stacks of Frost Armor.
+
+Point Contact Cannon Brace
+
+Lightning strike damage now scales further based on how long Thunderclap is charged for, up to 2x.
+
+- This stacks with the bonus damage from casting while amplified.
+
+Reworked melee regen from lightning strike kills to compensate for the new wave of bolts on charge up.
+
+- No longer target tiered. Flat amount has been increased to compensate.
+- Should see larger energy returns on average.
+
+Helm of Saint-14
+
+New functionality: While Weapons of Light is active, kills or sustained damage grant stacks of The Saint; Void and Kinetic damage sources will also suppress in a radius around the victim.
+
+- Sustained damage is based on actual damage dealt. The more damage you deal, the quicker it activates.
+- Picking up your Ward of Dawn consumes all stacks of The Saint and then extends Ward's duration based on how many stacks were consumed.
+
+ACD/0 Feedback Fence
+
+- No longer provides any melee damage resist versus players.
+
+Peacekeepers
+
+- Decreased bonus damage when damaging bosses by ~33%.
+- Reverted a prior nerf to Tarrabah when paired with Peacekeepers, now gets full bonus when damaging non-bosses.
+
+Stronghold
+
+- The infinite guard capability has been updated to only work on Heavy ammo Swords.
+
+Blastwave Striders
+
+To reduce instances of accidently triggering the blast, the following changes were made:
+
+- Explosions created by explosive perk kills (ie: Dragonfly, Firefly) no longer trigger the blast.
+- Explosions created by passive explosive perks (ie: Explosive Payload, Explosive Head) still trigger the blast.
+- A small delay has been added after each explosive kill to prevent cases where the blast wave is triggered on the same kill that fills the buff bar to 100% if that kill also caused explosive damage to yourself.
+
+The sliding activator has changed to damage with the Shiver Strike melee (also works with Howl of the Storm aspect).
+
+- Triggering the exotic via melee creates a tighter spread of projectiles.
+
+#### Warlock Exotics
+
+Nezarec's Sin
+
+- New effect: Combatants damaged by Soul Siphon are suppressed. Defeating suppressed targets or with Soul Siphon grants an additional 1.5s to Abyssal Extractors
+
+Mataiodoxia
+
+Increased suspending burst damage from Super supercombine by ~22%.
+
+- Note: This makes it equal to a Cuirass Thundercrash. Have at it!
+
+Skull of Dire Ahamkara
+
+- After casting a Nova Bomb, you get a short period where you can cast a Nova Lance.
+- Destroying a Cataclysm Nova Bomb with a Nova Lance creates a Nova Vortex alongside the Cataclysm Nova Bomb seekers.
+- The written mention of additional damage resistance during Nova Bomb cast has been removed from the description. The functionality has not changed.
+
+Crown of Tempests
+
+- While you have at least one stack of Conduction Tines, Ionic Sentry creates a Storm Grenade when it deploys.
+- Increased the duration of Conduction Tines in PvE from seven to ten seconds.
+
+Mantle of Battle Harmony
+
+- Now can trigger its Super energy gain or weapon damage bonuses on sustained weapon damage in addition to final blows.
+- After casting your Super, now gain surges for all elements and weapons matching your Super's damage type cause detonations when hitting targets for a moderate duration.
+
+Astrocyte Verse
+
+- While using blink with this Exotic equipped, you can now use your air move input to perform a dark blink horizontally in any direction.
+- Blinking or dark blinking now grants volatile rounds, in addition to the volatile explosion.
+
+Dawn Chorus
+
+- Now increases the damage caused by ignitions you create by scorching a target.
+- Now grants melee energy for dealing ignition damage, in addition to scorch damage.
+- Removed the internal cooldown on energy gains from scorch damage and retuned gains to return slightly more energy overall.
+- Now causes Daybreak projectiles to immediately ignite targets they hit.
+
+Nothing Manacles
+
+- Extra seekers can no longer chain off themselves.
+- Reduced extra seekers generated from four to three.
+- Reduced range and lifetime of extra seekers.
+- Note: These changes primarily affect just the initial grenade.
+
+Contraverse Hold
+
+- Reduced energy returns when used with Magnetic Grenade/Handheld Supernova by 15%.
+
+Deimosuffusion
+
+- Increased the time between damage ticks against players from 0.1 to 0.3 seconds.
+
+#### Armor Stats
+
+Added six additional Armor Archetypes for a total of 12. All archetypes are available from all sources of Armor 3.0 gear.
+
+Siegebreaker
+
+- Health primary, Grenade secondary.
+
+Skirmisher
+
+- Melee primary, Weapons secondary.
+
+Demolitionst
+
+- Grenade primary, Class secondary.
+
+Colossus
+
+- Super primary, Health secondary.
+
+Reaver
+
+- Class primary, Melee secondary.
+
+Powerhouse
+
+- Weapons primary, Super secondary.
+
+Increased the strength of Armorer mods on Ghosts.
+
+- While equipped, your chosen archetype will now approximately have a one in two chance to drop (previously one in three).
+
+#### Armor Set Bonuses
+
+Ride Together, Die Together (Smoke Jumper set two-piece perk)
+
+- Decreased the maximum damage resistance (DR) granted from 50% to 40%.
+- Made a minor formatting change to the perk description. Perk functionality is unchanged.
+
+Superluminal Motion (Wayward Psyche four-piece set)
+
+- Perk performance is unchanged in PvP.
+- Increased the health granted while moving from 15 to 30 health per second outside of Crucible.
+
+#### Armor Mods
+
+Melee Kickstart armor mods will now activate when a full melee charge is consumed, not just when reaching zero melee energy.
+
+- When used with Flechette Storm, this will only activate when returning to the ground.
+- Grenade Kickstart mods already support multiple charges and remain unchanged.
+
+Updated the perk description for Radiant Light and Powerful Friends to clarify that allies must already have at least one Armor Charge.
+
+- Functionality of these mods is unchanged.
+
+Holster Mods
+
+Fixed an issue where Solar and Harmonic holster could reload Parasite despite it being a weapon with only one in the mag.
+
+- The Worm still hungers for violence and can be satiated via its catalyst.
+
+#### Miscellaneous
+
+Legendary Armor Ornaments
+
+- Re-ordered the list of Armor Ornaments to be more consistently sorted – first in reverse rarity order, then in reverse release order (in other words, newest Legendary options are first in the list).
+
+Armor 2.0 from raids (including the appropriate raid mod slot) can now be focused at Hawthorne with high stats for ten Spoils of Conquest per piece.
+
+- Vault of Glass
+- Crota's End
+- Kingsfall
+- Last Wish
+- Garden of Salvation
+- Deep Stone Crypt
+- Vow of the Disciple
+- Root of Nightmares
+- Salvation's Edge
+
+#### Armor Fixes
+
+- Fixed Celestial Nighthawk eye glow not modulating intensity with player Super ability energy.
+- Fixed Spirit of Galanor not returning Super energy while Transcendence was active.
+- Fixed Secant Filaments reducing Devour duration in some cases when Echo of Persistence was equipped.
+- Fixed an issue that allowed the player to activate the Praxic Vestment's air move while already using certain Super abilities (Glacial Quake heavy attack, Ward of Dawn cast, Fist of Havoc slam), which could cause players to get stuck in an awkward animation.
+- Fixed an issue where Oathkeeper's HUD buff would appear while drawing Leviathan's Breath despite being unable to gain the damage buff. This is a purely visual change.
+- Fixed an issue where secondary damage instances could deactivate Adamantine Brace on Oathkeeper while it was charging.
+- Fixed an issue where Rimecoat Raiment's Stasis buddy was not properly showing how many icicle projectiles were stored around its circumference.
+- Fixed an issue where Mechaneer's Tricksleeves had two HUD buffs.
+- Fixed an issue where the Forgemaster buff on Melas Panoplia would deactivate when swapping to a Sword, Glaive, or other weapon with a melee override.
+- Fixed an issue where Grapple Melee couldn't activate Nightmare Fuel on Sealed Ahamkara Grasps.
+- Fixed an issue where Sealed Ahamkara Grasps was slightly buffing all outgoing damage instead of only weapon damage, if the buff was active while you were Radiant.
+- Fixed an issue where Caliban's Hand wouldn't trigger an ignition when killing enemies whose bodies deleted instantly on death.
+- Fixed an issue where the Legendary Final Shape campaign rewards would include Armor 2.0 versions of Exotic armor instead of the intended Armor 3.0 curated rolls.
+
+### Weapons
+
+#### Anti-Champion 2.0
+
+- With the removal of anti-Champion mods from artifacts, all weapons will now have intrinsic anti-Champion capabilities based on their weapon archetype.
+- Simplified the activation criteria for Anti-Champion effects: simply firing the weapon and hitting a target will apply the associated effect immediately.
+- The lists of both base weapon archetypes and the more specific frames can be found below:
+
+| Weapon Type | Effect |
+| --- | --- |
+| Aggressive | Unstoppable |
+| High Impact | Unstoppable |
+| Precision | Barrier |
+| Adaptive | Barrier |
+| Lightweight | Overload |
+| Rapid-Fire | Overload |
+
+| Weapon Archetype | Weapon Type | Effect |
+| --- | --- | --- |
+| Support | AR | Overload |
+| Adaptive Burst | LFR | Barrier |
+| Area Denial | Breach GL | Overload |
+| Double Fire | Breach GL | Unstoppable |
+| Micro-Missile | Breach GL | Unstoppable |
+| Wave | Breach GL | Unstoppable |
+| Compressed Wave | Drum GL | Unstoppable |
+| Heavy Burst | HC | Unstoppable |
+| Spread Shot | HC | Overload |
+| Aggressive Burst | SMG | Unstoppable |
+| Aggressive Burst | Pulse | Unstoppable |
+| Heavy Burst | Pulse | Unstoppable |
+| Legacy PR-55 Frame | Pulse | Barrier |
+| Rocket-Assisted | Pulse | Unstoppable |
+| Rocket-Assisted | Sidearm | Unstoppable |
+| Disruption | Sniper Rifle | Barrier |
+| Caster | Sword | Barrier |
+| Vortex | Sword | Overload |
+| Wave | Sword | Unstoppable |
+| Dynamic Heat Weapons | Various | Overload |
+| Balanced Heat Weapons | Various | Overload |
+
+#### General
+
+Crafted Weapons and Raid Adepts capable of Reshape can now reach the power of Gear Tier 5.
+
+- In weapon inspection, players can improve the item's gear tier under Weapon Level Boost and visit the crafting table to acquire new enhanced components/origins. Only weapons with an Enhanced Intrinsic can achieve the additive stat boost based on the weapon's Gear Tier.
+
+#### Ammo System
+
+PvE
+
+Rocket Pulses
+
+- Fixed an issue that was sometimes causing Rocket Pulses to only earn two shots per base brick.
+- Fixed an issue where Psi Aeterna was not correctly having its ammo per brick increased by Scavenger mods.
+- Fixed an issue where legendary Rocket Pulses were not correctly having their ammo per brick split when used with a second Special weapon.
+
+Reduced Choir of One's ammo per brick
+
+- Base: 45 to 35
+- Enhanced: 90 to 70
+
+PvP:
+
+Increased Rapid Fire Machine Gun ammo from crates from a maximum of 45 to a maximum of 62, based on magazine size.
+
+- Other Machine Guns remain capped at 22.
+- Bitter End's ammo from crates has been reduced to fit within this scale.
+
+#### Weapon Types
+
+Support Frame Auto Rifles
+
+- Updated support auto healing bullet firing FX and player feedback.
+
+Crossbows
+
+Tweaked the bulk pickup behavior for Crossbow bolts to be slightly more forgiving when moving at faster speeds.
+
+- Under certain circumstances you should now find yourself retrieving more bolts in a single interact than you would have prior.
+
+Primary Ammo Weapons
+
+Legendary Primary Weapons
+
+- Increased damage versus base combatants by 30%.
+
+Exotic Primary Weapons
+
+- Increased bonus damage versus base combatants from 30% to 40%.
+
+Non-Blaster Primary Weapons
+
+- Increased damage versus elite combatants by 15%.
+
+Blaster Primary Weapons
+
+- Increased bonus damage versus elite combatants from 15% to 20%.
+
+Auto Rifles
+
+High Impacts
+
+- Increased RPM from 360 to 400.
+- Reduced ADS Damage Falloff scalar from 1.7 to 1.6.
+- Reduced base damage from 24 to 22.
+- This includes Vex Mythoclast and SUROS Regime with Dual Speed Receiver but excludes Cerberus+1 and Sweet Business in its non-spun up state.
+
+Adaptives
+
+- Increased base damage from 15 to 15.5 and critical hit damage from 26.25 to 27.1.
+
+Pulse Rifles
+
+Lightweights
+
+- Reduced base damage from 19.7 to 18.8 and critical hit damage from 31.5 to 30.1.
+
+Legacy Frame
+
+- Since these weapons inherit the damage change from Lightweight Pulse Rifles, we are reverting the nerf to their ADS damage falloff scalar.
+- Increased ADS Damage Falloff Scalar from 1.6 back to 1.7.
+
+Micro Missiles
+
+- Reduced Ammo Generation stat of legendary Micro Missile Pulse Rifles by 15.
+
+Scout Rifles
+
+Rapid Fires
+
+- Reduced base damage from 28 to 27.3 and critical hit damage from 54.6 to 53.25.
+
+Hand Cannons
+
+Aggressives
+
+- Reduced base damage from 49 to 48.7 and critical hit damage from 90.65 to 90.1.
+
+Bows
+
+General
+
+- Increased damage versus base combatants by an additional 20%.
+- Increased damage versus elite combatants by an additional 40%.
+
+Lightweight
+
+- Fixed an issue where some Lightweight Bows (Whispering Slab reprise) were displaying an incorrect draw time.
+
+Special Ammo Weapons
+
+General
+
+Increased damage versus elite combatants by 20%.
+
+- Excludes Snipers, Rocket Pulses, Rocket Sidearms, and Choir of One.
+
+Rocket Pulses
+
+Decreased damage vs bosses by 25%.
+
+- This is on top of the above 10%.
+
+Rocket Sidearms
+
+- Reduced Super Generation by 25% for roamers and 33% for standard Supers.
+- Increased projectile explosion radius by 33%.
+
+Fusion Rifles
+
+Rapid Fire
+
+- Increased PvE Damage Scalar by 7%.
+
+Adaptive
+
+- Increased PvE Damage Scalar by 10%.
+
+Precision
+
+- Increased PvE Damage Scalar by 20%.
+
+High Impacts
+
+- Increased PvE Damage Scalar by 15%.
+
+Shotguns
+
+Aggressive
+
+- Increased PvE Damage Scalar by 15%.
+- Improved the base stats of Felwinter's
+
+Lightweight
+
+- Increased PvE Damage Scalar by 15%.
+
+Precision
+
+- Increased PvE Damage Scalar by 20%.
+
+Slug Shotguns
+
+Rapid Fire
+
+- Increased PvE Damage Scalar by 10%.
+
+Pinpoint
+
+- Increased PvE Damage Scalar by 5%.
+
+Heavy Burst
+
+- Increased PvE Damage Scalar by 10%.
+
+Snipers
+
+Aggressive
+
+- Increased PvE Damage Scalar by 15%.
+
+Adaptive
+
+- Increased PvE Damage Scalar by 10%.
+
+Glaives
+
+Rapid Fire
+
+- Increased PvE Damage Scalar by 10%.
+
+Trace Rifles
+
+General
+
+- Increased damage versus base combatants by an additional 20%.
+- Increased damage versus elite combatants by an additional 20%.
+
+Exotic Trace Rifles
+
+- Increased bonus damage versus base combatants from 30% to 40%.
+
+Heavy Grenade Launchers
+
+General
+
+- Increased damage versus Bosses and Champions by 5%.
+
+Rocket Launchers
+
+General
+
+- Increased damage versus Bosses and Champions by 5%.
+
+Crossbows
+
+General
+
+- Increased damage versus Bosses and Champions by 10%.
+
+Linear Fusion Rifles
+
+Precisions
+
+- Increased PvE Damage Scalar by 10%.
+- Increased ammo reserves by ~30%.
+
+General
+
+- Increased the damage of legendary LFRs versus Bosses and Champions by 10%.
+
+Machine Guns
+
+Heat Weapons
+
+- Increased Bitter End's reserve ammo.
+
+Swords
+
+- Decreased cost of Vortex frame heavy attack from six to four ammo.
+
+#### Exotic Weapons
+
+Tarrabah
+
+Dealing damage to Scorched combatants grants increased Ravenous Beast progress by 33%.
+
+- Can generate full meter if all the mag hits a scorched enemy.
+
+Kills grant greatly increased progress.
+
+- 10% per kill.
+
+Anarchy
+
+- Increased armed trap lifetime 50% from 10 to 15 seconds.
+- Increased trap damage versus combatants by 30%.
+- Doubled trap detonation damage vs combatants to better match the per tick damage of a trap.
+- Replaced Moving Target with Impromptu Ammunition.
+
+Divinity
+
+- Increased Penance damage by 20%.
+- Reduced time to activate Penance from four to three seconds.
+- Reduced shots to activate the cage from 14 to 10.
+
+Winterbite
+
+- Reduced self damage of the projectile by 66%.
+
+Edge of Action, Concurrence, and Intent
+
+- Glaive projectiles now grant doubled progress towards special shot.
+
+Crimson
+
+- Now has To the Pain as a catalyst perk in addition to the stat increase.
+
+Coldheart
+
+- Now has Supercharged Magazine as a catalyst perk in addition to the stat increase.
+
+Merciless
+
+- Impetus's bonuses can now be refreshed while active.
+- Now has Heal Clip as a catalyst perk in addition to the stat increase.
+
+Sunshot
+
+- Now has Loose Change as a catalyst perk in addition to the stat increase.
+
+Skyburner's Oath
+
+- Increased base handling by 20.
+- Now has Incandescent and Burning Ambition as catalyst perks in addition to the stat increase.
+
+Riskrunner
+
+- Now has Chain Reaction as a catalyst perk in addition to the stat increase.
+
+The Prospector
+
+- Now has Danger Zone as a catalyst perk in addition to the stat increase.
+
+Hard Light
+
+Slightly tweaked the special reload activation and animation cancel timings.
+
+- This should feel more snappy and responsive.
+
+Borealis
+
+Slightly tweaked the special reload activation and animation cancel timings.
+
+- This should feel more snappy and responsive.
+
+Dead Messenger
+
+Slightly tweaked the special reload activation and animation cancel timings.
+
+- This should feel more snappy and responsive.
+
+Hierarchy of Needs
+
+- Seekers now apply +15 (+5) scorch to hit targets.
+- Added increased hip fire accuracy to the benefits provided by the catalyst.
+- Added hidden tracking for seekers that guides them to targets hit by precision damage.
+
+Touch of Malice
+
+- Increased final round bonus damage by 10%.
+- Set it up so the Special Reload can be made faster by buffing reload speed.
+- Replaced Rapid Hit in the catalyst with Precision Instrument.
+- Gain increased stability and reload speed with each stack of Charged with Blight.
+
+Jade Rabbit
+
+Fate of All Fools
+
+- Precision kills will now add a stack.
+- Gaining a stack now refills the magazine.
+- Increased the maximum stacks cap to 15.
+- Stacks will no longer be completely removed when you reload. Dealing direct body shot damage will remove one stack.
+- Scales the damage of Firefly when it is active, and dealing splash damage will not remove a stack of the perk.
+
+Catalyst
+
+- In addition to adding Stability, special reloading will consume Fate of All Fools and grants a singular Micro Missile round which deals bonus damage based on the number of stacks.
+
+Vex Mythoclast
+
+Timeless Mythoclast (Intrinsic)
+
+- Now has what is comparably a more potent version of Rewind Rounds while in full auto mode.
+
+Temporal Unlimiter (Trait)
+
+- Precision kills with Linear Fusion Rifle shots now trigger an ignition.
+- After leaving Linear Fusion Rifle mode, the magazine is now fully reloaded.
+- The HUD buff and magazine display have been tweaked to show the exact amount of Linear Fusion shots remaining. This is a purely visual change; functionality remains the same.
+
+Calculated Balance (Catalyst)
+
+- Sustained damage can now also activate the catalyst in addition to kills.
+- Added a HUD buff.
+
+The Last Word
+
+- Increased stability on mouse and keyboard by 10%.
+- Increased aim assist when hip firing on mouse and keyboard by 10%.
+
+Trinity Ghoul
+
+- Fixed an issue where kills with Lightning Rod chains were not granting ammo progress.
+
+MIDA Multi-Tool
+
+- Decreased the PvE combatant kill requirement from ten kills per modification (15 with Macro-Tool) to seven kills per modification (ten with Macro-Tool). This lowers the total kill requirement from 40 (60) to 27 (40) to acquire all modifications.
+- The catalyst's improved radar resolution now remains active for a few seconds when you stow Multi-Tool instead of immediately deactivating. Multi-Tool still needs to be in your hands for the catalyst to activate.
+
+Sunshot
+
+- Rebalanced the damage of the explosion to deal more damage up close and less damage further away.
+
+Graviton Lance
+
+- Rebalanced the damage of the explosion to deal more damage up close and less damage further away.
+
+Outbreak Perfected
+
+- Reduced damage bonus at maximum Nanite stacks from 4.5x to 4x.
+
+Arbalest
+
+- Increased damage versus Champions by 33%.
+
+Choir of One
+
+Reduced ammo per brick.
+
+- Base: 45 to 35.
+- Enhanced: 90 to 70.
+
+Wardcliff Coil
+
+- Fixed an issue where firing Wardcliff Coil would not grant Bolt Charge if the firing player was too far off the ground.
+- Mechanized Autoloader now works while the weapon is stowed.
+- Increased maximum ammo from five to eight.
+
+Sleeper Simulant
+
+- Increased damage versus Bosses and Champions by 10%.
+
+The Lament
+
+Reverted the previous nerf to this weapon by ~70%.
+
+- Returned most of the final combo damage and self healing the previous change reduced.
+
+Truth
+
+Now returns one ammo to reserves and buffs the next magazine when all rounds in a magazine hit a target.
+
+- The next magazine gains dramatically increased rate of fire, stability, tracking strength, and cluster bombs.
+
+Thunderlord
+
+- Decreased ammo refunded by the lightning strike from seven to five at base.
+
+Whirling Ovation
+
+Increased the amount of Anticipation gained per point of damage by just over 11%.
+
+- This is compensation for the Rocket Pulse damage nerf disproportionately affecting the feel of this weapon's rotations.
+
+Heirloom
+
+- Increased charge rate by 20%.
+- Increased impact damage of charged shots by 20% in PvE only.
+- Reduced extra heat generated by charged shots by 7%.
+- Increased damage vs miniboss and champion targets by 20%.
+- Increased damage vs boss targets by 10%.
+- Added Incandescent perk to catalyst.
+
+Prometheus Lens
+
+Increased scorch stacks applied per trigger.
+
+- Up to 20 (+10) from 10 (+10).
+
+Centrifuse
+
+- Increased the amount of magazine refilled per trigger to 10% from 4%.
+
+Slayer's Fang
+
+- Increased magazine size by two.
+- Increased reserve ammo by ten.
+- Now slowly reloads itself while its buff is active.
+
+Xenophage
+
+- Increased reserve ammo by ten.
+
+Chaperone
+
+- Increased magazine size by one.
+
+Ice Breaker
+
+- Fixed an issue where Ice Breaker was errantly igniting Barrier Champions while they were stunned.
+
+Praxic Blade
+
+- Decreased the Balanced Form's ammo generation from two to one.
+- Changed the Defensive Form's ammo criteria to rapid blocks.
+- Decreased the tracking of the reflected bolts at long range targets.
+- Can now reflect projectiles from Fallen turrets.
+
+Tractor Cannon
+
+Adjusted Tractor Cannon's perk description to more clearly indicate that it applies the Void suppression effect and a more powerful Void weaken rather than a unique debuff.
+
+- Also adjusted the language used on both Hunter supers that apply a non-standard Weaken effect (Deadfall and Mobius Quiver), as well as Felwinter's Helm.
+- The functionality of these effects has not changed.
+
+#### Weapon perks
+
+Collective Action, Collective Pugilism, Cooling Baubles, Elemental Charge, Facet of Honor
+
+- These perks now all share the same Tangle activator.
+- Previously this activator differed depending on the perk, and would either activate when shooting a Tangle, picking up a Tangle, throwing a Tangle, or a combination of these despite sharing the same terminology in their strings.
+- These now share the same activator: destroy a Tangle, either by shooing it or upon impact after throwing it.
+- In addition to this activator, Collective Action and Collective Pugilism also grant additional time to their durations upon throwing a Tangle. This unique behavior is called out in their descriptions.
+- Artifact elemental orbs are now officially considered elemental pickups for the sake of these perks and grant the same benefits as Tangles. As such, we fixed an issue where the artifact Arc orbs would give dark Transcendence energy with Facet of Honor; they now give light Transcendence energy.
+
+All-Star
+
+- Damage timer is paused on weapon stow and resumed on weapon equip.
+
+Advanced Reflexes (Dreaming City Origin Trait)
+
+- New effect: +5% damage bonus while active.
+- Increased bonus handling from +30 to +40.
+- Increased bonus charge rate (Swords) from +20 to +35.
+
+Gun and Run (Gambit Origin Trait)
+
+- Reworked Effect: Defeating targets builds stacks of Gun and Run for a short duration. Sprinting for a short time consumes a stack to partially reload this weapon's magazine from reserves; on Bows, this briefly improves draw speed.
+
+Nanotech Tracers Missiles (Neomuna Destination Origin Trait)
+
+- Decreased the amount of hits needed for Basso Ostinato to activate Nanotech Tracers Missiles by roughly one.
+
+Jolting Feedback
+
+- Decreased shots to activate the perk by ~1-2 for Scout Rifles and Hand Cannons.
+
+Focused Fury
+
+- Increased damage bonus from 20% to 25%.
+- Decreased hits required to activate from 50% of the magazine to 35% of the magazine.
+
+Full Court
+
+- Increased maximum explosive damage bonus from 25% to 35%.
+
+Lasting Impression
+
+- Increased explosive damage bonus from 25% to 35%.
+
+Reservoir Burst
+
+- Increased damage bonus from 25% (27.5% enhanced) to 30% (33% enhanced).
+
+Encore
+
+- Encore's HUD buff now displays a timer.
+
+Adagio
+
+- Decreased the damage bonus on Hand Cannons from 30% to 27%.
+- Increased the damage bonus on Shotguns and Bows from 20% to 30%.
+
+Collective Action
+
+Instead of a flat seven seconds, elemental pickup now provides differing amounts of time to the perk duration depending on how easy they are to create. These values match Collective Pugilism:
+
+- Firesprites, Void Breaches: eight seconds.
+- Ionic Traces, Stasis Shards: four seconds.
+- Tangle Detonation: four seconds.
+- Tangle Throw: four seconds.
+
+Full Choke
+
+- Increased maximum time from 12 to 16 seconds.
+- Decreased pellet spread by 5% instead of 3.25%.
+
+Shot Package intrinsic
+
+- Decreased pellet spread by 2.5% in ADS (aim down sight).
+
+Frenzy
+
+- Fixed an issue where the enhanced version of Frenzy was not getting an extended duration when refreshed compared to standard Frenzy.
+- Fixed an issue where Frenzy being inactive could prevent the Crucible origin perk from activating.
+
+Gutshot Straight
+
+- Decreased the aim assist penalty by 20% on the base perk and 25% on the enhanced perk.
+- Fixed an issue where this perk did not work on Bitter End.
+
+Envious Assassin
+
+- Fixed an issue where the perk was not working on some single shot weapons.
+
+Cascade Point
+
+Since we removed the "Ready" HUD buff when the weapon is stowed, we have simplified the activation criteria for dealing precision damage with other weapons:
+
+- Auto Rifles, Pulse Rifles, SMGs, Trace Rifles, Sidearms, LMGs: six critical hits.
+- Hand Cannons, Scout Rifles: four critical hits.
+- Bows, LFRs, Glaive projectiles, Shotguns, Sniper Rifles: two critical hits.
+
+Attrition Orbs
+
+- Now activates in four hits on wave frame grenade launchers, down from ten.
+- Now activates in three hits on rocket launchers, down from six.
+
+Contending Cascade
+
+- The number of rapid final blows needed get max benefits has been reduced from 15 (12 if enhanced) to 12 (10 if enhanced).
+- Stat benefits are now maxed out when the elemental explosions are granted instead of scaling with up to 20 rapid final blows.
+
+Desperado
+
+- In addition to its current activator of reloading after a precision kill, Desperado can now also activate when reloading after three rapid kills.
+
+Physic
+
+- Can now roll on damage types other than Solar.
+
+#### Miscellaneous
+
+Increased stats for several reprised weapons. Changes listed here apply to both old and new versions of these weapons.
+
+Battle Scar
+
+- +5 Range
+- +8 Stability
+- +1 Recoil Direction
+
+Seventh Seraph Carbine
+
+- +5 Range
+- +5 Aim Assistance
+
+Seventh Seraph Officer Revolver
+
+- +6 Range
+- +6 Aim Assistance
+
+Seventh Seraph SI-2
+
+- +10 Range
+- +10 Airborne Effectiveness
+- +5 Aim Assistance
+
+Seventh Seraph VY-7
+
+- +3 Range
+
+Seventh Seraph SAW
+
+- +5 Magazine
+- +5 Handling
+- +30 Recoil Direction
+
+True Prophecy
+
+- +2 Recoil Direction
+- +10 Airborne Effectiveness
+
+The Deicide
+
+- +5 Stability
+- +2 Aim Assistance
+
+Pluperfect
+
+- +13 Stability
+- +5 Airborne Effectiveness
+- +2 Aim Assistance
+
+Cry Mutiny
+
+- +2 Magazine
+
+Spare Rations
+
+- +10 Range
+- +2 Stability
+
+Loud Lullaby
+
+- +5 Range
+- +10 Stability
+- +4 Handling
+- +5 Aim Assist
+
+Premonition
+
+- +8 Stability
+- +7 Reload Speed
+- +7 Handling
+- +5 Aim Assist
+
+Every Waking Moment
+
+- +5 Range
+- +7 Reload Speed
+- +6 Handling
+
+Following the HUD buff iteration we did for subclass buffs in v950, we wanted to iterate on weapon HUD buffs for v970. Our goal is to improve the player experience by improving clarity concerning the source of a buff (ie. if you see a buff on screen it's from your active weapon), minimizing the amount of buffs that get pushed out by removing unnecessary buffs, and when buffs do get pushed out they are of lesser importance. Key notes include:
+
+- A handful of weapon traits' buff priority have been adjusted so that more important buffs should be less likely to get pushed out.
+- Perk HUD buffs that appeared while stowed will now require that weapon to be your active weapon. Functionality remains the same for perks that have effects that remain active while stowed.
+- Icarus Grip and Sprint Grip no longer have HUD buffs.
+- Gordian Knot Cooldown now appears in the weapon buff channel.
+
+Weapon of Sorrow damage-over-time
+
+“Corruption” now refers to the short-duration damage-over-time that can stack.
+
+- Thorn, Touch of Malice, and Necrochasm all apply this.
+
+“Potent corruption” now refers to the longer duration damage-over-time that cannot stack and will (typically) gradually increase in damage.
+
+- Necrotic Grip, Spirit of the Necrotic, and Osteo Striga all apply this. Spirit of the Necrotic will continue to persist at the same damage value (not ramp up).
+
+#### Weapon fixes
+
+Paracausal Fluid
+
+- Fixed an issue where the HUD buff could display stacks at x2, despite multiple stacks providing no additional benefit.
+- Fixed an issue where this perk would not activate on Swords.
+- Fixed an issue where this perk would not always activate if the enemy had a high enough health pool.
+
+Fixed an issue where corruption from Thorn, Necrochasm, or Touch of Malice could extend the duration of potent corruption from Osteo Striga or Necrotic Grip. Likewise, fixed an issue where potent corruption from Osteo Striga or Necrotic Grip could remove all stacks of corruption applied by Thorn, Necrochasm, or Touch of Malice.
+
+- Both types of corruption can now be active on the same enemy at the same time.
+
+Fixed the reload and special reload timings on various weapons to be slightly sooner so that they align with the animation:
+
+- Delicate Tomb basic reload.
+- Edge of Action, Intent, and Concurrence special reload.
+- Wolfsbane special reload.
+- Glaive basic reload.
+
+These weapons' projectiles are now capable of over-penetrating combatant shields while they have Anti-Barrier capabilities:
+
+- Rocket launchers
+- Hierarchy of Needs submunitions
+- Caster Frame Swords
+
+Fixed an issue where The Bombardiers were applying custom blind and suppress effects, instead of Arc Blind and Void Suppress
+
+- In fixing this, the duration of the blind effect against PvE combatants was increased from five seconds to ten seconds, matching the duration of suppression.
+
+### Abilities
+
+#### General
+
+Grenades
+
+NEW: Stasis Shatter Grenade
+
+- A grenade that sticks to combatants before exploding into razor-sharp Stasis shrapnel. The shrapnel ricochets off surfaces, dealing damage to all in its path. Hitting a frozen target shatters it instantly and deals bonus damage.
+
+NEW: Strand Slicewire Grenade
+
+- A grenade that bounces and releases multiple whirling threads, severing targets.
+
+Spike Grenade
+
+- Slightly increased the damage area at the wider side of the cone.
+
+Lightning Grenade
+
+- Increased detonation damage by 25%.
+
+Scatter Grenades
+
+- Reduced chase distance versus players by 50%.
+- Reduce the amount of Grenade energy this ability gains from perks by 12.5%.
+
+Grapple
+
+- Against boss combatants, decreased max grapple melee damage bonus granted by grenade stat by 50%.
+- Against boss combatants, damage bonus granted by Grenade stat and Melee stat is now additive instead of multiplicative.
+
+Melees
+
+When powered melee and unpowered melee are bound to the same button, pressing that button now behaves consistently when aiming down sights (ADS).
+
+- Previously: ADS and pressing melee triggers unpowered melee.
+- Now: ADS and pressing melee triggers powered melee if it is charged, unpowered melee otherwise.
+
+Supers
+
+- Reduced Super energy generation from dealing damage to bosses by 60%.
+
+Multi-charge Abilities
+
+- In PvP only, when the match begins, multi-charge abilities now start with one charge instead of all charges.
+
+Ability Cooldown Stats
+
+Reduced maximum passive ability-cooldown-bonus granted by ability stats by ~20%.
+
+- Curve rescaled to reach max at the same ratio.
+
+Reduced maximum active ability-cooldown-bonus granted by ability stats from 190% to 125%.
+
+- Curve rescaled to reach max at the same ratio.
+
+Stasis
+
+Shatter
+
+Stasis shatter damage now stuns Unstoppable Champions instead of Overload Champions.
+
+- Note: This is a revert of a previous change.
+
+Frost Armor (Status Effect)
+
+Each stack now gives slightly more damage resistance.
+
+- Damage resistance at five stacks is increased from ~31% to ~35%.
+
+Whisper of Rime (Fragment)
+
+- Decreased max stacks from eight to seven.
+- Max damage resistance is still 50%.
+
+Arc
+
+Spark of Shock (Status Effect)
+
+- When jolt is applied via an Arc Soul or an Ionic Sentry, there is now a four-second internal cooldown for applying jolt again via these constructs.
+
+Void
+
+Invisibility (Status Effect)
+
+- Made Void Invisibility slightly more visible in Crucible.
+
+Prismatic
+
+Facet of Dominance (Fragment)
+
+- When jolt is applied via an Arc Soul, there is now a four-second internal cooldown for applying jolt again via this construct.
+
+Strand
+
+Grapple Tangles
+
+- Fixed an issue where players who didn't have the Grapple Grenade equipped could Grapple Punch from a free grapple.
+
+#### Titan
+
+Sunbreaker
+
+NEW: Shieldburst (Aspect)
+
+Enhances your equipped barricade with Solar capabilities.
+
+- Towering Barricade: Your barricade slides forward across the ground before stopping, allowing you to advance in safety.
+- Rally Barricade: Standing behind your barricade grants scorching rounds to your allies' Solar and Kinetic weapons.
+
+Hammer Strike (Melee)
+
+- Increased damage versus combatants by 100%.
+
+Sentinel
+
+Ward of Dawn (Super)
+
+Ward of Dawn now has a core object that destroys the ward if it's destroyed.
+
+- The casting Titan can pick up the core object and throw it to relocate the Ward up to two times.
+
+Offensive Bulwark (Aspect)
+
+While the player has a Void Overshield, final blows now grant melee ability energy.
+
+- The grenade energy generation has also been rolled into this and is now granted on final blow instead of as increased recharge rate.
+
+Unbreakable (Aspect)
+
+- Final blows with Unbreakable's blast now grant Devour.
+- Slightly increased the size of Unbreakable's blast.
+
+Bastion (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Shield Bash (Melee)
+
+- Increased damage vsersus combatants by 100%.
+
+Striker
+
+Thruster (Class Ability)
+
+- Can now be activated while airborne.
+
+Knockout (Aspect)
+
+- No longer grants a lunge-range increase vs. enemy players.
+
+Touch of Thunder (Aspect)
+
+Lightning Grenade
+
+- Now grants five stacks of Bolt Charge per hit.
+
+Flashbang Grenade
+
+- The blinding pulse on first bounce now deals damage.
+
+Storm Grenade
+
+- Increased storm duration by 0.5 seconds.
+- Increased maximum tracking speed versus combatants by 38%.
+- Increased time to reach max tracking speed by 25%.
+
+Seismic Strike (Melee)
+
+- Increased damage versus combatants by 100%.
+
+Knockout
+
+- Corrected an issue where the bonus damage could be applied too early, increasing the damage of the melee that activated it and causing unexpected one hit kills in Crucible.
+
+Behemoth
+
+Tectonic Harvest (Aspect)
+
+While you have Frost Armor, defeating an enemy with a Stasis or Kinetic weapon has a chance to shatter the enemy, dealing damage around the shattered enemy.
+
+- This chance increases based on how many Frost Armor stacks you have.
+
+Diamond Lance (Aspect)
+
+- Decreased size of freeze detonation from thrown Diamond Lance versus players.
+
+Cryoclasm (Aspect)
+
+- Sliding while you have Frost Armor now launches a Stasis wave that shatters Stasis Crystals and frozen enemies in front of you.
+
+Glacial Quake (Super)
+
+- Heavy attacks now deal additional damage in an area in front of the Titan.
+
+Berserker
+
+Drengr's Lash (Aspect)
+
+- Defeating elementally debuffed targets now grants Class Ability energy.
+- Increased Fragment slots from two to three.
+- The suspending wave's impact damage now scales with your Class stat when your Class stat is above 100.
+
+Hunter
+
+Nightstalker
+
+NEW: Phantom Surge (Melee)
+
+- Dash forward, slashing combatants as you pass through them. Deals significantly increased damage to Void-debuffed targets and targets marked by On The Prowl.
+- Generate Void Overshield for each combatant hit. Defeating at least one combatant grants additional Overshield and refunds some melee ability energy.
+
+Trapper's Ambush (Aspect)
+
+Now deals significant area damage on impact instead of creating a smoke cloud.
+
+- Damage and radius is increased if cast while you have a Void buff.
+
+On the Prowl (Aspect)
+
+- In addition to acquiring a target when you become invisible, can now also passively acquire a target after a short time if you're not invisible.
+
+Smoke Bomb (Melee)
+
+- Now natively grants invisibility to yourself and allies on deployment.
+
+Mobius Quiver (Super)
+
+- Reduced maximum Moebius Quiver buff to Crossbow weapons by 50%.
+
+Gunslinger
+
+NEW: Crackshot (Aspect)
+
+- Activate your class ability to fire up to three scorching shots at targets you've marked. Aim at targets to mark them.
+- Landing all three shots cures you.
+
+Acrobat's Dodge (Class Ability)
+
+- Now can be activated while airborne.
+
+Proximity Explosive Knife (Melee)
+
+- Increased detonation size from 5 to 6 meters.
+- Increased detonation damage from 90 to 100.
+
+On Your Mark (Aspect)
+
+- Now grants Solar Restoration x1 for 3 seconds after final blows at ten stacks.
+- Final blows with Red Death Reformed grant Cure 1 + Resto 1 for 3 sec.
+
+Knock 'em Down (Aspect)
+
+- Now grants Cure on super activation.
+
+Gunpowder Gamble (Aspect)
+
+- Fixed an issue where the Gunpowder Gamble projectile could remain in the Hunter's hand after throwing it.
+
+Blade Barrage (Super)
+
+- Increased knife projectile speed and tracking.
+- Increased knife detonation size from 3 to 4.25 meters.
+- Increased knife detonation damage by 10%.
+- Knife detonations now Scorch enemies.
+
+Golden Gun: Deadshot (Super)
+
+- Reduced super-energy gain from player kills by 40%.
+
+Arcstrider
+
+Arc Staff (Super)
+
+- Now grants Bolt Charge stacks on kill.
+
+Lethal Current (Aspect)
+
+- Now jolts and creates an aftershock when used with Tempest Strike.
+- Now can be activated while in Super.
+- Fixed an issue where Lethal Current would sometimes deactivate before providing the aftershock benefits.
+
+Ascension (Aspect)
+
+- Ascension detonation damage now scales with your Class stat when your Class stat is above 100.
+- Now counts as a class ability for all perks and abilities.
+
+Threadrunner
+
+Rope Dart (Melee)
+
+- Successfully catching the rope dart now grants Woven Mail based on the number of targets it defeated.
+
+Widow's Silk (Aspect)
+
+- Increased Fragment slots from two to three.
+- Fixed a bug where Widow's Silk was not granting an extra grapple charge when using Silkstrike.
+
+Threaded Specter (Aspect)
+
+- The specter's detonation damage now scales with your Class stat when your Class stat is above 100.
+
+Ensnaring Slam
+
+- Now counts as a class ability for all perks and abilities.
+
+Revenant
+
+Grim Harvest (Aspect)
+
+While you have Frost Armor, defeating an enemy with a Stasis or Kinetic weapon has a chance to shatter the enemy, dealing damage around the shattered enemy.
+
+- This chance increases based on how many Frost Armor stacks you have.
+
+Shatterdive (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Winter's Shroud (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Prismatic
+
+Ascension (Aspect)
+
+- Can now activate the Winter's Shroud Aspect on cast.
+
+#### Warlock
+
+Voidwalker
+
+NEW: Soul Siphon (Aspect)
+
+- Ready this aspect by striking a foe with your powered melee ability.
+- Once readied, press your melee ability to begin siphoning energy from all enemies in front of you, dealing damage and gathering Overshield and class ability energy from each target.
+
+Child of the Old Gods (Aspect)
+
+- Now suppresses combatants for a short time after initial attach.
+- Increased the Child's max speed and acceleration by 100%.
+- Increased Fragment slots from two to three.
+- Fixed an issue where defeating enemies who were being drained by the Child with weapons would not provide class-ability energy.
+
+Nova Bomb: Cataclysm (Super)
+
+- Allied projectiles now pass through the Nova Bomb projectile instead of colliding with it.
+
+Dawnblade
+
+Heat Rises (Aspect)
+
+- While Heat Rises is active, now reduces the accuracy of combatant attacks versus the Warlock.
+
+Hellion (Aspect)
+
+- Reduced maximum target acquisition range from 40 to 32 meters.
+
+Icarus Dash (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Stormcaller
+
+Chain Lightning (Melee)
+
+- Increased damage vs. combatants by 100%.
+- Now has two ability charges by default.
+
+Arc Soul (Aspect)
+
+- Reduced maximum target acquisition range from 30 to 24 meters.
+
+Lightning Surge (Aspect)
+
+- Increased Fragment slots from two to three.
+
+Shadebinder
+
+Glacial Harvest (Aspect)
+
+- All Stasis subclasses now create Shatter Shards intrinsically.
+- Glacial Harvest gives Frost Armor when you pick up a Shatter Shard.
+- While you have Frost Armor, defeating an enemy with a Stasis or Kinetic weapon has a chance to shatter the enemy, dealing damage around the shattered enemy.
+- While you have Frost Armor, taking damage now grants grenade energy.
+- Decreased Fragment slots from three to two.
+
+Frostpulse (Aspect)
+
+- Now grants five stacks of Frost Armor if this ability freezes a target.
+- Increased Fragment slots from two to three.
+
+Winter's Wrath (Super)
+
+- Winter's Wrath projectiles now prioritize targets in alignment with their trajectory over closer targets.
+
+Broodweaver
+
+Mindspun Invocation (Aspect)
+
+- Threadling Grenade no longer creates perched Threadlings when consumed. Instead, Threadling Grenade can now be charged and thrown, spawning a Threadling nest (similar to Service of Luzaku) on impact.
+
+The Wanderer (Aspect)
+
+- Threadling final blows now reduce your Tangle cooldown by one second.
+
+Weavewalk (Aspect)
+
+- Melee attacks can no longer interrupt the Weavewalk exit animation.
+
+Needlestorm (Super)
+
+- Fixed an issue where Needlestorm projectiles would not track certain bosses.
+
+Healing Rift and Empowering Rift
+
+- Fixed an issue where Warlock Rifts could spawn under the ground if the player was throttling towards certain environmental objects.
+
+### Artifacts 2.0
+
+Introducing Artifacts 2.0:
+
+Brought back a selection of Artifacts from previous Seasons, all of which have been updated to the Artifacts 2.0 system.
+
+- Players will have access to a total of seven Artifacts.
+
+Removed Anti-Champion mods from all available Artifacts, as this functionality has been moved to being intrinsic to all weapons.
+
+- See our Anti-Champion 2.0 section.
+
+Queensfoil Censer
+
+Torch
+
+- No longer increases damage versus bosses.
+
+Heart of the Flame
+
+- Reduced top end to 15% increased damage for Supers based on nearby allies from 21%.
+
+Bring into Being
+
+- Set equal to wearing three pieces of old season armor, perk can activate if the user has 60% Super energy or more.
+
+Dragons Bite
+
+- Set to the value of wearing three pieces of armor, every three kills.
+
+Creeping Chill
+
+- Now works with any Stasis defeat instead of just weapons. Also grants Frost Armor to allies near the explosion radius.
+
+Solo Operative
+
+- Updated to be "precision final blows grant a scaling damage benefit with weapons until the user dies."
+
+Slayer Baron Apothecary Satchel
+
+Wind Chill
+
+- Precision damage is no longer required to activate this perk.
+
+Debilitating Wave
+
+- Significantly increased the tracking capabilities of the wave.
+
+Curative Orbs
+
+- This perk no longer activates when picking up a Tangle but instead when destroying a Tangle (either by shooting it or upon impact after throwing it).
+
+Void Renewal
+
+- The benefits from the old artifact perk Frenzied Hunger are now also granted upon collecting a Void Breach. Slightly increased these benefits to match the new activation requirement.
+
+Kinetic Impacts
+
+- Special and Primary ammo Grenade Launchers can now also trigger this perk. The shockwave from Special and Primary ammo Grenade Launchers deals less damage than from Heavy Grenade Launchers.
+- The benefits from the old artifact perk 'Rapid Impacts' has been rolled into this perk.
+
+Old God's Rite
+
+- Increased the base damage of the projectiles by roughly 200%. In addition to this, the projectiles deal 85% more damage to orange bars, and 200% more damage to red bars.
+
+Concussive Reload
+
+- This has been replaced with Weakened Clear. Armor of Eramis has been replaced with Frost Renewal.
+
+Finders Keepers
+
+- This has been replaced with Killing Breeze.
+
+Killing Breeze
+
+- Increased the duration from five to seven seconds.
+
+The boost and/or seasonal gear bonus on these perks has been rolled into the base perk.
+
+- Wind Chill
+- Crystalline Converter
+- Total Carnage
+- Power From Pain
+- Trace Evidence
+- The Thick of It
+- Hail the Storm
+- Debilitating Wave
+- Retinal Burn
+- Curative Orbs
+- Void Renewal
+- Old God's Rite
+
+The boost and/or seasonal gear bonus on these perks has been removed.
+
+- Killing Breeze
+- Wind Chill
+- Brain Freeze
+- Conductive Cosmic Crystal
+
+Hunters Journal
+
+Sword Stamina
+
+- Decreased ammo granted to special swords on three rapid kills from three ammo to one ammo.
+
+Sustained Fire
+
+- Decreased from Resist x3 to Resist x2.
+
+Sustained Fire
+
+- Now works with Support Auto Rifles.
+
+Shieldcrush
+
+- Updated to work with the Melee and Grenade stats.
+
+Transference
+
+- Decreased number of kills needed for the max payout from 20 to 12.
+
+Tablet of Ruin
+
+Volatile Marksman
+
+- Boost portion ICD has been removed.
+
+Elemental Siphon
+
+- Increased Super energy for picking up a matching pickup from 3% to 5%.
+
+Vile Weave
+
+- Increased how many seconds are removed from Tangle cooldown from one to four seconds.
+
+Flashover
+
+- Damage bonus reduced from 150% to 50%.
+
+No Bell
+
+- Updated to be additive melee stacking at 85% (former high end), increased duration by 0.5 seconds.
+
+Heavy Ordinance Regeneration
+
+- Increased benefits timer from nine to ten seconds.
+
+Limit Break
+
+- Decreased benefit from 30% to 15%.
+
+Gold from Lead
+
+- Decreased proc rate by ~50%.
+
+Particle Reconstruction
+
+- Increased the minimum shots to proc by ~70%.
+
+Implement of Curiosity
+
+Pack Tactics
+
+- Increased maximum duration from seven to ten seconds.
+
+Elemental Daze
+
+- Decreased damage of the blast by 25%.
+
+Elemental Coalescence
+
+- Increased chance of creating the elemental pickup by 20%.
+
+Energy Acceleration
+
+- Updated string to reference behavior vs Unstoppable Champions.
+
+Solar Shrapnel
+
+- Updated spawning behavior to match Horde Shuttle. This will increase its potential in roaming content and reduce it versus bosses.
+
+Elemental Overdrive
+
+- Increased boost from 10% to 22% to match 3x surge.
+
+Iron Lord's Vigor
+
+- Decreased ammo granted to special swords on three rapid kills from three ammo to one ammo.
+
+Encrypted Data Disc
+
+Kinetic Ammo Synthesis
+
+- Decreased ammo generation for Heavy weapons and Praxic Blade by 50%.
+
+Payday
+
+- Decreased Super energy generation by 5%.
+
+Snipers Meditation
+
+- Decreased the damage bonus by 5%.
+
+NPA Repulsion Regulator
+
+Improved Unraveling
+
+- Increased PvE damage bonus from 10% to 15%.
+
+Bricks from Beyond
+
+- Now grants Heavy ammo bar progress instead of bricks.
+
+Supernova
+
+- PvE weaken duration increased from six to eight seconds.
+
+Lightning Strikes Twice
+
+- Now works with the Grenade stat.
+
+### Power and Progression
+
+Power caps will not be increasing and Power level will not be reset.
+
+- The hard cap remains 550 Power and all your items will maintain their current Power levels.
+
+Portal Activity Reward Power
+
+The Power of Portal Activity rewards are no longer capped per the difficulty level selected.
+
+- Earning an "A" grade (for example) will drop rewards at the same Power level, regardless of which difficulty you played.
+
+The Power of Portal Activity rewards has been increased, allowing for faster progression.
+
+- "A" grades or higher will now continue to award positive Power progression all the way to the hard cap of 550.
+- Higher grades will continue to provide larger Power bonuses.
+
+Miscellaneous rewards from sources throughout the game (such as pre-The Edge of Fate content) have been buffed.
+
+- These rewards will no longer be capped at 300 Power.
+- These rewards now have a chance to drop +1 Power up to 400 Power.
+- After 400 Power, these rewards will drop close to, but below, your current Power level.
+
+Rewards purchased from legacy vendors have been buffed.
+
+- These rewards will no longer be capped at 300 Power.
+- These rewards will drop close to, but below, your current Power level.
+
+### Currencies and Materials
+
+Updated max stack size limits on the following currencies:
+
+Strange Coins
+
+- New Limit: 777
+
+Enhancement Cores
+
+- New Limit: 9999
+
+Enhancement Prisms
+
+- New Limit: 200
+
+Ascendant Shard
+
+- New Limit: 50
+
+Ascendant Alloy
+
+- New Limit: 50
+
+Raid Banner
+
+- New Limit: 999
+
+#### Experience
+
+- Fixed incorrectly assigned Collections reacquisition costs for several Ghost Shells, Ships, and Sparrows released since Episode: Revenant.
+- The weekly rest bonus remains available for the first 250K XP earned each week.
+- The weekly catch-up bonus introduced for the Lawless Rewards Pass has been removed. This bonus had further increased bonus XP each week to help keep Pass progression on track ahead of a Pass’ expiration date. Since the Lawless Rewards Pass has ended and the Triumphant Rewards Pass will not expire, this bonus has been retired.
+
+#### Bright Dust
+
+Increased Bright Dust gains across almost all weekly sources. On an annual basis, these increased earn rates will offset the loss of Bright Dust from new Rewards Passes and Seasonal Events.
+
+Active Orders (before Weekly Softcap): 1500 total (up from 1000)
+
+- 10 per Normal, 100 per Legendary, 200 per Exotic. These rates are unchanged.
+
+Active Orders (after Weekly Softcap): Uncapped
+
+- 10 per 10 Normal, 20 per Legendary, 30 per Exotic. Legendary Order earn rate has been doubled.
+
+Vanguard Alerts: 250 each (up from 50)
+
+- This can be earned twice a week.
+
+#### Chronologs
+
+General Updates
+
+Commander Zavala’s offer to acquire the previous week’s Vanguard Arsenal Credits will no longer cost Bright Dust. It will instead cost up to 200 Chronologs:
+
+- 100 Chronologs awards the first Arsenal Credit, unlocking three weapon choices
+- The fourth and fifth weapon choices can be unlocked for 50 Chronologs each.
+
+Increased Chronolog gains across all Weekly sources.
+
+Vanguard Alerts: 200 total (Up from 50).
+
+- This can be earned once a week.
+
+### Vendors
+
+Ada-1
+
+Added additional shaders to Ada-1's shader inventory:
+
+Four Unreleased Shaders:
+
+- Alchemy Scorch
+- Bonemeal Loam
+- Brineglow
+- Charred Plumage
+
+Increased number of available shaders per week from three to six.
+
+- Still randomly rotates through available shaders each week.
+
+Updated Threader Bounty Reset:
+
+No longer resets seasonally, instead players will earn one additional threader bounty, per class, per week.
+
+- New bounties available each week at weekly reset.
+- Maximum number of available Threader Bounties, per class, is ten.
+
+Drifter
+
+Updated Gambit Focusing:
+
+- Gear additions
+- Tired focusing will utilize Gambit engrams.
+- Now includes focusing for all tiered Gambit gear.
+
+Lord Shaxx
+
+Updated Crucible Focusing:
+
+Now includes focusing for all tiered Crucible and Competitive Crucible gear.
+
+Tiered Focusing will utilize Crucible engrams.
+
+- Competitive Crucible gear will require Crucible Ciphers which can be obtained via Competitive Crucible.
+
+Commander Zavala
+
+Updated Vanguard Focusing:
+
+Now includes focusing for all tiered Solo Ops, Fireteam Ops, Arena Ops and Pinnacle Ops gear.
+
+Tiered Focusing will utilize Vanguard engrams.
+
+Pinnacle Ops and Arena Ops gear will require Vanguard Ciphers which can be obtained via Pinnacle Ops and Arena Ops activities.
+
+- Nightfall Ciphers that players may have in their inventory will be automatically updated to Vanguard Ciphers.
+
+Saint-14
+
+Updated Trials Focusing:
+
+Now includes focusing for all tiered Trials gear.
+
+- Gear additions
+- Includes Tiered gear from the Edge of Fate, Ash & Iron, and Renegades.
+- Focusing will utilize Trials engrams.
+
+Saladin
+
+Updated Iron Banner Focusing:
+
+Now includes focusing for all tiered Iron Banner gear.
+
+- Gear additions
+- Includes Tiered gear from the Edge of Fate, Ash & Iron, and Renegades.
+- Focusing will utilize Iron Banner Ciphers, obtained through Iron Banner match completions.
+
+Banshee-44
+
+Gunsmith Reputation Rank Reward Track has been restored.
+
+- Dismantling weapons and armors gives Gunsmith Reputation again.
+
+Updated Gunsmith Focusing:
+
+- Now includes Shared Pool weapons from previous releases.
+
+Hawthorne
+
+- Includes Tiered gear from the Edge of Fate, Ash & Iron, and Renegades.
+- Updated Clan engrams to give tiered gear.
+
+Xûr
+
+Xûr's Reputation Rank Reward Track has been restored.
+
+- Purchasing items from Xur grants reputation.
+
+Xûr's Inventory has been updated:
+
+- New Catalysts
+- Tiered Armor
+
+Lodi
+
+- Lodi is now in the Tower. You can find him enjoying his coffee in the Bazaar near Ikora, upstairs in New Monarchy's old space.
+
+## Identity and Expression
+
+### Expanded Ornaments for Exotic Armor
+
+All qualities of Armor Ornament from Common to Legendary can now be applied to the currently equipped Exotic armor alongside Universal Exotic Ornaments.
+
+- If the ornament is not specifically parented to the equipped Exotic armor, its visuals will be temporarily disabled in PvP content.
+- Special visual cues or effects applied by ornaments that are not specifically parented to the equipped Exotic armor may not be visible.
+
+#### General Fixes
+
+- Exotic Ornaments have been added to Collections.
+- The Death+∞ ornament for Suros Regime will now appear in Collections.
+- The icon for the Reefmade shader has been updated to better communicate its purple themes.
+- The tooltips for the Singular Mercenary, Devoted Warrior, and Noble Partisan armor ornament sets will now correctly note these are associated with a partnership.
+- The Polar Wolf helm for Hunters inadvertently shipped without its ears. We have added a second version of the ornament that includes the ears while leaving the original intact. Existing and future owners of the Hunter version of the Polar Wolf Set can claim this additional version from the Special Deliveries kiosk in the Tower.
+- The Positive Practice emote inadvertently shipped without its intended audio. This has been added to the emote. We’re investigating adding an alternate version of this emote without its audio for those who may prefer that version.
+- Updated the Chlorophyta Mask/Helm/Hood from the Reclamation Rewards Pass to reduce a persistent yellow effect, better aligning its visuals with the Chlorophyta Armor Set.
+
+## General
+
+### Product Updates
+
+The Year of Prophecy Deluxe Edition and the Year of Prophecy Ultimate Edition have been retired.
+
+The New Land Beyond Exotic and its catalyst will now be available to new and existing owners of either The Edge of Fate Standard Edition or Renegades Standard Edition. These can be claimed from the Special Deliveries Kiosk in the Tower.
+
+- New Land Beyond will also be available on the Monument of Lost Lights for owners of either expansion.
+
+All owners of The Edge of Fate: Standard Edition who had purchased prior to the release of Renegades will now retroactively receive both the Reclamation Rewards Pass and the Ash & Iron Rewards Pass if unowned.
+
+- All purchases of The Edge of Fate: Standard Edition since Renegades launched already provided both passes. This remains unchanged.
+
+All owners of Renegades: Standard Edition will now receive both the Lawless Rewards Pass and the Triumphant Rewards Pass as part of their purchase.
+
+For new and future purchasers of Renegades Standard Edition, the Lawless Rewards Pass will be unlocked on the Monument to Seasons Past.
+
+- If the account played during Lawless and acquired enough progress to earn ranks, some rewards will be ready to claim.
+- Any remaining items can be acquired for Chronologs like any other expired Pass.
+
+Destiny 2: The Collection is now available on all platforms. This collection offers all Standard Editions and Legacy Packs for each expansion in one product, along with the Dungeon Keys for The Witch Queen, Lightfall, and The Final Shape and the four Reward Passes from Year of Prophecy.
+
+- Dungeon Keys remain available in the Eververse individually or in a pack. These will show as Owned if the Keys are acquired from Destiny 2: The Collection.
+
+### Destiny Announcements
+
+The Destiny Announcements screen has been added to orbit. This screen houses up to thirty-six of the most recent messages shared by the Destiny team.
+
+- This will allow you to refer to announcements that you may want or need to re-read, may have missed, or had accidentally dismissed for up to thirty days after receipt, after which they will naturally expire and be removed.
+
+### Rewards Pass Updates
+
+General
+
+- The Announcements screen also includes a Featured Item carousel including standing messages and information about relevant content.
+- The expiration timer has been removed.
+- The repeatable 5-Rank and 10-Rank offers in the Eververse have been retired.
+
+Rewards Track
+
+The Score Boost for Portal Activities has been replaced with a Minor XP Boost.
+
+Once an account has earned five levels of the Minor XP Boost across both the Lawless Rewards Pass and the Triumphant Rewards Pass, the Minor XP Boost will be capped at 15%.
+
+- Any remaining Ranks on the Triumphant Reward Pass that would provide a Minor XP Boost will instead award ten Enhancement Cores.
+
+### Monument to Seasons Past Updates
+
+General
+
+- The Ash & Iron Rewards Pass and the Lawless Rewards Pass have been added to the Monument to Seasons Past.
+- The seasonal armor bundles for the Year of The Final Shape have been added to their relevant Episodes.
+
+Exchange
+
+The Chronolog Exchange has been updated to support a weekly or bi-weekly purchase cycle for every resource. Below we’ve listed the items offered with their individual Chronolog (CL) cost and how many can be purchased per-week:
+
+- Enhancement Prism: 50 Chronologs, 10x per week.
+- Ascendant Alloy: 200 Chronologs, 1x per week.
+- Ascendant Shard: 300 Chronologs, 1x per week.
+- Deepsight Harmonizer: 300 Chronologs, 1x per two weeks.
+- 7x Strange Coins: 50 Chronologs, 10x per week.
+- Synthweave Template: 500 Chronologs, 1x per two weeks.
+- Exotic Cipher: 500 Chronologs, 1x per week.
+- Bright Engram: 200 Chronologs, 2x per week.
+- Exotic Engram: 300 Chronologs, 1x per week.
+
+### Evergreen Eververse
+
+General Updates
+
+Ornament Sales from the Appearance screen will feature both Silver and Bright Dust offers from The Witch Queen to today.
+
+- Older items can be acquired from Daily Offers or Bright Engram Focusing in the Eververse.
+
+Daily Offers
+
+Daily Offer categories include:
+
+For Bright Dust: an Exotic Weapon Ornament slot, an Armor Ornament slot, an Exotic emote slot, a slot for each major Exotic accessory (Ghost Shell, Ship, and Vehicle), two emote slots, a Legendary Ghost Projection Slot, four Legendary Shader slots, and three Legendary Transmat Effect slots
+
+- The Armor Ornament slot includes both Exotic Armor Ornaments and Legendary Armor Augments that pair with an Exotic armor for the current class, but not individual parts of Legendary Armor Ornament Sets. These can instead be acquired as packs or from Focused Engrams.
+- The Vehicle slot includes both Sparrows and Skimmers.
+- The Emote slots include both Legendary and Rare emotes.
+
+For Silver: two Exotic emote slots, one slot for each major Exotic Accessory (Ghost Shell, Ship, and Vehicle), and three slots for Legendary Emotes and Finishers.
+
+- The Vehicle slot includes both Sparrows and Skimmers.
+
+No items are shared between slots of the same currency and type. For example, the Grillmaster Ghost Shell can appear for Silver or Bright Dust, but the Occultation Shader will only appear in one of the four Shader Bright Dust slots.
+
+- The same item can appear for Silver and Bright Dust in the same day, just like two independent decks of cards can both have the same card next in line at the same time.
+
+Legends
+
+The Legends tab has been refreshed to house content from our Featured Partners.
+
+- Items on this tab will be available for as long as Destiny 2 is permitted to offer them, after which they will be retired.
+- Partner items will only be available for Silver and will not be available outside of this tab.
+- When all items in the Legends tab are eventually retired, this tab will automatically be removed from the Eververse.
+
+Seasonal Offerings / Archive
+
+The Archive will house Armor Ornament Set Packs, Weapon Ornament Packs, Shader Packs, Skimmer Packs, and Holochips offered prior to Monument of Triumph.
+
+- This includes all previous Holiday Event armors, available for both Silver and Bright Dust.
+
+Except for the free Runner Kit, the full contents of each pack in Seasonal Offerings or the Archive - including every Silver-only Armor Ornament Set and new item added in Monument of Triumph - can also be acquired through Focused Bright Engrams.
+
+- Any components of a pack that match the category of a Daily Offer slot, like a Weapon Ornament, will eventually appear in Daily Offers as well.
+
+### Bright Engram Focusing
+
+Several Focused Engrams have more items in them than can be shown in the preview of their contents, but will not drop duplicates, and their contents are finite.
+
+- When a Focused Engram has been completely emptied, its preview will be empty and additional purchases of that Engram will be blocked.
+
+· Legendary Accessories – Ghosts, Ships, and Vehicles together
+
+· Legendary Shaders
+
+· Legendary Flair – Holochips, Ghost Holograms, and Transmat Effects together.
+
+· Exotic Accessories – Ghosts, Ships, Vehicles individually, with Skimmers included in Vehicles.
+
+· Legendary Emotes – Single-Player & Multiplayer together
+
+· Legendary Finishers
+
+· Exotic Weapon Ornaments
+
+· Exotic Emotes – Single-Player & Multiplayer together
+
+· Legendary & Exotic Armor Ornaments – individual engrams per class and slot combination.
+
+| For one (1) Eververse Engram + |
+| --- |
+| 0 Bright Dust | · Standard Decryption with no focusing |
+| 300 Bright Dust |
+| 600 Bright Dust |
+| 900 Bright Dust |
+
+Legacy Engrams
+
+- Bright Engram Focusing costs per category are:
+- Bright Engram Focusing will also provide a one-to-one exchange for Legacy Engrams if present in your Engram inventory. Eligible legacy engrams include:
+
+| S1: Bright Engram | S4: Steadfast Engram | S6: Jubilant Engram |
+| --- | --- | --- |
+| S2: Illuminated Engram | S4: Ephemeral Engram | S7: Best of Year 1 Engram |
+| S2: Dawning Engram | S5: Etched Engram | S8: Nostalgic Engram |
+| S2: Crimson Engram | S5: Winterdrift Engram | S9: Fond Memories Engram |
+| S3: Prototype Engram | S5: Crimson Engram | S10: Luminous Engram |
+| S3: Solstice Engram | S6: Notorious Engram | S11: Mnemonic Engram |
+
+This site uses cookies to provide you with the best possible user experience. By clicking 'Accept', you agree to the policies documented at Cookie Policy and Privacy Policy.Accept
