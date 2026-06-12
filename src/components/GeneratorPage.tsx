@@ -85,11 +85,42 @@ function MetaStrip({ count, summary }: { count: number; summary: string }) {
   );
 }
 
+function ResultActions({
+  onRegenerate,
+  onVariation,
+}: {
+  onRegenerate: () => void;
+  onVariation: () => void;
+}) {
+  const buttonClass =
+    "text-xs border border-line px-4 py-1.5 text-muted hover:text-foreground hover:border-foreground/40 transition-colors focus-visible:outline-accent";
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <button type="button" onClick={onRegenerate} className={buttonClass}>
+        Regenerate
+      </button>
+      <button type="button" onClick={onVariation} className={buttonClass}>
+        Try a Different Angle
+      </button>
+    </div>
+  );
+}
+
+/** Augments the original request so the model steers away from the last build. */
+function variationRequest(request: BuildRequest, response: BuildApiResponse): BuildRequest {
+  const avoidExotic = response.sheet.exoticArmor.requestedName;
+  const directive = `Produce a meaningfully different build than "${response.build.name}": pick a different exotic armor piece than ${avoidExotic} and a different core engine.`;
+  const notes = request.notes ? `${request.notes}\n${directive}` : directive;
+  return { ...request, notes };
+}
+
 export function GeneratorPage() {
   const [state, setState] = useState<GeneratorState>({ phase: "idle" });
+  const [lastRequest, setLastRequest] = useState<BuildRequest | null>(null);
 
   const handleSubmit = async (req: BuildRequest) => {
     const ac = new AbortController();
+    setLastRequest(req);
     setState({ phase: "generating", abortController: ac });
 
     try {
@@ -156,6 +187,14 @@ export function GeneratorPage() {
               count={state.response.toolCallCount}
               summary={state.response.researchSummary}
             />
+            {lastRequest && (
+              <ResultActions
+                onRegenerate={() => void handleSubmit(lastRequest)}
+                onVariation={() =>
+                  void handleSubmit(variationRequest(lastRequest, state.response))
+                }
+              />
+            )}
             <BuildSheet sheet={state.response.sheet} />
             <ExportPanel exports={state.response.exports} build={state.response.build} />
           </>
