@@ -49,6 +49,14 @@ export function getBungieOAuthConfig(): BungieOAuthConfig | null {
   return { apiKey, clientId, clientSecret };
 }
 
+/**
+ * DIM Sync API key for dim.gg loadout shares; null when not configured.
+ * Self-service for localhost dev: POST https://api.destinyitemmanager.com/new_app
+ */
+export function getDimApiKey(): string | null {
+  return readTrimmed("DIM_API_KEY");
+}
+
 export function getSessionSecret(): string | null {
   const secret = readTrimmed("SESSION_SECRET");
   if (!secret || secret.length < 32) return null;

@@ -47,7 +47,25 @@ npm run dev                        # http://localhost:3000
 
 Copy `.env.local.example` to `.env.local`. All variables are optional except
 when using the corresponding feature (Bungie keys for sign-in, `SESSION_SECRET`
-for sessions).
+for sessions, `DIM_API_KEY` for dim.gg shares).
+
+## Using the app
+
+1. **First run**: open **Settings** and click *Refresh manifest*. This
+   downloads the Bungie manifest tables and builds the derived entity stores
+   (requires `BUNGIE_API_KEY`). Generation refuses to run without them.
+2. **Generator** (`/`): pick class/subclass/activity/playstyle, optionally pin
+   an exotic or weapon, and generate. The model researches with manifest tools
+   before composing; the app then resolves every name, flags fuzzy matches,
+   illegal perks, and missing champion coverage, and renders the build sheet.
+   *Regenerate* reruns the same request; *Try a Different Angle* asks for a
+   different exotic and engine.
+3. **Analyzer** (`/analyze`): paste your current loadout (or sign in with
+   Bungie and import a character's equipped gear) and get an assessment,
+   prioritized swaps, and an optimized build sheet.
+4. **Exports**: every build sheet offers a DIM wishlist, Loadout Optimizer
+   parameters, raw JSON, and — when signed in with Bungie and `DIM_API_KEY` is
+   set — a dim.gg share link.
 
 ## Scripts
 
@@ -58,6 +76,7 @@ for sessions).
 | `npm run typecheck` | TypeScript check, no emit                |
 | `npm run test`      | Vitest unit tests                        |
 | `npm run lint`      | ESLint                                   |
+| `npm run build`     | Production build                         |
 
 ## Project layout
 
