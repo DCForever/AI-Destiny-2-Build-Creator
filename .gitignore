@@ -32,6 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
+
+# manifest raw tables + derived entity stores
+/.cache/
+
+# local https certs from next dev --experimental-https
+/certificates/
 
 # vercel
 .vercel
