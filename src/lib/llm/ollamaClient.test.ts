@@ -116,6 +116,37 @@ describe("HttpOllamaClient", () => {
     await expect(client.listModels()).resolves.toEqual(["gemma4", "llama3"]);
   });
 
+  it("sends tool results with tool_name only on the wire", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      jsonResponse({ message: { role: "assistant", content: "ok" }, done: true }),
+    );
+    const client = new HttpOllamaClient({
+      baseUrl: "http://localhost:11434",
+      model: "test",
+      fetchFn,
+    });
+
+    await client.chat([
+      {
+        role: "tool",
+        tool_name: "search_items",
+        tool_call_id: "call_abc",
+        content: '{"matches":[]}',
+      },
+    ]);
+
+    const { init } = firstFetchCall(fetchFn);
+    const body = JSON.parse(String(init.body)) as {
+      messages: Array<Record<string, unknown>>;
+    };
+    expect(body.messages[0]).toEqual({
+      role: "tool",
+      content: '{"matches":[]}',
+      tool_name: "search_items",
+    });
+    expect(body.messages[0].tool_call_id).toBeUndefined();
+  });
+
   it("healthCheck reports unhealthy when listModels rejects", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => new Response("down", { status: 503 }));
     const client = new HttpOllamaClient({
@@ -127,5 +158,29 @@ describe("HttpOllamaClient", () => {
     const result = await client.healthCheck();
     expect(result.healthy).toBe(false);
     expect(result.detail).toContain("503");
+  });
+
+  it("aborts chat when signal is aborted", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetchFn = vi.fn<typeof fetch>(async (_url, init) => {
+      if (init?.signal?.aborted) {
+        throw new DOMException("The operation was aborted.", "AbortError");
+      }
+      return jsonResponse({ message: { role: "assistant", content: "ok" }, done: true });
+    });
+    const client = new HttpOllamaClient({
+      baseUrl: "http://localhost:11434",
+      model: "test",
+      fetchFn,
+    });
+
+    await expect(
+      client.chat([{ role: "user", content: "hi" }], { signal: controller.signal }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(fetchFn).toHaveBeenCalledWith(
+      "http://localhost:11434/api/chat",
+      expect.objectContaining({ signal: controller.signal }),
+    );
   });
 });

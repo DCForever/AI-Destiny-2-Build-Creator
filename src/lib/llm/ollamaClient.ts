@@ -1,69 +1,17 @@
-import { getOllamaConfig } from "@/lib/config/env";
-
-import type { ToolDefinition } from "./toolTypes";
-
-export interface ChatMessage {
-  role: "system" | "user" | "assistant" | "tool";
-  content: string;
-  tool_calls?: { function: { name: string; arguments: Record<string, unknown> } }[];
-  tool_name?: string;
-}
-
-export interface ChatOptions {
-  tools?: ToolDefinition[];
-  format?: Record<string, unknown>;
-  temperature?: number;
-}
-
-export interface ChatResponse {
-  message: ChatMessage;
-  done: boolean;
-}
-
-export interface OllamaClient {
-  chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse>;
-  listModels(): Promise<string[]>;
-  healthCheck(): Promise<{ healthy: boolean; detail: string }>;
-}
-
-const DEFAULT_TIMEOUT_MS = 120_000;
-const BODY_TRUNCATE = 200;
-
-function truncateText(text: string, max = BODY_TRUNCATE): string {
-  if (text.length <= max) return text;
-  return `${text.slice(0, max)}…`;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function parseToolArguments(raw: unknown): Record<string, unknown> {
-  if (isRecord(raw)) return raw;
-  if (typeof raw === "string") {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      return isRecord(parsed) ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
-  return {};
-}
-
-function parseToolCalls(raw: unknown): ChatMessage["tool_calls"] {
-  if (!Array.isArray(raw)) return undefined;
-  const calls: NonNullable<ChatMessage["tool_calls"]> = [];
-  for (const entry of raw) {
-    if (!isRecord(entry) || !isRecord(entry.function)) continue;
-    const fn = entry.function;
-    if (typeof fn.name !== "string") continue;
-    calls.push({
-      function: { name: fn.name, arguments: parseToolArguments(fn.arguments) },
-    });
-  }
-  return calls.length > 0 ? calls : undefined;
-}
+import type {
+  ChatMessage,
+  ChatOptions,
+  ChatResponse,
+  LlmClient,
+  LlmFetchFn,
+} from "./llmClient";
+import {
+  formatLlmFetchError,
+  isRecord,
+  parseToolCalls,
+  readErrorBody,
+} from "./llmClient";
+import { llmFetch } from "./llmFetch";
 
 function parseChatMessage(raw: unknown): ChatMessage {
   if (!isRecord(raw) || typeof raw.role !== "string") {
@@ -102,36 +50,36 @@ function parseTagsResponse(body: unknown): string[] {
   return names;
 }
 
-async function readErrorBody(response: Response): Promise<string> {
-  try {
-    return truncateText(await response.text());
-  } catch {
-    return "(unable to read response body)";
-  }
+function toOllamaMessages(messages: ChatMessage[]): ChatMessage[] {
+  return messages.map((message) => {
+    if (message.role !== "tool") return message;
+    return {
+      role: "tool" as const,
+      content: message.content,
+      tool_name: message.tool_name,
+    };
+  });
 }
 
-export class HttpOllamaClient implements OllamaClient {
+export class HttpOllamaClient implements LlmClient {
   private readonly baseUrl: string;
   private readonly model: string;
-  private readonly fetchFn: typeof fetch;
-  private readonly timeoutMs: number;
+  private readonly fetchFn: LlmFetchFn;
 
   constructor(options: {
     baseUrl: string;
     model: string;
-    fetchFn?: typeof fetch;
-    timeoutMs?: number;
+    fetchFn?: LlmFetchFn;
   }) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
     this.model = options.model;
-    this.fetchFn = options.fetchFn ?? fetch;
-    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.fetchFn = options.fetchFn ?? llmFetch;
   }
 
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     const body: Record<string, unknown> = {
       model: this.model,
-      messages,
+      messages: toOllamaMessages(messages),
       stream: false,
       options: { temperature: options?.temperature ?? 0.2 },
     };
@@ -142,6 +90,7 @@ export class HttpOllamaClient implements OllamaClient {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: options?.signal,
     });
     const parsed: unknown = await response.json();
     return parseChatResponse(parsed);
@@ -167,30 +116,25 @@ export class HttpOllamaClient implements OllamaClient {
   }
 
   private async request(path: string, init: RequestInit): Promise<Response> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const url = `${this.baseUrl}${path}`;
+    // #region agent log
+    fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'ollamaClient.ts:request',message:'llm fetch start',data:{url,signalAborted:init.signal?.aborted??false},timestamp:Date.now(),hypothesisId:'A,C'})}).catch(()=>{});
+    // #endregion
     try {
-      const response = await this.fetchFn(`${this.baseUrl}${path}`, {
-        ...init,
-        signal: controller.signal,
-      });
+      const response = await this.fetchFn(url, init);
       if (!response.ok) {
         const bodyText = await readErrorBody(response);
         throw new Error(`Ollama ${path} failed (${response.status}): ${bodyText}`);
       }
       return response;
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`Ollama ${path} timed out after ${this.timeoutMs}ms`);
-      }
-      throw error;
-    } finally {
-      clearTimeout(timer);
+      // #region agent log
+      fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'ollamaClient.ts:request:catch',message:'llm fetch failed',data:{url,message:error instanceof Error?error.message:'unknown',cause:error instanceof Error&&'cause' in error?String((error as Error&{cause?:unknown}).cause):undefined},timestamp:Date.now(),hypothesisId:'A,C'})}).catch(()=>{});
+      // #endregion
+      throw formatLlmFetchError(url, error);
     }
   }
 }
 
-export function createOllamaClient(): OllamaClient {
-  const { url, model } = getOllamaConfig();
-  return new HttpOllamaClient({ baseUrl: url, model });
-}
+/** @deprecated Use createLlmClient() from createLlmClient.ts */
+export type OllamaClient = LlmClient;

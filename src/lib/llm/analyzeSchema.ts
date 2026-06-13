@@ -45,7 +45,7 @@ export const loadoutAnalysisSchema = z.object({
 });
 export type LoadoutAnalysis = z.infer<typeof loadoutAnalysisSchema>;
 
-/** JSON Schema for Ollama's `format` parameter (analyzer Phase B). */
+/** JSON Schema for Phase B structured output (analyzer). */
 export function analysisJsonSchema(): Record<string, unknown> {
   return z.toJSONSchema(loadoutAnalysisSchema) as Record<string, unknown>;
 }

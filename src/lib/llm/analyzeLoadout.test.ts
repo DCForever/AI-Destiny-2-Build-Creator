@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { analyzeLoadout } from "./analyzeLoadout";
 import type { AnalyzeRequest, LoadoutAnalysis } from "./analyzeSchema";
 import type { GeneratedBuild } from "./buildSchema";
-import type { ChatMessage, ChatOptions, ChatResponse, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, ChatOptions, ChatResponse, LlmClient } from "./llmClient";
 import type { ToolExecutor } from "./toolTypes";
 
 const request: AnalyzeRequest = {
@@ -61,12 +61,12 @@ function assistantMessage(content: string): ChatResponse {
 }
 
 function scriptedClient(composeReplies: string[]): {
-  client: OllamaClient;
+  client: LlmClient;
   chatCalls: { messages: ChatMessage[]; options?: ChatOptions }[];
 } {
   const chatCalls: { messages: ChatMessage[]; options?: ChatOptions }[] = [];
   let composeIndex = 0;
-  const client: OllamaClient = {
+  const client: LlmClient = {
     chat: vi.fn(async (messages: ChatMessage[], options?: ChatOptions) => {
       chatCalls.push({ messages, options });
       if (options?.tools) return assistantMessage("verified findings");

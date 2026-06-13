@@ -6,13 +6,26 @@ import { StatusCard } from "./StatusCard";
 const BUNGIE_ENV_HINT =
   "Set BUNGIE_API_KEY, BUNGIE_CLIENT_ID, BUNGIE_CLIENT_SECRET, SESSION_SECRET in .env.local";
 
-async function loadOllamaStatus(): Promise<{ ok: boolean; lines: string[] }> {
-  const res = await fetch("/api/ollama");
+async function loadLlmStatus(): Promise<{ ok: boolean; lines: string[] }> {
+  const res = await fetch("/api/llm");
   const body: unknown = await res.json();
   const record = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
   const healthy = record.healthy === true;
   const lines: string[] = [];
+  if (typeof record.provider === "string") lines.push(`provider: ${record.provider}`);
+  if (typeof record.active === "string" && record.active !== "primary") {
+    lines.push(`active: ${record.active}`);
+  }
   if (typeof record.detail === "string") lines.push(record.detail);
+  const fallback =
+    typeof record.fallback === "object" && record.fallback !== null
+      ? record.fallback as Record<string, unknown>
+      : null;
+  if (fallback && typeof fallback.provider === "string") {
+    const fbHealthy = fallback.healthy === true ? "healthy" : "unavailable";
+    lines.push(`fallback (${fallback.provider}): ${fbHealthy}`);
+    if (typeof fallback.detail === "string") lines.push(fallback.detail);
+  }
   if (Array.isArray(record.models) && record.models.length > 0) {
     const models = record.models.filter((m): m is string => typeof m === "string");
     if (models.length > 0) lines.push(`models: ${models.join(", ")}`);
@@ -70,9 +83,9 @@ export function SettingsPage() {
       <ManifestCard />
 
       <StatusCard
-        title="Ollama (Local LLM)"
-        description="Local LLM that generates and analyzes builds. Configure with OLLAMA_URL / OLLAMA_MODEL."
-        load={loadOllamaStatus}
+        title="Local LLM"
+        description="Generates and analyzes builds. Set LLM_PROVIDER (openai, ollama, or grok). With grok, OLLAMA_* or a local LLM_URL auto-configures a fallback when Grok is unavailable."
+        load={loadLlmStatus}
       />
 
       <StatusCard

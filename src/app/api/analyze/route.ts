@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { analyzeRequestSchema } from "@/lib/llm/analyzeSchema";
+import { isAbortError } from "@/lib/llm/llmClient";
 import { ManifestNotReadyError, runLoadoutAnalysis } from "@/lib/services";
 
 export const runtime = "nodejs";
@@ -9,7 +10,7 @@ export const maxDuration = 300;
 
 function errorStatus(error: unknown): number {
   if (error instanceof ManifestNotReadyError) return 503;
-  if (error instanceof Error && /Ollama/.test(error.message)) return 502;
+  if (error instanceof Error && /Ollama|OpenAI|LLM/.test(error.message)) return 502;
   return 500;
 }
 
@@ -30,9 +31,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const outcome = await runLoadoutAnalysis(parsed.data);
+    const outcome = await runLoadoutAnalysis(parsed.data, request.signal);
     return NextResponse.json(outcome);
   } catch (error) {
+    if (isAbortError(error)) {
+      return new NextResponse(null, { status: 499 });
+    }
     const message = error instanceof Error ? error.message : "Loadout analysis failed";
     return NextResponse.json({ error: message }, { status: errorStatus(error) });
   }

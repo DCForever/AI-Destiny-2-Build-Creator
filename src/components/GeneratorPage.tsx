@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BuildForm } from "./BuildForm";
 import { BuildSheet } from "./sheet/BuildSheet";
 import { ExportPanel } from "./ExportPanel";
+import { WaitingProgressPanel } from "./WaitingProgressPanel";
 import type { BuildRequest } from "@/lib/llm/buildSchema";
 import type { BuildApiResponse } from "./buildResponse";
 
@@ -13,51 +14,11 @@ type GeneratorState =
   | { phase: "done"; response: BuildApiResponse }
   | { phase: "error"; message: string };
 
-const PROGRESS_STAGES = [
-  "Researching manifest + meta…",
-  "Composing build…",
-  "Validating against manifest…",
-];
-
-function ProgressPanel({ onCancel }: { onCancel: () => void }) {
-  const [stageIdx, setStageIdx] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setStageIdx((prev) => Math.min(prev + 1, PROGRESS_STAGES.length - 1));
-    }, 20_000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="panel-notch p-6" aria-busy="true" aria-label="Generating build">
-      <div className="text-[11px] tracking-widest uppercase text-muted mb-4">
-        Estimated · Generating
-      </div>
-      <div className="space-y-3 mb-6">
-        {PROGRESS_STAGES.map((label, i) => (
-          <div
-            key={label}
-            className={`flex items-center gap-3 ${i <= stageIdx ? "text-foreground" : "text-muted"}`}
-          >
-            <div
-              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                i < stageIdx ? "bg-success" : i === stageIdx ? "bg-accent pulse-line" : "bg-line"
-              }`}
-            />
-            <span className="text-sm">{label}</span>
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={onCancel}
-        className="text-xs text-danger border border-danger/30 px-4 py-1.5 hover:bg-danger/10 transition-colors focus-visible:outline-accent"
-      >
-        Cancel
-      </button>
-    </div>
-  );
+function formatClientFetchError(message: string): string {
+  if (message === "fetch failed" || message === "Failed to fetch") {
+    return "Connection to the app was lost. If generation was still running, ensure LM Studio/Ollama stays open and try again. Check Settings for LLM status.";
+  }
+  return message;
 }
 
 function ErrorPanel({ message, onReset }: { message: string; onReset: () => void }) {
@@ -133,6 +94,9 @@ export function GeneratorPage() {
 
       if (!res.ok) {
         const body = await res.json() as { error: string };
+        // #region agent log
+        fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'GeneratorPage.tsx:handleSubmit',message:'api non-ok response',data:{status:res.status,error:body.error},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         const hint = res.status === 503 ? " — Open Settings to download the manifest." : "";
         setState({ phase: "error", message: `${body.error}${hint}` });
         return;
@@ -145,7 +109,12 @@ export function GeneratorPage() {
         setState({ phase: "idle" });
         return;
       }
-      const message = err instanceof Error ? err.message : "Build generation failed";
+      const message = formatClientFetchError(
+        err instanceof Error ? err.message : "Build generation failed",
+      );
+      // #region agent log
+      fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'GeneratorPage.tsx:catch',message:'client fetch threw',data:{message,name:err instanceof Error?err.name:'unknown',cause:err instanceof Error&&'cause' in err?String((err as Error&{cause?:unknown}).cause):undefined},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       setState({ phase: "error", message });
     }
   };
@@ -174,7 +143,7 @@ export function GeneratorPage() {
         )}
 
         {state.phase === "generating" && (
-          <ProgressPanel onCancel={handleCancel} />
+          <WaitingProgressPanel label="Generating" onCancel={handleCancel} />
         )}
 
         {state.phase === "error" && (

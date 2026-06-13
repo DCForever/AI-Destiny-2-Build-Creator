@@ -18,13 +18,14 @@ import {
   type LoadoutAnalysis,
 } from "./analyzeSchema";
 import { composeJsonWithRetry } from "./composeJson";
-import type { ChatMessage, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, LlmClient } from "./llmClient";
 import { runResearchLoop } from "./toolLoop";
 import type { ToolExecutor } from "./toolTypes";
 
 export interface AnalyzeLoadoutDeps {
-  client: OllamaClient;
+  client: LlmClient;
   executor: ToolExecutor;
+  signal?: AbortSignal;
 }
 
 export interface AnalyzeLoadoutResult {
@@ -47,6 +48,7 @@ export async function analyzeLoadout(
     executor: deps.executor,
     systemPrompt: composeAnalyzeResearchSystemPrompt(metaPack),
     userPrompt: composeAnalyzeUserPrompt(request),
+    signal: deps.signal,
   });
 
   const [, ...conversation] = research.messages;
@@ -61,6 +63,7 @@ export async function analyzeLoadout(
     composeMessages,
     analysisJsonSchema(),
     loadoutAnalysisSchema,
+    deps.signal,
   );
   return {
     analysis,

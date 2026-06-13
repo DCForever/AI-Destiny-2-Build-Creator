@@ -3,8 +3,7 @@
  * rationale ONLY — never hashes. The app resolves names against the manifest
  * entity stores and validates perk/fragment legality afterwards.
  *
- * Converted to JSON Schema (z.toJSONSchema) for Ollama's `format` parameter
- * in Phase B of the generation pipeline.
+ * Converted to JSON Schema (z.toJSONSchema) for Phase B structured output.
  */
 
 import { z } from "zod";
@@ -102,7 +101,7 @@ export const generatedBuildSchema = z.object({
 });
 export type GeneratedBuild = z.infer<typeof generatedBuildSchema>;
 
-/** JSON Schema for Ollama's `format` parameter (Phase B). */
+/** JSON Schema for Phase B structured output. */
 export function buildJsonSchema(): Record<string, unknown> {
   return z.toJSONSchema(generatedBuildSchema) as Record<string, unknown>;
 }

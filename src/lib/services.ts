@@ -12,7 +12,7 @@ import { analyzeLoadout } from "@/lib/llm/analyzeLoadout";
 import type { AnalyzeRequest, LoadoutAnalysis } from "@/lib/llm/analyzeSchema";
 import type { BuildRequest, GeneratedBuild } from "@/lib/llm/buildSchema";
 import { generateBuild } from "@/lib/llm/generateBuild";
-import { createOllamaClient, type OllamaClient } from "@/lib/llm/ollamaClient";
+import { createLlmClient, type LlmClient } from "@/lib/llm/createLlmClient";
 import { createToolExecutor } from "@/lib/llm/tools";
 import { createEntityCache } from "@/lib/manifest/entityCache";
 import { createItemResolver } from "@/lib/manifest/itemResolver";
@@ -26,13 +26,14 @@ import type {
   PerkValidator,
 } from "@/lib/manifest/types/services";
 import { createSearxngClient, type SearxngClient } from "@/lib/search/searxng";
+import { getLlmConfig } from "@/lib/config/env";
 
 export interface Services {
   manifest: ManifestService;
   entityCache: EntityCache;
   resolver: ItemResolver;
   validator: PerkValidator;
-  ollama: OllamaClient;
+  llm: LlmClient;
   searxng: SearxngClient;
 }
 
@@ -56,7 +57,7 @@ function buildServices(manifest: ManifestService, version: string | null): Servi
     entityCache,
     resolver: createItemResolver(entityCache),
     validator: createPerkValidator(entityCache),
-    ollama: createOllamaClient(),
+    llm: createLlmClient(),
     searxng: createSearxngClient(),
   };
 }
@@ -114,15 +115,23 @@ function renderExports(sheet: ResolvedBuildSheet): BuildExports {
 /** Full pipeline: research loop -> composition -> manifest resolution. */
 export async function runBuildGeneration(
   request: BuildRequest,
+  signal?: AbortSignal,
 ): Promise<BuildGenerationOutcome> {
-  const { entityCache, resolver, validator, ollama, searxng } = await getServices();
+  // #region agent log
+  fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'services.ts:runBuildGeneration',message:'pipeline start',data:{className:request.className,subclass:request.subclass,signalAborted:signal?.aborted??false},timestamp:Date.now(),hypothesisId:'C,D'})}).catch(()=>{});
+  // #endregion
+  const { entityCache, resolver, validator, llm, searxng } = await getServices();
+  const llmConfig = getLlmConfig();
+  // #region agent log
+  fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'services.ts:runBuildGeneration',message:'llm config',data:{provider:llmConfig.provider,url:llmConfig.url,model:llmConfig.model},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const meta = await entityCache.getMeta();
   if (!meta) {
     throw new ManifestNotReadyError();
   }
 
   const executor = createToolExecutor({ resolver, cache: entityCache, searcher: searxng });
-  const generated = await generateBuild(request, { client: ollama, executor });
+  const generated = await generateBuild(request, { client: llm, executor, signal });
   const sheet = await resolveBuild(generated.build, request.activity, {
     resolver,
     validator,
@@ -149,15 +158,16 @@ export interface LoadoutAnalysisOutcome {
 /** Analyzer pipeline: research loop -> composition -> manifest resolution. */
 export async function runLoadoutAnalysis(
   request: AnalyzeRequest,
+  signal?: AbortSignal,
 ): Promise<LoadoutAnalysisOutcome> {
-  const { entityCache, resolver, validator, ollama, searxng } = await getServices();
+  const { entityCache, resolver, validator, llm, searxng } = await getServices();
   const meta = await entityCache.getMeta();
   if (!meta) {
     throw new ManifestNotReadyError();
   }
 
   const executor = createToolExecutor({ resolver, cache: entityCache, searcher: searxng });
-  const result = await analyzeLoadout(request, { client: ollama, executor });
+  const result = await analyzeLoadout(request, { client: llm, executor, signal });
   const sheet = await resolveBuild(result.analysis.optimizedBuild, request.activity, {
     resolver,
     validator,

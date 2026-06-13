@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { PromptPreviewDialog } from "@/components/PromptPreviewDialog";
+import { composeAnalyzePromptPreview, type PromptPreview } from "@/lib/llm/composePromptPreview";
 import type { AnalyzeRequest } from "@/lib/llm/analyzeSchema";
 
 const ACTIVITY_OPTIONS = [
@@ -46,6 +48,7 @@ export function AnalyzeForm({
   const [notes, setNotes] = useState("");
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [errors, setErrors] = useState<{ activity?: string; loadout?: string }>({});
+  const [preview, setPreview] = useState<PromptPreview | null>(null);
 
   const validate = (): boolean => {
     const next: { activity?: string; loadout?: string } = {};
@@ -55,16 +58,23 @@ export function AnalyzeForm({
     return Object.keys(next).length === 0;
   };
 
+  const analyzeRequest = (): AnalyzeRequest => ({
+    className,
+    activity: activity.trim(),
+    playstyle: playstyle.trim() || undefined,
+    loadoutText: loadoutText.trim(),
+    notes: notes.trim() || undefined,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit({
-      className,
-      activity: activity.trim(),
-      playstyle: playstyle.trim() || undefined,
-      loadoutText: loadoutText.trim(),
-      notes: notes.trim() || undefined,
-    });
+    onSubmit(analyzeRequest());
+  };
+
+  const handlePreview = () => {
+    if (!validate()) return;
+    setPreview(composeAnalyzePromptPreview(analyzeRequest()));
   };
 
   return (
@@ -171,6 +181,24 @@ export function AnalyzeForm({
       >
         Analyze Loadout
       </button>
+
+      <button
+        type="button"
+        onClick={handlePreview}
+        disabled={disabled}
+        className="w-full py-2.5 text-sm tracking-widest uppercase border border-line text-muted hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-accent"
+      >
+        Preview Prompt
+      </button>
+
+      {preview && (
+        <PromptPreviewDialog
+          open
+          onClose={() => setPreview(null)}
+          title="Analyzer Prompt Preview"
+          preview={preview}
+        />
+      )}
     </form>
   );
 }

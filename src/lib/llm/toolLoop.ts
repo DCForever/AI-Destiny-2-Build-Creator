@@ -1,7 +1,8 @@
 import type { ToolExecutor, ToolName } from "./toolTypes";
 import { MAX_TOOL_CALLS } from "./toolTypes";
 import { buildToolDefinitions } from "./tools";
-import type { ChatMessage, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, LlmClient } from "./llmClient";
+import { throwIfAborted } from "./llmClient";
 
 export interface ResearchLoopResult {
   messages: ChatMessage[];
@@ -27,17 +28,23 @@ async function executeToolCalls(
     count += 1;
     next = [
       ...next,
-      { role: "tool", tool_name: name, content: JSON.stringify(result) },
+      {
+        role: "tool",
+        tool_name: name,
+        tool_call_id: call.id,
+        content: JSON.stringify(result),
+      },
     ];
   }
   return { messages: next, toolCallCount: count };
 }
 
 export async function runResearchLoop(params: {
-  client: OllamaClient;
+  client: LlmClient;
   executor: ToolExecutor;
   systemPrompt: string;
   userPrompt: string;
+  signal?: AbortSignal;
 }): Promise<ResearchLoopResult> {
   const tools = buildToolDefinitions();
   let messages: ChatMessage[] = [
@@ -47,7 +54,8 @@ export async function runResearchLoop(params: {
   let toolCallCount = 0;
 
   while (true) {
-    const response = await params.client.chat(messages, { tools });
+    throwIfAborted(params.signal);
+    const response = await params.client.chat(messages, { tools, signal: params.signal });
     const assistant = response.message;
     messages = [...messages, assistant];
 
@@ -57,7 +65,8 @@ export async function runResearchLoop(params: {
 
     if (toolCallCount >= MAX_TOOL_CALLS) {
       messages = [...messages, { role: "user", content: BUDGET_EXHAUSTED_PROMPT }];
-      const finalResponse = await params.client.chat(messages);
+      throwIfAborted(params.signal);
+      const finalResponse = await params.client.chat(messages, { signal: params.signal });
       messages = [...messages, finalResponse.message];
       return {
         messages,

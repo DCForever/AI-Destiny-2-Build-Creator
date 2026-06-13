@@ -16,7 +16,7 @@ export const TOOL_NAMES = [
 
 export type ToolName = (typeof TOOL_NAMES)[number];
 
-/** JSON-schema-ish tool definition sent to Ollama's `tools` parameter. */
+/** JSON-schema-ish tool definition sent to the LLM `tools` parameter. */
 export interface ToolDefinition {
   type: "function";
   function: {

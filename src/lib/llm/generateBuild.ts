@@ -5,7 +5,8 @@
  * structured build, validated by zod with one corrective retry.
  *
  * Ollama cannot combine tool emission and schema-constrained decoding in a
- * single call, hence the split.
+ * single call, hence the split. The same two-phase split applies to OpenAI-
+ * compatible servers when tools and response_format cannot be combined.
  */
 
 import { renderMetaPack } from "@/data/meta/renderMetaPack";
@@ -17,7 +18,7 @@ import {
   type GeneratedBuild,
 } from "./buildSchema";
 import { composeJsonWithRetry } from "./composeJson";
-import type { ChatMessage, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, LlmClient } from "./llmClient";
 import {
   composeFinalizeSystemPrompt,
   composeResearchSystemPrompt,
@@ -27,8 +28,9 @@ import { runResearchLoop } from "./toolLoop";
 import type { ToolExecutor } from "./toolTypes";
 
 export interface GenerateBuildDeps {
-  client: OllamaClient;
+  client: LlmClient;
   executor: ToolExecutor;
+  signal?: AbortSignal;
 }
 
 export interface GenerateBuildResult {
@@ -51,6 +53,7 @@ export async function generateBuild(
     executor: deps.executor,
     systemPrompt: composeResearchSystemPrompt(metaPack),
     userPrompt: composeUserPrompt(request),
+    signal: deps.signal,
   });
 
   // Replay the research conversation under the composition system prompt.
@@ -66,6 +69,7 @@ export async function generateBuild(
     composeMessages,
     buildJsonSchema(),
     generatedBuildSchema,
+    deps.signal,
   );
   return {
     build,

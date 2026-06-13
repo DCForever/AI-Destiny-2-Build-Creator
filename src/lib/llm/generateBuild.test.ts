@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { BuildRequest, GeneratedBuild } from "./buildSchema";
 import { generateBuild } from "./generateBuild";
-import type { ChatMessage, ChatOptions, ChatResponse, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, ChatOptions, ChatResponse, LlmClient } from "./llmClient";
 import type { ToolExecutor } from "./toolTypes";
 
 const request: BuildRequest = {
@@ -50,12 +50,12 @@ function assistantMessage(content: string): ChatResponse {
 
 /** Client scripted per call: research reply (no tools), then compose replies. */
 function scriptedClient(composeReplies: string[]): {
-  client: OllamaClient;
+  client: LlmClient;
   chatCalls: { messages: ChatMessage[]; options?: ChatOptions }[];
 } {
   const chatCalls: { messages: ChatMessage[]; options?: ChatOptions }[] = [];
   let composeIndex = 0;
-  const client: OllamaClient = {
+  const client: LlmClient = {
     chat: vi.fn(async (messages: ChatMessage[], options?: ChatOptions) => {
       chatCalls.push({ messages, options });
       if (options?.tools) return assistantMessage("research done");

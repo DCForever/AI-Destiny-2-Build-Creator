@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ChatMessage, ChatOptions, ChatResponse, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, ChatOptions, ChatResponse, LlmClient } from "./llmClient";
 import { runResearchLoop } from "./toolLoop";
 import { MAX_TOOL_CALLS } from "./toolTypes";
 import type { ToolExecutor, ToolResult } from "./toolTypes";
@@ -17,7 +17,7 @@ function assistant(content: string): ChatMessage {
   return { role: "assistant", content };
 }
 
-function createScriptedClient(script: ChatMessage[]): OllamaClient {
+function createScriptedClient(script: ChatMessage[]): LlmClient {
   let index = 0;
   return {
     chat: vi.fn(async (_messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> => {
@@ -62,7 +62,7 @@ describe("runResearchLoop", () => {
   });
 
   it("finalizes without tools after MAX_TOOL_CALLS when the model keeps requesting tools", async () => {
-    const client: OllamaClient = {
+    const client: LlmClient = {
       chat: vi.fn(async (_messages: ChatMessage[], options?: ChatOptions) => {
         if (!options?.tools) {
           return { message: assistant("Budget summary with verified notes."), done: true };

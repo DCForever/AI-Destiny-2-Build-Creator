@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { SUBCLASSES_BY_CLASS } from "@/data/subclasses";
+import { PromptPreviewDialog } from "@/components/PromptPreviewDialog";
+import { composeBuildPromptPreview, type PromptPreview } from "@/lib/llm/composePromptPreview";
 import type { BuildRequest } from "@/lib/llm/buildSchema";
-
-const SUBCLASS_OPTIONS = [
-  "Sunbreaker", "Striker", "Behemoth", "Sentinel", "Berserker", "Prismatic Titan",
-  "Gunslinger", "Arcstrider", "Revenant", "Nightstalker", "Threadrunner", "Prismatic Hunter",
-  "Dawnblade", "Stormcaller", "Shadebinder", "Voidwalker", "Broodweaver", "Prismatic Warlock",
-];
 
 const ACTIVITY_OPTIONS = [
   "Grandmaster Nightfall", "Master Raid", "Raid", "Dungeon",
@@ -51,9 +48,13 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [preview, setPreview] = useState<PromptPreview | null>(null);
 
   const set = (key: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const setClassName = (className: BuildRequest["className"]) =>
+    setForm((prev) => ({ ...prev, className, subclass: "" }));
 
   const validate = (): boolean => {
     const next: Partial<Record<keyof FormData, string>> = {};
@@ -64,18 +65,25 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
     return Object.keys(next).length === 0;
   };
 
+  const buildRequest = (): BuildRequest => ({
+    className: form.className,
+    subclass: form.subclass.trim(),
+    activity: form.activity.trim(),
+    playstyle: form.playstyle.trim(),
+    preferredExotic: form.preferredExotic.trim() || undefined,
+    preferredWeapon: form.preferredWeapon.trim() || undefined,
+    notes: form.notes.trim() || undefined,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit({
-      className: form.className,
-      subclass: form.subclass.trim(),
-      activity: form.activity.trim(),
-      playstyle: form.playstyle.trim(),
-      preferredExotic: form.preferredExotic.trim() || undefined,
-      preferredWeapon: form.preferredWeapon.trim() || undefined,
-      notes: form.notes.trim() || undefined,
-    });
+    onSubmit(buildRequest());
+  };
+
+  const handlePreview = () => {
+    if (!validate()) return;
+    setPreview(composeBuildPromptPreview(buildRequest()));
   };
 
   return (
@@ -90,7 +98,7 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
                 name="guardianClass"
                 value={cls}
                 checked={form.className === cls}
-                onChange={() => set("className", cls)}
+                onChange={() => setClassName(cls)}
                 className="sr-only"
               />
               <span
@@ -109,17 +117,17 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
 
       <div className="space-y-1">
         <label htmlFor="subclass">{fieldLabel("Subclass")}</label>
-        <input
+        <select
           id="subclass"
-          list="subclass-list"
           value={form.subclass}
           onChange={(e) => set("subclass", e.target.value)}
-          placeholder="e.g. Sunbreaker"
-          className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
-        />
-        <datalist id="subclass-list">
-          {SUBCLASS_OPTIONS.map((s) => <option key={s} value={s} />)}
-        </datalist>
+          className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground focus-visible:outline-accent focus-visible:border-accent"
+        >
+          <option value="" disabled>Select subclass…</option>
+          {SUBCLASSES_BY_CLASS[form.className].map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
         {errors.subclass && <p className="text-xs text-danger">{errors.subclass}</p>}
       </div>
 
@@ -206,6 +214,24 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
       >
         Generate Build
       </button>
+
+      <button
+        type="button"
+        onClick={handlePreview}
+        disabled={isGenerating}
+        className="w-full py-2.5 text-sm tracking-widest uppercase border border-line text-muted hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-accent"
+      >
+        Preview Prompt
+      </button>
+
+      {preview && (
+        <PromptPreviewDialog
+          open
+          onClose={() => setPreview(null)}
+          title="Build Prompt Preview"
+          preview={preview}
+        />
+      )}
     </form>
   );
 }

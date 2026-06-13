@@ -5,7 +5,7 @@
 
 import type { ZodType } from "zod";
 
-import type { ChatMessage, OllamaClient } from "./ollamaClient";
+import type { ChatMessage, LlmClient } from "./llmClient";
 
 export function parseStructuredJson<T>(content: string, schema: ZodType<T>): T {
   let parsed: unknown;
@@ -26,12 +26,13 @@ export function parseStructuredJson<T>(content: string, schema: ZodType<T>): T {
 }
 
 export async function composeJsonWithRetry<T>(
-  client: OllamaClient,
+  client: LlmClient,
   messages: ChatMessage[],
   format: Record<string, unknown>,
   schema: ZodType<T>,
+  signal?: AbortSignal,
 ): Promise<T> {
-  const first = await client.chat(messages, { format });
+  const first = await client.chat(messages, { format, signal });
   try {
     return parseStructuredJson(first.message.content, schema);
   } catch (error) {
@@ -44,7 +45,7 @@ export async function composeJsonWithRetry<T>(
         content: `That output was rejected: ${reason}. Output the corrected JSON now.`,
       },
     ];
-    const second = await client.chat(retryMessages, { format });
+    const second = await client.chat(retryMessages, { format, signal });
     return parseStructuredJson(second.message.content, schema);
   }
 }

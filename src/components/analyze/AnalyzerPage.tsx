@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { AnalyzeRequest } from "@/lib/llm/analyzeSchema";
 import { AnalyzeForm } from "./AnalyzeForm";
 import { BungieImport } from "./BungieImport";
 import { AnalysisReport } from "./AnalysisReport";
 import { BuildSheet } from "@/components/sheet/BuildSheet";
 import { ExportPanel } from "@/components/ExportPanel";
+import { WaitingProgressPanel } from "@/components/WaitingProgressPanel";
 import type { AnalyzeApiResponse } from "./analyzeResponse";
 
 type AnalyzerState =
@@ -15,59 +16,11 @@ type AnalyzerState =
   | { phase: "done"; response: AnalyzeApiResponse }
   | { phase: "error"; message: string };
 
-const PROGRESS_STAGES = [
-  "Reading loadout",
-  "Verifying items against manifest",
-  "Judging against 9.7.0 sandbox",
-  "Composing optimized build",
-];
-
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="mb-4">
       <h3 className="text-[11px] tracking-widest uppercase text-muted mb-1">{title}</h3>
       <div className="keyline" />
-    </div>
-  );
-}
-
-function ProgressPanel({ onCancel }: { onCancel: () => void }) {
-  const [stageIdx, setStageIdx] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setStageIdx((prev) => Math.min(prev + 1, PROGRESS_STAGES.length - 1));
-    }, 25_000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="panel-notch p-6" aria-busy="true" aria-label="Analyzing loadout">
-      <div className="text-[11px] tracking-widest uppercase text-muted mb-4">
-        Estimated · Analyzing
-      </div>
-      <div className="space-y-3 mb-6">
-        {PROGRESS_STAGES.map((label, i) => (
-          <div
-            key={label}
-            className={`flex items-center gap-3 ${i <= stageIdx ? "text-foreground" : "text-muted"}`}
-          >
-            <div
-              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                i < stageIdx ? "bg-success" : i === stageIdx ? "bg-accent pulse-line" : "bg-line"
-              }`}
-            />
-            <span className="text-sm">{label}</span>
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={onCancel}
-        className="text-xs text-danger border border-danger/30 px-4 py-1.5 hover:bg-danger/10 transition-colors focus-visible:outline-accent"
-      >
-        Cancel
-      </button>
     </div>
   );
 }
@@ -174,7 +127,7 @@ export function AnalyzerPage() {
         )}
 
         {state.phase === "analyzing" && (
-          <ProgressPanel onCancel={handleCancel} />
+          <WaitingProgressPanel label="Analyzing" onCancel={handleCancel} />
         )}
 
         {state.phase === "error" && (
