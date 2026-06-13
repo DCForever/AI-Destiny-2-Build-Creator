@@ -25,7 +25,7 @@ function firstVerbMatch(
   return items.find(item => pattern.test(item.description));
 }
 
-function collectVerbSources(
+function collectSubclassSources(
   verbCheckItems: Array<{ name: string; description: string }>,
 ): ChampionCoverageSource[] {
   const sources: ChampionCoverageSource[] = [];
@@ -41,11 +41,14 @@ function collectVerbSources(
   return sources;
 }
 
-function buildCovered(sources: ChampionCoverageSource[]): Record<ChampionType, boolean> {
+function buildCovered(
+  weaponSources: ChampionCoverageSource[],
+  subclassSources: ChampionCoverageSource[],
+): Record<ChampionType, boolean> {
   const covered = Object.fromEntries(
-    CHAMPION_TYPES.map(t => [t, false])
+    CHAMPION_TYPES.map(t => [t, false]),
   ) as Record<ChampionType, boolean>;
-  for (const { counter } of sources) {
+  for (const { counter } of [...weaponSources, ...subclassSources]) {
     covered[counter] = true;
   }
   return covered;
@@ -55,6 +58,11 @@ export function computeChampionCoverage(
   weapons: ResolvedWeapon[],
   verbCheckItems: Array<{ name: string; description: string }>,
 ): ChampionCoverage {
-  const sources = [...collectWeaponSources(weapons), ...collectVerbSources(verbCheckItems)];
-  return { sources, covered: buildCovered(sources) };
+  const weaponSources = collectWeaponSources(weapons);
+  const subclassSources = collectSubclassSources(verbCheckItems);
+  return {
+    weaponSources,
+    subclassSources,
+    covered: buildCovered(weaponSources, subclassSources),
+  };
 }

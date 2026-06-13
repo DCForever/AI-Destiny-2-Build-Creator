@@ -24,11 +24,16 @@ export function composeAnalyzeResearchSystemPrompt(metaPack: string): string {
     metaPack,
     ANALYZE_FOCUS,
     `## Research phase instructions
-You have tools: search_items, get_weapon_perks, get_exotic_details, get_artifact_perks, web_search. Before writing the analysis:
+You have tools: search_items, get_weapon_perks, search_weapon_perks, find_weapons_with_perk, get_exotic_details, get_artifact_perks, web_search. Before writing the analysis:
 1. Verify the loadout's exotic armor with get_exotic_details.
-2. Verify perk pools with get_weapon_perks for any weapon whose perks you question or replace.
-3. Check the artifact grid with get_artifact_perks if you change artifact perks.
-Be economical: at most 8 tool calls total. When done, reply with a short plain-text summary of your verified findings and stop calling tools.`,
+2. For each weapon slot you question or replace (Kinetic, Energy, Power):
+   a. search_weapon_perks(query) when exploring perk synergies and column placement.
+   b. find_weapons_with_perk(perkName, slot=<slot>) when you need a weapon that rolls a specific perk.
+   c. search_items(query, category=weapons, slot=<slot>) when browsing alternatives.
+   d. get_weapon_perks(weaponName) before recommending perk swaps; only pick perks from returned columns.
+3. Never assign a weapon to a slot unless the tool result shows that exact slot.
+4. Check the artifact grid with get_artifact_perks if you change artifact perks.
+Be economical: at most 12 tool calls total. When done, reply with a short plain-text summary of your verified findings and stop calling tools.`,
   ].join("\n\n");
 }
 

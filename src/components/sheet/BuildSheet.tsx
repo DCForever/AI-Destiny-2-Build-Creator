@@ -1,4 +1,4 @@
-import type { ResolvedBuildSheet, ResolvedReference } from "@/lib/build/types";
+import type { ResolvedBuildSheet, ResolvedReference, ResolvedWeapon } from "@/lib/build/types";
 import { ChampionCoverageBar } from "./ChampionCoverageBar";
 import { SubclassSection } from "./SubclassSection";
 import { WeaponsSection } from "./WeaponsSection";
@@ -73,15 +73,19 @@ function ValidationStrip({ v }: { v: ResolvedBuildSheet["validation"] }) {
       {v.fuzzy > 0 && <span className="text-warning">{v.fuzzy} fuzzy</span>}
       {v.unresolved > 0 && <span className="text-danger">{v.unresolved} unresolved</span>}
       {v.illegalPerks > 0 && <span className="text-danger">{v.illegalPerks} illegal perks</span>}
+      {v.remediations > 0 && <span className="text-warning">{v.remediations} remediated</span>}
+      {v.slotMismatches > 0 && <span className="text-warning">{v.slotMismatches} slot mismatches</span>}
     </div>
   );
 }
 
 interface BuildSheetProps {
   sheet: ResolvedBuildSheet;
+  editable?: boolean;
+  onWeaponSlotClick?: (slot: ResolvedWeapon["slot"]) => void;
 }
 
-export function BuildSheet({ sheet }: BuildSheetProps) {
+export function BuildSheet({ sheet, editable = false, onWeaponSlotClick }: BuildSheetProps) {
   return (
     <div className="space-y-8">
       <div>
@@ -90,12 +94,8 @@ export function BuildSheet({ sheet }: BuildSheetProps) {
         <ValidationStrip v={sheet.validation} />
       </div>
 
-      <SectionWrapper title="Champion Coverage">
-        <ChampionCoverageBar coverage={sheet.championCoverage} />
-      </SectionWrapper>
-
       <SectionWrapper title="Subclass">
-        <SubclassSection subclass={sheet.subclass} />
+        <SubclassSection subclass={sheet.subclass} subclassName={sheet.build.subclass.name} />
       </SectionWrapper>
 
       <SectionWrapper title="Exotic Armor">
@@ -103,7 +103,15 @@ export function BuildSheet({ sheet }: BuildSheetProps) {
       </SectionWrapper>
 
       <SectionWrapper title="Weapons">
-        <WeaponsSection weapons={sheet.weapons} />
+        <WeaponsSection
+          weapons={sheet.weapons}
+          editable={editable}
+          onSlotClick={onWeaponSlotClick}
+        />
+      </SectionWrapper>
+
+      <SectionWrapper title="Champion Coverage">
+        <ChampionCoverageBar coverage={sheet.championCoverage} />
       </SectionWrapper>
 
       <SectionWrapper title="Stats">

@@ -40,9 +40,13 @@ export function ChampionCoverageBar({ coverage }: ChampionCoverageBarProps) {
   return (
     <div className="flex gap-2">
       {CHAMPION_TYPES.map((type) => {
-        const sources = coverage.sources
+        const weaponSources = coverage.weaponSources
           .filter((s) => s.counter === type)
           .map((s) => s.source);
+        const subclassSources = coverage.subclassSources
+          .filter((s) => s.counter === type)
+          .map((s) => s.source);
+        const sources = [...weaponSources, ...subclassSources];
         return (
           <ChampionCell
             key={type}

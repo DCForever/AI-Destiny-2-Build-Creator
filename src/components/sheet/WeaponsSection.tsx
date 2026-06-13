@@ -40,6 +40,14 @@ function ElementLine({ weapon }: { weapon: ResolvedWeapon }) {
   );
 }
 
+function RemediationNote({ original, reason }: { original: string; reason?: string }) {
+  return (
+    <p className="text-[10px] text-warning mt-1" title={reason}>
+      Auto-corrected from {original}
+    </p>
+  );
+}
+
 function PerkRow({ perk }: { perk: ResolvedPerkPick }) {
   const isIllegal = perk.legality?.legal === false;
   const name = perk.resolved?.name ?? perk.requestedName;
@@ -51,6 +59,9 @@ function PerkRow({ perk }: { perk: ResolvedPerkPick }) {
         <ResolutionBadge status={perk.status} />
         {isIllegal && <IllegalBadge reason={perk.legality?.reason} />}
       </div>
+      {perk.originalRequestedName && (
+        <RemediationNote original={perk.originalRequestedName} reason={perk.remediationReason} />
+      )}
       {perk.rationale && (
         <p className="text-xs text-muted mt-0.5 leading-relaxed">{perk.rationale}</p>
       )}
@@ -58,13 +69,22 @@ function PerkRow({ perk }: { perk: ResolvedPerkPick }) {
   );
 }
 
-function WeaponCard({ weapon }: { weapon: ResolvedWeapon }) {
+function WeaponCard({ weapon, editable = false, onClick }: {
+  weapon: ResolvedWeapon;
+  editable?: boolean;
+  onClick?: () => void;
+}) {
   const name = weapon.reference.resolved?.name ?? weapon.reference.requestedName;
   const icon = weapon.reference.resolved?.icon ?? null;
 
-  return (
+  const card = (
     <div className="panel-notch p-4 space-y-3">
-      <div className="text-[11px] tracking-widest uppercase text-muted">{weapon.slot}</div>
+      <div className="text-[11px] tracking-widest uppercase text-muted flex items-center justify-between">
+        <span>{weapon.slot}</span>
+        {editable && (
+          <span className="text-[10px] text-accent normal-case tracking-normal">Click to swap</span>
+        )}
+      </div>
 
       <div className="flex items-center gap-3">
         <ItemIcon icon={icon} name={name} size={40} />
@@ -84,6 +104,21 @@ function WeaponCard({ weapon }: { weapon: ResolvedWeapon }) {
         <ChampionChip type={weapon.championCounter} />
       )}
 
+      {weapon.owned === false && (
+        <p className="text-[10px] text-muted border border-line px-2 py-1">Not in your inventory — see Acquisition</p>
+      )}
+      {weapon.owned === true && weapon.rollTags && weapon.rollTags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {weapon.rollTags.map((tag) => (
+            <span key={tag} className="text-[10px] border border-accent/30 text-accent px-1.5 py-0.5">{tag}</span>
+          ))}
+        </div>
+      )}
+
+      {weapon.originalRequestedName && (
+        <RemediationNote original={weapon.originalRequestedName} reason={weapon.remediationReason} />
+      )}
+
       {weapon.perks.length > 0 && (
         <div>
           <div className="text-[11px] tracking-widest uppercase text-muted mb-1">Perks</div>
@@ -98,17 +133,38 @@ function WeaponCard({ weapon }: { weapon: ResolvedWeapon }) {
       <p className="text-xs text-muted leading-relaxed">{weapon.rationale}</p>
     </div>
   );
+
+  if (editable && onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="text-left w-full cursor-pointer hover:ring-1 hover:ring-accent/40 transition-shadow focus-visible:outline-accent rounded-sm"
+      >
+        {card}
+      </button>
+    );
+  }
+
+  return card;
 }
 
 interface WeaponsSectionProps {
   weapons: ResolvedWeapon[];
+  editable?: boolean;
+  onSlotClick?: (slot: ResolvedWeapon["slot"]) => void;
 }
 
-export function WeaponsSection({ weapons }: WeaponsSectionProps) {
+export function WeaponsSection({ weapons, editable = false, onSlotClick }: WeaponsSectionProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       {weapons.map((w) => (
-        <WeaponCard key={w.reference.requestedName} weapon={w} />
+        <WeaponCard
+          key={w.reference.requestedName}
+          weapon={w}
+          editable={editable}
+          onClick={onSlotClick ? () => onSlotClick(w.slot) : undefined}
+        />
       ))}
     </div>
   );

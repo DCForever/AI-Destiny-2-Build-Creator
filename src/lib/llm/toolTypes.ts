@@ -9,6 +9,8 @@ import type { StoreName } from "@/lib/manifest/types/stores";
 export const TOOL_NAMES = [
   "search_items",
   "get_weapon_perks",
+  "search_weapon_perks",
+  "find_weapons_with_perk",
   "get_exotic_details",
   "get_artifact_perks",
   "web_search",
@@ -33,6 +35,20 @@ export interface SearchItemsArgs {
     StoreName,
     "weapons" | "exotic-armor" | "exotic-weapons" | "aspects" | "fragments" | "mods"
   >;
+  /** Filter weapon results to Kinetic, Energy, or Power when searching weapons. */
+  slot?: "Kinetic" | "Energy" | "Power";
+}
+
+export interface SearchWeaponPerksArgs {
+  query: string;
+  limit?: number;
+}
+
+export interface FindWeaponsWithPerkArgs {
+  perkName: string;
+  slot: "Kinetic" | "Energy" | "Power";
+  itemTypeName?: string;
+  ownedOnly?: boolean;
 }
 
 export interface GetWeaponPerksArgs {
@@ -63,4 +79,4 @@ export interface ToolExecutor {
 }
 
 /** Hard cap on Phase A tool calls (research loop). */
-export const MAX_TOOL_CALLS = 8;
+export const MAX_TOOL_CALLS = 12;

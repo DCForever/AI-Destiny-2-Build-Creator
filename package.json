@@ -10,11 +10,14 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "gate": "bash scripts/gate.sh"
   },
   "dependencies": {
     "@destinyitemmanager/dim-api-types": "^1.40.0",
+    "better-sqlite3": "^12.10.1",
     "bungie-api-ts": "^5.10.0",
+    "drizzle-orm": "^0.45.2",
     "fuse.js": "^7.4.2",
     "iron-session": "^8.0.4",
     "next": "^16.2.9",
@@ -25,9 +28,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",

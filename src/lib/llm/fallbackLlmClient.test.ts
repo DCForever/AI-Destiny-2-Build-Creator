@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ChatMessage, ChatResponse, LlmClient } from "./llmClient";
+import type { ChatResponse, LlmClient } from "./llmClient";
 import {
   FallbackLlmClient,
   isRetriableLlmError,

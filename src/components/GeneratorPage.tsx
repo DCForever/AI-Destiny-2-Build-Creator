@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { BuildForm } from "./BuildForm";
-import { BuildSheet } from "./sheet/BuildSheet";
+import { EditableBuildSheet } from "./sheet/EditableBuildSheet";
 import { ExportPanel } from "./ExportPanel";
 import { WaitingProgressPanel } from "./WaitingProgressPanel";
+import { loadAuthStatus } from "@/components/BungieAuthControl";
 import type { BuildRequest } from "@/lib/llm/buildSchema";
+import type { GeneratedBuild } from "@/lib/llm/buildSchema";
+import type { ResolvedBuildSheet } from "@/lib/build/types";
 import type { BuildApiResponse } from "./buildResponse";
 
 type GeneratorState =
@@ -49,20 +52,35 @@ function MetaStrip({ count, summary }: { count: number; summary: string }) {
 function ResultActions({
   onRegenerate,
   onVariation,
+  onSave,
+  saving,
+  saveError,
+  saveDone,
 }: {
   onRegenerate: () => void;
   onVariation: () => void;
+  onSave: () => void;
+  saving: boolean;
+  saveError: string | null;
+  saveDone: boolean;
 }) {
   const buttonClass =
-    "text-xs border border-line px-4 py-1.5 text-muted hover:text-foreground hover:border-foreground/40 transition-colors focus-visible:outline-accent";
+    "text-xs border border-line px-4 py-1.5 text-muted hover:text-foreground hover:border-foreground/40 transition-colors focus-visible:outline-accent disabled:opacity-50";
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <button type="button" onClick={onRegenerate} className={buttonClass}>
-        Regenerate
-      </button>
-      <button type="button" onClick={onVariation} className={buttonClass}>
-        Try a Different Angle
-      </button>
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={onRegenerate} className={buttonClass}>
+          Regenerate
+        </button>
+        <button type="button" onClick={onVariation} className={buttonClass}>
+          Try a Different Angle
+        </button>
+        <button type="button" onClick={onSave} disabled={saving} className={buttonClass}>
+          {saving ? "Saving…" : "Save Loadout"}
+        </button>
+      </div>
+      {saveDone && <p className="text-xs text-muted">Loadout saved. View it in Loadouts.</p>}
+      {saveError && <p className="text-xs text-danger">{saveError}</p>}
     </div>
   );
 }
@@ -75,13 +93,20 @@ function variationRequest(request: BuildRequest, response: BuildApiResponse): Bu
   return { ...request, notes };
 }
 
-export function GeneratorPage() {
+export function GeneratorPage({ multiPassAvailable = false }: { multiPassAvailable?: boolean }) {
   const [state, setState] = useState<GeneratorState>({ phase: "idle" });
   const [lastRequest, setLastRequest] = useState<BuildRequest | null>(null);
+  const [liveBuild, setLiveBuild] = useState<GeneratedBuild | null>(null);
+  const [liveSheet, setLiveSheet] = useState<ResolvedBuildSheet | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveDone, setSaveDone] = useState(false);
 
   const handleSubmit = async (req: BuildRequest) => {
     const ac = new AbortController();
     setLastRequest(req);
+    setSaveDone(false);
+    setSaveError(null);
     setState({ phase: "generating", abortController: ac });
 
     try {
@@ -103,6 +128,8 @@ export function GeneratorPage() {
       }
 
       const data = await res.json() as BuildApiResponse;
+      setLiveBuild(data.build);
+      setLiveSheet(data.sheet);
       setState({ phase: "done", response: data });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -125,12 +152,60 @@ export function GeneratorPage() {
     }
   };
 
+  const handleSaveLoadout = async () => {
+    if (state.phase !== "done" || !lastRequest || !liveBuild || !liveSheet) return;
+
+    const { auth } = await loadAuthStatus();
+    if (!auth.signedIn) {
+      setSaveError("Sign in with Bungie to save loadouts.");
+      return;
+    }
+
+    const defaultName = state.response.build.name;
+    const name = window.prompt("Loadout name", defaultName)?.trim();
+    if (!name) return;
+
+    setSaving(true);
+    setSaveError(null);
+    setSaveDone(false);
+
+    try {
+      const res = await fetch("/api/user/loadouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          source: "generator",
+          buildRequest: lastRequest,
+          generatedBuild: liveBuild,
+          resolvedSheet: liveSheet,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json() as { error?: string };
+        setSaveError(body.error ?? "Failed to save loadout");
+        return;
+      }
+
+      setSaveDone(true);
+    } catch {
+      setSaveError("Failed to save loadout");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const isGenerating = state.phase === "generating";
 
   return (
     <div className="flex-1 flex flex-col xl:flex-row gap-8 p-6 max-w-[1600px] mx-auto w-full">
       <div className="xl:w-[380px] flex-shrink-0">
-        <BuildForm onSubmit={handleSubmit} isGenerating={isGenerating} />
+        <BuildForm
+          onSubmit={handleSubmit}
+          isGenerating={isGenerating}
+          multiPassAvailable={multiPassAvailable}
+        />
       </div>
 
       <div className="flex-1 min-w-0 space-y-6">
@@ -150,26 +225,42 @@ export function GeneratorPage() {
           <ErrorPanel message={state.message} onReset={() => setState({ phase: "idle" })} />
         )}
 
-        {state.phase === "done" && (
+        {state.phase === "done" && liveBuild && liveSheet && lastRequest && (
           <>
             <MetaStrip
               count={state.response.toolCallCount}
               summary={state.response.researchSummary}
             />
-            {lastRequest && (
-              <ResultActions
-                onRegenerate={() => void handleSubmit(lastRequest)}
-                onVariation={() =>
-                  void handleSubmit(variationRequest(lastRequest, state.response))
-                }
-              />
-            )}
-            <BuildSheet sheet={state.response.sheet} />
+            <ResultActions
+              onRegenerate={() => void handleSubmit(lastRequest)}
+              onVariation={() =>
+                void handleSubmit(variationRequest(lastRequest, state.response))
+              }
+              onSave={() => void handleSaveLoadout()}
+              saving={saving}
+              saveError={saveError}
+              saveDone={saveDone}
+            />
+            <EditableBuildSheet
+              sheet={liveSheet}
+              build={liveBuild}
+              activity={lastRequest.activity}
+              className={lastRequest.className}
+              onUpdate={({ build, sheet }) => {
+                setLiveBuild(build);
+                setLiveSheet(sheet);
+                setState((prev) =>
+                  prev.phase === "done"
+                    ? { ...prev, response: { ...prev.response, build, sheet } }
+                    : prev,
+                );
+              }}
+            />
             <ExportPanel
               exports={state.response.exports}
-              build={state.response.build}
-              sheet={state.response.sheet}
-              shareClassName={lastRequest?.className}
+              build={liveBuild}
+              sheet={liveSheet}
+              shareClassName={lastRequest.className}
             />
           </>
         )}

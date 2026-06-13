@@ -7,6 +7,7 @@ import type { EntityCacheMeta, EntityStores, StoreName } from "./types/stores";
 import { STORE_NAMES } from "./types/stores";
 import { entityStorePath, entityCacheMetaPath } from "./cachePaths";
 import { EXTRACTORS } from "./extractors/index";
+import { buildPerkWeaponIndex, writePerkWeaponIndex } from "./perkWeaponIndex";
 
 // ─── Node error helper ────────────────────────────────────────────────────
 
@@ -92,13 +93,23 @@ export class FileEntityCache implements EntityCache {
       STORE_NAMES.map((n) => [n, 0]),
     ) as Record<StoreName, number>;
 
+    const builtStores = {} as EntityStores;
+
     for (const extractor of EXTRACTORS) {
       const data = await extractor.extract(memoizedLoad);
       const filePath = entityStorePath(version, extractor.store);
       await mkdir(path.dirname(filePath), { recursive: true });
       await writeFile(filePath, JSON.stringify(data), "utf8");
       counts[extractor.store] = (data as unknown[]).length;
+      (builtStores as unknown as Record<string, unknown>)[extractor.store] = data;
     }
+
+    const perkIndex = buildPerkWeaponIndex(version, {
+      weapons: builtStores.weapons ?? [],
+      "exotic-weapons": builtStores["exotic-weapons"] ?? [],
+      "weapon-perks": builtStores["weapon-perks"] ?? [],
+    });
+    await writePerkWeaponIndex(version, perkIndex);
 
     const meta: EntityCacheMeta = {
       manifestVersion: version,

@@ -10,6 +10,7 @@
  */
 
 import { renderMetaPack } from "@/data/meta/renderMetaPack";
+import { isMultiPassEnabled } from "@/lib/config/env";
 
 import {
   buildJsonSchema,
@@ -19,6 +20,7 @@ import {
 } from "./buildSchema";
 import { composeJsonWithRetry } from "./composeJson";
 import type { ChatMessage, LlmClient } from "./llmClient";
+import { generateBuildMultiPass } from "./multiPass/generateBuildMultiPass";
 import {
   composeFinalizeSystemPrompt,
   composeResearchSystemPrompt,
@@ -31,6 +33,7 @@ export interface GenerateBuildDeps {
   client: LlmClient;
   executor: ToolExecutor;
   signal?: AbortSignal;
+  inventorySummary?: string | null;
 }
 
 export interface GenerateBuildResult {
@@ -46,13 +49,17 @@ export async function generateBuild(
   request: BuildRequest,
   deps: GenerateBuildDeps,
 ): Promise<GenerateBuildResult> {
+  if (request.generationMode === "multi-pass" && isMultiPassEnabled()) {
+    return generateBuildMultiPass(request, deps);
+  }
+
   const metaPack = renderMetaPack(request.className, request.activity);
 
   const research = await runResearchLoop({
     client: deps.client,
     executor: deps.executor,
     systemPrompt: composeResearchSystemPrompt(metaPack),
-    userPrompt: composeUserPrompt(request),
+    userPrompt: composeUserPrompt(request, deps.inventorySummary),
     signal: deps.signal,
   });
 

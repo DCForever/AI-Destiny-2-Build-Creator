@@ -10,6 +10,13 @@ import { z } from "zod";
 
 const trimmed = z.string().trim().min(1);
 
+export const weaponTypePreferencesSchema = z.object({
+  include: z.array(z.string()).optional(),
+  exclude: z.array(z.string()).optional(),
+  prioritizeOwned: z.boolean().optional(),
+});
+export type WeaponTypePreferences = z.infer<typeof weaponTypePreferencesSchema>;
+
 export const buildRequestSchema = z.object({
   className: z.enum(["Titan", "Hunter", "Warlock"]),
   subclass: trimmed.describe('Subclass name, e.g. "Sunbreaker" or "Prismatic"'),
@@ -18,6 +25,8 @@ export const buildRequestSchema = z.object({
   preferredExotic: z.string().trim().optional(),
   preferredWeapon: z.string().trim().optional(),
   notes: z.string().trim().optional(),
+  generationMode: z.enum(["standard", "multi-pass"]).optional(),
+  weaponTypePreferences: weaponTypePreferencesSchema.optional(),
 });
 export type BuildRequest = z.infer<typeof buildRequestSchema>;
 

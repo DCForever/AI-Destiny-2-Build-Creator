@@ -46,6 +46,23 @@ export function entityCacheMetaPath(version: string): string {
   );
 }
 
+export function perkWeaponIndexPath(version: string): string {
+  return path.join(
+    CACHE_ROOT,
+    "entities",
+    versionToDirName(version),
+    "perk-weapon-index.json",
+  );
+}
+
+export function appDbPath(): string {
+  return path.join(CACHE_ROOT, "app.db");
+}
+
+export function userPreferencesPath(bungieMembershipId: string): string {
+  return path.join(CACHE_ROOT, "users", bungieMembershipId, "preferences.json");
+}
+
 /** Tracks which version's stores are current, for cheap status checks. */
 export function currentVersionFilePath(): string {
   return path.join(CACHE_ROOT, "current-version.json");

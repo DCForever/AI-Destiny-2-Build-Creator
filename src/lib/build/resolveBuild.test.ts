@@ -36,6 +36,7 @@ const EXOTIC_ARMOR: ExoticArmorRecord[] = [
 ];
 const WEAPONS: WeaponRecord[] = [
   { ...B(4001, "Fatebringer"), slot: "Kinetic", element: "Void", ammo: "Primary", frame: "Adaptive Frame", itemTypeName: "Hand Cannon", originTraitHashes: [], perkColumns: [{ column: 0, curated: [5001], randomized: [5002] }] },
+  { ...B(4002, "Eyasluna"), slot: "Energy", element: "Arc", ammo: "Primary", frame: "Adaptive Frame", itemTypeName: "Hand Cannon", originTraitHashes: [], perkColumns: [{ column: 0, curated: [5001], randomized: [5002] }] },
 ];
 const WEAPON_PERKS: PerkRecord[] = [
   { ...B(5001, "Firefly"), description: "Precision kills cause the target to explode." },
@@ -201,14 +202,44 @@ describe("resolveBuild – fuzzy + unresolved mix", () => {
 });
 
 describe("resolveBuild – illegal perk", () => {
-  it("illegalPerks = 1 and legality.reason is carried through", async () => {
+  it("auto-remediates illegal perks with visible notes", async () => {
     const sheet = await resolveBuild(BASE_BUILD, "Nightfall", makeDeps(DEFAULT_STORES, {
       illegalWeaponPerk: { weaponHash: 4001, perkHash: 5001, reason: "Firefly not in Fatebringer pool" },
     }));
 
-    expect(sheet.validation.illegalPerks).toBe(1);
-    expect(sheet.weapons[0]!.perks[0]!.legality?.legal).toBe(false);
-    expect(sheet.weapons[0]!.perks[0]!.legality?.reason).toBe("Firefly not in Fatebringer pool");
+    expect(sheet.validation.illegalPerks).toBe(0);
+    expect(sheet.validation.remediations).toBeGreaterThanOrEqual(1);
+    const perk = sheet.weapons[0]!.perks[0]!;
+    expect(perk.originalRequestedName).toBe("Firefly");
+    expect(perk.remediationReason).toContain("Firefly");
+    expect(perk.legality?.legal).toBe(true);
+  });
+});
+
+describe("resolveBuild – slot mismatch", () => {
+  it("remediates wrong-slot legendaries via perk-index fallback", async () => {
+    const build = {
+      ...BASE_BUILD,
+      weapons: [
+        { slot: "Energy", name: "Fatebringer", isExotic: false, perks: [{ name: "Firefly", rationale: "AoE." }], rationale: "Wrong slot hand cannon." },
+        BASE_BUILD.weapons[1]!,
+        BASE_BUILD.weapons[2]!,
+      ],
+    } as unknown as GeneratedBuild;
+
+    const sheet = await resolveBuild(build, "Nightfall", makeDeps());
+    const energyWeapon = sheet.weapons[0]!;
+    expect(energyWeapon.originalRequestedName).toBe("Fatebringer");
+    expect(energyWeapon.slotLegality?.legal).toBe(true);
+    expect(energyWeapon.reference.resolved?.name).toBe("Eyasluna");
+  });
+});
+
+describe("resolveBuild – champion coverage sources", () => {
+  it("splits weapon and subclass champion sources", async () => {
+    const sheet = await resolveBuild(BASE_BUILD, "Grandmaster Nightfall", makeDeps());
+    expect(sheet.championCoverage.weaponSources.length).toBeGreaterThan(0);
+    expect(sheet.championCoverage.subclassSources.length).toBeGreaterThan(0);
   });
 });
 

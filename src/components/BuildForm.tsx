@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { SUBCLASSES_BY_CLASS } from "@/data/subclasses";
+import { useCallback, useEffect, useState } from "react";
+import { SUBCLASSES_BY_CLASS, formatSubclassLabel } from "@/data/subclasses";
 import { PromptPreviewDialog } from "@/components/PromptPreviewDialog";
 import { composeBuildPromptPreview, type PromptPreview } from "@/lib/llm/composePromptPreview";
 import type { BuildRequest } from "@/lib/llm/buildSchema";
+import type { UserPreferences } from "@/lib/preferences/types";
+import { DEFAULT_PREFERENCES } from "@/lib/preferences/types";
 
 const ACTIVITY_OPTIONS = [
   "Grandmaster Nightfall", "Master Raid", "Raid", "Dungeon",
@@ -12,6 +14,8 @@ const ACTIVITY_OPTIONS = [
 ];
 
 const CLASSES: BuildRequest["className"][] = ["Titan", "Hunter", "Warlock"];
+
+type GenerationMode = NonNullable<UserPreferences["defaultGenerationMode"]>;
 
 type FormData = {
   className: BuildRequest["className"];
@@ -21,16 +25,10 @@ type FormData = {
   preferredExotic: string;
   preferredWeapon: string;
   notes: string;
-};
-
-const INITIAL_FORM: FormData = {
-  className: "Titan",
-  subclass: "",
-  activity: "",
-  playstyle: "",
-  preferredExotic: "",
-  preferredWeapon: "",
-  notes: "",
+  generationMode: GenerationMode;
+  weaponTypesInclude: string;
+  weaponTypesExclude: string;
+  prioritizeOwned: boolean;
 };
 
 function fieldLabel(text: string) {
@@ -42,19 +40,69 @@ function fieldLabel(text: string) {
 interface BuildFormProps {
   onSubmit: (req: BuildRequest) => void;
   isGenerating: boolean;
+  multiPassAvailable?: boolean;
 }
 
-export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
-  const [form, setForm] = useState<FormData>(INITIAL_FORM);
+export function BuildForm({ onSubmit, isGenerating, multiPassAvailable = false }: BuildFormProps) {
+  const [form, setForm] = useState<FormData>({
+    className: DEFAULT_PREFERENCES.defaultClass ?? "Titan",
+    subclass: "",
+    activity: "",
+    playstyle: "",
+    preferredExotic: "",
+    preferredWeapon: "",
+    notes: "",
+    generationMode: DEFAULT_PREFERENCES.defaultGenerationMode ?? "standard",
+    weaponTypesInclude: "",
+    weaponTypesExclude: "",
+    prioritizeOwned: false,
+  });
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [preview, setPreview] = useState<PromptPreview | null>(null);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   const set = (key: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const setClassName = (className: BuildRequest["className"]) =>
     setForm((prev) => ({ ...prev, className, subclass: "" }));
+
+  const persistGenerationMode = useCallback(async (generationMode: GenerationMode) => {
+    try {
+      await fetch("/api/user/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaultGenerationMode: generationMode }),
+      });
+    } catch {
+      // Preference sync is best-effort; generation still works with local state.
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch("/api/user/preferences");
+      if (cancelled) return;
+      if (res.status === 401) {
+        setPrefsLoaded(true);
+        return;
+      }
+      if (!res.ok) {
+        setPrefsLoaded(true);
+        return;
+      }
+      const body = await res.json() as { preferences: UserPreferences };
+      setForm((prev) => ({
+        ...prev,
+        className: body.preferences.defaultClass ?? prev.className,
+        generationMode: body.preferences.defaultGenerationMode ?? prev.generationMode,
+      }));
+      setPrefsLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const validate = (): boolean => {
     const next: Partial<Record<keyof FormData, string>> = {};
@@ -65,15 +113,32 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
     return Object.keys(next).length === 0;
   };
 
-  const buildRequest = (): BuildRequest => ({
-    className: form.className,
-    subclass: form.subclass.trim(),
-    activity: form.activity.trim(),
-    playstyle: form.playstyle.trim(),
-    preferredExotic: form.preferredExotic.trim() || undefined,
-    preferredWeapon: form.preferredWeapon.trim() || undefined,
-    notes: form.notes.trim() || undefined,
-  });
+  const buildRequest = (): BuildRequest => {
+    const splitTypes = (raw: string) =>
+      raw.split(",").map((s) => s.trim()).filter(Boolean);
+    const include = splitTypes(form.weaponTypesInclude);
+    const exclude = splitTypes(form.weaponTypesExclude);
+    const weaponTypePreferences =
+      include.length > 0 || exclude.length > 0 || form.prioritizeOwned
+        ? {
+            include: include.length > 0 ? include : undefined,
+            exclude: exclude.length > 0 ? exclude : undefined,
+            prioritizeOwned: form.prioritizeOwned || undefined,
+          }
+        : undefined;
+
+    return {
+      className: form.className,
+      subclass: form.subclass.trim(),
+      activity: form.activity.trim(),
+      playstyle: form.playstyle.trim(),
+      preferredExotic: form.preferredExotic.trim() || undefined,
+      preferredWeapon: form.preferredWeapon.trim() || undefined,
+      notes: form.notes.trim() || undefined,
+      generationMode: form.generationMode,
+      weaponTypePreferences,
+    };
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +149,12 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
   const handlePreview = () => {
     if (!validate()) return;
     setPreview(composeBuildPromptPreview(buildRequest()));
+  };
+
+  const handleGenerationModeChange = (checked: boolean) => {
+    const generationMode: GenerationMode = checked ? "multi-pass" : "standard";
+    setForm((prev) => ({ ...prev, generationMode }));
+    void persistGenerationMode(generationMode);
   };
 
   return (
@@ -113,7 +184,24 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
             </label>
           ))}
         </div>
+        {!prefsLoaded && (
+          <p className="text-[10px] text-muted mt-1">Loading preferences…</p>
+        )}
       </fieldset>
+
+      {multiPassAvailable && (
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.generationMode === "multi-pass"}
+            onChange={(e) => handleGenerationModeChange(e.target.checked)}
+            className="accent-accent"
+          />
+          <span className="text-xs text-muted">
+            Multi-pass generation <span className="text-[10px]">(experimental, slower)</span>
+          </span>
+        </label>
+      )}
 
       <div className="space-y-1">
         <label htmlFor="subclass">{fieldLabel("Subclass")}</label>
@@ -125,7 +213,7 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
         >
           <option value="" disabled>Select subclass…</option>
           {SUBCLASSES_BY_CLASS[form.className].map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>{formatSubclassLabel(s)}</option>
           ))}
         </select>
         {errors.subclass && <p className="text-xs text-danger">{errors.subclass}</p>}
@@ -193,7 +281,35 @@ export function BuildForm({ onSubmit, isGenerating }: BuildFormProps) {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="notes">{fieldLabel("Notes")}</label>
+              <label htmlFor="weapon-types-include">{fieldLabel("Weapon types to include")}</label>
+              <input
+                id="weapon-types-include"
+                value={form.weaponTypesInclude}
+                onChange={(e) => set("weaponTypesInclude", e.target.value)}
+                placeholder="e.g. Hand Cannon, Scout Rifle (comma-separated)"
+                className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="weapon-types-exclude">{fieldLabel("Weapon types to exclude")}</label>
+              <input
+                id="weapon-types-exclude"
+                value={form.weaponTypesExclude}
+                onChange={(e) => set("weaponTypesExclude", e.target.value)}
+                placeholder="e.g. Sidearm, Glaive (comma-separated)"
+                className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
+              />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.prioritizeOwned}
+                onChange={(e) => setForm((prev) => ({ ...prev, prioritizeOwned: e.target.checked }))}
+                className="accent-accent"
+              />
+              <span className="text-xs text-muted">Prioritize weapons I own (requires inventory sync)</span>
+            </label>
+            <div className="space-y-1">
               <textarea
                 id="notes"
                 rows={3}

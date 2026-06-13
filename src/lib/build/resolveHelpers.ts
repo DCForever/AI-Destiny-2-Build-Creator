@@ -4,8 +4,8 @@
  */
 
 import type { GeneratedBuild } from "@/lib/llm/buildSchema";
-import type { ItemResolver, PerkValidator, EntityCache, PerkLegality } from "@/lib/manifest/types/services";
-import type { EntityRecordBase, ArtifactRecord, Hash } from "@/lib/manifest/types/records";
+import type { ItemResolver, PerkValidator, EntityCache, PerkLegality, ResolveResult } from "@/lib/manifest/types/services";
+import type { EntityRecordBase, ArtifactRecord, Hash, WeaponRecord, WeaponSlotName } from "@/lib/manifest/types/records";
 import type { StoreName } from "@/lib/manifest/types/stores";
 import type {
   ResolvedReference,
@@ -17,6 +17,12 @@ import type {
   FragmentCheckView,
 } from "./types";
 import { normalizeName } from "@/lib/manifest/normalize";
+import {
+  buildPerkWeaponIndex,
+  columnIndexToLabel,
+  loadPerkWeaponIndex,
+  type PerkWeaponIndex,
+} from "@/lib/manifest/perkWeaponIndex";
 import { computeBenefitsAt } from "@/data/rules/statBenefits";
 import { isArtifactAllowed } from "@/data/rules/activityRules";
 import { getChampionCounterForFrame } from "@/data/rules/championCounters";
@@ -189,16 +195,242 @@ async function computeWeaponPerkLegality(
   return mapPerkLegality(legality);
 }
 
+function extractSlot(result: BaseResolveResult): WeaponSlotName | null {
+  if (!result) return null;
+  return (result.record as unknown as { slot?: WeaponSlotName }).slot ?? null;
+}
+
+function nameSimilarity(a: string, b: string): number {
+  const na = normalizeName(a);
+  const nb = normalizeName(b);
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.85;
+  const wa = new Set(na.split(" ").filter(Boolean));
+  const wb = new Set(nb.split(" ").filter(Boolean));
+  let overlap = 0;
+  for (const w of wa) if (wb.has(w)) overlap++;
+  return overlap / Math.max(wa.size, wb.size, 1);
+}
+
+async function loadPerkIndex(cache: EntityCache): Promise<PerkWeaponIndex> {
+  const meta = await cache.getMeta();
+  if (meta) {
+    const loaded = await loadPerkWeaponIndex(meta.manifestVersion);
+    if (loaded) return loaded;
+  }
+  const [weapons, exoticWeapons, weaponPerks] = await Promise.all([
+    cache.getStore("weapons"),
+    cache.getStore("exotic-weapons"),
+    cache.getStore("weapon-perks"),
+  ]);
+  return buildPerkWeaponIndex(meta?.manifestVersion ?? "inline", {
+    weapons,
+    "exotic-weapons": exoticWeapons,
+    "weapon-perks": weaponPerks,
+  });
+}
+
+async function buildPerkHashMap(cache: EntityCache): Promise<Map<number, string>> {
+  const perks = await cache.getStore("weapon-perks");
+  return new Map(perks.map(p => [p.hash, p.name]));
+}
+
+async function findBestPoolPerk(
+  weapon: WeaponRecord,
+  requestedName: string,
+  cache: EntityCache,
+  excludeHash: Hash | null = null,
+): Promise<{ hash: Hash; name: string; curated: boolean } | null> {
+  const perkNames = await buildPerkHashMap(cache);
+  let best: { hash: Hash; name: string; curated: boolean; score: number } | null = null;
+  for (const col of weapon.perkColumns) {
+    const curatedSet = new Set(col.curated);
+    for (const hash of [...col.curated, ...col.randomized]) {
+      if (excludeHash !== null && hash === excludeHash) continue;
+      const name = perkNames.get(hash);
+      if (!name) continue;
+      const score = nameSimilarity(requestedName, name) + (curatedSet.has(hash) ? 0.15 : 0);
+      if (!best || score > best.score) {
+        best = { hash, name, curated: curatedSet.has(hash), score };
+      }
+    }
+  }
+  if (!best || best.score < 0.2) {
+    for (const col of weapon.perkColumns) {
+      for (const hash of [...col.curated, ...col.randomized]) {
+        if (excludeHash !== null && hash === excludeHash) continue;
+        const name = perkNames.get(hash);
+        if (!name) continue;
+        return { hash, name, curated: col.curated.includes(hash) };
+      }
+    }
+    return null;
+  }
+  return { hash: best.hash, name: best.name, curated: best.curated };
+}
+
+async function remediateIllegalPerk(
+  weapon: WeaponRecord,
+  requestedName: string,
+  ref: ResolvedReference,
+  isExotic: boolean,
+  weaponHash: Hash | null,
+  validator: PerkValidator,
+  cache: EntityCache,
+  rationale: string | undefined,
+): Promise<ResolvedPerkPick> {
+  const legality = await computeWeaponPerkLegality(ref, isExotic, weaponHash, validator);
+  if (!legality || legality.legal) {
+    return { ...ref, legality, rationale };
+  }
+
+  const replacement = await findBestPoolPerk(weapon, requestedName, cache, ref.resolved?.hash ?? null);
+  if (!replacement) {
+    return { ...ref, legality, rationale };
+  }
+
+  const replacementRef: ResolvedReference = {
+    requestedName: replacement.name,
+    resolved: { hash: replacement.hash, name: replacement.name, icon: ref.resolved?.icon ?? null },
+    confidence: 1,
+    status: "verified",
+  };
+  return {
+    ...replacementRef,
+    legality: { legal: true, curated: replacement.curated },
+    rationale,
+    originalRequestedName: requestedName,
+    remediationReason: `${requestedName} cannot roll on ${weapon.name}; replaced with ${replacement.name} (${columnIndexToLabel(
+      weapon.perkColumns.find(c =>
+        c.curated.includes(replacement.hash) || c.randomized.includes(replacement.hash),
+      )?.column ?? 2,
+    )})`,
+  };
+}
+
+async function findSlotReplacement(
+  requestedSlot: WeaponSlotName,
+  perkNames: string[],
+  wrongWeaponName: string,
+  manifestSlot: WeaponSlotName,
+  deps: ResolveBuildDeps,
+): Promise<ResolveResult<WeaponRecord> | null> {
+  const index = await loadPerkIndex(deps.cache);
+  const perkHashes = await Promise.all(
+    perkNames.map(async name => {
+      const resolved = await deps.resolver.resolve("weapon-perks", name);
+      return resolved?.record.hash ?? null;
+    }),
+  );
+  const validPerkHashes = perkHashes.filter((h): h is Hash => h !== null);
+
+  type Candidate = { weaponHash: Hash; score: number; curated: boolean };
+  const candidates = new Map<number, Candidate>();
+
+  for (const perkHash of validPerkHashes) {
+    for (const entry of index.byPerk[String(perkHash)] ?? []) {
+      if (entry.slot !== requestedSlot) continue;
+      const existing = candidates.get(entry.weaponHash);
+      const bonus = entry.curated ? 2 : 1;
+      candidates.set(entry.weaponHash, {
+        weaponHash: entry.weaponHash,
+        score: (existing?.score ?? 0) + bonus,
+        curated: (existing?.curated ?? false) || entry.curated,
+      });
+    }
+  }
+
+  const weapons = await deps.cache.getStore("weapons");
+  const exotics = await deps.cache.getStore("exotic-weapons");
+  const byHash = new Map<number, WeaponRecord>();
+  for (const w of weapons) byHash.set(w.hash, w);
+  for (const w of exotics) byHash.set(w.hash, w as unknown as WeaponRecord);
+
+  const ranked = [...candidates.values()]
+    .map(c => ({ ...c, record: byHash.get(c.weaponHash) }))
+    .filter((c): c is Candidate & { record: WeaponRecord } => c.record !== undefined)
+    .sort((a, b) => b.score - a.score || a.record.name.localeCompare(b.record.name));
+
+  if (ranked[0]) {
+    return { record: ranked[0].record, confidence: 1 };
+  }
+
+  if (perkNames.length === 0) {
+    const hits = await deps.resolver.search("weapons", wrongWeaponName, 8);
+    const slotHit = hits.find(h => (h.record as WeaponRecord).slot === requestedSlot);
+    if (slotHit) return slotHit as ResolveResult<WeaponRecord>;
+  }
+
+  return null;
+}
+
+type WeaponResolveResult = ResolveResult<WeaponRecord> | null;
+
+async function remediateSlotMismatch(
+  weapon: GeneratedBuild["weapons"][number],
+  result: WeaponResolveResult,
+  manifestSlot: WeaponSlotName,
+  deps: ResolveBuildDeps,
+): Promise<{
+  result: WeaponResolveResult;
+  originalRequestedName?: string;
+  remediationReason?: string;
+  slotLegality: { legal: boolean; reason?: string; manifestSlot?: WeaponSlotName };
+}> {
+  const wrongName = weapon.name;
+  const replacement = await findSlotReplacement(
+    weapon.slot,
+    weapon.perks.map(p => p.name),
+    wrongName,
+    manifestSlot,
+    deps,
+  );
+
+  if (replacement) {
+    return {
+      result: replacement,
+      originalRequestedName: wrongName,
+      remediationReason: `Auto-corrected from ${wrongName} (manifest slot: ${manifestSlot}, requested: ${weapon.slot}) → ${replacement.record.name}`,
+      slotLegality: { legal: true, manifestSlot: weapon.slot },
+    };
+  }
+
+  return {
+    result,
+    originalRequestedName: wrongName,
+    remediationReason: `${wrongName} belongs in ${manifestSlot}, not ${weapon.slot}; no replacement found in requested slot`,
+    slotLegality: {
+      legal: false,
+      reason: `Manifest slot is ${manifestSlot}, build requested ${weapon.slot}`,
+      manifestSlot,
+    },
+  };
+}
+
 async function resolveWeaponPerks(
   weapon: GeneratedBuild["weapons"][number],
+  weaponRecord: WeaponRecord | null,
   weaponHash: Hash | null,
   deps: ResolveBuildDeps,
 ): Promise<ResolvedPerkPick[]> {
   return Promise.all(weapon.perks.map(async perk => {
     const result = await deps.resolver.resolve("weapon-perks", perk.name);
     const ref = buildRef(perk.name, result as BaseResolveResult);
-    const legality = await computeWeaponPerkLegality(ref, weapon.isExotic, weaponHash, deps.validator);
-    return { ...ref, legality, rationale: perk.rationale };
+    if (!weaponRecord || weapon.isExotic || weaponHash === null) {
+      const legality = await computeWeaponPerkLegality(ref, weapon.isExotic, weaponHash, deps.validator);
+      return { ...ref, legality, rationale: perk.rationale };
+    }
+    return remediateIllegalPerk(
+      weaponRecord,
+      perk.name,
+      ref,
+      weapon.isExotic,
+      weaponHash,
+      deps.validator,
+      deps.cache,
+      perk.rationale,
+    );
   }));
 }
 
@@ -207,11 +439,28 @@ export async function resolveWeapon(
   deps: ResolveBuildDeps,
 ): Promise<ResolvedWeapon> {
   const store = weapon.isExotic ? "exotic-weapons" : "weapons";
-  const result = await deps.resolver.resolve(store, weapon.name);
-  const ref = buildRef(weapon.name, result as BaseResolveResult);
+  let result = await deps.resolver.resolve(store, weapon.name) as WeaponResolveResult;
+  let originalRequestedName: string | undefined;
+  let remediationReason: string | undefined;
+  let slotLegality: ResolvedWeapon["slotLegality"] = null;
+
+  const manifestSlot = extractSlot(result as BaseResolveResult);
+  if (result && manifestSlot && manifestSlot !== weapon.slot) {
+    const remediated = await remediateSlotMismatch(weapon, result, manifestSlot, deps);
+    result = remediated.result;
+    originalRequestedName = remediated.originalRequestedName;
+    remediationReason = remediated.remediationReason;
+    slotLegality = remediated.slotLegality;
+  } else if (manifestSlot) {
+    slotLegality = { legal: true, manifestSlot };
+  }
+
+  const weaponRecord = result?.record ?? null;
+  const refName = weaponRecord?.name ?? weapon.name;
+  const ref = buildRef(refName, result as BaseResolveResult);
   const frame = extractFrame(result as BaseResolveResult);
   const championCounter = extractChampionCounter(frame, result as BaseResolveResult, weapon.isExotic);
-  const perks = await resolveWeaponPerks(weapon, ref.resolved?.hash ?? null, deps);
+  const perks = await resolveWeaponPerks(weapon, weaponRecord, ref.resolved?.hash ?? null, deps);
   const { element, ammo } = extractElementAndAmmo(result as BaseResolveResult);
   return {
     slot: weapon.slot,
@@ -223,6 +472,9 @@ export async function resolveWeapon(
     championCounter,
     perks,
     rationale: weapon.rationale,
+    slotLegality,
+    originalRequestedName,
+    remediationReason,
   };
 }
 

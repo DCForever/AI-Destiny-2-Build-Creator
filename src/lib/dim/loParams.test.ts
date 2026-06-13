@@ -131,7 +131,8 @@ function makeSheet(overrides: Partial<ResolvedBuildSheet> = {}): ResolvedBuildSh
     },
     weapons: [],
     championCoverage: {
-      sources: [],
+      weaponSources: [],
+      subclassSources: [],
       covered: { Barrier: false, Overload: false, Unstoppable: false },
     },
     validation: {
@@ -139,6 +140,8 @@ function makeSheet(overrides: Partial<ResolvedBuildSheet> = {}): ResolvedBuildSh
       fuzzy: 0,
       unresolved: 0,
       illegalPerks: 0,
+      slotMismatches: 0,
+      remediations: 0,
     },
     ...overrides,
   };

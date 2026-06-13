@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { requireAuthenticatedUser } from "@/lib/auth/requireUser";
 import { buildRequestSchema } from "@/lib/llm/buildSchema";
 import { isAbortError } from "@/lib/llm/llmClient";
+import { getDb } from "@/lib/db/client";
 import { ManifestNotReadyError, runBuildGeneration } from "@/lib/services";
 
 export const runtime = "nodejs";
@@ -31,7 +33,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const outcome = await runBuildGeneration(parsed.data, request.signal);
+    const auth = await requireAuthenticatedUser(request);
+    const context = auth ? { userId: auth.user.id, db: getDb() } : undefined;
+    const outcome = await runBuildGeneration(parsed.data, request.signal, context);
     return NextResponse.json(outcome);
   } catch (error) {
     if (isAbortError(error)) {

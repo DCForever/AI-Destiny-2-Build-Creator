@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { getBungieOAuthConfig, getSessionSecret } from "@/lib/config/env";
 import { createBungieAuthClient } from "@/lib/bungie/oauth";
-import { consumeOAuthState } from "@/lib/bungie/oauthStateStore";
 import { getSession } from "@/lib/bungie/session";
 
 export const runtime = "nodejs";
@@ -24,17 +23,22 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Missing code or state query parameter" }, { status: 400 });
   }
 
-  if (!consumeOAuthState(state)) {
+  const session = await getSession();
+  const expectedState = session.oauthState;
+  const returnUrl = session.oauthReturnUrl ?? "/analyze";
+
+  if (!expectedState || expectedState !== state) {
     return NextResponse.json({ error: "OAuth state mismatch — possible CSRF attempt" }, { status: 400 });
   }
+
+  session.oauthState = undefined;
+  session.oauthReturnUrl = undefined;
 
   const redirectUri = new URL("/api/auth/callback", request.url).toString();
   const authClient = createBungieAuthClient(redirectUri);
   if (!authClient) {
     return NextResponse.json(NOT_CONFIGURED, { status: 503 });
   }
-
-  const session = await getSession();
 
   try {
     const tokens = await authClient.exchangeCode(code);
@@ -45,5 +49,5 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  return NextResponse.redirect(new URL("/analyze", request.url), { status: 307 });
+  return NextResponse.redirect(new URL(returnUrl, request.url), { status: 307 });
 }

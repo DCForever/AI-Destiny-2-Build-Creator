@@ -88,12 +88,26 @@ function renderRequest(request: BuildRequest): string {
   if (request.preferredExotic) lines.push(`Preferred exotic: ${request.preferredExotic}`);
   if (request.preferredWeapon) lines.push(`Preferred weapon: ${request.preferredWeapon}`);
   if (request.notes) lines.push(`Notes: ${request.notes}`);
+  if (request.weaponTypePreferences) {
+    const prefs = request.weaponTypePreferences;
+    if (prefs.include?.length) lines.push(`Preferred weapon types: ${prefs.include.join(", ")}`);
+    if (prefs.exclude?.length) lines.push(`Excluded weapon types: ${prefs.exclude.join(", ")}`);
+    if (prefs.prioritizeOwned) lines.push("Prioritize weapons the user already owns when possible.");
+  }
   return lines.join("\n");
 }
 
-/**
- * Phase A: bounded research loop with tools enabled and no format constraint.
- */
+export function composeUserPrompt(request: BuildRequest, inventorySummary?: string | null): string {
+  const sections = [`Create a build for the following request:\n${renderRequest(request)}`];
+  if (inventorySummary) {
+    sections.push(
+      "## User inventory summary (prefer owned weapons when prioritizeOwned is set)\n"
+      + inventorySummary,
+    );
+  }
+  return sections.join("\n\n");
+}
+
 export function composeResearchSystemPrompt(metaPack: string): string {
   return [
     ROLE,
@@ -101,12 +115,18 @@ export function composeResearchSystemPrompt(metaPack: string): string {
     "## Curated meta notes (verified against 9.7.0 sources; trust these over memory)",
     metaPack,
     `## Research phase instructions
-You have tools: search_items, get_weapon_perks, get_exotic_details, get_artifact_perks, web_search. Before composing the build:
+You have tools: search_items, get_weapon_perks, search_weapon_perks, find_weapons_with_perk, get_exotic_details, get_artifact_perks, web_search. Before composing the build:
 1. Verify your exotic armor pick and its 9.7.0 behavior with get_exotic_details.
-2. Verify each legendary weapon's perk pool with get_weapon_perks before recommending perks.
-3. Check the chosen artifact's actual perk grid with get_artifact_perks.
-4. If unsure about the current meta for the activity, use web_search once or twice; if search is unavailable, rely on the curated meta notes above.
-Be economical: at most 8 tool calls total. When your picks are verified, reply with a short plain-text summary of your verified choices and stop calling tools.`,
+2. For EACH weapon slot (Kinetic, Energy, Power):
+   a. If exploring perk synergies → search_weapon_perks(query) to see which columns each perk rolls in.
+   b. If you need a weapon with a specific perk → find_weapons_with_perk(perkName, slot=<slot>); use ownedOnly=true when the user has synced inventory and prioritizeOwned is set.
+   c. If exploring options → search_items(query, category=weapons, slot=<slot>).
+   d. Before finalizing perks → get_weapon_perks(weaponName); pick perks only from columns returned by the tools.
+3. Never assign a weapon to a slot unless the tool result shows that exact slot.
+4. Never recommend a perk in a column where that perk cannot roll on that weapon.
+5. Check the chosen artifact's actual perk grid with get_artifact_perks.
+6. If unsure about the current meta for the activity, use web_search once or twice; if search is unavailable, rely on the curated meta notes above.
+Be economical: at most 12 tool calls total. When your picks are verified, reply with a short plain-text summary of your verified choices and stop calling tools.`,
   ].join("\n\n");
 }
 
@@ -122,8 +142,4 @@ export function composeFinalizeSystemPrompt(metaPack: string): string {
     `## Composition instructions
 Using the research findings in the conversation, output the final build as JSON matching the provided schema. Every name must be an exact in-game display name you verified during research or found in the meta notes. Include all six stat targets with rationale that cites the enhanced benefit when a target exceeds 100. Cover all three champion types for endgame PvE activities. Set "artifact" to null only for Trials of Osiris or Competitive Crucible builds.`,
   ].join("\n\n");
-}
-
-export function composeUserPrompt(request: BuildRequest): string {
-  return `Create a build for the following request:\n${renderRequest(request)}`;
 }

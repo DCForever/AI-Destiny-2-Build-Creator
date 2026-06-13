@@ -8,12 +8,16 @@ import { resolveBuild } from "@/lib/build/resolveBuild";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import { buildLoParams, renderLoParamsText } from "@/lib/dim/loParams";
 import { buildWishlist } from "@/lib/dim/wishlist";
+import { annotateWeaponsWithInventory } from "@/lib/inventory/annotateWeapons";
+import { buildInventorySummary } from "@/lib/inventory/inventorySummary";
 import { analyzeLoadout } from "@/lib/llm/analyzeLoadout";
 import type { AnalyzeRequest, LoadoutAnalysis } from "@/lib/llm/analyzeSchema";
 import type { BuildRequest, GeneratedBuild } from "@/lib/llm/buildSchema";
 import { generateBuild } from "@/lib/llm/generateBuild";
 import { createLlmClient, type LlmClient } from "@/lib/llm/createLlmClient";
-import { createToolExecutor } from "@/lib/llm/tools";
+import { refineBuild, type RefineBuildResult } from "@/lib/llm/refineBuild";
+import type { RefineRequest } from "@/lib/llm/refinePrompts";
+import { createToolExecutor, type InventoryContext } from "@/lib/llm/tools";
 import { createEntityCache } from "@/lib/manifest/entityCache";
 import { createItemResolver } from "@/lib/manifest/itemResolver";
 import { createManifestService } from "@/lib/manifest/manifestService";
@@ -27,6 +31,7 @@ import type {
 } from "@/lib/manifest/types/services";
 import { createSearxngClient, type SearxngClient } from "@/lib/search/searxng";
 import { getLlmConfig } from "@/lib/config/env";
+import type { AppDatabase } from "@/lib/db/client";
 
 export interface Services {
   manifest: ManifestService;
@@ -112,10 +117,16 @@ function renderExports(sheet: ResolvedBuildSheet): BuildExports {
   };
 }
 
+export interface BuildGenerationContext {
+  userId: number;
+  db: AppDatabase;
+}
+
 /** Full pipeline: research loop -> composition -> manifest resolution. */
 export async function runBuildGeneration(
   request: BuildRequest,
   signal?: AbortSignal,
+  context?: BuildGenerationContext,
 ): Promise<BuildGenerationOutcome> {
   // #region agent log
   fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'services.ts:runBuildGeneration',message:'pipeline start',data:{className:request.className,subclass:request.subclass,signalAborted:signal?.aborted??false},timestamp:Date.now(),hypothesisId:'C,D'})}).catch(()=>{});
@@ -130,18 +141,126 @@ export async function runBuildGeneration(
     throw new ManifestNotReadyError();
   }
 
-  const executor = createToolExecutor({ resolver, cache: entityCache, searcher: searxng });
-  const generated = await generateBuild(request, { client: llm, executor, signal });
-  const sheet = await resolveBuild(generated.build, request.activity, {
+  const inventoryContext: InventoryContext | undefined = context
+    ? { userId: context.userId, db: context.db }
+    : undefined;
+  const inventorySummary = context
+    ? buildInventorySummary(context.db, context.userId)
+    : null;
+
+  const executor = createToolExecutor({
+    resolver,
+    cache: entityCache,
+    searcher: searxng,
+    inventoryContext,
+  });
+  const generated = await generateBuild(request, {
+    client: llm,
+    executor,
+    signal,
+    inventorySummary,
+  });
+  let sheet = await resolveBuild(generated.build, request.activity, {
     resolver,
     validator,
     cache: entityCache,
   });
+
+  if (context) {
+    const annotatedWeapons = await annotateWeaponsWithInventory(
+      sheet.weapons,
+      context.db,
+      context.userId,
+      resolver,
+    );
+    sheet = { ...sheet, weapons: annotatedWeapons };
+  }
+
   return {
     build: generated.build,
     sheet,
     toolCallCount: generated.toolCallCount,
     researchSummary: generated.researchSummary,
+    exports: renderExports(sheet),
+  };
+}
+
+export interface ResolveSlotOutcome {
+  build: GeneratedBuild;
+  sheet: ResolvedBuildSheet;
+  manifestVersion: string;
+}
+
+export interface ReResolveOutcome {
+  build: GeneratedBuild;
+  sheet: ResolvedBuildSheet;
+  manifestVersion: string;
+}
+
+/** Re-resolve a single weapon slot after a manual swap. */
+export async function resolveBuildSlot(params: {
+  build: GeneratedBuild;
+  activity: string;
+  slot: "Kinetic" | "Energy" | "Power";
+  weapon: GeneratedBuild["weapons"][number];
+}): Promise<ResolveSlotOutcome> {
+  const { entityCache, resolver, validator } = await getServices();
+  const meta = await entityCache.getMeta();
+  if (!meta) throw new ManifestNotReadyError();
+
+  const weapons = params.build.weapons.map((w) =>
+    w.slot === params.slot ? params.weapon : w,
+  );
+  const build: GeneratedBuild = { ...params.build, weapons };
+  const sheet = await resolveBuild(build, params.activity, {
+    resolver,
+    validator,
+    cache: entityCache,
+  });
+  return { build, sheet, manifestVersion: meta.manifestVersion };
+}
+
+/** Re-resolve an entire build against the current manifest. */
+export async function reResolveBuild(
+  build: GeneratedBuild,
+  activity: string,
+): Promise<ReResolveOutcome> {
+  const { entityCache, resolver, validator } = await getServices();
+  const meta = await entityCache.getMeta();
+  if (!meta) throw new ManifestNotReadyError();
+
+  const sheet = await resolveBuild(build, activity, {
+    resolver,
+    validator,
+    cache: entityCache,
+  });
+  return { build, sheet, manifestVersion: meta.manifestVersion };
+}
+
+export interface BuildRefineOutcome extends RefineBuildResult {
+  sheet: ResolvedBuildSheet;
+  exports: BuildExports;
+}
+
+/** Partial LLM refine with locked sections, then manifest resolution. */
+export async function runBuildRefine(
+  req: RefineRequest,
+  signal?: AbortSignal,
+): Promise<BuildRefineOutcome> {
+  const { entityCache, resolver, validator, llm, searxng } = await getServices();
+  const meta = await entityCache.getMeta();
+  if (!meta) throw new ManifestNotReadyError();
+
+  const executor = createToolExecutor({ resolver, cache: entityCache, searcher: searxng });
+  const refined = await refineBuild(req, { client: llm, executor, signal });
+  const sheet = await resolveBuild(refined.build, req.activity, {
+    resolver,
+    validator,
+    cache: entityCache,
+  });
+  return {
+    ...refined,
+    sheet,
     exports: renderExports(sheet),
   };
 }

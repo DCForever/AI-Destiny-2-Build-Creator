@@ -18,11 +18,12 @@ async function executeToolCalls(
   toolCalls: NonNullable<ChatMessage["tool_calls"]>,
   executor: ToolExecutor,
   toolCallCount: number,
+  maxToolCalls: number,
 ): Promise<{ messages: ChatMessage[]; toolCallCount: number }> {
   let next = messages;
   let count = toolCallCount;
   for (const call of toolCalls) {
-    if (count >= MAX_TOOL_CALLS) break;
+    if (count >= maxToolCalls) break;
     const name = call.function.name as ToolName;
     const result = await executor.execute(name, call.function.arguments);
     count += 1;
@@ -45,7 +46,9 @@ export async function runResearchLoop(params: {
   systemPrompt: string;
   userPrompt: string;
   signal?: AbortSignal;
+  maxToolCalls?: number;
 }): Promise<ResearchLoopResult> {
+  const toolBudget = params.maxToolCalls ?? MAX_TOOL_CALLS;
   const tools = buildToolDefinitions();
   let messages: ChatMessage[] = [
     { role: "system", content: params.systemPrompt },
@@ -63,7 +66,7 @@ export async function runResearchLoop(params: {
       return { messages, toolCallCount, finalSummary: assistant.content };
     }
 
-    if (toolCallCount >= MAX_TOOL_CALLS) {
+    if (toolCallCount >= toolBudget) {
       messages = [...messages, { role: "user", content: BUDGET_EXHAUSTED_PROMPT }];
       throwIfAborted(params.signal);
       const finalResponse = await params.client.chat(messages, { signal: params.signal });
@@ -80,8 +83,12 @@ export async function runResearchLoop(params: {
       assistant.tool_calls,
       params.executor,
       toolCallCount,
+      toolBudget,
     );
     messages = executed.messages;
     toolCallCount = executed.toolCallCount;
+    if (toolCallCount >= toolBudget) {
+      messages = [...messages, { role: "user", content: BUDGET_EXHAUSTED_PROMPT }];
+    }
   }
 }

@@ -20,6 +20,8 @@ vi.mock("../cachePaths", () => ({
     path.join(tmpDir, `${v.replace(/[^a-zA-Z0-9._-]+/g, "_")}-${s}.json`),
   entityCacheMetaPath: (v: string) =>
     path.join(tmpDir, `${v.replace(/[^a-zA-Z0-9._-]+/g, "_")}-meta.json`),
+  perkWeaponIndexPath: (v: string) =>
+    path.join(tmpDir, `${v.replace(/[^a-zA-Z0-9._-]+/g, "_")}-perk-index.json`),
   rawTablePath: (v: string, t: string) =>
     path.join(tmpDir, `raw-${v}-${t}.json`),
   currentVersionFilePath: () => path.join(tmpDir, "current-version.json"),

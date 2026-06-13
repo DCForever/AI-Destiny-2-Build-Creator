@@ -20,7 +20,8 @@ economy.
 - Bungie API manifest (versioned disk cache, derived entity stores) and
   optional OAuth sign-in for character import
 - zod (LLM output validation), fuse.js (fuzzy name resolution), iron-session
-  (encrypted session cookie), vitest (unit tests)
+  (encrypted session cookie), **SQLite** (inventory + saved loadouts via
+  Drizzle + better-sqlite3), vitest (unit tests)
 
 ## Getting started
 
@@ -81,21 +82,38 @@ Other variables are optional except when using the corresponding feature
 (Bungie keys for sign-in, `SESSION_SECRET` for sessions, `DIM_API_KEY` for
 dim.gg shares).
 
+### SQLite (inventory + loadouts)
+
+User inventory and saved loadouts are stored in `.cache/app.db` (SQLite). User
+preferences remain in `.cache/users/{id}/preferences.json`.
+
+**Deployment constraint:** SQLite is intended for **single-process local use**
+only (`npm run dev` or `npm start`). Do not run multiple Node instances against
+the same file, and do not deploy to Edge or serverless — the DB file is not
+shared across workers. If the dev DB becomes corrupted after hot reload, delete
+`.cache/app.db` and re-sync inventory from Bungie.
+
 ## Using the app
 
 1. **First run**: open **Settings** and click *Refresh manifest*. This
    downloads the Bungie manifest tables and builds the derived entity stores
    (requires `BUNGIE_API_KEY`). Generation refuses to run without them.
 2. **Generator** (`/`): pick class/subclass/activity/playstyle, optionally pin
-   an exotic or weapon, and generate. The model researches with manifest tools
-   before composing; the app then resolves every name, flags fuzzy matches,
-   illegal perks, and missing champion coverage, and renders the build sheet.
+   an exotic or weapon, filter weapon types, and generate. The model researches
+   with manifest tools before composing; the app then resolves every name,
+   flags fuzzy matches, illegal perks, slot mismatches (with visible
+   auto-remediation), and missing champion coverage, and renders the build
+   sheet. Sign in and sync inventory to prioritize owned weapons.
    *Regenerate* reruns the same request; *Try a Different Angle* asks for a
-   different exotic and engine.
+   different exotic and engine. Enable multi-pass generation in Settings when
+   `LLM_MULTI_PASS_ENABLED=true`.
 3. **Analyzer** (`/analyze`): paste your current loadout (or sign in with
    Bungie and import a character's equipped gear) and get an assessment,
    prioritized swaps, and an optimized build sheet.
-4. **Exports**: every build sheet offers a DIM wishlist, Loadout Optimizer
+4. **Loadouts** (`/loadouts`): save, list, and edit generated builds when
+   signed in. Swap weapons client-side with manifest re-resolve; optional LLM
+   partial refine for locked sections.
+5. **Exports**: every build sheet offers a DIM wishlist, Loadout Optimizer
    parameters, raw JSON, and — when signed in with Bungie and `DIM_API_KEY` is
    set — a dim.gg share link.
 
@@ -109,17 +127,18 @@ dim.gg shares).
 | `npm run test`      | Vitest unit tests                        |
 | `npm run lint`      | ESLint                                   |
 | `npm run build`     | Production build                         |
+| `npm run gate`      | typecheck + lint + test + build          |
 
 ## Project layout
 
 - `src/lib/manifest/` — manifest download/cache, entity extractors, item
   resolver, perk validator
 - `src/lib/llm/` — LLM clients (OpenAI-compatible, Ollama, Grok with fallback),
-  tool loop, build schema, prompts
+  tool loop, build schema, prompts, optional multi-pass pipeline
+- `src/lib/db/` — SQLite schema, repositories (inventory, loadouts, users)
 - `src/lib/search/` — SearXNG JSON API client
-- `src/lib/bungie/` — OAuth, session, profile import
-- `src/lib/dim/` — wishlist lines, Loadout Optimizer parameters, dim.gg share
+- `src/lib/bungie/` — OAuth, session, profile import, inventory sync
 - `src/data/meta/` — curated 9.7.0 meta pack (with cached sources)
 - `src/data/rules/` — deterministic sandbox rule tables (anti-champion mapping,
   armor archetypes, stat benefit curves, activity rules)
-- `src/app/` — pages (`/` generator, `/analyze`, `/settings`) and API routes
+- `src/app/` — pages (`/` generator, `/analyze`, `/loadouts`, `/settings`) and API routes

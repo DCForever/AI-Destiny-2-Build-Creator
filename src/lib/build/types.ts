@@ -25,6 +25,9 @@ export interface ResolvedPerkPick extends ResolvedReference {
   /** Legality against the weapon's perk pools / artifact grid, when checkable. */
   legality: { legal: boolean; reason?: string; curated?: boolean } | null;
   rationale?: string;
+  /** Set when resolve-time auto-remediation replaced an illegal perk. */
+  originalRequestedName?: string;
+  remediationReason?: string;
 }
 
 export interface ResolvedWeapon {
@@ -39,6 +42,15 @@ export interface ResolvedWeapon {
   championCounter: ChampionType | null;
   perks: ResolvedPerkPick[];
   rationale: string;
+  /** Manifest slot vs requested slot check; legal after successful remediation. */
+  slotLegality?: { legal: boolean; reason?: string; manifestSlot?: "Kinetic" | "Energy" | "Power" } | null;
+  /** Set when resolve-time auto-remediation swapped a wrong-slot weapon. */
+  originalRequestedName?: string;
+  remediationReason?: string;
+  /** Phase 3: whether the user owns a matching roll. */
+  owned?: boolean;
+  matchingInstanceId?: string;
+  rollTags?: string[];
 }
 
 export interface ChampionCoverageSource {
@@ -48,7 +60,8 @@ export interface ChampionCoverageSource {
 }
 
 export interface ChampionCoverage {
-  sources: ChampionCoverageSource[];
+  weaponSources: ChampionCoverageSource[];
+  subclassSources: ChampionCoverageSource[];
   covered: Record<ChampionType, boolean>;
 }
 
@@ -87,6 +100,10 @@ export interface ValidationSummary {
   fuzzy: number;
   unresolved: number;
   illegalPerks: number;
+  /** Weapons whose manifest slot differed from the LLM-requested slot. */
+  slotMismatches: number;
+  /** Perks or weapons auto-corrected at resolve time (shown separately in UI). */
+  remediations: number;
 }
 
 export interface ResolvedBuildSheet {

@@ -102,6 +102,78 @@ const EQUIPMENT_RESPONSE = {
     },
   },
 };
+const FULL_INVENTORY_RESPONSE = {
+  ErrorCode: 1,
+  Response: {
+    profileInventory: {
+      data: {
+        items: [
+          { itemHash: 800001, bucketHash: 1498876634, itemInstanceId: "vault1" },
+        ],
+      },
+    },
+    characterInventories: {
+      data: {
+        char1: {
+          items: [
+            { itemHash: 800002, bucketHash: 2465295065, itemInstanceId: "charInv1" },
+          ],
+        },
+      },
+    },
+    characterEquipment: {
+      data: {
+        char1: {
+          items: [
+            { itemHash: 800003, bucketHash: 953998645, itemInstanceId: "equip1" },
+          ],
+        },
+      },
+    },
+    itemComponents: {
+      instances: {
+        data: {
+          vault1: { primaryStat: { value: 1800 }, isMasterwork: true, isCrafted: false },
+          charInv1: { primaryStat: { value: 1810 }, isCrafted: true },
+          equip1: { primaryStat: { value: 1820 } },
+        },
+      },
+      sockets: {
+        data: {
+          vault1: { sockets: [{ plugHash: 501, isEnabled: true }] },
+          charInv1: { sockets: [{ plugHash: 502, isEnabled: true }] },
+          equip1: { sockets: [{ plugHash: 503, isEnabled: true }] },
+        },
+      },
+    },
+  },
+};
+
+describe("HttpBungieProfileClient.getFullInventory", () => {
+  const membership = { membershipType: 3, membershipId: "mem1", displayName: "G1" };
+
+  it("parses vault, character, and equipped items with instances and sockets", async () => {
+    const items = await makeClient(makeOkFetch(FULL_INVENTORY_RESPONSE)).getFullInventory(
+      ACCESS_TOKEN,
+      membership,
+    );
+
+    expect(items).toHaveLength(3);
+    const vault = items.find((i) => i.location === "vault");
+    expect(vault?.itemHash).toBe(800001);
+    expect(vault?.power).toBe(1800);
+    expect(vault?.isMasterwork).toBe(true);
+    expect(vault?.plugHashes).toEqual([501]);
+
+    const charItem = items.find((i) => i.location === "character");
+    expect(charItem?.characterId).toBe("char1");
+    expect(charItem?.isCrafted).toBe(true);
+
+    const equipped = items.find((i) => i.location === "equipped");
+    expect(equipped?.itemHash).toBe(800003);
+    expect(equipped?.plugHashes).toEqual([503]);
+  });
+});
 
 describe("HttpBungieProfileClient.getMemberships", () => {
   it("maps destinyMemberships and uses bungieGlobalDisplayName when present", async () => {

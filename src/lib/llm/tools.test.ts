@@ -136,11 +136,13 @@ function createExecutor(
 }
 
 describe("buildToolDefinitions", () => {
-  it("defines all five research tools", () => {
+  it("defines all seven research tools", () => {
     const names = buildToolDefinitions().map((t) => t.function.name);
     expect(names).toEqual([
       "search_items",
       "get_weapon_perks",
+      "search_weapon_perks",
+      "find_weapons_with_perk",
       "get_exotic_details",
       "get_artifact_perks",
       "web_search",
@@ -175,6 +177,7 @@ describe("ManifestToolExecutor", () => {
   it("get_weapon_perks returns legendary columns with curated-first perk names", async () => {
     const result = await executor.execute("get_weapon_perks", { weaponName: "Fatebringer (Timelost)" });
     expect(result.weapon).toBe("Fatebringer (Timelost)");
+    expect(result.slot).toBe("Energy");
     const columns = result.columns as { column: number; perks: string[] }[];
     expect(columns[0]?.perks[0]).toBe("Explosive Payload");
     expect(columns[0]?.perks.length).toBeLessThanOrEqual(12);
@@ -255,6 +258,62 @@ describe("ManifestToolExecutor", () => {
     expect(await executor.execute("search_items", { query: "  " })).toEqual({
       error: "query must be a non-empty string",
     });
+  });
+
+  it("search_items filters by slot for weapons", async () => {
+    const kineticCache = createFakeCache({
+      weapons: [
+        {
+          ...baseRecord(501, "Kinetic Scout"),
+          slot: "Kinetic",
+          element: "Kinetic",
+          ammo: "Primary",
+          frame: "Scout Rifle",
+          itemTypeName: "Scout Rifle",
+          originTraitHashes: [],
+          perkColumns: [],
+        },
+        {
+          ...baseRecord(502, "Energy Scout"),
+          slot: "Energy",
+          element: "Arc",
+          ammo: "Primary",
+          frame: "Scout Rifle",
+          itemTypeName: "Scout Rifle",
+          originTraitHashes: [],
+          perkColumns: [],
+        },
+      ],
+      "weapon-perks": WEAPON_PERKS,
+    });
+    const kineticExecutor = createExecutor(createItemResolver(kineticCache), kineticCache, searcher);
+    const result = await kineticExecutor.execute("search_items", {
+      query: "scout",
+      category: "weapons",
+      slot: "Kinetic",
+    });
+    const matches = result.matches as { name: string; slot: string }[];
+    expect(matches).toHaveLength(1);
+    expect(matches[0]?.slot).toBe("Kinetic");
+  });
+
+  it("search_weapon_perks returns column metadata", async () => {
+    const result = await executor.execute("search_weapon_perks", { query: "firefly" });
+    const matches = result.matches as { name: string; columns: { label: string }[] }[];
+    expect(matches[0]?.name).toBe("Firefly");
+    expect(matches[0]?.columns[0]?.label).toBe("Barrel");
+  });
+
+  it("find_weapons_with_perk returns weapons in the requested slot", async () => {
+    const result = await executor.execute("find_weapons_with_perk", {
+      perkName: "Firefly",
+      slot: "Energy",
+    });
+    expect(result.perk).toBe("Firefly");
+    expect(result.slot).toBe("Energy");
+    const weapons = result.weapons as { name: string; columnLabel: string }[];
+    expect(weapons[0]?.name).toContain("Fatebringer");
+    expect(weapons[0]?.columnLabel).toBe("Barrel");
   });
 
   it("createToolExecutor returns a working executor", async () => {

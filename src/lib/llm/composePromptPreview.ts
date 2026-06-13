@@ -12,7 +12,7 @@ import {
   composeResearchSystemPrompt,
   composeUserPrompt,
 } from "./prompts";
-import { buildToolDefinitions } from "./tools";
+import { buildToolDefinitions } from "./toolDefinitions";
 
 export const BUILD_COMPOSE_PROMPT =
   "Now output the final build as a single JSON object matching the required schema. No prose.";

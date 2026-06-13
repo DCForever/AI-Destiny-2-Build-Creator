@@ -112,3 +112,17 @@ describe("isArtifactAllowed", () => {
     expect(isArtifactAllowed("Raid: The Desert Perpetual")).toBe(true);
   });
 });
+
+describe("abilityTimings", () => {
+  it("parses cooldown and duration from manifest text", async () => {
+    const { parseAbilityTiming, formatAbilityTiming } = await import("./abilityTimings");
+    const timing = parseAbilityTiming("15 second cooldown. 8s duration while active.");
+    expect(formatAbilityTiming(timing)).toBe("15s cooldown · 8s duration");
+  });
+
+  it("falls back to table when description lacks timing", async () => {
+    const { parseAbilityTiming, formatAbilityTiming } = await import("./abilityTimings");
+    const timing = parseAbilityTiming("Call lightning down on foes.", "Stormtrance");
+    expect(formatAbilityTiming(timing)).toContain("300s cooldown");
+  });
+});

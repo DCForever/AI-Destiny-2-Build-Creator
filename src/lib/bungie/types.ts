@@ -21,6 +21,8 @@ export interface SessionData {
   tokens?: BungieTokens;
   /** CSRF state for the in-flight OAuth redirect. */
   oauthState?: string;
+  /** Safe same-origin return path after OAuth (e.g. `/` or `/settings`). */
+  oauthReturnUrl?: string;
 }
 
 export interface DestinyMembership {
@@ -57,6 +59,20 @@ export interface BungieAuthClient {
   refreshTokens(tokens: BungieTokens): Promise<BungieTokens>;
 }
 
+export type InventoryLocation = "vault" | "character" | "equipped";
+
+export interface RawInventoryItem {
+  instanceId: string;
+  itemHash: number;
+  bucketHash: number;
+  location: InventoryLocation;
+  characterId?: string;
+  power: number;
+  plugHashes: number[];
+  isMasterwork: boolean;
+  isCrafted: boolean;
+}
+
 export interface BungieProfileClient {
   getMemberships(accessToken: string): Promise<DestinyMembership[]>;
   getCharacters(
@@ -68,4 +84,8 @@ export interface BungieProfileClient {
     membership: DestinyMembership,
     characterId: string,
   ): Promise<CharacterEquipment>;
+  getFullInventory(
+    accessToken: string,
+    membership: DestinyMembership,
+  ): Promise<RawInventoryItem[]>;
 }

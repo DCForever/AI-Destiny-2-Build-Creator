@@ -1,4 +1,6 @@
 import type { ResolvedSubclass, ResolvedReference, ResolutionStatus } from "@/lib/build/types";
+import { getSubclassMeta, listSubclassVerbs } from "@/data/subclasses";
+import { formatAbilityTiming, parseAbilityTiming } from "@/data/rules/abilityTimings";
 import { ResolutionBadge } from "./ResolutionBadge";
 
 function resolvedName(ref: ResolvedReference): string {
@@ -31,6 +33,9 @@ function AbilitiesGrid({ abilities }: { abilities: ResolvedSubclass["abilities"]
             <span className="text-sm text-foreground">{resolvedName(reference)}</span>
             <ResolutionBadge status={reference.status} />
           </div>
+          <p className="text-[10px] text-muted mt-1">
+            {formatAbilityTiming(parseAbilityTiming("", resolvedName(reference))) ?? "—"}
+          </p>
         </div>
       ))}
     </div>
@@ -53,11 +58,33 @@ function FragmentCheckLine({ check }: FragmentCheckLineProps) {
 
 interface SubclassSectionProps {
   subclass: ResolvedSubclass;
+  subclassName?: string;
 }
 
-export function SubclassSection({ subclass }: SubclassSectionProps) {
+function KeywordVerbsBlock({ subclassName }: { subclassName: string }) {
+  const meta = getSubclassMeta(subclassName);
+  if (!meta) return null;
+  const verbs = listSubclassVerbs(subclassName);
+  return (
+    <div>
+      <div className="text-[11px] tracking-widest uppercase text-muted mb-2">
+        Keyword verbs · {meta.element}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {verbs.map((v) => (
+          <span key={v.name} className="border border-line px-2 py-1 text-xs text-foreground" title={v.description}>
+            {v.name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SubclassSection({ subclass, subclassName }: SubclassSectionProps) {
   return (
     <div className="space-y-4">
+      {subclassName && <KeywordVerbsBlock subclassName={subclassName} />}
       <AbilitiesGrid abilities={subclass.abilities} />
 
       <div>

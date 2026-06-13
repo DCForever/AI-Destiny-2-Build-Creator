@@ -44,11 +44,16 @@ function addRef(ref: ResolvedReference, counts: ValidationSummary): void {
 
 function addPick(pick: ResolvedPerkPick, counts: ValidationSummary): void {
   addRef(pick, counts);
-  if (pick.legality !== null && !pick.legality.legal) counts.illegalPerks++;
+  if (pick.originalRequestedName) counts.remediations++;
+  if (pick.legality !== null && !pick.legality.legal && !pick.originalRequestedName) {
+    counts.illegalPerks++;
+  }
 }
 
 function computeValidation(input: ValidationInput): ValidationSummary {
-  const counts: ValidationSummary = { verified: 0, fuzzy: 0, unresolved: 0, illegalPerks: 0 };
+  const counts: ValidationSummary = {
+    verified: 0, fuzzy: 0, unresolved: 0, illegalPerks: 0, slotMismatches: 0, remediations: 0,
+  };
 
   for (const r of input.subclass.aspects) addRef(r, counts);
   for (const r of input.subclass.fragments) addRef(r, counts);
@@ -59,6 +64,8 @@ function computeValidation(input: ValidationInput): ValidationSummary {
 
   for (const w of input.weapons) {
     addRef(w.reference, counts);
+    if (w.originalRequestedName) counts.remediations++;
+    if (w.slotLegality && !w.slotLegality.legal) counts.slotMismatches++;
     for (const p of w.perks) addPick(p, counts);
   }
 

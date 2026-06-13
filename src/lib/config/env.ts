@@ -178,3 +178,8 @@ export function getSessionSecret(): string | null {
   if (!secret || secret.length < 32) return null;
   return secret;
 }
+
+export function isMultiPassEnabled(): boolean {
+  const raw = readTrimmed("LLM_MULTI_PASS_ENABLED");
+  return raw === "true" || raw === "1";
+}
