@@ -11,6 +11,7 @@ const ENV_KEYS = [
   "LLM_PROVIDER",
   "LLM_URL",
   "LLM_MODEL",
+  "LLM_MODEL_GROK",
   "LLM_API_KEY",
   "XAI_API_KEY",
   "OLLAMA_URL",
@@ -83,22 +84,20 @@ describe("getLlmConfig", () => {
     expect(config.apiKey).toBe("xai-secret");
   });
 
-  it("uses explicit non-local LLM_URL as grok primary", () => {
+  it("uses LLM_MODEL_GROK when set for grok provider", () => {
     vi.stubEnv("LLM_PROVIDER", "grok");
-    vi.stubEnv("LLM_URL", "https://api.x.ai/v1");
-    vi.stubEnv("LLM_MODEL", "grok-4.3-latest");
+    vi.stubEnv("LLM_MODEL_GROK", "grok-4.3-latest");
     const config = getLlmConfig();
-    expect(config.url).toBe("https://api.x.ai/v1");
     expect(config.model).toBe("grok-4.3-latest");
   });
 
-  it("does not use local LLM_URL as grok primary", () => {
+  it("does not use LLM_MODEL as grok primary", () => {
     vi.stubEnv("LLM_PROVIDER", "grok");
     vi.stubEnv("LLM_URL", "http://127.0.0.1:1234/v1");
     vi.stubEnv("LLM_MODEL", "local-model");
     const config = getLlmConfig();
     expect(config.url).toBe("https://api.x.ai/v1");
-    expect(config.model).toBe("local-model");
+    expect(config.model).toBe("grok-4.3");
   });
 });
 

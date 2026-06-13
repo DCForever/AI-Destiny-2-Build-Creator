@@ -41,9 +41,9 @@ npm run dev                        # http://localhost:3000
      `OLLAMA_MODEL=gemma4`.
    - **Grok (xAI)**: set `LLM_PROVIDER=grok` and `XAI_API_KEY` (or
      `LLM_API_KEY`) from [console.x.ai](https://console.x.ai). Defaults to
-     `grok-4.3` at `https://api.x.ai/v1`. To auto-fallback to a local LLM when
-     Grok is unavailable, also set `OLLAMA_URL`/`OLLAMA_MODEL` or a local
-     `LLM_URL` (e.g. `http://127.0.0.1:1234/v1` for LM Studio).
+     `grok-4.3` at `https://api.x.ai/v1` (`LLM_MODEL_GROK` overrides the model).
+     To auto-fallback to a local LLM when Grok is unavailable, also set
+     `OLLAMA_URL`/`OLLAMA_MODEL` or a local `LLM_URL` + `LLM_MODEL` (e.g. LM Studio).
    - Any other **OpenAI-compatible** server on `/v1/chat/completions` with
      function/tool calling support.
 
@@ -71,7 +71,8 @@ Copy `.env.local.example` to `.env.local`. Key LLM variables:
 | --- | --- |
 | `LLM_PROVIDER` | `openai` (default), `ollama`, or `grok` |
 | `LLM_URL` | Base URL — include `/v1` for OpenAI-compatible servers |
-| `LLM_MODEL` | Model id (LM Studio shows this in the server tab) |
+| `LLM_MODEL` | Model id for openai/ollama or local Grok fallback (LM Studio server tab) |
+| `LLM_MODEL_GROK` | Grok model id when `LLM_PROVIDER=grok` (default `grok-4.3`) |
 | `LLM_API_KEY` | Optional Bearer token if your server requires auth |
 | `XAI_API_KEY` | xAI API key when `LLM_PROVIDER=grok` (alias for `LLM_API_KEY`) |
 | `OLLAMA_URL` / `OLLAMA_MODEL` | Ollama config; also used as Grok fallback when set |

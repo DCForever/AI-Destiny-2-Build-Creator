@@ -95,7 +95,7 @@ export function getLlmConfig(): LlmConfig {
 
   if (provider === "grok") {
     url = resolveGrokPrimaryUrl(llmUrl);
-    model = llmModel ?? DEFAULT_GROK_MODEL;
+    model = readTrimmed("LLM_MODEL_GROK") ?? DEFAULT_GROK_MODEL;
   } else {
     url =
       llmUrl ??

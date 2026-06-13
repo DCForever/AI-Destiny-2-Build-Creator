@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getBungieOAuthConfig, getSessionSecret } from "@/lib/config/env";
 import { createBungieAuthClient } from "@/lib/bungie/oauth";
+import { consumeOAuthState } from "@/lib/bungie/oauthStateStore";
 import { getSession } from "@/lib/bungie/session";
 
 export const runtime = "nodejs";
@@ -23,8 +24,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Missing code or state query parameter" }, { status: 400 });
   }
 
-  const session = await getSession();
-  if (!session.oauthState || session.oauthState !== state) {
+  if (!consumeOAuthState(state)) {
     return NextResponse.json({ error: "OAuth state mismatch — possible CSRF attempt" }, { status: 400 });
   }
 
@@ -34,10 +34,11 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json(NOT_CONFIGURED, { status: 503 });
   }
 
+  const session = await getSession();
+
   try {
     const tokens = await authClient.exchangeCode(code);
     session.tokens = tokens;
-    session.oauthState = undefined;
     await session.save();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Token exchange failed";
