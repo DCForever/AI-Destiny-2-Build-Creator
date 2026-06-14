@@ -47,6 +47,7 @@ export interface GenerateBuildMultiPassDeps {
   client: LlmClient;
   executor: ToolExecutor;
   signal?: AbortSignal;
+  inventorySummary?: string | null;
 }
 
 const PASS_TOOL_BUDGETS = {
@@ -122,7 +123,7 @@ export async function generateBuildMultiPass(
   const weaponsResult = await runPass(deps, {
     researchPrompt: composeWeaponsResearchPrompt(metaPack, request, abilitiesResult.output),
     finalizePrompt: composeWeaponsFinalizePrompt(metaPack),
-    userPrompt: composeWeaponsUserPrompt(request),
+    userPrompt: composeWeaponsUserPrompt(request, deps.inventorySummary),
     composePrompt: PASS_COMPOSE_PROMPTS.weapons,
     jsonSchema: weaponsPassJsonSchema(),
     schema: weaponsPassSchema,

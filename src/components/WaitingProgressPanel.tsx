@@ -12,9 +12,14 @@ function formatElapsed(seconds: number): string {
 interface WaitingProgressPanelProps {
   label: "Generating" | "Analyzing";
   onCancel: () => void;
+  multiPassMode?: boolean;
 }
 
-export function WaitingProgressPanel({ label, onCancel }: WaitingProgressPanelProps) {
+export function WaitingProgressPanel({
+  label,
+  onCancel,
+  multiPassMode = false,
+}: WaitingProgressPanelProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
@@ -30,7 +35,14 @@ export function WaitingProgressPanel({ label, onCancel }: WaitingProgressPanelPr
       <div className="text-[11px] tracking-widest uppercase text-muted mb-4">
         {label} · {formatElapsed(elapsedSeconds)}
       </div>
-      <p className="text-sm text-muted mb-6">Waiting for model response…</p>
+      <p className="text-sm text-muted mb-6">
+        Waiting for model response…
+        {multiPassMode && (
+          <span className="block mt-2 text-xs text-warning">
+            Multi-pass mode runs five specialist passes (~10+ LLM round-trips). This can take several minutes.
+          </span>
+        )}
+      </p>
       <button
         type="button"
         onClick={onCancel}

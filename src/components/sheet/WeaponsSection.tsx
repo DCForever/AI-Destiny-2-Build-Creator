@@ -123,8 +123,8 @@ function WeaponCard({ weapon, editable = false, onClick }: {
         <div>
           <div className="text-[11px] tracking-widest uppercase text-muted mb-1">Perks</div>
           <ul className="divide-y-0">
-            {weapon.perks.map((p) => (
-              <PerkRow key={p.requestedName} perk={p} />
+            {weapon.perks.map((p, index) => (
+              <PerkRow key={`${p.requestedName}-${index}`} perk={p} />
             ))}
           </ul>
         </div>

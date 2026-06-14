@@ -98,8 +98,18 @@ export function composeWeaponsFinalizePrompt(metaPack: string): string {
   ].join("\n\n");
 }
 
-export function composeWeaponsUserPrompt(request: BuildRequest): string {
-  return `Pick three synergistic weapons for:\n${renderRequest(request)}`;
+export function composeWeaponsUserPrompt(
+  request: BuildRequest,
+  inventorySummary?: string | null,
+): string {
+  const lines = [`Pick three synergistic weapons for:\n${renderRequest(request)}`];
+  if (inventorySummary) {
+    lines.push(
+      "## Owned inventory (prefer these when prioritizeOwned is set; use find_weapons_with_perk with ownedOnly)",
+      inventorySummary,
+    );
+  }
+  return lines.join("\n\n");
 }
 
 export function composeArmorResearchPrompt(

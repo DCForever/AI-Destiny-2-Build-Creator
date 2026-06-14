@@ -218,7 +218,11 @@ export function GeneratorPage({ multiPassAvailable = false }: { multiPassAvailab
         )}
 
         {state.phase === "generating" && (
-          <WaitingProgressPanel label="Generating" onCancel={handleCancel} />
+          <WaitingProgressPanel
+            label="Generating"
+            onCancel={handleCancel}
+            multiPassMode={lastRequest?.generationMode === "multi-pass"}
+          />
         )}
 
         {state.phase === "error" && (
