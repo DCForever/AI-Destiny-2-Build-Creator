@@ -45,8 +45,8 @@ function StatRow({ target: st }: StatRowProps) {
       <StatTrack target={st.target} />
       {st.benefits.length > 0 && (
         <ul className="mt-2 space-y-0.5">
-          {st.benefits.map((line) => (
-            <li key={line} className="text-xs text-muted leading-relaxed">
+          {st.benefits.map((line, index) => (
+            <li key={`${line}-${index}`} className="text-xs text-muted leading-relaxed">
               {line}
             </li>
           ))}

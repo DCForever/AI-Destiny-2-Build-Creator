@@ -31,7 +31,7 @@ function SlotColumn({ slot, picks }: SlotColumnProps) {
         {picks.length === 0 ? (
           <p className="text-xs text-muted/50 italic">—</p>
         ) : (
-          picks.map((p) => <ModChip key={p.requestedName} pick={p} />)
+          picks.map((p, index) => <ModChip key={`${p.requestedName}-${index}`} pick={p} />)
         )}
       </div>
     </div>

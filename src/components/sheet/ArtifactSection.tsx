@@ -33,12 +33,12 @@ export function ArtifactSection({ artifact, activity }: ArtifactSectionProps) {
       <div>
         <div className="text-[11px] tracking-widest uppercase text-muted mb-2">Perks</div>
         <div className="flex flex-wrap gap-2">
-          {artifact.perks.map((perk) => {
+          {artifact.perks.map((perk, index) => {
             const isIllegal = perk.legality?.legal === false;
             const perkName = perk.resolved?.name ?? perk.requestedName;
             return (
               <span
-                key={perk.requestedName}
+                key={`${perk.requestedName}-${index}`}
                 className={`inline-flex items-center gap-1.5 border px-2 py-1 text-xs ${isIllegal ? "border-danger/40 text-danger" : "border-line text-foreground"}`}
               >
                 {perkName}

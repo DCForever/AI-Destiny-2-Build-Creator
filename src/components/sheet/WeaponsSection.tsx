@@ -109,8 +109,8 @@ function WeaponCard({ weapon, editable = false, onClick }: {
       )}
       {weapon.owned === true && weapon.rollTags && weapon.rollTags.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {weapon.rollTags.map((tag) => (
-            <span key={tag} className="text-[10px] border border-accent/30 text-accent px-1.5 py-0.5">{tag}</span>
+          {weapon.rollTags.map((tag, index) => (
+            <span key={`${tag}-${index}`} className="text-[10px] border border-accent/30 text-accent px-1.5 py-0.5">{tag}</span>
           ))}
         </div>
       )}
@@ -160,7 +160,7 @@ export function WeaponsSection({ weapons, editable = false, onSlotClick }: Weapo
     <div className="grid gap-4 sm:grid-cols-3">
       {weapons.map((w) => (
         <WeaponCard
-          key={w.reference.requestedName}
+          key={w.slot}
           weapon={w}
           editable={editable}
           onClick={onSlotClick ? () => onSlotClick(w.slot) : undefined}

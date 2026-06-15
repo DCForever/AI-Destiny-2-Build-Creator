@@ -71,8 +71,8 @@ function TextTab({ text, skipped }: { text: string; skipped: string[] }) {
       {skipped.length > 0 && (
         <div className="space-y-1">
           <div className="text-[11px] tracking-widest uppercase text-warning">Skipped</div>
-          {skipped.map((s) => (
-            <p key={s} className="text-xs text-warning/80">{s}</p>
+          {skipped.map((s, index) => (
+            <p key={`${s}-${index}`} className="text-xs text-warning/80">{s}</p>
           ))}
         </div>
       )}

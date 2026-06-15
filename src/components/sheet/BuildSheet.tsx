@@ -55,8 +55,8 @@ function AlternativesList({ alternatives }: { alternatives: ResolvedReference[] 
     <div>
       <div className="text-[11px] tracking-widest uppercase text-muted mb-1">Alternatives</div>
       <div className="flex flex-wrap gap-2">
-        {alternatives.map((alt) => (
-          <span key={alt.requestedName} className="inline-flex items-center gap-1.5 border border-line px-2 py-1 text-xs text-foreground">
+        {alternatives.map((alt, index) => (
+          <span key={`${alt.requestedName}-${index}`} className="inline-flex items-center gap-1.5 border border-line px-2 py-1 text-xs text-foreground">
             {alt.resolved?.name ?? alt.requestedName}
             <ResolutionBadge status={alt.status} />
           </span>

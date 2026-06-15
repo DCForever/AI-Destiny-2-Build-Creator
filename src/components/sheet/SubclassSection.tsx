@@ -90,8 +90,8 @@ export function SubclassSection({ subclass, subclassName }: SubclassSectionProps
       <div>
         <div className="text-[11px] tracking-widest uppercase text-muted mb-2">Aspects</div>
         <div className="flex flex-wrap gap-2">
-          {subclass.aspects.map((ref) => (
-            <RefChip key={ref.requestedName} reference={ref} />
+          {subclass.aspects.map((ref, index) => (
+            <RefChip key={`${ref.requestedName}-${index}`} reference={ref} />
           ))}
         </div>
       </div>
@@ -99,8 +99,8 @@ export function SubclassSection({ subclass, subclassName }: SubclassSectionProps
       <div>
         <div className="text-[11px] tracking-widest uppercase text-muted mb-2">Fragments</div>
         <div className="flex flex-wrap gap-2">
-          {subclass.fragments.map((ref) => (
-            <RefChip key={ref.requestedName} reference={ref} />
+          {subclass.fragments.map((ref, index) => (
+            <RefChip key={`${ref.requestedName}-${index}`} reference={ref} />
           ))}
         </div>
         {subclass.fragmentCheck && (

@@ -18,8 +18,8 @@ function BulletList({
 }) {
   return (
     <ul className="space-y-2">
-      {items.map((item) => (
-        <li key={item} className="flex items-start gap-2.5 text-sm text-foreground leading-relaxed">
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`} className="flex items-start gap-2.5 text-sm text-foreground leading-relaxed">
           <span className={`size-2 shrink-0 rotate-45 mt-1.5 ${dotClass}`} aria-hidden="true" />
           <span>{item}</span>
         </li>
@@ -84,7 +84,7 @@ export function AnalysisReport({ analysis }: AnalysisReportProps) {
           <SectionHeader title="Priority Swaps" />
           <div className="space-y-4">
             {analysis.swaps.map((swap, i) => (
-              <SwapRow key={`${swap.replace}-${swap.with}`} index={i} swap={swap} />
+              <SwapRow key={i} index={i} swap={swap} />
             ))}
           </div>
         </section>
