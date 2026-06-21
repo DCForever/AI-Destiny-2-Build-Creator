@@ -42,4 +42,25 @@
 2. A build has at least 1 of the following: helmet, arms, chest, legs, class item, primary slot weapon, special slot weapon, heavy slot weapon. This would be the default variant of sets. A single build will have the same subclass and aspects through out all variants. A build will have at least one focused synergy that will help guide suggestions.
    1. A build can have variants which have different sets than the default.
 3. A build variant has at least 1 of the following: helmet, arms, chest, legs, class item, primary slot weapon, special slot weapon, heavy slot weapon before it can be saved.
- 
+
+## Rules
+
+For a build to be complete, it must have the following:
+1. A Class
+2. A subclass
+3. A super selected
+4. A class ability selected
+5. A grenade selected
+6. A melee selected
+7. 2 Aspects selected
+8. Maximum allowed fragments
+9. A primary weapon
+10. A special weapon
+11. A heavy weapon
+12. A helmet armor
+13. A arms armor
+14. A chest armor
+15. A leg armor
+16. A class item armor
+17. Artifact perks selected
+18. Armor mods selected for each armor piece
