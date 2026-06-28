@@ -12,7 +12,7 @@ Add user-created **Sets** (Weapon, Armor, Mod, Pair, Fashion) with per-type slot
 
 Weapon SetItems store full roll data; removed entries retain roll history for display and alternative matching. Pair Sets must match build exotic armor and primarily supply the variant exotic weapon. Variant and build save require ≥1 equipment slot filled via attached sets and ≥1 designated synergy.
 
-Technical approach: extend SQLite/Drizzle schema (`sets`, `set_items`, `set_tags`, `synergies`, `builds`, `build_tags`, `build_variants`, `variant_set_attachments`, `build_synergies`); add `src/lib/sets`, `src/lib/synergies`, `src/lib/builds` services with slot-resolution, tag validation, and conflict validation; shared `ConceptTagPicker` / `TagFilterBar` UI; reuse manifest entity stores, fuse.js filtering, and existing `GeneratedBuild`/`ResolvedBuildSheet` resolution where builds overlap with today's loadout generator.
+Technical approach: extend SQLite/Drizzle schema (`sets`, `set_items`, `set_tags`, `synergies`, `synergy_links`, `builds`, `build_tags`, `build_variants`, `build_synergies`, `variant_set_attachments`); add `src/lib/sets`, `src/lib/synergies`, `src/lib/builds` services with slot-resolution, tag validation, and conflict validation; shared `ConceptTagPicker` / `TagFilterBar` UI; reuse manifest entity stores, fuse.js filtering, and existing `GeneratedBuild`/`ResolvedBuildSheet` resolution where builds overlap with today's loadout generator.
 
 ## Technical Context
 
@@ -20,7 +20,7 @@ Technical approach: extend SQLite/Drizzle schema (`sets`, `set_items`, `set_tags
 
 **Primary Dependencies**: Next.js/React, zod, drizzle-orm + better-sqlite3, fuse.js, bungie-api-ts, @destinyitemmanager/dim-api-types, LLM clients (openai-compat), iron-session, manifest extractors/entity stores (`src/lib/manifest`)
 
-**Storage**: SQLite (`.cache/app.db`) — new tables for sets, synergies, builds, variants, attachments; existing `loadouts`/`inventory_items`/`users` unchanged initially (builds may later link to or supersede loadout saves). Filesystem `.cache` for Bungie manifest.
+**Storage**: SQLite (`.cache/app.db`) — new tables: `sets`, `set_items`, `set_tags`, `synergies`, `synergy_links`, `builds`, `build_tags`, `build_variants`, `build_synergies`, `variant_set_attachments`; existing `loadouts`/`inventory_items`/`users` unchanged initially (builds may later link to or supersede loadout saves). Filesystem `.cache` for Bungie manifest.
 
 **Testing**: vitest co-located `*.test.ts`; gate = `npm run gate` (typecheck + lint + test + build)
 
@@ -30,7 +30,7 @@ Technical approach: extend SQLite/Drizzle schema (`sets`, `set_items`, `set_tags
 
 **Performance Goals**: Sub-100ms set attach and slot-conflict checks; sub-5s filter/search on catalogs (SC-002); 30+ sets / 20+ synergies without UI lag (SC-007)
 
-**Constraints**: Single-process SQLite; manifest refresh required; fashion sets excluded from functional resolution; Pair Set armor must match build exotic armor (FR-028); cross-set slot conflicts block variant save (FR-026)
+**Constraints**: Single-process SQLite; manifest refresh required; fashion sets excluded from functional resolution; Pair Set armor must match build exotic armor (FR-028); cross-set slot conflicts block variant save (FR-026). US3 build save requires ≥1 designated synergy (FR-024); minimal synergy read/seed ships in US3; full synergy CRUD remains US4.
 
 **Scale/Scope**: Single user; 6 user stories (P1–P6); extends generator, analyzer, loadouts, build sheet
 
@@ -77,6 +77,7 @@ src/
 │   ├── sets/                   # set CRUD, slot rules, roll storage
 │   ├── synergies/              # synergy CRUD
 │   ├── builds/                 # build/variant, slot resolution, conflicts
+│   ├── catalog/                # filterItems + inventory intersection (FR-007/008)
 │   ├── suggestions/            # rules + LLM orchestration
 │   ├── db/schema.ts            # extend drizzle tables
 │   └── db/repositories/        # new repos + tests co-located

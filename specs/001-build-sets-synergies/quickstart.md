@@ -20,18 +20,20 @@ npm run dev
 2. Attempt second primary → confirmation → replace on confirm (FR-027).
 3. Create **Armor Set** named `Ferropotent` with tags `[Solar, Melee]` — one helmet, one chest.
 4. Attempt to save a set with invalid tag → rejected (`INVALID_TAG`, FR-029).
-5. Create **Pair Set** with exotic armor + exotic weapon entries.
-6. Create **Fashion Set** — verify excluded from build composition UI.
-7. Delete weapon from set → previous roll still visible; alternatives offered (FR-019).
-8. Duplicate name within same set type → error (FR-005).
-9. Filter Sets list by `Solar` + `Melee` → only Ferropotent armor set shown (FR-031).
+5. Create **Mod Set** or Armor Set with empty mod slots → UI encourages adding mods (FR-021).
+6. Create **Pair Set** with exotic armor + exotic weapon entries.
+7. Create **Fashion Set** — verify excluded from build composition UI.
+8. Delete weapon from set → previous roll still visible; alternatives offered (FR-019).
+8b. Attach set to a build variant, attempt delete → blocked with affected build/variant list (FR-017).
+9. Duplicate name within same set type → error (FR-005).
+10. Filter Sets list by `Solar` + `Melee` → only Ferropotent armor set shown (FR-031).
 
 **Pass**: SC-001 (<60s for 3+ items across slots).
 
 ## Scenario 2: P2 — Catalog Filtering
 
 1. Browse all weapons — filter by type/archetype.
-2. Toggle **My Weapons** after inventory sync.
+2. Toggle **My Weapons** after inventory sync → only owned items; unsigned-in shows prompt (FR-007).
 3. Repeat for armor.
 
 **Pass**: SC-002 (<5s search).
@@ -45,15 +47,19 @@ npm run dev
 5. Attach Weapon Set primary + Pair exotic weapon conflicting → save blocked (FR-026).
 6. Edit live set → variant reflects change; snapshot unchanged.
 7. In attach flow, filter by `Solar` + `Melee` → only matching sets shown; empty state if none (FR-032).
-8. Auto + explicit set suggestions appear (FR-010).
+8. **Automatic** set suggestions appear when exotic armor or subclass changes — no explicit action (FR-010).
+9. **Explicit** set and synergy suggestions appear via Suggest action or goal input (FR-010, FR-016 stub OK until T077).
 
 **Pass**: SC-003.
 
-## Scenario 4: P4 — Synergies
+## Scenario 4: P4 — Synergies with Links
 
-1. Create Melee + Grenade synergies.
-2. Designate **both** on a build.
-3. Request suggestions → both influence results equally (FR-024).
+1. Create **Melee** synergy; link **Cast No Shadows** origin trait (FR-012).
+2. Create **Void** synergy; link **Eutechnology** 2-piece (*Gift of the Ley Lines*) and 4-piece (*Techeun's Foresight*) bonuses on the same synergy.
+3. Designate **both** on a build; request suggestions → both influence results equally (FR-024).
+4. Browse catalog — **all** linked synergies appear as badges on matching traits/set bonuses; same target with multiple synergies shows multiple badges (FR-012, BR-SYN-008).
+5. Link a second synergy to *Cast No Shadows* — both Melee and Verb synergies shown on that trait.
+6. Attempt invalid link (unknown trait name) → rejected (`INVALID_SYNERGY_LINK`).
 
 ## Scenario 5: P5 — Roll Suggestions
 
@@ -64,8 +70,9 @@ npm run dev
 
 1. From build with Crown of Tempests, duplicate variant.
 2. Variant A: Osteo Striga + survivability sets.
+2b. Set variant notes (e.g. "Survivability" / "DPS") on each variant.
 3. Variant B: Vex Mythoclast + DPS sets.
-4. Compare variants — shared armor/subclass/synergies; diff weapons/sets highlighted.
+4. Compare variants — shared armor/subclass/synergies; diff weapons/sets/notes highlighted.
 5. Filter builds by exotic armor → both variants listed (FR-015, SC-004).
 
 ## Edge Cases
@@ -89,4 +96,5 @@ npm run gate
 - [data-model.md](./data-model.md) — entities
 - [contracts/set-attachment-contract.md](./contracts/set-attachment-contract.md)
 - [contracts/build-variant-contract.md](./contracts/build-variant-contract.md)
+- [contracts/synergy-contract.md](./contracts/synergy-contract.md)
 - [research.md](./research.md) — design decisions

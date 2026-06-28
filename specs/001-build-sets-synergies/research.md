@@ -66,6 +66,20 @@
 - Single synergy only: too restrictive.
 - Primary + secondary: rejected by user.
 
+## Synergy Links (Association Targets)
+
+**Decision**: Synergies associate to manifest-backed targets via **`synergy_links`** with fixed kinds: `weapon`, `weapon_perk`, `origin_trait`, `armor_set_bonus`. **Many-to-many**: multiple links per synergy; multiple synergies per target (FR-012, Session 2026-06-28).
+
+**Examples**:
+- Melee synergy ← origin trait *Cast No Shadows*
+- Void synergy ← *Eutechnology* 2pc *Gift of the Ley Lines* + 4pc *Techeun's Foresight*
+
+**Rationale**: User needs to document perk/trait/set-bonus interactions, not only whole weapons or abstract "items". Reverse lookup enables catalog badges (BR-SYN-004).
+
+**Alternatives considered**:
+- Free-form JSON `elements`: rejected — needs typed validation and indexed reverse lookup.
+- Link only to whole weapons: too coarse for origin traits and set bonuses.
+
 ## Pair Set Attachment Rules
 
 **Decision**: On attach to a variant, Pair Set `exotic_armor` **must match** build-level exotic armor (hash equality). Mismatch → reject with error. Pair primarily supplies variant `exotic_weapon` (FR-028).
@@ -105,7 +119,7 @@
 
 ## Persistence Schema Summary
 
-**Decision**: New tables — `sets`, `set_items`, `set_tags`, `synergies`, `build_synergies`, `builds`, `build_tags`, `build_variants`, `variant_set_attachments`. Existing `loadouts` table remains for current save flow; builds are parallel until integration story.
+**Decision**: New tables — `sets`, `set_items`, `set_tags`, `synergies`, `synergy_links`, `build_synergies`, `builds`, `build_tags`, `build_variants`, `variant_set_attachments`. Existing `loadouts` table remains for current save flow; builds are parallel until integration story.
 
 **Rationale**: Normalized model supports deletion guards, variant attachments, and slot queries without overloading loadout JSON blobs.
 

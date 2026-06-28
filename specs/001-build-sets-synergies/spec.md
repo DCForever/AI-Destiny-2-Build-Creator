@@ -34,8 +34,8 @@
 - Q: Are set categories free-form text or a controlled vocabulary? → A: **Controlled concept tags** from a system-defined Destiny vocabulary (PVE, PVP, Solar, Melee, Grandmaster, Dungeon, Solo, Support, etc.) — not user-typed strings.
 - Q: Can a set have multiple categories/tags? → A: **Yes** — multi-select from the controlled vocabulary; set **name** remains user-defined and separate from tags.
 - Q: How do users discover sets to attach to a build? → A: Filter sets (and builds) by **tag combination with AND semantics** (e.g. Solar + Melee) in the Sets list, Builds list, and SetAttachPicker without leaving the attach flow.
-
-## User Scenarios & Testing *(mandatory)*
+- Q: What game elements can a Synergy be associated with? → A: **Weapons**, **weapon perks**, **origin traits**, and **armor set bonuses** (2-piece and 4-piece). Multiple links per synergy. Examples: *Cast No Shadows* origin trait → Melee synergy; *Eutechnology* 2pc (*Gift of the Ley Lines*) and 4pc (*Techeun's Foresight*) → Void synergy.
+- Q: Can the same item/target have more than one synergy? → A: **Yes** — association is **many-to-many**. A single origin trait, perk, weapon, or armor set bonus MAY be linked to **multiple synergies** (e.g. *Cast No Shadows* linked to both a Melee synergy and a Verb synergy). Reverse lookup and catalog UI MUST show **all** linked synergies.
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
@@ -92,7 +92,7 @@ A user can associate one or more Sets with a Build's default variant. The build 
 
 **Why this priority**: Directly enables the core capability "Combine sets intelligently to create builds" and the Felwinters Helm + Monte Carlo example. This slice can be validated once sets and basic builds exist.
 
-**Independent Test**: User creates a Melee-focused build, attaches an Armor Set named `Ferropotent` (tags `[Melee, Solar]`) choosing snapshot and a Weapon Set named `Grenade Loop` (tags `[Grenade]`) choosing live link. Later edits the live Set and confirms the build reflects the change, while the snapshot one stays fixed. Testable without full synergy rules or intelligent generation.
+**Independent Test**: User creates a Melee-focused build, attaches an Armor Set named `Ferropotent` (tags `[Melee, Solar]`) choosing snapshot and a Weapon Set named `Grenade Loop` (tags `[Grenade]`) choosing live link. Later edits the live Set and confirms the build reflects the change, while the snapshot one stays fixed. Requires at least one synergy record (create via minimal seed or US4 CRUD) before build save per FR-024.
 
 **Acceptance Scenarios**:
 
@@ -108,17 +108,20 @@ A user can associate one or more Sets with a Build's default variant. The build 
 
 ### User Story 4 - Define and Manage Synergies (Priority: P4)
 
-Users can create, edit, view, and delete Synergies of various types (Melee synergies, Destiny 2 Verb synergies, Grenade, Primary/Special/Heavy Weapon, Kinetic, Super, Damage, Healing).
+Users can create, edit, view, and delete Synergies of various types (Melee synergies, Destiny 2 Verb synergies, Grenade, Primary/Special/Heavy Weapon, Kinetic, Super, Damage, Healing). Each synergy can be **linked** to manifest-backed targets: weapons, weapon perks, origin traits, and armor set bonuses (2-piece and 4-piece).
 
 **Why this priority**: Synergies are a major goal area (8+ types listed). Defining them manually provides immediate value for documentation and later use in suggestions, independently of automatic generation.
 
-**Independent Test**: User creates a "Meleefire" synergy linking specific melee abilities and weapons, assigns it a type, saves it. Later browses the synergies library and finds it, edits description, and deletes it. No build association required for this test.
+**Independent Test**: User creates a Melee synergy linked to the *Cast No Shadows* origin trait; creates a Void synergy linked to *Eutechnology* 2-piece (*Gift of the Ley Lines*) and 4-piece (*Techeun's Foresight*) bonuses. Browses the synergies library, filters by type, and sees links on catalog items. No build association required for this test.
 
 **Acceptance Scenarios**:
 
-1. **Given** the user wants to document a combo, **When** they create a new Melee synergy and specify participating abilities/weapons, **Then** the synergy is saved and appears in the synergies catalog with its type and details.
-2. **Given** existing synergies, **When** the user filters the catalog by synergy type (e.g., "Grenade"), **Then** only matching synergies are shown.
-3. **Given** a synergy attached to items the user owns, **When** they view their items or sets, **Then** relevant synergies are surfaced as tags or notes.
+1. **Given** the user wants to document a combo, **When** they create a new Melee synergy and link the *Cast No Shadows* origin trait, **Then** the synergy is saved with its type, links, and appears in the synergies catalog.
+2. **Given** the user documents an armor set interaction, **When** they create a Void synergy and link *Eutechnology* 2-piece (*Gift of the Ley Lines*) and 4-piece (*Techeun's Foresight*) bonuses, **Then** both armor set bonus links are stored on the same synergy.
+3. **Given** existing synergies, **When** the user filters the catalog by synergy type (e.g., "Grenade"), **Then** only matching synergies are shown.
+4. **Given** a synergy linked to a weapon perk, origin trait, or armor set bonus, **When** the user views that element in the weapon/armor catalog or inventory, **Then** **all** linked synergies are surfaced as tags or notes.
+5. **Given** multiple synergies link to the same target (e.g. *Cast No Shadows* linked to both Melee and Verb synergies), **When** the user views that target or creates links, **Then** all associations are preserved and displayed — no exclusivity constraint.
+6. **Given** the user adds a link, **When** the target cannot be resolved in the manifest (invalid hash or unknown name), **Then** save is rejected with a clear validation error.
 
 ---
 
@@ -161,7 +164,7 @@ A user can easily create and manage multiple variants of the same build that sha
 - Set names must be unique per user per Set type. Creating a duplicate name within the same Set type results in an error.
 - Concept tags are selected from a controlled vocabulary; invalid tag values are rejected. Multi-tag filters use AND semantics (e.g. Solar + Melee requires both tags).
 - What happens when a user has hundreds of sets or very large sets (50+ items)?
-- How are conflicts resolved when multiple synergies apply to the same items in a build?
+- How are conflicts resolved when multiple synergies apply to the same items in a build? → **Not a conflict**: the same target MAY link to multiple synergies (many-to-many). When a build designates multiple synergies, all contribute equally to suggestions (FR-024). Equipment matching any linked synergy is relevant context.
 - What occurs if the manifest updates and items in a user's set are deprecated or changed?
 - Can sets be shared or are they strictly private per user?
 - Fashion Sets are treated purely as cosmetic and organizational (ignored for build composition, synergies, suggestions, and stats, unlike weapon/armor/mod sets).
@@ -187,14 +190,14 @@ A user can easily create and manage multiple variants of the same build that sha
 - **FR-007**: System MUST provide fast filtering and search for the user's owned weapons ("my weapons"), integrated with inventory sync.
 - **FR-008**: System MUST provide equivalent fast filtering for all armor and my armor.
 - **FR-009**: System MUST allow users to attach one or more Sets to a Build, with a choice per attachment of live reference (edits to the Set affect the Build) or snapshot (Build uses the Set state at the time of attachment).
-- **FR-010**: System MUST provide suggestions for relevant Sets both automatically (contextual based on exotic, subclass, or playstyle during build creation/editing) and on explicit user request (via "Suggest" action or goal description).
+- **FR-010**: System MUST provide suggestions for relevant Sets both automatically (contextual based on exotic, subclass, or playstyle during build creation/editing) and on explicit user request (via "Suggest" action or goal description). Automatic suggestions MUST work via deterministic rules in US3 (P3); LLM-enhanced explicit suggestions MAY ship in polish (Phase 9).
 - **FR-011**: System MUST support creation, editing, viewing, and deletion of Synergies for the listed types (Melee, Verb, Grenade, Primary Weapon, Special Weapon, Heavy Weapon, Kinetic Weapon, Super, Damage, Healing).
-- **FR-012**: System MUST allow users to associate synergies with items, sets, or builds for discovery and documentation.
+- **FR-012**: System MUST allow users to associate synergies with **weapons**, **weapon perks**, **origin traits**, and **armor set bonuses** (2-piece and 4-piece) for discovery, documentation, and suggestions. Multiple links per synergy MUST be supported. The same target MAY be linked to **multiple synergies** (many-to-many); reverse lookup MUST return all linked synergies for a target.
 - **FR-013**: System MUST provide suggested weapon rolls (specific perks) that complement a chosen set or synergy.
 - **FR-019**: For weapon SetItems, the system MUST store the full selected roll data (perks including barrels, magazine, traits, masterwork, etc.). When a SetItem is removed from a set, the previous roll configuration MUST still be displayable, and the system SHOULD offer alternatives (other weapons with matching or similar perks/rolls).
 - **FR-014**: Users MUST be able to create multiple variants under the same build sharing exotic armor but using different attached Sets and optionally different exotic weapons (typically using snapshots for stable variants).
 - **FR-015**: System MUST make it easy to discover and switch between variants for the same build (filterable by shared exotic armor and per-variant exotic weapon).
-- **FR-016**: System MUST support intelligent suggestion of sets or synergies, triggered both automatically (contextual during build editing) and explicitly (when user requests suggestions or describes a goal, e.g., "Melee focused build using Felwinters Helm + Monte Carlo").
+- **FR-016**: System MUST support intelligent suggestion of **synergies** (and sets per FR-010), triggered both automatically (contextual during build editing) and explicitly (when user requests suggestions or describes a goal, e.g., "Melee focused build using Felwinters Helm + Monte Carlo"). Deterministic synergy matching (type, tags, links) MUST ship in US3/US4; LLM ranking MAY ship in Phase 9.
 - **FR-017**: System MUST block deletion of a Set if it is currently attached to any Build variant(s). The user MUST be shown the list of affected builds/variants and detach the Set from all of them before deletion is allowed.
 - **FR-020**: Each Set MUST enforce at most one item per applicable equipment slot within its type's domain: Weapon Sets (primary, special, heavy), Armor Sets (helmet, arms, chest, legs, class item), Pair Sets (exotic weapon, exotic armor). Slots within a set's domain may be empty.
 - **FR-021**: Mod Sets and optional mods on other set types SHOULD encourage mod selection; mods are not required for a valid set but the UI MUST encourage adding mods where relevant.
@@ -223,7 +226,13 @@ A user can easily create and manage multiple variants of the same build that sha
   Set names MUST be unique per (userId, setType) for a given user.
 
   For weapons in a set (SetItem): full roll data is stored (selected perks, barrels, masterwork, etc.) so that the exact configuration can be shown even if the SetItem is later removed ("deleted") from the set, and alternatives (similar weapons matching the perks/roll) can be offered.
-- **Synergy**: A documented interaction between abilities, verbs, weapons, or effects. Has a type and participating elements.
+- **Synergy**: A documented interaction between abilities, verbs, weapons, or effects. Has a **type** (Melee, Grenade, Void, etc.) and zero or more **links** to manifest-backed targets:
+  - **Weapon** (item hash)
+  - **Weapon perk** (perk plug hash)
+  - **Origin trait** (e.g. Cast No Shadows → Melee synergy)
+  - **Armor set bonus** (armor set name + 2pc or 4pc + bonus name, e.g. Eutechnology *Gift of the Ley Lines* / *Techeun's Foresight* → Void synergy)
+  Links form a **many-to-many** graph: one synergy → many targets; one target → many synergies (FR-012).
+  Builds may **designate** synergies separately via `build_synergies` to guide suggestions (FR-024).
 - **Item**: Reference to a weapon or armor piece from the manifest (used inside Sets, Builds, and Synergies).
 - **ConceptTag**: A system-defined label in a facet of the controlled Destiny vocabulary (activity, element, playstyle, role). Users select zero or more tags when creating or editing Sets and Builds. UI notation like `Solar:Melee` is a filter shorthand for two tags (AND), not a single compound tag value.
 

@@ -71,10 +71,35 @@ Item occupying one slot within a set.
 | id | text PK | |
 | userId | integer FK | |
 | name | text | |
-| type | enum | melee, verb, grenade, primary-weapon, … |
+| type | enum | melee, verb, grenade, primary-weapon, void, … |
 | description | text | |
-| elements | text JSON | optional item/set/name references |
 | createdAt, updatedAt | text | |
+
+Links stored in **`synergy_links`** junction — **many-to-many**: multiple links per synergy; multiple synergies per target (FR-012, BR-SYN-006, BR-SYN-008).
+
+### SynergyLink
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | |
+| synergyId | text FK → synergies | |
+| kind | enum | `weapon` \| `weapon_perk` \| `origin_trait` \| `armor_set_bonus` |
+| displayName | text | denormalized label for UI |
+| itemHash | integer nullable | weapon link |
+| perkHash | integer nullable | weapon perk link |
+| parentItemHash | integer nullable | optional weapon context for perk |
+| originTraitName | text nullable | e.g. `Cast No Shadows` |
+| originTraitHash | integer nullable | manifest hash when available |
+| armorSetName | text nullable | e.g. `Eutechnology` |
+| bonusPieces | integer nullable | `2` or `4` |
+| bonusName | text nullable | e.g. `Gift of the Ley Lines` |
+| armorSetHash | integer nullable | manifest set id when available |
+
+**Validation** (FR-012, BR-SYN-005):
+- Required fields per `kind`; manifest validation where hashes are provided.
+- `armor_set_bonus`: resolve via `set-bonuses` store — match `(name, perks[].requiredCount, perks[].name)`; set `armorSetHash` on success.
+- Multiple links per synergy; **multiple synergies per target** (no exclusivity).
+- Indexes: `synergy_links(synergy_id)`, `synergy_links(kind, origin_trait_name)`, `synergy_links(armor_set_name, bonus_pieces)`.
 
 ### Build
 
@@ -112,6 +137,7 @@ Parent configuration shared by variants.
 | isDefault | integer boolean | exactly one per build |
 | exoticWeaponHash | integer nullable | per-variant exotic weapon |
 | exoticWeaponName | text nullable | |
+| notes | text nullable | optional variant playstyle notes (e.g. "DPS", "Survivability") |
 | createdAt, updatedAt | text | |
 
 **Validation**: FR-025 — resolved slot map must have ≥1 equipment slot before save.
@@ -161,7 +187,7 @@ Same pattern for `build_tags` when filtering builds.
 ```text
 User 1──* Set 1──* SetItem
 Set *──* ConceptTag (via set_tags)
-User 1──* Synergy
+User 1──* Synergy 1──* SynergyLink
 User 1──* Build 1──* BuildVariant 1──* VariantSetAttachment *──1 Set
 Build *──* ConceptTag (via build_tags)
 Build *──* Synergy (via BuildSynergy)
