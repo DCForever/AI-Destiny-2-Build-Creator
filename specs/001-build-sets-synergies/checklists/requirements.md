@@ -40,6 +40,9 @@
 - Functional requirements are concrete and testable.
 - Key entities identified without schema or storage details.
 
+**2026-06-22 - Clarification session (set/build/variant model)**:
+- Integrated hybrid exotic model (armor build-level, weapon per-variant), Pair Set armor-match rule, designated synergies with equal weight, slot cardinality per set type, variant save rules, separate set types, and replace-with-confirmation for occupied slots.
+
 All checklist items pass. Ready for `/speckit-plan`.
 
 ## Notes

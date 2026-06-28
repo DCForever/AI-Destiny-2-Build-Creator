@@ -1,100 +1,198 @@
 # Data Model: Build Sets and Synergies
 
-## Overview
-Extends the existing build/loadout/user model in SQLite. New entities for Sets (with items), Synergies, and Build attachments (supporting live references or snapshots per clarification).
+**Updated**: 2026-06-28
 
-All entities are user-owned (via user_id). Item references use manifest identifiers (e.g. hash or name key from Bungie manifest stores) for loose coupling.
+## Overview
+
+Extends SQLite (Drizzle) with first-class **Builds** (parent) and **BuildVariants** (equipment composition via attached Sets). Sets are typed collections with **slot-scoped items** and **concept tags** from a controlled vocabulary (`src/data/conceptTags.ts`). Synergies link to builds for suggestion weighting (equal when multiple).
+
+Equipment slots (canonical enum):
+
+| Domain | Slots |
+|--------|-------|
+| Weapon | `primary`, `special`, `heavy` |
+| Armor | `helmet`, `arms`, `chest`, `legs`, `class_item` |
+| Pair | `exotic_weapon`, `exotic_armor` |
+
+Logical slots for variant resolution map manifest buckets to the above. Mods are optional metadata on armor slots or via Mod Sets.
 
 ## Entities
 
 ### Set
-User-curated collection.
-- id: string (primary key, uuid or cuid)
-- userId: string (FK to users)
-- name: string (unique within user + category + type per clarif)
-- category: string (e.g. "Melee:Ferropotent", "Solar Weapons PVE", "Grenade")
-- type: 'weapon' | 'armor' | 'mod' | 'pair' | 'fashion'
-- createdAt: datetime
-- updatedAt: datetime
 
-**Validation**:
-- name + category + type unique per user (enforced in app + DB unique constraint where possible)
-- Fashion type treated as cosmetic only (FR-018)
+User-curated collection with a user-defined name and zero or more concept tags.
 
-**Relationships**:
-- has many SetItem
-- can be attached to many Builds via BuildSetAttachment
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | uuid/cuid |
+| userId | integer FK → users | |
+| name | text | user-defined; unique per (userId, type) |
+| type | enum | `weapon` \| `armor` \| `mod` \| `pair` \| `fashion` |
+| createdAt | text ISO | |
+| updatedAt | text ISO | |
+
+**Validation**: FR-005 name uniqueness per (userId, type); FR-004/029 tag validation; fashion excluded from functional resolution (FR-018).
+
+### SetTag (junction)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| setId | text FK → sets | |
+| tagId | text | `ConceptTagId` from controlled vocabulary |
+
+**Validation**: tagId MUST exist in `conceptTags.ts` enum (FR-029). Zero tags allowed.
 
 ### SetItem
-Junction for items in a set (supports 50+ items per edge case).
-- setId: string (FK)
-- itemId: string (manifest reference, e.g. item hash or canonical name)
-- order: number (optional, for display order)
-- addedAt: datetime
 
-**Weapon-specific data** (for weapon type SetItems; required for full roll storage per user clarification):
-- selectedPerks: json (array of selected perk hashes, e.g. barrel, magazine, trait1, trait2, etc.)
-- masterworkHash?: string (optional)
-- otherData?: json (e.g. catalyst, ornament, etc. for the specific weapon roll)
+Item occupying one slot within a set.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | |
+| setId | text FK → sets | |
+| slot | enum | slot valid for parent set type |
+| itemHash | integer | Bungie manifest hash |
+| itemName | text | denormalized display |
+| selectedPerks | text JSON | perk plug hashes (weapons) |
+| masterworkHash | integer nullable | |
+| modHashes | text JSON nullable | armor/mods |
+| sortOrder | integer | display |
+| removedAt | text nullable | soft-remove; roll retained for history UI |
 
 **Validation**:
-- itemId must exist in current manifest (checked on add/update for live).
-- For weapons: selectedPerks must be valid for the item's sockets (validated on save).
-- The full roll data (perks etc.) is stored directly in the SetItem so that if the entry is later removed ("deleted") from the set, the previous configuration (exact perks, barrels, etc.) can still be shown and used to offer alternatives (similar weapons/rolls matching the perks).
-
-**Relationships**:
-- For snapshots: the roll data is captured at attach time.
+- At most one **active** row per (setId, slot) where `removedAt IS NULL` (FR-020).
+- Replace flow: confirm in UI, then UPDATE row or INSERT after soft-delete previous (FR-027).
+- Weapon perks validated against manifest sockets on save.
 
 ### Synergy
-User-defined interaction.
-- id: string
-- userId: string
-- name: string
-- type: 'melee' | 'verb' | 'grenade' | 'primary-weapon' | 'special-weapon' | 'heavy-weapon' | 'kinetic-weapon' | 'super' | 'damage' | 'healing' (per spec)
-- description: string (text, rationale)
-- createdAt, updatedAt
 
-**Relationships**:
-- many-to-many with Items or Sets via association (for simplicity, use JSON elements or junction table for itemIds/setIds referenced in synergy)
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | |
+| userId | integer FK | |
+| name | text | |
+| type | enum | melee, verb, grenade, primary-weapon, … |
+| description | text | |
+| elements | text JSON | optional item/set/name references |
+| createdAt, updatedAt | text | |
 
-**Validation**: name reasonable length; type from enum.
+### Build
 
-### BuildSetAttachment
-Links Build to Set (supports clarif on live/snapshot per Build).
-- id: string
-- buildId: string (FK to existing builds/loadouts)
-- setId: string (FK)
-- mode: 'live' | 'snapshot'
-- snapshotItemIds: json | null (array of itemIds if mode=snapshot; frozen at attach time)  [deprecated in favor of snapshotConfigs for weapons]
-- snapshotConfigs: json | null (array of {itemId, selectedPerks, masterworkHash?, ...} for full weapon rolls if mode=snapshot; frozen at attach time. For non-weapons, falls back to itemId only.)
-- attachedAt: datetime
+Parent configuration shared by variants.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | |
+| userId | integer FK | |
+| name | text | |
+| className | enum | Titan, Hunter, Warlock |
+| subclass | text JSON | aspects, fragments, abilities (subset of GeneratedBuild subclass) |
+| exoticArmorHash | integer | build-level exotic armor |
+| exoticArmorName | text | |
+| createdAt, updatedAt | text | |
+
+**Validation**: FR-022 — must have default variant with ≥1 slot filled before save completes; FR-024 — ≥1 synergy in `build_synergies`; FR-030 — concept tags via `build_tags`.
+
+### BuildTag (junction)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| buildId | text FK → builds | |
+| tagId | text | `ConceptTagId` from controlled vocabulary |
+
+**Validation**: tagId MUST exist in `conceptTags.ts` enum (FR-029/030).
+
+### BuildVariant
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | |
+| buildId | text FK → builds | |
+| name | text | e.g. `Default`, `DPS` |
+| isDefault | integer boolean | exactly one per build |
+| exoticWeaponHash | integer nullable | per-variant exotic weapon |
+| exoticWeaponName | text nullable | |
+| createdAt, updatedAt | text | |
+
+**Validation**: FR-025 — resolved slot map must have ≥1 equipment slot before save.
+
+### BuildSynergy (junction)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| buildId | text FK | |
+| synergyId | text FK | |
+| attachedAt | text | |
+
+**Validation**: ≥1 row per build for save (FR-024). All rows weighted equally in suggestions.
+
+### VariantSetAttachment
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | text PK | |
+| variantId | text FK → build_variants | |
+| setId | text FK → sets | |
+| mode | enum | `live` \| `snapshot` |
+| snapshotConfigs | text JSON nullable | frozen slot→{itemHash, selectedPerks, …} |
+| attachedAt | text | |
 
 **Validation**:
-- If mode=snapshot, either snapshotItemIds or snapshotConfigs required (use snapshotConfigs for weapons to preserve perks/barrels/etc.).
-- Deletion of Set: blocked if any attachment exists (per clarif and FR-017); show list of builds.
+- Pair Set: `exotic_armor` in resolved set must match `builds.exoticArmorHash` (FR-028).
+- Deleting Set blocked if any attachment exists (FR-017).
+- Cross-set slot conflicts block variant save (FR-026).
 
-**Relationships**:
-- belongs to Build
-- belongs to Set
+### ResolvedVariantEquipment (computed, not stored)
 
-### Existing Entities (extended)
-- **Build** (or Loadout): now has 0..* BuildSetAttachment. Supports variants by using different attachments (P6).
-- **Item** (from manifest): referenced by id in SetItem, attachments, synergies.
+Service output merging variant attachments + variant exotic weapon + build exotic armor into slot map for UI/sheet export.
 
-## State Transitions / Lifecycle
-- Set: create (with items) -> edit (add/remove items, rename, recategorize) -> delete (only if no attachments)
-- Attachment: attach (choose mode) -> edit build (change mode or set) -> detach
-- For live attachments: on build view/render, always fetch current Set items (reflects edits).
-- For snapshot: use stored list (stable even if Set changes or deleted later - but deletion prevented).
-- Synergy: CRUD independent; surfaced as tags/notes on items/sets/builds.
-- Fashion Set: can be created/attached but ignored in functional resolution/suggestions/synergies.
+## Tag Filter Queries (AND semantics)
 
-## Indexes / Queries (for performance per SC-007)
-- Sets by user + category/type (for uniqueness + filter)
-- Attachments by buildId (for build sheet)
-- Set items by setId (for large sets)
-- Suggestions use existing fuse.js + in-memory indexes from manifest/rules.
+To list sets matching tags `[solar, melee]` (FR-031):
 
-This model directly supports all 6 user stories, clarifications, FRs, SCs, and edge cases from the spec. References to manifest items allow updates without breaking sets (live mode re-resolves). 
+1. For each tagId, select `set_id` from `set_tags`.
+2. Intersect result sets → entities with **all** tags.
+3. Join to `sets` scoped by `userId`; optional `type` filter.
 
-See quickstart.md for validation scenarios. Contracts define the shapes for UI/DB.
+Same pattern for `build_tags` when filtering builds.
+
+## Relationships
+
+```text
+User 1──* Set 1──* SetItem
+Set *──* ConceptTag (via set_tags)
+User 1──* Synergy
+User 1──* Build 1──* BuildVariant 1──* VariantSetAttachment *──1 Set
+Build *──* ConceptTag (via build_tags)
+Build *──* Synergy (via BuildSynergy)
+```
+
+## State Transitions
+
+| Entity | Lifecycle |
+|--------|-----------|
+| Set | create → assign tags → add/edit items (slot replace with confirm) → delete if unattached |
+| Build | create + default variant → assign tags + synergies → save when variant valid |
+| BuildVariant | create → attach/detach sets → save when ≥1 slot + no conflicts |
+| VariantSetAttachment | attach (live default) → optional switch to snapshot → detach |
+
+## Indexes
+
+- `sets(user_id, type, name)` unique
+- `set_tags(tag_id, set_id)` — supports AND intersection queries
+- `set_tags(set_id)`
+- `build_tags(tag_id, build_id)`
+- `build_tags(build_id)`
+- `set_items(set_id, slot)` unique partial where active
+- `build_variants(build_id)`
+- `variant_set_attachments(variant_id)`
+- `build_synergies(build_id)`
+
+## Integration with Existing Models
+
+- **`loadouts`**: unchanged in P1–P3; future task may export a variant to `SavedLoadout` (`generatedBuild` + `resolvedSheet`).
+- **`GeneratedBuild`**: build subclass JSON aligns with `generatedBuildSchema.subclass` for familiarity.
+- **`conceptTags.ts`**: canonical tag vocabulary for validation, UI pickers, and filter queries.
+- **Manifest**: all `itemHash` resolved via existing entity stores; validation-first (constitution V).
+
+See [contracts/](./contracts/) for API/UI shapes and [quickstart.md](./quickstart.md) for validation flows.

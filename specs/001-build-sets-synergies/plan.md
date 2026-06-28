@@ -1,54 +1,49 @@
 # Implementation Plan: Build Sets and Synergies
 
-**Branch**: `001-build-sets-synergies` | **Date**: 2026-06-17 | **Spec**: specs/001-build-sets-synergies/spec.md
+**Branch**: `001-build-sets-synergies` | **Date**: 2026-06-28 | **Spec**: [specs/001-build-sets-synergies/spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/001-build-sets-synergies/spec.md`
+**Input**: Feature specification from `/specs/001-build-sets-synergies/spec.md` (includes Session 2026-06-22 clarifications on set slot rules, build/variant model, hybrid exotics, synergy weighting, Pair Set behavior; Session 2026-06-28 on controlled concept tags with AND-filter discovery).
 
 **Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-Primary requirement from spec (plus user clarification): Add support for user-created categorized Sets (weapon, armor, mod, pair, fashion), Synergies of multiple types, attaching Sets to Builds (with per-attachment choice of live reference or snapshot), automated + explicit suggestions for Sets/Synergies/Rolls, and easy creation of variant Builds using different Sets. 
+Add user-created **Sets** (Weapon, Armor, Mod, Pair, Fashion) with per-type slot cardinality (0–1 per applicable slot), **concept tags** from a controlled vocabulary (`src/data/conceptTags.ts`), **Synergies**, and **Builds** composed of a **default variant** plus optional additional **variants**. Build-level fields (subclass, aspects, exotic armor, designated synergies, tags) are shared; variants differ in attached sets and exotic weapon. Attachments support live reference (default) or snapshot per variant. Users filter sets/builds by tag combination (AND semantics) when attaching sets to builds. Suggestions combine deterministic rules/meta with the existing LLM pipeline; all designated synergies contribute equally.
 
-Key enhancement: For weapons in Sets (SetItem), store full roll data (selected perks, barrels, masterwork, etc.). If a SetItem/weapon is later removed ("deleted") from the set, the previous roll configuration can still be displayed, and alternatives (weapons with matching/similar perks) can be offered in the set UI. Fashion Sets remain cosmetic only.
+Weapon SetItems store full roll data; removed entries retain roll history for display and alternative matching. Pair Sets must match build exotic armor and primarily supply the variant exotic weapon. Variant and build save require ≥1 equipment slot filled via attached sets and ≥1 designated synergy.
 
-Technical approach: Extend the existing Next.js app's SQLite schema and lib services for sets/synergies/attachments (leveraging existing manifest entity stores and loadout/build models); add UI components integrated into build editor, sheets, and new or extended management views; use a hybrid of existing deterministic rules/meta + LLM pipeline (per clarifications and assumptions) for suggestions; ensure compliance with constitution via per-story increments, tests-first, and gate checkpoints. Use clarifications: deletion blocks with list, names unique per category/type, live default with per-Build snapshot option, suggestions = auto contextual + explicit, fashion excluded from functional logic.
+Technical approach: extend SQLite/Drizzle schema (`sets`, `set_items`, `set_tags`, `synergies`, `builds`, `build_tags`, `build_variants`, `variant_set_attachments`, `build_synergies`); add `src/lib/sets`, `src/lib/synergies`, `src/lib/builds` services with slot-resolution, tag validation, and conflict validation; shared `ConceptTagPicker` / `TagFilterBar` UI; reuse manifest entity stores, fuse.js filtering, and existing `GeneratedBuild`/`ResolvedBuildSheet` resolution where builds overlap with today's loadout generator.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5+, Next.js 16.2 (App Router, React 19)
 
-**Primary Dependencies**: Next.js/React, zod (schemas), drizzle-orm + better-sqlite3 (persistence), fuse.js (search/filter), existing: bungie-api-ts, @destinyitemmanager/dim-api-types, LLM clients (openai-compat for local/Grok/Ollama), iron-session, manifest extractors/entity stores in src/lib/manifest
+**Primary Dependencies**: Next.js/React, zod, drizzle-orm + better-sqlite3, fuse.js, bungie-api-ts, @destinyitemmanager/dim-api-types, LLM clients (openai-compat), iron-session, manifest extractors/entity stores (`src/lib/manifest`)
 
-**Storage**: SQLite (via Drizzle, file .cache/app.db) for sets, set_items, synergies, build_set_attachments + existing inventory/loadouts/users; filesystem .cache for Bungie manifest + derived stores; JSON files for user preferences
+**Storage**: SQLite (`.cache/app.db`) — new tables for sets, synergies, builds, variants, attachments; existing `loadouts`/`inventory_items`/`users` unchanged initially (builds may later link to or supersede loadout saves). Filesystem `.cache` for Bungie manifest.
 
-**Testing**: vitest (unit + integration, co-located *.test.ts); full gate = typecheck + lint + test + build (npm run gate)
+**Testing**: vitest co-located `*.test.ts`; gate = `npm run gate` (typecheck + lint + test + build)
 
-**Target Platform**: Web browser (local dev server or production build); requires user-provided LLM endpoint; optional Bungie OAuth for inventory sync
+**Target Platform**: Web browser (local dev / production); optional Bungie OAuth; LLM endpoint for explicit suggestions
 
-**Project Type**: Full-stack web application (Next.js with API routes, server components, client UI)
+**Project Type**: Full-stack Next.js web app (API routes + server/client components)
 
-**Performance Goals**: Sub-100ms response for set attach, suggestions, filters on 1000+ items; support 100+ sets and 50+ item sets without UI lag; responsive even with many variants
+**Performance Goals**: Sub-100ms set attach and slot-conflict checks; sub-5s filter/search on catalogs (SC-002); 30+ sets / 20+ synergies without UI lag (SC-007)
 
-**Constraints**: Single-process local SQLite (no multi-writer); manifest must be refreshed first (BUNGIE_API_KEY); LLM required for intelligent suggestions (rules/meta fallback); offline capable for cached data only; existing build/loadout CRUD as foundation
+**Constraints**: Single-process SQLite; manifest refresh required; fashion sets excluded from functional resolution; Pair Set armor must match build exotic armor (FR-028); cross-set slot conflicts block variant save (FR-026)
 
-**Scale/Scope**: Single user; 10-100s of sets/synergies per user; full Destiny manifest (thousands of weapons/armor); extends existing generator, analyzer, loadouts, build sheet features; 6 user stories as small testable increments (P1-P6)
+**Scale/Scope**: Single user; 6 user stories (P1–P6); extends generator, analyzer, loadouts, build sheet
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Required checks against constitution (concrete assessment):**
+- I. Small Testable Increments: **PASS**. Six prioritized user stories remain independently testable. P1 (Sets CRUD + slot rules) is a viable MVP without builds.
+- II. Test-First (NON-NEGOTIABLE): **PASS** (plan). Slot validation, attachment modes, variant save guards, and Pair Set matching will have failing tests before implementation.
+- III. Green Commit Checkpoints (NON-NEGOTIABLE): **PASS** (plan). Checkpoint after each user story; commit only when `npm run gate` passes.
+- IV–V. Co-Located Tests + Validation-First External Data: **PASS**. Manifest item hashes, roll perks, and LLM suggestion payloads validated via zod before persistence or display.
 
-- I. Small Testable Increments: **PASS**. Spec decomposes into 6 prioritized, independently testable user stories (P1: Set CRUD; P2: Filter weapons/armor; P3: Attach with live/snapshot + suggestions; P4: Synergy CRUD; P5: Roll suggestions; P6: Variant builds). Each has Independent Test and acceptance scenarios. No cross-story dependencies that break independence.
-
-- II. Test-First (NON-NEGOTIABLE): **PASS** (plan). All new behavior (set management, attachments, suggestions, synergies) will have failing tests written first per constitution and tasks template. Co-located vitest tests planned.
-
-- III. Green Commit Checkpoints (NON-NEGOTIABLE): **PASS** (plan). Checkpoints after each user story (e.g. after P1 sets complete, after P3 attach). Commits only after `npm run gate` (typecheck + lint + test + build) passes. Aligns with existing project gate.sh.
-
-- IV-V. Co-Located Test Verification + Validation-First External Data: **PASS**. New code (lib/sets, lib/synergies, components for pickers/suggestions) will use co-located tests. All external data (manifest items, LLM suggestions, Bungie inventory) passes through existing zod schemas and validation layers before affecting sets/builds (per V and project practice).
-
-No violations. All user stories map directly to constitution-mandated small increments. Complexity table not needed.
+**Post-design re-check (Phase 1)**: **PASS**. Data model decomposes build vs variant vs attachment cleanly; contracts define validation boundaries; no constitution violations introduced.
 
 ## Project Structure
 
@@ -65,39 +60,30 @@ specs/001-build-sets-synergies/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
 src/
-├── app/ (extend build/loadouts)
+├── app/
+│   ├── api/user/sets/          # new CRUD
+│   ├── api/user/synergies/     # new CRUD
+│   ├── api/user/builds/        # new CRUD + variants
+│   └── (extend loadouts/build pages)
 ├── components/
-│   ├── sets/ (new)
-│   └── sheet/ (extend)
+│   ├── sets/                   # Set editor, slot pickers, replace confirm
+│   ├── builds/                 # Build editor, variant tabs, compare
+│   ├── synergies/              # Synergy catalog
+│   └── sheet/                  # extend resolved sheet with set composition
 ├── lib/
-│   ├── sets.ts, synergies.ts
-│   ├── build/ (extend)
-│   └── db/repositories + schema (extend)
-
-tests/ co-located (following existing co-location pattern)
-
-
-
-
-
-
-
-
+│   ├── sets/                   # set CRUD, slot rules, roll storage
+│   ├── synergies/              # synergy CRUD
+│   ├── builds/                 # build/variant, slot resolution, conflicts
+│   ├── suggestions/            # rules + LLM orchestration
+│   ├── db/schema.ts            # extend drizzle tables
+│   └── db/repositories/        # new repos + tests co-located
 ```
 
-**Structure Decision**: Extend existing Next.js single project structure. New code in src/lib/ and src/components/ following current conventions for co-located tests, Drizzle/SQLite, manifest reuse. Integrates with existing build/loadout features. Simplest consistent extension.
+**Structure Decision**: Extend the existing single Next.js project. New domain modules under `src/lib/{sets,synergies,builds}` with co-located tests. Builds are first-class entities separate from ephemeral `GeneratedBuild` JSON in loadouts, but may import/export via existing sheet resolution.
 
 ## Complexity Tracking
 
-No violations of constitution (see Constitution Check above). All 6 user stories provide small, independently testable increments. Implementation will follow test-first + gate checkpoints.
-
-(If future design reveals unavoidable complexity, document here with justification per template.)
+No constitution violations. Build/variant split and per-type slot domains add modeling complexity but are required by spec clarifications (Session 2026-06-22).

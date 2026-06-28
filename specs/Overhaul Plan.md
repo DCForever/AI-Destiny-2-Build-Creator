@@ -7,9 +7,9 @@
 3. View all my weapons and quickly filter them
 4. View all sets of armor and quickly filter them
 5. View all my armor and quickly filter them
-6. Categorize builds, weapons, armor, etc...
+6. Categorize builds, weapons, armor with **concept tags** from a controlled Destiny vocabulary (PVE, PVP, Solar, Melee, Grandmaster, etc.)
 7. Create sets of items to help create builds
-   1. Categorize each set such as Melee:Ferropotent, Solar Weapons PVE, Grenade  
+   1. Tag each set with one or more concept tags (e.g. name `Ferropotent`, tags `[Melee, Solar, PVE]`) — filter by tag combination when attaching to builds
    2. Sets of Weapons
    3. Sets of Armor
    4. Sets of Mods
@@ -36,3 +36,10 @@
 - Support hundreds of builds and sets, but quickly support finding similar builds Melee focused or Weapon Focused or a specific exotic used
   - I want to have a multiple build for each exotic where only some of the sets differ
     - Example: I want several builds that use Vex Mythoclast, but one might be healing and survivablity while another might be a DPS focused build
+
+## Relationships
+1. A set can have 1 or 0 of the following: helmet, arms, chest, legs, class item, primary slot weapon, special slot weapon, heavy slot weapon
+2. A build has at least 1 of the following: helmet, arms, chest, legs, class item, primary slot weapon, special slot weapon, heavy slot weapon. This would be the default variant of sets. A single build will have the same subclass and aspects through out all variants. A build will have at least one focused synergy that will help guide suggestions.
+   1. A build can have variants which have different sets than the default.
+3. A build variant has at least 1 of the following: helmet, arms, chest, legs, class item, primary slot weapon, special slot weapon, heavy slot weapon before it can be saved.
+ 

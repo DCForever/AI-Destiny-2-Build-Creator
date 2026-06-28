@@ -1,80 +1,162 @@
-# Contract: Set Attachment (UI / Data)
+# Contract: Set Attachment and Variant Composition
 
-**Type**: Internal data + UI component contract for attaching Sets to Builds (P3).
+**Type**: Internal API + UI contract (P3, P6)
 
-## Data Shapes (zod validated, shared with DB)
+## Equipment Slot Enum
 
 ```ts
-// Attachment payload (for create/update)
-type SetAttachmentInput = {
-  setId: string;
-  mode: 'live' | 'snapshot';  // per clarif
-};
+type WeaponSlot = 'primary' | 'special' | 'heavy';
+type ArmorSlot = 'helmet' | 'arms' | 'chest' | 'legs' | 'class_item';
+type PairSlot = 'exotic_weapon' | 'exotic_armor';
+type EquipmentSlot = WeaponSlot | ArmorSlot | PairSlot;
+```
 
-// Stored
-type BuildSetAttachment = {
-  id: string;
-  buildId: string;
-  setId: string;
-  mode: 'live' | 'snapshot';
-  snapshotItemIds?: string[] | null;  // legacy/simple
-  snapshotConfigs?: Array<{
-    itemId: string;
-    selectedPerks?: string[];  // for weapons: barrel, mag, traits etc.
-    masterworkHash?: string;
-    // ...
-  }> | null;  // full weapon roll data if snapshot
-  attachedAt: string;
-};
+## Set Types and Allowed Slots
 
-// SetItem (for weapons, stores the desired roll)
-type SetItem = {
-  setId: string;
-  itemId: string;  // base weapon
-  selectedPerks?: string[];  // perks/barrels/etc. for this weapon entry
-  masterworkHash?: string;
-  order?: number;
-  // If the SetItem is removed ("deleted"), the perks/roll data is preserved
-  // so the set can show "what was in that weapon" and offer alternatives.
-};
+```ts
+type SetType = 'weapon' | 'armor' | 'mod' | 'pair' | 'fashion';
 
-// Set reference (live resolve uses this)
-type SetRef = {
-  id: string;
-  name: string;
-  category: string;
-  type: 'weapon'|'armor'|...|'fashion';
-  itemIds: string[];  // current for live; snapshot uses attachment's configs
-  // For weapons, each can carry roll data when needed
+const SLOTS_BY_SET_TYPE: Record<SetType, EquipmentSlot[] | 'mods_only' | 'cosmetic'> = {
+  weapon: ['primary', 'special', 'heavy'],
+  armor: ['helmet', 'arms', 'chest', 'legs', 'class_item'],
+  mod: 'mods_only',
+  pair: ['exotic_weapon', 'exotic_armor'],
+  fashion: 'cosmetic',
 };
 ```
 
-**Validation** (from clarifs/FRs):
-- mode choice required on attach.
-- For snapshot, snapshotItemIds captured at attach.
-- Delete Set blocked if any BuildSetAttachment exists (return list of buildIds for UI).
+## SetItem Shape
 
-## UI Contract (Component: SetAttachPicker)
+```ts
+type SetItemInput = {
+  slot: EquipmentSlot;
+  itemHash: number;
+  selectedPerks?: number[];
+  masterworkHash?: number;
+  modHashes?: number[];
+};
 
-Props:
-- availableSets: SetRef[]
-- currentAttachments: BuildSetAttachment[]
-- onAttach: (input: SetAttachmentInput) => void
-- onDetach: (attachmentId: string) => void
-- onModeChange?: (attachmentId, newMode) => void  // for edit
+type SetItem = SetItemInput & {
+  id: string;
+  setId: string;
+  itemName: string;
+  removedAt?: string | null;
+};
+```
 
-Behavior:
-- Search + filter sets (by category, type, name). Exclude fashion from functional suggestions (per clarif A).
-- Toggle/Radio: "Live (updates when Set changes)" | "Snapshot (freeze now)" . Default: live.
-- Auto suggestions: when exotic/subclass changes, show recommended chips (click to attach with default mode).
-- Explicit: "Suggest for goal" button opens input or uses current build context → proposals (per clarif C for suggestions).
-- Display in build sheet: list with mode badge + items (live vs snapshot label). 
+**Replace rule**: `PUT /api/user/sets/:id/items` with occupied `slot` → returns `409` with `{ code: 'SLOT_OCCUPIED', confirmRequired: true }` unless `?confirm=true` (FR-027).
 
-Events / Errors:
-- Duplicate name error surfaced in set create (separate).
-- Attach blocked? No (only delete blocked).
-- Suggestion empty state: "No strong matches; try explicit goal".
+## Set and Build Input Shapes
 
-See data-model.md for full entities. Quickstart.md for runnable flows. Implementation must pass the acceptance scenarios in spec.md US3.
+```ts
+import type { ConceptTagId } from '@/data/conceptTags';
 
-This contract is internal; no public API version yet.
+type SetInput = {
+  name: string;
+  type: SetType;
+  tagIds: ConceptTagId[]; // zero or more; validated against vocabulary
+};
+
+type BuildInput = {
+  name: string;
+  className: 'Titan' | 'Hunter' | 'Warlock';
+  subclass: GeneratedBuild['subclass']; // zod-validated
+  exoticArmorHash: number;
+  synergyIds: string[]; // min 1
+  tagIds?: ConceptTagId[];
+};
+
+type BuildVariantInput = {
+  name: string;
+  isDefault?: boolean;
+  exoticWeaponHash?: number | null;
+  attachments: SetAttachmentInput[];
+};
+
+type SetAttachmentInput = {
+  setId: string;
+  mode: 'live' | 'snapshot'; // default live
+};
+```
+
+## Attachment Stored Shape
+
+```ts
+type VariantSetAttachment = {
+  id: string;
+  variantId: string;
+  setId: string;
+  mode: 'live' | 'snapshot';
+  snapshotConfigs?: Array<{
+    slot: EquipmentSlot;
+    itemHash: number;
+    selectedPerks?: number[];
+    masterworkHash?: number;
+  }> | null;
+  attachedAt: string;
+};
+```
+
+## Validation Responses
+
+| Code | When |
+|------|------|
+| `SLOT_CONFLICT` | Two attached sets claim same logical equipment slot (FR-026) |
+| `PAIR_ARMOR_MISMATCH` | Pair exotic armor ≠ build exotic armor (FR-028) |
+| `VARIANT_EMPTY` | No equipment slots filled (FR-025) |
+| `NO_SYNERGY` | Build has zero designated synergies (FR-024) |
+| `SET_IN_USE` | Delete set while attached; body includes `{ buildIds, variantIds }` (FR-017) |
+| `DUPLICATE_SET_NAME` | Same name within set type for user (FR-005) |
+| `INVALID_TAG` | Unknown or invalid concept tag id (FR-029) |
+
+## List/Filter API (Sets and Builds)
+
+```ts
+// GET /api/concept-tags — returns CONCEPT_TAGS grouped by facet
+// GET /api/user/sets?tags=solar,melee&type=armor
+// GET /api/user/builds?tags=solar,melee
+
+type TagFilterQuery = {
+  tags?: ConceptTagId[]; // AND semantics — entity must have all listed tags
+  type?: SetType;        // sets only
+};
+```
+
+Repository: intersect `set_id` / `build_id` per tagId in junction tables, then join parent entity scoped by userId.
+
+## Slot Resolution Algorithm (service contract)
+
+1. Load build (exotic armor) + variant (exotic weapon) + attachments (live resolve or snapshot).
+2. For each attachment, expand set items to slot map (fashion skipped).
+3. Apply variant `exoticWeaponHash` to appropriate weapon slot from manifest bucket.
+4. Apply build `exoticArmorHash` to armor slot from manifest.
+5. Pair Set: validate armor match; apply weapon from pair.
+6. If any slot has >1 claimant → `SLOT_CONFLICT`.
+7. Return `ResolvedVariantEquipment` for sheet UI.
+
+## UI: SetAttachPicker (extends prior contract)
+
+- Props: `build`, `variant`, `availableSets`, `attachments`, `onAttach`, `onDetach`, `onModeChange`
+- Props add: `tagFilter: ConceptTagId[]`, `onTagFilterChange`, `filteredSets`
+- **TagFilterBar** above set list: multi-select from vocabulary; AND semantics; match count + empty state ("No sets match Solar · Melee")
+- Pair attach: pre-validate armor match; show error inline if mismatch.
+- Conflict panel: list conflicting slots and owning sets before save.
+- Synergy picker on build form: multi-select; no primary badge (equal weight).
+
+Shared components: `ConceptTagPicker` (assign on create/edit), `TagFilterBar` (filter on list/attach).
+
+## Suggestion Context Payload
+
+```ts
+type SuggestionContext = {
+  build: Pick<Build, 'subclass' | 'exoticArmorHash'>;
+  variant: Pick<BuildVariant, 'exoticWeaponHash'>;
+  synergies: Synergy[]; // all designated, equal weight
+  attachedSetTags: ConceptTagId[];
+  buildTagIds?: ConceptTagId[];
+};
+```
+
+Explicit suggest endpoint accepts optional `goal: string` plus `SuggestionContext`.
+
+See [data-model.md](../data-model.md) and [quickstart.md](../quickstart.md).
