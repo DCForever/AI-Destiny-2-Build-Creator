@@ -122,6 +122,23 @@ export function SetsDebugPage() {
     await loadSets();
   }
 
+  async function suggestRollsForSet() {
+    if (!selectedId) return;
+    const payload = { setId: selectedId };
+    const res = await fetch("/api/user/suggestions/rolls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: "POST /api/user/suggestions/rolls",
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
+  }
+
   const slots = SLOTS_BY_TYPE[createForm.type] ?? WEAPON_SLOTS;
 
   return (
@@ -225,6 +242,14 @@ export function SetsDebugPage() {
             onClick={() => void deleteSet()}
           >
             Delete set
+          </button>
+          <button
+            type="button"
+            className="ml-2 rounded bg-emerald-700 px-3 py-1 text-sm disabled:opacity-40"
+            disabled={!selectedId}
+            onClick={() => void suggestRollsForSet()}
+          >
+            Suggest rolls
           </button>
         </fieldset>
 

@@ -131,6 +131,33 @@ export function CatalogDebugPage() {
             </p>
           )}
         </fieldset>
+
+        <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Synergy reverse lookup (T057b)</legend>
+          <input
+            id="synergy-lookup-name"
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            placeholder="origin trait name (e.g. Cast No Shadows)"
+            defaultValue="Cast No Shadows"
+          />
+          <button
+            type="button"
+            className="rounded bg-zinc-700 px-3 py-1 text-sm"
+            onClick={() => {
+              const name = (document.getElementById("synergy-lookup-name") as HTMLInputElement).value;
+              void (async () => {
+                const params = new URLSearchParams({ kind: "origin_trait", name });
+                const url = `/api/user/synergies/by-target?${params}`;
+                setPanel({ label: `GET ${url}` });
+                const res = await fetch(url);
+                const body = await res.json();
+                setPanel({ label: `GET ${url}`, response: body, error: res.ok ? undefined : body });
+              })();
+            }}
+          >
+            Synergy lookup JSON
+          </button>
+        </fieldset>
       </section>
 
       <section>

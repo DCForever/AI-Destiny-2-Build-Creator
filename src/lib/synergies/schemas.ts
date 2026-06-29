@@ -45,3 +45,6 @@ export const createSynergySchema = z.object({
 
 export type SynergyLinkInput = z.infer<typeof synergyLinkSchema>;
 export type CreateSynergyInput = z.infer<typeof createSynergySchema>;
+
+export const updateSynergySchema = createSynergySchema.partial();
+export type UpdateSynergyInput = z.infer<typeof updateSynergySchema>;

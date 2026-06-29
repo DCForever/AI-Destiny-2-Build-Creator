@@ -8,7 +8,7 @@ import { getVariant } from "@/lib/db/repositories/variantRepository";
 import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
 import { listSets } from "@/lib/db/repositories/setRepository";
 import { getDb } from "@/lib/db/client";
-import { buildAutomaticSuggestionContext, suggestSets } from "@/lib/suggestions/suggestSets";
+import { buildAutomaticSuggestionContext, suggestSetsWithGoal } from "@/lib/suggestions/suggestSets";
 
 export const runtime = "nodejs";
 
@@ -43,6 +43,6 @@ export async function POST(request: Request, context: RouteContext): Promise<Nex
   const ctx = buildAutomaticSuggestionContext(build, variant, synergies);
   if (parsed.data.goal) ctx.goal = parsed.data.goal;
 
-  const suggestions = suggestSets(listSets(db, auth.user.id), ctx);
+  const suggestions = await suggestSetsWithGoal(listSets(db, auth.user.id), ctx);
   return NextResponse.json({ suggestions, context: ctx });
 }

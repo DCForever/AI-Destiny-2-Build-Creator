@@ -56,6 +56,21 @@ export function suggestSynergies(
     .slice(0, limit);
 }
 
+export async function suggestSynergiesWithGoal(
+  ctx: SynergySuggestionContext & { goal?: string },
+  limit = 5,
+): Promise<SynergySuggestion[]> {
+  const base = suggestSynergies(ctx, limit * 2);
+  if (!ctx.goal?.trim()) return base.slice(0, limit);
+  const { rankSuggestionsWithGoal } = await import("./llmGoalRanking");
+  const ranked = await rankSuggestionsWithGoal(
+    ctx.goal,
+    base.map((s) => ({ ...s, id: s.synergyId })),
+    "synergy",
+  );
+  return ranked.slice(0, limit).map(({ id: _id, ...rest }) => ({ ...rest, synergyId: _id }));
+}
+
 export function tagOverlapScore(buildTags: ConceptTagId[], candidateTags: ConceptTagId[]): number {
   return candidateTags.filter((t) => buildTags.includes(t)).length;
 }

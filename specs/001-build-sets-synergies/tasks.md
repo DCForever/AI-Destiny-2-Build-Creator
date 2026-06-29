@@ -153,17 +153,17 @@ description: "Task list for Build Sets and Synergies feature"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T052 [P] [US4] Add failing synergy service tests (link kinds, multi-link, multi-synergy per target, set-bonus manifest resolution) in `src/lib/synergies/synergyService.test.ts`
+- [X] T052 [P] [US4] Add failing synergy service tests (link kinds, multi-link, multi-synergy per target, set-bonus manifest resolution) in `src/lib/synergies/synergyService.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T053 [P] [US4] Implement full `synergyRepository` CRUD (extends T041b read-only) in `src/lib/db/repositories/synergyRepository.ts`
-- [ ] T054 [US4] Implement `synergyService` in `src/lib/synergies/synergyService.ts`
-- [ ] T055 [P] [US4] Add synergies API routes in `src/app/api/user/synergies/route.ts` and `src/app/api/user/synergies/[id]/route.ts`
-- [ ] T056 [P] [US4] Build `/debug/synergies` page — CRUD forms, link kind inputs, reverse-lookup test panel in `src/app/debug/synergies/page.tsx` (FR-033)
-- [ ] T057b [P] [US4] Add synergy reverse-lookup JSON preview to `/debug/catalog` page
-- [ ] T059 [US4] Add `GET /api/user/synergies/by-target` reverse lookup route per [synergy-contract.md](contracts/synergy-contract.md)
-- [ ] T058 [US4] Run `npm run gate` and validate quickstart Scenario 4 via `/debug/synergies` + `/debug/catalog`
+- [X] T053 [P] [US4] Implement full `synergyRepository` CRUD (extends T041b read-only) in `src/lib/db/repositories/synergyRepository.ts`
+- [X] T054 [US4] Implement `synergyService` in `src/lib/synergies/synergyService.ts`
+- [X] T055 [P] [US4] Add synergies API routes in `src/app/api/user/synergies/route.ts` and `src/app/api/user/synergies/[id]/route.ts`
+- [X] T056 [P] [US4] Build `/debug/synergies` page — CRUD forms, link kind inputs, reverse-lookup test panel in `src/app/debug/synergies/page.tsx` (FR-033)
+- [X] T057b [P] [US4] Add synergy reverse-lookup JSON preview to `/debug/catalog` page
+- [X] T059 [US4] Add `GET /api/user/synergies/by-target` reverse lookup route per [synergy-contract.md](contracts/synergy-contract.md)
+- [X] T058 [US4] Run `npm run gate` and validate quickstart Scenario 4 via `/debug/synergies` + `/debug/catalog`
 
 **Checkpoint**: Synergies independently usable (integrates with US3 build form)
 
@@ -177,16 +177,16 @@ description: "Task list for Build Sets and Synergies feature"
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T061 [P] [US5] Add failing roll suggestion tests in `src/lib/suggestions/suggestRolls.test.ts`
+- [X] T061 [P] [US5] Add failing roll suggestion tests in `src/lib/suggestions/suggestRolls.test.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T062 [US5] Implement equal-weight synergy merge for suggestions in `src/lib/suggestions/mergeSynergyContext.ts`
-- [ ] T063 [US5] Implement roll suggestion service using manifest + inventory in `src/lib/suggestions/suggestRolls.ts`
-- [ ] T064 [P] [US5] Add explicit suggest-rolls API in `src/app/api/user/suggestions/rolls/route.ts`
-- [ ] T065 [P] [US5] Build `/debug/suggestions` page — roll suggestion forms + JSON panels in `src/app/debug/suggestions/page.tsx` (FR-033)
-- [ ] T066 [US5] Wire roll suggestion triggers on `/debug/builds` and `/debug/sets` (link to suggest-rolls API)
-- [ ] T067 [US5] Run `npm run gate` and validate quickstart Scenario 5 via `/debug/suggestions`
+- [X] T062 [US5] Implement equal-weight synergy merge for suggestions in `src/lib/suggestions/mergeSynergyContext.ts`
+- [X] T063 [US5] Implement roll suggestion service using manifest + inventory in `src/lib/suggestions/suggestRolls.ts`
+- [X] T064 [P] [US5] Add explicit suggest-rolls API in `src/app/api/user/suggestions/rolls/route.ts`
+- [X] T065 [P] [US5] Build `/debug/suggestions` page — roll suggestion forms + JSON panels in `src/app/debug/suggestions/page.tsx` (FR-033)
+- [X] T066 [US5] Wire roll suggestion triggers on `/debug/builds` and `/debug/sets` (link to suggest-rolls API)
+- [X] T067 [US5] Run `npm run gate` and validate quickstart Scenario 5 via `/debug/suggestions`
 
 **Checkpoint**: Roll suggestions deliverable
 
@@ -200,16 +200,16 @@ description: "Task list for Build Sets and Synergies feature"
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T068 [P] [US6] Add failing variant duplicate/compare tests including `notes` diff in `src/lib/builds/variantService.test.ts`
+- [X] T068 [P] [US6] Add failing variant duplicate/compare tests including `notes` diff in `src/lib/builds/variantService.test.ts`
 
 ### Implementation for User Story 6
 
-- [ ] T069 [US6] Implement variant create/duplicate with snapshot defaults in `src/lib/builds/variantService.ts`
-- [ ] T070 [US6] Implement variant compare diff (sets, exotic weapon, notes) in `src/lib/builds/compareVariants.ts`
-- [ ] T071 [P] [US6] Add variant create/delete API in `src/app/api/user/builds/[id]/variants/route.ts`
-- [ ] T072 [P] [US6] Add variant compare API in `src/app/api/user/builds/[id]/compare/route.ts`
-- [ ] T073 [US6] Extend `/debug/builds` — variant duplicate, notes field, compare JSON panel, list filters (FR-015, FR-033)
-- [ ] T076 [US6] Run `npm run gate` and validate quickstart Scenario 6 via `/debug/builds`
+- [X] T069 [US6] Implement variant create/duplicate with snapshot defaults in `src/lib/builds/variantService.ts`
+- [X] T070 [US6] Implement variant compare diff (sets, exotic weapon, notes) in `src/lib/builds/compareVariants.ts`
+- [X] T071 [P] [US6] Add variant create/delete API in `src/app/api/user/builds/[id]/variants/route.ts`
+- [X] T072 [P] [US6] Add variant compare API in `src/app/api/user/builds/[id]/compare/route.ts`
+- [X] T073 [US6] Extend `/debug/builds` — variant duplicate, notes field, compare JSON panel, list filters (FR-015, FR-033)
+- [X] T076 [US6] Run `npm run gate` and validate quickstart Scenario 6 via `/debug/builds`
 
 **Checkpoint**: Full variant workflow complete
 
@@ -219,11 +219,11 @@ description: "Task list for Build Sets and Synergies feature"
 
 **Purpose**: LLM explicit suggestions, resolved export API, full quickstart validation
 
-- [ ] T077 [P] Wire explicit LLM goal suggestions into `suggestSets.ts` and `suggestSynergies.ts` using existing LLM pipeline in `src/lib/llm/` (FR-010/016 explicit path)
-- [ ] T079 Extend variant resolved-equipment export on build API or `/debug/builds` JSON download (production sheet UI deferred)
-- [ ] T080 [P] Add integration test for end-to-end set attach flow in `src/lib/builds/buildFlow.integration.test.ts`
-- [ ] T081 Run full `specs/001-build-sets-synergies/quickstart.md` validation checklist via `/debug/*`
-- [ ] T082 Run `npm run gate` final polish checkpoint
+- [X] T077 [P] Wire explicit LLM goal suggestions into `suggestSets.ts` and `suggestSynergies.ts` using existing LLM pipeline in `src/lib/llm/` (FR-010/016 explicit path)
+- [X] T079 Extend variant resolved-equipment export on build API or `/debug/builds` JSON download (production sheet UI deferred)
+- [X] T080 [P] Add integration test for end-to-end set attach flow in `src/lib/builds/buildFlow.integration.test.ts`
+- [X] T081 Run full `specs/001-build-sets-synergies/quickstart.md` validation checklist via `/debug/*`
+- [X] T082 Run `npm run gate` final polish checkpoint
 
 ---
 

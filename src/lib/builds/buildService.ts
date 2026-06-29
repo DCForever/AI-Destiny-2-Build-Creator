@@ -7,7 +7,7 @@ import {
   deleteBuildRecord,
   getBuild,
   listBuilds,
-  listBuildsByTags,
+  listBuildsFiltered,
   updateBuildRecord,
 } from "@/lib/db/repositories/buildRepository";
 import {
@@ -102,9 +102,21 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
 export function listUserBuilds(
   db: AppDatabase,
   userId: number,
-  opts?: { tags?: ConceptTagId[] },
+  opts?: {
+    tags?: ConceptTagId[];
+    exoticArmorHash?: number;
+    exoticWeaponHash?: number;
+    synergyId?: string;
+  },
 ) {
-  if (opts?.tags?.length) return listBuildsByTags(db, userId, opts.tags);
+  if (
+    opts?.exoticArmorHash !== undefined ||
+    opts?.exoticWeaponHash !== undefined ||
+    opts?.synergyId ||
+    opts?.tags?.length
+  ) {
+    return listBuildsFiltered(db, userId, opts ?? {});
+  }
   return listBuilds(db, userId);
 }
 

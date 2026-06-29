@@ -45,14 +45,17 @@ export function BuildsDebugPage() {
 
   const [attachForm, setAttachForm] = useState({ setId: "", mode: "live" as "live" | "snapshot" });
   const [suggestGoal, setSuggestGoal] = useState("");
+  const [variantNotes, setVariantNotes] = useState("");
+  const [filterExoticArmor, setFilterExoticArmor] = useState("");
 
   const record = useCallback((next: JsonPanel) => setPanel(next), []);
 
   async function loadBuilds() {
-    const res = await fetch("/api/user/builds");
+    const query = filterExoticArmor.trim() ? `?exoticArmorHash=${encodeURIComponent(filterExoticArmor.trim())}` : "";
+    const res = await fetch(`/api/user/builds${query}`);
     const body = await res.json();
     if (res.ok) setBuilds(body.builds ?? []);
-    record({ label: "GET /api/user/builds", response: body, error: res.ok ? undefined : body });
+    record({ label: "GET /api/user/builds" + query, response: body, error: res.ok ? undefined : body });
   }
 
   async function loadSetsAndSynergies() {
@@ -159,6 +162,62 @@ export function BuildsDebugPage() {
     record({ label: "POST " + url, request: payload, response: body, error: res.ok ? undefined : body });
   }
 
+  async function suggestRollsCall() {
+    const payload = {
+      buildId: selectedBuildId || undefined,
+      setId: attachForm.setId || undefined,
+    };
+    const res = await fetch("/api/user/suggestions/rolls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({ label: "POST /api/user/suggestions/rolls", request: payload, response: body, error: res.ok ? undefined : body });
+  }
+
+  async function duplicateVariant() {
+    if (!selectedBuildId || !selectedVariantId) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants`;
+    const payload = { duplicateFromVariantId: selectedVariantId, name: "Copy", notes: variantNotes || null };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (res.ok) {
+      const copy = body.build?.variants?.find((v: { name: string }) => v.name === "Copy");
+      if (copy) setSelectedVariantId(copy.id);
+    }
+    record({ label: "POST " + url, request: payload, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
+  async function compareVariantsCall() {
+    if (!selectedBuildId) return;
+    const url = `/api/user/builds/${selectedBuildId}/compare`;
+    const res = await fetch(url);
+    const body = await res.json();
+    record({ label: "GET " + url, response: body, error: res.ok ? undefined : body });
+  }
+
+  async function exportResolved() {
+    if (!selectedBuildId || !selectedVariantId) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/resolved`;
+    const res = await fetch(url);
+    const body = await res.json();
+    if (res.ok) {
+      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = `resolved-${selectedBuildId}-${selectedVariantId}.json`;
+      a.click();
+      URL.revokeObjectURL(href);
+    }
+    record({ label: "Export " + url, response: body, error: res.ok ? undefined : body });
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <section className="space-y-4">
@@ -166,6 +225,12 @@ export function BuildsDebugPage() {
 
         <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
           <legend className="px-1 text-sm">Load data</legend>
+          <input
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            placeholder="Filter exoticArmorHash"
+            value={filterExoticArmor}
+            onChange={(e) => setFilterExoticArmor(e.target.value)}
+          />
           <button type="button" className="rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void loadBuilds()}>
             Load builds
           </button>
@@ -232,6 +297,25 @@ export function BuildsDebugPage() {
           <button type="button" className="ml-2 rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void fetchResolved()}>
             Resolved JSON
           </button>
+          <button type="button" className="ml-2 rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void exportResolved()}>
+            Export resolved
+          </button>
+        </fieldset>
+
+        <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Variants</legend>
+          <input
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            placeholder="Notes for duplicate"
+            value={variantNotes}
+            onChange={(e) => setVariantNotes(e.target.value)}
+          />
+          <button type="button" className="rounded bg-emerald-700 px-3 py-1 text-sm" onClick={() => void duplicateVariant()}>
+            Duplicate variant
+          </button>
+          <button type="button" className="ml-2 rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void compareVariantsCall()}>
+            Compare variants
+          </button>
         </fieldset>
 
         <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
@@ -242,6 +326,9 @@ export function BuildsDebugPage() {
           </button>
           <button type="button" className="ml-2 rounded bg-emerald-700 px-3 py-1 text-sm" onClick={() => void suggestSynergiesCall()}>
             Suggest synergies
+          </button>
+          <button type="button" className="ml-2 rounded bg-emerald-700 px-3 py-1 text-sm" onClick={() => void suggestRollsCall()}>
+            Suggest rolls
           </button>
         </fieldset>
       </section>

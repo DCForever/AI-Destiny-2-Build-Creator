@@ -41,6 +41,18 @@ export function getUserById(db: AppDatabase, id: number): DbUser | null {
   return row ? rowToUser(row) : null;
 }
 
+export function updateUserMembership(
+  db: AppDatabase,
+  userId: number,
+  membershipType: number,
+  displayName: string,
+): void {
+  db.update(users)
+    .set({ membershipType, displayName })
+    .where(eq(users.id, userId))
+    .run();
+}
+
 function rowToUser(row: typeof users.$inferSelect): DbUser {
   return {
     id: row.id,

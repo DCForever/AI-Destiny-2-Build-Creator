@@ -1,8 +1,9 @@
 import { computeRollTags } from "@/lib/inventory/rollTags";
 import type { AppDatabase } from "@/lib/db/client";
 import { upsertInventoryBatch, getInventoryStatus } from "@/lib/db/repositories/inventoryRepository";
+import { updateUserMembership } from "@/lib/db/repositories/userRepository";
 import type { DbUser, UserInventoryItem } from "@/lib/db/types";
-import type { BungieProfileClient, RawInventoryItem } from "@/lib/bungie/types";
+import type { BungieProfileClient, DestinyMembership, RawInventoryItem } from "@/lib/bungie/types";
 import type { EntityCache } from "@/lib/manifest/types/services";
 import type { WeaponRecord } from "@/lib/manifest/types/records";
 
@@ -77,6 +78,18 @@ function normalizeItems(
   });
 }
 
+async function resolveDestinyMembership(
+  profileClient: BungieProfileClient,
+  accessToken: string,
+): Promise<DestinyMembership> {
+  const memberships = await profileClient.getMemberships(accessToken);
+  const membership = memberships[0];
+  if (!membership) {
+    throw new Error("No Destiny memberships found");
+  }
+  return membership;
+}
+
 async function performSync(
   db: AppDatabase,
   user: DbUser,
@@ -84,11 +97,14 @@ async function performSync(
   profileClient: BungieProfileClient,
   entityCache: EntityCache,
 ): Promise<SyncInventoryResult> {
-  const membership = {
-    membershipType: user.membershipType,
-    membershipId: user.bungieMembershipId,
-    displayName: user.displayName,
-  };
+  const membership = await resolveDestinyMembership(profileClient, accessToken);
+
+  if (
+    user.membershipType !== membership.membershipType ||
+    user.displayName !== membership.displayName
+  ) {
+    updateUserMembership(db, user.id, membership.membershipType, membership.displayName);
+  }
 
   const rawItems = await profileClient.getFullInventory(accessToken, membership);
   const [perkNameMap, weaponLookup] = await Promise.all([

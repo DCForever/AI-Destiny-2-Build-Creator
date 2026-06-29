@@ -122,6 +122,11 @@ export function queryInventoryByHashes(
   return rows.map(rowToItem);
 }
 
+export function listInventoryItems(db: AppDatabase, userId: number): UserInventoryItem[] {
+  const rows = db.select().from(inventoryItems).where(eq(inventoryItems.userId, userId)).all();
+  return rows.map(rowToItem);
+}
+
 export function queryInventoryByTags(
   db: AppDatabase,
   userId: number,

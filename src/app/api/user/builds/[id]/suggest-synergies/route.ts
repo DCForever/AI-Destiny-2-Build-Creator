@@ -5,7 +5,7 @@ import { unauthorizedResponse } from "@/lib/api/response";
 import { getBuild } from "@/lib/db/repositories/buildRepository";
 import { listSynergies } from "@/lib/db/repositories/synergyRepository";
 import { getDb } from "@/lib/db/client";
-import { suggestSynergies } from "@/lib/suggestions/suggestSynergies";
+import { suggestSynergiesWithGoal } from "@/lib/suggestions/suggestSynergies";
 
 export const runtime = "nodejs";
 
@@ -16,14 +16,18 @@ export async function GET(request: Request, context: RouteContext): Promise<Next
   if (!auth) return unauthorizedResponse();
 
   const { id } = await context.params;
+  const url = new URL(request.url);
+  const goal = url.searchParams.get("goal") ?? undefined;
+
   const db = getDb();
   const build = getBuild(db, auth.user.id, id);
   if (!build) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const suggestions = suggestSynergies({
+  const suggestions = await suggestSynergiesWithGoal({
     build,
     designatedSynergyIds: build.synergyIds,
     available: listSynergies(db, auth.user.id),
+    goal,
   });
 
   return NextResponse.json({ suggestions });

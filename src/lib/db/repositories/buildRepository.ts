@@ -2,7 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 
 import type { ConceptTagId } from "@/data/conceptTags";
 import type { AppDatabase } from "@/lib/db/client";
-import { buildSynergies, buildTags, builds } from "@/lib/db/schema";
+import { buildSynergies, buildTags, builds, buildVariants } from "@/lib/db/schema";
 
 export type BuildRecord = {
   id: string;
@@ -88,6 +88,48 @@ export function listBuildsByTags(
     .where(and(eq(builds.userId, userId), inArray(builds.id, matching)))
     .all()
     .map((row) => rowToBuild(db, row));
+}
+
+export function listBuildsFiltered(
+  db: AppDatabase,
+  userId: number,
+  filters: {
+    tags?: ConceptTagId[];
+    exoticArmorHash?: number;
+    exoticWeaponHash?: number;
+    synergyId?: string;
+  },
+): BuildRecord[] {
+  let results = filters.tags?.length
+    ? listBuildsByTags(db, userId, filters.tags)
+    : listBuilds(db, userId);
+
+  if (filters.exoticArmorHash !== undefined) {
+    results = results.filter((b) => b.exoticArmorHash === filters.exoticArmorHash);
+  }
+
+  if (filters.synergyId) {
+    results = results.filter((b) => b.synergyIds.includes(filters.synergyId!));
+  }
+
+  if (filters.exoticWeaponHash !== undefined) {
+    const buildIds = results.map((b) => b.id);
+    if (buildIds.length === 0) return [];
+    const variantRows = db
+      .select({ buildId: buildVariants.buildId })
+      .from(buildVariants)
+      .where(
+        and(
+          inArray(buildVariants.buildId, buildIds),
+          eq(buildVariants.exoticWeaponHash, filters.exoticWeaponHash),
+        ),
+      )
+      .all();
+    const allowed = new Set(variantRows.map((r) => r.buildId));
+    results = results.filter((b) => allowed.has(b.id));
+  }
+
+  return results;
 }
 
 export function getBuild(db: AppDatabase, userId: number, id: string): BuildRecord | null {

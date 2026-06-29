@@ -85,6 +85,22 @@ export function suggestSets(availableSets: SetRecord[], ctx: SuggestionContext, 
     .slice(0, limit);
 }
 
+export async function suggestSetsWithGoal(
+  availableSets: SetRecord[],
+  ctx: SuggestionContext,
+  limit = 5,
+): Promise<SetSuggestion[]> {
+  const base = suggestSets(availableSets, ctx, limit * 2);
+  if (!ctx.goal?.trim()) return base.slice(0, limit);
+  const { rankSuggestionsWithGoal } = await import("./llmGoalRanking");
+  const ranked = await rankSuggestionsWithGoal(
+    ctx.goal,
+    base.map((s) => ({ ...s, id: s.setId })),
+    "set",
+  );
+  return ranked.slice(0, limit).map(({ id: _id, ...rest }) => ({ ...rest, setId: _id }));
+}
+
 export function buildAutomaticSuggestionContext(
   build: BuildRecord,
   variant: { exoticWeaponHash: number | null },

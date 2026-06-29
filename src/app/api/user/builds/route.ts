@@ -23,8 +23,26 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid tag in filter" }, { status: 400 });
   }
 
+  const exoticArmorRaw = url.searchParams.get("exoticArmorHash");
+  const exoticWeaponRaw = url.searchParams.get("exoticWeaponHash");
+  const synergyId = url.searchParams.get("synergyId") ?? undefined;
+
+  const exoticArmorHash = exoticArmorRaw ? Number(exoticArmorRaw) : undefined;
+  const exoticWeaponHash = exoticWeaponRaw ? Number(exoticWeaponRaw) : undefined;
+  if (exoticArmorRaw && Number.isNaN(exoticArmorHash)) {
+    return NextResponse.json({ error: "Invalid exoticArmorHash" }, { status: 400 });
+  }
+  if (exoticWeaponRaw && Number.isNaN(exoticWeaponHash)) {
+    return NextResponse.json({ error: "Invalid exoticWeaponHash" }, { status: 400 });
+  }
+
   const db = getDb();
-  const builds = listUserBuilds(db, auth.user.id, { tags: tags as typeof tags & undefined });
+  const builds = listUserBuilds(db, auth.user.id, {
+    tags: tags as typeof tags & undefined,
+    exoticArmorHash,
+    exoticWeaponHash,
+    synergyId,
+  });
   return NextResponse.json({ builds });
 }
 
