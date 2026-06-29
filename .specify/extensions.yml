@@ -8,7 +8,7 @@ hooks:
   - extension: agent-context
     command: speckit.agent-context.update
     enabled: true
-    optional: true
+    optional: false
     priority: 10
     prompt: Execute speckit.agent-context.update?
     description: Refresh agent context after specification
@@ -16,8 +16,8 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
-    priority: 10
+    optional: false
+    priority: 20
     prompt: Commit specification changes?
     description: Auto-commit after specification
     condition: null
@@ -25,7 +25,7 @@ hooks:
   - extension: agent-context
     command: speckit.agent-context.update
     enabled: true
-    optional: true
+    optional: false
     priority: 10
     prompt: Execute speckit.agent-context.update?
     description: Refresh agent context after planning
@@ -33,10 +33,95 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
-    priority: 10
+    optional: false
+    priority: 20
     prompt: Commit plan changes?
     description: Auto-commit after implementation planning
+    condition: null
+  after_clarify:
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after clarification
+    condition: null
+  - extension: git
+    command: speckit.git.commit
+    enabled: true
+    optional: false
+    priority: 20
+    prompt: Commit clarification changes?
+    description: Auto-commit after spec clarification
+    condition: null
+  after_tasks:
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after task generation
+    condition: null
+  - extension: git
+    command: speckit.git.commit
+    enabled: true
+    optional: false
+    priority: 20
+    prompt: Commit task changes?
+    description: Auto-commit after task generation
+    condition: null
+  after_implement:
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after implementation
+    condition: null
+  - extension: git
+    command: speckit.git.commit
+    enabled: true
+    optional: true
+    priority: 20
+    prompt: Commit implementation changes?
+    description: Auto-commit after implementation (disabled in git-config; commit manually after gate)
+    condition: null
+  after_checklist:
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after checklist generation
+    condition: null
+  - extension: git
+    command: speckit.git.commit
+    enabled: true
+    optional: false
+    priority: 20
+    prompt: Commit checklist changes?
+    description: Auto-commit after checklist generation
+    condition: null
+  after_analyze:
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after analysis
+    condition: null
+  - extension: git
+    command: speckit.git.commit
+    enabled: true
+    optional: false
+    priority: 20
+    prompt: Commit analysis results?
+    description: Auto-commit after analysis
     condition: null
   before_constitution:
   - extension: git
@@ -127,51 +212,6 @@ hooks:
     priority: 10
     prompt: Commit constitution changes?
     description: Auto-commit after constitution update
-    condition: null
-  after_clarify:
-  - extension: git
-    command: speckit.git.commit
-    enabled: true
-    optional: true
-    priority: 10
-    prompt: Commit clarification changes?
-    description: Auto-commit after spec clarification
-    condition: null
-  after_tasks:
-  - extension: git
-    command: speckit.git.commit
-    enabled: true
-    optional: true
-    priority: 10
-    prompt: Commit task changes?
-    description: Auto-commit after task generation
-    condition: null
-  after_implement:
-  - extension: git
-    command: speckit.git.commit
-    enabled: true
-    optional: true
-    priority: 10
-    prompt: Commit implementation changes?
-    description: Auto-commit after implementation
-    condition: null
-  after_checklist:
-  - extension: git
-    command: speckit.git.commit
-    enabled: true
-    optional: true
-    priority: 10
-    prompt: Commit checklist changes?
-    description: Auto-commit after checklist generation
-    condition: null
-  after_analyze:
-  - extension: git
-    command: speckit.git.commit
-    enabled: true
-    optional: true
-    priority: 10
-    prompt: Commit analysis results?
-    description: Auto-commit after analysis
     condition: null
   after_taskstoissues:
   - extension: git

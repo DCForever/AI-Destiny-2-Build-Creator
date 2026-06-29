@@ -6,6 +6,12 @@ import { getDb } from "@/lib/db/client";
 import { createLoadout, listLoadouts } from "@/lib/db/repositories/loadoutRepository";
 import type { SavedLoadout } from "@/lib/db/types";
 import { buildRequestSchema, generatedBuildSchema } from "@/lib/llm/buildSchema";
+import { buildFilteredLoadoutList } from "@/lib/loadouts/loadoutListApi";
+import {
+  InvalidLoadoutFilterError,
+  parseLoadoutFilterQuery,
+} from "@/lib/loadouts/parseFilterQuery";
+import { getServices } from "@/lib/services";
 import { getManifestStatus } from "@/lib/services";
 
 export const runtime = "nodejs";
@@ -23,25 +29,34 @@ const createLoadoutSchema = z.object({
   manifestVersion: z.string().trim().min(1).optional(),
 });
 
-function toSummary(loadout: SavedLoadout) {
-  return {
-    id: loadout.id,
-    name: loadout.name,
-    source: loadout.source,
-    className: loadout.buildRequest?.className,
-    createdAt: loadout.createdAt,
-    updatedAt: loadout.updatedAt,
-    manifestVersion: loadout.manifestVersion,
-  };
+async function loadManifestStores() {
+  const { entityCache } = await getServices();
+  const [exoticArmor, exoticWeapons] = await Promise.all([
+    entityCache.getStore("exotic-armor"),
+    entityCache.getStore("exotic-weapons"),
+  ]);
+  return { exoticArmor, exoticWeapons };
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
   const auth = await requireAuthenticatedUser(request);
   if (!auth) return unauthorized();
 
+  let criteria;
+  try {
+    criteria = parseLoadoutFilterQuery(new URL(request.url).searchParams);
+  } catch (error) {
+    if (error instanceof InvalidLoadoutFilterError) {
+      return NextResponse.json({ error: "INVALID_FILTER" }, { status: 400 });
+    }
+    throw error;
+  }
+
   const db = getDb();
   const loadouts = listLoadouts(db, auth.user.id);
-  return NextResponse.json({ loadouts: loadouts.map(toSummary) });
+  const manifest = await loadManifestStores();
+  const body = buildFilteredLoadoutList(loadouts, criteria, manifest);
+  return NextResponse.json(body);
 }
 
 export async function POST(request: Request): Promise<NextResponse> {

@@ -3,6 +3,8 @@
 import { useCallback, useState } from "react";
 import type { BuildRequest, GeneratedBuild } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
+import type { ExoticFilterCriteria } from "@/lib/loadouts/types";
+import type { LoadoutListRow } from "@/lib/loadouts/types";
 import { BuildSheet } from "./BuildSheet";
 import { WeaponPicker, type WeaponSearchResult } from "./WeaponPicker";
 
@@ -13,6 +15,8 @@ interface EditableBuildSheetProps {
   className: BuildRequest["className"];
   onUpdate: (next: { build: GeneratedBuild; sheet: ResolvedBuildSheet }) => void;
   staleBanner?: string | null;
+  exoticSummary?: LoadoutListRow["exoticSummary"];
+  onDiscoverLoadouts?: (title: string, criteria: ExoticFilterCriteria) => void;
 }
 
 export function EditableBuildSheet({
@@ -22,6 +26,8 @@ export function EditableBuildSheet({
   className,
   onUpdate,
   staleBanner,
+  exoticSummary,
+  onDiscoverLoadouts,
 }: EditableBuildSheetProps) {
   const [pickerSlot, setPickerSlot] = useState<"Kinetic" | "Energy" | "Power" | null>(null);
   const [resolving, setResolving] = useState(false);
@@ -116,6 +122,96 @@ export function EditableBuildSheet({
         editable
         onWeaponSlotClick={(slot) => setPickerSlot(slot)}
       />
+
+      {onDiscoverLoadouts && exoticSummary && (
+        <div className="panel-notch p-4 space-y-3">
+          <div className="text-[11px] tracking-widest uppercase text-muted">
+            Find similar loadouts
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {exoticSummary.exoticArmor && (
+              <>
+                <button
+                  type="button"
+                  className="text-xs border border-line px-3 py-1 text-muted hover:text-foreground"
+                  onClick={() =>
+                    onDiscoverLoadouts(
+                      `Loadouts with ${exoticSummary.exoticArmor!.name}`,
+                      {
+                        armor: {
+                          mode: "exact",
+                          hash: exoticSummary.exoticArmor!.hash ?? undefined,
+                          name: exoticSummary.exoticArmor!.name,
+                        },
+                      },
+                    )
+                  }
+                >
+                  Loadouts with this exotic armor
+                </button>
+                {exoticSummary.exoticArmor.slot && (
+                  <button
+                    type="button"
+                    className="text-xs border border-line px-3 py-1 text-muted hover:text-foreground"
+                    onClick={() =>
+                      onDiscoverLoadouts(
+                        `Loadouts with exotic ${exoticSummary.exoticArmor!.slot}`,
+                        {
+                          armor: {
+                            mode: "slot",
+                            slot: exoticSummary.exoticArmor!.slot!,
+                          },
+                        },
+                      )
+                    }
+                  >
+                    Loadouts with exotic {exoticSummary.exoticArmor.slot}
+                  </button>
+                )}
+              </>
+            )}
+            {exoticSummary.exoticWeapon && (
+              <>
+                <button
+                  type="button"
+                  className="text-xs border border-line px-3 py-1 text-muted hover:text-foreground"
+                  onClick={() =>
+                    onDiscoverLoadouts(
+                      `Loadouts with ${exoticSummary.exoticWeapon!.name}`,
+                      {
+                        weapon: {
+                          mode: "exact",
+                          hash: exoticSummary.exoticWeapon!.hash ?? undefined,
+                          name: exoticSummary.exoticWeapon!.name,
+                        },
+                      },
+                    )
+                  }
+                >
+                  Loadouts with this exotic weapon
+                </button>
+                <button
+                  type="button"
+                  className="text-xs border border-line px-3 py-1 text-muted hover:text-foreground"
+                  onClick={() =>
+                    onDiscoverLoadouts(
+                      `Loadouts with exotic ${exoticSummary.exoticWeapon!.slot}`,
+                      {
+                        weapon: {
+                          mode: "slot",
+                          slot: exoticSummary.exoticWeapon!.slot,
+                        },
+                      },
+                    )
+                  }
+                >
+                  Loadouts with exotic in {exoticSummary.exoticWeapon.slot} slot
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="panel-notch p-4 space-y-3">
         <div className="text-[11px] tracking-widest uppercase text-muted">
