@@ -118,28 +118,28 @@ description: "Task list for Build Sets and Synergies feature"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T035 [P] [US3] Add failing build/variant service tests in `src/lib/builds/buildService.test.ts`
-- [ ] T036 [P] [US3] Add failing slot resolution + conflict tests in `src/lib/builds/resolveVariant.test.ts`
-- [ ] T037 [P] [US3] Add failing attachment mode tests in `src/lib/builds/attachmentService.test.ts`
-- [ ] T037b [P] [US3] Add failing automatic suggestion tests (trigger on exotic/subclass/tag change, no explicit action) in `src/lib/suggestions/suggestSets.test.ts`
-- [ ] T037c [P] [US3] Add failing synergy suggestion tests (match by synergy type, link targets, build tags) in `src/lib/suggestions/suggestSynergies.test.ts`
+- [X] T035 [P] [US3] Add failing build/variant service tests in `src/lib/builds/buildService.test.ts`
+- [X] T036 [P] [US3] Add failing slot resolution + conflict tests in `src/lib/builds/resolveVariant.test.ts`
+- [X] T037 [P] [US3] Add failing attachment mode tests in `src/lib/builds/attachmentService.test.ts`
+- [X] T037b [P] [US3] Add failing automatic suggestion tests (trigger on exotic/subclass/tag change, no explicit action) in `src/lib/suggestions/suggestSets.test.ts`
+- [X] T037c [P] [US3] Add failing synergy suggestion tests (match by synergy type, link targets, build tags) in `src/lib/suggestions/suggestSynergies.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T038 [P] [US3] Implement `buildRepository` in `src/lib/db/repositories/buildRepository.ts`
-- [ ] T039 [P] [US3] Implement `variantRepository` and `attachmentRepository` in `src/lib/db/repositories/variantRepository.ts`
-- [ ] T040 [US3] Implement variant slot resolution + `SLOT_CONFLICT` / `PAIR_ARMOR_MISMATCH` in `src/lib/builds/resolveVariant.ts`
-- [ ] T041 [US3] Implement live vs snapshot attachment logic in `src/lib/builds/attachmentService.ts`
-- [ ] T041b [US3] Implement minimal read-only `synergyRepository.list` + seed helper for dev/tests in `src/lib/db/repositories/synergyRepository.ts` (unblocks FR-024 build save before full US4 CRUD)
-- [ ] T042 [US3] Implement `buildService` (save guards FR-022/024/025) in `src/lib/builds/buildService.ts`
-- [ ] T043 [P] [US3] Add builds list/create API in `src/app/api/user/builds/route.ts` (`GET` supports `?tags=` AND filter)
-- [ ] T044 [P] [US3] Add build detail/patch/delete API in `src/app/api/user/builds/[id]/route.ts` (patch includes `tagIds`)
-- [ ] T045 [US3] Add variant patch + resolved equipment API in `src/app/api/user/builds/[id]/variants/[variantId]/route.ts` (PATCH accepts `notes`)
-- [ ] T046 [P] [US3] Build `/debug/builds` page — build/variant forms, synergy multi-select, attach live/snapshot, tag filter, conflict JSON, suggestions hooks in `src/app/debug/builds/page.tsx` (FR-024, FR-032, FR-033)
-- [ ] T049b [US3] Wire automatic + explicit set/synergy suggestion forms on `/debug/builds` (panel updates when exotic/subclass/tags change)
-- [ ] T050 [P] [US3] Implement rule-based `suggestSets` with automatic triggers (exotic armor, subclass, build tags, designated synergies) and explicit goal input hook in `src/lib/suggestions/suggestSets.ts` (FR-010 contextual; LLM enhancement deferred to T077)
-- [ ] T050b [P] [US3] Implement rule-based `suggestSynergies` (type/link/tag overlap with build context) in `src/lib/suggestions/suggestSynergies.ts` (FR-016; LLM deferred to T077)
-- [ ] T051 [US3] Run `npm run gate` and validate quickstart Scenario 3 via `/debug/builds`
+- [X] T038 [P] [US3] Implement `buildRepository` in `src/lib/db/repositories/buildRepository.ts`
+- [X] T039 [P] [US3] Implement `variantRepository` and `attachmentRepository` in `src/lib/db/repositories/variantRepository.ts`
+- [X] T040 [US3] Implement variant slot resolution + `SLOT_CONFLICT` / `PAIR_ARMOR_MISMATCH` in `src/lib/builds/resolveVariant.ts`
+- [X] T041 [US3] Implement live vs snapshot attachment logic in `src/lib/builds/attachmentService.ts`
+- [X] T041b [US3] Implement minimal read-only `synergyRepository.list` + seed helper for dev/tests in `src/lib/db/repositories/synergyRepository.ts` (unblocks FR-024 build save before full US4 CRUD)
+- [X] T042 [US3] Implement `buildService` (save guards FR-022/024/025) in `src/lib/builds/buildService.ts`
+- [X] T043 [P] [US3] Add builds list/create API in `src/app/api/user/builds/route.ts` (`GET` supports `?tags=` AND filter)
+- [X] T044 [P] [US3] Add build detail/patch/delete API in `src/app/api/user/builds/[id]/route.ts` (patch includes `tagIds`)
+- [X] T045 [US3] Add variant patch + resolved equipment API in `src/app/api/user/builds/[id]/variants/[variantId]/route.ts` (PATCH accepts `notes`)
+- [X] T046 [P] [US3] Build `/debug/builds` page — build/variant forms, synergy multi-select, attach live/snapshot, tag filter, conflict JSON, suggestions hooks in `src/app/debug/builds/page.tsx` (FR-024, FR-032, FR-033)
+- [X] T049b [US3] Wire automatic + explicit set/synergy suggestion forms on `/debug/builds` (panel updates when exotic/subclass/tags change)
+- [X] T050 [P] [US3] Implement rule-based `suggestSets` with automatic triggers (exotic armor, subclass, build tags, designated synergies) and explicit goal input hook in `src/lib/suggestions/suggestSets.ts` (FR-010 contextual; LLM enhancement deferred to T077)
+- [X] T050b [P] [US3] Implement rule-based `suggestSynergies` (type/link/tag overlap with build context) in `src/lib/suggestions/suggestSynergies.ts` (FR-016; LLM deferred to T077)
+- [X] T051 [US3] Run `npm run gate` and validate quickstart Scenario 3 via `/debug/builds`
 
 **Checkpoint**: User Story 3 complete — set-based builds work
 
