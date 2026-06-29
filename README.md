@@ -95,6 +95,8 @@ shared across workers. If the dev DB becomes corrupted after hot reload, delete
 
 ## Using the app
 
+See **[DEBUG.md](./DEBUG.md)** for the Debug / Service UI (`/debug/*`): prerequisites (manifest, Bungie sign-in, inventory sync), per-page flows, and owned-instance drill-down.
+
 1. **First run**: open **Settings** and click *Refresh manifest*. This
    downloads the Bungie manifest tables and builds the derived entity stores
    (requires `BUNGIE_API_KEY`). Generation refuses to run without them.
@@ -128,6 +130,10 @@ shared across workers. If the dev DB becomes corrupted after hot reload, delete
 | `npm run lint`      | ESLint                                   |
 | `npm run build`     | Production build                         |
 | `npm run gate`      | typecheck + lint + test + build          |
+
+## Debug / Service UI
+
+Local API verification uses `/debug/*` pages (signed in, non-production only). See **[DEBUG.md](./DEBUG.md)** for setup, inventory sync, and per-page flows.
 
 ## Project layout
 

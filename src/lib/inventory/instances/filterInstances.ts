@@ -10,10 +10,20 @@ function normalizeQuery(q: string): string {
 export function filterInventoryItems(
   items: UserInventoryItem[],
   criteria: InstanceFilterCriteria,
+  identity?: {
+    itemSearchName: string | null;
+    inventorySearchNames: Map<number, string>;
+  },
 ): UserInventoryItem[] {
   return items.filter((item) => {
     if (!isEquipmentBucket(item.bucket)) return false;
-    if (criteria.itemHash !== undefined && item.itemHash !== criteria.itemHash) return false;
+    if (criteria.itemHash !== undefined) {
+      const matchesHash = item.itemHash === criteria.itemHash;
+      const matchesName =
+        identity?.itemSearchName != null &&
+        identity.inventorySearchNames.get(item.itemHash) === identity.itemSearchName;
+      if (!matchesHash && !matchesName) return false;
+    }
     if (criteria.bucket !== undefined && item.bucket !== criteria.bucket) return false;
     if (criteria.kind !== undefined) {
       const kind = bucketKind(item.bucket);

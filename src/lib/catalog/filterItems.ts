@@ -36,6 +36,90 @@ export type ArmorCatalogSource = {
 
 export type InventoryBucketRow = { itemHash: number; bucket: string };
 
+export type InventoryHashProjection = {
+  name: string;
+  searchName: string;
+  icon: string | null;
+};
+
+export function aggregateOwnedCountsBySearchName(
+  manifestRows: Array<{ hash: number; searchName: string }>,
+  owned: Map<number, number>,
+  projections: Map<number, InventoryHashProjection>,
+): Map<number, number> {
+  const representativeBySearchName = new Map<string, number>();
+  for (const row of manifestRows) {
+    if (!representativeBySearchName.has(row.searchName)) {
+      representativeBySearchName.set(row.searchName, row.hash);
+    }
+  }
+
+  const manifestHashSet = new Set(manifestRows.map((row) => row.hash));
+  const counts = new Map<number, number>();
+
+  for (const [hash, count] of owned) {
+    if (manifestHashSet.has(hash)) {
+      counts.set(hash, (counts.get(hash) ?? 0) + count);
+      continue;
+    }
+
+    const projection = projections.get(hash);
+    if (projection) {
+      const representative = representativeBySearchName.get(projection.searchName);
+      if (representative !== undefined) {
+        counts.set(representative, (counts.get(representative) ?? 0) + count);
+        continue;
+      }
+    }
+
+    counts.set(hash, (counts.get(hash) ?? 0) + count);
+  }
+
+  return counts;
+}
+
+function applyAggregatedOwnedCounts(
+  rows: SearchableCatalogRow[],
+  aggregated: Map<number, number>,
+): void {
+  for (const row of rows) {
+    const ownedCount = aggregated.get(row.hash) ?? 0;
+    row.ownedCount = ownedCount;
+    row.owned = ownedCount > 0;
+  }
+}
+
+function isOwnedHashCoveredByRows(
+  hash: number,
+  count: number,
+  rows: SearchableCatalogRow[],
+  projections: Map<number, InventoryHashProjection>,
+): boolean {
+  if (count <= 0) return true;
+  if (rows.some((row) => row.hash === hash && row.ownedCount > 0)) return true;
+  const projection = projections.get(hash);
+  if (projection) {
+    return rows.some((row) => row.searchName === projection.searchName && row.ownedCount > 0);
+  }
+  return false;
+}
+
+function unknownOwnedRow(
+  hash: number,
+  count: number,
+  projection: InventoryHashProjection | undefined,
+): SearchableCatalogRow {
+  return {
+    hash,
+    name: projection?.name ?? `Unknown (${hash})`,
+    searchName: projection?.searchName ?? String(hash),
+    icon: projection?.icon ?? null,
+    isExotic: false,
+    owned: true,
+    ownedCount: count,
+  };
+}
+
 export function ownedHashesFromInventory(
   items: InventoryBucketRow[],
   kind: "weapons" | "armor",
@@ -111,28 +195,27 @@ function finalize(rows: SearchableCatalogRow[], limit?: number): CatalogItem[] {
 
 export function filterWeaponCatalog(
   source: WeaponCatalogSource,
-  params: CatalogFilterParams & { ownedHashes?: Map<number, number> },
+  params: CatalogFilterParams & {
+    ownedHashes?: Map<number, number>;
+    inventoryProjections?: Map<number, InventoryHashProjection>;
+  },
 ): CatalogItem[] {
   const owned = params.ownedHashes ?? new Map<number, number>();
+  const projections = params.inventoryProjections ?? new Map<number, InventoryHashProjection>();
   const manifestRows: SearchableCatalogRow[] = [
-    ...source.weapons.map((w) => weaponToCatalog(w, false, owned.get(w.hash) ?? 0)),
-    ...source.exoticWeapons.map((w) => weaponToCatalog(w, true, owned.get(w.hash) ?? 0)),
+    ...source.weapons.map((w) => weaponToCatalog(w, false, 0)),
+    ...source.exoticWeapons.map((w) => weaponToCatalog(w, true, 0)),
   ];
+
+  const aggregated = aggregateOwnedCountsBySearchName(manifestRows, owned, projections);
+  applyAggregatedOwnedCounts(manifestRows, aggregated);
 
   let rows = manifestRows;
   if (params.scope === "owned") {
-    rows = manifestRows.filter((row) => owned.has(row.hash));
+    rows = manifestRows.filter((row) => row.ownedCount > 0);
     for (const [hash, count] of owned) {
-      if (rows.some((r) => r.hash === hash)) continue;
-      rows.push({
-        hash,
-        name: `Unknown (${hash})`,
-        searchName: String(hash),
-        icon: null,
-        isExotic: false,
-        owned: true,
-        ownedCount: count,
-      });
+      if (isOwnedHashCoveredByRows(hash, count, rows, projections)) continue;
+      rows.push(unknownOwnedRow(hash, count, projections.get(hash)));
     }
   }
 
@@ -143,26 +226,23 @@ export function filterWeaponCatalog(
 
 export function filterArmorCatalog(
   source: ArmorCatalogSource,
-  params: CatalogFilterParams & { ownedHashes?: Map<number, number> },
+  params: CatalogFilterParams & {
+    ownedHashes?: Map<number, number>;
+    inventoryProjections?: Map<number, InventoryHashProjection>;
+  },
 ): CatalogItem[] {
   const owned = params.ownedHashes ?? new Map<number, number>();
-  let rows: SearchableCatalogRow[] = source.exoticArmor.map((a) =>
-    armorToCatalog(a, owned.get(a.hash) ?? 0),
-  );
+  const projections = params.inventoryProjections ?? new Map<number, InventoryHashProjection>();
+  let rows: SearchableCatalogRow[] = source.exoticArmor.map((a) => armorToCatalog(a, 0));
+
+  const aggregated = aggregateOwnedCountsBySearchName(rows, owned, projections);
+  applyAggregatedOwnedCounts(rows, aggregated);
 
   if (params.scope === "owned") {
-    rows = rows.filter((row) => owned.has(row.hash));
+    rows = rows.filter((row) => row.ownedCount > 0);
     for (const [hash, count] of owned) {
-      if (rows.some((r) => r.hash === hash)) continue;
-      rows.push({
-        hash,
-        name: `Unknown (${hash})`,
-        searchName: String(hash),
-        icon: null,
-        isExotic: false,
-        owned: true,
-        ownedCount: count,
-      });
+      if (isOwnedHashCoveredByRows(hash, count, rows, projections)) continue;
+      rows.push(unknownOwnedRow(hash, count, projections.get(hash)));
     }
   }
 

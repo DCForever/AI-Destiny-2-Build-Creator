@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 
 import { requireAuthenticatedUser } from "@/lib/auth/requireUser";
 import { getDb } from "@/lib/db/client";
+import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
 import { loadInstanceListContext } from "@/lib/inventory/instances/loadInstanceContext";
 import { listUserInstances } from "@/lib/inventory/instances/listUserInstances";
+import {
+  buildInventorySearchNameMap,
+  resolveCatalogItemSearchName,
+} from "@/lib/inventory/instances/matchItemIdentity";
 import {
   InvalidInstanceFilterError,
   parseInstanceFilterQuery,
 } from "@/lib/inventory/instances/parseFilterQuery";
+import { getServices } from "@/lib/services";
 
 export const runtime = "nodejs";
 
@@ -31,6 +37,33 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const context = await loadInstanceListContext(auth);
   const db = getDb();
+
+  let itemIdentity:
+    | {
+        itemSearchName: string | null;
+        inventorySearchNames: Map<number, string>;
+      }
+    | undefined;
+  let itemSearchName: string | null = null;
+  if (criteria.itemHash !== undefined) {
+    const { entityCache, manifest } = await getServices();
+    const manifestStatus = await manifest.getStatus();
+    itemSearchName = await resolveCatalogItemSearchName(
+      criteria.itemHash,
+      entityCache,
+      manifest,
+      manifestStatus.cachedVersion,
+    );
+    const inventoryHashes = listInventoryItems(db, auth.user.id).map((item) => item.itemHash);
+    const inventorySearchNames = await buildInventorySearchNameMap(
+      inventoryHashes,
+      entityCache,
+      manifest,
+      manifestStatus.cachedVersion,
+    );
+    itemIdentity = { itemSearchName, inventorySearchNames };
+  }
+
   const body = listUserInstances({
     db,
     userId: auth.user.id,
@@ -38,6 +71,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     plugMap: context.plugMap,
     characterLabels: context.characterLabels,
     membershipDisplayName: context.membershipDisplayName,
+    itemIdentity,
   });
 
   return NextResponse.json(body);

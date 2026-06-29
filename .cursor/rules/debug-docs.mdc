@@ -1,0 +1,20 @@
+---
+description: Keep DEBUG.md in sync when debug UI, catalog, inventory, or Bungie sync changes
+globs: src/app/debug/**,src/app/api/catalog/**,src/app/api/user/inventory/**,src/app/api/bungie/**,specs/**/quickstart.md,specs/**/contracts/*debug*,specs/**/contracts/inventory*
+alwaysApply: false
+---
+
+# Debug documentation
+
+`DEBUG.md` at the repo root is the **canonical operator guide** for `/debug/*` flows, prerequisites, and owned-catalog/inventory chains.
+
+When your change affects any of the following, **update `DEBUG.md` in the same commit**:
+
+- Debug routes, layout, or page behavior (`src/app/debug/**`)
+- Owned catalog, instance APIs, or sync (`/api/catalog/*`, `/api/user/inventory/*`, `/api/bungie/sync`)
+- Prerequisites (manifest, OAuth, sync steps) or edge-case tables
+- New debug pages or removed routes
+
+Also bump the **Last reviewed** date in `DEBUG.md` when you edit it.
+
+Feature `specs/*/quickstart.md` files stay as scenario checklists; do not duplicate full flow docs there—link to `DEBUG.md` instead when adding cross-cutting prerequisites.

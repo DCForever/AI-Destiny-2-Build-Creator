@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { resolveOwnedCatalogContext } from "@/app/api/catalog/_ownedFilter";
 import { filterWeaponCatalog } from "@/lib/catalog/filterItems";
+import { resolveInventoryHashProjections } from "@/lib/catalog/inventoryHashProjections";
 import { attachInstancePointers } from "@/lib/inventory/instances/catalogPointer";
 import { getDb } from "@/lib/db/client";
 import { getServices } from "@/lib/services";
@@ -42,29 +43,44 @@ export async function GET(request: Request): Promise<NextResponse> {
   let ownedHashes = new Map<number, number>();
   let syncPrompt = false;
 
+  const ownedContext = await resolveOwnedCatalogContext(request, db, "weapons");
+
   if (parsed.data.scope === "owned") {
-    const owned = await resolveOwnedCatalogContext(request, db, "weapons");
-    if (!owned) {
+    if (!ownedContext) {
       return NextResponse.json({
         items: [],
         syncPrompt: true,
         message: "Sign in and sync inventory for owned weapons",
       });
     }
-    ownedHashes = owned.ownedHashes;
-    syncPrompt = owned.syncPrompt;
+    ownedHashes = ownedContext.ownedHashes;
+    syncPrompt = ownedContext.syncPrompt;
+  } else if (ownedContext) {
+    ownedHashes = ownedContext.ownedHashes;
   }
 
   try {
-    const { entityCache } = await getServices();
+    const { entityCache, manifest } = await getServices();
+    const manifestStatus = await manifest.getStatus();
     const [weapons, exoticWeapons] = await Promise.all([
       entityCache.getStore("weapons"),
       entityCache.getStore("exotic-weapons"),
     ]);
 
+    const storeHashes = new Set([...weapons, ...exoticWeapons].map((weapon) => weapon.hash));
+    const unknownOwnedHashes = [...ownedHashes.keys()].filter((hash) => !storeHashes.has(hash));
+    const inventoryProjections =
+      unknownOwnedHashes.length > 0 && manifestStatus.cachedVersion
+        ? await resolveInventoryHashProjections(
+            manifest,
+            manifestStatus.cachedVersion,
+            unknownOwnedHashes,
+          )
+        : new Map();
+
     const filtered = filterWeaponCatalog(
       { weapons, exoticWeapons },
-      { ...parsed.data, ownedHashes },
+      { ...parsed.data, ownedHashes, inventoryProjections },
     );
 
     const includePointer =

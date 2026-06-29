@@ -20,6 +20,10 @@ export interface ListUserInstancesInput {
   plugMap: Map<number, string>;
   characterLabels?: Map<string, CharacterLabel>;
   membershipDisplayName?: string;
+  itemIdentity?: {
+    itemSearchName: string | null;
+    inventorySearchNames: Map<number, string>;
+  };
 }
 
 const SYNC_MESSAGE = "Sync inventory to see owned copies";
@@ -42,7 +46,7 @@ export function listUserInstances(input: ListUserInstancesInput): ListInstancesR
     isEquipmentBucket(item.bucket),
   );
 
-  const matched = filterInventoryItems(equipment, input.criteria);
+  const matched = filterInventoryItems(equipment, input.criteria, input.itemIdentity);
   let instances = matched.map((item) =>
     projectInstance(
       item,

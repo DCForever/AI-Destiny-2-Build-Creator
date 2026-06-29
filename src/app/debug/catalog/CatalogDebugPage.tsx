@@ -41,7 +41,7 @@ type InstanceResponse = {
 export function CatalogDebugPage() {
   const [panel, setPanel] = useState<JsonPanel>({ label: "Ready" });
   const [kind, setKind] = useState<"weapons" | "armor">("weapons");
-  const [scope, setScope] = useState<"all" | "owned">("all");
+  const [scope, setScope] = useState<"all" | "owned">("owned");
   const [includeInstancePointer, setIncludeInstancePointer] = useState(false);
   const [q, setQ] = useState("");
   const [slot, setSlot] = useState("");

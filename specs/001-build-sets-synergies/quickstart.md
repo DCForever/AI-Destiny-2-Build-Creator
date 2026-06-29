@@ -4,6 +4,8 @@
 
 **Purpose**: Runnable validation via **`/debug/*` pages** and APIs (FR-033). No production UX required.
 
+**Operator guide:** [DEBUG.md](../../../DEBUG.md) — consolidated prerequisites and flows (keep in sync when debug behavior changes).
+
 ## Prerequisites
 
 ```bash

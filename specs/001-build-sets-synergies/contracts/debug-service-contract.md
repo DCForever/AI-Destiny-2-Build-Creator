@@ -44,4 +44,6 @@ No design system, routing nav to production pages, or client-side state manageme
 
 Manual validation follows [quickstart.md](../quickstart.md) using `/debug/*` in local dev (`npm run dev`, signed in).
 
+**Operator guide:** [DEBUG.md](../../../DEBUG.md) at repo root — canonical prerequisites and per-flow steps (update when debug or owned-inventory behavior changes).
+
 See [set-attachment-contract.md](./set-attachment-contract.md), [build-variant-contract.md](./build-variant-contract.md), [synergy-contract.md](./synergy-contract.md).

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ExoticArmorRecord, ExoticWeaponRecord, WeaponRecord } from "@/lib/manifest/types/records";
 
-import { filterArmorCatalog, filterWeaponCatalog, ownedHashesFromInventory } from "./filterItems";
+import { filterArmorCatalog, filterWeaponCatalog, ownedHashesFromInventory, aggregateOwnedCountsBySearchName } from "./filterItems";
 
 const legendaryAuto: WeaponRecord = {
   hash: 1001,
@@ -60,6 +60,59 @@ describe("filterWeaponCatalog", () => {
       { scope: "all", q: "exotic" },
     );
     expect(results.map((r) => r.hash)).toContain(2001);
+  });
+
+  it("annotates owned counts in all scope when ownedHashes provided", () => {
+    const owned = new Map([[1001, 2]]);
+    const results = filterWeaponCatalog(
+      { weapons: [legendaryAuto], exoticWeapons: [exoticHc] },
+      { scope: "all", ownedHashes: owned },
+    );
+    expect(results).toHaveLength(2);
+    expect(results.find((r) => r.hash === 1001)?.ownedCount).toBe(2);
+    expect(results.find((r) => r.hash === 1001)?.owned).toBe(true);
+    expect(results.find((r) => r.hash === 2001)?.ownedCount).toBe(0);
+  });
+
+  it("aggregates reissue inventory hashes onto catalog row by search name", () => {
+    const catalogWeapon: WeaponRecord = {
+      ...legendaryAuto,
+      hash: 93253474,
+      name: "The Ringing Nail",
+      searchName: "the ringing nail",
+    };
+    const owned = new Map([
+      [3326135421, 1],
+      [4206550094, 1],
+    ]);
+    const projections = new Map([
+      [3326135421, { name: "The Ringing Nail", searchName: "the ringing nail", icon: null }],
+      [4206550094, { name: "The Ringing Nail", searchName: "the ringing nail", icon: null }],
+    ]);
+
+    const results = filterWeaponCatalog(
+      { weapons: [catalogWeapon], exoticWeapons: [] },
+      { scope: "owned", ownedHashes: owned, inventoryProjections: projections, q: "Ringing Nail" },
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.hash).toBe(93253474);
+    expect(results[0]?.ownedCount).toBe(2);
+  });
+
+  it("aggregateOwnedCountsBySearchName rolls reissues onto representative hash", () => {
+    const aggregated = aggregateOwnedCountsBySearchName(
+      [{ hash: 93253474, searchName: "the ringing nail" }],
+      new Map([
+        [3326135421, 1],
+        [4206550094, 1],
+      ]),
+      new Map([
+        [3326135421, { name: "The Ringing Nail", searchName: "the ringing nail", icon: null }],
+        [4206550094, { name: "The Ringing Nail", searchName: "the ringing nail", icon: null }],
+      ]),
+    );
+    expect(aggregated.get(93253474)).toBe(2);
   });
 
   it("restricts to owned hashes in owned scope", () => {

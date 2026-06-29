@@ -22,6 +22,18 @@ describe("filterInstances", () => {
     expect(result.map((i) => i.instanceId)).toEqual(["inst-vault-1", "inst-char-1"]);
   });
 
+  it("matches reissue inventory hashes by catalog search name", () => {
+    const result = filterInventoryItems(
+      items,
+      { itemHash: 93253474 },
+      {
+        itemSearchName: "the ringing nail",
+        inventorySearchNames: new Map([[1363886209, "the ringing nail"]]),
+      },
+    );
+    expect(result.map((i) => i.instanceId)).toEqual(["inst-vault-1", "inst-char-1"]);
+  });
+
   it("filters by kind weapons", () => {
     const result = filterInventoryItems(items, { kind: "weapon" });
     expect(result.every((i) => i.bucket === "Kinetic")).toBe(true);

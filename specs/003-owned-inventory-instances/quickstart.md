@@ -5,6 +5,8 @@
 
 **Purpose**: Validate per-copy inventory listing, plug resolution, and debug catalog drill-down.
 
+**Operator guide:** [DEBUG.md](../../../DEBUG.md) — owned catalog + instance prerequisite chain.
+
 ## Prerequisites
 
 ```bash
@@ -13,7 +15,7 @@ npm run dev
 # NODE_ENV must NOT be production (debug routes 404 in production)
 # Settings → Refresh manifest (BUNGIE_API_KEY)
 # Sign in with Bungie
-# Trigger inventory sync (Settings or POST /api/bungie/sync)
+# Trigger inventory sync — see DEBUG.md (POST /api/bungie/sync; no Settings button yet)
 ```
 
 **Debug entry**: `/debug/catalog`  
@@ -92,13 +94,13 @@ GET /api/user/inventory/instances?kind=weapons&q=frenzy
 GET /api/catalog/weapons?scope=owned&q=funnel
 ```
 
-Without `includeInstances` → response shape unchanged from pre-003 (manifest fields + `ownedCount`).
+Without `includeInstancePointer` → response shape unchanged from pre-003 (manifest fields + `ownedCount`).
 
 ```http
-GET /api/catalog/weapons?scope=owned&includeInstances=1&q=funnel
+GET /api/catalog/weapons?scope=owned&includeInstancePointer=1&q=funnel
 ```
 
-**Pass**: Optional `ownedInstances` array present; existing fields intact.
+**Pass**: Each owned row includes `instancesHref`; existing fields intact; debug UI auto-fetches on row select.
 
 ## Scenario 9: Gate
 
