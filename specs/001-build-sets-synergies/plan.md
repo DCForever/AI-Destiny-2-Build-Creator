@@ -88,6 +88,25 @@ src/
 
 **Structure Decision**: Extend existing Next.js app. **No** `src/components/{sets,builds,synergies}` production components in this iteration. Debug pages use plain HTML forms calling the same APIs quickstart scenarios exercise. Builds remain separate from loadout JSON blobs.
 
+## Delivery & Verification
+
+*Moved from [spec.md](./spec.md) (stakeholder refactor 2026-06-28) — implements FR-033 acceptance criteria.*
+
+This iteration delivers domain logic via **REST/internal APIs** and a **Debug/Service UI** at `/debug/*` only (HTML forms + JSON panels). Production user-facing UI is deferred.
+
+| Concern | Decision |
+|---------|----------|
+| API surface | `/api/user/*` (sets, synergies, builds, suggestions), `/api/catalog/*` (weapons, armor) |
+| Debug UI | Minimal Next.js routes: `/debug/sets`, `/debug/builds`, `/debug/synergies`, `/debug/catalog`, `/debug/suggestions` |
+| Debug access | Authenticated session (same as `/api/user/*`); **`NODE_ENV=production` → 404** on all `/debug/*` |
+| Slot replace (FR-027) | Two-step API: first request returns `SLOT_OCCUPIED`; resubmit with `confirmReplace: true` |
+| Stale items (FR-019) | `stale: true` in API responses when hash no longer resolves |
+| Tag vocabulary (FR-029) | `GET /api/concept-tags`; source: `src/data/conceptTags.ts` |
+| List scale (FR-031) | Full user-scoped lists; no pagination v1 |
+| Verification | `quickstart.md` scenarios exercised via `/debug/*`; `npm run gate` |
+
+See [research.md](./research.md) for rationale on debug UI, confirmReplace, stale handling, and list scale.
+
 ## Complexity Tracking
 
 No constitution violations. Debug-only delivery reduces UI surface while preserving testable vertical slices via API + `/debug/*`.

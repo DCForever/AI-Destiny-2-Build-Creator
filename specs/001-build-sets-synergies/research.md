@@ -1,6 +1,19 @@
 # Research: Build Sets and Synergies
 
-**Updated**: 2026-06-28 (debug UI scope, stale items, confirmReplace integrated)
+**Updated**: 2026-06-28 (debug UI scope, stale items, confirmReplace integrated; spec stakeholder refactor — implementation details consolidated here and in [plan.md](./plan.md) § Delivery & Verification)
+
+## Spec ↔ Implementation Traceability
+
+Stakeholder-facing [spec.md](./spec.md) describes **what** users can do. This file and plan.md hold **how** it is delivered in iteration 1:
+
+| Spec topic | Spec (outcome language) | Implementation (this repo) |
+|------------|-------------------------|----------------------------|
+| FR-033 verification | Internal tools + automated checks before production UI | `/debug/*` pages + vitest + `npm run gate` |
+| FR-027 slot replace | Two-step user confirmation | `SLOT_OCCUPIED` + `confirmReplace: true` API contract |
+| FR-019 stale items | Stale indicator in listings | `stale: true` on API entity projections |
+| FR-029 tags | Canonical vocabulary | `src/data/conceptTags.ts`, `GET /api/concept-tags` |
+| FR-031 lists | Full lists at household scale | No pagination on list endpoints v1 |
+| FR-010/016 suggestions | Deterministic + optional intelligent ranking | Rules in US3–5; LLM goal ranking in Phase 9 polish |
 
 ## Concept Tags (Controlled Vocabulary)
 
