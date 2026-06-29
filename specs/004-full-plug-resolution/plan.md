@@ -1,120 +1,93 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Full Inventory Plug Resolution
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Branch**: `004-full-plug-resolution` | **Date**: 2026-06-29 | **Spec**: [specs/004-full-plug-resolution/spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Input**: Feature specification from `/specs/004-full-plug-resolution/spec.md`
 
-**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Note**: Filled by `/speckit-plan`. See `.specify/templates/plan-template.md` for workflow.
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Expand **read-time plug name resolution** for owned inventory instances so typical equipped plugs on weapons and armor resolve to human-readable names when manifest data exists. Keep the existing `ResolvedPlug` DTO and hash fallback. **No sync or schema changes** — enhance `buildPlugNameMap` / `loadInstanceListContext` with a **hybrid lookup**: merged entity stores plus batch `DestinyInventoryItemDefinition` fallback for plug hashes present in the user's inventory (pattern from `inventoryHashProjections.ts`). Applies automatically to instance list, detail, and `q` search (003 endpoints unchanged).
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**Language/Version**: TypeScript 5+, Next.js 16.2 (App Router, React 19)
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: Next.js/React, zod, drizzle-orm + better-sqlite3, manifest entity cache + `ManifestService.loadRawTable`, iron-session auth
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: SQLite — read-only `inventory_items` (unchanged). Plug names resolved at request time only.
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: vitest co-located `*.test.ts`; gate = `npm run gate`; fixture hashes documented in quickstart for SC-001
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: Local dev (`npm run dev`); signed-in Bungie user with manifest refresh + inventory sync
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: Full-stack Next.js — **debug-first delivery** (no production inventory UI)
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Performance Goals**: Instance list/detail at household scale &lt;2s with manifest loaded; plug map build amortized per request (entity stores + batch lookup for unique plug hashes in user's equipment rows only)
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: Preserve `ResolvedPlug` shape (FR-004); list all stored plug hashes (FR-005); auth unchanged (FR-010); no stat bars / kill counts UI (FR-011); no persist-at-sync (FR-009); ≥99% named plugs on quickstart fixtures (SC-001)
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: 4 user stories (P1 weapon + armor resolution, P2 search + debug verification); touch `resolvePlugs.ts`, `loadInstanceContext.ts`, instance API routes; optional alignment of `loadoutText` hash index — not required for acceptance
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Required checks against constitution (edit this list with concrete assessment):**
+- I. Small Testable Increments: **PASS**. US1 (weapon plug map + tests) is MVP. US2 (armor — same code path). US3 (`q` search inherits map). US4 (debug — no API change).
+- II. Test-First (NON-NEGOTIABLE): **PASS** (plan). Extend `resolvePlugs.test.ts` and add `buildPlugNameMap` integration tests with fixture hashes before wiring routes.
+- III. Green Commit Checkpoints (NON-NEGOTIABLE): **PASS** (plan). Gate per user-story checkpoint after `/speckit-tasks`.
+- IV–V. Co-Located Tests + Validation-First: **PASS**. Manifest lookups use `isUsable` / `projectBase`; unresolved plugs remain explicit (FR-006).
 
-- I. Small Testable Increments: Scope is decomposed into vertical slices listed in user stories / phases. Each slice is independently testable.
-- II. Test-First (NON-NEGOTIABLE): All implementation tasks for new behavior will be preceded by failing tests.
-- III. Green Commit Checkpoints (NON-NEGOTIABLE): Checkpoints defined after each user story (or sub-increment); commits only when gate (typecheck + lint + test + build) is green.
-- IV-V. Additional principles (co-located tests, validation-first): Accounted for in task breakdown and contracts.
-
-If any violation: document in Complexity Tracking table below with why no simpler alternative exists.
+**Post-design re-check (Phase 1)**: **PASS**. Contract documents unchanged DTO with resolution coverage notes; data model adds derived `PlugNameMap` only; no constitution violations.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-├── contracts/           # Phase 1 output (/speckit-plan command)
-└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
+specs/004-full-plug-resolution/
+├── plan.md              # This file
+├── research.md          # Phase 0 output
+├── data-model.md        # Phase 1 output
+├── quickstart.md        # Phase 1 output
+├── contracts/           # Phase 1 output
+└── tasks.md             # Phase 2 (/speckit-tasks)
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── models/
-├── services/
-├── cli/
+├── app/api/user/inventory/instances/
+│   ├── route.ts                          # pass inventory plug hashes into context builder
+│   └── [instanceId]/route.ts           # same for single-instance
 └── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+    ├── catalog/
+    │   └── inventoryHashProjections.ts   # reuse / generalize for plug names
+    └── inventory/instances/
+        ├── resolvePlugs.ts               # buildPlugNameMap + resolvePlugs
+        ├── loadInstanceContext.ts        # orchestrate hybrid map
+        ├── filterInstances.ts            # q search (unchanged logic, richer map)
+        ├── projectInstance.ts            # unchanged projection
+        └── *.test.ts                     # fixtures incl. Ringing Nail hashes
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Single Next.js project. All resolution logic stays in `src/lib/inventory/instances/`; manifest fallback reuses catalog projection helpers. No new API routes.
+
+## Delivery Mapping
+
+| User Story | Domain | API | Debug |
+|------------|--------|-----|-------|
+| US1 Weapon plug names (P1) | `buildPlugNameMap`, manifest fallback | list + detail | catalog instance panel |
+| US2 Armor plug names (P1) | same path | list + detail | same |
+| US3 Perk search (P2) | `filterInstances` + expanded map | `q` param | search in debug panel |
+| US4 Debug verification (P2) | quickstart fixtures | — | manual SC-001 check |
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+> No constitution violations requiring justification.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| — | — | — |
