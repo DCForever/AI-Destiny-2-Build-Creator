@@ -13,9 +13,8 @@
 npm run dev
 # http://localhost:3000
 # NODE_ENV must NOT be production (debug routes 404 in production)
-# Settings → Refresh manifest (BUNGIE_API_KEY)
-# Sign in with Bungie
-# Trigger inventory sync — see DEBUG.md (POST /api/bungie/sync; no Settings button yet)
+# Settings → Refresh manifest (BUNGIE_API_KEY; auto-syncs inventory when signed in)
+# Sign in with Bungie before refresh for one-step manifest + inventory sync
 ```
 
 **Debug entry**: `/debug/catalog`  
@@ -23,7 +22,7 @@ npm run dev
 
 ## Scenario 1: List owned copies of a weapon (US1, SC-001)
 
-1. Sign in and sync inventory.
+1. Sign in, then **Settings → Refresh manifest** (syncs inventory automatically), or sign in and run manual sync per DEBUG.md.
 2. On `/debug/catalog`, set **Kind** = Weapons, **Scope** = Owned, search for a weapon you own in **multiple copies** (e.g. a craftable with duplicates).
 3. Note a catalog row with `ownedCount > 2`.
 4. Select the row → instance panel shows **separate entries** per copy (not one collapsed row).

@@ -38,7 +38,31 @@ export const helmetCopy: UserInventoryItem = {
   power: 1815,
   isMasterwork: true,
   isCrafted: false,
-  plugHashes: [5001],
+  plugHashes: [5001, 6001, 6002, 882794621],
+  rollTags: [],
+  syncedAt: SYNCED_AT,
+};
+
+export const ringingNailCopy: UserInventoryItem = {
+  instanceId: "inst-rn-1",
+  itemHash: 4206550094,
+  bucket: "Kinetic",
+  location: "vault",
+  power: 1812,
+  isMasterwork: true,
+  isCrafted: false,
+  plugHashes: [
+    1636108362,
+    4248210736,
+    3634656993,
+    882794620,
+    2034764268,
+    905869860,
+    1001,
+    2001,
+    3001,
+    4001,
+  ],
   rollTags: [],
   syncedAt: SYNCED_AT,
 };

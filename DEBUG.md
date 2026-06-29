@@ -4,7 +4,7 @@
 
 > **Maintenance (required):** Update this file in the same change whenever you modify debug routes, prerequisites, owned-catalog/inventory flows, sync behavior, or related APIs. Feature `quickstart.md` files are scenario checklists; **this file is the single consolidated reference.**
 
-**Last reviewed:** 2026-06-28 (feature 003 owned inventory instances)
+**Last reviewed:** 2026-06-29 (feature 004 full plug resolution)
 
 ---
 
@@ -48,7 +48,9 @@ Without manifest: generation and perk resolution fail; catalog filters return er
 
 Owned scope and instance listing read SQLite `inventory_items` — **no sync on search**; data must exist first.
 
-**After sign-in**, trigger a full inventory pull:
+**Recommended:** While signed in, use **Settings → Refresh manifest**. After manifest refresh completes, inventory sync runs automatically (see spec US5).
+
+**Manual sync** (optional if you already refreshed manifest without signing in first):
 
 ```bash
 # From a signed-in browser session (cookies), e.g. DevTools console:
@@ -68,8 +70,10 @@ Expect `itemCount > 0` and `lastFullSyncAt` set. If `itemCount` is 0, owned cata
 **Prerequisites chain for owned inventory:**
 
 ```
-manifest refresh → Bungie sign-in → POST /api/bungie/sync → owned catalog / instances
+manifest refresh (Settings; auto-syncs inventory when signed in) → owned catalog / instances
 ```
+
+Sign in before refreshing manifest if you want the one-step manifest + inventory flow. Otherwise: sign in → manual `POST /api/bungie/sync`.
 
 ---
 
@@ -128,7 +132,22 @@ On `/debug/catalog`, **Instance API (direct)** section:
 
 - `itemHash` — filter to one manifest item
 - `kind` — `weapons` or `armor`
-- `q` — case-insensitive substring on resolved perk names
+- `q` — case-insensitive substring on resolved perk names (includes intrinsics, mods, masterwork, cosmetics — not just roll perks; see 004)
+
+### Plug resolution (004)
+
+Instance APIs build a **hybrid plug name map** per request: entity stores (`weapon-perks`, `mods`, `origin-traits`) plus manifest `DestinyInventoryItemDefinition` fallback for plug hashes on the user's equipment rows. No sync or API shape changes.
+
+**Fixture weapon:** The Ringing Nail (`itemHash` `4206550094`) — see [`specs/004-full-plug-resolution/quickstart.md`](specs/004-full-plug-resolution/quickstart.md) for expected named plugs (Precision Frame, Synergy, Default Shader, etc.).
+
+**Search examples:**
+
+```http
+GET /api/user/inventory/instances?q=Synergy
+GET /api/user/inventory/instances?q=Precision
+```
+
+**When manifest is missing:** more plugs show hash fallback (`resolved: false`); instances still return `200`.
 
 ### Catalog instance pointer (optional)
 
@@ -233,7 +252,7 @@ GET /api/user/loadouts?weaponMode=slot&weaponSlot=Power
 | Manifest not refreshed | Sync may return `503`; catalog/perks degraded |
 | Sync already running | `POST /api/bungie/sync` → `409` |
 | Stale `itemHash` after manifest refresh | API may return `stale: true` on set items |
-| Unresolved plug hash | Instance still returns; `displayName` = hash, `resolved: false` |
+| Unresolved plug hash | Instance still returns; `displayName` = hash, `resolved: false` (rare when manifest loaded; see 004 quickstart) |
 
 ---
 
@@ -250,6 +269,7 @@ Feature-specific scenario checklists:
 | Sets, catalog, builds, synergies (platform) | [`specs/001-build-sets-synergies/quickstart.md`](specs/001-build-sets-synergies/quickstart.md) |
 | Exotic loadout filters | [`specs/002-exotic-loadouts-by-type/quickstart.md`](specs/002-exotic-loadouts-by-type/quickstart.md) |
 | Owned inventory instances | [`specs/003-owned-inventory-instances/quickstart.md`](specs/003-owned-inventory-instances/quickstart.md) |
+| Full plug resolution | [`specs/004-full-plug-resolution/quickstart.md`](specs/004-full-plug-resolution/quickstart.md) |
 
 Contract reference: [`specs/001-build-sets-synergies/contracts/debug-service-contract.md`](specs/001-build-sets-synergies/contracts/debug-service-contract.md)
 

@@ -90,7 +90,23 @@ When browsing the owned catalog (weapons or armor), each catalog row may optiona
 
 ---
 
-### User Story 5 - Stat, Tracker, and Acquisition Sort (Priority: P3 — Deferred)
+### User Story 5 - Sync Inventory After Manifest Refresh (Priority: P2)
+
+A signed-in player refreshes the manifest from **Settings**. After the manifest download and entity-store rebuild complete successfully, the app automatically triggers a full inventory sync so owned catalog and instance APIs are ready without a separate manual sync step.
+
+**Why this priority**: The operator prerequisite chain is manifest → sign-in → sync; chaining sync onto manifest refresh removes friction for debug and local development while keeping catalog/instance search free of per-request sync (FR-013).
+
+**Independent Test**: Sign in, open Settings, click **Refresh manifest**. When manifest refresh succeeds, inventory sync runs automatically and the UI reports item count (or a clear partial-failure message if sync fails after manifest success). Unsigned users still get manifest-only refresh with no sync attempt.
+
+**Acceptance Scenarios**:
+
+1. **Given** a signed-in user on Settings, **When** they click **Refresh manifest** and manifest refresh succeeds, **Then** the client calls inventory sync immediately afterward and shows a success message with synced item count.
+2. **Given** a signed-in user, **When** manifest refresh succeeds but inventory sync fails (e.g. token expired, sync in progress), **Then** manifest status still updates and the UI shows manifest success plus a distinct sync failure message.
+3. **Given** a user who is not signed in, **When** they refresh the manifest, **Then** only manifest refresh runs; no inventory sync request is made.
+
+---
+
+### User Story 6 - Stat, Tracker, and Acquisition Sort (Priority: P3 — Deferred)
 
 Full weapon stat bars, kill tracker, weapon experience display, and **kills-then-acquired instance sort** are deferred unless implementation cost is negligible. Document as future enhancement only; not required for v1 acceptance (v1 sorts by power descending per FR-015).
 
@@ -131,7 +147,8 @@ Full weapon stat bars, kill tracker, weapon experience display, and **kills-then
 - **FR-010**: System MUST preserve existing owned-scoped catalog browse behavior; instance detail MUST be additive and MUST NOT remove manifest-level browse capabilities.
 - **FR-011**: Owned-scoped catalog responses MAY include an optional per-row **instance-list pointer** (URL to fetch all copies for that item hash). Catalog responses MUST NOT embed full instance payloads inline. Interactive UIs (debug catalog) MUST auto-fetch instance detail from the pointer when a row is selected. Clients that ignore the pointer remain unaffected.
 - **FR-012**: Instance response shape MUST support future attachment of a specific instance identity to set items without requiring a breaking API change.
-- **FR-013**: System MUST NOT require inventory re-sync on each catalog or instance search; consumers use the existing manual sync action.
+- **FR-013**: System MUST NOT require inventory re-sync on each catalog or instance search; consumers use the existing manual sync action or the Settings manifest refresh chain (FR-016).
+- **FR-016**: Settings **Refresh manifest** MUST, when the user is signed in and manifest refresh succeeds, automatically invoke inventory sync on the client (POST sync after POST manifest). Unsigned users MUST receive manifest-only refresh with no sync attempt.
 - **FR-014**: System MUST NOT include full stat breakdown bars, kill tracker, weapon level or XP, ornaments, shaders, user notes, or loadout sharing in v1 instance detail.
 - **FR-015**: Instance lists with multiple copies MUST be sorted by **power descending** in v1. Preferred long-term sort (kills then acquired) is deferred until kill tracker and acquisition metadata are in scope.
 
@@ -163,7 +180,7 @@ Full weapon stat bars, kill tracker, weapon experience display, and **kills-then
 - Full user-scoped instance lists without pagination are acceptable in v1, consistent with existing list API policy for user-owned data.
 - Roll tags already computed during sync may be surfaced when present; v1 does not require new roll-tag algorithms unless needed for search.
 - v1 lists all plug hashes stored at sync time; filtering to roll-relevant plugs or adding `socketType` is deferred to a future increment with backward-compatible plug objects.
-- Preferred instance sort when kill/acquisition data exists: kills descending, then acquired (newest first); v1 uses power descending until US5 data is available.
+- Preferred instance sort when kill/acquisition data exists: kills descending, then acquired (newest first); v1 uses power descending until US6 data is available.
 - Set editor integration to pick a specific instance identity is a follow-on consumer of this API shape; v1 delivers listing and detail only.
 - Aligns with overhaul goals for viewing and filtering owned weapons and armor at roll level and supports set creation workflows that need specific perk combinations.
 

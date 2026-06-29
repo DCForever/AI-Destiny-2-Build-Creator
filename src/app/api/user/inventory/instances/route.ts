@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/auth/requireUser";
 import { getDb } from "@/lib/db/client";
 import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
+import { collectEquipmentPlugHashes } from "@/lib/inventory/instances/collectPlugHashes";
 import { loadInstanceListContext } from "@/lib/inventory/instances/loadInstanceContext";
 import { listUserInstances } from "@/lib/inventory/instances/listUserInstances";
 import {
@@ -35,8 +36,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     throw error;
   }
 
-  const context = await loadInstanceListContext(auth);
   const db = getDb();
+  const inventoryRows = listInventoryItems(db, auth.user.id);
+  const plugHashes = collectEquipmentPlugHashes(inventoryRows);
+  const context = await loadInstanceListContext(auth, plugHashes);
 
   let itemIdentity:
     | {

@@ -4,6 +4,7 @@ import {
   funnelCopyCharacter,
   funnelCopyVault,
   helmetCopy,
+  ringingNailCopy,
   subclassItem,
 } from "./__fixtures__/inventoryFixtures";
 import {
@@ -13,6 +14,7 @@ import {
 } from "./filterInstances";
 import { projectInstance } from "./projectInstance";
 import { samplePlugNameMap } from "./__fixtures__/inventoryFixtures";
+import { ringingNailHybridPlugMap } from "./__fixtures__/plugFixtures";
 
 describe("filterInstances", () => {
   const items = [funnelCopyVault, funnelCopyCharacter, helmetCopy, subclassItem];
@@ -66,5 +68,19 @@ describe("filterInstances", () => {
   it("maps weapons kind query", () => {
     expect(kindFromQuery("weapons")).toBe("weapon");
     expect(kindFromQuery("armor")).toBe("armor");
+  });
+
+  it("filters projected instances by Synergy mod name", () => {
+    const projected = [projectInstance(ringingNailCopy, ringingNailHybridPlugMap)];
+    const result = filterProjectedByPerkQuery(projected, "Synergy");
+    expect(result).toHaveLength(1);
+    expect(result[0]?.instanceId).toBe("inst-rn-1");
+  });
+
+  it("filters projected instances by Precision intrinsic name", () => {
+    const projected = [projectInstance(ringingNailCopy, ringingNailHybridPlugMap)];
+    const result = filterProjectedByPerkQuery(projected, "Precision");
+    expect(result).toHaveLength(1);
+    expect(result[0]?.instanceId).toBe("inst-rn-1");
   });
 });

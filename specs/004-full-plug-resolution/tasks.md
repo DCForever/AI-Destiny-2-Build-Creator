@@ -30,8 +30,8 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 **Purpose**: Test fixtures and helpers for plug resolution coverage (SC-001)
 
-- [ ] T001 [P] Add Ringing Nail and armor plug hash fixtures in `src/lib/inventory/instances/__fixtures__/plugFixtures.ts` (quickstart.md hash table)
-- [ ] T002 [P] Add `collectEquipmentPlugHashes` helper stub and failing tests in `src/lib/inventory/instances/collectPlugHashes.test.ts`
+- [x] T001 [P] Add Ringing Nail and armor plug hash fixtures in `src/lib/inventory/instances/__fixtures__/plugFixtures.ts` (quickstart.md hash table)
+- [x] T002 [P] Add `collectEquipmentPlugHashes` helper stub and failing tests in `src/lib/inventory/instances/collectPlugHashes.test.ts`
 
 ---
 
@@ -41,12 +41,12 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 **⚠️ CRITICAL**: No user story validation until this phase completes
 
-- [ ] T003 [P] Add failing hybrid `buildPlugNameMap` tests (entity layer + manifest merge; unresolved fallback) in `src/lib/inventory/instances/resolvePlugs.test.ts`
-- [ ] T004 [P] Add failing `buildPlugMapForInventory` tests in `src/lib/inventory/instances/loadInstanceContext.test.ts`
-- [ ] T005 Implement `collectEquipmentPlugHashes` in `src/lib/inventory/instances/collectPlugHashes.ts` (equipment buckets only; union unique hashes)
-- [ ] T006 Add shared `resolvePlugNamesFromManifest` (reuse `getRaw`/`isUsable`/`projectBase` pattern) in `src/lib/inventory/instances/plugNamesFromManifest.ts`; DRY with `src/lib/catalog/inventoryHashProjections.ts` if practical
-- [ ] T007 Expand `buildPlugNameMap` and add `mergeManifestPlugNames` in `src/lib/inventory/instances/resolvePlugs.ts` (FR-003, FR-006)
-- [ ] T008 Refactor `loadInstanceListContext` → export `buildPlugMapForInventory(entityCache, manifest, plugHashes)` in `src/lib/inventory/instances/loadInstanceContext.ts` (research R3)
+- [x] T003 [P] Add failing hybrid `buildPlugNameMap` tests (entity layer + manifest merge; unresolved fallback) in `src/lib/inventory/instances/resolvePlugs.test.ts`
+- [x] T004 [P] Add failing `buildPlugMapForInventory` tests in `src/lib/inventory/instances/loadInstanceContext.test.ts`
+- [x] T005 Implement `collectEquipmentPlugHashes` in `src/lib/inventory/instances/collectPlugHashes.ts` (equipment buckets only; union unique hashes)
+- [x] T006 Add shared `resolvePlugNamesFromManifest` (reuse `getRaw`/`isUsable`/`projectBase` pattern) in `src/lib/inventory/instances/plugNamesFromManifest.ts`; DRY with `src/lib/catalog/inventoryHashProjections.ts` if practical
+- [x] T007 Expand `buildPlugNameMap` and add `mergeManifestPlugNames` in `src/lib/inventory/instances/resolvePlugs.ts` (FR-003, FR-006)
+- [x] T008 Refactor `loadInstanceListContext` → export `buildPlugMapForInventory(entityCache, manifest, plugHashes)` in `src/lib/inventory/instances/loadInstanceContext.ts` (research R3)
 
 **Checkpoint**: Hybrid map builds from fixture hashes; unresolved plugs still degrade to hash string
 
@@ -62,13 +62,13 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 > Write FIRST; confirm FAIL before route wiring
 
-- [ ] T009 [P] [US1] Add failing weapon plug resolution tests (Ringing Nail fixture hashes → `resolved: true`) in `src/lib/inventory/instances/listUserInstances.test.ts`
+- [x] T009 [P] [US1] Add failing weapon plug resolution tests (Ringing Nail fixture hashes → `resolved: true`) in `src/lib/inventory/instances/listUserInstances.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Wire list route: collect plug hashes from DB, call `buildPlugMapForInventory`, pass map to `listUserInstances` in `src/app/api/user/inventory/instances/route.ts`
-- [ ] T011 [US1] Wire detail route: collect plug hashes for single row (or item's hashes), hybrid map in `src/app/api/user/inventory/instances/[instanceId]/route.ts`
-- [ ] T012 [US1] Run `npm run gate` and validate quickstart Scenarios 1–2 (list vs detail consistency)
+- [x] T010 [US1] Wire list route: collect plug hashes from DB, call `buildPlugMapForInventory`, pass map to `listUserInstances` in `src/app/api/user/inventory/instances/route.ts`
+- [x] T011 [US1] Wire detail route: collect plug hashes for single row (or item's hashes), hybrid map in `src/app/api/user/inventory/instances/[instanceId]/route.ts`
+- [x] T012 [US1] Run `npm run gate` and validate quickstart Scenarios 1–2 (list vs detail consistency)
 
 **Checkpoint**: User Story 1 complete — weapon plugs named at ≥99% on fixture
 
@@ -82,12 +82,12 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T013 [P] [US2] Add failing armor plug resolution tests (mod + masterwork fixture hashes) in `src/lib/inventory/instances/projectInstance.test.ts`
+- [x] T013 [P] [US2] Add failing armor plug resolution tests (mod + masterwork fixture hashes) in `src/lib/inventory/instances/projectInstance.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Extend `plugFixtures.ts` with armor socket hashes; assert armor `kind` in `listUserInstances.test.ts` uses hybrid map (same routes as US1 — no duplicate wiring)
-- [ ] T015 [US2] Run `npm run gate` and validate quickstart Scenario 4
+- [x] T014 [US2] Extend `plugFixtures.ts` with armor socket hashes; assert armor `kind` in `listUserInstances.test.ts` uses hybrid map (same routes as US1 — no duplicate wiring)
+- [x] T015 [US2] Run `npm run gate` and validate quickstart Scenario 4
 
 **Checkpoint**: P1 stories complete — weapons and armor plug names
 
@@ -101,12 +101,12 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T016 [P] [US3] Add failing `q=Synergy` and `q=Precision` filter tests in `src/lib/inventory/instances/filterInstances.test.ts`
+- [x] T016 [P] [US3] Add failing `q=Synergy` and `q=Precision` filter tests in `src/lib/inventory/instances/filterInstances.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Confirm `filterInstances` matches on projected `displayName`/`name` only — fix only if tests fail in `src/lib/inventory/instances/filterInstances.ts`
-- [ ] T018 [US3] Run `npm run gate` and validate quickstart Scenario 3
+- [x] T017 [US3] Confirm `filterInstances` matches on projected `displayName`/`name` only — fix only if tests fail in `src/lib/inventory/instances/filterInstances.ts`
+- [x] T018 [US3] Run `npm run gate` and validate quickstart Scenario 3
 
 **Checkpoint**: Search finds enhanced mods and intrinsics by name
 
@@ -120,8 +120,8 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Update owned-instance plug resolution notes in `DEBUG.md` (link quickstart fixtures; no API shape change)
-- [ ] T020 [US4] Run `npm run gate` and validate quickstart Scenarios 5–6 (debug + manifest-missing degrade)
+- [x] T019 [US4] Update owned-instance plug resolution notes in `DEBUG.md` (link quickstart fixtures; no API shape change)
+- [x] T020 [US4] Run `npm run gate` and validate quickstart Scenarios 5–6 (debug + manifest-missing degrade)
 
 **Checkpoint**: Debug + docs aligned with 004 behavior
 
@@ -131,8 +131,8 @@ description: "Task list for Full Inventory Plug Resolution feature"
 
 **Purpose**: Contract alignment and final validation
 
-- [ ] T021 [P] Cross-check `specs/004-full-plug-resolution/contracts/plug-resolution-contract.md` examples against implemented fixture names; adjust contract or fixtures if drift
-- [ ] T022 Run full `specs/004-full-plug-resolution/quickstart.md` Scenario 7 (`npm run gate`) and mark feature ready for `/speckit-implement` completion
+- [x] T021 [P] Cross-check `specs/004-full-plug-resolution/contracts/plug-resolution-contract.md` examples against implemented fixture names; adjust contract or fixtures if drift
+- [x] T022 Run full `specs/004-full-plug-resolution/quickstart.md` Scenario 7 (`npm run gate`) and mark feature ready for `/speckit-implement` completion
 
 ---
 

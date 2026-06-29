@@ -22,6 +22,19 @@ export function buildPlugNameMap(stores: PlugStores): Map<number, string> {
   return map;
 }
 
+export function mergeManifestPlugNames(
+  entityMap: Map<number, string>,
+  manifestMap: Map<number, string>,
+): Map<number, string> {
+  const merged = new Map(entityMap);
+  for (const [hash, name] of manifestMap) {
+    if (!merged.has(hash)) {
+      merged.set(hash, name);
+    }
+  }
+  return merged;
+}
+
 export function resolvePlugs(plugHashes: number[], plugMap: Map<number, string>): ResolvedPlug[] {
   return plugHashes.map((hash) => {
     const name = plugMap.get(hash) ?? null;

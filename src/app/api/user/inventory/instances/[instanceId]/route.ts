@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAuthenticatedUser } from "@/lib/auth/requireUser";
 import { getDb } from "@/lib/db/client";
+import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
 import { loadInstanceListContext } from "@/lib/inventory/instances/loadInstanceContext";
 import { getUserInstanceById } from "@/lib/inventory/instances/listUserInstances";
 
@@ -19,8 +20,11 @@ export async function GET(
   if (!auth) return unauthorized();
 
   const { instanceId } = await context.params;
-  const apiContext = await loadInstanceListContext(auth);
   const db = getDb();
+  const inventoryRows = listInventoryItems(db, auth.user.id);
+  const target = inventoryRows.find((row) => row.instanceId === instanceId);
+  const plugHashes = target?.plugHashes ?? [];
+  const apiContext = await loadInstanceListContext(auth, plugHashes);
   const result = getUserInstanceById({
     db,
     userId: auth.user.id,

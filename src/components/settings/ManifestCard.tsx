@@ -91,12 +91,52 @@ async function fetchManifestStatus(): Promise<{
   return { status };
 }
 
-export function ManifestCard() {
+interface InventorySyncResult {
+  itemCount: number;
+  lastFullSyncAt: string;
+}
+
+function parseInventorySyncResult(value: unknown): InventorySyncResult | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (typeof record.itemCount !== "number" || typeof record.lastFullSyncAt !== "string") {
+    return null;
+  }
+  return { itemCount: record.itemCount, lastFullSyncAt: record.lastFullSyncAt };
+}
+
+async function syncInventoryAfterManifest(): Promise<{
+  result: InventorySyncResult | null;
+  error?: string;
+}> {
+  const res = await fetch("/api/bungie/sync", { method: "POST" });
+  const body: unknown = await res.json();
+  if (!res.ok) {
+    const record = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
+    const message = typeof record.error === "string" ? record.error : "Inventory sync failed";
+    return { result: null, error: message };
+  }
+  const result = parseInventorySyncResult(body);
+  if (!result) {
+    return { result: null, error: "Invalid inventory sync response" };
+  }
+  return { result };
+}
+
+interface ManifestCardProps {
+  /** When true, inventory sync runs automatically after a successful manifest refresh. */
+  signedIn?: boolean;
+}
+
+export function ManifestCard({ signedIn = false }: ManifestCardProps) {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<ManifestStatus | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
+  const [refreshPhase, setRefreshPhase] = useState<"manifest" | "inventory" | null>(null);
 
   const applyResult = useCallback((result: { status: ManifestStatus | null; error?: string }) => {
     if (result.status) {
@@ -132,6 +172,9 @@ export function ManifestCard() {
   const handleRefresh = async () => {
     setRefreshing(true);
     setRefreshError(null);
+    setSyncMessage(null);
+    setSyncWarning(null);
+    setRefreshPhase("manifest");
     try {
       const res = await fetch("/api/manifest", { method: "POST" });
       const body: unknown = await res.json();
@@ -149,11 +192,28 @@ export function ManifestCard() {
       }
       setStatus(next);
       setLoadError(null);
+
+      if (signedIn) {
+        setRefreshPhase("inventory");
+        const sync = await syncInventoryAfterManifest();
+        if (sync.result) {
+          setSyncMessage(
+            `Inventory synced (${sync.result.itemCount.toLocaleString()} items).`,
+          );
+        } else {
+          setSyncWarning(
+            sync.error
+              ? `Manifest refreshed. Inventory sync failed: ${sync.error}`
+              : "Manifest refreshed. Inventory sync failed.",
+          );
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Manifest refresh failed";
       setRefreshError(message);
     } finally {
       setRefreshing(false);
+      setRefreshPhase(null);
     }
   };
 
@@ -177,7 +237,7 @@ export function ManifestCard() {
 
       <p className="text-xs text-muted leading-relaxed">
         Bungie manifest tables and derived entity stores. Required for build generation and
-        loadout verification.
+        loadout verification. When signed in, refreshing the manifest also syncs your inventory.
       </p>
 
       {loadError && <p className="text-xs text-danger">{loadError}</p>}
@@ -214,12 +274,16 @@ export function ManifestCard() {
         <div className="flex items-start gap-2 text-xs text-muted">
           <Spinner />
           <span>
-            Downloading manifest and rebuilding entity stores… this can take a few minutes
+            {refreshPhase === "inventory"
+              ? "Syncing inventory from Bungie…"
+              : "Downloading manifest and rebuilding entity stores… this can take a few minutes"}
           </span>
         </div>
       )}
 
       {refreshError && <p className="text-xs text-danger">{refreshError}</p>}
+      {syncMessage && <p className="text-xs text-muted">{syncMessage}</p>}
+      {syncWarning && <p className="text-xs text-danger">{syncWarning}</p>}
 
       <button
         type="button"

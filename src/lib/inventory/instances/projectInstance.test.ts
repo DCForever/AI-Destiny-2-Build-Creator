@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   funnelCopyVault,
   helmetCopy,
+  ringingNailCopy,
   samplePlugNameMap,
   subclassItem,
 } from "./__fixtures__/inventoryFixtures";
+import { armorHybridPlugMap, ringingNailHybridPlugMap } from "./__fixtures__/plugFixtures";
 import { isEquipmentBucket, projectInstance } from "./projectInstance";
 
 describe("projectInstance", () => {
@@ -39,5 +41,23 @@ describe("projectInstance", () => {
     );
     expect(detail.className).toBe("Warlock");
     expect(detail.characterDisplayName).toBe("Guardian#1");
+  });
+
+  it("resolves armor mod and masterwork plugs from hybrid map", () => {
+    const detail = projectInstance(helmetCopy, armorHybridPlugMap);
+    expect(detail.plugs.find((p) => p.hash === 6001)).toMatchObject({
+      displayName: "Harmonic Resonance",
+      resolved: true,
+    });
+    expect(detail.plugs.find((p) => p.hash === 882794621)).toMatchObject({
+      displayName: "Intellect Masterwork",
+      resolved: true,
+    });
+  });
+
+  it("resolves Ringing Nail non-roll plugs from hybrid map", () => {
+    const detail = projectInstance(ringingNailCopy, ringingNailHybridPlugMap);
+    expect(detail.plugs.find((p) => p.hash === 3634656993)?.resolved).toBe(true);
+    expect(detail.plugs.find((p) => p.hash === 4248210736)?.displayName).toBe("Default Shader");
   });
 });

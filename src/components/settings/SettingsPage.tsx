@@ -182,7 +182,7 @@ export function SettingsPage() {
         )}
       </div>
 
-      <ManifestCard />
+      <ManifestCard signedIn={signedIn} />
 
       <StatusCard
         title="Local LLM"
