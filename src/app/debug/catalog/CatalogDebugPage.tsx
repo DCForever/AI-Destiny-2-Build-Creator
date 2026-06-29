@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+
+import type { CatalogItem } from "@/lib/catalog/types";
 
 type JsonPanel = {
   label: string;
@@ -9,15 +11,81 @@ type JsonPanel = {
   error?: unknown;
 };
 
+type CatalogResponse = {
+  items?: CatalogItem[];
+  syncPrompt?: boolean;
+  message?: string;
+};
+
+type InstanceRow = {
+  instanceId: string;
+  itemHash: number;
+  kind: string;
+  bucket: string;
+  location: string;
+  power: number;
+  isMasterwork: boolean;
+  isCrafted: boolean;
+  className?: string | null;
+  characterDisplayName?: string | null;
+  plugs: { displayName: string; resolved: boolean }[];
+};
+
+type InstanceResponse = {
+  instances?: InstanceRow[];
+  count?: number;
+  syncPrompt?: boolean;
+  message?: string;
+};
+
 export function CatalogDebugPage() {
   const [panel, setPanel] = useState<JsonPanel>({ label: "Ready" });
   const [kind, setKind] = useState<"weapons" | "armor">("weapons");
   const [scope, setScope] = useState<"all" | "owned">("all");
+  const [includeInstancePointer, setIncludeInstancePointer] = useState(false);
   const [q, setQ] = useState("");
   const [slot, setSlot] = useState("");
   const [itemType, setItemType] = useState("");
   const [frame, setFrame] = useState("");
   const [className, setClassName] = useState("");
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
+  const [selectedHash, setSelectedHash] = useState<number | null>(null);
+  const [instanceRows, setInstanceRows] = useState<InstanceRow[]>([]);
+  const [instancePanel, setInstancePanel] = useState<JsonPanel | null>(null);
+  const [instanceItemHash, setInstanceItemHash] = useState("");
+  const [instanceKind, setInstanceKind] = useState<"" | "weapons" | "armor">("");
+  const [instanceQ, setInstanceQ] = useState("");
+
+  const fetchInstances = useCallback(async (href: string, label: string) => {
+    setInstancePanel({ label, request: { url: href } });
+    const res = await fetch(href);
+    const body = (await res.json()) as InstanceResponse;
+    if (!res.ok) {
+      setInstancePanel({ label, request: { url: href }, error: body });
+      setInstanceRows([]);
+      return;
+    }
+    setInstancePanel({ label, request: { url: href }, response: body });
+    setInstanceRows(body.instances ?? []);
+  }, []);
+
+  const selectCatalogRow = useCallback(
+    async (item: CatalogItem) => {
+      setSelectedHash(item.hash);
+      if (item.ownedCount <= 0) {
+        setInstanceRows([]);
+        setInstancePanel({
+          label: "No owned copies",
+          response: { message: "ownedCount is 0" },
+        });
+        return;
+      }
+      const href =
+        item.instancesHref ?? `/api/user/inventory/instances?itemHash=${item.hash}`;
+      await fetchInstances(href, `GET ${href}`);
+    },
+    [fetchInstances],
+  );
 
   async function runSearch() {
     const params = new URLSearchParams({ scope });
@@ -26,17 +94,47 @@ export function CatalogDebugPage() {
     if (kind === "weapons" && itemType.trim()) params.set("itemType", itemType.trim());
     if (frame.trim()) params.set("frame", frame.trim());
     if (kind === "armor" && className) params.set("className", className);
+    if (scope === "owned" && includeInstancePointer) {
+      params.set("includeInstancePointer", "1");
+    }
 
     const url = `/api/catalog/${kind}?${params}`;
     setPanel({ label: `GET ${url}`, request: { url } });
+    setCatalogItems([]);
+    setSelectedHash(null);
+    setInstanceRows([]);
+    setInstancePanel(null);
 
     const res = await fetch(url);
-    const body = await res.json();
+    const body = (await res.json()) as CatalogResponse;
     if (!res.ok) {
       setPanel({ label: `GET ${url}`, request: { url }, error: body });
       return;
     }
     setPanel({ label: `GET ${url}`, request: { url }, response: body });
+    setCatalogItems(body.items ?? []);
+  }
+
+  async function runInstanceQuery() {
+    const params = new URLSearchParams();
+    if (instanceItemHash.trim()) params.set("itemHash", instanceItemHash.trim());
+    if (instanceKind) params.set("kind", instanceKind);
+    if (instanceQ.trim()) params.set("q", instanceQ.trim());
+    const href = `/api/user/inventory/instances?${params}`;
+    await fetchInstances(href, `GET ${href}`);
+  }
+
+  async function fetchInstanceDetail(instanceId: string) {
+    const href = `/api/user/inventory/instances/${instanceId}`;
+    setInstancePanel({ label: `GET ${href}`, request: { url: href } });
+    const res = await fetch(href);
+    const body = await res.json();
+    setInstancePanel({
+      label: `GET ${href}`,
+      request: { url: href },
+      response: body,
+      error: res.ok ? undefined : body,
+    });
   }
 
   return (
@@ -68,6 +166,16 @@ export function CatalogDebugPage() {
               <option value="owned">Owned (inventory)</option>
             </select>
           </label>
+          {scope === "owned" && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={includeInstancePointer}
+                onChange={(e) => setIncludeInstancePointer(e.target.checked)}
+              />
+              includeInstancePointer=1
+            </label>
+          )}
           <input
             className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
             placeholder="Search (q)"
@@ -127,9 +235,63 @@ export function CatalogDebugPage() {
           </button>
           {scope === "owned" && (
             <p className="text-xs text-amber-400">
-              Owned scope requires sign-in and inventory sync. Empty results show syncPrompt in JSON.
+              Owned scope requires sign-in and inventory sync. Select a row to auto-fetch instances.
             </p>
           )}
+        </fieldset>
+
+        {catalogItems.length > 0 && (
+          <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+            <legend className="px-1 text-sm">Catalog results ({catalogItems.length})</legend>
+            <ul className="max-h-48 space-y-1 overflow-auto text-sm">
+              {catalogItems.map((item) => (
+                <li key={item.hash}>
+                  <button
+                    type="button"
+                    className={`w-full rounded px-2 py-1 text-left ${
+                      selectedHash === item.hash ? "bg-emerald-900" : "bg-zinc-900 hover:bg-zinc-800"
+                    }`}
+                    onClick={() => void selectCatalogRow(item)}
+                  >
+                    {item.name} ({item.ownedCount} owned)
+                    {item.instancesHref ? " · pointer" : ""}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </fieldset>
+        )}
+
+        <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Instance API (direct)</legend>
+          <input
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            placeholder="itemHash"
+            value={instanceItemHash}
+            onChange={(e) => setInstanceItemHash(e.target.value)}
+          />
+          <select
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            value={instanceKind}
+            onChange={(e) => setInstanceKind(e.target.value as "" | "weapons" | "armor")}
+          >
+            <option value="">(any kind)</option>
+            <option value="weapons">weapons</option>
+            <option value="armor">armor</option>
+          </select>
+          <input
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            placeholder="Perk search (q)"
+            value={instanceQ}
+            onChange={(e) => setInstanceQ(e.target.value)}
+          />
+          <button
+            type="button"
+            className="rounded bg-emerald-700 px-3 py-1 text-sm"
+            onClick={() => void runInstanceQuery()}
+          >
+            Query instances
+          </button>
         </fieldset>
 
         <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
@@ -160,28 +322,74 @@ export function CatalogDebugPage() {
         </fieldset>
       </section>
 
-      <section>
-        <h2 className="mb-2 text-sm font-medium">{panel.label}</h2>
-        {panel.error !== undefined && (
-          <pre className="mb-2 overflow-auto rounded bg-red-950/50 p-3 text-xs text-red-200">
-            {JSON.stringify(panel.error, null, 2)}
-          </pre>
-        )}
-        {panel.request !== undefined && (
-          <>
-            <p className="text-xs text-zinc-500">Request</p>
-            <pre className="mb-2 overflow-auto rounded bg-zinc-900 p-3 text-xs">
-              {JSON.stringify(panel.request, null, 2)}
+      <section className="space-y-4">
+        <div>
+          <h2 className="mb-2 text-sm font-medium">{panel.label}</h2>
+          {panel.error !== undefined && (
+            <pre className="mb-2 overflow-auto rounded bg-red-950/50 p-3 text-xs text-red-200">
+              {JSON.stringify(panel.error, null, 2)}
             </pre>
-          </>
-        )}
-        {panel.response !== undefined && (
-          <>
-            <p className="text-xs text-zinc-500">Response</p>
-            <pre className="overflow-auto rounded bg-zinc-900 p-3 text-xs">
-              {JSON.stringify(panel.response, null, 2)}
-            </pre>
-          </>
+          )}
+          {panel.request !== undefined && (
+            <>
+              <p className="text-xs text-zinc-500">Request</p>
+              <pre className="mb-2 overflow-auto rounded bg-zinc-900 p-3 text-xs">
+                {JSON.stringify(panel.request, null, 2)}
+              </pre>
+            </>
+          )}
+          {panel.response !== undefined && (
+            <>
+              <p className="text-xs text-zinc-500">Response</p>
+              <pre className="overflow-auto rounded bg-zinc-900 p-3 text-xs">
+                {JSON.stringify(panel.response, null, 2)}
+              </pre>
+            </>
+          )}
+        </div>
+
+        {(instanceRows.length > 0 || instancePanel) && (
+          <div>
+            <h2 className="mb-2 text-sm font-medium">Owned instances</h2>
+            {instanceRows.length > 0 && (
+              <ul className="mb-3 space-y-2 text-sm">
+                {instanceRows.map((row) => (
+                  <li key={row.instanceId} className="rounded border border-zinc-800 p-2">
+                    <button
+                      type="button"
+                      className="text-left text-emerald-400 underline"
+                      onClick={() => void fetchInstanceDetail(row.instanceId)}
+                    >
+                      {row.instanceId}
+                    </button>
+                    <p>
+                      {row.power} · {row.bucket} · {row.location}
+                      {row.className ? ` · ${row.className}` : ""}
+                      {row.characterDisplayName ? ` (${row.characterDisplayName})` : ""}
+                    </p>
+                    <p className="text-xs text-zinc-400">
+                      {row.plugs.map((p) => p.displayName).join(", ")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {instancePanel && (
+              <>
+                <p className="text-xs text-zinc-500">{instancePanel.label}</p>
+                {instancePanel.error !== undefined && (
+                  <pre className="mb-2 overflow-auto rounded bg-red-950/50 p-3 text-xs text-red-200">
+                    {JSON.stringify(instancePanel.error, null, 2)}
+                  </pre>
+                )}
+                {instancePanel.response !== undefined && (
+                  <pre className="overflow-auto rounded bg-zinc-900 p-3 text-xs">
+                    {JSON.stringify(instancePanel.response, null, 2)}
+                  </pre>
+                )}
+              </>
+            )}
+          </div>
         )}
       </section>
     </div>

@@ -12,6 +12,7 @@ export type CatalogItem = {
   isExotic: boolean;
   owned: boolean;
   ownedCount: number;
+  instancesHref?: string;
 };
 
 export type CatalogFilterParams = {

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { resolveOwnedCatalogContext } from "@/app/api/catalog/_ownedFilter";
 import { filterArmorCatalog } from "@/lib/catalog/filterItems";
+import { attachInstancePointers } from "@/lib/inventory/instances/catalogPointer";
 import { getDb } from "@/lib/db/client";
 import { getServices } from "@/lib/services";
 
@@ -15,6 +16,7 @@ const querySchema = z.object({
   className: z.enum(["Titan", "Hunter", "Warlock"]).optional(),
   frame: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
+  includeInstancePointer: z.enum(["0", "1"]).optional(),
 });
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -26,6 +28,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     className: url.searchParams.get("className") ?? undefined,
     frame: url.searchParams.get("frame") ?? undefined,
     limit: url.searchParams.get("limit") ?? "100",
+    includeInstancePointer: url.searchParams.get("includeInstancePointer") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -56,7 +59,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     const { entityCache } = await getServices();
     const exoticArmor = await entityCache.getStore("exotic-armor");
 
-    const items = filterArmorCatalog({ exoticArmor }, { ...parsed.data, ownedHashes });
+    const filtered = filterArmorCatalog({ exoticArmor }, { ...parsed.data, ownedHashes });
+    const includePointer =
+      parsed.data.scope === "owned" && parsed.data.includeInstancePointer === "1";
+    const items = attachInstancePointers(filtered, includePointer);
 
     return NextResponse.json({
       items,

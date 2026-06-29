@@ -31,10 +31,10 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 **Purpose**: Module scaffolding, types, and query schemas
 
-- [ ] T001 Create instances module directory `src/lib/inventory/instances/` per plan.md
-- [ ] T002 [P] Add `OwnedInstanceDetail`, `ResolvedPlug`, `InstanceFilterCriteria`, and related types in `src/lib/inventory/instances/types.ts` (data-model.md)
-- [ ] T003 [P] Add zod schemas for instance list query params (`itemHash`, `bucket`, `kind`, `q`) in `src/lib/inventory/instances/schemas.ts` (contract: `inventory-instances-contract.md`)
-- [ ] T004 [P] Add test fixtures for synced inventory rows in `src/lib/inventory/instances/__fixtures__/inventoryFixtures.ts`
+- [x] T001 Create instances module directory `src/lib/inventory/instances/` per plan.md
+- [x] T002 [P] Add `OwnedInstanceDetail`, `ResolvedPlug`, `InstanceFilterCriteria`, and related types in `src/lib/inventory/instances/types.ts` (data-model.md)
+- [x] T003 [P] Add zod schemas for instance list query params (`itemHash`, `bucket`, `kind`, `q`) in `src/lib/inventory/instances/schemas.ts` (contract: `inventory-instances-contract.md`)
+- [x] T004 [P] Add test fixtures for synced inventory rows in `src/lib/inventory/instances/__fixtures__/inventoryFixtures.ts`
 
 ---
 
@@ -44,11 +44,11 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 **⚠️ CRITICAL**: No user story implementation until this phase completes
 
-- [ ] T005 [P] Add failing `buildPlugNameMap` / `resolvePlugs` tests (weapon-perks, mods, origin-traits; unresolved hash fallback) in `src/lib/inventory/instances/resolvePlugs.test.ts`
-- [ ] T006 [P] Add failing `projectInstance` tests (all plugs listed, kind from bucket, power sort field presence) in `src/lib/inventory/instances/projectInstance.test.ts`
-- [ ] T007 Implement `buildPlugNameMap` and `resolvePlugs` in `src/lib/inventory/instances/resolvePlugs.ts` (FR-005, FR-006)
-- [ ] T008 Implement `projectInstance` in `src/lib/inventory/instances/projectInstance.ts` (FR-004 plug shape; extensible for future `socketType`)
-- [ ] T009 [P] Add `sortInstancesByPower` helper (power descending per FR-015) in `src/lib/inventory/instances/sortInstances.ts`
+- [x] T005 [P] Add failing `buildPlugNameMap` / `resolvePlugs` tests (weapon-perks, mods, origin-traits; unresolved hash fallback) in `src/lib/inventory/instances/resolvePlugs.test.ts`
+- [x] T006 [P] Add failing `projectInstance` tests (all plugs listed, kind from bucket, power sort field presence) in `src/lib/inventory/instances/projectInstance.test.ts`
+- [x] T007 Implement `buildPlugNameMap` and `resolvePlugs` in `src/lib/inventory/instances/resolvePlugs.ts` (FR-005, FR-006)
+- [x] T008 Implement `projectInstance` in `src/lib/inventory/instances/projectInstance.ts` (FR-004 plug shape; extensible for future `socketType`)
+- [x] T009 [P] Add `sortInstancesByPower` helper (power descending per FR-015) in `src/lib/inventory/instances/sortInstances.ts`
 
 **Checkpoint**: Projection ready — filter, API, and UI work can begin
 
@@ -64,15 +64,15 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T010 [P] [US1] Add failing `filterInstances` tests (kind, bucket, perk `q` AND, exclude non-weapon/armor buckets) in `src/lib/inventory/instances/filterInstances.test.ts`
-- [ ] T011 [P] [US1] Add failing `listUserInstances` orchestration tests (auth context, sync prompt, power desc sort) in `src/lib/inventory/instances/listUserInstances.test.ts`
+- [x] T010 [P] [US1] Add failing `filterInstances` tests (kind, bucket, perk `q` AND, exclude non-weapon/armor buckets) in `src/lib/inventory/instances/filterInstances.test.ts`
+- [x] T011 [P] [US1] Add failing `listUserInstances` orchestration tests (auth context, sync prompt, power desc sort) in `src/lib/inventory/instances/listUserInstances.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement `filterInstances` in `src/lib/inventory/instances/filterInstances.ts` (FR-003 perk text; catalog-first — no item-name param)
-- [ ] T013 [US1] Implement `listUserInstances` in `src/lib/inventory/instances/listUserInstances.ts` (read `inventory_items`; manifest plug map; FR-007, FR-015)
-- [ ] T014 [US1] Add `GET` handler with query validation in `src/app/api/user/inventory/instances/route.ts`
-- [ ] T015 [US1] Run `npm run gate` and validate quickstart Scenarios 1, 2, and 7 (API)
+- [x] T012 [US1] Implement `filterInstances` in `src/lib/inventory/instances/filterInstances.ts` (FR-003 perk text; catalog-first — no item-name param)
+- [x] T013 [US1] Implement `listUserInstances` in `src/lib/inventory/instances/listUserInstances.ts` (read `inventory_items`; manifest plug map; FR-007, FR-015)
+- [x] T014 [US1] Add `GET` handler with query validation in `src/app/api/user/inventory/instances/route.ts`
+- [x] T015 [US1] Run `npm run gate` and validate quickstart Scenarios 1, 2, and 7 (API)
 
 **Checkpoint**: User Story 1 complete — instance list API MVP shippable
 
@@ -86,16 +86,16 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T016 [P] [US2] Add failing `resolveCharacterLabels` tests (className + displayName; vault omits; roster miss degrades) in `src/lib/inventory/instances/resolveCharacterLabels.test.ts`
-- [ ] T017 [P] [US2] Add failing single-instance lookup tests in `src/lib/inventory/instances/listUserInstances.test.ts`
+- [x] T016 [P] [US2] Add failing `resolveCharacterLabels` tests (className + displayName; vault omits; roster miss degrades) in `src/lib/inventory/instances/resolveCharacterLabels.test.ts`
+- [x] T017 [P] [US2] Add failing single-instance lookup tests in `src/lib/inventory/instances/listUserInstances.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Implement `resolveCharacterLabels` using Bungie character roster in `src/lib/inventory/instances/resolveCharacterLabels.ts` (research R9)
-- [ ] T019 [US2] Wire character enrichment into `projectInstance` / `listUserInstances` in `src/lib/inventory/instances/listUserInstances.ts`
-- [ ] T020 [P] [US2] Add `GET` handler in `src/app/api/user/inventory/instances/[instanceId]/route.ts`
-- [ ] T021 [US2] Extend `CatalogDebugPage.tsx`: owned row selection, instance panel, **auto-fetch** from `instancesHref` or `itemHash` query (FR-009)
-- [ ] T022 [US2] Run `npm run gate` and validate quickstart Scenario 3
+- [x] T018 [US2] Implement `resolveCharacterLabels` using Bungie character roster in `src/lib/inventory/instances/resolveCharacterLabels.ts` (research R9)
+- [x] T019 [US2] Wire character enrichment into `projectInstance` / `listUserInstances` in `src/lib/inventory/instances/listUserInstances.ts`
+- [x] T020 [P] [US2] Add `GET` handler in `src/app/api/user/inventory/instances/[instanceId]/route.ts`
+- [x] T021 [US2] Extend `CatalogDebugPage.tsx`: owned row selection, instance panel, **auto-fetch** from `instancesHref` or `itemHash` query (FR-009)
+- [x] T022 [US2] Run `npm run gate` and validate quickstart Scenario 3
 
 **Checkpoint**: P1 stories complete — list API + debug drill-down
 
@@ -109,14 +109,14 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T023 [P] [US3] Add failing `itemHash` empty-result and perk `q` tests to `src/lib/inventory/instances/filterInstances.test.ts`
-- [ ] T024 [P] [US3] Add failing API-level tests for `itemHash` + `q` params in `src/lib/inventory/instances/listUserInstances.test.ts`
+- [x] T023 [P] [US3] Add failing `itemHash` empty-result and perk `q` tests to `src/lib/inventory/instances/filterInstances.test.ts`
+- [x] T024 [P] [US3] Add failing API-level tests for `itemHash` + `q` params in `src/lib/inventory/instances/listUserInstances.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Harden `itemHash` filter and empty-state messaging in `src/lib/inventory/instances/listUserInstances.ts` (not sync-failure error)
-- [ ] T026 [P] [US3] Add direct instance API query controls (`itemHash`, `kind`, `q`) to `src/app/debug/catalog/CatalogDebugPage.tsx`
-- [ ] T027 [US3] Run `npm run gate` and validate quickstart Scenarios 4, 5, and 6
+- [x] T025 [US3] Harden `itemHash` filter and empty-state messaging in `src/lib/inventory/instances/listUserInstances.ts` (not sync-failure error)
+- [x] T026 [P] [US3] Add direct instance API query controls (`itemHash`, `kind`, `q`) to `src/app/debug/catalog/CatalogDebugPage.tsx`
+- [x] T027 [US3] Run `npm run gate` and validate quickstart Scenarios 4, 5, and 6
 
 **Checkpoint**: Item identity and perk search independently testable
 
@@ -130,16 +130,16 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T028 [P] [US4] Add failing `buildInstancesHref` tests in `src/lib/inventory/instances/instancesHref.test.ts`
-- [ ] T029 [P] [US4] Add failing catalog pointer tests in `src/lib/catalog/filterItems.test.ts` or dedicated `src/lib/inventory/instances/catalogPointer.test.ts`
+- [x] T028 [P] [US4] Add failing `buildInstancesHref` tests in `src/lib/inventory/instances/instancesHref.test.ts`
+- [x] T029 [P] [US4] Add failing catalog pointer tests in `src/lib/catalog/filterItems.test.ts` or dedicated `src/lib/inventory/instances/catalogPointer.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T030 [P] [US4] Implement `buildInstancesHref` helper in `src/lib/inventory/instances/instancesHref.ts`
-- [ ] T031 [US4] Add `includeInstancePointer` query param and `instancesHref` on owned rows in `src/app/api/catalog/weapons/route.ts`
-- [ ] T032 [P] [US4] Add `includeInstancePointer` and `instancesHref` in `src/app/api/catalog/armor/route.ts`
-- [ ] T033 [US4] Update `CatalogDebugPage.tsx` to use `instancesHref` from catalog response when present
-- [ ] T034 [US4] Run `npm run gate` and validate quickstart Scenario 8
+- [x] T030 [P] [US4] Implement `buildInstancesHref` helper in `src/lib/inventory/instances/instancesHref.ts`
+- [x] T031 [US4] Add `includeInstancePointer` query param and `instancesHref` on owned rows in `src/app/api/catalog/weapons/route.ts`
+- [x] T032 [P] [US4] Add `includeInstancePointer` and `instancesHref` in `src/app/api/catalog/armor/route.ts`
+- [x] T033 [US4] Update `CatalogDebugPage.tsx` to use `instancesHref` from catalog response when present
+- [x] T034 [US4] Run `npm run gate` and validate quickstart Scenario 8
 
 **Checkpoint**: All in-scope user stories complete
 
@@ -149,9 +149,9 @@ description: "Task list for Owned Inventory Instance Detail feature"
 
 **Purpose**: Full validation and documentation alignment
 
-- [ ] T035 Run full `specs/003-owned-inventory-instances/quickstart.md` validation (all scenarios)
-- [ ] T036 [P] Align `specs/003-owned-inventory-instances/plan.md` delivery table with `includeInstancePointer` naming if drift remains
-- [ ] T037 [P] Verify `find_weapons_with_perk` owned path remains compatible with new instance `instanceId` shape (no regression in `src/lib/llm/tools.ts`)
+- [x] T035 Run full `specs/003-owned-inventory-instances/quickstart.md` validation (all scenarios)
+- [x] T036 [P] Align `specs/003-owned-inventory-instances/plan.md` delivery table with `includeInstancePointer` naming if drift remains
+- [x] T037 [P] Verify `find_weapons_with_perk` owned path remains compatible with new instance `instanceId` shape (no regression in `src/lib/llm/tools.ts`)
 
 ---
 

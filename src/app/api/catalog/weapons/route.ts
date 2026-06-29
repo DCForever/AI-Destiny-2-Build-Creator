@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { resolveOwnedCatalogContext } from "@/app/api/catalog/_ownedFilter";
 import { filterWeaponCatalog } from "@/lib/catalog/filterItems";
+import { attachInstancePointers } from "@/lib/inventory/instances/catalogPointer";
 import { getDb } from "@/lib/db/client";
 import { getServices } from "@/lib/services";
 
@@ -15,6 +16,7 @@ const querySchema = z.object({
   itemType: z.string().trim().optional(),
   frame: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
+  includeInstancePointer: z.enum(["0", "1"]).optional(),
 });
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -26,6 +28,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     frame: url.searchParams.get("frame") ?? undefined,
     slot: url.searchParams.get("slot") ?? undefined,
     limit: url.searchParams.get("limit") ?? "100",
+    includeInstancePointer: url.searchParams.get("includeInstancePointer") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -59,10 +62,14 @@ export async function GET(request: Request): Promise<NextResponse> {
       entityCache.getStore("exotic-weapons"),
     ]);
 
-    const items = filterWeaponCatalog(
+    const filtered = filterWeaponCatalog(
       { weapons, exoticWeapons },
       { ...parsed.data, ownedHashes },
     );
+
+    const includePointer =
+      parsed.data.scope === "owned" && parsed.data.includeInstancePointer === "1";
+    const items = attachInstancePointers(filtered, includePointer);
 
     return NextResponse.json({
       items,

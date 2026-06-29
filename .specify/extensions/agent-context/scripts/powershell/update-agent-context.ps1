@@ -63,26 +63,73 @@ if (-not (Test-Path -LiteralPath $ExtConfig)) {
     exit 0
 }
 
+function Read-SimpleYamlConfig {
+    param([string]$Path)
+
+    $lines = Get-Content -LiteralPath $Path -ErrorAction Stop
+    $result = [ordered]@{
+        context_file = $null
+        context_markers = [ordered]@{
+            start = $null
+            end = $null
+        }
+    }
+
+    foreach ($line in $lines) {
+        if ($line -match '^\s*context_file:\s*(.+)$') {
+            $result.context_file = $Matches[1].Trim()
+            continue
+        }
+        if ($line -match '^\s+start:\s*(.+)$') {
+            $result.context_markers.start = $Matches[1].Trim()
+            continue
+        }
+        if ($line -match '^\s+end:\s*(.+)$') {
+            $result.context_markers.end = $Matches[1].Trim()
+        }
+    }
+
+    if (-not $result.context_file) {
+        return $null
+    }
+    return [pscustomobject]$result
+}
+
 $Options = $null
 if (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue) {
     try {
         $Options = Get-Content -LiteralPath $ExtConfig -Raw | ConvertFrom-Yaml -ErrorAction Stop
     } catch {
-        # fall through to Python fallback
+        # fall through to simple parser / Python fallback
+    }
+}
+
+if ($null -eq $Options) {
+    try {
+        $Options = Read-SimpleYamlConfig -Path $ExtConfig
+    } catch {
+        $Options = $null
     }
 }
 
 if ($null -eq $Options) {
     # ConvertFrom-Yaml unavailable or failed; fall back to Python+PyYAML.
     $pythonCmd = $null
-    foreach ($candidate in @('python3', 'python')) {
-        if (Get-Command $candidate -ErrorAction SilentlyContinue) {
-            # Verify it is Python 3
+    foreach ($candidate in @('py', 'python', 'python3')) {
+        if (-not (Get-Command $candidate -ErrorAction SilentlyContinue)) {
+            continue
+        }
+        try {
             $verOut = & $candidate --version 2>&1
+            if ($LASTEXITCODE -ne 0 -and -not ($verOut -match 'Python 3')) {
+                continue
+            }
             if ($verOut -match 'Python 3') {
                 $pythonCmd = $candidate
                 break
             }
+        } catch {
+            continue
         }
     }
 
