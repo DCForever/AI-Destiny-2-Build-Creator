@@ -95,16 +95,16 @@ description: "Task list for Build Sets and Synergies feature"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T027 [P] [US2] Add failing catalog filter tests including owned-only mode (intersect manifest with `inventoryRepository`) in `src/lib/catalog/filterItems.test.ts` (FR-007, FR-008)
+- [X] T027 [P] [US2] Add failing catalog filter tests including owned-only mode (intersect manifest with `inventoryRepository`) in `src/lib/catalog/filterItems.test.ts` (FR-007, FR-008)
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Implement fuse-indexed catalog filter service with `scope: 'all' | 'owned'` using manifest stores + `inventoryRepository` in `src/lib/catalog/filterItems.ts` (FR-007, FR-008)
-- [ ] T028b [P] [US2] Add owned-inventory API helpers in `src/app/api/catalog/_ownedFilter.ts` (auth-gated; returns empty when unsigned-in or unsynced)
-- [ ] T029 [P] [US2] Add catalog API route in `src/app/api/catalog/weapons/route.ts` (`?scope=all|owned`)
-- [ ] T030 [P] [US2] Add catalog API route in `src/app/api/catalog/armor/route.ts` (`?scope=all|owned`)
-- [ ] T031 [P] [US2] Build `/debug/catalog` page — scope toggle, filter forms, JSON results, sync prompt when owned empty in `src/app/debug/catalog/page.tsx` (FR-007, FR-008)
-- [ ] T034 [US2] Run `npm run gate` and validate quickstart Scenario 2 via `/debug/catalog`
+- [X] T028 [P] [US2] Implement fuse-indexed catalog filter service with `scope: 'all' | 'owned'` using manifest stores + `inventoryRepository` in `src/lib/catalog/filterItems.ts` (FR-007, FR-008)
+- [X] T028b [P] [US2] Add owned-inventory API helpers in `src/app/api/catalog/_ownedFilter.ts` (auth-gated; returns empty when unsigned-in or unsynced)
+- [X] T029 [P] [US2] Add catalog API route in `src/app/api/catalog/weapons/route.ts` (`?scope=all|owned`)
+- [X] T030 [P] [US2] Add catalog API route in `src/app/api/catalog/armor/route.ts` (`?scope=all|owned`)
+- [X] T031 [P] [US2] Build `/debug/catalog` page — scope toggle, filter forms, JSON results, sync prompt when owned empty in `src/app/debug/catalog/page.tsx` (FR-007, FR-008)
+- [X] T034 [US2] Run `npm run gate` and validate quickstart Scenario 2 via `/debug/catalog`
 
 **Checkpoint**: User Stories 1 and 2 independently functional
 
