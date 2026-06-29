@@ -87,6 +87,111 @@ export function runMigrations(db: Database.Database): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_loadouts_user_updated ON loadouts(user_id, updated_at);
+
+    CREATE TABLE IF NOT EXISTS sets (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_sets_user_type_name ON sets(user_id, type, name);
+
+    CREATE TABLE IF NOT EXISTS set_tags (
+      set_id TEXT NOT NULL REFERENCES sets(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL,
+      UNIQUE(set_id, tag_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_set_tags_tag ON set_tags(tag_id, set_id);
+
+    CREATE TABLE IF NOT EXISTS set_items (
+      id TEXT PRIMARY KEY,
+      set_id TEXT NOT NULL REFERENCES sets(id) ON DELETE CASCADE,
+      slot TEXT NOT NULL,
+      item_hash INTEGER NOT NULL,
+      item_name TEXT NOT NULL,
+      selected_perks TEXT NOT NULL DEFAULT '[]',
+      masterwork_hash INTEGER,
+      mod_hashes TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      removed_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_set_items_set ON set_items(set_id);
+
+    CREATE TABLE IF NOT EXISTS synergies (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS synergy_links (
+      id TEXT PRIMARY KEY,
+      synergy_id TEXT NOT NULL REFERENCES synergies(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      item_hash INTEGER,
+      perk_hash INTEGER,
+      parent_item_hash INTEGER,
+      origin_trait_name TEXT,
+      origin_trait_hash INTEGER,
+      armor_set_name TEXT,
+      bonus_pieces INTEGER,
+      bonus_name TEXT,
+      armor_set_hash INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS idx_synergy_links_synergy ON synergy_links(synergy_id);
+
+    CREATE TABLE IF NOT EXISTS builds (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      class_name TEXT NOT NULL,
+      subclass TEXT NOT NULL,
+      exotic_armor_hash INTEGER NOT NULL,
+      exotic_armor_name TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS build_tags (
+      build_id TEXT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL,
+      UNIQUE(build_id, tag_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS build_variants (
+      id TEXT PRIMARY KEY,
+      build_id TEXT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      exotic_weapon_hash INTEGER,
+      exotic_weapon_name TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS build_synergies (
+      build_id TEXT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
+      synergy_id TEXT NOT NULL REFERENCES synergies(id) ON DELETE CASCADE,
+      attached_at TEXT NOT NULL,
+      UNIQUE(build_id, synergy_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS variant_set_attachments (
+      id TEXT PRIMARY KEY,
+      variant_id TEXT NOT NULL REFERENCES build_variants(id) ON DELETE CASCADE,
+      set_id TEXT NOT NULL REFERENCES sets(id) ON DELETE RESTRICT,
+      mode TEXT NOT NULL,
+      snapshot_configs TEXT,
+      attached_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_variant_attachments_set ON variant_set_attachments(set_id);
   `);
   migrated = true;
 }
@@ -101,7 +206,20 @@ export function getDb(): AppDatabase {
 export function createTestDb(): AppDatabase {
   const sqlite = new Database(":memory:");
   sqlite.pragma("foreign_keys = ON");
+  const prevMigrated = migrated;
   migrated = false;
   runMigrations(sqlite);
+  migrated = prevMigrated;
   return drizzle(sqlite, { schema });
+}
+
+/** Raw sqlite handle for migration smoke tests. */
+export function createTestSqlite(): Database.Database {
+  const sqlite = new Database(":memory:");
+  sqlite.pragma("foreign_keys = ON");
+  const prevMigrated = migrated;
+  migrated = false;
+  runMigrations(sqlite);
+  migrated = prevMigrated;
+  return sqlite;
 }

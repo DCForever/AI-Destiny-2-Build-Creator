@@ -1,6 +1,6 @@
 # Data Model: Build Sets and Synergies
 
-**Updated**: 2026-06-28
+**Updated**: 2026-06-28 (debug UI scope, stale items, confirmReplace)
 
 ## Overview
 
@@ -61,8 +61,8 @@ Item occupying one slot within a set.
 
 **Validation**:
 - At most one **active** row per (setId, slot) where `removedAt IS NULL` (FR-020).
-- Replace flow: confirm in UI, then UPDATE row or INSERT after soft-delete previous (FR-027).
-- Weapon perks validated against manifest sockets on save.
+- Replace flow: first request returns `SLOT_OCCUPIED`; resubmit with `confirmReplace: true` (FR-027).
+- New `itemHash` assignments MUST be rejected when hash invalid in manifest; existing rows may be **stale** (computed `stale: true` in API output when hash unresolved).
 
 ### Synergy
 

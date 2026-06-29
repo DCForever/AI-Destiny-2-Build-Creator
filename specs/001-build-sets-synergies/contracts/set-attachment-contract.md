@@ -49,10 +49,11 @@ type SetItem = SetItemInput & {
   setId: string;
   itemName: string;
   removedAt?: string | null; // BR-ROLL-002: soft-remove retains roll history
+  stale?: boolean; // computed: true when itemHash no longer resolves in manifest (FR-019)
 };
 ```
 
-**Replace rule** (**BR-SLOT-006**, [FR-027](../spec.md#functional-requirements)): `PUT /api/user/sets/:id/items` with occupied `slot` → returns `409` with `{ code: 'SLOT_OCCUPIED', confirmRequired: true }` unless `?confirm=true`.
+**Replace rule** (**BR-SLOT-006**, [FR-027](../spec.md#functional-requirements)): `PUT /api/user/sets/:id/items` with occupied `slot` → returns `409` with `{ code: 'SLOT_OCCUPIED', confirmRequired: true }` unless body includes `confirmReplace: true`.
 
 ## Set and Build Input Shapes
 

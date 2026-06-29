@@ -1,6 +1,6 @@
 # Research: Build Sets and Synergies
 
-**Updated**: 2026-06-28 (Session clarifications integrated)
+**Updated**: 2026-06-28 (debug UI scope, stale items, confirmReplace integrated)
 
 ## Concept Tags (Controlled Vocabulary)
 
@@ -34,19 +34,48 @@
 
 ## Occupied Slot Overwrite Within a Set
 
-**Decision**: Adding to an occupied slot **replaces** the existing item after **user confirmation** (FR-027).
+**Decision**: Adding to an occupied slot **replaces** the existing item after **API confirmation** (FR-027). First request without `confirmReplace: true` returns `SLOT_OCCUPIED`; resubmit with `confirmReplace: true` performs replace. `/debug/*` forms surface the conflict and resubmit.
 
-**Rationale**: Clarification A (2026-06-22). Standard inventory UX; avoids duplicate slot rows in DB.
+**Rationale**: Clarification A (2026-06-22) + Session 2026-06-28 API-first confirmation. Testable without production UX dialogs.
 
 **Alternatives considered**:
 - Reject until manual remove: slower UX.
-- Multiple candidates per slot: conflicts with 0–1 rule.
+- Browser `confirm()` only: not API-testable.
+
+## Debug/Service UI (Iteration 1)
+
+**Decision**: **Minimal Next.js pages under `/debug/*`** — HTML forms bound to the same APIs, plus JSON request/response panels (FR-033). **Auth required** (same session as `/api/user/*`). **`NODE_ENV=production` → 404** on all `/debug/*` routes.
+
+**Rationale**: Session 2026-06-28 clarify — no production user-facing UI this iteration; manual quickstart validation still required.
+
+**Alternatives considered**:
+- API-only (curl): rejected — user wants testable debug surfaces.
+- Production component library: explicitly deferred.
+
+## Stale Manifest Item Hashes
+
+**Decision**: **Soft stale** — retain persisted name/roll; API responses include `stale: true` when hash no longer resolves after manifest refresh; **block new** assignments with invalid hashes only (FR-019).
+
+**Rationale**: Session 2026-06-28 clarify. Avoids silent data loss.
+
+**Alternatives considered**:
+- Hard fail all reads: too brittle.
+- Auto-purge on refresh: loses roll history.
+
+## List API Scale (v1)
+
+**Decision**: **No pagination v1** — list endpoints return full user-scoped results. Acceptable for SC-007 (~30 sets / 20 synergies). Pagination deferred to production UI iteration.
+
+**Rationale**: Session 2026-06-28 clarify; single-user SQLite.
+
+**Alternatives considered**:
+- Cursor pagination from day one: premature for debug iteration.
 
 ## Build vs Variant Model (Hybrid Exotics)
 
 **Decision**:
 - New **`builds`** entity: name, subclass/aspects (structured JSON aligned with `generatedBuildSchema.subclass`), **exotic armor** (manifest hash + name), user ownership.
-- **`build_variants`**: `is_default`, name, optional **exotic weapon** per variant.
+- **`build_variants`**: `is_default`, name, optional **exotic weapon** per variant, optional **notes**.
 - Shared across variants: subclass, aspects, exotic armor, designated synergies.
 - Per variant: attached sets, exotic weapon, resolved equipment projection.
 

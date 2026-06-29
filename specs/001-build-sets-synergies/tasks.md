@@ -21,7 +21,7 @@ description: "Task list for Build Sets and Synergies feature"
 
 - Single Next.js project: `src/`, co-located tests next to modules
 - API routes: `src/app/api/user/...`
-- UI: `src/components/{sets,builds,synergies}/`
+- UI: `src/app/debug/` — Debug/Service pages only (FR-033); no production components
 
 ---
 
@@ -29,12 +29,12 @@ description: "Task list for Build Sets and Synergies feature"
 
 **Purpose**: Module scaffolding and shared types used across stories
 
-- [ ] T001 Create sets module directory structure per plan in `src/lib/sets/`, `src/lib/synergies/`, `src/lib/builds/`, `src/lib/suggestions/`
-- [ ] T002 [P] Add equipment slot and set-type enums plus zod schemas in `src/lib/sets/schemas.ts` (import `conceptTagIdsSchema` from `src/data/conceptTags.ts`)
-- [ ] T002b [P] Add `GET /api/concept-tags` route returning vocabulary grouped by facet in `src/app/api/concept-tags/route.ts` (source: `src/data/conceptTags.ts`)
-- [ ] T003 [P] Add build/variant/synergy zod schemas in `src/lib/builds/schemas.ts` and `src/lib/synergies/schemas.ts` (`buildVariantSchema` includes optional `notes: string | null`)
-- [ ] T004 [P] Add shared API error codes enum matching contracts in `src/lib/api/errors.ts`
-- [ ] T005 Add feature route stubs (empty pages) in `src/app/sets/page.tsx`, `src/app/builds/page.tsx`, `src/app/synergies/page.tsx`
+- [X] T001 Create sets module directory structure per plan in `src/lib/sets/`, `src/lib/synergies/`, `src/lib/builds/`, `src/lib/suggestions/`
+- [X] T002 [P] Add equipment slot and set-type enums plus zod schemas in `src/lib/sets/schemas.ts` (import `conceptTagIdsSchema` from `src/data/conceptTags.ts`)
+- [X] T002b [P] Add `GET /api/concept-tags` route returning vocabulary grouped by facet in `src/app/api/concept-tags/route.ts` (source: `src/data/conceptTags.ts`)
+- [X] T003 [P] Add build/variant/synergy zod schemas in `src/lib/builds/schemas.ts` and `src/lib/synergies/schemas.ts` (`buildVariantSchema` includes optional `notes: string | null`)
+- [X] T004 [P] Add shared API error codes enum matching contracts in `src/lib/api/errors.ts`
+- [X] T005 Add `/debug` layout (auth + production 404 guard) and route stubs in `src/app/debug/{sets,builds,synergies,catalog,suggestions}/page.tsx` (FR-033)
 
 ---
 
@@ -44,14 +44,14 @@ description: "Task list for Build Sets and Synergies feature"
 
 **⚠️ CRITICAL**: No user story implementation until this phase completes
 
-- [ ] T006 Extend Drizzle schema with `sets`, `set_items`, `set_tags`, `synergies`, `synergy_links`, `builds`, `build_tags`, `build_variants` (`notes` text nullable), `build_synergies`, `variant_set_attachments` in `src/lib/db/schema.ts` (no `category` column; unique on `user_id+type+name`)
-- [ ] T007 Add SQL migration DDL for new tables and indexes in `src/lib/db/client.ts` `runMigrations()`
-- [ ] T008 [P] Add co-located migration smoke test in `src/lib/db/schema.test.ts` (assert `build_variants.notes` column exists)
-- [ ] T009 [P] Create authenticated user helper for new API routes reusing loadout pattern in `src/lib/api/requireUser.ts`
-- [ ] T010 [P] Add manifest item hash validation helper in `src/lib/sets/validateItem.ts`
-- [ ] T010b [P] Add `validateSynergyLink` + set-bonus resolver using `set-bonuses` / `origin-traits` stores in `src/lib/synergies/validateSynergyLink.ts`
-- [ ] T011 Implement slot-to-bucket mapping utility in `src/lib/builds/slotMap.ts`
-- [ ] T012 Add co-located failing tests for slot mapping in `src/lib/builds/slotMap.test.ts`
+- [X] T006 Extend Drizzle schema with `sets`, `set_items`, `set_tags`, `synergies`, `synergy_links`, `builds`, `build_tags`, `build_variants` (`notes` text nullable), `build_synergies`, `variant_set_attachments` in `src/lib/db/schema.ts` (no `category` column; unique on `user_id+type+name`)
+- [X] T007 Add SQL migration DDL for new tables and indexes in `src/lib/db/client.ts` `runMigrations()`
+- [X] T008 [P] Add co-located migration smoke test in `src/lib/db/schema.test.ts` (assert `build_variants.notes` column exists)
+- [X] T009 [P] Create authenticated user helper for new API routes reusing loadout pattern in `src/lib/api/requireUser.ts`
+- [X] T010 [P] Add manifest item hash validation helper in `src/lib/sets/validateItem.ts`
+- [X] T010b [P] Add `validateSynergyLink` + set-bonus resolver using `set-bonuses` / `origin-traits` stores in `src/lib/synergies/validateSynergyLink.ts`
+- [X] T011 Implement slot-to-bucket mapping utility in `src/lib/builds/slotMap.ts`
+- [X] T012 Add co-located failing tests for slot mapping in `src/lib/builds/slotMap.test.ts`
 
 **Checkpoint**: Foundation ready — user story work can begin
 
@@ -67,26 +67,21 @@ description: "Task list for Build Sets and Synergies feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T013 [P] [US1] Add failing set service tests (slot cardinality, replace confirm, unique name per type, tag validation, mod-encourage visibility on empty armor mod slots, delete blocked with `SET_IN_USE` + `{ buildIds, variantIds }`) in `src/lib/sets/setService.test.ts` (FR-017)
-- [ ] T014 [P] [US1] Add failing set repository tests including `findAttachmentsBySetId` for delete guard in `src/lib/db/repositories/setRepository.test.ts`
-- [ ] T014b [P] [US1] Add failing `listByTags` AND intersection tests in `src/lib/db/repositories/setRepository.test.ts`
+- [X] T013 [P] [US1] Add failing set service tests (slot cardinality, replace confirm, unique name per type, tag validation, mod-encourage visibility on empty armor mod slots, delete blocked with `SET_IN_USE` + `{ buildIds, variantIds }`) in `src/lib/sets/setService.test.ts` (FR-017)
+- [X] T014 [P] [US1] Add failing set repository tests including `findAttachmentsBySetId` for delete guard in `src/lib/db/repositories/setRepository.test.ts`
+- [X] T014b [P] [US1] Add failing `listByTags` AND intersection tests in `src/lib/db/repositories/setRepository.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T015 [P] [US1] Implement `setRepository` CRUD in `src/lib/db/repositories/setRepository.ts`
-- [ ] T016 [P] [US1] Implement set item CRUD with slot rules and soft-remove roll history in `src/lib/sets/setItemService.ts`
-- [ ] T017 [US1] Implement `setService` orchestration (delete guard returning `SET_IN_USE` with affected builds/variants, name uniqueness per type, tag validation, `listByTags` AND) in `src/lib/sets/setService.ts` (FR-017)
-- [ ] T018 [P] [US1] Implement roll-alternatives matcher stub using manifest perks in `src/lib/sets/rollAlternatives.ts`
-- [ ] T019 [P] [US1] Add `GET`/`POST` routes in `src/app/api/user/sets/route.ts` (`GET` supports `?tags=solar,melee&type=armor` AND filter)
-- [ ] T020 [P] [US1] Add `GET`/`PATCH`/`DELETE` routes in `src/app/api/user/sets/[id]/route.ts`
-- [ ] T021 [US1] Add set item routes with `SLOT_OCCUPIED` + confirm in `src/app/api/user/sets/[id]/items/route.ts`
-- [ ] T022 [P] [US1] Build `SetList` with `TagFilterBar` in `src/components/sets/SetList.tsx`
-- [ ] T022b [P] [US1] Build shared `ConceptTagPicker` and `TagFilterBar` in `src/components/tags/ConceptTagPicker.tsx` and `src/components/tags/TagFilterBar.tsx`
-- [ ] T023 [P] [US1] Build `SetEditor` with per-type slot pickers, `ConceptTagPicker`, and mod encouragement UI (empty mod slots prompt, Mod Set type highlights) in `src/components/sets/SetEditor.tsx` (FR-021)
-- [ ] T024 [US1] Build replace-confirmation dialog in `src/components/sets/SlotReplaceConfirm.tsx`
-- [ ] T024b [US1] Build `ModEncourageHint` for armor/mod slots in `src/components/sets/ModEncourageHint.tsx` — shown when mod slot empty on Armor/Mod sets (FR-021)
-- [ ] T025 [US1] Wire sets management page in `src/app/sets/page.tsx`
-- [ ] T026 [US1] Run `npm run gate` and validate quickstart Scenario 1 in `specs/001-build-sets-synergies/quickstart.md`
+- [X] T015 [P] [US1] Implement `setRepository` CRUD in `src/lib/db/repositories/setRepository.ts`
+- [X] T016 [P] [US1] Implement set item CRUD with slot rules, soft-remove roll history, and stale hash flagging in `src/lib/sets/setItemService.ts`
+- [X] T017 [US1] Implement `setService` orchestration (delete guard returning `SET_IN_USE` with affected builds/variants, name uniqueness per type, tag validation, `listByTags` AND) in `src/lib/sets/setService.ts` (FR-017)
+- [X] T018 [P] [US1] Implement roll-alternatives matcher stub using manifest perks in `src/lib/sets/rollAlternatives.ts`
+- [X] T019 [P] [US1] Add `GET`/`POST` routes in `src/app/api/user/sets/route.ts` (`GET` supports `?tags=solar,melee&type=armor` AND filter)
+- [X] T020 [P] [US1] Add `GET`/`PATCH`/`DELETE` routes in `src/app/api/user/sets/[id]/route.ts`
+- [X] T021 [US1] Add set item routes with `SLOT_OCCUPIED` + `confirmReplace` body flag in `src/app/api/user/sets/[id]/items/route.ts`
+- [X] T022 [P] [US1] Build `/debug/sets` page — HTML forms for set CRUD, tag multi-select, item slots, `confirmReplace` resubmit, mod-slot hint, JSON panels in `src/app/debug/sets/page.tsx` (FR-033, FR-027, FR-021)
+- [X] T026 [US1] Run `npm run gate` and validate quickstart Scenario 1 via `/debug/sets`
 
 **Checkpoint**: User Story 1 complete — Sets MVP shippable
 
@@ -108,10 +103,8 @@ description: "Task list for Build Sets and Synergies feature"
 - [ ] T028b [P] [US2] Add owned-inventory API helpers in `src/app/api/catalog/_ownedFilter.ts` (auth-gated; returns empty when unsigned-in or unsynced)
 - [ ] T029 [P] [US2] Add catalog API route in `src/app/api/catalog/weapons/route.ts` (`?scope=all|owned`)
 - [ ] T030 [P] [US2] Add catalog API route in `src/app/api/catalog/armor/route.ts` (`?scope=all|owned`)
-- [ ] T031 [P] [US2] Build `ItemBrowser` with all/my toggle wired to `scope` param; show sync prompt when my-mode and inventory empty in `src/components/catalog/ItemBrowser.tsx` (FR-007, FR-008)
-- [ ] T032 [US2] Add weapons browse page in `src/app/items/weapons/page.tsx`
-- [ ] T033 [US2] Add armor browse page in `src/app/items/armor/page.tsx`
-- [ ] T034 [US2] Run `npm run gate` and validate quickstart Scenario 2
+- [ ] T031 [P] [US2] Build `/debug/catalog` page — scope toggle, filter forms, JSON results, sync prompt when owned empty in `src/app/debug/catalog/page.tsx` (FR-007, FR-008)
+- [ ] T034 [US2] Run `npm run gate` and validate quickstart Scenario 2 via `/debug/catalog`
 
 **Checkpoint**: User Stories 1 and 2 independently functional
 
@@ -142,15 +135,11 @@ description: "Task list for Build Sets and Synergies feature"
 - [ ] T043 [P] [US3] Add builds list/create API in `src/app/api/user/builds/route.ts` (`GET` supports `?tags=` AND filter)
 - [ ] T044 [P] [US3] Add build detail/patch/delete API in `src/app/api/user/builds/[id]/route.ts` (patch includes `tagIds`)
 - [ ] T045 [US3] Add variant patch + resolved equipment API in `src/app/api/user/builds/[id]/variants/[variantId]/route.ts` (PATCH accepts `notes`)
-- [ ] T046 [P] [US3] Build `BuildEditor` with exotic armor, synergy multi-select (from `synergyRepository.list`), and `ConceptTagPicker` in `src/components/builds/BuildEditor.tsx` (FR-024)
-- [ ] T047 [P] [US3] Build `SetAttachPicker` with live/snapshot toggle + `TagFilterBar` + empty state in `src/components/builds/SetAttachPicker.tsx`
-- [ ] T048 [US3] Build slot conflict panel in `src/components/builds/SlotConflictPanel.tsx`
-- [ ] T049 [US3] Wire builds page in `src/app/builds/page.tsx`
-- [ ] T049b [US3] Wire automatic + explicit set suggestions into `BuildEditor` and `SetAttachPicker` (panel updates when exotic/subclass/tags change) in `src/components/builds/BuildEditor.tsx` and `src/components/builds/SetAttachPicker.tsx`
-- [ ] T049c [US3] Wire synergy suggestion panel into `BuildEditor` alongside set suggestions in `src/components/builds/SynergySuggestPanel.tsx` (FR-016)
+- [ ] T046 [P] [US3] Build `/debug/builds` page — build/variant forms, synergy multi-select, attach live/snapshot, tag filter, conflict JSON, suggestions hooks in `src/app/debug/builds/page.tsx` (FR-024, FR-032, FR-033)
+- [ ] T049b [US3] Wire automatic + explicit set/synergy suggestion forms on `/debug/builds` (panel updates when exotic/subclass/tags change)
 - [ ] T050 [P] [US3] Implement rule-based `suggestSets` with automatic triggers (exotic armor, subclass, build tags, designated synergies) and explicit goal input hook in `src/lib/suggestions/suggestSets.ts` (FR-010 contextual; LLM enhancement deferred to T077)
 - [ ] T050b [P] [US3] Implement rule-based `suggestSynergies` (type/link/tag overlap with build context) in `src/lib/suggestions/suggestSynergies.ts` (FR-016; LLM deferred to T077)
-- [ ] T051 [US3] Run `npm run gate` and validate quickstart Scenario 3
+- [ ] T051 [US3] Run `npm run gate` and validate quickstart Scenario 3 via `/debug/builds`
 
 **Checkpoint**: User Story 3 complete — set-based builds work
 
@@ -158,9 +147,9 @@ description: "Task list for Build Sets and Synergies feature"
 
 ## Phase 6: User Story 4 — Define and Manage Synergies (Priority: P4)
 
-**Goal**: Synergy CRUD by type; link to weapons, perks, origin traits, armor set bonuses; filter catalog; reverse lookup in item browser
+**Goal**: Synergy CRUD by type; link to weapons, perks, origin traits, armor set bonuses; reverse lookup via API + `/debug/catalog`
 
-**Independent Test**: Create Melee synergy linked to Cast No Shadows origin trait; Void synergy linked to Eutechnology 2pc + 4pc bonuses; filter by type; see synergy badges on catalog items (spec US4)
+**Independent Test**: Via `/debug/synergies` and APIs: create synergies with links; filter by type; reverse lookup JSON on `/debug/catalog` (spec US4)
 
 ### Tests for User Story 4 ⚠️
 
@@ -171,12 +160,10 @@ description: "Task list for Build Sets and Synergies feature"
 - [ ] T053 [P] [US4] Implement full `synergyRepository` CRUD (extends T041b read-only) in `src/lib/db/repositories/synergyRepository.ts`
 - [ ] T054 [US4] Implement `synergyService` in `src/lib/synergies/synergyService.ts`
 - [ ] T055 [P] [US4] Add synergies API routes in `src/app/api/user/synergies/route.ts` and `src/app/api/user/synergies/[id]/route.ts`
-- [ ] T056 [P] [US4] Build `SynergyCatalog` list/filter UI in `src/components/synergies/SynergyCatalog.tsx`
-- [ ] T057 [US4] Build `SynergyEditor` with link pickers per kind (weapon, perk, origin trait, armor set bonus) in `src/components/synergies/SynergyEditor.tsx`
-- [ ] T057b [P] [US4] Add reverse-lookup synergy badges to `src/components/catalog/ItemBrowser.tsx`
-- [ ] T058 [US4] Wire synergies page in `src/app/synergies/page.tsx`
+- [ ] T056 [P] [US4] Build `/debug/synergies` page — CRUD forms, link kind inputs, reverse-lookup test panel in `src/app/debug/synergies/page.tsx` (FR-033)
+- [ ] T057b [P] [US4] Add synergy reverse-lookup JSON preview to `/debug/catalog` page
 - [ ] T059 [US4] Add `GET /api/user/synergies/by-target` reverse lookup route per [synergy-contract.md](contracts/synergy-contract.md)
-- [ ] T060 [US4] Run `npm run gate` and validate quickstart Scenario 4
+- [ ] T058 [US4] Run `npm run gate` and validate quickstart Scenario 4 via `/debug/synergies` + `/debug/catalog`
 
 **Checkpoint**: Synergies independently usable (integrates with US3 build form)
 
@@ -197,9 +184,9 @@ description: "Task list for Build Sets and Synergies feature"
 - [ ] T062 [US5] Implement equal-weight synergy merge for suggestions in `src/lib/suggestions/mergeSynergyContext.ts`
 - [ ] T063 [US5] Implement roll suggestion service using manifest + inventory in `src/lib/suggestions/suggestRolls.ts`
 - [ ] T064 [P] [US5] Add explicit suggest-rolls API in `src/app/api/user/suggestions/rolls/route.ts`
-- [ ] T065 [P] [US5] Build `RollSuggestionsPanel` in `src/components/suggestions/RollSuggestionsPanel.tsx`
-- [ ] T066 [US5] Integrate auto/explicit roll suggestions into `src/components/builds/BuildEditor.tsx` and `src/components/sets/SetEditor.tsx`
-- [ ] T067 [US5] Run `npm run gate` and validate quickstart Scenario 5
+- [ ] T065 [P] [US5] Build `/debug/suggestions` page — roll suggestion forms + JSON panels in `src/app/debug/suggestions/page.tsx` (FR-033)
+- [ ] T066 [US5] Wire roll suggestion triggers on `/debug/builds` and `/debug/sets` (link to suggest-rolls API)
+- [ ] T067 [US5] Run `npm run gate` and validate quickstart Scenario 5 via `/debug/suggestions`
 
 **Checkpoint**: Roll suggestions deliverable
 
@@ -221,10 +208,8 @@ description: "Task list for Build Sets and Synergies feature"
 - [ ] T070 [US6] Implement variant compare diff (sets, exotic weapon, notes) in `src/lib/builds/compareVariants.ts`
 - [ ] T071 [P] [US6] Add variant create/delete API in `src/app/api/user/builds/[id]/variants/route.ts`
 - [ ] T072 [P] [US6] Add variant compare API in `src/app/api/user/builds/[id]/compare/route.ts`
-- [ ] T073 [P] [US6] Build `VariantTabs` with per-variant `notes` field in `src/components/builds/VariantTabs.tsx`
-- [ ] T074 [US6] Build `VariantCompare` view highlighting `notes` diff in `src/components/builds/VariantCompare.tsx`
-- [ ] T075 [US6] Add exotic-armor, exotic-weapon, and concept tag filters to builds list in `src/components/builds/BuildList.tsx`
-- [ ] T076 [US6] Run `npm run gate` and validate quickstart Scenario 6
+- [ ] T073 [US6] Extend `/debug/builds` — variant duplicate, notes field, compare JSON panel, list filters (FR-015, FR-033)
+- [ ] T076 [US6] Run `npm run gate` and validate quickstart Scenario 6 via `/debug/builds`
 
 **Checkpoint**: Full variant workflow complete
 
@@ -232,13 +217,12 @@ description: "Task list for Build Sets and Synergies feature"
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-**Purpose**: LLM explicit suggestions, navigation, export, full quickstart validation
+**Purpose**: LLM explicit suggestions, resolved export API, full quickstart validation
 
 - [ ] T077 [P] Wire explicit LLM goal suggestions into `suggestSets.ts` and `suggestSynergies.ts` using existing LLM pipeline in `src/lib/llm/` (FR-010/016 explicit path)
-- [ ] T078 [P] Add nav links for Sets, Builds, Synergies, Items in `src/components/layout/Nav.tsx` (or existing header component)
-- [ ] T079 Extend build sheet export to include attachments in `src/components/sheet/` (resolved variant equipment)
+- [ ] T079 Extend variant resolved-equipment export on build API or `/debug/builds` JSON download (production sheet UI deferred)
 - [ ] T080 [P] Add integration test for end-to-end set attach flow in `src/lib/builds/buildFlow.integration.test.ts`
-- [ ] T081 Run full `specs/001-build-sets-synergies/quickstart.md` validation checklist
+- [ ] T081 Run full `specs/001-build-sets-synergies/quickstart.md` validation checklist via `/debug/*`
 - [ ] T082 Run `npm run gate` final polish checkpoint
 
 ---
@@ -257,7 +241,7 @@ description: "Task list for Build Sets and Synergies feature"
 | US1 (P1) | Phase 2 | MVP — no other stories required |
 | US2 (P2) | Phase 2 | Independent of US1 (catalog only) |
 | US3 (P3) | US1 + T041b (minimal synergy read) | Full synergy CRUD (US4) enhances picker and T050b/T057b; US3 checkpoint requires designated synergy via T041b + T042 |
-| US4 (P4) | Phase 2; **US2 for T057b** | Synergy CRUD independent; catalog synergy badges (T057b) require `ItemBrowser` from US2 |
+| US4 (P4) | Phase 2; **US2 for T057b** | Synergy CRUD independent; T057b reverse-lookup preview lives on `/debug/catalog` (US2) |
 | US5 (P5) | US1, US4 | Roll context needs sets + synergies |
 | US6 (P6) | US3 | Variants require build/attach foundation |
 
@@ -273,8 +257,8 @@ description: "Task list for Build Sets and Synergies feature"
 
 - **Phase 1**: T002, T003, T004 in parallel
 - **Phase 2**: T008, T009, T010 in parallel after T006–T007
-- **US1**: T013–T014 tests parallel; T015–T016 repos parallel; T022–T023 UI parallel
-- **US2**: T027–T033 mostly parallel after T028
+- **US1**: T013–T014 tests parallel; T015–T016 repos parallel
+- **US2**: T027–T031 mostly parallel after T028
 - **US3**: T035–T037c tests parallel; T041b before T042; T043–T044 API parallel
 - **US4–US6**: repository + API tasks marked [P] within each phase
 - **Cross-story**: US1 and US2 can run in parallel after Phase 2
@@ -292,9 +276,9 @@ T014: src/lib/db/repositories/setRepository.test.ts
 T015: src/lib/db/repositories/setRepository.ts
 T016: src/lib/sets/setItemService.ts
 
-# UI (parallel after services):
-T022: src/components/sets/SetList.tsx
-T023: src/components/sets/SetEditor.tsx
+# UI (after services):
+T022: src/app/debug/sets/page.tsx
+T046: src/app/debug/builds/page.tsx
 ```
 
 ---
@@ -318,11 +302,11 @@ T023: src/components/sets/SetEditor.tsx
 5. US4 Synergies → enriches suggestions
 6. US5 Rolls → hunt-for value
 7. US6 Variants → multi-loadout-per-exotic-armor
-8. Polish → LLM + nav + export
+8. Polish → LLM + export API + full quickstart via `/debug/*`
 
 ### Suggested MVP Scope
 
-**User Story 1 only** (Phase 1 + 2 + 3): typed Sets with slot rules, roll storage, and management UI — independently valuable per spec.
+**User Story 1 only** (Phase 1 + 2 + 3): typed Sets with slot rules, roll storage, APIs + `/debug/sets` — independently valuable per spec. Production UI and nav are out of scope (FR-033).
 
 ---
 

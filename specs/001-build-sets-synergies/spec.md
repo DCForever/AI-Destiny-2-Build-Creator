@@ -36,6 +36,22 @@
 - Q: How do users discover sets to attach to a build? → A: Filter sets (and builds) by **tag combination with AND semantics** (e.g. Solar + Melee) in the Sets list, Builds list, and SetAttachPicker without leaving the attach flow.
 - Q: What game elements can a Synergy be associated with? → A: **Weapons**, **weapon perks**, **origin traits**, and **armor set bonuses** (2-piece and 4-piece). Multiple links per synergy. Examples: *Cast No Shadows* origin trait → Melee synergy; *Eutechnology* 2pc (*Gift of the Ley Lines*) and 4pc (*Techeun's Foresight*) → Void synergy.
 - Q: Can the same item/target have more than one synergy? → A: **Yes** — association is **many-to-many**. A single origin trait, perk, weapon, or armor set bonus MAY be linked to **multiple synergies** (e.g. *Cast No Shadows* linked to both a Melee synergy and a Verb synergy). Reverse lookup and catalog UI MUST show **all** linked synergies.
+- Q: What UI scope applies to this iteration? → A: **Debug/Service UI only** for manual verification and QA. No production user-facing UI (polished editors, catalog browse, navigation). Full UX deferred to a future iteration.
+- Q: What form should Debug/Service UI take? → A: **Minimal Next.js pages under `/debug/*`** — HTML forms for CRUD/attach/suggest actions plus JSON request/response and error panels.
+- Q: Who may access `/debug/*` and when? → A: **Authenticated session required** (same as existing user APIs) **and** routes **disabled in production** (`NODE_ENV=production` → 404).
+- Q: When a manifest refresh invalidates a SetItem's itemHash, what should happen? → A: **Soft stale** — retain persisted name/roll data; flag stale in API/debug responses; block **new** assignments with invalid hashes only.
+- Q: How should list APIs handle large numbers of sets/builds/synergies in v1? → A: **No pagination v1** — return full user-scoped lists; pagination deferred to production UI iteration.
+- Q: How is slot replace confirmation (FR-027) enforced for API/debug flows? → A: **Two-step API** — first request returns `SLOT_OCCUPIED`; client resubmits with `confirmReplace: true` to replace.
+
+## Iteration Scope (UI)
+
+**In scope (this iteration)**: Domain logic, persistence, REST/internal APIs, automated tests, and a **Debug/Service UI** under `/debug/*` sufficient to exercise CRUD, attach flows, suggestions, validation errors, and quickstart scenarios.
+
+**Out of scope (this iteration)**: Production user-facing UI (e.g. polished `SetEditor`, `BuildEditor`, catalog browse pages, nav integration, mod-encouragement polish). User stories describe **domain capabilities**; acceptance is verified via `/debug/*` pages, API calls, and tests—not end-user UX.
+
+**Debug/Service UI shape**: Minimal Next.js routes at `/debug/*` with HTML forms bound to the same APIs used in production, plus read-only JSON panels showing request payloads, responses, and validation errors.
+
+**Debug/Service UI access**: Requires authenticated user session (same as `/api/user/*`). `/debug/*` MUST NOT be served when `NODE_ENV=production` (return 404).
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
@@ -56,13 +72,13 @@ A user can create, name, tag, edit, view, and delete reusable collections ("Sets
 
 **Why this priority**: Sets are the foundational building block described in the overhaul. All intelligent combination, variant builds, and synergies depend on users first being able to curate their own sets. This slice delivers immediate standalone value for organization.
 
-**Independent Test**: A signed-in user creates a new Weapon Set named `Solar PVE` with tags `[Solar, PVE]`, adds a weapon with specific perks/barrels/masterwork (full roll data), saves the set, later removes ("deletes") that weapon entry from the set — the UI can still display the previous roll details, and alternatives matching the perks are offered. Edits name/tags, and (after ensuring it is not attached to builds) deletes the set. This can be fully verified through the sets UI and list without any build, synergy, or generation features.
+**Independent Test**: A signed-in user creates a new Weapon Set named `Solar PVE` with tags `[Solar, PVE]`, adds a weapon with specific perks/barrels/masterwork (full roll data), saves the set, later removes ("deletes") that weapon entry from the set — roll details remain retrievable via API/Debug UI, and alternatives matching the perks are offered. Edits name/tags, and (after ensuring it is not attached to builds) deletes the set. Verifiable via Debug/Service UI or API without build, synergy, or suggestion features.
 
 **Acceptance Scenarios**:
 
 1. **Given** the user is viewing their item collections, **When** they create a new Weapon Set named `Solar PVE`, assign concept tags `[Solar, PVE]`, and add up to one weapon per slot (primary, special, heavy) with chosen perks/barrels/masterwork (full roll data stored), **Then** the set appears in their Sets list with the chosen name, tags, and correct base items + roll details.
 2. **Given** an existing set, **When** the user edits its concept tags or adds/removes items, **Then** the changes are immediately reflected when viewing the set and in any set listings.
-3. **Given** a Weapon Set with a primary weapon already assigned, **When** the user adds a different primary weapon, **Then** the system prompts for confirmation and replaces the existing item on confirm.
+3. **Given** a Weapon Set with a primary weapon already assigned, **When** the user adds a different primary weapon without `confirmReplace`, **Then** the API returns `SLOT_OCCUPIED`. **When** the user resubmits with `confirmReplace: true`, **Then** the existing item is replaced.
 4. **Given** a set the user owns that is not attached to any builds, **When** they remove ("delete") a weapon entry from the set, **Then** the UI can still show the previous full roll details (perks, barrels, etc.) for that entry, alternatives matching the roll are offered, and the rest of the set remains. (The whole set can be deleted when not attached.)
 5. **Given** a set the user owns that is attached to one or more builds, **When** they attempt to delete it, **Then** the deletion is blocked, the user is shown the list of affected builds, and the set is not deleted until detached from all referencing builds.
 6. **Given** the user has an existing Weapon Set named `PVE`, **When** they attempt to create or rename another Weapon Set to `PVE`, **Then** the operation is rejected with a clear error that the name is already in use within the Weapon Set type.
@@ -76,7 +92,7 @@ Users can browse the complete catalog of weapons and armor items and quickly fil
 
 **Why this priority**: The goals explicitly call out fast filtering for both global and personal weapons/armor. This provides discovery and inventory awareness independently of sets or builds.
 
-**Independent Test**: User opens the weapons browser, applies filters for weapon type + archetype + "my owned only", sees correct results. Separately filters the full catalog without login/inventory. Can be tested without sets, builds, or synergies present.
+**Independent Test**: Via Debug/Service UI or catalog API, apply filters for weapon type + archetype + owned-only scope; verify manifest vs inventory results. No production catalog UI required.
 
 **Acceptance Scenarios**:
 
@@ -92,7 +108,7 @@ A user can associate one or more Sets with a Build's default variant. The build 
 
 **Why this priority**: Directly enables the core capability "Combine sets intelligently to create builds" and the Felwinters Helm + Monte Carlo example. This slice can be validated once sets and basic builds exist.
 
-**Independent Test**: User creates a Melee-focused build, attaches an Armor Set named `Ferropotent` (tags `[Melee, Solar]`) choosing snapshot and a Weapon Set named `Grenade Loop` (tags `[Grenade]`) choosing live link. Later edits the live Set and confirms the build reflects the change, while the snapshot one stays fixed. Requires at least one synergy record (create via minimal seed or US4 CRUD) before build save per FR-024.
+**Independent Test**: Via Debug/Service UI or build APIs, create a Melee-focused build, attach sets (snapshot + live), edit live set, confirm variant resolution changes. Requires at least one synergy record (seed or API) before build save per FR-024.
 
 **Acceptance Scenarios**:
 
@@ -112,7 +128,7 @@ Users can create, edit, view, and delete Synergies of various types (Melee syner
 
 **Why this priority**: Synergies are a major goal area (8+ types listed). Defining them manually provides immediate value for documentation and later use in suggestions, independently of automatic generation.
 
-**Independent Test**: User creates a Melee synergy linked to the *Cast No Shadows* origin trait; creates a Void synergy linked to *Eutechnology* 2-piece (*Gift of the Ley Lines*) and 4-piece (*Techeun's Foresight*) bonuses. Browses the synergies library, filters by type, and sees links on catalog items. No build association required for this test.
+**Independent Test**: Via synergy APIs and Debug/Service UI, create synergies with origin-trait and armor-set-bonus links; verify list/filter and reverse lookup responses. No production synergy catalog UI required.
 
 **Acceptance Scenarios**:
 
@@ -131,7 +147,7 @@ While browsing or building, users receive suggestions for specific weapon rolls 
 
 **Why this priority**: Explicitly listed capability. Provides actionable "hunt for" value on top of sets and synergies.
 
-**Independent Test**: User selects a synergy or a set named `Solar PVE` tagged `[Solar, PVE]`; the UI shows 2-3 recommended god-roll weapons/perks that fit the synergy/set theme. Can be validated by viewing suggestions without a full build.
+**Independent Test**: Via suggest-rolls API or Debug/Service UI, request roll suggestions for a tagged set or synergy; verify ≥2 manifest-valid combos and owned/unowned flags in JSON response.
 
 **Acceptance Scenarios**:
 
@@ -147,7 +163,7 @@ A user can easily create and manage multiple variants of the same build that sha
 
 **Why this priority**: Directly supports the stated need for "a multiple build for each exotic where only some of the sets differ".
 
-**Independent Test**: Starting from one build with a fixed exotic armor piece, the user duplicates a variant (using snapshots of sets), swaps attached armor/weapon sets and changes the exotic weapon to create a second variant. Both variants remain under the same build. Verifiable in the builds list and variant comparison views.
+**Independent Test**: Via variant APIs and Debug/Service UI, duplicate a variant, swap sets/exotic weapon, compare diff JSON. No production variant tabs/compare UI required.
 
 **Acceptance Scenarios**:
 
@@ -163,14 +179,15 @@ A user can easily create and manage multiple variants of the same build that sha
 - When a user attempts to delete a Set that is attached to one or more Builds, the deletion is blocked. The system must show the list of affected Builds, and the user must detach the Set from those Builds before the Set can be deleted.
 - Set names must be unique per user per Set type. Creating a duplicate name within the same Set type results in an error.
 - Concept tags are selected from a controlled vocabulary; invalid tag values are rejected. Multi-tag filters use AND semantics (e.g. Solar + Melee requires both tags).
-- What happens when a user has hundreds of sets or very large sets (50+ items)?
+- What happens when a user has hundreds of sets or very large sets (50+ items)? → **No pagination in v1**: list APIs return full user-scoped results. Acceptable for this iteration (SC-007 targets ~30 sets / 20 synergies). Server-side pagination is deferred to the production UI iteration.
 - How are conflicts resolved when multiple synergies apply to the same items in a build? → **Not a conflict**: the same target MAY link to multiple synergies (many-to-many). When a build designates multiple synergies, all contribute equally to suggestions (FR-024). Equipment matching any linked synergy is relevant context.
-- What occurs if the manifest updates and items in a user's set are deprecated or changed?
+- What occurs if the manifest updates and items in a user's set are deprecated or changed? → **Soft stale**: persisted SetItem name and roll data are retained; API and `/debug/*` responses include a stale indicator when the hash no longer resolves. New item assignments MUST be rejected if the hash is invalid; existing stale items do not block set read or unrelated edits until replaced.
 - Can sets be shared or are they strictly private per user?
 - Fashion Sets are treated purely as cosmetic and organizational (ignored for build composition, synergies, suggestions, and stats, unlike weapon/armor/mod sets).
-- Within a single set, a slot cannot hold more than one item; adding to an occupied slot replaces the existing item after user confirmation.
+- Within a single set, a slot cannot hold more than one item; adding to an occupied slot requires `confirmReplace: true` after an initial `SLOT_OCCUPIED` response (FR-027).
 - Attaching multiple set types to one variant must not assign two items to the same equipment slot (e.g., a Weapon Set primary and a Pair Set exotic weapon cannot both occupy primary without conflict resolution).
 - When a Pair Set is attached to a variant, its exotic armor MUST match the build's exotic armor; mismatch is rejected with a clear error. The Pair Set's exotic weapon populates the variant's exotic weapon slot.
+- `/debug/*` routes MUST require authentication and MUST return 404 in production deployments.
 - A build variant cannot be saved unless at least one equipment slot is filled via attached sets.
 - Variants of the same build always share subclass, aspects, designated synergies, and exotic armor; exotic weapon may differ per variant. Changing shared build-level fields requires editing the parent build.
 - A build without at least one designated synergy cannot be saved (or suggestions are blocked until at least one is set).
@@ -194,24 +211,25 @@ A user can easily create and manage multiple variants of the same build that sha
 - **FR-011**: System MUST support creation, editing, viewing, and deletion of Synergies for the listed types (Melee, Verb, Grenade, Primary Weapon, Special Weapon, Heavy Weapon, Kinetic Weapon, Super, Damage, Healing).
 - **FR-012**: System MUST allow users to associate synergies with **weapons**, **weapon perks**, **origin traits**, and **armor set bonuses** (2-piece and 4-piece) for discovery, documentation, and suggestions. Multiple links per synergy MUST be supported. The same target MAY be linked to **multiple synergies** (many-to-many); reverse lookup MUST return all linked synergies for a target.
 - **FR-013**: System MUST provide suggested weapon rolls (specific perks) that complement a chosen set or synergy.
-- **FR-019**: For weapon SetItems, the system MUST store the full selected roll data (perks including barrels, magazine, traits, masterwork, etc.). When a SetItem is removed from a set, the previous roll configuration MUST still be displayable, and the system SHOULD offer alternatives (other weapons with matching or similar perks/rolls).
+- **FR-019**: For weapon SetItems, the system MUST store the full selected roll data (perks including barrels, magazine, traits, masterwork, etc.). When a SetItem is removed from a set, the previous roll configuration MUST still be displayable, and the system SHOULD offer alternatives (other weapons with matching or similar perks/rolls). When a manifest refresh leaves an `itemHash` unresolved, the SetItem MUST be retained with a **stale** flag in API output; new assignments with invalid hashes MUST be rejected.
 - **FR-014**: Users MUST be able to create multiple variants under the same build sharing exotic armor but using different attached Sets and optionally different exotic weapons (typically using snapshots for stable variants).
 - **FR-015**: System MUST make it easy to discover and switch between variants for the same build (filterable by shared exotic armor and per-variant exotic weapon).
 - **FR-016**: System MUST support intelligent suggestion of **synergies** (and sets per FR-010), triggered both automatically (contextual during build editing) and explicitly (when user requests suggestions or describes a goal, e.g., "Melee focused build using Felwinters Helm + Monte Carlo"). Deterministic synergy matching (type, tags, links) MUST ship in US3/US4; LLM ranking MAY ship in Phase 9.
 - **FR-017**: System MUST block deletion of a Set if it is currently attached to any Build variant(s). The user MUST be shown the list of affected builds/variants and detach the Set from all of them before deletion is allowed.
 - **FR-020**: Each Set MUST enforce at most one item per applicable equipment slot within its type's domain: Weapon Sets (primary, special, heavy), Armor Sets (helmet, arms, chest, legs, class item), Pair Sets (exotic weapon, exotic armor). Slots within a set's domain may be empty.
-- **FR-021**: Mod Sets and optional mods on other set types SHOULD encourage mod selection; mods are not required for a valid set but the UI MUST encourage adding mods where relevant.
+- **FR-021**: Mod Sets and optional mods on other set types SHOULD encourage mod selection; mods are not required for a valid set. Debug/Service UI SHOULD expose empty mod-slot state; polished mod encouragement UI is deferred to the production UI iteration.
 - **FR-026**: When multiple attached sets would populate the same equipment slot on a variant, the system MUST detect the conflict and block save until resolved.
-- **FR-027**: When a user adds an item to an occupied slot within the same set, the system MUST prompt for confirmation and replace the existing item on confirm.
+- **FR-027**: When a user adds an item to an occupied slot within the same set, the API MUST return `SLOT_OCCUPIED` unless the request includes `confirmReplace: true`, in which case the existing item is replaced. `/debug/*` forms MUST surface the conflict and allow resubmit with confirmation.
 - **FR-028**: When a Pair Set is attached to a build variant, its exotic armor MUST match the build's exotic armor. On mismatch, attachment MUST be rejected. The Pair Set primarily supplies the variant's exotic weapon.
 - **FR-022**: A Build MUST include a default variant composed of attached sets with at least one equipment slot filled before the build can be saved.
 - **FR-023**: All variants of a Build MUST share the same subclass, aspects, and exotic armor. Variants MAY differ in attached sets and exotic weapon.
 - **FR-024**: Each Build MUST designate at least one synergy to guide suggestions. Multiple synergies MAY be designated; when more than one is present, all MUST contribute equally to set and roll suggestions.
 - **FR-025**: A Build variant MUST NOT be saved unless at least one equipment slot is filled via attached sets.
-- **FR-029**: System MUST expose the canonical concept tag list for UI pickers and validate all persisted tag assignments against it.
+- **FR-029**: System MUST expose the canonical concept tag list for API consumers and Debug/Service UI; validate all persisted tag assignments against it.
 - **FR-030**: Builds MUST support the same concept tag assignment model as Sets.
-- **FR-031**: System MUST allow filtering Sets and Builds by one or more concept tags; when multiple tags are selected, results MUST include only entities that have **all** selected tags (AND semantics).
-- **FR-032**: When attaching sets to a build variant, the user MUST be able to filter available sets by concept tags without leaving the attach flow.
+- **FR-031**: System MUST allow filtering Sets and Builds by one or more concept tags (API query params); when multiple tags are selected, results MUST include only entities that have **all** selected tags (AND semantics). List endpoints MAY return full user-scoped result sets without pagination in v1.
+- **FR-032**: When attaching sets to a build variant, callers MUST be able to filter available sets by concept tags (API or Debug/Service UI attach flow).
+- **FR-033**: This iteration MUST deliver domain capability via REST/internal APIs and a **Debug/Service UI** at `/debug/*` only. Each debug page MUST provide HTML forms to invoke the same APIs, display request/response JSON, and surface validation errors for manual verification. `/debug/*` MUST require authenticated user session and MUST return 404 in production (`NODE_ENV=production`). Production user-facing UI is **out of scope** and deferred to a future iteration.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -240,11 +258,13 @@ A user can easily create and manage multiple variants of the same build that sha
 
 ### Measurable Outcomes
 
-- **SC-001**: A user can create a new categorized set containing at least 3 items in under 60 seconds.
-- **SC-002**: Users can locate a previously created set or synergy using search or concept tag filters in under 5 seconds.
-- **SC-003**: A user can attach relevant sets to a build and see the effect on the build presentation within the same session.
+**Iteration 1 note**: SC-001–SC-004, SC-006–SC-007 are verified via Debug/Service UI, API tests, and quickstart scenarios. SC-005 applies to a **future production UI iteration** (out of scope here).
+
+- **SC-001**: A developer or tester can create a new categorized set containing at least 3 items via Debug/Service UI or API in under 60 seconds.
+- **SC-002**: Sets or synergies can be located using search or concept tag filters (API or Debug/Service UI) in under 5 seconds.
+- **SC-003**: Relevant sets can be attached to a build and resolved equipment output verified within the same session (API or Debug/Service UI).
 - **SC-004**: When viewing a build's shared exotic armor, the system surfaces at least two distinct variants using different sets or exotic weapons (for users who have created them).
-- **SC-005**: 80% of users attempting to create a set-based build for a stated goal (e.g. "Melee focused") can complete the flow without external help on their first try.
+- **SC-005**: *(Deferred — future production UI iteration.)* 80% of users attempting to create a set-based build for a stated goal (e.g. "Melee focused") can complete the flow without external help on their first try.
 - **SC-006**: Roll suggestions for a set or synergy return at least 2 relevant, manifest-valid weapon/perk combinations.
 - **SC-007**: The system supports users maintaining at least 30 sets and 20 synergies without noticeable slowdown in listing or filtering.
 
@@ -262,3 +282,4 @@ A user can easily create and manage multiple variants of the same build that sha
 - Equipment slots for build variants span helmet, arms, chest, legs, class item, primary, special, heavy across attached set types. Mods are optional and encouraged via Mod Sets or mod selections on other sets.
 - Set types remain distinct (Weapon, Armor, Mod, Pair, Fashion); slot cardinality applies per type domain, not as one unified eight-slot container.
 - A build's default variant is the initial set composition; additional variants reuse build-level subclass, aspects, designated synergies, and exotic armor; exotic weapon may change per variant.
+- **This iteration is API + `/debug/*` Service UI only.** Production user-facing UX is explicitly deferred; quickstart scenarios and user stories validate domain behavior through APIs and debug pages.
