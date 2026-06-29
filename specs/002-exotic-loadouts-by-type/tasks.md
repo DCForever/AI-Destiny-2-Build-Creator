@@ -29,9 +29,9 @@ description: "Task list for Exotic Loadouts by Type feature"
 
 **Purpose**: Module scaffolding and shared types/schemas
 
-- [ ] T001 Create loadouts module directory `src/lib/loadouts/` per plan.md
-- [ ] T002 [P] Add `LoadoutExoticSummary`, `ExoticFilterCriteria`, and related types in `src/lib/loadouts/types.ts`
-- [ ] T003 [P] Add zod schemas for filter criteria and `GET` query params (`armorMode`, `weaponMode`, slots, hashes) in `src/lib/loadouts/schemas.ts` (contract: `loadout-exotic-filter-contract.md`)
+- [X] T001 Create loadouts module directory `src/lib/loadouts/` per plan.md
+- [X] T002 [P] Add `LoadoutExoticSummary`, `ExoticFilterCriteria`, and related types in `src/lib/loadouts/types.ts`
+- [X] T003 [P] Add zod schemas for filter criteria and `GET` query params (`armorMode`, `weaponMode`, slots, hashes) in `src/lib/loadouts/schemas.ts` (contract: `loadout-exotic-filter-contract.md`)
 
 ---
 
@@ -41,11 +41,11 @@ description: "Task list for Exotic Loadouts by Type feature"
 
 **⚠️ CRITICAL**: No user story implementation until this phase completes
 
-- [ ] T004 [P] Add failing `classifyLoadoutExotics` tests (armor hash/slot/class, weapon exotic detection, null when absent, unresolved fallback) in `src/lib/loadouts/classifyExotics.test.ts`
-- [ ] T005 [P] Add failing name-normalization tests in `src/lib/loadouts/normalizeExoticName.test.ts`
-- [ ] T006 Implement `normalizeExoticName` helper in `src/lib/loadouts/normalizeExoticName.ts`
-- [ ] T007 Implement `classifyLoadoutExotics` with manifest `exotic-armor` / `exotic-weapons` lookup in `src/lib/loadouts/classifyExotics.ts` (FR-008)
-- [ ] T008 [P] Add `summarizeLoadouts` batch helper (map loadout id → summary) in `src/lib/loadouts/summarizeLoadouts.ts`
+- [X] T004 [P] Add failing `classifyLoadoutExotics` tests (armor hash/slot/class, weapon exotic detection, null when absent, unresolved fallback) in `src/lib/loadouts/classifyExotics.test.ts`
+- [X] T005 [P] Add failing name-normalization tests in `src/lib/loadouts/normalizeExoticName.test.ts`
+- [X] T006 Implement `normalizeExoticName` helper in `src/lib/loadouts/normalizeExoticName.ts`
+- [X] T007 Implement `classifyLoadoutExotics` with manifest `exotic-armor` / `exotic-weapons` lookup in `src/lib/loadouts/classifyExotics.ts` (FR-008)
+- [X] T008 [P] Add `summarizeLoadouts` batch helper (map loadout id → summary) in `src/lib/loadouts/summarizeLoadouts.ts`
 
 **Checkpoint**: Classification ready — filter and API work can begin
 
@@ -61,18 +61,18 @@ description: "Task list for Exotic Loadouts by Type feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T009 [P] [US1] Add failing armor-only `filterLoadouts` tests (exact hash, exact name fallback, slot + class match, exclude missing armor, exclude cross-class) in `src/lib/loadouts/filterLoadouts.test.ts`
-- [ ] T010 [P] [US1] Add failing `parseLoadoutFilterQuery` tests for armor query params and `INVALID_FILTER` cases in `src/lib/loadouts/parseFilterQuery.test.ts`
+- [X] T009 [P] [US1] Add failing armor-only `filterLoadouts` tests (exact hash, exact name fallback, slot + class match, exclude missing armor, exclude cross-class) in `src/lib/loadouts/filterLoadouts.test.ts`
+- [X] T010 [P] [US1] Add failing `parseLoadoutFilterQuery` tests for armor query params and `INVALID_FILTER` cases in `src/lib/loadouts/parseFilterQuery.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement `filterLoadouts` armor dimension in `src/lib/loadouts/filterLoadouts.ts`
-- [ ] T012 [P] [US1] Implement `parseLoadoutFilterQuery` from URL search params in `src/lib/loadouts/parseFilterQuery.ts`
-- [ ] T013 [P] [US1] Add failing GET `/api/user/loadouts` armor filter tests in `src/lib/loadouts/loadoutListApi.test.ts`
-- [ ] T014 [US1] Extend `GET` handler: `exoticSummary` on each row + armor query filter in `src/app/api/user/loadouts/route.ts`
-- [ ] T015 [P] [US1] Create armor filter controls (exact picker + slot select + clear) in `src/components/loadouts/LoadoutExoticFilterBar.tsx`
-- [ ] T016 [US1] Integrate armor filter bar, client-side re-filter, and exotic armor labels on rows in `src/components/LoadoutsPage.tsx`
-- [ ] T017 [US1] Run `npm run gate` and validate quickstart Scenario 1 on `/loadouts`
+- [X] T011 [US1] Implement `filterLoadouts` armor dimension in `src/lib/loadouts/filterLoadouts.ts`
+- [X] T012 [P] [US1] Implement `parseLoadoutFilterQuery` from URL search params in `src/lib/loadouts/parseFilterQuery.ts`
+- [X] T013 [P] [US1] Add failing GET `/api/user/loadouts` armor filter tests in `src/lib/loadouts/loadoutListApi.test.ts`
+- [X] T014 [US1] Extend `GET` handler: `exoticSummary` on each row + armor query filter in `src/app/api/user/loadouts/route.ts`
+- [X] T015 [P] [US1] Create armor filter controls (exact picker + slot select + clear) in `src/components/loadouts/LoadoutExoticFilterBar.tsx`
+- [X] T016 [US1] Integrate armor filter bar, client-side re-filter, and exotic armor labels on rows in `src/components/LoadoutsPage.tsx`
+- [X] T017 [US1] Run `npm run gate` and validate quickstart Scenario 1 on `/loadouts`
 
 **Checkpoint**: User Story 1 complete — armor filtering MVP shippable
 
@@ -86,16 +86,16 @@ description: "Task list for Exotic Loadouts by Type feature"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T018 [P] [US2] Add failing weapon + combined AND tests to `src/lib/loadouts/filterLoadouts.test.ts` (exact, slot, exclude missing weapon, FR-006 AND)
-- [ ] T019 [P] [US2] Extend `parseLoadoutFilterQuery` weapon tests in `src/lib/loadouts/parseFilterQuery.test.ts`
+- [X] T018 [P] [US2] Add failing weapon + combined AND tests to `src/lib/loadouts/filterLoadouts.test.ts` (exact, slot, exclude missing weapon, FR-006 AND)
+- [X] T019 [P] [US2] Extend `parseLoadoutFilterQuery` weapon tests in `src/lib/loadouts/parseFilterQuery.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Extend `filterLoadouts` weapon dimension and AND semantics in `src/lib/loadouts/filterLoadouts.ts`
-- [ ] T021 [P] [US2] Extend GET route weapon query params and combined filter response in `src/app/api/user/loadouts/route.ts`
-- [ ] T022 [P] [US2] Add weapon filter controls to `src/components/loadouts/LoadoutExoticFilterBar.tsx`
-- [ ] T023 [US2] Wire weapon filters, combined AND, and weapon row labels in `src/components/LoadoutsPage.tsx`
-- [ ] T024 [US2] Run `npm run gate` and validate quickstart Scenarios 2 and 4
+- [X] T020 [US2] Extend `filterLoadouts` weapon dimension and AND semantics in `src/lib/loadouts/filterLoadouts.ts`
+- [X] T021 [P] [US2] Extend GET route weapon query params and combined filter response in `src/app/api/user/loadouts/route.ts`
+- [X] T022 [P] [US2] Add weapon filter controls to `src/components/loadouts/LoadoutExoticFilterBar.tsx`
+- [X] T023 [US2] Wire weapon filters, combined AND, and weapon row labels in `src/components/LoadoutsPage.tsx`
+- [X] T024 [US2] Run `npm run gate` and validate quickstart Scenarios 2 and 4
 
 **Checkpoint**: User Stories 1 and 2 independently functional
 
@@ -109,14 +109,14 @@ description: "Task list for Exotic Loadouts by Type feature"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T025 [P] [US3] Add failing tests for overlay match list + empty state using `filterLoadouts` in `src/components/LoadoutDiscoveryOverlay.test.tsx`
+- [X] T025 [P] [US3] Add failing tests for overlay match list + empty state using `filterLoadouts` in `src/components/LoadoutDiscoveryOverlay.test.tsx`
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Implement `LoadoutDiscoveryOverlay` panel/modal (title, match list, dismiss, exotic labels) in `src/components/LoadoutDiscoveryOverlay.tsx`
-- [ ] T027 [US3] Add per-exotic discovery actions ("this exotic", "same slot type") in `src/components/sheet/EditableBuildSheet.tsx`
-- [ ] T028 [US3] Wire overlay open/close state from sheet actions in `src/components/LoadoutsPage.tsx` (sheet remains open behind overlay)
-- [ ] T029 [US3] Run `npm run gate` and validate quickstart Scenarios 3 and 5
+- [X] T026 [P] [US3] Implement `LoadoutDiscoveryOverlay` panel/modal (title, match list, dismiss, exotic labels) in `src/components/LoadoutDiscoveryOverlay.tsx`
+- [X] T027 [US3] Add per-exotic discovery actions ("this exotic", "same slot type") in `src/components/sheet/EditableBuildSheet.tsx`
+- [X] T028 [US3] Wire overlay open/close state from sheet actions in `src/components/LoadoutsPage.tsx` (sheet remains open behind overlay)
+- [X] T029 [US3] Run `npm run gate` and validate quickstart Scenarios 3 and 5
 
 **Checkpoint**: All three user stories complete
 
@@ -126,9 +126,9 @@ description: "Task list for Exotic Loadouts by Type feature"
 
 **Purpose**: Optional debug surface and full validation
 
-- [ ] T030 [P] Add optional `/debug/loadouts` filter query form page in `src/app/debug/loadouts/page.tsx` (plan: optional API verification)
-- [ ] T031 Run full `specs/002-exotic-loadouts-by-type/quickstart.md` validation (all scenarios)
-- [ ] T032 [P] Verify manifest re-resolve path still compatible with hash-first exact match in `src/components/LoadoutsPage.tsx` `reResolveIfStale` flow
+- [X] T030 [P] Add optional `/debug/loadouts` filter query form page in `src/app/debug/loadouts/page.tsx` (plan: optional API verification)
+- [X] T031 Run full `specs/002-exotic-loadouts-by-type/quickstart.md` validation (all scenarios)
+- [X] T032 [P] Verify manifest re-resolve path still compatible with hash-first exact match in `src/components/LoadoutsPage.tsx` `reResolveIfStale` flow
 
 ---
 

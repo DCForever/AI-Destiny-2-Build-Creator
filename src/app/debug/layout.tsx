@@ -39,6 +39,9 @@ export default async function DebugLayout({ children }: { children: React.ReactN
           <a href="/debug/suggestions" className="underline">
             Suggestions
           </a>
+          <a href="/debug/loadouts" className="underline">
+            Loadouts
+          </a>
         </nav>
       </header>
       <main className="p-4">{children}</main>
