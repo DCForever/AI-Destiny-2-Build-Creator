@@ -46,7 +46,7 @@ When query filters are active and valid, `filter.applied` is `true` and `filter.
 
 ### Query parameters (all optional)
 
-Independent armor and weapon dimensions (FR-006). Omit a dimension to leave it unconstrained.
+Independent armor and weapon dimensions (FR-006). When **both** are provided, results must match **both** (AND). Omit a dimension to leave it unconstrained.
 
 #### Armor
 
@@ -112,18 +112,27 @@ filterLoadouts(
 - Missing exotic on loadout → fails that dimension's filter
 - Armor slot filter enforces class match (see data-model)
 
-## UI contract: contextual discovery
+## UI contract: contextual discovery (overlay)
 
-From `EditableBuildSheet` when viewing a saved loadout:
+From `EditableBuildSheet` when viewing a saved loadout (FR-007):
 
-| Action | Sets criteria |
-|--------|----------------|
+| Action | Overlay criteria |
+|--------|------------------|
 | "Loadouts with this exotic" (armor) | `armorMode=exact`, hash/name from current armor |
 | "Loadouts with exotic helmets" (armor) | `armorMode=slot`, slot from summary |
 | "Loadouts with this exotic" (weapon) | `weaponMode=exact`, hash/name from weapon |
 | "Loadouts with exotic in this slot" (weapon) | `weaponMode=slot`, slot from weapon |
 
-Actions call parent callback → `LoadoutsPage` updates filter state, collapses or scrolls list, **does not** PATCH loadout.
+**Behavior**:
+- Opens `LoadoutDiscoveryOverlay` with title derived from action + exotic name/slot
+- Current loadout sheet **remains visible** (not closed)
+- Overlay lists matching loadouts with `exoticSummary` labels; empty state when no matches (excluding current if alone)
+- Dismiss overlay returns to sheet; **no** loadout PATCH
+- Uses same `filterLoadouts` pure function as list bar
+
+## UI contract: list filter bar
+
+`LoadoutsPage` filter controls apply criteria to the main list (not overlay). Same query param shape as API. AND when both armor and weapon set.
 
 ## Non-goals (v1)
 

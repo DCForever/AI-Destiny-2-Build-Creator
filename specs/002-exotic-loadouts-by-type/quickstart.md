@@ -49,14 +49,15 @@ GET /api/user/loadouts?weaponMode=slot&weaponSlot=Power
 GET /api/user/loadouts?weaponMode=exact&weaponHash=<hash>
 ```
 
-## Scenario 3: P3 — Contextual Discovery from Sheet
+## Scenario 3: P3 — Contextual Discovery from Sheet (overlay)
 
-1. Open a loadout using Crown of Tempests.
+1. Open a loadout using Crown of Tempests (sheet expanded).
 2. On exotic armor row, click **Loadouts with this exotic** (exact).
-3. **Pass**: List filters to Crown-only; sheet may close or stay open per UX; no loadout data mutated.
-4. Re-open same loadout → click **Same slot type** (Helmet).
-5. **Pass**: Broader helmet list including other exotics (SC-002 within 10s).
+3. **Pass**: Overlay opens listing only Crown of Tempests loadouts; **sheet remains open** behind overlay; no loadout data mutated (FR-007, SC-002).
+4. Dismiss overlay → click **Same slot type** (Helmet).
+5. **Pass**: Overlay shows all exotic-helmet loadouts including others (SC-002 within 10s).
 6. Repeat for exotic weapon row (exact + slot actions).
+7. When no other matches, overlay shows informative empty/only-current state (US3 scenario 4).
 
 ## Scenario 4: Combined Filters and Clear
 
@@ -69,7 +70,7 @@ GET /api/user/loadouts?weaponMode=exact&weaponHash=<hash>
 
 1. Save Titan helmet loadout and Warlock helmet loadout.
 2. Filter **Helmet** slot.
-3. **Pass**: Each loadout only matches if exotic armor class matches loadout class (no cross-class false positives).
+3. **Pass**: Titan loadout appears only for Titan helmet exotic; Warlock loadout only for Warlock helmet (FR-002).
 
 ## Gate
 

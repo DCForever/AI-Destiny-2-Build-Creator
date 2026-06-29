@@ -63,7 +63,7 @@ Projection attached to list API responses and used in UI row labels.
 
 ### ExoticFilterCriteria
 
-In-memory / query-string filter. Armor and weapon dimensions are **independent** (FR-006).
+In-memory / query-string filter. Armor and weapon dimensions are **independent** for apply/clear (FR-006); when **both** are set, matching uses **AND**.
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -80,8 +80,8 @@ In-memory / query-string filter. Armor and weapon dimensions are **independent**
 | slot | `ArmorSlotName` | required when mode=slot |
 
 **Matching rules**:
-- `exact`: summary armor hash matches, OR normalized names match when hash missing
-- `slot`: summary armor slot matches AND `classType` matches loadout `className`
+- `exact`: resolved hash matches filter hash when both present; else normalized names match
+- `slot`: summary armor slot matches AND `classType` matches loadout `className`; null armor → excluded
 
 ### WeaponExoticFilter
 
@@ -93,8 +93,8 @@ In-memory / query-string filter. Armor and weapon dimensions are **independent**
 | slot | `WeaponSlotName` | required when mode=slot |
 
 **Matching rules**:
-- `exact`: weapon hash or name match
-- `slot`: exotic weapon exists and slot matches
+- `exact`: hash first, then normalized name; null exotic weapon → excluded
+- `slot`: exotic weapon exists and slot matches; null → excluded
 
 ### LoadoutFilterState (UI)
 
@@ -103,15 +103,27 @@ Client state mirroring `ExoticFilterCriteria` plus UX fields:
 | Field | Type | Notes |
 |-------|------|-------|
 | criteria | ExoticFilterCriteria | |
-| source | `list` \| `context` | whether filter set from bar or sheet action |
-| contextLoadoutId | text optional | loadout that triggered contextual discovery |
+| source | `list` \| `overlay` | list bar vs sheet-triggered overlay |
+| contextLoadoutId | text optional | loadout open when overlay triggered |
+
+### LoadoutDiscoveryOverlay (UI)
+
+Ephemeral view state — not persisted.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| open | boolean | |
+| criteria | ExoticFilterCriteria | same shape as list filter |
+| matches | `LoadoutSummary[]` | filtered subset with `exoticSummary` labels |
+| title | string | e.g. "Loadouts with Crown of Tempests" |
 
 ## State Transitions
 
 ```text
-[All loadouts] --apply armor/weapon filter--> [Filtered subset]
+[All loadouts] --apply armor/weapon filter (AND if both)--> [Filtered subset on list]
 [Filtered] --clear armor OR weapon OR all--> [All or partial filter]
-[Sheet open] --"same exotic" / "same slot"--> [Filtered subset + list scroll]
+[Sheet open] --"same exotic" / "same slot"--> [LoadoutDiscoveryOverlay with matches; sheet stays open]
+[Overlay] --dismiss--> [Sheet still open]
 ```
 
 All transitions are **read-only** — no loadout mutation (FR-004, assumptions).

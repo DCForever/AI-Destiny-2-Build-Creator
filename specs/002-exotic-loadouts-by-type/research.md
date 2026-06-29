@@ -1,18 +1,23 @@
 # Research: Exotic Loadouts by Type
 
-**Updated**: 2026-06-29
+**Updated**: 2026-06-29 (Session 2026-06-29 clarifications synced)
 
 ## Spec ↔ Implementation Traceability
 
 | Spec topic | Spec (outcome) | Implementation |
 |------------|----------------|----------------|
 | FR-001/002 armor filters | Exact name + armor slot type | `ExoticFilterCriteria.armor` with `mode: exact \| slot` |
+| FR-002 class scoping | Titan helmet ≠ Hunter helmet | Slot match requires `className === classType` |
 | FR-003 weapon filters | Exact weapon + weapon slot | `ExoticFilterCriteria.weapon` with `mode: exact \| slot` |
-| FR-004 contextual discovery | Exact or broaden to slot | Sheet actions set same criteria as list filter |
-| FR-005 result labels | Show actual exotic used | `LoadoutExoticSummary` on list rows |
-| FR-008 stable classification | Manifest-backed slots | `exotic-armor` / `exotic-weapons` stores + `ResolvedBuildSheet` |
+| FR-004 contextual discovery | Exact or broaden to slot | Sheet actions → overlay with same `filterLoadouts` criteria |
+| FR-005 result labels | Show actual exotic used | `LoadoutExoticSummary` on list rows and overlay |
+| FR-006 combined filters | AND when both dimensions set | `filterLoadouts` requires armor AND weapon match |
+| FR-007 overlay UX | Sheet stays open | `LoadoutDiscoveryOverlay` component |
+| FR-008 exact identity | Hash first, name fallback | `classifyExotics` + exact matcher |
 | FR-009 user scope | Own loadouts only | Existing `userId` on `loadouts` table |
+| FR-010 missing exotic | Exclude from dimension | Null armor/weapon fails that filter leg |
 | SC-001 performance | &lt;5s filter | In-memory over full user list (≤50 typical) |
+| SC-002 overlay | &lt;10s discovery | Client-side filter + overlay render |
 
 ## Loadouts vs Builds
 
@@ -51,8 +56,8 @@
 **Rationale**: Clarification C — both modes. Class scoping addresses edge case in spec (Titan helmets vs Hunter).
 
 **Alternatives considered**:
-- Slot without class check: rejected — cross-class false positives.
-- OR across exact+slot when both set: rejected — FR-006 requires independent apply/clear per dimension.
+- Slot without class check: rejected — Session 2026-06-29; cross-class false positives.
+- OR across armor+weapon when both set: rejected — Session 2026-06-29 AND semantics (FR-006).
 
 ## Filter Execution Layer
 
@@ -75,9 +80,19 @@ List endpoint returns enriched summaries (`exoticSummary`) so rows show armor/we
 
 **Rationale**: Spec edge case on manifest updates; aligns with validation-first principle.
 
+## Contextual Discovery UX
+
+**Decision**: **Panel/modal overlay** (`LoadoutDiscoveryOverlay`) opened from `EditableBuildSheet` actions. Current loadout sheet **remains open** behind the overlay (FR-007, Session 2026-06-29).
+
+**Rationale**: User chose overlay over list filter+scroll; supports quick comparison without losing sheet context.
+
+**Alternatives considered**:
+- Apply filter on main list and scroll: rejected at clarify — user chose overlay.
+- Separate route: rejected — extra navigation.
+
 ## UI Delivery Surface
 
-**Decision**: **Production `/loadouts` page** — filter bar (armor mode, weapon mode, clear), row subtitles with exotic labels, contextual buttons on sheet.
+**Decision**: **Production `/loadouts` page** — filter bar on list; row subtitles with exotic labels; contextual discovery via overlay from sheet.
 
 **Rationale**: Spec explicitly names loadouts list and opened loadout sheet. Unlike 001, this is user-facing discovery, not debug-only.
 
