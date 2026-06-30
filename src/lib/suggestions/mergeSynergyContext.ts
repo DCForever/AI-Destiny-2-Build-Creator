@@ -24,6 +24,7 @@ export type MergedRollContext = {
   perkHashes: number[];
   originTraitHashes: number[];
   weaponHashes: number[];
+  weaponArchetypeSubTypes: string[];
   tagIds: ConceptTagId[];
 };
 
@@ -35,11 +36,16 @@ export function mergeSynergyContext(
   const perkHashes = new Set<number>();
   const originTraitHashes = new Set<number>();
   const weaponHashes = new Set<number>();
+  const weaponArchetypeSubTypes: string[] = [];
   const tagIds = new Set<ConceptTagId>([...(extra?.setTagIds ?? []), ...(extra?.buildTagIds ?? [])]);
 
   for (const synergy of synergies) {
     for (const tag of SYNERGY_TYPE_TAGS[synergy.type] ?? []) {
       tagIds.add(tag);
+    }
+
+    if (synergy.type === "weapon_archetype" && synergy.subType) {
+      weaponArchetypeSubTypes.push(synergy.subType);
     }
 
     for (const link of synergy.links) {
@@ -56,6 +62,7 @@ export function mergeSynergyContext(
     perkHashes: [...perkHashes],
     originTraitHashes: [...originTraitHashes],
     weaponHashes: [...weaponHashes],
+    weaponArchetypeSubTypes,
     tagIds: [...tagIds],
   };
 }

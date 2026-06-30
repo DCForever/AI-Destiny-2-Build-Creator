@@ -9,8 +9,33 @@ import {
   updateUserSynergy,
 } from "@/lib/synergies/synergyService";
 
+const ARCHETYPE_ITEM_TABLE = {
+  "100": {
+    hash: 100,
+    redacted: false,
+    displayProperties: { name: "Test Pulse", description: "", icon: null },
+    itemType: 3,
+    itemTypeDisplayName: "Pulse Rifle",
+    defaultDamageTypeHash: 1,
+    inventory: { tierType: 5 },
+    equippingBlock: { ammoType: 1, equipmentSlotTypeHash: 1 },
+    sockets: { socketEntries: [{ singleInitialItemHash: 200 }] },
+  },
+  "200": {
+    hash: 200,
+    redacted: false,
+    displayProperties: { name: "Micro-Missile Frame", description: "", icon: null },
+    itemTypeDisplayName: "Intrinsic",
+    plug: { plugCategoryIdentifier: "intrinsics" },
+  },
+};
+
 vi.mock("@/lib/services", () => ({
   getServices: vi.fn(async () => ({
+    manifest: {
+      getStatus: vi.fn(async () => ({ cachedVersion: "test-v" })),
+      loadRawTable: vi.fn(async () => ARCHETYPE_ITEM_TABLE),
+    },
     entityCache: {
       getStore: vi.fn(async (store: string) => {
         if (store === "origin-traits") {
@@ -39,8 +64,32 @@ vi.mock("@/lib/services", () => ({
               searchName: "the ringing nail",
               description: "",
               icon: null,
+              slot: "Kinetic",
+              element: "Kinetic",
+              ammo: "Primary",
+              frame: "Adaptive Frame",
+              itemTypeName: "Auto Rifle",
+              originTraitHashes: [],
+              perkColumns: [],
+            },
+            {
+              hash: 100,
+              name: "Outbreak Perfected",
+              searchName: "outbreak perfected",
+              description: "",
+              icon: null,
+              slot: "Kinetic",
+              element: "Kinetic",
+              ammo: "Primary",
+              frame: "Micro-Missile Frame",
+              itemTypeName: "Pulse Rifle",
+              originTraitHashes: [],
+              perkColumns: [],
             },
           ];
+        }
+        if (store === "exotic-weapons") {
+          return [];
         }
         return [];
       }),
@@ -205,6 +254,65 @@ describe("synergyService", () => {
       createUserSynergy(db, user.id, {
         type: "melee",
         links: [{ kind: "origin_trait", displayName: "Cast No Shadows", originTraitName: "Cast No Shadows" }],
+      }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE });
+  });
+
+  it("creates weapon archetype synergy with manifest-backed subType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-arch", 3, "Player");
+
+    const synergy = await createUserSynergy(db, user.id, {
+      type: "weapon_archetype",
+      subType: "Micro-Missile Frame",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+
+    expect(synergy.name).toBe("Weapon Archetype: Micro-Missile Frame — Cast No Shadows");
+    expect(synergy.subType).toBe("Micro-Missile Frame");
+  });
+
+  it("creates weapon archetype synergy with weapon type subType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-arch-type", 3, "Player");
+
+    const synergy = await createUserSynergy(db, user.id, {
+      type: "weapon_archetype",
+      subType: "Pulse Rifle",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+
+    expect(synergy.name).toBe("Weapon Archetype: Pulse Rifle — Cast No Shadows");
+    expect(synergy.subType).toBe("Pulse Rifle");
+  });
+
+  it("rejects unknown weapon archetype subType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-arch-bad", 3, "Player");
+
+    await expect(
+      createUserSynergy(db, user.id, {
+        type: "weapon_archetype",
+        subType: "Glaive Frame",
+        links: [
+          {
+            kind: "origin_trait",
+            displayName: "Cast No Shadows",
+            originTraitName: "Cast No Shadows",
+          },
+        ],
       }),
     ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE });
   });

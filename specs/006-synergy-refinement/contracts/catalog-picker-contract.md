@@ -16,7 +16,9 @@ Supply searchable lists for synergy **sub-types** and **link targets** so the de
 
 | Param | Required | Values |
 |-------|----------|--------|
-| category | yes | `verb` \| `melee` \| `grenade` \| `super` \| `element` |
+| category | yes | `verb` \| `melee` \| `grenade` \| `super` \| `element` \| `weapon_archetype` |
+| q | no | case-insensitive substring on `name` |
+| limit | no | default 2000 when `q` empty, 50 when filtering; max 2000 |
 
 **Response 200**:
 
@@ -35,6 +37,7 @@ Supply searchable lists for synergy **sub-types** and **link targets** so the de
 - `verb` → deduplicated `subclasses.meta` verbs
 - `melee` \| `grenade` \| `super` → `Base` + manifest `abilities` filtered by kind, deduplicated by display name
 - `element` → fixed seven elements (includes Kinetic)
+- `weapon_archetype` → deduplicated legendary weapon types (`itemTypeDisplayName`) and frames (manifest intrinsic sockets ending in ` Frame`)
 
 **Errors**: 400 invalid category; 503 manifest not loaded.
 

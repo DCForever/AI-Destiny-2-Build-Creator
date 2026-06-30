@@ -42,4 +42,10 @@ describe("validateSynergySubType", () => {
     expect(validateSynergySubType("element", "Kinetic").ok).toBe(true);
     expect(validateSynergySubType("element", "Base").ok).toBe(false);
   });
+
+  it("accepts non-Base subType for weapon_archetype (vocabulary enforced in service)", () => {
+    expect(validateSynergySubType("weapon_archetype", "Micro-Missile Frame").ok).toBe(true);
+    expect(validateSynergySubType("weapon_archetype", "Pulse Rifle").ok).toBe(true);
+    expect(validateSynergySubType("weapon_archetype", "Base").ok).toBe(false);
+  });
 });

@@ -17,6 +17,7 @@ export const CREATABLE_SYNERGY_TYPES = [
   "solo",
   "damage_resist",
   "general_weapon",
+  "weapon_archetype",
   "team",
 ] as const;
 

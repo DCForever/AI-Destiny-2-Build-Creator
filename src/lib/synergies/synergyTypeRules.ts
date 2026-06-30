@@ -1,6 +1,13 @@
 import type { CreatableSynergyType, SynergyType } from "@/lib/synergies/schemas";
 
-export const SUB_TYPE_REQUIRED_TYPES = ["verb", "melee", "grenade", "super", "element"] as const;
+export const SUB_TYPE_REQUIRED_TYPES = [
+  "verb",
+  "melee",
+  "grenade",
+  "super",
+  "element",
+  "weapon_archetype",
+] as const;
 
 export type SubTypeRequiredType = (typeof SUB_TYPE_REQUIRED_TYPES)[number];
 

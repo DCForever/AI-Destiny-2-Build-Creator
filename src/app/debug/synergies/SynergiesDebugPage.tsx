@@ -51,6 +51,7 @@ export function SynergiesDebugPage() {
   });
 
   const [subTypeOptions, setSubTypeOptions] = useState<SubTypeOption[]>([]);
+  const [subTypeSearch, setSubTypeSearch] = useState("");
   const [linkSearch, setLinkSearch] = useState("");
   const [linkOptions, setLinkOptions] = useState<SynergyPickerItem[]>([]);
   const [weaponOptions, setWeaponOptions] = useState<WeaponOption[]>([]);
@@ -72,12 +73,17 @@ export function SynergiesDebugPage() {
     });
   }, [form.type, form.subType, needsSubType, selectedLink]);
 
-  const loadSubTypes = useCallback(async (category: string) => {
+  const loadSubTypes = useCallback(async (category: string, query = "") => {
     if (!requiresSubType(category as never)) {
       setSubTypeOptions([]);
       return;
     }
-    const res = await fetch(`/api/catalog/synergy-pickers/subtypes?category=${category}`);
+    const params = new URLSearchParams({ category });
+    if (query.trim()) {
+      params.set("q", query.trim());
+      params.set("limit", "100");
+    }
+    const res = await fetch(`/api/catalog/synergy-pickers/subtypes?${params}`);
     const body = await res.json();
     if (res.ok) {
       setSubTypeOptions(body.options ?? []);
@@ -104,6 +110,7 @@ export function SynergiesDebugPage() {
 
   const handleTypeChange = (nextType: string) => {
     subTypesLoadedFor.current = null;
+    setSubTypeSearch("");
     setForm({ ...form, type: nextType, subType: "" });
     ensureSubTypes(nextType);
   };
@@ -278,16 +285,38 @@ export function SynergiesDebugPage() {
           </select>
 
           {needsSubType && (
-            <select
-              className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
-              value={form.subType}
-              onChange={(e) => setForm({ ...form, subType: e.target.value })}
-            >
-              <option value="">— select sub-type —</option>
-              {subTypeOptions.map((o) => (
-                <option key={o.id} value={o.name}>{o.name}</option>
-              ))}
-            </select>
+            <>
+              {form.type === "weapon_archetype" && (
+                <div className="flex gap-2">
+                  <input
+                    className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+                    placeholder="Filter archetypes…"
+                    value={subTypeSearch}
+                    onChange={(e) => setSubTypeSearch(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="rounded bg-zinc-800 px-2 py-1 text-xs"
+                    onClick={() => {
+                      subTypesLoadedFor.current = null;
+                      void loadSubTypes(form.type, subTypeSearch);
+                    }}
+                  >
+                    Search
+                  </button>
+                </div>
+              )}
+              <select
+                className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+                value={form.subType}
+                onChange={(e) => setForm({ ...form, subType: e.target.value })}
+              >
+                <option value="">— select sub-type —</option>
+                {subTypeOptions.map((o) => (
+                  <option key={o.id} value={o.name}>{o.name}</option>
+                ))}
+              </select>
+            </>
           )}
 
           <select

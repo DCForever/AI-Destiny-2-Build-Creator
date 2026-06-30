@@ -19,6 +19,7 @@ export const SYNERGY_CATEGORY_LABELS: Record<string, string> = {
   solo: "Solo",
   damage_resist: "DR",
   general_weapon: "General Weapon",
+  weapon_archetype: "Weapon Archetype",
   team: "Team",
   kinetic_weapon: "Kinetic Weapon",
 };

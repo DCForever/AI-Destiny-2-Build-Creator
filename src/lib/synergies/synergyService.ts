@@ -14,6 +14,7 @@ import type { CreateSynergyInput } from "@/lib/synergies/schemas";
 import type { SynergyType } from "@/lib/synergies/schemas";
 import { generateSynergyName } from "@/lib/synergies/generateSynergyName";
 import { normalizeLegacySynergyType } from "@/lib/synergies/legacySynergyTypes";
+import { isValidSubTypeForCategory, listSubTypeOptions } from "@/lib/synergies/subTypeVocabularies";
 import { validateSynergyLinks } from "@/lib/synergies/validateSynergyLink";
 import { validateSynergySubType } from "@/lib/synergies/validateSynergySubType";
 
@@ -26,7 +27,7 @@ async function validateLinksOrThrow(links: CreateSynergyInput["links"]) {
   }
 }
 
-function resolveSynergyFields(input: {
+async function resolveSynergyFields(input: {
   type?: SynergyType;
   subType?: string | null;
   links: CreateSynergyInput["links"];
@@ -36,6 +37,16 @@ function resolveSynergyFields(input: {
   const subTypeCheck = validateSynergySubType(normalized.type, normalized.subType);
   if (!subTypeCheck.ok) {
     throw new ApiError(API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE, subTypeCheck.reason);
+  }
+
+  if (normalized.type === "weapon_archetype" && subTypeCheck.subType) {
+    const options = await listSubTypeOptions("weapon_archetype");
+    if (!isValidSubTypeForCategory("weapon_archetype", subTypeCheck.subType, options)) {
+      throw new ApiError(
+        API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE,
+        `Unknown weapon archetype subType: ${subTypeCheck.subType}`,
+      );
+    }
   }
 
   const linkDisplayName = input.links[0]?.displayName ?? "Unlinked";
@@ -62,7 +73,7 @@ export async function createUserSynergy(
   input: CreateSynergyInput,
 ): Promise<SynergyWithLinks> {
   const links = await validateLinksOrThrow(input.links);
-  const resolved = resolveSynergyFields({
+  const resolved = await resolveSynergyFields({
     type: input.type,
     subType: input.subType,
     links,
@@ -108,7 +119,7 @@ export async function updateUserSynergy(
     armorSetHash: l.armorSetHash ?? undefined,
   }));
 
-  const resolved = resolveSynergyFields({
+  const resolved = await resolveSynergyFields({
     type: mergedType,
     subType: mergedSubType,
     links: mergedLinks,

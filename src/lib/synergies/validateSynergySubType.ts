@@ -16,7 +16,10 @@ export function validateSynergySubType(
     if (!trimmed) {
       return { ok: false, reason: `subType required for ${type} synergies` };
     }
-    if ((type === "verb" || type === "element") && trimmed === "Base") {
+    if (
+      (type === "verb" || type === "element" || type === "weapon_archetype") &&
+      trimmed === "Base"
+    ) {
       return { ok: false, reason: `Base is not valid for ${type} synergies` };
     }
     if (type === "element" && !(SYNERGY_ELEMENTS as readonly string[]).includes(trimmed)) {

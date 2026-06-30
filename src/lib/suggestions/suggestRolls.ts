@@ -7,6 +7,7 @@ import {
 import type { WeaponRecord, WeaponSlotName } from "@/lib/manifest/types/records";
 
 import type { MergedRollContext } from "./mergeSynergyContext";
+import { matchingWeaponArchetypeSubType } from "@/lib/synergies/weaponArchetypeSubType";
 
 export type RollPerkChoice = {
   column: number;
@@ -115,6 +116,11 @@ function buildRollForWeapon(
   if (matchesElement(context.tagIds, weapon)) {
     score += 2;
     reasons.push(`Element match (${weapon.element})`);
+  }
+  const archetypeMatch = matchingWeaponArchetypeSubType(weapon, context.weaponArchetypeSubTypes);
+  if (archetypeMatch) {
+    score += 2;
+    reasons.push(`Archetype match (${archetypeMatch})`);
   }
 
   const perkHashes = perks.map((p) => p.perkHash);

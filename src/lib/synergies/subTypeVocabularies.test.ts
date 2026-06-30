@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { RAW_TABLES } from "@/lib/manifest/__fixtures__/rawTables";
 import { listSubTypeOptions } from "@/lib/synergies/subTypeVocabularies";
 
 vi.mock("@/lib/services", () => ({
@@ -70,8 +71,62 @@ vi.mock("@/lib/services", () => ({
             },
           ];
         }
+        if (store === "weapons") {
+          return [
+            {
+              hash: 100,
+              name: "Outbreak Perfected",
+              searchName: "outbreak perfected",
+              description: "",
+              icon: null,
+              slot: "Kinetic",
+              element: "Kinetic",
+              ammo: "Primary",
+              frame: "Micro-Missile Frame",
+              itemTypeName: "Pulse Rifle",
+              originTraitHashes: [],
+              perkColumns: [],
+            },
+            {
+              hash: 101,
+              name: "Fatebringer",
+              searchName: "fatebringer",
+              description: "",
+              icon: null,
+              slot: "Kinetic",
+              element: "Kinetic",
+              ammo: "Primary",
+              frame: "Adaptive Frame",
+              itemTypeName: "Hand Cannon",
+              originTraitHashes: [],
+              perkColumns: [],
+            },
+          ];
+        }
+        if (store === "exotic-weapons") {
+          return [
+            {
+              hash: 200,
+              name: "Witherhoard",
+              searchName: "witherhoard",
+              description: "",
+              icon: null,
+              slot: "Kinetic",
+              element: "Kinetic",
+              ammo: "Special",
+              frame: "Breech Grenade Launcher",
+              intrinsic: { name: "Blight", description: "" },
+              catalyst: null,
+              flavorText: "",
+            },
+          ];
+        }
         return [];
       }),
+    },
+    manifest: {
+      getStatus: vi.fn(async () => ({ cachedVersion: "fixture-v" })),
+      loadRawTable: vi.fn(async () => RAW_TABLES.DestinyInventoryItemDefinition),
     },
   })),
 }));
@@ -117,5 +172,12 @@ describe("subTypeVocabularies", () => {
     const elements = await listSubTypeOptions("element");
     expect(elements.map((e) => e.name)).toContain("Kinetic");
     expect(elements.some((e) => e.name === "Base")).toBe(false);
+  });
+
+  it("builds weapon type and frame options from manifest", async () => {
+    const options = await listSubTypeOptions("weapon_archetype");
+    expect(options.map((o) => o.name)).toEqual(["Precision Frame", "Pulse Rifle"]);
+    expect(options.some((o) => o.name === "Kill Clip")).toBe(false);
+    expect(options.some((o) => o.name === "Base")).toBe(false);
   });
 });

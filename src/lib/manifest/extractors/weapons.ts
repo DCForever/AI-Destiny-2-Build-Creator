@@ -14,6 +14,7 @@ import {
   isExcludedPerkSocket,
   getPerkSocketIndexes,
 } from "./common";
+import { isLegendaryWeaponFramePlug } from "@/lib/synergies/weaponArchetypeSubType";
 
 const ITEM_TYPE_WEAPON = 3;
 const TIER_LEGENDARY = 5;
@@ -51,10 +52,7 @@ function findFramePlug(
   item: RawInventoryItem,
   itemTable: RawTable,
 ): RawInventoryItem | undefined {
-  return findSocketPlug(item, itemTable, (plug) => {
-    const cat = plug.plug?.plugCategoryIdentifier ?? "";
-    return cat === "frames";
-  });
+  return findSocketPlug(item, itemTable, isLegendaryWeaponFramePlug);
 }
 
 function collectOriginHashes(

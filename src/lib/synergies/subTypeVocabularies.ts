@@ -2,8 +2,10 @@ import { SYNERGY_ELEMENTS } from "@/data/synergyElements";
 import { SUBCLASS_METADATA } from "@/data/subclasses.meta";
 import type { AbilityKind } from "@/lib/manifest/types/records";
 import { getServices } from "@/lib/services";
+import { sortByName } from "@/lib/sortByName";
 import type { SubTypeRequiredType } from "@/lib/synergies/synergyTypeRules";
 import { allowsBaseSubType } from "@/lib/synergies/synergyTypeRules";
+import { collectLegendaryWeaponArchetypeSubTypeNames } from "@/lib/synergies/weaponArchetypeSubType";
 
 export type SynergySubTypeOption = {
   id: string;
@@ -79,6 +81,41 @@ async function listAbilityOptions(kind: AbilityKind): Promise<SynergySubTypeOpti
   return [BASE_OPTION, ...dedupeAbilityOptionsByName(candidates)];
 }
 
+function slugId(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, "-");
+}
+
+async function listWeaponArchetypeOptions(): Promise<SynergySubTypeOption[]> {
+  const { manifest } = await getServices();
+  const status = await manifest.getStatus();
+  if (!status.cachedVersion) return [];
+
+  const itemTable = await manifest.loadRawTable(
+    status.cachedVersion,
+    "DestinyInventoryItemDefinition",
+  );
+  const names = collectLegendaryWeaponArchetypeSubTypeNames(itemTable);
+
+  return sortByName(
+    names.map((name) => ({
+      id: slugId(name),
+      name,
+    })),
+  );
+}
+
+export function filterSubTypeOptions(
+  options: SynergySubTypeOption[],
+  query: string,
+  limit: number,
+): SynergySubTypeOption[] {
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? options.filter((option) => option.name.toLowerCase().includes(q))
+    : options;
+  return filtered.slice(0, limit);
+}
+
 export async function listSubTypeOptions(
   category: SubTypeRequiredType,
 ): Promise<SynergySubTypeOption[]> {
@@ -93,6 +130,8 @@ export async function listSubTypeOptions(
       return listAbilityOptions("grenade");
     case "super":
       return listAbilityOptions("super");
+    case "weapon_archetype":
+      return listWeaponArchetypeOptions();
   }
 }
 

@@ -84,11 +84,34 @@ describe("mergeSynergyContext", () => {
     expect(merged.tagIds).toContain("ability");
     expect(merged.synergies).toHaveLength(2);
   });
+
+  it("collects weapon archetype sub-types", () => {
+    const merged = mergeSynergyContext([
+      synergyFixture({
+        id: "s-arch",
+        name: "Pulse Micro Missile",
+        type: "weapon_archetype",
+        subType: "Micro-Missile Frame",
+      }),
+    ]);
+
+    expect(merged.weaponArchetypeSubTypes).toEqual(["Micro-Missile Frame"]);
+  });
 });
+
+const microMissilePulse: WeaponRecord = {
+  ...rifle,
+  hash: 1003,
+  name: "Outbreak Perfected",
+  searchName: "outbreak perfected",
+  frame: "Micro-Missile Frame",
+  itemTypeName: "Pulse Rifle",
+  perkColumns: [{ column: 2, curated: [500], randomized: [501] }],
+};
 
 describe("suggestRolls", () => {
   const perkIndex = buildPerkWeaponIndex("1.0", {
-    weapons: [rifle, arcRifle],
+    weapons: [rifle, arcRifle, microMissilePulse],
     "exotic-weapons": [],
     "weapon-perks": [
       { hash: 200, name: "Firefly", searchName: "firefly", icon: null, description: "" },
@@ -103,6 +126,8 @@ describe("suggestRolls", () => {
     [201, "Explosive Payload"],
     [300, "Kill Clip"],
     [400, "Seraph Rounds"],
+    [500, "Outbreak Prime"],
+    [501, "Parasitism"],
   ]);
 
   it("returns at least two manifest-valid rolls with owned flags", () => {
@@ -161,5 +186,69 @@ describe("suggestRolls", () => {
     expect(suggestions[0]?.owned).toBe(true);
     expect(suggestions[0]?.ownedInstanceIds).toContain("inst-1");
     expect(suggestions.some((s) => !s.owned)).toBe(true);
+  });
+
+  it("boosts weapons matching weapon archetype synergies", () => {
+    const context = mergeSynergyContext([
+      synergyFixture({
+        id: "s-arch",
+        name: "Pulse Micro Missile",
+        type: "weapon_archetype",
+        subType: "Micro-Missile Frame",
+        links: [
+          {
+            id: "l-arch",
+            synergyId: "s-arch",
+            kind: "weapon_perk",
+            displayName: "Outbreak Prime",
+            itemHash: null,
+            perkHash: 500,
+            parentItemHash: null,
+            originTraitName: null,
+            originTraitHash: null,
+            armorSetName: null,
+            bonusPieces: null,
+            bonusName: null,
+            armorSetHash: null,
+          },
+        ],
+      }),
+    ]);
+
+    const suggestions = suggestRolls({
+      context,
+      perkIndex,
+      perkNames,
+      weapons: [rifle, arcRifle, microMissilePulse],
+      ownedItems: [],
+      limit: 3,
+    });
+
+    const outbreak = suggestions.find((s) => s.weaponHash === 1003);
+    expect(outbreak?.reasons).toContain("Archetype match (Micro-Missile Frame)");
+    expect(outbreak?.score).toBeGreaterThan(0);
+  });
+
+  it("boosts weapons matching weapon type archetype synergies", () => {
+    const context = mergeSynergyContext([
+      synergyFixture({
+        id: "s-arch-type",
+        name: "Pulse rifles",
+        type: "weapon_archetype",
+        subType: "Pulse Rifle",
+      }),
+    ]);
+
+    const suggestions = suggestRolls({
+      context,
+      perkIndex,
+      perkNames,
+      weapons: [rifle, arcRifle, microMissilePulse],
+      ownedItems: [],
+      limit: 3,
+    });
+
+    const outbreak = suggestions.find((s) => s.weaponHash === 1003);
+    expect(outbreak?.reasons).toContain("Archetype match (Pulse Rifle)");
   });
 });
