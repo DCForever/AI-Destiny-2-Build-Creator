@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { ManifestService } from "@/lib/manifest/types/services";
+
 import {
   buildEquipmentBucketLookup,
   resolveTransferContainerBuckets,
@@ -74,7 +76,7 @@ describe("buildEquipmentBucketLookup", () => {
       }),
     };
 
-    const lookup = await buildEquipmentBucketLookup(manifest, "v1", [100, 200]);
+    const lookup = await buildEquipmentBucketLookup(manifest as unknown as ManifestService, "v1", [100, 200]);
 
     expect(lookup.get(100)).toBe(KINETIC);
     expect(lookup.has(200)).toBe(false);

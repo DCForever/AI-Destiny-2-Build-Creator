@@ -19,7 +19,9 @@ import type {
   RawInventoryItem,
 } from "@/lib/bungie/types";
 import type { EntityCache, ManifestService } from "@/lib/manifest/types/services";
-import type { WeaponRecord } from "@/lib/manifest/types/records";
+import type { ExoticWeaponRecord, WeaponRecord } from "@/lib/manifest/types/records";
+
+type WeaponCatalogRecord = WeaponRecord | ExoticWeaponRecord;
 
 const syncLocks = new Map<number, Promise<SyncInventoryResult>>();
 
@@ -42,12 +44,12 @@ function bucketLabel(bucketHash: number): string {
   return inventoryBucketLabel(bucketHash);
 }
 
-async function buildWeaponLookup(cache: EntityCache): Promise<Map<number, WeaponRecord>> {
+async function buildWeaponLookup(cache: EntityCache): Promise<Map<number, WeaponCatalogRecord>> {
   const [weapons, exoticWeapons] = await Promise.all([
     cache.getStore("weapons"),
     cache.getStore("exotic-weapons"),
   ]);
-  const lookup = new Map<number, WeaponRecord>();
+  const lookup = new Map<number, WeaponCatalogRecord>();
   for (const weapon of [...weapons, ...exoticWeapons]) {
     lookup.set(weapon.hash, weapon);
   }
@@ -62,7 +64,7 @@ async function buildExoticArmorHashSet(cache: EntityCache): Promise<Set<number>>
 function enrichManifestDiagnostics(
   diagnostics: InventoryParseDiagnostics,
   rawItems: RawInventoryItem[],
-  weaponLookup: Map<number, WeaponRecord>,
+  weaponLookup: Map<number, WeaponCatalogRecord>,
   exoticArmorHashes: Set<number>,
 ): void {
   const equipmentHashes = new Set<number>();
@@ -136,11 +138,12 @@ async function buildPerkNameMap(cache: EntityCache): Promise<Map<number, string>
 function normalizeItems(
   rawItems: RawInventoryItem[],
   perkNameMap: Map<number, string>,
-  weaponLookup: Map<number, WeaponRecord>,
+  weaponLookup: Map<number, WeaponCatalogRecord>,
   syncedAt: string,
 ): UserInventoryItem[] {
   return rawItems.map((raw) => {
-    const weaponRecord = weaponLookup.get(raw.itemHash) ?? null;
+    const catalogEntry = weaponLookup.get(raw.itemHash) ?? null;
+    const weaponRecord = catalogEntry && "perkColumns" in catalogEntry ? catalogEntry : null;
     const rollTags = computeRollTags(raw.plugHashes, perkNameMap, weaponRecord, {
       isCrafted: raw.isCrafted,
     });

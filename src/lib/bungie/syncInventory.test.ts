@@ -102,6 +102,7 @@ function createMockManifest(): ManifestService {
       cachedVersion: "test",
       remoteVersion: "test",
       isStale: false,
+      entityCache: null,
     }),
     ensureCurrent: async () => "test",
   };
