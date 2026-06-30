@@ -132,11 +132,34 @@ vi.mock("@/lib/services", () => ({
 }));
 
 describe("subTypeVocabularies", () => {
-  it("deduplicates verbs across subclasses", async () => {
+  it("lists curated verb glossary without Base", async () => {
     const verbs = await listSubTypeOptions("verb");
     const scorch = verbs.filter((v) => v.name === "Scorch");
     expect(scorch).toHaveLength(1);
     expect(verbs.some((v) => v.name === "Base")).toBe(false);
+    expect(verbs.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it("includes Destinypedia verb staples", async () => {
+    const names = (await listSubTypeOptions("verb")).map((v) => v.name);
+    for (const name of [
+      "Sever",
+      "Void Breach",
+      "Radiant",
+      "Weaken",
+      "Cure",
+      "Exhaust",
+      "Devour",
+      "Amplified",
+      "Ionic Trace",
+      "Stasis Shard",
+      "Void Overshield",
+      "Suppression",
+    ]) {
+      expect(names).toContain(name);
+    }
+    expect(names).not.toContain("Solar");
+    expect(names).not.toContain("Volatile Rounds");
   });
 
   it("prepends Base for melee grenade super", async () => {

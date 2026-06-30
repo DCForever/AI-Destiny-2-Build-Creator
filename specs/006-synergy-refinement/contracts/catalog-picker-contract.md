@@ -34,7 +34,7 @@ Supply searchable lists for synergy **sub-types** and **link targets** so the de
 
 **Sources** (see [research.md](../research.md)):
 
-- `verb` → deduplicated `subclasses.meta` verbs
+- `verb` → curated glossary in `src/data/synergyVerbs.ts` (32 keywords; legacy `Suppress` alias → `Suppression`)
 - `melee` \| `grenade` \| `super` → `Base` + manifest `abilities` filtered by kind, deduplicated by display name
 - `element` → fixed seven elements (includes Kinetic)
 - `weapon_archetype` → deduplicated legendary weapon types (`itemTypeDisplayName`) and frames (manifest intrinsic sockets ending in ` Frame`)

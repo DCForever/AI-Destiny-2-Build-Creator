@@ -8,6 +8,24 @@ describe("validateSynergySubType", () => {
     expect(validateSynergySubType("verb", "Scorch").ok).toBe(true);
   });
 
+  it("rejects unknown verb subType", () => {
+    expect(validateSynergySubType("verb", "Foo").ok).toBe(false);
+  });
+
+  it("accepts Destinypedia verb staples", () => {
+    for (const name of ["Sever", "Void Breach", "Exhaust", "Ionic Trace", "Stasis Shard"]) {
+      expect(validateSynergySubType("verb", name).ok).toBe(true);
+    }
+  });
+
+  it("normalizes legacy Suppress alias to Suppression", () => {
+    const result = validateSynergySubType("verb", "Suppress");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.subType).toBe("Suppression");
+    }
+  });
+
   it("rejects Base on verb", () => {
     expect(validateSynergySubType("verb", "Base").ok).toBe(false);
   });

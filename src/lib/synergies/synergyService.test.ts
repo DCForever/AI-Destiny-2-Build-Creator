@@ -317,6 +317,45 @@ describe("synergyService", () => {
     ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE });
   });
 
+  it("rejects unknown verb subType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-verb-bad", 3, "Player");
+
+    await expect(
+      createUserSynergy(db, user.id, {
+        type: "verb",
+        subType: "Foo",
+        links: [
+          {
+            kind: "origin_trait",
+            displayName: "Cast No Shadows",
+            originTraitName: "Cast No Shadows",
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE });
+  });
+
+  it("creates verb synergy with glossary subType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-verb-sever", 3, "Player");
+
+    const synergy = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Void Breach",
+      links: [
+        {
+          kind: "weapon",
+          displayName: "The Ringing Nail",
+          itemHash: 4206550094,
+        },
+      ],
+    });
+
+    expect(synergy.name).toBe("Verb: Void Breach — The Ringing Nail");
+    expect(synergy.subType).toBe("Void Breach");
+  });
+
   it("regenerates name on update", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "syn5", 3, "Player");

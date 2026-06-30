@@ -1,5 +1,5 @@
 import { SYNERGY_ELEMENTS } from "@/data/synergyElements";
-import { SUBCLASS_METADATA } from "@/data/subclasses.meta";
+import { SYNERGY_VERBS } from "@/data/synergyVerbs";
 import type { AbilityKind } from "@/lib/manifest/types/records";
 import { getServices } from "@/lib/services";
 import { sortByName } from "@/lib/sortByName";
@@ -19,20 +19,18 @@ const BASE_OPTION: SynergySubTypeOption = {
   description: "Applies to all abilities of this category.",
 };
 
+function slugId(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, "-");
+}
+
 function listAllVerbs(): SynergySubTypeOption[] {
-  const seen = new Map<string, SynergySubTypeOption>();
-  for (const meta of Object.values(SUBCLASS_METADATA)) {
-    for (const verb of meta.verbs) {
-      if (!seen.has(verb.name)) {
-        seen.set(verb.name, {
-          id: verb.name.toLowerCase().replace(/\s+/g, "-"),
-          name: verb.name,
-          description: verb.description,
-        });
-      }
-    }
-  }
-  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+  return sortByName(
+    SYNERGY_VERBS.map((verb) => ({
+      id: slugId(verb.name),
+      name: verb.name,
+      description: verb.description,
+    })),
+  );
 }
 
 function listElementOptions(): SynergySubTypeOption[] {
@@ -79,10 +77,6 @@ async function listAbilityOptions(kind: AbilityKind): Promise<SynergySubTypeOpti
     }));
 
   return [BASE_OPTION, ...dedupeAbilityOptionsByName(candidates)];
-}
-
-function slugId(value: string): string {
-  return value.toLowerCase().replace(/\s+/g, "-");
 }
 
 async function listWeaponArchetypeOptions(): Promise<SynergySubTypeOption[]> {

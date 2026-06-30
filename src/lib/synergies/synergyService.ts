@@ -39,12 +39,15 @@ async function resolveSynergyFields(input: {
     throw new ApiError(API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE, subTypeCheck.reason);
   }
 
-  if (normalized.type === "weapon_archetype" && subTypeCheck.subType) {
-    const options = await listSubTypeOptions("weapon_archetype");
-    if (!isValidSubTypeForCategory("weapon_archetype", subTypeCheck.subType, options)) {
+  if (
+    (normalized.type === "weapon_archetype" || normalized.type === "verb") &&
+    subTypeCheck.subType
+  ) {
+    const options = await listSubTypeOptions(normalized.type);
+    if (!isValidSubTypeForCategory(normalized.type, subTypeCheck.subType, options)) {
       throw new ApiError(
         API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE,
-        `Unknown weapon archetype subType: ${subTypeCheck.subType}`,
+        `Unknown ${normalized.type} subType: ${subTypeCheck.subType}`,
       );
     }
   }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { isKnownVerbSubType } from "@/data/synergyVerbs";
 import type { BuildRequest } from "@/lib/llm/buildSchema";
 
 import { SUBCLASSES_BY_CLASS, formatSubclassLabel, getSubclassMeta } from "./subclasses";
@@ -26,6 +27,9 @@ describe("SUBCLASSES_BY_CLASS", () => {
         expect(meta?.element).toBeTruthy();
         expect(meta?.verbs.length).toBeGreaterThan(0);
         expect(formatSubclassLabel(name)).toContain(meta!.element);
+        for (const verb of meta!.verbs) {
+          expect(isKnownVerbSubType(verb.name)).toBe(true);
+        }
       }
     }
   });

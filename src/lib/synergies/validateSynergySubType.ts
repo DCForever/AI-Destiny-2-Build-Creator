@@ -1,4 +1,5 @@
 import { SYNERGY_ELEMENTS } from "@/data/synergyElements";
+import { resolveVerbSubType } from "@/data/synergyVerbs";
 import type { SynergyType } from "@/lib/synergies/schemas";
 import { allowsBaseSubType, requiresSubType } from "@/lib/synergies/synergyTypeRules";
 
@@ -25,11 +26,15 @@ export function validateSynergySubType(
     if (type === "element" && !(SYNERGY_ELEMENTS as readonly string[]).includes(trimmed)) {
       return { ok: false, reason: `Unknown element subType: ${trimmed}` };
     }
+    if (type === "verb") {
+      const canonical = resolveVerbSubType(trimmed);
+      if (!canonical) {
+        return { ok: false, reason: `Unknown verb subType: ${trimmed}` };
+      }
+      return { ok: true, subType: canonical };
+    }
     if (allowsBaseSubType(type) && trimmed === "Base") {
       return { ok: true, subType: "Base" };
-    }
-    if (allowsBaseSubType(type) || type === "verb") {
-      return { ok: true, subType: trimmed };
     }
     return { ok: true, subType: trimmed };
   }
