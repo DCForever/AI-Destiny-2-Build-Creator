@@ -1,4 +1,5 @@
 import { getServices } from "@/lib/services";
+import { sortByName } from "@/lib/sortByName";
 import type { SynergyLinkInput } from "@/lib/synergies/schemas";
 
 export type SynergyPickerItem = {
@@ -26,8 +27,9 @@ export async function searchSynergyLinkPickerItems(
 
   if (kind === "origin_trait") {
     const traits = await entityCache.getStore("origin-traits");
-    return traits
-      .filter((t) => !q || t.searchName.includes(q) || t.name.toLowerCase().includes(q))
+    return sortByName(
+      traits.filter((t) => !q || t.searchName.includes(q) || t.name.toLowerCase().includes(q)),
+    )
       .slice(0, limit)
       .map((t) => ({
         kind: "origin_trait" as const,
@@ -41,8 +43,9 @@ export async function searchSynergyLinkPickerItems(
 
   if (kind === "weapon_perk") {
     const perks = await entityCache.getStore("weapon-perks");
-    return perks
-      .filter((p) => !q || p.searchName.includes(q) || p.name.toLowerCase().includes(q))
+    return sortByName(
+      perks.filter((p) => !q || p.searchName.includes(q) || p.name.toLowerCase().includes(q)),
+    )
       .slice(0, limit)
       .map((p) => ({
         kind: "weapon_perk" as const,
@@ -69,8 +72,8 @@ export async function searchSynergyLinkPickerItems(
         bonusName: perk.name,
         armorSetHash: set.hash,
       });
-      if (items.length >= limit) return items;
+      if (items.length >= limit) return sortByName(items).slice(0, limit);
     }
   }
-  return items.slice(0, limit);
+  return sortByName(items).slice(0, limit);
 }

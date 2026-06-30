@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { sortByName } from "@/lib/sortByName";
+
 type JsonPanel = {
   label: string;
   request?: unknown;
@@ -23,14 +25,14 @@ export function SuggestionsDebugPage() {
   async function loadSets() {
     const res = await fetch("/api/user/sets");
     const body = await res.json();
-    if (res.ok) setSets(body.sets ?? []);
+    if (res.ok) setSets(sortByName(body.sets ?? []));
     setPanel({ label: "GET /api/user/sets", response: body, error: res.ok ? undefined : body });
   }
 
   async function loadBuilds() {
     const res = await fetch("/api/user/builds");
     const body = await res.json();
-    if (res.ok) setBuilds(body.builds ?? []);
+    if (res.ok) setBuilds(sortByName(body.builds ?? []));
     setPanel({ label: "GET /api/user/builds", response: body, error: res.ok ? undefined : body });
   }
 

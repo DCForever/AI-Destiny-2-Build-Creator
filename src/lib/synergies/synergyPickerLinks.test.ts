@@ -9,10 +9,24 @@ vi.mock("@/lib/services", () => ({
         if (store === "origin-traits") {
           return [
             {
+              hash: 9002,
+              name: "Zeta Trait",
+              searchName: "zeta trait",
+              description: "Z trait.",
+              icon: null,
+            },
+            {
               hash: 9001,
               name: "Cast No Shadows",
               searchName: "cast no shadows",
               description: "Melee synergy trait.",
+              icon: null,
+            },
+            {
+              hash: 9003,
+              name: "Alpha Trait",
+              searchName: "alpha trait",
+              description: "A trait.",
               icon: null,
             },
           ];
@@ -47,6 +61,15 @@ vi.mock("@/lib/services", () => ({
 }));
 
 describe("searchSynergyLinkPickerItems", () => {
+  it("returns origin traits sorted alphabetically by name", async () => {
+    const items = await searchSynergyLinkPickerItems("origin_trait", "", 10);
+    expect(items.map((item) => item.name)).toEqual([
+      "Alpha Trait",
+      "Cast No Shadows",
+      "Zeta Trait",
+    ]);
+  });
+
   it("returns origin traits with description", async () => {
     const items = await searchSynergyLinkPickerItems("origin_trait", "cast", 10);
     expect(items[0]?.originTraitName).toBe("Cast No Shadows");

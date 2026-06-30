@@ -45,6 +45,14 @@ const exoticHelmet: ExoticArmorRecord = {
 };
 
 describe("filterWeaponCatalog", () => {
+  it("sorts results alphabetically by name", () => {
+    const results = filterWeaponCatalog(
+      { weapons: [legendaryAuto], exoticWeapons: [exoticHc] },
+      { scope: "all" },
+    );
+    expect(results.map((r) => r.name)).toEqual(["Exotic HC", "Test Auto"]);
+  });
+
   it("filters by item type and frame in all scope", () => {
     const results = filterWeaponCatalog(
       { weapons: [legendaryAuto], exoticWeapons: [exoticHc] },

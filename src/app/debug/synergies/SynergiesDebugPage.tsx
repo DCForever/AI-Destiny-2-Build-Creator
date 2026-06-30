@@ -7,6 +7,7 @@ import { generateSynergyName, getSynergyTypeLabel } from "@/lib/synergies/genera
 import { requiresSubType } from "@/lib/synergies/synergyTypeRules";
 import type { SynergyLinkInput } from "@/lib/synergies/schemas";
 import type { SynergyPickerItem } from "@/lib/synergies/synergyPickerLinks";
+import { compareDisplayName, sortByName } from "@/lib/sortByName";
 
 type JsonPanel = {
   label: string;
@@ -20,6 +21,21 @@ type SubTypeOption = { id: string; name: string; description?: string };
 type WeaponOption = { hash: number; name: string; description?: string };
 
 const LINK_KINDS = ["weapon", "weapon_perk", "origin_trait", "armor_set_bonus"] as const;
+
+const SORTED_SYNERGY_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
+  compareDisplayName(getSynergyTypeLabel(a), getSynergyTypeLabel(b)),
+);
+
+const SORTED_LINK_KINDS = [...LINK_KINDS].sort((a, b) => compareDisplayName(a, b));
+
+function linkItemSelectValue(
+  linkKind: (typeof LINK_KINDS)[number],
+  item: SynergyPickerItem | WeaponOption,
+): string {
+  if (linkKind === "weapon" && "hash" in item) return String(item.hash);
+  if ("kind" in item) return `${item.kind}-${item.name}`;
+  return "";
+}
 
 export function SynergiesDebugPage() {
   const [panel, setPanel] = useState<JsonPanel>({ label: "Ready" });
@@ -101,11 +117,13 @@ export function SynergiesDebugPage() {
       const body = await res.json();
       if (res.ok) {
         setWeaponOptions(
-          (body.items ?? []).map((i: { hash: number; name: string; description?: string }) => ({
-            hash: i.hash,
-            name: i.name,
-            description: i.description ?? "",
-          })),
+          sortByName(
+            (body.items ?? []).map((i: { hash: number; name: string; description?: string }) => ({
+              hash: i.hash,
+              name: i.name,
+              description: i.description ?? "",
+            })),
+          ),
         );
       }
       return;
@@ -113,7 +131,7 @@ export function SynergiesDebugPage() {
     const params = new URLSearchParams({ kind: form.linkKind, q: linkSearch, limit: "30" });
     const res = await fetch(`/api/catalog/synergy-pickers/links?${params}`);
     const body = await res.json();
-    if (res.ok) setLinkOptions(body.items ?? []);
+    if (res.ok) setLinkOptions(sortByName(body.items ?? []));
   }, [form.linkKind, linkSearch]);
 
   function selectLinkItem(item: SynergyPickerItem | WeaponOption) {
@@ -151,7 +169,7 @@ export function SynergiesDebugPage() {
     const url = `/api/user/synergies${params}`;
     const res = await fetch(url);
     const body = await res.json();
-    if (res.ok) setSynergies(body.synergies ?? []);
+    if (res.ok) setSynergies(sortByName(body.synergies ?? []));
     setPanel({ label: `GET ${url}`, response: body, error: res.ok ? undefined : body });
   }
 
@@ -220,7 +238,7 @@ export function SynergiesDebugPage() {
           <legend className="px-1 text-sm">List</legend>
           <select className="rounded bg-zinc-900 px-2 py-1 text-sm" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="">(any type)</option>
-            {CREATABLE_SYNERGY_TYPES.map((t) => (
+            {SORTED_SYNERGY_TYPES.map((t) => (
               <option key={t} value={t}>{getSynergyTypeLabel(t)}</option>
             ))}
           </select>
@@ -251,7 +269,7 @@ export function SynergiesDebugPage() {
             value={form.type}
             onChange={(e) => handleTypeChange(e.target.value)}
           >
-            {CREATABLE_SYNERGY_TYPES.map((t) => (
+            {SORTED_SYNERGY_TYPES.map((t) => (
               <option key={t} value={t}>{getSynergyTypeLabel(t)}</option>
             ))}
           </select>
@@ -280,7 +298,7 @@ export function SynergiesDebugPage() {
               setWeaponOptions([]);
             }}
           >
-            {LINK_KINDS.map((k) => (
+            {SORTED_LINK_KINDS.map((k) => (
               <option key={k} value={k}>{k}</option>
             ))}
           </select>
@@ -299,13 +317,7 @@ export function SynergiesDebugPage() {
 
           <select
             className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
-            value={
-              selectedLink && "hash" in selectedLink
-                ? String(selectedLink.hash)
-                : selectedLink && "kind" in selectedLink
-                  ? `${selectedLink.kind}-${selectedLink.name}`
-                  : ""
-            }
+            value={selectedLink ? linkItemSelectValue(form.linkKind, selectedLink) : ""}
             onChange={(e) => {
               if (form.linkKind === "weapon") {
                 const w = weaponOptions.find((o) => String(o.hash) === e.target.value);
@@ -340,7 +352,7 @@ export function SynergiesDebugPage() {
         <fieldset className="min-w-0 space-y-2 rounded border border-zinc-800 p-3">
           <legend className="px-1 text-sm">Reverse lookup</legend>
           <select className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={lookupKind} onChange={(e) => setLookupKind(e.target.value)}>
-            {LINK_KINDS.map((k) => (
+            {SORTED_LINK_KINDS.map((k) => (
               <option key={k} value={k}>{k}</option>
             ))}
           </select>

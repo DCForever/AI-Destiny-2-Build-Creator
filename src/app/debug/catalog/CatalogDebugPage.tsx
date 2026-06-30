@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 
+import { sortByName } from "@/lib/sortByName";
+
 import type { CatalogItem } from "@/lib/catalog/types";
 
 type JsonPanel = {
@@ -75,7 +77,7 @@ export function CatalogDebugPage() {
     const url = `/api/user/synergies/by-target?${params}`;
     const res = await fetch(url);
     const body = (await res.json()) as { synergies?: Array<{ id: string; name: string; type: string }> };
-    setLinkedSynergies(res.ok ? (body.synergies ?? []) : []);
+    setLinkedSynergies(res.ok ? sortByName(body.synergies ?? []) : []);
   }, []);
 
   const selectCatalogRow = useCallback(

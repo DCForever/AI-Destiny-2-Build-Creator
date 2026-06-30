@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 
+import { sortByName } from "@/lib/sortByName";
+
 import { CONCEPT_TAGS } from "@/data/conceptTags";
 
 type JsonPanel = {
@@ -54,7 +56,7 @@ export function BuildsDebugPage() {
     const query = filterExoticArmor.trim() ? `?exoticArmorHash=${encodeURIComponent(filterExoticArmor.trim())}` : "";
     const res = await fetch(`/api/user/builds${query}`);
     const body = await res.json();
-    if (res.ok) setBuilds(body.builds ?? []);
+    if (res.ok) setBuilds(sortByName(body.builds ?? []));
     record({ label: "GET /api/user/builds" + query, response: body, error: res.ok ? undefined : body });
   }
 
@@ -64,7 +66,7 @@ export function BuildsDebugPage() {
       fetch("/api/user/builds"),
     ]);
     const setsBody = await setsRes.json();
-    if (setsRes.ok) setSets(setsBody.sets ?? []);
+    if (setsRes.ok) setSets(sortByName(setsBody.sets ?? []));
 
     if (buildRes.ok && selectedBuildId) {
       const detail = await fetch(`/api/user/builds/${selectedBuildId}`);

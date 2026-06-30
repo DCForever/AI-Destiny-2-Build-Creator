@@ -6,6 +6,7 @@ import type {
   WeaponRecord,
 } from "@/lib/manifest/types/records";
 
+import { compareDisplayName } from "@/lib/sortByName";
 import type { CatalogFilterParams, CatalogItem } from "./types";
 
 export const WEAPON_INVENTORY_BUCKETS = new Set(["Kinetic", "Energy", "Power"]);
@@ -185,7 +186,8 @@ function applySearch(rows: SearchableCatalogRow[], q?: string): SearchableCatalo
 }
 
 function finalize(rows: SearchableCatalogRow[], limit?: number): CatalogItem[] {
-  const capped = limit ? rows.slice(0, limit) : rows;
+  const sorted = [...rows].sort((a, b) => compareDisplayName(a.name, b.name));
+  const capped = limit ? sorted.slice(0, limit) : sorted;
   return capped.map((row) => {
     const { searchName, ...item } = row;
     void searchName;

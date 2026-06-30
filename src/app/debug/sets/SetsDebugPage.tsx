@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { CONCEPT_TAGS } from "@/data/conceptTags";
+import { sortByName } from "@/lib/sortByName";
 import { SET_TYPES, WEAPON_SLOTS, ARMOR_SLOTS } from "@/lib/sets/schemas";
 
 type JsonPanel = {
@@ -52,7 +53,7 @@ export function SetsDebugPage() {
       record({ label: "GET /api/user/sets", request: { url }, error: body });
       return;
     }
-    setSets(body.sets ?? []);
+    setSets(sortByName((body.sets ?? []) as Array<{ id: string; name: string; type: string }>));
     record({ label: "GET /api/user/sets", request: { url }, response: body });
   }, [filterTags, filterType, record]);
 

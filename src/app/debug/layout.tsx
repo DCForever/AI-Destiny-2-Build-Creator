@@ -24,23 +24,23 @@ export default async function DebugLayout({ children }: { children: React.ReactN
       <header className="border-b border-zinc-800 px-4 py-3">
         <p className="text-sm font-medium text-amber-400">Debug / Service UI (FR-033)</p>
         <nav className="mt-2 flex flex-wrap gap-3 text-sm">
-          <a href="/debug/sets" className="underline">
-            Sets
-          </a>
           <a href="/debug/builds" className="underline">
             Builds
-          </a>
-          <a href="/debug/synergies" className="underline">
-            Synergies
           </a>
           <a href="/debug/catalog" className="underline">
             Catalog
           </a>
+          <a href="/debug/loadouts" className="underline">
+            Loadouts
+          </a>
+          <a href="/debug/sets" className="underline">
+            Sets
+          </a>
           <a href="/debug/suggestions" className="underline">
             Suggestions
           </a>
-          <a href="/debug/loadouts" className="underline">
-            Loadouts
+          <a href="/debug/synergies" className="underline">
+            Synergies
           </a>
         </nav>
       </header>
