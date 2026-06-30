@@ -17,6 +17,30 @@ export type SynergyPickerItem = {
   armorSetHash?: number;
 };
 
+function shouldPreferPickerItem(current: SynergyPickerItem, next: SynergyPickerItem): boolean {
+  const currentDesc = current.description?.trim() ?? "";
+  const nextDesc = next.description?.trim() ?? "";
+  if (nextDesc.length !== currentDesc.length) return nextDesc.length > currentDesc.length;
+  const currentHash = current.hash ?? Number.MAX_SAFE_INTEGER;
+  const nextHash = next.hash ?? Number.MAX_SAFE_INTEGER;
+  return nextHash < currentHash;
+}
+
+function dedupePickerItemsByName(items: SynergyPickerItem[]): SynergyPickerItem[] {
+  const seen = new Map<string, SynergyPickerItem>();
+  for (const item of items) {
+    const existing = seen.get(item.name);
+    if (!existing || shouldPreferPickerItem(existing, item)) {
+      seen.set(item.name, item);
+    }
+  }
+  return [...seen.values()];
+}
+
+function finalizePickerItems(items: SynergyPickerItem[], limit: number): SynergyPickerItem[] {
+  return sortByName(dedupePickerItemsByName(items)).slice(0, limit);
+}
+
 export async function searchSynergyLinkPickerItems(
   kind: "origin_trait" | "weapon_perk" | "armor_set_bonus",
   query: string,
@@ -27,33 +51,35 @@ export async function searchSynergyLinkPickerItems(
 
   if (kind === "origin_trait") {
     const traits = await entityCache.getStore("origin-traits");
-    return sortByName(
-      traits.filter((t) => !q || t.searchName.includes(q) || t.name.toLowerCase().includes(q)),
-    )
-      .slice(0, limit)
-      .map((t) => ({
-        kind: "origin_trait" as const,
-        hash: t.hash,
-        name: t.name,
-        description: t.description,
-        originTraitName: t.name,
-        originTraitHash: t.hash,
-      }));
+    return finalizePickerItems(
+      traits
+        .filter((t) => !q || t.searchName.includes(q) || t.name.toLowerCase().includes(q))
+        .map((t) => ({
+          kind: "origin_trait" as const,
+          hash: t.hash,
+          name: t.name,
+          description: t.description,
+          originTraitName: t.name,
+          originTraitHash: t.hash,
+        })),
+      limit,
+    );
   }
 
   if (kind === "weapon_perk") {
     const perks = await entityCache.getStore("weapon-perks");
-    return sortByName(
-      perks.filter((p) => !q || p.searchName.includes(q) || p.name.toLowerCase().includes(q)),
-    )
-      .slice(0, limit)
-      .map((p) => ({
-        kind: "weapon_perk" as const,
-        hash: p.hash,
-        name: p.name,
-        description: p.description,
-        perkHash: p.hash,
-      }));
+    return finalizePickerItems(
+      perks
+        .filter((p) => !q || p.searchName.includes(q) || p.name.toLowerCase().includes(q))
+        .map((p) => ({
+          kind: "weapon_perk" as const,
+          hash: p.hash,
+          name: p.name,
+          description: p.description,
+          perkHash: p.hash,
+        })),
+      limit,
+    );
   }
 
   const sets = await entityCache.getStore("set-bonuses");

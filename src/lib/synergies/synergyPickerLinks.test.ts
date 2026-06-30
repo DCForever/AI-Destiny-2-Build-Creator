@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { getServices } from "@/lib/services";
 import { searchSynergyLinkPickerItems } from "@/lib/synergies/synergyPickerLinks";
 
 vi.mock("@/lib/services", () => ({
@@ -61,6 +62,37 @@ vi.mock("@/lib/services", () => ({
 }));
 
 describe("searchSynergyLinkPickerItems", () => {
+  it("deduplicates origin traits that share a display name", async () => {
+    vi.mocked(getServices).mockResolvedValueOnce({
+      entityCache: {
+        getStore: vi.fn(async (store: string) => {
+          if (store !== "origin-traits") return [];
+          return [
+            {
+              hash: 100,
+              name: "Accelerated Assault",
+              searchName: "accelerated assault",
+              description: "Short.",
+              icon: null,
+            },
+            {
+              hash: 200,
+              name: "Accelerated Assault",
+              searchName: "accelerated assault",
+              description: "Longer accelerated assault description.",
+              icon: null,
+            },
+          ];
+        }),
+      },
+    } as never);
+
+    const items = await searchSynergyLinkPickerItems("origin_trait", "accelerated", 10);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.name).toBe("Accelerated Assault");
+    expect(items[0]?.hash).toBe(200);
+  });
+
   it("returns origin traits sorted alphabetically by name", async () => {
     const items = await searchSynergyLinkPickerItems("origin_trait", "", 10);
     expect(items.map((item) => item.name)).toEqual([

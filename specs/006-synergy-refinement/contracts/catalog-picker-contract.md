@@ -48,7 +48,7 @@ Supply searchable lists for synergy **sub-types** and **link targets** so the de
 |-------|----------|--------|
 | kind | yes | `origin_trait` \| `weapon_perk` \| `armor_set_bonus` |
 | q | no | case-insensitive substring on name |
-| limit | no | default 50, max 100 |
+| limit | no | default 2000 when `q` empty, 50 when filtering; max 2000 |
 
 **Response 200**:
 

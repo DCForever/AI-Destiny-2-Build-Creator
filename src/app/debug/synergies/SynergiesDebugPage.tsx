@@ -128,7 +128,10 @@ export function SynergiesDebugPage() {
       }
       return;
     }
-    const params = new URLSearchParams({ kind: form.linkKind, q: linkSearch, limit: "30" });
+    const params = new URLSearchParams({ kind: form.linkKind, q: linkSearch });
+    if (linkSearch.trim()) {
+      params.set("limit", "100");
+    }
     const res = await fetch(`/api/catalog/synergy-pickers/links?${params}`);
     const body = await res.json();
     if (res.ok) setLinkOptions(sortByName(body.items ?? []));
