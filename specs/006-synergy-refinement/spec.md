@@ -14,11 +14,12 @@
 
 - Q: Should Melee and Grenade sub-type pickers be limited or comprehensive? → A: Any melee or any grenade from the full curated catalog (user picks one specific ability/type).
 - Q: Does Super require a sub-type picker like Melee/Grenade? → A: Yes — Super follows the same pattern (required specific super selection).
-- Q: Should Element be a synergy category? → A: Yes — Element is its own synergy category requiring a specific element sub-type (e.g., Solar, Arc, Void).
+- Q: Should Element be a synergy category? → A: Yes — Element is its own synergy category requiring a specific element sub-type (e.g., Kinetic, Solar, Arc, Void).
 - Q: Should Kinetic Weapon remain a synergy option? → A: No — Kinetic Weapon is removed from creatable synergy categories.
 - Q: What should the Damage synergy category be called? → A: Renamed to **DPS** (replaces "Damage").
 - Q: Can one game element be linked to multiple synergies? → A: Yes — synergies are multi-select per target; e.g. a weapon may have both a DPS synergy and a Verb: Void Breach synergy (many-to-many, no exclusivity).
 - Q: Can Melee, Grenade, or Super use a category-wide sub-type instead of a specific ability? → A: Yes — each offers a **Base** sub-type meaning all melees, all grenades, or all supers respectively.
+- Q: Is Kinetic available as an element sub-type? → A: Yes — **Kinetic** is a selectable element under the Element synergy category (distinct from the removed Kinetic Weapon synergy category).
 
 ## Iteration Scope
 
@@ -36,14 +37,14 @@
 | Melee | Yes | **Base** (all melees) or any specific melee from full curated catalog | `Melee: Base — {link}` or `Melee: {melee} — {link}` |
 | Grenade | Yes | **Base** (all grenades) or any specific grenade from full curated catalog | `Grenade: Base — {link}` or `Grenade: {grenade} — {link}` |
 | Super | Yes | **Base** (all supers) or any specific super from full curated catalog | `Super: Base — {link}` or `Super: {super} — {link}` |
-| Element | Yes | Specific damage element (Solar, Arc, Void, Stasis, Strand, Prismatic); no Base option | `Element: {element} — {link}` |
+| Element | Yes | Specific damage element (Kinetic, Solar, Arc, Void, Stasis, Strand, Prismatic); no Base option | `Element: {element} — {link}` |
 | Primary Weapon | No | — | `Primary Weapon — {link}` |
 | Special Weapon | No | — | `Special Weapon — {link}` |
 | Heavy Weapon | No | — | `Heavy Weapon — {link}` |
 | DPS | No | — | `DPS — {link}` |
 | Healing | No | — | `Healing — {link}` |
 
-**Removed categories** (not creatable; legacy records remain readable): Kinetic Weapon, Damage (superseded by DPS).
+**Removed categories** (not creatable; legacy records remain readable): Kinetic Weapon (synergy category—use Element: Kinetic instead), Damage (superseded by DPS).
 
 **Association model**: Many-to-many — one synergy may link to multiple targets; one target (weapon, perk, origin trait, armor set bonus) may be linked to **multiple synergies** simultaneously (e.g. DPS + Verb: Void Breach on the same weapon).
 
@@ -81,10 +82,11 @@ Verb and Element synergies must identify a **specific** verb or element. Melee, 
 2. **Given** the user selects category Grenade, **When** the form is shown, **Then** a required sub-type picker lists **Base** (all grenades) plus any specific grenade type from the full curated catalog.
 3. **Given** the user selects category Melee, **When** the form is shown, **Then** a required sub-type picker lists **Base** (all melees) plus any specific melee ability from the full curated catalog.
 4. **Given** the user selects category Super, **When** the form is shown, **Then** a required sub-type picker lists **Base** (all supers) plus any specific super ability from the full curated catalog.
-5. **Given** the user selects category Element, **When** the form is shown, **Then** a required sub-type picker lists specific damage elements (Solar, Arc, Void, Stasis, Strand, Prismatic) with no Base option.
-6. **Given** the user selects a category that does not require a sub-type (e.g., DPS), **When** they complete the form, **Then** no sub-type picker is shown and naming uses category + link only (e.g., `DPS — Witherhoard`).
-7. **Given** the user attempts to create a synergy with category Kinetic Weapon or Damage, **When** they open the category picker, **Then** those options are not available (Kinetic Weapon removed; Damage replaced by DPS).
-8. **Given** an existing synergy created under legacy categories (`kinetic_weapon`, `damage`, or generic Verb), **When** the user views it, **Then** it remains visible and editable; saving after edit must conform to refined rules (migrate type to DPS where applicable).
+5. **Given** the user selects category Element, **When** the form is shown, **Then** a required sub-type picker lists specific damage elements (Kinetic, Solar, Arc, Void, Stasis, Strand, Prismatic) with no Base option.
+6. **Given** the user selects category Element and sub-type Kinetic, **When** they link a weapon, **Then** the auto-generated name follows the pattern `Element: Kinetic — {link name}`.
+7. **Given** the user selects a category that does not require a sub-type (e.g., DPS), **When** they complete the form, **Then** no sub-type picker is shown and naming uses category + link only (e.g., `DPS — Witherhoard`).
+8. **Given** the user attempts to create a synergy with category Kinetic Weapon or Damage, **When** they open the category picker, **Then** those options are not available (Kinetic Weapon removed—use Element: Kinetic; Damage replaced by DPS).
+9. **Given** an existing synergy created under legacy categories (`kinetic_weapon`, `damage`, or generic Verb), **When** the user views it, **Then** it remains visible and editable; saving after edit must conform to refined rules (migrate `kinetic_weapon` to Element: Kinetic where applicable; migrate `damage` to DPS).
 
 ---
 
@@ -148,7 +150,7 @@ When the user selects a weapon, weapon perk, origin trait, or armor set bonus as
 - What if auto-generated name would exceed maximum name length? Truncate the link display portion with an ellipsis while preserving category and sub-type.
 - What if two different selection combinations produce the same auto-name? Allow both (names need not be unique); list views may show link kind or sub-type as disambiguation context.
 - Sub-type vocabularies (verbs, grenades, melees, supers) should be deduplicated where the same name appears across subclasses (e.g., Scorch on multiple subclasses → one Scorch option).
-- Legacy synergies with type `kinetic_weapon` or `damage` remain listable and deletable; re-save prompts migration to valid category (DPS for former Damage synergies).
+- Legacy synergies with type `kinetic_weapon` or `damage` remain listable and deletable; re-save prompts migration to Element: Kinetic (former Kinetic Weapon) or DPS (former Damage).
 - Base sub-type synergies (Melee: Base, Grenade: Base, Super: Base) apply broadly in suggestion and reverse-lookup context—matching any ability of that kind on the linked target or in build context.
 
 ## Requirements *(mandatory)*
@@ -160,9 +162,9 @@ When the user selects a weapon, weapon perk, origin trait, or armor set bonus as
 - **FR-003**: System MUST require a sub-type when synergy category is Grenade; the sub-type picker MUST offer **Base** (all grenades) plus any specific grenade from the full curated catalog.
 - **FR-004**: System MUST require a sub-type when synergy category is Melee; the sub-type picker MUST offer **Base** (all melees) plus any specific melee from the full curated catalog.
 - **FR-005**: System MUST require a sub-type when synergy category is Super; the sub-type picker MUST offer **Base** (all supers) plus any specific super from the full curated catalog.
-- **FR-006**: System MUST support synergy category **Element** with a required specific element sub-type (Solar, Arc, Void, Stasis, Strand, Prismatic); Element sub-type MUST NOT offer a Base option.
+- **FR-006**: System MUST support synergy category **Element** with a required specific element sub-type (Kinetic, Solar, Arc, Void, Stasis, Strand, Prismatic); Element sub-type MUST NOT offer a Base option.
 - **FR-007**: Sub-type options for Verb, Melee, Grenade, Super, and Element MUST be drawn from curated, system-maintained vocabularies (not user-typed strings).
-- **FR-008**: System MUST NOT offer **Kinetic Weapon** as a creatable synergy category; existing `kinetic_weapon` records remain readable and deletable only.
+- **FR-008**: System MUST NOT offer **Kinetic Weapon** as a creatable synergy category; kinetic loadout synergies MUST use **Element: Kinetic** instead; existing `kinetic_weapon` records remain readable and deletable; re-save MUST migrate to Element with Kinetic sub-type.
 - **FR-009**: System MUST rename the **Damage** synergy category to **DPS** for all new synergies; existing `damage` records remain readable; re-save MUST migrate type to `dps`.
 - **FR-010**: Synergy associations MUST be **many-to-many**: one link target MAY be linked to multiple synergies simultaneously; linking a new synergy to a target MUST NOT remove existing synergies on that target.
 - **FR-011**: Reverse lookup and catalog/browse views MUST return and display **all** synergies linked to a target (multi-select display), not a single exclusive synergy.
@@ -197,7 +199,7 @@ When the user selects a weapon, weapon perk, origin trait, or armor set bonus as
 
 - Verb vocabulary is aggregated from existing subclass verb metadata already curated in the project (deduplicated by verb name).
 - Melee, grenade, and super sub-type lists are derived from curated subclass/ability metadata covering **all** abilities of each kind in the game, plus a synthetic **Base** entry at the top of each picker.
-- Element sub-types are the six damage elements: Solar, Arc, Void, Stasis, Strand, Prismatic.
+- Element sub-types are the seven damage elements: Kinetic, Solar, Arc, Void, Stasis, Strand, Prismatic.
 - Many-to-many association per BR-SYN-008 from 001-build-sets-synergies is explicitly reinforced in this refinement; no exclusivity constraint is added.
 - This iteration updates the **internal verification UI** (`/debug/synergies`); production synergy editor remains deferred per 001 iteration scope.
 - Auto-generated names are system-owned on create; manual name override is out of scope unless a future iteration adds it.
