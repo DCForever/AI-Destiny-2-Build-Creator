@@ -32,8 +32,8 @@ description: "Task list for Synergy Refinement feature"
 
 **Purpose**: Constants and test fixtures for synergy refinement
 
-- [ ] T001 [P] Add seven-element list (Kinetic, Solar, Arc, Void, Stasis, Strand, Prismatic) in `src/data/synergyElements.ts`
-- [ ] T002 [P] Add synergy refinement test fixtures (sample types, subTypes, link display names) in `src/lib/synergies/__fixtures__/synergyRefinementFixtures.ts`
+- [X] T001 [P] Add seven-element list (Kinetic, Solar, Arc, Void, Stasis, Strand, Prismatic) in `src/data/synergyElements.ts`
+- [X] T002 [P] Add synergy refinement test fixtures (sample types, subTypes, link display names) in `src/lib/synergies/__fixtures__/synergyRefinementFixtures.ts`
 
 ---
 
@@ -43,16 +43,16 @@ description: "Task list for Synergy Refinement feature"
 
 **⚠️ CRITICAL**: No user story work until this phase completes
 
-- [ ] T003 Add Drizzle migration `sub_type TEXT` on `synergies` in `drizzle/` (update `src/lib/db/client.ts` bootstrap SQL if used)
-- [ ] T004 Add `subType` column to `synergies` in `src/lib/db/schema.ts`
-- [ ] T005 Update `SYNERGY_TYPES` (add `element`, rename `damage`→`dps`, exclude creatable `kinetic_weapon`) and add `subType` to zod schemas in `src/lib/synergies/schemas.ts`
-- [ ] T006 [P] Add failing `generateSynergyName` tests (patterns, truncation, em dash) in `src/lib/synergies/generateSynergyName.test.ts`
-- [ ] T007 Implement `generateSynergyName` in `src/lib/synergies/generateSynergyName.ts`
-- [ ] T008 [P] Add failing `subTypeVocabularies` tests (verbs dedupe, Base prepend, elements include Kinetic) in `src/lib/synergies/subTypeVocabularies.test.ts`
-- [ ] T009 Implement `listSubTypeOptions(category)` in `src/lib/synergies/subTypeVocabularies.ts` (verbs from `subclasses.meta`, abilities from manifest store, elements from `synergyElements.ts`)
-- [ ] T010 [P] Add failing legacy migration tests in `src/lib/synergies/legacySynergyTypes.test.ts`
-- [ ] T011 Implement `normalizeLegacySynergyType` in `src/lib/synergies/legacySynergyTypes.ts` (`kinetic_weapon`→element+Kinetic, `damage`→dps)
-- [ ] T012 Persist and read `subType` in `src/lib/db/repositories/synergyRepository.ts` (create/update/list/get)
+- [X] T003 Add Drizzle migration `sub_type TEXT` on `synergies` in `drizzle/` (update `src/lib/db/client.ts` bootstrap SQL if used)
+- [X] T004 Add `subType` column to `synergies` in `src/lib/db/schema.ts`
+- [X] T005 Update `SYNERGY_TYPES` (add `element`, rename `damage`→`dps`, exclude creatable `kinetic_weapon`) and add `subType` to zod schemas in `src/lib/synergies/schemas.ts`
+- [X] T006 [P] Add failing `generateSynergyName` tests (patterns, truncation, em dash) in `src/lib/synergies/generateSynergyName.test.ts`
+- [X] T007 Implement `generateSynergyName` in `src/lib/synergies/generateSynergyName.ts`
+- [X] T008 [P] Add failing `subTypeVocabularies` tests (verbs dedupe, Base prepend, elements include Kinetic) in `src/lib/synergies/subTypeVocabularies.test.ts`
+- [X] T009 Implement `listSubTypeOptions(category)` in `src/lib/synergies/subTypeVocabularies.ts` (verbs from `subclasses.meta`, abilities from manifest store, elements from `synergyElements.ts`)
+- [X] T010 [P] Add failing legacy migration tests in `src/lib/synergies/legacySynergyTypes.test.ts`
+- [X] T011 Implement `normalizeLegacySynergyType` in `src/lib/synergies/legacySynergyTypes.ts` (`kinetic_weapon`→element+Kinetic, `damage`→dps)
+- [X] T012 Persist and read `subType` in `src/lib/db/repositories/synergyRepository.ts` (create/update/list/get)
 
 **Checkpoint**: Core libs pass unit tests; DB accepts `sub_type`; gate green on foundational modules
 
@@ -68,14 +68,14 @@ description: "Task list for Synergy Refinement feature"
 
 > Write FIRST; confirm FAIL before service wiring
 
-- [ ] T013 [P] [US1] Add failing auto-name integration tests in `src/lib/synergies/synergyService.test.ts` (create/update overrides client name; DPS pattern without subType)
+- [X] T013 [P] [US1] Add failing auto-name integration tests in `src/lib/synergies/synergyService.test.ts` (create/update overrides client name; DPS pattern without subType)
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Apply `generateSynergyName` on create/update in `src/lib/synergies/synergyService.ts` (primary link = `links[0].displayName`)
-- [ ] T015 [US1] Make `name` optional on create in `src/lib/synergies/schemas.ts`; include `subType` in API responses via repository
-- [ ] T016 [US1] Add read-only auto-name preview in `src/app/debug/synergies/SynergiesDebugPage.tsx` (import `generateSynergyName`; update on category/subType/link change)
-- [ ] T017 [US1] Run `npm run gate` and validate quickstart Scenario 1 (auto-name before create)
+- [X] T014 [US1] Apply `generateSynergyName` on create/update in `src/lib/synergies/synergyService.ts` (primary link = `links[0].displayName`)
+- [X] T015 [US1] Make `name` optional on create in `src/lib/synergies/schemas.ts`; include `subType` in API responses via repository
+- [X] T016 [US1] Add read-only auto-name preview in `src/app/debug/synergies/SynergiesDebugPage.tsx` (import `generateSynergyName`; update on category/subType/link change)
+- [X] T017 [US1] Run `npm run gate` and validate quickstart Scenario 1 (auto-name before create)
 
 **Checkpoint**: User Story 1 — names auto-generated end-to-end
 
@@ -89,16 +89,16 @@ description: "Task list for Synergy Refinement feature"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T018 [P] [US2] Add failing sub-type validation tests in `src/lib/synergies/validateSynergySubType.test.ts`
-- [ ] T019 [P] [US2] Add failing subtypes route tests in `src/app/api/catalog/synergy-pickers/subtypes/route.test.ts`
+- [X] T018 [P] [US2] Add failing sub-type validation tests in `src/lib/synergies/validateSynergySubType.test.ts`
+- [X] T019 [P] [US2] Add failing subtypes route tests in `src/app/api/catalog/synergy-pickers/subtypes/route.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Implement `validateSynergySubType(type, subType)` in `src/lib/synergies/validateSynergySubType.ts`; wire in `src/lib/synergies/synergyService.ts` with `INVALID_SYNERGY_SUBTYPE` via `src/lib/api/errors.ts`
-- [ ] T021 [US2] Apply `normalizeLegacySynergyType` on update in `src/lib/synergies/synergyService.ts`
-- [ ] T022 [US2] Implement `GET /api/catalog/synergy-pickers/subtypes` in `src/app/api/catalog/synergy-pickers/subtypes/route.ts`
-- [ ] T023 [US2] Replace creatable category list and add sub-type `<select>` (fed by subtypes API) in `src/app/debug/synergies/SynergiesDebugPage.tsx`
-- [ ] T024 [US2] Run `npm run gate` and validate quickstart Scenario 2
+- [X] T020 [US2] Implement `validateSynergySubType(type, subType)` in `src/lib/synergies/validateSynergySubType.ts`; wire in `src/lib/synergies/synergyService.ts` with `INVALID_SYNERGY_SUBTYPE` via `src/lib/api/errors.ts`
+- [X] T021 [US2] Apply `normalizeLegacySynergyType` on update in `src/lib/synergies/synergyService.ts`
+- [X] T022 [US2] Implement `GET /api/catalog/synergy-pickers/subtypes` in `src/app/api/catalog/synergy-pickers/subtypes/route.ts`
+- [X] T023 [US2] Replace creatable category list and add sub-type `<select>` (fed by subtypes API) in `src/app/debug/synergies/SynergiesDebugPage.tsx`
+- [X] T024 [US2] Run `npm run gate` and validate quickstart Scenario 2
 
 **Checkpoint**: P1 complete — auto-name + sub-types + category model (MVP)
 
@@ -112,13 +112,13 @@ description: "Task list for Synergy Refinement feature"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T025 [P] [US3] Add failing weapon `itemHash` dual-synergy reverse-lookup test in `src/lib/synergies/synergyService.test.ts`
+- [X] T025 [P] [US3] Add failing weapon `itemHash` dual-synergy reverse-lookup test in `src/lib/synergies/synergyService.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Extend reverse-lookup form to support `itemHash` weapon queries in `src/app/debug/synergies/SynergiesDebugPage.tsx`
-- [ ] T027 [US3] Ensure catalog synergy badges render **all** linked synergies (not first only) in `src/app/debug/catalog/CatalogDebugPage.tsx`
-- [ ] T028 [US3] Run `npm run gate` and validate quickstart Scenario 3
+- [X] T026 [US3] Extend reverse-lookup form to support `itemHash` weapon queries in `src/app/debug/synergies/SynergiesDebugPage.tsx`
+- [X] T027 [US3] Ensure catalog synergy badges render **all** linked synergies (not first only) in `src/app/debug/catalog/CatalogDebugPage.tsx`
+- [X] T028 [US3] Run `npm run gate` and validate quickstart Scenario 3
 
 **Checkpoint**: Multi-synergy associations verified in service + debug surfaces
 
@@ -132,15 +132,15 @@ description: "Task list for Synergy Refinement feature"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T029 [P] [US4] Add failing links picker route tests in `src/app/api/catalog/synergy-pickers/links/route.test.ts`
+- [X] T029 [P] [US4] Add failing links picker route tests in `src/app/api/catalog/synergy-pickers/links/route.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T030 [US4] Implement `GET /api/catalog/synergy-pickers/links` in `src/app/api/catalog/synergy-pickers/links/route.ts` (origin_trait, weapon_perk, armor_set_bonus from entity stores)
-- [ ] T031 [US4] Add weapon link search select via `GET /api/catalog/weapons?q=` in `src/app/debug/synergies/SynergiesDebugPage.tsx`
-- [ ] T032 [US4] Replace free-text origin_trait, weapon_perk, armor_set_bonus inputs with searchable selects in `src/app/debug/synergies/SynergiesDebugPage.tsx`
-- [ ] T033 [US4] Remove manual `itemHash`/`perkHash` text fields; build `SynergyLink` from picker selection only
-- [ ] T034 [US4] Run `npm run gate` and validate quickstart Scenario 4
+- [X] T030 [US4] Implement `GET /api/catalog/synergy-pickers/links` in `src/app/api/catalog/synergy-pickers/links/route.ts` (origin_trait, weapon_perk, armor_set_bonus from entity stores)
+- [X] T031 [US4] Add weapon link search select via `GET /api/catalog/weapons?q=` in `src/app/debug/synergies/SynergiesDebugPage.tsx`
+- [X] T032 [US4] Replace free-text origin_trait, weapon_perk, armor_set_bonus inputs with searchable selects in `src/app/debug/synergies/SynergiesDebugPage.tsx`
+- [X] T033 [US4] Remove manual `itemHash`/`perkHash` text fields; build `SynergyLink` from picker selection only
+- [X] T034 [US4] Run `npm run gate` and validate quickstart Scenario 4
 
 **Checkpoint**: All link targets chosen from catalog pickers
 
@@ -154,9 +154,9 @@ description: "Task list for Synergy Refinement feature"
 
 ### Implementation for User Story 5
 
-- [ ] T035 [US5] Add read-only description panel below link picker in `src/app/debug/synergies/SynergiesDebugPage.tsx` (from catalog item or picker row `description`)
-- [ ] T036 [US5] Clear/hide description when link selection cleared or link kind changes in `src/app/debug/synergies/SynergiesDebugPage.tsx`
-- [ ] T037 [US5] Run `npm run gate` and validate quickstart Scenario 5
+- [X] T035 [US5] Add read-only description panel below link picker in `src/app/debug/synergies/SynergiesDebugPage.tsx` (from catalog item or picker row `description`)
+- [X] T036 [US5] Clear/hide description when link selection cleared or link kind changes in `src/app/debug/synergies/SynergiesDebugPage.tsx`
+- [X] T037 [US5] Run `npm run gate` and validate quickstart Scenario 5
 
 **Checkpoint**: Description preview for all four link kinds
 
@@ -166,9 +166,9 @@ description: "Task list for Synergy Refinement feature"
 
 **Purpose**: Docs, legacy migration manual check, final gate
 
-- [ ] T038 [P] Update synergy debug flows in `DEBUG.md` (auto-name, sub-types, pickers, multi-synergy)
-- [ ] T039 [P] Add legacy migration note to `specs/006-synergy-refinement/quickstart.md` Scenario 6 if steps drift
-- [ ] T040 Run full `specs/006-synergy-refinement/quickstart.md` validation and `npm run gate`
+- [X] T038 [P] Update synergy debug flows in `DEBUG.md` (auto-name, sub-types, pickers, multi-synergy)
+- [X] T039 [P] Add legacy migration note to `specs/006-synergy-refinement/quickstart.md` Scenario 6 if steps drift
+- [X] T040 Run full `specs/006-synergy-refinement/quickstart.md` validation and `npm run gate`
 
 ---
 

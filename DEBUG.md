@@ -4,7 +4,7 @@
 
 > **Maintenance (required):** Update this file in the same change whenever you modify debug routes, prerequisites, owned-catalog/inventory flows, sync behavior, or related APIs. Feature `quickstart.md` files are scenario checklists; **this file is the single consolidated reference.**
 
-**Last reviewed:** 2026-06-29 (feature 004 full plug resolution)
+**Last reviewed:** 2026-06-29 (feature 006 synergy refinement)
 
 ---
 
@@ -85,8 +85,8 @@ Nav: header on every debug page (`src/app/debug/layout.tsx`).
 |-------|---------|--------------|
 | [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict | `/api/user/sets`, `/api/concept-tags` |
 | [`/debug/builds`](src/app/debug/builds/page.tsx) | Builds, variants, set attachments (live/snapshot), synergies, suggestions, compare | `/api/user/builds`, variants, suggest-* |
-| [`/debug/synergies`](src/app/debug/synergies/page.tsx) | Synergy CRUD, link kinds (origin trait, armor set bonus, etc.) | `/api/user/synergies` |
-| [`/debug/catalog`](src/app/debug/catalog/page.tsx) | Catalog browse (`scope=all\|owned`), owned instance drill-down, synergy reverse lookup, direct instance API panel | `/api/catalog/weapons`, `/api/catalog/armor`, `/api/user/inventory/instances`, `/api/user/synergies/by-target` |
+| [`/debug/synergies`](src/app/debug/synergies/page.tsx) | Synergy CRUD with auto-generated names, sub-type pickers, catalog-backed link search, description preview | `/api/user/synergies`, `/api/catalog/synergy-pickers/*` |
+| [`/debug/catalog`](src/app/debug/catalog/page.tsx) | Catalog browse (`scope=all\|owned`), owned instance drill-down, weapon synergy badges, synergy reverse lookup, direct instance API panel | `/api/catalog/weapons`, `/api/catalog/armor`, `/api/user/inventory/instances`, `/api/user/synergies/by-target` |
 | [`/debug/suggestions`](src/app/debug/suggestions/page.tsx) | Roll / set / synergy suggestion requests | `/api/user/suggestions/rolls`, build suggest endpoints |
 | [`/debug/loadouts`](src/app/debug/loadouts/page.tsx) | Loadout list exotic armor/weapon filter query builder (API verification) | `/api/user/loadouts` |
 
@@ -204,14 +204,21 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 
 ---
 
-## Flow: Synergies (001 P4)
+## Flow: Synergies (001 P4 + 006 refinement)
 
-**Pages:** `/debug/synergies`, `/debug/catalog` (reverse lookup panel)
+**Pages:** `/debug/synergies`, `/debug/catalog` (reverse lookup + weapon badges)
 
-1. Create synergies with typed links (origin trait, armor set bonus, etc.).
-2. On `/debug/catalog`, **Synergy reverse lookup** — `GET /api/user/synergies/by-target?kind=origin_trait&name=...`
+**Needs:** manifest refresh (sub-type vocabularies and link pickers read entity stores).
 
-**Checklist:** Scenario 4 in 001 quickstart
+1. Open `/debug/synergies`. Category list excludes legacy `kinetic_weapon` / `damage`; use `element` + Kinetic or `dps` instead. Playstyle/role categories without sub-types include **DPS**, **Healing**, **Solo**, **DR** (`damage_resist`), **General Weapon**, and **Team**.
+2. Pick category → sub-type loads from `GET /api/catalog/synergy-pickers/subtypes?category=…` (Base for melee/grenade/super; verbs/elements from manifest).
+3. Auto-generated name preview updates as category, sub-type, and link selection change (server always persists generated name).
+4. Link targets: search catalog pickers only — weapons via `GET /api/catalog/weapons?q=`, other kinds via `GET /api/catalog/synergy-pickers/links?kind=…`. Description panel shows selected row text.
+5. Create posts to `POST /api/user/synergies` with `type`, optional `subType`, and `links[]` built from picker selection (no manual hash fields).
+6. Reverse lookup on `/debug/synergies`: origin trait / perk / armor by name, or weapon by `itemHash`.
+7. On `/debug/catalog`, select a weapon row — violet badges list **all** synergies linked to that `itemHash`. JSON panel still supports `GET /api/user/synergies/by-target?kind=origin_trait&name=…`.
+
+**Checklist:** `specs/006-synergy-refinement/quickstart.md` Scenarios 1–6; Scenario 4 in 001 quickstart for origin-trait lookup.
 
 ---
 

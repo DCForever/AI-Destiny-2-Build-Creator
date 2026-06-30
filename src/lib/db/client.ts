@@ -34,8 +34,15 @@ function getSqlite(): Database.Database {
 
 let migrated = false;
 
+function ensureSynergySubTypeColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(synergies)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "sub_type")) {
+    db.exec("ALTER TABLE synergies ADD COLUMN sub_type TEXT");
+  }
+}
+
 export function runMigrations(db: Database.Database): void {
-  if (migrated) return;
+  if (!migrated) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -194,6 +201,8 @@ export function runMigrations(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_variant_attachments_set ON variant_set_attachments(set_id);
   `);
   migrated = true;
+  }
+  ensureSynergySubTypeColumn(db);
 }
 
 export function getDb(): AppDatabase {

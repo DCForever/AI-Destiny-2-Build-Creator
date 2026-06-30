@@ -6,9 +6,16 @@ const SYNERGY_TYPE_TAGS: Partial<Record<string, ConceptTagId[]>> = {
   grenade: ["grenade"],
   super: ["super"],
   healing: ["healing"],
+  dps: ["dps"],
   damage: ["dps"],
+  solo: ["solo"],
+  damage_resist: ["survival"],
+  team: ["support"],
   verb: ["ability"],
+  element: ["ability"],
   primary_weapon: ["kinetic"],
+  special_weapon: ["ability"],
+  heavy_weapon: ["ability"],
   kinetic_weapon: ["kinetic"],
 };
 

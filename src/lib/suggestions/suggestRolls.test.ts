@@ -38,6 +38,7 @@ function synergyFixture(
 ): SynergyWithLinks {
   return {
     userId: 1,
+    subType: null,
     description: "",
     createdAt: "",
     updatedAt: "",

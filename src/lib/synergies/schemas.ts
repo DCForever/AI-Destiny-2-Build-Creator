@@ -1,17 +1,28 @@
 import { z } from "zod";
 
-export const SYNERGY_TYPES = [
+/** Legacy types remain readable from DB; not creatable via API. */
+export const LEGACY_SYNERGY_TYPES = ["kinetic_weapon", "damage"] as const;
+
+export const CREATABLE_SYNERGY_TYPES = [
   "melee",
   "verb",
   "grenade",
+  "super",
+  "element",
   "primary_weapon",
   "special_weapon",
   "heavy_weapon",
-  "kinetic_weapon",
-  "super",
-  "damage",
+  "dps",
   "healing",
+  "solo",
+  "damage_resist",
+  "general_weapon",
+  "team",
 ] as const;
+
+export type CreatableSynergyType = (typeof CREATABLE_SYNERGY_TYPES)[number];
+
+export const SYNERGY_TYPES = [...CREATABLE_SYNERGY_TYPES, ...LEGACY_SYNERGY_TYPES] as const;
 
 export type SynergyType = (typeof SYNERGY_TYPES)[number];
 
@@ -37,8 +48,9 @@ export const synergyLinkSchema = z.object({
 });
 
 export const createSynergySchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  type: z.enum(SYNERGY_TYPES),
+  name: z.string().trim().min(1).max(120).optional(),
+  type: z.enum(CREATABLE_SYNERGY_TYPES),
+  subType: z.string().trim().min(1).nullable().optional(),
   description: z.string().max(2000).optional(),
   links: z.array(synergyLinkSchema).default([]),
 });

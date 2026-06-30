@@ -73,6 +73,53 @@ export interface RawInventoryItem {
   isCrafted: boolean;
 }
 
+export interface InventoryParseDiagnostics {
+  membership: {
+    membershipType: number;
+    membershipId: string;
+    displayName: string;
+  };
+  raw: {
+    vault: number;
+    characterInventories: Record<string, number>;
+    characterInventoriesTotal: number;
+    characterEquipment: Record<string, number>;
+    characterEquipmentTotal: number;
+    total: number;
+  };
+  parsed: {
+    total: number;
+    equipmentTotal: number;
+    subclassTotal: number;
+    byLocation: Record<InventoryLocation, number>;
+    byBucket: Record<string, number>;
+  };
+  dropped: {
+    total: number;
+    invalidShape: number;
+    unknownBucket: number;
+    missingInstanceId: number;
+    unknownBuckets: Record<string, number>;
+  };
+  manifest?: {
+    equipmentItemHashes: number;
+    inWeaponsCatalog: number;
+    inExoticArmorCatalog: number;
+    unmatchedEquipmentHashes: number;
+  };
+  resolution?: {
+    resolvedFromTransfer: number;
+    droppedNonEquipment: number;
+    storedTotal: number;
+    storedEquipment: number;
+  };
+}
+
+export interface FullInventoryParseResult {
+  items: RawInventoryItem[];
+  diagnostics: InventoryParseDiagnostics;
+}
+
 export interface BungieProfileClient {
   getMemberships(accessToken: string): Promise<DestinyMembership[]>;
   getCharacters(
@@ -88,4 +135,8 @@ export interface BungieProfileClient {
     accessToken: string,
     membership: DestinyMembership,
   ): Promise<RawInventoryItem[]>;
+  getFullInventoryWithDiagnostics(
+    accessToken: string,
+    membership: DestinyMembership,
+  ): Promise<FullInventoryParseResult>;
 }

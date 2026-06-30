@@ -50,6 +50,7 @@ export function CatalogDebugPage() {
   const [className, setClassName] = useState("");
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [selectedHash, setSelectedHash] = useState<number | null>(null);
+  const [linkedSynergies, setLinkedSynergies] = useState<Array<{ id: string; name: string; type: string }>>([]);
   const [instanceRows, setInstanceRows] = useState<InstanceRow[]>([]);
   const [instancePanel, setInstancePanel] = useState<JsonPanel | null>(null);
   const [instanceItemHash, setInstanceItemHash] = useState("");
@@ -69,9 +70,22 @@ export function CatalogDebugPage() {
     setInstanceRows(body.instances ?? []);
   }, []);
 
+  const fetchLinkedSynergies = useCallback(async (itemHash: number) => {
+    const params = new URLSearchParams({ kind: "weapon", itemHash: String(itemHash) });
+    const url = `/api/user/synergies/by-target?${params}`;
+    const res = await fetch(url);
+    const body = (await res.json()) as { synergies?: Array<{ id: string; name: string; type: string }> };
+    setLinkedSynergies(res.ok ? (body.synergies ?? []) : []);
+  }, []);
+
   const selectCatalogRow = useCallback(
     async (item: CatalogItem) => {
       setSelectedHash(item.hash);
+      if (kind === "weapons") {
+        await fetchLinkedSynergies(item.hash);
+      } else {
+        setLinkedSynergies([]);
+      }
       if (item.ownedCount <= 0) {
         setInstanceRows([]);
         setInstancePanel({
@@ -84,7 +98,7 @@ export function CatalogDebugPage() {
         item.instancesHref ?? `/api/user/inventory/instances?itemHash=${item.hash}`;
       await fetchInstances(href, `GET ${href}`);
     },
-    [fetchInstances],
+    [fetchInstances, fetchLinkedSynergies, kind],
   );
 
   async function runSearch() {
@@ -102,6 +116,7 @@ export function CatalogDebugPage() {
     setPanel({ label: `GET ${url}`, request: { url } });
     setCatalogItems([]);
     setSelectedHash(null);
+    setLinkedSynergies([]);
     setInstanceRows([]);
     setInstancePanel(null);
 
@@ -138,7 +153,7 @@ export function CatalogDebugPage() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
       <section className="space-y-4">
         <h1 className="text-lg font-semibold">Catalog</h1>
 
@@ -256,6 +271,19 @@ export function CatalogDebugPage() {
                     {item.name} ({item.ownedCount} owned)
                     {item.instancesHref ? " · pointer" : ""}
                   </button>
+                  {selectedHash === item.hash && linkedSynergies.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1 px-2">
+                      {linkedSynergies.map((s) => (
+                        <span
+                          key={s.id}
+                          className="rounded bg-violet-900/60 px-1.5 py-0.5 text-xs text-violet-200"
+                          title={s.type}
+                        >
+                          {s.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

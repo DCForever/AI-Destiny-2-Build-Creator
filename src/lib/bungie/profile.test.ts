@@ -173,6 +173,37 @@ describe("HttpBungieProfileClient.getFullInventory", () => {
     expect(equipped?.itemHash).toBe(800003);
     expect(equipped?.plugHashes).toEqual([503]);
   });
+
+  it("reports diagnostics for dropped items (unknown bucket, missing instance id)", async () => {
+    const response = {
+      ...FULL_INVENTORY_RESPONSE,
+      Response: {
+        ...FULL_INVENTORY_RESPONSE.Response,
+        profileInventory: {
+          data: {
+            items: [
+              ...FULL_INVENTORY_RESPONSE.Response.profileInventory.data.items,
+              { itemHash: 900001, bucketHash: 215593132, itemInstanceId: "postmaster1" },
+              { itemHash: 900002, bucketHash: 1498876634 },
+              { itemHash: 900003, bucketHash: 138197802, itemInstanceId: "vault-general1" },
+            ],
+          },
+        },
+      },
+    };
+    const { items, diagnostics } = await makeClient(makeOkFetch(response)).getFullInventoryWithDiagnostics(
+      ACCESS_TOKEN,
+      membership,
+    );
+
+    expect(items).toHaveLength(5);
+    expect(diagnostics.raw.total).toBe(6);
+    expect(diagnostics.parsed.total).toBe(5);
+    expect(diagnostics.dropped.total).toBe(1);
+    expect(diagnostics.dropped.unknownBucket).toBe(0);
+    expect(diagnostics.dropped.missingInstanceId).toBe(1);
+    expect(items.some((item) => item.instanceId === "vault-general1")).toBe(true);
+  });
 });
 
 describe("HttpBungieProfileClient.getMemberships", () => {

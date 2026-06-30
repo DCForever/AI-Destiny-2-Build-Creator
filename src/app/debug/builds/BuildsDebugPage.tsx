@@ -219,7 +219,7 @@ export function BuildsDebugPage() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
       <section className="space-y-4">
         <h1 className="text-lg font-semibold">Builds</h1>
 

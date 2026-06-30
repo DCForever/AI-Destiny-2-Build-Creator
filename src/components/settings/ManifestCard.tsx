@@ -91,9 +91,12 @@ async function fetchManifestStatus(): Promise<{
   return { status };
 }
 
+import type { InventoryParseDiagnostics } from "@/lib/bungie/types";
+
 interface InventorySyncResult {
   itemCount: number;
   lastFullSyncAt: string;
+  diagnostics?: InventoryParseDiagnostics;
 }
 
 function parseInventorySyncResult(value: unknown): InventorySyncResult | null {
@@ -102,7 +105,38 @@ function parseInventorySyncResult(value: unknown): InventorySyncResult | null {
   if (typeof record.itemCount !== "number" || typeof record.lastFullSyncAt !== "string") {
     return null;
   }
-  return { itemCount: record.itemCount, lastFullSyncAt: record.lastFullSyncAt };
+  const diagnostics =
+    typeof record.diagnostics === "object" && record.diagnostics !== null
+      ? (record.diagnostics as InventoryParseDiagnostics)
+      : undefined;
+  return { itemCount: record.itemCount, lastFullSyncAt: record.lastFullSyncAt, diagnostics };
+}
+
+function formatSyncDiagnostics(diagnostics: InventoryParseDiagnostics): string {
+  const lines = [
+    `Bungie raw items: ${diagnostics.raw.total.toLocaleString()}`,
+    `Parsed from Bungie: ${diagnostics.parsed.total.toLocaleString()} (${diagnostics.parsed.equipmentTotal.toLocaleString()} weapons/armor incl. vault containers, ${diagnostics.parsed.subclassTotal} subclasses)`,
+    `Dropped: ${diagnostics.dropped.total.toLocaleString()} (unknown bucket: ${diagnostics.dropped.unknownBucket}, missing instance id: ${diagnostics.dropped.missingInstanceId})`,
+  ];
+  if (diagnostics.resolution) {
+    lines.push(
+      `Stored after resolution: ${diagnostics.resolution.storedTotal.toLocaleString()} (${diagnostics.resolution.storedEquipment.toLocaleString()} weapons/armor; ${diagnostics.resolution.resolvedFromTransfer.toLocaleString()} from vault/postmaster, ${diagnostics.resolution.droppedNonEquipment.toLocaleString()} non-equipment dropped)`,
+    );
+  }
+  if (diagnostics.manifest) {
+    lines.push(
+      `Manifest match: ${diagnostics.manifest.inWeaponsCatalog} weapons, ${diagnostics.manifest.inExoticArmorCatalog} exotic armor, ${diagnostics.manifest.unmatchedEquipmentHashes} unmatched hashes`,
+    );
+  }
+  const unknownBuckets = Object.entries(diagnostics.dropped.unknownBuckets)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([hash, count]) => `  bucket ${hash}: ${count}`)
+    .join("\n");
+  if (unknownBuckets) {
+    lines.push("Top unknown buckets:\n" + unknownBuckets);
+  }
+  return lines.join("\n");
 }
 
 async function syncInventoryAfterManifest(): Promise<{
@@ -135,6 +169,7 @@ export function ManifestCard({ signedIn = false }: ManifestCardProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [syncDiagnostics, setSyncDiagnostics] = useState<InventoryParseDiagnostics | null>(null);
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
   const [refreshPhase, setRefreshPhase] = useState<"manifest" | "inventory" | null>(null);
 
@@ -173,6 +208,7 @@ export function ManifestCard({ signedIn = false }: ManifestCardProps) {
     setRefreshing(true);
     setRefreshError(null);
     setSyncMessage(null);
+    setSyncDiagnostics(null);
     setSyncWarning(null);
     setRefreshPhase("manifest");
     try {
@@ -200,7 +236,9 @@ export function ManifestCard({ signedIn = false }: ManifestCardProps) {
           setSyncMessage(
             `Inventory synced (${sync.result.itemCount.toLocaleString()} items).`,
           );
+          setSyncDiagnostics(sync.result.diagnostics ?? null);
         } else {
+          setSyncDiagnostics(null);
           setSyncWarning(
             sync.error
               ? `Manifest refreshed. Inventory sync failed: ${sync.error}`
@@ -283,6 +321,14 @@ export function ManifestCard({ signedIn = false }: ManifestCardProps) {
 
       {refreshError && <p className="text-xs text-danger">{refreshError}</p>}
       {syncMessage && <p className="text-xs text-muted">{syncMessage}</p>}
+      {syncDiagnostics && (
+        <details className="text-xs text-muted">
+          <summary className="cursor-pointer hover:text-foreground">Sync breakdown</summary>
+          <pre className="mt-2 whitespace-pre-wrap font-mono text-[10px] leading-relaxed border border-line p-2">
+            {formatSyncDiagnostics(syncDiagnostics)}
+          </pre>
+        </details>
+      )}
       {syncWarning && <p className="text-xs text-danger">{syncWarning}</p>}
 
       <button

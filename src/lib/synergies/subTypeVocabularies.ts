@@ -1,0 +1,106 @@
+import { SYNERGY_ELEMENTS } from "@/data/synergyElements";
+import { SUBCLASS_METADATA } from "@/data/subclasses.meta";
+import type { AbilityKind } from "@/lib/manifest/types/records";
+import { getServices } from "@/lib/services";
+import type { SubTypeRequiredType } from "@/lib/synergies/synergyTypeRules";
+import { allowsBaseSubType } from "@/lib/synergies/synergyTypeRules";
+
+export type SynergySubTypeOption = {
+  id: string;
+  name: string;
+  description?: string;
+};
+
+const BASE_OPTION: SynergySubTypeOption = {
+  id: "base",
+  name: "Base",
+  description: "Applies to all abilities of this category.",
+};
+
+function listAllVerbs(): SynergySubTypeOption[] {
+  const seen = new Map<string, SynergySubTypeOption>();
+  for (const meta of Object.values(SUBCLASS_METADATA)) {
+    for (const verb of meta.verbs) {
+      if (!seen.has(verb.name)) {
+        seen.set(verb.name, {
+          id: verb.name.toLowerCase().replace(/\s+/g, "-"),
+          name: verb.name,
+          description: verb.description,
+        });
+      }
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function listElementOptions(): SynergySubTypeOption[] {
+  return SYNERGY_ELEMENTS.map((name) => ({ id: name.toLowerCase(), name }));
+}
+
+type AbilityOptionCandidate = SynergySubTypeOption & { hash: number };
+
+function shouldPreferAbilityOption(
+  current: AbilityOptionCandidate,
+  next: AbilityOptionCandidate,
+): boolean {
+  const currentDesc = current.description?.trim() ?? "";
+  const nextDesc = next.description?.trim() ?? "";
+  if (nextDesc.length !== currentDesc.length) {
+    return nextDesc.length > currentDesc.length;
+  }
+  return next.hash < current.hash;
+}
+
+function dedupeAbilityOptionsByName(candidates: AbilityOptionCandidate[]): SynergySubTypeOption[] {
+  const seen = new Map<string, AbilityOptionCandidate>();
+  for (const candidate of candidates) {
+    const existing = seen.get(candidate.name);
+    if (!existing || shouldPreferAbilityOption(existing, candidate)) {
+      seen.set(candidate.name, candidate);
+    }
+  }
+  return [...seen.values()]
+    .map(({ hash: _hash, ...option }) => option)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function listAbilityOptions(kind: AbilityKind): Promise<SynergySubTypeOption[]> {
+  const { entityCache } = await getServices();
+  const abilities = await entityCache.getStore("abilities");
+  const candidates = abilities
+    .filter((a) => a.kind === kind)
+    .map((a) => ({
+      hash: a.hash,
+      id: String(a.hash),
+      name: a.name,
+      description: a.description,
+    }));
+
+  return [BASE_OPTION, ...dedupeAbilityOptionsByName(candidates)];
+}
+
+export async function listSubTypeOptions(
+  category: SubTypeRequiredType,
+): Promise<SynergySubTypeOption[]> {
+  switch (category) {
+    case "verb":
+      return listAllVerbs();
+    case "element":
+      return listElementOptions();
+    case "melee":
+      return listAbilityOptions("melee");
+    case "grenade":
+      return listAbilityOptions("grenade");
+    case "super":
+      return listAbilityOptions("super");
+  }
+}
+
+export function isValidSubTypeForCategory(
+  category: SubTypeRequiredType,
+  subType: string,
+  options: SynergySubTypeOption[],
+): boolean {
+  if (allowsBaseSubType(category) && subType === "Base") return true;
+  return options.some((o) => o.name === subType);
+}

@@ -12,7 +12,10 @@ import {
 } from "@/lib/db/repositories/synergyRepository";
 import type { CreateSynergyInput } from "@/lib/synergies/schemas";
 import type { SynergyType } from "@/lib/synergies/schemas";
+import { generateSynergyName } from "@/lib/synergies/generateSynergyName";
+import { normalizeLegacySynergyType } from "@/lib/synergies/legacySynergyTypes";
 import { validateSynergyLinks } from "@/lib/synergies/validateSynergyLink";
+import { validateSynergySubType } from "@/lib/synergies/validateSynergySubType";
 
 async function validateLinksOrThrow(links: CreateSynergyInput["links"]) {
   try {
@@ -21,6 +24,32 @@ async function validateLinksOrThrow(links: CreateSynergyInput["links"]) {
     const message = error instanceof Error ? error.message : "Invalid synergy link";
     throw new ApiError(API_ERROR_CODES.INVALID_SYNERGY_LINK, message);
   }
+}
+
+function resolveSynergyFields(input: {
+  type?: SynergyType;
+  subType?: string | null;
+  links: CreateSynergyInput["links"];
+  name?: string;
+}) {
+  const normalized = normalizeLegacySynergyType(input.type ?? "melee", input.subType);
+  const subTypeCheck = validateSynergySubType(normalized.type, normalized.subType);
+  if (!subTypeCheck.ok) {
+    throw new ApiError(API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE, subTypeCheck.reason);
+  }
+
+  const linkDisplayName = input.links[0]?.displayName ?? "Unlinked";
+  const name = generateSynergyName({
+    type: normalized.type,
+    subType: subTypeCheck.subType,
+    linkDisplayName,
+  });
+
+  return {
+    type: normalized.type,
+    subType: subTypeCheck.subType,
+    name,
+  };
 }
 
 export function listUserSynergies(db: AppDatabase, userId: number, type?: SynergyType): SynergyWithLinks[] {
@@ -33,12 +62,20 @@ export async function createUserSynergy(
   input: CreateSynergyInput,
 ): Promise<SynergyWithLinks> {
   const links = await validateLinksOrThrow(input.links);
+  const resolved = resolveSynergyFields({
+    type: input.type,
+    subType: input.subType,
+    links,
+    name: input.name,
+  });
+
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   return createSynergyRecord(db, userId, {
     id,
-    name: input.name,
-    type: input.type,
+    name: resolved.name,
+    type: resolved.type,
+    subType: resolved.subType,
     description: input.description ?? "",
     links,
     now,
@@ -51,11 +88,38 @@ export async function updateUserSynergy(
   synergyId: string,
   input: Partial<CreateSynergyInput>,
 ): Promise<SynergyWithLinks | null> {
+  const existing = getSynergy(db, userId, synergyId);
+  if (!existing) return null;
+
   const links = input.links ? await validateLinksOrThrow(input.links) : undefined;
+  const mergedType = (input.type ?? existing.type) as SynergyType;
+  const mergedSubType = input.subType !== undefined ? input.subType : existing.subType;
+  const mergedLinks = links ?? existing.links.map((l) => ({
+    kind: l.kind as CreateSynergyInput["links"][number]["kind"],
+    displayName: l.displayName,
+    itemHash: l.itemHash ?? undefined,
+    perkHash: l.perkHash ?? undefined,
+    parentItemHash: l.parentItemHash ?? undefined,
+    originTraitName: l.originTraitName ?? undefined,
+    originTraitHash: l.originTraitHash ?? undefined,
+    armorSetName: l.armorSetName ?? undefined,
+    bonusPieces: (l.bonusPieces === 2 || l.bonusPieces === 4 ? l.bonusPieces : undefined),
+    bonusName: l.bonusName ?? undefined,
+    armorSetHash: l.armorSetHash ?? undefined,
+  }));
+
+  const resolved = resolveSynergyFields({
+    type: mergedType,
+    subType: mergedSubType,
+    links: mergedLinks,
+    name: input.name,
+  });
+
   const now = new Date().toISOString();
   return updateSynergyRecord(db, userId, synergyId, {
-    name: input.name,
-    type: input.type,
+    name: resolved.name,
+    type: resolved.type,
+    subType: resolved.subType,
     description: input.description,
     links,
     now,

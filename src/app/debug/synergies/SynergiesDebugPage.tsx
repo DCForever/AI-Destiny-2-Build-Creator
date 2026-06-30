@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useMemo, useState } from "react";
 
-import { SYNERGY_TYPES } from "@/lib/synergies/schemas";
+import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
+import { generateSynergyName, getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
+import { requiresSubType } from "@/lib/synergies/synergyTypeRules";
+import type { SynergyLinkInput } from "@/lib/synergies/schemas";
+import type { SynergyPickerItem } from "@/lib/synergies/synergyPickerLinks";
 
 type JsonPanel = {
   label: string;
@@ -10,6 +14,10 @@ type JsonPanel = {
   response?: unknown;
   error?: unknown;
 };
+
+type SubTypeOption = { id: string; name: string; description?: string };
+
+type WeaponOption = { hash: number; name: string; description?: string };
 
 const LINK_KINDS = ["weapon", "weapon_perk", "origin_trait", "armor_set_bonus"] as const;
 
@@ -20,38 +28,121 @@ export function SynergiesDebugPage() {
   const [filterType, setFilterType] = useState("");
 
   const [form, setForm] = useState({
-    name: "Melee — Cast No Shadows",
-    type: "melee",
+    type: "verb",
+    subType: "",
     description: "",
     linkKind: "origin_trait" as (typeof LINK_KINDS)[number],
-    displayName: "Cast No Shadows",
-    originTraitName: "Cast No Shadows",
-    armorSetName: "Eutechnology",
-    bonusPieces: "2",
-    bonusName: "Gift of the Ley Lines",
-    itemHash: "",
-    perkHash: "",
   });
+
+  const [subTypeOptions, setSubTypeOptions] = useState<SubTypeOption[]>([]);
+  const [linkSearch, setLinkSearch] = useState("");
+  const [linkOptions, setLinkOptions] = useState<SynergyPickerItem[]>([]);
+  const [weaponOptions, setWeaponOptions] = useState<WeaponOption[]>([]);
+  const [selectedLink, setSelectedLink] = useState<SynergyPickerItem | WeaponOption | null>(null);
+  const [linkDescription, setLinkDescription] = useState("");
 
   const [lookupKind, setLookupKind] = useState("origin_trait");
   const [lookupName, setLookupName] = useState("Cast No Shadows");
+  const [lookupItemHash, setLookupItemHash] = useState("");
 
-  function buildLink() {
-    const base = { kind: form.linkKind, displayName: form.displayName };
-    switch (form.linkKind) {
+  const needsSubType = requiresSubType(form.type as (typeof CREATABLE_SYNERGY_TYPES)[number] & string);
+
+  const previewName = useMemo(() => {
+    const linkDisplayName = selectedLink?.name ?? "Unlinked";
+    return generateSynergyName({
+      type: form.type as Parameters<typeof generateSynergyName>[0]["type"],
+      subType: needsSubType ? form.subType || null : null,
+      linkDisplayName,
+    });
+  }, [form.type, form.subType, needsSubType, selectedLink]);
+
+  const loadSubTypes = useCallback(async (category: string) => {
+    if (!requiresSubType(category as never)) {
+      setSubTypeOptions([]);
+      return;
+    }
+    const res = await fetch(`/api/catalog/synergy-pickers/subtypes?category=${category}`);
+    const body = await res.json();
+    if (res.ok) {
+      setSubTypeOptions(body.options ?? []);
+      if (body.options?.[0]?.name) {
+        setForm((f) => ({ ...f, subType: f.subType || body.options[0].name }));
+      }
+    }
+  }, []);
+
+  const subTypesLoadedFor = useRef<string | null>(null);
+
+  const ensureSubTypes = useCallback(
+    (category: string) => {
+      if (!requiresSubType(category as never)) {
+        setSubTypeOptions([]);
+        return;
+      }
+      if (subTypesLoadedFor.current === category) return;
+      subTypesLoadedFor.current = category;
+      void loadSubTypes(category);
+    },
+    [loadSubTypes],
+  );
+
+  const handleTypeChange = (nextType: string) => {
+    subTypesLoadedFor.current = null;
+    setForm({ ...form, type: nextType, subType: "" });
+    ensureSubTypes(nextType);
+  };
+
+  const searchLinks = useCallback(async () => {
+    setSelectedLink(null);
+    setLinkDescription("");
+    if (form.linkKind === "weapon") {
+      const params = new URLSearchParams({ q: linkSearch, limit: "30" });
+      const res = await fetch(`/api/catalog/weapons?${params}`);
+      const body = await res.json();
+      if (res.ok) {
+        setWeaponOptions(
+          (body.items ?? []).map((i: { hash: number; name: string; description?: string }) => ({
+            hash: i.hash,
+            name: i.name,
+            description: i.description ?? "",
+          })),
+        );
+      }
+      return;
+    }
+    const params = new URLSearchParams({ kind: form.linkKind, q: linkSearch, limit: "30" });
+    const res = await fetch(`/api/catalog/synergy-pickers/links?${params}`);
+    const body = await res.json();
+    if (res.ok) setLinkOptions(body.items ?? []);
+  }, [form.linkKind, linkSearch]);
+
+  function selectLinkItem(item: SynergyPickerItem | WeaponOption) {
+    setSelectedLink(item);
+    setLinkDescription(item.description ?? "");
+  }
+
+  function buildLink(): SynergyLinkInput | null {
+    if (!selectedLink) return null;
+    if (form.linkKind === "weapon" && "hash" in selectedLink && !("kind" in selectedLink)) {
+      return { kind: "weapon", displayName: selectedLink.name, itemHash: selectedLink.hash };
+    }
+    const picker = selectedLink as SynergyPickerItem;
+    const base = { kind: picker.kind, displayName: picker.name };
+    switch (picker.kind) {
       case "origin_trait":
-        return { ...base, originTraitName: form.originTraitName };
+        return { ...base, originTraitName: picker.originTraitName, originTraitHash: picker.originTraitHash };
+      case "weapon_perk":
+        return { ...base, perkHash: picker.perkHash };
       case "armor_set_bonus":
         return {
           ...base,
-          armorSetName: form.armorSetName,
-          bonusPieces: Number(form.bonusPieces) as 2 | 4,
-          bonusName: form.bonusName,
+          armorSetName: picker.armorSetName!,
+          bonusPieces: picker.bonusPieces!,
+          bonusName: picker.bonusName!,
+          armorSetHash: picker.armorSetHash,
         };
-      case "weapon":
-        return { ...base, itemHash: Number(form.itemHash) };
-      case "weapon_perk":
-        return { ...base, perkHash: Number(form.perkHash) };
+      default:
+        return null;
     }
   }
 
@@ -65,11 +156,16 @@ export function SynergiesDebugPage() {
   }
 
   async function createSynergy() {
+    const link = buildLink();
+    if (!link) {
+      setPanel({ label: "Create blocked", error: { message: "Select a link from catalog pickers" } });
+      return;
+    }
     const payload = {
-      name: form.name,
       type: form.type,
+      subType: needsSubType ? form.subType : null,
       description: form.description,
-      links: [buildLink()],
+      links: [link],
     };
     setPanel({ label: "POST /api/user/synergies", request: payload });
     const res = await fetch("/api/user/synergies", {
@@ -82,7 +178,12 @@ export function SynergiesDebugPage() {
       setSelectedId(body.synergy?.id ?? "");
       await loadSynergies();
     }
-    setPanel({ label: "POST /api/user/synergies", request: payload, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+    setPanel({
+      label: "POST /api/user/synergies",
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
   }
 
   async function deleteSynergy() {
@@ -99,7 +200,11 @@ export function SynergiesDebugPage() {
 
   async function reverseLookup() {
     const params = new URLSearchParams({ kind: lookupKind });
-    if (lookupName.trim()) params.set("name", lookupName.trim());
+    if (lookupKind === "weapon" && lookupItemHash.trim()) {
+      params.set("itemHash", lookupItemHash.trim());
+    } else if (lookupName.trim()) {
+      params.set("name", lookupName.trim());
+    }
     const url = `/api/user/synergies/by-target?${params}`;
     const res = await fetch(url);
     const body = await res.json();
@@ -107,16 +212,16 @@ export function SynergiesDebugPage() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
       <section className="space-y-4">
         <h1 className="text-lg font-semibold">Synergies</h1>
 
-        <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+        <fieldset className="min-w-0 space-y-2 rounded border border-zinc-800 p-3">
           <legend className="px-1 text-sm">List</legend>
           <select className="rounded bg-zinc-900 px-2 py-1 text-sm" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="">(any type)</option>
-            {SYNERGY_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+            {CREATABLE_SYNERGY_TYPES.map((t) => (
+              <option key={t} value={t}>{getSynergyTypeLabel(t)}</option>
             ))}
           </select>
           <button type="button" className="ml-2 rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void loadSynergies()}>
@@ -133,45 +238,127 @@ export function SynergiesDebugPage() {
           </button>
         </fieldset>
 
-        <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+        <fieldset
+          className="min-w-0 space-y-2 rounded border border-zinc-800 p-3"
+          onFocus={() => ensureSubTypes(form.type)}
+        >
           <legend className="px-1 text-sm">Create synergy + link</legend>
-          <input className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <select className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-            {SYNERGY_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+          <label className="block text-xs text-zinc-400">Auto-generated name</label>
+          <p className="min-w-0 break-words rounded bg-zinc-950 px-2 py-1 text-sm text-zinc-300">{previewName}</p>
+
+          <select
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            value={form.type}
+            onChange={(e) => handleTypeChange(e.target.value)}
+          >
+            {CREATABLE_SYNERGY_TYPES.map((t) => (
+              <option key={t} value={t}>{getSynergyTypeLabel(t)}</option>
             ))}
           </select>
-          <select className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={form.linkKind} onChange={(e) => setForm({ ...form, linkKind: e.target.value as typeof form.linkKind })}>
+
+          {needsSubType && (
+            <select
+              className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+              value={form.subType}
+              onChange={(e) => setForm({ ...form, subType: e.target.value })}
+            >
+              <option value="">— select sub-type —</option>
+              {subTypeOptions.map((o) => (
+                <option key={o.id} value={o.name}>{o.name}</option>
+              ))}
+            </select>
+          )}
+
+          <select
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            value={form.linkKind}
+            onChange={(e) => {
+              setForm({ ...form, linkKind: e.target.value as typeof form.linkKind });
+              setSelectedLink(null);
+              setLinkDescription("");
+              setLinkOptions([]);
+              setWeaponOptions([]);
+            }}
+          >
             {LINK_KINDS.map((k) => (
               <option key={k} value={k}>{k}</option>
             ))}
           </select>
-          {form.linkKind === "origin_trait" && (
-            <input className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" placeholder="originTraitName" value={form.originTraitName} onChange={(e) => setForm({ ...form, originTraitName: e.target.value, displayName: e.target.value })} />
-          )}
-          {form.linkKind === "armor_set_bonus" && (
-            <>
-              <input className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" placeholder="armorSetName" value={form.armorSetName} onChange={(e) => setForm({ ...form, armorSetName: e.target.value })} />
-              <select className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={form.bonusPieces} onChange={(e) => setForm({ ...form, bonusPieces: e.target.value })}>
-                <option value="2">2pc</option>
-                <option value="4">4pc</option>
-              </select>
-              <input className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" placeholder="bonusName" value={form.bonusName} onChange={(e) => setForm({ ...form, bonusName: e.target.value })} />
-            </>
-          )}
+
+          <div className="flex gap-2">
+            <input
+              className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+              placeholder="Search catalog…"
+              value={linkSearch}
+              onChange={(e) => setLinkSearch(e.target.value)}
+            />
+            <button type="button" className="rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void searchLinks()}>
+              Search
+            </button>
+          </div>
+
+          <select
+            className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+            value={
+              selectedLink && "hash" in selectedLink
+                ? String(selectedLink.hash)
+                : selectedLink && "kind" in selectedLink
+                  ? `${selectedLink.kind}-${selectedLink.name}`
+                  : ""
+            }
+            onChange={(e) => {
+              if (form.linkKind === "weapon") {
+                const w = weaponOptions.find((o) => String(o.hash) === e.target.value);
+                if (w) selectLinkItem(w);
+              } else {
+                const item = linkOptions.find(
+                  (o) => `${o.kind}-${o.name}` === e.target.value,
+                );
+                if (item) selectLinkItem(item);
+              }
+            }}
+          >
+            <option value="">— select link —</option>
+            {form.linkKind === "weapon"
+              ? weaponOptions.map((w) => (
+                  <option key={w.hash} value={String(w.hash)}>{w.name}</option>
+                ))
+              : linkOptions.map((o) => (
+                  <option key={`${o.kind}-${o.name}`} value={`${o.kind}-${o.name}`}>{o.name}</option>
+                ))}
+          </select>
+
+          {linkDescription ? (
+            <p className="min-w-0 break-words rounded bg-zinc-950 p-2 text-xs leading-relaxed text-zinc-400">{linkDescription}</p>
+          ) : null}
+
           <button type="button" className="rounded bg-emerald-700 px-3 py-1 text-sm" onClick={() => void createSynergy()}>
             Create
           </button>
         </fieldset>
 
-        <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
+        <fieldset className="min-w-0 space-y-2 rounded border border-zinc-800 p-3">
           <legend className="px-1 text-sm">Reverse lookup</legend>
           <select className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={lookupKind} onChange={(e) => setLookupKind(e.target.value)}>
             {LINK_KINDS.map((k) => (
               <option key={k} value={k}>{k}</option>
             ))}
           </select>
-          <input className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" placeholder="name" value={lookupName} onChange={(e) => setLookupName(e.target.value)} />
+          {lookupKind === "weapon" ? (
+            <input
+              className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+              placeholder="itemHash"
+              value={lookupItemHash}
+              onChange={(e) => setLookupItemHash(e.target.value)}
+            />
+          ) : (
+            <input
+              className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
+              placeholder="name"
+              value={lookupName}
+              onChange={(e) => setLookupName(e.target.value)}
+            />
+          )}
           <button type="button" className="rounded bg-emerald-700 px-3 py-1 text-sm" onClick={() => void reverseLookup()}>
             Lookup
           </button>
@@ -179,7 +366,7 @@ export function SynergiesDebugPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-medium">{panel.label}</h2>
+        <h2 className="mb-2 break-words text-sm font-medium">{panel.label}</h2>
         {panel.error !== undefined && (
           <pre className="mb-2 overflow-auto rounded bg-red-950/50 p-3 text-xs text-red-200">{JSON.stringify(panel.error, null, 2)}</pre>
         )}

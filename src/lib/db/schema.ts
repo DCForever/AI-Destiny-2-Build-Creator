@@ -96,6 +96,7 @@ export const synergies = sqliteTable("synergies", {
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   type: text("type").notNull(),
+  subType: text("sub_type"),
   description: text("description").notNull().default(""),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),

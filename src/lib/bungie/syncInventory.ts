@@ -3,8 +3,22 @@ import type { AppDatabase } from "@/lib/db/client";
 import { upsertInventoryBatch, getInventoryStatus } from "@/lib/db/repositories/inventoryRepository";
 import { updateUserMembership } from "@/lib/db/repositories/userRepository";
 import type { DbUser, UserInventoryItem } from "@/lib/db/types";
-import type { BungieProfileClient, DestinyMembership, RawInventoryItem } from "@/lib/bungie/types";
-import type { EntityCache } from "@/lib/manifest/types/services";
+import {
+  inventoryBucketLabel,
+  SUBCLASS_BUCKET_HASH,
+} from "@/lib/bungie/inventoryBuckets";
+import {
+  buildEquipmentBucketLookup,
+  needsEquipmentBucketResolution,
+  resolveTransferContainerBuckets,
+} from "@/lib/bungie/resolveEquipmentBuckets";
+import type {
+  BungieProfileClient,
+  DestinyMembership,
+  InventoryParseDiagnostics,
+  RawInventoryItem,
+} from "@/lib/bungie/types";
+import type { EntityCache, ManifestService } from "@/lib/manifest/types/services";
 import type { WeaponRecord } from "@/lib/manifest/types/records";
 
 const syncLocks = new Map<number, Promise<SyncInventoryResult>>();
@@ -13,6 +27,7 @@ export interface SyncInventoryResult {
   itemCount: number;
   syncVersion: number;
   lastFullSyncAt: string;
+  diagnostics: InventoryParseDiagnostics;
 }
 
 export class SyncInProgressError extends Error {
@@ -22,28 +37,95 @@ export class SyncInProgressError extends Error {
   }
 }
 
+
 function bucketLabel(bucketHash: number): string {
-  const labels: Record<number, string> = {
-    1498876634: "Kinetic",
-    2465295065: "Energy",
-    953998645: "Power",
-    3448274439: "Helmet",
-    3551918588: "Gauntlets",
-    14239492: "Chest",
-    20886954: "Legs",
-    1585787867: "ClassItem",
-    3284755031: "Subclass",
-  };
-  return labels[bucketHash] ?? "Unknown";
+  return inventoryBucketLabel(bucketHash);
 }
 
 async function buildWeaponLookup(cache: EntityCache): Promise<Map<number, WeaponRecord>> {
-  const weapons = await cache.getStore("weapons");
+  const [weapons, exoticWeapons] = await Promise.all([
+    cache.getStore("weapons"),
+    cache.getStore("exotic-weapons"),
+  ]);
   const lookup = new Map<number, WeaponRecord>();
-  for (const weapon of weapons) {
+  for (const weapon of [...weapons, ...exoticWeapons]) {
     lookup.set(weapon.hash, weapon);
   }
   return lookup;
+}
+
+async function buildExoticArmorHashSet(cache: EntityCache): Promise<Set<number>> {
+  const armor = await cache.getStore("exotic-armor");
+  return new Set(armor.map((piece) => piece.hash));
+}
+
+function enrichManifestDiagnostics(
+  diagnostics: InventoryParseDiagnostics,
+  rawItems: RawInventoryItem[],
+  weaponLookup: Map<number, WeaponRecord>,
+  exoticArmorHashes: Set<number>,
+): void {
+  const equipmentHashes = new Set<number>();
+  for (const item of rawItems) {
+    if (item.bucketHash === SUBCLASS_BUCKET_HASH) continue;
+    equipmentHashes.add(item.itemHash);
+  }
+
+  let inWeaponsCatalog = 0;
+  let inExoticArmorCatalog = 0;
+  for (const hash of equipmentHashes) {
+    if (weaponLookup.has(hash)) {
+      inWeaponsCatalog += 1;
+    }
+    if (exoticArmorHashes.has(hash)) {
+      inExoticArmorCatalog += 1;
+    }
+  }
+
+  const matchedHashes = new Set<number>();
+  for (const hash of equipmentHashes) {
+    if (weaponLookup.has(hash) || exoticArmorHashes.has(hash)) {
+      matchedHashes.add(hash);
+    }
+  }
+
+  diagnostics.manifest = {
+    equipmentItemHashes: equipmentHashes.size,
+    inWeaponsCatalog,
+    inExoticArmorCatalog,
+    unmatchedEquipmentHashes: equipmentHashes.size - matchedHashes.size,
+  };
+}
+
+function logInventorySyncDiagnostics(diagnostics: InventoryParseDiagnostics): void {
+  const topUnknownBuckets = Object.entries(diagnostics.dropped.unknownBuckets)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15);
+  console.info(
+    "[inventory-sync]",
+    JSON.stringify(
+      {
+        membership: diagnostics.membership,
+        rawTotal: diagnostics.raw.total,
+        parsedTotal: diagnostics.parsed.total,
+        equipmentTotal: diagnostics.parsed.equipmentTotal,
+        subclassTotal: diagnostics.parsed.subclassTotal,
+        droppedTotal: diagnostics.dropped.total,
+        dropped: {
+          invalidShape: diagnostics.dropped.invalidShape,
+          unknownBucket: diagnostics.dropped.unknownBucket,
+          missingInstanceId: diagnostics.dropped.missingInstanceId,
+          topUnknownBuckets,
+        },
+        byLocation: diagnostics.parsed.byLocation,
+        byBucket: diagnostics.parsed.byBucket,
+        resolution: diagnostics.resolution,
+        manifest: diagnostics.manifest,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 async function buildPerkNameMap(cache: EntityCache): Promise<Map<number, string>> {
@@ -96,6 +178,8 @@ async function performSync(
   accessToken: string,
   profileClient: BungieProfileClient,
   entityCache: EntityCache,
+  manifest: ManifestService,
+  manifestVersion: string,
 ): Promise<SyncInventoryResult> {
   const membership = await resolveDestinyMembership(profileClient, accessToken);
 
@@ -106,14 +190,37 @@ async function performSync(
     updateUserMembership(db, user.id, membership.membershipType, membership.displayName);
   }
 
-  const rawItems = await profileClient.getFullInventory(accessToken, membership);
-  const [perkNameMap, weaponLookup] = await Promise.all([
+  const { items: rawItems, diagnostics } = await profileClient.getFullInventoryWithDiagnostics(
+    accessToken,
+    membership,
+  );
+
+  const transferItemHashes = rawItems
+    .filter((item) => needsEquipmentBucketResolution(item.bucketHash))
+    .map((item) => item.itemHash);
+  const equipmentBucketLookup = await buildEquipmentBucketLookup(
+    manifest,
+    manifestVersion,
+    transferItemHashes,
+  );
+  const resolved = resolveTransferContainerBuckets(rawItems, equipmentBucketLookup);
+
+  const [perkNameMap, weaponLookup, exoticArmorHashes] = await Promise.all([
     buildPerkNameMap(entityCache),
     buildWeaponLookup(entityCache),
+    buildExoticArmorHashSet(entityCache),
   ]);
+  enrichManifestDiagnostics(diagnostics, resolved.items, weaponLookup, exoticArmorHashes);
 
   const syncedAt = new Date().toISOString();
-  const items = normalizeItems(rawItems, perkNameMap, weaponLookup, syncedAt);
+  const items = normalizeItems(resolved.items, perkNameMap, weaponLookup, syncedAt);
+  diagnostics.resolution = {
+    resolvedFromTransfer: resolved.resolvedFromTransfer,
+    droppedNonEquipment: resolved.droppedNonEquipment,
+    storedTotal: items.length,
+    storedEquipment: items.filter((item) => item.bucket !== "Subclass").length,
+  };
+  logInventorySyncDiagnostics(diagnostics);
   upsertInventoryBatch(db, user.id, items);
 
   const status = getInventoryStatus(db, user.id);
@@ -121,6 +228,7 @@ async function performSync(
     itemCount: status?.itemCount ?? items.length,
     syncVersion: status?.syncVersion ?? 1,
     lastFullSyncAt: status?.lastFullSyncAt ?? syncedAt,
+    diagnostics,
   };
 }
 
@@ -130,13 +238,23 @@ export async function syncUserInventory(
   accessToken: string,
   profileClient: BungieProfileClient,
   entityCache: EntityCache,
+  manifest: ManifestService,
+  manifestVersion: string,
 ): Promise<SyncInventoryResult> {
   const existing = syncLocks.get(user.id);
   if (existing) {
     throw new SyncInProgressError();
   }
 
-  const syncPromise = performSync(db, user, accessToken, profileClient, entityCache).finally(() => {
+  const syncPromise = performSync(
+    db,
+    user,
+    accessToken,
+    profileClient,
+    entityCache,
+    manifest,
+    manifestVersion,
+  ).finally(() => {
     syncLocks.delete(user.id);
   });
 

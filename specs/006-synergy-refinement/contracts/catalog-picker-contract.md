@@ -33,7 +33,7 @@ Supply searchable lists for synergy **sub-types** and **link targets** so the de
 **Sources** (see [research.md](../research.md)):
 
 - `verb` → deduplicated `subclasses.meta` verbs
-- `melee` \| `grenade` \| `super` → `Base` + manifest `abilities` filtered by kind
+- `melee` \| `grenade` \| `super` → `Base` + manifest `abilities` filtered by kind, deduplicated by display name
 - `element` → fixed seven elements (includes Kinetic)
 
 **Errors**: 400 invalid category; 503 manifest not loaded.

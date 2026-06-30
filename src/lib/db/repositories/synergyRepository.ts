@@ -10,6 +10,7 @@ export type SynergyRecord = {
   userId: number;
   name: string;
   type: SynergyType;
+  subType: string | null;
   description: string;
   createdAt: string;
   updatedAt: string;
@@ -50,6 +51,7 @@ function rowToSynergy(row: typeof synergies.$inferSelect): SynergyRecord {
     userId: row.userId,
     name: row.name,
     type: row.type as SynergyType,
+    subType: row.subType ?? null,
     description: row.description,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -121,6 +123,7 @@ export function createSynergyRecord(
     id: string;
     name: string;
     type: SynergyType;
+    subType: string | null;
     description: string;
     links: SynergyLinkInput[];
     now: string;
@@ -132,6 +135,7 @@ export function createSynergyRecord(
       userId,
       name: input.name,
       type: input.type,
+      subType: input.subType,
       description: input.description,
       createdAt: input.now,
       updatedAt: input.now,
@@ -149,6 +153,7 @@ export function updateSynergyRecord(
   patch: {
     name?: string;
     type?: SynergyType;
+    subType?: string | null;
     description?: string;
     links?: SynergyLinkInput[];
     now: string;
@@ -161,6 +166,7 @@ export function updateSynergyRecord(
     .set({
       name: patch.name ?? existing.name,
       type: patch.type ?? existing.type,
+      subType: patch.subType !== undefined ? patch.subType : existing.subType,
       description: patch.description ?? existing.description,
       updatedAt: patch.now,
     })
@@ -237,6 +243,7 @@ export function seedDefaultSynergies(db: AppDatabase, userId: number): SynergyWi
     id: crypto.randomUUID(),
     name: "Melee Combo",
     type: "melee",
+    subType: "Base",
     description: "Default melee synergy for dev/testing",
     links: [],
     now,

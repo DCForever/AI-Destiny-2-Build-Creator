@@ -29,7 +29,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const { entityCache } = await getServices();
+    const { entityCache, manifest } = await getServices();
+    const manifestStatus = await manifest.getStatus();
+    if (!manifestStatus.cachedVersion) {
+      return NextResponse.json(
+        { error: "Manifest not ready. Refresh the manifest from Settings first." },
+        { status: 503 },
+      );
+    }
     const db = getDb();
     const result = await syncUserInventory(
       db,
@@ -37,6 +44,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       auth.tokens.accessToken,
       profileClient,
       entityCache,
+      manifest,
+      manifestStatus.cachedVersion,
     );
     return NextResponse.json(result);
   } catch (error) {

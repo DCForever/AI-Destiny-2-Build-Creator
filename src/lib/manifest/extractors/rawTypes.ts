@@ -36,6 +36,7 @@ export interface RawSockets {
 
 export interface RawInventoryBlock {
   tierType?: number;
+  bucketTypeHash?: number;
 }
 
 export interface RawEquippingBlock {

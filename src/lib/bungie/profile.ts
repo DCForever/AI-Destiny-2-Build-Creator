@@ -1,12 +1,20 @@
 import { getBungieOAuthConfig } from "@/lib/config/env";
 import type { DestinyClassName } from "@/lib/manifest/types/records";
+import {
+  EQUIPMENT_BUCKET_DISPLAY_LABELS,
+  isParsableInventoryBucket,
+  parseBucketLabel,
+  SUBCLASS_BUCKET_HASH,
+} from "./inventoryBuckets";
 import type {
   BungieProfileClient,
   CharacterEquipment,
   CharacterSummary,
   DestinyMembership,
   EquippedItemSummary,
+  FullInventoryParseResult,
   InventoryLocation,
+  InventoryParseDiagnostics,
   RawInventoryItem,
 } from "./types";
 
@@ -18,30 +26,7 @@ const CLASS_NAMES: Record<number, DestinyClassName> = {
   2: "Warlock",
 };
 
-const BUCKET_LABELS: Record<number, string> = {
-  1498876634: "Kinetic",
-  2465295065: "Energy",
-  953998645: "Power",
-  3448274439: "Helmet",
-  3551918588: "Gauntlets",
-  14239492: "Chest",
-  20886954: "Legs",
-  1585787867: "ClassItem",
-  3284755031: "Subclass",
-};
-
-/** Legacy display labels for equipment import text. */
-const BUCKET_DISPLAY_LABELS: Record<number, string> = {
-  1498876634: "Kinetic Weapons",
-  2465295065: "Energy Weapons",
-  953998645: "Power Weapons",
-  3448274439: "Helmet",
-  3551918588: "Gauntlets",
-  14239492: "Chest Armor",
-  20886954: "Leg Armor",
-  1585787867: "Class Armor",
-  3284755031: "Subclass",
-};
+const BUCKET_DISPLAY_LABELS = EQUIPMENT_BUCKET_DISPLAY_LABELS;
 
 const INVENTORY_COMPONENTS = "102,201,205,300,305";
 
@@ -117,9 +102,17 @@ export class HttpBungieProfileClient implements BungieProfileClient {
     accessToken: string,
     membership: DestinyMembership,
   ): Promise<RawInventoryItem[]> {
+    const { items } = await this.getFullInventoryWithDiagnostics(accessToken, membership);
+    return items;
+  }
+
+  async getFullInventoryWithDiagnostics(
+    accessToken: string,
+    membership: DestinyMembership,
+  ): Promise<FullInventoryParseResult> {
     const path = `/Destiny2/${membership.membershipType}/Profile/${membership.membershipId}/?components=${INVENTORY_COMPONENTS}`;
     const response = await this.bungieGet(path, accessToken);
-    return parseFullInventoryResponse(response);
+    return parseFullInventoryResponseWithDiagnostics(response, membership);
   }
 }
 
@@ -236,7 +229,18 @@ function parseEquippedItem(
   return [{ itemHash, bucket, plugHashes }];
 }
 
-function parseFullInventoryResponse(response: unknown): RawInventoryItem[] {
+type InventoryDropReason = "invalid_shape" | "unknown_bucket" | "missing_instance_id";
+
+interface InventoryParseAttempt {
+  item: RawInventoryItem | null;
+  dropReason: InventoryDropReason | null;
+  bucketHash?: number;
+}
+
+function parseFullInventoryResponseWithDiagnostics(
+  response: unknown,
+  membership: DestinyMembership,
+): FullInventoryParseResult {
   if (typeof response !== "object" || response === null) {
     throw new Error("Unexpected inventory response shape");
   }
@@ -244,30 +248,163 @@ function parseFullInventoryResponse(response: unknown): RawInventoryItem[] {
   const socketsMap = extractSocketsMap(res.itemComponents);
   const instancesMap = extractInstancesMap(res.itemComponents);
   const items: RawInventoryItem[] = [];
+  const diagnostics = createEmptyInventoryDiagnostics(membership);
 
   const vaultItems = extractItemList(res.profileInventory);
+  diagnostics.raw.vault = vaultItems.length;
   for (const raw of vaultItems) {
-    const parsed = parseInventoryItem(raw, "vault", undefined, socketsMap, instancesMap);
-    if (parsed) items.push(parsed);
+    recordInventoryParseAttempt(
+      parseInventoryItemAttempt(raw, "vault", undefined, socketsMap, instancesMap),
+      diagnostics,
+      items,
+    );
   }
 
   const charInventories = extractCharacterItemSections(res.characterInventories);
   for (const [charId, rawItems] of Object.entries(charInventories)) {
+    diagnostics.raw.characterInventories[charId] = rawItems.length;
+    diagnostics.raw.characterInventoriesTotal += rawItems.length;
     for (const raw of rawItems) {
-      const parsed = parseInventoryItem(raw, "character", charId, socketsMap, instancesMap);
-      if (parsed) items.push(parsed);
+      recordInventoryParseAttempt(
+        parseInventoryItemAttempt(raw, "character", charId, socketsMap, instancesMap),
+        diagnostics,
+        items,
+      );
     }
   }
 
   const charEquipment = extractCharacterItemSections(res.characterEquipment);
   for (const [charId, rawItems] of Object.entries(charEquipment)) {
+    diagnostics.raw.characterEquipment[charId] = rawItems.length;
+    diagnostics.raw.characterEquipmentTotal += rawItems.length;
     for (const raw of rawItems) {
-      const parsed = parseInventoryItem(raw, "equipped", charId, socketsMap, instancesMap);
-      if (parsed) items.push(parsed);
+      recordInventoryParseAttempt(
+        parseInventoryItemAttempt(raw, "equipped", charId, socketsMap, instancesMap),
+        diagnostics,
+        items,
+      );
     }
   }
 
-  return items;
+  diagnostics.raw.total =
+    diagnostics.raw.vault +
+    diagnostics.raw.characterInventoriesTotal +
+    diagnostics.raw.characterEquipmentTotal;
+
+  return { items, diagnostics };
+}
+
+function createEmptyInventoryDiagnostics(
+  membership: DestinyMembership,
+): InventoryParseDiagnostics {
+  return {
+    membership: {
+      membershipType: membership.membershipType,
+      membershipId: membership.membershipId,
+      displayName: membership.displayName,
+    },
+    raw: {
+      vault: 0,
+      characterInventories: {},
+      characterInventoriesTotal: 0,
+      characterEquipment: {},
+      characterEquipmentTotal: 0,
+      total: 0,
+    },
+    parsed: {
+      total: 0,
+      equipmentTotal: 0,
+      subclassTotal: 0,
+      byLocation: { vault: 0, character: 0, equipped: 0 },
+      byBucket: {},
+    },
+    dropped: {
+      total: 0,
+      invalidShape: 0,
+      unknownBucket: 0,
+      missingInstanceId: 0,
+      unknownBuckets: {},
+    },
+  };
+}
+
+function recordInventoryParseAttempt(
+  attempt: InventoryParseAttempt,
+  diagnostics: InventoryParseDiagnostics,
+  items: RawInventoryItem[],
+): void {
+  if (attempt.item) {
+    items.push(attempt.item);
+    diagnostics.parsed.total += 1;
+    diagnostics.parsed.byLocation[attempt.item.location] += 1;
+    const bucketLabel = parseBucketLabel(attempt.item.bucketHash);
+    diagnostics.parsed.byBucket[bucketLabel] =
+      (diagnostics.parsed.byBucket[bucketLabel] ?? 0) + 1;
+    if (attempt.item.bucketHash === SUBCLASS_BUCKET_HASH) {
+      diagnostics.parsed.subclassTotal += 1;
+    } else {
+      diagnostics.parsed.equipmentTotal += 1;
+    }
+    return;
+  }
+
+  diagnostics.dropped.total += 1;
+  if (attempt.dropReason === "invalid_shape") {
+    diagnostics.dropped.invalidShape += 1;
+    return;
+  }
+  if (attempt.dropReason === "missing_instance_id") {
+    diagnostics.dropped.missingInstanceId += 1;
+    return;
+  }
+  if (attempt.dropReason === "unknown_bucket" && attempt.bucketHash !== undefined) {
+    diagnostics.dropped.unknownBucket += 1;
+    const key = String(attempt.bucketHash);
+    diagnostics.dropped.unknownBuckets[key] = (diagnostics.dropped.unknownBuckets[key] ?? 0) + 1;
+  }
+}
+
+function parseInventoryItemAttempt(
+  raw: unknown,
+  location: InventoryLocation,
+  characterId: string | undefined,
+  socketsMap: Record<string, unknown[]>,
+  instancesMap: Record<string, Record<string, unknown>>,
+): InventoryParseAttempt {
+  if (typeof raw !== "object" || raw === null) {
+    return { item: null, dropReason: "invalid_shape" };
+  }
+  const item = raw as Record<string, unknown>;
+  const bucketHash = Number(item.bucketHash);
+  if (!isParsableInventoryBucket(bucketHash)) {
+    return { item: null, dropReason: "unknown_bucket", bucketHash };
+  }
+
+  const instanceId = typeof item.itemInstanceId === "string" ? item.itemInstanceId : null;
+  if (!instanceId) {
+    return { item: null, dropReason: "missing_instance_id", bucketHash };
+  }
+
+  const instance = instancesMap[instanceId];
+  const power = parseItemPower(instance);
+  const isMasterwork = parseIsMasterwork(instance);
+  const isCrafted = parseIsCrafted(instance);
+  const plugHashes = parsePlugHashes(socketsMap[instanceId] ?? []);
+
+  return {
+    item: {
+      instanceId,
+      itemHash: Number(item.itemHash),
+      bucketHash,
+      location,
+      characterId,
+      power,
+      plugHashes,
+      isMasterwork,
+      isCrafted,
+    },
+    dropReason: null,
+  };
 }
 
 function extractItemList(section: unknown): unknown[] {
@@ -305,40 +442,6 @@ function extractInstancesMap(itemComponents: unknown): Record<string, Record<str
     }
   }
   return result;
-}
-
-function parseInventoryItem(
-  raw: unknown,
-  location: InventoryLocation,
-  characterId: string | undefined,
-  socketsMap: Record<string, unknown[]>,
-  instancesMap: Record<string, Record<string, unknown>>,
-): RawInventoryItem | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const item = raw as Record<string, unknown>;
-  const bucketHash = Number(item.bucketHash);
-  if (!BUCKET_LABELS[bucketHash]) return null;
-
-  const instanceId = typeof item.itemInstanceId === "string" ? item.itemInstanceId : null;
-  if (!instanceId) return null;
-
-  const instance = instancesMap[instanceId];
-  const power = parseItemPower(instance);
-  const isMasterwork = parseIsMasterwork(instance);
-  const isCrafted = parseIsCrafted(instance);
-  const plugHashes = parsePlugHashes(socketsMap[instanceId] ?? []);
-
-  return {
-    instanceId,
-    itemHash: Number(item.itemHash),
-    bucketHash,
-    location,
-    characterId,
-    power,
-    plugHashes,
-    isMasterwork,
-    isCrafted,
-  };
 }
 
 function parseItemPower(instance: Record<string, unknown> | undefined): number {

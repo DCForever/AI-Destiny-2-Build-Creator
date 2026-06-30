@@ -44,7 +44,9 @@ export default async function DebugLayout({ children }: { children: React.ReactN
           </a>
         </nav>
       </header>
-      <main className="p-4">{children}</main>
+      <main className="min-w-0 overflow-x-hidden p-4 [&_input]:max-w-full [&_pre]:max-w-full [&_pre]:min-w-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_select]:max-w-full">
+        {children}
+      </main>
     </div>
   );
 }
