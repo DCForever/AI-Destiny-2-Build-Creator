@@ -9,6 +9,8 @@ export type CatalogItem = {
   itemTypeName?: string;
   frame?: string;
   classType?: string;
+  setBonusName?: string;
+  setBonusHash?: number;
   isExotic: boolean;
   owned: boolean;
   ownedCount: number;
@@ -22,5 +24,10 @@ export type CatalogFilterParams = {
   itemType?: string;
   frame?: string;
   className?: string;
+  perk?: string;
+  originTrait?: string;
+  setBonus?: string;
   limit?: number;
+  weaponHashAllowlist?: Set<number>;
+  armorHashAllowlist?: Set<number>;
 };

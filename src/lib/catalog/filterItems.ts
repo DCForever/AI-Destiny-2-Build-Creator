@@ -7,6 +7,7 @@ import type {
 } from "@/lib/manifest/types/records";
 
 import { compareDisplayName } from "@/lib/sortByName";
+import type { LegendaryArmorRow } from "./legendaryArmor";
 import type { CatalogFilterParams, CatalogItem } from "./types";
 
 export const WEAPON_INVENTORY_BUCKETS = new Set(["Kinetic", "Energy", "Power"]);
@@ -33,6 +34,7 @@ export type WeaponCatalogSource = {
 
 export type ArmorCatalogSource = {
   exoticArmor: ExoticArmorRecord[];
+  legendaryArmor?: LegendaryArmorRow[];
 };
 
 export type InventoryBucketRow = { itemHash: number; bucket: string };
@@ -154,7 +156,10 @@ function weaponToCatalog(
   };
 }
 
-function armorToCatalog(record: ExoticArmorRecord, ownedCount: number): SearchableCatalogRow {
+function armorToCatalog(
+  record: ExoticArmorRecord,
+  ownedCount: number,
+): SearchableCatalogRow {
   return {
     hash: record.hash,
     name: record.name,
@@ -167,6 +172,30 @@ function armorToCatalog(record: ExoticArmorRecord, ownedCount: number): Searchab
     owned: ownedCount > 0,
     ownedCount,
   };
+}
+
+function legendaryArmorToCatalog(record: LegendaryArmorRow, ownedCount: number): SearchableCatalogRow {
+  return {
+    hash: record.hash,
+    name: record.name,
+    searchName: record.searchName,
+    icon: record.icon,
+    slot: record.slot,
+    classType: record.classType,
+    setBonusName: record.setBonusName,
+    setBonusHash: record.setBonusHash,
+    isExotic: false,
+    owned: ownedCount > 0,
+    ownedCount,
+  };
+}
+
+function applyHashAllowlist(
+  rows: SearchableCatalogRow[],
+  allowlist: Set<number> | undefined,
+): SearchableCatalogRow[] {
+  if (!allowlist) return rows;
+  return rows.filter((row) => allowlist.has(row.hash));
 }
 
 function applyFieldFilters(rows: SearchableCatalogRow[], params: CatalogFilterParams): SearchableCatalogRow[] {
@@ -222,6 +251,7 @@ export function filterWeaponCatalog(
   }
 
   rows = applyFieldFilters(rows, params);
+  rows = applyHashAllowlist(rows, params.weaponHashAllowlist);
   rows = applySearch(rows, params.q);
   return finalize(rows, params.limit);
 }
@@ -235,7 +265,14 @@ export function filterArmorCatalog(
 ): CatalogItem[] {
   const owned = params.ownedHashes ?? new Map<number, number>();
   const projections = params.inventoryProjections ?? new Map<number, InventoryHashProjection>();
+  const includeLegendary = Boolean(params.setBonus?.trim() || params.armorHashAllowlist);
   let rows: SearchableCatalogRow[] = source.exoticArmor.map((a) => armorToCatalog(a, 0));
+  if (includeLegendary && source.legendaryArmor) {
+    rows = [
+      ...rows,
+      ...source.legendaryArmor.map((a) => legendaryArmorToCatalog(a, 0)),
+    ];
+  }
 
   const aggregated = aggregateOwnedCountsBySearchName(rows, owned, projections);
   applyAggregatedOwnedCounts(rows, aggregated);
@@ -249,6 +286,7 @@ export function filterArmorCatalog(
   }
 
   rows = applyFieldFilters(rows, params);
+  rows = applyHashAllowlist(rows, params.armorHashAllowlist);
   rows = applySearch(rows, params.q);
   return finalize(rows, params.limit);
 }

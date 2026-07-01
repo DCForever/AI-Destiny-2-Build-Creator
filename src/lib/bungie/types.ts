@@ -5,6 +5,7 @@
  */
 
 import type { DestinyClassName } from "@/lib/manifest/types/records";
+import type { ArmorStatName } from "@/data/rules/statBenefits";
 
 /** Stored inside the encrypted iron-session cookie. */
 export interface BungieTokens {
@@ -71,6 +72,7 @@ export interface RawInventoryItem {
   plugHashes: number[];
   isMasterwork: boolean;
   isCrafted: boolean;
+  statValues?: Partial<Record<ArmorStatName, number>>;
 }
 
 export interface InventoryParseDiagnostics {

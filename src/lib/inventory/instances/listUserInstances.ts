@@ -10,7 +10,7 @@ import {
   hasActiveFilter,
 } from "./filterInstances";
 import { isEquipmentBucket, projectInstance } from "./projectInstance";
-import { sortInstancesByPower } from "./sortInstances";
+import { sortInstances } from "./sortInstances";
 import type { CharacterLabel, InstanceFilterCriteria, ListInstancesResult } from "./types";
 
 export interface ListUserInstancesInput {
@@ -60,7 +60,12 @@ export function listUserInstances(input: ListUserInstancesInput): ListInstancesR
     instances = filterProjectedByPerkQuery(instances, input.criteria.q);
   }
 
-  instances = sortInstancesByPower(instances);
+  const armorSortBy =
+    input.criteria.sortBy &&
+    (input.criteria.kind === "armor" || instances.every((row) => row.kind === "armor"))
+      ? input.criteria.sortBy
+      : undefined;
+  instances = sortInstances(instances, armorSortBy);
 
   return {
     instances,

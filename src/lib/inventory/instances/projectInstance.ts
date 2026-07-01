@@ -5,6 +5,10 @@ import {
 } from "@/lib/catalog/filterItems";
 
 import { resolvePlugs } from "./resolvePlugs";
+import {
+  computeTotalArmorStats,
+  isCompleteArmorStats,
+} from "./parseArmorStats";
 import type { CharacterLabel, InstanceKind, OwnedInstanceDetail } from "./types";
 
 export function bucketKind(bucket: string): InstanceKind | null {
@@ -51,6 +55,13 @@ export function projectInstance(
     isCrafted: item.isCrafted,
     rollTags: item.rollTags,
     plugs: resolvePlugs(item.plugHashes, plugMap),
+    statValues: kind === "armor" ? item.statValues : undefined,
+    totalStats:
+      kind === "armor" && item.statValues ? computeTotalArmorStats(item.statValues) : undefined,
+    statsIncomplete:
+      kind === "armor"
+        ? !item.statValues || !isCompleteArmorStats(item.statValues)
+        : undefined,
     syncedAt: item.syncedAt,
   };
 }

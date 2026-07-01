@@ -158,6 +158,7 @@ function normalizeItems(
       isCrafted: raw.isCrafted,
       plugHashes: raw.plugHashes,
       rollTags,
+      statValues: raw.statValues,
       syncedAt,
     };
   });

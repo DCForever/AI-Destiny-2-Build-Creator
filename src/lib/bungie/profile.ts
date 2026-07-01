@@ -1,7 +1,10 @@
 import { getBungieOAuthConfig } from "@/lib/config/env";
 import type { DestinyClassName } from "@/lib/manifest/types/records";
+import { parseArmorStatValues } from "@/lib/inventory/instances/parseArmorStats";
+import type { BungieStatEntry } from "@/lib/inventory/instances/parseArmorStats";
 import {
   EQUIPMENT_BUCKET_DISPLAY_LABELS,
+  EQUIPMENT_BUCKET_LABELS,
   isParsableInventoryBucket,
   parseBucketLabel,
   SUBCLASS_BUCKET_HASH,
@@ -27,6 +30,16 @@ const CLASS_NAMES: Record<number, DestinyClassName> = {
 };
 
 const BUCKET_DISPLAY_LABELS = EQUIPMENT_BUCKET_DISPLAY_LABELS;
+
+const ARMOR_BUCKET_HASHES = new Set(
+  Object.entries(EQUIPMENT_BUCKET_LABELS)
+    .filter(([, label]) => ["Helmet", "Gauntlets", "Chest", "Legs", "ClassItem"].includes(label))
+    .map(([hash]) => Number(hash)),
+);
+
+function isArmorBucketHash(bucketHash: number): boolean {
+  return ARMOR_BUCKET_HASHES.has(bucketHash);
+}
 
 const INVENTORY_COMPONENTS = "102,201,205,300,305";
 
@@ -199,6 +212,30 @@ function extractCharacterItems(
   return Array.isArray(c.items) ? c.items : [];
 }
 
+function extractStatsMap(itemComponents: unknown): Record<string, BungieStatEntry[]> {
+  if (typeof itemComponents !== "object" || itemComponents === null) return {};
+  const ic = itemComponents as Record<string, unknown>;
+  const stats = ic.stats;
+  if (typeof stats !== "object" || stats === null) return {};
+  const s = stats as Record<string, unknown>;
+  if (typeof s.data !== "object" || s.data === null) return {};
+  const result: Record<string, BungieStatEntry[]> = {};
+  for (const [id, entry] of Object.entries(s.data as Record<string, unknown>)) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const e = entry as Record<string, unknown>;
+    const rows = Array.isArray(e.stats) ? e.stats : [];
+    const parsed: BungieStatEntry[] = [];
+    for (const row of rows) {
+      if (typeof row !== "object" || row === null) continue;
+      const stat = row as Record<string, unknown>;
+      if (typeof stat.statHash !== "number" || typeof stat.value !== "number") continue;
+      parsed.push({ statHash: stat.statHash, value: stat.value });
+    }
+    if (parsed.length > 0) result[id] = parsed;
+  }
+  return result;
+}
+
 function extractSocketsMap(itemComponents: unknown): Record<string, unknown[]> {
   if (typeof itemComponents !== "object" || itemComponents === null) return {};
   const ic = itemComponents as Record<string, unknown>;
@@ -246,6 +283,7 @@ function parseFullInventoryResponseWithDiagnostics(
   }
   const res = response as Record<string, unknown>;
   const socketsMap = extractSocketsMap(res.itemComponents);
+  const statsMap = extractStatsMap(res.itemComponents);
   const instancesMap = extractInstancesMap(res.itemComponents);
   const items: RawInventoryItem[] = [];
   const diagnostics = createEmptyInventoryDiagnostics(membership);
@@ -254,7 +292,7 @@ function parseFullInventoryResponseWithDiagnostics(
   diagnostics.raw.vault = vaultItems.length;
   for (const raw of vaultItems) {
     recordInventoryParseAttempt(
-      parseInventoryItemAttempt(raw, "vault", undefined, socketsMap, instancesMap),
+      parseInventoryItemAttempt(raw, "vault", undefined, socketsMap, instancesMap, statsMap),
       diagnostics,
       items,
     );
@@ -266,7 +304,7 @@ function parseFullInventoryResponseWithDiagnostics(
     diagnostics.raw.characterInventoriesTotal += rawItems.length;
     for (const raw of rawItems) {
       recordInventoryParseAttempt(
-        parseInventoryItemAttempt(raw, "character", charId, socketsMap, instancesMap),
+        parseInventoryItemAttempt(raw, "character", charId, socketsMap, instancesMap, statsMap),
         diagnostics,
         items,
       );
@@ -279,7 +317,7 @@ function parseFullInventoryResponseWithDiagnostics(
     diagnostics.raw.characterEquipmentTotal += rawItems.length;
     for (const raw of rawItems) {
       recordInventoryParseAttempt(
-        parseInventoryItemAttempt(raw, "equipped", charId, socketsMap, instancesMap),
+        parseInventoryItemAttempt(raw, "equipped", charId, socketsMap, instancesMap, statsMap),
         diagnostics,
         items,
       );
@@ -370,6 +408,7 @@ function parseInventoryItemAttempt(
   characterId: string | undefined,
   socketsMap: Record<string, unknown[]>,
   instancesMap: Record<string, Record<string, unknown>>,
+  statsMap: Record<string, BungieStatEntry[]>,
 ): InventoryParseAttempt {
   if (typeof raw !== "object" || raw === null) {
     return { item: null, dropReason: "invalid_shape" };
@@ -390,6 +429,9 @@ function parseInventoryItemAttempt(
   const isMasterwork = parseIsMasterwork(instance);
   const isCrafted = parseIsCrafted(instance);
   const plugHashes = parsePlugHashes(socketsMap[instanceId] ?? []);
+  const statValues = isArmorBucketHash(bucketHash)
+    ? parseArmorStatValues(statsMap[instanceId])
+    : undefined;
 
   return {
     item: {
@@ -402,6 +444,7 @@ function parseInventoryItemAttempt(
       plugHashes,
       isMasterwork,
       isCrafted,
+      statValues: statValues ?? undefined,
     },
     dropReason: null,
   };

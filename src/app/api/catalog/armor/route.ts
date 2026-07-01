@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { resolveOwnedCatalogContext } from "@/app/api/catalog/_ownedFilter";
+import { emptyFilterMessage } from "@/lib/catalog/emptyFilterResult";
 import { filterArmorCatalog } from "@/lib/catalog/filterItems";
 import { resolveInventoryHashProjections } from "@/lib/catalog/inventoryHashProjections";
+import { loadLegendaryArmorRows } from "@/lib/catalog/legendaryArmor";
+import { resolveSetBonusFilter } from "@/lib/catalog/setBonusFilter";
 import { attachInstancePointers } from "@/lib/inventory/instances/catalogPointer";
 import { getDb } from "@/lib/db/client";
 import { getServices } from "@/lib/services";
@@ -16,6 +19,7 @@ const querySchema = z.object({
   slot: z.enum(["Helmet", "Gauntlets", "Chest", "Legs", "ClassItem"]).optional(),
   className: z.enum(["Titan", "Hunter", "Warlock"]).optional(),
   frame: z.string().trim().optional(),
+  setBonus: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   includeInstancePointer: z.enum(["0", "1"]).optional(),
 });
@@ -28,6 +32,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     slot: url.searchParams.get("slot") ?? undefined,
     className: url.searchParams.get("className") ?? undefined,
     frame: url.searchParams.get("frame") ?? undefined,
+    setBonus: url.searchParams.get("setBonus") ?? undefined,
     limit: url.searchParams.get("limit") ?? "100",
     includeInstancePointer: url.searchParams.get("includeInstancePointer") ?? undefined,
   });
@@ -64,7 +69,37 @@ export async function GET(request: Request): Promise<NextResponse> {
     const manifestStatus = await manifest.getStatus();
     const exoticArmor = await entityCache.getStore("exotic-armor");
 
-    const storeHashes = new Set(exoticArmor.map((armor) => armor.hash));
+    let armorHashAllowlist: Set<number> | undefined;
+    let legendaryArmor:
+      | Awaited<ReturnType<typeof loadLegendaryArmorRows>>
+      | undefined;
+
+    if (parsed.data.setBonus?.trim()) {
+      const setBonuses = await entityCache.getStore("set-bonuses");
+      const resolution = resolveSetBonusFilter(parsed.data.setBonus, setBonuses);
+      if (!resolution.ok) {
+        return NextResponse.json({
+          items: [],
+          count: 0,
+          scope: parsed.data.scope,
+          syncPrompt: parsed.data.scope === "owned" ? syncPrompt : false,
+          message: emptyFilterMessage({ setBonus: parsed.data.setBonus }),
+        });
+      }
+      armorHashAllowlist = resolution.armorHashes;
+      if (manifestStatus.cachedVersion) {
+        legendaryArmor = await loadLegendaryArmorRows(
+          resolution.sets,
+          manifest,
+          manifestStatus.cachedVersion,
+        );
+      }
+    }
+
+    const storeHashes = new Set([
+      ...exoticArmor.map((armor) => armor.hash),
+      ...(legendaryArmor?.map((row) => row.hash) ?? []),
+    ]);
     const unknownOwnedHashes = [...ownedHashes.keys()].filter((hash) => !storeHashes.has(hash));
     const inventoryProjections =
       unknownOwnedHashes.length > 0 && manifestStatus.cachedVersion
@@ -76,8 +111,13 @@ export async function GET(request: Request): Promise<NextResponse> {
         : new Map();
 
     const filtered = filterArmorCatalog(
-      { exoticArmor },
-      { ...parsed.data, ownedHashes, inventoryProjections },
+      { exoticArmor, legendaryArmor },
+      {
+        ...parsed.data,
+        ownedHashes,
+        inventoryProjections,
+        armorHashAllowlist,
+      },
     );
     const includePointer =
       parsed.data.scope === "owned" && parsed.data.includeInstancePointer === "1";

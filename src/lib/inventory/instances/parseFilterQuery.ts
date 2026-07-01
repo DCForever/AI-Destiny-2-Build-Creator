@@ -15,6 +15,7 @@ export function parseInstanceFilterQuery(params: URLSearchParams): InstanceFilte
     bucket: params.get("bucket") ?? undefined,
     kind: params.get("kind") ?? undefined,
     q: params.get("q") ?? undefined,
+    sortBy: params.get("sortBy") ?? undefined,
   };
 
   const parsed = instanceFilterQuerySchema.safeParse(raw);
@@ -27,5 +28,6 @@ export function parseInstanceFilterQuery(params: URLSearchParams): InstanceFilte
     bucket: parsed.data.bucket,
     kind: kindFromQuery(parsed.data.kind),
     q: parsed.data.q,
+    sortBy: parsed.data.sortBy,
   };
 }

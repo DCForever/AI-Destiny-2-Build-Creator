@@ -1,5 +1,6 @@
 import type { GeneratedBuild, BuildRequest } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
+import type { ArmorStatName } from "@/data/rules/statBenefits";
 
 export type RollTag =
   | "MeleeBuildCandidate"
@@ -20,6 +21,7 @@ export interface UserInventoryItem {
   isCrafted: boolean;
   plugHashes: number[];
   rollTags: RollTag[];
+  statValues?: Partial<Record<ArmorStatName, number>>;
   syncedAt: string;
 }
 

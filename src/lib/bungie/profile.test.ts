@@ -149,6 +149,49 @@ const FULL_INVENTORY_RESPONSE = {
   },
 };
 
+const ARMOR_STATS_RESPONSE = {
+  ErrorCode: 1,
+  Response: {
+    profileInventory: {
+      data: {
+        items: [
+          {
+            itemHash: 700001,
+            bucketHash: 3448274439,
+            itemInstanceId: "armor1",
+          },
+        ],
+      },
+    },
+    itemComponents: {
+      instances: {
+        data: {
+          armor1: { primaryStat: { value: 1810 } },
+        },
+      },
+      sockets: {
+        data: {
+          armor1: { sockets: [] },
+        },
+      },
+      stats: {
+        data: {
+          armor1: {
+            stats: [
+              { statHash: 392767087, value: 10 },
+              { statHash: 4244567218, value: 20 },
+              { statHash: 1735777505, value: 5 },
+              { statHash: 144602215, value: 8 },
+              { statHash: 1943323491, value: 12 },
+              { statHash: 2996146975, value: 15 },
+            ],
+          },
+        },
+      },
+    },
+  },
+};
+
 describe("HttpBungieProfileClient.getFullInventory", () => {
   const membership = { membershipType: 3, membershipId: "mem1", displayName: "G1" };
 
@@ -203,6 +246,52 @@ describe("HttpBungieProfileClient.getFullInventory", () => {
     expect(diagnostics.dropped.unknownBucket).toBe(0);
     expect(diagnostics.dropped.missingInstanceId).toBe(1);
     expect(items.some((item) => item.instanceId === "vault-general1")).toBe(true);
+  });
+
+  it("parses armor stat values from itemComponents.stats", async () => {
+    const items = await makeClient(makeOkFetch(ARMOR_STATS_RESPONSE)).getFullInventory(
+      ACCESS_TOKEN,
+      membership,
+    );
+
+    expect(items).toHaveLength(1);
+    const armor = items[0]!;
+    expect(armor.statValues).toEqual({
+      Health: 10,
+      Melee: 20,
+      Grenade: 5,
+      Super: 8,
+      Class: 12,
+      Weapons: 15,
+    });
+  });
+
+  it("omits statValues for weapons and partial armor stats", async () => {
+    const partialStatsResponse = {
+      ...ARMOR_STATS_RESPONSE,
+      Response: {
+        ...ARMOR_STATS_RESPONSE.Response,
+        itemComponents: {
+          ...ARMOR_STATS_RESPONSE.Response.itemComponents,
+          stats: {
+            data: {
+              armor1: {
+                stats: [
+                  { statHash: 392767087, value: 10 },
+                  { statHash: 4244567218, value: 20 },
+                ],
+              },
+            },
+          },
+        },
+      },
+    };
+    const items = await makeClient(makeOkFetch(partialStatsResponse)).getFullInventory(
+      ACCESS_TOKEN,
+      membership,
+    );
+
+    expect(items[0]?.statValues).toEqual({ Health: 10, Melee: 20 });
   });
 });
 

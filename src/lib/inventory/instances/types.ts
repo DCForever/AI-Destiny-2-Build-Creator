@@ -1,5 +1,8 @@
 import type { RollTag } from "@/lib/db/types";
+import type { ArmorStatName } from "@/data/rules/statBenefits";
 import type { DestinyClassName } from "@/lib/manifest/types/records";
+
+import type { ArmorStatSortBy } from "./sortInstances";
 
 export type InstanceKind = "weapon" | "armor";
 
@@ -24,6 +27,9 @@ export interface OwnedInstanceDetail {
   isCrafted: boolean;
   rollTags: RollTag[];
   plugs: ResolvedPlug[];
+  statValues?: Partial<Record<ArmorStatName, number>>;
+  totalStats?: number;
+  statsIncomplete?: boolean;
   syncedAt: string;
 }
 
@@ -32,6 +38,7 @@ export interface InstanceFilterCriteria {
   bucket?: string;
   kind?: InstanceKind;
   q?: string;
+  sortBy?: ArmorStatSortBy;
 }
 
 export interface CharacterLabel {

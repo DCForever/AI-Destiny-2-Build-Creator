@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { ExoticArmorRecord, ExoticWeaponRecord, WeaponRecord } from "@/lib/manifest/types/records";
 
 import { filterArmorCatalog, filterWeaponCatalog, ownedHashesFromInventory, aggregateOwnedCountsBySearchName } from "./filterItems";
+import {
+  FIXTURE_SET_EUTECHNOLOGY,
+  FIXTURE_WEAPON_NO_PERKS,
+  FIXTURE_WEAPON_WITH_INCANDESCENT,
+} from "./__fixtures__/setLookupFixtures";
+import { buildLegendaryArmorRows } from "./legendaryArmor";
 
 const legendaryAuto: WeaponRecord = {
   hash: 1001,
@@ -141,6 +147,37 @@ describe("filterWeaponCatalog", () => {
     );
     expect(results).toHaveLength(0);
   });
+
+  it("filters by weapon hash allowlist (perk)", () => {
+    const results = filterWeaponCatalog(
+      { weapons: [legendaryAuto, FIXTURE_WEAPON_WITH_INCANDESCENT], exoticWeapons: [] },
+      { scope: "all", weaponHashAllowlist: new Set([7001]) },
+    );
+    expect(results).toHaveLength(1);
+    expect(results[0]?.hash).toBe(7001);
+  });
+
+  it("filters by origin trait allowlist", () => {
+    const results = filterWeaponCatalog(
+      {
+        weapons: [FIXTURE_WEAPON_WITH_INCANDESCENT, FIXTURE_WEAPON_NO_PERKS],
+        exoticWeapons: [],
+      },
+      { scope: "all", weaponHashAllowlist: new Set([7001]) },
+    );
+    expect(results.map((r) => r.hash)).toEqual([7001]);
+  });
+
+  it("ANDs perk and origin trait allowlists", () => {
+    const results = filterWeaponCatalog(
+      {
+        weapons: [FIXTURE_WEAPON_WITH_INCANDESCENT, FIXTURE_WEAPON_NO_PERKS],
+        exoticWeapons: [],
+      },
+      { scope: "all", weaponHashAllowlist: new Set() },
+    );
+    expect(results).toHaveLength(0);
+  });
 });
 
 describe("filterArmorCatalog", () => {
@@ -167,6 +204,61 @@ describe("filterArmorCatalog", () => {
     expect(unknown?.name).toContain("9999");
     expect(unknown?.owned).toBe(true);
   });
+
+  it("filters legendary armor by set bonus allowlist and slot", () => {
+    const legendary = buildLegendaryArmorRows([FIXTURE_SET_EUTECHNOLOGY], (hash) => {
+      if (hash === 9001) {
+        return {
+          name: "Eutech Helm",
+          searchName: "eutech helm",
+          icon: null,
+          slot: "Helmet",
+          classType: "Warlock",
+        };
+      }
+      if (hash === 9002) {
+        return {
+          name: "Eutech Gloves",
+          searchName: "eutech gloves",
+          icon: null,
+          slot: "Gauntlets",
+          classType: "Warlock",
+        };
+      }
+      return null;
+    });
+
+    const results = filterArmorCatalog(
+      { exoticArmor: [exoticHelmet], legendaryArmor: legendary },
+      {
+        scope: "all",
+        setBonus: "Eutechnology",
+        slot: "Helmet",
+        armorHashAllowlist: new Set([9001]),
+      },
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.hash).toBe(9001);
+    expect(results[0]?.setBonusName).toBe("Eutechnology");
+  });
+
+  it("excludes legendary armor when set bonus filter not active", () => {
+    const legendary = buildLegendaryArmorRows([FIXTURE_SET_EUTECHNOLOGY], () => ({
+      name: "Eutech Helm",
+      searchName: "eutech helm",
+      icon: null,
+      slot: "Helmet",
+    }));
+
+    const results = filterArmorCatalog(
+      { exoticArmor: [exoticHelmet], legendaryArmor: legendary },
+      { scope: "all" },
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.hash).toBe(3001);
+  });
 });
 
 describe("ownedHashesFromInventory", () => {
@@ -186,5 +278,25 @@ describe("ownedHashesFromInventory", () => {
   it("collects armor bucket hashes", () => {
     const hashes = ownedHashesFromInventory([{ itemHash: 3001, bucket: "Helmet" }], "armor");
     expect([...hashes.keys()]).toEqual([3001]);
+  });
+});
+
+describe("filterWeaponCatalog performance", () => {
+  it("filters a large weapon list within 5 seconds", () => {
+    const weapons: WeaponRecord[] = Array.from({ length: 5000 }, (_, i) => ({
+      ...legendaryAuto,
+      hash: 10_000 + i,
+      name: `Weapon ${i}`,
+      searchName: `weapon ${i}`,
+    }));
+
+    const start = performance.now();
+    filterWeaponCatalog(
+      { weapons, exoticWeapons: [exoticHc] },
+      { scope: "all", weaponHashAllowlist: new Set(weapons.slice(0, 50).map((w) => w.hash)) },
+    );
+    const elapsed = performance.now() - start;
+
+    expect(elapsed).toBeLessThan(5000);
   });
 });

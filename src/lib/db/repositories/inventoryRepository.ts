@@ -3,6 +3,7 @@ import { eq, and, inArray, sql } from "drizzle-orm";
 import type { AppDatabase } from "../client";
 import { inventoryItems, inventorySyncMeta, users } from "../schema";
 import type { RollTag, UserInventoryItem } from "../types";
+import type { ArmorStatName } from "@/data/rules/statBenefits";
 
 export function upsertInventoryBatch(
   db: AppDatabase,
@@ -25,6 +26,7 @@ export function upsertInventoryBatch(
           isCrafted: item.isCrafted ? 1 : 0,
           plugHashes: JSON.stringify(item.plugHashes),
           rollTags: JSON.stringify(item.rollTags),
+          statValues: item.statValues ? JSON.stringify(item.statValues) : null,
           syncedAt: item.syncedAt || now,
         })
         .onConflictDoUpdate({
@@ -39,6 +41,7 @@ export function upsertInventoryBatch(
             isCrafted: sql`excluded.is_crafted`,
             plugHashes: sql`excluded.plug_hashes`,
             rollTags: sql`excluded.roll_tags`,
+            statValues: sql`excluded.stat_values`,
             syncedAt: sql`excluded.synced_at`,
           },
         })
@@ -141,6 +144,9 @@ export function queryInventoryByTags(
 }
 
 function rowToItem(row: typeof inventoryItems.$inferSelect): UserInventoryItem {
+  const statValues = row.statValues
+    ? (JSON.parse(row.statValues) as Partial<Record<ArmorStatName, number>>)
+    : undefined;
   return {
     instanceId: row.instanceId,
     itemHash: row.itemHash,
@@ -152,6 +158,7 @@ function rowToItem(row: typeof inventoryItems.$inferSelect): UserInventoryItem {
     isCrafted: row.isCrafted === 1,
     plugHashes: JSON.parse(row.plugHashes) as number[],
     rollTags: JSON.parse(row.rollTags) as RollTag[],
+    statValues,
     syncedAt: row.syncedAt,
   };
 }

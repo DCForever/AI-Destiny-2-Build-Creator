@@ -41,6 +41,13 @@ function ensureSynergySubTypeColumn(db: Database.Database): void {
   }
 }
 
+function ensureStatValuesColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(inventory_items)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "stat_values")) {
+    db.exec("ALTER TABLE inventory_items ADD COLUMN stat_values TEXT");
+  }
+}
+
 export function runMigrations(db: Database.Database): void {
   if (!migrated) {
   db.exec(`
@@ -203,6 +210,7 @@ export function runMigrations(db: Database.Database): void {
   migrated = true;
   }
   ensureSynergySubTypeColumn(db);
+  ensureStatValuesColumn(db);
 }
 
 export function getDb(): AppDatabase {

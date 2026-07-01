@@ -21,6 +21,7 @@ export const inventoryItems = sqliteTable("inventory_items", {
   isCrafted: integer("is_crafted").notNull().default(0),
   plugHashes: text("plug_hashes").notNull().default("[]"),
   rollTags: text("roll_tags").notNull().default("[]"),
+  statValues: text("stat_values"),
   syncedAt: text("synced_at").notNull(),
 });
 
