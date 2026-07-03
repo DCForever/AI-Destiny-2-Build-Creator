@@ -281,6 +281,40 @@ describe("ownedHashesFromInventory", () => {
   });
 });
 
+describe("filterWeaponCatalog description search", () => {
+  const exoticPoison: ExoticWeaponRecord = {
+    hash: 90001,
+    name: "Test Bow",
+    searchName: "test bow",
+    icon: null,
+    slot: "Kinetic",
+    element: "Void",
+    ammo: "Primary",
+    frame: "Combat Bow",
+    intrinsic: { name: "Poison Arrows", description: "Poison on full draw." },
+    catalyst: null,
+    flavorText: "",
+  };
+
+  it("matches exotic weapons by intrinsic description in q", () => {
+    const results = filterWeaponCatalog(
+      { weapons: [], exoticWeapons: [exoticPoison] },
+      { scope: "all", q: "poison" },
+    );
+    expect(results).toHaveLength(1);
+    expect(results[0]?.hash).toBe(90001);
+    expect(results[0]?.description).toContain("Poison");
+  });
+
+  it("does not match legendary weapons by rollable perk description in q", () => {
+    const results = filterWeaponCatalog(
+      { weapons: [legendaryAuto], exoticWeapons: [] },
+      { scope: "all", q: "solar ignition" },
+    );
+    expect(results).toHaveLength(0);
+  });
+});
+
 describe("filterWeaponCatalog performance", () => {
   it("filters a large weapon list within 5 seconds", () => {
     const weapons: WeaponRecord[] = Array.from({ length: 5000 }, (_, i) => ({

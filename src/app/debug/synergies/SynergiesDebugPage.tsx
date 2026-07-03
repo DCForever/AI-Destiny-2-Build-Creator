@@ -316,6 +316,26 @@ export function SynergiesDebugPage() {
                   <option key={o.id} value={o.name}>{o.name}</option>
                 ))}
               </select>
+              {subTypeOptions.length > 0 ? (
+                <ul className="max-h-40 space-y-1 overflow-auto text-xs">
+                  {subTypeOptions.map((o) => (
+                    <li key={o.id}>
+                      <button
+                        type="button"
+                        className={`w-full rounded px-2 py-1 text-left ${
+                          form.subType === o.name ? "bg-emerald-900" : "bg-zinc-950 hover:bg-zinc-900"
+                        }`}
+                        onClick={() => setForm({ ...form, subType: o.name })}
+                      >
+                        <div>{o.name}</div>
+                        <div className="text-zinc-500">
+                          {o.description?.trim() ? o.description : "Description unavailable"}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </>
           )}
 
@@ -371,6 +391,40 @@ export function SynergiesDebugPage() {
                   <option key={`${o.kind}-${o.name}`} value={`${o.kind}-${o.name}`}>{o.name}</option>
                 ))}
           </select>
+
+          {(form.linkKind === "weapon" ? weaponOptions : linkOptions).length > 0 ? (
+            <ul className="max-h-48 space-y-1 overflow-auto text-xs">
+              {(form.linkKind === "weapon" ? weaponOptions : linkOptions).map((item) => {
+                const key =
+                  form.linkKind === "weapon" && "hash" in item
+                    ? String(item.hash)
+                    : `${(item as SynergyPickerItem).kind}-${item.name}`;
+                const selected =
+                  form.linkKind === "weapon"
+                    ? selectedLink && "hash" in selectedLink && selectedLink.hash === (item as WeaponOption).hash
+                    : selectedLink &&
+                      "kind" in selectedLink &&
+                      selectedLink.kind === (item as SynergyPickerItem).kind &&
+                      selectedLink.name === item.name;
+                return (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      className={`w-full rounded px-2 py-1 text-left ${
+                        selected ? "bg-emerald-900" : "bg-zinc-950 hover:bg-zinc-900"
+                      }`}
+                      onClick={() => selectLinkItem(item as SynergyPickerItem | WeaponOption)}
+                    >
+                      <div>{item.name}</div>
+                      <div className="text-zinc-500">
+                        {item.description?.trim() ? item.description : "Description unavailable"}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
 
           {linkDescription ? (
             <p className="min-w-0 break-words rounded bg-zinc-950 p-2 text-xs leading-relaxed text-zinc-400">{linkDescription}</p>

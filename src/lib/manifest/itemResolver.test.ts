@@ -325,4 +325,14 @@ describe("StoreItemResolver", () => {
     expect(result?.record.hash).toBe(3341713435);
     expect(result?.confidence).toBe(1);
   });
+
+  it("searches exotic weapons by intrinsic description", async () => {
+    const results = await resolver.search("exotic-weapons", "poison", 5);
+    expect(results[0]?.record.name).toBe("Le Monarque");
+  });
+
+  it("searches exotic weapons by blight pools description", async () => {
+    const results = await resolver.search("exotic-weapons", "blight", 5);
+    expect(results.some((r) => r.record.name === "Witherhoard")).toBe(true);
+  });
 });

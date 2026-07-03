@@ -7,7 +7,17 @@ export const runtime = "nodejs";
 
 const querySchema = z.object({
   q: z.string().trim().min(1).max(80),
-  category: z.enum(["weapons", "exotic-weapons", "mods", "exotic-armor"]).default("weapons"),
+  category: z
+    .enum([
+      "weapons",
+      "exotic-weapons",
+      "mods",
+      "exotic-armor",
+      "aspects",
+      "fragments",
+      "artifacts",
+    ])
+    .default("weapons"),
   slot: z.enum(["Kinetic", "Energy", "Power"]).optional(),
   limit: z.coerce.number().int().min(1).max(20).default(8),
 });

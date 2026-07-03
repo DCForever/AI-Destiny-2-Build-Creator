@@ -33,7 +33,7 @@ description: "Task list for Description Search for Pickers feature"
 
 **Purpose**: Test fixtures with name-only vs description-only match samples for all entity scopes
 
-- [ ] T001 [P] Add description search test fixtures (perk/trait/set tier/exotic intrinsic samples) in `src/lib/search/__fixtures__/descriptionSearchFixtures.ts`
+- [X] T001 [P] Add description search test fixtures (perk/trait/set tier/exotic intrinsic samples) in `src/lib/search/__fixtures__/descriptionSearchFixtures.ts`
 
 ---
 
@@ -43,8 +43,8 @@ description: "Task list for Description Search for Pickers feature"
 
 **⚠️ CRITICAL**: No user story work until this phase completes
 
-- [ ] T002 [P] Add failing `descriptionMatch` tests (substring, case-insensitive, name vs description rank, empty query) in `src/lib/search/descriptionMatch.test.ts`
-- [ ] T003 Implement `matchDescriptionQuery`, `compareMatchRank`, and `matchByNameOrDescription` helpers in `src/lib/search/descriptionMatch.ts`
+- [X] T002 [P] Add failing `descriptionMatch` tests (substring, case-insensitive, name vs description rank, empty query) in `src/lib/search/descriptionMatch.test.ts`
+- [X] T003 Implement `matchDescriptionQuery`, `compareMatchRank`, and `matchByNameOrDescription` helpers in `src/lib/search/descriptionMatch.ts`
 
 **Checkpoint**: `descriptionMatch` tests pass; gate green on foundational module
 
@@ -60,16 +60,16 @@ description: "Task list for Description Search for Pickers feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T004 [P] [US1] Add failing description-match tests for `resolvePerkFilter` and `resolveOriginTraitFilter` in `src/lib/catalog/perkTraitFilters.test.ts`
-- [ ] T005 [P] [US1] Add failing description-match tests for `searchSynergyLinkPickerItems` (weapon_perk, origin_trait) in `src/lib/synergies/synergyPickerLinks.test.ts`
-- [ ] T006 [P] [US1] Add failing links route contract tests for description `q` on weapon_perk and origin_trait in `src/app/api/catalog/synergy-pickers/links/route.test.ts`
+- [X] T004 [P] [US1] Add failing description-match tests for `resolvePerkFilter` and `resolveOriginTraitFilter` in `src/lib/catalog/perkTraitFilters.test.ts`
+- [X] T005 [P] [US1] Add failing description-match tests for `searchSynergyLinkPickerItems` (weapon_perk, origin_trait) in `src/lib/synergies/synergyPickerLinks.test.ts`
+- [X] T006 [P] [US1] Add failing links route contract tests for description `q` on weapon_perk and origin_trait in `src/app/api/catalog/synergy-pickers/links/route.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Extend `matchByName` to use `descriptionMatch` for perk and trait records in `src/lib/catalog/perkTraitFilters.ts`
-- [ ] T008 [US1] Extend `searchSynergyLinkPickerItems` weapon_perk and origin_trait filters to match `description` in `src/lib/synergies/synergyPickerLinks.ts`; apply `compareMatchRank` before `finalizePickerItems`
-- [ ] T009 [US1] Wire description-ranked results through `src/app/api/catalog/synergy-pickers/links/route.ts` (no schema change; verify DTO `description` populated)
-- [ ] T010 [US1] Run `npm run gate` and validate quickstart §1–2 and §6 perk-filter portion
+- [X] T007 [US1] Extend `matchByName` to use `descriptionMatch` for perk and trait records in `src/lib/catalog/perkTraitFilters.ts`
+- [X] T008 [US1] Extend `searchSynergyLinkPickerItems` weapon_perk and origin_trait filters to match `description` in `src/lib/synergies/synergyPickerLinks.ts`; apply `compareMatchRank` before `finalizePickerItems`
+- [X] T009 [US1] Wire description-ranked results through `src/app/api/catalog/synergy-pickers/links/route.ts` (no schema change; verify DTO `description` populated)
+- [X] T010 [US1] Run `npm run gate` and validate quickstart §1–2 and §6 perk-filter portion
 
 **Checkpoint**: User Story 1 — perk/trait description search in synergy pickers and perk/originTrait filter resolvers
 
@@ -85,14 +85,14 @@ description: "Task list for Description Search for Pickers feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T011 [P] [US2] Add failing `filterSubTypeOptions` description-match tests in `src/lib/synergies/subTypeVocabularies.test.ts`
-- [ ] T012 [P] [US2] Add failing subtypes route contract tests for description `q` in `src/app/api/catalog/synergy-pickers/subtypes/route.test.ts`
+- [X] T011 [P] [US2] Add failing `filterSubTypeOptions` description-match tests in `src/lib/synergies/subTypeVocabularies.test.ts`
+- [X] T012 [P] [US2] Add failing subtypes route contract tests for description `q` in `src/app/api/catalog/synergy-pickers/subtypes/route.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Extend `filterSubTypeOptions` to match `option.description` via `descriptionMatch` in `src/lib/synergies/subTypeVocabularies.ts`
-- [ ] T014 [US2] Verify subtypes route passes through ranked options in `src/app/api/catalog/synergy-pickers/subtypes/route.ts`
-- [ ] T015 [US2] Run `npm run gate` and validate quickstart §4
+- [X] T013 [US2] Extend `filterSubTypeOptions` to match `option.description` via `descriptionMatch` in `src/lib/synergies/subTypeVocabularies.ts`
+- [X] T014 [US2] Verify subtypes route passes through ranked options in `src/app/api/catalog/synergy-pickers/subtypes/route.ts`
+- [X] T015 [US2] Run `npm run gate` and validate quickstart §4
 
 **Checkpoint**: User Story 2 — subtype picker description search
 
@@ -108,19 +108,19 @@ description: "Task list for Description Search for Pickers feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T016 [P] [US5] Add failing tier-description tests for `resolveSetBonusFilter` in `src/lib/catalog/setBonusFilter.test.ts`
-- [ ] T017 [P] [US5] Add failing armor_set_bonus description tests in `src/lib/synergies/synergyPickerLinks.test.ts`
-- [ ] T018 [P] [US5] Add failing catalog `q` intrinsic-description tests for exotic weapons in `src/lib/catalog/filterItems.test.ts`
-- [ ] T019 [P] [US5] Add failing manifest search description tests for exotic-weapons in `src/lib/manifest/itemResolver.test.ts`
+- [X] T016 [P] [US5] Add failing tier-description tests for `resolveSetBonusFilter` in `src/lib/catalog/setBonusFilter.test.ts`
+- [X] T017 [P] [US5] Add failing armor_set_bonus description tests in `src/lib/synergies/synergyPickerLinks.test.ts`
+- [X] T018 [P] [US5] Add failing catalog `q` intrinsic-description tests for exotic weapons in `src/lib/catalog/filterItems.test.ts`
+- [X] T019 [P] [US5] Add failing manifest search description tests for exotic-weapons in `src/lib/manifest/itemResolver.test.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T020 [US5] Extend `resolveSetBonusFilter` to match tier perk name and description in `src/lib/catalog/setBonusFilter.ts`
-- [ ] T021 [US5] Extend `armor_set_bonus` branch to match `perk.description` and rank results in `src/lib/synergies/synergyPickerLinks.ts`
-- [ ] T022 [US5] Project `intrinsicName` and `intrinsicDescription` on `SearchableCatalogRow` and add Fuse keys in `src/lib/catalog/filterItems.ts` (`weaponToCatalog` / `armorToCatalog`)
-- [ ] T023 [US5] Extend per-store Fuse index keys to include `description` and exotic intrinsic description in `src/lib/manifest/itemResolver.ts`
-- [ ] T024 [US5] Extend manifest search route allowed categories for description search on mods/aspects/fragments/artifacts if not already covered in `src/app/api/manifest/search/route.ts`
-- [ ] T025 [US5] Run `npm run gate` and validate quickstart §3, §5, §7–8
+- [X] T020 [US5] Extend `resolveSetBonusFilter` to match tier perk name and description in `src/lib/catalog/setBonusFilter.ts`
+- [X] T021 [US5] Extend `armor_set_bonus` branch to match `perk.description` and rank results in `src/lib/synergies/synergyPickerLinks.ts`
+- [X] T022 [US5] Project `intrinsicName` and `intrinsicDescription` on `SearchableCatalogRow` and add Fuse keys in `src/lib/catalog/filterItems.ts` (`weaponToCatalog` / `armorToCatalog`)
+- [X] T023 [US5] Extend per-store Fuse index keys to include `description` and exotic intrinsic description in `src/lib/manifest/itemResolver.ts`
+- [X] T024 [US5] Extend manifest search route allowed categories for description search on mods/aspects/fragments/artifacts if not already covered in `src/app/api/manifest/search/route.ts`
+- [X] T025 [US5] Run `npm run gate` and validate quickstart §3, §5, §7–8
 
 **Checkpoint**: User Story 5 — set bonus, exotic intrinsic, and manifest description search
 
@@ -136,16 +136,16 @@ description: "Task list for Description Search for Pickers feature"
 
 > Write FIRST; confirm FAIL before implementation
 
-- [ ] T026 [P] [US3] Add failing weapons route tests for description-only `perk` and `originTrait` params in `src/app/api/catalog/weapons/route.test.ts`
-- [ ] T027 [P] [US3] Add failing armor route tests for description-only `setBonus` param in `src/app/api/catalog/armor/route.test.ts`
-- [ ] T028 [P] [US3] Add regression test that catalog `q` does NOT match rollable perk descriptions (FR-019) in `src/lib/catalog/filterItems.test.ts`
+- [X] T026 [P] [US3] Add failing weapons route tests for description-only `perk` and `originTrait` params in `src/app/api/catalog/weapons/route.test.ts`
+- [X] T027 [P] [US3] Add failing armor route tests for description-only `setBonus` param in `src/app/api/catalog/armor/route.test.ts`
+- [X] T028 [P] [US3] Add regression test that catalog `q` does NOT match rollable perk descriptions (FR-019) in `src/lib/catalog/filterItems.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Verify weapons route uses updated `resolvePerkFilter` / `resolveOriginTraitFilter` and empty-filter messages in `src/app/api/catalog/weapons/route.ts`
-- [ ] T030 [US3] Verify armor route uses updated `resolveSetBonusFilter` in `src/app/api/catalog/armor/route.ts`
-- [ ] T031 [US3] Validate Sets debug perk/setBonus filters inherit description resolution via catalog API in `src/app/debug/sets/SetsDebugPage.tsx` (no code change if already wired; document or fix gaps)
-- [ ] T032 [US3] Run `npm run gate` and validate quickstart §6–7 and regression §9
+- [X] T029 [US3] Verify weapons route uses updated `resolvePerkFilter` / `resolveOriginTraitFilter` and empty-filter messages in `src/app/api/catalog/weapons/route.ts`
+- [X] T030 [US3] Verify armor route uses updated `resolveSetBonusFilter` in `src/app/api/catalog/armor/route.ts`
+- [X] T031 [US3] Validate Sets debug perk/setBonus filters inherit description resolution via catalog API in `src/app/debug/sets/SetsDebugPage.tsx` (no code change if already wired; document or fix gaps)
+- [X] T032 [US3] Run `npm run gate` and validate quickstart §6–7 and regression §9
 
 **Checkpoint**: User Story 3 — catalog/Sets filter parity with description keywords
 
@@ -159,9 +159,9 @@ description: "Task list for Description Search for Pickers feature"
 
 ### Implementation for User Story 4
 
-- [ ] T033 [US4] Render description excerpt (with unavailable indicator) in link and subtype picker result lists in `src/app/debug/synergies/SynergiesDebugPage.tsx`
-- [ ] T034 [US4] Add optional description column or secondary line for exotic catalog rows in `src/app/debug/catalog/CatalogDebugPage.tsx`
-- [ ] T035 [US4] Run `npm run gate` and validate quickstart §1 and §5 UI portions
+- [X] T033 [US4] Render description excerpt (with unavailable indicator) in link and subtype picker result lists in `src/app/debug/synergies/SynergiesDebugPage.tsx`
+- [X] T034 [US4] Add optional description column or secondary line for exotic catalog rows in `src/app/debug/catalog/CatalogDebugPage.tsx`
+- [X] T035 [US4] Run `npm run gate` and validate quickstart §1 and §5 UI portions
 
 **Checkpoint**: User Story 4 — informed selection with visible descriptions in lists
 
@@ -171,10 +171,10 @@ description: "Task list for Description Search for Pickers feature"
 
 **Purpose**: Regression, contract alignment, full feature validation
 
-- [ ] T036 [P] Add description-search contract alignment notes or cross-links in `specs/009-description-search/contracts/description-search-contract.md` if implementation diverged (update doc only if needed)
-- [ ] T037 [P] Verify name-only searches unchanged (regression) across `perkTraitFilters.test.ts`, `setBonusFilter.test.ts`, and `synergyPickerLinks.test.ts`
-- [ ] T038 Run full manual validation per `specs/009-description-search/quickstart.md` (all 9 scenarios + regression §9)
-- [ ] T039 Run `npm run gate` as final feature checkpoint
+- [X] T036 [P] Add description-search contract alignment notes or cross-links in `specs/009-description-search/contracts/description-search-contract.md` if implementation diverged (update doc only if needed)
+- [X] T037 [P] Verify name-only searches unchanged (regression) across `perkTraitFilters.test.ts`, `setBonusFilter.test.ts`, and `synergyPickerLinks.test.ts`
+- [X] T038 Run full manual validation per `specs/009-description-search/quickstart.md` (all 9 scenarios + regression §9)
+- [X] T039 Run `npm run gate` as final feature checkpoint
 
 ---
 

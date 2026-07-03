@@ -124,4 +124,52 @@ describe("searchSynergyLinkPickerItems", () => {
     expect(items[0]?.bonusName).toBe("Gift of the Ley Lines");
     expect(items[0]?.armorSetName).toBe("Eutechnology");
   });
+
+  it("matches weapon perks by description when name does not match", async () => {
+    vi.mocked(getServices).mockResolvedValueOnce({
+      entityCache: {
+        getStore: vi.fn(async (store: string) => {
+          if (store !== "weapon-perks") return [];
+          return [
+            {
+              hash: 7002,
+              name: "Adaptive Munitions",
+              searchName: "adaptive munitions",
+              description: "Melee final blows grant bonus damage.",
+              icon: null,
+            },
+          ];
+        }),
+      },
+    } as never);
+
+    const items = await searchSynergyLinkPickerItems("weapon_perk", "melee", 10);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.name).toBe("Adaptive Munitions");
+    expect(items[0]?.description).toContain("Melee");
+  });
+
+  it("matches armor set bonuses by tier description", async () => {
+    vi.mocked(getServices).mockResolvedValueOnce({
+      entityCache: {
+        getStore: vi.fn(async (store: string) => {
+          if (store !== "set-bonuses") return [];
+          return [
+            {
+              hash: 8101,
+              name: "Osmium Council",
+              searchName: "osmium council",
+              icon: null,
+              perks: [{ requiredCount: 2, name: "Council's Edge", description: "Overshield on arc melee." }],
+              itemHashes: [],
+            },
+          ];
+        }),
+      },
+    } as never);
+
+    const items = await searchSynergyLinkPickerItems("armor_set_bonus", "overshield", 10);
+    expect(items[0]?.bonusName).toBe("Council's Edge");
+    expect(items[0]?.description).toContain("Overshield");
+  });
 });

@@ -19,10 +19,14 @@ export const ARMOR_INVENTORY_BUCKETS = new Set([
   "ClassItem",
 ]);
 
-type SearchableCatalogRow = CatalogItem & { searchName: string };
+type SearchableCatalogRow = CatalogItem & {
+  searchName: string;
+  intrinsicName?: string;
+  intrinsicDescription?: string;
+};
 
 const FUSE_OPTIONS: IFuseOptions<SearchableCatalogRow> = {
-  keys: ["searchName", "name", "itemTypeName", "frame"],
+  keys: ["searchName", "name", "itemTypeName", "frame", "intrinsicName", "intrinsicDescription"],
   threshold: 0.35,
   ignoreLocation: true,
 };
@@ -141,6 +145,8 @@ function weaponToCatalog(
   isExotic: boolean,
   ownedCount: number,
 ): SearchableCatalogRow {
+  const intrinsic =
+    isExotic && "intrinsic" in record ? record.intrinsic : undefined;
   return {
     hash: record.hash,
     name: record.name,
@@ -153,6 +159,9 @@ function weaponToCatalog(
     isExotic,
     owned: ownedCount > 0,
     ownedCount,
+    intrinsicName: intrinsic?.name,
+    intrinsicDescription: intrinsic?.description,
+    description: intrinsic?.description,
   };
 }
 
@@ -171,6 +180,9 @@ function armorToCatalog(
     isExotic: true,
     owned: ownedCount > 0,
     ownedCount,
+    intrinsicName: record.intrinsic.name,
+    intrinsicDescription: record.intrinsic.description,
+    description: record.intrinsic.description,
   };
 }
 
@@ -218,8 +230,10 @@ function finalize(rows: SearchableCatalogRow[], limit?: number): CatalogItem[] {
   const sorted = [...rows].sort((a, b) => compareDisplayName(a.name, b.name));
   const capped = limit ? sorted.slice(0, limit) : sorted;
   return capped.map((row) => {
-    const { searchName, ...item } = row;
+    const { searchName, intrinsicName, intrinsicDescription, ...item } = row;
     void searchName;
+    void intrinsicName;
+    void intrinsicDescription;
     return item;
   });
 }

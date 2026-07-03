@@ -273,6 +273,9 @@ export function CatalogDebugPage() {
                     {item.name} ({item.ownedCount} owned)
                     {item.instancesHref ? " · pointer" : ""}
                   </button>
+                  {item.description ? (
+                    <p className="px-2 pb-1 text-xs leading-relaxed text-zinc-500">{item.description}</p>
+                  ) : null}
                   {selectedHash === item.hash && linkedSynergies.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1 px-2">
                       {linkedSynergies.map((s) => (

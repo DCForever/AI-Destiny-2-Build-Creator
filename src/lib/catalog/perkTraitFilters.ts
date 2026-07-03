@@ -1,5 +1,6 @@
 import type { OriginTraitRecord, PerkRecord, WeaponRecord } from "@/lib/manifest/types/records";
 import type { PerkWeaponIndex } from "@/lib/manifest/perkWeaponIndex";
+import { matchByNameOrDescription } from "@/lib/search/descriptionMatch";
 
 export type PerkFilterResolution =
   | { ok: true; weaponHashes: Set<number> }
@@ -16,22 +17,14 @@ function parseNumericHash(value: string): number | null {
   return Number.isFinite(hash) && hash > 0 ? hash : null;
 }
 
-function matchByName<T extends { name: string; searchName: string; hash: number }>(
-  query: string,
-  records: T[],
-): T[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  return records.filter((r) => r.searchName.includes(q) || r.name.toLowerCase().includes(q));
-}
-
 export function resolvePerkFilter(
   perk: string,
   perks: PerkRecord[],
   index: PerkWeaponIndex | null,
 ): PerkFilterResolution {
   const numeric = parseNumericHash(perk);
-  const perkHashes = numeric !== null ? [numeric] : matchByName(perk, perks).map((p) => p.hash);
+  const perkHashes =
+    numeric !== null ? [numeric] : matchByNameOrDescription(perk, perks).map((p) => p.hash);
   if (perkHashes.length === 0) return { ok: false };
   if (!index) return { ok: false };
 
@@ -53,7 +46,7 @@ export function resolveOriginTraitFilter(
 ): OriginTraitFilterResolution {
   const numeric = parseNumericHash(originTrait);
   const traitHashes =
-    numeric !== null ? [numeric] : matchByName(originTrait, traits).map((t) => t.hash);
+    numeric !== null ? [numeric] : matchByNameOrDescription(originTrait, traits).map((t) => t.hash);
   if (traitHashes.length === 0) return { ok: false };
 
   const traitHashSet = new Set(traitHashes);

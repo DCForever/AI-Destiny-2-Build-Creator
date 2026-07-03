@@ -1,5 +1,9 @@
 import { getServices } from "@/lib/services";
 import { sortByName } from "@/lib/sortByName";
+import {
+  matchDescriptionQuery,
+  sortByMatchRankThenName,
+} from "@/lib/search/descriptionMatch";
 import type { SynergyLinkInput } from "@/lib/synergies/schemas";
 
 export type SynergyPickerItem = {
@@ -37,8 +41,28 @@ function dedupePickerItemsByName(items: SynergyPickerItem[]): SynergyPickerItem[
   return [...seen.values()];
 }
 
-function finalizePickerItems(items: SynergyPickerItem[], limit: number): SynergyPickerItem[] {
-  return sortByName(dedupePickerItemsByName(items)).slice(0, limit);
+function finalizePickerItems(
+  items: SynergyPickerItem[],
+  limit: number,
+  query: string,
+): SynergyPickerItem[] {
+  const q = query.trim();
+  if (!q) {
+    return sortByName(dedupePickerItemsByName(items)).slice(0, limit);
+  }
+
+  const ranked = sortByMatchRankThenName(
+    items.map((item) => ({
+      item,
+      matchField: matchDescriptionQuery(q, {
+        name: item.name,
+        description: item.description,
+        otherTexts: item.bonusName ? [item.bonusName, item.armorSetName ?? ""] : undefined,
+      }).matchField,
+    })),
+  );
+
+  return dedupePickerItemsByName(ranked).slice(0, limit);
 }
 
 export async function searchSynergyLinkPickerItems(
@@ -46,49 +70,66 @@ export async function searchSynergyLinkPickerItems(
   query: string,
   limit: number,
 ): Promise<SynergyPickerItem[]> {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   const { entityCache } = await getServices();
 
   if (kind === "origin_trait") {
     const traits = await entityCache.getStore("origin-traits");
-    return finalizePickerItems(
-      traits
-        .filter((t) => !q || t.searchName.includes(q) || t.name.toLowerCase().includes(q))
-        .map((t) => ({
-          kind: "origin_trait" as const,
-          hash: t.hash,
-          name: t.name,
-          description: t.description,
-          originTraitName: t.name,
-          originTraitHash: t.hash,
-        })),
-      limit,
-    );
+    const items = traits
+      .filter(
+        (t) =>
+          !q ||
+          matchDescriptionQuery(q, {
+            name: t.name,
+            searchName: t.searchName,
+            description: t.description,
+          }).matched,
+      )
+      .map((t) => ({
+        kind: "origin_trait" as const,
+        hash: t.hash,
+        name: t.name,
+        description: t.description,
+        originTraitName: t.name,
+        originTraitHash: t.hash,
+      }));
+    return finalizePickerItems(items, limit, query);
   }
 
   if (kind === "weapon_perk") {
     const perks = await entityCache.getStore("weapon-perks");
-    return finalizePickerItems(
-      perks
-        .filter((p) => !q || p.searchName.includes(q) || p.name.toLowerCase().includes(q))
-        .map((p) => ({
-          kind: "weapon_perk" as const,
-          hash: p.hash,
-          name: p.name,
-          description: p.description,
-          perkHash: p.hash,
-        })),
-      limit,
-    );
+    const items = perks
+      .filter(
+        (p) =>
+          !q ||
+          matchDescriptionQuery(q, {
+            name: p.name,
+            searchName: p.searchName,
+            description: p.description,
+          }).matched,
+      )
+      .map((p) => ({
+        kind: "weapon_perk" as const,
+        hash: p.hash,
+        name: p.name,
+        description: p.description,
+        perkHash: p.hash,
+      }));
+    return finalizePickerItems(items, limit, query);
   }
 
   const sets = await entityCache.getStore("set-bonuses");
   const items: SynergyPickerItem[] = [];
   for (const set of sets) {
-    const setMatches = !q || set.searchName.includes(q) || set.name.toLowerCase().includes(q);
     for (const perk of set.perks) {
-      const perkMatches = !q || perk.name.toLowerCase().includes(q);
-      if (!setMatches && !perkMatches) continue;
+      const matched =
+        !q ||
+        matchDescriptionQuery(q, {
+          name: set.name,
+          searchName: set.searchName,
+          otherTexts: [perk.name, perk.description],
+        }).matched;
+      if (!matched) continue;
       items.push({
         kind: "armor_set_bonus",
         name: `${set.name} ${perk.requiredCount}pc — ${perk.name}`,
@@ -98,8 +139,9 @@ export async function searchSynergyLinkPickerItems(
         bonusName: perk.name,
         armorSetHash: set.hash,
       });
-      if (items.length >= limit) return sortByName(items).slice(0, limit);
+      if (items.length >= limit * 2) break;
     }
+    if (items.length >= limit * 2) break;
   }
-  return sortByName(items).slice(0, limit);
+  return finalizePickerItems(items, limit, query);
 }

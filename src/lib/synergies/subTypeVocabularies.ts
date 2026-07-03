@@ -3,6 +3,7 @@ import { SYNERGY_VERBS } from "@/data/synergyVerbs";
 import type { AbilityKind } from "@/lib/manifest/types/records";
 import { getServices } from "@/lib/services";
 import { sortByName } from "@/lib/sortByName";
+import { matchDescriptionQuery } from "@/lib/search/descriptionMatch";
 import type { SubTypeRequiredType } from "@/lib/synergies/synergyTypeRules";
 import { allowsBaseSubType } from "@/lib/synergies/synergyTypeRules";
 import { collectLegendaryWeaponArchetypeSubTypeNames } from "@/lib/synergies/weaponArchetypeSubType";
@@ -60,7 +61,11 @@ function dedupeAbilityOptionsByName(candidates: AbilityOptionCandidate[]): Syner
     }
   }
   return [...seen.values()]
-    .map(({ hash: _hash, ...option }) => option)
+    .map((candidate) => ({
+      id: candidate.id,
+      name: candidate.name,
+      description: candidate.description,
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -103,9 +108,14 @@ export function filterSubTypeOptions(
   query: string,
   limit: number,
 ): SynergySubTypeOption[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   const filtered = q
-    ? options.filter((option) => option.name.toLowerCase().includes(q))
+    ? options.filter((option) =>
+        matchDescriptionQuery(q, {
+          name: option.name,
+          description: option.description,
+        }).matched,
+      )
     : options;
   return filtered.slice(0, limit);
 }

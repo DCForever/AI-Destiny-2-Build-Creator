@@ -13,6 +13,8 @@ type StoreRecord<TName extends StoreName> = EntityStores[TName][number];
 type SearchableRecord = {
   hash: number;
   searchName: string;
+  description?: string;
+  intrinsicDescription?: string;
 };
 
 interface StoreIndex<TRecord> {
@@ -20,31 +22,91 @@ interface StoreIndex<TRecord> {
   fuse: Fuse<TRecord>;
 }
 
-const FUSE_OPTIONS: IFuseOptions<SearchableRecord> = {
+const DEFAULT_FUSE_OPTIONS: IFuseOptions<SearchableRecord> = {
   keys: ["searchName"],
   includeScore: true,
   threshold: 0.35,
   ignoreLocation: true,
 };
 
-function toSearchableRecord(record: StoreRecord<StoreName>): SearchableRecord {
-  if ("searchName" in record && typeof record.searchName === "string") {
-    return { hash: record.hash, searchName: record.searchName };
+const DESCRIPTION_FUSE_OPTIONS: IFuseOptions<SearchableRecord> = {
+  keys: ["searchName", "description"],
+  includeScore: true,
+  threshold: 0.35,
+  ignoreLocation: true,
+};
+
+const EXOTIC_FUSE_OPTIONS: IFuseOptions<SearchableRecord> = {
+  keys: ["searchName", "description", "intrinsicDescription"],
+  includeScore: true,
+  threshold: 0.35,
+  ignoreLocation: true,
+};
+
+function fuseOptionsForStore(store: StoreName): IFuseOptions<SearchableRecord> {
+  if (store === "exotic-weapons" || store === "exotic-armor") {
+    return EXOTIC_FUSE_OPTIONS;
   }
-  if ("name" in record && typeof record.name === "string") {
-    return { hash: record.hash, searchName: normalizeName(record.name) };
+  if (
+    store === "mods" ||
+    store === "aspects" ||
+    store === "fragments" ||
+    store === "artifacts"
+  ) {
+    return DESCRIPTION_FUSE_OPTIONS;
   }
-  throw new Error("Record is missing a searchable name");
+  return DEFAULT_FUSE_OPTIONS;
+}
+
+function toSearchableRecord(
+  store: StoreName,
+  record: StoreRecord<StoreName>,
+): SearchableRecord {
+  const searchName =
+    "searchName" in record && typeof record.searchName === "string"
+      ? record.searchName
+      : "name" in record && typeof record.name === "string"
+        ? normalizeName(record.name)
+        : (() => {
+            throw new Error("Record is missing a searchable name");
+          })();
+
+  const base: SearchableRecord = { hash: record.hash, searchName };
+
+  if (store === "exotic-weapons" && "intrinsic" in record) {
+    const exotic = record as EntityStores["exotic-weapons"][number];
+    return {
+      ...base,
+      description: exotic.intrinsic.description,
+      intrinsicDescription: exotic.intrinsic.description,
+    };
+  }
+
+  if (store === "exotic-armor" && "intrinsic" in record) {
+    const exotic = record as EntityStores["exotic-armor"][number];
+    return {
+      ...base,
+      description: exotic.intrinsic.description,
+      intrinsicDescription: exotic.intrinsic.description,
+    };
+  }
+
+  if ("description" in record && typeof record.description === "string") {
+    return { ...base, description: record.description };
+  }
+
+  return base;
 }
 
 function buildStoreIndex<TRecord extends SearchableRecord>(
   records: TRecord[],
+  options: IFuseOptions<TRecord>,
 ): StoreIndex<TRecord> {
   const exactMap = new Map<string, TRecord>();
   for (const record of records) {
     exactMap.set(record.searchName, record);
   }
-  return { exactMap, fuse: new Fuse(records, FUSE_OPTIONS) };
+  return { exactMap, fuse: new Fuse(records, options) };
 }
 
 function fuseHitToResult<TRecord>(
@@ -166,10 +228,10 @@ export class StoreItemResolver implements ItemResolver {
 
     for (const record of records) {
       byHash.set(record.hash, record);
-      searchable.push(toSearchableRecord(record));
+      searchable.push(toSearchableRecord(store, record));
     }
 
-    const index = buildStoreIndex(searchable);
+    const index = buildStoreIndex(searchable, fuseOptionsForStore(store));
     this.indexes.set(store, index);
     this.recordsByStore.set(store, { searchable, byHash } as LoadedStore<StoreName>);
 

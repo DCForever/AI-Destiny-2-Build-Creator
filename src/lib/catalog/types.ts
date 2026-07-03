@@ -15,6 +15,8 @@ export type CatalogItem = {
   owned: boolean;
   ownedCount: number;
   instancesHref?: string;
+  /** Exotic intrinsic or picker description for display/search projection */
+  description?: string;
 };
 
 export type CatalogFilterParams = {

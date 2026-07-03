@@ -204,3 +204,12 @@ describe("subTypeVocabularies", () => {
     expect(options.some((o) => o.name === "Base")).toBe(false);
   });
 });
+
+describe("filterSubTypeOptions", () => {
+  it("matches option descriptions", async () => {
+    const { filterSubTypeOptions } = await import("@/lib/synergies/subTypeVocabularies");
+    const options = await listSubTypeOptions("melee");
+    const filtered = filterSubTypeOptions(options, "arc melee", 50);
+    expect(filtered.some((o) => o.name === "Storm Fist")).toBe(true);
+  });
+});

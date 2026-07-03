@@ -1,4 +1,5 @@
 import type { SetBonusRecord } from "@/lib/manifest/types/records";
+import { matchDescriptionQuery } from "@/lib/search/descriptionMatch";
 
 export type SetBonusFilterResolution =
   | { ok: true; sets: SetBonusRecord[]; armorHashes: Set<number> }
@@ -11,6 +12,30 @@ function parseNumericHash(value: string): number | null {
   return Number.isFinite(hash) && hash > 0 ? hash : null;
 }
 
+function setMatchesQuery(set: SetBonusRecord, query: string): boolean {
+  if (
+    matchDescriptionQuery(query, {
+      name: set.name,
+      searchName: set.searchName,
+    }).matched
+  ) {
+    return true;
+  }
+
+  for (const perk of set.perks) {
+    if (
+      matchDescriptionQuery(query, {
+        name: perk.name,
+        description: perk.description,
+      }).matched
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function resolveSetBonusFilter(
   setBonus: string,
   sets: SetBonusRecord[],
@@ -19,10 +44,7 @@ export function resolveSetBonusFilter(
   const matched =
     numeric !== null
       ? sets.filter((set) => set.hash === numeric)
-      : sets.filter((set) => {
-          const q = setBonus.trim().toLowerCase();
-          return set.searchName.includes(q) || set.name.toLowerCase().includes(q);
-        });
+      : sets.filter((set) => setMatchesQuery(set, setBonus));
 
   if (matched.length === 0) return { ok: false };
 
