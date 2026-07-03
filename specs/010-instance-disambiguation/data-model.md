@@ -21,23 +21,25 @@ Existing fields relied upon by the carousel (no change): `instanceId`, `itemHash
 
 ---
 
-## 2. `ArmorTier` (new, derived)
+## 2. `ArmorTier` (new)
 
-Represents the best-effort Armor 3.0 tier for an armor copy. Produced by `deriveArmorTier(totalStats, { isExotic, statsComplete })` (`src/data/rules/armorTiers.ts`).
+Represents the Armor 3.0 tier for an armor copy. **Primary source is the Bungie API `gearTier`** (instance component 300); a curated stat-band heuristic is the fallback for legacy copies. Produced by `resolveArmorTier({ gearTier, totalStats, isExotic, statsComplete })` (`src/data/rules/armorTiers.ts`). See research R1.
 
 | Field | Type | Rules |
 |-------|------|-------|
-| `tier` | `1 \| 2 \| 3 \| 4 \| 5 \| null` | Numeric band for legendary armor; `null` for exotics or when unavailable. |
-| `label` | `string` | Display label: `"Tier N"` (optionally `"~Tier N"` when approximate), `"Exotic"`, or `"Tier unavailable"`. |
-| `approximate` | `boolean` | `true` for legendary derivations (synced total includes masterwork). |
-| `available` | `boolean` | `false` when `statsComplete === false` (no reliable total). |
+| `tier` | `1 \| 2 \| 3 \| 4 \| 5 \| null` | Numeric tier; `null` for exotics (no numeric tier) or when unavailable. |
+| `label` | `string` | Display label: `"Tier N"`, `"~Tier N"` (estimated), `"Exotic"` (optionally `"Exotic · Tier N"`), or `"Tier unavailable"`. |
+| `source` | `"api" \| "estimated" \| "none"` | `api` = exact from `gearTier`; `estimated` = stat-band fallback; `none` = unavailable. |
+| `approximate` | `boolean` | `true` only for `source: "estimated"` (masterwork-inflated total). Always `false` for `api`. |
+| `available` | `boolean` | `false` only when `source: "none"`. |
 
-**Derivation rules** (see research R1):
-- `statsComplete === false` → `{ tier: null, label: "Tier unavailable", approximate: false, available: false }`.
-- `isExotic === true` → `{ tier: null, label: "Exotic", approximate: false, available: true }`.
-- else map `totalStats` to a tier via `ARMOR_TIER_BANDS`, clamp above T5 → `{ tier: N, label: "~Tier N", approximate: true, available: true }`.
+**Resolution precedence** (first match wins):
+1. `gearTier` in `1..5` → `{ tier: gearTier, label: "Tier N", source: "api", approximate: false, available: true }` (exotic-with-tier may render `"Exotic · Tier N"`).
+2. `gearTier` null AND `isExotic` → `{ tier: null, label: "Exotic", source: "api", approximate: false, available: true }`.
+3. `gearTier` null, legendary, `statsComplete` → stat-band fallback via `ARMOR_TIER_BANDS`, clamp above T5 → `{ tier: N, label: "~Tier N", source: "estimated", approximate: true, available: true }`.
+4. otherwise (`gearTier` null, stats incomplete) → `{ tier: null, label: "Tier unavailable", source: "none", approximate: false, available: false }`.
 
-**`ARMOR_TIER_BANDS`** (curated, source-cited; GamesRadar/TheGamer consensus):
+**`ARMOR_TIER_BANDS`** (fallback only; curated, source-cited; GamesRadar/TheGamer consensus):
 
 | Tier | Total stat band (inclusive lower) |
 |------|-----------------------------------|
@@ -46,6 +48,17 @@ Represents the best-effort Armor 3.0 tier for an armor copy. Produced by `derive
 | 3 | 64–69 |
 | 4 | 70–74 |
 | 5 | ≥ 75 |
+
+### Storage: `inventory_items.gear_tier` (new)
+
+`gearTier` is captured during sync so the projection can read it from the DB (instance listing is not per-request synced — 003 FR-013).
+
+| Location | Field/Column | Type | Rules |
+|----------|--------------|------|-------|
+| `inventory_items` (DB) | `gear_tier` | `INTEGER NULL` | Per-copy `gearTier` from component 300; `NULL` for pre-v9.0.0 items and rows synced before this feature. |
+| `UserInventoryItem` | `gearTier` | `number \| null` | Parsed from `DestinyItemInstanceComponent.gearTier` in `parseInventoryItemAttempt` (`profile.ts`). |
+
+Migration: idempotent `ensureGearTierColumn` in `src/lib/db/client.ts` (mirrors `ensureStatValuesColumn`). Nullable → backward compatible; requires a one-time re-sync to backfill.
 
 ---
 
@@ -154,7 +167,7 @@ Not persisted. Held in React state on the debug Sets page; pure logic in `candid
 |------|--------|-------------|
 | `instanceId` non-empty when provided | FR-012 | `setItemInputSchema` (zod) |
 | Weapon perk options scoped to the copy's pool (not full manifest) | FR-013 | `resolveWeaponPerkOptions` (curated ∪ randomized only) |
-| Armor stats incomplete flagged, tier "unavailable" | FR-008/FR-009 | `deriveArmorTier`, `statsIncomplete` |
+| Tier from API `gearTier` when present; heuristic fallback; else "unavailable" | FR-005/FR-008/FR-009 | `resolveArmorTier` (gearTier → stat-band → none), `statsIncomplete` |
 | No set membership → "no set bonus" | FR-009 | `armorSetBonus` lookup returns `null` |
 | Candidate removal never mutates inventory | FR-016 | `candidateSession` reducer (no API calls) |
 | All copies shown, no cap | FR-021 | carousel renders full `visible[]` |

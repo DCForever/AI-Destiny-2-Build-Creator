@@ -11,30 +11,41 @@ Resolves the unknowns in `plan.md` Technical Context. Existing infrastructure (o
 **Question**: The spec (FR-005) requires showing each armor copy's Tier. Where does Tier come from?
 
 **Findings**:
-- The raw Bungie item definition captured by the manifest pipeline exposes only `inventory.tierType` = **rarity** (5 = Legendary, 6 = Exotic) — see `src/lib/manifest/extractors/rawTypes.ts:38` and usages in `weapons.ts`/`exoticArmor.ts`. There is **no Armor 3.0 gear-tier (1–5) field** on item definitions, instance components, DTOs, or the DB.
-- Community sources map gear tier to **total stat points**, but the bands **conflict**: GamesRadar/TheGamer/video → T1 52–57, T2 58–63, T3 64–69, T4 70–75, T5 75; skycoach → T1 48–53, T2 53–58, T3 59–64, T4 65–72, T5 73–75.
-- The synced `statValues`/`totalStats` (from Bungie stats component 300) **include masterwork and mods**, so a copy's stored total is inflated above its base roll (TheGamer: fully-masterworked ≈ 78; exotics roll ≈ T2 range, +15 masterworked). Base vs. masterworked totals are **not separable** from stored data (`is_masterwork` is a boolean, not a level).
+- **The Bungie API exposes the exact gear tier per copy.** As of *The Edge of Fate* (API v9.0.0), `DestinyItemInstanceComponent` (profile **component 300**) has a nullable **`gearTier`** integer, `1–5` for items obtained on/after v9.0.0 and `null` for older items ([Bungie API issue #1981](https://github.com/Bungie-net/api/issues/1981)). Exotics may carry a `gearTier` on drop even though the game does not surface it. DIM reads this field directly (it does **not** compute tier from stats); tier overlay icons come from the new `DestinyInventoryItemConstantsDefinition.gearTierOverlayImagePaths`.
+- **Our sync already fetches component 300** and reads the instance object: `INVENTORY_COMPONENTS = "102,201,205,300,305"` (`src/lib/bungie/profile.ts:44`), `extractInstancesMap` (`profile.ts:474`), and `parseInventoryItemAttempt` already pulls `power`/`isMasterwork`/`isCrafted` off the same `instance` map (`profile.ts:427-430`). `gearTier` sits on that object but is currently **not captured or stored** (`inventory_items` has no tier column; `UserInventoryItem` has no tier field).
+- The item **definition** only exposes `inventory.tierType` = **rarity** (5 = Legendary, 6 = Exotic) — `src/lib/manifest/extractors/rawTypes.ts:38`. This is *not* the gear tier; it is only used to distinguish exotics.
+- Community stat-total → tier bands exist but **conflict** (GamesRadar/TheGamer/video → T1 52–57, T2 58–63, T3 64–69, T4 70–75, T5 75; skycoach → T1 48–53, T2 53–58, …) and synced `totalStats` include masterwork/mods, so a stat-derived tier is only an approximation. This is now the **fallback**, not the primary source.
 
-**Decision**: Derive an **approximate** tier from the copy's synced total armor stats via a curated, source-cited band table in `src/data/rules/armorTiers.ts`, exposed as a pure function:
+**Decision**: Make **`gearTier` (instance component 300) the primary Tier source**, captured during sync, with the stat-band heuristic as a fallback for legacy (pre-v9.0.0, `gearTier: null`) copies.
+
+1. **Capture during sync**: read `gearTier` in `parseInventoryItemAttempt` (a `parseGearTier(instance)` helper beside `parseItemPower`), add `UserInventoryItem.gearTier?: number | null`, and persist a **nullable `gear_tier` integer column** on `inventory_items` (idempotent `ensureGearTierColumn` in `src/lib/db/client.ts`, mirroring `ensureStatValuesColumn`).
+2. **Project** onto `OwnedInstanceDetail.tier` via `resolveArmorTier(...)` (`src/data/rules/armorTiers.ts`):
 
 ```
-deriveArmorTier(totalStats: number, opts: { isExotic: boolean; statsComplete: boolean })
-  → { label: string; tier: 1|2|3|4|5|null; approximate: boolean; available: boolean }
+resolveArmorTier(input: {
+  gearTier: number | null;        // from instance component 300
+  totalStats?: number;            // fallback input
+  isExotic: boolean;
+  statsComplete: boolean;
+}) → { tier: 1|2|3|4|5|null; label: string; source: "api"|"estimated"|"none"; approximate: boolean; available: boolean }
 ```
 
-- Legendary armor: map `totalStats` to a tier using the **GamesRadar/TheGamer consensus bands** (the majority/most-cited set), clamping above T5.
-- Exotic armor (`isExotic`): return `{ label: "Exotic", tier: null, available: true }` (exotics are outside the 1–5 system).
-- `statsComplete === false`: return `{ label: "Tier unavailable", available: false }` (satisfies FR-009).
-- `approximate: true` whenever the value is inferred from a masterwork-inflated total (i.e., all legendary derivations), so the card can mark it (e.g., "~T4").
+Resolution precedence:
+- **`gearTier` present (1–5)** → `{ tier: gearTier, label: "Tier N", source: "api", approximate: false, available: true }` (exotics with an API tier may show `"Exotic · Tier N"`).
+- **`gearTier` null, `isExotic`** → `{ tier: null, label: "Exotic", source: "api", approximate: false, available: true }`.
+- **`gearTier` null, legendary, `statsComplete`** → stat-band fallback via `ARMOR_TIER_BANDS` (GamesRadar/TheGamer consensus): `{ tier: N, label: "~Tier N", source: "estimated", approximate: true, available: true }`.
+- **`gearTier` null and stats incomplete** → `{ tier: null, label: "Tier unavailable", source: "none", approximate: false, available: false }` (satisfies FR-009).
 
-**Rationale**: Honors the user's explicit need to *see* a tier while staying deterministic and testable (pure `total → tier`), and honestly signals imprecision instead of asserting a wrong exact tier. Fits Constitution V (curated, validated, degrades explicitly).
+**Rationale**: `gearTier` is exact, deterministic, per-copy, already in the payload we fetch, and matches how DIM does it — no masterwork-inflation caveat. The heuristic is retained only so legacy copies still show *something* (the user's headline need) instead of "unavailable", clearly flagged `approximate`. Fits Constitution V (validated instance data; explicit degradation).
+
+**Cost/trade-off**: Requires a **one-time inventory re-sync** to backfill `gear_tier` (null → resolves via fallback/unavailable until re-synced). Adds one nullable sync column. Both are additive and backward compatible (SC-007).
 
 **Alternatives considered**:
-- *Extract a tier field from the manifest*: rejected for v1 — no such field exists in the current definition shape; would require confirming an undocumented Bungie signal.
-- *Subtract a masterwork constant before banding*: rejected — masterwork level isn't stored (only a boolean), so the correction would itself be a guess.
-- *Show "unavailable" for all tiers*: rejected — fails the headline user requirement when a reasonable estimate is available.
+- *Stat-band heuristic as primary* (previous decision): rejected — the exact `gearTier` field exists in data we already fetch; a heuristic would be needlessly imprecise. Kept as fallback only.
+- *Read `gearTier` live per request instead of storing*: rejected — the projection runs off the DB `UserInventoryItem`, not a live profile call; storing keeps instance listing free of per-request sync (003 FR-013).
+- *Drop the heuristic entirely (null → always "unavailable")*: viable and simpler; rejected for v1 so legacy items still display an estimate. Revisit if the estimate proves confusing.
 
-**Follow-on**: Replace the estimate with a precise value if a stable manifest/API gear-tier signal is later confirmed (extract during manifest build, resolve by itemHash).
+**To confirm at implementation**: verify the live profile response actually populates `gearTier` for this manifest version before relying on it; the fallback covers the null case regardless.
 
 ---
 
@@ -59,6 +70,8 @@ deriveArmorTier(totalStats: number, opts: { isExotic: boolean; statsComplete: bo
 **Alternatives considered**:
 - *Sync per-socket reusable plugs per instance*: rejected for v1 — larger sync/schema change; pools are item-level and already available in the manifest.
 - *Extend `CatalogItem` with `perkColumns`*: rejected — bloats every catalog row; options are only needed at the selection step.
+
+**Follow-on — true per-column perk grouping (deferred)**: FR-003 / US2 acceptance say a weapon card lists perks "grouped by socket/column", but the current `OwnedInstanceDetail.plugs[]` is a **flat, socket-ordered** list with no column label, and `parsePlugHashes` (`src/lib/bungie/profile.ts:512`) captures every enabled socket's equipped `plugHash` (including non-perk sockets: masterwork/mods/cosmetics). This iteration therefore renders equipped sockets in socket order (unresolved by hash), not under labeled columns. Real column grouping needs a **sync-side change**: capture each socket's column/category index (and a perk-vs-cosmetic classification) during inventory sync (component 305 socket order + `DestinyInventoryItemDefinition.sockets.socketCategories`), persist it on `inventory_items`, and expose grouped columns on the DTO. Scope it as a separate feature (`0NN-weapon-perk-columns`) since it changes the sync/schema surface this feature intentionally avoids. Until then, the socket-order flat list satisfies "all perks shown" (FR-003/SC-002 coverage) without column headings.
 
 ---
 

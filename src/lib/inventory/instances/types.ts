@@ -1,5 +1,6 @@
 import type { RollTag } from "@/lib/db/types";
 import type { ArmorStatName } from "@/data/rules/statBenefits";
+import type { ArmorTier } from "@/data/rules/armorTiers";
 import type { DestinyClassName } from "@/lib/manifest/types/records";
 
 import type { ArmorStatSortBy } from "./sortInstances";
@@ -11,6 +12,29 @@ export interface ResolvedPlug {
   name: string | null;
   displayName: string;
   resolved: boolean;
+}
+
+/** A single set-bonus tier effect (2-piece or 4-piece). */
+export interface SetBonusTierSummary {
+  requiredCount: number;
+  name: string;
+  description: string;
+}
+
+/** Armor set-bonus surfaced on an armor instance card (2pc & 4pc). */
+export interface ArmorSetBonusSummary {
+  hash: number;
+  name: string;
+  tiers: SetBonusTierSummary[];
+}
+
+/**
+ * Per-`itemHash` armor metadata resolved once per request (loadInstanceContext)
+ * and threaded into projection so `projectInstance` performs no manifest reads.
+ */
+export interface ArmorInstanceMeta {
+  isExotic: boolean;
+  setBonus: ArmorSetBonusSummary | null;
 }
 
 export interface OwnedInstanceDetail {
@@ -30,6 +54,10 @@ export interface OwnedInstanceDetail {
   statValues?: Partial<Record<ArmorStatName, number>>;
   totalStats?: number;
   statsIncomplete?: boolean;
+  /** Armor only: resolved Armor 3.0 tier (see resolveArmorTier). */
+  tier?: ArmorTier;
+  /** Armor only: 2pc/4pc set bonus, or null when the item is in no set. */
+  setBonus?: ArmorSetBonusSummary | null;
   syncedAt: string;
 }
 

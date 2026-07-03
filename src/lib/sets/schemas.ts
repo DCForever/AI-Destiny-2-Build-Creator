@@ -48,6 +48,7 @@ export const setItemInputSchema = z.object({
   slot: z.string().min(1),
   itemHash: z.number().int().positive(),
   itemName: z.string().trim().min(1).optional(),
+  instanceId: z.string().min(1).optional(),
   selectedPerks: z.array(z.number().int()).optional(),
   masterworkHash: z.number().int().nullable().optional(),
   modHashes: z.array(z.number().int()).optional(),

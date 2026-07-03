@@ -4,7 +4,7 @@
 
 > **Maintenance (required):** Update this file in the same change whenever you modify debug routes, prerequisites, owned-catalog/inventory flows, sync behavior, or related APIs. Feature `quickstart.md` files are scenario checklists; **this file is the single consolidated reference.**
 
-**Last reviewed:** 2026-06-29 (feature 006 synergy refinement)
+**Last reviewed:** 2026-07-03 (feature 010 instance disambiguation)
 
 ---
 
@@ -83,7 +83,7 @@ Nav: header on every debug page (`src/app/debug/layout.tsx`).
 
 | Route | Purpose | Primary APIs |
 |-------|---------|--------------|
-| [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict | `/api/user/sets`, `/api/concept-tags` |
+| [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict, **instance disambiguation carousel** (owned copies with Tier/stats/set-bonus or weapon perks), per-socket weapon perk selection | `/api/user/sets`, `/api/concept-tags`, `/api/catalog/{weapons,armor}`, `/api/user/inventory/instances`, `/api/catalog/weapons/perk-options` |
 | [`/debug/builds`](src/app/debug/builds/page.tsx) | Builds, variants, set attachments (live/snapshot), synergies, suggestions, compare | `/api/user/builds`, variants, suggest-* |
 | [`/debug/synergies`](src/app/debug/synergies/page.tsx) | Synergy CRUD with auto-generated names, sub-type pickers, catalog-backed link search, description preview | `/api/user/synergies`, `/api/catalog/synergy-pickers/*` |
 | [`/debug/catalog`](src/app/debug/catalog/page.tsx) | Catalog browse (`scope=all\|owned`), owned instance drill-down, weapon synergy badges, synergy reverse lookup, direct instance API panel | `/api/catalog/weapons`, `/api/catalog/armor`, `/api/user/inventory/instances`, `/api/user/synergies/by-target` |
@@ -179,7 +179,7 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 ## Flow: Sets (001 P1)
 
 **Page:** `/debug/sets`  
-**Needs:** manifest + sign-in (inventory not required)
+**Needs:** manifest + sign-in (inventory not required for CRUD; inventory sync required for the disambiguation carousel)
 
 1. Create typed sets (Weapon, Armor, Mod, Pair, Fashion).
 2. On `SLOT_OCCUPIED`, resubmit with `confirmReplace: true`.
@@ -187,6 +187,39 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 4. Fashion sets excluded from build attach on `/debug/builds`.
 
 **Checklist:** `specs/001-build-sets-synergies/quickstart.md` Scenario 1
+
+---
+
+## Flow: Instance disambiguation carousel (010 P1/P2)
+
+**Page:** `/debug/sets` (Item lookup fieldset)  
+**Needs:** manifest + sign-in + **inventory sync**
+
+1. Select a Weapon/Armor set + slot, then **Search catalog** (`scope=owned`, `includeInstancePointer=1`).
+2. Click an owned catalog row (`ownedCount > 0`) → the picker fetches copies via `instancesHref` and opens a **carousel of all owned copies** (one card per copy, no cap — US1/FR-021).
+   - **Armor card**: six Armor 3.0 stats + total, the **Tier** (`Tier N` exact from the API `gearTier`, `~Tier N` estimated fallback, `Exotic`, or `Tier unavailable`), and **Set Bonus** 2pc/4pc text (or "no set bonus"). (US2)
+   - **Weapon card**: every equipped socket plug in socket order (unresolved shown by hash). (US2/FR-003)
+3. **Remove** copies you don't want → they leave the carousel (session-only, inventory unchanged); **Reset** restores them (US5/FR-016/FR-017).
+4. **Select this copy** → fills the item form with that copy's `instanceId` + equipped perks.
+   - **Weapon**: a per-socket **perk selection** panel loads from `GET /api/catalog/weapons/perk-options?itemHash=…` (curated ∪ randomized per column, equipped marked, defaults to equipped). Degrades to equipped-only when `columns: []` (exotics/unknowns). (US4)
+5. **Put item** → `PUT /api/user/sets/:id/items` records the specific `instanceId` + `selectedPerks`. Occupied-slot **replace confirmation** still applies.
+
+**Re-sync note:** the armor **Tier** reads a new nullable `inventory_items.gear_tier` column captured during inventory sync. Copies synced before feature 010 show `Tier unavailable`/estimated until you **re-sync inventory** to backfill `gearTier`.
+
+**Edge cases:**
+
+| Case | Expected |
+|------|----------|
+| Item owned in one copy | single-card carousel, still selectable |
+| Never-synced / unsigned | sync prompt / auth error (no empty carousel) |
+| Armor with API `gearTier` | exact `Tier N` (not approximate) |
+| Legacy armor (`gearTier` null) + complete stats | estimated `~Tier N` |
+| `gearTier` null + incomplete stats | `Tier unavailable` |
+| Armor in no set (exotic/standalone) | "no set bonus" |
+| Weapon socket with no alternatives | only the equipped perk shown |
+| All candidates removed | empty state with reset |
+
+**Checklist:** `specs/010-instance-disambiguation/quickstart.md` Scenarios A & B
 
 ---
 

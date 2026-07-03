@@ -429,9 +429,9 @@ function parseInventoryItemAttempt(
   const isMasterwork = parseIsMasterwork(instance);
   const isCrafted = parseIsCrafted(instance);
   const plugHashes = parsePlugHashes(socketsMap[instanceId] ?? []);
-  const statValues = isArmorBucketHash(bucketHash)
-    ? parseArmorStatValues(statsMap[instanceId])
-    : undefined;
+  const isArmor = isArmorBucketHash(bucketHash);
+  const statValues = isArmor ? parseArmorStatValues(statsMap[instanceId]) : undefined;
+  const gearTier = isArmor ? parseGearTier(instance) : null;
 
   return {
     item: {
@@ -445,6 +445,7 @@ function parseInventoryItemAttempt(
       isMasterwork,
       isCrafted,
       statValues: statValues ?? undefined,
+      gearTier,
     },
     dropReason: null,
   };
@@ -507,6 +508,17 @@ function parseIsMasterwork(instance: Record<string, unknown> | undefined): boole
 function parseIsCrafted(instance: Record<string, unknown> | undefined): boolean {
   if (!instance) return false;
   return instance.isCrafted === true;
+}
+
+/**
+ * Armor 3.0 gear tier from `DestinyItemInstanceComponent.gearTier` (component
+ * 300). Null for pre-v9.0.0 items. Range validation happens downstream in
+ * resolveArmorTier; here we only capture the raw integer.
+ */
+function parseGearTier(instance: Record<string, unknown> | undefined): number | null {
+  if (!instance) return null;
+  const value = instance.gearTier;
+  return typeof value === "number" ? value : null;
 }
 
 function parsePlugHashes(sockets: unknown[]): number[] {

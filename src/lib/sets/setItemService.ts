@@ -14,6 +14,7 @@ export type SetItemRecord = {
   slot: string;
   itemHash: number;
   itemName: string;
+  instanceId: string | null;
   selectedPerks: number[];
   masterworkHash: number | null;
   modHashes: number[] | null;
@@ -39,6 +40,7 @@ async function rowToItem(row: typeof setItems.$inferSelect): Promise<SetItemReco
     slot: row.slot,
     itemHash: row.itemHash,
     itemName: resolved.name,
+    instanceId: row.instanceId,
     selectedPerks: parseJsonArray(row.selectedPerks),
     masterworkHash: row.masterworkHash,
     modHashes: row.modHashes ? parseJsonArray(row.modHashes) : null,
@@ -107,6 +109,7 @@ export async function upsertSetItem(
       slot: input.slot,
       itemHash: input.itemHash,
       itemName: validation.name,
+      instanceId: input.instanceId ?? null,
       selectedPerks: JSON.stringify(input.selectedPerks ?? []),
       masterworkHash: input.masterworkHash ?? null,
       modHashes: input.modHashes ? JSON.stringify(input.modHashes) : null,

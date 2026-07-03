@@ -22,6 +22,7 @@ export interface UserInventoryItem {
   plugHashes: number[];
   rollTags: RollTag[];
   statValues?: Partial<Record<ArmorStatName, number>>;
+  gearTier?: number | null;
   syncedAt: string;
 }
 

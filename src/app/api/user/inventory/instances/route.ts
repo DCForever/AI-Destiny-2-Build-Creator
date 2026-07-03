@@ -74,6 +74,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     plugMap: context.plugMap,
     characterLabels: context.characterLabels,
     membershipDisplayName: context.membershipDisplayName,
+    armorMeta: context.armorMeta,
     itemIdentity,
   });
 

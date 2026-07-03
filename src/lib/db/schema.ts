@@ -22,6 +22,7 @@ export const inventoryItems = sqliteTable("inventory_items", {
   plugHashes: text("plug_hashes").notNull().default("[]"),
   rollTags: text("roll_tags").notNull().default("[]"),
   statValues: text("stat_values"),
+  gearTier: integer("gear_tier"),
   syncedAt: text("synced_at").notNull(),
 });
 
@@ -86,6 +87,7 @@ export const setItems = sqliteTable("set_items", {
   selectedPerks: text("selected_perks").notNull().default("[]"),
   masterworkHash: integer("masterwork_hash"),
   modHashes: text("mod_hashes"),
+  instanceId: text("instance_id"),
   sortOrder: integer("sort_order").notNull().default(0),
   removedAt: text("removed_at"),
 });

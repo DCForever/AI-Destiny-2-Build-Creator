@@ -159,6 +159,7 @@ function normalizeItems(
       plugHashes: raw.plugHashes,
       rollTags,
       statValues: raw.statValues,
+      gearTier: raw.gearTier ?? null,
       syncedAt,
     };
   });

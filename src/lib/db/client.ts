@@ -48,6 +48,20 @@ function ensureStatValuesColumn(db: Database.Database): void {
   }
 }
 
+function ensureGearTierColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(inventory_items)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "gear_tier")) {
+    db.exec("ALTER TABLE inventory_items ADD COLUMN gear_tier INTEGER");
+  }
+}
+
+function ensureSetItemInstanceIdColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(set_items)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "instance_id")) {
+    db.exec("ALTER TABLE set_items ADD COLUMN instance_id TEXT");
+  }
+}
+
 export function runMigrations(db: Database.Database): void {
   if (!migrated) {
   db.exec(`
@@ -211,6 +225,8 @@ export function runMigrations(db: Database.Database): void {
   }
   ensureSynergySubTypeColumn(db);
   ensureStatValuesColumn(db);
+  ensureGearTierColumn(db);
+  ensureSetItemInstanceIdColumn(db);
 }
 
 export function getDb(): AppDatabase {

@@ -60,4 +60,39 @@ describe("projectInstance", () => {
     expect(detail.plugs.find((p) => p.hash === 3634656993)?.resolved).toBe(true);
     expect(detail.plugs.find((p) => p.hash === 4248210736)?.displayName).toBe("Default Shader");
   });
+
+  it("adds armor tier from gearTier and set bonus from projection context", () => {
+    const armor = {
+      ...helmetCopy,
+      gearTier: 5,
+      statValues: { Health: 12, Melee: 10, Grenade: 10, Super: 10, Class: 10, Weapons: 11 },
+    };
+    const meta = new Map([
+      [
+        armor.itemHash,
+        {
+          isExotic: false,
+          setBonus: {
+            hash: 1,
+            name: "Deep Stone Crypt",
+            tiers: [
+              { requiredCount: 2, name: "Scanner", description: "d2" },
+              { requiredCount: 4, name: "Reaper", description: "d4" },
+            ],
+          },
+        },
+      ],
+    ]);
+    const detail = projectInstance(armor, armorHybridPlugMap, undefined, undefined, meta);
+    expect(detail.tier).toMatchObject({ tier: 5, source: "api", available: true });
+    expect(detail.setBonus?.name).toBe("Deep Stone Crypt");
+    expect(detail.setBonus?.tiers.map((t) => t.requiredCount)).toEqual([2, 4]);
+  });
+
+  it("omits tier and setBonus for weapons and lists every equipped socket", () => {
+    const detail = projectInstance(ringingNailCopy, ringingNailHybridPlugMap);
+    expect(detail.tier).toBeUndefined();
+    expect(detail.setBonus).toBeUndefined();
+    expect(detail.plugs).toHaveLength(ringingNailCopy.plugHashes.length);
+  });
 });

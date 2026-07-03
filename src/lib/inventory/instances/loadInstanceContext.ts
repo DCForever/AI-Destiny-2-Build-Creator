@@ -4,15 +4,43 @@ import type { EntityCache } from "@/lib/manifest/types/services";
 import type { ManifestService } from "@/lib/manifest/types/services";
 import { getServices } from "@/lib/services";
 
+import { buildSetBonusByItemHash, lookupSetBonus } from "./armorSetBonus";
 import { resolvePlugNamesFromManifest } from "./plugNamesFromManifest";
 import { buildCharacterLabelMap } from "./resolveCharacterLabels";
 import { buildPlugNameMap, mergeManifestPlugNames } from "./resolvePlugs";
-import type { CharacterLabel } from "./types";
+import type { ArmorInstanceMeta, CharacterLabel } from "./types";
 
 export interface InstanceListContext {
   plugMap: Map<number, string>;
   characterLabels?: Map<string, CharacterLabel>;
   membershipDisplayName: string;
+  armorMeta: Map<number, ArmorInstanceMeta>;
+}
+
+/**
+ * Build a per-`itemHash` armor-metadata lookup (isExotic + 2pc/4pc set bonus)
+ * so projection can resolve Tier and Set Bonus without any manifest reads.
+ */
+export async function buildArmorInstanceMeta(
+  entityCache: EntityCache,
+): Promise<Map<number, ArmorInstanceMeta>> {
+  const [setBonuses, exoticArmor] = await Promise.all([
+    entityCache.getStore("set-bonuses"),
+    entityCache.getStore("exotic-armor"),
+  ]);
+
+  const setBonusByItemHash = buildSetBonusByItemHash(setBonuses);
+  const meta = new Map<number, ArmorInstanceMeta>();
+
+  for (const itemHash of setBonusByItemHash.keys()) {
+    meta.set(itemHash, { isExotic: false, setBonus: lookupSetBonus(setBonusByItemHash, itemHash) });
+  }
+  for (const piece of exoticArmor) {
+    const existing = meta.get(piece.hash);
+    meta.set(piece.hash, { isExotic: true, setBonus: existing?.setBonus ?? null });
+  }
+
+  return meta;
 }
 
 export async function buildPlugMapForInventory(
@@ -48,12 +76,10 @@ export async function loadInstanceListContext(
 ): Promise<InstanceListContext> {
   const { entityCache, manifest } = await getServices();
   const manifestStatus = await manifest.getStatus();
-  const plugMap = await buildPlugMapForInventory(
-    entityCache,
-    manifest,
-    manifestStatus.cachedVersion,
-    plugHashes,
-  );
+  const [plugMap, armorMeta] = await Promise.all([
+    buildPlugMapForInventory(entityCache, manifest, manifestStatus.cachedVersion, plugHashes),
+    buildArmorInstanceMeta(entityCache),
+  ]);
 
   let membershipDisplayName = auth.user.displayName || "Guardian";
   let characterLabels: Map<string, CharacterLabel> | undefined;
@@ -73,5 +99,5 @@ export async function loadInstanceListContext(
     }
   }
 
-  return { plugMap, characterLabels, membershipDisplayName };
+  return { plugMap, characterLabels, membershipDisplayName, armorMeta };
 }

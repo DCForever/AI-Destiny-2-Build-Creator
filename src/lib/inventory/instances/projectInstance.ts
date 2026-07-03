@@ -4,12 +4,19 @@ import {
   WEAPON_INVENTORY_BUCKETS,
 } from "@/lib/catalog/filterItems";
 
+import { resolveArmorTier } from "@/data/rules/armorTiers";
+
 import { resolvePlugs } from "./resolvePlugs";
 import {
   computeTotalArmorStats,
   isCompleteArmorStats,
 } from "./parseArmorStats";
-import type { CharacterLabel, InstanceKind, OwnedInstanceDetail } from "./types";
+import type {
+  ArmorInstanceMeta,
+  CharacterLabel,
+  InstanceKind,
+  OwnedInstanceDetail,
+} from "./types";
 
 export function bucketKind(bucket: string): InstanceKind | null {
   if (WEAPON_INVENTORY_BUCKETS.has(bucket)) return "weapon";
@@ -26,6 +33,7 @@ export function projectInstance(
   plugMap: Map<number, string>,
   characterLabels?: Map<string, CharacterLabel>,
   membershipDisplayName?: string,
+  armorMeta?: Map<number, ArmorInstanceMeta>,
 ): OwnedInstanceDetail {
   const kind = bucketKind(item.bucket) ?? "weapon";
   let className: OwnedInstanceDetail["className"] = null;
@@ -41,6 +49,11 @@ export function projectInstance(
     }
   }
 
+  const isArmor = kind === "armor";
+  const totalStats = isArmor && item.statValues ? computeTotalArmorStats(item.statValues) : undefined;
+  const statsComplete = isArmor && isCompleteArmorStats(item.statValues);
+  const meta = isArmor ? armorMeta?.get(item.itemHash) : undefined;
+
   return {
     instanceId: item.instanceId,
     itemHash: item.itemHash,
@@ -55,13 +68,18 @@ export function projectInstance(
     isCrafted: item.isCrafted,
     rollTags: item.rollTags,
     plugs: resolvePlugs(item.plugHashes, plugMap),
-    statValues: kind === "armor" ? item.statValues : undefined,
-    totalStats:
-      kind === "armor" && item.statValues ? computeTotalArmorStats(item.statValues) : undefined,
-    statsIncomplete:
-      kind === "armor"
-        ? !item.statValues || !isCompleteArmorStats(item.statValues)
-        : undefined,
+    statValues: isArmor ? item.statValues : undefined,
+    totalStats,
+    statsIncomplete: isArmor ? !statsComplete : undefined,
+    tier: isArmor
+      ? resolveArmorTier({
+          gearTier: item.gearTier ?? null,
+          totalStats,
+          isExotic: meta?.isExotic ?? false,
+          statsComplete,
+        })
+      : undefined,
+    setBonus: isArmor ? (meta?.setBonus ?? null) : undefined,
     syncedAt: item.syncedAt,
   };
 }

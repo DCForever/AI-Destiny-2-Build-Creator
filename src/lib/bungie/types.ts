@@ -73,6 +73,7 @@ export interface RawInventoryItem {
   isMasterwork: boolean;
   isCrafted: boolean;
   statValues?: Partial<Record<ArmorStatName, number>>;
+  gearTier?: number | null;
 }
 
 export interface InventoryParseDiagnostics {

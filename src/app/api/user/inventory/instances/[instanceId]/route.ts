@@ -32,6 +32,7 @@ export async function GET(
     plugMap: apiContext.plugMap,
     characterLabels: apiContext.characterLabels,
     membershipDisplayName: apiContext.membershipDisplayName,
+    armorMeta: apiContext.armorMeta,
     instanceId,
   });
 

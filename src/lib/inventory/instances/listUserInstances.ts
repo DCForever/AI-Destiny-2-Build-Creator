@@ -11,7 +11,12 @@ import {
 } from "./filterInstances";
 import { isEquipmentBucket, projectInstance } from "./projectInstance";
 import { sortInstances } from "./sortInstances";
-import type { CharacterLabel, InstanceFilterCriteria, ListInstancesResult } from "./types";
+import type {
+  ArmorInstanceMeta,
+  CharacterLabel,
+  InstanceFilterCriteria,
+  ListInstancesResult,
+} from "./types";
 
 export interface ListUserInstancesInput {
   db: AppDatabase;
@@ -20,6 +25,7 @@ export interface ListUserInstancesInput {
   plugMap: Map<number, string>;
   characterLabels?: Map<string, CharacterLabel>;
   membershipDisplayName?: string;
+  armorMeta?: Map<number, ArmorInstanceMeta>;
   itemIdentity?: {
     itemSearchName: string | null;
     inventorySearchNames: Map<number, string>;
@@ -53,6 +59,7 @@ export function listUserInstances(input: ListUserInstancesInput): ListInstancesR
       input.plugMap,
       input.characterLabels,
       input.membershipDisplayName,
+      input.armorMeta,
     ),
   );
 

@@ -24,7 +24,7 @@ npm run gate            # typecheck + lint + test + build (checkpoint bar)
 2. Search owned armor and **select the item owned in multiple copies** (e.g. First Ascent Hood).
    - **Expected**: the picker fetches instances (`instancesHref`) and renders **all owned copies in a carousel**, one card per copy — no cap (FR-001, FR-021).
 3. Step through the carousel cards.
-   - **Expected** per card: copy identity (power, location/character), all six **Armor 3.0 stats** + total, the **Tier** label (e.g. `~Tier 5`, `Exotic`, or `Tier unavailable`), and the **Set Bonus** with both **2-piece and 4-piece** effect text (or "no set bonus"). (US2 / FR-005..FR-009)
+   - **Expected** per card: copy identity (power, location/character), all six **Armor 3.0 stats** + total, the **Tier** label — exact `Tier 5` when the copy has an API `gearTier`, `~Tier 5` for a legacy stat-estimate, `Exotic`, or `Tier unavailable` — and the **Set Bonus** with both **2-piece and 4-piece** effect text (or "no set bonus"). (US2 / FR-005..FR-009)
 4. **Remove** two copies you don't want.
    - **Expected**: they disappear from the carousel; your inventory is unchanged (FR-015, FR-016). A **reset** control restores them (FR-017).
 5. **Select** one copy and **Attach** to the slot.
@@ -43,7 +43,9 @@ npm run gate            # typecheck + lint + test + build (checkpoint bar)
 
 - Item owned in exactly one copy → single-card carousel, still selectable (spec edge case).
 - Never-synced / unsigned → existing sync prompt / auth error (no empty carousel) (FR-018).
-- Armor copy with `statsIncomplete` → Tier shows **unavailable**; stats flagged incomplete (FR-008, FR-009).
+- Armor copy with an API `gearTier` → Tier shows the **exact** `Tier N` (`source: "api"`, not approximate).
+- Legacy armor copy (`gearTier` null) with complete stats → Tier shows the **estimated** `~Tier N` (stat-band fallback).
+- Armor copy with `gearTier` null **and** `statsIncomplete` → Tier shows **unavailable**; stats flagged incomplete (FR-008, FR-009).
 - Armor with no set membership (exotic/standalone) → **no set bonus** indicator (FR-009).
 - Weapon with a socket that has no alternatives → that socket shows only the equipped perk.
 - Remove all candidates → empty state with reset/re-search (FR-018).
@@ -52,7 +54,8 @@ npm run gate            # typecheck + lint + test + build (checkpoint bar)
 
 | Area | Test location |
 |------|---------------|
-| Tier derivation bands + exotic/unavailable | `src/data/rules/armorTiers.test.ts` |
+| `resolveArmorTier`: gearTier primary + stat-band fallback + exotic/unavailable | `src/data/rules/armorTiers.test.ts` |
+| Sync captures `gearTier` (component 300) into `inventory_items.gear_tier` | `src/lib/bungie/profile.test.ts` |
 | Set-bonus-by-itemHash map/lookup | `src/lib/inventory/instances/armorSetBonus.test.ts` |
 | Armor projection adds `tier`/`setBonus`; weapon unaffected | `src/lib/inventory/instances/projectInstance.test.ts` |
 | Weapon perk options resolution + degradation | `src/lib/catalog/weaponPerkOptions.test.ts` |

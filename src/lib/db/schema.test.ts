@@ -15,4 +15,26 @@ describe("schema migrations", () => {
     const indexes = sqlite.prepare("PRAGMA index_list(sets)").all() as Array<{ name: string }>;
     expect(indexes.some((i) => i.name === "idx_sets_user_type_name")).toBe(true);
   });
+
+  it("adds nullable set_items.instance_id column", () => {
+    const sqlite = createTestSqlite();
+    const cols = sqlite.prepare("PRAGMA table_info(set_items)").all() as Array<{
+      name: string;
+      notnull: number;
+    }>;
+    const col = cols.find((c) => c.name === "instance_id");
+    expect(col).toBeDefined();
+    expect(col?.notnull).toBe(0);
+  });
+
+  it("adds nullable inventory_items.gear_tier column", () => {
+    const sqlite = createTestSqlite();
+    const cols = sqlite.prepare("PRAGMA table_info(inventory_items)").all() as Array<{
+      name: string;
+      notnull: number;
+    }>;
+    const col = cols.find((c) => c.name === "gear_tier");
+    expect(col).toBeDefined();
+    expect(col?.notnull).toBe(0);
+  });
 });

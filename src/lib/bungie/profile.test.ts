@@ -293,6 +293,33 @@ describe("HttpBungieProfileClient.getFullInventory", () => {
 
     expect(items[0]?.statValues).toEqual({ Health: 10, Melee: 20 });
   });
+
+  it("captures the API gearTier from the instance component", async () => {
+    const response = {
+      ...ARMOR_STATS_RESPONSE,
+      Response: {
+        ...ARMOR_STATS_RESPONSE.Response,
+        itemComponents: {
+          ...ARMOR_STATS_RESPONSE.Response.itemComponents,
+          instances: {
+            data: {
+              armor1: { primaryStat: { value: 1810 }, gearTier: 4 },
+            },
+          },
+        },
+      },
+    };
+    const items = await makeClient(makeOkFetch(response)).getFullInventory(ACCESS_TOKEN, membership);
+    expect(items[0]?.gearTier).toBe(4);
+  });
+
+  it("returns a null gearTier when the instance component omits it", async () => {
+    const items = await makeClient(makeOkFetch(ARMOR_STATS_RESPONSE)).getFullInventory(
+      ACCESS_TOKEN,
+      membership,
+    );
+    expect(items[0]?.gearTier ?? null).toBeNull();
+  });
 });
 
 describe("HttpBungieProfileClient.getMemberships", () => {

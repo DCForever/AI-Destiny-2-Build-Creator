@@ -4,10 +4,19 @@ import { useCallback, useMemo, useState } from "react";
 
 import { CONCEPT_TAGS } from "@/data/conceptTags";
 import type { CatalogItem } from "@/lib/catalog/types";
-import type { ResolvedPlug } from "@/lib/inventory/instances/types";
+import type { WeaponPerkOptions } from "@/lib/catalog/weaponPerkOptions";
+import {
+  candidateSessionReducer,
+  openCandidateSession,
+  type CandidateAction,
+  type CandidateSession,
+} from "@/lib/inventory/instances/candidateSession";
+import type { InstanceKind, OwnedInstanceDetail } from "@/lib/inventory/instances/types";
 import { sortByName } from "@/lib/sortByName";
 import { setSlotToCatalogBucket } from "@/lib/sets/catalogSlotMap";
 import { SET_TYPES, WEAPON_SLOTS, ARMOR_SLOTS } from "@/lib/sets/schemas";
+
+import { InstanceCarousel } from "./InstanceCarousel";
 
 type JsonPanel = {
   label: string;
@@ -17,15 +26,6 @@ type JsonPanel = {
 };
 
 type SetSummary = { id: string; name: string; type: string };
-
-type InstanceRow = {
-  instanceId: string;
-  itemHash: number;
-  power: number;
-  plugs: ResolvedPlug[];
-  totalStats?: number;
-  statsIncomplete?: boolean;
-};
 
 const SLOTS_BY_TYPE: Record<string, string[]> = {
   weapon: [...WEAPON_SLOTS],
@@ -64,14 +64,26 @@ export function SetsDebugPage() {
   const [lookupStatSort, setLookupStatSort] = useState<(typeof ARMOR_STAT_SORTS)[number]>("total");
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [selectedCatalogHash, setSelectedCatalogHash] = useState<number | null>(null);
-  const [instanceRows, setInstanceRows] = useState<InstanceRow[]>([]);
+  const [session, setSession] = useState<CandidateSession | null>(null);
+  const [carouselHint, setCarouselHint] = useState<string | undefined>(undefined);
+  const [perkOptions, setPerkOptions] = useState<WeaponPerkOptions | null>(null);
+  const [perkSelection, setPerkSelection] = useState<Record<number, number>>({});
 
   const record = useCallback((next: JsonPanel) => setPanel(next), []);
+
+  const dispatchSession = useCallback((action: CandidateAction) => {
+    setSession((prev) => (prev ? candidateSessionReducer(prev, action) : prev));
+  }, []);
 
   const selectedSet = useMemo(
     () => sets.find((set) => set.id === selectedId) ?? null,
     [selectedId, sets],
   );
+
+  const equippedPerkHashes = useMemo(() => {
+    const chosen = session?.all.find((c) => c.instanceId === session?.selectedInstanceId);
+    return new Set(chosen?.plugs.map((plug) => plug.hash) ?? []);
+  }, [session]);
   const activeSetType = selectedSet?.type ?? createForm.type;
   const catalogKind =
     activeSetType === "weapon" ? "weapons" : activeSetType === "armor" ? "armor" : null;
@@ -111,7 +123,10 @@ export function SetsDebugPage() {
     record({ label: `GET ${url}`, request: { url } });
     setCatalogItems([]);
     setSelectedCatalogHash(null);
-    setInstanceRows([]);
+    setSession(null);
+    setCarouselHint(undefined);
+    setPerkOptions(null);
+    setPerkSelection({});
 
     const res = await fetch(url);
     const body = await res.json();
@@ -136,6 +151,10 @@ export function SetsDebugPage() {
   const selectCatalogRow = useCallback(
     async (item: CatalogItem) => {
       setSelectedCatalogHash(item.hash);
+      setSession(null);
+      setCarouselHint(undefined);
+      setPerkOptions(null);
+      setPerkSelection({});
       if (item.ownedCount <= 0) {
         setItemForm((prev) => ({
           ...prev,
@@ -143,10 +162,10 @@ export function SetsDebugPage() {
           itemName: item.name,
           selectedPerks: "",
         }));
-        setInstanceRows([]);
         return;
       }
 
+      const kind: InstanceKind = catalogKind === "weapons" ? "weapon" : "armor";
       const params = new URLSearchParams({
         itemHash: String(item.hash),
         kind: catalogKind === "weapons" ? "weapons" : "armor",
@@ -161,38 +180,86 @@ export function SetsDebugPage() {
       const body = await res.json();
       if (!res.ok) {
         record({ label: `GET ${href}`, request: { url: href }, error: body });
-        setInstanceRows([]);
         return;
       }
 
-      const rows = (body.instances ?? []) as InstanceRow[];
-      setInstanceRows(rows);
       record({ label: `GET ${href}`, request: { url: href }, response: body });
 
-      if (rows.length === 1) {
-        const only = rows[0]!;
-        setItemForm((prev) => ({
-          ...prev,
-          itemHash: String(only.itemHash),
-          itemName: item.name,
-          selectedPerks: only.plugs.map((plug) => plug.hash).join(","),
-        }));
+      const rows = (body.instances ?? []) as OwnedInstanceDetail[];
+      if (body.syncPrompt) {
+        setCarouselHint(body.message ?? "Sync inventory to see owned copies.");
+        return;
       }
+      if (rows.length === 0) {
+        setCarouselHint("No owned copies matched.");
+        return;
+      }
+      setSession(openCandidateSession(item.hash, kind, rows));
     },
     [catalogKind, lookupOriginTrait, lookupPerk, lookupStatSort, record],
   );
 
-  const selectInstanceRow = useCallback(
-    (row: InstanceRow, itemName: string) => {
-      setItemForm((prev) => ({
-        ...prev,
-        itemHash: String(row.itemHash),
-        itemName,
-        selectedPerks: row.plugs.map((plug) => plug.hash).join(","),
-      }));
+  const loadWeaponPerkOptions = useCallback(
+    async (chosen: OwnedInstanceDetail) => {
+      const url = `/api/catalog/weapons/perk-options?itemHash=${chosen.itemHash}`;
+      const res = await fetch(url);
+      const body = await res.json();
+      if (!res.ok) {
+        setPerkOptions(null);
+        setPerkSelection({});
+        return;
+      }
+      const options = body as WeaponPerkOptions;
+      setPerkOptions(options);
+
+      const equippedHashes = new Set(chosen.plugs.map((plug) => plug.hash));
+      const selection: Record<number, number> = {};
+      for (const column of options.columns) {
+        const equipped = column.options.find((option) => equippedHashes.has(option.hash));
+        if (equipped) selection[column.column] = equipped.hash;
+      }
+      setPerkSelection(selection);
     },
     [],
   );
+
+  const selectCandidate = useCallback(
+    (instanceId: string) => {
+      dispatchSession({ type: "select", instanceId });
+      setSession((prev) => {
+        const chosen = prev?.all.find((c) => c.instanceId === instanceId);
+        if (chosen) {
+          const itemName =
+            catalogItems.find((item) => item.hash === chosen.itemHash)?.name ?? "";
+          setItemForm((form) => ({
+            ...form,
+            itemHash: String(chosen.itemHash),
+            itemName: itemName || form.itemName,
+            selectedPerks: chosen.plugs.map((plug) => plug.hash).join(","),
+          }));
+          if (chosen.kind === "weapon") {
+            void loadWeaponPerkOptions(chosen);
+          } else {
+            setPerkOptions(null);
+            setPerkSelection({});
+          }
+        }
+        return prev;
+      });
+    },
+    [catalogItems, dispatchSession, loadWeaponPerkOptions],
+  );
+
+  const changePerkSelection = useCallback((column: number, hash: number) => {
+    setPerkSelection((prev) => {
+      const next = { ...prev, [column]: hash };
+      setItemForm((form) => ({
+        ...form,
+        selectedPerks: Object.values(next).join(","),
+      }));
+      return next;
+    });
+  }, []);
 
   async function createSet() {
     const payload = createForm;
@@ -219,6 +286,7 @@ export function SetsDebugPage() {
       itemHash: Number(itemForm.itemHash),
       itemName: itemForm.itemName,
     };
+    if (session?.selectedInstanceId) payload.instanceId = session.selectedInstanceId;
     if (itemForm.selectedPerks.trim()) {
       payload.selectedPerks = itemForm.selectedPerks.split(",").map((s) => Number(s.trim()));
     }
@@ -488,26 +556,48 @@ export function SetsDebugPage() {
               ))}
             </ul>
           )}
-          {instanceRows.length > 0 && (
-            <ul className="max-h-40 space-y-1 overflow-auto text-sm">
-              {instanceRows.map((row) => {
-                const itemName =
-                  catalogItems.find((item) => item.hash === row.itemHash)?.name ?? itemForm.itemName;
-                return (
-                  <li key={row.instanceId}>
-                    <button
-                      type="button"
-                      className="w-full rounded bg-zinc-900 px-2 py-1 text-left hover:bg-zinc-800"
-                      onClick={() => selectInstanceRow(row, itemName)}
+          {carouselHint && !session && (
+            <p className="rounded border border-zinc-800 p-2 text-xs text-zinc-400">
+              {carouselHint}
+            </p>
+          )}
+          {session && (
+            <InstanceCarousel
+              session={session}
+              onPrev={() => dispatchSession({ type: "prev" })}
+              onNext={() => dispatchSession({ type: "next" })}
+              onSelect={selectCandidate}
+              onRemove={(instanceId) => dispatchSession({ type: "remove", instanceId })}
+              onReset={() => dispatchSession({ type: "reset" })}
+            />
+          )}
+          {session?.kind === "weapon" && session.selectedInstanceId && (
+            <div className="space-y-2 rounded border border-zinc-800 p-2 text-sm">
+              <p className="text-xs text-zinc-500">Perk selection (defaults to equipped)</p>
+              {perkOptions && perkOptions.columns.length > 0 ? (
+                perkOptions.columns.map((column) => (
+                  <label key={column.column} className="block text-xs">
+                    Column {column.column + 1}
+                    <select
+                      className="ml-2 rounded bg-zinc-900 px-2 py-1"
+                      value={perkSelection[column.column] ?? ""}
+                      onChange={(e) => changePerkSelection(column.column, Number(e.target.value))}
                     >
-                      {row.power}
-                      {row.totalStats !== undefined ? ` · stats ${row.totalStats}` : ""}
-                      {row.statsIncomplete ? " · incomplete stats" : ""}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                      {column.options.map((option) => (
+                        <option key={option.hash} value={option.hash}>
+                          {option.name}
+                          {equippedPerkHashes.has(option.hash) ? " (equipped)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))
+              ) : (
+                <p className="text-xs text-zinc-400">
+                  Perk options unavailable — recording equipped perks.
+                </p>
+              )}
+            </div>
           )}
           <button
             type="button"

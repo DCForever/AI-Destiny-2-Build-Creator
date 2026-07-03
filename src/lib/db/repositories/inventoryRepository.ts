@@ -27,6 +27,7 @@ export function upsertInventoryBatch(
           plugHashes: JSON.stringify(item.plugHashes),
           rollTags: JSON.stringify(item.rollTags),
           statValues: item.statValues ? JSON.stringify(item.statValues) : null,
+          gearTier: item.gearTier ?? null,
           syncedAt: item.syncedAt || now,
         })
         .onConflictDoUpdate({
@@ -42,6 +43,7 @@ export function upsertInventoryBatch(
             plugHashes: sql`excluded.plug_hashes`,
             rollTags: sql`excluded.roll_tags`,
             statValues: sql`excluded.stat_values`,
+            gearTier: sql`excluded.gear_tier`,
             syncedAt: sql`excluded.synced_at`,
           },
         })
@@ -159,6 +161,7 @@ function rowToItem(row: typeof inventoryItems.$inferSelect): UserInventoryItem {
     plugHashes: JSON.parse(row.plugHashes) as number[],
     rollTags: JSON.parse(row.rollTags) as RollTag[],
     statValues,
+    gearTier: row.gearTier ?? null,
     syncedAt: row.syncedAt,
   };
 }
