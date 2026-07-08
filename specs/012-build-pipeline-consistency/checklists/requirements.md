@@ -31,7 +31,8 @@
 
 ## Notes
 
-- Validation passed on first review (2026-07-08).
+- Validation passed on first review (2026-07-08); re-validated after clarify session 2026-07-08 (5/5 questions).
 - Spec intentionally references prior domain rules (live/snapshot, Pair/exotic, synergy designation) without restating implementation.
 - Mentions of “debug” surfaces and “catalog-backed lookup” describe verification venue and user-facing selection behavior, not tech stack.
-- Ready for `/speckit-clarify` or `/speckit-plan`.
+- Clarifications added: empty create allowed; additive attach; detach in scope; per-variant exotic weapon picker; block create when no synergies (link to Synergies debug).
+- Plan already exists — sync plan/contracts/research with clarify outcomes before `/speckit-tasks` if needed.

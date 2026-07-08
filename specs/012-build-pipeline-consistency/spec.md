@@ -10,11 +10,21 @@
 
 ## Iteration Scope
 
-**In scope (this iteration)**: Close end-to-end gaps in the build composition pipeline (create build → designate synergies → manage variants → attach sets → resolve/verify) and align **lookup and selection patterns** across all debug verification surfaces (Builds, Sets, Synergies, Catalog, and related suggestion flows) so every identity a user must choose is picked from the same catalog-backed discovery model—not typed as raw hashes, free-form IDs, or ad-hoc JSON where a picker already exists elsewhere.
+**In scope (this iteration)**: Close end-to-end gaps in the build composition pipeline (create build → designate synergies → manage variants → attach/detach sets → resolve/verify) and align **lookup and selection patterns** across all debug verification surfaces (Builds, Sets, Synergies, Catalog, and related suggestion flows) so every identity a user must choose is picked from the same catalog-backed discovery model—not typed as raw hashes, free-form IDs, or ad-hoc JSON where a picker already exists elsewhere.
 
 **Out of scope (this iteration)**: Polished production build/set editors; new synergy or set domain rules beyond what prior specs already define; pagination of large lists; changing business rules for live vs snapshot, exotic armor/weapon placement, or synergy weighting (those remain as established in 001 and later refinements).
 
 **Verification**: A signed-in tester can walk the full pipeline on debug pages without leaving the debug UI or inventing hashes/IDs by hand for happy-path flows. Automated checks cover attach/create validation and that debug lookup behaviors stay aligned across surfaces.
+
+## Clarifications
+
+### Session 2026-07-08
+
+- Q: Must the default variant have equipment filled at build create time? → A: Allow create with an empty default variant; equipment is required only when saving/resolving a variant that must be non-empty per existing rules (staged pipeline: create → designate → attach → resolve).
+- Q: When attaching a set to a variant that already has attachments, what happens to existing attachments? → A: Attach adds or updates that one set; other attachments on the variant are preserved (no wipe-on-single-attach).
+- Q: Can the user remove a set attachment from a variant in this iteration? → A: Yes — list current attachments on the selected variant and remove one without affecting the others.
+- Q: Is per-variant exotic weapon selection in scope for debug Builds? → A: Yes — optional exotic weapon picker on the selected variant (catalog search → set or clear).
+- Q: What happens when the user has no synergies yet and tries to create a build? → A: Block create with a clear message and a path/link to Synergies debug to create one first (no inline synergy wizard; ≥1 designation rule retained).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -32,7 +42,8 @@ A tester creating a build on the debug Builds surface chooses exotic armor, subc
 2. **Given** the create-build flow, **When** the user designates synergies, **Then** they select from their existing synergies list (multi-select allowed) rather than relying on an invisible default seed or empty attachment.
 3. **Given** subclass configuration is required, **When** the user fills subclass fields, **Then** they pick from available class/subclass options (or an equivalent structured picker)—not by inventing free-form JSON as the only path.
 4. **Given** required fields are incomplete (no exotic armor selected, or no synergy designated when required by existing rules), **When** the user attempts to save, **Then** creation is blocked with a clear validation message naming what is missing.
-5. **Given** a successful create, **When** the user views the build detail, **Then** exotic armor, tags, designated synergies, and the default variant are all visible and match what was selected.
+5. **Given** a successful create, **When** the user views the build detail, **Then** exotic armor, tags, designated synergies, and the default variant are all visible and match what was selected — even if the default variant still has no set attachments yet.
+6. **Given** the user has selected exotic armor, synergies, and subclass but has not attached any sets, **When** they create the build, **Then** creation succeeds with an empty default variant; attaching sets is a later step.
 
 ---
 
@@ -49,18 +60,20 @@ A tester attaching sets to a build selects the target **variant** from the build
 1. **Given** a build with one or more variants, **When** the user opens attach-set, **Then** they select the target variant from a list of that build’s variants (name + identity)—not by typing a raw variant ID as the primary path.
 2. **Given** the attach flow, **When** the user chooses a set, **Then** they can filter sets by type and by concept-tag combination (AND semantics), matching the SetAttachPicker behavior already required for builds.
 3. **Given** the user attaches a set, **When** they choose live or snapshot, **Then** the attachment is recorded on the selected variant with that mode, and later set edits behave according to existing live/snapshot rules.
-4. **Given** a Pair Set whose exotic armor does not match the build’s exotic armor, **When** the user attempts to attach it, **Then** the operation is rejected with a clear explanation (existing Pair/exotic rule).
-5. **Given** attachments on multiple variants, **When** the user requests resolved equipment for each variant, **Then** each resolution reflects only that variant’s attachments (plus shared build-level exotic armor / subclass / synergies).
+4. **Given** a variant that already has one or more set attachments, **When** the user attaches a different set, **Then** the new set is added (or an existing attachment for the same set is updated) and previously attached sets remain on that variant.
+5. **Given** a Pair Set whose exotic armor does not match the build’s exotic armor, **When** the user attempts to attach it, **Then** the operation is rejected with a clear explanation (existing Pair/exotic rule).
+6. **Given** attachments on multiple variants, **When** the user requests resolved equipment for each variant, **Then** each resolution reflects only that variant’s attachments (plus shared build-level exotic armor / subclass / synergies).
+7. **Given** a variant with two or more set attachments listed, **When** the user removes one attachment, **Then** that set is detached from the variant and the remaining attachments are unchanged.
 
 ---
 
 ### User Story 3 - Account for Every Variant in Debug Workflows (Priority: P1)
 
-A tester can list, select, duplicate, compare, and resolve **all** variants of a build from the debug Builds surface without losing track of which variant is active, and without workflows that silently default to “first variant only.”
+A tester can list, select, duplicate, compare, and resolve **all** variants of a build from the debug Builds surface without losing track of which variant is active, and without workflows that silently default to “first variant only.” They can optionally set or clear each variant’s **exotic weapon** via catalog-backed lookup (variants may differ by attached sets and exotic weapon).
 
-**Why this priority**: Prior debug flows often assume a single default variant. Incomplete variant accounting breaks attach, suggest, compare, and export verification.
+**Why this priority**: Prior debug flows often assume a single default variant. Incomplete variant accounting breaks attach, suggest, compare, and export verification. Exotic weapon is part of how variants differ under existing rules.
 
-**Independent Test**: Duplicate a variant, switch selection between default and copy, attach different sets to each, run compare and resolved export for both; confirm no action applies to the wrong variant.
+**Independent Test**: Duplicate a variant, switch selection between default and copy, attach different sets to each, set a different exotic weapon on the copy, run compare and resolved export for both; confirm no action applies to the wrong variant.
 
 **Acceptance Scenarios**:
 
@@ -69,6 +82,7 @@ A tester can list, select, duplicate, compare, and resolve **all** variants of a
 3. **Given** the user duplicates a variant, **When** the copy is created, **Then** it appears in the variant list, becomes selectable, and starts from the duplicated attachments per existing rules.
 4. **Given** two or more variants, **When** the user runs compare, **Then** the comparison covers the build’s variants with clear per-variant differences (attachments / exotic weapon where applicable).
 5. **Given** no variant is selected, **When** the user attempts a variant-scoped action, **Then** the UI blocks the action and prompts them to select a variant.
+6. **Given** a selected variant, **When** the user picks an exotic weapon from catalog search (or clears it), **Then** that variant’s exotic weapon identity is updated and other variants are unchanged.
 
 ---
 
@@ -85,7 +99,7 @@ A tester can designate, add, remove, and review synergies on a build using the s
 1. **Given** existing user synergies, **When** the user designates synergies on a build (create or edit), **Then** they pick from a searchable/filterable list of their synergies (by name and type), not free-text IDs.
 2. **Given** a build with designated synergies, **When** the user views the build, **Then** all designated synergies are listed with names and types consistent with the Synergies debug listing.
 3. **Given** a build with designated synergies, **When** the user removes one designation, **Then** the build updates and subsequent suggestions no longer treat the removed synergy as designated.
-4. **Given** the user has no synergies yet, **When** they attempt to create a build that requires at least one designated synergy, **Then** they are guided to create a synergy first (or blocked with a clear message)—not silently given a hidden placeholder without visibility.
+4. **Given** the user has no synergies yet, **When** they attempt to create a build, **Then** creation is blocked with a clear message that at least one synergy is required and a visible path/link to the Synergies debug page to create one first—not an inline synergy wizard and not a silent placeholder.
 
 ---
 
@@ -111,9 +125,11 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 ### Edge Cases
 
 - What happens when the user switches the active variant mid-flow after selecting a set but before confirming attach? The attach must use the variant selected at confirm time; if selection changed, the UI confirms the target variant name before applying.
-- How does the system handle a build whose default variant has no equipment slots filled yet? Variant-scoped save/resolve rules from prior specs still apply; debug UI surfaces the validation clearly instead of succeeding with an empty composition.
+- What happens to existing attachments when attaching another set? They are **preserved**; attach is additive/update-in-place for the chosen set, not a wipe of the variant’s attachment list.
+- How does the system handle a build whose default variant has no equipment slots filled yet? **Create is allowed** with an empty default variant. Existing variant-scoped save/resolve rules still apply afterward; debug UI surfaces validation clearly when a non-empty composition is required for a later action, instead of blocking create.
 - What if a designated synergy is deleted while still attached to builds? Follow existing synergy/build referential rules; debug UI refreshes designations and shows a clear stale/missing state if a designation can no longer resolve.
 - What if set list or synergy list is empty when opening an attach/designate picker? Show an informative empty state with a path to create the missing entity on the appropriate debug page.
+- What if the user has zero synergies at build create? **Block create** with a clear required-synergy message and a link/path to `/debug/synergies`; do not offer an inline synergy-create wizard on Builds in this iteration.
 - What if catalog data is unavailable or stale for an exotic armor previously saved on a build? Show the stored name/hash with a stale indicator; block new selections that fail catalog validation, consistent with soft-stale item rules.
 - What if the user filters builds by exotic armor using a picker selection vs an old hash filter? Both must resolve to the same build set when the same exotic armor identity is chosen.
 
@@ -122,13 +138,18 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 ### Functional Requirements
 
 - **FR-001**: Debug Builds create flow MUST allow selecting exotic armor via catalog-backed lookup; happy-path create MUST NOT require typing a raw exotic armor hash.
-- **FR-002**: Debug Builds create/edit flows MUST allow designating one or more synergies via picker from the user’s synergies; designated synergies MUST be visible after save.
+- **FR-002**: Debug Builds create/edit flows MUST allow designating one or more synergies via picker from the user’s synergies; designated synergies MUST be visible after save. When the user has no synergies, create MUST be blocked with a clear message and a path/link to Synergies debug—not an inline synergy-create wizard and not silent seeding.
 - **FR-003**: Debug Builds MUST support structured subclass selection sufficient to satisfy existing build subclass requirements without raw JSON as the only happy-path input.
-- **FR-004**: System MUST reject build create/update that violates existing required fields (including designated synergy and default-variant equipment rules already defined) with explicit, user-visible validation messages.
+- **FR-004**: System MUST reject build create/update that violates existing required fields (including designated synergy) with explicit, user-visible validation messages. Build **create** MUST allow an empty default variant (no set attachments / no filled equipment slots yet); existing non-empty variant rules apply to later save/resolve steps, not to initial create.
+- **FR-015**: After create, users MUST be able to attach sets to the (possibly empty) default variant as a separate step; the staged pipeline create → designate → attach → resolve is the supported happy path.
+- **FR-019**: Build create MUST continue to require ≥1 designated synergy; absence of any user synergies is an explicit block with navigation guidance to Synergies debug, not a relaxation of the designation rule.
 - **FR-005**: Debug Builds MUST list all variants for the selected build and require an explicit variant selection for every variant-scoped action (attach set, suggest sets, resolve, export).
 - **FR-006**: Debug Builds attach-set flow MUST select sets via a picker that supports set type and concept-tag AND filtering, and MUST record live vs snapshot mode on the selected variant.
+- **FR-016**: Attaching a set to a variant MUST preserve other attachments already on that variant (add or update the chosen set only). A single attach action MUST NOT wipe the variant’s full attachment list.
+- **FR-017**: Debug Builds MUST list the selected variant’s current set attachments and allow removing one attachment without affecting the others.
 - **FR-007**: Attach and resolve behavior MUST continue to enforce existing Pair Set / build exotic armor consistency and live vs snapshot semantics; this feature MUST NOT weaken those rules.
 - **FR-008**: Variant duplicate and compare actions MUST operate on the explicitly selected build/variants and MUST refresh the variant list so every variant remains selectable afterward.
+- **FR-018**: Debug Builds MUST allow setting or clearing the selected variant’s optional exotic weapon via catalog-backed lookup (happy path MUST NOT require typing a raw exotic weapon hash); build-level exotic armor remains separate and shared across variants.
 - **FR-009**: Users MUST be able to add and remove synergy designations on an existing build from debug Builds after create, with listings consistent with Synergies debug (name, type).
 - **FR-010**: Across debug surfaces (Builds, Sets, Synergies, Catalog, and suggestion pages that select the same entities), lookups for the same entity kind MUST present consistent search/filter → select behavior and comparable result identity fields (name, type/kind, and description when that entity already shows descriptions elsewhere).
 - **FR-011**: Happy-path debug flows for build create, set attach, synergy designate, and variant select MUST be completable without manual entry of opaque IDs or hashes; any remaining raw ID/hash inputs MUST be optional advanced escape hatches only.
@@ -157,7 +178,7 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 
 ## Assumptions
 
-- Existing domain rules from 001 (and refinements in 006–011) remain authoritative for live/snapshot, exotic armor at build level, exotic weapon per variant, Pair matching, synergy weighting, and set slot cardinality; this feature closes verification and selection gaps rather than redefining those rules.
+- Existing domain rules from 001 (and refinements in 006–011) remain authoritative for live/snapshot, exotic armor at build level, exotic weapon per variant, Pair matching, synergy weighting, and set slot cardinality; this feature closes verification and selection gaps rather than redefining those rules. Clarification 2026-07-08: **empty default variant at create is allowed**; 001’s “at least one equipment slot filled” constraint applies to later variant save/resolve readiness, not to blocking initial build create in this pipeline.
 - Debug UI remains the delivery and verification venue (signed-in, non-production), consistent with prior iterations.
 - Catalog, Sets, and Synergies already have stronger picker patterns for many entity types; Builds (and any lagging controls on other debug pages) are brought up to that bar.
 - “Consistency” means same discovery model and comparable result fields for the same entity kind—not identical page layout or pixel-perfect UI.
