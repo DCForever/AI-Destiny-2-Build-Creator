@@ -118,6 +118,21 @@
 
 ---
 
+## R10 — Empty search + class/element scoping (clarify session 2)
+
+**Decision**:
+1. Allow empty `q` on `GET /api/manifest/search` for scoped browse categories used by Builds (`abilities`, `aspects`, `fragments`, `exotic-armor`, `exotic-weapons`): empty `q` lists from entity store (not Fuse empty-query), then apply filters.
+2. Add query params `classType` (`Titan|Hunter|Warlock`) and `element` (including `Prismatic`) where records support them.
+3. Subclass form scopes abilities/aspects/fragments by `getSubclassMeta(subclassName)` → `{ classType, element }`; Prismatic uses element `Prismatic` only.
+4. Exotic armor/weapon lookups pass build `className` as `classType` (armor has `classType`; weapons may be class-agnostic — filter armor strictly; weapons return all exotics when class filter N/A, or filter only if record has class).
+5. UI: empty Search/Browse allowed; on class/subclass change clear incompatible selections and re-fetch open result keys.
+
+**Rationale**: Spec FR-020–FR-022 / SC-007. Current route requires `q.min(1)` and `ItemResolver.search("")` returns `[]`.
+
+**Alternatives considered**:
+- Client-side full-store download — heavier; prefer server filter.
+- Prismatic = all elements — rejected by user; Prismatic has its own kit.
+
 ## Resolved clarifications
 
 | Topic | Resolution |
@@ -132,3 +147,7 @@
 | Detach attachment? | In scope (clarify) |
 | Per-variant exotic weapon? | Catalog picker in scope (clarify) |
 | Subclass storage? | Unchanged JSON name-based shape |
+| Empty search returns? | All items still valid under scope (clarify session 2) |
+| Subclass field scope? | Class + element from subclass metadata; Prismatic = Prismatic only |
+| Empty search trigger? | Explicit Search/Browse; refresh open results on class/subclass change |
+| Incompatible on subclass change? | Clear incompatible ability/aspect/fragment picks; keep compatible |

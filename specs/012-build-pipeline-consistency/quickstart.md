@@ -80,10 +80,10 @@ Empty search on each → clear empty state.
 
 From a clean browser session (already signed in, sets+synergies exist), complete A→C resolve in under 5 minutes **without** entering any hash or UUID by hand.
 
-## Pass criteria
+## Scenario G — Scoped empty search (SC-007 / FR-020–022)
 
-- [ ] Happy path uses pickers only (SC-002)
-- [ ] Multi-variant actions hit selected variant only (SC-003)
-- [ ] Parity table above passes (SC-004)
-- [ ] Invalid ops show clear messages (SC-005)
-- [ ] `npm run gate` green
+1. On `/debug/builds` create form, set class **Warlock**, subclass **Stormcaller**.
+2. Clear the Super search box → click **Search** → **Expect**: only Warlock + Arc supers (not Solar/Void/etc.).
+3. Pick a Super; switch subclass to **Dawnblade** → **Expect**: Arc-incompatible Super cleared; empty Super Search now lists Solar-scoped options.
+4. Exotic armor empty Search with class Warlock → **Expect**: only Warlock exotic armor.
+5. Prismatic Warlock empty ability Search → **Expect**: Prismatic-tagged options only (not all Warlock elements).

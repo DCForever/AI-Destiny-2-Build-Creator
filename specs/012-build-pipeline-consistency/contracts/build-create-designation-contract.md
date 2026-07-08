@@ -90,15 +90,20 @@ Unchanged build detail shape including `variants[]` and designated synergies wit
 
 ### GET `/api/manifest/search`
 
-Add category:
+| Param | Behavior |
+|-------|----------|
+| `category` | Includes `abilities` (plus existing stores) |
+| `q` | Optional for browse categories below; empty/`omit` = list all after filters (not an error) |
+| `kind` | Abilities only: `super` \| `grenade` \| `melee` \| `classAbility` \| `movement` |
+| `classType` | `Titan` \| `Hunter` \| `Warlock` — filter records with `classType` (exotic-armor, abilities, aspects when present) |
+| `element` | Element name including `Prismatic` — filter abilities/aspects/fragments |
+| `limit` | Cap results; empty-browse may use a higher default (e.g. 50) for scoped lists |
 
-| `category` | Store | Optional params |
-|------------|-------|-----------------|
-| `abilities` | `abilities` entity cache | `kind` = `super` \| `grenade` \| `melee` \| `classAbility` \| `movement` when filtering |
+**Empty-`q` browse categories (012 FR-020)**: `abilities`, `aspects`, `fragments`, `exotic-armor`, `exotic-weapons`.
 
-Response `results[]` include at least `name`, `hash`, `icon`, and `kind` when available.
+**Subclass scoping**: Stormcaller → `classType=Warlock&element=Arc`; Prismatic Warlock → `classType=Warlock&element=Prismatic` (not all elements).
 
-Existing categories (`exotic-armor`, `aspects`, `fragments`, …) unchanged.
+Response `results[]` include `name`, `hash`, `icon`, and when available `kind`, `classType`, `element`, `slot`.
 
 ## Error codes (relevant)
 

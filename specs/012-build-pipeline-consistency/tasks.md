@@ -172,6 +172,34 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ---
 
+## Phase 9: Delta — Scoped Empty Search (FR-020–FR-022 / SC-007)
+
+**Purpose**: Follow-up after clarify session 2. Empty Search/Browse returns all items still valid under class/element (and class for exotics); Prismatic = Prismatic only; clear incompatible picks on subclass/class change.
+
+**Independent Test**: On `/debug/builds`, select Warlock + Stormcaller → empty Super Search lists only Warlock+Arc supers; switch to Dawnblade → Arc-only picks clear and empty search shows Solar-scoped options; exotic armor empty search lists only that class’s exotic armor.
+
+### Tests (write first, confirm failing)
+
+- [ ] T041 [P] Extend `src/app/api/manifest/search/route.test.ts`: empty `q` allowed for `abilities`/`aspects`/`fragments`/`exotic-armor`/`exotic-weapons`; `classType` + `element` filters applied; Prismatic element does not return Arc/Solar rows; non-browse categories still require `q` or behave safely.
+- [ ] T042 [P] Add `src/lib/debug/subclassScope.test.ts` for `resolveSubclassScope(subclassName)` → `{ classType, element }` via `getSubclassMeta` (Stormcaller → Warlock+Arc; Prismatic Warlock → Warlock+Prismatic).
+- [ ] T043 [P] Add `src/lib/debug/clearIncompatibleSubclassSelections.test.ts` (or co-locate): given prior Arc picks + new Solar scope, incompatible ability/aspect/fragment strings cleared; compatible kept.
+
+### Implementation
+
+- [ ] T044 Implement empty-`q` browse path in `src/app/api/manifest/search/route.ts`: optional `q`; when empty and category is a browse store, load via `entityCache.getStore` (or resolver list helper), apply `kind`/`classType`/`element`/`slot` filters, raise default `limit` for browse (e.g. 50); include `classType`/`element` on results when present (depends on T041).
+- [ ] T045 [P] Add `resolveSubclassScope` in `src/lib/debug/subclassScope.ts` wrapping `getSubclassMeta` from `src/data/subclasses` (depends on T042).
+- [ ] T046 [P] Add `clearIncompatibleSubclassSelections(value, scope)` in `src/lib/debug/subclassScope.ts` (or sibling module) used by the form (depends on T043).
+- [ ] T047 Update `src/components/debug/SubclassStructuredForm.tsx`: allow empty Search/Browse; pass `classType`+`element` from `resolveSubclassScope(value.name)`; on class/subclass change clear incompatible selections via T046 and refresh any open result keys (depends on T044–T046).
+- [ ] T048 [P] Update `src/components/debug/ExoticArmorLookup.tsx`: empty Search lists class-scoped exotic armor (`classType` from props); non-empty filters within scope (depends on T044).
+- [ ] T049 [P] Update `src/components/debug/ExoticWeaponLookup.tsx`: empty Search lists exotic weapons (class filter if/when applicable); non-empty filters within results (depends on T044).
+- [ ] T050 Wire Builds create/filter exotic lookups with guardian `className` as `classType` in `src/app/debug/builds/BuildsDebugPage.tsx` (depends on T048).
+- [ ] T051 [P] Update `DEBUG.md` + `specs/012-build-pipeline-consistency/quickstart.md` with empty-search scoping / Stormcaller→Dawnblade scenario (SC-007).
+- [ ] T052 Run `npm run gate` and fix failures from T041–T051.
+
+**Checkpoint**: SC-007 satisfied; gate green.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -184,6 +212,7 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 - **US4 (Phase 6)**: After US1 (`SynergyMultiSelect` + create)
 - **US5 (Phase 7)**: After shared pickers exist (best after US1–US4)
 - **Polish (Phase 8)**: After desired stories complete
+- **Delta scoped search (Phase 9)**: After Phase 8 baseline; depends on existing pickers + manifest search from Phases 2–3
 
 ### User Story Dependencies
 
@@ -194,10 +223,12 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 | US2 | US3 variant select + Phase 2 merge helpers | Phase 5 checkpoint |
 | US4 | US1 SynergyMultiSelect | Phase 6 checkpoint |
 | US5 | Shared pickers from US1–US4 | Phase 7 checkpoint |
+| FR-020–022 delta | Phases 1–8 complete | Phase 9 checkpoint |
 
 ### Parallel Opportunities
 
 - T003–T005 tests in parallel; T014–T016 components in parallel; T020–T021 in parallel; T034–T036 audits in parallel; T038–T039 docs in parallel.
+- Phase 9: T041–T043 tests in parallel; T045–T046 and T048–T049 in parallel after T044.
 
 ### Parallel Example: User Story 1
 
@@ -207,6 +238,16 @@ Task: "Implement ExoticArmorLookup in src/components/debug/ExoticArmorLookup.tsx
 Task: "Implement SynergyMultiSelect in src/components/debug/SynergyMultiSelect.tsx"
 Task: "Implement SubclassStructuredForm in src/components/debug/SubclassStructuredForm.tsx"
 # Then wire BuildsDebugPage create section.
+```
+
+### Parallel Example: Phase 9 (scoped empty search)
+
+```bash
+# Tests first:
+Task: "Extend manifest search route tests for empty q + classType/element"
+Task: "Add subclassScope unit tests"
+Task: "Add clearIncompatibleSubclassSelections tests"
+# Then API, then UI components in parallel after route lands.
 ```
 
 ---
@@ -227,10 +268,11 @@ Task: "Implement SubclassStructuredForm in src/components/debug/SubclassStructur
 3. US2 → attach/detach sets  
 4. US4 → edit designations  
 5. US5 → cross-page parity + polish  
+6. **Phase 9** → scoped empty search (FR-020–FR-022)
 
 ### Suggested MVP Scope
 
-**US1 only** (Phases 1–3): proves explicit synergies + catalog exotic + structured subclass. Full pipeline value needs US3+US2 next.
+**Phases 1–3 (US1)** already delivered. Remaining open work: **Phase 9 (T041–T052)** only.
 
 ---
 
@@ -240,3 +282,5 @@ Task: "Implement SubclassStructuredForm in src/components/debug/SubclassStructur
 - Do not reintroduce silent synergy seeding
 - Constitution: Test-First + Green Checkpoints at each story checkpoint
 - Avoid same-file conflicts: serialize `BuildsDebugPage.tsx` edits across US1→US5
+- Phase 9: `ItemResolver.search("")` returns `[]` today — empty browse must use store list + filters, not Fuse empty query
+- T001–T040 remain complete; do not uncheck them when implementing the delta
