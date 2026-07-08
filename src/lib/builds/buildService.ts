@@ -21,8 +21,6 @@ import {
 } from "@/lib/db/repositories/variantRepository";
 import {
   getSynergiesByIds,
-  listSynergies,
-  seedDefaultSynergies,
 } from "@/lib/db/repositories/synergyRepository";
 import { prepareAttachments } from "@/lib/builds/attachmentService";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
@@ -122,12 +120,7 @@ export function listUserBuilds(
 
 export async function createUserBuild(db: AppDatabase, userId: number, input: CreateBuildInput) {
   const tags = parseTags(input.tagIds);
-
-  seedDefaultSynergies(db, userId);
-  const synergyIds =
-    input.synergyIds && input.synergyIds.length > 0
-      ? input.synergyIds
-      : listSynergies(db, userId).slice(0, 1).map((s) => s.id);
+  const synergyIds = input.synergyIds ?? [];
 
   assertSynergiesPresent(synergyIds);
   const found = getSynergiesByIds(db, userId, synergyIds);

@@ -296,10 +296,10 @@ export function CatalogDebugPage() {
         )}
 
         <fieldset className="space-y-2 rounded border border-zinc-800 p-3">
-          <legend className="px-1 text-sm">Instance API (direct)</legend>
+          <legend className="px-1 text-sm">Advanced instance API (direct)</legend>
           <input
             className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
-            placeholder="itemHash"
+            placeholder="Advanced itemHash"
             value={instanceItemHash}
             onChange={(e) => setInstanceItemHash(e.target.value)}
           />

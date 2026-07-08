@@ -15,19 +15,41 @@ const querySchema = z.object({
       "exotic-armor",
       "aspects",
       "fragments",
+      "abilities",
       "artifacts",
     ])
     .default("weapons"),
   slot: z.enum(["Kinetic", "Energy", "Power"]).optional(),
+  kind: z.enum(["super", "grenade", "melee", "classAbility", "movement"]).optional(),
   limit: z.coerce.number().int().min(1).max(20).default(8),
 });
 
+type SearchResult = {
+  record: {
+    name: string;
+    hash: number;
+    icon: string | null;
+    slot?: string;
+    kind?: string;
+  };
+  confidence: number;
+};
+
 function slotFilter(
-  results: Array<{ record: { slot?: string; name: string; hash: number; icon: string | null }; confidence: number }>,
+  results: SearchResult[],
   slot: "Kinetic" | "Energy" | "Power" | undefined,
 ) {
   if (!slot) return results;
   return results.filter((r) => r.record.slot === slot);
+}
+
+function kindFilter(
+  results: SearchResult[],
+  category: string,
+  kind: string | undefined,
+) {
+  if (category !== "abilities" || !kind) return results;
+  return results.filter((r) => r.record.kind === kind);
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -36,6 +58,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     q: url.searchParams.get("q") ?? "",
     category: url.searchParams.get("category") ?? "weapons",
     slot: url.searchParams.get("slot") ?? undefined,
+    kind: url.searchParams.get("kind") ?? undefined,
     limit: url.searchParams.get("limit") ?? "8",
   });
 
@@ -48,7 +71,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     const { resolver } = await getServices();
     const store = parsed.data.category;
     const raw = await resolver.search(store, parsed.data.q, parsed.data.limit * 2);
-    const filtered = slotFilter(raw, parsed.data.slot).slice(0, parsed.data.limit);
+    const filtered = kindFilter(slotFilter(raw, parsed.data.slot), store, parsed.data.kind).slice(
+      0,
+      parsed.data.limit,
+    );
 
     return NextResponse.json({
       results: filtered.map((r) => ({
@@ -56,6 +82,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         hash: r.record.hash,
         icon: r.record.icon,
         slot: "slot" in r.record ? r.record.slot : undefined,
+        kind: "kind" in r.record ? r.record.kind : undefined,
         confidence: r.confidence,
         isExotic: store === "exotic-weapons",
       })),

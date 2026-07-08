@@ -6,7 +6,6 @@ import { apiErrorResponse, unauthorizedResponse } from "@/lib/api/response";
 import { createUserBuild, listUserBuilds } from "@/lib/builds/buildService";
 import { createBuildSchema } from "@/lib/builds/schemas";
 import { getDb } from "@/lib/db/client";
-import { seedDefaultSynergies } from "@/lib/db/repositories/synergyRepository";
 
 export const runtime = "nodejs";
 
@@ -67,7 +66,6 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const db = getDb();
-    seedDefaultSynergies(db, auth.user.id);
     const build = await createUserBuild(db, auth.user.id, parsed.data);
     return NextResponse.json({ build }, { status: 201 });
   } catch (error) {

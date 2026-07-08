@@ -31,8 +31,9 @@
 
 ## Notes
 
-- Validation passed on first review (2026-07-08); re-validated after clarify session 2026-07-08 (5/5 questions).
+- Validation passed on first review (2026-07-08); re-validated after clarify sessions 2026-07-08.
 - Spec intentionally references prior domain rules (live/snapshot, Pair/exotic, synergy designation) without restating implementation.
 - Mentions of “debug” surfaces and “catalog-backed lookup” describe verification venue and user-facing selection behavior, not tech stack.
-- Clarifications added: empty create allowed; additive attach; detach in scope; per-variant exotic weapon picker; block create when no synergies (link to Synergies debug).
-- Plan already exists — sync plan/contracts/research with clarify outcomes before `/speckit-tasks` if needed.
+- Clarifications (session 1): empty create; additive attach; detach; per-variant exotic weapon; block create when no synergies.
+- Clarifications (session 2 — lookup scoping): empty search returns all scoped items; subclass form + exotic armor/weapon; class+element scope (Prismatic = Prismatic only); explicit Search/Browse; clear incompatible on subclass change.
+- Implementation already landed for 012 — follow-up implement needed for FR-020–FR-022 scoped empty search.

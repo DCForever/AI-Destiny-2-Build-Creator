@@ -26,6 +26,14 @@
 - Q: Is per-variant exotic weapon selection in scope for debug Builds? → A: Yes — optional exotic weapon picker on the selected variant (catalog search → set or clear).
 - Q: What happens when the user has no synergies yet and tries to create a build? → A: Block create with a clear message and a path/link to Synergies debug to create one first (no inline synergy wizard; ≥1 designation rule retained).
 
+### Session 2026-07-08 (lookup empty-search scoping)
+
+- Q: Where does empty-search → “all items, but scoped to prior choices” apply? → A: Subclass structured form (abilities, aspects, fragments) plus exotic armor/weapon lookups scoped by guardian class.
+- Q: How is “fits this subclass” defined for abilities/aspects/fragments? → A: Scope by guardian class + element of the selected subclass (e.g. Stormcaller → Warlock + Arc).
+- Q: How should Prismatic subclasses be scoped? → A: Same rule — class + element `Prismatic` only. Prismatic has its own specific supers/grenades/melees/etc.; do not widen to all elements for the class.
+- Q: When does empty-query “list all scoped options” run? → A: On explicit Search/Browse with an empty query; refresh if class/subclass changes while results are already shown.
+- Q: If the user changes subclass after picking abilities, what happens to incompatible selections? → A: Clear incompatible ability/aspect/fragment selections; keep compatible ones; refresh open result lists.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Create a Build Without Manual Hashes or Guesswork (Priority: P1)
@@ -40,10 +48,11 @@ A tester creating a build on the debug Builds surface chooses exotic armor, subc
 
 1. **Given** a signed-in user on debug Builds, **When** they create a build, **Then** exotic armor is chosen via catalog-style lookup (search/filter → select), and the stored identity and display name stay consistent with the chosen catalog item.
 2. **Given** the create-build flow, **When** the user designates synergies, **Then** they select from their existing synergies list (multi-select allowed) rather than relying on an invisible default seed or empty attachment.
-3. **Given** subclass configuration is required, **When** the user fills subclass fields, **Then** they pick from available class/subclass options (or an equivalent structured picker)—not by inventing free-form JSON as the only path.
-4. **Given** required fields are incomplete (no exotic armor selected, or no synergy designated when required by existing rules), **When** the user attempts to save, **Then** creation is blocked with a clear validation message naming what is missing.
-5. **Given** a successful create, **When** the user views the build detail, **Then** exotic armor, tags, designated synergies, and the default variant are all visible and match what was selected — even if the default variant still has no set attachments yet.
-6. **Given** the user has selected exotic armor, synergies, and subclass but has not attached any sets, **When** they create the build, **Then** creation succeeds with an empty default variant; attaching sets is a later step.
+3. **Given** subclass configuration is required, **When** the user fills subclass fields, **Then** they pick from available class/subclass options (or an equivalent structured picker)—not by inventing free-form JSON as the only path. Empty searches list all options still valid for the current class/subclass (and exotic armor/weapon lookups are scoped by guardian class).
+4. **Given** the user has selected abilities/aspects/fragments for a subclass, **When** they change to a different subclass (or class) whose class+element scope no longer includes those choices, **Then** incompatible selections are cleared, compatible ones remain, and any open result lists refresh to the new scope.
+5. **Given** required fields are incomplete (no exotic armor selected, or no synergy designated when required by existing rules), **When** the user attempts to save, **Then** creation is blocked with a clear validation message naming what is missing.
+6. **Given** a successful create, **When** the user views the build detail, **Then** exotic armor, tags, designated synergies, and the default variant are all visible and match what was selected — even if the default variant still has no set attachments yet.
+7. **Given** the user has selected exotic armor, synergies, and subclass but has not attached any sets, **When** they create the build, **Then** creation succeeds with an empty default variant; attaching sets is a later step.
 
 ---
 
@@ -117,8 +126,9 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 2. **Given** set selection is needed on Builds attach and on Sets management, **When** the user looks up sets, **Then** both surfaces support name visibility, type, and tag AND filtering consistently.
 3. **Given** synergy selection is needed on Builds and Synergies, **When** the user looks up synergies, **Then** both surfaces show name, type, and enough identity to distinguish duplicates; selection does not require typing synergy IDs.
 4. **Given** item/perk/trait/set-bonus lookup already exists on Catalog/Sets/Synergies, **When** a debug page needs that same entity, **Then** it reuses the same lookup behavior (filters, description visibility, empty states)—not a divergent free-text path for the happy path.
-5. **Given** a lookup returns no matches, **When** results are shown on any debug surface, **Then** the user sees a clear empty state—not unrelated items or a silent failure.
-6. **Given** advanced/power-user needs, **When** a raw hash or ID field remains for escape-hatch debugging, **Then** it is clearly labeled as optional/advanced and is not required for the documented happy-path acceptance scenarios.
+5. **Given** a lookup returns no matches for a non-empty query (or after scoping filters), **When** results are shown on any debug surface, **Then** the user sees a clear empty state—not unrelated items or a silent failure.
+6. **Given** the user opens a scoped lookup (subclass ability/aspect/fragment, or exotic armor/weapon) with an empty search box, **When** they search/browse, **Then** they see all items that remain valid under the current scoping choices (not an error and not an unscoped full catalog dump).
+7. **Given** advanced/power-user needs, **When** a raw hash or ID field remains for escape-hatch debugging, **Then** it is clearly labeled as optional/advanced and is not required for the documented happy-path acceptance scenarios.
 
 ---
 
@@ -130,6 +140,9 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 - What if a designated synergy is deleted while still attached to builds? Follow existing synergy/build referential rules; debug UI refreshes designations and shows a clear stale/missing state if a designation can no longer resolve.
 - What if set list or synergy list is empty when opening an attach/designate picker? Show an informative empty state with a path to create the missing entity on the appropriate debug page.
 - What if the user has zero synergies at build create? **Block create** with a clear required-synergy message and a link/path to `/debug/synergies`; do not offer an inline synergy-create wizard on Builds in this iteration.
+- What if the user searches with an empty query on a scoped lookup? Return **all items still valid for current choices** (class / subclass as applicable)—not an error and not the unscoped full catalog.
+- What if the selected subclass is Prismatic? Scope to **class + element Prismatic** only (Prismatic’s own supers/grenades/etc.), not every elemental option for that class.
+- What if the user changes subclass after selecting abilities? **Clear incompatible** ability/aspect/fragment selections; keep compatible ones; refresh open result lists.
 - What if catalog data is unavailable or stale for an exotic armor previously saved on a build? Show the stored name/hash with a stale indicator; block new selections that fail catalog validation, consistent with soft-stale item rules.
 - What if the user filters builds by exotic armor using a picker selection vs an old hash filter? Both must resolve to the same build set when the same exotic armor identity is chosen.
 
@@ -140,6 +153,9 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 - **FR-001**: Debug Builds create flow MUST allow selecting exotic armor via catalog-backed lookup; happy-path create MUST NOT require typing a raw exotic armor hash.
 - **FR-002**: Debug Builds create/edit flows MUST allow designating one or more synergies via picker from the user’s synergies; designated synergies MUST be visible after save. When the user has no synergies, create MUST be blocked with a clear message and a path/link to Synergies debug—not an inline synergy-create wizard and not silent seeding.
 - **FR-003**: Debug Builds MUST support structured subclass selection sufficient to satisfy existing build subclass requirements without raw JSON as the only happy-path input.
+- **FR-020**: For subclass structured lookups (supers, grenades, melees, class abilities, movement, aspects, fragments) and for exotic armor/weapon lookups, an empty search MUST return all items that remain valid under current scoping choices (guardian class; and for subclass fields, the selected subclass). Non-empty search MUST further filter within that same scoped set. Empty-query listing MUST run on explicit Search/Browse (not auto-fetch on field mount alone); if results are already shown and class/subclass changes, the scoped result list MUST refresh.
+- **FR-021**: Subclass-field scoping MUST use the selected subclass’s **guardian class + element** (from subclass metadata). Example: Stormcaller → only Warlock + Arc options for the relevant ability/aspect/fragment kind. Prismatic subclasses use the same rule with element `Prismatic` (their own specific ability/aspect/fragment set)—MUST NOT widen to all elements for the class. Exotic armor/weapon lookups MUST be scoped by the build’s guardian class where class applies.
+- **FR-022**: When the user changes guardian class or subclass, the system MUST clear ability/aspect/fragment selections that are outside the new class+element scope, keep selections that remain valid, and refresh any open scoped result lists to the new scope.
 - **FR-004**: System MUST reject build create/update that violates existing required fields (including designated synergy) with explicit, user-visible validation messages. Build **create** MUST allow an empty default variant (no set attachments / no filled equipment slots yet); existing non-empty variant rules apply to later save/resolve steps, not to initial create.
 - **FR-015**: After create, users MUST be able to attach sets to the (possibly empty) default variant as a separate step; the staged pipeline create → designate → attach → resolve is the supported happy path.
 - **FR-019**: Build create MUST continue to require ≥1 designated synergy; absence of any user synergies is an explicit block with navigation guidance to Synergies debug, not a relaxation of the designation rule.
@@ -174,7 +190,7 @@ A tester moving between Catalog, Sets, Synergies, and Builds debug pages experie
 - **SC-003**: For a build with 2+ variants, 100% of attach/suggest/resolve/export actions in a scripted checklist apply to the intentionally selected variant (zero cross-variant mis-applies).
 - **SC-004**: Cross-surface lookup parity checklist passes for exotic armor, sets, and synergies: each entity is selectable with consistent identity fields on every debug page that needs it.
 - **SC-005**: 100% of blocked invalid operations (missing synergy, mismatched Pair exotic armor, no variant selected, empty required picker) show a clear message naming the problem in manual verification.
-- **SC-006**: After this iteration, a new tester following a written verification script can complete the pipeline on first attempt without being told any hash or internal ID values.
+- **SC-007**: For Stormcaller (Warlock + Arc), empty Super/Grenade/etc. Search/Browse returns only Warlock+Arc options of that kind; switching to Dawnblade clears Arc-only incompatible picks and shows Solar-scoped options instead.
 
 ## Assumptions
 

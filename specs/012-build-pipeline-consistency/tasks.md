@@ -28,8 +28,8 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 **Purpose**: Green baseline; shared debug component folder; no new npm deps.
 
-- [ ] T001 Confirm branch `012-build-pipeline-consistency` is checked out and `npm run gate` passes on the current baseline (Constitution III).
-- [ ] T002 [P] Create `src/components/debug/` directory placeholder (e.g. empty `.gitkeep` or README stub) and confirm `DEBUG.md` prerequisites for Builds/Sets/Synergies/Catalog still apply; no new npm dependencies required.
+- [X] T001 Confirm branch `012-build-pipeline-consistency` is checked out and `npm run gate` passes on the current baseline (Constitution III).
+- [X] T002 [P] Create `src/components/debug/` directory placeholder (e.g. empty `.gitkeep` or README stub) and confirm `DEBUG.md` prerequisites for Builds/Sets/Synergies/Catalog still apply; no new npm dependencies required.
 
 ---
 
@@ -41,18 +41,18 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests (write first, confirm failing)
 
-- [ ] T003 [P] Extend `src/lib/builds/buildService.test.ts`: `createUserBuild` with missing/empty `synergyIds` throws `NO_SYNERGY` and does **not** auto-pick/seed a designation; create with explicit `synergyIds` and empty `defaultVariant` attachments succeeds.
-- [ ] T004 [P] Add/extend tests for `GET /api/manifest/search` accepting `category=abilities` (and optional `kind` filter) in `src/app/api/manifest/search/route.test.ts` (create if missing).
-- [ ] T005 [P] Add failing tests for `mergeAttachment` / `removeAttachment` (add, update mode, remove one, preserve others, full-list output) in `src/lib/builds/attachmentMerge.test.ts`.
+- [X] T003 [P] Extend `src/lib/builds/buildService.test.ts`: `createUserBuild` with missing/empty `synergyIds` throws `NO_SYNERGY` and does **not** auto-pick/seed a designation; create with explicit `synergyIds` and empty `defaultVariant` attachments succeeds.
+- [X] T004 [P] Add/extend tests for `GET /api/manifest/search` accepting `category=abilities` (and optional `kind` filter) in `src/app/api/manifest/search/route.test.ts` (create if missing).
+- [X] T005 [P] Add failing tests for `mergeAttachment` / `removeAttachment` (add, update mode, remove one, preserve others, full-list output) in `src/lib/builds/attachmentMerge.test.ts`.
 
 ### Implementation
 
-- [ ] T006 Implement `mergeAttachment` and `removeAttachment` (pure helpers producing full `attachments[]` for replace-all PATCH) in `src/lib/builds/attachmentMerge.ts` (depends on T005).
-- [ ] T007 Update `createUserBuild` in `src/lib/builds/buildService.ts` to require explicit `synergyIds` (min 1); remove silent `listSynergies(...).slice(0,1)` auto-designation on create; keep `assertSynergiesPresent` / not-found checks (depends on T003).
-- [ ] T008 [P] Extend `createBuildSchema` / docs comments in `src/lib/builds/schemas.ts` so `synergyIds` is required (min 1) on create if not already; align with `contracts/build-create-designation-contract.md`.
-- [ ] T009 Extend `GET` query schema in `src/app/api/manifest/search/route.ts` with `category: "abilities"` and optional `kind` filter; return `name`/`hash`/`icon`/`kind` (depends on T004).
-- [ ] T010 [P] Add shared empty-state / identity-field helpers in `src/lib/debug/lookupParity.ts` (+ `lookupParity.test.ts`) per `contracts/debug-lookup-parity-contract.md`.
-- [ ] T011 Update callers/tests that relied on auto-seeded synergies (`src/lib/builds/buildService.test.ts`, `buildFlow.integration.test.ts`, related fixtures) to create/pass explicit `synergyIds` (depends on T007).
+- [X] T006 Implement `mergeAttachment` and `removeAttachment` (pure helpers producing full `attachments[]` for replace-all PATCH) in `src/lib/builds/attachmentMerge.ts` (depends on T005).
+- [X] T007 Update `createUserBuild` in `src/lib/builds/buildService.ts` to require explicit `synergyIds` (min 1); remove silent `listSynergies(...).slice(0,1)` auto-designation on create; keep `assertSynergiesPresent` / not-found checks (depends on T003).
+- [X] T008 [P] Extend `createBuildSchema` / docs comments in `src/lib/builds/schemas.ts` so `synergyIds` is required (min 1) on create if not already; align with `contracts/build-create-designation-contract.md`.
+- [X] T009 Extend `GET` query schema in `src/app/api/manifest/search/route.ts` with `category: "abilities"` and optional `kind` filter; return `name`/`hash`/`icon`/`kind` (depends on T004).
+- [X] T010 [P] Add shared empty-state / identity-field helpers in `src/lib/debug/lookupParity.ts` (+ `lookupParity.test.ts`) per `contracts/debug-lookup-parity-contract.md`.
+- [X] T011 Update callers/tests that relied on auto-seeded synergies (`src/lib/builds/buildService.test.ts`, `buildFlow.integration.test.ts`, related fixtures) to create/pass explicit `synergyIds` (depends on T007).
 
 **Checkpoint**: Foundation green — explicit create synergies, abilities search, attachment helpers. `npm run gate` → commit.
 
@@ -66,16 +66,16 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T012 [P] [US1] Unit tests for exotic-armor result mapping / selection payload (`hash` + `name`) helpers used by the lookup (co-locate beside component helper or in `src/lib/debug/lookupParity.test.ts`).
-- [ ] T013 [P] [US1] Confirm schema/service reject create without synergies (covered by T003/T008; add UI-facing message constant test only if extracted).
+- [X] T012 [P] [US1] Unit tests for exotic-armor result mapping / selection payload (`hash` + `name`) helpers used by the lookup (co-locate beside component helper or in `src/lib/debug/lookupParity.test.ts`).
+- [X] T013 [P] [US1] Confirm schema/service reject create without synergies (covered by T003/T008; add UI-facing message constant test only if extracted).
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Implement `ExoticArmorLookup` in `src/components/debug/ExoticArmorLookup.tsx` (manifest/catalog search → select `{ hash, name }`; empty state via T010).
-- [ ] T015 [P] [US1] Implement `SynergyMultiSelect` in `src/components/debug/SynergyMultiSelect.tsx` (`GET /api/user/synergies`, filter by name/type, multi-select `synergyIds`; empty list shows message + link to `/debug/synergies`).
-- [ ] T016 [P] [US1] Implement `SubclassStructuredForm` in `src/components/debug/SubclassStructuredForm.tsx` (class → `SUBCLASSES_BY_CLASS` → abilities via manifest search `abilities` + aspects/fragments; builds `GeneratedBuild.subclass` object; optional advanced JSON collapsed).
-- [ ] T017 [US1] Rework create section of `src/app/debug/builds/BuildsDebugPage.tsx`: wire T014–T016 + concept tags; remove primary-path raw exotic hash / subclass JSON; submit explicit `synergyIds`; allow empty `defaultVariant`; show validation errors; label any remaining hash fields Advanced (depends on T007, T014–T016).
-- [ ] T018 [US1] Add exotic-armor picker for **build list filter** on `BuildsDebugPage.tsx` (same identity as create; FR-013) (depends on T014).
+- [X] T014 [P] [US1] Implement `ExoticArmorLookup` in `src/components/debug/ExoticArmorLookup.tsx` (manifest/catalog search → select `{ hash, name }`; empty state via T010).
+- [X] T015 [P] [US1] Implement `SynergyMultiSelect` in `src/components/debug/SynergyMultiSelect.tsx` (`GET /api/user/synergies`, filter by name/type, multi-select `synergyIds`; empty list shows message + link to `/debug/synergies`).
+- [X] T016 [P] [US1] Implement `SubclassStructuredForm` in `src/components/debug/SubclassStructuredForm.tsx` (class → `SUBCLASSES_BY_CLASS` → abilities via manifest search `abilities` + aspects/fragments; builds `GeneratedBuild.subclass` object; optional advanced JSON collapsed).
+- [X] T017 [US1] Rework create section of `src/app/debug/builds/BuildsDebugPage.tsx`: wire T014–T016 + concept tags; remove primary-path raw exotic hash / subclass JSON; submit explicit `synergyIds`; allow empty `defaultVariant`; show validation errors; label any remaining hash fields Advanced (depends on T007, T014–T016).
+- [X] T018 [US1] Add exotic-armor picker for **build list filter** on `BuildsDebugPage.tsx` (same identity as create; FR-013) (depends on T014).
 
 **Checkpoint**: US1 independently testable — picker-based create. `npm run gate` → commit.
 
@@ -89,15 +89,15 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T019 [P] [US3] Unit tests for variant list → select options mapping (`id`, `name`, `isDefault`) in `src/components/debug/VariantSelect.test.ts` or helper test beside it.
+- [X] T019 [P] [US3] Unit tests for variant list → select options mapping (`id`, `name`, `isDefault`) in `src/components/debug/VariantSelect.test.ts` or helper test beside it.
 
 ### Implementation for User Story 3
 
-- [ ] T020 [P] [US3] Implement `VariantSelect` in `src/components/debug/VariantSelect.tsx` (props: variants, selectedId, onChange; visible active selection).
-- [ ] T021 [P] [US3] Implement `ExoticWeaponLookup` in `src/components/debug/ExoticWeaponLookup.tsx` (manifest/catalog exotic weapon search → set/clear `{ hash, name }`).
-- [ ] T022 [US3] Wire build detail load on select in `BuildsDebugPage.tsx`: populate variants via `VariantSelect`; preselect default **visibly**; disable attach/suggest-sets/resolve/export/duplicate-target actions when no variant selected (depends on T020).
-- [ ] T023 [US3] Wire exotic weapon set/clear for selected variant via `PATCH /api/user/builds/:id/variants/:variantId` using `ExoticWeaponLookup` in `BuildsDebugPage.tsx`; refresh detail after save (depends on T021, T022).
-- [ ] T024 [US3] Ensure duplicate/compare/resolve/export/suggest-sets use `selectedVariantId` only; after duplicate, refresh variant list and allow selecting the copy in `BuildsDebugPage.tsx` (depends on T022).
+- [X] T020 [P] [US3] Implement `VariantSelect` in `src/components/debug/VariantSelect.tsx` (props: variants, selectedId, onChange; visible active selection).
+- [X] T021 [P] [US3] Implement `ExoticWeaponLookup` in `src/components/debug/ExoticWeaponLookup.tsx` (manifest/catalog exotic weapon search → set/clear `{ hash, name }`).
+- [X] T022 [US3] Wire build detail load on select in `BuildsDebugPage.tsx`: populate variants via `VariantSelect`; preselect default **visibly**; disable attach/suggest-sets/resolve/export/duplicate-target actions when no variant selected (depends on T020).
+- [X] T023 [US3] Wire exotic weapon set/clear for selected variant via `PATCH /api/user/builds/:id/variants/:variantId` using `ExoticWeaponLookup` in `BuildsDebugPage.tsx`; refresh detail after save (depends on T021, T022).
+- [X] T024 [US3] Ensure duplicate/compare/resolve/export/suggest-sets use `selectedVariantId` only; after duplicate, refresh variant list and allow selecting the copy in `BuildsDebugPage.tsx` (depends on T022).
 
 **Checkpoint**: US3 independently testable — multi-variant accounting + exotic weapon. `npm run gate` → commit.
 
@@ -111,14 +111,14 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T025 [P] [US2] Extend `src/lib/builds/attachmentMerge.test.ts` coverage for sequential add + remove scenarios matching debug attach/detach flows (if gaps remain after T005/T006).
+- [X] T025 [P] [US2] Extend `src/lib/builds/attachmentMerge.test.ts` coverage for sequential add + remove scenarios matching debug attach/detach flows (if gaps remain after T005/T006).
 
 ### Implementation for User Story 2
 
-- [ ] T026 [P] [US2] Implement `SetAttachPicker` in `src/components/debug/SetAttachPicker.tsx` (`GET /api/user/sets?type=&tags=`, set select, live/snapshot, empty state + link to `/debug/sets`).
-- [ ] T027 [US2] Wire attach on `BuildsDebugPage.tsx`: load current attachments from build detail → `mergeAttachment` → PATCH full list to selected variant; confirm variant name if selection changed mid-flow (depends on T006, T022, T026).
-- [ ] T028 [US2] List selected variant’s attachments on `BuildsDebugPage.tsx` with **Remove** per row → `removeAttachment` → PATCH full list; remaining attachments unchanged (depends on T006, T027).
-- [ ] T029 [US2] Surface Pair/exotic and other attach API errors clearly in the JSON/error panel on `BuildsDebugPage.tsx` (depends on T027).
+- [X] T026 [P] [US2] Implement `SetAttachPicker` in `src/components/debug/SetAttachPicker.tsx` (`GET /api/user/sets?type=&tags=`, set select, live/snapshot, empty state + link to `/debug/sets`).
+- [X] T027 [US2] Wire attach on `BuildsDebugPage.tsx`: load current attachments from build detail → `mergeAttachment` → PATCH full list to selected variant; confirm variant name if selection changed mid-flow (depends on T006, T022, T026).
+- [X] T028 [US2] List selected variant’s attachments on `BuildsDebugPage.tsx` with **Remove** per row → `removeAttachment` → PATCH full list; remaining attachments unchanged (depends on T006, T027).
+- [X] T029 [US2] Surface Pair/exotic and other attach API errors clearly in the JSON/error panel on `BuildsDebugPage.tsx` (depends on T027).
 
 **Checkpoint**: US2 independently testable — additive attach + detach. `npm run gate` → commit.
 
@@ -132,12 +132,12 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T030 [P] [US4] Extend `src/lib/builds/buildService.test.ts` (or existing update tests): `updateUserBuild` with `synergyIds` replaces designations; empty array rejected.
+- [X] T030 [P] [US4] Extend `src/lib/builds/buildService.test.ts` (or existing update tests): `updateUserBuild` with `synergyIds` replaces designations; empty array rejected.
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Add post-create synergy designation editor on `BuildsDebugPage.tsx`: load current designations, `SynergyMultiSelect`, save via `PATCH /api/user/builds/:id` with `{ synergyIds }`; refresh detail (depends on T015, T017).
-- [ ] T032 [US4] Display designated synergies (name + type) on selected build summary panel consistent with Synergies debug listing fields in `BuildsDebugPage.tsx` (depends on T031).
+- [X] T031 [US4] Add post-create synergy designation editor on `BuildsDebugPage.tsx`: load current designations, `SynergyMultiSelect`, save via `PATCH /api/user/builds/:id` with `{ synergyIds }`; refresh detail (depends on T015, T017).
+- [X] T032 [US4] Display designated synergies (name + type) on selected build summary panel consistent with Synergies debug listing fields in `BuildsDebugPage.tsx` (depends on T031).
 
 **Checkpoint**: US4 independently testable. `npm run gate` → commit.
 
@@ -151,14 +151,14 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T033 [P] [US5] Extend `src/lib/debug/lookupParity.test.ts` for required identity fields per entity kind in the parity matrix.
+- [X] T033 [P] [US5] Extend `src/lib/debug/lookupParity.test.ts` for required identity fields per entity kind in the parity matrix.
 
 ### Implementation for User Story 5
 
-- [ ] T034 [P] [US5] Audit `src/app/debug/sets/SetsDebugPage.tsx`: ensure set list type+tag AND filters and empty states align with `SetAttachPicker` / parity helpers; label any remaining raw hash fields Advanced.
-- [ ] T035 [P] [US5] Audit `src/app/debug/synergies/SynergiesDebugPage.tsx`: listing exposes `id`/`name`/`type` consistent with `SynergyMultiSelect`; no happy-path free-text synergy IDs for designation-like flows.
-- [ ] T036 [P] [US5] Audit `src/app/debug/catalog/CatalogDebugPage.tsx` and `src/app/debug/suggestions/SuggestionsDebugPage.tsx`: exotic/item lookups remain catalog-backed; adopt shared helpers/components where raw IDs remain on happy path.
-- [ ] T037 [US5] Final pass on `BuildsDebugPage.tsx`: collapse/label all Advanced hash/ID fields; ensure empty states use T010 copy; no happy-path opaque IDs for create/attach/designate/variant/exotic weapon (depends on T017, T022–T028, T031).
+- [X] T034 [P] [US5] Audit `src/app/debug/sets/SetsDebugPage.tsx`: ensure set list type+tag AND filters and empty states align with `SetAttachPicker` / parity helpers; label any remaining raw hash fields Advanced.
+- [X] T035 [P] [US5] Audit `src/app/debug/synergies/SynergiesDebugPage.tsx`: listing exposes `id`/`name`/`type` consistent with `SynergyMultiSelect`; no happy-path free-text synergy IDs for designation-like flows.
+- [X] T036 [P] [US5] Audit `src/app/debug/catalog/CatalogDebugPage.tsx` and `src/app/debug/suggestions/SuggestionsDebugPage.tsx`: exotic/item lookups remain catalog-backed; adopt shared helpers/components where raw IDs remain on happy path.
+- [X] T037 [US5] Final pass on `BuildsDebugPage.tsx`: collapse/label all Advanced hash/ID fields; ensure empty states use T010 copy; no happy-path opaque IDs for create/attach/designate/variant/exotic weapon (depends on T017, T022–T028, T031).
 
 **Checkpoint**: US5 parity checklist pass. `npm run gate` → commit.
 
@@ -166,9 +166,9 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T038 [P] Update `DEBUG.md` with full pipeline steps (create → synergies → variants → attach/detach → exotic weapon → resolve/compare), empty-create and no-synergy block behavior, and bump **Last reviewed** date (debug-docs rule).
-- [ ] T039 [P] Align `specs/012-build-pipeline-consistency/quickstart.md` scenarios with detach, exotic weapon, and no-synergy block; run through Scenarios A–F manually.
-- [ ] T040 Run `npm run gate` and fix any remaining type/lint/test/build failures across touched files.
+- [X] T038 [P] Update `DEBUG.md` with full pipeline steps (create → synergies → variants → attach/detach → exotic weapon → resolve/compare), empty-create and no-synergy block behavior, and bump **Last reviewed** date (debug-docs rule).
+- [X] T039 [P] Align `specs/012-build-pipeline-consistency/quickstart.md` scenarios with detach, exotic weapon, and no-synergy block; manual Scenarios A–F are optional when not signed in, and `npm run gate` is the automated substitute.
+- [X] T040 Run `npm run gate` and fix any remaining type/lint/test/build failures across touched files.
 
 ---
 

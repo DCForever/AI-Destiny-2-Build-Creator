@@ -31,6 +31,7 @@ Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/ap
    - Pick **subclass** via structured fields (class → subclass name → abilities/aspects/fragments).
    - Select **≥1 synergy** from multi-select.
    - Select concept tags as desired.
+   - Leave the default variant empty if desired.
 3. Submit create.
 4. **Expect**: Build appears; detail/JSON shows exotic name+hash, synergies, default variant. No “seeded default synergy” without selection.
 5. **Negative**: Clear synergies and attempt create → blocked with clear `NO_SYNERGY` (or equivalent message).
@@ -61,7 +62,8 @@ Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/ap
 2. On Builds, select build → multi-select both → save designations (PATCH).
 3. Remove one → save.
 4. Run suggest-sets / suggest-synergies.
-5. **Expect**: Designation list matches selection; suggestions run without error.
+5. Run compare / resolve against the selected variant.
+6. **Expect**: Designation list matches selection; selected-variant suggestions, compare, and resolve run without error.
 
 ## Scenario E — Lookup parity smoke (US5)
 
