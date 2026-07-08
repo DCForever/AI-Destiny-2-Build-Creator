@@ -21,7 +21,7 @@ See also: [DEBUG.md](../../../DEBUG.md) (update when this feature lands).
 npm run gate
 ```
 
-Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/app/api/manifest/search` abilities category, attachment merge helper tests.
+Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/app/api/manifest/search` scoped empty browse, `src/lib/debug/subclassScope.test.ts`, attachment merge helper tests.
 
 ## Scenario A — Create build (US1)
 
@@ -74,7 +74,7 @@ Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/ap
 | Synergy | Multi-select | Synergies list | name + type visible |
 | Variant | VariantSelect | (Builds only) | name + default flag |
 
-Empty search on each → clear empty state.
+Empty Search on scoped lookups → browse valid results; empty non-browse lookups still show clear empty state.
 
 ## Scenario F — End-to-end timing (SC-001)
 

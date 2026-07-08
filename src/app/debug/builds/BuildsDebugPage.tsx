@@ -350,7 +350,7 @@ export function BuildsDebugPage() {
 
         <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
           <legend className="px-1 text-sm">Load builds</legend>
-          <ExoticArmorLookup selected={filterExoticArmor} onSelect={setFilterExoticArmor} />
+          <ExoticArmorLookup className={createForm.className} selected={filterExoticArmor} onSelect={setFilterExoticArmor} />
           <button type="button" className="rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void loadBuildData()}>
             Load synergies + builds
           </button>
@@ -377,7 +377,7 @@ export function BuildsDebugPage() {
             <option value="Warlock">Warlock</option>
           </select>
           <ExoticArmorLookup
-            className={createForm.className}
+            className={buildDetail?.className ?? createForm.className}
             selected={createForm.exoticArmor}
             onSelect={(exoticArmor) => updateCreateForm({ exoticArmor })}
           />
@@ -436,6 +436,7 @@ export function BuildsDebugPage() {
             <p className="text-xs text-zinc-500">{emptyLookupMessage("variant")}</p>
           )}
           <ExoticWeaponLookup
+            className={createForm.className}
             selected={selectedVariantExoticWeapon}
             onSelect={(item) =>
               void patchVariant(

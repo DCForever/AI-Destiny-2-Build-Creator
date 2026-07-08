@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { SUBCLASSES_BY_CLASS } from "@/data/subclasses";
+import {
+  clearIncompatibleSubclassSelections,
+  resolveSubclassScope,
+  type SubclassValidNames,
+} from "@/lib/debug/subclassScope";
 
 type GuardianClass = "Titan" | "Hunter" | "Warlock";
 type AbilityKind = "super" | "classAbility" | "movement" | "melee" | "grenade";
@@ -43,6 +48,39 @@ function joinUnique(items: string[], next: string): string[] {
   return [...new Set([...items, next])];
 }
 
+async function fetchResults(
+  formValue: SubclassFormValue,
+  key: string,
+  category: SearchCategory,
+  q: string,
+  kind?: AbilityKind,
+): Promise<SearchResult[]> {
+  const params = new URLSearchParams({ category, q, limit: q ? "8" : "50" });
+  const scope = resolveSubclassScope(formValue.name);
+  if (scope) {
+    params.set("classType", scope.classType);
+    params.set("element", scope.element);
+  }
+  if (kind) params.set("kind", kind);
+  const res = await fetch(`/api/manifest/search?${params}`);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error ?? `Search failed for ${key}`);
+  return body.results ?? [];
+}
+
+async function fetchValidNames(formValue: SubclassFormValue): Promise<SubclassValidNames> {
+  const [abilities, aspects, fragments] = await Promise.all([
+    fetchResults(formValue, "abilities", "abilities", ""),
+    fetchResults(formValue, "aspects", "aspects", ""),
+    fetchResults(formValue, "fragments", "fragments", ""),
+  ]);
+  return {
+    abilities: new Set(abilities.map((item) => item.name)),
+    aspects: new Set(aspects.map((item) => item.name)),
+    fragments: new Set(fragments.map((item) => item.name)),
+  };
+}
+
 export function SubclassStructuredForm({ className, value, onChange }: Props) {
   const [searchText, setSearchText] = useState<Record<string, string>>({});
   const [results, setResults] = useState<Record<string, SearchResult[]>>({});
@@ -52,20 +90,56 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
     onChange({ ...value, [key]: next });
   }
 
+  const refreshOpenResults = useCallback(
+    async (nextValue: SubclassFormValue) => {
+      const openKeys = Object.keys(results).filter((key) => results[key]?.length);
+      const nextResults = await Promise.all(
+        openKeys.map(async (key) => {
+          const field = ABILITY_FIELDS.find((item) => item.key === key);
+          const category = field ? "abilities" : (key as SearchCategory);
+          const found = await fetchResults(nextValue, key, category, searchText[key] ?? "", field?.key);
+          return [key, found] as const;
+        }),
+      );
+      setResults((current) => ({ ...current, ...Object.fromEntries(nextResults) }));
+    },
+    [results, searchText],
+  );
+
+  const applyScopedValue = useCallback(
+    async (nextValue: SubclassFormValue) => {
+      onChange(nextValue);
+      setError(null);
+      try {
+        const validNames = await fetchValidNames(nextValue);
+        const cleaned = clearIncompatibleSubclassSelections(nextValue, validNames);
+        onChange(cleaned);
+        await refreshOpenResults(cleaned);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to refresh subclass scope");
+      }
+    },
+    [onChange, refreshOpenResults],
+  );
+
+  useEffect(() => {
+    const subclassNames: readonly string[] = SUBCLASSES_BY_CLASS[className];
+    if (subclassNames.includes(value.name)) return;
+    queueMicrotask(() => {
+      void applyScopedValue({ ...value, name: subclassNames[0] });
+    });
+  }, [applyScopedValue, className, value]);
+
   async function search(key: string, category: SearchCategory, kind?: AbilityKind) {
     const q = (searchText[key] ?? "").trim();
-    if (!q) return;
     setError(null);
-    const params = new URLSearchParams({ category, q, limit: "8" });
-    if (kind) params.set("kind", kind);
-    const res = await fetch(`/api/manifest/search?${params}`);
-    const body = await res.json();
-    if (!res.ok) {
-      setError(body.error ?? "Search failed");
+    try {
+      const found = await fetchResults(value, key, category, q, kind);
+      setResults((current) => ({ ...current, [key]: found }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Search failed");
       setResults((current) => ({ ...current, [key]: [] }));
-      return;
     }
-    setResults((current) => ({ ...current, [key]: body.results ?? [] }));
   }
 
   return (
@@ -75,7 +149,7 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
         <select
           className="mt-1 block w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
           value={value.name}
-          onChange={(event) => updateField("name", event.target.value)}
+          onChange={(event) => void applyScopedValue({ ...value, name: event.target.value })}
         >
           {SUBCLASSES_BY_CLASS[className].map((subclass) => (
             <option key={subclass} value={subclass}>

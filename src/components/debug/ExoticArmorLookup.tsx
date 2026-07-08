@@ -18,17 +18,15 @@ export function ExoticArmorLookup({ className, selected, onSelect }: Props) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   async function runSearch() {
     const q = query.trim();
-    if (!q) {
-      setResults([]);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
-    const params = new URLSearchParams({ category: "exotic-armor", q, limit: "12" });
+    setHasSearched(true);
+    const params = new URLSearchParams({ category: "exotic-armor", q, limit: q ? "12" : "50" });
+    if (className) params.set("classType", className);
     const res = await fetch(`/api/manifest/search?${params}`);
     const body = await res.json();
     setIsLoading(false);
@@ -73,7 +71,7 @@ export function ExoticArmorLookup({ className, selected, onSelect }: Props) {
         </button>
       </div>
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
-      {!isLoading && query.trim() && results.length === 0 && !error ? (
+      {!isLoading && hasSearched && results.length === 0 && !error ? (
         <p className="text-xs text-zinc-500">{emptyLookupMessage("exotic_armor")}</p>
       ) : null}
       {isLoading ? <p className="text-xs text-zinc-500">Searching...</p> : null}

@@ -180,21 +180,21 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests (write first, confirm failing)
 
-- [ ] T041 [P] Extend `src/app/api/manifest/search/route.test.ts`: empty `q` allowed for `abilities`/`aspects`/`fragments`/`exotic-armor`/`exotic-weapons`; `classType` + `element` filters applied; Prismatic element does not return Arc/Solar rows; non-browse categories still require `q` or behave safely.
-- [ ] T042 [P] Add `src/lib/debug/subclassScope.test.ts` for `resolveSubclassScope(subclassName)` → `{ classType, element }` via `getSubclassMeta` (Stormcaller → Warlock+Arc; Prismatic Warlock → Warlock+Prismatic).
-- [ ] T043 [P] Add `src/lib/debug/clearIncompatibleSubclassSelections.test.ts` (or co-locate): given prior Arc picks + new Solar scope, incompatible ability/aspect/fragment strings cleared; compatible kept.
+- [X] T041 [P] Extend `src/app/api/manifest/search/route.test.ts`: empty `q` allowed for `abilities`/`aspects`/`fragments`/`exotic-armor`/`exotic-weapons`; `classType` + `element` filters applied; Prismatic element does not return Arc/Solar rows; non-browse categories still require `q` or behave safely.
+- [X] T042 [P] Add `src/lib/debug/subclassScope.test.ts` for `resolveSubclassScope(subclassName)` → `{ classType, element }` via `getSubclassMeta` (Stormcaller → Warlock+Arc; Prismatic Warlock → Warlock+Prismatic).
+- [X] T043 [P] Add `src/lib/debug/clearIncompatibleSubclassSelections.test.ts` (or co-locate): given prior Arc picks + new Solar scope, incompatible ability/aspect/fragment strings cleared; compatible kept.
 
 ### Implementation
 
-- [ ] T044 Implement empty-`q` browse path in `src/app/api/manifest/search/route.ts`: optional `q`; when empty and category is a browse store, load via `entityCache.getStore` (or resolver list helper), apply `kind`/`classType`/`element`/`slot` filters, raise default `limit` for browse (e.g. 50); include `classType`/`element` on results when present (depends on T041).
-- [ ] T045 [P] Add `resolveSubclassScope` in `src/lib/debug/subclassScope.ts` wrapping `getSubclassMeta` from `src/data/subclasses` (depends on T042).
-- [ ] T046 [P] Add `clearIncompatibleSubclassSelections(value, scope)` in `src/lib/debug/subclassScope.ts` (or sibling module) used by the form (depends on T043).
-- [ ] T047 Update `src/components/debug/SubclassStructuredForm.tsx`: allow empty Search/Browse; pass `classType`+`element` from `resolveSubclassScope(value.name)`; on class/subclass change clear incompatible selections via T046 and refresh any open result keys (depends on T044–T046).
-- [ ] T048 [P] Update `src/components/debug/ExoticArmorLookup.tsx`: empty Search lists class-scoped exotic armor (`classType` from props); non-empty filters within scope (depends on T044).
-- [ ] T049 [P] Update `src/components/debug/ExoticWeaponLookup.tsx`: empty Search lists exotic weapons (class filter if/when applicable); non-empty filters within results (depends on T044).
-- [ ] T050 Wire Builds create/filter exotic lookups with guardian `className` as `classType` in `src/app/debug/builds/BuildsDebugPage.tsx` (depends on T048).
-- [ ] T051 [P] Update `DEBUG.md` + `specs/012-build-pipeline-consistency/quickstart.md` with empty-search scoping / Stormcaller→Dawnblade scenario (SC-007).
-- [ ] T052 Run `npm run gate` and fix failures from T041–T051.
+- [X] T044 Implement empty-`q` browse path in `src/app/api/manifest/search/route.ts`: optional `q`; when empty and category is a browse store, load via `entityCache.getStore` (or resolver list helper), apply `kind`/`classType`/`element`/`slot` filters, raise default `limit` for browse (e.g. 50); include `classType`/`element` on results when present (depends on T041).
+- [X] T045 [P] Add `resolveSubclassScope` in `src/lib/debug/subclassScope.ts` wrapping `getSubclassMeta` from `src/data/subclasses` (depends on T042).
+- [X] T046 [P] Add `clearIncompatibleSubclassSelections(value, scope)` in `src/lib/debug/subclassScope.ts` (or sibling module) used by the form (depends on T043).
+- [X] T047 Update `src/components/debug/SubclassStructuredForm.tsx`: allow empty Search/Browse; pass `classType`+`element` from `resolveSubclassScope(value.name)`; on class/subclass change clear incompatible selections via T046 and refresh any open result keys (depends on T044–T046).
+- [X] T048 [P] Update `src/components/debug/ExoticArmorLookup.tsx`: empty Search lists class-scoped exotic armor (`classType` from props); non-empty filters within scope (depends on T044).
+- [X] T049 [P] Update `src/components/debug/ExoticWeaponLookup.tsx`: empty Search lists exotic weapons (class filter if/when applicable); non-empty filters within results (depends on T044).
+- [X] T050 Wire Builds create/filter exotic lookups with guardian `className` as `classType` in `src/app/debug/builds/BuildsDebugPage.tsx` (depends on T048).
+- [X] T051 [P] Update `DEBUG.md` + `specs/012-build-pipeline-consistency/quickstart.md` with empty-search scoping / Stormcaller→Dawnblade scenario (SC-007).
+- [X] T052 Run `npm run gate` and fix failures from T041–T051.
 
 **Checkpoint**: SC-007 satisfied; gate green.
 

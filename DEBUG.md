@@ -235,10 +235,12 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 
 1. If the account has no synergies, create one on `/debug/synergies` first. Build create no longer auto-seeds a first/default synergy; `POST /api/user/builds` requires explicit `synergyIds`.
 2. Create on `/debug/builds` with exotic armor lookup, structured subclass fields, synergy multi-select, and concept tags. An empty default variant is allowed, but create is blocked when no synergies exist or none are selected; the empty state links to `/debug/synergies`.
-3. Select a build, then use `VariantSelect` to choose the active variant. Variant-scoped actions are disabled until a variant is selected.
-4. Use exotic weapon lookup to set or clear the selected variant's exotic weapon.
-5. Attach sets through `SetAttachPicker` with type + tag filters, choosing live or snapshot mode. Attach is additive; Remove detaches one set and sends the remaining full attachment list.
-6. Edit synergy designations after create with the same multi-select, then resolve, compare, export, or request set/synergy/roll suggestions using the selected variant.
+3. Empty **Search** clicks browse scoped lookup results instead of erroring: Stormcaller shows Warlock + Arc abilities/aspects/fragments, and Prismatic Warlock shows Prismatic kit only. Switching class/subclass clears incompatible structured picks while keeping compatible names.
+4. Exotic armor empty Search is scoped by the selected guardian class. Exotic weapon empty Search browses all exotic weapons because weapon records are not class-scoped.
+5. Select a build, then use `VariantSelect` to choose the active variant. Variant-scoped actions are disabled until a variant is selected.
+6. Use exotic weapon lookup to set or clear the selected variant's exotic weapon.
+7. Attach sets through `SetAttachPicker` with type + tag filters, choosing live or snapshot mode. Attach is additive; Remove detaches one set and sends the remaining full attachment list.
+8. Edit synergy designations after create with the same multi-select, then resolve, compare, export, or request set/synergy/roll suggestions using the selected variant.
 
 **Checklist:** `specs/012-build-pipeline-consistency/quickstart.md`
 
