@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { HttpBungieProfileClient } from "./profile";
+import { HttpBungieProfileClient, parseSocketCapture, extractReusablePlugsMap } from "./profile";
 
 const API_KEY = "test-api-key";
 const ACCESS_TOKEN = "bearer-token";
@@ -215,6 +215,81 @@ describe("HttpBungieProfileClient.getFullInventory", () => {
     const equipped = items.find((i) => i.location === "equipped");
     expect(equipped?.itemHash).toBe(800003);
     expect(equipped?.plugHashes).toEqual([503]);
+  });
+
+  it("captures reusable plugs from component 310 into weapon socketCapture", async () => {
+    const response = {
+      ...FULL_INVENTORY_RESPONSE,
+      Response: {
+        ...FULL_INVENTORY_RESPONSE.Response,
+        profileInventory: {
+          data: {
+            items: [
+              {
+                itemHash: 900100,
+                bucketHash: 1498876634,
+                itemInstanceId: "weapon1",
+              },
+            ],
+          },
+        },
+        itemComponents: {
+          ...FULL_INVENTORY_RESPONSE.Response.itemComponents,
+          sockets: {
+            data: {
+              weapon1: {
+                sockets: [
+                  { plugHash: 101, isEnabled: true },
+                  { plugHash: 201, isEnabled: true },
+                ],
+              },
+            },
+          },
+          reusablePlugs: {
+            data: {
+              weapon1: {
+                plugs: {
+                  "0": [
+                    { plugItemHash: 101, canInsert: true },
+                    { plugItemHash: 102, canInsert: true },
+                  ],
+                  "1": [{ plugItemHash: 201, canInsert: true }],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const items = await makeClient(makeOkFetch(response)).getFullInventory(ACCESS_TOKEN, membership);
+    const weapon = items.find((item) => item.instanceId === "weapon1");
+    expect(weapon?.socketCapture).toEqual([
+      { socketIndex: 0, equippedPlugHash: 101, reusablePlugHashes: [101, 102] },
+      { socketIndex: 1, equippedPlugHash: 201, reusablePlugHashes: [201] },
+    ]);
+  });
+
+  it("parseSocketCapture and extractReusablePlugsMap helpers merge 305 and 310", () => {
+    const reusable = extractReusablePlugsMap({
+      reusablePlugs: {
+        data: {
+          inst: {
+            plugs: {
+              "0": [{ plugItemHash: 11, canInsert: true }],
+            },
+          },
+        },
+      },
+    });
+    const capture = parseSocketCapture(
+      "inst",
+      [{ plugHash: 10, isEnabled: true }],
+      reusable,
+    );
+    expect(capture).toEqual([
+      { socketIndex: 0, equippedPlugHash: 10, reusablePlugHashes: [11] },
+    ]);
   });
 
   it("reports diagnostics for dropped items (unknown bucket, missing instance id)", async () => {

@@ -1,4 +1,8 @@
 import { computeRollTags } from "@/lib/inventory/rollTags";
+import { buildStoredSocketPlugs } from "@/lib/inventory/instances/buildStoredSocketPlugs";
+import { loadWeaponSocketContext } from "@/lib/inventory/instances/weaponSocketContext";
+import type { StoredSocketPlug } from "@/lib/inventory/instances/types";
+import { isWeaponBucketHash } from "@/lib/bungie/inventoryBuckets";
 import type { AppDatabase } from "@/lib/db/client";
 import { upsertInventoryBatch, getInventoryStatus } from "@/lib/db/repositories/inventoryRepository";
 import { updateUserMembership } from "@/lib/db/repositories/userRepository";
@@ -140,6 +144,7 @@ function normalizeItems(
   perkNameMap: Map<number, string>,
   weaponLookup: Map<number, WeaponCatalogRecord>,
   syncedAt: string,
+  socketPlugsByInstance: Map<string, StoredSocketPlug[] | null>,
 ): UserInventoryItem[] {
   return rawItems.map((raw) => {
     const catalogEntry = weaponLookup.get(raw.itemHash) ?? null;
@@ -160,9 +165,63 @@ function normalizeItems(
       rollTags,
       statValues: raw.statValues,
       gearTier: raw.gearTier ?? null,
+      socketPlugs: socketPlugsByInstance.get(raw.instanceId) ?? null,
       syncedAt,
     };
   });
+}
+
+async function buildSocketPlugsForItems(
+  rawItems: RawInventoryItem[],
+  manifest: ManifestService,
+  manifestVersion: string,
+): Promise<Map<string, StoredSocketPlug[] | null>> {
+  const byInstance = new Map<string, StoredSocketPlug[] | null>();
+  const contextCache = new Map<
+    number,
+    Awaited<ReturnType<typeof loadWeaponSocketContext>>
+  >();
+
+  for (const raw of rawItems) {
+    if (!isWeaponBucketHash(raw.bucketHash) || !raw.socketCapture?.length) {
+      byInstance.set(raw.instanceId, null);
+      continue;
+    }
+
+    const allPlugHashes = [
+      ...new Set(
+        raw.socketCapture.flatMap((row) => [row.equippedPlugHash, ...row.reusablePlugHashes]),
+      ),
+    ];
+
+    let ctx = contextCache.get(raw.itemHash);
+    if (!ctx) {
+      ctx = await loadWeaponSocketContext(manifest, manifestVersion, raw.itemHash, allPlugHashes);
+      contextCache.set(raw.itemHash, ctx);
+    } else {
+      const missing = allPlugHashes.filter((hash) => !ctx!.plugCategoryByHash.has(hash));
+      if (missing.length > 0) {
+        const extra = await loadWeaponSocketContext(
+          manifest,
+          manifestVersion,
+          raw.itemHash,
+          [...allPlugHashes, ...missing],
+        );
+        for (const [hash, category] of extra.plugCategoryByHash) {
+          ctx.plugCategoryByHash.set(hash, category);
+        }
+      }
+    }
+
+    const stored = buildStoredSocketPlugs({
+      socketCapture: raw.socketCapture,
+      plugCategoryByHash: ctx.plugCategoryByHash,
+      weaponPerkSocketIndexes: ctx.weaponPerkSocketIndexes,
+    });
+    byInstance.set(raw.instanceId, stored);
+  }
+
+  return byInstance;
 }
 
 async function resolveDestinyMembership(
@@ -218,7 +277,18 @@ async function performSync(
   enrichManifestDiagnostics(diagnostics, resolved.items, weaponLookup, exoticArmorHashes);
 
   const syncedAt = new Date().toISOString();
-  const items = normalizeItems(resolved.items, perkNameMap, weaponLookup, syncedAt);
+  const socketPlugsByInstance = await buildSocketPlugsForItems(
+    resolved.items,
+    manifest,
+    manifestVersion,
+  );
+  const items = normalizeItems(
+    resolved.items,
+    perkNameMap,
+    weaponLookup,
+    syncedAt,
+    socketPlugsByInstance,
+  );
   diagnostics.resolution = {
     resolvedFromTransfer: resolved.resolvedFromTransfer,
     droppedNonEquipment: resolved.droppedNonEquipment,

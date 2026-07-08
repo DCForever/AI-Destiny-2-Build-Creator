@@ -3,6 +3,7 @@ import { eq, and, inArray, sql } from "drizzle-orm";
 import type { AppDatabase } from "../client";
 import { inventoryItems, inventorySyncMeta, users } from "../schema";
 import type { RollTag, UserInventoryItem } from "../types";
+import type { StoredSocketPlug } from "@/lib/inventory/instances/types";
 import type { ArmorStatName } from "@/data/rules/statBenefits";
 
 export function upsertInventoryBatch(
@@ -28,6 +29,7 @@ export function upsertInventoryBatch(
           rollTags: JSON.stringify(item.rollTags),
           statValues: item.statValues ? JSON.stringify(item.statValues) : null,
           gearTier: item.gearTier ?? null,
+          socketPlugs: item.socketPlugs ? JSON.stringify(item.socketPlugs) : null,
           syncedAt: item.syncedAt || now,
         })
         .onConflictDoUpdate({
@@ -44,6 +46,7 @@ export function upsertInventoryBatch(
             rollTags: sql`excluded.roll_tags`,
             statValues: sql`excluded.stat_values`,
             gearTier: sql`excluded.gear_tier`,
+            socketPlugs: sql`excluded.socket_plugs`,
             syncedAt: sql`excluded.synced_at`,
           },
         })
@@ -162,6 +165,9 @@ function rowToItem(row: typeof inventoryItems.$inferSelect): UserInventoryItem {
     rollTags: JSON.parse(row.rollTags) as RollTag[],
     statValues,
     gearTier: row.gearTier ?? null,
+    socketPlugs: row.socketPlugs
+      ? (JSON.parse(row.socketPlugs) as StoredSocketPlug[])
+      : null,
     syncedAt: row.syncedAt,
   };
 }

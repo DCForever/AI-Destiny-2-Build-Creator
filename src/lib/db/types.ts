@@ -1,6 +1,7 @@
 import type { GeneratedBuild, BuildRequest } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import type { ArmorStatName } from "@/data/rules/statBenefits";
+import type { StoredSocketPlug } from "@/lib/inventory/instances/types";
 
 export type RollTag =
   | "MeleeBuildCandidate"
@@ -23,6 +24,7 @@ export interface UserInventoryItem {
   rollTags: RollTag[];
   statValues?: Partial<Record<ArmorStatName, number>>;
   gearTier?: number | null;
+  socketPlugs?: StoredSocketPlug[] | null;
   syncedAt: string;
 }
 

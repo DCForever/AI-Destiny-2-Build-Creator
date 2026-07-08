@@ -1,0 +1,154 @@
+import type { UserInventoryItem } from "@/lib/db/types";
+import type { InstancePerkColumn, InstancePerkGrid, StoredSocketPlug } from "./types";
+import {
+  classifyWeaponSocket,
+  formatPerkDisplayName,
+  isEnhancedPlug,
+} from "./classifyWeaponSocket";
+import { deriveCaptureStatus, buildStoredSocketPlugs } from "./buildStoredSocketPlugs";
+
+const COLUMN_ORDER: Record<InstancePerkColumn["columnKind"], number> = {
+  barrel: 0,
+  magazine: 1,
+  trait: 2,
+  intrinsic: 3,
+  origin: 4,
+  masterwork: 5,
+  catalyst: 6,
+};
+
+export interface ResolveInstancePerkGridInput {
+  item: UserInventoryItem;
+  plugMap: Map<number, string>;
+  plugCategoryByHash: Map<number, string>;
+  weaponPerkSocketIndexes: number[];
+}
+
+function buildColumnOptions(
+  stored: StoredSocketPlug,
+  plugMap: Map<number, string>,
+  plugCategoryByHash: Map<number, string>,
+  includeAlternates: boolean,
+) {
+  const hashes = includeAlternates
+    ? [...new Set([stored.equippedPlugHash, ...stored.reusablePlugHashes])]
+    : [stored.equippedPlugHash];
+
+  return hashes.map((hash) => {
+    const name = plugMap.get(hash) ?? null;
+    const category = plugCategoryByHash.get(hash) ?? "";
+    const enhanced = isEnhancedPlug(name, category);
+    return {
+      hash,
+      name,
+      displayName: formatPerkDisplayName(name, hash, enhanced),
+      isEnhanced: enhanced,
+      isEquipped: hash === stored.equippedPlugHash,
+    };
+  });
+}
+
+function sortColumns(columns: InstancePerkColumn[]): InstancePerkColumn[] {
+  return [...columns].sort((a, b) => {
+    const kindDiff = COLUMN_ORDER[a.columnKind] - COLUMN_ORDER[b.columnKind];
+    if (kindDiff !== 0) return kindDiff;
+    return a.socketIndex - b.socketIndex;
+  });
+}
+
+/** When multiple columns share a label, prefer the equipped plug name. */
+function disambiguateColumnLabels(
+  columns: InstancePerkColumn[],
+  plugMap: Map<number, string>,
+): InstancePerkColumn[] {
+  const labelCounts = new Map<string, number>();
+  for (const col of columns) {
+    labelCounts.set(col.label, (labelCounts.get(col.label) ?? 0) + 1);
+  }
+
+  return columns.map((col) => {
+    if ((labelCounts.get(col.label) ?? 0) <= 1) return col;
+    const equippedName = plugMap.get(col.equippedPlugHash);
+    if (equippedName) return { ...col, label: equippedName };
+    return { ...col, label: `${col.label} (socket ${col.socketIndex + 1})` };
+  });
+}
+
+function buildPendingEquippedColumns(input: ResolveInstancePerkGridInput): InstancePerkColumn[] {
+  const capture = input.item.plugHashes.map((equippedPlugHash, socketIndex) => ({
+    socketIndex,
+    equippedPlugHash,
+    reusablePlugHashes: [] as number[],
+  }));
+  const stored = buildStoredSocketPlugs({
+    socketCapture: capture,
+    plugCategoryByHash: input.plugCategoryByHash,
+    weaponPerkSocketIndexes: input.weaponPerkSocketIndexes,
+  });
+
+  return stored.map((row) => ({
+    columnKind: row.columnKind,
+    label: row.columnLabel,
+    socketIndex: row.socketIndex,
+    equippedPlugHash: row.equippedPlugHash,
+    options: buildColumnOptions(row, input.plugMap, input.plugCategoryByHash, false),
+  }));
+}
+
+export function resolveInstancePerkGrid(input: ResolveInstancePerkGridInput): InstancePerkGrid {
+  const captureStatus = deriveCaptureStatus(input.item.socketPlugs);
+  const includeAlternates = captureStatus === "complete";
+  const storedRows = input.item.socketPlugs ?? [];
+
+  const columns: InstancePerkColumn[] = [];
+
+  if (captureStatus === "pending" && storedRows.length === 0 && input.item.plugHashes.length > 0) {
+    columns.push(...buildPendingEquippedColumns(input));
+  } else {
+    for (const stored of storedRows) {
+      const options = buildColumnOptions(
+        stored,
+        input.plugMap,
+        input.plugCategoryByHash,
+        includeAlternates,
+      );
+      if (options.length === 0) continue;
+      columns.push({
+        columnKind: stored.columnKind,
+        label: stored.columnLabel,
+        socketIndex: stored.socketIndex,
+        equippedPlugHash: stored.equippedPlugHash,
+        options,
+      });
+    }
+  }
+
+  return {
+    instanceId: input.item.instanceId,
+    itemHash: input.item.itemHash,
+    captureStatus,
+    columns: disambiguateColumnLabels(sortColumns(columns), input.plugMap),
+  };
+}
+
+export function selectionFromGrid(
+  grid: InstancePerkGrid,
+  overrides: Record<number, number>,
+): number[] {
+  return grid.columns.map((column) => overrides[column.socketIndex] ?? column.equippedPlugHash);
+}
+
+/** @internal test helper */
+export function classifySocketForTests(
+  socketIndex: number,
+  equippedPlugHash: number,
+  plugCategoryByHash: Map<number, string>,
+  weaponPerkSocketIndexes: number[],
+) {
+  return classifyWeaponSocket({
+    socketIndex,
+    equippedPlugHash,
+    plugCategoryByHash,
+    weaponPerkSocketIndexes,
+  });
+}

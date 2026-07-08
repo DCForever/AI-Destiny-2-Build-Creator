@@ -51,6 +51,22 @@ export function inventoryBucketLabel(bucketHash: number): string {
   return EQUIPMENT_BUCKET_LABELS[bucketHash] ?? "Unknown";
 }
 
+export const WEAPON_BUCKET_HASHES = new Set<number>([
+  1498876634,
+  2465295065,
+  953998645,
+]);
+
+export function isWeaponBucketHash(bucketHash: number): boolean {
+  return WEAPON_BUCKET_HASHES.has(bucketHash);
+}
+
+const WEAPON_BUCKET_LABELS = new Set(["Kinetic", "Energy", "Power"]);
+
+export function isWeaponBucketLabel(bucket: string): boolean {
+  return WEAPON_BUCKET_LABELS.has(bucket);
+}
+
 export function parseBucketLabel(bucketHash: number): string {
   return (
     EQUIPMENT_BUCKET_LABELS[bucketHash] ??

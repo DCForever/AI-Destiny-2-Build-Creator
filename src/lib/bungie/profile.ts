@@ -6,9 +6,11 @@ import {
   EQUIPMENT_BUCKET_DISPLAY_LABELS,
   EQUIPMENT_BUCKET_LABELS,
   isParsableInventoryBucket,
+  isWeaponBucketHash,
   parseBucketLabel,
   SUBCLASS_BUCKET_HASH,
 } from "./inventoryBuckets";
+import type { RawSocketCapture } from "@/lib/inventory/instances/types";
 import type {
   BungieProfileClient,
   CharacterEquipment,
@@ -41,7 +43,7 @@ function isArmorBucketHash(bucketHash: number): boolean {
   return ARMOR_BUCKET_HASHES.has(bucketHash);
 }
 
-const INVENTORY_COMPONENTS = "102,201,205,300,305";
+const INVENTORY_COMPONENTS = "102,201,205,300,305,310";
 
 function assertBungieEnvelope(data: unknown): unknown {
   if (typeof data !== "object" || data === null) {
@@ -285,6 +287,7 @@ function parseFullInventoryResponseWithDiagnostics(
   const socketsMap = extractSocketsMap(res.itemComponents);
   const statsMap = extractStatsMap(res.itemComponents);
   const instancesMap = extractInstancesMap(res.itemComponents);
+  const reusablePlugsMap = extractReusablePlugsMap(res.itemComponents);
   const items: RawInventoryItem[] = [];
   const diagnostics = createEmptyInventoryDiagnostics(membership);
 
@@ -292,7 +295,15 @@ function parseFullInventoryResponseWithDiagnostics(
   diagnostics.raw.vault = vaultItems.length;
   for (const raw of vaultItems) {
     recordInventoryParseAttempt(
-      parseInventoryItemAttempt(raw, "vault", undefined, socketsMap, instancesMap, statsMap),
+      parseInventoryItemAttempt(
+        raw,
+        "vault",
+        undefined,
+        socketsMap,
+        instancesMap,
+        statsMap,
+        reusablePlugsMap,
+      ),
       diagnostics,
       items,
     );
@@ -304,7 +315,15 @@ function parseFullInventoryResponseWithDiagnostics(
     diagnostics.raw.characterInventoriesTotal += rawItems.length;
     for (const raw of rawItems) {
       recordInventoryParseAttempt(
-        parseInventoryItemAttempt(raw, "character", charId, socketsMap, instancesMap, statsMap),
+        parseInventoryItemAttempt(
+          raw,
+          "character",
+          charId,
+          socketsMap,
+          instancesMap,
+          statsMap,
+          reusablePlugsMap,
+        ),
         diagnostics,
         items,
       );
@@ -317,7 +336,15 @@ function parseFullInventoryResponseWithDiagnostics(
     diagnostics.raw.characterEquipmentTotal += rawItems.length;
     for (const raw of rawItems) {
       recordInventoryParseAttempt(
-        parseInventoryItemAttempt(raw, "equipped", charId, socketsMap, instancesMap, statsMap),
+        parseInventoryItemAttempt(
+          raw,
+          "equipped",
+          charId,
+          socketsMap,
+          instancesMap,
+          statsMap,
+          reusablePlugsMap,
+        ),
         diagnostics,
         items,
       );
@@ -409,6 +436,7 @@ function parseInventoryItemAttempt(
   socketsMap: Record<string, unknown[]>,
   instancesMap: Record<string, Record<string, unknown>>,
   statsMap: Record<string, BungieStatEntry[]>,
+  reusablePlugsMap: Record<string, Record<number, number[]>>,
 ): InventoryParseAttempt {
   if (typeof raw !== "object" || raw === null) {
     return { item: null, dropReason: "invalid_shape" };
@@ -432,6 +460,9 @@ function parseInventoryItemAttempt(
   const isArmor = isArmorBucketHash(bucketHash);
   const statValues = isArmor ? parseArmorStatValues(statsMap[instanceId]) : undefined;
   const gearTier = isArmor ? parseGearTier(instance) : null;
+  const socketCapture = isWeaponBucketHash(bucketHash)
+    ? parseSocketCapture(instanceId, socketsMap[instanceId] ?? [], reusablePlugsMap)
+    : undefined;
 
   return {
     item: {
@@ -446,6 +477,7 @@ function parseInventoryItemAttempt(
       isCrafted,
       statValues: statValues ?? undefined,
       gearTier,
+      socketCapture,
     },
     dropReason: null,
   };
@@ -529,6 +561,66 @@ function parsePlugHashes(sockets: unknown[]): number[] {
     if (s.isEnabled === false) continue;
     if (typeof s.plugHash === "number") result.push(s.plugHash);
   }
+  return result;
+}
+
+/** Component 310: per-instance reusable plugs keyed by socket index. */
+export function extractReusablePlugsMap(
+  itemComponents: unknown,
+): Record<string, Record<number, number[]>> {
+  if (typeof itemComponents !== "object" || itemComponents === null) return {};
+  const ic = itemComponents as Record<string, unknown>;
+  const reusable = ic.reusablePlugs;
+  if (typeof reusable !== "object" || reusable === null) return {};
+  const r = reusable as Record<string, unknown>;
+  if (typeof r.data !== "object" || r.data === null) return {};
+
+  const result: Record<string, Record<number, number[]>> = {};
+  for (const [instanceId, entry] of Object.entries(r.data as Record<string, unknown>)) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const e = entry as Record<string, unknown>;
+    const plugs = e.plugs;
+    if (typeof plugs !== "object" || plugs === null) continue;
+
+    const bySocket: Record<number, number[]> = {};
+    for (const [socketKey, plugList] of Object.entries(plugs as Record<string, unknown>)) {
+      const socketIndex = Number(socketKey);
+      if (!Array.isArray(plugList)) continue;
+      const hashes: number[] = [];
+      for (const plug of plugList) {
+        if (typeof plug !== "object" || plug === null) continue;
+        const p = plug as Record<string, unknown>;
+        if (p.canInsert === false) continue;
+        if (p.enabled === false) continue;
+        if (typeof p.plugItemHash === "number") hashes.push(p.plugItemHash);
+      }
+      if (hashes.length > 0) bySocket[socketIndex] = hashes;
+    }
+    if (Object.keys(bySocket).length > 0) result[instanceId] = bySocket;
+  }
+  return result;
+}
+
+export function parseSocketCapture(
+  instanceId: string,
+  sockets: unknown[],
+  reusablePlugsMap: Record<string, Record<number, number[]>>,
+): RawSocketCapture[] {
+  const instanceReusable = reusablePlugsMap[instanceId] ?? {};
+  const result: RawSocketCapture[] = [];
+
+  sockets.forEach((sock, socketIndex) => {
+    if (typeof sock !== "object" || sock === null) return;
+    const s = sock as Record<string, unknown>;
+    if (s.isEnabled === false) return;
+    if (typeof s.plugHash !== "number") return;
+    result.push({
+      socketIndex,
+      equippedPlugHash: s.plugHash,
+      reusablePlugHashes: instanceReusable[socketIndex] ?? [],
+    });
+  });
+
   return result;
 }
 

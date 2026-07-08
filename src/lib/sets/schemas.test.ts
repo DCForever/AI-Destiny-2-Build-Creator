@@ -25,4 +25,14 @@ describe("setItemInputSchema instanceId", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts multi-column selectedPerks in column order", () => {
+    const parsed = setItemInputSchema.parse({
+      slot: "primary",
+      itemHash: 100,
+      instanceId: "inst-1",
+      selectedPerks: [10, 20, 30, 40],
+    });
+    expect(parsed.selectedPerks).toEqual([10, 20, 30, 40]);
+  });
 });

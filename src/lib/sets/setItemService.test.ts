@@ -70,6 +70,19 @@ describe("upsertSetItem instanceId", () => {
     expect(record.selectedPerks).toEqual([]);
   });
 
+  it("persists column-ordered selectedPerks from a perk grid selection", async () => {
+    const db = seedSet("s-grid");
+    const record = await upsertSetItem(db, "s-grid", "weapon", {
+      slot: "primary",
+      itemHash: 100,
+      itemName: "Gunburn",
+      instanceId: "inst-grid",
+      selectedPerks: [10, 20, 30, 40],
+    });
+    expect(record.instanceId).toBe("inst-grid");
+    expect(record.selectedPerks).toEqual([10, 20, 30, 40]);
+  });
+
   it("still enforces occupied-slot replace confirmation and swaps the instanceId", async () => {
     const db = seedSet("s4");
     await upsertSetItem(db, "s4", "weapon", {

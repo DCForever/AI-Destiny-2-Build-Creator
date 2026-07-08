@@ -37,4 +37,15 @@ describe("schema migrations", () => {
     expect(col).toBeDefined();
     expect(col?.notnull).toBe(0);
   });
+
+  it("adds nullable inventory_items.socket_plugs column", () => {
+    const sqlite = createTestSqlite();
+    const cols = sqlite.prepare("PRAGMA table_info(inventory_items)").all() as Array<{
+      name: string;
+      notnull: number;
+    }>;
+    const col = cols.find((c) => c.name === "socket_plugs");
+    expect(col).toBeDefined();
+    expect(col?.notnull).toBe(0);
+  });
 });

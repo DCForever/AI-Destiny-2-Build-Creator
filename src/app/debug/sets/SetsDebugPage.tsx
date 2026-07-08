@@ -1,17 +1,23 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CONCEPT_TAGS } from "@/data/conceptTags";
 import type { CatalogItem } from "@/lib/catalog/types";
-import type { WeaponPerkOptions } from "@/lib/catalog/weaponPerkOptions";
+import {
+  createPerkGridRefreshState,
+  markSyncAttempted,
+  markSyncFinished,
+  shouldAutoSync,
+} from "@/lib/inventory/instances/perkGridRefresh";
+import { selectionFromGrid } from "@/lib/inventory/instances/resolveInstancePerkGrid";
+import type { InstanceKind, InstancePerkGrid, OwnedInstanceDetail } from "@/lib/inventory/instances/types";
 import {
   candidateSessionReducer,
   openCandidateSession,
   type CandidateAction,
   type CandidateSession,
 } from "@/lib/inventory/instances/candidateSession";
-import type { InstanceKind, OwnedInstanceDetail } from "@/lib/inventory/instances/types";
 import { sortByName } from "@/lib/sortByName";
 import { setSlotToCatalogBucket } from "@/lib/sets/catalogSlotMap";
 import { SET_TYPES, WEAPON_SLOTS, ARMOR_SLOTS } from "@/lib/sets/schemas";
@@ -66,8 +72,15 @@ export function SetsDebugPage() {
   const [selectedCatalogHash, setSelectedCatalogHash] = useState<number | null>(null);
   const [session, setSession] = useState<CandidateSession | null>(null);
   const [carouselHint, setCarouselHint] = useState<string | undefined>(undefined);
-  const [perkOptions, setPerkOptions] = useState<WeaponPerkOptions | null>(null);
+  const [perkGrid, setPerkGrid] = useState<InstancePerkGrid | null>(null);
+  const [perkGridLoading, setPerkGridLoading] = useState(false);
   const [perkSelection, setPerkSelection] = useState<Record<number, number>>({});
+  const perkGridRefreshRef = useRef(createPerkGridRefreshState());
+  const perkGridRef = useRef<InstancePerkGrid | null>(null);
+
+  useEffect(() => {
+    perkGridRef.current = perkGrid;
+  }, [perkGrid]);
 
   const record = useCallback((next: JsonPanel) => setPanel(next), []);
 
@@ -80,10 +93,6 @@ export function SetsDebugPage() {
     [selectedId, sets],
   );
 
-  const equippedPerkHashes = useMemo(() => {
-    const chosen = session?.all.find((c) => c.instanceId === session?.selectedInstanceId);
-    return new Set(chosen?.plugs.map((plug) => plug.hash) ?? []);
-  }, [session]);
   const activeSetType = selectedSet?.type ?? createForm.type;
   const catalogKind =
     activeSetType === "weapon" ? "weapons" : activeSetType === "armor" ? "armor" : null;
@@ -125,7 +134,7 @@ export function SetsDebugPage() {
     setSelectedCatalogHash(null);
     setSession(null);
     setCarouselHint(undefined);
-    setPerkOptions(null);
+    setPerkGrid(null);
     setPerkSelection({});
 
     const res = await fetch(url);
@@ -153,7 +162,7 @@ export function SetsDebugPage() {
       setSelectedCatalogHash(item.hash);
       setSession(null);
       setCarouselHint(undefined);
-      setPerkOptions(null);
+      setPerkGrid(null);
       setPerkSelection({});
       if (item.ownedCount <= 0) {
         setItemForm((prev) => ({
@@ -199,29 +208,47 @@ export function SetsDebugPage() {
     [catalogKind, lookupOriginTrait, lookupPerk, lookupStatSort, record],
   );
 
-  const loadWeaponPerkOptions = useCallback(
-    async (chosen: OwnedInstanceDetail) => {
-      const url = `/api/catalog/weapons/perk-options?itemHash=${chosen.itemHash}`;
-      const res = await fetch(url);
+  const loadInstancePerkGrid = useCallback(async (instanceId: string) => {
+    setPerkGridLoading(true);
+    const fetchGrid = async (): Promise<InstancePerkGrid | null> => {
+      const res = await fetch(`/api/user/inventory/instances/${instanceId}/perk-grid`);
       const body = await res.json();
       if (!res.ok) {
-        setPerkOptions(null);
+        setPerkGrid(null);
         setPerkSelection({});
-        return;
+        return null;
       }
-      const options = body as WeaponPerkOptions;
-      setPerkOptions(options);
+      return body as InstancePerkGrid;
+    };
 
-      const equippedHashes = new Set(chosen.plugs.map((plug) => plug.hash));
+    let grid = await fetchGrid();
+    if (
+      grid?.captureStatus === "pending" &&
+      shouldAutoSync(perkGridRefreshRef.current, instanceId)
+    ) {
+      perkGridRefreshRef.current = markSyncAttempted(perkGridRefreshRef.current, instanceId);
+      try {
+        await fetch("/api/bungie/sync", { method: "POST" });
+      } finally {
+        perkGridRefreshRef.current = markSyncFinished(perkGridRefreshRef.current);
+      }
+      grid = await fetchGrid();
+    }
+
+    setPerkGrid(grid);
+    if (grid) {
       const selection: Record<number, number> = {};
-      for (const column of options.columns) {
-        const equipped = column.options.find((option) => equippedHashes.has(option.hash));
-        if (equipped) selection[column.column] = equipped.hash;
+      for (const column of grid.columns) {
+        selection[column.socketIndex] = column.equippedPlugHash;
       }
       setPerkSelection(selection);
-    },
-    [],
-  );
+      setItemForm((form) => ({
+        ...form,
+        selectedPerks: selectionFromGrid(grid, selection).join(","),
+      }));
+    }
+    setPerkGridLoading(false);
+  }, []);
 
   const selectCandidate = useCallback(
     (instanceId: string) => {
@@ -238,25 +265,28 @@ export function SetsDebugPage() {
             selectedPerks: chosen.plugs.map((plug) => plug.hash).join(","),
           }));
           if (chosen.kind === "weapon") {
-            void loadWeaponPerkOptions(chosen);
+            void loadInstancePerkGrid(instanceId);
           } else {
-            setPerkOptions(null);
+            setPerkGrid(null);
             setPerkSelection({});
           }
         }
         return prev;
       });
     },
-    [catalogItems, dispatchSession, loadWeaponPerkOptions],
+    [catalogItems, dispatchSession, loadInstancePerkGrid],
   );
 
-  const changePerkSelection = useCallback((column: number, hash: number) => {
+  const changePerkSelection = useCallback((socketIndex: number, hash: number) => {
     setPerkSelection((prev) => {
-      const next = { ...prev, [column]: hash };
-      setItemForm((form) => ({
-        ...form,
-        selectedPerks: Object.values(next).join(","),
-      }));
+      const next = { ...prev, [socketIndex]: hash };
+      const grid = perkGridRef.current;
+      if (grid) {
+        setItemForm((form) => ({
+          ...form,
+          selectedPerks: selectionFromGrid(grid, next).join(","),
+        }));
+      }
       return next;
     });
   }, []);
@@ -573,29 +603,46 @@ export function SetsDebugPage() {
           )}
           {session?.kind === "weapon" && session.selectedInstanceId && (
             <div className="space-y-2 rounded border border-zinc-800 p-2 text-sm">
-              <p className="text-xs text-zinc-500">Perk selection (defaults to equipped)</p>
-              {perkOptions && perkOptions.columns.length > 0 ? (
-                perkOptions.columns.map((column) => (
-                  <label key={column.column} className="block text-xs">
-                    Column {column.column + 1}
+              <p className="text-xs text-zinc-500">Per-copy perk grid (defaults to equipped)</p>
+              {perkGridLoading && (
+                <p className="text-xs text-zinc-400">Loading perk grid…</p>
+              )}
+              {!perkGridLoading && perkGrid?.captureStatus === "pending" && (
+                <p className="text-xs text-amber-400">
+                  Per-copy alternates pending — showing equipped only.
+                </p>
+              )}
+              {!perkGridLoading && perkGrid?.captureStatus === "unavailable" && (
+                <p className="text-xs text-amber-400">
+                  Per-copy alternates unavailable — showing equipped only.
+                </p>
+              )}
+              {perkGrid && perkGrid.columns.length > 0 ? (
+                perkGrid.columns.map((column) => (
+                  <label key={column.socketIndex} className="block text-xs">
+                    {column.label}
                     <select
                       className="ml-2 rounded bg-zinc-900 px-2 py-1"
-                      value={perkSelection[column.column] ?? ""}
-                      onChange={(e) => changePerkSelection(column.column, Number(e.target.value))}
+                      value={perkSelection[column.socketIndex] ?? column.equippedPlugHash}
+                      onChange={(e) =>
+                        changePerkSelection(column.socketIndex, Number(e.target.value))
+                      }
                     >
                       {column.options.map((option) => (
                         <option key={option.hash} value={option.hash}>
-                          {option.name}
-                          {equippedPerkHashes.has(option.hash) ? " (equipped)" : ""}
+                          {option.displayName}
+                          {option.isEquipped ? " (equipped)" : ""}
                         </option>
                       ))}
                     </select>
                   </label>
                 ))
               ) : (
-                <p className="text-xs text-zinc-400">
-                  Perk options unavailable — recording equipped perks.
-                </p>
+                !perkGridLoading && (
+                  <p className="text-xs text-zinc-400">
+                    Perk grid unavailable — recording equipped perks.
+                  </p>
+                )
               )}
             </div>
           )}

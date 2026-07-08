@@ -74,6 +74,8 @@ export interface RawInventoryItem {
   isCrafted: boolean;
   statValues?: Partial<Record<ArmorStatName, number>>;
   gearTier?: number | null;
+  /** Weapon copies only: equipped + reusable plugs per socket from Bungie 305/310. */
+  socketCapture?: import("@/lib/inventory/instances/types").RawSocketCapture[];
 }
 
 export interface InventoryParseDiagnostics {

@@ -62,6 +62,13 @@ function ensureSetItemInstanceIdColumn(db: Database.Database): void {
   }
 }
 
+function ensureSocketPlugsColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(inventory_items)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "socket_plugs")) {
+    db.exec("ALTER TABLE inventory_items ADD COLUMN socket_plugs TEXT");
+  }
+}
+
 export function runMigrations(db: Database.Database): void {
   if (!migrated) {
   db.exec(`
@@ -226,6 +233,7 @@ export function runMigrations(db: Database.Database): void {
   ensureSynergySubTypeColumn(db);
   ensureStatValuesColumn(db);
   ensureGearTierColumn(db);
+  ensureSocketPlugsColumn(db);
   ensureSetItemInstanceIdColumn(db);
 }
 

@@ -23,6 +23,7 @@ export const inventoryItems = sqliteTable("inventory_items", {
   rollTags: text("roll_tags").notNull().default("[]"),
   statValues: text("stat_values"),
   gearTier: integer("gear_tier"),
+  socketPlugs: text("socket_plugs"),
   syncedAt: text("synced_at").notNull(),
 });
 

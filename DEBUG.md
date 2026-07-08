@@ -4,7 +4,7 @@
 
 > **Maintenance (required):** Update this file in the same change whenever you modify debug routes, prerequisites, owned-catalog/inventory flows, sync behavior, or related APIs. Feature `quickstart.md` files are scenario checklists; **this file is the single consolidated reference.**
 
-**Last reviewed:** 2026-07-03 (feature 010 instance disambiguation)
+**Last reviewed:** 2026-07-05 (feature 011 per-copy perk grid)
 
 ---
 
@@ -83,7 +83,7 @@ Nav: header on every debug page (`src/app/debug/layout.tsx`).
 
 | Route | Purpose | Primary APIs |
 |-------|---------|--------------|
-| [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict, **instance disambiguation carousel** (owned copies with Tier/stats/set-bonus or weapon perks), per-socket weapon perk selection | `/api/user/sets`, `/api/concept-tags`, `/api/catalog/{weapons,armor}`, `/api/user/inventory/instances`, `/api/catalog/weapons/perk-options` |
+| [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict, **instance disambiguation carousel** (owned copies with Tier/stats/set-bonus or weapon perks), **per-copy weapon perk grid** (DIM-style columns from instance capture) | `/api/user/sets`, `/api/concept-tags`, `/api/catalog/{weapons,armor}`, `/api/user/inventory/instances`, `/api/user/inventory/instances/:instanceId/perk-grid`, `/api/bungie/sync` |
 | [`/debug/builds`](src/app/debug/builds/page.tsx) | Builds, variants, set attachments (live/snapshot), synergies, suggestions, compare | `/api/user/builds`, variants, suggest-* |
 | [`/debug/synergies`](src/app/debug/synergies/page.tsx) | Synergy CRUD with auto-generated names, sub-type pickers, catalog-backed link search, description preview | `/api/user/synergies`, `/api/catalog/synergy-pickers/*` |
 | [`/debug/catalog`](src/app/debug/catalog/page.tsx) | Catalog browse (`scope=all\|owned`), owned instance drill-down, weapon synergy badges, synergy reverse lookup, direct instance API panel | `/api/catalog/weapons`, `/api/catalog/armor`, `/api/user/inventory/instances`, `/api/user/synergies/by-target` |
@@ -201,10 +201,12 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
    - **Weapon card**: every equipped socket plug in socket order (unresolved shown by hash). (US2/FR-003)
 3. **Remove** copies you don't want → they leave the carousel (session-only, inventory unchanged); **Reset** restores them (US5/FR-016/FR-017).
 4. **Select this copy** → fills the item form with that copy's `instanceId` + equipped perks.
-   - **Weapon**: a per-socket **perk selection** panel loads from `GET /api/catalog/weapons/perk-options?itemHash=…` (curated ∪ randomized per column, equipped marked, defaults to equipped). Degrades to equipped-only when `columns: []` (exotics/unknowns). (US4)
-5. **Put item** → `PUT /api/user/sets/:id/items` records the specific `instanceId` + `selectedPerks`. Occupied-slot **replace confirmation** still applies.
+   - **Weapon**: a **per-copy perk grid** loads from `GET /api/user/inventory/instances/:instanceId/perk-grid` (equipped + alternates per column, equipped marked, defaults to equipped). Does **not** use catalog `perk-options` (weapon-type pool). Stale copies (`socket_plugs` null) trigger **one automatic** `POST /api/bungie/sync` per copy per session, then re-fetch; until capture completes, grid shows equipped-only with a pending indicator (011 US3).
+5. **Put item** → `PUT /api/user/sets/:id/items` records the specific `instanceId` + column-ordered `selectedPerks`. Occupied-slot **replace confirmation** still applies.
 
-**Re-sync note:** the armor **Tier** reads a new nullable `inventory_items.gear_tier` column captured during inventory sync. Copies synced before feature 010 show `Tier unavailable`/estimated until you **re-sync inventory** to backfill `gearTier`.
+**Re-sync notes:**
+- Armor **Tier** reads nullable `inventory_items.gear_tier` — copies synced before feature 010 need re-sync to backfill `gearTier`.
+- Weapon **per-copy alternates** read nullable `inventory_items.socket_plugs` — copies synced before feature 011 auto re-sync once when the grid opens, or re-sync manually via Settings / `POST /api/bungie/sync`.
 
 **Edge cases:**
 
@@ -217,9 +219,12 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 | `gearTier` null + incomplete stats | `Tier unavailable` |
 | Armor in no set (exotic/standalone) | "no set bonus" |
 | Weapon socket with no alternatives | only the equipped perk shown |
+| Stale weapon copy (`socket_plugs` null) | one auto sync + equipped-only grid until capture completes |
+| Sync failure / capture unavailable | equipped-only grid + indicator; no catalog type pool |
+| Enhanced perk in column | base and enhanced as separate options; enhanced labeled `(Enhanced)` |
 | All candidates removed | empty state with reset |
 
-**Checklist:** `specs/010-instance-disambiguation/quickstart.md` Scenarios A & B
+**Checklist:** `specs/010-instance-disambiguation/quickstart.md` Scenarios A & B; `specs/011-per-copy-perk-grid/quickstart.md` Scenarios A–D
 
 ---
 

@@ -28,8 +28,8 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 **Purpose**: Establish a green baseline; confirm no new dependencies or tooling are needed.
 
-- [ ] T001 Confirm branch `011-per-copy-perk-grid` is checked out and `npm run gate` passes on the current baseline (green starting point per Constitution III).
-- [ ] T002 [P] Confirm required manifest entity stores (`weapons`, `exotic-weapons`, `weapon-perks`, `origin-traits`) build and debug prerequisites in `DEBUG.md` are met; verify no new npm dependencies are required by this feature.
+- [X] T001 Confirm branch `011-per-copy-perk-grid` is checked out and `npm run gate` passes on the current baseline (green starting point per Constitution III).
+- [X] T002 [P] Confirm required manifest entity stores (`weapons`, `exotic-weapons`, `weapon-perks`, `origin-traits`) build and debug prerequisites in `DEBUG.md` are met; verify no new npm dependencies are required by this feature.
 
 ---
 
@@ -39,10 +39,10 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 **⚠️ CRITICAL**: No user story work should modify `src/lib/db/schema.ts` / `client.ts` until this phase is complete.
 
-- [ ] T003 Extend the migration smoke test in `src/lib/db/schema.test.ts` to assert that `inventory_items.socket_plugs` exists after `runMigrations` (write FIRST; must FAIL before T004/T005).
-- [ ] T004 [P] Add `inventoryItems.socketPlugs` (`text("socket_plugs")`) to the drizzle schema in `src/lib/db/schema.ts`.
-- [ ] T005 [P] Add idempotent `ensureSocketPlugsColumn(db)` (PRAGMA `table_info` + `ALTER TABLE ADD COLUMN`, mirroring `ensureGearTierColumn`) and invoke it from `runMigrations` in `src/lib/db/client.ts`.
-- [ ] T006 [P] Add `socketPlugs: StoredSocketPlug[] | null` to `UserInventoryItem` in `src/lib/db/types.ts` and JSON parse/serialize in `src/lib/db/repositories/inventoryRepository.ts` (read/write `socket_plugs` column).
+- [X] T003 Extend the migration smoke test in `src/lib/db/schema.test.ts` to assert that `inventory_items.socket_plugs` exists after `runMigrations` (write FIRST; must FAIL before T004/T005).
+- [X] T004 [P] Add `inventoryItems.socketPlugs` (`text("socket_plugs")`) to the drizzle schema in `src/lib/db/schema.ts`.
+- [X] T005 [P] Add idempotent `ensureSocketPlugsColumn(db)` (PRAGMA `table_info` + `ALTER TABLE ADD COLUMN`, mirroring `ensureGearTierColumn`) and invoke it from `runMigrations` in `src/lib/db/client.ts`.
+- [X] T006 [P] Add `socketPlugs: StoredSocketPlug[] | null` to `UserInventoryItem` in `src/lib/db/types.ts` and JSON parse/serialize in `src/lib/db/repositories/inventoryRepository.ts` (read/write `socket_plugs` column).
 
 **Checkpoint**: Migrations pass (T003 green); DB row shape carries `socketPlugs`. `npm run gate` clean → commit.
 
@@ -56,20 +56,20 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 1 ⚠️ (write first, confirm failing)
 
-- [ ] T007 [P] [US1] Tests for parsing Bungie component **310** reusable plugs + merging equipped socket rows into `StoredSocketPlug[]` (weapon only; non-weapon → null) in `src/lib/bungie/profile.test.ts`.
-- [ ] T008 [P] [US1] Tests for `classifyWeaponSocket` (barrel/magazine/trait/intrinsic/origin/masterwork/catalyst labels; exclude shader/tracker/ornament sockets) in `src/lib/inventory/instances/classifyWeaponSocket.test.ts`.
-- [ ] T009 [P] [US1] Tests for `resolveInstancePerkGrid` (complete grid with alternates; equipped flagged; enhanced `" (Enhanced)"` label; exotic catalyst column; two copies → different options; **no type-pool hashes**) in `src/lib/inventory/instances/resolveInstancePerkGrid.test.ts`.
-- [ ] T010 [P] [US1] Tests for `GET /api/user/inventory/instances/[instanceId]/perk-grid` (200 shape; `401` unsigned; `404` missing; armor → error; pending → equipped-only + status) in `src/app/api/user/inventory/instances/[instanceId]/perk-grid/route.test.ts`.
+- [X] T007 [P] [US1] Tests for parsing Bungie component **310** reusable plugs + merging equipped socket rows into `StoredSocketPlug[]` (weapon only; non-weapon → null) in `src/lib/bungie/profile.test.ts`.
+- [X] T008 [P] [US1] Tests for `classifyWeaponSocket` (barrel/magazine/trait/intrinsic/origin/masterwork/catalyst labels; exclude shader/tracker/ornament sockets) in `src/lib/inventory/instances/classifyWeaponSocket.test.ts`.
+- [X] T009 [P] [US1] Tests for `resolveInstancePerkGrid` (complete grid with alternates; equipped flagged; enhanced `" (Enhanced)"` label; exotic catalyst column; two copies → different options; **no type-pool hashes**) in `src/lib/inventory/instances/resolveInstancePerkGrid.test.ts`.
+- [X] T010 [P] [US1] Tests for `GET /api/user/inventory/instances/[instanceId]/perk-grid` (200 shape; `401` unsigned; `404` missing; armor → error; pending → equipped-only + status) in `src/app/api/user/inventory/instances/[instanceId]/perk-grid/route.test.ts`.
 
 ### Implementation for User Story 1
 
-- [ ] T011 [P] [US1] Add `StoredSocketPlug`, `SocketColumnKind`, `InstancePerkGrid`, `InstancePerkColumn`, and `InstancePerkOption` types in `src/lib/inventory/instances/types.ts`.
-- [ ] T012 [P] [US1] Implement `classifyWeaponSocket(itemHash, socketIndex, manifestContext) → { columnKind, columnLabel, includeInGrid }` in `src/lib/inventory/instances/classifyWeaponSocket.ts` (depends on T008).
-- [ ] T013 [US1] Extend `INVENTORY_COMPONENTS` with **310** (+ profile/character plug sets if required per `profile.test.ts`); add `parseReusablePlugsMap`, merge plug-set alternates, and build `socketPlugs[]` via `classifyWeaponSocket` in `src/lib/bungie/profile.ts` (depends on T006, T007, T012).
-- [ ] T014 [US1] Persist `socketPlugs` on weapon/exotic weapon rows during `upsertInventoryBatch` in `src/lib/bungie/syncInventory.ts` (depends on T013).
-- [ ] T015 [US1] Implement `resolveInstancePerkGrid({ item, socketPlugs, plugMap, manifestContext }) → InstancePerkGrid` with `captureStatus` in `src/lib/inventory/instances/resolveInstancePerkGrid.ts` (depends on T009, T011, T012).
-- [ ] T016 [US1] Implement `GET /api/user/inventory/instances/[instanceId]/perk-grid/route.ts` (auth, load row, weapon-kind guard, call resolver, zod-safe response) per `contracts/instance-perk-grid-contract.md` (depends on T015).
-- [ ] T017 [US1] Replace catalog `perk-options` fetch with perk-grid in `src/app/debug/sets/SetsDebugPage.tsx`: lazy load on weapon copy select, render labeled columns with equipped marker, refresh grid when carousel copy changes; **do not** call `GET /api/catalog/weapons/perk-options` (depends on T016).
+- [X] T011 [P] [US1] Add `StoredSocketPlug`, `SocketColumnKind`, `InstancePerkGrid`, `InstancePerkColumn`, and `InstancePerkOption` types in `src/lib/inventory/instances/types.ts`.
+- [X] T012 [P] [US1] Implement `classifyWeaponSocket(itemHash, socketIndex, manifestContext) → { columnKind, columnLabel, includeInGrid }` in `src/lib/inventory/instances/classifyWeaponSocket.ts` (depends on T008).
+- [X] T013 [US1] Extend `INVENTORY_COMPONENTS` with **310** (+ profile/character plug sets if required per `profile.test.ts`); add `parseReusablePlugsMap`, merge plug-set alternates, and build `socketPlugs[]` via `classifyWeaponSocket` in `src/lib/bungie/profile.ts` (depends on T006, T007, T012).
+- [X] T014 [US1] Persist `socketPlugs` on weapon/exotic weapon rows during `upsertInventoryBatch` in `src/lib/bungie/syncInventory.ts` (depends on T013).
+- [X] T015 [US1] Implement `resolveInstancePerkGrid({ item, socketPlugs, plugMap, manifestContext }) → InstancePerkGrid` with `captureStatus` in `src/lib/inventory/instances/resolveInstancePerkGrid.ts` (depends on T009, T011, T012).
+- [X] T016 [US1] Implement `GET /api/user/inventory/instances/[instanceId]/perk-grid/route.ts` (auth, load row, weapon-kind guard, call resolver, zod-safe response) per `contracts/instance-perk-grid-contract.md` (depends on T015).
+- [X] T017 [US1] Replace catalog `perk-options` fetch with perk-grid in `src/app/debug/sets/SetsDebugPage.tsx`: lazy load on weapon copy select, render labeled columns with equipped marker, refresh grid when carousel copy changes; **do not** call `GET /api/catalog/weapons/perk-options` (depends on T016).
 
 **Checkpoint**: US1 independently testable — per-copy grid renders from real capture data. `npm run gate` clean → commit.
 
@@ -83,13 +83,13 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 2 ⚠️ (write first, confirm failing)
 
-- [ ] T018 [P] [US2] Extend `src/lib/sets/setItemService.test.ts`: grid-derived `selectedPerks` (column display order) persist with `instanceId`; untouched columns keep equipped defaults; two copies → distinguishable saved references.
-- [ ] T019 [P] [US2] Extend `src/lib/sets/schemas.test.ts` (if needed): `selectedPerks` array length/order accepted for multi-column weapon rolls.
+- [X] T018 [P] [US2] Extend `src/lib/sets/setItemService.test.ts`: grid-derived `selectedPerks` (column display order) persist with `instanceId`; untouched columns keep equipped defaults; two copies → distinguishable saved references.
+- [X] T019 [P] [US2] Extend `src/lib/sets/schemas.test.ts` (if needed): `selectedPerks` array length/order accepted for multi-column weapon rolls.
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Wire perk-grid selection state in `src/app/debug/sets/SetsDebugPage.tsx`: initialize each column to `equippedPlugHash`; map `selectedPerks` to column-order hash array on Put item; preserve replace confirmation and slot rules (depends on T017).
-- [ ] T021 [US2] Verify `upsertSetItem` in `src/lib/sets/setItemService.ts` stores grid selection unchanged (extend only if gaps found by T018; otherwise confirm via green tests).
+- [X] T020 [US2] Wire perk-grid selection state in `src/app/debug/sets/SetsDebugPage.tsx`: initialize each column to `equippedPlugHash`; map `selectedPerks` to column-order hash array on Put item; preserve replace confirmation and slot rules (depends on T017).
+- [X] T021 [US2] Verify `upsertSetItem` in `src/lib/sets/setItemService.ts` stores grid selection unchanged (extend only if gaps found by T018; otherwise confirm via green tests).
 
 **Checkpoint**: P1 complete (US1 + US2) — compare copies, pick per-column roll, attach to set. `npm run gate` clean → commit.
 
@@ -103,13 +103,13 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 3 ⚠️ (write first, confirm failing)
 
-- [ ] T022 [P] [US3] Extend `src/lib/inventory/instances/resolveInstancePerkGrid.test.ts`: `captureStatus: "pending"` and `"unavailable"` → equipped-only options per column; never inject catalog type-pool hashes.
-- [ ] T023 [P] [US3] Tests for `perkGridRefresh` session dedupe (one sync attempt per `instanceId`; `inFlight` guard; no loop on repeated failure) in `src/lib/inventory/instances/perkGridRefresh.test.ts`.
+- [X] T022 [P] [US3] Extend `src/lib/inventory/instances/resolveInstancePerkGrid.test.ts`: `captureStatus: "pending"` and `"unavailable"` → equipped-only options per column; never inject catalog type-pool hashes.
+- [X] T023 [P] [US3] Tests for `perkGridRefresh` session dedupe (one sync attempt per `instanceId`; `inFlight` guard; no loop on repeated failure) in `src/lib/inventory/instances/perkGridRefresh.test.ts`.
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Implement `perkGridRefresh.ts` (`syncAttemptedFor` set, `shouldAutoSync`, `markSyncAttempted`) in `src/lib/inventory/instances/perkGridRefresh.ts` (depends on T023).
-- [ ] T025 [US3] Add auto re-sync UX in `src/app/debug/sets/SetsDebugPage.tsx`: on `captureStatus === "pending"` call `POST /api/bungie/sync` once per copy per session (via T024), show loading while pending, re-fetch grid; on `"unavailable"` show equipped-only + indicator; never fall back to catalog `perk-options` (depends on T017, T024).
+- [X] T024 [US3] Implement `perkGridRefresh.ts` (`syncAttemptedFor` set, `shouldAutoSync`, `markSyncAttempted`) in `src/lib/inventory/instances/perkGridRefresh.ts` (depends on T023).
+- [X] T025 [US3] Add auto re-sync UX in `src/app/debug/sets/SetsDebugPage.tsx`: on `captureStatus === "pending"` call `POST /api/bungie/sync` once per copy per session (via T024), show loading while pending, re-fetch grid; on `"unavailable"` show equipped-only + indicator; never fall back to catalog `perk-options` (depends on T017, T024).
 
 **Checkpoint**: All user stories complete. `npm run gate` clean → commit.
 
@@ -117,8 +117,8 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T026 [P] Update `DEBUG.md` (perk-grid endpoint, auto re-sync on stale copies, Sets debug no longer uses catalog `perk-options` for attachment, edge-case table) and bump **Last reviewed** date, per the `debug-docs` rule.
-- [ ] T027 Run `quickstart.md` Scenarios A–D + edge cases, then `npm run gate` for the full-feature green checkpoint.
+- [X] T026 [P] Update `DEBUG.md` (perk-grid endpoint, auto re-sync on stale copies, Sets debug no longer uses catalog `perk-options` for attachment, edge-case table) and bump **Last reviewed** date, per the `debug-docs` rule.
+- [X] T027 Run `quickstart.md` Scenarios A–D + edge cases, then `npm run gate` for the full-feature green checkpoint.
 
 ---
 

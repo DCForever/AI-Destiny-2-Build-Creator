@@ -7,6 +7,56 @@ import type { ArmorStatSortBy } from "./sortInstances";
 
 export type InstanceKind = "weapon" | "armor";
 
+export type SocketColumnKind =
+  | "barrel"
+  | "magazine"
+  | "trait"
+  | "intrinsic"
+  | "origin"
+  | "masterwork"
+  | "catalyst";
+
+/** Per-socket capture persisted on inventory_items.socket_plugs. */
+export interface StoredSocketPlug {
+  socketIndex: number;
+  equippedPlugHash: number;
+  reusablePlugHashes: number[];
+  columnKind: SocketColumnKind;
+  columnLabel: string;
+}
+
+export type PerkCaptureStatus = "complete" | "pending" | "unavailable";
+
+export interface InstancePerkOption {
+  hash: number;
+  name: string | null;
+  displayName: string;
+  isEnhanced: boolean;
+  isEquipped: boolean;
+}
+
+export interface InstancePerkColumn {
+  columnKind: SocketColumnKind;
+  label: string;
+  socketIndex: number;
+  equippedPlugHash: number;
+  options: InstancePerkOption[];
+}
+
+export interface InstancePerkGrid {
+  instanceId: string;
+  itemHash: number;
+  captureStatus: PerkCaptureStatus;
+  columns: InstancePerkColumn[];
+}
+
+/** Raw socket rows from Bungie parse before manifest classification. */
+export interface RawSocketCapture {
+  socketIndex: number;
+  equippedPlugHash: number;
+  reusablePlugHashes: number[];
+}
+
 export interface ResolvedPlug {
   hash: number;
   name: string | null;
