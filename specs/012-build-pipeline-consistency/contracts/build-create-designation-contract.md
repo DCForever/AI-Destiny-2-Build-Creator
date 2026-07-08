@@ -40,6 +40,8 @@ Tighten create/update designation rules so builds never receive **invisible** sy
 | Rule | Before | After |
 |------|--------|-------|
 | Missing/empty `synergyIds` | Server seeded defaults / first synergy | **400** `NO_SYNERGY` — client must designate explicitly |
+| No user synergies exist | Silent seed | Debug **blocks create** with message + link to `/debug/synergies` (no inline wizard) |
+| Empty default variant | Ambiguous vs 001 equipment rule | **Allowed** at create; non-empty rules apply to later save/resolve |
 | `exoticArmorName` | Optional; default `Exotic (hash)` | Still optional at API, but debug happy path **always** sets name from picker |
 | Subclass | Validated zod object | Unchanged schema; debug builds object via structured form |
 
@@ -75,9 +77,14 @@ Unchanged build detail shape including `variants[]` and designated synergies wit
 **Semantics**: `attachments` is a **full replacement** of that variant’s attachments. Debug UI MUST:
 
 1. Load current attachments from build detail.
-2. Apply add/update mode in memory.
+2. Apply **add/update** (attach) or **remove one** (detach) in memory — never wipe unrelated attachments on a single attach.
 3. Submit the complete array.
 4. Target the **selected** variant id only.
+5. List current attachments and expose detach for one set without affecting others.
+
+### Per-variant exotic weapon
+
+`PATCH .../variants/:variantId` with `exoticWeaponHash` / `exoticWeaponName` (or clear) via catalog-backed **ExoticWeaponLookup** on the selected variant. Happy path MUST NOT require typing a raw exotic weapon hash.
 
 ## Manifest search extension
 

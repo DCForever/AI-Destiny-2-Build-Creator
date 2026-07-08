@@ -37,7 +37,7 @@ No new persisted tables. This document clarifies **entities and client/debug sta
 | `setId`, `mode` | live \| snapshot |
 | Replace semantics | PATCH variant with `attachments[]` **replaces entire set** for that variant |
 
-**Client rule**: Before PATCH, load current attachments from build detail, apply add/replace/remove in memory, send complete array.
+**Client rule**: Before PATCH, load current attachments from build detail, apply **add/update** or **remove one** in memory, send complete array. Single attach MUST NOT wipe other attachments; detach removes only the chosen set.
 
 ### Synergy Designation
 
@@ -63,12 +63,14 @@ Not persisted. Represents a selection session:
 
 | Rule | Behavior |
 |------|----------|
-| Explicit synergies on create | Missing/empty `synergyIds` → `NO_SYNERGY` (400); no auto-pick |
+| Explicit synergies on create | Missing/empty `synergyIds` → `NO_SYNERGY` (400); no auto-pick; debug links to Synergies page when list empty |
 | Synergy update | `synergyIds` present ⇒ min 1; unknown ids ⇒ `NO_SYNERGY` |
-| Exotic from picker | Happy path sets both hash and catalog name together |
+| Empty create | Default variant may have zero attachments at create |
+| Exotic armor from picker | Happy path sets both hash and catalog name together |
+| Exotic weapon on variant | Optional; set/clear via picker on selected variant only |
 | Variant-scoped action | UI blocks if `selectedVariantId` empty |
 | Pair attach | Existing `PAIR_ARMOR_MISMATCH` unchanged |
-| Empty variant equipment | Existing `VARIANT_EMPTY` / save rules unchanged; surface in debug messages |
+| Empty variant equipment | Create allowed empty; existing `VARIANT_EMPTY` / save rules apply to later save/resolve; surface in debug messages |
 
 ## State transitions (debug client)
 

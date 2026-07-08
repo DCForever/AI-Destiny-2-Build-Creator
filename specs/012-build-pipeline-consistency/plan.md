@@ -8,9 +8,11 @@
 
 ## Summary
 
-Close end-to-end gaps in the **build composition pipeline** and align **debug lookup patterns** so Creates → synergy designation → variant selection → set attach → resolve/compare can be verified without typing raw hashes or opaque IDs. Build/variant/set/synergy **REST APIs already exist** (001); this iteration is primarily **debug UX + shared pickers**, plus small API/behavior fixes: stop silent synergy auto-seed on create, expose abilities in manifest search for structured subclass picking, and make attach UX respect replace-all attachment semantics.
+Close end-to-end gaps in the **build composition pipeline** and align **debug lookup patterns** so Creates → synergy designation → variant selection → set attach/detach → resolve/compare can be verified without typing raw hashes or opaque IDs. Build/variant/set/synergy **REST APIs already exist** (001); this iteration is primarily **debug UX + shared pickers**, plus small API/behavior fixes: stop silent synergy auto-seed on create, expose abilities in manifest search for structured subclass picking, and make attach UX additive over replace-all attachment semantics.
 
-Technical approach: extract reusable debug pickers (exotic armor catalog search, synergy multi-select, set attach with type+tag AND filters, variant `<select>`); rework `BuildsDebugPage` to drive the full pipeline; extend `GET /api/manifest/search` with `abilities`; require explicit `synergyIds` on build create (no invisible first-synergy seed); keep advanced hash/ID fields optional only.
+Technical approach: extract reusable debug pickers (exotic armor/weapon catalog search, synergy multi-select, set attach with type+tag AND filters + detach, variant `<select>`); rework `BuildsDebugPage` to drive the full pipeline; extend `GET /api/manifest/search` with `abilities`; require explicit `synergyIds` on build create (no invisible first-synergy seed; block + link to Synergies debug when none exist); allow empty default variant at create; keep advanced hash/ID fields optional only.
+
+**Clarifications (2026-07-08)**: empty create allowed; attach additive; detach in scope; per-variant exotic weapon picker; no-synergies → block create with link to `/debug/synergies`.
 
 ## Technical Context
 
@@ -75,15 +77,16 @@ src/
 ├── components/
 │   └── debug/                                # NEW shared debug pickers
 │       ├── ExoticArmorLookup.tsx             # catalog/manifest exotic armor search → select
+│       ├── ExoticWeaponLookup.tsx            # catalog/manifest exotic weapon search → set/clear
 │       ├── SynergyMultiSelect.tsx            # list/filter user synergies → multi-select
-│       ├── SetAttachPicker.tsx               # type + tag AND + set select + live/snapshot
+│       ├── SetAttachPicker.tsx               # type + tag AND + set select + live/snapshot + detach
 │       ├── VariantSelect.tsx                 # variants of selected build
 │       └── SubclassStructuredForm.tsx       # class → subclass → ability/aspect/fragment fields
 ├── lib/
 │   ├── builds/
 │   │   ├── buildService.ts                   # require explicit synergyIds (no silent seed)
 │   │   ├── buildService.test.ts
-│   │   └── attachmentMerge.ts                # NEW: merge/replace helpers for UI payloads
+│   │   └── attachmentMerge.ts                # NEW: add/update/remove helpers for full-list PATCH
 │   └── debug/
 │       └── lookupParity.ts                   # NEW: shared result-field helpers / empty-state copy
 └── ...
@@ -96,9 +99,9 @@ DEBUG.md                                      # update pipeline verification ste
 
 | User Story | Domain / data work | API / surface | UI |
 |------------|--------------------|---------------|-----|
-| US1 Create without hashes (P1) | Stop silent synergy seed; subclass still `GeneratedBuild.subclass` | `POST /api/user/builds` (explicit `synergyIds`); `GET /api/manifest/search?category=exotic-armor\|abilities\|aspects\|fragments`; `GET /api/catalog/armor` or manifest exotic search | ExoticArmorLookup, SynergyMultiSelect, SubclassStructuredForm on Builds create |
-| US3 Variant accounting (P1) | None (client selection) | Existing variant routes; load detail → list variants | VariantSelect; block variant-scoped actions when empty |
-| US2 Attach sets (P1) | Client merge for replace-all attachments | `GET /api/user/sets?type=&tags=`; `PATCH .../variants/:id` with full `attachments[]` | SetAttachPicker; confirm target variant name |
+| US1 Create without hashes (P1) | Stop silent synergy seed; empty default variant OK; subclass still `GeneratedBuild.subclass` | `POST /api/user/builds` (explicit `synergyIds`); `GET /api/manifest/search?category=exotic-armor\|abilities\|aspects\|fragments` | ExoticArmorLookup, SynergyMultiSelect (empty → block + link), SubclassStructuredForm on Builds create |
+| US3 Variant accounting (P1) | Optional exotic weapon on variant | Existing variant PATCH; load detail → list variants | VariantSelect; block scoped actions when empty; ExoticWeaponLookup set/clear |
+| US2 Attach/detach sets (P1) | Client merge/remove for replace-all attachments | `GET /api/user/sets?type=&tags=`; `PATCH .../variants/:id` with full `attachments[]` | SetAttachPicker; list + detach one; confirm target variant name |
 | US4 Synergy edit (P2) | None | `PATCH /api/user/builds/:id` `{ synergyIds }` | SynergyMultiSelect on selected build + save designations |
 | US5 Lookup parity (P2) | Shared helpers | Reuse catalog/synergy/set list endpoints | Adopt shared pickers on any debug page still using raw IDs for those entities; optional advanced hash fields labeled |
 

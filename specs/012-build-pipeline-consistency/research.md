@@ -61,26 +61,28 @@
 
 ---
 
-## R5 — Variant accounting
+## R5 — Variant accounting (+ exotic weapon)
 
-**Decision**: Load `GET /api/user/builds/:id` after build select; render **VariantSelect** from `build.variants`; store `selectedVariantId` in client state; **block** attach/suggest-sets/resolve/export when unset. Never auto-bind only `variants[0]` without showing the choice (may preselect default variant *visibly*).
+**Decision**: Load `GET /api/user/builds/:id` after build select; render **VariantSelect** from `build.variants`; store `selectedVariantId` in client state; **block** attach/suggest-sets/resolve/export when unset. Never auto-bind only `variants[0]` without showing the choice (may preselect default variant *visibly*). Add **ExoticWeaponLookup** to set/clear optional `exoticWeaponHash`/`exoticWeaponName` on the selected variant via existing variant PATCH. (Clarify 2026-07-08.)
 
-**Rationale**: Server has no active-variant concept; bugs come from free-text `variantId` and silent first-variant use in `loadSetsAndSynergies`.
+**Rationale**: Server has no active-variant concept; bugs come from free-text `variantId` and silent first-variant use in `loadSetsAndSynergies`. Exotic weapon is how variants differ under 001.
 
 **Alternatives considered**:
 - Persist last-selected variant on build — unnecessary for debug iteration.
+- Exotic weapon only via Pair Set — rejected in clarify; separate picker in scope.
 
 ---
 
-## R6 — Set attach + replace-all semantics
+## R6 — Set attach/detach + replace-all semantics
 
-**Decision**: Implement **SetAttachPicker** using `GET /api/user/sets?type=&tags=` (AND tags already in `listSetsByTags`). On attach confirm, **merge** the chosen set into the variant’s current attachments (by set id / type rules as today), then PATCH the **full** `attachments[]` list. Show live/snapshot mode. Confirm target variant name if selection changed mid-flow.
+**Decision**: Implement **SetAttachPicker** using `GET /api/user/sets?type=&tags=` (AND tags already in `listSetsByTags`). On attach confirm, **merge** the chosen set into the variant’s current attachments (add/update by set id), then PATCH the **full** `attachments[]` list. Support **detach**: remove one attachment from the in-memory list and PATCH the remainder. Show live/snapshot mode. Confirm target variant name if selection changed mid-flow. (Clarify 2026-07-08: attach additive; detach in scope.)
 
 **Rationale**: `replaceAttachments` deletes all rows then inserts — sending a single attachment wipes prior sets (current debug bug risk).
 
 **Alternatives considered**:
 - Change API to merge attachments — possible follow-up; UI fix is safer for this iteration.
 - Separate POST `/attachments` — new surface; not needed if merge helper is solid.
+- Wipe-on-attach or detach-out-of-scope — rejected in clarify session.
 
 ---
 
@@ -124,5 +126,9 @@
 | Schema migrations? | None |
 | Production UI? | Out of scope |
 | Auto-seed synergies? | Removed from create happy path |
-| Attachment PATCH? | Keep replace-all; UI sends full list |
+| No user synergies at create? | Block + link to Synergies debug (clarify) |
+| Empty default variant at create? | Allowed (clarify) |
+| Attachment PATCH? | Keep replace-all; UI merge/remove then full list |
+| Detach attachment? | In scope (clarify) |
+| Per-variant exotic weapon? | Catalog picker in scope (clarify) |
 | Subclass storage? | Unchanged JSON name-based shape |

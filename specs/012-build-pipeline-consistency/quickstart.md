@@ -34,6 +34,7 @@ Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/ap
 3. Submit create.
 4. **Expect**: Build appears; detail/JSON shows exotic name+hash, synergies, default variant. No “seeded default synergy” without selection.
 5. **Negative**: Clear synergies and attempt create → blocked with clear `NO_SYNERGY` (or equivalent message).
+6. **Negative**: With zero user synergies in the account, open create → blocked with message + path/link to `/debug/synergies` (no inline wizard).
 
 ## Scenario B — Variant accounting (US3)
 
@@ -41,16 +42,18 @@ Focus areas: `src/lib/builds/buildService.test.ts` (explicit synergies), `src/ap
 2. Confirm **Variant** dropdown lists Default (visible selection).
 3. Duplicate variant.
 4. **Expect**: Both variants listed; selection can switch between them.
-5. With **no** variant selected (if UI allows clear), attempt Resolve → blocked with prompt to select a variant.
+5. On the copy, set an **exotic weapon** via catalog search (or clear) → **Expect**: only that variant updates.
+6. With **no** variant selected (if UI allows clear), attempt Resolve → blocked with prompt to select a variant.
 
-## Scenario C — Attach sets (US2)
+## Scenario C — Attach / detach sets (US2)
 
 1. Select variant **Default**.
 2. Open set attach: filter by type `weapon` and a tag the weapon set has; select set; mode `live`; confirm (variant name shown).
-3. Select the **duplicate** variant; attach an armor set (optionally different tags/type).
-4. For each variant, run **Resolved JSON**.
-5. **Expect**: Each resolution reflects only that variant’s attachments; shared exotic armor/subclass/synergies appear on both.
-6. Attach a second set to Default without wiping the first (full-list merge) → both attachments present after PATCH.
+3. Attach a **second** set to Default → **Expect**: both attachments present (additive; no wipe).
+4. Select the **duplicate** variant; attach an armor set.
+5. On Default, **Remove** one attachment → **Expect**: only that set gone; the other remains.
+6. For each variant, run **Resolved JSON**.
+7. **Expect**: Each resolution reflects only that variant’s attachments; shared exotic armor/subclass/synergies appear on both.
 
 ## Scenario D — Synergy edit (US4)
 
