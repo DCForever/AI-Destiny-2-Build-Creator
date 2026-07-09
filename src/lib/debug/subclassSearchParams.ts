@@ -29,7 +29,9 @@ export function buildSubclassSearchParams(input: {
   }
   if (input.kind) params.set("kind", input.kind);
   if (input.category === "abilities") {
-    const subclass = input.filters?.subclassAffinity?.trim();
+    // Always scope abilities by selected subclass affinities; optional filter overrides.
+    const subclass =
+      input.filters?.subclassAffinity?.trim() || input.subclassName.trim();
     const verb = input.filters?.verb?.trim();
     if (subclass) params.set("subclass", subclass);
     if (verb) params.set("verb", verb);

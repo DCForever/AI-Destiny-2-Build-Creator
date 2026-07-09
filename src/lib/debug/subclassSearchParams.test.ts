@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildSubclassSearchParams } from "./subclassSearchParams";
 
 describe("buildSubclassSearchParams", () => {
-  it("includes class/element scope and kind for abilities", () => {
+  it("includes class/element/kind and auto-scopes subclass affinities for abilities", () => {
     const params = buildSubclassSearchParams({
       category: "abilities",
       q: "",
@@ -14,17 +14,18 @@ describe("buildSubclassSearchParams", () => {
     expect(params.get("classType")).toBe("Warlock");
     expect(params.get("element")).toBe("Arc");
     expect(params.get("kind")).toBe("super");
+    expect(params.get("subclass")).toBe("Stormcaller");
   });
 
-  it("passes subclass affinity and verb filters for abilities", () => {
+  it("lets optional affinity filter override the selected subclass", () => {
     const params = buildSubclassSearchParams({
       category: "abilities",
       q: "",
       subclassName: "Dawnblade",
       kind: "classAbility",
-      filters: { subclassAffinity: "Dawnblade", verb: "Cure" },
+      filters: { subclassAffinity: "Prismatic Warlock", verb: "Cure" },
     });
-    expect(params.get("subclass")).toBe("Dawnblade");
+    expect(params.get("subclass")).toBe("Prismatic Warlock");
     expect(params.get("verb")).toBe("Cure");
   });
 
