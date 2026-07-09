@@ -69,6 +69,8 @@ function classTypeFilter(results: SearchResult[], classType: string | undefined)
   if (!classType) return results;
   return results.filter((r) => {
     if (!("classType" in r.record)) return true;
+    // Null classType = shared / class-agnostic (e.g. many supers & grenades in cache).
+    if (r.record.classType == null) return true;
     return r.record.classType === classType;
   });
 }

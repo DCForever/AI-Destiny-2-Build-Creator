@@ -94,6 +94,14 @@ describe("manifest search route", () => {
         classType: null,
         element: "Arc",
       },
+      {
+        name: "Chaos Reach",
+        hash: 2005,
+        icon: "/chaos.png",
+        kind: "super",
+        classType: null,
+        element: "Arc",
+      },
     ]);
 
     vi.mocked(getServices).mockResolvedValue({
@@ -111,19 +119,54 @@ describe("manifest search route", () => {
     expect(response.status).toBe(200);
     expect(getStore).toHaveBeenCalledWith("abilities");
     expect(search).not.toHaveBeenCalled();
-    expect(body.results).toEqual([
+    expect(body.results.map((result: { name: string }) => result.name)).toEqual([
+      "Stormtrance",
+      "Chaos Reach",
+    ]);
+  });
+
+  it("includes null-classType grenades when browsing by class and element", async () => {
+    const getStore = vi.fn(async () => [
       {
-        name: "Stormtrance",
-        hash: 2001,
-        icon: "/storm.png",
-        kind: "super",
-        slot: undefined,
-        classType: "Warlock",
+        name: "Healing Grenade",
+        hash: 3001,
+        icon: "/heal.png",
+        kind: "grenade",
+        classType: null,
+        element: "Solar",
+      },
+      {
+        name: "Pulse Grenade",
+        hash: 3002,
+        icon: "/pulse.png",
+        kind: "grenade",
+        classType: null,
         element: "Arc",
-        confidence: 1,
-        isExotic: false,
+      },
+      {
+        name: "Storm Fist",
+        hash: 3003,
+        icon: "/fist.png",
+        kind: "melee",
+        classType: "Titan",
+        element: "Arc",
       },
     ]);
+
+    vi.mocked(getServices).mockResolvedValue({
+      resolver: { search: vi.fn() },
+      entityCache: { getStore },
+    } as unknown as Awaited<ReturnType<typeof getServices>>);
+
+    const response = await GET(
+      new Request(
+        "http://localhost/api/manifest/search?q=&category=abilities&kind=grenade&classType=Warlock&element=Solar",
+      ),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.results.map((result: { name: string }) => result.name)).toEqual(["Healing Grenade"]);
   });
 
   it("does not mix Prismatic empty ability browse with other elements", async () => {
