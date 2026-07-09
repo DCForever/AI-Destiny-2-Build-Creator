@@ -16,7 +16,7 @@ export const createBuildSchema = z.object({
   subclass: generatedBuildSchema.shape.subclass,
   exoticArmorHash: z.number().int().positive(),
   exoticArmorName: z.string().trim().min(1).optional(),
-  synergyIds: z.array(z.string().min(1)).optional(),
+  synergyIds: z.array(z.string().min(1)).min(1),
   tagIds: conceptTagIdsSchema.optional(),
   defaultVariant: buildVariantSchema
     .extend({

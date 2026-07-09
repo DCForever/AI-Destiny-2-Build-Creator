@@ -8,6 +8,7 @@ import { ensureUser } from "@/lib/db/repositories/userRepository";
 import { upsertSetItem } from "@/lib/sets/setItemService";
 import {
   createUserBuild,
+  listUserBuilds,
   updateUserVariant,
 } from "@/lib/builds/buildService";
 
@@ -20,6 +21,31 @@ vi.mock("@/lib/services", () => ({
 }));
 
 describe("buildService", () => {
+  it("requires explicit synergies and does not auto-designate one", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b0", 3, "Player");
+    const synergies = seedDefaultSynergies(db, user.id);
+    const baseInput = {
+      name: "No Designation",
+      className: "Titan" as const,
+      subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
+      exoticArmorHash: 100,
+    };
+    const missingSynergyInput = baseInput as unknown as Parameters<typeof createUserBuild>[2];
+
+    await expect(createUserBuild(db, user.id, missingSynergyInput)).rejects.toMatchObject({
+      code: API_ERROR_CODES.NO_SYNERGY,
+    });
+    await expect(
+      createUserBuild(db, user.id, { ...baseInput, synergyIds: [] }),
+    ).rejects.toMatchObject({
+      code: API_ERROR_CODES.NO_SYNERGY,
+    });
+
+    expect(synergies.length).toBeGreaterThan(0);
+    expect(listUserBuilds(db, user.id)).toHaveLength(0);
+  });
+
   it("creates build with default variant and synergy", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b1", 3, "Player");
@@ -33,6 +59,7 @@ describe("buildService", () => {
       exoticArmorName: "Hallowfire Heart",
       synergyIds: [synergies[0]!.id],
       tagIds: ["solar", "pve"],
+      defaultVariant: { attachments: [] },
     });
 
     expect(build?.variants).toHaveLength(1);

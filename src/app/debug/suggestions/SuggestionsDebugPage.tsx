@@ -99,7 +99,7 @@ export function SuggestionsDebugPage() {
           </select>
           <input
             className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
-            placeholder="synergyIds (comma)"
+            placeholder="Advanced synergyIds (comma)"
             value={form.synergyIds}
             onChange={(e) => setForm({ ...form, synergyIds: e.target.value })}
           />

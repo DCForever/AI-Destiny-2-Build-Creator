@@ -436,7 +436,7 @@ export function SynergiesDebugPage() {
         </fieldset>
 
         <fieldset className="min-w-0 space-y-2 rounded border border-zinc-800 p-3">
-          <legend className="px-1 text-sm">Reverse lookup</legend>
+          <legend className="px-1 text-sm">Advanced reverse lookup</legend>
           <select className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm" value={lookupKind} onChange={(e) => setLookupKind(e.target.value)}>
             {SORTED_LINK_KINDS.map((k) => (
               <option key={k} value={k}>{k}</option>
@@ -445,7 +445,7 @@ export function SynergiesDebugPage() {
           {lookupKind === "weapon" ? (
             <input
               className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
-              placeholder="itemHash"
+              placeholder="Advanced itemHash"
               value={lookupItemHash}
               onChange={(e) => setLookupItemHash(e.target.value)}
             />

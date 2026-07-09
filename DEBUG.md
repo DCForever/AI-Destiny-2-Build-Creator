@@ -4,7 +4,7 @@
 
 > **Maintenance (required):** Update this file in the same change whenever you modify debug routes, prerequisites, owned-catalog/inventory flows, sync behavior, or related APIs. Feature `quickstart.md` files are scenario checklists; **this file is the single consolidated reference.**
 
-**Last reviewed:** 2026-07-05 (feature 011 per-copy perk grid)
+**Last reviewed:** 2026-07-08 (feature 012 build pipeline consistency)
 
 ---
 
@@ -84,7 +84,7 @@ Nav: header on every debug page (`src/app/debug/layout.tsx`).
 | Route | Purpose | Primary APIs |
 |-------|---------|--------------|
 | [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict, **instance disambiguation carousel** (owned copies with Tier/stats/set-bonus or weapon perks), **per-copy weapon perk grid** (DIM-style columns from instance capture) | `/api/user/sets`, `/api/concept-tags`, `/api/catalog/{weapons,armor}`, `/api/user/inventory/instances`, `/api/user/inventory/instances/:instanceId/perk-grid`, `/api/bungie/sync` |
-| [`/debug/builds`](src/app/debug/builds/page.tsx) | Builds, variants, set attachments (live/snapshot), synergies, suggestions, compare | `/api/user/builds`, variants, suggest-* |
+| [`/debug/builds`](src/app/debug/builds/page.tsx) | Build pipeline UI: exotic armor/weapon lookup, explicit synergies, structured subclass, variant selection, set attach/detach, suggestions, compare | `/api/user/builds`, variants, `/api/manifest/search`, suggest-* |
 | [`/debug/synergies`](src/app/debug/synergies/page.tsx) | Synergy CRUD with auto-generated names, sub-type pickers, catalog-backed link search, description preview | `/api/user/synergies`, `/api/catalog/synergy-pickers/*` |
 | [`/debug/catalog`](src/app/debug/catalog/page.tsx) | Catalog browse (`scope=all\|owned`), owned instance drill-down, weapon synergy badges, synergy reverse lookup, direct instance API panel | `/api/catalog/weapons`, `/api/catalog/armor`, `/api/user/inventory/instances`, `/api/user/synergies/by-target` |
 | [`/debug/suggestions`](src/app/debug/suggestions/page.tsx) | Roll / set / synergy suggestion requests | `/api/user/suggestions/rolls`, build suggest endpoints |
@@ -228,17 +228,21 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 
 ---
 
-## Flow: Builds & variants (001 P3/P6)
+## Flow: Builds pipeline (012)
 
 **Page:** `/debug/builds`  
-**Needs:** manifest + sign-in; seed synergies via `/debug/synergies` if needed
+**Needs:** manifest + sign-in; at least one synergy created via `/debug/synergies`
 
-1. Create build with exotic armor, subclass, ≥1 synergy.
-2. Default variant: attach armor set (snapshot) + weapon set (live).
-3. Pair set exotic armor must match build exotic.
-4. Duplicate variant, compare, filter by exotic armor hash.
+1. If the account has no synergies, create one on `/debug/synergies` first. Build create no longer auto-seeds a first/default synergy; `POST /api/user/builds` requires explicit `synergyIds`.
+2. Create on `/debug/builds` with exotic armor lookup, structured subclass fields, synergy multi-select, and concept tags. An empty default variant is allowed, but create is blocked when no synergies exist or none are selected; the empty state links to `/debug/synergies`.
+3. Empty **Search** clicks browse scoped lookup results instead of erroring: Stormcaller shows Warlock + Arc abilities/aspects/fragments, and Prismatic Warlock shows Prismatic kit only. Switching class/subclass clears incompatible structured picks while keeping compatible names.
+4. Exotic armor empty Search is scoped by the selected guardian class. Exotic weapon empty Search browses all exotic weapons because weapon records are not class-scoped.
+5. Select a build, then use `VariantSelect` to choose the active variant. Variant-scoped actions are disabled until a variant is selected.
+6. Use exotic weapon lookup to set or clear the selected variant's exotic weapon.
+7. Attach sets through `SetAttachPicker` with type + tag filters, choosing live or snapshot mode. Attach is additive; Remove detaches one set and sends the remaining full attachment list.
+8. Edit synergy designations after create with the same multi-select, then resolve, compare, export, or request set/synergy/roll suggestions using the selected variant.
 
-**Checklist:** Scenarios 3 and 6 in 001 quickstart
+**Checklist:** `specs/012-build-pipeline-consistency/quickstart.md`
 
 ---
 
