@@ -1,7 +1,8 @@
 # Quickstart: Item Filter Enrichment
 
 **Feature**: 013-item-filter-enrichment  
-**Branch**: `013-item-filter-enrichment`
+**Branch**: `013-item-filter-enrichment`  
+**Updated**: 2026-07-08 (post-clarify)
 
 ## Prerequisites
 
@@ -48,15 +49,18 @@ GET /api/manifest/search?category=abilities&kind=super&subclass=Stormcaller&elem
 
 Expect Phoenix Dive and Chaos Reach respectively in under 30 seconds of manual verification (SC-002).
 
-### V3 — Exclusivity (US3)
+Also verify via **minimal debug controls** on the subclass/ability debug surface: set verb/subclass filters without typing the ability name and confirm the same hits.
+
+### V3 — Exclusivity + shared class semantics (US3)
 
 ```http
 GET /api/manifest/search?category=abilities&classType=Titan&verb=Cure
 GET /api/manifest/search?category=abilities&subclass=Voidwalker&verb=Cure
 GET /api/manifest/search?category=abilities&element=Solar&kind=super&subclass=Stormcaller
+GET /api/manifest/search?category=abilities&classType=Warlock&kind=grenade
 ```
 
-Expect empty or non-matching sets (no Phoenix Dive / Chaos Reach false inclusions).
+Expect: no Phoenix Dive / Chaos Reach false inclusions on the first three; Warlock grenade browse includes **shared** grenades as well as Warlock exclusives.
 
 ### V4 — Text search still works (FR-010)
 
@@ -68,7 +72,8 @@ Expect Chaos Reach still returned; enrichment fields present on the DTO.
 
 ## Done when
 
-- [ ] Extractor tests cover FR-006 / FR-007 anchors
-- [ ] Search route contract tests cover AND filters + empty negatives
+- [ ] Extractor tests cover FR-006 / FR-007 anchors (including `Prismatic Warlock`)
+- [ ] Search route contract tests cover `subclass`/`verb` AND filters, class-includes-shared, and empty negatives
+- [ ] Minimal debug UI can apply subclass/verb filters
 - [ ] Manual V2 queries succeed without typing ability names
 - [ ] `npm run gate` green

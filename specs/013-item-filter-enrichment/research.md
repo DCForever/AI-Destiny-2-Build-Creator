@@ -1,13 +1,32 @@
 # Research: Item Filter Enrichment
 
 **Feature**: 013-item-filter-enrichment  
-**Date**: 2026-07-08
+**Date**: 2026-07-08  
+**Updated**: 2026-07-08 (post-clarify sync)
+
+## Clarification lock-ins (Session 2026-07-08)
+
+| Topic | Decision |
+|-------|----------|
+| Verb completeness | Best-effort catalog-wide whitelist word-boundary tagging + overrides for anchors/ambiguity |
+| Prismatic affinity names | Class-qualified: `Prismatic Warlock`, `Prismatic Titan`, `Prismatic Hunter` |
+| Shared ability affinities | Element-matched dedicated subclasses; Prismatic only when membership proven |
+| Verification surface | Search/lookup structured params **plus** minimal debug UI controls |
+| Class filter vs shared | `classType=Warlock` includes Warlock exclusives **and** shared (`null`) |
+
+## Baseline already in tree (post-merge)
+
+`GET /api/manifest/search` already supports `category=abilities`, empty-`q` browse for abilities, and filters `kind`, `classType`, `element`. `classTypeFilter` already includes `classType == null` as shared. `SubclassStructuredForm` already passes `classType`/`element`/`kind` from subclass scope.
+
+**Still missing for this feature**: `subclassAffinities` / `verbs` on `AbilityRecord`, `subclass` + `verb` query params, enriched response fields, extractor derivation, and minimal debug controls for subclass/verb filters.
+
+---
 
 ## R1 — Ability record gaps
 
 **Decision**: Extend `AbilityRecord` with `subclassAffinities: string[]` and `verbs: string[]` (canonical curated verb names). Keep existing `classType` and `element`. Do not persist raw `plugCategoryIdentifier` on the public record unless needed for debugging tests.
 
-**Rationale**: Spec FR-001–FR-004 require four filter dimensions. Class and element already exist on abilities (`abilities.ts` + `AbilityRecord`). Subclass affinity and effect verbs are the missing structured fields. Aspects/fragments already have partial class/element; v1 stays abilities-first per spec assumptions.
+**Rationale**: Spec FR-001–FR-004 require four filter dimensions. Class and element already exist on abilities. Subclass affinity and effect verbs are the missing structured fields. Aspects/fragments already have partial class/element; v1 stays abilities-first per spec assumptions.
 
 **Alternatives considered**:
 - New parallel “enrichment store” — rejected; duplicates entity cache and complicates search.
@@ -19,16 +38,16 @@
 
 **Decision**: Three-tier derivation at extract time:
 
-1. **Dedicated plug category** — Parse `{class}.{element}.{kind}` from `plugCategoryIdentifier` (existing ability matcher). Resolve unique subclass via `SUBCLASS_METADATA` where `classType` + `element` match (e.g. `warlock.arc.supers` → Stormcaller).
-2. **Shared plugs** — For `shared.*` (and `classType: null`), expand affinities to all subclasses whose `element` matches the ability’s derived element (e.g. shared Arc grenade → Striker, Arcstrider, Stormcaller, plus Prismatic entries only when membership is proven in tier 3—not by element match alone).
-3. **Cross-subclass / Prismatic** — Prefer membership via subclass inventory item plug sets (`DestinyPlugSetDefinition` + existing `plugSetHashes` / `socketPlugHashes` helpers). When plug-set traversal cannot prove Prismatic (or other dual) affinity, apply a **small curated affinity override** keyed by ability hash (or stable `searchName`) for known cases required by FR-006 (Phoenix Dive → Dawnblade + Prismatic Warlock).
+1. **Dedicated plug category** — Parse `{class}.{element}.{kind}` from `plugCategoryIdentifier`. Resolve unique subclass via `SUBCLASS_METADATA` where `classType` + `element` match (e.g. `warlock.arc.supers` → Stormcaller).
+2. **Shared plugs** — For `shared.*` (and `classType: null`), expand affinities to all **dedicated** subclasses whose `element` matches the ability’s derived element (e.g. shared Arc grenade → Striker, Arcstrider, Stormcaller). **Do not** add Prismatic affinities by element alone.
+3. **Cross-subclass / Prismatic** — Prefer membership via subclass inventory item plug sets (`DestinyPlugSetDefinition` + existing `plugSetHashes` / `socketPlugHashes`). When traversal cannot prove Prismatic (or other dual) affinity, apply a **small curated affinity override** keyed by ability hash (or stable `searchName`) for known cases required by FR-006 (Phoenix Dive → Dawnblade + **Prismatic Warlock**).
 
-**Rationale**: Chaos Reach is fully covered by tier 1. Phoenix Dive’s Dawnblade + Prismatic dual affinity cannot be inferred from Solar Warlock category alone. Plug-set membership is the correct long-term source; curated overrides satisfy acceptance examples without blocking the feature on incomplete traversal.
+**Rationale**: Matches clarify Q3. Chaos Reach is covered by tier 1. Phoenix Dive’s Dawnblade + Prismatic Warlock dual affinity cannot be inferred from Solar Warlock category alone.
 
 **Alternatives considered**:
-- Element-match Prismatic for every Solar/Arc/etc. ability — rejected; over-includes abilities not on Prismatic trees.
-- Overrides-only map for all abilities — rejected; unmaintainable at catalog scale.
-- Defer Prismatic affinities — rejected; FR-006 explicitly requires Dawnblade **and** Prismatic.
+- Element-match all Prismatic variants for shared items — rejected (clarify Q3).
+- Empty affinities for shared items — rejected (clarify Q3).
+- Bare `Prismatic` label — rejected (clarify Q2).
 
 **Subclass name convention**: Use `SUBCLASS_METADATA` keys / `name` values (e.g. `Dawnblade`, `Stormcaller`, `Prismatic Warlock`). Filters match these strings case-insensitively after normalize.
 
@@ -36,47 +55,54 @@
 
 ## R3 — Effect verb enrichment
 
-**Decision**: Extract-time `verbs: string[]` using:
+**Decision**: Extract-time `verbs: string[]` using **best-effort catalog-wide** tagging (clarify Q1):
 
-1. Scan ability description (and linked sandbox perk description when `item.perks` resolves via existing `perkDescription` patterns) with **word-boundary** matches against `SYNERGY_VERB_NAMES` / `resolveVerbSubType()` (including aliases such as Suppress → Suppression).
+1. Scan ability description (and linked sandbox perk description when available) with **word-boundary** matches against `SYNERGY_VERB_NAMES` / `resolveVerbSubType()` (including aliases).
 2. Store only canonical names from `synergyVerbs.ts`.
-3. Optional **hash→verbs override** for acceptance anchors (Phoenix Dive → `["Cure"]`, Chaos Reach → `["Jolt"]`) when description wording is ambiguous or uses non-canonical phrasing.
-4. **Forbidden**: bare `includes(verb)` / unanchored `RegExp(verb)` as the sole tagging method (FR-008; avoids championCoverage-style false positives).
+3. **hash→verbs override** for acceptance anchors (Phoenix Dive → `["Cure"]`, Chaos Reach → `["Jolt"]`) and ambiguous wording.
+4. **Forbidden**: bare `includes(verb)` / unanchored `RegExp(verb)` as the sole tagging method (FR-008).
+5. No confident match → empty `verbs[]` (do not invent).
 
-**Rationale**: Spec requires curated vocabulary alignment and zero false positives from casual description mentions. Whitelist + boundaries is cheap and testable; overrides guarantee SC-001 for the two named examples.
+**Rationale**: Clarified completeness target; whitelist + boundaries keeps SC-004 testable without a full hand map.
 
 **Alternatives considered**:
-- Inherit subclass meta verbs onto every ability — rejected; too coarse (misses ability-specific Cure; over-tags).
-- LLM/semantic tagging — out of scope per spec.
-- Description-only substring (009 style) as structured verbs — rejected by FR-008.
+- Anchors-only — rejected (clarify Q1).
+- Full curated map for every ability — rejected (clarify Q1).
+- Inherit subclass meta verbs onto every ability — rejected; too coarse.
 
 ---
 
 ## R4 — Advanced filter surface
 
-**Decision**: Extend `GET /api/manifest/search` to support `category=abilities` and optional structured filters: `kind`, `classType`, `element`, `subclass`, `verb`. Make `q` optional when at least one structured filter is present (structured-only discovery for US2). Return enrichment fields on ability results (`kind`, `classType`, `element`, `subclassAffinities`, `verbs`, `description`). Post-filter with AND semantics across provided dimensions. Index abilities in the resolver with description (and optionally verbs) for text `q`, preserving FR-010.
+**Decision**:
 
-**Rationale**: Spec FR-005/FR-011 require the same lookup surfaces curators already use. Existing route lacks `abilities` despite tests/UI expectations (`SubclassStructuredForm`, `route.test.ts`). Catalog armor/weapon routes already demonstrate field post-filters (`applyFieldFilters` / `slotFilter`).
+1. Extend `GET /api/manifest/search` with `subclass` and `verb` params (AND with existing `kind`/`classType`/`element`). Keep `q` optional when structured filters or browse category rules already allow empty search.
+2. **Class filter**: when `classType` is set, include matching exclusives **and** shared (`null`) — already implemented; preserve and document as contract (clarify Q5).
+3. Return enrichment fields on ability results: `subclassAffinities`, `verbs`, `description` (plus existing `kind`/`classType`/`element`).
+4. **Minimal debug UI** (clarify Q4): add simple subclass + verb filter fields on `SubclassStructuredForm` (or adjacent debug ability search) that pass through to the same search params—not a polished multi-select panel.
+
+**Rationale**: FR-011 after clarify requires lookup **and** minimal debug controls. Class-includes-shared already matches clarify Q5.
 
 **Alternatives considered**:
-- New `/api/catalog/abilities` route — deferred; manifest search is the existing ability picker path.
-- Synergy subtype picker only — insufficient for class/subclass/element/verb AND queries.
+- API-only verification — rejected (clarify Q4).
+- Full debug filter panel — out of scope.
+- Exclude shared from class filter — rejected (clarify Q5); would regress current route behavior.
 
 ---
 
 ## R5 — Scope boundary (aspects / fragments)
 
-**Decision**: v1 enrichment + structured filters target **abilities** only. Aspects keep `classType`/`element` as today; fragments keep `element`. Subclass/verb enrichment for aspects/fragments is a follow-up that reuses the same derivation helpers.
+**Decision**: v1 enrichment + structured subclass/verb filters target **abilities** only. Aspects/fragments keep today’s class/element fields; reuse derivation helpers later.
 
-**Rationale**: Spec assumptions and out-of-scope language; Phoenix Dive / Chaos Reach are abilities.
+**Rationale**: Spec assumptions; Phoenix Dive / Chaos Reach are abilities.
 
 ---
 
 ## R6 — Validation & cache invalidation
 
-**Decision**: Treat new fields as part of the derived entity store schema. After extractor changes, entity cache for the abilities store must be rebuilt (existing manifest extract/cache pipeline). Validate verb strings against `isKnownVerbSubType` / `resolveVerbSubType` before write. Unknown subclass affinity → empty array (FR-009), not invented names.
+**Decision**: New fields are part of the derived abilities entity store schema. Rebuild abilities cache after extractor changes. Validate verbs via `resolveVerbSubType`; constrain affinities to `SUBCLASS_METADATA` names. Unknown → empty arrays (FR-009).
 
-**Rationale**: Constitution V (validation-first external data); empty affinities exclude from positive subclass filters per edge cases.
+**Rationale**: Constitution V.
 
 ---
 
@@ -85,7 +111,9 @@
 | Topic | Resolution |
 |-------|------------|
 | Where to store enrichment | On `AbilityRecord` in entity cache |
-| Phoenix Dive Prismatic | Plug-set membership + curated override fallback |
-| Verb false positives | Whitelist + word boundaries + optional hash overrides |
-| Filter API | Extend `/api/manifest/search` |
+| Phoenix Dive Prismatic | Plug-set membership + curated override → `Prismatic Warlock` |
+| Verb completeness | Best-effort whitelist + overrides |
+| Shared affinities | Element-matched dedicated; Prismatic only when proven |
+| Class filter | Includes shared |
+| Verification UI | Search params + minimal debug controls |
 | Aspects/fragments in v1 | Deferred |
