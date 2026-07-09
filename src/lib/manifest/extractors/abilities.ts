@@ -1,6 +1,10 @@
 import type { AbilityRecord, AbilityKind } from "../types/records";
 import type { Extractor, RawTable, RawTableName } from "../types/services";
 import type { RawInventoryItem } from "./rawTypes";
+import {
+  deriveAbilityVerbs,
+  deriveSubclassAffinities,
+} from "./abilityEnrichment";
 import { iterItems, projectBase, toClassName, deriveElement } from "./common";
 
 const ABILITY_CAT_RE = /\.(supers|grenades|melee|class_abilities|movement)$/;
@@ -40,13 +44,22 @@ async function extractAbilities(loadTable: LoadTable): Promise<AbilityRecord[]> 
     const typeName = item.itemTypeDisplayName ?? "";
     const element = deriveElement(typeName, cat);
     const classType = toClassName(item.classType);
+    const description = item.displayProperties.description;
 
     result.push({
       ...projectBase(item),
-      description: item.displayProperties.description,
+      description,
       kind,
       classType,
       element,
+      // Rebuild abilities entity cache after extractor changes (013 enrichment fields).
+      subclassAffinities: deriveSubclassAffinities({
+        hash: item.hash,
+        plugCategoryIdentifier: cat,
+        classType,
+        element,
+      }),
+      verbs: deriveAbilityVerbs({ hash: item.hash, description }),
     });
   }
 

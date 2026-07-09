@@ -3,16 +3,23 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { SUBCLASSES_BY_CLASS } from "@/data/subclasses";
+import { SYNERGY_VERB_NAMES } from "@/data/synergyVerbs";
 import {
   clearIncompatibleSubclassSelections,
-  resolveSubclassScope,
   type SubclassValidNames,
 } from "@/lib/debug/subclassScope";
+import { buildSubclassSearchParams } from "@/lib/debug/subclassSearchParams";
 
 type GuardianClass = "Titan" | "Hunter" | "Warlock";
 type AbilityKind = "super" | "classAbility" | "movement" | "melee" | "grenade";
 type SearchCategory = "abilities" | "aspects" | "fragments";
-type SearchResult = { hash: number; name: string; kind?: string };
+type SearchResult = {
+  hash: number;
+  name: string;
+  kind?: string;
+  subclassAffinities?: string[];
+  verbs?: string[];
+};
 
 export type SubclassFormValue = {
   name: string;
@@ -54,14 +61,15 @@ async function fetchResults(
   category: SearchCategory,
   q: string,
   kind?: AbilityKind,
+  filters?: { subclassAffinity?: string; verb?: string },
 ): Promise<SearchResult[]> {
-  const params = new URLSearchParams({ category, q, limit: q ? "8" : "50" });
-  const scope = resolveSubclassScope(formValue.name);
-  if (scope) {
-    params.set("classType", scope.classType);
-    params.set("element", scope.element);
-  }
-  if (kind) params.set("kind", kind);
+  const params = buildSubclassSearchParams({
+    category,
+    q,
+    subclassName: formValue.name,
+    kind,
+    filters,
+  });
   const res = await fetch(`/api/manifest/search?${params}`);
   const body = await res.json();
   if (!res.ok) throw new Error(body.error ?? `Search failed for ${key}`);
@@ -85,6 +93,8 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
   const [searchText, setSearchText] = useState<Record<string, string>>({});
   const [results, setResults] = useState<Record<string, SearchResult[]>>({});
   const [error, setError] = useState<string | null>(null);
+  const [affinityFilter, setAffinityFilter] = useState("");
+  const [verbFilter, setVerbFilter] = useState("");
 
   function updateField<K extends keyof SubclassFormValue>(key: K, next: SubclassFormValue[K]) {
     onChange({ ...value, [key]: next });
@@ -92,18 +102,29 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
 
   const refreshOpenResults = useCallback(
     async (nextValue: SubclassFormValue) => {
+      const enrichmentFilters = {
+        subclassAffinity: affinityFilter || undefined,
+        verb: verbFilter || undefined,
+      };
       const openKeys = Object.keys(results).filter((key) => results[key]?.length);
       const nextResults = await Promise.all(
         openKeys.map(async (key) => {
           const field = ABILITY_FIELDS.find((item) => item.key === key);
           const category = field ? "abilities" : (key as SearchCategory);
-          const found = await fetchResults(nextValue, key, category, searchText[key] ?? "", field?.key);
+          const found = await fetchResults(
+            nextValue,
+            key,
+            category,
+            searchText[key] ?? "",
+            field?.key,
+            enrichmentFilters,
+          );
           return [key, found] as const;
         }),
       );
       setResults((current) => ({ ...current, ...Object.fromEntries(nextResults) }));
     },
-    [results, searchText],
+    [affinityFilter, results, searchText, verbFilter],
   );
 
   const applyScopedValue = useCallback(
@@ -134,7 +155,10 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
     const q = (searchText[key] ?? "").trim();
     setError(null);
     try {
-      const found = await fetchResults(value, key, category, q, kind);
+      const found = await fetchResults(value, key, category, q, kind, {
+        subclassAffinity: affinityFilter || undefined,
+        verb: verbFilter || undefined,
+      });
       setResults((current) => ({ ...current, [key]: found }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
@@ -158,6 +182,33 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
           ))}
         </select>
       </label>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="block text-sm">
+          Affinity filter (optional)
+          <input
+            className="mt-1 block w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
+            placeholder="e.g. Dawnblade or Prismatic Warlock"
+            value={affinityFilter}
+            onChange={(event) => setAffinityFilter(event.target.value)}
+          />
+        </label>
+        <label className="block text-sm">
+          Verb filter (optional)
+          <select
+            className="mt-1 block w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
+            value={verbFilter}
+            onChange={(event) => setVerbFilter(event.target.value)}
+          >
+            <option value="">Any verb</option>
+            {SYNERGY_VERB_NAMES.map((verb) => (
+              <option key={verb} value={verb}>
+                {verb}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {ABILITY_FIELDS.map((field) => (
         <div key={field.key} className="space-y-1">
@@ -233,6 +284,12 @@ function SearchResults({ results, onPick }: { results: SearchResult[]; onPick: (
         >
           {item.name}
           {item.kind ? <span className="ml-2 text-zinc-500">{item.kind}</span> : null}
+          {item.verbs?.length ? (
+            <span className="ml-2 text-zinc-500">{item.verbs.join(", ")}</span>
+          ) : null}
+          {item.subclassAffinities?.length ? (
+            <span className="ml-2 text-zinc-600">{item.subclassAffinities.join(", ")}</span>
+          ) : null}
         </button>
       ))}
     </div>

@@ -69,17 +69,30 @@ describe("fragmentsExtractor", () => {
 // ─── Abilities ────────────────────────────────────────────────────────────
 
 describe("abilitiesExtractor", () => {
-  it("returns exactly 5 abilities (one per kind)", async () => {
+  it("returns exactly 6 abilities (kinds + Phoenix Dive)", async () => {
     const records = await abilitiesExtractor.extract(makeLoader());
-    expect(records).toHaveLength(5);
+    expect(records).toHaveLength(6);
   });
 
-  it("Chaos Reach: super, Warlock, Arc", async () => {
+  it("Chaos Reach: super, Warlock, Arc, Stormcaller, Jolt", async () => {
     const records = await abilitiesExtractor.extract(makeLoader());
     const rec = records.find((r) => r.hash === 1018);
     expect(rec?.kind).toBe("super");
     expect(rec?.classType).toBe("Warlock");
     expect(rec?.element).toBe("Arc");
+    expect(rec?.subclassAffinities).toContain("Stormcaller");
+    expect(rec?.verbs).toContain("Jolt");
+  });
+
+  it("Phoenix Dive: classAbility, Warlock, Dawnblade + Prismatic Warlock, Cure", async () => {
+    const records = await abilitiesExtractor.extract(makeLoader());
+    const rec = records.find((r) => r.hash === 1026);
+    expect(rec?.kind).toBe("classAbility");
+    expect(rec?.classType).toBe("Warlock");
+    expect(rec?.subclassAffinities).toEqual(
+      expect.arrayContaining(["Dawnblade", "Prismatic Warlock"]),
+    );
+    expect(rec?.verbs).toContain("Cure");
   });
 
   it("Pulse Grenade: grenade, classType null (shared), Arc", async () => {

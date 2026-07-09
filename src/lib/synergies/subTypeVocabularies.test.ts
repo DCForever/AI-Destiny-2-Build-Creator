@@ -18,6 +18,8 @@ vi.mock("@/lib/services", () => ({
               element: "Arc",
               searchName: "chaos reach",
               icon: null,
+              subclassAffinities: ["Stormcaller"],
+              verbs: ["Jolt"],
             },
             {
               hash: 1099,
@@ -28,6 +30,8 @@ vi.mock("@/lib/services", () => ({
               element: "Arc",
               searchName: "chaos reach",
               icon: null,
+              subclassAffinities: ["Stormcaller"],
+              verbs: ["Jolt"],
             },
             {
               hash: 1020,
@@ -38,6 +42,8 @@ vi.mock("@/lib/services", () => ({
               element: "Arc",
               searchName: "storm fist",
               icon: null,
+              subclassAffinities: ["Striker"],
+              verbs: [],
             },
             {
               hash: 1021,
@@ -48,6 +54,8 @@ vi.mock("@/lib/services", () => ({
               element: "Arc",
               searchName: "storm fist",
               icon: null,
+              subclassAffinities: ["Striker"],
+              verbs: [],
             },
             {
               hash: 1019,
@@ -58,6 +66,8 @@ vi.mock("@/lib/services", () => ({
               element: "Arc",
               searchName: "pulse grenade",
               icon: null,
+              subclassAffinities: ["Striker", "Arcstrider", "Stormcaller"],
+              verbs: [],
             },
             {
               hash: 1022,
@@ -68,6 +78,8 @@ vi.mock("@/lib/services", () => ({
               element: "Arc",
               searchName: "pulse grenade",
               icon: null,
+              subclassAffinities: ["Striker", "Arcstrider", "Stormcaller"],
+              verbs: [],
             },
           ];
         }

@@ -132,6 +132,10 @@ export interface AbilityRecord extends EntityRecordBase {
   kind: AbilityKind;
   classType: DestinyClassName | null;
   element: ElementName;
+  /** Subclass display names from SUBCLASS_METADATA; empty when unknown. */
+  subclassAffinities: string[];
+  /** Canonical curated verb names; empty when none known. */
+  verbs: string[];
 }
 
 export interface ModRecord extends EntityRecordBase {

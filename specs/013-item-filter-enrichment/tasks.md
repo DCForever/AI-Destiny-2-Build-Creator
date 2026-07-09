@@ -28,8 +28,8 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 **Purpose**: Confirm feature branch baseline; no new npm dependencies.
 
-- [ ] T001 Confirm branch `013-item-filter-enrichment` is checked out, `.specify/feature.json` points at `specs/013-item-filter-enrichment`, and `npm run gate` passes on the current baseline (Constitution III).
-- [ ] T002 [P] Skim `specs/013-item-filter-enrichment/contracts/ability-enrichment-search-contract.md` and `quickstart.md`; note baseline already in `src/app/api/manifest/search/route.ts` (`abilities`, `kind`, `classType`, `element`, shared-inclusive class filter) vs remaining gaps (`subclass`, `verb`, enrichment fields, debug controls).
+- [X] T001 Confirm branch `013-item-filter-enrichment` is checked out, `.specify/feature.json` points at `specs/013-item-filter-enrichment`, and `npm run gate` passes on the current baseline (Constitution III).
+- [X] T002 [P] Skim `specs/013-item-filter-enrichment/contracts/ability-enrichment-search-contract.md` and `quickstart.md`; note baseline already in `src/app/api/manifest/search/route.ts` (`abilities`, `kind`, `classType`, `element`, shared-inclusive class filter) vs remaining gaps (`subclass`, `verb`, enrichment fields, debug controls).
 
 ---
 
@@ -41,15 +41,15 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests (write first, confirm failing)
 
-- [ ] T003 [P] Add failing type/shape expectations for `AbilityRecord.subclassAffinities` and `AbilityRecord.verbs` (empty arrays default) in `src/lib/manifest/extractors/extractors2.test.ts` (or a new co-located `abilityEnrichment.test.ts` that imports the record type via a fixture assertion helper).
-- [ ] T004 [P] Add failing unit tests for override merge helpers (hash → affinities/verbs) in `src/data/abilityEnrichmentOverrides.test.ts` covering Phoenix Dive / Chaos Reach anchor keys once the module exists.
+- [X] T003 [P] Add failing type/shape expectations for `AbilityRecord.subclassAffinities` and `AbilityRecord.verbs` (empty arrays default) in `src/lib/manifest/extractors/extractors2.test.ts` (or a new co-located `abilityEnrichment.test.ts` that imports the record type via a fixture assertion helper).
+- [X] T004 [P] Add failing unit tests for override merge helpers (hash → affinities/verbs) in `src/data/abilityEnrichmentOverrides.test.ts` covering Phoenix Dive / Chaos Reach anchor keys once the module exists.
 
 ### Implementation
 
-- [ ] T005 Extend `AbilityRecord` in `src/lib/manifest/types/records.ts` with `subclassAffinities: string[]` and `verbs: string[]` (required arrays; document empty = unknown/none) per `data-model.md` (depends on T003 intent).
-- [ ] T006 [P] Create `src/data/abilityEnrichmentOverrides.ts` with typed maps for affinity and verb overrides (include Phoenix Dive → Dawnblade + Prismatic Warlock + Cure; Chaos Reach → Stormcaller + Jolt) and export lookup helpers (depends on T004).
-- [ ] T007 Create `src/lib/manifest/extractors/abilityEnrichment.ts` exporting pure functions `deriveSubclassAffinities(...)` and `deriveAbilityVerbs(...)` with stubs returning `[]` (wire real logic in US1); import override helpers from T006.
-- [ ] T008 Update ability fixture(s) in `src/lib/manifest/__fixtures__/rawTables.ts` as needed so Chaos Reach (and Phoenix Dive if added) remain extractable; ensure any new AbilityRecord construction sites compile with the new required fields (depends on T005).
+- [X] T005 Extend `AbilityRecord` in `src/lib/manifest/types/records.ts` with `subclassAffinities: string[]` and `verbs: string[]` (required arrays; document empty = unknown/none) per `data-model.md` (depends on T003 intent).
+- [X] T006 [P] Create `src/data/abilityEnrichmentOverrides.ts` with typed maps for affinity and verb overrides (include Phoenix Dive → Dawnblade + Prismatic Warlock + Cure; Chaos Reach → Stormcaller + Jolt) and export lookup helpers (depends on T004).
+- [X] T007 Create `src/lib/manifest/extractors/abilityEnrichment.ts` exporting pure functions `deriveSubclassAffinities(...)` and `deriveAbilityVerbs(...)` with stubs returning `[]` (wire real logic in US1); import override helpers from T006.
+- [X] T008 Update ability fixture(s) in `src/lib/manifest/__fixtures__/rawTables.ts` as needed so Chaos Reach (and Phoenix Dive if added) remain extractable; ensure any new AbilityRecord construction sites compile with the new required fields (depends on T005).
 
 **Checkpoint**: Types + override/enrichment stubs compile. `npm run gate` → commit.
 
@@ -63,16 +63,16 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T009 [P] [US1] Expand `src/lib/manifest/extractors/extractors2.test.ts` (and/or `abilityEnrichment.test.ts`) with failing cases: Chaos Reach affinities/verbs; Phoenix Dive affinities/verbs (add fixture item if missing); word-boundary verb tagging does not false-positive on casual description mentions; empty verbs when no match.
-- [ ] T010 [P] [US1] Add failing unit tests in `src/lib/manifest/extractors/abilityEnrichment.test.ts` for dedicated plug-category → `SUBCLASS_METADATA` join (e.g. `warlock.arc.supers` → Stormcaller) and class-qualified Prismatic naming (never bare `Prismatic`).
+- [X] T009 [P] [US1] Expand `src/lib/manifest/extractors/extractors2.test.ts` (and/or `abilityEnrichment.test.ts`) with failing cases: Chaos Reach affinities/verbs; Phoenix Dive affinities/verbs (add fixture item if missing); word-boundary verb tagging does not false-positive on casual description mentions; empty verbs when no match.
+- [X] T010 [P] [US1] Add failing unit tests in `src/lib/manifest/extractors/abilityEnrichment.test.ts` for dedicated plug-category → `SUBCLASS_METADATA` join (e.g. `warlock.arc.supers` → Stormcaller) and class-qualified Prismatic naming (never bare `Prismatic`).
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement `deriveSubclassAffinities` in `src/lib/manifest/extractors/abilityEnrichment.ts`: dedicated `{class}.{element}.{kind}` → `SUBCLASS_METADATA`; merge plug-set membership when available via `common.ts` helpers; merge overrides from `abilityEnrichmentOverrides.ts` (depends on T007, T010).
-- [ ] T012 [US1] Implement `deriveAbilityVerbs` in `src/lib/manifest/extractors/abilityEnrichment.ts`: best-effort word-boundary scan of description (+ sandbox perk text when resolvable) against `SYNERGY_VERBS` / `resolveVerbSubType`; merge overrides; dedupe canonical names (depends on T007, T009).
-- [ ] T013 [US1] Wire enrichment into `src/lib/manifest/extractors/abilities.ts` so each `AbilityRecord` sets `subclassAffinities` and `verbs` (depends on T011, T012, T005).
-- [ ] T014 [US1] Add/adjust Phoenix Dive (and any needed) raw fixture entries in `src/lib/manifest/__fixtures__/rawTables.ts`; make T009–T010 pass (depends on T013).
-- [ ] T015 [US1] Ensure entity-cache consumers tolerate new fields (rebuild note in comments or extract path); fix any TypeScript breakages in ability record mocks under `src/lib/synergies/subTypeVocabularies.test.ts` and related tests (depends on T005, T013).
+- [X] T011 [US1] Implement `deriveSubclassAffinities` in `src/lib/manifest/extractors/abilityEnrichment.ts`: dedicated `{class}.{element}.{kind}` → `SUBCLASS_METADATA`; merge plug-set membership when available via `common.ts` helpers; merge overrides from `abilityEnrichmentOverrides.ts` (depends on T007, T010).
+- [X] T012 [US1] Implement `deriveAbilityVerbs` in `src/lib/manifest/extractors/abilityEnrichment.ts`: best-effort word-boundary scan of description (+ sandbox perk text when resolvable) against `SYNERGY_VERBS` / `resolveVerbSubType`; merge overrides; dedupe canonical names (depends on T007, T009).
+- [X] T013 [US1] Wire enrichment into `src/lib/manifest/extractors/abilities.ts` so each `AbilityRecord` sets `subclassAffinities` and `verbs` (depends on T011, T012, T005).
+- [X] T014 [US1] Add/adjust Phoenix Dive (and any needed) raw fixture entries in `src/lib/manifest/__fixtures__/rawTables.ts`; make T009–T010 pass (depends on T013).
+- [X] T015 [US1] Ensure entity-cache consumers tolerate new fields (rebuild note in comments or extract path); fix any TypeScript breakages in ability record mocks under `src/lib/synergies/subTypeVocabularies.test.ts` and related tests (depends on T005, T013).
 
 **Checkpoint**: US1 independently testable — enriched records for anchors. `npm run gate` → commit.
 
@@ -86,16 +86,16 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T016 [P] [US2] Extend `src/app/api/manifest/search/route.test.ts` with failing cases for `subclass` and `verb` query params (AND semantics), enriched response fields (`subclassAffinities`, `verbs`, `description`), and alias resolution (`Suppress` → `Suppression`).
-- [ ] T017 [P] [US2] Add failing tests for debug form query wiring (subclass/verb params passed to `/api/manifest/search`) in `src/components/debug/SubclassStructuredForm.test.tsx` (create if missing) or a small extracted helper test beside the form.
+- [X] T016 [P] [US2] Extend `src/app/api/manifest/search/route.test.ts` with failing cases for `subclass` and `verb` query params (AND semantics), enriched response fields (`subclassAffinities`, `verbs`, `description`), and alias resolution (`Suppress` → `Suppression`).
+- [X] T017 [P] [US2] Add failing tests for debug form query wiring (subclass/verb params passed to `/api/manifest/search`) in `src/components/debug/SubclassStructuredForm.test.tsx` (create if missing) or a small extracted helper test beside the form.
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Extend `querySchema` and filters in `src/app/api/manifest/search/route.ts` with optional `subclass` and `verb`; AND with existing `kind`/`classType`/`element`; resolve verb aliases via `resolveVerbSubType` (depends on T016).
-- [ ] T019 [US2] Extend ability search response mapping in `src/app/api/manifest/search/route.ts` to include `description`, `subclassAffinities`, and `verbs` when present on the record (depends on T013, T018).
-- [ ] T020 [US2] Update `src/lib/manifest/itemResolver.ts` so abilities search indexes description (and optionally verbs) for text `q` while preserving FR-010 (depends on T005).
-- [ ] T021 [US2] Add minimal subclass + verb filter controls to `src/components/debug/SubclassStructuredForm.tsx` (and pass params in `fetchResults`) per contract debug UI table; show enrichment hints in results when available (depends on T017, T018, T019).
-- [ ] T022 [US2] Make T016–T017 pass; manually smoke-check quickstart V2 queries (depends on T018–T021).
+- [X] T018 [US2] Extend `querySchema` and filters in `src/app/api/manifest/search/route.ts` with optional `subclass` and `verb`; AND with existing `kind`/`classType`/`element`; resolve verb aliases via `resolveVerbSubType` (depends on T016).
+- [X] T019 [US2] Extend ability search response mapping in `src/app/api/manifest/search/route.ts` to include `description`, `subclassAffinities`, and `verbs` when present on the record (depends on T013, T018).
+- [X] T020 [US2] Update `src/lib/manifest/itemResolver.ts` so abilities search indexes description (and optionally verbs) for text `q` while preserving FR-010 (depends on T005).
+- [X] T021 [US2] Add minimal subclass + verb filter controls to `src/components/debug/SubclassStructuredForm.tsx` (and pass params in `fetchResults`) per contract debug UI table; show enrichment hints in results when available (depends on T017, T018, T019).
+- [X] T022 [US2] Make T016–T017 pass; manually smoke-check quickstart V2 queries (depends on T018–T021).
 
 **Checkpoint**: US2 independently testable — nameless discovery via API + minimal debug UI. `npm run gate` → commit.
 
@@ -109,14 +109,14 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T023 [P] [US3] Add failing affinity tests in `src/lib/manifest/extractors/abilityEnrichment.test.ts` for shared plugs: element-matched dedicated subclasses only; Prismatic affinities absent unless override/plug-set proves membership.
-- [ ] T024 [P] [US3] Extend `src/app/api/manifest/search/route.test.ts` with failing/asserting cases: class filter includes shared; wrong-class and wrong-subclass negatives for Phoenix Dive / Chaos Reach (align with quickstart V3).
+- [X] T023 [P] [US3] Add failing affinity tests in `src/lib/manifest/extractors/abilityEnrichment.test.ts` for shared plugs: element-matched dedicated subclasses only; Prismatic affinities absent unless override/plug-set proves membership.
+- [X] T024 [P] [US3] Extend `src/app/api/manifest/search/route.test.ts` with failing/asserting cases: class filter includes shared; wrong-class and wrong-subclass negatives for Phoenix Dive / Chaos Reach (align with quickstart V3).
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Complete shared-plug branch of `deriveSubclassAffinities` in `src/lib/manifest/extractors/abilityEnrichment.ts` per research R2 tier 2–3 and clarify Q3 (depends on T011, T023).
-- [ ] T026 [US3] Confirm/preserve `classTypeFilter` shared-inclusive behavior in `src/app/api/manifest/search/route.ts`; document in a brief comment referencing FR-001 clarify; fix if any regression (depends on T024).
-- [ ] T027 [US3] Add shared-grenade (or equivalent) fixture coverage in `src/lib/manifest/__fixtures__/rawTables.ts` and make T023–T024 pass (depends on T025, T026).
+- [X] T025 [US3] Complete shared-plug branch of `deriveSubclassAffinities` in `src/lib/manifest/extractors/abilityEnrichment.ts` per research R2 tier 2–3 and clarify Q3 (depends on T011, T023).
+- [X] T026 [US3] Confirm/preserve `classTypeFilter` shared-inclusive behavior in `src/app/api/manifest/search/route.ts`; document in a brief comment referencing FR-001 clarify; fix if any regression (depends on T024).
+- [X] T027 [US3] Add shared-grenade (or equivalent) fixture coverage in `src/lib/manifest/__fixtures__/rawTables.ts` and make T023–T024 pass (depends on T025, T026).
 
 **Checkpoint**: US3 independently testable — exclusivity + shared semantics. `npm run gate` → commit.
 
@@ -126,9 +126,9 @@ Single Next.js project; source at repository root `src/`. Co-located `*.test.ts`
 
 **Purpose**: End-to-end validation and cleanup across stories.
 
-- [ ] T028 [P] Run through `specs/013-item-filter-enrichment/quickstart.md` V1–V4; fix any doc/contract mismatches in `contracts/ability-enrichment-search-contract.md` or `quickstart.md`.
-- [ ] T029 [P] Rebuild abilities entity cache (project’s usual extract/cache refresh) and spot-check live Phoenix Dive / Chaos Reach enrichment if manifest is available.
-- [ ] T030 Final `npm run gate`; ensure no leftover stubs returning empty enrichment for wired paths; commit polish checkpoint.
+- [X] T028 [P] Run through `specs/013-item-filter-enrichment/quickstart.md` V1–V4; fix any doc/contract mismatches in `contracts/ability-enrichment-search-contract.md` or `quickstart.md`.
+- [X] T029 [P] Rebuild abilities entity cache (project’s usual extract/cache refresh) and spot-check live Phoenix Dive / Chaos Reach enrichment if manifest is available.
+- [X] T030 Final `npm run gate`; ensure no leftover stubs returning empty enrichment for wired paths; commit polish checkpoint.
 
 ---
 

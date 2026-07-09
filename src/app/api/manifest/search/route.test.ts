@@ -312,4 +312,144 @@ describe("manifest search route", () => {
     expect(response.status).toBe(400);
     expect(body.error).toMatch(/empty search/i);
   });
+
+  it("filters abilities by subclass and verb with enriched DTO fields", async () => {
+    const getStore = vi.fn(async () => [
+      {
+        name: "Phoenix Dive",
+        hash: 1026,
+        icon: "/phoenix.png",
+        description: "Dive and cure allies.",
+        kind: "classAbility",
+        classType: "Warlock",
+        element: "Solar",
+        subclassAffinities: ["Dawnblade", "Prismatic Warlock"],
+        verbs: ["Cure"],
+      },
+      {
+        name: "Chaos Reach",
+        hash: 1018,
+        icon: "/chaos.png",
+        description: "Arc beam.",
+        kind: "super",
+        classType: "Warlock",
+        element: "Arc",
+        subclassAffinities: ["Stormcaller"],
+        verbs: ["Jolt"],
+      },
+      {
+        name: "Healing Rift",
+        hash: 9001,
+        icon: "/rift.png",
+        description: "Rift.",
+        kind: "classAbility",
+        classType: "Warlock",
+        element: "Arc",
+        subclassAffinities: ["Stormcaller"],
+        verbs: [],
+      },
+    ]);
+
+    vi.mocked(getServices).mockResolvedValue({
+      resolver: { search: vi.fn() },
+      entityCache: { getStore },
+    } as unknown as Awaited<ReturnType<typeof getServices>>);
+
+    const response = await GET(
+      new Request(
+        "http://localhost/api/manifest/search?category=abilities&classType=Warlock&verb=Cure&subclass=Dawnblade",
+      ),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.results).toEqual([
+      {
+        name: "Phoenix Dive",
+        hash: 1026,
+        icon: "/phoenix.png",
+        slot: undefined,
+        kind: "classAbility",
+        classType: "Warlock",
+        element: "Solar",
+        description: "Dive and cure allies.",
+        subclassAffinities: ["Dawnblade", "Prismatic Warlock"],
+        verbs: ["Cure"],
+        confidence: 1,
+        isExotic: false,
+      },
+    ]);
+  });
+
+  it("resolves Suppress verb alias to Suppression", async () => {
+    const getStore = vi.fn(async () => [
+      {
+        name: "Suppressor Grenade",
+        hash: 5001,
+        icon: "/sup.png",
+        kind: "grenade",
+        classType: null,
+        element: "Void",
+        subclassAffinities: ["Sentinel", "Nightstalker", "Voidwalker"],
+        verbs: ["Suppression"],
+      },
+    ]);
+
+    vi.mocked(getServices).mockResolvedValue({
+      resolver: { search: vi.fn() },
+      entityCache: { getStore },
+    } as unknown as Awaited<ReturnType<typeof getServices>>);
+
+    const response = await GET(
+      new Request("http://localhost/api/manifest/search?category=abilities&verb=Suppress"),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.results.map((r: { name: string }) => r.name)).toEqual(["Suppressor Grenade"]);
+  });
+
+  it("excludes Phoenix Dive for Titan+Cure and Voidwalker subclass", async () => {
+    const store = [
+      {
+        name: "Phoenix Dive",
+        hash: 1026,
+        icon: "/phoenix.png",
+        kind: "classAbility",
+        classType: "Warlock",
+        element: "Solar",
+        subclassAffinities: ["Dawnblade", "Prismatic Warlock"],
+        verbs: ["Cure"],
+      },
+    ];
+
+    vi.mocked(getServices).mockResolvedValue({
+      resolver: { search: vi.fn() },
+      entityCache: { getStore: vi.fn(async () => store) },
+    } as unknown as Awaited<ReturnType<typeof getServices>>);
+
+    const titan = await GET(
+      new Request("http://localhost/api/manifest/search?category=abilities&classType=Titan&verb=Cure"),
+    );
+    expect((await titan.json()).results).toEqual([]);
+
+    const voidwalker = await GET(
+      new Request(
+        "http://localhost/api/manifest/search?category=abilities&subclass=Voidwalker&verb=Cure",
+      ),
+    );
+    expect((await voidwalker.json()).results).toEqual([]);
+  });
+
+  it("rejects subclass/verb filters on non-ability categories", async () => {
+    vi.mocked(getServices).mockResolvedValue({
+      resolver: { search: vi.fn() },
+      entityCache: { getStore: vi.fn() },
+    } as unknown as Awaited<ReturnType<typeof getServices>>);
+
+    const response = await GET(
+      new Request("http://localhost/api/manifest/search?category=aspects&verb=Cure"),
+    );
+    expect(response.status).toBe(400);
+  });
 });

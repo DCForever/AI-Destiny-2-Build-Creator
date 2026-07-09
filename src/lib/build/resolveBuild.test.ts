@@ -24,11 +24,11 @@ const FRAGMENTS: FragmentRecord[] = [
   { ...B(2002, "Spark of Resistance"), description: "While surrounded, you are more resistant to damage.", element: "Arc", statModifiers: {} },
 ];
 const ABILITIES: AbilityRecord[] = [
-  { ...B(3001, "Stormtrance"), description: "Call lightning down on foes.", kind: "super", classType: "Warlock", element: "Arc" },
-  { ...B(3002, "Healing Rift"), description: "Cast a rift that heals you and nearby allies.", kind: "classAbility", classType: "Warlock", element: "Arc" },
-  { ...B(3003, "Burst Glide"), description: "Jump and then activate again for a second burst.", kind: "movement", classType: "Warlock", element: "Arc" },
-  { ...B(3004, "Ball Lightning"), description: "Throw a ball of lightning that jolts enemies.", kind: "melee", classType: "Warlock", element: "Arc" },
-  { ...B(3005, "Shackle Grenade"), description: "Throw a grenade that suspends nearby enemies on detonation.", kind: "grenade", classType: null, element: "Strand" },
+  { ...B(3001, "Stormtrance"), description: "Call lightning down on foes.", kind: "super", classType: "Warlock", element: "Arc", subclassAffinities: ["Stormcaller"], verbs: [] },
+  { ...B(3002, "Healing Rift"), description: "Cast a rift that heals you and nearby allies.", kind: "classAbility", classType: "Warlock", element: "Arc", subclassAffinities: ["Stormcaller"], verbs: [] },
+  { ...B(3003, "Burst Glide"), description: "Jump and then activate again for a second burst.", kind: "movement", classType: "Warlock", element: "Arc", subclassAffinities: ["Stormcaller"], verbs: [] },
+  { ...B(3004, "Ball Lightning"), description: "Throw a ball of lightning that jolts enemies.", kind: "melee", classType: "Warlock", element: "Arc", subclassAffinities: ["Stormcaller"], verbs: ["Jolt"] },
+  { ...B(3005, "Shackle Grenade"), description: "Throw a grenade that suspends nearby enemies on detonation.", kind: "grenade", classType: null, element: "Strand", subclassAffinities: ["Berserker", "Threadrunner", "Broodweaver"], verbs: ["Suspend"] },
 ];
 const EXOTIC_ARMOR: ExoticArmorRecord[] = [
   { ...B(6001, "Ophidian Aspect"), slot: "Gauntlets", classType: "Warlock", archetype: null, intrinsic: { name: "Fluid Aura", description: "Enhanced handling." }, flavorText: "..." },

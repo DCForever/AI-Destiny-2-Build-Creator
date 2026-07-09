@@ -51,7 +51,8 @@ function fuseOptionsForStore(store: StoreName): IFuseOptions<SearchableRecord> {
     store === "mods" ||
     store === "aspects" ||
     store === "fragments" ||
-    store === "artifacts"
+    store === "artifacts" ||
+    store === "abilities"
   ) {
     return DESCRIPTION_FUSE_OPTIONS;
   }

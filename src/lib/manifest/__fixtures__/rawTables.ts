@@ -243,6 +243,11 @@ const ITEM_TABLE: RawTable = {
     classType: 2, // Warlock
     plug: { plugCategoryIdentifier: "warlock.arc.movement" },
   }),
+  "1026": mkItem(1026, "Phoenix Dive", "Dive to the ground and create a burst of Solar Light that cures nearby allies.", {
+    itemTypeDisplayName: "Solar Class Ability",
+    classType: 2, // Warlock
+    plug: { plugCategoryIdentifier: "warlock.solar.class_abilities" },
+  }),
 
   // Mods
   "1023": mkItem(1023, "Charged Up", "Increases the maximum number of stacks.", {

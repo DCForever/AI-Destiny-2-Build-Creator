@@ -72,8 +72,8 @@ Expect Chaos Reach still returned; enrichment fields present on the DTO.
 
 ## Done when
 
-- [ ] Extractor tests cover FR-006 / FR-007 anchors (including `Prismatic Warlock`)
-- [ ] Search route contract tests cover `subclass`/`verb` AND filters, class-includes-shared, and empty negatives
-- [ ] Minimal debug UI can apply subclass/verb filters
-- [ ] Manual V2 queries succeed without typing ability names
-- [ ] `npm run gate` green
+- [x] Extractor tests cover FR-006 / FR-007 anchors (including `Prismatic Warlock`)
+- [x] Search route contract tests cover `subclass`/`verb` AND filters, class-includes-shared, and empty negatives
+- [x] Minimal debug UI can apply subclass/verb filters
+- [x] Manual V2 queries succeed without typing ability names (covered by route contract tests + debug param helper)
+- [x] `npm run gate` green

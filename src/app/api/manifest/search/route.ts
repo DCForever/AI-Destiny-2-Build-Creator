@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { resolveVerbSubType } from "@/data/synergyVerbs";
 import { getServices } from "@/lib/services";
 import type { StoreName } from "@/lib/manifest/types/stores";
 
@@ -32,6 +33,8 @@ const querySchema = z.object({
   kind: z.enum(["super", "grenade", "melee", "classAbility", "movement"]).optional(),
   classType: z.enum(["Titan", "Hunter", "Warlock"]).optional(),
   element: z.string().trim().min(1).optional(),
+  subclass: z.string().trim().min(1).optional(),
+  verb: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).optional(),
 });
 
@@ -44,6 +47,9 @@ type SearchResult = {
     kind?: string;
     classType?: string | null;
     element?: string;
+    description?: string;
+    subclassAffinities?: string[];
+    verbs?: string[];
   };
   confidence: number;
 };
@@ -69,7 +75,7 @@ function classTypeFilter(results: SearchResult[], classType: string | undefined)
   if (!classType) return results;
   return results.filter((r) => {
     if (!("classType" in r.record)) return true;
-    // Null classType = shared / class-agnostic (e.g. many supers & grenades in cache).
+    // FR-001 clarify: null classType = shared / class-agnostic — include with class filter.
     if (r.record.classType == null) return true;
     return r.record.classType === classType;
   });
@@ -83,10 +89,50 @@ function elementFilter(results: SearchResult[], element: string | undefined) {
   });
 }
 
+function normalizeLabel(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function subclassFilter(
+  results: SearchResult[],
+  category: string,
+  subclass: string | undefined,
+) {
+  if (category !== "abilities" || !subclass) return results;
+  const wanted = normalizeLabel(subclass);
+  return results.filter((r) =>
+    (r.record.subclassAffinities ?? []).some((a) => normalizeLabel(a) === wanted),
+  );
+}
+
+function verbFilter(
+  results: SearchResult[],
+  category: string,
+  verb: string | undefined,
+) {
+  if (category !== "abilities" || !verb) return results;
+  const canonical = resolveVerbSubType(verb) ?? verb;
+  const wanted = normalizeLabel(canonical);
+  return results.filter((r) =>
+    (r.record.verbs ?? []).some((v) => normalizeLabel(v) === wanted),
+  );
+}
+
 function applyFilters(results: SearchResult[], query: z.infer<typeof querySchema>) {
-  return elementFilter(
-    classTypeFilter(kindFilter(slotFilter(results, query.slot), query.category, query.kind), query.classType),
-    query.element,
+  return verbFilter(
+    subclassFilter(
+      elementFilter(
+        classTypeFilter(
+          kindFilter(slotFilter(results, query.slot), query.category, query.kind),
+          query.classType,
+        ),
+        query.element,
+      ),
+      query.category,
+      query.subclass,
+    ),
+    query.category,
+    query.verb,
   );
 }
 
@@ -103,6 +149,13 @@ function toResponseResult(result: SearchResult, store: string) {
     kind: "kind" in result.record ? result.record.kind : undefined,
     classType: "classType" in result.record ? result.record.classType : undefined,
     element: "element" in result.record ? result.record.element : undefined,
+    ...(result.record.description !== undefined
+      ? { description: result.record.description }
+      : {}),
+    ...(result.record.subclassAffinities !== undefined
+      ? { subclassAffinities: result.record.subclassAffinities }
+      : {}),
+    ...(result.record.verbs !== undefined ? { verbs: result.record.verbs } : {}),
     confidence: result.confidence,
     isExotic: store === "exotic-weapons",
   };
@@ -117,12 +170,24 @@ export async function GET(request: Request): Promise<NextResponse> {
     kind: url.searchParams.get("kind") ?? undefined,
     classType: url.searchParams.get("classType") ?? undefined,
     element: url.searchParams.get("element") ?? undefined,
+    subclass: url.searchParams.get("subclass") ?? undefined,
+    verb: url.searchParams.get("verb") ?? undefined,
     limit: url.searchParams.get("limit") ?? undefined,
   });
 
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => i.message).join("; ");
     return NextResponse.json({ error: issues }, { status: 400 });
+  }
+
+  if (
+    parsed.data.category !== "abilities" &&
+    (parsed.data.subclass != null || parsed.data.verb != null)
+  ) {
+    return NextResponse.json(
+      { error: "subclass and verb filters are only supported for category=abilities" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -135,7 +200,9 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const raw = parsed.data.q
       ? await resolver.search(store, parsed.data.q, limit * 2)
-      : (await entityCache.getStore(store as StoreName)).map((record) => toSearchResult(record));
+      : (await entityCache.getStore(store as StoreName)).map((record) =>
+          toSearchResult(record as SearchResult["record"]),
+        );
     const filtered = applyFilters(raw, parsed.data).slice(0, limit);
 
     return NextResponse.json({
