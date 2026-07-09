@@ -1,7 +1,3 @@
 ﻿{
-<<<<<<< HEAD
   "feature_directory": "specs/013-item-filter-enrichment"
-=======
-  "feature_directory": "specs/012-build-pipeline-consistency"
->>>>>>> feature/overhall
 }
