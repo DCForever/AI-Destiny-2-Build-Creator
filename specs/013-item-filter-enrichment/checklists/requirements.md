@@ -32,4 +32,5 @@
 ## Notes
 
 - Validation pass 1 (2026-07-08): All items pass. Spec stays at WHAT/WHY; Phoenix Dive and Chaos Reach examples anchor FR-006/FR-007 and SC-001–SC-005. No clarification markers needed—defaults documented in Assumptions (abilities-first scope, curated verb vocabulary, Prismatic as subclass affinity).
-- Ready for `/speckit-clarify` (optional) or `/speckit-plan`.
+- Clarification session 2026-07-08: 5 decisions integrated (verb completeness, Prismatic naming, shared affinities, verification surface, class+shared filter semantics). Re-validated: all checklist items still pass (16/16). Plan/contracts may need a light sync for class-filter-includes-shared and minimal debug UI.
+- Ready for `/speckit-tasks` (plan already exists); optionally re-run `/speckit-plan` briefly to align artifacts, or fold deltas into tasks.
