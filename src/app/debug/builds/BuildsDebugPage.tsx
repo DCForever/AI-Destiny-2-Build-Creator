@@ -99,6 +99,10 @@ export function BuildsDebugPage() {
   });
   const [pendingIdentityPayload, setPendingIdentityPayload] = useState<Record<string, unknown> | null>(null);
   const [loadoutGaps, setLoadoutGaps] = useState<string[]>([]);
+  const [characters, setCharacters] = useState<
+    Array<{ characterId: string; classType: GuardianClass; light: number }>
+  >([]);
+  const [equipCharacterId, setEquipCharacterId] = useState("");
 
   const record = useCallback((next: JsonPanel) => setPanel(next), []);
   const tagFacets = useMemo(() => conceptTagsByFacet(), []);
@@ -111,6 +115,12 @@ export function BuildsDebugPage() {
     ? { hash: selectedVariant.exoticWeaponHash, name: selectedVariant.exoticWeaponName ?? `Exotic (${selectedVariant.exoticWeaponHash})` }
     : null;
   const canUseVariant = Boolean(selectedBuildId && selectedVariantId && selectedVariant);
+  const classFilteredCharacters = useMemo(() => {
+    const buildClass = buildDetail?.className;
+    if (!buildClass) return characters;
+    return characters.filter((c) => c.classType === buildClass);
+  }, [characters, buildDetail?.className]);
+  const canEquip = Boolean(canUseVariant && equipCharacterId);
   const createBlockedMessage =
     availableSynergies.length === 0
       ? "Create is blocked until at least one synergy exists."
@@ -351,6 +361,41 @@ export function BuildsDebugPage() {
     const res = await fetch(url, { method: "POST" });
     const body = await res.json();
     record({ label: `POST ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
+  async function loadCharacters() {
+    const url = "/api/bungie/characters";
+    const res = await fetch(url);
+    const body = await res.json();
+    if (res.ok && Array.isArray(body.characters)) {
+      setCharacters(body.characters);
+      const buildClass = buildDetail?.className;
+      const filtered = buildClass
+        ? body.characters.filter(
+            (c: { classType: string }) => c.classType === buildClass,
+          )
+        : body.characters;
+      if (filtered[0]?.characterId) setEquipCharacterId(filtered[0].characterId);
+    }
+    record({ label: `GET ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
+  async function equipVariant() {
+    if (!canUseVariant || !equipCharacterId) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/equip`;
+    const payload = { characterId: equipCharacterId };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: `POST ${url}`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
   }
 
   async function checkDimExportGate() {
@@ -825,6 +870,30 @@ export function BuildsDebugPage() {
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void exportResolved()}>
               Export
+            </button>
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <button type="button" className={buttonClass(false)} onClick={() => void loadCharacters()}>
+              Load characters
+            </button>
+            <label className="text-sm">
+              Equip character
+              <select
+                className={zincInputClass()}
+                value={equipCharacterId}
+                onChange={(event) => setEquipCharacterId(event.target.value)}
+                disabled={classFilteredCharacters.length === 0}
+              >
+                <option value="">Select…</option>
+                {classFilteredCharacters.map((c) => (
+                  <option key={c.characterId} value={c.characterId}>
+                    {c.classType} · {c.light} ({c.characterId.slice(-6)})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className={buttonClass(!canEquip)} disabled={!canEquip} onClick={() => void equipVariant()}>
+              Equip
             </button>
           </div>
         </fieldset>
