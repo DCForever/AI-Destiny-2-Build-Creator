@@ -15,8 +15,8 @@
 | 4 | **done** | `artifacts-fashion` (`018`) | DBR-ART-*, DBR-FASH-*, DAC-VAR-002–003 | Merged to `feature/overhall` |
 | 5 | **done** | `soft-stat-targets` (`019`) | DBR-STAT-*, EoF six stats | Merged to `feature/overhall` |
 | 6 | **done** | `bungie-equip` (`020`) | DAC-P1-007, DBR-EQP-* | Merged to `feature/overhall` |
-| 7 | **in_progress** | `dim-export` (`021`) | DAC-P1-008 | Spec started; equip-ready → DIM share |
-| 8 | pending | `class-item-intent` | Exotic class-item intent-lock | Deferred from slice 1 |
+| 7 | **done** | `dim-export` (`021`) | DAC-P1-008 | Merged to `feature/overhall` |
+| 8 | **in_progress** | `class-item-intent` | Exotic class-item intent-lock | Deferred from slice 1 |
 | 9 | pending | `llm-propose` | LLM propose-for-confirm | Manual re-run; no auto-apply |
 
 **Done when**: all rows are `done` and local `feature/overhall` contains each merge.

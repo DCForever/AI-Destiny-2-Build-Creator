@@ -406,6 +406,24 @@ export function BuildsDebugPage() {
     record({ label: `POST ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
   }
 
+  async function exportToDim(jsonOnly = false) {
+    if (!canUseVariant) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/dim-export`;
+    const payload = { jsonOnly };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: `POST ${url}`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
+  }
+
   async function exportResolved() {
     if (!canUseVariant) return;
     const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/resolved`;
@@ -867,6 +885,12 @@ export function BuildsDebugPage() {
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void checkDimExportGate()}>
               Check DIM gate
+            </button>
+            <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void exportToDim(true)}>
+              Export to DIM (JSON)
+            </button>
+            <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void exportToDim(false)}>
+              Export to DIM
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void exportResolved()}>
               Export

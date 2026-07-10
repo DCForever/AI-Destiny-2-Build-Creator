@@ -31,13 +31,13 @@ export interface DimLoadout {
   parameters?: DimLoadoutParameters;
 }
 
-const CLASS_TYPE: Record<"Titan" | "Hunter" | "Warlock", number> = {
+export const DIM_CLASS_TYPE: Record<"Titan" | "Hunter" | "Warlock", number> = {
   Titan: 0,
   Hunter: 1,
   Warlock: 2,
 };
 
-const STAT_HASHES: Record<string, number> = {
+export const DIM_STAT_HASHES: Record<string, number> = {
   Weapons: 2996146975,
   Health: 392767087,
   Class: 1943323491,
@@ -45,6 +45,9 @@ const STAT_HASHES: Record<string, number> = {
   Super: 144602215,
   Melee: 4244567218,
 };
+
+const CLASS_TYPE = DIM_CLASS_TYPE;
+const STAT_HASHES = DIM_STAT_HASHES;
 
 function buildEquipped(sheet: ResolvedBuildSheet): DimLoadoutItem[] {
   const items: DimLoadoutItem[] = [];
