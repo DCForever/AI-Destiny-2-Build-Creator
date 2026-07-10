@@ -330,6 +330,14 @@ export function BuildsDebugPage() {
     record({ label: `GET ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
   }
 
+  async function fetchCoverage() {
+    if (!canUseVariant) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/coverage`;
+    const res = await fetch(url);
+    const body = await res.json();
+    record({ label: `GET ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
   async function checkEquipGate() {
     if (!canUseVariant) return;
     const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/equip-gate`;
@@ -631,6 +639,9 @@ export function BuildsDebugPage() {
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void fetchResolved()}>
               Resolve
+            </button>
+            <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void fetchCoverage()}>
+              Fetch Coverage
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void checkEquipGate()}>
               Check equip gate

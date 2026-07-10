@@ -78,4 +78,68 @@ describe("suggestSets", () => {
     const results = suggestSets(sets, ctx);
     expect(results.some((r) => r.setId === "s2")).toBe(true);
   });
+
+  it("ranks gap-closing sets above peers that do not close gaps", () => {
+    const gapSets: SetRecord[] = [
+      {
+        id: "gap-close",
+        userId: 1,
+        name: "Has Missing Gun",
+        type: "weapon",
+        tagIds: ["solar"],
+        createdAt: "",
+        updatedAt: "",
+      },
+      {
+        id: "gap-miss",
+        userId: 1,
+        name: "Other Solar",
+        type: "weapon",
+        tagIds: ["solar"],
+        createdAt: "",
+        updatedAt: "",
+      },
+      {
+        id: "fashion",
+        userId: 1,
+        name: "Looks",
+        type: "fashion",
+        tagIds: ["solar"],
+        createdAt: "",
+        updatedAt: "",
+      },
+    ];
+    const ctx = buildAutomaticSuggestionContext(
+      {
+        id: "b1",
+        userId: 1,
+        name: "Build",
+        className: "Warlock",
+        subclass: { name: "Dawnblade", element: "Solar" },
+        exoticArmorHash: 1,
+        exoticArmorName: "X",
+        exoticWeaponHash: null,
+        exoticWeaponName: null,
+        pinnedSuper: null,
+        tagIds: ["solar"],
+        synergyIds: [],
+        createdAt: "",
+        updatedAt: "",
+      },
+      { exoticWeaponHash: null },
+      [],
+    );
+    ctx.coverageGaps = [{ synergyName: "Trace", itemHashes: [4242], perkHashes: [] }];
+    ctx.setItemHashesBySetId = {
+      "gap-close": [4242],
+      "gap-miss": [999],
+      fashion: [4242],
+    };
+
+    const results = suggestSets(gapSets, ctx);
+    expect(results[0]?.setId).toBe("gap-close");
+    expect(results[0]?.reasons.some((r) => r.includes("Closes gap"))).toBe(true);
+    const fashionResult = results.find((r) => r.setId === "fashion");
+    expect(fashionResult?.reasons.some((r) => r.includes("Closes gap")) ?? false).toBe(false);
+  });
 });

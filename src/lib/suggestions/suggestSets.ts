@@ -9,6 +9,10 @@ export type SuggestionContext = {
   synergies: SynergyWithLinks[];
   buildTagIds: ConceptTagId[];
   goal?: string;
+  /** Unmatched evidence from soft coverage (gap bias). */
+  coverageGaps?: Array<{ synergyName: string; itemHashes: number[]; perkHashes: number[] }>;
+  /** setId → item hashes for gap matching */
+  setItemHashesBySetId?: Record<string, number[]>;
 };
 
 export type SetSuggestion = {
@@ -71,6 +75,16 @@ function scoreSet(set: SetRecord, ctx: SuggestionContext): SetSuggestion {
     if (goalTag) {
       score += 2;
       reasons.push(`Tag matches goal: ${goalTag}`);
+    }
+  }
+
+  if (set.type !== "fashion" && ctx.coverageGaps?.length) {
+    const hashes = ctx.setItemHashesBySetId?.[set.id] ?? [];
+    for (const gap of ctx.coverageGaps) {
+      if (gap.itemHashes.some((h) => hashes.includes(h))) {
+        score += 4;
+        reasons.push(`Closes gap: ${gap.synergyName}`);
+      }
     }
   }
 
