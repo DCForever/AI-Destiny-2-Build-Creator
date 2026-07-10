@@ -1,6 +1,8 @@
 import type { SynergyLinkRecord, SynergyWithLinks } from "@/lib/db/repositories/synergyRepository";
 import type { SlotClaim } from "@/lib/builds/resolveVariant";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
+import type { SoftStatTargets } from "@/lib/builds/softStatTargets";
+import { softStatWarnings, type SoftStatWarningRow, type StatEstimate } from "@/lib/builds/statEstimate";
 import type { SetBonusRecord } from "@/lib/manifest/types/records";
 
 export type CoverageTier = "supported" | "weak" | "missing";
@@ -41,6 +43,9 @@ export type CoverageResult = {
   synergies: SynergyCoverageRow[];
   setBonuses: SetBonusSoftRow[];
   elementMismatches: ElementSoftMismatch[];
+  targets: SoftStatTargets;
+  statEstimate: StatEstimate | null;
+  softStats: SoftStatWarningRow[];
 };
 
 export type CoverageEvalInput = {
@@ -51,6 +56,8 @@ export type CoverageEvalInput = {
   setBonusByItemHash?: Map<number, SetBonusRecord>;
   /** itemHash → element name for weapons */
   weaponElementByHash?: Map<number, string>;
+  softStatTargets?: SoftStatTargets;
+  statEstimate?: StatEstimate | null;
 };
 
 const ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_item"];
@@ -134,6 +141,8 @@ function subclassElement(subclass: unknown): string | null {
 
 export function evaluateCoverage(input: CoverageEvalInput): CoverageResult {
   const { claims, synergies, subclass, setBonusByItemHash, weaponElementByHash } = input;
+  const softStatTargets = input.softStatTargets ?? {};
+  const statEstimate = input.statEstimate ?? null;
 
   const synergyRows: SynergyCoverageRow[] = synergies.map((synergy) => {
     const matchedLinks: LinkMatchSummary[] = [];
@@ -221,7 +230,17 @@ export function evaluateCoverage(input: CoverageEvalInput): CoverageResult {
     }
   }
 
-  return { synergies: synergyRows, setBonuses, elementMismatches };
+  const softStats =
+    statEstimate != null ? softStatWarnings(softStatTargets, statEstimate) : [];
+
+  return {
+    synergies: synergyRows,
+    setBonuses,
+    elementMismatches,
+    targets: softStatTargets,
+    statEstimate,
+    softStats,
+  };
 }
 
 /** Unmatched item/perk hashes for suggest-sets gap bias. */

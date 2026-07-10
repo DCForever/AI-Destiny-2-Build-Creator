@@ -69,6 +69,14 @@ function ensureSocketPlugsColumn(db: Database.Database): void {
   }
 }
 
+function ensureSoftStatTargetsColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(builds)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "soft_stat_targets")) {
+    db.exec("ALTER TABLE builds ADD COLUMN soft_stat_targets TEXT");
+  }
+}
+
 function ensureVariantArtifactColumns(db: Database.Database): void {
   const cols = db.prepare("PRAGMA table_info(build_variants)").all() as { name: string }[];
   if (cols.length === 0) return;
@@ -251,6 +259,7 @@ export function runMigrations(db: Database.Database): void {
       exotic_weapon_hash INTEGER,
       exotic_weapon_name TEXT,
       pinned_super TEXT,
+      soft_stat_targets TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -302,6 +311,7 @@ export function runMigrations(db: Database.Database): void {
   ensureSetItemInstanceIdColumn(db);
   ensureBuildsIdentityColumns(db);
   ensureVariantArtifactColumns(db);
+  ensureSoftStatTargetsColumn(db);
 }
 
 export function getDb(): AppDatabase {

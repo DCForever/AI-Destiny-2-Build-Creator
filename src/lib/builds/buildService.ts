@@ -28,6 +28,7 @@ import { prepareAttachments } from "@/lib/builds/attachmentService";
 import { deriveDefaultBuildName } from "@/lib/builds/defaultBuildName";
 import { buildInventoryPinIndex, computeEquipReady } from "@/lib/builds/equipReady";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
+import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
 import {
   assertFullCombatLoadout,
   assertNoSlotConflicts,
@@ -253,6 +254,9 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
     exoticWeaponHash,
     exoticWeaponName,
     pinnedSuper,
+    softStatTargets: input.softStatTargets
+      ? normalizeSoftStatTargets(input.softStatTargets)
+      : {},
     tagIds: tags,
     synergyIds,
     now,
@@ -326,6 +330,7 @@ async function forkBuildWithIdentity(
     exoticWeaponHash: exoticWeaponHash ?? null,
     exoticWeaponName: exoticWeaponName ?? null,
     pinnedSuper: pinnedSuper ?? null,
+    softStatTargets: existing.softStatTargets,
     tagIds,
     synergyIds,
     now,
@@ -426,6 +431,17 @@ export async function updateUserBuild(
   }
 
   const now = new Date().toISOString();
+  let softStatTargets = existing.softStatTargets;
+  if (input.acceptStatNudges) {
+    const synergies = getSynergiesByIds(db, userId, existing.synergyIds);
+    const { suggestStatNudges, targetsFromAcceptedNudges } = await import("@/lib/builds/statNudges");
+    softStatTargets = targetsFromAcceptedNudges(softStatTargets, suggestStatNudges(synergies));
+  }
+  if (input.softStatTargets !== undefined) {
+    softStatTargets =
+      input.softStatTargets === null ? {} : normalizeSoftStatTargets(input.softStatTargets);
+  }
+
   updateBuildRecord(db, userId, buildId, {
     name: input.name?.trim() || undefined,
     className: input.className,
@@ -435,6 +451,8 @@ export async function updateUserBuild(
     exoticWeaponHash: input.exoticWeaponHash,
     exoticWeaponName: input.exoticWeaponName,
     pinnedSuper: input.pinnedSuper,
+    softStatTargets:
+      input.softStatTargets !== undefined || input.acceptStatNudges ? softStatTargets : undefined,
     tagIds: input.tagIds,
     synergyIds: input.synergyIds,
     now,

@@ -22,6 +22,7 @@ export const createBuildSchema = z.object({
   exoticWeaponHash: z.number().int().positive().nullable().optional(),
   exoticWeaponName: z.string().trim().min(1).nullable().optional(),
   pinnedSuper: z.string().trim().min(1).nullable().optional(),
+  softStatTargets: z.record(z.string(), z.number().int()).optional().nullable(),
   synergyIds: z.array(z.string().min(1)).min(1),
   tagIds: conceptTagIdsSchema.optional(),
   defaultVariant: buildVariantSchema
@@ -44,6 +45,8 @@ export const updateBuildSchema = createBuildSchema
   .extend({
     synergyIds: z.array(z.string().min(1)).min(1).optional(),
     identityAction: z.enum(["confirm", "fork"]).optional(),
+    softStatTargets: z.record(z.string(), z.number().int()).optional().nullable(),
+    acceptStatNudges: z.boolean().optional(),
   });
 
 export const updateVariantSchema = buildVariantSchema.extend({

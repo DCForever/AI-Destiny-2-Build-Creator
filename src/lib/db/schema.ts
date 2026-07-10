@@ -137,6 +137,7 @@ export const builds = sqliteTable("builds", {
   exoticWeaponHash: integer("exotic_weapon_hash"),
   exoticWeaponName: text("exotic_weapon_name"),
   pinnedSuper: text("pinned_super"),
+  softStatTargets: text("soft_stat_targets"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

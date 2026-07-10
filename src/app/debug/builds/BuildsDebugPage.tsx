@@ -37,6 +37,7 @@ type BuildDetail = BuildSummary & {
   exoticWeaponHash?: number | null;
   exoticWeaponName?: string | null;
   pinnedSuper?: string | null;
+  softStatTargets?: Partial<Record<string, number>>;
   synergies: SynergySummary[];
   variants: BuildVariant[];
 };
@@ -80,6 +81,7 @@ export function BuildsDebugPage() {
   const [variantNotes, setVariantNotes] = useState("");
   const [artifactHashInput, setArtifactHashInput] = useState("");
   const [artifactConfigInput, setArtifactConfigInput] = useState("");
+  const [softStatDraft, setSoftStatDraft] = useState("");
   const [suggestGoal, setSuggestGoal] = useState("");
   const [filterExoticArmor, setFilterExoticArmor] = useState<ExoticSelection | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -694,6 +696,102 @@ export function BuildsDebugPage() {
                 </p>
               );
             })}
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Soft stat targets (build-level)</legend>
+          <input
+            className={zincInputClass()}
+            placeholder='JSON e.g. {"Health":100,"Weapons":80}'
+            value={
+              softStatDraft ||
+              (buildDetail?.softStatTargets ? JSON.stringify(buildDetail.softStatTargets) : "")
+            }
+            onChange={(event) => setSoftStatDraft(event.target.value)}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={buttonClass(!selectedBuildId)}
+              disabled={!selectedBuildId}
+              onClick={() => {
+                let softStatTargets: Record<string, number> = {};
+                try {
+                  const raw = softStatDraft.trim() || "{}";
+                  softStatTargets = JSON.parse(raw) as Record<string, number>;
+                } catch {
+                  return;
+                }
+                void (async () => {
+                  const url = `/api/user/builds/${selectedBuildId}`;
+                  const payload = { softStatTargets };
+                  const res = await fetch(url, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                  });
+                  const body = await res.json();
+                  if (res.ok) await loadBuildDetail(selectedBuildId);
+                  record({
+                    label: `PATCH ${url} softStatTargets`,
+                    request: payload,
+                    response: res.ok ? body : undefined,
+                    error: res.ok ? undefined : body,
+                  });
+                })();
+              }}
+            >
+              Save soft targets
+            </button>
+            <button
+              type="button"
+              className={buttonClass(!selectedBuildId)}
+              disabled={!selectedBuildId}
+              onClick={() => {
+                void (async () => {
+                  const url = `/api/user/builds/${selectedBuildId}/suggest-stat-targets`;
+                  const res = await fetch(url);
+                  const body = await res.json();
+                  record({
+                    label: `GET ${url}`,
+                    response: res.ok ? body : undefined,
+                    error: res.ok ? undefined : body,
+                  });
+                })();
+              }}
+            >
+              Suggest stat nudges
+            </button>
+            <button
+              type="button"
+              className={buttonClass(!selectedBuildId)}
+              disabled={!selectedBuildId}
+              onClick={() => {
+                void (async () => {
+                  const url = `/api/user/builds/${selectedBuildId}`;
+                  const payload = { acceptStatNudges: true };
+                  const res = await fetch(url, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                  });
+                  const body = await res.json();
+                  if (res.ok) {
+                    setSoftStatDraft("");
+                    await loadBuildDetail(selectedBuildId);
+                  }
+                  record({
+                    label: `PATCH ${url} acceptStatNudges`,
+                    request: payload,
+                    response: res.ok ? body : undefined,
+                    error: res.ok ? undefined : body,
+                  });
+                })();
+              }}
+            >
+              Accept nudges
+            </button>
           </div>
         </fieldset>
 

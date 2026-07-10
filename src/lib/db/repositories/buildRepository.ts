@@ -3,6 +3,11 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { ConceptTagId } from "@/data/conceptTags";
 import type { AppDatabase } from "@/lib/db/client";
 import { buildSynergies, buildTags, builds, buildVariants } from "@/lib/db/schema";
+import {
+  parseSoftStatTargets,
+  serializeSoftStatTargets,
+  type SoftStatTargets,
+} from "@/lib/builds/softStatTargets";
 
 export type BuildRecord = {
   id: string;
@@ -15,6 +20,7 @@ export type BuildRecord = {
   exoticWeaponHash: number | null;
   exoticWeaponName: string | null;
   pinnedSuper: string | null;
+  softStatTargets: SoftStatTargets;
   tagIds: ConceptTagId[];
   synergyIds: string[];
   createdAt: string;
@@ -52,6 +58,7 @@ function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildReco
     exoticWeaponHash: row.exoticWeaponHash ?? null,
     exoticWeaponName: row.exoticWeaponName ?? null,
     pinnedSuper: row.pinnedSuper ?? null,
+    softStatTargets: parseSoftStatTargets(row.softStatTargets),
     tagIds: loadBuildTags(db, row.id),
     synergyIds: loadBuildSynergies(db, row.id),
     createdAt: row.createdAt,
@@ -179,6 +186,7 @@ export function createBuildRecord(
     exoticWeaponHash: number | null;
     exoticWeaponName: string | null;
     pinnedSuper: string | null;
+    softStatTargets?: SoftStatTargets;
     tagIds: ConceptTagId[];
     synergyIds: string[];
     now: string;
@@ -196,6 +204,7 @@ export function createBuildRecord(
       exoticWeaponHash: input.exoticWeaponHash,
       exoticWeaponName: input.exoticWeaponName,
       pinnedSuper: input.pinnedSuper,
+      softStatTargets: serializeSoftStatTargets(input.softStatTargets ?? {}),
       createdAt: input.now,
       updatedAt: input.now,
     })
@@ -226,6 +235,7 @@ export function updateBuildRecord(
     exoticWeaponHash?: number | null;
     exoticWeaponName?: string | null;
     pinnedSuper?: string | null;
+    softStatTargets?: SoftStatTargets;
     tagIds?: ConceptTagId[];
     synergyIds?: string[];
     now: string;
@@ -248,6 +258,10 @@ export function updateBuildRecord(
       exoticWeaponName:
         patch.exoticWeaponName !== undefined ? patch.exoticWeaponName : existing.exoticWeaponName,
       pinnedSuper: patch.pinnedSuper !== undefined ? patch.pinnedSuper : existing.pinnedSuper,
+      softStatTargets:
+        patch.softStatTargets !== undefined
+          ? serializeSoftStatTargets(patch.softStatTargets)
+          : serializeSoftStatTargets(existing.softStatTargets),
       updatedAt: patch.now,
     })
     .where(and(eq(builds.id, id), eq(builds.userId, userId)))

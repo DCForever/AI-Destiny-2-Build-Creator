@@ -109,13 +109,14 @@ describe("evaluateCoverage synergies", () => {
     expect(missing.synergies[0]?.tier).toBe("missing");
   });
 
-  it("does not emit softStats", () => {
+  it("does not invent softStats when no targets", () => {
     const result = evaluateCoverage({
       claims: [],
       synergies: [],
       subclass: {},
     });
-    expect(result).not.toHaveProperty("softStats");
+    expect(result.softStats).toEqual([]);
+    expect(result.targets).toEqual({});
     expect(result.setBonuses).toEqual([]);
     expect(result.elementMismatches).toEqual([]);
   });
