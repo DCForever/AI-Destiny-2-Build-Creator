@@ -31,6 +31,7 @@ export type SnapshotConfig = {
   selectedPerks?: number[];
   masterworkHash?: number | null;
   modHashes?: number[] | null;
+  instanceId?: string | null;
 };
 
 function rowToVariant(row: typeof buildVariants.$inferSelect): VariantRecord {

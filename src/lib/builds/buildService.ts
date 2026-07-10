@@ -26,6 +26,7 @@ import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
 import { getSet } from "@/lib/db/repositories/setRepository";
 import { prepareAttachments } from "@/lib/builds/attachmentService";
 import { deriveDefaultBuildName } from "@/lib/builds/defaultBuildName";
+import { buildInventoryPinIndex, computeEquipReady } from "@/lib/builds/equipReady";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
 import {
   assertFullCombatLoadout,
@@ -37,6 +38,7 @@ import {
 } from "@/lib/builds/resolveVariant";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
+import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
 import { getServices } from "@/lib/services";
 
 function parseTags(tagIds: unknown): ConceptTagId[] {
@@ -503,10 +505,13 @@ export async function getResolvedVariant(
   const attachments = listAttachments(db, variantId);
   const weapon = effectiveExoticWeapon(build, variant);
   const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
-  return resolveVariantEquipment(db, userId, build, variant, attachments, {
+  const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
     exoticWeaponSlot: slots.weaponSlot,
     exoticArmorSlot: slots.armorSlot,
   });
+  const inventory = buildInventoryPinIndex(listInventoryItems(db, userId));
+  const readiness = computeEquipReady(resolved, inventory);
+  return { ...resolved, ...readiness };
 }
 
 export type { VariantRecord, AttachmentRecord };

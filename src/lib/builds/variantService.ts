@@ -24,6 +24,7 @@ async function snapshotFromSet(db: AppDatabase, setId: string): Promise<Snapshot
     selectedPerks: item.selectedPerks,
     masterworkHash: item.masterworkHash,
     modHashes: item.modHashes,
+    instanceId: item.instanceId,
   }));
 }
 

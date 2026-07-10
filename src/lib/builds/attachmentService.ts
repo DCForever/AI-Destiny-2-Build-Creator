@@ -22,6 +22,7 @@ async function buildSnapshotConfigs(db: AppDatabase, setId: string): Promise<Sna
     selectedPerks: item.selectedPerks,
     masterworkHash: item.masterworkHash,
     modHashes: item.modHashes,
+    instanceId: item.instanceId,
   }));
 }
 

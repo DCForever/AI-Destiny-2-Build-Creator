@@ -330,6 +330,22 @@ export function BuildsDebugPage() {
     record({ label: `GET ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
   }
 
+  async function checkEquipGate() {
+    if (!canUseVariant) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/equip-gate`;
+    const res = await fetch(url, { method: "POST" });
+    const body = await res.json();
+    record({ label: `POST ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
+  async function checkDimExportGate() {
+    if (!canUseVariant) return;
+    const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/dim-export-gate`;
+    const res = await fetch(url, { method: "POST" });
+    const body = await res.json();
+    record({ label: `POST ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
   async function exportResolved() {
     if (!canUseVariant) return;
     const url = `/api/user/builds/${selectedBuildId}/variants/${selectedVariantId}/resolved`;
@@ -615,6 +631,12 @@ export function BuildsDebugPage() {
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void fetchResolved()}>
               Resolve
+            </button>
+            <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void checkEquipGate()}>
+              Check equip gate
+            </button>
+            <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void checkDimExportGate()}>
+              Check DIM gate
             </button>
             <button type="button" className={buttonClass(!canUseVariant)} disabled={!canUseVariant} onClick={() => void exportResolved()}>
               Export

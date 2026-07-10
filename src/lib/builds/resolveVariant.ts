@@ -16,6 +16,7 @@ export type SlotClaim = {
   source: "set" | "build_exotic_armor" | "variant_exotic_weapon" | "pair_set";
   setId?: string;
   selectedPerks?: number[];
+  instanceId?: string | null;
 };
 
 export type ResolvedVariantEquipment = {
@@ -52,6 +53,7 @@ export type ExpandedSetItem = {
   selectedPerks?: number[];
   setId: string;
   setType: SetType;
+  instanceId?: string | null;
 };
 
 export function detectSlotConflicts(claims: SlotClaim[]): ResolvedVariantEquipment["conflicts"] {
@@ -117,6 +119,7 @@ export async function loadExpandedAttachmentItems(
       selectedPerks: cfg.selectedPerks,
       setId: attachment.setId,
       setType: set.type,
+      instanceId: cfg.instanceId ?? null,
     }));
   }
 
@@ -128,6 +131,7 @@ export async function loadExpandedAttachmentItems(
     selectedPerks: item.selectedPerks,
     setId: attachment.setId,
     setType: set.type,
+    instanceId: item.instanceId,
   }));
 }
 
@@ -139,6 +143,7 @@ export function itemsToSlotClaims(items: ExpandedSetItem[]): SlotClaim[] {
     source: item.setType === "pair" ? "pair_set" : "set",
     setId: item.setId,
     selectedPerks: item.selectedPerks,
+    instanceId: item.instanceId ?? null,
   }));
 }
 

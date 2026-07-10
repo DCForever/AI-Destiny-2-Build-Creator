@@ -318,6 +318,7 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | `DEFAULT_VARIANT_INCOMPLETE` | [DBR-VAR-001](./domain-business-rules.md), [015 default-loadout contract](015-build-identity/contracts/default-loadout-naming-contract.md) | [015 FR-007+](015-build-identity/spec.md) |
 | `IDENTITY_CONFIRM_REQUIRED` | [DBR-ID-010](./domain-business-rules.md), [015 confirm/fork contract](015-build-identity/contracts/identity-confirm-fork-contract.md) | [015 FR-010+](015-build-identity/spec.md) |
 | `DUPLICATE_BUILD_NAME` | [015 naming contract](015-build-identity/contracts/default-loadout-naming-contract.md) | [015 FR-012+](015-build-identity/spec.md) |
+| `NOT_EQUIP_READY` | [DBR-EQP-003](./domain-business-rules.md), [016 gate contract](016-wishlist-equip-ready/contracts/equip-dim-gate-contract.md) | [016 FR-006/013](016-wishlist-equip-ready/spec.md) |
 
 ---
 
