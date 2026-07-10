@@ -81,17 +81,19 @@ export function buildEquipmentMap(claims: SlotClaim[]): Partial<Record<Equipment
 export function validatePairArmorMatch(
   build: Pick<BuildRecord, "exoticArmorHash">,
   pairItems: ExpandedSetItem[],
+  opts?: { intentMode?: boolean },
 ): void {
   if (build.exoticArmorHash == null) return;
   const pairArmor = pairItems.find((i) => i.slot === "exotic_armor");
-  if (pairArmor && pairArmor.itemHash !== build.exoticArmorHash) {
-    throw new ApiError(
-      API_ERROR_CODES.PAIR_ARMOR_MISMATCH,
-      "Pair set exotic armor must match build exotic armor",
-      { expected: build.exoticArmorHash, actual: pairArmor.itemHash },
-      409,
-    );
-  }
+  if (!pairArmor) return;
+  if (pairArmor.itemHash === build.exoticArmorHash) return;
+  if (opts?.intentMode) return;
+  throw new ApiError(
+    API_ERROR_CODES.PAIR_ARMOR_MISMATCH,
+    "Pair set exotic armor must match build exotic armor",
+    { expected: build.exoticArmorHash, actual: pairArmor.itemHash },
+    409,
+  );
 }
 
 export function expandAttachmentItems(
@@ -169,8 +171,12 @@ export function addExoticArmorClaim(
   claims: SlotClaim[],
   build: Pick<BuildRecord, "exoticArmorHash" | "exoticArmorName">,
   armorSlot: EquipmentSlot | null,
+  opts?: { skipIfClassItemClaimed?: boolean },
 ): SlotClaim[] {
   if (!armorSlot || build.exoticArmorHash == null) return claims;
+  if (opts?.skipIfClassItemClaimed && claims.some((c) => c.slot === "class_item")) {
+    return claims;
+  }
   return [
     ...claims,
     {
@@ -269,7 +275,8 @@ export async function resolveVariantEquipment(
     expanded.push(...(await loadExpandedAttachmentItems(db, userId, attachment)));
   }
 
-  validatePairArmorMatch(build, expanded.filter((i) => i.setType === "pair"));
+  const intentMode = opts?.exoticArmorSlot === "class_item";
+  validatePairArmorMatch(build, expanded.filter((i) => i.setType === "pair"), { intentMode });
 
   let claims = itemsToSlotClaims(expanded);
   const weapon = effectiveExoticWeapon(build, variant);
@@ -279,7 +286,9 @@ export async function resolveVariantEquipment(
     opts?.exoticWeaponSlot ?? null,
     weapon.fromBuild ? "variant_exotic_weapon" : "variant_exotic_weapon",
   );
-  claims = addExoticArmorClaim(claims, build, opts?.exoticArmorSlot ?? null);
+  claims = addExoticArmorClaim(claims, build, opts?.exoticArmorSlot ?? null, {
+    skipIfClassItemClaimed: intentMode,
+  });
 
   const conflicts = detectSlotConflicts(claims);
   return {

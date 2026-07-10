@@ -97,6 +97,7 @@ export function BuildsDebugPage() {
     synergyIds: [] as string[],
     subclass: DEFAULT_SUBCLASS,
   });
+  const [editExoticArmor, setEditExoticArmor] = useState<ExoticSelection | null>(null);
   const [pendingIdentityPayload, setPendingIdentityPayload] = useState<Record<string, unknown> | null>(null);
   const [loadoutGaps, setLoadoutGaps] = useState<string[]>([]);
   const [characters, setCharacters] = useState<
@@ -296,6 +297,37 @@ export function BuildsDebugPage() {
     }
     if (res.ok) await loadBuildDetail(selectedBuildId);
     record({ label: `PATCH ${url}`, request: payload, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
+  async function saveExoticArmor() {
+    if (!selectedBuildId) return;
+    const url = `/api/user/builds/${selectedBuildId}`;
+    const payload = {
+      exoticArmorHash: editExoticArmor?.hash ?? null,
+      exoticArmorName: editExoticArmor?.name ?? null,
+    };
+    record({ label: `PATCH ${url} exoticArmor`, request: payload });
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (res.status === 409 && body?.code === "IDENTITY_CONFIRM_REQUIRED") {
+      setPendingIdentityPayload(payload);
+      record({ label: `PATCH ${url} exoticArmor`, request: payload, error: body });
+      return;
+    }
+    if (res.ok) {
+      setEditExoticArmor(null);
+      await loadBuildDetail(selectedBuildId);
+    }
+    record({
+      label: `PATCH ${url} exoticArmor`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
   }
 
   async function confirmIdentityAction(action: "confirm" | "fork") {
@@ -734,6 +766,66 @@ export function BuildsDebugPage() {
           <button type="button" className={buttonClass(!selectedBuildId || designationIds.length === 0)} disabled={!selectedBuildId || designationIds.length === 0} onClick={() => void saveDesignations()}>
             Save designations
           </button>
+          <div className="space-y-2 border-t border-zinc-800 pt-3">
+            <p className="text-xs text-zinc-500">
+              Build exotic armor (classic = hash identity; ClassItem = intent-lock). Current:{" "}
+              {buildDetail?.exoticArmorHash
+                ? `${buildDetail.exoticArmorName ?? "?"} (${buildDetail.exoticArmorHash})`
+                : "none"}
+            </p>
+            <ExoticArmorLookup
+              selected={editExoticArmor}
+              onSelect={(exoticArmor) => setEditExoticArmor(exoticArmor)}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={buttonClass(!selectedBuildId)}
+                disabled={!selectedBuildId}
+                onClick={() => void saveExoticArmor()}
+              >
+                Save exotic armor
+              </button>
+              <button
+                type="button"
+                className={buttonClass(!editExoticArmor)}
+                disabled={!editExoticArmor}
+                onClick={() => setEditExoticArmor(null)}
+              >
+                Clear draft
+              </button>
+              <button
+                type="button"
+                className={buttonClass(!selectedBuildId || buildDetail?.exoticArmorHash == null)}
+                disabled={!selectedBuildId || buildDetail?.exoticArmorHash == null}
+                onClick={() => {
+                  setEditExoticArmor(null);
+                  void (async () => {
+                    if (!selectedBuildId) return;
+                    const url = `/api/user/builds/${selectedBuildId}`;
+                    const payload = { exoticArmorHash: null, exoticArmorName: null };
+                    const res = await fetch(url, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(payload),
+                    });
+                    const body = await res.json();
+                    if (res.status === 409 && body?.code === "IDENTITY_CONFIRM_REQUIRED") {
+                      setPendingIdentityPayload(payload);
+                    } else if (res.ok) await loadBuildDetail(selectedBuildId);
+                    record({
+                      label: `PATCH ${url} clear exoticArmor`,
+                      request: payload,
+                      response: res.ok ? body : undefined,
+                      error: res.ok ? undefined : body,
+                    });
+                  })();
+                }}
+              >
+                Clear build exotic
+              </button>
+            </div>
+          </div>
           {pendingIdentityPayload ? (
             <div className="space-y-2 rounded border border-amber-700/60 bg-amber-950/40 p-2 text-xs text-amber-100">
               <p>Identity change requires confirm or fork.</p>

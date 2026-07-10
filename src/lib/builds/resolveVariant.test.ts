@@ -11,6 +11,7 @@ import {
   itemsToSlotClaims,
   validatePairArmorMatch,
   type ExpandedSetItem,
+  type SlotClaim,
 } from "./resolveVariant";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import type { BuildRecord } from "@/lib/db/repositories/buildRepository";
@@ -106,5 +107,41 @@ describe("resolveVariant", () => {
       },
     ];
     expect(() => validatePairArmorMatch({ exoticArmorHash: null }, pairItems)).not.toThrow();
+  });
+
+  it("allows pair armor mismatch in class-item intent mode", () => {
+    const pairItems: ExpandedSetItem[] = [
+      {
+        slot: "exotic_armor",
+        itemHash: 999,
+        itemName: "Other class item",
+        setId: "p1",
+        setType: "pair",
+      },
+    ];
+    expect(() =>
+      validatePairArmorMatch({ exoticArmorHash: 100 }, pairItems, { intentMode: true }),
+    ).not.toThrow();
+  });
+
+  it("skips build exotic injection when class_item already claimed in intent mode", () => {
+    const existing: SlotClaim[] = [
+      {
+        slot: "class_item",
+        itemHash: 50,
+        itemName: "Variant CI",
+        source: "set",
+        selectedPerks: [1, 2],
+      },
+    ];
+    const next = addExoticArmorClaim(
+      existing,
+      { exoticArmorHash: 100, exoticArmorName: "Build CI" },
+      "class_item",
+      { skipIfClassItemClaimed: true },
+    );
+    expect(next).toHaveLength(1);
+    expect(next[0]?.itemHash).toBe(50);
+    expect(next[0]?.selectedPerks).toEqual([1, 2]);
   });
 });

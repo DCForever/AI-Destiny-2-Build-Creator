@@ -1,4 +1,3 @@
-import type { ArmorSlotName } from "@/lib/manifest/types/records";
 import type { AppDatabase } from "@/lib/db/client";
 import { getBuild } from "@/lib/db/repositories/buildRepository";
 import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
@@ -7,43 +6,9 @@ import {
   listAttachments,
   listVariants,
 } from "@/lib/db/repositories/variantRepository";
+import { lookupExoticSlots } from "@/lib/builds/exoticArmorIntent";
+import { resolveVariantEquipment } from "@/lib/builds/resolveVariant";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
-import {
-  armorManifestSlotToEquipment,
-  resolveVariantEquipment,
-  weaponManifestSlotToEquipment,
-} from "@/lib/builds/resolveVariant";
-import { getServices } from "@/lib/services";
-
-async function lookupExoticSlots(
-  exoticWeaponHash: number | null,
-  exoticArmorHash: number | null,
-): Promise<{ weaponSlot: EquipmentSlot | null; armorSlot: EquipmentSlot | null }> {
-  try {
-    const { entityCache } = await getServices();
-    let weaponSlot: EquipmentSlot | null = null;
-    let armorSlot: EquipmentSlot | null = null;
-
-    if (exoticWeaponHash) {
-      const exotics = await entityCache.getStore("exotic-weapons");
-      const match = exotics.find((w) => w.hash === exoticWeaponHash);
-      if (match) weaponSlot = weaponManifestSlotToEquipment(match.slot);
-    }
-
-    if (exoticArmorHash) {
-      const armor = await entityCache.getStore("exotic-armor");
-      const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
-      if (armorMatch) armorSlot = armorManifestSlotToEquipment(armorMatch.slot as ArmorSlotName);
-    }
-
-    return { weaponSlot, armorSlot };
-  } catch {
-    return {
-      weaponSlot: exoticWeaponHash ? "primary" : null,
-      armorSlot: exoticArmorHash ? "chest" : null,
-    };
-  }
-}
 
 export type VariantCompareResult = {
   shared: {

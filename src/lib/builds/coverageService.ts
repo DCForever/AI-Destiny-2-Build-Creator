@@ -10,6 +10,7 @@ import {
 } from "@/lib/builds/coverage";
 import { estimateLoadoutStats } from "@/lib/builds/statEstimate";
 import { effectiveExoticWeapon, resolveVariantEquipment } from "@/lib/builds/resolveVariant";
+import { lookupExoticSlots } from "@/lib/builds/exoticArmorIntent";
 import { buildSetBonusByItemHash } from "@/lib/inventory/instances/armorSetBonus";
 import { getServices } from "@/lib/services";
 
@@ -47,9 +48,10 @@ export async function getVariantCoverage(
 
   const attachments = listAttachments(db, variantId);
   const weapon = effectiveExoticWeapon(build, variant);
+  const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
   const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
-    exoticWeaponSlot: weapon.exoticWeaponHash ? "primary" : null,
-    exoticArmorSlot: build.exoticArmorHash ? "chest" : null,
+    exoticWeaponSlot: slots.weaponSlot,
+    exoticArmorSlot: slots.armorSlot,
   });
 
   const claims = Object.values(resolved.equipment);

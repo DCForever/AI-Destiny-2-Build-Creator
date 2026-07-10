@@ -32,15 +32,17 @@ import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
 import {
   assertFullCombatLoadout,
   assertNoSlotConflicts,
-  armorManifestSlotToEquipment,
   effectiveExoticWeapon,
   resolveVariantEquipment,
-  weaponManifestSlotToEquipment,
 } from "@/lib/builds/resolveVariant";
-import type { EquipmentSlot } from "@/lib/sets/schemas";
+import {
+  isIdentityExoticArmorChange,
+  lookupExoticArmorSlot,
+  lookupExoticSlots,
+  modeFromArmorSlot,
+} from "@/lib/builds/exoticArmorIntent";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
 import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
-import { getServices } from "@/lib/services";
 
 function parseTags(tagIds: unknown): ConceptTagId[] {
   const result = conceptTagIdsSchema.safeParse(tagIds ?? []);
@@ -74,34 +76,41 @@ function assertUniqueBuildName(
   }
 }
 
-async function lookupExoticSlots(
-  exoticWeaponHash: number | null,
-  exoticArmorHash: number | null,
-): Promise<{ weaponSlot: EquipmentSlot | null; armorSlot: EquipmentSlot | null }> {
-  try {
-    const { entityCache } = await getServices();
-    let weaponSlot: EquipmentSlot | null = null;
-    let armorSlot: EquipmentSlot | null = null;
-
-    if (exoticWeaponHash) {
-      const exotics = await entityCache.getStore("exotic-weapons");
-      const match = exotics.find((w) => w.hash === exoticWeaponHash);
-      if (match) weaponSlot = weaponManifestSlotToEquipment(match.slot);
-    }
-
-    if (exoticArmorHash) {
-      const armor = await entityCache.getStore("exotic-armor");
-      const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
-      if (armorMatch) armorSlot = armorManifestSlotToEquipment(armorMatch.slot);
-    }
-
-    return { weaponSlot, armorSlot };
-  } catch {
-    return {
-      weaponSlot: exoticWeaponHash ? "primary" : null,
-      armorSlot: exoticArmorHash ? "chest" : null,
-    };
+async function identityFieldsChanged(
+  existing: BuildRecord,
+  input: UpdateBuildInput,
+): Promise<string[]> {
+  const fields: string[] = [];
+  if (input.synergyIds !== undefined) {
+    const next = [...input.synergyIds].sort().join(",");
+    const prev = [...existing.synergyIds].sort().join(",");
+    if (next !== prev) fields.push("synergyIds");
   }
+  if (input.exoticArmorHash !== undefined && input.exoticArmorHash !== existing.exoticArmorHash) {
+    const [existingSlot, nextSlot] = await Promise.all([
+      lookupExoticArmorSlot(existing.exoticArmorHash),
+      lookupExoticArmorSlot(input.exoticArmorHash),
+    ]);
+    const existingMode = modeFromArmorSlot(existingSlot, existing.exoticArmorHash);
+    const nextMode = modeFromArmorSlot(nextSlot, input.exoticArmorHash);
+    if (
+      isIdentityExoticArmorChange(
+        existing.exoticArmorHash,
+        input.exoticArmorHash,
+        existingMode,
+        nextMode,
+      )
+    ) {
+      fields.push("exoticArmorHash");
+    }
+  }
+  if (input.exoticWeaponHash !== undefined && input.exoticWeaponHash !== existing.exoticWeaponHash) {
+    fields.push("exoticWeaponHash");
+  }
+  if (input.pinnedSuper !== undefined && input.pinnedSuper !== existing.pinnedSuper) {
+    fields.push("pinnedSuper");
+  }
+  return fields;
 }
 
 async function variantHasMods(
@@ -119,25 +128,6 @@ async function variantHasMods(
     if (items.some((item) => (item.modHashes?.length ?? 0) > 0)) return true;
   }
   return false;
-}
-
-function identityFieldsChanged(existing: BuildRecord, input: UpdateBuildInput): string[] {
-  const fields: string[] = [];
-  if (input.synergyIds !== undefined) {
-    const next = [...input.synergyIds].sort().join(",");
-    const prev = [...existing.synergyIds].sort().join(",");
-    if (next !== prev) fields.push("synergyIds");
-  }
-  if (input.exoticArmorHash !== undefined && input.exoticArmorHash !== existing.exoticArmorHash) {
-    fields.push("exoticArmorHash");
-  }
-  if (input.exoticWeaponHash !== undefined && input.exoticWeaponHash !== existing.exoticWeaponHash) {
-    fields.push("exoticWeaponHash");
-  }
-  if (input.pinnedSuper !== undefined && input.pinnedSuper !== existing.pinnedSuper) {
-    fields.push("pinnedSuper");
-  }
-  return fields;
 }
 
 export type BuildDetail = Awaited<ReturnType<typeof getBuildDetail>>;
@@ -409,7 +399,7 @@ export async function updateUserBuild(
     }
   }
 
-  const changedIdentity = identityFieldsChanged(existing, input);
+  const changedIdentity = await identityFieldsChanged(existing, input);
   if (changedIdentity.length > 0) {
     if (!input.identityAction) {
       throw new ApiError(
