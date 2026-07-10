@@ -17,7 +17,7 @@
 | 6 | **done** | `bungie-equip` (`020`) | DAC-P1-007, DBR-EQP-* | Merged to `feature/overhall` |
 | 7 | **done** | `dim-export` (`021`) | DAC-P1-008 | Merged to `feature/overhall` |
 | 8 | **done** | `class-item-intent` (`022`) | DAC-VAR-005, DBR-ID-005, DBR-ROLL-009 | Merged to `feature/overhall` |
-| 9 | **in_progress** | `llm-propose` | LLM propose-for-confirm | Manual re-run; no auto-apply |
+| 9 | **in_progress** | `llm-propose` (`023`) | DAC-P2-004, DBR-LLM-* | Spec started; propose-for-confirm |
 
 **Done when**: all rows are `done` and local `feature/overhall` contains each merge.
 

@@ -5,5 +5,5 @@ alwaysApply: true
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/022-class-item-intent/plan.md
+at specs/023-llm-propose/spec.md
 <!-- SPECKIT END -->
