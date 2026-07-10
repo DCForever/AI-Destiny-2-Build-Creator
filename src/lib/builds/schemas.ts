@@ -8,6 +8,9 @@ export const buildVariantSchema = z.object({
   notes: z.string().trim().max(500).nullable().optional(),
   exoticWeaponHash: z.number().int().positive().nullable().optional(),
   exoticWeaponName: z.string().nullable().optional(),
+  artifactHash: z.number().int().positive().nullable().optional(),
+  artifactName: z.string().trim().min(1).nullable().optional(),
+  artifactConfig: z.array(z.number().int().positive()).optional(),
 });
 
 export const createBuildSchema = z.object({

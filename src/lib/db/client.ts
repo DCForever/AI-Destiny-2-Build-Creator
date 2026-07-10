@@ -69,6 +69,18 @@ function ensureSocketPlugsColumn(db: Database.Database): void {
   }
 }
 
+function ensureVariantArtifactColumns(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(build_variants)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "artifact_hash")) {
+    db.exec("ALTER TABLE build_variants ADD COLUMN artifact_hash INTEGER");
+    db.exec("ALTER TABLE build_variants ADD COLUMN artifact_name TEXT");
+  }
+  if (!cols.some((c) => c.name === "artifact_config")) {
+    db.exec("ALTER TABLE build_variants ADD COLUMN artifact_config TEXT NOT NULL DEFAULT '[]'");
+  }
+}
+
 function ensureBuildsIdentityColumns(db: Database.Database): void {
   const cols = db.prepare("PRAGMA table_info(builds)").all() as { name: string; notnull: number }[];
   if (cols.length === 0) return;
@@ -256,6 +268,9 @@ export function runMigrations(db: Database.Database): void {
       is_default INTEGER NOT NULL DEFAULT 0,
       exotic_weapon_hash INTEGER,
       exotic_weapon_name TEXT,
+      artifact_hash INTEGER,
+      artifact_name TEXT,
+      artifact_config TEXT NOT NULL DEFAULT '[]',
       notes TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -286,6 +301,7 @@ export function runMigrations(db: Database.Database): void {
   ensureSocketPlugsColumn(db);
   ensureSetItemInstanceIdColumn(db);
   ensureBuildsIdentityColumns(db);
+  ensureVariantArtifactColumns(db);
 }
 
 export function getDb(): AppDatabase {

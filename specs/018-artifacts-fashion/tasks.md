@@ -5,13 +5,13 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Verify docs under `specs/018-artifacts-fashion/` (plan, research, data-model, contracts, quickstart)
-- [ ] T002 [P] Skim `schema.ts` build_variants, `sets/schemas.ts`, `setItemService.ts`, `resolveVariant.ts`, `prepareAttachments`, Builds/Sets debug
+- [x] T001 Verify docs under `specs/018-artifacts-fashion/` (plan, research, data-model, contracts, quickstart)
+- [x] T002 [P] Skim `schema.ts` build_variants, `sets/schemas.ts`, `setItemService.ts`, `resolveVariant.ts`, `prepareAttachments`, Builds/Sets debug
 
 ## Phase 2: Foundational
 
-- [ ] T003 Add `artifact_hash`, `artifact_name`, `artifact_config` columns + migration/backfill on `build_variants`
-- [ ] T004 Add `FASHION_SLOTS` + fix `isSlotValidForSetType` for fashion in `src/lib/sets/schemas.ts`
+- [x] T003 Add `artifact_hash`, `artifact_name`, `artifact_config` columns + migration/backfill on `build_variants`
+- [x] T004 Add `FASHION_SLOTS` + fix `isSlotValidForSetType` for fashion in `src/lib/sets/schemas.ts`
 - [ ] T005 Checkpoint: typecheck compiles
 
 ## Phase 3: US1 Artifact (P1)

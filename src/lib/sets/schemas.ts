@@ -8,6 +8,14 @@ export type SetType = (typeof SET_TYPES)[number];
 export const WEAPON_SLOTS = ["primary", "special", "heavy"] as const;
 export const ARMOR_SLOTS = ["helmet", "arms", "chest", "legs", "class_item"] as const;
 export const PAIR_SLOTS = ["exotic_weapon", "exotic_armor"] as const;
+export const FASHION_SLOTS = [
+  "shader_ornament",
+  "ghost",
+  "sparrow",
+  "ship",
+  "emblem",
+  "finisher",
+] as const;
 
 export const EQUIPMENT_SLOTS = [
   ...WEAPON_SLOTS,
@@ -16,22 +24,24 @@ export const EQUIPMENT_SLOTS = [
 ] as const;
 
 export type EquipmentSlot = (typeof EQUIPMENT_SLOTS)[number];
+export type FashionSlot = (typeof FASHION_SLOTS)[number];
 
-export const SLOTS_BY_SET_TYPE: Record<
-  SetType,
-  readonly EquipmentSlot[] | "mods_only" | "cosmetic"
-> = {
+export const SLOTS_BY_SET_TYPE: Record<SetType, readonly string[] | "mods_only"> = {
   weapon: WEAPON_SLOTS,
   armor: ARMOR_SLOTS,
   mod: "mods_only",
   pair: PAIR_SLOTS,
-  fashion: "cosmetic",
+  fashion: FASHION_SLOTS,
 };
 
-export function isSlotValidForSetType(type: SetType, slot: string): slot is EquipmentSlot {
+export function isSlotValidForSetType(type: SetType, slot: string): boolean {
   const allowed = SLOTS_BY_SET_TYPE[type];
-  if (allowed === "mods_only" || allowed === "cosmetic") return false;
+  if (allowed === "mods_only") return false;
   return (allowed as readonly string[]).includes(slot);
+}
+
+export function isFashionSlot(slot: string): slot is FashionSlot {
+  return (FASHION_SLOTS as readonly string[]).includes(slot);
 }
 
 export const setTypeSchema = z.enum(SET_TYPES);

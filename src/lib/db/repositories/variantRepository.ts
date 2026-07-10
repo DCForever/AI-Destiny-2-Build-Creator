@@ -10,10 +10,23 @@ export type VariantRecord = {
   isDefault: boolean;
   exoticWeaponHash: number | null;
   exoticWeaponName: string | null;
+  artifactHash: number | null;
+  artifactName: string | null;
+  artifactConfig: number[];
   notes: string | null;
   createdAt: string;
   updatedAt: string;
 };
+
+function parseArtifactConfig(raw: string | null | undefined): number[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((n): n is number => typeof n === "number") : [];
+  } catch {
+    return [];
+  }
+}
 
 export type AttachmentRecord = {
   id: string;
@@ -42,6 +55,9 @@ function rowToVariant(row: typeof buildVariants.$inferSelect): VariantRecord {
     isDefault: row.isDefault === 1,
     exoticWeaponHash: row.exoticWeaponHash,
     exoticWeaponName: row.exoticWeaponName,
+    artifactHash: row.artifactHash ?? null,
+    artifactName: row.artifactName ?? null,
+    artifactConfig: parseArtifactConfig(row.artifactConfig),
     notes: row.notes,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -86,6 +102,9 @@ export function createVariantRecord(
     isDefault?: boolean;
     exoticWeaponHash?: number | null;
     exoticWeaponName?: string | null;
+    artifactHash?: number | null;
+    artifactName?: string | null;
+    artifactConfig?: number[];
     notes?: string | null;
     now: string;
   },
@@ -98,6 +117,9 @@ export function createVariantRecord(
       isDefault: input.isDefault ? 1 : 0,
       exoticWeaponHash: input.exoticWeaponHash ?? null,
       exoticWeaponName: input.exoticWeaponName ?? null,
+      artifactHash: input.artifactHash ?? null,
+      artifactName: input.artifactName ?? null,
+      artifactConfig: JSON.stringify(input.artifactConfig ?? []),
       notes: input.notes ?? null,
       createdAt: input.now,
       updatedAt: input.now,
@@ -114,6 +136,9 @@ export function updateVariantRecord(
     name?: string;
     exoticWeaponHash?: number | null;
     exoticWeaponName?: string | null;
+    artifactHash?: number | null;
+    artifactName?: string | null;
+    artifactConfig?: number[];
     notes?: string | null;
     now: string;
   },
@@ -127,6 +152,12 @@ export function updateVariantRecord(
       exoticWeaponHash: patch.exoticWeaponHash !== undefined ? patch.exoticWeaponHash : existing.exoticWeaponHash,
       exoticWeaponName:
         patch.exoticWeaponName !== undefined ? patch.exoticWeaponName : existing.exoticWeaponName,
+      artifactHash: patch.artifactHash !== undefined ? patch.artifactHash : existing.artifactHash,
+      artifactName: patch.artifactName !== undefined ? patch.artifactName : existing.artifactName,
+      artifactConfig:
+        patch.artifactConfig !== undefined
+          ? JSON.stringify(patch.artifactConfig)
+          : JSON.stringify(existing.artifactConfig),
       notes: patch.notes !== undefined ? patch.notes : existing.notes,
       updatedAt: patch.now,
     })
