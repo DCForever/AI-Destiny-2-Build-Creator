@@ -1,8 +1,12 @@
 # Business Rules
 
-**Updated**: 2026-06-28
+**Updated**: 2026-07-10
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
+
+**Domain layer (canonical when conflicting)**:
+- [`domain-business-rules.md`](./domain-business-rules.md) (`DBR-*`)
+- [`domain-acceptance-criteria.md`](./domain-acceptance-criteria.md) (`DAC-*`)
 
 **Canonical tag vocabulary**: [`src/data/conceptTags.ts`](../src/data/conceptTags.ts)
 
@@ -69,9 +73,9 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 
 | ID | Rule | FR |
 |----|------|-----|
-| BR-FASH-001 | Fashion Sets are purely cosmetic/organizational. | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-FASH-002 | Fashion Sets must not participate in build composition, synergies, suggestions, or stats. | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-FASH-003 | Fashion Sets excluded from variant slot resolution. | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-FASH-001 | Fashion Sets are cosmetic/organizational (not identity). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-FASH-002 | Fashion Sets must not participate in synergies, suggestions, or stats. **Updated**: they **do** participate in **full equip / DIM export** when attached per variant — see [DBR-FASH-001–005](./domain-business-rules.md). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-FASH-003 | Fashion is resolved on the variant fashion layer for equip/export; still excluded from combat synergy/stat resolution. **See** [DBR-FASH-*](./domain-business-rules.md). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
 
 ---
 
@@ -103,9 +107,9 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | ID | Rule | FR |
 |----|------|-----|
 | BR-BLD-001 | Build contains one default variant and optional additional variants. | [FR-014](001-build-sets-synergies/spec.md#functional-requirements), [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-BLD-002 | Shared across variants: subclass, aspects, exotic armor, designated synergies, concept tags. | [FR-023](001-build-sets-synergies/spec.md#functional-requirements), [FR-030](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-BLD-003 | **Exotic armor** is build-level, shared by all variants. | [FR-023](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-BLD-004 | **Exotic weapon** may differ per variant. | [FR-023](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-BLD-002 | Shared across variants: subclass **tree/element**, designated synergies; aspects/fragments/abilities may vary per variant except build-pinned Super / exotic-required pins. Concept tags are filter metadata, not identity. **Superseded in part by** [DBR-ID-*](./domain-business-rules.md), [DBR-SUB-*](./domain-business-rules.md). | [FR-023](001-build-sets-synergies/spec.md#functional-requirements), [FR-030](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-BLD-003 | **Exotic armor** (non–class-item), when set, is build-level identity by **item** (not instance). Exotic class items are intent-locked and may differ per variant within synergies. **See** [DBR-ID-003–005](./domain-business-rules.md). | [FR-023](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-BLD-004 | **Exotic weapon** may be variant-level **or** build-shared (build-shared ⇒ identity). **See** [DBR-ID-006](./domain-business-rules.md). | [FR-023](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-BLD-005 | Shared build-level fields edited on parent build, not per variant. | [001 edge cases](001-build-sets-synergies/spec.md#edge-cases) |
 | BR-BLD-006 | Exactly one default variant per build. | [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
 
@@ -115,10 +119,10 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 
 | ID | Rule | FR |
 |----|------|-----|
-| BR-SAVE-001 | Build cannot save unless default variant has ≥1 equipment slot via attached sets. | [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SAVE-002 | Variant cannot save unless ≥1 equipment slot filled via attached sets. | [FR-025](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SAVE-003 | Build must designate ≥1 synergy; zero → `NO_SYNERGY`. | [FR-024](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SAVE-004 | Empty variant error: `VARIANT_EMPTY`. | [FR-025](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SAVE-001 | **Superseded by** [DBR-CMPL-001](./domain-business-rules.md): default variant must be a **full combat loadout**, not merely ≥1 slot. | [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SAVE-002 | **Superseded in part by** [DBR-CMPL-002](./domain-business-rules.md): non-default variants may have empty slots; default must be complete. Wishlist/unowned desired rolls may save; equip gated separately ([DBR-ROLL-005](./domain-business-rules.md)). | [FR-025](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SAVE-003 | Build must designate ≥1 synergy; zero → `NO_SYNERGY`. Affirmed by [DBR-SYN-003](./domain-business-rules.md). | [FR-024](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SAVE-004 | Empty variant error: `VARIANT_EMPTY` — applies when a variant that must be complete (default) has no equipment; non-default gaps are allowed per [DBR-CMPL-002](./domain-business-rules.md). | [FR-025](001-build-sets-synergies/spec.md#functional-requirements) |
 
 ---
 
@@ -159,7 +163,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | ID | Rule | FR |
 |----|------|-----|
 | BR-VAR-001 | Multiple variants per build with different sets and exotic weapons. | [FR-014](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-VAR-002 | Variants typically use snapshots for stable compositions. | [FR-014](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-VAR-002 | Attachments are **live by default**; snapshot is opt-in for frozen equipable variants. **Supersedes “typically snapshots”** — see [DBR-CMP-003](./domain-business-rules.md). | [FR-014](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-VAR-003 | Compare view highlights set/weapon/notes differences; shows shared fields as common. | [FR-014](001-build-sets-synergies/spec.md#functional-requirements), [FR-015](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-VAR-004 | Filter builds by exotic armor, exotic weapon, and concept tags. | [FR-015](001-build-sets-synergies/spec.md#functional-requirements), [FR-031](001-build-sets-synergies/spec.md#functional-requirements) |
 
@@ -319,7 +323,12 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | Topic | Status |
 |-------|--------|
 | Large sets (50+ items) | Not resolved |
-| Multiple synergies on same items | Not resolved |
-| Manifest deprecation of set items | Not resolved |
-| User-defined custom tags | Out of scope v1 |
+| Multiple synergies on same items | **Resolved in domain**: many-to-many links; required links AND on default variant — see [DBR-SYN-007–010](./domain-business-rules.md) |
+| Manifest deprecation of set items | Soft stale retained; instance stale pins — see [DBR-ROLL-006](./domain-business-rules.md) |
+| User-defined custom tags | Out of scope v1 (personal synergy **keywords** allowed — [DBR-SYN-005](./domain-business-rules.md)) |
 | Auto-infer tags from set contents | Future enhancement |
+| Shareable read-only build links | Planned — [DBR-BLD-005](./domain-business-rules.md) |
+
+## Domain supersession index (2026-07-10)
+
+When implementing build/equip behavior, prefer [`domain-business-rules.md`](./domain-business-rules.md) over older BR text where marked superseded above. Full mapping: domain doc § Supersessions.
