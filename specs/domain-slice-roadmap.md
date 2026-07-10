@@ -14,8 +14,8 @@
 | 3 | **done** | `soft-guidance` (`017`) | DAC-P1-006, DBR-GUID-*, DBR-SYN-011; set-bonus + element soft (no soft-stat UI) | Merged to `feature/overhall` |
 | 4 | **done** | `artifacts-fashion` (`018`) | DBR-ART-*, DBR-FASH-*, DAC-VAR-002–003 | Merged to `feature/overhall` |
 | 5 | **done** | `soft-stat-targets` (`019`) | DBR-STAT-*, EoF six stats | Merged to `feature/overhall` |
-| 6 | **in_progress** | `bungie-equip` (`020`) | DAC-P1-007, DBR-EQP-* | Spec started; sync/transfer/apply; best-effort partial |
-| 7 | pending | `dim-export` | DAC-P1-008 | Export equip-ready variant to DIM |
+| 6 | **done** | `bungie-equip` (`020`) | DAC-P1-007, DBR-EQP-* | Merged to `feature/overhall` |
+| 7 | **in_progress** | `dim-export` | DAC-P1-008 | Export equip-ready variant to DIM |
 | 8 | pending | `class-item-intent` | Exotic class-item intent-lock | Deferred from slice 1 |
 | 9 | pending | `llm-propose` | LLM propose-for-confirm | Manual re-run; no auto-apply |
 
