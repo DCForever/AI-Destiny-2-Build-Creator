@@ -10,8 +10,8 @@
 | 1 | **done** | `build-identity` (`015`) | DAC-P1-002–003, DAC-VAR-004, DAC-NME-*, identity DBR | Merged to `feature/overhall` |
 | 2 | **done** | `wishlist-equip-ready` (`016`) | DAC-P1-005, DBR-ROLL-001–008, DBR-EQP-003 | Merged to `feature/overhall` |
 | 3 | **done** | `soft-guidance` (`017`) | DAC-P1-006, DBR-GUID-*, DBR-SYN-011; set-bonus + element soft (no soft-stat UI) | Merged to `feature/overhall` |
-| 4 | **in_progress** | `artifacts-fashion` (`018`) | DBR-ART-*, DBR-FASH-*, DAC-VAR-002–003 | Spec started; storage + resolved exposure; equip apply deferred |
-| 5 | pending | `soft-stat-targets` | DBR-STAT-*, EoF six stats | Soft targets at build level; UI + validation soft |
+| 4 | **done** | `artifacts-fashion` (`018`) | DBR-ART-*, DBR-FASH-*, DAC-VAR-002–003 | Merged to `feature/overhall` |
+| 5 | **in_progress** | `soft-stat-targets` | DBR-STAT-*, EoF six stats | Soft targets at build level; UI + validation soft |
 | 6 | pending | `bungie-equip` | DAC-P1-007, DBR-EQP-* | Sync-on-equip, transfer, apply; best-effort partial |
 | 7 | pending | `dim-export` | DAC-P1-008 | Export equip-ready variant to DIM |
 | 8 | pending | `class-item-intent` | Exotic class-item intent-lock | Deferred from slice 1 |

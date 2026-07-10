@@ -266,6 +266,9 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
     isDefault: true,
     exoticWeaponHash: defaultVariant.exoticWeaponHash ?? null,
     exoticWeaponName: defaultVariant.exoticWeaponName ?? null,
+    artifactHash: defaultVariant.artifactHash ?? null,
+    artifactName: defaultVariant.artifactName ?? null,
+    artifactConfig: defaultVariant.artifactConfig ?? [],
     notes: defaultVariant.notes ?? null,
     now,
   });
@@ -338,6 +341,9 @@ async function forkBuildWithIdentity(
       isDefault: variant.isDefault,
       exoticWeaponHash: variant.exoticWeaponHash,
       exoticWeaponName: variant.exoticWeaponName,
+      artifactHash: variant.artifactHash,
+      artifactName: variant.artifactName,
+      artifactConfig: variant.artifactConfig,
       notes: variant.notes,
       now,
     });
@@ -446,12 +452,28 @@ export async function updateUserVariant(
   const build = getBuild(db, userId, buildId);
   if (!build) return null;
 
+  const existing = getVariant(db, buildId, variantId);
+  if (!existing) return null;
+
   const now = new Date().toISOString();
+  const { resolveArtifactSelection } = await import("@/lib/builds/artifactSelection");
+  const artifactPatch = await resolveArtifactSelection({
+    artifactHash: input.artifactHash,
+    artifactName: input.artifactName,
+    artifactConfig: input.artifactConfig,
+    previous: {
+      artifactHash: existing.artifactHash,
+      artifactName: existing.artifactName,
+      artifactConfig: existing.artifactConfig,
+    },
+  });
+
   updateVariantRecord(db, buildId, variantId, {
     name: input.name,
     exoticWeaponHash: input.exoticWeaponHash,
     exoticWeaponName: input.exoticWeaponName,
     notes: input.notes,
+    ...(artifactPatch ?? {}),
     now,
   });
 
@@ -511,7 +533,15 @@ export async function getResolvedVariant(
   });
   const inventory = buildInventoryPinIndex(listInventoryItems(db, userId));
   const readiness = computeEquipReady(resolved, inventory);
-  return { ...resolved, ...readiness };
+  const { resolvedArtifactFromVariant, resolveFashionLayer } = await import(
+    "@/lib/builds/resolveArtifactFashion"
+  );
+  return {
+    ...resolved,
+    ...readiness,
+    artifact: resolvedArtifactFromVariant(variant),
+    fashion: await resolveFashionLayer(db, userId, variantId, attachments),
+  };
 }
 
 export type { VariantRecord, AttachmentRecord };

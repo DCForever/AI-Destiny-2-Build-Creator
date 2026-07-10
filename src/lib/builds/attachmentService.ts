@@ -1,3 +1,4 @@
+import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import type { AppDatabase } from "@/lib/db/client";
 import {
   listAttachments,
@@ -34,10 +35,21 @@ export async function prepareAttachments(
   now: string,
 ): Promise<AttachmentRecord[]> {
   const prepared: Array<Omit<AttachmentRecord, "id" | "variantId" | "attachedAt">> = [];
+  let fashionCount = 0;
 
   for (const input of inputs) {
     const set = getSet(db, userId, input.setId);
     if (!set) continue;
+
+    if (set.type === "fashion") {
+      fashionCount += 1;
+      if (fashionCount > 1) {
+        throw new ApiError(
+          API_ERROR_CODES.INVALID_ITEM,
+          "Variant may attach at most one fashion set",
+        );
+      }
+    }
 
     let snapshotConfigs: SnapshotConfig[] | null = null;
     if (input.mode === "snapshot") {

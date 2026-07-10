@@ -24,6 +24,9 @@ type BuildVariant = {
   isDefault?: boolean;
   exoticWeaponHash: number | null;
   exoticWeaponName: string | null;
+  artifactHash?: number | null;
+  artifactName?: string | null;
+  artifactConfig?: number[];
   notes: string | null;
   attachments: AttachmentRecord[];
 };
@@ -75,6 +78,8 @@ export function BuildsDebugPage() {
   const [availableSynergies, setAvailableSynergies] = useState<SynergySummary[]>([]);
   const [designationIds, setDesignationIds] = useState<string[]>([]);
   const [variantNotes, setVariantNotes] = useState("");
+  const [artifactHashInput, setArtifactHashInput] = useState("");
+  const [artifactConfigInput, setArtifactConfigInput] = useState("");
   const [suggestGoal, setSuggestGoal] = useState("");
   const [filterExoticArmor, setFilterExoticArmor] = useState<ExoticSelection | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -544,6 +549,77 @@ export function BuildsDebugPage() {
               )
             }
           />
+          <label className="block text-xs text-zinc-400">
+            Artifact hash
+            <input
+              className={zincInputClass()}
+              placeholder="Manifest artifact hash"
+              value={artifactHashInput || (selectedVariant?.artifactHash != null ? String(selectedVariant.artifactHash) : "")}
+              onChange={(event) => setArtifactHashInput(event.target.value)}
+            />
+          </label>
+          <label className="block text-xs text-zinc-400">
+            Artifact config (comma perk hashes)
+            <input
+              className={zincInputClass()}
+              placeholder="111,222"
+              value={
+                artifactConfigInput ||
+                (selectedVariant?.artifactConfig?.length ? selectedVariant.artifactConfig.join(",") : "")
+              }
+              onChange={(event) => setArtifactConfigInput(event.target.value)}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={buttonClass(!canUseVariant)}
+              disabled={!canUseVariant}
+              onClick={() => {
+                const hashRaw = (artifactHashInput || String(selectedVariant?.artifactHash ?? "")).trim();
+                const configRaw = (
+                  artifactConfigInput ||
+                  (selectedVariant?.artifactConfig ?? []).join(",")
+                ).trim();
+                const artifactConfig = configRaw
+                  ? configRaw
+                      .split(",")
+                      .map((s) => Number(s.trim()))
+                      .filter((n) => Number.isFinite(n) && n > 0)
+                  : [];
+                if (!hashRaw) {
+                  void patchVariant(
+                    { artifactHash: null, artifactConfig: [] },
+                    `Clear artifact on ${selectedVariantName}`,
+                  );
+                  return;
+                }
+                const artifactHash = Number(hashRaw);
+                if (!Number.isFinite(artifactHash)) return;
+                void patchVariant(
+                  { artifactHash, artifactConfig },
+                  `Set artifact on ${selectedVariantName}`,
+                );
+              }}
+            >
+              Save artifact
+            </button>
+            <button
+              type="button"
+              className={buttonClass(!canUseVariant)}
+              disabled={!canUseVariant}
+              onClick={() => {
+                setArtifactHashInput("");
+                setArtifactConfigInput("");
+                void patchVariant(
+                  { artifactHash: null, artifactConfig: [] },
+                  `Clear artifact on ${selectedVariantName}`,
+                );
+              }}
+            >
+              Clear artifact
+            </button>
+          </div>
           <input
             className={zincInputClass()}
             placeholder="Notes for duplicate"

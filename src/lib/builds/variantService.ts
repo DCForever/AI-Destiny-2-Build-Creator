@@ -68,6 +68,10 @@ export async function createUserVariant(
     sourceAttachments = listAttachments(db, source.id);
   }
 
+  const sourceVariant = input.duplicateFromVariantId
+    ? getVariant(db, buildId, input.duplicateFromVariantId)
+    : null;
+
   createVariantRecord(db, {
     id: variantId,
     buildId,
@@ -75,6 +79,9 @@ export async function createUserVariant(
     isDefault: false,
     exoticWeaponHash,
     exoticWeaponName,
+    artifactHash: input.artifactHash ?? sourceVariant?.artifactHash ?? null,
+    artifactName: input.artifactName ?? sourceVariant?.artifactName ?? null,
+    artifactConfig: input.artifactConfig ?? sourceVariant?.artifactConfig ?? [],
     notes,
     now,
   });

@@ -20,7 +20,7 @@ import {
 } from "@/lib/inventory/instances/candidateSession";
 import { sortByName } from "@/lib/sortByName";
 import { setSlotToCatalogBucket } from "@/lib/sets/catalogSlotMap";
-import { SET_TYPES, WEAPON_SLOTS, ARMOR_SLOTS } from "@/lib/sets/schemas";
+import { SET_TYPES, WEAPON_SLOTS, ARMOR_SLOTS, FASHION_SLOTS, PAIR_SLOTS } from "@/lib/sets/schemas";
 
 import { InstanceCarousel } from "./InstanceCarousel";
 
@@ -36,7 +36,8 @@ type SetSummary = { id: string; name: string; type: string };
 const SLOTS_BY_TYPE: Record<string, string[]> = {
   weapon: [...WEAPON_SLOTS],
   armor: [...ARMOR_SLOTS],
-  pair: ["exotic_weapon", "exotic_armor"],
+  pair: [...PAIR_SLOTS],
+  fashion: [...FASHION_SLOTS],
 };
 
 const ARMOR_STAT_SORTS = ["total", "Health", "Melee", "Grenade", "Super", "Class", "Weapons"] as const;
