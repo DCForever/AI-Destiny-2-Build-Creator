@@ -42,6 +42,9 @@ export default async function DebugLayout({ children }: { children: React.ReactN
           <a href="/debug/synergies" className="underline">
             Synergies
           </a>
+          <a href="/debug/llm-propose" className="underline">
+            LLM Propose
+          </a>
         </nav>
       </header>
       <main className="min-w-0 overflow-x-hidden p-4 [&_input]:max-w-full [&_pre]:max-w-full [&_pre]:min-w-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_select]:max-w-full">
