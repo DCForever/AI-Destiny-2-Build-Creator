@@ -29,8 +29,11 @@ type BuildVariant = {
 };
 type BuildDetail = BuildSummary & {
   className: GuardianClass;
-  exoticArmorHash: number;
-  exoticArmorName: string;
+  exoticArmorHash: number | null;
+  exoticArmorName: string | null;
+  exoticWeaponHash?: number | null;
+  exoticWeaponName?: string | null;
+  pinnedSuper?: string | null;
   synergies: SynergySummary[];
   variants: BuildVariant[];
 };
@@ -78,13 +81,17 @@ export function BuildsDebugPage() {
   const [advancedSubclassJson, setAdvancedSubclassJson] = useState(JSON.stringify(DEFAULT_SUBCLASS, null, 2));
   const [rawExoticArmorHash, setRawExoticArmorHash] = useState("");
   const [createForm, setCreateForm] = useState({
-    name: "Solar Titan",
+    name: "",
     className: "Titan" as GuardianClass,
     tagIds: ["solar", "pve"],
     exoticArmor: null as ExoticSelection | null,
+    exoticWeapon: null as ExoticSelection | null,
+    pinnedSuper: "",
     synergyIds: [] as string[],
     subclass: DEFAULT_SUBCLASS,
   });
+  const [pendingIdentityPayload, setPendingIdentityPayload] = useState<Record<string, unknown> | null>(null);
+  const [loadoutGaps, setLoadoutGaps] = useState<string[]>([]);
 
   const record = useCallback((next: JsonPanel) => setPanel(next), []);
   const tagFacets = useMemo(() => conceptTagsByFacet(), []);
@@ -103,7 +110,7 @@ export function BuildsDebugPage() {
       : createForm.synergyIds.length === 0
         ? "Select at least one synergy designation before creating a build."
         : "";
-  const createDisabled = Boolean(createBlockedMessage || !createForm.exoticArmor || !createForm.name.trim());
+  const createDisabled = Boolean(createBlockedMessage);
 
   const loadBuilds = useCallback(async () => {
     const hash = filterExoticArmor?.hash ?? (rawExoticArmorHash.trim() ? Number(rawExoticArmorHash.trim()) : null);
@@ -178,8 +185,8 @@ export function BuildsDebugPage() {
   }
 
   async function createBuild() {
-    if (createDisabled || !createForm.exoticArmor) {
-      record({ label: "Create build blocked", error: { message: createBlockedMessage || "Pick exotic armor and name." } });
+    if (createDisabled) {
+      record({ label: "Create build blocked", error: { message: createBlockedMessage || "Fix create form." } });
       return;
     }
 
@@ -194,11 +201,14 @@ export function BuildsDebugPage() {
     }
 
     const payload = {
-      name: createForm.name.trim(),
+      name: createForm.name.trim() || undefined,
       className: createForm.className,
       subclass,
-      exoticArmorHash: createForm.exoticArmor.hash,
-      exoticArmorName: createForm.exoticArmor.name,
+      exoticArmorHash: createForm.exoticArmor?.hash ?? null,
+      exoticArmorName: createForm.exoticArmor?.name ?? null,
+      exoticWeaponHash: createForm.exoticWeapon?.hash ?? null,
+      exoticWeaponName: createForm.exoticWeapon?.name ?? null,
+      pinnedSuper: createForm.pinnedSuper.trim() || null,
       tagIds: createForm.tagIds,
       synergyIds: createForm.synergyIds,
       defaultVariant: { name: "Default" },
@@ -229,7 +239,13 @@ export function BuildsDebugPage() {
       body: JSON.stringify(payload),
     });
     const body = await res.json();
-    if (res.ok) await loadBuildDetail(selectedBuildId, preferredVariantId);
+    if (res.ok) {
+      setLoadoutGaps([]);
+      await loadBuildDetail(selectedBuildId, preferredVariantId);
+    } else if (body?.code === "DEFAULT_VARIANT_INCOMPLETE") {
+      const missing = Array.isArray(body.missing) ? (body.missing as string[]) : [];
+      setLoadoutGaps(missing);
+    }
     record({ label, request: payload, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
   }
 
@@ -256,8 +272,39 @@ export function BuildsDebugPage() {
       body: JSON.stringify(payload),
     });
     const body = await res.json();
+    if (res.status === 409 && body?.code === "IDENTITY_CONFIRM_REQUIRED") {
+      setPendingIdentityPayload(payload);
+      record({ label: `PATCH ${url}`, request: payload, error: body });
+      return;
+    }
     if (res.ok) await loadBuildDetail(selectedBuildId);
     record({ label: `PATCH ${url}`, request: payload, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+  }
+
+  async function confirmIdentityAction(action: "confirm" | "fork") {
+    if (!selectedBuildId || !pendingIdentityPayload) return;
+    const url = `/api/user/builds/${selectedBuildId}`;
+    const payload = { ...pendingIdentityPayload, identityAction: action };
+    record({ label: `PATCH ${url} (${action})`, request: payload });
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (res.ok) {
+      setPendingIdentityPayload(null);
+      const build = body.build as BuildDetail;
+      setSelectedBuildId(build.id);
+      await loadBuilds();
+      await loadBuildDetail(build.id);
+    }
+    record({
+      label: `PATCH ${url} (${action})`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
   }
 
   async function duplicateVariant() {
@@ -366,7 +413,12 @@ export function BuildsDebugPage() {
 
         <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
           <legend className="px-1 text-sm">Create build</legend>
-          <input className={zincInputClass()} value={createForm.name} onChange={(event) => updateCreateForm({ name: event.target.value })} />
+          <input
+            className={zincInputClass()}
+            placeholder="Name (optional — blank derives default)"
+            value={createForm.name}
+            onChange={(event) => updateCreateForm({ name: event.target.value })}
+          />
           <select
             className={zincInputClass()}
             value={createForm.className}
@@ -380,6 +432,26 @@ export function BuildsDebugPage() {
             className={buildDetail?.className ?? createForm.className}
             selected={createForm.exoticArmor}
             onSelect={(exoticArmor) => updateCreateForm({ exoticArmor })}
+          />
+          <button
+            type="button"
+            className={buttonClass(!createForm.exoticArmor)}
+            disabled={!createForm.exoticArmor}
+            onClick={() => updateCreateForm({ exoticArmor: null })}
+          >
+            Clear exotic armor
+          </button>
+          <ExoticWeaponLookup
+            className={createForm.className}
+            selected={createForm.exoticWeapon}
+            onSelect={(exoticWeapon) => updateCreateForm({ exoticWeapon })}
+          />
+          <p className="text-xs text-zinc-500">Build-shared exotic weapon (identity when set)</p>
+          <input
+            className={zincInputClass()}
+            placeholder="Pinned Super (optional identity)"
+            value={createForm.pinnedSuper}
+            onChange={(event) => updateCreateForm({ pinnedSuper: event.target.value })}
           />
           <div>
             <p className="mb-1 text-sm font-medium">Synergy designations</p>
@@ -468,6 +540,11 @@ export function BuildsDebugPage() {
           <p className="text-xs text-zinc-500">
             Attach to {selectedVariant ? selectedVariant.name : "a selected variant"}
           </p>
+          {loadoutGaps.length > 0 ? (
+            <p className="rounded border border-amber-700/60 bg-amber-950/40 px-2 py-1 text-xs text-amber-100">
+              Default incomplete: missing {loadoutGaps.join(", ")}
+            </p>
+          ) : null}
           <div className="space-y-1">
             {(selectedVariant?.attachments ?? []).length === 0 ? (
               <p className="text-xs text-zinc-500">No sets attached to this variant.</p>
@@ -492,6 +569,22 @@ export function BuildsDebugPage() {
           <button type="button" className={buttonClass(!selectedBuildId || designationIds.length === 0)} disabled={!selectedBuildId || designationIds.length === 0} onClick={() => void saveDesignations()}>
             Save designations
           </button>
+          {pendingIdentityPayload ? (
+            <div className="space-y-2 rounded border border-amber-700/60 bg-amber-950/40 p-2 text-xs text-amber-100">
+              <p>Identity change requires confirm or fork.</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={buttonClass()} onClick={() => void confirmIdentityAction("confirm")}>
+                  Confirm in-place
+                </button>
+                <button type="button" className={buttonClass()} onClick={() => void confirmIdentityAction("fork")}>
+                  Fork as new build
+                </button>
+                <button type="button" className="rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => setPendingIdentityPayload(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-1 text-xs text-zinc-400">
             {(buildDetail?.synergies ?? []).map((synergy) => {
               const identity = synergyIdentityFields(synergy);

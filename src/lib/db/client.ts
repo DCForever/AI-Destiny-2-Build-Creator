@@ -69,6 +69,53 @@ function ensureSocketPlugsColumn(db: Database.Database): void {
   }
 }
 
+function ensureBuildsIdentityColumns(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(builds)").all() as { name: string; notnull: number }[];
+  if (cols.length === 0) return;
+
+  if (!cols.some((c) => c.name === "exotic_weapon_hash")) {
+    db.exec("ALTER TABLE builds ADD COLUMN exotic_weapon_hash INTEGER");
+    db.exec("ALTER TABLE builds ADD COLUMN exotic_weapon_name TEXT");
+  }
+  if (!cols.some((c) => c.name === "pinned_super")) {
+    db.exec("ALTER TABLE builds ADD COLUMN pinned_super TEXT");
+  }
+
+  const armorCol = cols.find((c) => c.name === "exotic_armor_hash");
+  if (armorCol?.notnull === 1) {
+    db.exec(`
+      CREATE TABLE builds_identity_mig (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        subclass TEXT NOT NULL,
+        exotic_armor_hash INTEGER,
+        exotic_armor_name TEXT,
+        exotic_weapon_hash INTEGER,
+        exotic_weapon_name TEXT,
+        pinned_super TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      INSERT INTO builds_identity_mig (
+        id, user_id, name, class_name, subclass,
+        exotic_armor_hash, exotic_armor_name,
+        exotic_weapon_hash, exotic_weapon_name, pinned_super,
+        created_at, updated_at
+      )
+      SELECT
+        id, user_id, name, class_name, subclass,
+        exotic_armor_hash, exotic_armor_name,
+        exotic_weapon_hash, exotic_weapon_name, pinned_super,
+        created_at, updated_at
+      FROM builds;
+      DROP TABLE builds;
+      ALTER TABLE builds_identity_mig RENAME TO builds;
+    `);
+  }
+}
+
 export function runMigrations(db: Database.Database): void {
   if (!migrated) {
   db.exec(`
@@ -187,8 +234,11 @@ export function runMigrations(db: Database.Database): void {
       name TEXT NOT NULL,
       class_name TEXT NOT NULL,
       subclass TEXT NOT NULL,
-      exotic_armor_hash INTEGER NOT NULL,
-      exotic_armor_name TEXT NOT NULL,
+      exotic_armor_hash INTEGER,
+      exotic_armor_name TEXT,
+      exotic_weapon_hash INTEGER,
+      exotic_weapon_name TEXT,
+      pinned_super TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -235,6 +285,7 @@ export function runMigrations(db: Database.Database): void {
   ensureGearTierColumn(db);
   ensureSocketPlugsColumn(db);
   ensureSetItemInstanceIdColumn(db);
+  ensureBuildsIdentityColumns(db);
 }
 
 export function getDb(): AppDatabase {

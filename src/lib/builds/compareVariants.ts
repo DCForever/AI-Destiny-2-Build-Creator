@@ -17,7 +17,7 @@ import { getServices } from "@/lib/services";
 
 async function lookupExoticSlots(
   exoticWeaponHash: number | null,
-  exoticArmorHash: number,
+  exoticArmorHash: number | null,
 ): Promise<{ weaponSlot: EquipmentSlot | null; armorSlot: EquipmentSlot | null }> {
   try {
     const { entityCache } = await getServices();
@@ -30,19 +30,24 @@ async function lookupExoticSlots(
       if (match) weaponSlot = weaponManifestSlotToEquipment(match.slot);
     }
 
-    const armor = await entityCache.getStore("exotic-armor");
-    const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
-    if (armorMatch) armorSlot = armorManifestSlotToEquipment(armorMatch.slot as ArmorSlotName);
+    if (exoticArmorHash) {
+      const armor = await entityCache.getStore("exotic-armor");
+      const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
+      if (armorMatch) armorSlot = armorManifestSlotToEquipment(armorMatch.slot as ArmorSlotName);
+    }
 
     return { weaponSlot, armorSlot };
   } catch {
-    return { weaponSlot: exoticWeaponHash ? "primary" : null, armorSlot: "chest" };
+    return {
+      weaponSlot: exoticWeaponHash ? "primary" : null,
+      armorSlot: exoticArmorHash ? "chest" : null,
+    };
   }
 }
 
 export type VariantCompareResult = {
   shared: {
-    exoticArmor: { hash: number; name: string };
+    exoticArmor: { hash: number | null; name: string | null };
     subclass: unknown;
     synergies: Array<{ id: string; name: string; type: string }>;
   };
@@ -68,7 +73,8 @@ async function resolveSlots(
   if (!build || !variant) return {};
 
   const attachments = listAttachments(db, variantId);
-  const slots = await lookupExoticSlots(variant.exoticWeaponHash, build.exoticArmorHash);
+  const weaponHash = build.exoticWeaponHash ?? variant.exoticWeaponHash;
+  const slots = await lookupExoticSlots(weaponHash, build.exoticArmorHash);
   const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
     exoticWeaponSlot: slots.weaponSlot,
     exoticArmorSlot: slots.armorSlot,

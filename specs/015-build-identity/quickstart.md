@@ -63,3 +63,16 @@ Before each story commit:
 ```bash
 npm run gate
 ```
+
+## Quickstart walk (T036) — 2026-07-10
+
+Debug UI at `/debug/builds` covers V1–V4:
+
+| Scenario | Debug control |
+|----------|----------------|
+| V1 optional armor / shared weapon / pinned Super | Create form: Clear exotic armor, ExoticWeaponLookup, Pinned Super |
+| V2 incomplete default | Attach incomplete set → amber “Default incomplete: missing …” |
+| V3 confirm/fork | Save designations → Confirm in-place / Fork as new build |
+| V4 blank name / uniqueness | Blank name on create; duplicate name surfaces via JSON panel (`DUPLICATE_BUILD_NAME`) |
+
+Automated coverage: `npx vitest run src/lib/builds` (31 tests) + `npm run gate`.

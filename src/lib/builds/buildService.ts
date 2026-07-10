@@ -5,33 +5,38 @@ import type { AppDatabase } from "@/lib/db/client";
 import {
   createBuildRecord,
   deleteBuildRecord,
+  findBuildByNameClass,
   getBuild,
   listBuilds,
   listBuildsFiltered,
   updateBuildRecord,
+  type BuildRecord,
 } from "@/lib/db/repositories/buildRepository";
 import {
   createVariantRecord,
   getVariant,
   listAttachments,
   listVariants,
+  replaceAttachments,
   updateVariantRecord,
   type AttachmentRecord,
   type VariantRecord,
 } from "@/lib/db/repositories/variantRepository";
-import {
-  getSynergiesByIds,
-} from "@/lib/db/repositories/synergyRepository";
+import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
+import { getSet } from "@/lib/db/repositories/setRepository";
 import { prepareAttachments } from "@/lib/builds/attachmentService";
+import { deriveDefaultBuildName } from "@/lib/builds/defaultBuildName";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
 import {
+  assertFullCombatLoadout,
   assertNoSlotConflicts,
-  assertVariantNotEmpty,
   armorManifestSlotToEquipment,
+  effectiveExoticWeapon,
   resolveVariantEquipment,
   weaponManifestSlotToEquipment,
 } from "@/lib/builds/resolveVariant";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
+import { listActiveSetItems } from "@/lib/sets/setItemService";
 import { getServices } from "@/lib/services";
 
 function parseTags(tagIds: unknown): ConceptTagId[] {
@@ -48,9 +53,27 @@ function assertSynergiesPresent(synergyIds: string[]): void {
   }
 }
 
+function assertUniqueBuildName(
+  db: AppDatabase,
+  userId: number,
+  className: string,
+  name: string,
+  excludeId?: string,
+): void {
+  const clash = findBuildByNameClass(db, userId, className, name, excludeId);
+  if (clash) {
+    throw new ApiError(
+      API_ERROR_CODES.DUPLICATE_BUILD_NAME,
+      "Build name must be unique per class",
+      { className, name },
+      409,
+    );
+  }
+}
+
 async function lookupExoticSlots(
   exoticWeaponHash: number | null,
-  exoticArmorHash: number,
+  exoticArmorHash: number | null,
 ): Promise<{ weaponSlot: EquipmentSlot | null; armorSlot: EquipmentSlot | null }> {
   try {
     const { entityCache } = await getServices();
@@ -63,14 +86,55 @@ async function lookupExoticSlots(
       if (match) weaponSlot = weaponManifestSlotToEquipment(match.slot);
     }
 
-    const armor = await entityCache.getStore("exotic-armor");
-    const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
-    if (armorMatch) armorSlot = armorManifestSlotToEquipment(armorMatch.slot);
+    if (exoticArmorHash) {
+      const armor = await entityCache.getStore("exotic-armor");
+      const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
+      if (armorMatch) armorSlot = armorManifestSlotToEquipment(armorMatch.slot);
+    }
 
     return { weaponSlot, armorSlot };
   } catch {
-    return { weaponSlot: exoticWeaponHash ? "primary" : null, armorSlot: "chest" };
+    return {
+      weaponSlot: exoticWeaponHash ? "primary" : null,
+      armorSlot: exoticArmorHash ? "chest" : null,
+    };
   }
+}
+
+async function variantHasMods(
+  db: AppDatabase,
+  userId: number,
+  attachments: AttachmentRecord[],
+): Promise<boolean> {
+  for (const attachment of attachments) {
+    const set = getSet(db, userId, attachment.setId);
+    if (set?.type === "mod") return true;
+    if (attachment.mode === "snapshot" && attachment.snapshotConfigs?.some((c) => c.modHashes?.length)) {
+      return true;
+    }
+    const items = await listActiveSetItems(db, attachment.setId);
+    if (items.some((item) => (item.modHashes?.length ?? 0) > 0)) return true;
+  }
+  return false;
+}
+
+function identityFieldsChanged(existing: BuildRecord, input: UpdateBuildInput): string[] {
+  const fields: string[] = [];
+  if (input.synergyIds !== undefined) {
+    const next = [...input.synergyIds].sort().join(",");
+    const prev = [...existing.synergyIds].sort().join(",");
+    if (next !== prev) fields.push("synergyIds");
+  }
+  if (input.exoticArmorHash !== undefined && input.exoticArmorHash !== existing.exoticArmorHash) {
+    fields.push("exoticArmorHash");
+  }
+  if (input.exoticWeaponHash !== undefined && input.exoticWeaponHash !== existing.exoticWeaponHash) {
+    fields.push("exoticWeaponHash");
+  }
+  if (input.pinnedSuper !== undefined && input.pinnedSuper !== existing.pinnedSuper) {
+    fields.push("pinnedSuper");
+  }
+  return fields;
 }
 
 export type BuildDetail = Awaited<ReturnType<typeof getBuildDetail>>;
@@ -85,7 +149,8 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
   const variantsWithAttachments = await Promise.all(
     variants.map(async (variant) => {
       const attachments = listAttachments(db, variant.id);
-      const slots = await lookupExoticSlots(variant.exoticWeaponHash, build.exoticArmorHash);
+      const weapon = effectiveExoticWeapon(build, variant);
+      const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
       const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
         exoticWeaponSlot: slots.weaponSlot,
         exoticArmorSlot: slots.armorSlot,
@@ -118,6 +183,31 @@ export function listUserBuilds(
   return listBuilds(db, userId);
 }
 
+function resolveCreateName(
+  db: AppDatabase,
+  userId: number,
+  input: CreateBuildInput,
+  synergyNames: string[],
+): string {
+  const trimmed = input.name?.trim() ?? "";
+  if (trimmed) {
+    assertUniqueBuildName(db, userId, input.className, trimmed);
+    return trimmed;
+  }
+  const derived = deriveDefaultBuildName({
+    className: input.className,
+    subclass: input.subclass,
+    pinnedSuper: input.pinnedSuper,
+    exoticArmorHash: input.exoticArmorHash,
+    exoticArmorName: input.exoticArmorName,
+    exoticWeaponHash: input.exoticWeaponHash,
+    exoticWeaponName: input.exoticWeaponName,
+    synergyNames,
+  });
+  assertUniqueBuildName(db, userId, input.className, derived);
+  return derived;
+}
+
 export async function createUserBuild(db: AppDatabase, userId: number, input: CreateBuildInput) {
   const tags = parseTags(input.tagIds);
   const synergyIds = input.synergyIds ?? [];
@@ -128,17 +218,39 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
     throw new ApiError(API_ERROR_CODES.NO_SYNERGY, "One or more synergies not found");
   }
 
+  const name = resolveCreateName(
+    db,
+    userId,
+    input,
+    found.map((s) => s.name),
+  );
+
+  const exoticArmorHash = input.exoticArmorHash ?? null;
+  const exoticArmorName =
+    exoticArmorHash == null
+      ? null
+      : (input.exoticArmorName ?? `Exotic (${exoticArmorHash})`);
+  const exoticWeaponHash = input.exoticWeaponHash ?? null;
+  const exoticWeaponName =
+    exoticWeaponHash == null
+      ? null
+      : (input.exoticWeaponName ?? `Exotic (${exoticWeaponHash})`);
+  const pinnedSuper = input.pinnedSuper ?? null;
+
   const now = new Date().toISOString();
   const buildId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
 
   createBuildRecord(db, userId, {
     id: buildId,
-    name: input.name,
+    name,
     className: input.className,
     subclass: input.subclass,
-    exoticArmorHash: input.exoticArmorHash,
-    exoticArmorName: input.exoticArmorName ?? `Exotic (${input.exoticArmorHash})`,
+    exoticArmorHash,
+    exoticArmorName,
+    exoticWeaponHash,
+    exoticWeaponName,
+    pinnedSuper,
     tagIds: tags,
     synergyIds,
     now,
@@ -164,12 +276,116 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
   return getBuildDetail(db, userId, buildId);
 }
 
+async function forkBuildWithIdentity(
+  db: AppDatabase,
+  userId: number,
+  existing: BuildRecord,
+  input: UpdateBuildInput,
+): Promise<BuildDetail> {
+  const now = new Date().toISOString();
+  const newBuildId = crypto.randomUUID();
+
+  const synergyIds = input.synergyIds ?? existing.synergyIds;
+  assertSynergiesPresent(synergyIds);
+  const found = getSynergiesByIds(db, userId, synergyIds);
+  if (found.length !== synergyIds.length) {
+    throw new ApiError(API_ERROR_CODES.NO_SYNERGY, "One or more synergies not found");
+  }
+
+  const className = input.className ?? existing.className;
+  const subclass = input.subclass ?? existing.subclass;
+  const exoticArmorHash =
+    input.exoticArmorHash !== undefined ? input.exoticArmorHash : existing.exoticArmorHash;
+  const exoticArmorName =
+    input.exoticArmorName !== undefined ? input.exoticArmorName : existing.exoticArmorName;
+  const exoticWeaponHash =
+    input.exoticWeaponHash !== undefined ? input.exoticWeaponHash : existing.exoticWeaponHash;
+  const exoticWeaponName =
+    input.exoticWeaponName !== undefined ? input.exoticWeaponName : existing.exoticWeaponName;
+  const pinnedSuper = input.pinnedSuper !== undefined ? input.pinnedSuper : existing.pinnedSuper;
+  const tagIds = input.tagIds ? parseTags(input.tagIds) : existing.tagIds;
+
+  let name = input.name?.trim() || existing.name;
+  if (findBuildByNameClass(db, userId, className, name)) {
+    name = `${name} (fork)`;
+  }
+  assertUniqueBuildName(db, userId, className, name);
+
+  createBuildRecord(db, userId, {
+    id: newBuildId,
+    name,
+    className,
+    subclass,
+    exoticArmorHash: exoticArmorHash ?? null,
+    exoticArmorName: exoticArmorName ?? null,
+    exoticWeaponHash: exoticWeaponHash ?? null,
+    exoticWeaponName: exoticWeaponName ?? null,
+    pinnedSuper: pinnedSuper ?? null,
+    tagIds,
+    synergyIds,
+    now,
+  });
+
+  const variants = listVariants(db, existing.id);
+  for (const variant of variants) {
+    const newVariantId = crypto.randomUUID();
+    createVariantRecord(db, {
+      id: newVariantId,
+      buildId: newBuildId,
+      name: variant.name,
+      isDefault: variant.isDefault,
+      exoticWeaponHash: variant.exoticWeaponHash,
+      exoticWeaponName: variant.exoticWeaponName,
+      notes: variant.notes,
+      now,
+    });
+
+    const sourceAttachments = listAttachments(db, variant.id);
+    if (sourceAttachments.length) {
+      const prepared = await Promise.all(
+        sourceAttachments.map(async (attachment) => {
+          if (attachment.snapshotConfigs?.length) {
+            return {
+              setId: attachment.setId,
+              mode: "snapshot" as const,
+              snapshotConfigs: attachment.snapshotConfigs,
+            };
+          }
+          const items = await listActiveSetItems(db, attachment.setId);
+          return {
+            setId: attachment.setId,
+            mode: "snapshot" as const,
+            snapshotConfigs: items.map((item) => ({
+              slot: item.slot,
+              itemHash: item.itemHash,
+              itemName: item.itemName,
+              selectedPerks: item.selectedPerks,
+              masterworkHash: item.masterworkHash,
+              modHashes: item.modHashes,
+            })),
+          };
+        }),
+      );
+      replaceAttachments(db, newVariantId, prepared, now);
+    }
+  }
+
+  const detail = await getBuildDetail(db, userId, newBuildId);
+  if (!detail) {
+    throw new ApiError(API_ERROR_CODES.INVALID_ITEM, "Forked build not found");
+  }
+  return Object.assign(detail, { forkedFromId: existing.id });
+}
+
 export async function updateUserBuild(
   db: AppDatabase,
   userId: number,
   buildId: string,
   input: UpdateBuildInput,
 ) {
+  const existing = getBuild(db, userId, buildId);
+  if (!existing) return null;
+
   if (input.synergyIds) assertSynergiesPresent(input.synergyIds);
   if (input.tagIds) parseTags(input.tagIds);
 
@@ -180,13 +396,37 @@ export async function updateUserBuild(
     }
   }
 
+  const changedIdentity = identityFieldsChanged(existing, input);
+  if (changedIdentity.length > 0) {
+    if (!input.identityAction) {
+      throw new ApiError(
+        API_ERROR_CODES.IDENTITY_CONFIRM_REQUIRED,
+        "Confirm in-place or fork to apply identity changes",
+        { identityFields: changedIdentity },
+        409,
+      );
+    }
+    if (input.identityAction === "fork") {
+      return forkBuildWithIdentity(db, userId, existing, input);
+    }
+  }
+
+  const nextClass = input.className ?? existing.className;
+  if (input.name !== undefined) {
+    const trimmed = input.name.trim();
+    if (trimmed) assertUniqueBuildName(db, userId, nextClass, trimmed, buildId);
+  }
+
   const now = new Date().toISOString();
   updateBuildRecord(db, userId, buildId, {
-    name: input.name,
+    name: input.name?.trim() || undefined,
     className: input.className,
     subclass: input.subclass,
     exoticArmorHash: input.exoticArmorHash,
     exoticArmorName: input.exoticArmorName,
+    exoticWeaponHash: input.exoticWeaponHash,
+    exoticWeaponName: input.exoticWeaponName,
+    pinnedSuper: input.pinnedSuper,
     tagIds: input.tagIds,
     synergyIds: input.synergyIds,
     now,
@@ -232,14 +472,18 @@ export async function validateVariantSave(
   if (!build || !variant) return;
 
   const attachments = listAttachments(db, variantId);
-  const slots = await lookupExoticSlots(variant.exoticWeaponHash, build.exoticArmorHash);
+  const weapon = effectiveExoticWeapon(build, variant);
+  const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
   const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
     exoticWeaponSlot: slots.weaponSlot,
     exoticArmorSlot: slots.armorSlot,
   });
 
   assertNoSlotConflicts(resolved);
-  assertVariantNotEmpty(resolved);
+  if (variant.isDefault) {
+    const hasMods = await variantHasMods(db, userId, attachments);
+    assertFullCombatLoadout(resolved, build, { hasMods });
+  }
 }
 
 export function deleteUserBuild(db: AppDatabase, userId: number, buildId: string) {
@@ -257,7 +501,8 @@ export async function getResolvedVariant(
   if (!build || !variant) return null;
 
   const attachments = listAttachments(db, variantId);
-  const slots = await lookupExoticSlots(variant.exoticWeaponHash, build.exoticArmorHash);
+  const weapon = effectiveExoticWeapon(build, variant);
+  const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
   return resolveVariantEquipment(db, userId, build, variant, attachments, {
     exoticWeaponSlot: slots.weaponSlot,
     exoticArmorSlot: slots.armorSlot,

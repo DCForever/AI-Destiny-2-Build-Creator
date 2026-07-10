@@ -11,11 +11,14 @@ export const buildVariantSchema = z.object({
 });
 
 export const createBuildSchema = z.object({
-  name: z.string().trim().min(1).max(120),
+  name: z.string().trim().max(120).optional(),
   className: z.enum(["Titan", "Hunter", "Warlock"]),
   subclass: generatedBuildSchema.shape.subclass,
-  exoticArmorHash: z.number().int().positive(),
-  exoticArmorName: z.string().trim().min(1).optional(),
+  exoticArmorHash: z.number().int().positive().nullable().optional(),
+  exoticArmorName: z.string().trim().min(1).nullable().optional(),
+  exoticWeaponHash: z.number().int().positive().nullable().optional(),
+  exoticWeaponName: z.string().trim().min(1).nullable().optional(),
+  pinnedSuper: z.string().trim().min(1).nullable().optional(),
   synergyIds: z.array(z.string().min(1)).min(1),
   tagIds: conceptTagIdsSchema.optional(),
   defaultVariant: buildVariantSchema
@@ -37,6 +40,7 @@ export const updateBuildSchema = createBuildSchema
   .partial()
   .extend({
     synergyIds: z.array(z.string().min(1)).min(1).optional(),
+    identityAction: z.enum(["confirm", "fork"]).optional(),
   });
 
 export const updateVariantSchema = buildVariantSchema.extend({

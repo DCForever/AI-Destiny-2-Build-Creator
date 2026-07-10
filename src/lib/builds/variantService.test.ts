@@ -2,12 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { API_ERROR_CODES } from "@/lib/api/errors";
 import { createTestDb } from "@/lib/db/client";
-import { createSetRecord } from "@/lib/db/repositories/setRepository";
 import { seedDefaultSynergies } from "@/lib/db/repositories/synergyRepository";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
-import { upsertSetItem } from "@/lib/sets/setItemService";
 import { createUserBuild, updateUserVariant } from "@/lib/builds/buildService";
 import { compareBuildVariants } from "@/lib/builds/compareVariants";
+import { seedFullCombatAttachments } from "@/lib/builds/testFixtures";
 import { createUserVariant, deleteUserVariant } from "@/lib/builds/variantService";
 
 vi.mock("@/lib/services", () => ({
@@ -23,14 +22,7 @@ describe("variantService", () => {
     const db = createTestDb();
     const user = ensureUser(db, "v1", 3, "Player");
     const synergies = seedDefaultSynergies(db, user.id);
-    const now = new Date().toISOString();
-
-    createSetRecord(db, user.id, { id: "set-w", name: "Weapons", type: "weapon", tagIds: [], now });
-    await upsertSetItem(db, "set-w", "weapon", {
-      slot: "primary",
-      itemHash: 500,
-      itemName: "Gun",
-    });
+    const attachments = await seedFullCombatAttachments(db, user.id, "v1");
 
     const build = await createUserBuild(db, user.id, {
       name: "Test",
@@ -42,9 +34,7 @@ describe("variantService", () => {
     });
 
     const sourceId = build!.variants[0]!.id;
-    await updateUserVariant(db, user.id, build!.id, sourceId, {
-      attachments: [{ setId: "set-w", mode: "live" }],
-    });
+    await updateUserVariant(db, user.id, build!.id, sourceId, { attachments });
 
     const updated = await createUserVariant(db, user.id, build!.id, {
       duplicateFromVariantId: sourceId,

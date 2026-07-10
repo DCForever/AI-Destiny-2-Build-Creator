@@ -315,6 +315,9 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | `VARIANT_EMPTY` | BR-SAVE-002, BR-SAVE-004 | [FR-025](001-build-sets-synergies/spec.md#functional-requirements) |
 | `NO_SYNERGY` | BR-SAVE-003 | [FR-024](001-build-sets-synergies/spec.md#functional-requirements) |
 | `INVALID_SYNERGY_LINK` | BR-SYN-005 | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
+| `DEFAULT_VARIANT_INCOMPLETE` | [DBR-VAR-001](./domain-business-rules.md), [015 default-loadout contract](015-build-identity/contracts/default-loadout-naming-contract.md) | [015 FR-007+](015-build-identity/spec.md) |
+| `IDENTITY_CONFIRM_REQUIRED` | [DBR-ID-010](./domain-business-rules.md), [015 confirm/fork contract](015-build-identity/contracts/identity-confirm-fork-contract.md) | [015 FR-010+](015-build-identity/spec.md) |
+| `DUPLICATE_BUILD_NAME` | [015 naming contract](015-build-identity/contracts/default-loadout-naming-contract.md) | [015 FR-012+](015-build-identity/spec.md) |
 
 ---
 

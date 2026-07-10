@@ -84,10 +84,10 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     priority: 20
     prompt: Commit implementation changes?
-    description: Auto-commit after implementation (disabled in git-config; commit manually after gate)
+    description: Auto-commit after implementation once gate is green
     condition: null
   after_checklist:
   - extension: agent-context

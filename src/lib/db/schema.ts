@@ -132,8 +132,11 @@ export const builds = sqliteTable("builds", {
   name: text("name").notNull(),
   className: text("class_name").notNull(),
   subclass: text("subclass").notNull(),
-  exoticArmorHash: integer("exotic_armor_hash").notNull(),
-  exoticArmorName: text("exotic_armor_name").notNull(),
+  exoticArmorHash: integer("exotic_armor_hash"),
+  exoticArmorName: text("exotic_armor_name"),
+  exoticWeaponHash: integer("exotic_weapon_hash"),
+  exoticWeaponName: text("exotic_weapon_name"),
+  pinnedSuper: text("pinned_super"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

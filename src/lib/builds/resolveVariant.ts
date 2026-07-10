@@ -80,6 +80,7 @@ export function validatePairArmorMatch(
   build: Pick<BuildRecord, "exoticArmorHash">,
   pairItems: ExpandedSetItem[],
 ): void {
+  if (build.exoticArmorHash == null) return;
   const pairArmor = pairItems.find((i) => i.slot === "exotic_armor");
   if (pairArmor && pairArmor.itemHash !== build.exoticArmorHash) {
     throw new ApiError(
@@ -143,17 +144,18 @@ export function itemsToSlotClaims(items: ExpandedSetItem[]): SlotClaim[] {
 
 export function addExoticWeaponClaim(
   claims: SlotClaim[],
-  variant: Pick<VariantRecord, "exoticWeaponHash" | "exoticWeaponName">,
+  weapon: { exoticWeaponHash: number | null; exoticWeaponName: string | null },
   weaponSlot: EquipmentSlot | null,
+  source: SlotClaim["source"] = "variant_exotic_weapon",
 ): SlotClaim[] {
-  if (!variant.exoticWeaponHash || !weaponSlot) return claims;
+  if (!weapon.exoticWeaponHash || !weaponSlot) return claims;
   return [
     ...claims,
     {
       slot: weaponSlot,
-      itemHash: variant.exoticWeaponHash,
-      itemName: variant.exoticWeaponName ?? `Exotic (${variant.exoticWeaponHash})`,
-      source: "variant_exotic_weapon",
+      itemHash: weapon.exoticWeaponHash,
+      itemName: weapon.exoticWeaponName ?? `Exotic (${weapon.exoticWeaponHash})`,
+      source,
     },
   ];
 }
@@ -163,13 +165,13 @@ export function addExoticArmorClaim(
   build: Pick<BuildRecord, "exoticArmorHash" | "exoticArmorName">,
   armorSlot: EquipmentSlot | null,
 ): SlotClaim[] {
-  if (!armorSlot) return claims;
+  if (!armorSlot || build.exoticArmorHash == null) return claims;
   return [
     ...claims,
     {
       slot: armorSlot,
       itemHash: build.exoticArmorHash,
-      itemName: build.exoticArmorName,
+      itemName: build.exoticArmorName ?? `Exotic (${build.exoticArmorHash})`,
       source: "build_exotic_armor",
     },
   ];
@@ -196,6 +198,56 @@ export function assertVariantNotEmpty(resolved: ResolvedVariantEquipment): void 
   }
 }
 
+const REQUIRED_WEAPON_SLOTS: EquipmentSlot[] = ["primary", "special", "heavy"];
+const REQUIRED_ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_item"];
+
+export function assertFullCombatLoadout(
+  resolved: ResolvedVariantEquipment,
+  build: BuildRecord,
+  opts?: { hasMods?: boolean },
+): void {
+  const missing: string[] = [];
+  for (const slot of REQUIRED_WEAPON_SLOTS) {
+    if (!resolved.equipment[slot]) missing.push(slot);
+  }
+  for (const slot of REQUIRED_ARMOR_SLOTS) {
+    if (!resolved.equipment[slot]) missing.push(slot);
+  }
+  if (!build.className) missing.push("className");
+  const subclass = build.subclass as { name?: string; super?: string } | null;
+  if (!subclass || typeof subclass !== "object" || !subclass.name) {
+    missing.push("subclass");
+  }
+  if (!opts?.hasMods) missing.push("mods");
+
+  if (missing.length > 0) {
+    throw new ApiError(
+      API_ERROR_CODES.DEFAULT_VARIANT_INCOMPLETE,
+      "Default variant must be a full combat loadout",
+      { missing },
+      400,
+    );
+  }
+}
+
+export function effectiveExoticWeapon(
+  build: BuildRecord,
+  variant: VariantRecord,
+): { exoticWeaponHash: number | null; exoticWeaponName: string | null; fromBuild: boolean } {
+  if (build.exoticWeaponHash != null) {
+    return {
+      exoticWeaponHash: build.exoticWeaponHash,
+      exoticWeaponName: build.exoticWeaponName,
+      fromBuild: true,
+    };
+  }
+  return {
+    exoticWeaponHash: variant.exoticWeaponHash,
+    exoticWeaponName: variant.exoticWeaponName,
+    fromBuild: false,
+  };
+}
+
 export async function resolveVariantEquipment(
   db: AppDatabase,
   userId: number,
@@ -215,7 +267,13 @@ export async function resolveVariantEquipment(
   validatePairArmorMatch(build, expanded.filter((i) => i.setType === "pair"));
 
   let claims = itemsToSlotClaims(expanded);
-  claims = addExoticWeaponClaim(claims, variant, opts?.exoticWeaponSlot ?? null);
+  const weapon = effectiveExoticWeapon(build, variant);
+  claims = addExoticWeaponClaim(
+    claims,
+    weapon,
+    opts?.exoticWeaponSlot ?? null,
+    weapon.fromBuild ? "variant_exotic_weapon" : "variant_exotic_weapon",
+  );
   claims = addExoticArmorClaim(claims, build, opts?.exoticArmorSlot ?? null);
 
   const conflicts = detectSlotConflicts(claims);

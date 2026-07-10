@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createTestDb } from "@/lib/db/client";
-import { createSetRecord } from "@/lib/db/repositories/setRepository";
 import { seedDefaultSynergies } from "@/lib/db/repositories/synergyRepository";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
-import { upsertSetItem } from "@/lib/sets/setItemService";
 import { createUserBuild, updateUserVariant } from "@/lib/builds/buildService";
+import { seedFullCombatAttachments } from "@/lib/builds/testFixtures";
 
 vi.mock("@/lib/services", () => ({
   getServices: vi.fn(async () => ({
@@ -21,21 +20,7 @@ describe("buildFlow integration", () => {
     const db = createTestDb();
     const user = ensureUser(db, "flow1", 3, "Player");
     const synergies = seedDefaultSynergies(db, user.id);
-    const now = new Date().toISOString();
-
-    createSetRecord(db, user.id, {
-      id: "weapon-set",
-      name: "Solar PVE",
-      type: "weapon",
-      tagIds: ["solar", "pve"],
-      now,
-    });
-    await upsertSetItem(db, "weapon-set", "weapon", {
-      slot: "primary",
-      itemHash: 900,
-      itemName: "Sunshot",
-      selectedPerks: [111, 222],
-    });
+    const attachments = await seedFullCombatAttachments(db, user.id, "flow");
 
     const build = await createUserBuild(db, user.id, {
       name: "Solar Flow",
@@ -49,12 +34,12 @@ describe("buildFlow integration", () => {
 
     const variantId = build!.variants[0]!.id;
     const attached = await updateUserVariant(db, user.id, build!.id, variantId, {
-      attachments: [{ setId: "weapon-set", mode: "snapshot" }],
+      attachments: attachments.map((a) => ({ ...a, mode: "snapshot" as const })),
     });
 
     const variant = attached!.variants.find((v) => v.id === variantId);
-    expect(variant?.attachments).toHaveLength(1);
-    expect(variant?.attachments[0]?.setId).toBe("weapon-set");
-    expect(variant?.resolved?.equipment?.primary?.itemHash).toBe(900);
+    expect(variant?.attachments).toHaveLength(3);
+    expect(variant?.attachments.some((a) => a.setId === "flow-weapons")).toBe(true);
+    expect(variant?.resolved?.equipment?.primary?.itemHash).toBe(1000);
   });
 });

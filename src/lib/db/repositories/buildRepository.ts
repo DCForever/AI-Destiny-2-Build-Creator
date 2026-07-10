@@ -10,8 +10,11 @@ export type BuildRecord = {
   name: string;
   className: string;
   subclass: unknown;
-  exoticArmorHash: number;
-  exoticArmorName: string;
+  exoticArmorHash: number | null;
+  exoticArmorName: string | null;
+  exoticWeaponHash: number | null;
+  exoticWeaponName: string | null;
+  pinnedSuper: string | null;
   tagIds: ConceptTagId[];
   synergyIds: string[];
   createdAt: string;
@@ -44,8 +47,11 @@ function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildReco
     name: row.name,
     className: row.className,
     subclass: JSON.parse(row.subclass) as unknown,
-    exoticArmorHash: row.exoticArmorHash,
-    exoticArmorName: row.exoticArmorName,
+    exoticArmorHash: row.exoticArmorHash ?? null,
+    exoticArmorName: row.exoticArmorName ?? null,
+    exoticWeaponHash: row.exoticWeaponHash ?? null,
+    exoticWeaponName: row.exoticWeaponName ?? null,
+    pinnedSuper: row.pinnedSuper ?? null,
     tagIds: loadBuildTags(db, row.id),
     synergyIds: loadBuildSynergies(db, row.id),
     createdAt: row.createdAt,
@@ -113,6 +119,7 @@ export function listBuildsFiltered(
   }
 
   if (filters.exoticWeaponHash !== undefined) {
+    const weaponHash = filters.exoticWeaponHash;
     const buildIds = results.map((b) => b.id);
     if (buildIds.length === 0) return [];
     const variantRows = db
@@ -121,15 +128,33 @@ export function listBuildsFiltered(
       .where(
         and(
           inArray(buildVariants.buildId, buildIds),
-          eq(buildVariants.exoticWeaponHash, filters.exoticWeaponHash),
+          eq(buildVariants.exoticWeaponHash, weaponHash),
         ),
       )
       .all();
     const allowed = new Set(variantRows.map((r) => r.buildId));
-    results = results.filter((b) => allowed.has(b.id));
+    results = results.filter(
+      (b) => b.exoticWeaponHash === weaponHash || allowed.has(b.id),
+    );
   }
 
   return results;
+}
+
+export function findBuildByNameClass(
+  db: AppDatabase,
+  userId: number,
+  className: string,
+  name: string,
+  excludeId?: string,
+): BuildRecord | null {
+  const rows = db
+    .select()
+    .from(builds)
+    .where(and(eq(builds.userId, userId), eq(builds.className, className), eq(builds.name, name)))
+    .all()
+    .map((row) => rowToBuild(db, row));
+  return rows.find((b) => b.id !== excludeId) ?? null;
 }
 
 export function getBuild(db: AppDatabase, userId: number, id: string): BuildRecord | null {
@@ -149,8 +174,11 @@ export function createBuildRecord(
     name: string;
     className: string;
     subclass: unknown;
-    exoticArmorHash: number;
-    exoticArmorName: string;
+    exoticArmorHash: number | null;
+    exoticArmorName: string | null;
+    exoticWeaponHash: number | null;
+    exoticWeaponName: string | null;
+    pinnedSuper: string | null;
     tagIds: ConceptTagId[];
     synergyIds: string[];
     now: string;
@@ -165,6 +193,9 @@ export function createBuildRecord(
       subclass: JSON.stringify(input.subclass),
       exoticArmorHash: input.exoticArmorHash,
       exoticArmorName: input.exoticArmorName,
+      exoticWeaponHash: input.exoticWeaponHash,
+      exoticWeaponName: input.exoticWeaponName,
+      pinnedSuper: input.pinnedSuper,
       createdAt: input.now,
       updatedAt: input.now,
     })
@@ -190,8 +221,11 @@ export function updateBuildRecord(
     name?: string;
     className?: string;
     subclass?: unknown;
-    exoticArmorHash?: number;
-    exoticArmorName?: string;
+    exoticArmorHash?: number | null;
+    exoticArmorName?: string | null;
+    exoticWeaponHash?: number | null;
+    exoticWeaponName?: string | null;
+    pinnedSuper?: string | null;
     tagIds?: ConceptTagId[];
     synergyIds?: string[];
     now: string;
@@ -205,8 +239,15 @@ export function updateBuildRecord(
       name: patch.name ?? existing.name,
       className: patch.className ?? existing.className,
       subclass: patch.subclass ? JSON.stringify(patch.subclass) : JSON.stringify(existing.subclass),
-      exoticArmorHash: patch.exoticArmorHash ?? existing.exoticArmorHash,
-      exoticArmorName: patch.exoticArmorName ?? existing.exoticArmorName,
+      exoticArmorHash:
+        patch.exoticArmorHash !== undefined ? patch.exoticArmorHash : existing.exoticArmorHash,
+      exoticArmorName:
+        patch.exoticArmorName !== undefined ? patch.exoticArmorName : existing.exoticArmorName,
+      exoticWeaponHash:
+        patch.exoticWeaponHash !== undefined ? patch.exoticWeaponHash : existing.exoticWeaponHash,
+      exoticWeaponName:
+        patch.exoticWeaponName !== undefined ? patch.exoticWeaponName : existing.exoticWeaponName,
+      pinnedSuper: patch.pinnedSuper !== undefined ? patch.pinnedSuper : existing.pinnedSuper,
       updatedAt: patch.now,
     })
     .where(and(eq(builds.id, id), eq(builds.userId, userId)))

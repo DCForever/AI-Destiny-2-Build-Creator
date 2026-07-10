@@ -110,9 +110,9 @@ hooks:
     description: "Auto-commit after task generation"
   after_implement:
     command: speckit.git.commit
-    optional: true
+    optional: false
     prompt: "Commit implementation changes?"
-    description: "Auto-commit after implementation"
+    description: "Auto-commit after implementation once gate is green"
   after_checklist:
     command: speckit.git.commit
     optional: true

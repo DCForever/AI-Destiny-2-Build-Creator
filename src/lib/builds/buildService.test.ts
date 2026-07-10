@@ -66,7 +66,7 @@ describe("buildService", () => {
     expect(build?.synergies).toHaveLength(1);
   });
 
-  it("rejects save with no equipment slots", async () => {
+  it("rejects incomplete default loadout when attachments saved", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b2", 3, "Player");
     const synergies = seedDefaultSynergies(db, user.id);
@@ -91,7 +91,7 @@ describe("buildService", () => {
       updateUserVariant(db, user.id, build!.id, build!.variants[0]!.id, {
         attachments: [{ setId: "set-w", mode: "live" }],
       }),
-    ).resolves.toBeTruthy();
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.DEFAULT_VARIANT_INCOMPLETE });
 
     const emptySet = crypto.randomUUID();
     createSetRecord(db, user.id, { id: emptySet, name: "Empty Set", type: "mod", tagIds: [], now });
@@ -100,7 +100,121 @@ describe("buildService", () => {
       updateUserVariant(db, user.id, build!.id, build!.variants[0]!.id, {
         attachments: [{ setId: emptySet, mode: "live" }],
       }),
-    ).rejects.toMatchObject({ code: API_ERROR_CODES.VARIANT_EMPTY });
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.DEFAULT_VARIANT_INCOMPLETE });
+  });
+
+  it("allows create without exotic armor and with pinned super / shared weapon", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b-id", 3, "Player");
+    const synergies = seedDefaultSynergies(db, user.id);
+
+    const build = await createUserBuild(db, user.id, {
+      className: "Warlock",
+      subclass: {
+        name: "Stormcaller",
+        super: "Chaos Reach",
+        classAbility: "",
+        movement: "",
+        melee: "",
+        grenade: "",
+        aspects: [],
+        fragments: [],
+        rationale: "",
+      },
+      exoticArmorHash: null,
+      exoticWeaponHash: 555,
+      exoticWeaponName: "Riskrunner",
+      pinnedSuper: "Chaos Reach",
+      synergyIds: [synergies[0]!.id],
+    });
+
+    expect(build?.exoticArmorHash).toBeNull();
+    expect(build?.exoticWeaponHash).toBe(555);
+    expect(build?.pinnedSuper).toBe("Chaos Reach");
+    expect(build?.name).toContain("Warlock");
+  });
+
+  it("requires identityAction when changing synergies", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b-fork", 3, "Player");
+    const synergies = seedDefaultSynergies(db, user.id);
+    const now = new Date().toISOString();
+    const { createSynergyRecord } = await import("@/lib/db/repositories/synergyRepository");
+    const second = createSynergyRecord(db, user.id, {
+      id: crypto.randomUUID(),
+      name: "Grenade Loop",
+      type: "grenade",
+      subType: "Base",
+      description: "Second synergy for identity fork tests",
+      links: [],
+      now,
+    });
+
+    const build = await createUserBuild(db, user.id, {
+      name: "Original",
+      className: "Titan",
+      subclass: {
+        name: "Sunbreaker",
+        super: "",
+        classAbility: "",
+        movement: "",
+        melee: "",
+        grenade: "",
+        aspects: [],
+        fragments: [],
+        rationale: "",
+      },
+      exoticArmorHash: 100,
+      synergyIds: [synergies[0]!.id],
+    });
+
+    const { updateUserBuild } = await import("@/lib/builds/buildService");
+    await expect(
+      updateUserBuild(db, user.id, build!.id, { synergyIds: [second.id] }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.IDENTITY_CONFIRM_REQUIRED });
+
+    const confirmed = await updateUserBuild(db, user.id, build!.id, {
+      synergyIds: [second.id],
+      identityAction: "confirm",
+    });
+    expect(confirmed?.id).toBe(build!.id);
+    expect(confirmed?.synergies[0]?.id).toBe(second.id);
+
+    const forked = await updateUserBuild(db, user.id, build!.id, {
+      synergyIds: [synergies[0]!.id],
+      identityAction: "fork",
+    });
+    expect(forked?.id).not.toBe(build!.id);
+    expect((forked as { forkedFromId?: string })?.forkedFromId).toBe(build!.id);
+  });
+
+  it("rejects duplicate build names within the same class", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b-name", 3, "Player");
+    const synergies = seedDefaultSynergies(db, user.id);
+    const base = {
+      className: "Warlock" as const,
+      subclass: {
+        name: "Stormcaller",
+        super: "Chaos Reach",
+        classAbility: "",
+        movement: "",
+        melee: "",
+        grenade: "",
+        aspects: [],
+        fragments: [],
+        rationale: "",
+      },
+      synergyIds: [synergies[0]!.id],
+    };
+
+    await createUserBuild(db, user.id, { ...base, name: "Ionic Trace Kit" });
+    await expect(createUserBuild(db, user.id, { ...base, name: "Ionic Trace Kit" })).rejects.toMatchObject({
+      code: API_ERROR_CODES.DUPLICATE_BUILD_NAME,
+    });
+    await expect(
+      createUserBuild(db, user.id, { ...base, className: "Titan", name: "Ionic Trace Kit" }),
+    ).resolves.toBeTruthy();
   });
 
   it("blocks pair armor mismatch", async () => {
