@@ -16,8 +16,8 @@
 | 5 | **done** | `soft-stat-targets` (`019`) | DBR-STAT-*, EoF six stats | Merged to `feature/overhall` |
 | 6 | **done** | `bungie-equip` (`020`) | DAC-P1-007, DBR-EQP-* | Merged to `feature/overhall` |
 | 7 | **done** | `dim-export` (`021`) | DAC-P1-008 | Merged to `feature/overhall` |
-| 8 | **in_progress** | `class-item-intent` (`022`) | DAC-VAR-005, DBR-ID-005, DBR-ROLL-009 | Spec started; intent-lock vs hash-lock |
-| 9 | pending | `llm-propose` | LLM propose-for-confirm | Manual re-run; no auto-apply |
+| 8 | **done** | `class-item-intent` (`022`) | DAC-VAR-005, DBR-ID-005, DBR-ROLL-009 | Merged to `feature/overhall` |
+| 9 | **in_progress** | `llm-propose` | LLM propose-for-confirm | Manual re-run; no auto-apply |
 
 **Done when**: all rows are `done` and local `feature/overhall` contains each merge.
 
