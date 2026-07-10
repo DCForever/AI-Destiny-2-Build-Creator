@@ -2,8 +2,10 @@
 
 **Base branch**: `feature/overhall`  
 **Canonical domain**: [domain-business-rules.md](./domain-business-rules.md), [domain-acceptance-criteria.md](./domain-acceptance-criteria.md)  
-**Pipeline per slice**: specify → plan → tasks → implement → finish-spec  
+**Pipeline per slice**: specify → plan → tasks → implement → finish-spec → **update Domain Slice Loop canvas**  
 **Clarify**: pause loop and run `/speckit-clarify` when the spec has underspecified gaps; wait for user answers before continuing.
+
+**Canvas**: `~/.cursor/projects/f-Destiny2BuildCreator/canvases/domain-slice-loop.canvas.tsx` — refresh status, phase, and current-slice callout at the end of every loop wake.
 
 | # | Status | Short name | Focus (DAC / DBR) | Notes |
 |---|--------|------------|-------------------|-------|
