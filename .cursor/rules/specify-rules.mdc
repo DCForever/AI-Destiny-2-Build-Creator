@@ -5,5 +5,5 @@ alwaysApply: true
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/019-soft-stat-targets/plan.md
+at specs/020-bungie-equip/plan.md
 <!-- SPECKIT END -->
