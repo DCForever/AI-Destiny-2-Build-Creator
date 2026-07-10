@@ -9,7 +9,7 @@
 |---|--------|------------|-------------------|-------|
 | 1 | **done** | `build-identity` (`015`) | DAC-P1-002–003, DAC-VAR-004, DAC-NME-*, identity DBR | Merged to `feature/overhall` |
 | 2 | **done** | `wishlist-equip-ready` (`016`) | DAC-P1-005, DBR-ROLL-001–008, DBR-EQP-003 | Merged to `feature/overhall` |
-| 3 | **next** | `soft-guidance` | DAC-P1-006, DBR-GUID-*, DBR-SYN-011, DBR-STAT-004 | Coverage indicators; soft only |
+| 3 | **in_progress** | `soft-guidance` (`017`) | DAC-P1-006, DBR-GUID-*, DBR-SYN-011; set-bonus + element soft (no soft-stat UI) | Clarify done (Q1=A, Q2=C, Q3=C); specify next |
 | 4 | pending | `artifacts-fashion` | DBR-ART-*, DBR-FASH-*, DAC artifact/fashion ACs | 6 artifacts per variant; fashion on variant for later equip |
 | 5 | pending | `soft-stat-targets` | DBR-STAT-*, EoF six stats | Soft targets at build level; UI + validation soft |
 | 6 | pending | `bungie-equip` | DAC-P1-007, DBR-EQP-* | Sync-on-equip, transfer, apply; best-effort partial |
