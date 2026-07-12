@@ -22,7 +22,7 @@ describe("collectVariantMods", () => {
   it("collects armor modHashes and snapshot mod-set item hashes", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "dim-mods", 3, "G");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const now = new Date().toISOString();
 
     createSetRecord(db, user.id, { id: "set-armor", name: "Armor", type: "armor", tagIds: [], now });

@@ -49,7 +49,7 @@ describe("buildService", () => {
   it("creates build with default variant and synergy", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b1", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
 
     const build = await createUserBuild(db, user.id, {
       name: "Solar Titan",
@@ -69,7 +69,7 @@ describe("buildService", () => {
   it("rejects incomplete default loadout when attachments saved", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b2", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const now = new Date().toISOString();
 
     createSetRecord(db, user.id, { id: "set-w", name: "Weapons", type: "weapon", tagIds: [], now });
@@ -106,7 +106,7 @@ describe("buildService", () => {
   it("allows create without exotic armor and with pinned super / shared weapon", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b-id", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
 
     const build = await createUserBuild(db, user.id, {
       className: "Warlock",
@@ -208,7 +208,7 @@ describe("buildService", () => {
   it("rejects duplicate build names within the same class", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b-name", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const base = {
       className: "Warlock" as const,
       subclass: {
@@ -237,7 +237,7 @@ describe("buildService", () => {
   it("blocks pair armor mismatch", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b3", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const now = new Date().toISOString();
 
     createSetRecord(db, user.id, { id: "pair-bad", name: "Pair", type: "pair", tagIds: [], now });

@@ -78,7 +78,6 @@ export function BuildsDebugPage() {
   const [selectedBuildId, setSelectedBuildId] = useState("");
   const [buildDetail, setBuildDetail] = useState<BuildDetail | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState("");
-  const [availableSynergies, setAvailableSynergies] = useState<SynergySummary[]>([]);
   const [designations, setDesignations] = useState<SynergyTypeSelection[]>([]);
   const [variantNotes, setVariantNotes] = useState("");
   const [artifactHashInput, setArtifactHashInput] = useState("");
@@ -142,13 +141,6 @@ export function BuildsDebugPage() {
     record({ label: `GET ${url}`, response: body, error: res.ok ? undefined : body });
   }, [filterExoticArmor, rawExoticArmorHash, record]);
 
-  const loadSynergies = useCallback(async () => {
-    const res = await fetch("/api/user/synergies");
-    const body = await res.json();
-    if (res.ok) setAvailableSynergies(sortByName((body.synergies ?? []) as SynergySummary[]));
-    record({ label: "GET /api/user/synergies", response: body, error: res.ok ? undefined : body });
-  }, [record]);
-
   const loadBuildDetail = useCallback(
     async (id: string, preferredVariantId?: string) => {
       if (!id) {
@@ -190,7 +182,6 @@ export function BuildsDebugPage() {
   }
 
   async function loadBuildData() {
-    await loadSynergies();
     await loadBuilds();
   }
 
@@ -530,7 +521,7 @@ export function BuildsDebugPage() {
           <legend className="px-1 text-sm">Load builds</legend>
           <ExoticArmorLookup className={createForm.className} selected={filterExoticArmor} onSelect={setFilterExoticArmor} />
           <button type="button" className="rounded bg-zinc-700 px-3 py-1 text-sm" onClick={() => void loadBuildData()}>
-            Load synergies + builds
+            Load builds
           </button>
           <select className={zincInputClass()} value={selectedBuildId} onChange={(event) => selectBuild(event.target.value)}>
             <option value="">Build —</option>

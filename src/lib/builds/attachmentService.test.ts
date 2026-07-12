@@ -14,7 +14,7 @@ describe("attachmentService", () => {
   it("captures snapshot configs at attach time", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "a1", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const now = new Date().toISOString();
 
     createBuildRecord(db, user.id, {
@@ -66,7 +66,7 @@ describe("attachmentService", () => {
   it("live attachment reflects set changes", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "a2", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const now = new Date().toISOString();
 
     createBuildRecord(db, user.id, {

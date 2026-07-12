@@ -19,7 +19,7 @@ describe("buildFlow integration", () => {
   it("creates set, attaches to build variant, and resolves equipment", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "flow1", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const attachments = await seedFullCombatAttachments(db, user.id, "flow");
 
     const build = await createUserBuild(db, user.id, {

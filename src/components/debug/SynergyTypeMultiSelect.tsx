@@ -38,11 +38,7 @@ export function SynergyTypeMultiSelect({ selected, onChange }: Props) {
   const needsSub = requiresSubType(draftType);
 
   useEffect(() => {
-    if (!needsSub) {
-      setSubTypeOptions([]);
-      setDraftSubType("");
-      return;
-    }
+    if (!needsSub) return;
     let cancelled = false;
     void (async () => {
       const res = await fetch(
@@ -58,6 +54,17 @@ export function SynergyTypeMultiSelect({ selected, onChange }: Props) {
       cancelled = true;
     };
   }, [draftType, needsSub]);
+
+  function changeDraftType(next: (typeof CREATABLE_SYNERGY_TYPES)[number]) {
+    setDraftType(next);
+    if (!requiresSubType(next)) {
+      setSubTypeOptions([]);
+      setDraftSubType("");
+    } else {
+      setDraftSubType("");
+      setSubTypeOptions([]);
+    }
+  }
 
   const selectedKeys = useMemo(() => new Set(selected.map(selectionKey)), [selected]);
 
@@ -83,7 +90,7 @@ export function SynergyTypeMultiSelect({ selected, onChange }: Props) {
           className="rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
           value={draftType}
           onChange={(e) =>
-            setDraftType(e.target.value as (typeof CREATABLE_SYNERGY_TYPES)[number])
+            changeDraftType(e.target.value as (typeof CREATABLE_SYNERGY_TYPES)[number])
           }
         >
           {SORTED_TYPES.map((t) => (

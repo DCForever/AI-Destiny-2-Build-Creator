@@ -21,7 +21,7 @@ describe("variantService", () => {
   it("duplicates variant with snapshot attachments and notes", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "v1", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
     const attachments = await seedFullCombatAttachments(db, user.id, "v1");
 
     const build = await createUserBuild(db, user.id, {
@@ -52,7 +52,7 @@ describe("variantService", () => {
   it("compare highlights notes and slot diffs", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "v2", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
 
     const build = await createUserBuild(db, user.id, {
       name: "Compare",
@@ -79,7 +79,7 @@ describe("variantService", () => {
   it("blocks deleting sole variant", () => {
     const db = createTestDb();
     const user = ensureUser(db, "v3", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
+    seedDefaultSynergies(db, user.id);
 
     return createUserBuild(db, user.id, {
       name: "Solo",

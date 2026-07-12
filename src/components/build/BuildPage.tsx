@@ -109,15 +109,6 @@ export function BuildPage() {
     })();
   }, [loadBuilds, loadCharacters]);
 
-  useEffect(() => {
-    if (!selectedId) {
-      setDetail(null);
-      setVariantId(null);
-      return;
-    }
-    void loadDetail(selectedId);
-  }, [selectedId, loadDetail]);
-
   async function handleCreate(input: {
     name: string;
     className: GuardianClass;
@@ -154,6 +145,7 @@ export function BuildPage() {
       await loadBuilds();
       if (body.build?.id) {
         setSelectedId(body.build.id);
+        await loadDetail(body.build.id);
         setCreating(false);
       }
     } catch {
@@ -331,10 +323,13 @@ export function BuildPage() {
                 setCreating(false);
                 setSelectedId(id);
                 setActionMessage(null);
+                void loadDetail(id);
               }}
               onNew={() => {
                 setCreating(true);
                 setSelectedId(null);
+                setDetail(null);
+                setVariantId(null);
                 setCreateError(null);
               }}
               loading={loading}
