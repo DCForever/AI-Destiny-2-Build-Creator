@@ -1,120 +1,73 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Lookup-Only Fields
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Branch**: `025-lookup-only-fields` | **Date**: 2026-07-12 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Input**: Feature specification from `/specs/025-lookup-only-fields/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Enforce a standing UI rule: Destiny game concepts are chosen only via lookups; free text is reserved for names, notes, and prose. Convert production create (subclass, exotic armor, pinned super), debug `SubclassStructuredForm` (abilities/aspects/fragments pick-only), and LLM `BuildForm` preferences (exotic, weapon, weapon types) to reuse existing catalog/manifest lookup patterns without schema migrations.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
-
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
-
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
-
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
-
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
-
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 5.x / Next.js (App Router)  
+**Primary Dependencies**: React client components, existing `/api/manifest/search`, `SUBCLASSES_BY_CLASS`, `ExoticArmorLookup` / `ExoticWeaponLookup`  
+**Storage**: No schema change — builds already store `exoticArmorHash`/`exoticArmorName`/`pinnedSuper` and subclass name strings; values must originate from lookups  
+**Testing**: Vitest (co-located `*.test.ts`); prefer pure helpers / payload builders over heavy RTL (project pattern)  
+**Target Platform**: Web app (production build UI + debug + generator)  
+**Project Type**: Web application (single Next.js repo)  
+**Performance Goals**: Lookup search remains on-demand; no new bulk loads beyond existing exotic/ability search  
+**Constraints**: Pick-only primary path; debug hash/JSON escape hatches may remain secondary; no name→hash migration this iteration  
+**Scale/Scope**: 3 form surfaces; shared small lookup helpers/components
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Required checks against constitution (edit this list with concrete assessment):**
+- **I. Small Testable Increments**: Three user stories (P1 create, P1 subclass form, P2 generator) — each shippable alone.
+- **II. Test-First**: Each story starts with failing tests for pick-only / vocabulary constraints before UI edits.
+- **III. Green Commit Checkpoints**: Commit after each story when `npm run gate` is green.
+- **IV. Co-Located Tests**: Helpers and payload mappers tested next to modules.
+- **V. Validation-First External Data**: Manifest search results already validated by API; UI only commits selected result identities.
 
-- I. Small Testable Increments: Scope is decomposed into vertical slices listed in user stories / phases. Each slice is independently testable.
-- II. Test-First (NON-NEGOTIABLE): All implementation tasks for new behavior will be preceded by failing tests.
-- III. Green Commit Checkpoints (NON-NEGOTIABLE): Checkpoints defined after each user story (or sub-increment); commits only when gate (typecheck + lint + test + build) is green.
-- IV-V. Additional principles (co-located tests, validation-first): Accounted for in task breakdown and contracts.
-
-If any violation: document in Complexity Tracking table below with why no simpler alternative exists.
+**Post-design re-check**: Pass — no new external data paths; reuse existing search contracts.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-├── contracts/           # Phase 1 output (/speckit-plan command)
-└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
+specs/025-lookup-only-fields/
+├── plan.md
+├── research.md
+├── data-model.md
+├── quickstart.md
+├── contracts/
+│   └── ui-lookups.md
+└── tasks.md              # /speckit-tasks
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+├── components/
+│   ├── build/CreateBuildPanel.tsx      # US1: subclass select, exotic + super lookups
+│   ├── build/BuildPage.tsx             # wire exoticArmorHash from create payload
+│   ├── debug/SubclassStructuredForm.tsx # US2: pick-only abilities/aspects/fragments
+│   ├── debug/ExoticArmorLookup.tsx     # reuse
+│   ├── debug/ExoticWeaponLookup.tsx    # reuse for generator preferred weapon path if needed
+│   └── BuildForm.tsx                   # US3: exotic/weapon lookups + weapon type multi-select
+├── data/
+│   ├── subclasses.ts                   # SUBCLASSES_BY_CLASS (reuse)
+│   └── weaponTypes.ts                  # NEW: known weapon type vocabulary for generator
+├── lib/
+│   ├── debug/subclassScope.ts          # clear incompatible on subclass change (reuse/extend)
+│   └── build/ or lib/ui/               # small helpers: default subclass for class, pick-only assign
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Single Next.js app; UI-first feature with shared data vocabularies and existing manifest search — no new API routes required unless a thin weapon-types list endpoint is preferred over a static data module (research chooses static list for generator).
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+> No constitution violations.
