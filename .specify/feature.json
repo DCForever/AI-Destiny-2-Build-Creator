@@ -1,1 +1,3 @@
-﻿{"feature_directory":"specs/023-llm-propose"}
+﻿{
+  "feature_directory": "specs/025-lookup-only-fields"
+}
