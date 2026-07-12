@@ -1,10 +1,16 @@
-import type { AspectRecord } from "../types/records";
+import type { AspectRecord, DestinyClassName } from "../types/records";
 import type { Extractor, RawTable, RawTableName } from "../types/services";
 import type { RawInventoryItem } from "./rawTypes";
 import { iterItems, projectBase, toClassName, deriveElement } from "./common";
 
 const ASPECT_CATEGORY_RE = /^(titan|hunter|warlock|shared)\.(arc|solar|void|stasis|strand|prismatic)\.aspects$/;
 const ASPECT_ENERGY_STAT_HASH = 2223994109;
+
+const CLASS_FROM_CAT: Record<string, DestinyClassName> = {
+  titan: "Titan",
+  hunter: "Hunter",
+  warlock: "Warlock",
+};
 
 type LoadTable = (table: RawTableName) => Promise<RawTable>;
 
@@ -20,6 +26,12 @@ function getFragmentCapacity(item: RawInventoryItem): number {
   return item.sockets?.socketEntries?.length ?? 0;
 }
 
+function classTypeFromCategory(categoryId: string): DestinyClassName | null {
+  const match = /^(titan|hunter|warlock)\./i.exec(categoryId);
+  if (!match) return null;
+  return CLASS_FROM_CAT[match[1].toLowerCase()] ?? null;
+}
+
 async function extractAspects(loadTable: LoadTable): Promise<AspectRecord[]> {
   const itemTable = await loadTable("DestinyInventoryItemDefinition");
   const result: AspectRecord[] = [];
@@ -30,7 +42,7 @@ async function extractAspects(loadTable: LoadTable): Promise<AspectRecord[]> {
     const typeName = item.itemTypeDisplayName ?? "";
     const cat = item.plug?.plugCategoryIdentifier ?? "";
     const element = deriveElement(typeName, cat);
-    const classType = toClassName(item.classType);
+    const classType = toClassName(item.classType) ?? classTypeFromCategory(cat);
 
     result.push({
       ...projectBase(item),

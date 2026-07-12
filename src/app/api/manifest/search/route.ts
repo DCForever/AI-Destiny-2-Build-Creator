@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getSubclassMeta } from "@/data/subclasses";
 import { resolveVerbSubType } from "@/data/synergyVerbs";
 import { getServices } from "@/lib/services";
 import type { StoreName } from "@/lib/manifest/types/stores";
@@ -71,12 +72,41 @@ function kindFilter(
   return results.filter((r) => r.record.kind === kind);
 }
 
-function classTypeFilter(results: SearchResult[], classType: string | undefined) {
+/** Supers/melee/movement/class abilities are never shared across classes. */
+const CLASS_LOCKED_KINDS = new Set(["super", "classAbility", "melee", "movement"]);
+
+/**
+ * Null classType usually means shared (e.g. grenades). Class-locked kinds with
+ * affinities spanning multiple classes are mis-enriched — exclude them when
+ * browsing by class so Hunter/Titan Strand supers do not appear for Warlock.
+ */
+function affinitiesExclusiveToClass(
+  affinities: string[] | undefined,
+  classType: string,
+): boolean {
+  if (!affinities || affinities.length === 0) return true;
+  const classes = affinities
+    .map((name) => getSubclassMeta(name)?.classType)
+    .filter((value): value is NonNullable<typeof value> => value != null);
+  if (classes.length === 0) return true;
+  return classes.every((value) => value === classType);
+}
+
+function classTypeFilter(
+  results: SearchResult[],
+  classType: string | undefined,
+  kind: string | undefined,
+) {
   if (!classType) return results;
   return results.filter((r) => {
     if (!("classType" in r.record)) return true;
-    // FR-001 clarify: null classType = shared / class-agnostic — include with class filter.
-    if (r.record.classType == null) return true;
+    if (r.record.classType == null) {
+      if (kind && CLASS_LOCKED_KINDS.has(kind)) {
+        return affinitiesExclusiveToClass(r.record.subclassAffinities, classType);
+      }
+      // FR-001 clarify: null classType = shared / class-agnostic — include with class filter.
+      return true;
+    }
     return r.record.classType === classType;
   });
 }
@@ -125,6 +155,7 @@ function applyFilters(results: SearchResult[], query: z.infer<typeof querySchema
         classTypeFilter(
           kindFilter(slotFilter(results, query.slot), query.category, query.kind),
           query.classType,
+          query.kind,
         ),
         query.element,
       ),

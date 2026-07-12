@@ -452,4 +452,74 @@ describe("manifest search route", () => {
     );
     expect(response.status).toBe(400);
   });
+
+  it("excludes mis-tagged Strand supers that list all Strand subclasses", async () => {
+    const getStore = vi.fn(async () => [
+      {
+        name: "Needlestorm",
+        hash: 1885339915,
+        kind: "super",
+        classType: null,
+        element: "Strand",
+        subclassAffinities: ["Broodweaver"],
+      },
+      {
+        name: "Needlestorm",
+        hash: 1869939001,
+        kind: "super",
+        classType: null,
+        element: "Strand",
+        subclassAffinities: ["Berserker", "Threadrunner", "Broodweaver"],
+      },
+      {
+        name: "Silkstrike",
+        hash: 2370269384,
+        kind: "super",
+        classType: null,
+        element: "Strand",
+        subclassAffinities: ["Berserker", "Threadrunner", "Broodweaver"],
+      },
+      {
+        name: "Bladefury",
+        hash: 2529942642,
+        kind: "super",
+        classType: null,
+        element: "Strand",
+        subclassAffinities: ["Berserker", "Threadrunner", "Broodweaver"],
+      },
+      {
+        name: "Shackle Grenade",
+        hash: 3005,
+        kind: "grenade",
+        classType: null,
+        element: "Strand",
+        subclassAffinities: ["Berserker", "Threadrunner", "Broodweaver"],
+      },
+    ]);
+
+    vi.mocked(getServices).mockResolvedValue({
+      resolver: { search: vi.fn() },
+      entityCache: { getStore },
+    } as unknown as Awaited<ReturnType<typeof getServices>>);
+
+    const supers = await GET(
+      new Request(
+        "http://localhost/api/manifest/search?q=&category=abilities&kind=super&classType=Warlock&element=Strand&subclass=Broodweaver",
+      ),
+    );
+    const superBody = await supers.json();
+    expect(supers.status).toBe(200);
+    expect(superBody.results.map((r: { name: string; hash: number }) => r.name)).toEqual([
+      "Needlestorm",
+    ]);
+    expect(superBody.results.map((r: { hash: number }) => r.hash)).toEqual([1885339915]);
+
+    const grenades = await GET(
+      new Request(
+        "http://localhost/api/manifest/search?q=&category=abilities&kind=grenade&classType=Warlock&element=Strand&subclass=Broodweaver",
+      ),
+    );
+    const grenadeBody = await grenades.json();
+    expect(grenadeBody.results.map((r: { name: string }) => r.name)).toEqual(["Shackle Grenade"]);
+  });
 });

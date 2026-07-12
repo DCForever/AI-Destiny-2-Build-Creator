@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import type { BuildSubclass, GuardianClass } from "@/components/build/types";
+import type { GuardianClass } from "@/components/build/types";
 import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
 import { PinnedSuperLookup } from "@/components/debug/PinnedSuperLookup";
 import {
@@ -29,20 +29,9 @@ import {
   subclassesForClass,
 } from "@/lib/build/createBuildLookups";
 import { createBuildPayload } from "@/lib/build/createBuildPayload";
+import { fetchSubclassKitForCreate } from "@/lib/build/createSubclassKit";
 
 const CLASSES: GuardianClass[] = ["Titan", "Hunter", "Warlock"];
-
-const DEFAULT_SUBCLASS: BuildSubclass = {
-  name: "Sunbreaker",
-  super: "Hammer of Sol",
-  classAbility: "Rally Barricade",
-  movement: "Catapult Lift",
-  melee: "Consecration",
-  grenade: "Healing Grenade",
-  aspects: ["Roaring Flames", "Sol Invictus"],
-  fragments: ["Ember of Torches", "Ember of Ashes"],
-  rationale: "Curated build",
-};
 
 export function CreateBuildPanel({
   busy,
@@ -61,8 +50,10 @@ export function CreateBuildPanel({
   const [pinnedSuper, setPinnedSuper] = useState<string | null>(null);
   const [exotic, setExotic] = useState<{ hash: number; name: string } | null>(null);
   const [synergyTypes, setSynergyTypes] = useState<SynergyTypeSelection[]>([]);
+  const [kitError, setKitError] = useState<string | null>(null);
+  const [sourcingKit, setSourcingKit] = useState(false);
 
-  const canSubmit = synergyTypes.length > 0 && !busy;
+  const canSubmit = synergyTypes.length > 0 && !busy && !sourcingKit;
 
   function handleClassChange(next: GuardianClass) {
     setClassName(next);
@@ -79,6 +70,29 @@ export function CreateBuildPanel({
       setPinnedSuper((pin) => pinnedSuperAfterSubclassChange(prev, next, pin));
       return next;
     });
+  }
+
+  async function handleSave() {
+    setKitError(null);
+    setSourcingKit(true);
+    try {
+      const subclassDefaults = await fetchSubclassKitForCreate(subclassName, pinnedSuper);
+      onCreate(
+        createBuildPayload({
+          name,
+          className,
+          subclassName,
+          pinnedSuper,
+          exotic,
+          synergyTypes,
+          subclassDefaults,
+        }),
+      );
+    } catch (err) {
+      setKitError(err instanceof Error ? err.message : "Failed to source subclass kit");
+    } finally {
+      setSourcingKit(false);
+    }
   }
 
   return (
@@ -141,30 +155,14 @@ export function CreateBuildPanel({
           <SynergyTypeMultiSelect selected={synergyTypes} onChange={setSynergyTypes} />
         </Section>
 
-        {error ? (
+        {error || kitError ? (
           <Text size="xs" tone="danger">
-            {error}
+            {kitError ?? error}
           </Text>
         ) : null}
 
-        <Button
-          variant="accent"
-          disabled={!canSubmit}
-          onClick={() =>
-            onCreate(
-              createBuildPayload({
-                name,
-                className,
-                subclassName,
-                pinnedSuper,
-                exotic,
-                synergyTypes,
-                subclassDefaults: DEFAULT_SUBCLASS,
-              }),
-            )
-          }
-        >
-          {busy ? "Creating…" : "Save build"}
+        <Button variant="accent" disabled={!canSubmit} onClick={() => void handleSave()}>
+          {busy || sourcingKit ? "Creating…" : "Save build"}
         </Button>
       </Stack>
     </Panel>
