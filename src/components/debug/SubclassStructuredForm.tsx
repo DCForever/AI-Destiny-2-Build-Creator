@@ -9,6 +9,7 @@ import {
   type SubclassValidNames,
 } from "@/lib/debug/subclassScope";
 import { buildSubclassSearchParams } from "@/lib/debug/subclassSearchParams";
+import { addPickedName, removePickedName } from "@/lib/debug/pickOnlyList";
 
 type GuardianClass = "Titan" | "Hunter" | "Warlock";
 type AbilityKind = "super" | "classAbility" | "movement" | "melee" | "grenade";
@@ -46,14 +47,6 @@ const ABILITY_FIELDS: Array<{ key: AbilityKind; label: string }> = [
   { key: "melee", label: "Melee" },
   { key: "grenade", label: "Grenade" },
 ];
-
-function splitList(value: string): string[] {
-  return value.split(",").map((item) => item.trim()).filter(Boolean);
-}
-
-function joinUnique(items: string[], next: string): string[] {
-  return [...new Set([...items, next])];
-}
 
 async function fetchResults(
   formValue: SubclassFormValue,
@@ -212,14 +205,21 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
 
       {ABILITY_FIELDS.map((field) => (
         <div key={field.key} className="space-y-1">
-          <label className="block text-sm">
-            {field.label}
-            <input
-              className="mt-1 block w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
-              value={value[field.key]}
-              onChange={(event) => updateField(field.key, event.target.value)}
-            />
-          </label>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm">{field.label}</span>
+            {value[field.key] ? (
+              <button
+                type="button"
+                className="rounded bg-zinc-800 px-2 py-0.5 text-xs"
+                onClick={() => updateField(field.key, "")}
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+          <p className="rounded border border-zinc-800 bg-zinc-950 px-2 py-1 text-sm text-zinc-200">
+            {value[field.key] || <span className="text-zinc-500">Pick from search…</span>}
+          </p>
           <div className="flex gap-2">
             <input
               className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
@@ -241,10 +241,10 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
         value={value.aspects}
         searchText={searchText.aspects ?? ""}
         results={results.aspects ?? []}
-        onTextChange={(next) => updateField("aspects", splitList(next))}
+        onRemove={(name) => updateField("aspects", removePickedName(value.aspects, name))}
         onSearchTextChange={(next) => setSearchText((current) => ({ ...current, aspects: next }))}
         onSearch={() => void search("aspects", "aspects")}
-        onPick={(item) => updateField("aspects", joinUnique(value.aspects, item.name))}
+        onPick={(item) => updateField("aspects", addPickedName(value.aspects, item.name))}
       />
       <ListField
         label="Fragments"
@@ -252,10 +252,10 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
         value={value.fragments}
         searchText={searchText.fragments ?? ""}
         results={results.fragments ?? []}
-        onTextChange={(next) => updateField("fragments", splitList(next))}
+        onRemove={(name) => updateField("fragments", removePickedName(value.fragments, name))}
         onSearchTextChange={(next) => setSearchText((current) => ({ ...current, fragments: next }))}
         onSearch={() => void search("fragments", "fragments")}
-        onPick={(item) => updateField("fragments", joinUnique(value.fragments, item.name))}
+        onPick={(item) => updateField("fragments", addPickedName(value.fragments, item.name))}
       />
 
       <label className="block text-sm">
@@ -302,7 +302,7 @@ function ListField({
   value,
   searchText,
   results,
-  onTextChange,
+  onRemove,
   onSearchTextChange,
   onSearch,
   onPick,
@@ -312,21 +312,31 @@ function ListField({
   value: string[];
   searchText: string;
   results: SearchResult[];
-  onTextChange: (next: string) => void;
+  onRemove: (name: string) => void;
   onSearchTextChange: (next: string) => void;
   onSearch: () => void;
   onPick: (item: SearchResult) => void;
 }) {
   return (
     <div className="space-y-1">
-      <label className="block text-sm">
-        {label}
-        <input
-          className="mt-1 block w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"
-          value={value.join(", ")}
-          onChange={(event) => onTextChange(event.target.value)}
-        />
-      </label>
+      <span className="block text-sm">{label}</span>
+      <div className="flex flex-wrap gap-1">
+        {value.length === 0 ? (
+          <span className="text-xs text-zinc-500">Pick from search…</span>
+        ) : (
+          value.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className="rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-xs hover:border-red-700"
+              onClick={() => onRemove(name)}
+              title="Remove"
+            >
+              {name} ×
+            </button>
+          ))
+        )}
+      </div>
       <div className="flex gap-2">
         <input
           className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm"

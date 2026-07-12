@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { SUBCLASSES_BY_CLASS, formatSubclassLabel } from "@/data/subclasses";
+import { KNOWN_WEAPON_TYPES, toggleWeaponType } from "@/data/weaponTypes";
+import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
+import { WeaponNameLookup } from "@/components/debug/WeaponNameLookup";
 import { PromptPreviewDialog } from "@/components/PromptPreviewDialog";
 import { composeBuildPromptPreview, type PromptPreview } from "@/lib/llm/composePromptPreview";
 import type { BuildRequest } from "@/lib/llm/buildSchema";
+import { buildFormPreferenceFields } from "@/lib/llm/buildFormPreferences";
 import type { UserPreferences } from "@/lib/preferences/types";
 import { DEFAULT_PREFERENCES } from "@/lib/preferences/types";
 
@@ -22,12 +26,12 @@ type FormData = {
   subclass: string;
   activity: string;
   playstyle: string;
-  preferredExotic: string;
-  preferredWeapon: string;
+  preferredExotic: { hash: number; name: string } | null;
+  preferredWeapon: { hash: number; name: string } | null;
   notes: string;
   generationMode: GenerationMode;
-  weaponTypesInclude: string;
-  weaponTypesExclude: string;
+  weaponTypesInclude: string[];
+  weaponTypesExclude: string[];
   prioritizeOwned: boolean;
 };
 
@@ -49,24 +53,24 @@ export function BuildForm({ onSubmit, isGenerating, multiPassAvailable = false }
     subclass: "",
     activity: "",
     playstyle: "",
-    preferredExotic: "",
-    preferredWeapon: "",
+    preferredExotic: null,
+    preferredWeapon: null,
     notes: "",
     generationMode: DEFAULT_PREFERENCES.defaultGenerationMode ?? "standard",
-    weaponTypesInclude: "",
-    weaponTypesExclude: "",
+    weaponTypesInclude: [],
+    weaponTypesExclude: [],
     prioritizeOwned: false,
   });
   const [prefsOpen, setPrefsOpen] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<"subclass" | "activity" | "playstyle", string>>>({});
   const [preview, setPreview] = useState<PromptPreview | null>(null);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
-  const set = (key: keyof FormData, value: string) =>
+  const set = (key: "subclass" | "activity" | "playstyle" | "notes", value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const setClassName = (className: BuildRequest["className"]) =>
-    setForm((prev) => ({ ...prev, className, subclass: "" }));
+    setForm((prev) => ({ ...prev, className, subclass: "", preferredExotic: null }));
 
   const persistGenerationMode = useCallback(async (generationMode: GenerationMode) => {
     try {
@@ -105,7 +109,7 @@ export function BuildForm({ onSubmit, isGenerating, multiPassAvailable = false }
   }, []);
 
   const validate = (): boolean => {
-    const next: Partial<Record<keyof FormData, string>> = {};
+    const next: Partial<Record<"subclass" | "activity" | "playstyle", string>> = {};
     if (!form.subclass.trim()) next.subclass = "Required";
     if (!form.activity.trim()) next.activity = "Required";
     if (!form.playstyle.trim()) next.playstyle = "Required";
@@ -114,29 +118,22 @@ export function BuildForm({ onSubmit, isGenerating, multiPassAvailable = false }
   };
 
   const buildRequest = (): BuildRequest => {
-    const splitTypes = (raw: string) =>
-      raw.split(",").map((s) => s.trim()).filter(Boolean);
-    const include = splitTypes(form.weaponTypesInclude);
-    const exclude = splitTypes(form.weaponTypesExclude);
-    const weaponTypePreferences =
-      include.length > 0 || exclude.length > 0 || form.prioritizeOwned
-        ? {
-            include: include.length > 0 ? include : undefined,
-            exclude: exclude.length > 0 ? exclude : undefined,
-            prioritizeOwned: form.prioritizeOwned || undefined,
-          }
-        : undefined;
+    const prefs = buildFormPreferenceFields({
+      preferredExotic: form.preferredExotic?.name ?? null,
+      preferredWeapon: form.preferredWeapon?.name ?? null,
+      weaponTypesInclude: form.weaponTypesInclude,
+      weaponTypesExclude: form.weaponTypesExclude,
+      prioritizeOwned: form.prioritizeOwned,
+      notes: form.notes,
+    });
 
     return {
       className: form.className,
       subclass: form.subclass.trim(),
       activity: form.activity.trim(),
       playstyle: form.playstyle.trim(),
-      preferredExotic: form.preferredExotic.trim() || undefined,
-      preferredWeapon: form.preferredWeapon.trim() || undefined,
-      notes: form.notes.trim() || undefined,
       generationMode: form.generationMode,
-      weaponTypePreferences,
+      ...prefs,
     };
   };
 
@@ -260,45 +257,64 @@ export function BuildForm({ onSubmit, isGenerating, multiPassAvailable = false }
 
         {prefsOpen && (
           <div className="mt-3 space-y-4 border-l border-line pl-4">
-            <div className="space-y-1">
-              <label htmlFor="exotic">{fieldLabel("Preferred Exotic")}</label>
-              <input
-                id="exotic"
-                value={form.preferredExotic}
-                onChange={(e) => set("preferredExotic", e.target.value)}
-                placeholder="Optional"
-                className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
-              />
+            <ExoticArmorLookup
+              className={form.className}
+              selected={form.preferredExotic}
+              onSelect={(item) => setForm((prev) => ({ ...prev, preferredExotic: item }))}
+            />
+            <WeaponNameLookup
+              selected={form.preferredWeapon}
+              onSelect={(item) => setForm((prev) => ({ ...prev, preferredWeapon: item }))}
+            />
+            <div className="space-y-2">
+              <span className="text-[11px] tracking-widest uppercase text-muted">Weapon types to include</span>
+              <div className="flex flex-wrap gap-2">
+                {KNOWN_WEAPON_TYPES.map((type) => {
+                  const active = form.weaponTypesInclude.includes(type);
+                  return (
+                    <button
+                      key={`include-${type}`}
+                      type="button"
+                      className={`border px-2 py-1 text-xs ${
+                        active ? "border-accent text-accent" : "border-line text-muted"
+                      }`}
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          weaponTypesInclude: toggleWeaponType(prev.weaponTypesInclude, type),
+                        }))
+                      }
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="space-y-1">
-              <label htmlFor="weapon">{fieldLabel("Preferred Weapon")}</label>
-              <input
-                id="weapon"
-                value={form.preferredWeapon}
-                onChange={(e) => set("preferredWeapon", e.target.value)}
-                placeholder="Optional"
-                className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="weapon-types-include">{fieldLabel("Weapon types to include")}</label>
-              <input
-                id="weapon-types-include"
-                value={form.weaponTypesInclude}
-                onChange={(e) => set("weaponTypesInclude", e.target.value)}
-                placeholder="e.g. Hand Cannon, Scout Rifle (comma-separated)"
-                className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="weapon-types-exclude">{fieldLabel("Weapon types to exclude")}</label>
-              <input
-                id="weapon-types-exclude"
-                value={form.weaponTypesExclude}
-                onChange={(e) => set("weaponTypesExclude", e.target.value)}
-                placeholder="e.g. Sidearm, Glaive (comma-separated)"
-                className="w-full bg-background border border-line px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline-accent focus-visible:border-accent"
-              />
+            <div className="space-y-2">
+              <span className="text-[11px] tracking-widest uppercase text-muted">Weapon types to exclude</span>
+              <div className="flex flex-wrap gap-2">
+                {KNOWN_WEAPON_TYPES.map((type) => {
+                  const active = form.weaponTypesExclude.includes(type);
+                  return (
+                    <button
+                      key={`exclude-${type}`}
+                      type="button"
+                      className={`border px-2 py-1 text-xs ${
+                        active ? "border-accent text-accent" : "border-line text-muted"
+                      }`}
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          weaponTypesExclude: toggleWeaponType(prev.weaponTypesExclude, type),
+                        }))
+                      }
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -328,18 +344,16 @@ export function BuildForm({ onSubmit, isGenerating, multiPassAvailable = false }
         disabled={isGenerating}
         className="w-full py-2.5 bg-accent text-background text-sm font-semibold tracking-widest uppercase hover:bg-accent-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-accent"
       >
-        Generate Build
+        {isGenerating ? "Generating…" : "Generate Build"}
       </button>
-
       <button
         type="button"
         onClick={handlePreview}
         disabled={isGenerating}
-        className="w-full py-2.5 text-sm tracking-widest uppercase border border-line text-muted hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-accent"
+        className="w-full py-2 border border-line text-xs tracking-widest uppercase text-muted hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline-accent"
       >
-        Preview Prompt
+        Preview prompt
       </button>
-
       {preview && (
         <PromptPreviewDialog
           open

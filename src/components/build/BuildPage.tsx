@@ -110,24 +110,25 @@ export function BuildPage() {
   }, [loadBuilds, loadCharacters]);
 
   async function handleCreate(input: {
-    name: string;
+    name?: string;
     className: GuardianClass;
     subclass: BuildSubclass;
     synergyTypes: SynergyTypeSelection[];
-    exoticArmorName: string;
-    pinnedSuper: string;
+    exoticArmorName: string | null;
+    exoticArmorHash: number | null;
+    pinnedSuper: string | null;
   }) {
     setCreateBusy(true);
     setCreateError(null);
     try {
       const payload = {
-        name: input.name || undefined,
+        name: input.name,
         className: input.className,
         subclass: input.subclass,
         synergyTypes: input.synergyTypes,
-        pinnedSuper: input.pinnedSuper || null,
-        exoticArmorName: input.exoticArmorName || null,
-        exoticArmorHash: null,
+        pinnedSuper: input.pinnedSuper,
+        exoticArmorName: input.exoticArmorName,
+        exoticArmorHash: input.exoticArmorHash,
       };
       const res = await fetch("/api/user/builds", {
         method: "POST",

@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 import type { BuildSubclass, GuardianClass } from "@/components/build/types";
+import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
+import { PinnedSuperLookup } from "@/components/debug/PinnedSuperLookup";
 import {
   SynergyTypeMultiSelect,
   type SynergyTypeSelection,
@@ -19,6 +21,14 @@ import {
   TextField,
   Heading,
 } from "@/components/ui";
+import { formatSubclassLabel } from "@/data/subclasses";
+import {
+  defaultSubclassForClass,
+  pinnedSuperAfterSubclassChange,
+  subclassAfterClassChange,
+  subclassesForClass,
+} from "@/lib/build/createBuildLookups";
+import { createBuildPayload } from "@/lib/build/createBuildPayload";
 
 const CLASSES: GuardianClass[] = ["Titan", "Hunter", "Warlock"];
 
@@ -43,23 +53,33 @@ export function CreateBuildPanel({
   busy: boolean;
   error: string | null;
   onCancel: () => void;
-  onCreate: (input: {
-    name: string;
-    className: GuardianClass;
-    subclass: BuildSubclass;
-    synergyTypes: SynergyTypeSelection[];
-    exoticArmorName: string;
-    pinnedSuper: string;
-  }) => void;
+  onCreate: (input: ReturnType<typeof createBuildPayload>) => void;
 }) {
   const [name, setName] = useState("");
   const [className, setClassName] = useState<GuardianClass>("Titan");
-  const [subclassName, setSubclassName] = useState(DEFAULT_SUBCLASS.name);
-  const [pinnedSuper, setPinnedSuper] = useState(DEFAULT_SUBCLASS.super);
-  const [exoticArmorName, setExoticArmorName] = useState("");
+  const [subclassName, setSubclassName] = useState(defaultSubclassForClass("Titan"));
+  const [pinnedSuper, setPinnedSuper] = useState<string | null>(null);
+  const [exotic, setExotic] = useState<{ hash: number; name: string } | null>(null);
   const [synergyTypes, setSynergyTypes] = useState<SynergyTypeSelection[]>([]);
 
   const canSubmit = synergyTypes.length > 0 && !busy;
+
+  function handleClassChange(next: GuardianClass) {
+    setClassName(next);
+    setSubclassName((prev) => {
+      const nextSubclass = subclassAfterClassChange(next, prev);
+      setPinnedSuper((pin) => pinnedSuperAfterSubclassChange(prev, nextSubclass, pin));
+      return nextSubclass;
+    });
+    setExotic(null);
+  }
+
+  function handleSubclassChange(next: string) {
+    setSubclassName((prev) => {
+      setPinnedSuper((pin) => pinnedSuperAfterSubclassChange(prev, next, pin));
+      return next;
+    });
+  }
 
   return (
     <Panel tone="raised" pad="lg" as="form">
@@ -85,31 +105,33 @@ export function CreateBuildPanel({
                 key={cls}
                 label={cls}
                 active={className === cls}
-                onClick={() => setClassName(cls)}
+                onClick={() => handleClassChange(cls)}
               />
             ))}
           </Cluster>
         </Section>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <TextField
-            label="Subclass"
+        <Section label="Subclass">
+          <select
+            className="w-full bg-surface-raised border border-line px-2 py-1.5 text-sm text-foreground"
             value={subclassName}
-            onChange={(e) => setSubclassName(e.target.value)}
-          />
-          <TextField
-            label="Pinned super"
-            value={pinnedSuper}
-            onChange={(e) => setPinnedSuper(e.target.value)}
-          />
-        </div>
+            onChange={(e) => handleSubclassChange(e.target.value)}
+          >
+            {subclassesForClass(className).map((s) => (
+              <option key={s} value={s}>
+                {formatSubclassLabel(s)}
+              </option>
+            ))}
+          </select>
+        </Section>
 
-        <TextField
-          label="Exotic armor name (optional)"
-          value={exoticArmorName}
-          onChange={(e) => setExoticArmorName(e.target.value)}
-          placeholder="Synthoceps"
+        <PinnedSuperLookup
+          subclassName={subclassName}
+          selected={pinnedSuper}
+          onSelect={setPinnedSuper}
         />
+
+        <ExoticArmorLookup className={className} selected={exotic} onSelect={setExotic} />
 
         <Section label="Synergy Types (required)">
           <Text size="xs" tone="muted" className="mb-2">
@@ -129,18 +151,17 @@ export function CreateBuildPanel({
           variant="accent"
           disabled={!canSubmit}
           onClick={() =>
-            onCreate({
-              name: name.trim(),
-              className,
-              subclass: {
-                ...DEFAULT_SUBCLASS,
-                name: subclassName.trim() || DEFAULT_SUBCLASS.name,
-                super: pinnedSuper.trim() || DEFAULT_SUBCLASS.super,
-              },
-              synergyTypes,
-              exoticArmorName: exoticArmorName.trim(),
-              pinnedSuper: pinnedSuper.trim(),
-            })
+            onCreate(
+              createBuildPayload({
+                name,
+                className,
+                subclassName,
+                pinnedSuper,
+                exotic,
+                synergyTypes,
+                subclassDefaults: DEFAULT_SUBCLASS,
+              }),
+            )
           }
         >
           {busy ? "Creating…" : "Save build"}
