@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { BuildActions } from "@/components/build/BuildActions";
+import { BuildEditPanel } from "@/components/build/BuildEditPanel";
 import { BuildIdentity } from "@/components/build/BuildIdentity";
 import { BuildLibrary } from "@/components/build/BuildLibrary";
 import { CreateBuildPanel } from "@/components/build/CreateBuildPanel";
 import { VariantCard } from "@/components/build/VariantCard";
+import { VariantEditPanel } from "@/components/build/VariantEditPanel";
 import type {
   BuildDetail,
   BuildSubclass,
@@ -34,7 +36,8 @@ import { sortByName } from "@/lib/sortByName";
  *   Workspace
  *     rail  → BuildLibrary
  *     main  → WorkspaceMain
- *       CreateBuildPanel | EmptyState | [BuildIdentity, CardGrid, BuildActions]
+ *       CreateBuildPanel | BuildEditPanel | VariantEditPanel | EmptyState |
+ *       [BuildIdentity, CardGrid, BuildActions]
  */
 export function BuildPage() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -44,6 +47,7 @@ export function BuildPage() {
   const [variantId, setVariantId] = useState<string | null>(null);
   const [classFilter, setClassFilter] = useState<GuardianClass | null>(null);
   const [creating, setCreating] = useState(false);
+  const [editingBuild, setEditingBuild] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -52,6 +56,8 @@ export function BuildPage() {
   const [characterId, setCharacterId] = useState("");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const loadBuilds = useCallback(async () => {
     const res = await fetch("/api/user/builds");
@@ -228,6 +234,71 @@ export function BuildPage() {
     }
   }
 
+  function applySavedBuild(next: BuildDetail) {
+    setDetail(next);
+    setSelectedId(next.id);
+    setBuilds((prev) => {
+      const exists = prev.some((b) => b.id === next.id);
+      const mapped = exists
+        ? prev.map((b) =>
+            b.id === next.id
+              ? {
+                  ...b,
+                  name: next.name,
+                  exoticArmorName: next.exoticArmorName,
+                  exoticWeaponName: next.exoticWeaponName,
+                  pinnedSuper: next.pinnedSuper,
+                }
+              : b,
+          )
+        : [
+            ...prev,
+            {
+              id: next.id,
+              name: next.name,
+              className: next.className,
+              exoticArmorHash: next.exoticArmorHash,
+              exoticArmorName: next.exoticArmorName,
+              exoticWeaponHash: next.exoticWeaponHash,
+              exoticWeaponName: next.exoticWeaponName,
+              pinnedSuper: next.pinnedSuper,
+            },
+          ];
+      return sortByName(mapped);
+    });
+  }
+
+  async function handleDeleteBuild() {
+    if (!detail) return;
+    const confirmed = window.confirm(
+      `Delete build “${detail.name}”? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    setDeleteBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/user/builds/${detail.id}`, {
+        method: "DELETE",
+      });
+      const body = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(body.error ?? "Failed to delete build");
+        return;
+      }
+      setBuilds((prev) => prev.filter((b) => b.id !== detail.id));
+      setSelectedId(null);
+      setDetail(null);
+      setVariantId(null);
+      setEditingBuild(false);
+      setEditingVariantId(null);
+      setActionMessage(null);
+    } catch {
+      setError("Failed to delete build");
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
   if (signedIn === false) {
     return (
       <div className="flex-1 max-w-3xl mx-auto p-6">
@@ -245,6 +316,8 @@ export function BuildPage() {
     detail?.variants.find((v) => v.id === variantId) ??
     detail?.variants[0] ??
     null;
+  const editingVariant =
+    detail?.variants.find((v) => v.id === editingVariantId) ?? null;
 
   let main: ReactNode;
   if (creating) {
@@ -266,11 +339,52 @@ export function BuildPage() {
         }
       />
     );
+  } else if (editingBuild) {
+    main = (
+      <WorkspaceMain>
+        <BuildEditPanel
+          build={detail}
+          onClose={() => setEditingBuild(false)}
+          onSaved={(next) => {
+            applySavedBuild(next);
+            if (next.id !== detail.id) {
+              setEditingBuild(false);
+              void loadDetail(next.id);
+            }
+          }}
+        />
+      </WorkspaceMain>
+    );
+  } else if (editingVariant) {
+    main = (
+      <WorkspaceMain>
+        <VariantEditPanel
+          build={detail}
+          variant={editingVariant}
+          onClose={() => setEditingVariantId(null)}
+          onSaved={(next, preferredVariantId) => {
+            applySavedBuild(next);
+            if (preferredVariantId) {
+              setVariantId(preferredVariantId);
+              setEditingVariantId(preferredVariantId);
+            }
+          }}
+        />
+      </WorkspaceMain>
+    );
   } else {
     main = (
       <WorkspaceMain>
-        {/* Reorder these three freely */}
-        <BuildIdentity build={detail} />
+        <BuildIdentity
+          build={detail}
+          onEdit={() => {
+            setEditingVariantId(null);
+            setEditingBuild(true);
+            setActionMessage(null);
+          }}
+          onDelete={() => void handleDeleteBuild()}
+          deleteBusy={deleteBusy}
+        />
         <CardGrid>
           {detail.variants.map((variant) => (
             <VariantCard
@@ -280,6 +394,12 @@ export function BuildPage() {
               selected={selectedVariant?.id === variant.id}
               onSelect={() => {
                 setVariantId(variant.id);
+                setActionMessage(null);
+              }}
+              onEdit={() => {
+                setEditingBuild(false);
+                setVariantId(variant.id);
+                setEditingVariantId(variant.id);
                 setActionMessage(null);
               }}
             />
@@ -308,7 +428,7 @@ export function BuildPage() {
       <Stack gap={16}>
         <PageHeader
           title="Build"
-          description="Curated library — select a build, compare variants, apply to a character or export to DIM."
+          description="Curated library — create builds, edit variants (General · Sets · Artifact · Mods · Abilities · Aspects · Fragments), apply to a character or export to DIM."
         />
 
         {error ? <Callout tone="danger">{error}</Callout> : null}
@@ -322,12 +442,16 @@ export function BuildPage() {
               onClassFilter={setClassFilter}
               onSelect={(id) => {
                 setCreating(false);
+                setEditingBuild(false);
+                setEditingVariantId(null);
                 setSelectedId(id);
                 setActionMessage(null);
                 void loadDetail(id);
               }}
               onNew={() => {
                 setCreating(true);
+                setEditingBuild(false);
+                setEditingVariantId(null);
                 setSelectedId(null);
                 setDetail(null);
                 setVariantId(null);

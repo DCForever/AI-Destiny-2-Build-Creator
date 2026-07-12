@@ -22,11 +22,13 @@ export function VariantCard({
   variant,
   selected,
   onSelect,
+  onEdit,
 }: {
   build: BuildDetail;
   variant: BuildVariantDetail;
   selected: boolean;
   onSelect: () => void;
+  onEdit?: () => void;
 }) {
   const equipment = variant.resolved?.equipment ?? {};
   const subclass = build.subclass;
@@ -52,13 +54,20 @@ export function VariantCard({
               </Text>
             ) : null}
           </button>
-          <Button
-            variant={selected ? "accent" : "outline"}
-            size="sm"
-            onClick={onSelect}
-          >
-            {selected ? "Selected" : "Select"}
-          </Button>
+          <Row gap={4}>
+            <Button
+              variant={selected ? "accent" : "outline"}
+              size="sm"
+              onClick={onSelect}
+            >
+              {selected ? "Selected" : "Select"}
+            </Button>
+            {onEdit ? (
+              <Button size="sm" onClick={onEdit}>
+                Edit
+              </Button>
+            ) : null}
+          </Row>
         </Row>
 
         <Section label="Exotic weapon">
