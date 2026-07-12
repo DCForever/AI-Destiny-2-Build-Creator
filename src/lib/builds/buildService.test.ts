@@ -37,7 +37,7 @@ describe("buildService", () => {
       code: API_ERROR_CODES.NO_SYNERGY,
     });
     await expect(
-      createUserBuild(db, user.id, { ...baseInput, synergyIds: [] }),
+      createUserBuild(db, user.id, { ...baseInput, synergyTypes: [] }),
     ).rejects.toMatchObject({
       code: API_ERROR_CODES.NO_SYNERGY,
     });
@@ -57,7 +57,7 @@ describe("buildService", () => {
       subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 100,
       exoticArmorName: "Hallowfire Heart",
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       tagIds: ["solar", "pve"],
       defaultVariant: { attachments: [] },
     });
@@ -84,7 +84,7 @@ describe("buildService", () => {
       className: "Titan",
       subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 100,
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
     });
 
     await expect(
@@ -125,7 +125,7 @@ describe("buildService", () => {
       exoticWeaponHash: 555,
       exoticWeaponName: "Riskrunner",
       pinnedSuper: "Chaos Reach",
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
     });
 
     expect(build?.exoticArmorHash).toBeNull();
@@ -134,21 +134,10 @@ describe("buildService", () => {
     expect(build?.name).toContain("Warlock");
   });
 
-  it("requires identityAction when changing synergies", async () => {
+  it("requires identityAction when changing synergy types", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b-fork", 3, "Player");
-    const synergies = seedDefaultSynergies(db, user.id);
-    const now = new Date().toISOString();
-    const { createSynergyRecord } = await import("@/lib/db/repositories/synergyRepository");
-    const second = createSynergyRecord(db, user.id, {
-      id: crypto.randomUUID(),
-      name: "Grenade Loop",
-      type: "grenade",
-      subType: "Base",
-      description: "Second synergy for identity fork tests",
-      links: [],
-      now,
-    });
+    seedDefaultSynergies(db, user.id);
 
     const build = await createUserBuild(db, user.id, {
       name: "Original",
@@ -165,27 +154,55 @@ describe("buildService", () => {
         rationale: "",
       },
       exoticArmorHash: 100,
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
     });
 
     const { updateUserBuild } = await import("@/lib/builds/buildService");
     await expect(
-      updateUserBuild(db, user.id, build!.id, { synergyIds: [second.id] }),
+      updateUserBuild(db, user.id, build!.id, {
+        synergyTypes: [{ type: "grenade", subType: "Base" }],
+      }),
     ).rejects.toMatchObject({ code: API_ERROR_CODES.IDENTITY_CONFIRM_REQUIRED });
 
     const confirmed = await updateUserBuild(db, user.id, build!.id, {
-      synergyIds: [second.id],
+      synergyTypes: [{ type: "grenade", subType: "Base" }],
       identityAction: "confirm",
     });
     expect(confirmed?.id).toBe(build!.id);
-    expect(confirmed?.synergies[0]?.id).toBe(second.id);
+    expect(confirmed?.synergyTypes?.[0]?.type).toBe("grenade");
 
     const forked = await updateUserBuild(db, user.id, build!.id, {
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       identityAction: "fork",
     });
     expect(forked?.id).not.toBe(build!.id);
     expect((forked as { forkedFromId?: string })?.forkedFromId).toBe(build!.id);
+  });
+
+  it("creates build with unmatched synergy type (no library record)", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b-unmatched", 3, "Player");
+
+    const build = await createUserBuild(db, user.id, {
+      name: "Devour Intent",
+      className: "Warlock",
+      subclass: {
+        name: "Voidwalker",
+        super: "",
+        classAbility: "",
+        movement: "",
+        melee: "",
+        grenade: "",
+        aspects: [],
+        fragments: [],
+        rationale: "",
+      },
+      synergyTypes: [{ type: "verb", subType: "Devour" }],
+    });
+
+    expect(build?.synergyTypes).toHaveLength(1);
+    expect(build?.synergyTypes?.[0]?.label).toBe("Verb: Devour");
+    expect(build?.synergies).toHaveLength(0);
   });
 
   it("rejects duplicate build names within the same class", async () => {
@@ -205,7 +222,7 @@ describe("buildService", () => {
         fragments: [],
         rationale: "",
       },
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee" as const, subType: "Base" }],
     };
 
     await createUserBuild(db, user.id, { ...base, name: "Ionic Trace Kit" });
@@ -235,7 +252,7 @@ describe("buildService", () => {
       className: "Titan",
       subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 100,
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
     });
 
     await expect(

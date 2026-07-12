@@ -1,6 +1,10 @@
 import type { AppDatabase } from "@/lib/db/client";
 import { getBuild } from "@/lib/db/repositories/buildRepository";
-import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
+import {
+  designationKey,
+  designationLabel,
+  resolveDesignatedSynergies,
+} from "@/lib/builds/resolveDesignatedSynergies";
 import {
   getVariant,
   listAttachments,
@@ -67,7 +71,12 @@ export async function compareBuildVariants(
   const defaultEquipment = await resolveSlots(db, userId, buildId, defaultVariant.id);
   const defaultNotes = defaultVariant.notes;
 
-  const synergies = getSynergiesByIds(db, userId, build.synergyIds);
+  const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
+  const synergies = bridge.designations.map((d) => ({
+    id: designationKey(d),
+    name: designationLabel(d),
+    type: d.type,
+  }));
 
   const variants = await Promise.all(
     selected.map(async (variant) => {

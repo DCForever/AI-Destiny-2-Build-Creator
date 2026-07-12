@@ -2,12 +2,14 @@ import { and, eq, inArray } from "drizzle-orm";
 
 import type { ConceptTagId } from "@/data/conceptTags";
 import type { AppDatabase } from "@/lib/db/client";
-import { buildSynergies, buildTags, builds, buildVariants } from "@/lib/db/schema";
+import { buildSynergyTypes, buildTags, builds, buildVariants } from "@/lib/db/schema";
+import type { SynergyTypeDesignation } from "@/lib/builds/resolveDesignatedSynergies";
 import {
   parseSoftStatTargets,
   serializeSoftStatTargets,
   type SoftStatTargets,
 } from "@/lib/builds/softStatTargets";
+import type { SynergyType } from "@/lib/synergies/schemas";
 
 export type BuildRecord = {
   id: string;
@@ -22,7 +24,7 @@ export type BuildRecord = {
   pinnedSuper: string | null;
   softStatTargets: SoftStatTargets;
   tagIds: ConceptTagId[];
-  synergyIds: string[];
+  synergyTypes: SynergyTypeDesignation[];
   createdAt: string;
   updatedAt: string;
 };
@@ -37,13 +39,20 @@ function loadBuildTags(db: AppDatabase, buildId: string): ConceptTagId[] {
     .sort();
 }
 
-function loadBuildSynergies(db: AppDatabase, buildId: string): string[] {
+function loadBuildSynergyTypes(db: AppDatabase, buildId: string): SynergyTypeDesignation[] {
   return db
-    .select({ synergyId: buildSynergies.synergyId })
-    .from(buildSynergies)
-    .where(eq(buildSynergies.buildId, buildId))
+    .select({
+      type: buildSynergyTypes.type,
+      subType: buildSynergyTypes.subType,
+    })
+    .from(buildSynergyTypes)
+    .where(eq(buildSynergyTypes.buildId, buildId))
     .all()
-    .map((r) => r.synergyId);
+    .map((r) => ({
+      type: r.type as SynergyType,
+      // Empty string stored for UNIQUE null-safety; expose as null
+      subType: r.subType?.trim() ? r.subType : null,
+    }));
 }
 
 function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildRecord {
@@ -60,7 +69,7 @@ function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildReco
     pinnedSuper: row.pinnedSuper ?? null,
     softStatTargets: parseSoftStatTargets(row.softStatTargets),
     tagIds: loadBuildTags(db, row.id),
-    synergyIds: loadBuildSynergies(db, row.id),
+    synergyTypes: loadBuildSynergyTypes(db, row.id),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -110,7 +119,8 @@ export function listBuildsFiltered(
     tags?: ConceptTagId[];
     exoticArmorHash?: number;
     exoticWeaponHash?: number;
-    synergyId?: string;
+    synergyType?: string;
+    synergySubType?: string | null;
   },
 ): BuildRecord[] {
   let results = filters.tags?.length
@@ -121,8 +131,19 @@ export function listBuildsFiltered(
     results = results.filter((b) => b.exoticArmorHash === filters.exoticArmorHash);
   }
 
-  if (filters.synergyId) {
-    results = results.filter((b) => b.synergyIds.includes(filters.synergyId!));
+  if (filters.synergyType) {
+    const type = filters.synergyType;
+    const sub =
+      filters.synergySubType === undefined
+        ? undefined
+        : filters.synergySubType?.trim() || null;
+    results = results.filter((b) =>
+      b.synergyTypes.some((d) => {
+        if (d.type !== type) return false;
+        if (sub === undefined) return true;
+        return (d.subType ?? null) === sub;
+      }),
+    );
   }
 
   if (filters.exoticWeaponHash !== undefined) {
@@ -173,6 +194,25 @@ export function getBuild(db: AppDatabase, userId: number, id: string): BuildReco
   return row ? rowToBuild(db, row) : null;
 }
 
+function insertSynergyTypes(
+  db: AppDatabase,
+  buildId: string,
+  designations: SynergyTypeDesignation[],
+  now: string,
+): void {
+  for (const d of designations) {
+    db.insert(buildSynergyTypes)
+      .values({
+        buildId,
+        type: d.type,
+        // SQLite UNIQUE treats NULLs as distinct — use "" for no subType
+        subType: d.subType?.trim() || "",
+        attachedAt: now,
+      })
+      .run();
+  }
+}
+
 export function createBuildRecord(
   db: AppDatabase,
   userId: number,
@@ -188,7 +228,7 @@ export function createBuildRecord(
     pinnedSuper: string | null;
     softStatTargets?: SoftStatTargets;
     tagIds: ConceptTagId[];
-    synergyIds: string[];
+    synergyTypes: SynergyTypeDesignation[];
     now: string;
   },
 ): BuildRecord {
@@ -213,11 +253,7 @@ export function createBuildRecord(
   for (const tagId of input.tagIds) {
     db.insert(buildTags).values({ buildId: input.id, tagId }).run();
   }
-  for (const synergyId of input.synergyIds) {
-    db.insert(buildSynergies)
-      .values({ buildId: input.id, synergyId, attachedAt: input.now })
-      .run();
-  }
+  insertSynergyTypes(db, input.id, input.synergyTypes, input.now);
 
   return getBuild(db, userId, input.id)!;
 }
@@ -237,7 +273,7 @@ export function updateBuildRecord(
     pinnedSuper?: string | null;
     softStatTargets?: SoftStatTargets;
     tagIds?: ConceptTagId[];
-    synergyIds?: string[];
+    synergyTypes?: SynergyTypeDesignation[];
     now: string;
   },
 ): BuildRecord | null {
@@ -274,13 +310,9 @@ export function updateBuildRecord(
     }
   }
 
-  if (patch.synergyIds) {
-    db.delete(buildSynergies).where(eq(buildSynergies.buildId, id)).run();
-    for (const synergyId of patch.synergyIds) {
-      db.insert(buildSynergies)
-        .values({ buildId: id, synergyId, attachedAt: patch.now })
-        .run();
-    }
+  if (patch.synergyTypes) {
+    db.delete(buildSynergyTypes).where(eq(buildSynergyTypes.buildId, id)).run();
+    insertSynergyTypes(db, id, patch.synergyTypes, patch.now);
   }
 
   return getBuild(db, userId, id);

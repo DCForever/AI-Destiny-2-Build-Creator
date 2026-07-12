@@ -89,6 +89,36 @@ function ensureVariantArtifactColumns(db: Database.Database): void {
   }
 }
 
+function ensureBuildSynergyTypesTable(db: Database.Database): void {
+  const typeTable = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='build_synergy_types'")
+    .get() as { name: string } | undefined;
+  if (!typeTable) {
+    db.exec(`
+      CREATE TABLE build_synergy_types (
+        build_id TEXT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        sub_type TEXT,
+        attached_at TEXT NOT NULL,
+        UNIQUE(build_id, type, sub_type)
+      );
+    `);
+  }
+
+  const oldTable = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='build_synergies'")
+    .get() as { name: string } | undefined;
+  if (!oldTable) return;
+
+  db.exec(`
+    INSERT OR IGNORE INTO build_synergy_types (build_id, type, sub_type, attached_at)
+    SELECT DISTINCT bs.build_id, s.type, COALESCE(s.sub_type, ''), bs.attached_at
+    FROM build_synergies bs
+    INNER JOIN synergies s ON s.id = bs.synergy_id;
+    DROP TABLE build_synergies;
+  `);
+}
+
 function ensureBuildsIdentityColumns(db: Database.Database): void {
   const cols = db.prepare("PRAGMA table_info(builds)").all() as { name: string; notnull: number }[];
   if (cols.length === 0) return;
@@ -285,11 +315,12 @@ export function runMigrations(db: Database.Database): void {
       updated_at TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS build_synergies (
+    CREATE TABLE IF NOT EXISTS build_synergy_types (
       build_id TEXT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
-      synergy_id TEXT NOT NULL REFERENCES synergies(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      sub_type TEXT,
       attached_at TEXT NOT NULL,
-      UNIQUE(build_id, synergy_id)
+      UNIQUE(build_id, type, sub_type)
     );
 
     CREATE TABLE IF NOT EXISTS variant_set_attachments (
@@ -312,6 +343,7 @@ export function runMigrations(db: Database.Database): void {
   ensureBuildsIdentityColumns(db);
   ensureVariantArtifactColumns(db);
   ensureSoftStatTargetsColumn(db);
+  ensureBuildSynergyTypesTable(db);
 }
 
 export function getDb(): AppDatabase {

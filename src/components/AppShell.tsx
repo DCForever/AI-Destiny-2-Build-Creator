@@ -3,14 +3,18 @@ import { Suspense } from "react";
 import { BungieAuthControl } from "@/components/BungieAuthControl";
 
 const NAV_LINKS = [
-  { href: "/", label: "Generator", key: "generator" as const },
-  { href: "/analyze", label: "Analyzer", key: "analyzer" as const },
-  { href: "/loadouts", label: "Loadouts", key: "loadouts" as const },
+  { href: "/loadouts", label: "In-Game Loadouts", key: "loadouts" as const },
+  { href: "/build", label: "Build", key: "build" as const },
+  { href: "/synergy", label: "Synergy", key: "synergy" as const },
+  { href: "/sets", label: "Sets", key: "sets" as const },
+  { href: "/catalog", label: "Catalog", key: "catalog" as const },
   { href: "/settings", label: "Settings", key: "settings" as const },
 ];
 
+export type AppShellActive = (typeof NAV_LINKS)[number]["key"];
+
 interface AppShellProps {
-  active: "generator" | "analyzer" | "loadouts" | "settings";
+  active: AppShellActive;
   children: React.ReactNode;
 }
 

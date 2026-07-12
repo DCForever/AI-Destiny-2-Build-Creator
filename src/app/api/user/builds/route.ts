@@ -24,7 +24,10 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const exoticArmorRaw = url.searchParams.get("exoticArmorHash");
   const exoticWeaponRaw = url.searchParams.get("exoticWeaponHash");
-  const synergyId = url.searchParams.get("synergyId") ?? undefined;
+  const synergyType = url.searchParams.get("type") ?? undefined;
+  const synergySubTypeParam = url.searchParams.get("subType");
+  const synergySubType =
+    synergySubTypeParam === null ? undefined : synergySubTypeParam.trim() || null;
 
   const exoticArmorHash = exoticArmorRaw ? Number(exoticArmorRaw) : undefined;
   const exoticWeaponHash = exoticWeaponRaw ? Number(exoticWeaponRaw) : undefined;
@@ -40,7 +43,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     tags: tags as typeof tags & undefined,
     exoticArmorHash,
     exoticWeaponHash,
-    synergyId,
+    synergyType,
+    synergySubType,
   });
   return NextResponse.json({ builds });
 }

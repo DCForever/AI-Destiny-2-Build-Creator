@@ -1,18 +1,23 @@
 import type { ConceptTagId } from "@/data/conceptTags";
 import type { SynergyWithLinks } from "@/lib/db/repositories/synergyRepository";
 import type { BuildRecord } from "@/lib/db/repositories/buildRepository";
+import {
+  designationKey,
+  type SynergyTypeDesignation,
+} from "@/lib/builds/resolveDesignatedSynergies";
 
 export type SynergySuggestion = {
   synergyId: string;
   name: string;
   type: string;
+  subType: string | null;
   score: number;
   reasons: string[];
 };
 
 export type SynergySuggestionContext = {
   build: Pick<BuildRecord, "subclass" | "tagIds">;
-  designatedSynergyIds: string[];
+  designatedTypes: SynergyTypeDesignation[];
   available: SynergyWithLinks[];
 };
 
@@ -26,9 +31,10 @@ export function suggestSynergies(
 ): SynergySuggestion[] {
   const keywords = subclassKeywords(ctx.build.subclass);
   const buildTags = new Set(ctx.build.tagIds);
+  const designated = new Set(ctx.designatedTypes.map((d) => designationKey(d)));
 
   return ctx.available
-    .filter((s) => !ctx.designatedSynergyIds.includes(s.id))
+    .filter((s) => !designated.has(designationKey({ type: s.type, subType: s.subType })))
     .map((synergy) => {
       let score = 0;
       const reasons: string[] = [];
@@ -39,7 +45,11 @@ export function suggestSynergies(
       }
 
       const typeAsTag = synergy.type.replace("_", " ");
-      if ([...buildTags].some((t) => typeAsTag.includes(t) || t.includes(synergy.type.split("_")[0] ?? ""))) {
+      if (
+        [...buildTags].some(
+          (t) => typeAsTag.includes(t) || t.includes(synergy.type.split("_")[0] ?? ""),
+        )
+      ) {
         score += 2;
         reasons.push("Build tag overlap");
       }
@@ -49,7 +59,14 @@ export function suggestSynergies(
         reasons.push(`${synergy.links.length} manifest link(s)`);
       }
 
-      return { synergyId: synergy.id, name: synergy.name, type: synergy.type, score, reasons };
+      return {
+        synergyId: synergy.id,
+        name: synergy.name,
+        type: synergy.type,
+        subType: synergy.subType,
+        score,
+        reasons,
+      };
     })
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score)

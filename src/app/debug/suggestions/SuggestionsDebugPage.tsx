@@ -18,7 +18,7 @@ export function SuggestionsDebugPage() {
   const [form, setForm] = useState({
     setId: "",
     buildId: "",
-    synergyIds: "",
+    synergyTypesJson: "",
     limit: "5",
   });
 
@@ -37,12 +37,19 @@ export function SuggestionsDebugPage() {
   }
 
   async function suggestRolls() {
+    let synergyTypes: unknown;
+    if (form.synergyTypesJson.trim()) {
+      try {
+        synergyTypes = JSON.parse(form.synergyTypesJson);
+      } catch {
+        setPanel({ label: "POST /api/user/suggestions/rolls", error: "Invalid synergyTypes JSON" });
+        return;
+      }
+    }
     const payload = {
       setId: form.setId || undefined,
       buildId: form.buildId || undefined,
-      synergyIds: form.synergyIds
-        ? form.synergyIds.split(",").map((s) => s.trim()).filter(Boolean)
-        : undefined,
+      synergyTypes,
       limit: Number(form.limit) || 5,
     };
     setPanel({ label: "POST /api/user/suggestions/rolls", request: payload });
@@ -99,9 +106,9 @@ export function SuggestionsDebugPage() {
           </select>
           <input
             className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"
-            placeholder="Advanced synergyIds (comma)"
-            value={form.synergyIds}
-            onChange={(e) => setForm({ ...form, synergyIds: e.target.value })}
+            placeholder='Optional synergyTypes JSON e.g. [{"type":"verb","subType":"Devour"}]'
+            value={form.synergyTypesJson}
+            onChange={(e) => setForm({ ...form, synergyTypesJson: e.target.value })}
           />
           <input
             className="block w-full rounded bg-zinc-900 px-2 py-1 text-sm"

@@ -14,6 +14,7 @@ export type LinkMatchSummary = {
 };
 
 export type SynergyCoverageRow = {
+  /** Designation key (`type::subType`) */
   synergyId: string;
   name: string;
   tier: CoverageTier;

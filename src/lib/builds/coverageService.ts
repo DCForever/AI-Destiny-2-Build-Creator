@@ -1,6 +1,6 @@
 import type { AppDatabase } from "@/lib/db/client";
 import { getBuild } from "@/lib/db/repositories/buildRepository";
-import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
+import type { SynergyWithLinks } from "@/lib/db/repositories/synergyRepository";
 import { getVariant, listAttachments } from "@/lib/db/repositories/variantRepository";
 import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
 import {
@@ -8,6 +8,12 @@ import {
   evaluateCoverage,
   type CoverageResult,
 } from "@/lib/builds/coverage";
+import {
+  aggregateLinksForDesignation,
+  designationKey,
+  designationLabel,
+  resolveDesignatedSynergies,
+} from "@/lib/builds/resolveDesignatedSynergies";
 import { estimateLoadoutStats } from "@/lib/builds/statEstimate";
 import { effectiveExoticWeapon, resolveVariantEquipment } from "@/lib/builds/resolveVariant";
 import { lookupExoticSlots } from "@/lib/builds/exoticArmorIntent";
@@ -36,6 +42,27 @@ async function loadCoverageIndexes(): Promise<{
   }
 }
 
+function designationCoverageSynergies(
+  bridge: ReturnType<typeof resolveDesignatedSynergies>,
+): SynergyWithLinks[] {
+  const now = new Date().toISOString();
+  return bridge.designations.map((d) => {
+    const key = designationKey(d);
+    const matches = bridge.byDesignation.get(key) ?? [];
+    return {
+      id: key,
+      userId: 0,
+      name: designationLabel(d),
+      type: d.type,
+      subType: d.subType,
+      description: "",
+      createdAt: now,
+      updatedAt: now,
+      links: aggregateLinksForDesignation(matches),
+    };
+  });
+}
+
 export async function getVariantCoverage(
   db: AppDatabase,
   userId: number,
@@ -55,7 +82,8 @@ export async function getVariantCoverage(
   });
 
   const claims = Object.values(resolved.equipment);
-  const synergies = getSynergiesByIds(db, userId, build.synergyIds);
+  const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
+  const synergies = designationCoverageSynergies(bridge);
   const indexes = await loadCoverageIndexes();
   const inventory = listInventoryItems(db, userId);
   const byInstance = new Map(inventory.map((i) => [i.instanceId, i]));
@@ -82,6 +110,6 @@ export async function getCoverageGapsForSuggest(
   if (!build) return [];
   const coverage = await getVariantCoverage(db, userId, buildId, variantId);
   if (!coverage) return [];
-  const synergies = getSynergiesByIds(db, userId, build.synergyIds);
-  return coverageGapsForSuggest(coverage, synergies);
+  const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
+  return coverageGapsForSuggest(coverage, designationCoverageSynergies(bridge));
 }

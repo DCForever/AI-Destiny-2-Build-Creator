@@ -91,10 +91,10 @@ Identity is what makes two loadouts the “same build” vs a different build.
 
 | ID | Rule |
 |----|------|
-| DBR-SYN-001 | A Synergy is a **curated play-pattern**: named goal with linked gear evidence. |
-| DBR-SYN-002 | Builds are created **intent-first**: user states goals via a **controlled vocabulary** (verbs/goals/synergy types); system helps find or create matching curated synergies. |
-| DBR-SYN-003 | Every Build must designate **≥1** synergy to save (`NO_SYNERGY` otherwise). |
-| DBR-SYN-004 | Multiple designated synergies contribute **equally** to suggestions and coverage. Soft UI nudge toward roughly **2–5**; no hard maximum. |
+| DBR-SYN-001 | A Synergy is **Type linked with an Object**: a curated play-pattern (`type` + optional `subType`) with linked gear evidence (Objects: weapon, perk, origin trait, armor set bonus, etc.). |
+| DBR-SYN-002 | Builds are created **intent-first**: user designates **Synergy Types** (`type` + optional `subType` only — e.g. Verb: Devour, Melee, Primary Weapon). The system **bridges** those Types to matching curated Synergies (Type + Object) for coverage and suggestions. A library Synergy need not exist for a Type designation to be valid. |
+| DBR-SYN-003 | Every Build must designate **≥1 Synergy Type** to save (`NO_SYNERGY` otherwise). |
+| DBR-SYN-004 | Multiple designated Synergy Types contribute **equally** to suggestions and coverage. Soft UI nudge toward roughly **2–5**; no hard maximum. Matched library Synergies for the same Type are **unioned** (equal weight). |
 | DBR-SYN-005 | Users may create **personal custom synergy types** grounded in keyword/verb-like concepts (e.g. Corruption, Poison). |
 | DBR-SYN-006 | Keywords may come from the **global vocabulary** or **personal keywords**, with optional later promote-to-global. |
 | DBR-SYN-007 | Synergy links are **evidence by default**. Authors may mark specific links **required**. |

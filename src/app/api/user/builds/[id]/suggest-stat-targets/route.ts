@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/api/requireUser";
 import { unauthorizedResponse } from "@/lib/api/response";
 import { getBuild } from "@/lib/db/repositories/buildRepository";
-import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
+import { resolveDesignatedSynergies } from "@/lib/builds/resolveDesignatedSynergies";
 import { getDb } from "@/lib/db/client";
 import { suggestStatNudges } from "@/lib/builds/statNudges";
 
@@ -20,9 +20,9 @@ export async function GET(request: Request, context: RouteContext): Promise<Next
   const build = getBuild(db, auth.user.id, id);
   if (!build) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const synergies = getSynergiesByIds(db, auth.user.id, build.synergyIds);
+  const bridge = resolveDesignatedSynergies(db, auth.user.id, build.synergyTypes);
   return NextResponse.json({
-    nudges: suggestStatNudges(synergies),
+    nudges: suggestStatNudges(bridge.designations, bridge.matchedSynergies),
     softStatTargets: build.softStatTargets,
   });
 }

@@ -29,7 +29,7 @@ describe("variantService", () => {
       className: "Titan",
       subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 100,
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       defaultVariant: { name: "Default", notes: "Survivability" },
     });
 
@@ -59,7 +59,7 @@ describe("variantService", () => {
       className: "Warlock",
       subclass: { name: "Voidwalker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 200,
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       defaultVariant: { name: "Default", notes: "Base" },
     });
 
@@ -86,7 +86,7 @@ describe("variantService", () => {
       className: "Hunter",
       subclass: { name: "Arcstrider", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 300,
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
     }).then((build) => {
       expect(() =>
         deleteUserVariant(db, user.id, build!.id, build!.variants[0]!.id),

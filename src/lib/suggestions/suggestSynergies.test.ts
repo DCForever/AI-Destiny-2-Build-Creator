@@ -31,7 +31,7 @@ describe("suggestSynergies", () => {
 
     const results = suggestSynergies({
       build: { subclass: { name: "Sentinel", melee: "Shield" }, tagIds: ["melee"] },
-      designatedSynergyIds: [],
+      designatedTypes: [],
       available,
     });
 

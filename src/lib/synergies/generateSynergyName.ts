@@ -32,6 +32,25 @@ export function getSynergyTypeLabel(type: SynergyType | string): string {
   return SYNERGY_CATEGORY_LABELS[type] ?? type;
 }
 
+/** Display label for a build Synergy Type designation (no Object). */
+export function formatSynergyTypeDesignation(input: {
+  type: SynergyType | string;
+  subType?: string | null;
+}): string {
+  const category = getSynergyTypeLabel(input.type);
+  const sub = input.subType?.trim();
+  if (sub) return `${category}: ${sub}`;
+  return category;
+}
+
+export function synergyTypeDesignationKey(input: {
+  type: string;
+  subType?: string | null;
+}): string {
+  const sub = input.subType?.trim() || "";
+  return `${input.type}::${sub}`;
+}
+
 export function generateSynergyName(input: {
   type: SynergyType;
   subType: string | null;

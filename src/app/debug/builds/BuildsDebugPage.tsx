@@ -7,15 +7,16 @@ import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
 import { ExoticWeaponLookup } from "@/components/debug/ExoticWeaponLookup";
 import { SetAttachPicker } from "@/components/debug/SetAttachPicker";
 import { SubclassStructuredForm, type SubclassFormValue } from "@/components/debug/SubclassStructuredForm";
-import { SynergyMultiSelect } from "@/components/debug/SynergyMultiSelect";
+import { SynergyTypeMultiSelect, type SynergyTypeSelection } from "@/components/debug/SynergyTypeMultiSelect";
 import { VariantSelect } from "@/components/debug/VariantSelect";
 import { mergeAttachment, removeAttachment, type AttachmentInput } from "@/lib/builds/attachmentMerge";
-import { emptyLookupMessage, synergyIdentityFields } from "@/lib/debug/lookupParity";
+import { emptyLookupMessage } from "@/lib/debug/lookupParity";
 import { sortByName } from "@/lib/sortByName";
 
 type GuardianClass = "Titan" | "Hunter" | "Warlock";
 type ExoticSelection = { hash: number; name: string };
-type SynergySummary = { id: string; name: string; type: string };
+type SynergySummary = { id: string; name: string; type: string; subType?: string | null };
+type SynergyTypeSummary = { type: string; subType: string | null; label: string; key: string };
 type BuildSummary = { id: string; name: string; className?: string; exoticArmorHash?: number; exoticArmorName?: string };
 type AttachmentRecord = AttachmentInput & { id?: string; set?: { name?: string; type?: string } };
 type BuildVariant = {
@@ -38,6 +39,7 @@ type BuildDetail = BuildSummary & {
   exoticWeaponName?: string | null;
   pinnedSuper?: string | null;
   softStatTargets?: Partial<Record<string, number>>;
+  synergyTypes?: SynergyTypeSummary[];
   synergies: SynergySummary[];
   variants: BuildVariant[];
 };
@@ -77,7 +79,7 @@ export function BuildsDebugPage() {
   const [buildDetail, setBuildDetail] = useState<BuildDetail | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [availableSynergies, setAvailableSynergies] = useState<SynergySummary[]>([]);
-  const [designationIds, setDesignationIds] = useState<string[]>([]);
+  const [designations, setDesignations] = useState<SynergyTypeSelection[]>([]);
   const [variantNotes, setVariantNotes] = useState("");
   const [artifactHashInput, setArtifactHashInput] = useState("");
   const [artifactConfigInput, setArtifactConfigInput] = useState("");
@@ -94,7 +96,7 @@ export function BuildsDebugPage() {
     exoticArmor: null as ExoticSelection | null,
     exoticWeapon: null as ExoticSelection | null,
     pinnedSuper: "",
-    synergyIds: [] as string[],
+    synergyTypes: [] as SynergyTypeSelection[],
     subclass: DEFAULT_SUBCLASS,
   });
   const [editExoticArmor, setEditExoticArmor] = useState<ExoticSelection | null>(null);
@@ -123,11 +125,9 @@ export function BuildsDebugPage() {
   }, [characters, buildDetail?.className]);
   const canEquip = Boolean(canUseVariant && equipCharacterId);
   const createBlockedMessage =
-    availableSynergies.length === 0
-      ? "Create is blocked until at least one synergy exists."
-      : createForm.synergyIds.length === 0
-        ? "Select at least one synergy designation before creating a build."
-        : "";
+    createForm.synergyTypes.length === 0
+      ? "Select at least one Synergy Type designation before creating a build."
+      : "";
   const createDisabled = Boolean(createBlockedMessage);
 
   const loadBuilds = useCallback(async () => {
@@ -154,7 +154,7 @@ export function BuildsDebugPage() {
       if (!id) {
         setBuildDetail(null);
         setSelectedVariantId("");
-        setDesignationIds([]);
+        setDesignations([]);
         return;
       }
 
@@ -172,7 +172,12 @@ export function BuildsDebugPage() {
       const current = variants.find((variant) => variant.id === selectedVariantId);
       const fallback = variants.find((variant) => variant.isDefault) ?? variants[0] ?? null;
       setBuildDetail(build);
-      setDesignationIds((build.synergies ?? []).map((synergy) => synergy.id));
+      setDesignations(
+        (build.synergyTypes ?? []).map((t) => ({
+          type: t.type as SynergyTypeSelection["type"],
+          subType: t.subType,
+        })),
+      );
       setSelectedVariantId((preferred ?? current ?? fallback)?.id ?? "");
       record({ label: `GET ${url}`, response: body });
     },
@@ -228,7 +233,7 @@ export function BuildsDebugPage() {
       exoticWeaponName: createForm.exoticWeapon?.name ?? null,
       pinnedSuper: createForm.pinnedSuper.trim() || null,
       tagIds: createForm.tagIds,
-      synergyIds: createForm.synergyIds,
+      synergyTypes: createForm.synergyTypes,
       defaultVariant: { name: "Default" },
     };
     record({ label: "POST /api/user/builds", request: payload });
@@ -282,7 +287,7 @@ export function BuildsDebugPage() {
   async function saveDesignations() {
     if (!selectedBuildId) return;
     const url = `/api/user/builds/${selectedBuildId}`;
-    const payload = { synergyIds: designationIds };
+    const payload = { synergyTypes: designations };
     record({ label: `PATCH ${url}`, request: payload });
     const res = await fetch(url, {
       method: "PATCH",
@@ -504,7 +509,7 @@ export function BuildsDebugPage() {
   async function suggestRollsCall() {
     const payload = {
       buildId: selectedBuildId || undefined,
-      synergyIds: designationIds.length ? designationIds : undefined,
+      synergyTypes: designations.length ? designations : undefined,
       limit: 5,
     };
     const res = await fetch("/api/user/suggestions/rolls", {
@@ -580,19 +585,13 @@ export function BuildsDebugPage() {
             onChange={(event) => updateCreateForm({ pinnedSuper: event.target.value })}
           />
           <div>
-            <p className="mb-1 text-sm font-medium">Synergy designations</p>
-            <SynergyMultiSelect
-              synergies={availableSynergies}
-              selectedIds={createForm.synergyIds}
-              onChange={(synergyIds) => updateCreateForm({ synergyIds })}
+            <p className="mb-1 text-sm font-medium">Synergy Type designations</p>
+            <SynergyTypeMultiSelect
+              selected={createForm.synergyTypes}
+              onChange={(synergyTypes) => updateCreateForm({ synergyTypes })}
             />
             {createBlockedMessage ? (
-              <p className="mt-2 text-xs text-amber-300">
-                {createBlockedMessage}{" "}
-                <a className="underline" href="/debug/synergies">
-                  Create a synergy first
-                </a>
-              </p>
+              <p className="mt-2 text-xs text-amber-300">{createBlockedMessage}</p>
             ) : null}
           </div>
           <SubclassStructuredForm
@@ -761,9 +760,9 @@ export function BuildsDebugPage() {
         </fieldset>
 
         <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
-          <legend className="px-1 text-sm">Synergy edit</legend>
-          <SynergyMultiSelect synergies={availableSynergies} selectedIds={designationIds} onChange={setDesignationIds} />
-          <button type="button" className={buttonClass(!selectedBuildId || designationIds.length === 0)} disabled={!selectedBuildId || designationIds.length === 0} onClick={() => void saveDesignations()}>
+          <legend className="px-1 text-sm">Synergy Type edit</legend>
+          <SynergyTypeMultiSelect selected={designations} onChange={setDesignations} />
+          <button type="button" className={buttonClass(!selectedBuildId || designations.length === 0)} disabled={!selectedBuildId || designations.length === 0} onClick={() => void saveDesignations()}>
             Save designations
           </button>
           <div className="space-y-2 border-t border-zinc-800 pt-3">
@@ -843,14 +842,18 @@ export function BuildsDebugPage() {
             </div>
           ) : null}
           <div className="space-y-1 text-xs text-zinc-400">
-            {(buildDetail?.synergies ?? []).map((synergy) => {
-              const identity = synergyIdentityFields(synergy);
-              return (
-                <p key={identity.id}>
-                  {identity.name} · {identity.type}
-                </p>
-              );
-            })}
+            <p className="text-zinc-500">Designated Types:</p>
+            {(buildDetail?.synergyTypes ?? []).map((t) => (
+              <p key={t.key}>
+                {t.label} · {t.type}
+              </p>
+            ))}
+            <p className="pt-1 text-zinc-500">Matched library Synergies:</p>
+            {(buildDetail?.synergies ?? []).map((synergy) => (
+              <p key={synergy.id}>
+                {synergy.name} · {synergy.type}
+              </p>
+            ))}
           </div>
         </fieldset>
 

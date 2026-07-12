@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireAuthenticatedUser } from "@/lib/api/requireUser";
 import { unauthorizedResponse } from "@/lib/api/response";
+import { synergyTypeDesignationSchema } from "@/lib/builds/schemas";
 import { getDb } from "@/lib/db/client";
 import { suggestRollsForUser } from "@/lib/suggestions/suggestRollsService";
 
@@ -10,7 +11,7 @@ export const runtime = "nodejs";
 
 const bodySchema = z.object({
   setId: z.string().min(1).optional(),
-  synergyIds: z.array(z.string().min(1)).optional(),
+  synergyTypes: z.array(synergyTypeDesignationSchema).optional(),
   buildId: z.string().min(1).optional(),
   limit: z.number().int().positive().max(20).optional(),
 });
@@ -28,7 +29,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") },
+      { status: 400 },
+    );
   }
 
   const db = getDb();

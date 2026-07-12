@@ -116,6 +116,27 @@ export function getSynergiesByIds(db: AppDatabase, userId: number, ids: string[]
   return rows.map((row) => ({ ...rowToSynergy(row), links: listSynergyLinks(db, row.id) }));
 }
 
+/** Match library synergies by type + subType (null-safe). */
+export function getSynergiesByTypeSubType(
+  db: AppDatabase,
+  userId: number,
+  type: SynergyType,
+  subType: string | null,
+): SynergyWithLinks[] {
+  const rows = db
+    .select()
+    .from(synergies)
+    .where(and(eq(synergies.userId, userId), eq(synergies.type, type)))
+    .all();
+  const normalizedSub = subType?.trim() || null;
+  return rows
+    .filter((row) => {
+      const rowSub = row.subType?.trim() || null;
+      return rowSub === normalizedSub;
+    })
+    .map((row) => ({ ...rowToSynergy(row), links: listSynergyLinks(db, row.id) }));
+}
+
 export function createSynergyRecord(
   db: AppDatabase,
   userId: number,

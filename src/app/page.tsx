@@ -1,11 +1,6 @@
-import { AppShell } from "@/components/AppShell";
-import { GeneratorPage } from "@/components/GeneratorPage";
-import { isMultiPassEnabled } from "@/lib/config/env";
+import { redirect } from "next/navigation";
 
+/** Generator retired from primary nav — curated Build is home. */
 export default function Home() {
-  return (
-    <AppShell active="generator">
-      <GeneratorPage multiPassAvailable={isMultiPassEnabled()} />
-    </AppShell>
-  );
+  redirect("/build");
 }

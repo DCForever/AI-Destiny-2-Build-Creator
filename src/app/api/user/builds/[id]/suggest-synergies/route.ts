@@ -25,7 +25,7 @@ export async function GET(request: Request, context: RouteContext): Promise<Next
 
   const suggestions = await suggestSynergiesWithGoal({
     build,
-    designatedSynergyIds: build.synergyIds,
+    designatedTypes: build.synergyTypes,
     available: listSynergies(db, auth.user.id),
     goal,
   });

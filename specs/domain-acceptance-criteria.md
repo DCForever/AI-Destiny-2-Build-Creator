@@ -21,17 +21,18 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 
 ## P1 — Intent → compose → equip
 
-### DAC-P1-001 — Intent to designated synergies
+### DAC-P1-001 — Intent to designated Synergy Types
 
 **Given** a signed-in user starting a new Build  
-**When** they state intent via controlled vocabulary (verbs/goals)  
-**Then** the system helps find or create curated synergies and the user designates ≥1 synergy  
-**And** save is rejected with `NO_SYNERGY` if zero synergies are designated  
+**When** they state intent via controlled vocabulary (Synergy Types: type + optional subType)  
+**Then** the user designates ≥1 Synergy Type (library Synergy records are not required to save)  
+**And** the system bridges designations to matching curated Synergies (Type + Object) for coverage/suggestions when present  
+**And** save is rejected with `NO_SYNERGY` if zero Synergy Types are designated  
 **Refs**: DBR-SYN-001–003, DBR-PUR-003
 
 ### DAC-P1-002 — Build identity established
 
-**Given** designated synergies (and optional exotic armor item / build-shared exotic weapon / build-pinned Super)  
+**Given** designated Synergy Types (and optional exotic armor item / build-shared exotic weapon / build-pinned Super)  
 **When** the user saves the Build  
 **Then** those fields form build identity  
 **And** concept tags may be set for filtering only without becoming identity  

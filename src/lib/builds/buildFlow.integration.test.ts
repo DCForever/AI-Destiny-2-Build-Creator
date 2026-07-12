@@ -28,7 +28,7 @@ describe("buildFlow integration", () => {
       subclass: { name: "Gunslinger", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
       exoticArmorHash: 700,
       exoticArmorName: "Celestial Nighthawk",
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       tagIds: ["solar", "pve"],
     });
 

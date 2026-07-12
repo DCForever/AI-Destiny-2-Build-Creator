@@ -172,19 +172,22 @@ export const buildVariants = sqliteTable("build_variants", {
   updatedAt: text("updated_at").notNull(),
 });
 
-export const buildSynergies = sqliteTable(
-  "build_synergies",
+export const buildSynergyTypes = sqliteTable(
+  "build_synergy_types",
   {
     buildId: text("build_id")
       .notNull()
       .references(() => builds.id, { onDelete: "cascade" }),
-    synergyId: text("synergy_id")
-      .notNull()
-      .references(() => synergies.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    subType: text("sub_type"),
     attachedAt: text("attached_at").notNull(),
   },
   (table) => ({
-    pk: uniqueIndex("build_synergies_build_synergy").on(table.buildId, table.synergyId),
+    pk: uniqueIndex("build_synergy_types_build_type_sub").on(
+      table.buildId,
+      table.type,
+      table.subType,
+    ),
   }),
 );
 

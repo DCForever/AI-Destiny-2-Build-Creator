@@ -22,10 +22,15 @@ import {
   type AttachmentRecord,
   type VariantRecord,
 } from "@/lib/db/repositories/variantRepository";
-import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
 import { getSet } from "@/lib/db/repositories/setRepository";
 import { prepareAttachments } from "@/lib/builds/attachmentService";
 import { deriveDefaultBuildName } from "@/lib/builds/defaultBuildName";
+import {
+  designationKey,
+  designationLabel,
+  resolveDesignatedSynergies,
+  type SynergyTypeDesignation,
+} from "@/lib/builds/resolveDesignatedSynergies";
 import { buildInventoryPinIndex, computeEquipReady } from "@/lib/builds/equipReady";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
 import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
@@ -43,6 +48,8 @@ import {
 } from "@/lib/builds/exoticArmorIntent";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
 import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
+import type { SynergyType } from "@/lib/synergies/schemas";
+import { validateSynergySubType } from "@/lib/synergies/validateSynergySubType";
 
 function parseTags(tagIds: unknown): ConceptTagId[] {
   const result = conceptTagIdsSchema.safeParse(tagIds ?? []);
@@ -52,10 +59,44 @@ function parseTags(tagIds: unknown): ConceptTagId[] {
   return result.data;
 }
 
-function assertSynergiesPresent(synergyIds: string[]): void {
-  if (synergyIds.length === 0) {
-    throw new ApiError(API_ERROR_CODES.NO_SYNERGY, "Build must designate at least one synergy", {}, 400);
+function assertTypesPresent(types: SynergyTypeDesignation[]): void {
+  if (types.length === 0) {
+    throw new ApiError(
+      API_ERROR_CODES.NO_SYNERGY,
+      "Build must designate at least one synergy type",
+      {},
+      400,
+    );
   }
+}
+
+function normalizeDesignations(
+  input: Array<{ type: SynergyType; subType?: string | null }>,
+): SynergyTypeDesignation[] {
+  const seen = new Set<string>();
+  const out: SynergyTypeDesignation[] = [];
+  for (const raw of input) {
+    const check = validateSynergySubType(raw.type, raw.subType);
+    if (!check.ok) {
+      throw new ApiError(API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE, check.reason);
+    }
+    const designation: SynergyTypeDesignation = {
+      type: raw.type,
+      subType: check.subType,
+    };
+    const key = designationKey(designation);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(designation);
+  }
+  return out;
+}
+
+function sortedDesignationKey(types: SynergyTypeDesignation[]): string {
+  return [...types]
+    .map((d) => designationKey(d))
+    .sort()
+    .join(",");
 }
 
 function assertUniqueBuildName(
@@ -81,10 +122,10 @@ async function identityFieldsChanged(
   input: UpdateBuildInput,
 ): Promise<string[]> {
   const fields: string[] = [];
-  if (input.synergyIds !== undefined) {
-    const next = [...input.synergyIds].sort().join(",");
-    const prev = [...existing.synergyIds].sort().join(",");
-    if (next !== prev) fields.push("synergyIds");
+  if (input.synergyTypes !== undefined) {
+    const next = sortedDesignationKey(normalizeDesignations(input.synergyTypes));
+    const prev = sortedDesignationKey(existing.synergyTypes);
+    if (next !== prev) fields.push("synergyTypes");
   }
   if (input.exoticArmorHash !== undefined && input.exoticArmorHash !== existing.exoticArmorHash) {
     const [existingSlot, nextSlot] = await Promise.all([
@@ -137,11 +178,25 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
   if (!build) return null;
 
   const variants = listVariants(db, buildId);
-  const synergies = getSynergiesByIds(db, userId, build.synergyIds);
+  const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
+  const synergies = bridge.matchedSynergies;
+  const synergyTypes = bridge.designations.map((d) => ({
+    ...d,
+    label: designationLabel(d),
+    key: designationKey(d),
+  }));
 
   const variantsWithAttachments = await Promise.all(
     variants.map(async (variant) => {
-      const attachments = listAttachments(db, variant.id);
+      const attachments = listAttachments(db, variant.id).map((attachment) => {
+        const set = getSet(db, userId, attachment.setId);
+        return {
+          ...attachment,
+          set: set
+            ? { id: set.id, name: set.name, type: set.type }
+            : undefined,
+        };
+      });
       const weapon = effectiveExoticWeapon(build, variant);
       const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
       const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
@@ -152,7 +207,7 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
     }),
   );
 
-  return { ...build, synergies, variants: variantsWithAttachments };
+  return { ...build, synergyTypes, synergies, variants: variantsWithAttachments };
 }
 
 export function listUserBuilds(
@@ -162,13 +217,14 @@ export function listUserBuilds(
     tags?: ConceptTagId[];
     exoticArmorHash?: number;
     exoticWeaponHash?: number;
-    synergyId?: string;
+    synergyType?: string;
+    synergySubType?: string | null;
   },
 ) {
   if (
     opts?.exoticArmorHash !== undefined ||
     opts?.exoticWeaponHash !== undefined ||
-    opts?.synergyId ||
+    opts?.synergyType ||
     opts?.tags?.length
   ) {
     return listBuildsFiltered(db, userId, opts ?? {});
@@ -203,19 +259,14 @@ function resolveCreateName(
 
 export async function createUserBuild(db: AppDatabase, userId: number, input: CreateBuildInput) {
   const tags = parseTags(input.tagIds);
-  const synergyIds = input.synergyIds ?? [];
-
-  assertSynergiesPresent(synergyIds);
-  const found = getSynergiesByIds(db, userId, synergyIds);
-  if (found.length !== synergyIds.length) {
-    throw new ApiError(API_ERROR_CODES.NO_SYNERGY, "One or more synergies not found");
-  }
+  const synergyTypes = normalizeDesignations(input.synergyTypes ?? []);
+  assertTypesPresent(synergyTypes);
 
   const name = resolveCreateName(
     db,
     userId,
     input,
-    found.map((s) => s.name),
+    synergyTypes.map((d) => designationLabel(d)),
   );
 
   const exoticArmorHash = input.exoticArmorHash ?? null;
@@ -248,7 +299,7 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
       ? normalizeSoftStatTargets(input.softStatTargets)
       : {},
     tagIds: tags,
-    synergyIds,
+    synergyTypes,
     now,
   });
 
@@ -284,12 +335,8 @@ async function forkBuildWithIdentity(
   const now = new Date().toISOString();
   const newBuildId = crypto.randomUUID();
 
-  const synergyIds = input.synergyIds ?? existing.synergyIds;
-  assertSynergiesPresent(synergyIds);
-  const found = getSynergiesByIds(db, userId, synergyIds);
-  if (found.length !== synergyIds.length) {
-    throw new ApiError(API_ERROR_CODES.NO_SYNERGY, "One or more synergies not found");
-  }
+  const synergyTypes = normalizeDesignations(input.synergyTypes ?? existing.synergyTypes);
+  assertTypesPresent(synergyTypes);
 
   const className = input.className ?? existing.className;
   const subclass = input.subclass ?? existing.subclass;
@@ -322,7 +369,7 @@ async function forkBuildWithIdentity(
     pinnedSuper: pinnedSuper ?? null,
     softStatTargets: existing.softStatTargets,
     tagIds,
-    synergyIds,
+    synergyTypes,
     now,
   });
 
@@ -389,15 +436,10 @@ export async function updateUserBuild(
   const existing = getBuild(db, userId, buildId);
   if (!existing) return null;
 
-  if (input.synergyIds) assertSynergiesPresent(input.synergyIds);
-  if (input.tagIds) parseTags(input.tagIds);
-
-  if (input.synergyIds) {
-    const found = getSynergiesByIds(db, userId, input.synergyIds);
-    if (found.length !== input.synergyIds.length) {
-      throw new ApiError(API_ERROR_CODES.NO_SYNERGY, "One or more synergies not found");
-    }
+  if (input.synergyTypes) {
+    assertTypesPresent(normalizeDesignations(input.synergyTypes));
   }
+  if (input.tagIds) parseTags(input.tagIds);
 
   const changedIdentity = await identityFieldsChanged(existing, input);
   if (changedIdentity.length > 0) {
@@ -423,9 +465,12 @@ export async function updateUserBuild(
   const now = new Date().toISOString();
   let softStatTargets = existing.softStatTargets;
   if (input.acceptStatNudges) {
-    const synergies = getSynergiesByIds(db, userId, existing.synergyIds);
+    const bridge = resolveDesignatedSynergies(db, userId, existing.synergyTypes);
     const { suggestStatNudges, targetsFromAcceptedNudges } = await import("@/lib/builds/statNudges");
-    softStatTargets = targetsFromAcceptedNudges(softStatTargets, suggestStatNudges(synergies));
+    softStatTargets = targetsFromAcceptedNudges(
+      softStatTargets,
+      suggestStatNudges(bridge.designations, bridge.matchedSynergies),
+    );
   }
   if (input.softStatTargets !== undefined) {
     softStatTargets =
@@ -444,7 +489,9 @@ export async function updateUserBuild(
     softStatTargets:
       input.softStatTargets !== undefined || input.acceptStatNudges ? softStatTargets : undefined,
     tagIds: input.tagIds,
-    synergyIds: input.synergyIds,
+    synergyTypes: input.synergyTypes
+      ? normalizeDesignations(input.synergyTypes)
+      : undefined,
     now,
   });
   return getBuildDetail(db, userId, buildId);

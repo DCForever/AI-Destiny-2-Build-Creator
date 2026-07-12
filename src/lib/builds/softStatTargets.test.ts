@@ -51,19 +51,7 @@ describe("estimateLoadoutStats", () => {
 
 describe("statNudges", () => {
   it("suggests from synergy type and accept merges up", () => {
-    const nudges = suggestStatNudges([
-      {
-        id: "s1",
-        userId: 1,
-        name: "Punch",
-        type: "melee",
-        subType: null,
-        description: "",
-        createdAt: "",
-        updatedAt: "",
-        links: [],
-      },
-    ]);
+    const nudges = suggestStatNudges([{ type: "melee", subType: null }]);
     expect(nudges[0]?.stat).toBe("Melee");
     expect(targetsFromAcceptedNudges({ Melee: 120 }, nudges).Melee).toBe(120);
     expect(targetsFromAcceptedNudges({}, nudges).Melee).toBe(100);

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { conceptTagIdsSchema } from "@/data/conceptTags";
 import { generatedBuildSchema } from "@/lib/llm/buildSchema";
+import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
 
 export const buildVariantSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -11,6 +12,11 @@ export const buildVariantSchema = z.object({
   artifactHash: z.number().int().positive().nullable().optional(),
   artifactName: z.string().trim().min(1).nullable().optional(),
   artifactConfig: z.array(z.number().int().positive()).optional(),
+});
+
+export const synergyTypeDesignationSchema = z.object({
+  type: z.enum(CREATABLE_SYNERGY_TYPES),
+  subType: z.string().trim().min(1).nullable().optional(),
 });
 
 export const createBuildSchema = z.object({
@@ -23,7 +29,7 @@ export const createBuildSchema = z.object({
   exoticWeaponName: z.string().trim().min(1).nullable().optional(),
   pinnedSuper: z.string().trim().min(1).nullable().optional(),
   softStatTargets: z.record(z.string(), z.number().int()).optional().nullable(),
-  synergyIds: z.array(z.string().min(1)).min(1),
+  synergyTypes: z.array(synergyTypeDesignationSchema).min(1),
   tagIds: conceptTagIdsSchema.optional(),
   defaultVariant: buildVariantSchema
     .extend({
@@ -43,7 +49,7 @@ export const updateBuildSchema = createBuildSchema
   .omit({ defaultVariant: true })
   .partial()
   .extend({
-    synergyIds: z.array(z.string().min(1)).min(1).optional(),
+    synergyTypes: z.array(synergyTypeDesignationSchema).min(1).optional(),
     identityAction: z.enum(["confirm", "fork"]).optional(),
     softStatTargets: z.record(z.string(), z.number().int()).optional().nullable(),
     acceptStatNudges: z.boolean().optional(),
@@ -72,3 +78,4 @@ export type BuildVariantInput = z.infer<typeof buildVariantSchema>;
 export type CreateBuildInput = z.infer<typeof createBuildSchema>;
 export type UpdateBuildInput = z.infer<typeof updateBuildSchema>;
 export type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
+export type SynergyTypeDesignationInput = z.infer<typeof synergyTypeDesignationSchema>;

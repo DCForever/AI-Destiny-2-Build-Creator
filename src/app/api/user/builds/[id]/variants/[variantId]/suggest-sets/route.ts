@@ -8,8 +8,8 @@ import { getCoverageGapsForSuggest } from "@/lib/builds/coverageService";
 import { getDb } from "@/lib/db/client";
 import { getBuild } from "@/lib/db/repositories/buildRepository";
 import { listSets } from "@/lib/db/repositories/setRepository";
-import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
 import { getVariant } from "@/lib/db/repositories/variantRepository";
+import { resolveDesignatedSynergies } from "@/lib/builds/resolveDesignatedSynergies";
 import { setItems } from "@/lib/db/schema";
 import { buildAutomaticSuggestionContext, suggestSetsWithGoal } from "@/lib/suggestions/suggestSets";
 
@@ -58,8 +58,8 @@ export async function POST(request: Request, context: RouteContext): Promise<Nex
   const variant = getVariant(db, id, variantId);
   if (!build || !variant) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const synergies = getSynergiesByIds(db, auth.user.id, build.synergyIds);
-  const ctx = buildAutomaticSuggestionContext(build, variant, synergies);
+  const bridge = resolveDesignatedSynergies(db, auth.user.id, build.synergyTypes);
+  const ctx = buildAutomaticSuggestionContext(build, variant, bridge.matchedSynergies);
   if (parsed.data.goal) ctx.goal = parsed.data.goal;
 
   const sets = listSets(db, auth.user.id);

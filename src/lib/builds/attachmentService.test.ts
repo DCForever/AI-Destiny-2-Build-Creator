@@ -28,7 +28,7 @@ describe("attachmentService", () => {
       exoticWeaponName: null,
       pinnedSuper: null,
       tagIds: [],
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       now,
     });
 
@@ -80,7 +80,7 @@ describe("attachmentService", () => {
       exoticWeaponName: null,
       pinnedSuper: null,
       tagIds: [],
-      synergyIds: [synergies[0]!.id],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
       now,
     });
 
