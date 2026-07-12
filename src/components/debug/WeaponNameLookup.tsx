@@ -77,7 +77,13 @@ export function WeaponNameLookup({ label = "Preferred weapon", selected, onSelec
             key={item.hash}
             type="button"
             className="block w-full rounded border border-line bg-background px-2 py-1 text-left text-sm hover:border-accent"
-            onClick={() => onSelect(mapExoticSelection(item))}
+            onClick={() => {
+              onSelect(mapExoticSelection(item));
+              setResults([]);
+              setQuery("");
+              setHasSearched(false);
+              setError(null);
+            }}
           >
             {item.name}
           </button>

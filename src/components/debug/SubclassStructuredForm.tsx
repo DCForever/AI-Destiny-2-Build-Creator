@@ -93,6 +93,21 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
     onChange({ ...value, [key]: next });
   }
 
+  function clearSearch(key: string) {
+    setResults((current) => ({ ...current, [key]: [] }));
+    setSearchText((current) => ({ ...current, [key]: "" }));
+  }
+
+  function pickAbility(key: AbilityKind, name: string) {
+    updateField(key, name);
+    clearSearch(key);
+  }
+
+  function pickListItem(key: "aspects" | "fragments", name: string) {
+    updateField(key, addPickedName(value[key], name));
+    clearSearch(key);
+  }
+
   const refreshOpenResults = useCallback(
     async (nextValue: SubclassFormValue) => {
       const enrichmentFilters = {
@@ -231,7 +246,7 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
               Search
             </button>
           </div>
-          <SearchResults results={results[field.key] ?? []} onPick={(item) => updateField(field.key, item.name)} />
+          <SearchResults results={results[field.key] ?? []} onPick={(item) => pickAbility(field.key, item.name)} />
         </div>
       ))}
 
@@ -244,7 +259,7 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
         onRemove={(name) => updateField("aspects", removePickedName(value.aspects, name))}
         onSearchTextChange={(next) => setSearchText((current) => ({ ...current, aspects: next }))}
         onSearch={() => void search("aspects", "aspects")}
-        onPick={(item) => updateField("aspects", addPickedName(value.aspects, item.name))}
+        onPick={(item) => pickListItem("aspects", item.name)}
       />
       <ListField
         label="Fragments"
@@ -255,7 +270,7 @@ export function SubclassStructuredForm({ className, value, onChange }: Props) {
         onRemove={(name) => updateField("fragments", removePickedName(value.fragments, name))}
         onSearchTextChange={(next) => setSearchText((current) => ({ ...current, fragments: next }))}
         onSearch={() => void search("fragments", "fragments")}
-        onPick={(item) => updateField("fragments", addPickedName(value.fragments, item.name))}
+        onPick={(item) => pickListItem("fragments", item.name)}
       />
 
       <label className="block text-sm">

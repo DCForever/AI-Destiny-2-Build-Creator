@@ -87,7 +87,13 @@ export function PinnedSuperLookup({ subclassName, selected, onSelect }: Props) {
             key={`${item.hash}-${item.name}`}
             type="button"
             className="block w-full rounded border border-line bg-background px-2 py-1 text-left text-sm hover:border-accent"
-            onClick={() => onSelect(item.name)}
+            onClick={() => {
+              onSelect(item.name);
+              setResults([]);
+              setQuery("");
+              setHasSearched(false);
+              setError(null);
+            }}
           >
             {item.name}
           </button>

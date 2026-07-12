@@ -81,7 +81,13 @@ export function ExoticArmorLookup({ className, selected, onSelect }: Props) {
             key={item.hash}
             type="button"
             className="block w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-left text-sm hover:border-zinc-600"
-            onClick={() => onSelect(mapExoticSelection(item))}
+            onClick={() => {
+              onSelect(mapExoticSelection(item));
+              setResults([]);
+              setQuery("");
+              setHasSearched(false);
+              setError(null);
+            }}
           >
             <span className="font-medium">{item.name}</span>
             <span className="ml-2 text-xs text-zinc-500">{item.slot ?? item.hash}</span>
