@@ -93,33 +93,73 @@ export function indexEntityIcons(
   }
 }
 
-/** Concept-tag / Base ability categories → stable label for designation lookup. */
-const ABILITY_KIND_LABEL: Readonly<Record<string, string>> = {
-  melee: "Melee",
-  grenade: "Grenade",
-  super: "Super",
-};
+/**
+ * Guardian ability/stat category labels that have official icons on
+ * DestinyStatDefinition (not specific subclass abilities).
+ */
+export const ABILITY_CATEGORY_STAT_NAMES = [
+  "Melee",
+  "Grenade",
+  "Super",
+  "Class",
+] as const;
 
 /**
- * Register category-level icons (Melee / Grenade / Super) from ability store.
- * Picks lowest hash with an icon when no item is already named exactly that label.
+ * Register generic Melee / Grenade / Super / Class icons from DestinyStatDefinition.
+ * These are the HUD/stat category glyphs — preferred over any specific ability art.
+ * Overwrites prior name hits for these labels so random ability names never win.
  */
-export function indexAbilityKindCategoryIcons(
-  abilities: ReadonlyArray<{
-    kind: string;
-    icon?: string | null;
-    hash: number;
-  }>,
+export function indexAbilityCategoryStatIcons(
+  statTable: RawTable,
   byName: Map<string, { icon: string; source: string }>,
 ): void {
-  for (const [kind, label] of Object.entries(ABILITY_KIND_LABEL)) {
-    if (lookupIconByName(byName, label)) continue;
-    const pick = abilities
-      .filter((a) => a.kind === kind && Boolean(a.icon?.trim()))
-      .sort((a, b) => a.hash - b.hash)[0];
-    if (pick?.icon) {
-      putNameIcon(byName, label, pick.icon, "ability-kind");
+  const wanted = new Set<string>(
+    ABILITY_CATEGORY_STAT_NAMES.map((n) => n.toLowerCase()),
+  );
+  type Cand = { name: string; icon: string; index: number };
+  const best = new Map<string, Cand>();
+
+  for (const value of Object.values(statTable)) {
+    if (typeof value !== "object" || value === null) continue;
+    const def = value as {
+      redacted?: boolean;
+      index?: number;
+      displayProperties?: {
+        name?: string;
+        icon?: string;
+        hasIcon?: boolean;
+      };
+    };
+    if (def.redacted) continue;
+    const name = def.displayProperties?.name?.trim() ?? "";
+    const icon = def.displayProperties?.icon?.trim() ?? "";
+    if (!name || !icon) continue;
+    if (!wanted.has(name.toLowerCase())) continue;
+    if (def.displayProperties?.hasIcon === false) continue;
+
+    const key = name.toLowerCase();
+    const index = typeof def.index === "number" ? def.index : 9999;
+    const prev = best.get(key);
+    // Lower manifest index = canonical armor 3.0 stat row (avoids Class/Melee icon collisions).
+    if (!prev || index < prev.index) {
+      best.set(key, { name, icon, index });
     }
+  }
+
+  for (const { name, icon } of best.values()) {
+    forcePutNameIcon(byName, name, icon, "stat-category");
+  }
+}
+
+/** Overwrite all name keys for a label (used for canonical category icons). */
+function forcePutNameIcon(
+  byName: Map<string, { icon: string; source: string }>,
+  name: string,
+  icon: string,
+  source: string,
+): void {
+  for (const key of nameKeys(name)) {
+    byName.set(key, { icon, source });
   }
 }
 

@@ -9,7 +9,7 @@ import { SYNERGY_VERB_NAMES } from "@/data/synergyVerbs";
 import { getServices } from "@/lib/services";
 import {
   designationIconKey,
-  indexAbilityKindCategoryIcons,
+  indexAbilityCategoryStatIcons,
   indexDamageTypeIcons,
   indexEntityIcons,
   indexInventoryItemIcons,
@@ -31,9 +31,10 @@ export type {
   DesignationRef,
 } from "@/lib/synergies/designationIconShared";
 export {
+  ABILITY_CATEGORY_STAT_NAMES,
   DESIGNATION_ICON_NAME_ALIASES,
   designationIconKey,
-  indexAbilityKindCategoryIcons,
+  indexAbilityCategoryStatIcons,
   indexDamageTypeIcons,
   indexEntityIcons,
   indexInventoryItemIcons,
@@ -76,7 +77,6 @@ export async function buildDesignationNameIconIndex(opts?: {
   ]);
 
   indexEntityIcons(abilities, "abilities", byName);
-  indexAbilityKindCategoryIcons(abilities, byName);
   indexEntityIcons(perks, "weapon-perks", byName);
   indexEntityIcons(traits, "origin-traits", byName);
   indexEntityIcons(weapons, "weapons", byName);
@@ -109,6 +109,17 @@ export async function buildDesignationNameIconIndex(opts?: {
         "DestinyDamageTypeDefinition",
       );
       indexDamageTypeIcons(damageTable, byName);
+    } catch {
+      /* optional */
+    }
+
+    try {
+      const statTable = await manifest.loadRawTable(
+        version,
+        "DestinyStatDefinition",
+      );
+      // Canonical Melee/Grenade/Super/Class HUD icons (overwrite any stray hits).
+      indexAbilityCategoryStatIcons(statTable, byName);
     } catch {
       /* optional */
     }

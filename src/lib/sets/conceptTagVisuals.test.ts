@@ -33,6 +33,12 @@ describe("conceptTagVisual", () => {
     });
   });
 
+  it("ability playstyle has no generic icon (text-only)", () => {
+    const v = conceptTagVisual("ability");
+    expect(v.label).toBe("Ability");
+    expect(v.designation).toBeNull();
+  });
+
   it("uses verb designations for healing/support/dps", () => {
     expect(conceptTagVisual("healing").designation?.type).toBe("verb");
     expect(conceptTagVisual("dps").designation?.subType).toBe("Radiant");

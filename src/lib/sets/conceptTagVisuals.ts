@@ -28,7 +28,11 @@ export type ConceptTagVisual = {
   hasGlyphFallback: boolean;
 };
 
-/** Playstyle tags that map to ability / verb designations. */
+/**
+ * Playstyle tags → designations with official icons.
+ * Melee / Grenade / Super use DestinyStatDefinition category glyphs (not a random ability).
+ * Ability has no generic Bungie category icon — stays text-only.
+ */
 const PLAYSTYLE_DESIGNATION: Partial<
   Record<string, { type: string; subType: string }>
 > = {
@@ -37,7 +41,6 @@ const PLAYSTYLE_DESIGNATION: Partial<
   super: { type: "super", subType: "Super" },
   healing: { type: "verb", subType: "Cure" },
   support: { type: "verb", subType: "Cure" },
-  ability: { type: "grenade", subType: "Grenade" },
   dps: { type: "verb", subType: "Radiant" },
   survival: { type: "verb", subType: "Woven Mail" },
 };

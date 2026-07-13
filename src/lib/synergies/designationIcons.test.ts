@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   designationIconKey,
-  indexAbilityKindCategoryIcons,
+  indexAbilityCategoryStatIcons,
   indexEntityIcons,
   indexInventoryItemIcons,
   lookupIconByName,
@@ -83,39 +83,97 @@ describe("resolveDesignationFromIndex", () => {
   });
 });
 
-describe("indexAbilityKindCategoryIcons", () => {
-  it("registers Melee/Grenade/Super from ability kind when no exact name", () => {
+describe("indexAbilityCategoryStatIcons", () => {
+  it("registers Melee/Grenade/Super from DestinyStatDefinition", () => {
     const byName = new Map<string, { icon: string; source: string }>();
-    indexAbilityKindCategoryIcons(
-      [
-        { kind: "grenade", icon: "/pulse_grenade.png", hash: 20 },
-        { kind: "grenade", icon: "/other.png", hash: 5 },
-        { kind: "melee", icon: "/fist.png", hash: 3 },
-        { kind: "super", icon: null, hash: 1 },
-        { kind: "super", icon: "/golden.png", hash: 9 },
-      ],
+    indexAbilityCategoryStatIcons(
+      {
+        "1": {
+          hash: 1,
+          index: 4,
+          displayProperties: {
+            name: "Melee",
+            icon: "/stat_melee.png",
+            hasIcon: true,
+          },
+        },
+        "2": {
+          hash: 2,
+          index: 5,
+          displayProperties: {
+            name: "Grenade",
+            icon: "/stat_grenade.png",
+            hasIcon: true,
+          },
+        },
+        "3": {
+          hash: 3,
+          index: 6,
+          displayProperties: {
+            name: "Super",
+            icon: "/stat_super.png",
+            hasIcon: true,
+          },
+        },
+      },
       byName,
     );
-    expect(lookupIconByName(byName, "Grenade")?.icon).toBe("/other.png");
-    expect(lookupIconByName(byName, "Melee")?.icon).toBe("/fist.png");
-    expect(lookupIconByName(byName, "Super")?.icon).toBe("/golden.png");
-    expect(lookupIconByName(byName, "Grenade")?.source).toBe("ability-kind");
+    expect(lookupIconByName(byName, "Melee")?.icon).toBe("/stat_melee.png");
+    expect(lookupIconByName(byName, "Grenade")?.icon).toBe("/stat_grenade.png");
+    expect(lookupIconByName(byName, "Super")?.icon).toBe("/stat_super.png");
+    expect(lookupIconByName(byName, "Melee")?.source).toBe("stat-category");
   });
 
-  it("does not override an existing exact name icon", () => {
+  it("prefers lower index when duplicate Class stats share a name", () => {
+    const byName = new Map<string, { icon: string; source: string }>();
+    indexAbilityCategoryStatIcons(
+      {
+        "10": {
+          hash: 10,
+          index: 10,
+          displayProperties: {
+            name: "Class",
+            icon: "/class_wrong_melee_dupe.png",
+            hasIcon: true,
+          },
+        },
+        "7": {
+          hash: 7,
+          index: 7,
+          displayProperties: {
+            name: "Class",
+            icon: "/class_canonical.png",
+            hasIcon: true,
+          },
+        },
+      },
+      byName,
+    );
+    expect(lookupIconByName(byName, "Class")?.icon).toBe("/class_canonical.png");
+  });
+
+  it("overwrites stray ability-name hits for category labels", () => {
     const byName = new Map<string, { icon: string; source: string }>();
     indexEntityIcons(
-      [{ name: "Grenade", icon: "/generic_grenade.png" }],
+      [{ name: "Grenade", icon: "/wrong_pulse_grenade.png" }],
       "abilities",
       byName,
     );
-    indexAbilityKindCategoryIcons(
-      [{ kind: "grenade", icon: "/pulse.png", hash: 1 }],
+    indexAbilityCategoryStatIcons(
+      {
+        "2": {
+          hash: 2,
+          index: 5,
+          displayProperties: {
+            name: "Grenade",
+            icon: "/stat_grenade.png",
+            hasIcon: true,
+          },
+        },
+      },
       byName,
     );
-    expect(lookupIconByName(byName, "Grenade")?.icon).toBe(
-      "/generic_grenade.png",
-    );
+    expect(lookupIconByName(byName, "Grenade")?.icon).toBe("/stat_grenade.png");
   });
 });
 
