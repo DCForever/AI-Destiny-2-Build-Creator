@@ -207,7 +207,15 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
     }),
   );
 
-  return { ...build, synergyTypes, synergies, variants: variantsWithAttachments };
+  const { enrichBuildPresentation } = await import(
+    "@/lib/builds/enrichBuildPresentation"
+  );
+  return enrichBuildPresentation({
+    ...build,
+    synergyTypes,
+    synergies,
+    variants: variantsWithAttachments,
+  });
 }
 
 export function listUserBuilds(

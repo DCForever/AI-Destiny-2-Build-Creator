@@ -15,6 +15,27 @@ export type BuildSubclass = {
   rationale?: string;
 };
 
+/** Icon + description resolved from entity cache for hotspots. */
+export type PresentedEntity = {
+  hash: number | null;
+  name: string;
+  icon: string | null;
+  description: string;
+  element: string | null;
+  kindLabel: string | null;
+};
+
+export type SubclassPresentation = {
+  name: string;
+  super: PresentedEntity | null;
+  classAbility: PresentedEntity | null;
+  movement: PresentedEntity | null;
+  melee: PresentedEntity | null;
+  grenade: PresentedEntity | null;
+  aspects: PresentedEntity[];
+  fragments: PresentedEntity[];
+};
+
 export type SynergySummary = {
   id: string;
   name: string;
@@ -37,6 +58,10 @@ export type SlotClaimSummary = {
   setId?: string;
   selectedPerks?: number[];
   instanceId?: string | null;
+  icon?: string | null;
+  description?: string;
+  element?: string | null;
+  perks?: PresentedEntity[];
 };
 
 export type VariantAttachment = {
@@ -60,6 +85,10 @@ export type BuildVariantDetail = {
     equipment: Partial<Record<EquipmentSlot, SlotClaimSummary>>;
     conflicts: Array<{ slot: EquipmentSlot; claimants: SlotClaimSummary[] }>;
   };
+  /** Presentation extras from enrichBuildPresentation. */
+  exoticWeapon?: PresentedEntity | null;
+  artifact?: PresentedEntity | null;
+  artifactPerks?: PresentedEntity[];
 };
 
 export type BuildSummary = {
@@ -84,6 +113,10 @@ export type BuildDetail = BuildSummary & {
   synergyTypes?: SynergyTypeSummary[];
   synergies: SynergySummary[];
   variants: BuildVariantDetail[];
+  /** Resolved icons/descriptions for subclass abilities/aspects/fragments. */
+  subclassPresentation?: SubclassPresentation;
+  /** Exotic armor presentation for hotspots. */
+  exoticArmor?: PresentedEntity | null;
 };
 
 export type BungieCharacter = {

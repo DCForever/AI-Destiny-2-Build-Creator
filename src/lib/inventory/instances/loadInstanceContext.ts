@@ -7,11 +7,15 @@ import { getServices } from "@/lib/services";
 import { buildSetBonusByItemHash, lookupSetBonus } from "./armorSetBonus";
 import { resolvePlugNamesFromManifest } from "./plugNamesFromManifest";
 import { buildCharacterLabelMap } from "./resolveCharacterLabels";
-import { buildPlugNameMap, mergeManifestPlugNames } from "./resolvePlugs";
+import {
+  buildPlugPresentationMap,
+  mergeManifestPlugPresentation,
+  type PlugPresentation,
+} from "./resolvePlugs";
 import type { ArmorInstanceMeta, CharacterLabel } from "./types";
 
 export interface InstanceListContext {
-  plugMap: Map<number, string>;
+  plugMap: Map<number, PlugPresentation>;
   characterLabels?: Map<string, CharacterLabel>;
   membershipDisplayName: string;
   armorMeta: Map<number, ArmorInstanceMeta>;
@@ -48,14 +52,14 @@ export async function buildPlugMapForInventory(
   manifest: ManifestService,
   manifestVersion: string | null | undefined,
   plugHashes: number[],
-): Promise<Map<number, string>> {
+): Promise<Map<number, PlugPresentation>> {
   const [weaponPerks, mods, originTraits] = await Promise.all([
     entityCache.getStore("weapon-perks"),
     entityCache.getStore("mods"),
     entityCache.getStore("origin-traits"),
   ]);
 
-  const entityMap = buildPlugNameMap({
+  const entityMap = buildPlugPresentationMap({
     "weapon-perks": weaponPerks,
     mods,
     "origin-traits": originTraits,
@@ -67,7 +71,7 @@ export async function buildPlugMapForInventory(
   }
 
   const manifestMap = await resolvePlugNamesFromManifest(manifest, manifestVersion, unresolved);
-  return mergeManifestPlugNames(entityMap, manifestMap);
+  return mergeManifestPlugPresentation(entityMap, manifestMap);
 }
 
 export async function loadInstanceListContext(

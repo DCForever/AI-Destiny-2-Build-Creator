@@ -1,6 +1,6 @@
 "use client";
 
-import type { BuildDetail } from "@/components/build/types";
+import type { BuildDetail, PresentedEntity } from "@/components/build/types";
 import {
   Button,
   Chip,
@@ -8,6 +8,7 @@ import {
   Cluster,
   DesignationIcon,
   ElementIcon,
+  EntityHotspot,
   IconBadge,
   InfoHotspot,
   Panel,
@@ -24,8 +25,44 @@ import {
   CLASS_TEXT_CLASS,
   ELEMENT_CSS_COLOR,
   elementFromSubclass,
+  isDestinyElement,
   isGuardianClass,
+  type DestinyElement,
 } from "@/lib/destiny/identityVisuals";
+
+function accentFor(element: string | null | undefined): string | undefined {
+  if (element && isDestinyElement(element)) {
+    return ELEMENT_CSS_COLOR[element as DestinyElement];
+  }
+  return undefined;
+}
+
+function AbilityHotspot({
+  entity,
+  kind,
+  fallbackName,
+  elementColor,
+}: {
+  entity?: PresentedEntity | null;
+  kind: string;
+  fallbackName?: string | null;
+  elementColor?: string;
+}) {
+  const name = entity?.name || fallbackName;
+  if (!name) return null;
+  return (
+    <EntityHotspot
+      kind={entity?.kindLabel ?? kind}
+      name={name}
+      description={entity?.description}
+      icon={entity?.icon}
+      accentColor={accentFor(entity?.element) ?? elementColor}
+      size={28}
+      showLabel="auto"
+      meta={entity?.element ? [entity.element] : undefined}
+    />
+  );
+}
 
 export function BuildIdentity({
   build,
@@ -47,6 +84,8 @@ export function BuildIdentity({
   const superName = build.pinnedSuper ?? subclass.super ?? null;
   const classColor = CLASS_CSS_COLOR[cls];
   const elementColor = ELEMENT_CSS_COLOR[element];
+  const sp = build.subclassPresentation;
+  const exoticArmor = build.exoticArmor;
 
   const designationRefs = (build.synergyTypes ?? []).map((t) => ({
     type: t.type,
@@ -71,7 +110,7 @@ export function BuildIdentity({
               >
                 <Row gap={4} align="center">
                   <IconBadge label={cls}>
-                    <ClassIcon className={cls} color={classColor} size={16} />
+                    <ClassIcon className={cls} color={classColor} size={20} />
                   </IconBadge>
                   <Text
                     size="xs"
@@ -90,13 +129,14 @@ export function BuildIdentity({
                   `Element: ${element}`,
                   superName ? `Super: ${superName}` : "No pinned super",
                 ]}
+                accentColor={elementColor}
               >
                 <Row gap={4} align="center">
                   <IconBadge label={element}>
                     <ElementIcon
                       element={element}
                       color={elementColor}
-                      size={14}
+                      size={18}
                       title={subclass.name}
                     />
                   </IconBadge>
@@ -106,37 +146,50 @@ export function BuildIdentity({
                 </Row>
               </InfoHotspot>
 
-              {superName ? (
-                <InfoHotspot
+              {superName || sp?.super ? (
+                <EntityHotspot
                   kind="Super"
-                  title={superName}
-                  lines={["Pinned super for identity / create kits"]}
+                  name={sp?.super?.name ?? superName!}
+                  description={
+                    sp?.super?.description || "Pinned super for identity"
+                  }
+                  icon={sp?.super?.icon}
+                  accentColor={
+                    accentFor(sp?.super?.element) ?? elementColor
+                  }
+                  size={28}
+                  showLabel="auto"
                 >
-                  <Row gap={4} align="center">
-                    <IconBadge label={superName}>
-                      <SuperIcon
-                        color={elementColor}
-                        size={14}
-                        title={superName}
-                      />
-                    </IconBadge>
-                    <Text size="xs" tone="accent" as="span">
-                      {superName}
-                    </Text>
-                  </Row>
-                </InfoHotspot>
+                  {!sp?.super?.icon ? (
+                    <Row gap={4} align="center">
+                      <IconBadge label={sp?.super?.name ?? superName!}>
+                        <SuperIcon
+                          color={elementColor}
+                          size={18}
+                          title={sp?.super?.name ?? superName!}
+                        />
+                      </IconBadge>
+                      <Text size="xs" tone="accent" as="span">
+                        {sp?.super?.name ?? superName}
+                      </Text>
+                    </Row>
+                  ) : undefined}
+                </EntityHotspot>
               ) : null}
 
-              {build.exoticArmorName ? (
-                <InfoHotspot
+              {exoticArmor || build.exoticArmorName ? (
+                <EntityHotspot
                   kind="Exotic armor"
-                  title={build.exoticArmorName}
-                  lines={["Build identity exotic armor"]}
-                >
-                  <Text size="xs" as="span">
-                    {build.exoticArmorName}
-                  </Text>
-                </InfoHotspot>
+                  name={
+                    exoticArmor?.name ??
+                    build.exoticArmorName ??
+                    "Exotic armor"
+                  }
+                  description={exoticArmor?.description}
+                  icon={exoticArmor?.icon}
+                  size={28}
+                  showLabel="auto"
+                />
               ) : (
                 <Text size="xs" tone="muted" as="span">
                   No exotic armor
@@ -163,33 +216,128 @@ export function BuildIdentity({
           </Row>
         </Row>
 
+        <Section label="Abilities">
+          <Cluster gap={8}>
+            <AbilityHotspot
+              entity={sp?.classAbility}
+              kind="Class ability"
+              fallbackName={subclass.classAbility}
+              elementColor={elementColor}
+            />
+            <AbilityHotspot
+              entity={sp?.movement}
+              kind="Movement"
+              fallbackName={subclass.movement}
+              elementColor={elementColor}
+            />
+            <AbilityHotspot
+              entity={sp?.melee}
+              kind="Melee"
+              fallbackName={subclass.melee}
+              elementColor={elementColor}
+            />
+            <AbilityHotspot
+              entity={sp?.grenade}
+              kind="Grenade"
+              fallbackName={subclass.grenade}
+              elementColor={elementColor}
+            />
+          </Cluster>
+        </Section>
+
+        {(sp?.aspects?.length ?? subclass.aspects?.length ?? 0) > 0 ? (
+          <Section label="Aspects">
+            <Cluster gap={8}>
+              {(sp?.aspects?.length
+                ? sp.aspects
+                : subclass.aspects.map((name) => ({
+                    hash: null,
+                    name,
+                    icon: null,
+                    description: "",
+                    element: null,
+                    kindLabel: "Aspect",
+                  }))
+              ).map((a) => (
+                <EntityHotspot
+                  key={a.name}
+                  kind="Aspect"
+                  name={a.name}
+                  description={a.description}
+                  icon={a.icon}
+                  accentColor={accentFor(a.element) ?? elementColor}
+                  size={28}
+                />
+              ))}
+            </Cluster>
+          </Section>
+        ) : null}
+
+        {(sp?.fragments?.length ?? subclass.fragments?.length ?? 0) > 0 ? (
+          <Section label="Fragments">
+            <Cluster gap={8}>
+              {(sp?.fragments?.length
+                ? sp.fragments
+                : subclass.fragments.map((name) => ({
+                    hash: null,
+                    name,
+                    icon: null,
+                    description: "",
+                    element: null,
+                    kindLabel: "Fragment",
+                  }))
+              ).map((f) => (
+                <EntityHotspot
+                  key={f.name}
+                  kind="Fragment"
+                  name={f.name}
+                  description={f.description}
+                  icon={f.icon}
+                  accentColor={accentFor(f.element) ?? elementColor}
+                  size={28}
+                />
+              ))}
+            </Cluster>
+          </Section>
+        ) : null}
+
         {(build.synergyTypes?.length ?? 0) > 0 ? (
           <Section label="Synergy Types">
             <div className="flex flex-wrap gap-2 items-center">
               {build.synergyTypes!.map((t) => {
                 const chipLabel = t.subType?.trim() || t.label;
+                const icon = getIcon(t.type, t.subType);
+                const accent =
+                  t.type === "element" && t.subType && isDestinyElement(t.subType)
+                    ? ELEMENT_CSS_COLOR[t.subType]
+                    : undefined;
                 return (
                   <InfoHotspot
                     key={t.key}
                     kind="Synergy type"
                     title={t.label}
+                    icon={icon}
+                    accentColor={accent}
                     lines={[
                       `Type: ${t.type}`,
                       t.subType ? `Subtype: ${t.subType}` : "No subtype",
                       "Designation matched against library synergies for coverage",
                     ]}
                   >
-                    <span className="inline-flex items-center gap-1.5 border border-line px-2 py-0.5">
+                    <span className="inline-flex items-center gap-1.5 border border-line px-1.5 py-0.5">
                       <DesignationIcon
                         type={t.type}
                         subType={t.subType}
-                        icon={getIcon(t.type, t.subType)}
-                        size={18}
+                        icon={icon}
+                        size={28}
                         label={t.label}
+                        accentColor={accent}
                       />
-                      <span className="text-[10px] tracking-wide text-muted whitespace-nowrap">
-                        {chipLabel}
-                      </span>
+                      {!icon ? (
+                        <span className="text-[10px] tracking-wide text-muted whitespace-nowrap">
+                          {chipLabel}
+                        </span>
+                      ) : null}
                     </span>
                   </InfoHotspot>
                 );

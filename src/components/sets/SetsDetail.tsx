@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 import { SLOT_LABEL, type SetDetail } from "@/components/sets/types";
-import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Chip,
   Cluster,
+  EntityHotspot,
   Heading,
   Panel,
   Row,
@@ -15,7 +15,19 @@ import {
   Stack,
   Text,
 } from "@/components/ui";
+import {
+  ELEMENT_CSS_COLOR,
+  isDestinyElement,
+  type DestinyElement,
+} from "@/lib/destiny/identityVisuals";
 import { SLOTS_BY_SET_TYPE, type SetType } from "@/lib/sets/schemas";
+
+function accentFor(element: string | null | undefined): string | undefined {
+  if (element && isDestinyElement(element)) {
+    return ELEMENT_CSS_COLOR[element as DestinyElement];
+  }
+  return undefined;
+}
 
 export function SetsDetail({
   set,
@@ -137,14 +149,15 @@ export function SetsDetail({
                       gap={8}
                       wrap
                     >
-                      <Row gap={8} align="center" className="min-w-0">
-                        <ItemIcon
-                          icon={item.icon ?? null}
-                          name={item.itemName}
-                          size={28}
-                        />
-                        <Chip accent>{item.itemName}</Chip>
-                      </Row>
+                      <EntityHotspot
+                        kind="Mod"
+                        name={item.itemName}
+                        description={item.description}
+                        icon={item.icon}
+                        accentColor={accentFor(item.element)}
+                        size={32}
+                        showLabel="auto"
+                      />
                       <Button
                         size="sm"
                         variant="danger"
@@ -182,18 +195,19 @@ export function SetsDetail({
                         {SLOT_LABEL[slot] ?? slot}
                       </Text>
                       {item ? (
-                        <Row gap={8} align="center">
-                          <ItemIcon
-                            icon={item.icon ?? null}
-                            name={item.itemName}
-                            size={32}
-                          />
-                          <Text size="sm">
-                            {item.itemName}
-                            {item.stale ? " · stale" : ""}
-                            {item.instanceId ? " · instance" : ""}
-                          </Text>
-                        </Row>
+                        <EntityHotspot
+                          kind={SLOT_LABEL[slot] ?? slot}
+                          name={item.itemName}
+                          description={item.description}
+                          icon={item.icon}
+                          accentColor={accentFor(item.element)}
+                          size={32}
+                          showLabel="auto"
+                          meta={[
+                            item.stale ? "Stale hash" : null,
+                            item.instanceId ? "Instance pinned" : null,
+                          ].filter(Boolean) as string[]}
+                        />
                       ) : (
                         <Text size="xs" tone="muted">
                           Empty

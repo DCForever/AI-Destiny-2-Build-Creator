@@ -157,7 +157,7 @@ export function CatalogItemPicker({
               }}
             >
               <span className="flex items-center gap-2 min-w-0">
-                <ItemIcon icon={item.icon} name={item.name} size={28} />
+                <ItemIcon icon={item.icon} name={item.name} size={32} />
                 <span className="min-w-0">
                   <span className="font-medium">{item.name}</span>
                   <span className="ml-2 text-xs text-muted">

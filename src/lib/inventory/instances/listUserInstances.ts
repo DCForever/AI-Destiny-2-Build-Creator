@@ -10,6 +10,7 @@ import {
   hasActiveFilter,
 } from "./filterInstances";
 import { isEquipmentBucket, projectInstance } from "./projectInstance";
+import type { PlugLookup } from "./resolvePlugs";
 import { sortInstances } from "./sortInstances";
 import type {
   ArmorInstanceMeta,
@@ -22,7 +23,7 @@ export interface ListUserInstancesInput {
   db: AppDatabase;
   userId: number;
   criteria: InstanceFilterCriteria;
-  plugMap: Map<number, string>;
+  plugMap: PlugLookup;
   characterLabels?: Map<string, CharacterLabel>;
   membershipDisplayName?: string;
   armorMeta?: Map<number, ArmorInstanceMeta>;

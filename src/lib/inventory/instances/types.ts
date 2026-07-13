@@ -62,6 +62,10 @@ export interface ResolvedPlug {
   name: string | null;
   displayName: string;
   resolved: boolean;
+  /** Bungie relative icon when known from entity stores. */
+  icon?: string | null;
+  /** Catalog description when known. */
+  description?: string;
 }
 
 /** A single set-bonus tier effect (2-piece or 4-piece). */

@@ -6,7 +6,7 @@ import {
 
 import { resolveArmorTier } from "@/data/rules/armorTiers";
 
-import { resolvePlugs } from "./resolvePlugs";
+import { resolvePlugs, type PlugLookup } from "./resolvePlugs";
 import {
   computeTotalArmorStats,
   isCompleteArmorStats,
@@ -30,7 +30,7 @@ export function isEquipmentBucket(bucket: string): boolean {
 
 export function projectInstance(
   item: UserInventoryItem,
-  plugMap: Map<number, string>,
+  plugMap: PlugLookup,
   characterLabels?: Map<string, CharacterLabel>,
   membershipDisplayName?: string,
   armorMeta?: Map<number, ArmorInstanceMeta>,

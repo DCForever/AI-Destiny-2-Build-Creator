@@ -10,12 +10,25 @@ import {
   Button,
   Chip,
   Cluster,
+  EntityHotspot,
   Panel,
   Row,
   Section,
   Stack,
   Text,
 } from "@/components/ui";
+import {
+  ELEMENT_CSS_COLOR,
+  isDestinyElement,
+  type DestinyElement,
+} from "@/lib/destiny/identityVisuals";
+
+function accentFor(element: string | null | undefined): string | undefined {
+  if (element && isDestinyElement(element)) {
+    return ELEMENT_CSS_COLOR[element as DestinyElement];
+  }
+  return undefined;
+}
 
 export function VariantCard({
   build,
@@ -31,12 +44,28 @@ export function VariantCard({
   onEdit?: () => void;
 }) {
   const equipment = variant.resolved?.equipment ?? {};
-  const subclass = build.subclass;
-  const exoticWeapon =
-    variant.exoticWeaponName ?? build.exoticWeaponName ?? "None";
   const setNames = variant.attachments
     .map((a) => a.set?.name)
     .filter((name): name is string => Boolean(name));
+
+  const exoticWeapon =
+    variant.exoticWeapon ??
+    (variant.exoticWeaponName || build.exoticWeaponName
+      ? {
+          hash: variant.exoticWeaponHash,
+          name:
+            variant.exoticWeaponName ??
+            build.exoticWeaponName ??
+            "Exotic weapon",
+          icon: null,
+          description: "",
+          element: null,
+          kindLabel: "Exotic weapon",
+        }
+      : null);
+
+  const artifact = variant.artifact;
+  const artifactPerks = variant.artifactPerks ?? [];
 
   return (
     <Panel as="article" tone={selected ? "accent" : "default"} className="h-full">
@@ -49,7 +78,12 @@ export function VariantCard({
           >
             {variant.name}
             {variant.isDefault ? (
-              <Text size="xs" tone="muted" as="span" className="ml-2 uppercase tracking-widest">
+              <Text
+                size="xs"
+                tone="muted"
+                as="span"
+                className="ml-2 uppercase tracking-widest"
+              >
                 Default
               </Text>
             ) : null}
@@ -71,18 +105,50 @@ export function VariantCard({
         </Row>
 
         <Section label="Exotic weapon">
-          <Text size="sm">{exoticWeapon}</Text>
+          {exoticWeapon ? (
+            <EntityHotspot
+              kind="Exotic weapon"
+              name={exoticWeapon.name}
+              description={exoticWeapon.description}
+              icon={exoticWeapon.icon}
+              accentColor={accentFor(exoticWeapon.element)}
+              size={32}
+              showLabel="auto"
+            />
+          ) : (
+            <Text size="sm" tone="muted">
+              None
+            </Text>
+          )}
         </Section>
 
-        {variant.artifactName || (variant.artifactConfig?.length ?? 0) > 0 ? (
+        {artifact || artifactPerks.length > 0 || variant.artifactName ? (
           <Section label="Artifact">
-            <Cluster>
-              {variant.artifactName ? (
-                <Chip accent>{variant.artifactName}</Chip>
+            <Cluster gap={8}>
+              {artifact || variant.artifactName ? (
+                <EntityHotspot
+                  kind="Artifact"
+                  name={artifact?.name ?? variant.artifactName!}
+                  description={artifact?.description}
+                  icon={artifact?.icon}
+                  size={28}
+                  showLabel="auto"
+                />
               ) : null}
-              {(variant.artifactConfig ?? []).map((hash) => (
-                <Chip key={hash}>Perk {hash}</Chip>
+              {artifactPerks.map((p) => (
+                <EntityHotspot
+                  key={p.hash ?? p.name}
+                  kind="Artifact perk"
+                  name={p.name}
+                  description={p.description}
+                  icon={p.icon}
+                  size={28}
+                />
               ))}
+              {!artifactPerks.length &&
+                (variant.artifactConfig ?? []).map((hash) => (
+                  <Chip key={hash}>Perk {hash}</Chip>
+                ))}
             </Cluster>
           </Section>
         ) : null}
@@ -109,19 +175,48 @@ export function VariantCard({
               const claim = equipment[slot];
               return (
                 <Stack key={slot} gap={4}>
-                  <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-widest"
+                  >
                     {SLOT_LABEL[slot]}
                   </Text>
                   {claim ? (
-                    <Row gap={6} wrap>
-                      <Text size="sm" as="span">
-                        {claim.itemName}
-                      </Text>
-                      {(claim.selectedPerks?.length ?? 0) > 0 ? (
+                    <Stack gap={4}>
+                      <Row gap={6} wrap align="center">
+                        <EntityHotspot
+                          kind="Weapon"
+                          name={claim.itemName}
+                          description={claim.description}
+                          icon={claim.icon}
+                          accentColor={accentFor(claim.element)}
+                          size={32}
+                          showLabel="auto"
+                          meta={[
+                            claim.element,
+                            !claim.instanceId ? "Wishlist" : null,
+                          ].filter(Boolean) as string[]}
+                        />
+                        {!claim.instanceId ? <Chip>Wishlist</Chip> : null}
+                      </Row>
+                      {(claim.perks?.length ?? 0) > 0 ? (
+                        <Cluster gap={6}>
+                          {claim.perks!.map((p) => (
+                            <EntityHotspot
+                              key={p.hash ?? p.name}
+                              kind="Weapon perk"
+                              name={p.name}
+                              description={p.description}
+                              icon={p.icon}
+                              size={28}
+                            />
+                          ))}
+                        </Cluster>
+                      ) : (claim.selectedPerks?.length ?? 0) > 0 ? (
                         <Chip>{claim.selectedPerks!.length} perks</Chip>
                       ) : null}
-                      {!claim.instanceId ? <Chip>Wishlist</Chip> : null}
-                    </Row>
+                    </Stack>
                   ) : (
                     <Text size="xs" tone="muted">
                       Empty
@@ -138,14 +233,23 @@ export function VariantCard({
             {ARMOR_SLOTS.map((slot) => {
               const claim = equipment[slot];
               return (
-                <Row key={slot} justify="between" align="baseline" gap={8}>
-                  <Text size="xs" tone="muted" className="uppercase tracking-widest shrink-0">
+                <Row key={slot} justify="between" align="center" gap={8}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-widest shrink-0"
+                  >
                     {SLOT_LABEL[slot]}
                   </Text>
                   {claim?.itemName ? (
-                    <Text size="sm" as="span" className="text-right">
-                      {claim.itemName}
-                    </Text>
+                    <EntityHotspot
+                      kind="Armor"
+                      name={claim.itemName}
+                      description={claim.description}
+                      icon={claim.icon}
+                      size={32}
+                      showLabel="auto"
+                    />
                   ) : (
                     <Text size="xs" tone="muted" as="span">
                       Empty
@@ -156,44 +260,6 @@ export function VariantCard({
             })}
           </Stack>
         </Section>
-
-        <Section label="Abilities">
-          <Cluster>
-            <Chip accent>{subclass.melee}</Chip>
-            <Chip accent>{subclass.grenade}</Chip>
-            <Chip accent>{subclass.classAbility}</Chip>
-          </Cluster>
-        </Section>
-
-        <Section label="Aspects / fragments">
-          <Cluster>
-            {subclass.aspects.map((a) => (
-              <Chip key={a} accent>
-                {a}
-              </Chip>
-            ))}
-            {subclass.fragments.map((f) => (
-              <Chip key={f}>
-                {f}
-              </Chip>
-            ))}
-          </Cluster>
-        </Section>
-
-        {variant.notes ? (
-          <Section label="Notes">
-            <Text size="xs" tone="muted" className="leading-relaxed">
-              {variant.notes}
-            </Text>
-          </Section>
-        ) : null}
-
-        {(variant.resolved?.conflicts.length ?? 0) > 0 ? (
-          <Text size="xs" tone="warning">
-            {variant.resolved!.conflicts.length} slot conflict
-            {variant.resolved!.conflicts.length === 1 ? "" : "s"}
-          </Text>
-        ) : null}
       </Stack>
     </Panel>
   );

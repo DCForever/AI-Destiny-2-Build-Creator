@@ -4,12 +4,12 @@ import {
   LINK_KIND_LABEL,
   type SynergyDetail,
 } from "@/components/synergy/types";
-import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Chip,
   Cluster,
   DesignationIcon,
+  EntityHotspot,
   InfoHotspot,
   Panel,
   Row,
@@ -89,6 +89,7 @@ export function SynergyDetail({
                 <InfoHotspot
                   kind="Subtype"
                   title={synergy.subType}
+                  icon={designationIcon}
                   lines={[
                     "Required for some types (verb, melee, archetype, …)",
                     "Matched when resolving coverage on builds",
@@ -102,10 +103,12 @@ export function SynergyDetail({
                       type={synergy.type}
                       subType={synergy.subType}
                       icon={designationIcon}
-                      size={20}
+                      size={28}
                       label={synergy.subType}
                     />
-                    <Chip>{synergy.subType}</Chip>
+                    {!designationIcon ? (
+                      <Chip>{synergy.subType}</Chip>
+                    ) : null}
                   </Row>
                 </InfoHotspot>
               ) : null}
@@ -155,60 +158,25 @@ export function SynergyDetail({
                     {LINK_KIND_LABEL[kind] ?? kind}
                     {links.length > 0 ? ` · ${links.length}` : ""}
                   </Text>
-                  <Stack gap={8}>
+                  <Cluster gap={10}>
                     {links.map((link) => {
                       const meta = linkMeta(link);
                       const objectDesc = link.description?.trim() ?? "";
                       const kindLabel = LINK_KIND_LABEL[kind] ?? kind;
                       return (
-                        <Panel key={link.id} tone="muted" pad="sm">
-                          <Stack gap={4}>
-                            <Row gap={10} align="start">
-                              <ItemIcon
-                                icon={link.icon ?? null}
-                                name={link.displayName}
-                                size={36}
-                              />
-                              <InfoHotspot
-                                kind={kindLabel}
-                                title={link.displayName}
-                                lines={[
-                                  `Link kind: ${kindLabel}`,
-                                  meta ?? "Catalog identity for this synergy",
-                                  objectDesc
-                                    ? objectDesc.slice(0, 200) +
-                                      (objectDesc.length > 200 ? "…" : "")
-                                    : "No catalog description",
-                                ]}
-                              >
-                                <Text size="sm" weight="medium">
-                                  {link.displayName}
-                                </Text>
-                              </InfoHotspot>
-                            </Row>
-                            {meta ? (
-                              <Text size="xs" tone="muted">
-                                {meta}
-                              </Text>
-                            ) : null}
-                            {objectDesc ? (
-                              <Text
-                                size="sm"
-                                tone="muted"
-                                className="leading-relaxed whitespace-pre-wrap"
-                              >
-                                {objectDesc}
-                              </Text>
-                            ) : (
-                              <Text size="xs" tone="muted">
-                                No catalog description
-                              </Text>
-                            )}
-                          </Stack>
-                        </Panel>
+                        <EntityHotspot
+                          key={link.id}
+                          kind={kindLabel}
+                          name={link.displayName}
+                          description={objectDesc}
+                          icon={link.icon}
+                          size={32}
+                          showLabel="auto"
+                          meta={meta ? [meta] : undefined}
+                        />
                       );
                     })}
-                  </Stack>
+                  </Cluster>
                 </Stack>
               ))}
             </Stack>

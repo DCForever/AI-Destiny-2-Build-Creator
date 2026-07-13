@@ -18,6 +18,8 @@ export { Callout } from "./Callout";
 export { Workspace, WorkspaceMain, CardGrid } from "./Workspace";
 export { ClassIcon, ElementIcon, SuperIcon, IconBadge } from "./DestinyIcons";
 export { InfoHotspot } from "./InfoHotspot";
+export { EntityHotspot } from "./EntityHotspot";
+export type { EntityHotspotShowLabel } from "./EntityHotspot";
 export { LoadoutColorBar, LoadoutIconPlate } from "./LoadoutColorBar";
 export { DesignationIcon, iconFromMap } from "./DesignationIcon";
 export {

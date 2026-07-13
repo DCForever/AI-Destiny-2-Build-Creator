@@ -1,5 +1,11 @@
 import type { ResolvedWeapon, ResolvedPerkPick } from "@/lib/build/types";
 import type { ChampionType } from "@/data/rules/championCounters";
+import { EntityHotspot } from "@/components/ui";
+import {
+  ELEMENT_CSS_COLOR,
+  isDestinyElement,
+  type DestinyElement,
+} from "@/lib/destiny/identityVisuals";
 import { ResolutionBadge, IllegalBadge } from "./ResolutionBadge";
 import { ItemIcon } from "./ItemIcon";
 
@@ -55,7 +61,17 @@ function PerkRow({ perk }: { perk: ResolvedPerkPick }) {
   return (
     <li className="py-1.5 border-b border-line/50 last:border-0">
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`text-sm ${isIllegal ? "text-danger" : "text-foreground"}`}>{name}</span>
+        <EntityHotspot
+          kind="Weapon perk"
+          name={name}
+          icon={perk.resolved?.icon ?? null}
+          size={28}
+          showLabel="auto"
+          meta={[
+            `Status: ${perk.status}`,
+            isIllegal ? perk.legality?.reason ?? "Illegal" : null,
+          ].filter(Boolean) as string[]}
+        />
         <ResolutionBadge status={perk.status} />
         {isIllegal && <IllegalBadge reason={perk.legality?.reason} />}
       </div>
@@ -76,6 +92,10 @@ function WeaponCard({ weapon, editable = false, onClick }: {
 }) {
   const name = weapon.reference.resolved?.name ?? weapon.reference.requestedName;
   const icon = weapon.reference.resolved?.icon ?? null;
+  const accent =
+    weapon.element && isDestinyElement(weapon.element)
+      ? ELEMENT_CSS_COLOR[weapon.element as DestinyElement]
+      : undefined;
 
   const card = (
     <div className="panel-notch p-4 space-y-3">
@@ -87,7 +107,19 @@ function WeaponCard({ weapon, editable = false, onClick }: {
       </div>
 
       <div className="flex items-center gap-3">
-        <ItemIcon icon={icon} name={name} size={40} />
+        {editable ? (
+          <ItemIcon icon={icon} name={name} size={40} accentColor={accent} />
+        ) : (
+          <EntityHotspot
+            kind="Weapon"
+            name={name}
+            icon={icon}
+            accentColor={accent}
+            size={40}
+            showLabel="never"
+            meta={[weapon.element, weapon.ammo, weapon.frame].filter(Boolean) as string[]}
+          />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-foreground truncate">{name}</span>

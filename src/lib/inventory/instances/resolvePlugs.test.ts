@@ -20,8 +20,22 @@ describe("resolvePlugs", () => {
   it("resolves known hashes to display names", () => {
     const plugs = resolvePlugs([1001, 5001], buildPlugNameMap(stores));
     expect(plugs).toEqual([
-      { hash: 1001, name: "Subsistence", displayName: "Subsistence", resolved: true },
-      { hash: 5001, name: "Solar Mod", displayName: "Solar Mod", resolved: true },
+      {
+        hash: 1001,
+        name: "Subsistence",
+        displayName: "Subsistence",
+        resolved: true,
+        icon: null,
+        description: "",
+      },
+      {
+        hash: 5001,
+        name: "Solar Mod",
+        displayName: "Solar Mod",
+        resolved: true,
+        icon: null,
+        description: "",
+      },
     ]);
   });
 
@@ -32,6 +46,8 @@ describe("resolvePlugs", () => {
       name: null,
       displayName: "9999999999",
       resolved: false,
+      icon: null,
+      description: "",
     });
   });
 

@@ -67,6 +67,7 @@ Last reviewed: 2026-07-13
 | Status | Item | Notes |
 |--------|------|--------|
 | `partial` | Further mobile density / touch targets | Responsive padding + nav improved |
+| `partial` | **Entity InfoHotspots** across all entity chips | `EntityHotspot` + presentation enrich; icon-first when art exists; remaining gaps where APIs still omit description |
 | `open` | Pixel-perfect canvas hi-fi parity | Icons/hotspots/loadout chrome largely done |
 
 ---
@@ -77,6 +78,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Entity hotspot primitive + presentation resolver | `EntityHotspot`, `entityPresentation`, build/set/plug enrich |
 | 2026-07-13 | Class / element / super icons on Build library + identity | Vault Terminal glyphs + subclass element |
 | 2026-07-13 | Info hotspots on identity / synergy chips | Portal + single-open (clip-path fix) |
 | 2026-07-13 | Responsive page padding + mobile shell nav | AppShell short labels, scroll nav |

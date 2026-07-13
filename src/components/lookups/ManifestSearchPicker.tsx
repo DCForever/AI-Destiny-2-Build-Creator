@@ -6,6 +6,7 @@ import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Cluster,
+  EntityHotspot,
   FilterChip,
   Row,
   Stack,
@@ -104,12 +105,14 @@ export function ManifestSearchPicker({
       </Text>
       {!multi && selected ? (
         <Row justify="between" align="center" gap={8}>
-          <Row gap={8} align="center" className="min-w-0">
-            <ItemIcon icon={selected.icon ?? null} name={selected.name} size={28} />
-            <Text size="sm" className="truncate">
-              {selected.name}
-            </Text>
-          </Row>
+          <EntityHotspot
+            kind={selected.kind ?? category}
+            name={selected.name}
+            description={selected.description}
+            icon={selected.icon}
+            size={32}
+            showLabel="always"
+          />
           <Button
             size="sm"
             variant="ghost"
@@ -179,11 +182,19 @@ export function ManifestSearchPicker({
                 }}
               >
                 <span className="flex items-center gap-2 min-w-0">
-                  <ItemIcon icon={item.icon ?? null} name={item.name} size={28} />
+                  <ItemIcon icon={item.icon ?? null} name={item.name} size={32} />
                   <span className="min-w-0">
                     <span className="font-medium">{item.name}</span>
                     {item.kind ? (
                       <span className="ml-2 text-xs text-muted">{item.kind}</span>
+                    ) : null}
+                    {item.description ? (
+                      <span
+                        className="block text-xs text-muted truncate max-w-[240px]"
+                        title={item.description}
+                      >
+                        {item.description}
+                      </span>
                     ) : null}
                   </span>
                 </span>

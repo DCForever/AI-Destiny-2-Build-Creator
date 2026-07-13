@@ -12,6 +12,7 @@ import {
   Chip,
   Cluster,
   EmptyState,
+  EntityHotspot,
   FilterChip,
   PageHeader,
   Panel,
@@ -25,6 +26,11 @@ import {
   WorkspaceMain,
   Heading,
 } from "@/components/ui";
+import {
+  ELEMENT_CSS_COLOR,
+  isDestinyElement,
+  type DestinyElement,
+} from "@/lib/destiny/identityVisuals";
 
 type Kind = "weapons" | "armor";
 type Scope = "all" | "owned";
@@ -34,8 +40,21 @@ type InstanceRow = {
   power?: number;
   location?: string;
   isMasterwork?: boolean;
-  plugs?: { displayName: string; resolved: boolean }[];
+  plugs?: {
+    displayName: string;
+    resolved: boolean;
+    hash?: number;
+    icon?: string | null;
+    description?: string | null;
+  }[];
 };
+
+function accentFor(element: string | null | undefined): string | undefined {
+  if (element && isDestinyElement(element)) {
+    return ELEMENT_CSS_COLOR[element as DestinyElement];
+  }
+  return undefined;
+}
 
 const WEAPON_SLOTS = ["Kinetic", "Energy", "Power"] as const;
 const ARMOR_SLOTS = ["Helmet", "Gauntlets", "Chest", "Legs", "ClassItem"] as const;
@@ -325,10 +344,20 @@ export function CatalogPage() {
                 <Panel tone="raised" className="w-full">
                   <Stack gap={14}>
                     <Row gap={14} align="start" wrap>
-                      <ItemIcon
-                        icon={selected.icon}
+                      <EntityHotspot
+                        kind={selected.isExotic ? "Exotic" : "Item"}
                         name={selected.name}
+                        description={selected.description}
+                        icon={selected.icon}
+                        accentColor={accentFor(selected.element)}
                         size={64}
+                        showLabel="never"
+                        meta={[
+                          selected.slot,
+                          selected.element,
+                          selected.itemTypeName,
+                          selected.frame,
+                        ].filter(Boolean) as string[]}
                       />
                       <Stack gap={6} className="min-w-0 flex-1">
                         <Heading level={1}>{selected.name}</Heading>
@@ -395,11 +424,17 @@ export function CatalogPage() {
                                   ) : null}
                                 </Row>
                                 {(inst.plugs?.length ?? 0) > 0 ? (
-                                  <Cluster gap={4}>
+                                  <Cluster gap={6}>
                                     {inst.plugs!.map((p) => (
-                                      <Chip key={`${inst.instanceId}-${p.displayName}`}>
-                                        {p.displayName}
-                                      </Chip>
+                                      <EntityHotspot
+                                        key={`${inst.instanceId}-${p.hash ?? p.displayName}`}
+                                        kind="Plug"
+                                        name={p.displayName}
+                                        description={p.description}
+                                        icon={p.icon}
+                                        size={28}
+                                        showLabel="auto"
+                                      />
                                     ))}
                                   </Cluster>
                                 ) : null}

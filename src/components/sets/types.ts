@@ -16,6 +16,8 @@ export type SetItem = {
   itemHash: number;
   itemName: string;
   icon?: string | null;
+  description?: string | null;
+  element?: string | null;
   instanceId: string | null;
   selectedPerks: number[];
   masterworkHash: number | null;

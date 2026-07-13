@@ -6,6 +6,7 @@ import {
   isEnhancedPlug,
 } from "./classifyWeaponSocket";
 import { deriveCaptureStatus, buildStoredSocketPlugs } from "./buildStoredSocketPlugs";
+import { plugNameFromMap, type PlugLookup } from "./resolvePlugs";
 
 const COLUMN_ORDER: Record<InstancePerkColumn["columnKind"], number> = {
   barrel: 0,
@@ -19,14 +20,14 @@ const COLUMN_ORDER: Record<InstancePerkColumn["columnKind"], number> = {
 
 export interface ResolveInstancePerkGridInput {
   item: UserInventoryItem;
-  plugMap: Map<number, string>;
+  plugMap: PlugLookup;
   plugCategoryByHash: Map<number, string>;
   weaponPerkSocketIndexes: number[];
 }
 
 function buildColumnOptions(
   stored: StoredSocketPlug,
-  plugMap: Map<number, string>,
+  plugMap: PlugLookup,
   plugCategoryByHash: Map<number, string>,
   includeAlternates: boolean,
 ) {
@@ -35,7 +36,7 @@ function buildColumnOptions(
     : [stored.equippedPlugHash];
 
   return hashes.map((hash) => {
-    const name = plugMap.get(hash) ?? null;
+    const name = plugNameFromMap(plugMap, hash);
     const category = plugCategoryByHash.get(hash) ?? "";
     const enhanced = isEnhancedPlug(name, category);
     return {
@@ -59,7 +60,7 @@ function sortColumns(columns: InstancePerkColumn[]): InstancePerkColumn[] {
 /** When multiple columns share a label, prefer the equipped plug name. */
 function disambiguateColumnLabels(
   columns: InstancePerkColumn[],
-  plugMap: Map<number, string>,
+  plugMap: PlugLookup,
 ): InstancePerkColumn[] {
   const labelCounts = new Map<string, number>();
   for (const col of columns) {
@@ -68,7 +69,7 @@ function disambiguateColumnLabels(
 
   return columns.map((col) => {
     if ((labelCounts.get(col.label) ?? 0) <= 1) return col;
-    const equippedName = plugMap.get(col.equippedPlugHash);
+    const equippedName = plugNameFromMap(plugMap, col.equippedPlugHash);
     if (equippedName) return { ...col, label: equippedName };
     return { ...col, label: `${col.label} (socket ${col.socketIndex + 1})` };
   });

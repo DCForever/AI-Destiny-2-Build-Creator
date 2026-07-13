@@ -9,6 +9,8 @@ instead of sprinkling `panel-notch` / raw Tailwind.
 
 | Export | Role |
 |--------|------|
+| `InfoHotspot` | Hover/pin popover (portaled); optional icon + accent in header |
+| `EntityHotspot` | Icon-first entity chip + description; prefers art over name when available |
 | `Panel` | Notched surface (`default` / `raised` / `accent` / `muted` / …) |
 | `Section` + `SectionLabel` | Labeled content block inside a panel |
 | `Stack` / `Row` / `Cluster` | Spacing + alignment |

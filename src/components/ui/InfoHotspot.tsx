@@ -11,6 +11,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { ItemIcon } from "@/components/sheet/ItemIcon";
+
 import { Stack } from "./Stack";
 import { Text } from "./Text";
 
@@ -28,17 +30,24 @@ function setActiveHotspot(id: string | null) {
 
 /**
  * Hover opens a detail popover; click pins it until dismissed.
+ * Optional icon + accentColor appear in the popover header.
  */
 export function InfoHotspot({
   title,
   lines,
   kind,
+  icon,
+  accentColor,
   children,
   className = "",
 }: {
   title: string;
   lines: string[];
   kind?: string;
+  /** Bungie relative icon path for popover header. */
+  icon?: string | null;
+  /** Element/class CSS color for icon ring. */
+  accentColor?: string | null;
   children: ReactNode;
   className?: string;
 }) {
@@ -69,16 +78,14 @@ export function InfoHotspot({
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const pad = 8;
-    const width = 260;
+    const width = 280;
     let left = rect.left;
     if (left + width > window.innerWidth - pad) {
       left = Math.max(pad, window.innerWidth - width - pad);
     }
     let top = rect.bottom + 6;
-    // If near bottom of viewport, open above
     if (top + 160 > window.innerHeight && rect.top > 180) {
       top = Math.max(pad, rect.top - 6);
-      // place above — adjust after measure if needed
       setCoords({ top, left });
       return;
     }
@@ -100,7 +107,6 @@ export function InfoHotspot({
     };
   }, [open, updatePosition]);
 
-  // Flip above trigger if popup would overflow bottom
   useLayoutEffect(() => {
     if (!open || !coords || !rootRef.current || !popupRef.current) return;
     const trigger = rootRef.current.getBoundingClientRect();
@@ -111,7 +117,7 @@ export function InfoHotspot({
         setCoords((c) => (c ? { ...c, top: above } : c));
       }
     }
-  }, [open, coords?.top, coords?.left, lines, title]);
+  }, [open, coords?.top, coords?.left, lines, title, icon]);
 
   const closePinned = useCallback(() => {
     setPinned(false);
@@ -151,7 +157,7 @@ export function InfoHotspot({
             id={`${reactId}-popup`}
             role="dialog"
             aria-label={title}
-            className={`fixed z-[100] min-w-[220px] max-w-[280px] p-2.5 panel-notch panel-notch-raised shadow-xl border border-line ${
+            className={`fixed z-[100] min-w-[240px] max-w-[300px] p-2.5 panel-notch panel-notch-raised shadow-xl border border-line ${
               pinned ? "border-accent" : ""
             }`}
             style={{ top: coords.top, left: coords.left }}
@@ -166,22 +172,32 @@ export function InfoHotspot({
               }
             }}
           >
-            <Stack gap={6}>
+            <Stack gap={8}>
               <div className="flex items-start justify-between gap-2">
-                <Stack gap={2} className="min-w-0">
-                  {kind ? (
-                    <Text
-                      size="xs"
-                      tone="muted"
-                      className="uppercase tracking-widest"
-                    >
-                      {kind}
-                    </Text>
+                <div className="flex items-start gap-2.5 min-w-0">
+                  {icon !== undefined ? (
+                    <ItemIcon
+                      icon={icon}
+                      name={title}
+                      size={36}
+                      accentColor={accentColor}
+                    />
                   ) : null}
-                  <Text size="sm" weight="medium">
-                    {title}
-                  </Text>
-                </Stack>
+                  <Stack gap={2} className="min-w-0">
+                    {kind ? (
+                      <Text
+                        size="xs"
+                        tone="muted"
+                        className="uppercase tracking-widest"
+                      >
+                        {kind}
+                      </Text>
+                    ) : null}
+                    <Text size="sm" weight="medium">
+                      {title}
+                    </Text>
+                  </Stack>
+                </div>
                 {pinned ? (
                   <button
                     type="button"
@@ -197,7 +213,12 @@ export function InfoHotspot({
                 )}
               </div>
               {lines.map((line) => (
-                <Text key={line} size="sm" tone="muted">
+                <Text
+                  key={line}
+                  size="sm"
+                  tone="muted"
+                  className="leading-relaxed whitespace-pre-wrap"
+                >
                   {line}
                 </Text>
               ))}
@@ -224,8 +245,9 @@ export function InfoHotspot({
         id={`${reactId}-trigger`}
         aria-expanded={open}
         aria-controls={open ? `${reactId}-popup` : undefined}
+        aria-label={title}
         title={`${title} — hover or click for details`}
-        className="inline-flex items-center gap-1 max-w-full p-0 m-0 bg-transparent border-0 cursor-pointer font-inherit text-inherit text-left whitespace-nowrap"
+        className="inline-flex items-center gap-1.5 max-w-full p-0 m-0 bg-transparent border-0 cursor-pointer font-inherit text-inherit text-left"
         onClick={() => {
           if (pinned) {
             closePinned();
