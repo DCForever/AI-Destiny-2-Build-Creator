@@ -3,6 +3,8 @@
 Shared primitives for production screens. Feature pages should **compose** these
 instead of sprinkling `panel-notch` / raw Tailwind.
 
+**Polish backlog:** [docs/ui-polish-tracker.md](../../../docs/ui-polish-tracker.md) — living list of fidelity / nice-to-have UI work (not Spec Kit).
+
 ## Primitives
 
 | Export | Role |
