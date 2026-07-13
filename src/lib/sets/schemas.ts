@@ -34,10 +34,20 @@ export const SLOTS_BY_SET_TYPE: Record<SetType, readonly string[] | "mods_only">
   fashion: FASHION_SLOTS,
 };
 
+/** Mod sets store each plug as an item; slots are `mod` or unique `mod:<hash>`. */
+export function isModSetSlot(slot: string): boolean {
+  return slot === "mod" || slot.startsWith("mod:");
+}
+
 export function isSlotValidForSetType(type: SetType, slot: string): boolean {
   const allowed = SLOTS_BY_SET_TYPE[type];
-  if (allowed === "mods_only") return false;
+  if (allowed === "mods_only") return isModSetSlot(slot);
   return (allowed as readonly string[]).includes(slot);
+}
+
+/** Unique slot for a mod plug so multiple mods can coexist in one set. */
+export function modSlotForHash(itemHash: number): string {
+  return `mod:${itemHash}`;
 }
 
 export function isFashionSlot(slot: string): slot is FashionSlot {
