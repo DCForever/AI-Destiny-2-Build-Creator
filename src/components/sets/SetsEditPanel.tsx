@@ -7,7 +7,7 @@ import {
   Button,
   Callout,
   Cluster,
-  FilterChip,
+  ConceptTagFilterChip,
   Panel,
   Row,
   Stack,
@@ -122,9 +122,9 @@ export function SetsEditPanel({
           </Text>
           <Cluster gap={6}>
             {CONCEPT_TAGS.map((tag) => (
-              <FilterChip
+              <ConceptTagFilterChip
                 key={tag.id}
-                label={tag.label}
+                tagId={tag.id}
                 active={tagIds.includes(tag.id)}
                 onClick={() => toggleTag(tag.id)}
               />

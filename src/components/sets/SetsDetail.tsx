@@ -8,6 +8,7 @@ import {
   Button,
   Chip,
   Cluster,
+  ConceptTagChip,
   EntityHotspot,
   Heading,
   Panel,
@@ -82,7 +83,7 @@ export function SetsDetail({
             <Cluster>
               <Chip accent>{set.type}</Chip>
               {(set.tagIds ?? []).map((t) => (
-                <Chip key={t}>{t}</Chip>
+                <ConceptTagChip key={t} tagId={t} size={22} />
               ))}
             </Cluster>
           </Stack>

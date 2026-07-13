@@ -9,6 +9,7 @@ import { SYNERGY_VERB_NAMES } from "@/data/synergyVerbs";
 import { getServices } from "@/lib/services";
 import {
   designationIconKey,
+  indexAbilityKindCategoryIcons,
   indexDamageTypeIcons,
   indexEntityIcons,
   indexInventoryItemIcons,
@@ -32,6 +33,7 @@ export type {
 export {
   DESIGNATION_ICON_NAME_ALIASES,
   designationIconKey,
+  indexAbilityKindCategoryIcons,
   indexDamageTypeIcons,
   indexEntityIcons,
   indexInventoryItemIcons,
@@ -74,6 +76,7 @@ export async function buildDesignationNameIconIndex(opts?: {
   ]);
 
   indexEntityIcons(abilities, "abilities", byName);
+  indexAbilityKindCategoryIcons(abilities, byName);
   indexEntityIcons(perks, "weapon-perks", byName);
   indexEntityIcons(traits, "origin-traits", byName);
   indexEntityIcons(weapons, "weapons", byName);
@@ -164,11 +167,28 @@ export async function designationIconMap(
   return map;
 }
 
-/** Preload icons for all curated verbs + elements (common UI). */
+/** Preload icons for curated verbs, elements, and set concept-tag designations. */
 export async function curatedDesignationIconMap(): Promise<DesignationIconMap> {
-  const refs: DesignationRef[] = [
-    ...SYNERGY_VERB_NAMES.map((name) => ({ type: "verb", subType: name })),
-    ...SYNERGY_ELEMENTS.map((name) => ({ type: "element", subType: name })),
-  ];
+  const { allConceptTagDesignationRefs } = await import(
+    "@/lib/sets/conceptTagVisuals"
+  );
+  const seen = new Set<string>();
+  const refs: DesignationRef[] = [];
+  for (const r of [
+    ...SYNERGY_VERB_NAMES.map((name) => ({
+      type: "verb" as const,
+      subType: name,
+    })),
+    ...SYNERGY_ELEMENTS.map((name) => ({
+      type: "element" as const,
+      subType: name,
+    })),
+    ...allConceptTagDesignationRefs(),
+  ]) {
+    const key = designationIconKey(r.type, r.subType);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    refs.push(r);
+  }
   return designationIconMap(refs);
 }

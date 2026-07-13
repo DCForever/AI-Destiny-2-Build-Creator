@@ -36,6 +36,7 @@ Last reviewed: 2026-07-13
 |--------|------|--------|
 | `open` | **Synergized items for set tags** (future) | On Set detail: show library synergies / catalog items that align with the set’s concept tags (and optionally linked build designations). Not just “used by builds” — reverse discoverability of *what this set is good with*. Likely needs tag↔synergy/item matching rules; keep FR/BR for tags vs identity in mind (tags are filter metadata, not build identity). |
 
+
 ### Build
 | Status | Item | Notes |
 |--------|------|--------|
@@ -74,6 +75,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Sets **concept tags** icon+color (Arc, Grenade, …) | `ConceptTagChip` / filter chips; element glyphs + ability-kind icons; text for activity/role |
 | 2026-07-13 | Sets fill-slot **element / ammo / archetype** multi-filters | CatalogItemPicker chips; armor frame multi via API |
 | 2026-07-13 | Sets **Used by builds** deep-link → Build detail | `/build?build=&variant=`; BuildPage reads query + selects variant |
 | 2026-07-13 | Catalog **ammo / element / archetype multi-filters** | Multi-select chips; API `element`/`ammo`/`itemType` lists; OR within dimension |

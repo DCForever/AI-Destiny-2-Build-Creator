@@ -11,6 +11,7 @@ export { Stack, Row, Cluster } from "./Stack";
 export { Text, Heading } from "./Text";
 export { Button } from "./Button";
 export { Chip, FilterChip } from "./Chip";
+export { ConceptTagChip, ConceptTagFilterChip } from "./ConceptTagChip";
 export { TextField, SelectField } from "./Field";
 export { PageHeader } from "./PageHeader";
 export { EmptyState } from "./EmptyState";

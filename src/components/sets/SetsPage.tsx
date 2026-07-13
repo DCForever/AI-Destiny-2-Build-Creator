@@ -10,6 +10,7 @@ import type { SetDetail, SetSummary } from "@/components/sets/types";
 import {
   Callout,
   Cluster,
+  ConceptTagFilterChip,
   EmptyState,
   FilterChip,
   PageHeader,
@@ -260,9 +261,9 @@ export function SetsPage() {
             </Cluster>
             <Cluster>
               {CONCEPT_TAGS.slice(0, 14).map((tag) => (
-                <FilterChip
+                <ConceptTagFilterChip
                   key={tag.id}
-                  label={tag.label}
+                  tagId={tag.id}
                   active={tagFilter.includes(tag.id)}
                   onClick={() =>
                     setTagFilter((prev) =>

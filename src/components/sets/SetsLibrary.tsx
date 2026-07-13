@@ -4,6 +4,7 @@ import type { SetSummary } from "@/components/sets/types";
 import {
   Button,
   Chip,
+  ConceptTagChip,
   Panel,
   Row,
   SectionLabel,
@@ -75,7 +76,7 @@ export function SetsLibrary({
                       <Row gap={6} wrap>
                         <Chip accent>{row.type}</Chip>
                         {(row.tagIds ?? []).slice(0, 3).map((t) => (
-                          <Chip key={t}>{t}</Chip>
+                          <ConceptTagChip key={t} tagId={t} size={18} />
                         ))}
                       </Row>
                     </Stack>

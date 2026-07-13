@@ -93,6 +93,36 @@ export function indexEntityIcons(
   }
 }
 
+/** Concept-tag / Base ability categories → stable label for designation lookup. */
+const ABILITY_KIND_LABEL: Readonly<Record<string, string>> = {
+  melee: "Melee",
+  grenade: "Grenade",
+  super: "Super",
+};
+
+/**
+ * Register category-level icons (Melee / Grenade / Super) from ability store.
+ * Picks lowest hash with an icon when no item is already named exactly that label.
+ */
+export function indexAbilityKindCategoryIcons(
+  abilities: ReadonlyArray<{
+    kind: string;
+    icon?: string | null;
+    hash: number;
+  }>,
+  byName: Map<string, { icon: string; source: string }>,
+): void {
+  for (const [kind, label] of Object.entries(ABILITY_KIND_LABEL)) {
+    if (lookupIconByName(byName, label)) continue;
+    const pick = abilities
+      .filter((a) => a.kind === kind && Boolean(a.icon?.trim()))
+      .sort((a, b) => a.hash - b.hash)[0];
+    if (pick?.icon) {
+      putNameIcon(byName, label, pick.icon, "ability-kind");
+    }
+  }
+}
+
 /**
  * Scan DestinyInventoryItemDefinition for icons matching target names.
  */
