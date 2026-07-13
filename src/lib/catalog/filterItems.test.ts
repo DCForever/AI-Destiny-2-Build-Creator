@@ -68,6 +68,37 @@ describe("filterWeaponCatalog", () => {
     expect(results[0]?.hash).toBe(1001);
   });
 
+  it("filters by multi element, ammo, and archetype (OR within each dimension)", () => {
+    const sniper: WeaponRecord = {
+      ...legendaryAuto,
+      hash: 3002,
+      name: "Test Sniper",
+      searchName: "test sniper",
+      slot: "Energy",
+      element: "Void",
+      ammo: "Special",
+      frame: "Aggressive Frame",
+      itemTypeName: "Sniper Rifle",
+    };
+    const multi = filterWeaponCatalog(
+      { weapons: [legendaryAuto, sniper], exoticWeapons: [exoticHc] },
+      {
+        scope: "all",
+        elements: ["Kinetic", "Solar"],
+        ammos: ["Primary"],
+        itemTypes: ["Hand Cannon", "Auto Rifle"],
+      },
+    );
+    // Kinetic auto primary + Solar HC primary — sniper is Special so excluded by ammo
+    expect(multi.map((r) => r.hash).sort()).toEqual([1001, 2001]);
+
+    const byAmmo = filterWeaponCatalog(
+      { weapons: [legendaryAuto, sniper], exoticWeapons: [exoticHc] },
+      { scope: "all", ammos: ["Special"] },
+    );
+    expect(byAmmo.map((r) => r.hash)).toEqual([3002]);
+  });
+
   it("searches by fuse query", () => {
     const results = filterWeaponCatalog(
       { weapons: [legendaryAuto], exoticWeapons: [exoticHc] },

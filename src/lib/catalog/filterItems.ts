@@ -211,11 +211,53 @@ function applyHashAllowlist(
   return rows.filter((row) => allowlist.has(row.hash));
 }
 
+function multiOrMatch(
+  selected: string[] | undefined,
+  value: string | undefined,
+): boolean {
+  if (!selected?.length) return true;
+  if (!value) return false;
+  return selected.includes(value);
+}
+
+/** Archetype match: exact itemTypeName, or frame containing the type (exotics). */
+function matchesArchetype(
+  selected: string[] | undefined,
+  row: SearchableCatalogRow,
+): boolean {
+  if (!selected?.length) return true;
+  if (row.itemTypeName && selected.includes(row.itemTypeName)) return true;
+  if (row.frame) {
+    return selected.some(
+      (t) =>
+        row.frame === t ||
+        row.frame!.includes(t) ||
+        t.includes(row.frame!.replace(/\s*Frame$/i, "").trim()),
+    );
+  }
+  return false;
+}
+
 function applyFieldFilters(rows: SearchableCatalogRow[], params: CatalogFilterParams): SearchableCatalogRow[] {
+  const itemTypes =
+    params.itemTypes?.length
+      ? params.itemTypes
+      : params.itemType
+        ? [params.itemType]
+        : undefined;
+  const frames =
+    params.frames?.length
+      ? params.frames
+      : params.frame
+        ? [params.frame]
+        : undefined;
+
   return rows.filter((row) => {
     if (params.slot && row.slot !== params.slot) return false;
-    if (params.itemType && row.itemTypeName !== params.itemType) return false;
-    if (params.frame && row.frame !== params.frame) return false;
+    if (!matchesArchetype(itemTypes, row)) return false;
+    if (!multiOrMatch(frames, row.frame)) return false;
+    if (!multiOrMatch(params.elements, row.element)) return false;
+    if (!multiOrMatch(params.ammos, row.ammo)) return false;
     if (params.className && row.classType !== params.className) return false;
     return true;
   });

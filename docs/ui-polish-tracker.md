@@ -30,7 +30,6 @@ Last reviewed: 2026-07-13
 ### Catalog
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | Richer ammo/element/archetype multi-filters | Partial filters exist |
 
 ### Sets
 | Status | Item | Notes |
@@ -76,6 +75,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Catalog **ammo / element / archetype multi-filters** | Multi-select chips; API `element`/`ammo`/`itemType` lists; OR within dimension |
 | 2026-07-13 | Catalog instance detail closer to DIM | Weapon stat bars (304), frame strip, denser multi-perk columns, resync CTA |
 | 2026-07-13 | Catalog perk-grid denser icons + full plug descriptions | Manifest fill for icon/desc; icon-only cells; all column options |
 | 2026-07-13 | Catalog **instance perk-grid** UX (011) | DIM-style columns in Catalog; icons; auto re-sync pending |

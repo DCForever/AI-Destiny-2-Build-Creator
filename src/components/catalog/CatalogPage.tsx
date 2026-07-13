@@ -65,6 +65,42 @@ function accentFor(element: string | null | undefined): string | undefined {
 const WEAPON_SLOTS = ["Kinetic", "Energy", "Power"] as const;
 const ARMOR_SLOTS = ["Helmet", "Gauntlets", "Chest", "Legs", "ClassItem"] as const;
 const CLASSES = ["Titan", "Hunter", "Warlock"] as const;
+const ELEMENTS = [
+  "Kinetic",
+  "Arc",
+  "Solar",
+  "Void",
+  "Stasis",
+  "Strand",
+  "Prismatic",
+] as const;
+const AMMO_TYPES = ["Primary", "Special", "Heavy"] as const;
+/** Common weapon archetypes (itemTypeName) for multi-filter chips. */
+const WEAPON_ARCHETYPES = [
+  "Auto Rifle",
+  "Pulse Rifle",
+  "Scout Rifle",
+  "Hand Cannon",
+  "Sidearm",
+  "Submachine Gun",
+  "Bow",
+  "Fusion Rifle",
+  "Glaive",
+  "Sniper Rifle",
+  "Shotgun",
+  "Trace Rifle",
+  "Grenade Launcher",
+  "Rocket Launcher",
+  "Linear Fusion Rifle",
+  "Machine Gun",
+  "Sword",
+] as const;
+
+function toggleInList(list: string[], value: string): string[] {
+  return list.includes(value)
+    ? list.filter((v) => v !== value)
+    : [...list, value];
+}
 
 /**
  * Catalog browse: filters · results rail · item detail + owned instances.
@@ -78,6 +114,10 @@ export function CatalogPage() {
   const [onlyExotic, setOnlyExotic] = useState(false);
   /** Multi group-by dimensions (order of activation = key order). */
   const [groupDims, setGroupDims] = useState<CatalogGroupDimension[]>([]);
+  /** Multi-select filters (OR within each dimension). */
+  const [elements, setElements] = useState<string[]>([]);
+  const [ammos, setAmmos] = useState<string[]>([]);
+  const [archetypes, setArchetypes] = useState<string[]>([]);
 
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
@@ -107,6 +147,11 @@ export function CatalogPage() {
       if (query.trim()) params.set("q", query.trim());
       if (slot) params.set("slot", slot);
       if (kind === "armor" && className) params.set("className", className);
+      if (kind === "weapons") {
+        if (elements.length) params.set("element", elements.join(","));
+        if (ammos.length) params.set("ammo", ammos.join(","));
+        if (archetypes.length) params.set("itemType", archetypes.join(","));
+      }
 
       const res = await fetch(`/api/catalog/${kind}?${params}`);
       const body = (await res.json()) as {
@@ -130,7 +175,17 @@ export function CatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [kind, scope, query, slot, className, onlyExotic]);
+  }, [
+    kind,
+    scope,
+    query,
+    slot,
+    className,
+    onlyExotic,
+    elements,
+    ammos,
+    archetypes,
+  ]);
 
   const selectItem = useCallback(
     async (item: CatalogItem) => {
@@ -253,6 +308,9 @@ export function CatalogPage() {
                   setSlot(null);
                   setClassName(null);
                   setGroupDims([]);
+                  setElements([]);
+                  setAmmos([]);
+                  setArchetypes([]);
                 }}
               />
               <FilterChip
@@ -262,6 +320,9 @@ export function CatalogPage() {
                   setKind("armor");
                   setSlot(null);
                   setGroupDims([]);
+                  setElements([]);
+                  setAmmos([]);
+                  setArchetypes([]);
                 }}
               />
               <FilterChip
@@ -289,29 +350,122 @@ export function CatalogPage() {
               }}
               placeholder="Name, frame, perk…"
             />
-            <Cluster gap={6}>
-              {slotOptions.map((s) => (
-                <FilterChip
-                  key={s}
-                  label={s}
-                  active={slot === s}
-                  onClick={() => setSlot((prev) => (prev === s ? null : s))}
-                />
-              ))}
-            </Cluster>
-            {kind === "armor" ? (
+            <Stack gap={4}>
+              <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                Slot
+              </Text>
               <Cluster gap={6}>
-                {CLASSES.map((c) => (
+                {slotOptions.map((s) => (
                   <FilterChip
-                    key={c}
-                    label={c}
-                    active={className === c}
-                    onClick={() =>
-                      setClassName((prev) => (prev === c ? null : c))
-                    }
+                    key={s}
+                    label={s}
+                    active={slot === s}
+                    onClick={() => setSlot((prev) => (prev === s ? null : s))}
                   />
                 ))}
               </Cluster>
+            </Stack>
+            {kind === "armor" ? (
+              <Stack gap={4}>
+                <Text
+                  size="xs"
+                  tone="muted"
+                  className="uppercase tracking-widest"
+                >
+                  Class
+                </Text>
+                <Cluster gap={6}>
+                  {CLASSES.map((c) => (
+                    <FilterChip
+                      key={c}
+                      label={c}
+                      active={className === c}
+                      onClick={() =>
+                        setClassName((prev) => (prev === c ? null : c))
+                      }
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
+            ) : null}
+            {kind === "weapons" ? (
+              <>
+                <Stack gap={4}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-widest"
+                  >
+                    Element
+                    {elements.length > 0 ? ` · ${elements.length}` : ""}
+                  </Text>
+                  <Cluster gap={6}>
+                    {ELEMENTS.map((el) => (
+                      <FilterChip
+                        key={el}
+                        label={el}
+                        active={elements.includes(el)}
+                        onClick={() => setElements((prev) => toggleInList(prev, el))}
+                      />
+                    ))}
+                  </Cluster>
+                </Stack>
+                <Stack gap={4}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-widest"
+                  >
+                    Ammo
+                    {ammos.length > 0 ? ` · ${ammos.length}` : ""}
+                  </Text>
+                  <Cluster gap={6}>
+                    {AMMO_TYPES.map((a) => (
+                      <FilterChip
+                        key={a}
+                        label={a}
+                        active={ammos.includes(a)}
+                        onClick={() => setAmmos((prev) => toggleInList(prev, a))}
+                      />
+                    ))}
+                  </Cluster>
+                </Stack>
+                <Stack gap={4}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-widest"
+                  >
+                    Archetype
+                    {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
+                  </Text>
+                  <Cluster gap={6}>
+                    {WEAPON_ARCHETYPES.map((t) => (
+                      <FilterChip
+                        key={t}
+                        label={t}
+                        active={archetypes.includes(t)}
+                        onClick={() =>
+                          setArchetypes((prev) => toggleInList(prev, t))
+                        }
+                      />
+                    ))}
+                  </Cluster>
+                </Stack>
+                {elements.length + ammos.length + archetypes.length > 0 ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setElements([]);
+                      setAmmos([]);
+                      setArchetypes([]);
+                    }}
+                  >
+                    Clear multi-filters
+                  </Button>
+                ) : null}
+              </>
             ) : null}
             <Stack gap={4}>
               <Text size="xs" tone="muted" className="uppercase tracking-widest">

@@ -34,8 +34,17 @@ export type CatalogFilterParams = {
   scope: CatalogScope;
   q?: string;
   slot?: string;
+  /** Single item type (legacy); prefer itemTypes for multi-select. */
   itemType?: string;
+  /** Multi-select weapon types (OR within set). */
+  itemTypes?: string[];
+  /** Single frame (legacy); prefer frames for multi-select. */
   frame?: string;
+  frames?: string[];
+  /** Multi-select damage types (OR). */
+  elements?: string[];
+  /** Multi-select ammo types Primary/Special/Heavy (OR). */
+  ammos?: string[];
   className?: string;
   perk?: string;
   originTrait?: string;

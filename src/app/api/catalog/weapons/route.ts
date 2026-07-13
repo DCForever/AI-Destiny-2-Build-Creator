@@ -17,12 +17,30 @@ import { getServices } from "@/lib/services";
 
 export const runtime = "nodejs";
 
+/** Collect multi-value query params: repeated keys and/or comma-separated. */
+function multiQuery(url: URL, keys: string[]): string[] | undefined {
+  const values: string[] = [];
+  for (const key of keys) {
+    for (const raw of url.searchParams.getAll(key)) {
+      for (const part of raw.split(",")) {
+        const t = part.trim();
+        if (t) values.push(t);
+      }
+    }
+  }
+  return values.length > 0 ? [...new Set(values)] : undefined;
+}
+
 const querySchema = z.object({
   scope: z.enum(["all", "owned"]).default("all"),
   q: z.string().trim().optional(),
   slot: z.enum(["Kinetic", "Energy", "Power"]).optional(),
   itemType: z.string().trim().optional(),
+  itemTypes: z.array(z.string().trim().min(1)).optional(),
   frame: z.string().trim().optional(),
+  frames: z.array(z.string().trim().min(1)).optional(),
+  elements: z.array(z.string().trim().min(1)).optional(),
+  ammos: z.array(z.string().trim().min(1)).optional(),
   perk: z.string().trim().optional(),
   originTrait: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
@@ -35,7 +53,11 @@ export async function GET(request: Request): Promise<NextResponse> {
     scope: url.searchParams.get("scope") ?? "all",
     q: url.searchParams.get("q") ?? undefined,
     itemType: url.searchParams.get("itemType") ?? undefined,
+    itemTypes: multiQuery(url, ["itemType", "itemTypes"]),
     frame: url.searchParams.get("frame") ?? undefined,
+    frames: multiQuery(url, ["frame", "frames"]),
+    elements: multiQuery(url, ["element", "elements"]),
+    ammos: multiQuery(url, ["ammo", "ammos"]),
     slot: url.searchParams.get("slot") ?? undefined,
     perk: url.searchParams.get("perk") ?? undefined,
     originTrait: url.searchParams.get("originTrait") ?? undefined,
