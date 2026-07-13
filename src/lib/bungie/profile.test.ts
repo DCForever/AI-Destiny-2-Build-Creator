@@ -270,6 +270,78 @@ describe("HttpBungieProfileClient.getFullInventory", () => {
     ]);
   });
 
+  it("captures socketCapture for vault General bucket weapons (before bucket resolve)", async () => {
+    const VAULT_GENERAL = 138197802;
+    const response = {
+      ...FULL_INVENTORY_RESPONSE,
+      Response: {
+        ...FULL_INVENTORY_RESPONSE.Response,
+        profileInventory: {
+          data: {
+            items: [
+              {
+                itemHash: 900200,
+                bucketHash: VAULT_GENERAL,
+                itemInstanceId: "vault-gun",
+              },
+            ],
+          },
+        },
+        itemComponents: {
+          ...FULL_INVENTORY_RESPONSE.Response.itemComponents,
+          sockets: {
+            data: {
+              "vault-gun": {
+                sockets: [
+                  { plugHash: 501, isEnabled: true },
+                  { plugHash: 601, isEnabled: true },
+                ],
+              },
+            },
+          },
+          reusablePlugs: {
+            data: {
+              "vault-gun": {
+                plugs: {
+                  "0": [
+                    { plugItemHash: 501, canInsert: true },
+                    { plugItemHash: 502, canInsert: true },
+                  ],
+                  "1": [
+                    { plugItemHash: 601, canInsert: true },
+                    { plugItemHash: 602, canInsert: true },
+                  ],
+                },
+              },
+            },
+          },
+          stats: {
+            data: {
+              "vault-gun": {
+                stats: {
+                  "4284893193": { statHash: 4284893193, value: 260 },
+                  "4043523819": { statHash: 4043523819, value: 45 },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const items = await makeClient(makeOkFetch(response)).getFullInventory(
+      ACCESS_TOKEN,
+      membership,
+    );
+    const weapon = items.find((item) => item.instanceId === "vault-gun");
+    expect(weapon?.bucketHash).toBe(VAULT_GENERAL);
+    expect(weapon?.socketCapture).toEqual([
+      { socketIndex: 0, equippedPlugHash: 501, reusablePlugHashes: [501, 502] },
+      { socketIndex: 1, equippedPlugHash: 601, reusablePlugHashes: [601, 602] },
+    ]);
+    expect(weapon?.statValues).toEqual({ RPM: 260, Impact: 45 });
+  });
+
   it("parseSocketCapture and extractReusablePlugsMap helpers merge 305 and 310", () => {
     const reusable = extractReusablePlugsMap({
       reusablePlugs: {

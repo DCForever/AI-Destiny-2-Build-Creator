@@ -10,6 +10,7 @@ import {
   isWeaponBucketHash,
   parseBucketLabel,
   SUBCLASS_BUCKET_HASH,
+  TRANSFER_CONTAINER_BUCKETS,
 } from "./inventoryBuckets";
 import type { RawSocketCapture } from "@/lib/inventory/instances/types";
 import type {
@@ -472,19 +473,31 @@ function parseInventoryItemAttempt(
   const power = parseItemPower(instance);
   const isMasterwork = parseIsMasterwork(instance);
   const isCrafted = parseIsCrafted(instance);
-  const plugHashes = parsePlugHashes(socketsMap[instanceId] ?? []);
+  const sockets = socketsMap[instanceId] ?? [];
+  const plugHashes = parsePlugHashes(sockets);
   const isArmor = isArmorBucketHash(bucketHash);
   const isWeapon = isWeaponBucketHash(bucketHash);
+  /** Vault / postmaster — equipment type unknown until bucket resolution. */
+  const isTransferContainer = TRANSFER_CONTAINER_BUCKETS.has(bucketHash);
   const statEntries = statsMap[instanceId];
+  // Vault weapons must still capture combat stats + per-copy plugs (socket_plugs).
+  // Bucket is only Kinetic/Energy/Power after resolveTransferContainerBuckets.
   const statValues = isArmor
     ? parseArmorStatValues(statEntries)
     : isWeapon
       ? parseWeaponStatValues(statEntries)
+      : isTransferContainer
+        ? (parseWeaponStatValues(statEntries) ??
+          parseArmorStatValues(statEntries))
+        : undefined;
+  const gearTier =
+    isArmor || isTransferContainer ? parseGearTier(instance) : null;
+  // Capture 305/310 for weapons AND transfer-container items (vault guns).
+  // Skipping vault General bucket was leaving socket_plugs null forever → pending grid.
+  const socketCapture =
+    isWeapon || isTransferContainer
+      ? parseSocketCapture(instanceId, sockets, reusablePlugsMap)
       : undefined;
-  const gearTier = isArmor ? parseGearTier(instance) : null;
-  const socketCapture = isWeapon
-    ? parseSocketCapture(instanceId, socketsMap[instanceId] ?? [], reusablePlugsMap)
-    : undefined;
 
   return {
     item: {
