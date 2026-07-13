@@ -7,7 +7,7 @@ import {
   isDestinyElement,
   type DestinyElement,
 } from "@/lib/destiny/identityVisuals";
-import { designationIconKey } from "@/lib/synergies/designationIcons";
+import { designationIconKey } from "@/lib/synergies/designationIconShared";
 
 /**
  * Official Bungie icon for a designation when mapped; otherwise element glyph

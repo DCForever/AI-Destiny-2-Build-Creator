@@ -6,7 +6,7 @@ import {
   indexInventoryItemIcons,
   lookupIconByName,
   resolveDesignationFromIndex,
-} from "./designationIcons";
+} from "./designationIconShared";
 
 describe("designationIconKey", () => {
   it("normalizes type and subtype", () => {

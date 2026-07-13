@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   designationIconKey,
   type DesignationRef,
-} from "@/lib/synergies/designationIcons";
+} from "@/lib/synergies/designationIconShared";
 
 type IconMap = Record<string, string | null>;
 
@@ -78,7 +78,6 @@ export function useDesignationIcons(refs: DesignationRef[]): {
       setExtra({});
       return;
     }
-    // Skip fetch if all already in curated
     const missing = refs.filter((r) => {
       const k = designationIconKey(r.type, r.subType);
       return curated[k] === undefined;
