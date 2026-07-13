@@ -63,30 +63,78 @@ export async function lookupExoticSlots(
   exoticWeaponHash: number | null,
   exoticArmorHash: number | null,
 ): Promise<{ weaponSlot: EquipmentSlot | null; armorSlot: EquipmentSlot | null }> {
+  const batch = await lookupExoticSlotsBatch(
+    exoticWeaponHash != null ? [exoticWeaponHash] : [],
+    exoticArmorHash,
+  );
+  return {
+    weaponSlot:
+      exoticWeaponHash != null
+        ? (batch.weaponSlotByHash.get(exoticWeaponHash) ?? null)
+        : null,
+    armorSlot: batch.armorSlot,
+  };
+}
+
+/**
+ * Batch exotic slot resolution — load entity stores once for many weapon hashes.
+ */
+export async function lookupExoticSlotsBatch(
+  exoticWeaponHashes: readonly (number | null | undefined)[],
+  exoticArmorHash: number | null,
+): Promise<{
+  armorSlot: EquipmentSlot | null;
+  weaponSlotByHash: Map<number, EquipmentSlot>;
+}> {
+  const weaponSlotByHash = new Map<number, EquipmentSlot>();
+  const uniqueWeapons = [
+    ...new Set(
+      exoticWeaponHashes.filter(
+        (h): h is number => h != null && Number.isFinite(h),
+      ),
+    ),
+  ];
+
   try {
     const { entityCache } = await getServices();
-    let weaponSlot: EquipmentSlot | null = null;
-    let armorSlot: EquipmentSlot | null = null;
+    const needWeapons = uniqueWeapons.length > 0;
+    const needArmor = exoticArmorHash != null;
+    const [exotics, armor] = await Promise.all([
+      needWeapons ? entityCache.getStore("exotic-weapons") : Promise.resolve([]),
+      needArmor ? entityCache.getStore("exotic-armor") : Promise.resolve([]),
+    ]);
 
-    if (exoticWeaponHash) {
-      const exotics = await entityCache.getStore("exotic-weapons");
-      const match = exotics.find((w) => w.hash === exoticWeaponHash);
-      if (match) weaponSlot = weaponManifestSlotToEquipment(match.slot as WeaponSlotName);
-    }
-
-    if (exoticArmorHash) {
-      const armor = await entityCache.getStore("exotic-armor");
-      const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
-      if (armorMatch) {
-        armorSlot = armorManifestSlotToEquipment(armorMatch.slot as ArmorSlotName);
+    if (needWeapons) {
+      const byHash = new Map(exotics.map((w) => [w.hash, w] as const));
+      for (const hash of uniqueWeapons) {
+        const match = byHash.get(hash);
+        if (match) {
+          weaponSlotByHash.set(
+            hash,
+            weaponManifestSlotToEquipment(match.slot as WeaponSlotName),
+          );
+        }
       }
     }
 
-    return { weaponSlot, armorSlot };
+    let armorSlot: EquipmentSlot | null = null;
+    if (needArmor && exoticArmorHash != null) {
+      const armorMatch = armor.find((a) => a.hash === exoticArmorHash);
+      if (armorMatch) {
+        armorSlot = armorManifestSlotToEquipment(
+          armorMatch.slot as ArmorSlotName,
+        );
+      }
+    }
+
+    return { armorSlot, weaponSlotByHash };
   } catch {
+    for (const hash of uniqueWeapons) {
+      weaponSlotByHash.set(hash, "primary");
+    }
     return {
-      weaponSlot: exoticWeaponHash ? "primary" : null,
-      armorSlot: exoticArmorHash ? "chest" : null,
+      armorSlot: exoticArmorHash != null ? "chest" : null,
+      weaponSlotByHash,
     };
   }
 }

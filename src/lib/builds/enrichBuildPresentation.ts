@@ -121,48 +121,6 @@ async function presentSubclass(
   };
 }
 
-async function presentClaims(
-  equipment: Partial<Record<EquipmentSlot, SlotClaim>>,
-): Promise<Partial<Record<EquipmentSlot, SlotClaimPresentation>>> {
-  const claims = Object.values(equipment).filter(Boolean) as SlotClaim[];
-  const itemHashes = claims.map((c) => c.itemHash);
-  const perkHashes = claims.flatMap((c) => c.selectedPerks ?? []);
-
-  const [items, perks] = await Promise.all([
-    presentByHashes(itemHashes, [
-      "weapons",
-      "exotic-weapons",
-      "exotic-armor",
-      "mods",
-    ]),
-    presentByHashes(perkHashes, ["weapon-perks", "origin-traits", "mods"]),
-  ]);
-
-  const out: Partial<Record<EquipmentSlot, SlotClaimPresentation>> = {};
-  for (const [slot, claim] of Object.entries(equipment) as [
-    EquipmentSlot,
-    SlotClaim | undefined,
-  ][]) {
-    if (!claim) continue;
-    const item = items.get(claim.itemHash);
-    const perkList = (claim.selectedPerks ?? []).map((h) => {
-      const p = perks.get(h);
-      return p
-        ? toPresented(p)
-        : emptyPresented(`Perk ${h}`);
-    });
-    out[slot] = {
-      ...claim,
-      itemName: item?.name && item.hash != null ? item.name : claim.itemName,
-      icon: item?.icon ?? null,
-      description: item?.description ?? "",
-      element: item?.element ?? null,
-      perks: perkList.length > 0 ? perkList : undefined,
-    };
-  }
-  return out;
-}
-
 export type VariantPresentationFields = {
   resolved?: ResolvedVariantPresentation;
   artifact?: PresentedEntity | null;
@@ -178,21 +136,43 @@ export async function enrichVariantPresentation(input: {
   artifactName?: string | null;
   artifactConfig?: number[] | null;
 }): Promise<VariantPresentationFields> {
+  // Single-variant path still used by tests/callers; batch path is enrichBuildPresentation.
   const hashes: number[] = [];
   if (input.exoticWeaponHash != null) hashes.push(input.exoticWeaponHash);
   if (input.artifactHash != null) hashes.push(input.artifactHash);
   for (const h of input.artifactConfig ?? []) hashes.push(h);
+  for (const claim of Object.values(input.resolved?.equipment ?? {})) {
+    if (!claim) continue;
+    hashes.push(claim.itemHash);
+    for (const p of claim.selectedPerks ?? []) hashes.push(p);
+  }
 
   const byHash = await presentByHashes(hashes, [
     "weapons",
     "exotic-weapons",
+    "exotic-armor",
     "artifacts",
     "weapon-perks",
+    "origin-traits",
     "mods",
   ]);
 
+  return assembleVariantPresentation(input, byHash);
+}
+
+function assembleVariantPresentation(
+  input: {
+    resolved?: ResolvedVariantEquipment;
+    exoticWeaponHash?: number | null;
+    exoticWeaponName?: string | null;
+    artifactHash?: number | null;
+    artifactName?: string | null;
+    artifactConfig?: number[] | null;
+  },
+  byHash: Map<number, EntityPresentation>,
+): VariantPresentationFields {
   const equipment = input.resolved
-    ? await presentClaims(input.resolved.equipment)
+    ? presentClaimsFromMap(input.resolved.equipment, byHash)
     : undefined;
 
   return {
@@ -230,6 +210,33 @@ export async function enrichVariantPresentation(input: {
   };
 }
 
+function presentClaimsFromMap(
+  equipment: Partial<Record<EquipmentSlot, SlotClaim>>,
+  byHash: Map<number, EntityPresentation>,
+): Partial<Record<EquipmentSlot, SlotClaimPresentation>> {
+  const out: Partial<Record<EquipmentSlot, SlotClaimPresentation>> = {};
+  for (const [slot, claim] of Object.entries(equipment) as [
+    EquipmentSlot,
+    SlotClaim | undefined,
+  ][]) {
+    if (!claim) continue;
+    const item = byHash.get(claim.itemHash);
+    const perkList = (claim.selectedPerks ?? []).map((h) => {
+      const p = byHash.get(h);
+      return p ? toPresented(p) : emptyPresented(`Perk ${h}`);
+    });
+    out[slot] = {
+      ...claim,
+      itemName: item?.name && item.hash != null ? item.name : claim.itemName,
+      icon: item?.icon ?? null,
+      description: item?.description ?? "",
+      element: item?.element ?? null,
+      perks: perkList.length > 0 ? perkList : undefined,
+    };
+  }
+  return out;
+}
+
 export type BuildPresentationExtras = {
   subclassPresentation: SubclassPresentation;
   exoticArmor: PresentedEntity | null;
@@ -238,6 +245,9 @@ export type BuildPresentationExtras = {
 /**
  * Enrich a raw getBuildDetail payload with presentation fields used by
  * EntityHotspot on the client.
+ *
+ * Batches all entity lookups across variants into two store loads (subclass
+ * names + gear hashes) instead of N per-variant presentByHashes calls.
  */
 export async function enrichBuildPresentation<T extends {
   subclass: unknown;
@@ -255,27 +265,37 @@ export async function enrichBuildPresentation<T extends {
 }>(
   detail: T,
 ): Promise<T & BuildPresentationExtras & { variants: Array<T["variants"][number] & VariantPresentationFields> }> {
-  const [subclassPresentation, exoticMap, ...variantExtras] = await Promise.all([
+  const gearHashes: number[] = [];
+  if (detail.exoticArmorHash != null) gearHashes.push(detail.exoticArmorHash);
+
+  for (const v of detail.variants) {
+    if (v.exoticWeaponHash != null) gearHashes.push(v.exoticWeaponHash);
+    if (v.artifactHash != null) gearHashes.push(v.artifactHash);
+    for (const h of v.artifactConfig ?? []) gearHashes.push(h);
+    for (const claim of Object.values(v.resolved?.equipment ?? {})) {
+      if (!claim) continue;
+      gearHashes.push(claim.itemHash);
+      for (const p of claim.selectedPerks ?? []) gearHashes.push(p);
+    }
+  }
+
+  const [subclassPresentation, byHash] = await Promise.all([
     presentSubclass(detail.subclass, detail.pinnedSuper),
-    detail.exoticArmorHash != null
-      ? presentByHashes([detail.exoticArmorHash], ["exotic-armor"])
-      : Promise.resolve(new Map<number, EntityPresentation>()),
-    ...detail.variants.map((v) =>
-      enrichVariantPresentation({
-        resolved: v.resolved,
-        exoticWeaponHash: v.exoticWeaponHash,
-        exoticWeaponName: v.exoticWeaponName,
-        artifactHash: v.artifactHash,
-        artifactName: v.artifactName,
-        artifactConfig: v.artifactConfig,
-      }),
-    ),
+    presentByHashes(gearHashes, [
+      "weapons",
+      "exotic-weapons",
+      "exotic-armor",
+      "artifacts",
+      "weapon-perks",
+      "origin-traits",
+      "mods",
+    ]),
   ]);
 
   const exoticArmor =
     detail.exoticArmorHash != null
       ? toPresented(
-          exoticMap.get(detail.exoticArmorHash) ??
+          byHash.get(detail.exoticArmorHash) ??
             emptyPresented(
               detail.exoticArmorName ??
                 `Unknown (${detail.exoticArmorHash})`,
@@ -285,9 +305,19 @@ export async function enrichBuildPresentation<T extends {
         ? emptyPresented(detail.exoticArmorName)
         : null;
 
-  const variants = detail.variants.map((v, i) => ({
+  const variants = detail.variants.map((v) => ({
     ...v,
-    ...variantExtras[i]!,
+    ...assembleVariantPresentation(
+      {
+        resolved: v.resolved,
+        exoticWeaponHash: v.exoticWeaponHash,
+        exoticWeaponName: v.exoticWeaponName,
+        artifactHash: v.artifactHash,
+        artifactName: v.artifactName,
+        artifactConfig: v.artifactConfig,
+      },
+      byHash,
+    ),
   })) as Array<T["variants"][number] & VariantPresentationFields>;
 
   return {

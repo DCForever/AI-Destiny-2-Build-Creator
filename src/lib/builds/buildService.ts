@@ -44,6 +44,7 @@ import {
   isIdentityExoticArmorChange,
   lookupExoticArmorSlot,
   lookupExoticSlots,
+  lookupExoticSlotsBatch,
   modeFromArmorSlot,
 } from "@/lib/builds/exoticArmorIntent";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
@@ -186,6 +187,15 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
     key: designationKey(d),
   }));
 
+  // Batch exotic slot lookups once (stores load once; not per variant).
+  const weaponHashes = variants.map(
+    (v) => effectiveExoticWeapon(build, v).exoticWeaponHash,
+  );
+  const exoticSlots = await lookupExoticSlotsBatch(
+    weaponHashes,
+    build.exoticArmorHash,
+  );
+
   const variantsWithAttachments = await Promise.all(
     variants.map(async (variant) => {
       const attachments = listAttachments(db, variant.id).map((attachment) => {
@@ -198,11 +208,21 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
         };
       });
       const weapon = effectiveExoticWeapon(build, variant);
-      const slots = await lookupExoticSlots(weapon.exoticWeaponHash, build.exoticArmorHash);
-      const resolved = await resolveVariantEquipment(db, userId, build, variant, attachments, {
-        exoticWeaponSlot: slots.weaponSlot,
-        exoticArmorSlot: slots.armorSlot,
-      });
+      const exoticWeaponSlot =
+        weapon.exoticWeaponHash != null
+          ? (exoticSlots.weaponSlotByHash.get(weapon.exoticWeaponHash) ?? null)
+          : null;
+      const resolved = await resolveVariantEquipment(
+        db,
+        userId,
+        build,
+        variant,
+        attachments,
+        {
+          exoticWeaponSlot,
+          exoticArmorSlot: exoticSlots.armorSlot,
+        },
+      );
       return { ...variant, attachments, resolved };
     }),
   );

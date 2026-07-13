@@ -174,8 +174,11 @@ export function BuildPage() {
       };
     });
     setBuilds(sortByName(mapped));
+    return true;
+  }, []);
 
-    // Best-effort: match in-game Bungie loadout slots for library badges.
+  /** Background: does not block library loading. */
+  const loadBungieLoadouts = useCallback(async () => {
     try {
       const loRes = await fetch("/api/bungie/loadouts");
       if (loRes.ok) {
@@ -189,8 +192,6 @@ export function BuildPage() {
     } catch {
       setBungieLoadouts([]);
     }
-
-    return true;
   }, []);
 
   const loadCharacters = useCallback(async () => {
@@ -232,13 +233,16 @@ export function BuildPage() {
   useEffect(() => {
     void (async () => {
       setLoading(true);
+      // Library only needs /api/user/builds. Characters + in-game loadouts
+      // are secondary and must not block first paint / list interactivity.
       const ok = await loadBuilds();
-      if (ok) {
-        await loadCharacters();
-      }
       setLoading(false);
+      if (ok) {
+        void loadCharacters();
+        void loadBungieLoadouts();
+      }
     })();
-  }, [loadBuilds, loadCharacters]);
+  }, [loadBuilds, loadCharacters, loadBungieLoadouts]);
 
   // Deep link: /build?build=<id>&variant=<name>
   useEffect(() => {

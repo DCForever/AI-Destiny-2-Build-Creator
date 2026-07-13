@@ -270,10 +270,13 @@ export async function resolveVariantEquipment(
     exoticArmorSlot?: EquipmentSlot | null;
   },
 ): Promise<ResolvedVariantEquipment> {
-  const expanded: ExpandedSetItem[] = [];
-  for (const attachment of attachments) {
-    expanded.push(...(await loadExpandedAttachmentItems(db, userId, attachment)));
-  }
+  const expanded = (
+    await Promise.all(
+      attachments.map((attachment) =>
+        loadExpandedAttachmentItems(db, userId, attachment),
+      ),
+    )
+  ).flat();
 
   const intentMode = opts?.exoticArmorSlot === "class_item";
   validatePairArmorMatch(build, expanded.filter((i) => i.setType === "pair"), { intentMode });
