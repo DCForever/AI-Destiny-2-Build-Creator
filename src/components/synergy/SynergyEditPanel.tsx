@@ -108,7 +108,6 @@ export function SynergyEditPanel({
 
   useEffect(() => {
     if (!needsSubType) {
-      setSubTypeOptions([]);
       return;
     }
     let cancelled = false;
@@ -124,6 +123,7 @@ export function SynergyEditPanel({
       if (!res.ok || cancelled) return;
       const body = (await res.json()) as { options?: SubTypeOption[] };
       const options = body.options ?? [];
+      if (cancelled) return;
       setSubTypeOptions(options);
       setSubType((prev) => prev || options[0]?.name || "");
     })();

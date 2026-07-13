@@ -6,8 +6,9 @@ import { getDb } from "@/lib/db/client";
 import { updateSynergySchema } from "@/lib/synergies/schemas";
 import {
   deleteUserSynergy,
-  getUserSynergy,
+  getUserSynergyDetail,
   updateUserSynergy,
+  withLinkDescriptions,
 } from "@/lib/synergies/synergyService";
 
 export const runtime = "nodejs";
@@ -19,10 +20,13 @@ export async function GET(request: Request, context: RouteContext): Promise<Next
   if (!auth) return unauthorizedResponse();
 
   const { id } = await context.params;
-  const db = getDb();
-  const synergy = getUserSynergy(db, auth.user.id, id);
-  if (!synergy) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ synergy });
+  try {
+    const synergy = await getUserSynergyDetail(getDb(), auth.user.id, id);
+    if (!synergy) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ synergy });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
 }
 
 export async function PATCH(request: Request, context: RouteContext): Promise<NextResponse> {
@@ -49,7 +53,7 @@ export async function PATCH(request: Request, context: RouteContext): Promise<Ne
     const db = getDb();
     const synergy = await updateUserSynergy(db, auth.user.id, id, parsed.data);
     if (!synergy) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ synergy });
+    return NextResponse.json({ synergy: await withLinkDescriptions(synergy) });
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -27,6 +27,15 @@ function groupLinks(detail: SynergyDetail) {
   return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
+function linkMeta(link: SynergyDetail["links"][number]): string | null {
+  if (link.kind === "armor_set_bonus" && link.bonusPieces != null) {
+    const pieces = `${link.bonusPieces}pc`;
+    const bonus = link.bonusName?.trim();
+    return bonus ? `${pieces} · ${bonus}` : pieces;
+  }
+  return null;
+}
+
 export function SynergyDetail({
   synergy,
   onEdit,
@@ -84,19 +93,49 @@ export function SynergyDetail({
               No links
             </Text>
           ) : (
-            <Stack gap={12}>
+            <Stack gap={14}>
               {grouped.map(([kind, links]) => (
-                <Stack key={kind} gap={6}>
-                  <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                <Stack key={kind} gap={8}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-widest"
+                  >
                     {LINK_KIND_LABEL[kind] ?? kind}
                   </Text>
-                  <Cluster>
-                    {links.map((link) => (
-                      <Chip key={link.id} accent>
-                        {link.displayName}
-                      </Chip>
-                    ))}
-                  </Cluster>
+                  <Stack gap={8}>
+                    {links.map((link) => {
+                      const meta = linkMeta(link);
+                      const objectDesc = link.description?.trim() ?? "";
+                      return (
+                        <Panel key={link.id} tone="muted" pad="sm">
+                          <Stack gap={4}>
+                            <Text size="sm" weight="medium">
+                              {link.displayName}
+                            </Text>
+                            {meta ? (
+                              <Text size="xs" tone="muted">
+                                {meta}
+                              </Text>
+                            ) : null}
+                            {objectDesc ? (
+                              <Text
+                                size="sm"
+                                tone="muted"
+                                className="leading-relaxed whitespace-pre-wrap"
+                              >
+                                {objectDesc}
+                              </Text>
+                            ) : (
+                              <Text size="xs" tone="muted">
+                                No catalog description
+                              </Text>
+                            )}
+                          </Stack>
+                        </Panel>
+                      );
+                    })}
+                  </Stack>
                 </Stack>
               ))}
             </Stack>

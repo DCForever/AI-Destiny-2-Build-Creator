@@ -4,30 +4,20 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 
 import { SynergyDetail } from "@/components/synergy/SynergyDetail";
 import { SynergyEditPanel } from "@/components/synergy/SynergyEditPanel";
+import { SynergyFilters } from "@/components/synergy/SynergyFilters";
 import { SynergyLibrary } from "@/components/synergy/SynergyLibrary";
 import type { SynergyDetail as SynergyDetailType, SynergySummary } from "@/components/synergy/types";
 import {
   Callout,
-  Cluster,
   EmptyState,
-  FilterChip,
   PageHeader,
-  Panel,
-  Row,
-  SectionLabel,
   Stack,
-  Text,
-  TextField,
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
-import { getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
-import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
-import { compareDisplayName, sortByName } from "@/lib/sortByName";
-
-const SORTED_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
-  compareDisplayName(getSynergyTypeLabel(a), getSynergyTypeLabel(b)),
-);
+import { filterSynergies } from "@/lib/synergies/filterSynergies";
+import { sameSynergyDesignation } from "@/lib/synergies/mergeSynergies";
+import { sortByName } from "@/lib/sortByName";
 
 /**
  * Synergy screen composition.
@@ -48,9 +38,12 @@ export function SynergyPage() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [subTypeFilter, setSubTypeFilter] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
+  const [mergeBusy, setMergeBusy] = useState(false);
 
   const loadList = useCallback(async () => {
     const res = await fetch("/api/user/synergies");
@@ -91,15 +84,103 @@ export function SynergyPage() {
     })();
   }, [loadList]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      if (typeFilter.length > 0 && !typeFilter.includes(row.type)) return false;
-      if (!q) return true;
-      const hay = `${row.name} ${row.type} ${row.subType ?? ""}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [rows, query, typeFilter]);
+  const filtered = useMemo(
+    () =>
+      filterSynergies(rows, {
+        query,
+        types: typeFilter,
+        subTypes: subTypeFilter,
+      }),
+    [rows, query, typeFilter, subTypeFilter],
+  );
+
+  const mergeState = useMemo(() => {
+    const checked = rows.filter((r) => checkedIds.has(r.id));
+    if (checked.length < 2) {
+      return {
+        enabled: false,
+        reason:
+          checked.length === 0
+            ? "Check two or more synergies to merge."
+            : "Check at least one more synergy to merge.",
+        survivorId: null as string | null,
+        sourceIds: [] as string[],
+      };
+    }
+    const survivor =
+      (selectedId && checkedIds.has(selectedId)
+        ? rows.find((r) => r.id === selectedId)
+        : null) ?? checked[0]!;
+    const sources = checked.filter((r) => r.id !== survivor.id);
+    const same = sources.every((s) => sameSynergyDesignation(survivor, s));
+    if (!same) {
+      return {
+        enabled: false,
+        reason:
+          "Checked rows must share the same type and subtype (e.g. all Verb: Scorch).",
+        survivorId: survivor.id,
+        sourceIds: sources.map((s) => s.id),
+      };
+    }
+    return {
+      enabled: true,
+      reason: null as string | null,
+      survivorId: survivor.id,
+      sourceIds: sources.map((s) => s.id),
+    };
+  }, [rows, checkedIds, selectedId]);
+
+  async function handleMerge() {
+    if (!mergeState.enabled || !mergeState.survivorId) return;
+    const survivor = rows.find((r) => r.id === mergeState.survivorId);
+    const confirmed = window.confirm(
+      `Merge ${mergeState.sourceIds.length + 1} synergies into “${survivor?.name ?? "selected"}”?\n\n` +
+        `Links will be combined; the other ${mergeState.sourceIds.length} row(s) will be deleted. Builds that use this type/subtype are unaffected.`,
+    );
+    if (!confirmed) return;
+    setMergeBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/user/synergies/merge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          survivorId: mergeState.survivorId,
+          sourceIds: mergeState.sourceIds,
+        }),
+      });
+      const body = (await res.json()) as {
+        error?: string;
+        synergy?: SynergyDetailType;
+        deletedIds?: string[];
+      };
+      if (!res.ok) {
+        setError(body.error ?? "Failed to merge synergies");
+        return;
+      }
+      const deleted = new Set(body.deletedIds ?? mergeState.sourceIds);
+      setRows((prev) => {
+        const without = prev.filter((r) => !deleted.has(r.id));
+        if (!body.synergy) return sortByName(without);
+        return sortByName(
+          without.map((r) => (r.id === body.synergy!.id ? body.synergy! : r)),
+        );
+      });
+      setCheckedIds(new Set());
+      setSelectedId(body.synergy?.id ?? mergeState.survivorId);
+      if (body.synergy) {
+        setDetail(body.synergy);
+      } else {
+        void loadDetail(mergeState.survivorId);
+      }
+      setCreating(false);
+      setEditing(false);
+    } catch {
+      setError("Failed to merge synergies");
+    } finally {
+      setMergeBusy(false);
+    }
+  }
 
   async function handleDelete() {
     if (!detail) return;
@@ -119,6 +200,11 @@ export function SynergyPage() {
         return;
       }
       setRows((prev) => prev.filter((r) => r.id !== detail.id));
+      setCheckedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(detail.id);
+        return next;
+      });
       setSelectedId(null);
       setDetail(null);
       setEditing(false);
@@ -207,65 +293,49 @@ export function SynergyPage() {
       <Stack gap={16}>
         <PageHeader
           title="Synergy"
-          description="Curate designations Build uses — filter by type, open detail, create or edit links."
+          description="Curate designations Build uses — filter by type and subtype submenu, open detail, create or edit links."
         />
 
         {error ? <Callout tone="danger">{error}</Callout> : null}
 
-        <Panel tone="muted" pad="md">
-          <Stack gap={10}>
-            <SectionLabel>Filters</SectionLabel>
-            <TextField
-              label="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search name · type · subtype…"
-            />
-            <Cluster>
-              {SORTED_TYPES.map((t) => (
-                <FilterChip
-                  key={t}
-                  label={getSynergyTypeLabel(t)}
-                  active={typeFilter.includes(t)}
-                  onClick={() =>
-                    setTypeFilter((prev) =>
-                      prev.includes(t)
-                        ? prev.filter((x) => x !== t)
-                        : [...prev, t],
-                    )
-                  }
-                />
-              ))}
-            </Cluster>
-            {(typeFilter.length > 0 || query.trim()) && (
-              <Row>
-                <button
-                  type="button"
-                  className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground"
-                  onClick={() => {
-                    setTypeFilter([]);
-                    setQuery("");
-                  }}
-                >
-                  Clear filters
-                </button>
-              </Row>
-            )}
-          </Stack>
-        </Panel>
+        <SynergyFilters
+          query={query}
+          onQueryChange={setQuery}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          subTypeFilter={subTypeFilter}
+          onSubTypeFilterChange={setSubTypeFilter}
+        />
 
         <Workspace
           rail={
             <SynergyLibrary
               synergies={filtered}
               selectedId={selectedId}
+              checkedIds={checkedIds}
               loading={loading}
+              mergeBusy={mergeBusy}
+              mergeEnabled={mergeState.enabled}
+              mergeBlockedReason={mergeState.reason}
               onSelect={(id) => {
                 setCreating(false);
                 setEditing(false);
                 setSelectedId(id);
                 void loadDetail(id);
               }}
+              onToggleCheck={(id) => {
+                setCheckedIds((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  return next;
+                });
+              }}
+              onCheckAllVisible={() => {
+                setCheckedIds(new Set(filtered.map((r) => r.id)));
+              }}
+              onClearChecked={() => setCheckedIds(new Set())}
+              onMerge={() => void handleMerge()}
               onNew={() => {
                 setCreating(true);
                 setEditing(false);

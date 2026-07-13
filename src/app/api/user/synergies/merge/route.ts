@@ -3,28 +3,18 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/api/requireUser";
 import { apiErrorResponse, unauthorizedResponse } from "@/lib/api/response";
 import { getDb } from "@/lib/db/client";
-import { createSynergySchema } from "@/lib/synergies/schemas";
+import { mergeSynergiesSchema } from "@/lib/synergies/schemas";
 import {
-  createUserSynergy,
-  listUserSynergies,
+  mergeUserSynergies,
   withLinkDescriptions,
 } from "@/lib/synergies/synergyService";
-import type { SynergyType } from "@/lib/synergies/schemas";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser(request);
-  if (!auth) return unauthorizedResponse();
-
-  const url = new URL(request.url);
-  const type = url.searchParams.get("type") as SynergyType | null;
-
-  const db = getDb();
-  const synergies = listUserSynergies(db, auth.user.id, type ?? undefined);
-  return NextResponse.json({ synergies });
-}
-
+/**
+ * Merge one or more library synergies into a survivor (same type + subType).
+ * Unions links, joins descriptions, deletes sources.
+ */
 export async function POST(request: Request): Promise<NextResponse> {
   const auth = await requireAuthenticatedUser(request);
   if (!auth) return unauthorizedResponse();
@@ -36,7 +26,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Request body must be JSON" }, { status: 400 });
   }
 
-  const parsed = createSynergySchema.safeParse(body);
+  const parsed = mergeSynergiesSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues.map((i) => i.message).join("; ") },
@@ -45,12 +35,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const db = getDb();
-    const synergy = await createUserSynergy(db, auth.user.id, parsed.data);
-    return NextResponse.json(
-      { synergy: await withLinkDescriptions(synergy) },
-      { status: 201 },
-    );
+    const result = await mergeUserSynergies(getDb(), auth.user.id, parsed.data);
+    return NextResponse.json({
+      ...result,
+      synergy: await withLinkDescriptions(result.synergy),
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

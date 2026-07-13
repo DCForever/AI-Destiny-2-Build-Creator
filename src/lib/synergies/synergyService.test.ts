@@ -5,6 +5,9 @@ import { createTestDb } from "@/lib/db/client";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
 import {
   createUserSynergy,
+  getUserSynergy,
+  listUserSynergies,
+  mergeUserSynergies,
   reverseLookupSynergies,
   updateUserSynergy,
 } from "@/lib/synergies/synergyService";
@@ -317,14 +320,14 @@ describe("synergyService", () => {
     ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE });
   });
 
-  it("rejects unknown verb subType", async () => {
+  it("rejects non-keyword-like verb subType", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "syn-verb-bad", 3, "Player");
 
     await expect(
       createUserSynergy(db, user.id, {
         type: "verb",
-        subType: "Foo",
+        subType: "not a verb!!!",
         links: [
           {
             kind: "origin_trait",
@@ -381,5 +384,84 @@ describe("synergyService", () => {
     expect(updated?.name).toBe("Melee: Base — Eutechnology 2pc");
     expect(updated?.links).toHaveLength(1);
     expect(updated?.links[0]?.kind).toBe("armor_set_bonus");
+  });
+
+  it("merges same-designation synergies: unions links and deletes sources", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-merge", 3, "Player");
+
+    const survivor = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Scorch",
+      description: "Survivor note",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+    const source = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Scorch",
+      description: "Source note",
+      links: [
+        {
+          kind: "weapon",
+          displayName: "The Ringing Nail",
+          itemHash: 4206550094,
+        },
+      ],
+    });
+
+    const result = await mergeUserSynergies(db, user.id, {
+      survivorId: survivor.id,
+      sourceIds: [source.id],
+    });
+
+    expect(result.deletedIds).toEqual([source.id]);
+    expect(result.synergy.id).toBe(survivor.id);
+    expect(result.synergy.links).toHaveLength(2);
+    expect(result.linksAdded).toBe(1);
+    expect(result.synergy.description).toContain("Survivor note");
+    expect(result.synergy.description).toContain("Source note");
+    expect(getUserSynergy(db, user.id, source.id)).toBeNull();
+    expect(listUserSynergies(db, user.id)).toHaveLength(1);
+  });
+
+  it("rejects merge across different type/subType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-merge-bad", 3, "Player");
+
+    const a = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Scorch",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+    const b = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Jolt",
+      links: [
+        {
+          kind: "weapon",
+          displayName: "The Ringing Nail",
+          itemHash: 4206550094,
+        },
+      ],
+    });
+
+    await expect(
+      mergeUserSynergies(db, user.id, {
+        survivorId: a.id,
+        sourceIds: [b.id],
+      }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_SYNERGY_TYPE });
   });
 });

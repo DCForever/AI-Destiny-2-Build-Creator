@@ -61,3 +61,12 @@ export type CreateSynergyInput = z.infer<typeof createSynergySchema>;
 
 export const updateSynergySchema = createSynergySchema.partial();
 export type UpdateSynergyInput = z.infer<typeof updateSynergySchema>;
+
+/** Merge multiple library rows into one survivor (same type + subType). */
+export const mergeSynergiesSchema = z.object({
+  /** Row that keeps its id; receives unioned links. */
+  survivorId: z.string().min(1),
+  /** Other rows to absorb and delete (must not include survivor). */
+  sourceIds: z.array(z.string().min(1)).min(1),
+});
+export type MergeSynergiesInput = z.infer<typeof mergeSynergiesSchema>;

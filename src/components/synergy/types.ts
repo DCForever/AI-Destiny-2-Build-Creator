@@ -15,6 +15,8 @@ export type SynergyLink = {
   bonusPieces: number | null;
   bonusName: string | null;
   armorSetHash: number | null;
+  /** Catalog description of the linked object (detail responses). */
+  description?: string | null;
 };
 
 export type SynergyDetail = {

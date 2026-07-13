@@ -4,16 +4,26 @@ import {
   createSynergyRecord,
   deleteSynergyRecord,
   findSynergiesByTarget,
+  getSynergiesByIds,
   getSynergy,
   listSynergies,
   updateSynergyRecord,
   type SynergyTargetQuery,
   type SynergyWithLinks,
 } from "@/lib/db/repositories/synergyRepository";
-import type { CreateSynergyInput } from "@/lib/synergies/schemas";
+import type { CreateSynergyInput, MergeSynergiesInput } from "@/lib/synergies/schemas";
 import type { SynergyType } from "@/lib/synergies/schemas";
 import { generateSynergyName } from "@/lib/synergies/generateSynergyName";
 import { normalizeLegacySynergyType } from "@/lib/synergies/legacySynergyTypes";
+import {
+  enrichSynergyWithLinkDescriptions,
+  type SynergyWithLinkDescriptions,
+} from "@/lib/synergies/enrichSynergyLinks";
+import {
+  mergeSynergyDescriptions,
+  sameSynergyDesignation,
+  unionSynergyLinks,
+} from "@/lib/synergies/mergeSynergies";
 import { isValidSubTypeForCategory, listSubTypeOptions } from "@/lib/synergies/subTypeVocabularies";
 import { validateSynergyLinks } from "@/lib/synergies/validateSynergyLink";
 import { validateSynergySubType } from "@/lib/synergies/validateSynergySubType";
@@ -39,10 +49,7 @@ async function resolveSynergyFields(input: {
     throw new ApiError(API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE, subTypeCheck.reason);
   }
 
-  if (
-    (normalized.type === "weapon_archetype" || normalized.type === "verb") &&
-    subTypeCheck.subType
-  ) {
+  if (normalized.type === "weapon_archetype" && subTypeCheck.subType) {
     const options = await listSubTypeOptions(normalized.type);
     if (!isValidSubTypeForCategory(normalized.type, subTypeCheck.subType, options)) {
       throw new ApiError(
@@ -51,6 +58,8 @@ async function resolveSynergyFields(input: {
       );
     }
   }
+  // verb: curated list OR keyword-like names validated in validateSynergySubType
+  // (allows object-discovered terms such as Sliding).
 
   const linkDisplayName = input.links[0]?.displayName ?? "Unlinked";
   const name = generateSynergyName({
@@ -144,8 +153,135 @@ export function deleteUserSynergy(db: AppDatabase, userId: number, synergyId: st
   return deleteSynergyRecord(db, userId, synergyId);
 }
 
+/**
+ * Merge source library rows into a survivor of the same type + subType.
+ * Unions links (deduped), joins unique descriptions, regenerates name,
+ * then deletes the sources.
+ */
+export async function mergeUserSynergies(
+  db: AppDatabase,
+  userId: number,
+  input: MergeSynergiesInput,
+): Promise<{
+  synergy: SynergyWithLinks;
+  deletedIds: string[];
+  linksAdded: number;
+}> {
+  const survivorId = input.survivorId.trim();
+  const sourceIds = [
+    ...new Set(input.sourceIds.map((id) => id.trim()).filter(Boolean)),
+  ].filter((id) => id !== survivorId);
+
+  if (sourceIds.length === 0) {
+    throw new ApiError(
+      API_ERROR_CODES.INVALID_ITEM,
+      "Select at least one other synergy to merge into the survivor.",
+    );
+  }
+
+  const allIds = [survivorId, ...sourceIds];
+  const loaded = getSynergiesByIds(db, userId, allIds);
+  const byId = new Map(loaded.map((s) => [s.id, s]));
+
+  const survivor = byId.get(survivorId);
+  if (!survivor) {
+    throw new ApiError(
+      API_ERROR_CODES.INVALID_ITEM,
+      "Survivor synergy not found.",
+      undefined,
+      404,
+    );
+  }
+
+  const missing = sourceIds.filter((id) => !byId.has(id));
+  if (missing.length > 0) {
+    throw new ApiError(
+      API_ERROR_CODES.INVALID_ITEM,
+      `Source synergy not found: ${missing[0]}`,
+      { missingIds: missing },
+      404,
+    );
+  }
+
+  const sources = sourceIds.map((id) => byId.get(id)!);
+  for (const src of sources) {
+    if (!sameSynergyDesignation(survivor, src)) {
+      throw new ApiError(
+        API_ERROR_CODES.INVALID_SYNERGY_TYPE,
+        `Cannot merge different designations: “${src.name}” (${src.type}${src.subType ? `: ${src.subType}` : ""}) into “${survivor.name}” (${survivor.type}${survivor.subType ? `: ${survivor.subType}` : ""}). Only rows with the same type and subtype can be merged.`,
+      );
+    }
+  }
+
+  const beforeCount = survivor.links.length;
+  const mergedLinks = unionSynergyLinks([
+    survivor.links,
+    ...sources.map((s) => s.links),
+  ]);
+  const description = mergeSynergyDescriptions([
+    survivor.description,
+    ...sources.map((s) => s.description),
+  ]);
+
+  const validated = await validateLinksOrThrow(mergedLinks);
+  const resolved = await resolveSynergyFields({
+    type: survivor.type as SynergyType,
+    subType: survivor.subType,
+    links: validated,
+  });
+
+  const now = new Date().toISOString();
+  const updated = updateSynergyRecord(db, userId, survivorId, {
+    name: resolved.name,
+    type: resolved.type,
+    subType: resolved.subType,
+    description,
+    links: validated,
+    now,
+  });
+  if (!updated) {
+    throw new ApiError(
+      API_ERROR_CODES.INVALID_ITEM,
+      "Survivor synergy not found.",
+      undefined,
+      404,
+    );
+  }
+
+  const deletedIds: string[] = [];
+  for (const id of sourceIds) {
+    if (deleteSynergyRecord(db, userId, id)) {
+      deletedIds.push(id);
+    }
+  }
+
+  return {
+    synergy: updated,
+    deletedIds,
+    linksAdded: Math.max(0, updated.links.length - beforeCount),
+  };
+}
+
 export function getUserSynergy(db: AppDatabase, userId: number, synergyId: string) {
   return getSynergy(db, userId, synergyId);
+}
+
+/** Detail payload with catalog descriptions for each linked object. */
+export async function getUserSynergyDetail(
+  db: AppDatabase,
+  userId: number,
+  synergyId: string,
+): Promise<SynergyWithLinkDescriptions | null> {
+  const synergy = getSynergy(db, userId, synergyId);
+  if (!synergy) return null;
+  return enrichSynergyWithLinkDescriptions(synergy);
+}
+
+/** Attach link descriptions after create/update/merge for the detail UI. */
+export async function withLinkDescriptions(
+  synergy: SynergyWithLinks,
+): Promise<SynergyWithLinkDescriptions> {
+  return enrichSynergyWithLinkDescriptions(synergy);
 }
 
 export function reverseLookupSynergies(
