@@ -34,6 +34,7 @@ Last reviewed: 2026-07-13
 ### Sets
 | Status | Item | Notes |
 |--------|------|--------|
+| `open` | **Synergized items for set tags** (future) | On Set detail: show library synergies / catalog items that align with the set’s concept tags (and optionally linked build designations). Not just “used by builds” — reverse discoverability of *what this set is good with*. Likely needs tag↔synergy/item matching rules; keep FR/BR for tags vs identity in mind (tags are filter metadata, not build identity). |
 
 ### Build
 | Status | Item | Notes |
