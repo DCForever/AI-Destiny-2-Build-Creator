@@ -79,11 +79,14 @@ export function VariantEditPanel({
   variant,
   onClose,
   onSaved,
+  closeLabel = "Close",
 }: {
   build: BuildDetail;
   variant: BuildVariantDetail;
   onClose: () => void;
   onSaved: (next: BuildDetail, preferredVariantId?: string) => void;
+  /** e.g. "Back to details" when dual-mode with Details panel. */
+  closeLabel?: string;
 }) {
   const [tab, setTab] = useState<VariantEditTab>("general");
   const [busy, setBusy] = useState(false);
@@ -233,7 +236,7 @@ export function VariantEditPanel({
             </Text>
           </Stack>
           <Button size="sm" variant="ghost" onClick={onClose} disabled={busy}>
-            Close
+            {closeLabel}
           </Button>
         </Row>
 

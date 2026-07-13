@@ -61,19 +61,27 @@ function AbilityHotspot({
   );
 }
 
+/**
+ * Read-only variant surface.
+ * - `card`: selectable tile in a multi-variant grid (legacy compact layout)
+ * - `detail`: focused Details mode (single variant; Edit switches to edit panel)
+ */
 export function VariantCard({
   build,
   variant,
   selected,
   onSelect,
   onEdit,
+  layout = "card",
 }: {
   build: BuildDetail;
   variant: BuildVariantDetail;
   selected: boolean;
   onSelect: () => void;
   onEdit?: () => void;
+  layout?: "card" | "detail";
 }) {
+  const focused = layout === "detail";
   const equipment = variant.resolved?.equipment ?? {};
   const setNames = variant.attachments
     .map((a) => a.set?.name)
@@ -102,41 +110,78 @@ export function VariantCard({
   const artifactPerks = variant.artifactPerks ?? [];
 
   return (
-    <Panel as="article" tone={selected ? "accent" : "default"} className="h-full">
+    <Panel
+      as="article"
+      tone={focused || selected ? "accent" : "default"}
+      className="h-full"
+    >
       <Stack gap={12}>
-        <Row justify="between" align="center">
-          <button
-            type="button"
-            onClick={onSelect}
-            className="text-left text-sm font-medium text-foreground hover:text-accent"
-          >
-            {variant.name}
-            {variant.isDefault ? (
-              <Text
-                size="xs"
-                tone="muted"
-                as="span"
-                className="ml-2 uppercase tracking-widest"
-              >
-                Default
+        <Row justify="between" align="center" gap={8} wrap>
+          {focused ? (
+            <Stack gap={2} className="min-w-0">
+              <Text size="sm" weight="medium">
+                {variant.name}
+                {variant.isDefault ? (
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    as="span"
+                    className="ml-2 uppercase tracking-widest"
+                  >
+                    Default
+                  </Text>
+                ) : null}
               </Text>
-            ) : null}
-          </button>
-          <Row gap={4}>
-            <Button
-              variant={selected ? "accent" : "outline"}
-              size="sm"
+              <Text size="xs" tone="muted">
+                Details · read-only overview
+              </Text>
+            </Stack>
+          ) : (
+            <button
+              type="button"
               onClick={onSelect}
+              className="text-left text-sm font-medium text-foreground hover:text-accent"
             >
-              {selected ? "Selected" : "Select"}
-            </Button>
+              {variant.name}
+              {variant.isDefault ? (
+                <Text
+                  size="xs"
+                  tone="muted"
+                  as="span"
+                  className="ml-2 uppercase tracking-widest"
+                >
+                  Default
+                </Text>
+              ) : null}
+            </button>
+          )}
+          <Row gap={4}>
+            {!focused ? (
+              <Button
+                variant={selected ? "accent" : "outline"}
+                size="sm"
+                onClick={onSelect}
+              >
+                {selected ? "Selected" : "Select"}
+              </Button>
+            ) : null}
             {onEdit ? (
-              <Button size="sm" onClick={onEdit}>
+              <Button
+                size="sm"
+                variant={focused ? "accent" : "outline"}
+                onClick={onEdit}
+              >
                 Edit
               </Button>
             ) : null}
           </Row>
         </Row>
+
+        {focused && variant.notes?.trim() ? (
+          <Text size="sm" tone="muted">
+            {variant.notes.trim()}
+          </Text>
+        ) : null}
 
         <Section label="Abilities">
           <Cluster gap={8}>

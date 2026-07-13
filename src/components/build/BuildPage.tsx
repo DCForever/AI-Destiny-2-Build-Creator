@@ -20,10 +20,15 @@ import type {
 import type { SynergyTypeSelection } from "@/components/build/SynergyTypeMultiSelect";
 import {
   Callout,
-  CardGrid,
+  Cluster,
   EmptyState,
+  FilterChip,
   PageHeader,
+  Panel,
+  Row,
+  SectionLabel,
   Stack,
+  Text,
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
@@ -35,6 +40,8 @@ import {
 } from "@/lib/sets/buildDetailHref";
 import { sortByName } from "@/lib/sortByName";
 
+type VariantViewMode = "details" | "edit";
+
 /**
  * Build screen composition.
  *
@@ -44,7 +51,7 @@ import { sortByName } from "@/lib/sortByName";
  *     rail  → BuildLibrary
  *     main  → WorkspaceMain
  *       CreateBuildPanel | BuildEditPanel | EmptyState |
- *       [BuildIdentity, VariantEditPanel | CardGrid + BuildActions]
+ *       [BuildIdentity, variant Details|Edit dual mode + BuildActions]
  */
 export function BuildPage() {
   const router = useRouter();
@@ -57,6 +64,7 @@ export function BuildPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<BuildDetail | null>(null);
   const [variantId, setVariantId] = useState<string | null>(null);
+  const [variantMode, setVariantMode] = useState<VariantViewMode>("details");
   const [classFilter, setClassFilter] = useState<GuardianClass | null>(null);
   const [creating, setCreating] = useState(false);
   const [editingBuild, setEditingBuild] = useState(false);
@@ -68,7 +76,6 @@ export function BuildPage() {
   const [characterId, setCharacterId] = useState("");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [bungieLoadouts, setBungieLoadouts] = useState<BungieInGameLoadout[]>(
     [],
@@ -250,7 +257,7 @@ export function BuildPage() {
     }
     setCreating(false);
     setEditingBuild(false);
-    setEditingVariantId(null);
+    setVariantMode("details");
     setSelectedId(deepBuildId);
     void loadDetail(deepBuildId, deepVariantName);
   }, [
@@ -442,8 +449,8 @@ export function BuildPage() {
       setSelectedId(null);
       setDetail(null);
       setVariantId(null);
+      setVariantMode("details");
       setEditingBuild(false);
-      setEditingVariantId(null);
       setActionMessage(null);
       writeBuildQuery(null);
     } catch {
@@ -470,8 +477,13 @@ export function BuildPage() {
     detail?.variants.find((v) => v.id === variantId) ??
     detail?.variants[0] ??
     null;
-  const editingVariant =
-    detail?.variants.find((v) => v.id === editingVariantId) ?? null;
+
+  function selectVariant(id: string, name: string, mode?: VariantViewMode) {
+    setVariantId(id);
+    if (mode) setVariantMode(mode);
+    setActionMessage(null);
+    if (selectedId) writeBuildQuery(selectedId, name);
+  }
 
   let main: ReactNode;
   if (creating) {
@@ -510,69 +522,105 @@ export function BuildPage() {
         />
       </WorkspaceMain>
     );
-  } else if (editingVariant) {
-    main = (
-      <WorkspaceMain>
-        <BuildIdentity
-          build={detail}
-          onEdit={() => {
-            setEditingVariantId(null);
-            setEditingBuild(true);
-            setActionMessage(null);
-          }}
-          onDelete={() => void handleDeleteBuild()}
-          deleteBusy={deleteBusy}
-        />
-        <VariantEditPanel
-          key={editingVariant.id}
-          build={detail}
-          variant={editingVariant}
-          onClose={() => setEditingVariantId(null)}
-          onSaved={(next, preferredVariantId) => {
-            applySavedBuild(next);
-            if (preferredVariantId) {
-              setVariantId(preferredVariantId);
-              setEditingVariantId(preferredVariantId);
-            }
-          }}
-        />
-      </WorkspaceMain>
-    );
   } else {
     main = (
       <WorkspaceMain>
         <BuildIdentity
           build={detail}
           onEdit={() => {
-            setEditingVariantId(null);
+            setVariantMode("details");
             setEditingBuild(true);
             setActionMessage(null);
           }}
           onDelete={() => void handleDeleteBuild()}
           deleteBusy={deleteBusy}
         />
-        <CardGrid>
-          {detail.variants.map((variant) => (
-            <VariantCard
-              key={variant.id}
-              build={detail}
-              variant={variant}
-              selected={selectedVariant?.id === variant.id}
-              onSelect={() => {
-                setVariantId(variant.id);
-                setActionMessage(null);
-                if (selectedId) writeBuildQuery(selectedId, variant.name);
-              }}
-              onEdit={() => {
-                setEditingBuild(false);
-                setVariantId(variant.id);
-                setEditingVariantId(variant.id);
-                setActionMessage(null);
-                if (selectedId) writeBuildQuery(selectedId, variant.name);
-              }}
-            />
-          ))}
-        </CardGrid>
+
+        <Panel tone="muted" pad="md">
+          <Stack gap={10}>
+            <Row justify="between" align="center" gap={8} wrap>
+              <SectionLabel>
+                Variants
+                {detail.variants.length > 0
+                  ? ` · ${detail.variants.length}`
+                  : ""}
+              </SectionLabel>
+              <Cluster gap={6}>
+                <FilterChip
+                  label="Details"
+                  active={variantMode === "details"}
+                  onClick={() => setVariantMode("details")}
+                />
+                <FilterChip
+                  label="Edit"
+                  active={variantMode === "edit"}
+                  onClick={() => setVariantMode("edit")}
+                  disabled={!selectedVariant}
+                />
+              </Cluster>
+            </Row>
+            {detail.variants.length === 0 ? (
+              <Text size="sm" tone="muted">
+                No variants on this build yet.
+              </Text>
+            ) : (
+              <Cluster gap={6}>
+                {detail.variants.map((variant) => (
+                  <FilterChip
+                    key={variant.id}
+                    label={
+                      variant.isDefault
+                        ? `${variant.name} · default`
+                        : variant.name
+                    }
+                    active={selectedVariant?.id === variant.id}
+                    onClick={() =>
+                      selectVariant(variant.id, variant.name)
+                    }
+                  />
+                ))}
+              </Cluster>
+            )}
+          </Stack>
+        </Panel>
+
+        {selectedVariant && variantMode === "edit" ? (
+          <VariantEditPanel
+            key={selectedVariant.id}
+            build={detail}
+            variant={selectedVariant}
+            closeLabel="Back to details"
+            onClose={() => setVariantMode("details")}
+            onSaved={(next, preferredVariantId) => {
+              applySavedBuild(next);
+              if (preferredVariantId) {
+                setVariantId(preferredVariantId);
+                setVariantMode("edit");
+              }
+            }}
+          />
+        ) : selectedVariant ? (
+          <VariantCard
+            key={selectedVariant.id}
+            build={detail}
+            variant={selectedVariant}
+            selected
+            layout="detail"
+            onSelect={() =>
+              selectVariant(selectedVariant.id, selectedVariant.name)
+            }
+            onEdit={() =>
+              selectVariant(
+                selectedVariant.id,
+                selectedVariant.name,
+                "edit",
+              )
+            }
+          />
+        ) : (
+          <EmptyState description="Select a variant to view details or edit." />
+        )}
+
         {selectedVariant ? (
           <BuildActions
             className={detail.className}
@@ -612,7 +660,7 @@ export function BuildPage() {
               onSelect={(id) => {
                 setCreating(false);
                 setEditingBuild(false);
-                setEditingVariantId(null);
+                setVariantMode("details");
                 setSelectedId(id);
                 setActionMessage(null);
                 writeBuildQuery(id);
@@ -621,7 +669,7 @@ export function BuildPage() {
               onNew={() => {
                 setCreating(true);
                 setEditingBuild(false);
-                setEditingVariantId(null);
+                setVariantMode("details");
                 setSelectedId(null);
                 setDetail(null);
                 setVariantId(null);
