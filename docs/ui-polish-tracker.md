@@ -76,6 +76,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Catalog perk-grid denser icons + full plug descriptions | Manifest fill for icon/desc; icon-only cells; all column options |
 | 2026-07-13 | Catalog **instance perk-grid** UX (011) | DIM-style columns in Catalog; icons; auto re-sync pending |
 | 2026-07-13 | Catalog multi **Group by** (ammo / element / archetype / …) | Multi-select dims; composite keys; `ammo` on catalog weapons |
 | 2026-07-13 | Entity hotspot primitive + presentation resolver | `EntityHotspot`, `entityPresentation`, build/set/plug enrich |

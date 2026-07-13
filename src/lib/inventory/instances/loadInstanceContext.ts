@@ -5,7 +5,7 @@ import type { ManifestService } from "@/lib/manifest/types/services";
 import { getServices } from "@/lib/services";
 
 import { buildSetBonusByItemHash, lookupSetBonus } from "./armorSetBonus";
-import { resolvePlugNamesFromManifest } from "./plugNamesFromManifest";
+import { resolvePlugPresentationsFromManifest } from "./plugNamesFromManifest";
 import { buildCharacterLabelMap } from "./resolveCharacterLabels";
 import {
   buildPlugPresentationMap,
@@ -65,12 +65,21 @@ export async function buildPlugMapForInventory(
     "origin-traits": originTraits,
   });
 
-  const unresolved = [...new Set(plugHashes)].filter((hash) => !entityMap.has(hash));
-  if (unresolved.length === 0 || !manifestVersion) {
+  // Fill missing hashes, icons, and descriptions from raw inventory defs
+  // (barrels/mags/frames often absent from compact weapon-perks store).
+  const needManifest = [...new Set(plugHashes)].filter((hash) => {
+    const p = entityMap.get(hash);
+    return !p || !p.icon || !p.description;
+  });
+  if (needManifest.length === 0 || !manifestVersion) {
     return entityMap;
   }
 
-  const manifestMap = await resolvePlugNamesFromManifest(manifest, manifestVersion, unresolved);
+  const manifestMap = await resolvePlugPresentationsFromManifest(
+    manifest,
+    manifestVersion,
+    needManifest,
+  );
   return mergeManifestPlugPresentation(entityMap, manifestMap);
 }
 

@@ -35,11 +35,25 @@ function buildColumnOptions(
   plugCategoryByHash: Map<number, string>,
   includeAlternates: boolean,
 ) {
+  // Always include every reusable plug hash for this socket (DIM-style full column).
   const hashes = includeAlternates
-    ? [...new Set([stored.equippedPlugHash, ...stored.reusablePlugHashes])]
+    ? [
+        ...new Set([
+          stored.equippedPlugHash,
+          ...stored.reusablePlugHashes,
+        ]),
+      ]
     : [stored.equippedPlugHash];
 
-  return hashes.map((hash) => {
+  // Equipped first, then remaining options in stable hash order for density scan.
+  const ordered = [
+    stored.equippedPlugHash,
+    ...hashes
+      .filter((h) => h !== stored.equippedPlugHash)
+      .sort((a, b) => a - b),
+  ];
+
+  return ordered.map((hash) => {
     const presentation = plugPresentationFromMap(plugMap, hash);
     const name = presentation?.name ?? plugNameFromMap(plugMap, hash);
     const category = plugCategoryByHash.get(hash) ?? "";

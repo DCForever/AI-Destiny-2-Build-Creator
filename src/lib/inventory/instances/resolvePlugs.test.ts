@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { ringingNailManifestPlugs, ringingNailRollPlugs } from "./__fixtures__/plugFixtures";
-import { buildPlugNameMap, mergeManifestPlugNames, resolvePlugs } from "./resolvePlugs";
+import {
+  buildPlugNameMap,
+  buildPlugPresentationMap,
+  mergeManifestPlugNames,
+  mergeManifestPlugPresentation,
+  resolvePlugs,
+} from "./resolvePlugs";
 
 describe("resolvePlugs", () => {
   const stores = {
@@ -88,5 +94,40 @@ describe("resolvePlugs", () => {
     const hybrid = mergeManifestPlugNames(new Map(), new Map());
     const plugs = resolvePlugs([9999999999], hybrid);
     expect(plugs[0]?.resolved).toBe(false);
+  });
+
+  it("mergeManifestPlugPresentation fills missing icon and description", () => {
+    const entity = buildPlugPresentationMap({
+      "weapon-perks": [
+        {
+          hash: 1001,
+          name: "Subsistence",
+          icon: null,
+          description: "",
+        },
+      ],
+    });
+    const fromManifest = new Map([
+      [
+        1001,
+        {
+          name: "Subsistence",
+          icon: "/sub.png",
+          description: "Kills partially refill the magazine.",
+        },
+      ],
+      [
+        9001,
+        {
+          name: "Corkscrew Rifling",
+          icon: "/cork.png",
+          description: "Slightly improved range and stability.",
+        },
+      ],
+    ]);
+    const merged = mergeManifestPlugPresentation(entity, fromManifest);
+    expect(merged.get(1001)?.icon).toBe("/sub.png");
+    expect(merged.get(1001)?.description).toContain("magazine");
+    expect(merged.get(9001)?.name).toBe("Corkscrew Rifling");
   });
 });

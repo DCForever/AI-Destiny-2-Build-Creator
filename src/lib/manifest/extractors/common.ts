@@ -211,10 +211,10 @@ export function getPerkSocketIndexes(item: RawInventoryItem, categoryHash: numbe
 
 /** Get perk description, falling back to the first DestinySandboxPerk description if blank. */
 export function perkDescription(item: RawInventoryItem, sandboxPerks: RawTable): string {
-  const desc = item.displayProperties.description;
-  if (desc.trim() !== "") return desc;
+  const desc = item.displayProperties.description?.trim() ?? "";
+  if (desc !== "") return desc;
   const perkHash = item.perks?.[0]?.perkHash;
   if (!perkHash) return "";
   const sp = asRawSandboxPerk(getRaw(sandboxPerks, perkHash));
-  return sp?.displayProperties.description ?? "";
+  return sp?.displayProperties.description?.trim() ?? "";
 }

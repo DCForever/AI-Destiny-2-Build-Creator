@@ -63,13 +63,25 @@ export function mergeManifestPlugNames(
 
 export function mergeManifestPlugPresentation(
   entityMap: Map<number, PlugPresentation>,
-  manifestMap: Map<number, string>,
+  manifestMap: Map<number, string> | Map<number, PlugPresentation>,
 ): Map<number, PlugPresentation> {
   const merged = new Map(entityMap);
-  for (const [hash, name] of manifestMap) {
-    if (!merged.has(hash)) {
-      merged.set(hash, { name, icon: null, description: "" });
+  for (const [hash, value] of manifestMap) {
+    const incoming: PlugPresentation =
+      typeof value === "string"
+        ? { name: value, icon: null, description: "" }
+        : value;
+    const existing = merged.get(hash);
+    if (!existing) {
+      merged.set(hash, incoming);
+      continue;
     }
+    // Prefer non-empty entity fields; fill gaps from manifest (icon / description).
+    merged.set(hash, {
+      name: existing.name || incoming.name,
+      icon: existing.icon || incoming.icon,
+      description: existing.description || incoming.description,
+    });
   }
   return merged;
 }

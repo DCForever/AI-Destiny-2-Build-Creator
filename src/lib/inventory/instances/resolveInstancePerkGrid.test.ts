@@ -74,7 +74,9 @@ describe("resolveInstancePerkGrid", () => {
 
     expect(grid.captureStatus).toBe("complete");
     expect(grid.columns).toHaveLength(3);
+    // Equipped first, then remaining alternates
     expect(grid.columns[0]?.options.map((o) => o.hash)).toEqual([101, 102]);
+    expect(grid.columns[0]?.options[0]?.isEquipped).toBe(true);
     expect(grid.columns[0]?.options.find((o) => o.hash === 101)?.isEquipped).toBe(true);
     expect(grid.columns[2]?.options.find((o) => o.hash === 302)?.displayName).toBe(
       "Zen Moment (Enhanced)",
