@@ -14,6 +14,8 @@ const BROWSE_CATEGORIES = new Set([
   "fragments",
   "exotic-armor",
   "exotic-weapons",
+  "artifacts",
+  "mods",
 ]);
 
 const querySchema = z.object({
@@ -172,6 +174,22 @@ function toSearchResult(record: SearchResult["record"], confidence = 1): SearchR
 }
 
 function toResponseResult(result: SearchResult, store: string) {
+  const perks =
+    store === "artifacts" &&
+    "perks" in result.record &&
+    Array.isArray((result.record as { perks?: unknown }).perks)
+      ? (
+          (result.record as {
+            perks: Array<{ hash: number; name: string; column?: number; row?: number }>;
+          }).perks
+        ).map((p) => ({
+          hash: p.hash,
+          name: p.name,
+          column: p.column,
+          row: p.row,
+        }))
+      : undefined;
+
   return {
     name: result.record.name,
     hash: result.record.hash,
@@ -187,6 +205,7 @@ function toResponseResult(result: SearchResult, store: string) {
       ? { subclassAffinities: result.record.subclassAffinities }
       : {}),
     ...(result.record.verbs !== undefined ? { verbs: result.record.verbs } : {}),
+    ...(perks ? { perks } : {}),
     confidence: result.confidence,
     isExotic: store === "exotic-weapons",
   };
