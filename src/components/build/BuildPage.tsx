@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { BuildActions } from "@/components/build/BuildActions";
 import { BuildEditPanel } from "@/components/build/BuildEditPanel";
@@ -26,6 +27,10 @@ import {
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
+import {
+  BUILD_QUERY_BUILD,
+  BUILD_QUERY_VARIANT,
+} from "@/lib/sets/buildDetailHref";
 import { sortByName } from "@/lib/sortByName";
 
 /**
@@ -40,6 +45,11 @@ import { sortByName } from "@/lib/sortByName";
  *       [BuildIdentity, VariantEditPanel | CardGrid + BuildActions]
  */
 export function BuildPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const deepBuildId = searchParams.get(BUILD_QUERY_BUILD);
+  const deepVariantName = searchParams.get(BUILD_QUERY_VARIANT);
+
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [builds, setBuilds] = useState<BuildSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -58,6 +68,23 @@ export function BuildPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+
+  const writeBuildQuery = useCallback(
+    (buildId: string | null, variantName?: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (buildId) {
+        params.set(BUILD_QUERY_BUILD, buildId);
+        if (variantName) params.set(BUILD_QUERY_VARIANT, variantName);
+        else params.delete(BUILD_QUERY_VARIANT);
+      } else {
+        params.delete(BUILD_QUERY_BUILD);
+        params.delete(BUILD_QUERY_VARIANT);
+      }
+      const qs = params.toString();
+      router.replace(qs ? `/build?${qs}` : "/build", { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   const loadBuilds = useCallback(async () => {
     const res = await fetch("/api/user/builds");
@@ -121,22 +148,31 @@ export function BuildPage() {
     setCharacters(body.characters ?? []);
   }, []);
 
-  const loadDetail = useCallback(async (id: string) => {
-    setError(null);
-    const res = await fetch(`/api/user/builds/${id}`);
-    if (!res.ok) {
-      const body = (await res.json()) as { error?: string };
-      setError(body.error ?? "Failed to load build");
-      setDetail(null);
-      return;
-    }
-    const body = (await res.json()) as { build: BuildDetail };
-    const build = body.build;
-    setDetail(build);
-    const preferred =
-      build.variants.find((v) => v.isDefault) ?? build.variants[0] ?? null;
-    setVariantId(preferred?.id ?? null);
-  }, []);
+  const loadDetail = useCallback(
+    async (id: string, preferredVariantName?: string | null) => {
+      setError(null);
+      const res = await fetch(`/api/user/builds/${id}`);
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        setError(body.error ?? "Failed to load build");
+        setDetail(null);
+        return;
+      }
+      const body = (await res.json()) as { build: BuildDetail };
+      const build = body.build;
+      setDetail(build);
+      const byName = preferredVariantName
+        ? build.variants.find((v) => v.name === preferredVariantName)
+        : undefined;
+      const preferred =
+        byName ??
+        build.variants.find((v) => v.isDefault) ??
+        build.variants[0] ??
+        null;
+      setVariantId(preferred?.id ?? null);
+    },
+    [],
+  );
 
   useEffect(() => {
     void (async () => {
@@ -148,6 +184,38 @@ export function BuildPage() {
       setLoading(false);
     })();
   }, [loadBuilds, loadCharacters]);
+
+  // Deep link: /build?build=<id>&variant=<name>
+  useEffect(() => {
+    if (loading || signedIn !== true || !deepBuildId) return;
+    if (selectedId === deepBuildId && detail?.id === deepBuildId) {
+      if (deepVariantName && detail) {
+        const match = detail.variants.find((v) => v.name === deepVariantName);
+        if (match && variantId !== match.id) setVariantId(match.id);
+      }
+      return;
+    }
+    const exists = builds.some((b) => b.id === deepBuildId);
+    if (!exists) {
+      setError("Linked build was not found in your library.");
+      return;
+    }
+    setCreating(false);
+    setEditingBuild(false);
+    setEditingVariantId(null);
+    setSelectedId(deepBuildId);
+    void loadDetail(deepBuildId, deepVariantName);
+  }, [
+    loading,
+    signedIn,
+    deepBuildId,
+    deepVariantName,
+    builds,
+    selectedId,
+    detail,
+    variantId,
+    loadDetail,
+  ]);
 
   async function handleCreate(input: {
     name?: string;
@@ -187,6 +255,7 @@ export function BuildPage() {
       if (body.build?.id) {
         setSelectedId(body.build.id);
         await loadDetail(body.build.id);
+        writeBuildQuery(body.build.id);
         setCreating(false);
       }
     } catch {
@@ -328,6 +397,7 @@ export function BuildPage() {
       setEditingBuild(false);
       setEditingVariantId(null);
       setActionMessage(null);
+      writeBuildQuery(null);
     } catch {
       setError("Failed to delete build");
     } finally {
@@ -443,12 +513,14 @@ export function BuildPage() {
               onSelect={() => {
                 setVariantId(variant.id);
                 setActionMessage(null);
+                if (selectedId) writeBuildQuery(selectedId, variant.name);
               }}
               onEdit={() => {
                 setEditingBuild(false);
                 setVariantId(variant.id);
                 setEditingVariantId(variant.id);
                 setActionMessage(null);
+                if (selectedId) writeBuildQuery(selectedId, variant.name);
               }}
             />
           ))}
@@ -494,6 +566,7 @@ export function BuildPage() {
                 setEditingVariantId(null);
                 setSelectedId(id);
                 setActionMessage(null);
+                writeBuildQuery(id);
                 void loadDetail(id);
               }}
               onNew={() => {
@@ -504,6 +577,7 @@ export function BuildPage() {
                 setDetail(null);
                 setVariantId(null);
                 setCreateError(null);
+                writeBuildQuery(null);
               }}
               loading={loading}
             />

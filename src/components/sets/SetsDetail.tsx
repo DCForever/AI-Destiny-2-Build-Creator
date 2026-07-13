@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { SLOT_LABEL, type SetDetail } from "@/components/sets/types";
 import {
@@ -20,6 +21,7 @@ import {
   isDestinyElement,
   type DestinyElement,
 } from "@/lib/destiny/identityVisuals";
+import { buildDetailHref } from "@/lib/sets/buildDetailHref";
 import { SLOTS_BY_SET_TYPE, type SetType } from "@/lib/sets/schemas";
 
 function accentFor(element: string | null | undefined): string | undefined {
@@ -113,16 +115,29 @@ export function SetsDetail({
           ) : (
             <Stack gap={6}>
               {set.usedByBuilds!.map((b) => (
-                <Panel key={b.buildId} tone="muted" pad="sm">
-                  <Stack gap={2}>
-                    <Text size="sm" weight="medium">
-                      {b.buildName}
-                    </Text>
-                    <Text size="xs" tone="muted">
-                      Variants: {b.variantNames.join(", ")}
-                    </Text>
-                  </Stack>
-                </Panel>
+                <Link
+                  key={b.buildId}
+                  href={buildDetailHref(b.buildId, b.variantNames)}
+                  className="block no-underline text-inherit hover:border-accent transition-colors"
+                >
+                  <Panel
+                    tone="muted"
+                    pad="sm"
+                    className="hover:border-accent transition-colors"
+                  >
+                    <Stack gap={2}>
+                      <Text size="sm" weight="medium" className="text-accent">
+                        {b.buildName}
+                      </Text>
+                      <Text size="xs" tone="muted">
+                        Variants: {b.variantNames.join(", ") || "—"}
+                        {b.variantNames.length === 1
+                          ? " · opens this variant"
+                          : " · open build"}
+                      </Text>
+                    </Stack>
+                  </Panel>
+                </Link>
               ))}
             </Stack>
           )}

@@ -34,7 +34,6 @@ Last reviewed: 2026-07-13
 ### Sets
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | Deep-link **Used by builds** → Build detail | Section exists; no navigation yet |
 | `open` | Fill-slot multi-select polish (archetype / element) | Fill works; canvas multi-select richer |
 
 ### Build
@@ -75,6 +74,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Sets **Used by builds** deep-link → Build detail | `/build?build=&variant=`; BuildPage reads query + selects variant |
 | 2026-07-13 | Catalog **ammo / element / archetype multi-filters** | Multi-select chips; API `element`/`ammo`/`itemType` lists; OR within dimension |
 | 2026-07-13 | Catalog instance detail closer to DIM | Weapon stat bars (304), frame strip, denser multi-perk columns, resync CTA |
 | 2026-07-13 | Catalog perk-grid denser icons + full plug descriptions | Manifest fill for icon/desc; icon-only cells; all column options |
