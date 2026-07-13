@@ -40,7 +40,6 @@ Last reviewed: 2026-07-13
 ### Build
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | Richer variant card gear rows | Functional cards; less canvas density |
 | `open` | Mods tab **slot-level** editing | Still largely “edit on Sets” |
 | `open` | Soft-stat targets editor (not raw JSON) | JSON textarea is functional only |
 
@@ -71,6 +70,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Richer variant card **gear rows** | Loadout icon strip; dense slot rows with element/source/perk icons; conflicts |
 | 2026-07-13 | Variant **Details vs Edit** dual mode | Variant chips + Details/Edit toggle; focused read-only card vs edit panel |
 | 2026-07-13 | Build **in-game loadout badges** + Bungie exotic link | Inventory-resolved exotics on Bungie slots; library badges; Loadouts linked builds |
 | 2026-07-13 | Build library **exotic armor filters** | Multi-select chips (OR); AND with class; scoped options; “No exotic” |

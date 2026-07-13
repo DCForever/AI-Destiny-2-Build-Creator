@@ -4,6 +4,7 @@ import type {
   BuildDetail,
   BuildVariantDetail,
   PresentedEntity,
+  SlotClaimSummary,
 } from "@/components/build/types";
 import {
   ARMOR_SLOTS,
@@ -26,12 +27,28 @@ import {
   elementFromSubclass,
   isDestinyElement,
 } from "@/lib/destiny/identityVisuals";
+import type { EquipmentSlot } from "@/lib/sets/schemas";
 
 function accentFor(element: string | null | undefined): string | undefined {
   if (element && isDestinyElement(element)) {
     return ELEMENT_CSS_COLOR[element];
   }
   return undefined;
+}
+
+function claimSourceLabel(source: string | undefined): string | null {
+  switch (source) {
+    case "set":
+      return "Set";
+    case "pair_set":
+      return "Pair";
+    case "build_exotic_armor":
+      return "Identity";
+    case "variant_exotic_weapon":
+      return "Variant";
+    default:
+      return source?.trim() ? source : null;
+  }
 }
 
 function AbilityHotspot({
@@ -61,6 +78,143 @@ function AbilityHotspot({
   );
 }
 
+/** Compact loadout strip: one icon per filled slot (at-a-glance density). */
+function GearStrip({
+  equipment,
+  slots,
+  kind,
+}: {
+  equipment: Partial<Record<EquipmentSlot, SlotClaimSummary>>;
+  slots: readonly EquipmentSlot[];
+  kind: "Weapon" | "Armor";
+}) {
+  const filled = slots
+    .map((slot) => ({ slot, claim: equipment[slot] }))
+    .filter((x): x is { slot: EquipmentSlot; claim: SlotClaimSummary } =>
+      Boolean(x.claim?.itemName),
+    );
+
+  if (filled.length === 0) {
+    return (
+      <Text size="xs" tone="muted">
+        No {kind.toLowerCase()} filled
+      </Text>
+    );
+  }
+
+  return (
+    <Cluster gap={6}>
+      {filled.map(({ slot, claim }) => (
+        <EntityHotspot
+          key={slot}
+          kind={kind}
+          name={claim.itemName}
+          description={claim.description}
+          icon={claim.icon}
+          accentColor={accentFor(claim.element)}
+          size={40}
+          showLabel="never"
+          meta={[
+            SLOT_LABEL[slot] ?? slot,
+            claim.element,
+            claimSourceLabel(claim.source),
+            !claim.instanceId ? "Wishlist" : null,
+          ].filter(Boolean) as string[]}
+        />
+      ))}
+    </Cluster>
+  );
+}
+
+/**
+ * Dense gear row: slot · icon+name · meta chips · perk icons on one line.
+ */
+function GearSlotRow({
+  slot,
+  claim,
+  kind,
+}: {
+  slot: EquipmentSlot;
+  claim: SlotClaimSummary | undefined;
+  kind: "Weapon" | "Armor";
+}) {
+  const source = claimSourceLabel(claim?.source);
+  const perks = claim?.perks ?? [];
+
+  return (
+    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 items-start py-1 border-b border-line/60 last:border-b-0">
+      <Text
+        size="xs"
+        tone="muted"
+        className="uppercase tracking-widest pt-2"
+      >
+        {SLOT_LABEL[slot] ?? slot}
+      </Text>
+      <Stack gap={4} className="min-w-0">
+        {claim?.itemName ? (
+          <>
+            <Row gap={8} align="center" wrap className="min-w-0">
+              <EntityHotspot
+                kind={kind}
+                name={claim.itemName}
+                description={claim.description}
+                icon={claim.icon}
+                accentColor={accentFor(claim.element)}
+                size={36}
+                showLabel="always"
+                meta={[
+                  claim.element,
+                  source,
+                  !claim.instanceId ? "Wishlist" : "Inventory",
+                ].filter(Boolean) as string[]}
+              />
+              <Cluster gap={4}>
+                {claim.element ? (
+                  <span
+                    className="inline-flex items-center text-[10px] tracking-wide px-2 py-0.5 border whitespace-nowrap"
+                    style={{
+                      borderColor: accentFor(claim.element) ?? "var(--line)",
+                      color: accentFor(claim.element) ?? undefined,
+                    }}
+                  >
+                    {claim.element}
+                  </span>
+                ) : null}
+                {source ? <Chip>{source}</Chip> : null}
+                {!claim.instanceId ? <Chip accent>Wishlist</Chip> : null}
+              </Cluster>
+            </Row>
+            {perks.length > 0 ? (
+              <Cluster gap={4}>
+                {perks.map((p) => (
+                  <EntityHotspot
+                    key={p.hash ?? p.name}
+                    kind="Weapon perk"
+                    name={p.name}
+                    description={p.description}
+                    icon={p.icon}
+                    size={24}
+                    showLabel="never"
+                  />
+                ))}
+              </Cluster>
+            ) : (claim.selectedPerks?.length ?? 0) > 0 ? (
+              <Text size="xs" tone="muted">
+                {claim.selectedPerks!.length} perk
+                {claim.selectedPerks!.length === 1 ? "" : "s"} selected
+              </Text>
+            ) : null}
+          </>
+        ) : (
+          <Text size="xs" tone="muted" className="pt-2">
+            Empty
+          </Text>
+        )}
+      </Stack>
+    </div>
+  );
+}
+
 /**
  * Read-only variant surface.
  * - `card`: selectable tile in a multi-variant grid (legacy compact layout)
@@ -83,6 +237,7 @@ export function VariantCard({
 }) {
   const focused = layout === "detail";
   const equipment = variant.resolved?.equipment ?? {};
+  const conflicts = variant.resolved?.conflicts ?? [];
   const setNames = variant.attachments
     .map((a) => a.set?.name)
     .filter((name): name is string => Boolean(name));
@@ -108,6 +263,9 @@ export function VariantCard({
 
   const artifact = variant.artifact;
   const artifactPerks = variant.artifactPerks ?? [];
+
+  const weaponFilled = WEAPON_SLOTS.some((s) => equipment[s]?.itemName);
+  const armorFilled = ARMOR_SLOTS.some((s) => equipment[s]?.itemName);
 
   return (
     <Panel
@@ -181,6 +339,38 @@ export function VariantCard({
           <Text size="sm" tone="muted">
             {variant.notes.trim()}
           </Text>
+        ) : null}
+
+        {/* At-a-glance loadout when any gear resolved */}
+        {focused && (weaponFilled || armorFilled) ? (
+          <Section label="Loadout">
+            <Stack gap={8}>
+              {weaponFilled ? (
+                <Stack gap={4}>
+                  <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                    Weapons
+                  </Text>
+                  <GearStrip
+                    equipment={equipment}
+                    slots={WEAPON_SLOTS}
+                    kind="Weapon"
+                  />
+                </Stack>
+              ) : null}
+              {armorFilled ? (
+                <Stack gap={4}>
+                  <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                    Armor
+                  </Text>
+                  <GearStrip
+                    equipment={equipment}
+                    slots={ARMOR_SLOTS}
+                    kind="Armor"
+                  />
+                </Stack>
+              ) : null}
+            </Stack>
+          </Section>
         ) : null}
 
         <Section label="Abilities">
@@ -333,95 +523,42 @@ export function VariantCard({
           )}
         </Section>
 
+        {conflicts.length > 0 ? (
+          <Section label="Slot conflicts">
+            <Stack gap={4}>
+              {conflicts.map((c) => (
+                <Text key={c.slot} size="xs" tone="warning">
+                  {(SLOT_LABEL[c.slot] ?? c.slot) +
+                    `: ${c.claimants.map((x) => x.itemName).join(" vs ")}`}
+                </Text>
+              ))}
+            </Stack>
+          </Section>
+        ) : null}
+
         <Section label="Weapons">
-          <Stack gap={8}>
-            {WEAPON_SLOTS.map((slot) => {
-              const claim = equipment[slot];
-              return (
-                <Stack key={slot} gap={4}>
-                  <Text
-                    size="xs"
-                    tone="muted"
-                    className="uppercase tracking-widest"
-                  >
-                    {SLOT_LABEL[slot]}
-                  </Text>
-                  {claim ? (
-                    <Stack gap={4}>
-                      <Row gap={6} wrap align="center">
-                        <EntityHotspot
-                          kind="Weapon"
-                          name={claim.itemName}
-                          description={claim.description}
-                          icon={claim.icon}
-                          accentColor={accentFor(claim.element)}
-                          size={32}
-                          showLabel="auto"
-                          meta={[
-                            claim.element,
-                            !claim.instanceId ? "Wishlist" : null,
-                          ].filter(Boolean) as string[]}
-                        />
-                        {!claim.instanceId ? <Chip>Wishlist</Chip> : null}
-                      </Row>
-                      {(claim.perks?.length ?? 0) > 0 ? (
-                        <Cluster gap={6}>
-                          {claim.perks!.map((p) => (
-                            <EntityHotspot
-                              key={p.hash ?? p.name}
-                              kind="Weapon perk"
-                              name={p.name}
-                              description={p.description}
-                              icon={p.icon}
-                              size={28}
-                            />
-                          ))}
-                        </Cluster>
-                      ) : (claim.selectedPerks?.length ?? 0) > 0 ? (
-                        <Chip>{claim.selectedPerks!.length} perks</Chip>
-                      ) : null}
-                    </Stack>
-                  ) : (
-                    <Text size="xs" tone="muted">
-                      Empty
-                    </Text>
-                  )}
-                </Stack>
-              );
-            })}
+          <Stack gap={0}>
+            {WEAPON_SLOTS.map((slot) => (
+              <GearSlotRow
+                key={slot}
+                slot={slot}
+                claim={equipment[slot]}
+                kind="Weapon"
+              />
+            ))}
           </Stack>
         </Section>
 
         <Section label="Armor">
-          <Stack gap={6}>
-            {ARMOR_SLOTS.map((slot) => {
-              const claim = equipment[slot];
-              return (
-                <Row key={slot} justify="between" align="center" gap={8}>
-                  <Text
-                    size="xs"
-                    tone="muted"
-                    className="uppercase tracking-widest shrink-0"
-                  >
-                    {SLOT_LABEL[slot]}
-                  </Text>
-                  {claim?.itemName ? (
-                    <EntityHotspot
-                      kind="Armor"
-                      name={claim.itemName}
-                      description={claim.description}
-                      icon={claim.icon}
-                      size={32}
-                      showLabel="auto"
-                    />
-                  ) : (
-                    <Text size="xs" tone="muted" as="span">
-                      Empty
-                    </Text>
-                  )}
-                </Row>
-              );
-            })}
+          <Stack gap={0}>
+            {ARMOR_SLOTS.map((slot) => (
+              <GearSlotRow
+                key={slot}
+                slot={slot}
+                claim={equipment[slot]}
+                kind="Armor"
+              />
+            ))}
           </Stack>
         </Section>
       </Stack>
