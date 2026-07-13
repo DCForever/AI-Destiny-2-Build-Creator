@@ -4,11 +4,13 @@ import type { SynergySummary } from "@/components/synergy/types";
 import {
   Button,
   Chip,
+  DesignationIcon,
   Panel,
   Row,
   SectionLabel,
   Stack,
   Text,
+  useDesignationIcons,
 } from "@/components/ui";
 import { getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
 
@@ -43,6 +45,9 @@ export function SynergyLibrary({
   loading: boolean;
 }) {
   const checkedCount = checkedIds.size;
+  const { getIcon } = useDesignationIcons(
+    synergies.map((s) => ({ type: s.type, subType: s.subType })),
+  );
 
   return (
     <Panel as="aside" className="flex flex-col min-h-[420px]">
@@ -151,24 +156,35 @@ export function SynergyLibrary({
                           : "hover:border-line-strong transition-colors"
                       }
                     >
-                      <Stack gap={4}>
-                        <Text size="sm" weight="medium">
-                          {row.name}
-                          {selected && checkedCount > 1 ? (
-                            <Text size="xs" tone="muted" as="span">
-                              {" "}
-                              · survivor
-                            </Text>
-                          ) : null}
-                        </Text>
-                        <Row gap={6} wrap>
-                          <Chip accent>{getSynergyTypeLabel(row.type)}</Chip>
-                          {row.subType ? <Chip>{row.subType}</Chip> : null}
-                          <Text size="xs" tone="muted" as="span">
-                            {linkCount} link{linkCount === 1 ? "" : "s"}
+                      <Row gap={10} align="start">
+                        <DesignationIcon
+                          type={row.type}
+                          subType={row.subType}
+                          icon={getIcon(row.type, row.subType)}
+                          size={36}
+                          label={row.name}
+                        />
+                        <Stack gap={4} className="min-w-0">
+                          <Text size="sm" weight="medium">
+                            {row.name}
+                            {selected && checkedCount > 1 ? (
+                              <Text size="xs" tone="muted" as="span">
+                                {" "}
+                                · survivor
+                              </Text>
+                            ) : null}
                           </Text>
-                        </Row>
-                      </Stack>
+                          <Row gap={6} wrap>
+                            <Chip accent>
+                              {getSynergyTypeLabel(row.type)}
+                            </Chip>
+                            {row.subType ? <Chip>{row.subType}</Chip> : null}
+                            <Text size="xs" tone="muted" as="span">
+                              {linkCount} link{linkCount === 1 ? "" : "s"}
+                            </Text>
+                          </Row>
+                        </Stack>
+                      </Row>
                     </Panel>
                   </button>
                 </div>

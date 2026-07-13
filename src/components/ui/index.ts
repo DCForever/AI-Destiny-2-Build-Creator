@@ -19,3 +19,8 @@ export { Workspace, WorkspaceMain, CardGrid } from "./Workspace";
 export { ClassIcon, ElementIcon, SuperIcon, IconBadge } from "./DestinyIcons";
 export { InfoHotspot } from "./InfoHotspot";
 export { LoadoutColorBar, LoadoutIconPlate } from "./LoadoutColorBar";
+export { DesignationIcon, iconFromMap } from "./DesignationIcon";
+export {
+  useCuratedDesignationIcons,
+  useDesignationIcons,
+} from "./useDesignationIcons";

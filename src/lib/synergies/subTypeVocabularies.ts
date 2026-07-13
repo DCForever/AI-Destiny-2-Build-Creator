@@ -12,6 +12,8 @@ export type SynergySubTypeOption = {
   id: string;
   name: string;
   description?: string;
+  /** Official Bungie icon path when resolved. */
+  icon?: string | null;
 };
 
 const BASE_OPTION: SynergySubTypeOption = {
@@ -24,18 +26,35 @@ function slugId(value: string): string {
   return value.toLowerCase().replace(/\s+/g, "-");
 }
 
-function listAllVerbs(): SynergySubTypeOption[] {
+async function listAllVerbs(): Promise<SynergySubTypeOption[]> {
+  const { designationIconKey, designationIconMap } = await import(
+    "@/lib/synergies/designationIcons"
+  );
+  const icons = await designationIconMap(
+    SYNERGY_VERBS.map((v) => ({ type: "verb", subType: v.name })),
+  );
   return sortByName(
     SYNERGY_VERBS.map((verb) => ({
       id: slugId(verb.name),
       name: verb.name,
       description: verb.description,
+      icon: icons[designationIconKey("verb", verb.name)] ?? null,
     })),
   );
 }
 
-function listElementOptions(): SynergySubTypeOption[] {
-  return SYNERGY_ELEMENTS.map((name) => ({ id: name.toLowerCase(), name }));
+async function listElementOptions(): Promise<SynergySubTypeOption[]> {
+  const { designationIconKey, designationIconMap } = await import(
+    "@/lib/synergies/designationIcons"
+  );
+  const icons = await designationIconMap(
+    SYNERGY_ELEMENTS.map((name) => ({ type: "element", subType: name })),
+  );
+  return SYNERGY_ELEMENTS.map((name) => ({
+    id: name.toLowerCase(),
+    name,
+    icon: icons[designationIconKey("element", name)] ?? null,
+  }));
 }
 
 type AbilityOptionCandidate = SynergySubTypeOption & { hash: number };
@@ -79,9 +98,16 @@ async function listAbilityOptions(kind: AbilityKind): Promise<SynergySubTypeOpti
       id: String(a.hash),
       name: a.name,
       description: a.description,
+      icon: a.icon,
     }));
 
-  return [BASE_OPTION, ...dedupeAbilityOptionsByName(candidates)];
+  return [
+    BASE_OPTION,
+    ...dedupeAbilityOptionsByName(candidates).map((opt) => {
+      const source = candidates.find((c) => c.name === opt.name);
+      return { ...opt, icon: source?.icon ?? null };
+    }),
+  ];
 }
 
 async function listWeaponArchetypeOptions(): Promise<SynergySubTypeOption[]> {
@@ -94,11 +120,18 @@ async function listWeaponArchetypeOptions(): Promise<SynergySubTypeOption[]> {
     "DestinyInventoryItemDefinition",
   );
   const names = collectLegendaryWeaponArchetypeSubTypeNames(itemTable);
+  const { designationIconKey, designationIconMap } = await import(
+    "@/lib/synergies/designationIcons"
+  );
+  const icons = await designationIconMap(
+    names.map((name) => ({ type: "weapon_archetype", subType: name })),
+  );
 
   return sortByName(
     names.map((name) => ({
       id: slugId(name),
       name,
+      icon: icons[designationIconKey("weapon_archetype", name)] ?? null,
     })),
   );
 }
@@ -125,9 +158,9 @@ export async function listSubTypeOptions(
 ): Promise<SynergySubTypeOption[]> {
   switch (category) {
     case "verb":
-      return listAllVerbs();
+      return await listAllVerbs();
     case "element":
-      return listElementOptions();
+      return await listElementOptions();
     case "melee":
       return listAbilityOptions("melee");
     case "grenade":

@@ -9,6 +9,7 @@ import {
   Button,
   Chip,
   Cluster,
+  DesignationIcon,
   InfoHotspot,
   Panel,
   Row,
@@ -16,6 +17,7 @@ import {
   Stack,
   Text,
   Heading,
+  useDesignationIcons,
 } from "@/components/ui";
 import { getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
 
@@ -51,13 +53,26 @@ export function SynergyDetail({
 }) {
   const grouped = groupLinks(synergy);
   const typeLabel = getSynergyTypeLabel(synergy.type);
+  const { getIcon } = useDesignationIcons([
+    { type: synergy.type, subType: synergy.subType },
+  ]);
+  const designationIcon = getIcon(synergy.type, synergy.subType);
 
   return (
     <Panel tone="raised" className="w-full">
       <Stack gap={14}>
         <Row justify="between" align="start" gap={12} wrap>
           <Stack gap={6} className="min-w-0 flex-1">
-            <Heading level={1}>{synergy.name}</Heading>
+            <Row gap={12} align="center">
+              <DesignationIcon
+                type={synergy.type}
+                subType={synergy.subType}
+                icon={designationIcon}
+                size={40}
+                label={synergy.name}
+              />
+              <Heading level={1}>{synergy.name}</Heading>
+            </Row>
             <Cluster>
               <InfoHotspot
                 kind="Synergy type"
@@ -77,9 +92,21 @@ export function SynergyDetail({
                   lines={[
                     "Required for some types (verb, melee, archetype, …)",
                     "Matched when resolving coverage on builds",
+                    designationIcon
+                      ? "Official Bungie icon resolved from manifest"
+                      : "No matching inventory icon yet",
                   ]}
                 >
-                  <Chip>{synergy.subType}</Chip>
+                  <Row gap={4} align="center">
+                    <DesignationIcon
+                      type={synergy.type}
+                      subType={synergy.subType}
+                      icon={designationIcon}
+                      size={20}
+                      label={synergy.subType}
+                    />
+                    <Chip>{synergy.subType}</Chip>
+                  </Row>
                 </InfoHotspot>
               ) : null}
             </Cluster>

@@ -6,6 +6,7 @@ import {
   Chip,
   ClassIcon,
   Cluster,
+  DesignationIcon,
   ElementIcon,
   IconBadge,
   InfoHotspot,
@@ -16,6 +17,7 @@ import {
   SuperIcon,
   Text,
   Heading,
+  useDesignationIcons,
 } from "@/components/ui";
 import {
   CLASS_CSS_COLOR,
@@ -45,6 +47,12 @@ export function BuildIdentity({
   const superName = build.pinnedSuper ?? subclass.super ?? null;
   const classColor = CLASS_CSS_COLOR[cls];
   const elementColor = ELEMENT_CSS_COLOR[element];
+
+  const designationRefs = (build.synergyTypes ?? []).map((t) => ({
+    type: t.type,
+    subType: t.subType,
+  }));
+  const { getIcon } = useDesignationIcons(designationRefs);
 
   return (
     <Panel tone="raised">
@@ -169,7 +177,16 @@ export function BuildIdentity({
                     "Designation matched against library synergies for coverage",
                   ]}
                 >
-                  <Chip>{t.label}</Chip>
+                  <Row gap={4} align="center">
+                    <DesignationIcon
+                      type={t.type}
+                      subType={t.subType}
+                      icon={getIcon(t.type, t.subType)}
+                      size={22}
+                      label={t.label}
+                    />
+                    <Chip>{t.label}</Chip>
+                  </Row>
                 </InfoHotspot>
               ))}
             </Cluster>

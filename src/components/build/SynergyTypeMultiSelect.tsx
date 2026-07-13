@@ -6,9 +6,11 @@ import {
   Button,
   Chip,
   Cluster,
+  DesignationIcon,
   Row,
   Stack,
   Text,
+  useDesignationIcons,
 } from "@/components/ui";
 import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
 import {
@@ -24,7 +26,7 @@ export type SynergyTypeSelection = {
   subType: string | null;
 };
 
-type SubTypeOption = { name: string; value?: string };
+type SubTypeOption = { name: string; value?: string; icon?: string | null };
 
 const SORTED_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
   compareDisplayName(getSynergyTypeLabel(a), getSynergyTypeLabel(b)),
@@ -85,6 +87,8 @@ export function SynergyTypeMultiSelect({
     () => new Set(selected.map(selectionKey)),
     [selected],
   );
+
+  const { getIcon } = useDesignationIcons(selected);
 
   function addDraft() {
     if (needsSub && !draftSubType.trim()) return;
@@ -171,6 +175,17 @@ export function SynergyTypeMultiSelect({
             const key = selectionKey(s);
             return (
               <Row key={key} gap={4} align="center">
+                <DesignationIcon
+                  type={s.type}
+                  subType={s.subType}
+                  icon={
+                    getIcon(s.type, s.subType) ??
+                    subTypeOptions.find((o) => o.name === s.subType)?.icon ??
+                    null
+                  }
+                  size={22}
+                  label={formatSynergyTypeDesignation(s)}
+                />
                 <Chip accent>{formatSynergyTypeDesignation(s)}</Chip>
                 <Button
                   size="sm"
