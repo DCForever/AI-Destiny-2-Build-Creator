@@ -1,6 +1,6 @@
 /**
  * Match an in-game loadout to curated builds by class + exotic identity.
- * Pure helper for Loadouts UI labeling.
+ * Pure helper for Loadouts UI labeling and Build library badges.
  */
 
 export type LoadoutMatchInput = {
@@ -17,11 +17,25 @@ export type BuildMatchInput = {
   exoticWeaponHash?: number | null;
 };
 
+/** Loadout row shape needed for reverse match (build → loadouts). */
+export type InGameLoadoutMatchRow = LoadoutMatchInput & {
+  id: string;
+  name: string;
+  iconUrl?: string | null;
+  colorUrl?: string | null;
+  className?: string | null;
+};
+
 export type LoadoutBuildMatchKind = "exact" | "partial" | "none";
 
 export type LoadoutBuildMatch = {
   kind: LoadoutBuildMatchKind;
   builds: Array<{ id: string; name: string }>;
+};
+
+export type BuildLoadoutMatch = {
+  kind: LoadoutBuildMatchKind;
+  loadouts: InGameLoadoutMatchRow[];
 };
 
 function hashEq(
@@ -119,4 +133,64 @@ export function loadoutMatchLabel(match: LoadoutBuildMatch): string {
   return match.builds.length === 1
     ? `Partial match: ${names}`
     : `Partial matches: ${names}`;
+}
+
+/**
+ * Reverse of matchLoadoutToBuilds: which in-game loadouts match this build.
+ * Prefers exact matches; includes partial only when no exact hits.
+ */
+export function matchBuildToLoadouts(
+  build: BuildMatchInput,
+  loadouts: InGameLoadoutMatchRow[],
+): BuildLoadoutMatch {
+  const exact: InGameLoadoutMatchRow[] = [];
+  const partial: InGameLoadoutMatchRow[] = [];
+
+  for (const lo of loadouts) {
+    const m = matchLoadoutToBuilds(lo, [build]);
+    if (m.kind === "none" || m.builds.length === 0) continue;
+    if (m.kind === "exact") exact.push(lo);
+    else partial.push(lo);
+  }
+
+  const sortByName = (a: InGameLoadoutMatchRow, b: InGameLoadoutMatchRow) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+
+  if (exact.length > 0) {
+    return { kind: "exact", loadouts: exact.sort(sortByName) };
+  }
+  if (partial.length > 0) {
+    return { kind: "partial", loadouts: partial.sort(sortByName) };
+  }
+  return { kind: "none", loadouts: [] };
+}
+
+/** Badge label for matched loadouts on a build card. */
+export function buildLoadoutMatchLabel(match: BuildLoadoutMatch): string {
+  if (match.kind === "none" || match.loadouts.length === 0) {
+    return "";
+  }
+  const names = match.loadouts.map((l) => l.name).join(", ");
+  if (match.kind === "exact") {
+    return match.loadouts.length === 1
+      ? `In-game: ${names}`
+      : `In-game (${match.loadouts.length}): ${names}`;
+  }
+  return match.loadouts.length === 1
+    ? `Partial loadout: ${names}`
+    : `Partial loadouts (${match.loadouts.length}): ${names}`;
+}
+
+/**
+ * Index every build id → its loadout match (for library list rendering).
+ */
+export function indexBuildLoadoutMatches(
+  builds: BuildMatchInput[],
+  loadouts: InGameLoadoutMatchRow[],
+): Map<string, BuildLoadoutMatch> {
+  const map = new Map<string, BuildLoadoutMatch>();
+  for (const b of builds) {
+    map.set(b.id, matchBuildToLoadouts(b, loadouts));
+  }
+  return map;
 }

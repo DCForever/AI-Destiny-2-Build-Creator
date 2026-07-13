@@ -150,9 +150,8 @@ export function LoadoutsPage() {
         matchLoadoutToBuilds(
           {
             className: lo.className,
-            // Exotics not resolved from instances in v1 — class-only partials possible later
-            exoticArmorHash: null,
-            exoticWeaponHash: null,
+            exoticArmorHash: lo.exoticArmorHash ?? null,
+            exoticWeaponHash: lo.exoticWeaponHash ?? null,
           },
           curatedBuilds,
         ),
@@ -548,6 +547,13 @@ export function LoadoutsPage() {
                                     ? ` · ${lo.itemInstanceIds.length} items`
                                     : ""}
                                 </Text>
+                                {lo.exoticArmorName || lo.exoticWeaponName ? (
+                                  <Text size="xs" tone="accent">
+                                    {[lo.exoticArmorName, lo.exoticWeaponName]
+                                      .filter(Boolean)
+                                      .join(" · ")}
+                                  </Text>
+                                ) : null}
                                 <Text
                                   size="xs"
                                   tone={

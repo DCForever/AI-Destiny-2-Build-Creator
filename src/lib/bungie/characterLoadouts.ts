@@ -29,6 +29,14 @@ export type BungieInGameLoadout = {
   itemInstanceIds: string[];
   /** True when the slot has no equipped instances (empty preset). */
   empty: boolean;
+  /**
+   * Resolved from synced inventory instance → hash + exotic catalog.
+   * Null when inventory not synced or no exotic in the loadout.
+   */
+  exoticArmorHash?: number | null;
+  exoticWeaponHash?: number | null;
+  exoticArmorName?: string | null;
+  exoticWeaponName?: string | null;
 };
 
 export type LoadoutPresentationTables = {

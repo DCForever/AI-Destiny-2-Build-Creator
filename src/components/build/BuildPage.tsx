@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { BuildActions } from "@/components/build/BuildActions";
@@ -27,6 +27,8 @@ import {
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
+import type { BungieInGameLoadout } from "@/lib/bungie/characterLoadouts";
+import { indexBuildLoadoutMatches } from "@/lib/loadouts/matchLoadoutToBuilds";
 import {
   BUILD_QUERY_BUILD,
   BUILD_QUERY_VARIANT,
@@ -68,6 +70,35 @@ export function BuildPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [bungieLoadouts, setBungieLoadouts] = useState<BungieInGameLoadout[]>(
+    [],
+  );
+
+  const loadoutMatchesByBuildId = useMemo(() => {
+    if (builds.length === 0 || bungieLoadouts.length === 0) {
+      return new Map();
+    }
+    return indexBuildLoadoutMatches(
+      builds.map((b) => ({
+        id: b.id,
+        name: b.name,
+        className: b.className,
+        exoticArmorHash: b.exoticArmorHash ?? null,
+        exoticWeaponHash: b.exoticWeaponHash ?? null,
+      })),
+      bungieLoadouts
+        .filter((lo) => !lo.empty)
+        .map((lo) => ({
+          id: lo.id,
+          name: lo.name,
+          className: lo.className,
+          exoticArmorHash: lo.exoticArmorHash ?? null,
+          exoticWeaponHash: lo.exoticWeaponHash ?? null,
+          iconUrl: lo.iconUrl,
+          colorUrl: lo.colorUrl,
+        })),
+    );
+  }, [builds, bungieLoadouts]);
 
   const writeBuildQuery = useCallback(
     (buildId: string | null, variantName?: string | null) => {
@@ -91,6 +122,7 @@ export function BuildPage() {
     if (res.status === 401) {
       setSignedIn(false);
       setBuilds([]);
+      setBungieLoadouts([]);
       return false;
     }
     if (!res.ok) {
@@ -135,6 +167,22 @@ export function BuildPage() {
       };
     });
     setBuilds(sortByName(mapped));
+
+    // Best-effort: match in-game Bungie loadout slots for library badges.
+    try {
+      const loRes = await fetch("/api/bungie/loadouts");
+      if (loRes.ok) {
+        const loBody = (await loRes.json()) as {
+          loadouts?: BungieInGameLoadout[];
+        };
+        setBungieLoadouts(loBody.loadouts ?? []);
+      } else {
+        setBungieLoadouts([]);
+      }
+    } catch {
+      setBungieLoadouts([]);
+    }
+
     return true;
   }, []);
 
@@ -560,6 +608,7 @@ export function BuildPage() {
               selectedId={selectedId}
               classFilter={classFilter}
               onClassFilter={setClassFilter}
+              loadoutMatchesByBuildId={loadoutMatchesByBuildId}
               onSelect={(id) => {
                 setCreating(false);
                 setEditingBuild(false);

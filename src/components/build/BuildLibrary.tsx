@@ -29,6 +29,8 @@ import {
   filterBuilds,
   type ExoticArmorFilterKey,
 } from "@/lib/builds/filterBuilds";
+import type { BuildLoadoutMatch } from "@/lib/loadouts/matchLoadoutToBuilds";
+import { buildLoadoutMatchLabel } from "@/lib/loadouts/matchLoadoutToBuilds";
 
 const CLASSES: GuardianClass[] = ["Titan", "Hunter", "Warlock"];
 
@@ -40,6 +42,7 @@ export function BuildLibrary({
   onSelect,
   onNew,
   loading,
+  loadoutMatchesByBuildId,
 }: {
   builds: BuildSummary[];
   selectedId: string | null;
@@ -48,6 +51,8 @@ export function BuildLibrary({
   onSelect: (id: string) => void;
   onNew: () => void;
   loading: boolean;
+  /** In-game loadout matches keyed by build id (from Bungie slots). */
+  loadoutMatchesByBuildId?: Map<string, BuildLoadoutMatch>;
 }) {
   const [exoticKeys, setExoticKeys] = useState<ExoticArmorFilterKey[]>([]);
 
@@ -248,6 +253,9 @@ export function BuildLibrary({
                           {build.exoticArmorName}
                         </Text>
                       ) : null}
+                      <BuildLoadoutBadges
+                        match={loadoutMatchesByBuildId?.get(build.id)}
+                      />
                     </Stack>
                   </Panel>
                 </button>
@@ -257,5 +265,64 @@ export function BuildLibrary({
         )}
       </Stack>
     </Panel>
+  );
+}
+
+function BuildLoadoutBadges({
+  match,
+}: {
+  match: BuildLoadoutMatch | undefined;
+}) {
+  if (!match || match.kind === "none" || match.loadouts.length === 0) {
+    return null;
+  }
+
+  const label = buildLoadoutMatchLabel(match);
+  const shown = match.loadouts.slice(0, 3);
+  const extra = match.loadouts.length - shown.length;
+
+  return (
+    <Row gap={4} align="center" wrap>
+      <span className="inline-flex items-center gap-1" title={label}>
+        {shown.map((lo) => (
+          <span
+            key={lo.id}
+            className="inline-flex size-5 shrink-0 items-center justify-center border border-line bg-surface-raised overflow-hidden"
+            title={
+              match.kind === "exact"
+                ? `In-game loadout: ${lo.name}`
+                : `Partial match: ${lo.name}`
+            }
+          >
+            {lo.iconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={lo.iconUrl}
+                alt=""
+                width={16}
+                height={16}
+                className="size-4 object-contain"
+              />
+            ) : (
+              <span className="text-[8px] text-muted tracking-tight">LO</span>
+            )}
+          </span>
+        ))}
+      </span>
+      {extra > 0 ? (
+        <Text size="xs" tone="muted" as="span">
+          +{extra}
+        </Text>
+      ) : null}
+      <Text
+        size="xs"
+        tone={match.kind === "exact" ? "accent" : "muted"}
+        as="span"
+        className="truncate max-w-[140px]"
+      >
+        {match.kind === "exact" ? "In-game" : "Partial"}
+        {match.loadouts.length === 1 ? ` · ${match.loadouts[0]!.name}` : ""}
+      </Text>
+    </Row>
   );
 }
