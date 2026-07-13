@@ -17,6 +17,8 @@ export type SynergyLink = {
   armorSetHash: number | null;
   /** Catalog description of the linked object (detail responses). */
   description?: string | null;
+  /** Bungie relative icon path when resolved. */
+  icon?: string | null;
 };
 
 export type SynergyDetail = {

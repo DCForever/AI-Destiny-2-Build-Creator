@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Cluster,
@@ -15,6 +16,7 @@ import {
 export type ManifestPick = {
   hash: number;
   name: string;
+  icon?: string | null;
   kind?: string;
   description?: string;
   perks?: Array<{ hash: number; name: string; column?: number; row?: number }>;
@@ -102,7 +104,12 @@ export function ManifestSearchPicker({
       </Text>
       {!multi && selected ? (
         <Row justify="between" align="center" gap={8}>
-          <Text size="sm">{selected.name}</Text>
+          <Row gap={8} align="center" className="min-w-0">
+            <ItemIcon icon={selected.icon ?? null} name={selected.name} size={28} />
+            <Text size="sm" className="truncate">
+              {selected.name}
+            </Text>
+          </Row>
           <Button
             size="sm"
             variant="ghost"
@@ -171,10 +178,15 @@ export function ManifestSearchPicker({
                   }
                 }}
               >
-                <span className="font-medium">{item.name}</span>
-                {item.kind ? (
-                  <span className="ml-2 text-xs text-muted">{item.kind}</span>
-                ) : null}
+                <span className="flex items-center gap-2 min-w-0">
+                  <ItemIcon icon={item.icon ?? null} name={item.name} size={28} />
+                  <span className="min-w-0">
+                    <span className="font-medium">{item.name}</span>
+                    {item.kind ? (
+                      <span className="ml-2 text-xs text-muted">{item.kind}</span>
+                    ) : null}
+                  </span>
+                </span>
               </button>
             );
           })}

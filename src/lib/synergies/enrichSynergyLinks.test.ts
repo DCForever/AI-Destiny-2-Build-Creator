@@ -19,6 +19,7 @@ describe("enrichSynergyLinks", () => {
           {
             hash: 100,
             name: "Test Gun",
+            icon: "/gun.png",
             itemTypeName: "Auto Rifle",
             frame: "Adaptive Frame",
           },
@@ -29,6 +30,7 @@ describe("enrichSynergyLinks", () => {
           {
             hash: 101,
             name: "Sunshot",
+            icon: "/sunshot.png",
             intrinsic: {
               name: "Sunburn",
               description: "Targets explode and Scorch nearby foes.",
@@ -142,6 +144,7 @@ describe("enrichSynergyLinks", () => {
     ]);
 
     expect(enriched[0]?.description).toBe("Auto Rifle · Adaptive Frame");
+    expect(enriched[0]?.icon).toBe("/gun.png");
     expect(enriched[1]?.description).toBe("Sliding reloads this weapon.");
     expect(enriched[2]?.description).toBe("Grants invisibility after a kill.");
     expect(enriched[3]?.description).toBe("Orbs of Power grant ability energy.");
@@ -166,6 +169,7 @@ describe("enrichSynergyLinks", () => {
     expect(exoticOnly[0]?.description).toBe(
       "Targets explode and Scorch nearby foes.",
     );
+    expect(exoticOnly[0]?.icon).toBe("/sunshot.png");
   });
 
   it("returns empty description when catalog miss", async () => {

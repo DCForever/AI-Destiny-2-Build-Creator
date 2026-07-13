@@ -4,6 +4,7 @@ import {
   LINK_KIND_LABEL,
   type SynergyDetail,
 } from "@/components/synergy/types";
+import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Chip,
@@ -135,22 +136,29 @@ export function SynergyDetail({
                       return (
                         <Panel key={link.id} tone="muted" pad="sm">
                           <Stack gap={4}>
-                            <InfoHotspot
-                              kind={kindLabel}
-                              title={link.displayName}
-                              lines={[
-                                `Link kind: ${kindLabel}`,
-                                meta ?? "Catalog identity for this synergy",
-                                objectDesc
-                                  ? objectDesc.slice(0, 200) +
-                                    (objectDesc.length > 200 ? "…" : "")
-                                  : "No catalog description",
-                              ]}
-                            >
-                              <Text size="sm" weight="medium">
-                                {link.displayName}
-                              </Text>
-                            </InfoHotspot>
+                            <Row gap={10} align="start">
+                              <ItemIcon
+                                icon={link.icon ?? null}
+                                name={link.displayName}
+                                size={36}
+                              />
+                              <InfoHotspot
+                                kind={kindLabel}
+                                title={link.displayName}
+                                lines={[
+                                  `Link kind: ${kindLabel}`,
+                                  meta ?? "Catalog identity for this synergy",
+                                  objectDesc
+                                    ? objectDesc.slice(0, 200) +
+                                      (objectDesc.length > 200 ? "…" : "")
+                                    : "No catalog description",
+                                ]}
+                              >
+                                <Text size="sm" weight="medium">
+                                  {link.displayName}
+                                </Text>
+                              </InfoHotspot>
+                            </Row>
                             {meta ? (
                               <Text size="xs" tone="muted">
                                 {meta}

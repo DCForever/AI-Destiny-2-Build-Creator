@@ -4,6 +4,8 @@ import type { SynergyLinkRecord, SynergyWithLinks } from "@/lib/db/repositories/
 export type SynergyLinkWithDescription = SynergyLinkRecord & {
   /** Catalog / manifest description of the linked object, when found. */
   description: string;
+  /** Bungie relative icon path when found on the linked entity. */
+  icon: string | null;
 };
 
 export type SynergyWithLinkDescriptions = Omit<SynergyWithLinks, "links"> & {
@@ -48,6 +50,7 @@ export async function enrichSynergyLinks(
 
   return links.map((link) => {
     let description = "";
+    let icon: string | null = null;
     switch (link.kind) {
       case "weapon": {
         if (link.itemHash != null) {
@@ -58,19 +61,23 @@ export async function enrichSynergyLinks(
               exotic.intrinsic?.description?.trim() ||
               exotic.catalyst?.description?.trim() ||
               "";
+            icon = exotic.icon ?? null;
           } else {
             const legendary = legendaryByHash.get(link.itemHash);
             // Legendary compact records have no long description; show frame.
             description = legendary?.frame?.trim()
               ? `${legendary.itemTypeName} · ${legendary.frame}`
               : "";
+            icon = legendary?.icon ?? null;
           }
         }
         break;
       }
       case "weapon_perk": {
         if (link.perkHash != null) {
-          description = perkByHash.get(link.perkHash)?.description?.trim() ?? "";
+          const perk = perkByHash.get(link.perkHash);
+          description = perk?.description?.trim() ?? "";
+          icon = perk?.icon ?? null;
         }
         break;
       }
@@ -84,6 +91,7 @@ export async function enrichSynergyLinks(
             : undefined) ??
           traitByName.get(link.displayName.trim().toLowerCase());
         description = trait?.description?.trim() ?? "";
+        icon = trait?.icon ?? null;
         break;
       }
       case "armor_set_bonus": {
@@ -93,23 +101,26 @@ export async function enrichSynergyLinks(
             ? setBonuses.find((s) => s.hash === link.armorSetHash)
             : undefined) ??
           setBonuses.find((s) => s.name.trim().toLowerCase() === setName);
-        if (set && link.bonusPieces != null) {
-          const bonusName = (link.bonusName ?? "").trim().toLowerCase();
-          const perk =
-            set.perks.find(
-              (p) =>
-                p.requiredCount === link.bonusPieces &&
-                p.name.trim().toLowerCase() === bonusName,
-            ) ??
-            set.perks.find((p) => p.requiredCount === link.bonusPieces);
-          description = perk?.description?.trim() ?? "";
+        if (set) {
+          icon = set.icon ?? null;
+          if (link.bonusPieces != null) {
+            const bonusName = (link.bonusName ?? "").trim().toLowerCase();
+            const perk =
+              set.perks.find(
+                (p) =>
+                  p.requiredCount === link.bonusPieces &&
+                  p.name.trim().toLowerCase() === bonusName,
+              ) ??
+              set.perks.find((p) => p.requiredCount === link.bonusPieces);
+            description = perk?.description?.trim() ?? "";
+          }
         }
         break;
       }
       default:
         break;
     }
-    return { ...link, description };
+    return { ...link, description, icon };
   });
 }
 

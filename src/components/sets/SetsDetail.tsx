@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { SLOT_LABEL, type SetDetail } from "@/components/sets/types";
+import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Chip,
@@ -136,7 +137,14 @@ export function SetsDetail({
                       gap={8}
                       wrap
                     >
-                      <Chip accent>{item.itemName}</Chip>
+                      <Row gap={8} align="center" className="min-w-0">
+                        <ItemIcon
+                          icon={item.icon ?? null}
+                          name={item.itemName}
+                          size={28}
+                        />
+                        <Chip accent>{item.itemName}</Chip>
+                      </Row>
                       <Button
                         size="sm"
                         variant="danger"
@@ -174,11 +182,18 @@ export function SetsDetail({
                         {SLOT_LABEL[slot] ?? slot}
                       </Text>
                       {item ? (
-                        <Text size="sm">
-                          {item.itemName}
-                          {item.stale ? " · stale" : ""}
-                          {item.instanceId ? " · instance" : ""}
-                        </Text>
+                        <Row gap={8} align="center">
+                          <ItemIcon
+                            icon={item.icon ?? null}
+                            name={item.itemName}
+                            size={32}
+                          />
+                          <Text size="sm">
+                            {item.itemName}
+                            {item.stale ? " · stale" : ""}
+                            {item.instanceId ? " · instance" : ""}
+                          </Text>
+                        </Row>
                       ) : (
                         <Text size="xs" tone="muted">
                           Empty

@@ -11,6 +11,7 @@ export type SynergyPickerItem = {
   hash?: number;
   name: string;
   description: string;
+  icon?: string | null;
   originTraitName?: string;
   originTraitHash?: number;
   perkHash?: number;
@@ -90,6 +91,7 @@ export async function searchSynergyLinkPickerItems(
         hash: t.hash,
         name: t.name,
         description: t.description,
+        icon: t.icon,
         originTraitName: t.name,
         originTraitHash: t.hash,
       }));
@@ -113,6 +115,7 @@ export async function searchSynergyLinkPickerItems(
         hash: p.hash,
         name: p.name,
         description: p.description,
+        icon: p.icon,
         perkHash: p.hash,
       }));
     return finalizePickerItems(items, limit, query);
@@ -134,6 +137,7 @@ export async function searchSynergyLinkPickerItems(
         kind: "armor_set_bonus",
         name: `${set.name} ${perk.requiredCount}pc — ${perk.name}`,
         description: perk.description,
+        icon: set.icon,
         armorSetName: set.name,
         bonusPieces: perk.requiredCount as 2 | 4,
         bonusName: perk.name,

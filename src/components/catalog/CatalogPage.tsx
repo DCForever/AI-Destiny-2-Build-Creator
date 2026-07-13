@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { filterCatalogClient } from "@/lib/catalog/filterCatalogClient";
 import type { CatalogItem } from "@/lib/catalog/types";
 import { sortByName } from "@/lib/sortByName";
+import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
   Callout,
@@ -281,21 +282,32 @@ export function CatalogPage() {
                                 : "hover:border-line-strong transition-colors"
                             }
                           >
-                            <Stack gap={4}>
-                              <Text size="sm" weight="medium">
-                                {item.name}
-                              </Text>
-                              <Row gap={6} wrap>
-                                {item.isExotic ? <Chip accent>Exotic</Chip> : null}
-                                {item.slot ? <Chip>{item.slot}</Chip> : null}
-                                {item.element ? <Chip>{item.element}</Chip> : null}
-                                {item.ownedCount > 0 ? (
-                                  <Text size="xs" tone="muted" as="span">
-                                    ×{item.ownedCount}
-                                  </Text>
-                                ) : null}
-                              </Row>
-                            </Stack>
+                            <Row gap={10} align="start">
+                              <ItemIcon
+                                icon={item.icon}
+                                name={item.name}
+                                size={40}
+                              />
+                              <Stack gap={4} className="min-w-0">
+                                <Text size="sm" weight="medium">
+                                  {item.name}
+                                </Text>
+                                <Row gap={6} wrap>
+                                  {item.isExotic ? (
+                                    <Chip accent>Exotic</Chip>
+                                  ) : null}
+                                  {item.slot ? <Chip>{item.slot}</Chip> : null}
+                                  {item.element ? (
+                                    <Chip>{item.element}</Chip>
+                                  ) : null}
+                                  {item.ownedCount > 0 ? (
+                                    <Text size="xs" tone="muted" as="span">
+                                      ×{item.ownedCount}
+                                    </Text>
+                                  ) : null}
+                                </Row>
+                              </Stack>
+                            </Row>
                           </Panel>
                         </button>
                       );
@@ -312,21 +324,32 @@ export function CatalogPage() {
               <WorkspaceMain>
                 <Panel tone="raised" className="w-full">
                   <Stack gap={14}>
-                    <Stack gap={6}>
-                      <Heading level={1}>{selected.name}</Heading>
-                      <Cluster>
-                        {selected.isExotic ? <Chip accent>Exotic</Chip> : null}
-                        {selected.slot ? <Chip>{selected.slot}</Chip> : null}
-                        {selected.element ? <Chip>{selected.element}</Chip> : null}
-                        {selected.itemTypeName ? (
-                          <Chip>{selected.itemTypeName}</Chip>
-                        ) : null}
-                        {selected.frame ? <Chip>{selected.frame}</Chip> : null}
-                        {selected.classType ? (
-                          <Chip>{selected.classType}</Chip>
-                        ) : null}
-                      </Cluster>
-                    </Stack>
+                    <Row gap={14} align="start" wrap>
+                      <ItemIcon
+                        icon={selected.icon}
+                        name={selected.name}
+                        size={64}
+                      />
+                      <Stack gap={6} className="min-w-0 flex-1">
+                        <Heading level={1}>{selected.name}</Heading>
+                        <Cluster>
+                          {selected.isExotic ? (
+                            <Chip accent>Exotic</Chip>
+                          ) : null}
+                          {selected.slot ? <Chip>{selected.slot}</Chip> : null}
+                          {selected.element ? (
+                            <Chip>{selected.element}</Chip>
+                          ) : null}
+                          {selected.itemTypeName ? (
+                            <Chip>{selected.itemTypeName}</Chip>
+                          ) : null}
+                          {selected.frame ? <Chip>{selected.frame}</Chip> : null}
+                          {selected.classType ? (
+                            <Chip>{selected.classType}</Chip>
+                          ) : null}
+                        </Cluster>
+                      </Stack>
+                    </Row>
 
                     {selected.setBonusName ? (
                       <Section label="Armor set bonus">

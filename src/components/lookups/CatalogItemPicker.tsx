@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ItemIcon } from "@/components/sheet/ItemIcon";
 import type { CatalogItem } from "@/lib/catalog/types";
 import { setSlotToCatalogBucket } from "@/lib/sets/catalogSlotMap";
 import {
@@ -155,12 +156,17 @@ export function CatalogItemPicker({
                 setQuery("");
               }}
             >
-              <span className="font-medium">{item.name}</span>
-              <span className="ml-2 text-xs text-muted">
-                {[item.slot, item.element, item.isExotic ? "Exotic" : null]
-                  .filter(Boolean)
-                  .join(" · ")}
-                {item.ownedCount > 0 ? ` · ×${item.ownedCount}` : ""}
+              <span className="flex items-center gap-2 min-w-0">
+                <ItemIcon icon={item.icon} name={item.name} size={28} />
+                <span className="min-w-0">
+                  <span className="font-medium">{item.name}</span>
+                  <span className="ml-2 text-xs text-muted">
+                    {[item.slot, item.element, item.isExotic ? "Exotic" : null]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    {item.ownedCount > 0 ? ` · ×${item.ownedCount}` : ""}
+                  </span>
+                </span>
               </span>
             </button>
           ))}

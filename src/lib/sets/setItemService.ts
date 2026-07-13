@@ -14,6 +14,8 @@ export type SetItemRecord = {
   slot: string;
   itemHash: number;
   itemName: string;
+  /** Bungie relative icon path when resolvable from the entity cache. */
+  icon: string | null;
   instanceId: string | null;
   selectedPerks: number[];
   masterworkHash: number | null;
@@ -40,6 +42,7 @@ async function rowToItem(row: typeof setItems.$inferSelect): Promise<SetItemReco
     slot: row.slot,
     itemHash: row.itemHash,
     itemName: resolved.name,
+    icon: resolved.icon,
     instanceId: row.instanceId,
     selectedPerks: parseJsonArray(row.selectedPerks),
     masterworkHash: row.masterworkHash,
