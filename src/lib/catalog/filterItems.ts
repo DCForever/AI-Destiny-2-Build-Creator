@@ -154,6 +154,7 @@ function weaponToCatalog(
     icon: record.icon,
     slot: record.slot,
     element: record.element,
+    ammo: "ammo" in record ? record.ammo : undefined,
     itemTypeName: "itemTypeName" in record ? record.itemTypeName : undefined,
     frame: record.frame,
     isExotic,

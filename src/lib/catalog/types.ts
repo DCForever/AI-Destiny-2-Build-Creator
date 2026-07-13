@@ -6,6 +6,8 @@ export type CatalogItem = {
   icon: string | null;
   slot?: string;
   element?: string;
+  /** Primary / Special / Heavy — weapons only. */
+  ammo?: string;
   itemTypeName?: string;
   frame?: string;
   classType?: string;
@@ -18,6 +20,15 @@ export type CatalogItem = {
   /** Exotic intrinsic or picker description for display/search projection */
   description?: string;
 };
+
+/** Client-side result grouping dimensions (multi-select combines with ·). */
+export type CatalogGroupDimension =
+  | "element"
+  | "ammo"
+  | "archetype"
+  | "frame"
+  | "slot"
+  | "class";
 
 export type CatalogFilterParams = {
   scope: CatalogScope;

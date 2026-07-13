@@ -30,7 +30,6 @@ Last reviewed: 2026-07-13
 ### Catalog
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | Multi **Group by** (ammo / element / archetype combinations) | Canvas catalog wire |
 | `open` | Deeper **instance perk-grid** UX | Beyond plug name list; relates to 011 |
 | `open` | Richer ammo/element/archetype multi-filters | Partial filters exist |
 
@@ -78,6 +77,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Catalog multi **Group by** (ammo / element / archetype / …) | Multi-select dims; composite keys; `ammo` on catalog weapons |
 | 2026-07-13 | Entity hotspot primitive + presentation resolver | `EntityHotspot`, `entityPresentation`, build/set/plug enrich |
 | 2026-07-13 | Class / element / super icons on Build library + identity | Vault Terminal glyphs + subclass element |
 | 2026-07-13 | Info hotspots on identity / synergy chips | Portal + single-open (clip-path fix) |

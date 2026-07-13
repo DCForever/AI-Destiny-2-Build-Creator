@@ -1,9 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { filterCatalogClient } from "@/lib/catalog/filterCatalogClient";
-import type { CatalogItem } from "@/lib/catalog/types";
+import {
+  ARMOR_GROUP_DIMENSIONS,
+  groupCatalogItems,
+  WEAPON_GROUP_DIMENSIONS,
+} from "@/lib/catalog/groupCatalogItems";
+import type { CatalogGroupDimension, CatalogItem } from "@/lib/catalog/types";
 import { sortByName } from "@/lib/sortByName";
 import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
@@ -70,6 +75,8 @@ export function CatalogPage() {
   const [slot, setSlot] = useState<string | null>(null);
   const [className, setClassName] = useState<string | null>(null);
   const [onlyExotic, setOnlyExotic] = useState(false);
+  /** Multi group-by dimensions (order of activation = key order). */
+  const [groupDims, setGroupDims] = useState<CatalogGroupDimension[]>([]);
 
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
@@ -166,6 +173,61 @@ export function CatalogPage() {
   );
 
   const slotOptions = kind === "weapons" ? WEAPON_SLOTS : ARMOR_SLOTS;
+  const groupDimOptions =
+    kind === "weapons" ? WEAPON_GROUP_DIMENSIONS : ARMOR_GROUP_DIMENSIONS;
+
+  const grouped = useMemo(
+    () => groupCatalogItems(items, groupDims),
+    [items, groupDims],
+  );
+
+  function toggleGroupDim(dim: CatalogGroupDimension) {
+    setGroupDims((prev) => {
+      if (prev.includes(dim)) return prev.filter((d) => d !== dim);
+      return [...prev, dim];
+    });
+  }
+
+  function renderResultRow(item: CatalogItem) {
+    const active = selected?.hash === item.hash;
+    return (
+      <button
+        key={item.hash}
+        type="button"
+        className="text-left w-full"
+        onClick={() => void selectItem(item)}
+      >
+        <Panel
+          tone={active ? "accent" : "muted"}
+          pad="sm"
+          className={
+            active ? "" : "hover:border-line-strong transition-colors"
+          }
+        >
+          <Row gap={10} align="start">
+            <ItemIcon icon={item.icon} name={item.name} size={40} />
+            <Stack gap={4} className="min-w-0">
+              <Text size="sm" weight="medium">
+                {item.name}
+              </Text>
+              <Row gap={6} wrap>
+                {item.isExotic ? <Chip accent>Exotic</Chip> : null}
+                {item.slot ? <Chip>{item.slot}</Chip> : null}
+                {item.element ? <Chip>{item.element}</Chip> : null}
+                {item.ammo ? <Chip>{item.ammo}</Chip> : null}
+                {item.itemTypeName ? <Chip>{item.itemTypeName}</Chip> : null}
+                {item.ownedCount > 0 ? (
+                  <Text size="xs" tone="muted" as="span">
+                    ×{item.ownedCount}
+                  </Text>
+                ) : null}
+              </Row>
+            </Stack>
+          </Row>
+        </Panel>
+      </button>
+    );
+  }
 
   return (
     <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
@@ -189,6 +251,7 @@ export function CatalogPage() {
                   setKind("weapons");
                   setSlot(null);
                   setClassName(null);
+                  setGroupDims([]);
                 }}
               />
               <FilterChip
@@ -197,6 +260,7 @@ export function CatalogPage() {
                 onClick={() => {
                   setKind("armor");
                   setSlot(null);
+                  setGroupDims([]);
                 }}
               />
               <FilterChip
@@ -248,6 +312,31 @@ export function CatalogPage() {
                 ))}
               </Cluster>
             ) : null}
+            <Stack gap={4}>
+              <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                Group by
+                {groupDims.length > 0
+                  ? ` · ${groupDims.map((d) => groupDimOptions.find((o) => o.id === d)?.label ?? d).join(" · ")}`
+                  : " · none"}
+              </Text>
+              <Cluster gap={6}>
+                {groupDimOptions.map((opt) => (
+                  <FilterChip
+                    key={opt.id}
+                    label={opt.label}
+                    active={groupDims.includes(opt.id)}
+                    onClick={() => toggleGroupDim(opt.id)}
+                  />
+                ))}
+                {groupDims.length > 0 ? (
+                  <FilterChip
+                    label="Clear groups"
+                    active={false}
+                    onClick={() => setGroupDims([])}
+                  />
+                ) : null}
+              </Cluster>
+            </Stack>
             <Row gap={8}>
               <Button
                 size="sm"
@@ -282,55 +371,28 @@ export function CatalogPage() {
                     No items match.
                   </Text>
                 ) : (
-                  <Stack gap={8} className="max-h-[70vh] overflow-auto">
-                    {items.map((item) => {
-                      const active = selected?.hash === item.hash;
-                      return (
-                        <button
-                          key={item.hash}
-                          type="button"
-                          className="text-left"
-                          onClick={() => void selectItem(item)}
-                        >
-                          <Panel
-                            tone={active ? "accent" : "muted"}
-                            pad="sm"
-                            className={
-                              active
-                                ? ""
-                                : "hover:border-line-strong transition-colors"
-                            }
-                          >
-                            <Row gap={10} align="start">
-                              <ItemIcon
-                                icon={item.icon}
-                                name={item.name}
-                                size={40}
-                              />
-                              <Stack gap={4} className="min-w-0">
-                                <Text size="sm" weight="medium">
-                                  {item.name}
-                                </Text>
-                                <Row gap={6} wrap>
-                                  {item.isExotic ? (
-                                    <Chip accent>Exotic</Chip>
-                                  ) : null}
-                                  {item.slot ? <Chip>{item.slot}</Chip> : null}
-                                  {item.element ? (
-                                    <Chip>{item.element}</Chip>
-                                  ) : null}
-                                  {item.ownedCount > 0 ? (
-                                    <Text size="xs" tone="muted" as="span">
-                                      ×{item.ownedCount}
-                                    </Text>
-                                  ) : null}
-                                </Row>
-                              </Stack>
+                  <Stack gap={10} className="max-h-[70vh] overflow-auto">
+                    {groupDims.length === 0
+                      ? items.map((item) => renderResultRow(item))
+                      : grouped.map((group) => (
+                          <Stack key={group.key} gap={6}>
+                            <Row justify="between" align="baseline" gap={8}>
+                              <Text
+                                size="xs"
+                                tone="muted"
+                                className="uppercase tracking-widest"
+                              >
+                                {group.label}
+                              </Text>
+                              <Text size="xs" tone="muted" as="span">
+                                {group.items.length}
+                              </Text>
                             </Row>
-                          </Panel>
-                        </button>
-                      );
-                    })}
+                            <Stack gap={6}>
+                              {group.items.map((item) => renderResultRow(item))}
+                            </Stack>
+                          </Stack>
+                        ))}
                   </Stack>
                 )}
               </Stack>
@@ -369,6 +431,7 @@ export function CatalogPage() {
                           {selected.element ? (
                             <Chip>{selected.element}</Chip>
                           ) : null}
+                          {selected.ammo ? <Chip>{selected.ammo}</Chip> : null}
                           {selected.itemTypeName ? (
                             <Chip>{selected.itemTypeName}</Chip>
                           ) : null}
