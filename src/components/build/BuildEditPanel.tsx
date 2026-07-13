@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { BuildDetail } from "@/components/build/types";
 import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
@@ -28,6 +28,7 @@ function designationsFromBuild(build: BuildDetail): SynergyTypeSelection[] {
   }));
 }
 
+/** Parent should pass key={build.id} so form state resets on selection change. */
 export function BuildEditPanel({
   build,
   onClose,
@@ -62,25 +63,6 @@ export function BuildEditPanel({
     string,
     unknown
   > | null>(null);
-
-  useEffect(() => {
-    setName(build.name);
-    setExoticArmor(
-      build.exoticArmorHash != null && build.exoticArmorName
-        ? { hash: build.exoticArmorHash, name: build.exoticArmorName }
-        : null,
-    );
-    setPinnedSuper(build.pinnedSuper ?? build.subclass.super ?? null);
-    setSynergyTypes(designationsFromBuild(build));
-    setSoftStatsDraft(
-      build.softStatTargets
-        ? JSON.stringify(build.softStatTargets, null, 2)
-        : "",
-    );
-    setError(null);
-    setMessage(null);
-    setPendingPayload(null);
-  }, [build]);
 
   async function patchBuild(
     payload: Record<string, unknown>,

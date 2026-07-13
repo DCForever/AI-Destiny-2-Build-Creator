@@ -36,8 +36,8 @@ import { sortByName } from "@/lib/sortByName";
  *   Workspace
  *     rail  → BuildLibrary
  *     main  → WorkspaceMain
- *       CreateBuildPanel | BuildEditPanel | VariantEditPanel | EmptyState |
- *       [BuildIdentity, CardGrid, BuildActions]
+ *       CreateBuildPanel | BuildEditPanel | EmptyState |
+ *       [BuildIdentity, VariantEditPanel | CardGrid + BuildActions]
  */
 export function BuildPage() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -343,6 +343,7 @@ export function BuildPage() {
     main = (
       <WorkspaceMain>
         <BuildEditPanel
+          key={detail.id}
           build={detail}
           onClose={() => setEditingBuild(false)}
           onSaved={(next) => {
@@ -358,7 +359,18 @@ export function BuildPage() {
   } else if (editingVariant) {
     main = (
       <WorkspaceMain>
+        <BuildIdentity
+          build={detail}
+          onEdit={() => {
+            setEditingVariantId(null);
+            setEditingBuild(true);
+            setActionMessage(null);
+          }}
+          onDelete={() => void handleDeleteBuild()}
+          deleteBusy={deleteBusy}
+        />
         <VariantEditPanel
+          key={editingVariant.id}
           build={detail}
           variant={editingVariant}
           onClose={() => setEditingVariantId(null)}

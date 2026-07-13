@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type {
   BuildDetail,
   BuildSubclass,
   BuildVariantDetail,
 } from "@/components/build/types";
-import { ExoticWeaponLookup } from "@/components/debug/ExoticWeaponLookup";
-import { SetAttachPicker } from "@/components/debug/SetAttachPicker";
+import { ManifestSearchPicker, type ManifestPick } from "@/components/lookups/ManifestSearchPicker";
+import { SetAttachPicker } from "@/components/lookups/SetAttachPicker";
 import {
   Button,
   Callout,
@@ -57,6 +57,23 @@ function toggleList(list: string[], value: string): string[] {
     : [...list, value];
 }
 
+function initialExotic(variant: BuildVariantDetail): ManifestPick | null {
+  return variant.exoticWeaponHash != null && variant.exoticWeaponName
+    ? { hash: variant.exoticWeaponHash, name: variant.exoticWeaponName }
+    : null;
+}
+
+function initialArtifact(variant: BuildVariantDetail): ManifestPick | null {
+  return variant.artifactHash != null
+    ? {
+        hash: variant.artifactHash,
+        name: variant.artifactName ?? `Artifact ${variant.artifactHash}`,
+        perks: [],
+      }
+    : null;
+}
+
+/** Parent should pass key={variant.id} so form state resets on variant switch. */
 export function VariantEditPanel({
   build,
   variant,
@@ -75,38 +92,16 @@ export function VariantEditPanel({
 
   const [name, setName] = useState(variant.name);
   const [notes, setNotes] = useState(variant.notes ?? "");
-  const [exoticWeapon, setExoticWeapon] = useState<{
-    hash: number;
-    name: string;
-  } | null>(
-    variant.exoticWeaponHash != null && variant.exoticWeaponName
-      ? { hash: variant.exoticWeaponHash, name: variant.exoticWeaponName }
-      : null,
+  const [exoticWeapon, setExoticWeapon] = useState<ManifestPick | null>(() =>
+    initialExotic(variant),
   );
-  const [artifactHash, setArtifactHash] = useState(
-    variant.artifactHash != null ? String(variant.artifactHash) : "",
+  const [artifact, setArtifact] = useState<ManifestPick | null>(() =>
+    initialArtifact(variant),
   );
-  const [artifactConfig, setArtifactConfig] = useState(
-    (variant.artifactConfig ?? []).join(","),
+  const [selectedPerkHashes, setSelectedPerkHashes] = useState<number[]>(
+    () => variant.artifactConfig ?? [],
   );
-  const [subclass, setSubclass] = useState<BuildSubclass>(build.subclass);
-
-  useEffect(() => {
-    setName(variant.name);
-    setNotes(variant.notes ?? "");
-    setExoticWeapon(
-      variant.exoticWeaponHash != null && variant.exoticWeaponName
-        ? { hash: variant.exoticWeaponHash, name: variant.exoticWeaponName }
-        : null,
-    );
-    setArtifactHash(
-      variant.artifactHash != null ? String(variant.artifactHash) : "",
-    );
-    setArtifactConfig((variant.artifactConfig ?? []).join(","));
-    setSubclass(build.subclass);
-    setError(null);
-    setMessage(null);
-  }, [variant, build.subclass]);
+  const [subclass, setSubclass] = useState<BuildSubclass>(() => build.subclass);
 
   async function patchVariant(
     payload: Record<string, unknown>,
@@ -159,7 +154,7 @@ export function VariantEditPanel({
       };
       if (res.status === 409 && body.code === "IDENTITY_CONFIRM_REQUIRED") {
         setError(
-          "Subclass change needs identity confirm/fork — use debug Builds for now, or keep ability names within the same subclass.",
+          "Subclass change needs identity confirm/fork — keep ability names within the same subclass, or edit identity from debug Builds.",
         );
         return;
       }
@@ -207,11 +202,17 @@ export function VariantEditPanel({
     }
   }
 
+  function togglePerk(hash: number) {
+    setSelectedPerkHashes((prev) =>
+      prev.includes(hash) ? prev.filter((h) => h !== hash) : [...prev, hash],
+    );
+  }
+
   const setCount = variant.attachments.length;
   const tabCounts: Record<VariantEditTab, number | null> = {
     general: null,
     sets: setCount,
-    artifact: variant.artifactConfig?.length ?? (variant.artifactHash ? 1 : 0),
+    artifact: selectedPerkHashes.length || (artifact ? 1 : 0),
     mods: null,
     abilities: 3,
     aspects: subclass.aspects.length,
@@ -275,10 +276,13 @@ export function VariantEditPanel({
               <Text size="xs" tone="muted" className="mb-2">
                 Optional. Overrides build-level exotic weapon for this variant.
               </Text>
-              <ExoticWeaponLookup
-                className={build.className}
+              <ManifestSearchPicker
+                label="Exotic weapon"
+                category="exotic-weapons"
+                classType={build.className}
                 selected={exoticWeapon}
                 onSelect={setExoticWeapon}
+                disabled={busy}
               />
             </Section>
             <Row gap={8} wrap>
@@ -353,6 +357,7 @@ export function VariantEditPanel({
             <Section label="Attach set">
               <SetAttachPicker
                 disabled={busy}
+                excludeIds={variant.attachments.map((a) => a.setId)}
                 onAttach={(attachment) =>
                   void patchVariant(
                     {
@@ -372,55 +377,71 @@ export function VariantEditPanel({
         {tab === "artifact" ? (
           <Stack gap={12}>
             <Text size="xs" tone="muted">
-              Seasonal artifact hash and selected perk hashes (comma-separated).
+              Pick a seasonal artifact, then toggle perks from its grid.
             </Text>
-            <TextField
-              label="Artifact hash"
-              value={artifactHash}
-              onChange={(e) => setArtifactHash(e.target.value)}
-              placeholder="Manifest artifact hash"
+            <ManifestSearchPicker
+              label="Artifact"
+              category="artifacts"
+              selected={artifact}
+              onSelect={(item) => {
+                setArtifact(item);
+                if (item?.perks?.length) {
+                  setSelectedPerkHashes((prev) =>
+                    prev.filter((h) => item.perks!.some((p) => p.hash === h)),
+                  );
+                }
+              }}
+              disabled={busy}
             />
-            <TextField
-              label="Perk config"
-              value={artifactConfig}
-              onChange={(e) => setArtifactConfig(e.target.value)}
-              placeholder="e.g. 123,456,789"
-            />
-            {variant.artifactName ? (
-              <Text size="sm">Current: {variant.artifactName}</Text>
+            {artifact?.perks && artifact.perks.length > 0 ? (
+              <Section label="Artifact perks">
+                <Cluster gap={6}>
+                  {artifact.perks.map((perk) => (
+                    <FilterChip
+                      key={perk.hash}
+                      label={perk.name}
+                      active={selectedPerkHashes.includes(perk.hash)}
+                      onClick={() => togglePerk(perk.hash)}
+                    />
+                  ))}
+                </Cluster>
+              </Section>
+            ) : artifact ? (
+              <Text size="xs" tone="muted">
+                Browse/search again after selecting to load perk chips when the
+                manifest includes them. Selected perk hashes:{" "}
+                {selectedPerkHashes.length || "none"}.
+              </Text>
             ) : null}
             <Row gap={8} wrap>
               <Button
                 variant="accent"
                 size="sm"
-                disabled={busy || !artifactHash.trim()}
-                onClick={() => {
-                  const hash = Number(artifactHash.trim());
-                  if (!Number.isFinite(hash)) {
-                    setError("Artifact hash must be a number");
-                    return;
-                  }
-                  const config = artifactConfig
-                    .split(",")
-                    .map((s) => Number(s.trim()))
-                    .filter((n) => Number.isFinite(n) && n > 0);
+                disabled={busy || !artifact}
+                onClick={() =>
                   void patchVariant(
-                    { artifactHash: hash, artifactConfig: config },
+                    {
+                      artifactHash: artifact!.hash,
+                      artifactName: artifact!.name,
+                      artifactConfig: selectedPerkHashes,
+                    },
                     "Artifact saved",
-                  );
-                }}
+                  )
+                }
               >
                 Save artifact
               </Button>
               <Button
                 size="sm"
                 disabled={busy}
-                onClick={() =>
+                onClick={() => {
+                  setArtifact(null);
+                  setSelectedPerkHashes([]);
                   void patchVariant(
-                    { artifactHash: null, artifactConfig: [] },
+                    { artifactHash: null, artifactName: null, artifactConfig: [] },
                     "Artifact cleared",
-                  )
-                }
+                  );
+                }}
               >
                 Clear
               </Button>
@@ -431,8 +452,8 @@ export function VariantEditPanel({
         {tab === "mods" ? (
           <Stack gap={8}>
             <Text size="sm" tone="muted">
-              Armor mods live on set instances and resolve through attached
-              sets. Edit mod rolls on the Sets screen, then attach here.
+              Armor mods live on set instances and resolve through attached sets.
+              Edit mod rolls on the Sets screen, then attach here.
             </Text>
             <Cluster gap={6}>
               {variant.attachments.map((a) => (
@@ -441,32 +462,46 @@ export function VariantEditPanel({
                 </Chip>
               ))}
             </Cluster>
+            {variant.attachments.length === 0 ? (
+              <Text size="xs" tone="muted">
+                No sets attached yet.
+              </Text>
+            ) : null}
           </Stack>
         ) : null}
 
         {tab === "abilities" ? (
           <Stack gap={12}>
-            <TextField
-              label="Melee"
-              value={subclass.melee}
-              onChange={(e) =>
-                setSubclass((s) => ({ ...s, melee: e.target.value }))
-              }
-            />
-            <TextField
-              label="Grenade"
-              value={subclass.grenade}
-              onChange={(e) =>
-                setSubclass((s) => ({ ...s, grenade: e.target.value }))
-              }
-            />
-            <TextField
-              label="Class ability"
-              value={subclass.classAbility}
-              onChange={(e) =>
-                setSubclass((s) => ({ ...s, classAbility: e.target.value }))
-              }
-            />
+            <Text size="xs" tone="muted">
+              {build.subclass.name} · {build.className}. Pick from manifest
+              abilities for this subclass.
+            </Text>
+            {(
+              [
+                ["melee", "Melee"],
+                ["grenade", "Grenade"],
+                ["classAbility", "Class ability"],
+              ] as const
+            ).map(([key, label]) => (
+              <Stack key={key} gap={6}>
+                <Text size="sm">
+                  {label}: <span className="text-accent">{subclass[key]}</span>
+                </Text>
+                <ManifestSearchPicker
+                  label={`Search ${label.toLowerCase()}`}
+                  category="abilities"
+                  kind={key}
+                  classType={build.className}
+                  subclass={build.subclass.name}
+                  selected={{ hash: 0, name: subclass[key] }}
+                  onSelect={(item) => {
+                    if (!item) return;
+                    setSubclass((s) => ({ ...s, [key]: item.name }));
+                  }}
+                  disabled={busy}
+                />
+              </Stack>
+            ))}
             <Button
               variant="accent"
               size="sm"
@@ -499,21 +534,19 @@ export function VariantEditPanel({
                 />
               ))}
             </Cluster>
-            <TextField
+            <ManifestSearchPicker
               label="Add aspect"
-              placeholder="Aspect name"
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                const value = (e.target as HTMLInputElement).value.trim();
-                if (!value) return;
+              category="aspects"
+              classType={build.className}
+              multi
+              selectedNames={subclass.aspects}
+              onToggleName={(name) =>
                 setSubclass((s) => ({
                   ...s,
-                  aspects: s.aspects.includes(value)
-                    ? s.aspects
-                    : [...s.aspects, value],
-                }));
-                (e.target as HTMLInputElement).value = "";
-              }}
+                  aspects: toggleList(s.aspects, name),
+                }))
+              }
+              disabled={busy}
             />
             <Button
               variant="accent"
@@ -547,21 +580,18 @@ export function VariantEditPanel({
                 />
               ))}
             </Cluster>
-            <TextField
+            <ManifestSearchPicker
               label="Add fragment"
-              placeholder="Fragment name"
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                const value = (e.target as HTMLInputElement).value.trim();
-                if (!value) return;
+              category="fragments"
+              multi
+              selectedNames={subclass.fragments}
+              onToggleName={(name) =>
                 setSubclass((s) => ({
                   ...s,
-                  fragments: s.fragments.includes(value)
-                    ? s.fragments
-                    : [...s.fragments, value],
-                }));
-                (e.target as HTMLInputElement).value = "";
-              }}
+                  fragments: toggleList(s.fragments, name),
+                }))
+              }
+              disabled={busy}
             />
             <Button
               variant="accent"
