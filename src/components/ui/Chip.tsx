@@ -11,7 +11,7 @@ export function Chip({
 }) {
   return (
     <span
-      className={`inline-flex items-center text-[10px] tracking-wide px-2 py-0.5 border ${
+      className={`inline-flex items-center text-[10px] tracking-wide px-2 py-0.5 border whitespace-nowrap ${
         accent ? "border-accent/50 text-accent" : "border-line text-muted"
       } ${className}`.trim()}
     >

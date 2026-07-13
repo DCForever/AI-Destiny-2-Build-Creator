@@ -165,35 +165,40 @@ export function BuildIdentity({
 
         {(build.synergyTypes?.length ?? 0) > 0 ? (
           <Section label="Synergy Types">
-            <Cluster>
-              {build.synergyTypes!.map((t) => (
-                <InfoHotspot
-                  key={t.key}
-                  kind="Synergy type"
-                  title={t.label}
-                  lines={[
-                    `Type: ${t.type}`,
-                    t.subType ? `Subtype: ${t.subType}` : "No subtype",
-                    "Designation matched against library synergies for coverage",
-                  ]}
-                >
-                  <Row gap={4} align="center">
-                    <DesignationIcon
-                      type={t.type}
-                      subType={t.subType}
-                      icon={getIcon(t.type, t.subType)}
-                      size={22}
-                      label={t.label}
-                    />
-                    <Chip>{t.label}</Chip>
-                  </Row>
-                </InfoHotspot>
-              ))}
-            </Cluster>
+            <div className="flex flex-wrap gap-2 items-center">
+              {build.synergyTypes!.map((t) => {
+                const chipLabel = t.subType?.trim() || t.label;
+                return (
+                  <InfoHotspot
+                    key={t.key}
+                    kind="Synergy type"
+                    title={t.label}
+                    lines={[
+                      `Type: ${t.type}`,
+                      t.subType ? `Subtype: ${t.subType}` : "No subtype",
+                      "Designation matched against library synergies for coverage",
+                    ]}
+                  >
+                    <span className="inline-flex items-center gap-1.5 border border-line px-2 py-0.5">
+                      <DesignationIcon
+                        type={t.type}
+                        subType={t.subType}
+                        icon={getIcon(t.type, t.subType)}
+                        size={18}
+                        label={t.label}
+                      />
+                      <span className="text-[10px] tracking-wide text-muted whitespace-nowrap">
+                        {chipLabel}
+                      </span>
+                    </span>
+                  </InfoHotspot>
+                );
+              })}
+            </div>
           </Section>
         ) : build.synergies.length > 0 ? (
           <Section label="Synergies">
-            <Cluster>
+            <div className="flex flex-wrap gap-2 items-center">
               {build.synergies.map((synergy) => (
                 <InfoHotspot
                   key={synergy.id}
@@ -201,13 +206,15 @@ export function BuildIdentity({
                   title={synergy.name}
                   lines={[
                     synergy.type,
-                    synergy.subType ? `Subtype: ${synergy.subType}` : "No subtype",
+                    synergy.subType
+                      ? `Subtype: ${synergy.subType}`
+                      : "No subtype",
                   ]}
                 >
-                  <Chip>{synergy.name}</Chip>
+                  <Chip className="whitespace-nowrap">{synergy.name}</Chip>
                 </InfoHotspot>
               ))}
-            </Cluster>
+            </div>
           </Section>
         ) : null}
 
