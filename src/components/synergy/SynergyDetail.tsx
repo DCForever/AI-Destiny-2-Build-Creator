@@ -8,6 +8,7 @@ import {
   Button,
   Chip,
   Cluster,
+  InfoHotspot,
   Panel,
   Row,
   Section,
@@ -48,6 +49,7 @@ export function SynergyDetail({
   deleteBusy?: boolean;
 }) {
   const grouped = groupLinks(synergy);
+  const typeLabel = getSynergyTypeLabel(synergy.type);
 
   return (
     <Panel tone="raised" className="w-full">
@@ -56,8 +58,29 @@ export function SynergyDetail({
           <Stack gap={6} className="min-w-0 flex-1">
             <Heading level={1}>{synergy.name}</Heading>
             <Cluster>
-              <Chip accent>{getSynergyTypeLabel(synergy.type)}</Chip>
-              {synergy.subType ? <Chip>{synergy.subType}</Chip> : null}
+              <InfoHotspot
+                kind="Synergy type"
+                title={typeLabel}
+                lines={[
+                  "Creatable library category",
+                  "Drives auto-generated display name",
+                  `Internal key: ${synergy.type}`,
+                ]}
+              >
+                <Chip accent>{typeLabel}</Chip>
+              </InfoHotspot>
+              {synergy.subType ? (
+                <InfoHotspot
+                  kind="Subtype"
+                  title={synergy.subType}
+                  lines={[
+                    "Required for some types (verb, melee, archetype, …)",
+                    "Matched when resolving coverage on builds",
+                  ]}
+                >
+                  <Chip>{synergy.subType}</Chip>
+                </InfoHotspot>
+              ) : null}
             </Cluster>
           </Stack>
           <Row gap={4} wrap>
@@ -102,17 +125,32 @@ export function SynergyDetail({
                     className="uppercase tracking-widest"
                   >
                     {LINK_KIND_LABEL[kind] ?? kind}
+                    {links.length > 0 ? ` · ${links.length}` : ""}
                   </Text>
                   <Stack gap={8}>
                     {links.map((link) => {
                       const meta = linkMeta(link);
                       const objectDesc = link.description?.trim() ?? "";
+                      const kindLabel = LINK_KIND_LABEL[kind] ?? kind;
                       return (
                         <Panel key={link.id} tone="muted" pad="sm">
                           <Stack gap={4}>
-                            <Text size="sm" weight="medium">
-                              {link.displayName}
-                            </Text>
+                            <InfoHotspot
+                              kind={kindLabel}
+                              title={link.displayName}
+                              lines={[
+                                `Link kind: ${kindLabel}`,
+                                meta ?? "Catalog identity for this synergy",
+                                objectDesc
+                                  ? objectDesc.slice(0, 200) +
+                                    (objectDesc.length > 200 ? "…" : "")
+                                  : "No catalog description",
+                              ]}
+                            >
+                              <Text size="sm" weight="medium">
+                                {link.displayName}
+                              </Text>
+                            </InfoHotspot>
                             {meta ? (
                               <Text size="xs" tone="muted">
                                 {meta}

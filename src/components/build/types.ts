@@ -71,6 +71,10 @@ export type BuildSummary = {
   exoticWeaponHash?: number | null;
   exoticWeaponName?: string | null;
   pinnedSuper?: string | null;
+  /** Subclass display name for library icons / meta. */
+  subclassName?: string | null;
+  /** Super ability name when known without full detail fetch. */
+  superName?: string | null;
 };
 
 export type BuildDetail = BuildSummary & {

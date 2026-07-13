@@ -11,7 +11,10 @@ import { EditableBuildSheet } from "@/components/sheet/EditableBuildSheet";
 import {
   Button,
   Callout,
+  ClassIcon,
   EmptyState,
+  LoadoutColorBar,
+  LoadoutIconPlate,
   PageHeader,
   Panel,
   Row,
@@ -21,6 +24,11 @@ import {
 import type { GeneratedBuild } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import type { SavedLoadout } from "@/lib/db/types";
+import {
+  CLASS_CSS_COLOR,
+  isGuardianClass,
+  loadoutAccentColor,
+} from "@/lib/destiny/identityVisuals";
 import { buildDiscoveryMatches, filterLoadoutRows } from "@/lib/loadouts/loadoutListApi";
 import {
   loadoutMatchLabel,
@@ -327,7 +335,7 @@ export function LoadoutsPage() {
   const openRow = openId ? rows.find((r) => r.id === openId) : undefined;
 
   return (
-    <div className="flex-1 max-w-4xl mx-auto p-6">
+    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
       <Stack gap={16}>
         <LoadoutDiscoveryOverlay
           open={discovery.open}
@@ -395,30 +403,47 @@ export function LoadoutsPage() {
                     builds: [],
                   };
                 const matchLabel = loadoutMatchLabel(buildMatch);
+                const cls = isGuardianClass(loadout.className ?? "")
+                  ? loadout.className!
+                  : "Titan";
+                const accent = loadoutAccentColor(
+                  `${loadout.id}:${loadout.name}:${cls}`,
+                );
+                const classColor = CLASS_CSS_COLOR[cls];
                 return (
                   <Panel key={loadout.id} tone="default" pad="none" className="overflow-hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-                      <Stack gap={4} className="min-w-0">
-                        <Text size="sm" weight="medium" className="truncate">
-                          {loadout.name}
-                        </Text>
-                        <Text size="xs" tone="muted">
-                          {[loadout.className, loadout.source, formatDate(loadout.updatedAt)]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </Text>
-                        {exoticLabels.length > 0 ? (
-                          <Text size="xs" tone="accent">
-                            {exoticLabels.join(" · ")}
+                    <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
+                      <LoadoutColorBar color={accent}>
+                        <LoadoutIconPlate color={accent}>
+                          <ClassIcon
+                            className={cls}
+                            color={classColor}
+                            size={18}
+                            title={cls}
+                          />
+                        </LoadoutIconPlate>
+                        <Stack gap={4} className="min-w-0">
+                          <Text size="sm" weight="medium" className="truncate">
+                            {loadout.name}
                           </Text>
-                        ) : null}
-                        <Text
-                          size="xs"
-                          tone={buildMatch.kind === "none" ? "muted" : "accent"}
-                        >
-                          {matchLabel}
-                        </Text>
-                      </Stack>
+                          <Text size="xs" tone="muted">
+                            {[loadout.className, loadout.source, formatDate(loadout.updatedAt)]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </Text>
+                          {exoticLabels.length > 0 ? (
+                            <Text size="xs" tone="accent">
+                              {exoticLabels.join(" · ")}
+                            </Text>
+                          ) : null}
+                          <Text
+                            size="xs"
+                            tone={buildMatch.kind === "none" ? "muted" : "accent"}
+                          >
+                            {matchLabel}
+                          </Text>
+                        </Stack>
+                      </LoadoutColorBar>
                       <Row gap={8} className="shrink-0">
                         <Button
                           size="sm"

@@ -16,3 +16,6 @@ export { PageHeader } from "./PageHeader";
 export { EmptyState } from "./EmptyState";
 export { Callout } from "./Callout";
 export { Workspace, WorkspaceMain, CardGrid } from "./Workspace";
+export { ClassIcon, ElementIcon, SuperIcon, IconBadge } from "./DestinyIcons";
+export { InfoHotspot } from "./InfoHotspot";
+export { LoadoutColorBar, LoadoutIconPlate } from "./LoadoutColorBar";

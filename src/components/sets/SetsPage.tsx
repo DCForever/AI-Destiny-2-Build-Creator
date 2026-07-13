@@ -145,7 +145,7 @@ export function SetsPage() {
 
   if (signedIn === false) {
     return (
-      <div className="flex-1 max-w-3xl mx-auto p-6">
+      <div className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Stack gap={16}>
           <PageHeader
             title="Sets"
@@ -224,7 +224,7 @@ export function SetsPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto p-6">
+    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
       <Stack gap={16}>
         <PageHeader
           title="Sets"

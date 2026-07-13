@@ -93,6 +93,15 @@ h4 {
   background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
 }
 
+/* Hide scrollbars on mobile nav overflow without killing scroll. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Status badges */
 .badge {
   font-family: var(--font-display), sans-serif;

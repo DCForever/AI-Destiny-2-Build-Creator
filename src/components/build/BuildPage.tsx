@@ -72,8 +72,42 @@ export function BuildPage() {
       return false;
     }
     setSignedIn(true);
-    const body = (await res.json()) as { builds: BuildSummary[] };
-    setBuilds(sortByName(body.builds ?? []));
+    const body = (await res.json()) as {
+      builds: Array<
+        BuildSummary & {
+          subclass?: BuildSubclass | string | null;
+          pinnedSuper?: string | null;
+        }
+      >;
+    };
+    const mapped: BuildSummary[] = (body.builds ?? []).map((b) => {
+      const sub =
+        typeof b.subclass === "string"
+          ? b.subclass
+          : b.subclass && typeof b.subclass === "object"
+            ? b.subclass.name
+            : b.subclassName ?? null;
+      const superName =
+        b.pinnedSuper ??
+        (typeof b.subclass === "object" && b.subclass
+          ? b.subclass.super
+          : null) ??
+        b.superName ??
+        null;
+      return {
+        id: b.id,
+        name: b.name,
+        className: b.className,
+        exoticArmorHash: b.exoticArmorHash,
+        exoticArmorName: b.exoticArmorName,
+        exoticWeaponHash: b.exoticWeaponHash,
+        exoticWeaponName: b.exoticWeaponName,
+        pinnedSuper: b.pinnedSuper,
+        subclassName: sub,
+        superName,
+      };
+    });
+    setBuilds(sortByName(mapped));
     return true;
   }, []);
 
@@ -262,6 +296,8 @@ export function BuildPage() {
               exoticWeaponHash: next.exoticWeaponHash,
               exoticWeaponName: next.exoticWeaponName,
               pinnedSuper: next.pinnedSuper,
+              subclassName: next.subclass?.name ?? null,
+              superName: next.pinnedSuper ?? next.subclass?.super ?? null,
             },
           ];
       return sortByName(mapped);
@@ -301,7 +337,7 @@ export function BuildPage() {
 
   if (signedIn === false) {
     return (
-      <div className="flex-1 max-w-3xl mx-auto p-6">
+      <div className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Stack gap={16}>
           <PageHeader
             title="Build"
@@ -436,7 +472,7 @@ export function BuildPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto p-6">
+    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
       <Stack gap={16}>
         <PageHeader
           title="Build"
