@@ -24,6 +24,8 @@ const MISSING_API_KEY_MESSAGE =
 interface BungieManifestServiceOptions {
   apiKey: string | null;
   fetchFn?: typeof fetch;
+  /** Disable in-process raw table memoization (tests). Default: enabled. */
+  cacheRawTables?: boolean;
 }
 
 interface ManifestMetadata {
@@ -143,10 +145,14 @@ function computeIsStale(
 export class BungieManifestService implements ManifestService {
   private readonly apiKey: string | null;
   private readonly fetchFn: typeof fetch;
+  private readonly cacheRawTables: boolean;
+  /** In-process memo of parsed raw tables (~190MB inventory defs) — UI lookups hit these repeatedly. */
+  private readonly rawTableCache = new Map<string, Promise<RawTable>>();
 
   constructor(options: BungieManifestServiceOptions) {
     this.apiKey = options.apiKey;
     this.fetchFn = options.fetchFn ?? fetch;
+    this.cacheRawTables = options.cacheRawTables !== false;
   }
 
   async getStatus(): Promise<ManifestStatus> {
@@ -175,10 +181,35 @@ export class BungieManifestService implements ManifestService {
     await writeJsonFile(currentVersionFilePath(), {
       version: metadata.version,
     });
+    // New version on disk — drop memoized tables so callers see fresh data.
+    this.rawTableCache.clear();
     return metadata.version;
   }
 
   async loadRawTable(
+    version: string,
+    table: RawTableName,
+  ): Promise<RawTable> {
+    const cacheKey = `${version}::${table}`;
+    if (this.cacheRawTables) {
+      const hit = this.rawTableCache.get(cacheKey);
+      if (hit) return hit;
+    }
+
+    const loadPromise = this.readAndParseRawTable(version, table);
+    if (this.cacheRawTables) {
+      this.rawTableCache.set(cacheKey, loadPromise);
+      // Drop failed promises so the next call retries disk.
+      loadPromise.catch(() => {
+        if (this.rawTableCache.get(cacheKey) === loadPromise) {
+          this.rawTableCache.delete(cacheKey);
+        }
+      });
+    }
+    return loadPromise;
+  }
+
+  private async readAndParseRawTable(
     version: string,
     table: RawTableName,
   ): Promise<RawTable> {

@@ -268,6 +268,30 @@ describe("BungieManifestService", () => {
     expect(loaded).toEqual(TABLE_FIXTURE);
   });
 
+  it("loadRawTable memoizes parsed tables within a service instance", async () => {
+    const table = RAW_TABLES[0];
+    await writeTableFile(TEST_VERSION, table, TABLE_FIXTURE);
+    const service = new BungieManifestService({ apiKey: "test-api-key" });
+
+    const a = await service.loadRawTable(TEST_VERSION, table);
+    const b = await service.loadRawTable(TEST_VERSION, table);
+    expect(a).toBe(b);
+  });
+
+  it("loadRawTable can disable memoization", async () => {
+    const table = RAW_TABLES[0];
+    await writeTableFile(TEST_VERSION, table, TABLE_FIXTURE);
+    const service = new BungieManifestService({
+      apiKey: "test-api-key",
+      cacheRawTables: false,
+    });
+
+    const a = await service.loadRawTable(TEST_VERSION, table);
+    const b = await service.loadRawTable(TEST_VERSION, table);
+    expect(a).toEqual(b);
+    expect(a).not.toBe(b);
+  });
+
   it("loadRawTable throws when the table file is missing", async () => {
     const service = new BungieManifestService({ apiKey: "test-api-key" });
 

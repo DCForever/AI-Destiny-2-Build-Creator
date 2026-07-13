@@ -189,46 +189,78 @@ function findArtifactPerkByName(
   return null;
 }
 
+type StoreIndex = {
+  byHash: Map<number, AnyRecord>;
+  bySearchName: Map<string, AnyRecord>;
+  records: AnyRecord[];
+};
+
+type LoadedIndexes = Partial<Record<PresentationStore, StoreIndex>>;
+
+/** Reuse hash/name indexes when entityCache returns the same store array refs. */
+const storeIndexCache = new WeakMap<AnyRecord[], StoreIndex>();
+
+function indexStore(records: AnyRecord[]): StoreIndex {
+  const cached = storeIndexCache.get(records);
+  if (cached) return cached;
+  const byHash = new Map<number, AnyRecord>();
+  const bySearchName = new Map<string, AnyRecord>();
+  for (const r of records) {
+    byHash.set(r.hash, r);
+    const sn =
+      "searchName" in r && typeof r.searchName === "string"
+        ? r.searchName
+        : normalizeName(r.name);
+    if (sn && !bySearchName.has(sn)) bySearchName.set(sn, r);
+  }
+  const index = { byHash, bySearchName, records };
+  storeIndexCache.set(records, index);
+  return index;
+}
+
 async function loadStores(
   names: readonly PresentationStore[],
-): Promise<Partial<Record<PresentationStore, AnyRecord[]>>> {
+): Promise<LoadedIndexes> {
   const { entityCache } = await getServices();
   const unique = [...new Set(names)];
   const pairs = await Promise.all(
     unique.map(async (name) => {
-      const records = await entityCache.getStore(name);
-      return [name, records as AnyRecord[]] as const;
+      const records = (await entityCache.getStore(name)) as AnyRecord[];
+      return [name, indexStore(records)] as const;
     }),
   );
   return Object.fromEntries(pairs);
 }
 
 function lookupHash(
-  loaded: Partial<Record<PresentationStore, AnyRecord[]>>,
+  loaded: LoadedIndexes,
   hash: number,
   stores: readonly PresentationStore[],
 ): EntityPresentation | null {
   for (const store of stores) {
     if (store === "artifacts") {
-      const arts = loaded.artifacts as EntityStores["artifacts"] | undefined;
+      const arts = loaded.artifacts;
       if (arts) {
-        const top = arts.find((a) => a.hash === hash);
+        const top = arts.byHash.get(hash);
         if (top) return fromRecord("artifacts", top);
-        const nested = findArtifactPerk(arts, hash);
+        const nested = findArtifactPerk(
+          arts.records as EntityStores["artifacts"],
+          hash,
+        );
         if (nested) return nested;
       }
       continue;
     }
-    const list = loaded[store];
-    if (!list) continue;
-    const match = list.find((r) => r.hash === hash);
+    const index = loaded[store];
+    if (!index) continue;
+    const match = index.byHash.get(hash);
     if (match) return fromRecord(store, match);
   }
   return null;
 }
 
 function lookupName(
-  loaded: Partial<Record<PresentationStore, AnyRecord[]>>,
+  loaded: LoadedIndexes,
   name: string,
   stores: readonly PresentationStore[],
 ): EntityPresentation | null {
@@ -237,28 +269,21 @@ function lookupName(
 
   for (const store of stores) {
     if (store === "artifacts") {
-      const arts = loaded.artifacts as EntityStores["artifacts"] | undefined;
+      const arts = loaded.artifacts;
       if (arts) {
-        const top = arts.find(
-          (a) =>
-            normalizeName(a.name) === search ||
-            ("searchName" in a && a.searchName === search),
-        );
+        const top = arts.bySearchName.get(search);
         if (top) return fromRecord("artifacts", top);
-        const nested = findArtifactPerkByName(arts, search);
+        const nested = findArtifactPerkByName(
+          arts.records as EntityStores["artifacts"],
+          search,
+        );
         if (nested) return nested;
       }
       continue;
     }
-    const list = loaded[store];
-    if (!list) continue;
-    const match = list.find((r) => {
-      if (normalizeName(r.name) === search) return true;
-      if ("searchName" in r && typeof r.searchName === "string") {
-        return r.searchName === search;
-      }
-      return false;
-    });
+    const index = loaded[store];
+    if (!index) continue;
+    const match = index.bySearchName.get(search);
     if (match) return fromRecord(store, match);
   }
   return null;

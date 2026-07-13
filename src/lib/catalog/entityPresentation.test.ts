@@ -218,4 +218,15 @@ describe("entityPresentation", () => {
     const byName = await presentByNames(["Font of Wisdom"], ["mods"]);
     expect(byName.get("Font of Wisdom")?.icon).toBe("/font.png");
   });
+
+  it("repeated presentByHashes calls remain correct (index reuse)", async () => {
+    const hashes = [100, 101, 201, 300, 400];
+    const a = await presentByHashes(hashes);
+    const b = await presentByHashes(hashes);
+    expect([...a.entries()].map(([h, p]) => [h, p.name])).toEqual(
+      [...b.entries()].map(([h, p]) => [h, p.name]),
+    );
+    expect(a.get(101)?.description).toContain("Scorch");
+    expect(b.get(101)?.description).toContain("Scorch");
+  });
 });

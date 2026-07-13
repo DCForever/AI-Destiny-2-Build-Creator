@@ -81,15 +81,18 @@ describe("buildPlugMapForInventory", () => {
     expect(map.get(1001)?.name).toBe("Fluted Barrel");
   });
 
-  it("returns entity map only when manifest version is missing", async () => {
+  it("scopes to requested hashes and skips manifest when version is missing", async () => {
     const manifest = createFakeManifest(ringingNailManifestPlugs);
     const map = await buildPlugMapForInventory(entityCache, manifest, null, [
+      1001,
       1636108362,
     ]);
 
     // Entity-known plug remains; unresolved hash not filled without version
     expect(map.get(1001)?.name).toBe("Fluted Barrel");
     expect(map.has(1636108362)).toBe(false);
+    // Unrequested entity plugs are not retained on the scoped map
+    expect(map.has(2001)).toBe(false);
   });
 
   it("fills missing icon/description from manifest even when name is known", async () => {

@@ -1,7 +1,7 @@
 import type { AuthenticatedUser } from "@/lib/auth/requireUser";
 import { createBungieProfileClient } from "@/lib/bungie/profile";
-import type { EntityCache } from "@/lib/manifest/types/services";
-import type { ManifestService } from "@/lib/manifest/types/services";
+import type { EntityCache, ManifestService } from "@/lib/manifest/types/services";
+import type { EntityStores } from "@/lib/manifest/types/stores";
 import { getServices } from "@/lib/services";
 
 import { buildSetBonusByItemHash, lookupSetBonus } from "./armorSetBonus";
@@ -47,6 +47,39 @@ export async function buildArmorInstanceMeta(
   return meta;
 }
 
+/** Cache full entity→presentation map while store array refs are stable. */
+const entityPlugMapByStores = new WeakMap<object, Map<number, PlugPresentation>>();
+
+function entityPlugPresentationMap(
+  weaponPerks: EntityStores["weapon-perks"],
+  mods: EntityStores["mods"],
+  originTraits: EntityStores["origin-traits"],
+): Map<number, PlugPresentation> {
+  const key = weaponPerks as object;
+  const hit = entityPlugMapByStores.get(key);
+  if (hit) return hit;
+  const map = buildPlugPresentationMap({
+    "weapon-perks": weaponPerks,
+    mods,
+    "origin-traits": originTraits,
+  });
+  entityPlugMapByStores.set(key, map);
+  return map;
+}
+
+function scopePlugMap(
+  entityMap: Map<number, PlugPresentation>,
+  plugHashes: number[],
+): Map<number, PlugPresentation> {
+  if (plugHashes.length === 0) return new Map(entityMap);
+  const scoped = new Map<number, PlugPresentation>();
+  for (const hash of new Set(plugHashes)) {
+    const p = entityMap.get(hash);
+    if (p) scoped.set(hash, p);
+  }
+  return scoped;
+}
+
 export async function buildPlugMapForInventory(
   entityCache: EntityCache,
   manifest: ManifestService,
@@ -59,20 +92,17 @@ export async function buildPlugMapForInventory(
     entityCache.getStore("origin-traits"),
   ]);
 
-  const entityMap = buildPlugPresentationMap({
-    "weapon-perks": weaponPerks,
-    mods,
-    "origin-traits": originTraits,
-  });
+  const entityMap = entityPlugPresentationMap(weaponPerks, mods, originTraits);
 
   // Fill missing hashes, icons, and descriptions from raw inventory defs
   // (barrels/mags/frames often absent from compact weapon-perks store).
-  const needManifest = [...new Set(plugHashes)].filter((hash) => {
+  const uniqueHashes = [...new Set(plugHashes)];
+  const needManifest = uniqueHashes.filter((hash) => {
     const p = entityMap.get(hash);
     return !p || !p.icon || !p.description;
   });
   if (needManifest.length === 0 || !manifestVersion) {
-    return entityMap;
+    return scopePlugMap(entityMap, uniqueHashes);
   }
 
   const manifestMap = await resolvePlugPresentationsFromManifest(
@@ -80,7 +110,10 @@ export async function buildPlugMapForInventory(
     manifestVersion,
     needManifest,
   );
-  return mergeManifestPlugPresentation(entityMap, manifestMap);
+  return mergeManifestPlugPresentation(
+    scopePlugMap(entityMap, uniqueHashes),
+    manifestMap,
+  );
 }
 
 export async function loadInstanceListContext(

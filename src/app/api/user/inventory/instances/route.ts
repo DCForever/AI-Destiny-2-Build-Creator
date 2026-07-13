@@ -38,8 +38,6 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const db = getDb();
   const inventoryRows = listInventoryItems(db, auth.user.id);
-  const plugHashes = collectEquipmentPlugHashes(inventoryRows);
-  const context = await loadInstanceListContext(auth, plugHashes);
 
   let itemIdentity:
     | {
@@ -47,17 +45,17 @@ export async function GET(request: Request): Promise<NextResponse> {
         inventorySearchNames: Map<number, string>;
       }
     | undefined;
-  let itemSearchName: string | null = null;
   if (criteria.itemHash !== undefined) {
     const { entityCache, manifest } = await getServices();
     const manifestStatus = await manifest.getStatus();
-    itemSearchName = await resolveCatalogItemSearchName(
+    const itemSearchName = await resolveCatalogItemSearchName(
       criteria.itemHash,
       entityCache,
       manifest,
       manifestStatus.cachedVersion,
     );
-    const inventoryHashes = listInventoryItems(db, auth.user.id).map((item) => item.itemHash);
+    // Only map search names for inventory hashes (not full catalog) — same identity match.
+    const inventoryHashes = inventoryRows.map((item) => item.itemHash);
     const inventorySearchNames = await buildInventorySearchNameMap(
       inventoryHashes,
       entityCache,
@@ -66,6 +64,22 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
     itemIdentity = { itemSearchName, inventorySearchNames };
   }
+
+  // Scope plug presentation work to items that will appear in the response
+  // (e.g. one weapon's copies) instead of every plug in the full vault.
+  const rowsForPlugs =
+    criteria.itemHash !== undefined
+      ? inventoryRows.filter((item) => {
+          if (item.itemHash === criteria.itemHash) return true;
+          if (!itemIdentity?.itemSearchName) return false;
+          return (
+            itemIdentity.inventorySearchNames.get(item.itemHash) ===
+            itemIdentity.itemSearchName
+          );
+        })
+      : inventoryRows;
+  const plugHashes = collectEquipmentPlugHashes(rowsForPlugs);
+  const context = await loadInstanceListContext(auth, plugHashes);
 
   const body = listUserInstances({
     db,

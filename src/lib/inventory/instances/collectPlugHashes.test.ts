@@ -36,4 +36,22 @@ describe("collectEquipmentPlugHashes", () => {
     expect(hashes).toContain(3634656993);
     expect(new Set(hashes).size).toBe(ringingNailAllPlugHashes.length);
   });
+
+  it("includes socket_plugs reusable alternates for multi-option columns", () => {
+    const withSockets = {
+      ...funnelCopyVault,
+      socketPlugs: [
+        {
+          socketIndex: 1,
+          equippedPlugHash: 1001,
+          reusablePlugHashes: [1001, 9001, 9002],
+          columnKind: "barrel" as const,
+          columnLabel: "Barrel",
+        },
+      ],
+    };
+    const hashes = collectEquipmentPlugHashes([withSockets]);
+    expect(hashes).toContain(9001);
+    expect(hashes).toContain(9002);
+  });
 });
