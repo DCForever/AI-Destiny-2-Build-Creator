@@ -7,6 +7,7 @@ import { listInventoryItems } from "@/lib/db/repositories/inventoryRepository";
 import { buildPlugMapForInventory } from "@/lib/inventory/instances/loadInstanceContext";
 import { resolveInstancePerkGrid } from "@/lib/inventory/instances/resolveInstancePerkGrid";
 import { loadWeaponSocketContext } from "@/lib/inventory/instances/weaponSocketContext";
+import { weaponStatLines } from "@/lib/inventory/instances/weaponStats";
 import { getServices } from "@/lib/services";
 
 export const runtime = "nodejs";
@@ -59,5 +60,25 @@ export async function GET(
     weaponPerkSocketIndexes: plugCtx.weaponPerkSocketIndexes,
   });
 
-  return NextResponse.json(grid);
+  const stats = weaponStatLines(item.statValues);
+  const intrinsicColumn = grid.columns.find((c) => c.columnKind === "intrinsic");
+  const intrinsic = intrinsicColumn?.options.find((o) => o.isEquipped) ??
+    intrinsicColumn?.options[0] ??
+    null;
+
+  return NextResponse.json({
+    ...grid,
+    power: item.power,
+    location: item.location,
+    isMasterwork: item.isMasterwork,
+    isCrafted: item.isCrafted,
+    stats,
+    intrinsic: intrinsic
+      ? {
+          name: intrinsic.displayName,
+          description: intrinsic.description ?? "",
+          icon: intrinsic.icon ?? null,
+        }
+      : null,
+  });
 }

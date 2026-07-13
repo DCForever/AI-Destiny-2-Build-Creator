@@ -491,6 +491,7 @@ export function CatalogPage() {
                                   <InstancePerkGridView
                                     instanceId={inst.instanceId}
                                     enabled
+                                    frameHint={selected.frame}
                                   />
                                 ) : (inst.plugs?.length ?? 0) > 0 ? (
                                   <Cluster gap={6}>

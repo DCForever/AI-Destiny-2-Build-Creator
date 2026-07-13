@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { WeaponStatsPanel } from "@/components/catalog/WeaponStatsPanel";
 import {
+  Button,
   Callout,
   EntityHotspot,
   Stack,
@@ -15,24 +17,84 @@ import {
   shouldAutoSync,
 } from "@/lib/inventory/instances/perkGridRefresh";
 import type { InstancePerkGrid } from "@/lib/inventory/instances/types";
+import type { WeaponStatLine } from "@/lib/inventory/instances/weaponStats";
+
+type PerkGridResponse = InstancePerkGrid & {
+  power?: number;
+  location?: string;
+  isMasterwork?: boolean;
+  isCrafted?: boolean;
+  stats?: WeaponStatLine[];
+  intrinsic?: {
+    name: string;
+    description: string;
+    icon: string | null;
+  } | null;
+  error?: string;
+};
 
 /**
- * Read-only DIM-style per-copy weapon perk grid (011).
- * Icon-dense columns; hover/pin for name + description.
- * Loads GET .../instances/:id/perk-grid; auto re-sync once when captureStatus is pending.
+ * Read-only DIM-style per-copy weapon detail: combat stats + multi-option perk columns.
  */
 export function InstancePerkGridView({
   instanceId,
-  /** When false, do not fetch (e.g. armor copies). */
   enabled = true,
+  /** Catalog frame name (e.g. Rapid-Fire Frame) for intrinsic strip. */
+  frameHint,
 }: {
   instanceId: string;
   enabled?: boolean;
+  frameHint?: string | null;
 }) {
-  const [grid, setGrid] = useState<InstancePerkGrid | null>(null);
+  const [grid, setGrid] = useState<PerkGridResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncBusy, setSyncBusy] = useState(false);
   const refreshRef = useRef(createPerkGridRefreshState());
+
+  async function fetchGrid(): Promise<PerkGridResponse | null> {
+    const res = await fetch(
+      `/api/user/inventory/instances/${encodeURIComponent(instanceId)}/perk-grid`,
+    );
+    const body = (await res.json()) as PerkGridResponse;
+    if (!res.ok) {
+      setError(body.error ?? "Failed to load perk grid");
+      setGrid(null);
+      return null;
+    }
+    return body;
+  }
+
+  async function load(opts?: { forceSync?: boolean }) {
+    if (!enabled || !instanceId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      let next = await fetchGrid();
+      const needSync =
+        opts?.forceSync ||
+        (next?.captureStatus === "pending" &&
+          shouldAutoSync(refreshRef.current, instanceId));
+
+      if (needSync) {
+        setSyncBusy(true);
+        refreshRef.current = markSyncAttempted(refreshRef.current, instanceId);
+        try {
+          await fetch("/api/bungie/sync", { method: "POST" });
+        } finally {
+          refreshRef.current = markSyncFinished(refreshRef.current);
+          setSyncBusy(false);
+        }
+        next = await fetchGrid();
+      }
+      setGrid(next);
+    } catch {
+      setError("Failed to load perk grid");
+      setGrid(null);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!enabled || !instanceId) {
@@ -40,57 +102,15 @@ export function InstancePerkGridView({
       setError(null);
       return;
     }
-
     let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      async function fetchGrid(): Promise<InstancePerkGrid | null> {
-        const res = await fetch(
-          `/api/user/inventory/instances/${encodeURIComponent(instanceId)}/perk-grid`,
-        );
-        const body = (await res.json()) as InstancePerkGrid & { error?: string };
-        if (!res.ok) {
-          if (!cancelled) {
-            setError(body.error ?? "Failed to load perk grid");
-            setGrid(null);
-          }
-          return null;
-        }
-        return body;
-      }
-
-      try {
-        let next = await fetchGrid();
-        if (
-          next?.captureStatus === "pending" &&
-          shouldAutoSync(refreshRef.current, instanceId)
-        ) {
-          refreshRef.current = markSyncAttempted(refreshRef.current, instanceId);
-          try {
-            await fetch("/api/bungie/sync", { method: "POST" });
-          } finally {
-            refreshRef.current = markSyncFinished(refreshRef.current);
-          }
-          if (!cancelled) next = await fetchGrid();
-        }
-        if (!cancelled) setGrid(next);
-      } catch {
-        if (!cancelled) {
-          setError("Failed to load perk grid");
-          setGrid(null);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void load();
+    void (async () => {
+      if (cancelled) return;
+      await load();
+    })();
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload only when instance changes
   }, [instanceId, enabled]);
 
   if (!enabled) return null;
@@ -98,7 +118,7 @@ export function InstancePerkGridView({
   if (loading && !grid) {
     return (
       <Text size="xs" tone="muted">
-        Loading perk grid…
+        Loading instance detail…
       </Text>
     );
   }
@@ -114,113 +134,139 @@ export function InstancePerkGridView({
   if (!grid) return null;
 
   const optionCount = grid.columns.reduce((n, c) => n + c.options.length, 0);
+  const rpm = grid.stats?.find((s) => s.name === "RPM")?.value;
+  const impact = grid.stats?.find((s) => s.name === "Impact")?.value;
+  const frameLabel =
+    grid.intrinsic?.name ||
+    frameHint ||
+    null;
+  const frameSub =
+    rpm != null && impact != null
+      ? `${rpm} rpm / ${impact} impact`
+      : grid.intrinsic?.description?.slice(0, 80) || null;
+
+  // Main combat sockets first (barrel/mag/traits/origin); keep others after.
+  const primaryKinds = new Set([
+    "barrel",
+    "magazine",
+    "trait",
+    "origin",
+    "intrinsic",
+    "masterwork",
+    "catalyst",
+  ]);
+  const mainColumns = grid.columns.filter((c) => primaryKinds.has(c.columnKind));
+  const extraColumns = grid.columns.filter((c) => !primaryKinds.has(c.columnKind));
+  const columns = [...mainColumns, ...extraColumns];
 
   return (
-    <Stack gap={8}>
-      <RowHeader
-        loading={loading}
-        captureStatus={grid.captureStatus}
-        optionCount={optionCount}
-        columnCount={grid.columns.length}
+    <Stack gap={12}>
+      <WeaponStatsPanel
+        stats={grid.stats ?? []}
+        frameLabel={frameLabel}
+        frameSub={frameSub}
       />
 
-      {grid.captureStatus === "pending" ? (
-        <Callout tone="warning">
-          Per-copy alternates pending — showing equipped only. Syncing may fill
-          the full roll for this copy.
-        </Callout>
-      ) : null}
-      {grid.captureStatus === "unavailable" ? (
-        <Callout tone="warning">
-          Per-copy alternates unavailable — showing equipped only. Re-sync
-          inventory after playing to capture multi-perk sockets.
-        </Callout>
-      ) : null}
-
-      {grid.columns.length === 0 ? (
-        <Text size="xs" tone="muted">
-          No perk columns for this copy.
-        </Text>
-      ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {grid.columns.map((column) => (
-            <div
-              key={column.socketIndex}
-              className="flex flex-col gap-1.5 min-w-[2.75rem] shrink-0"
-            >
-              <span
-                className="text-[9px] tracking-widest uppercase text-muted text-center truncate max-w-[3.5rem]"
-                title={column.label}
-              >
-                {column.label}
-              </span>
-              <div className="flex flex-col gap-1 items-center">
-                {column.options.map((opt) => (
-                  <div
-                    key={opt.hash}
-                    className={`relative rounded-sm p-0.5 ${
-                      opt.isEquipped
-                        ? "ring-2 ring-accent ring-offset-1 ring-offset-surface"
-                        : "opacity-90 hover:opacity-100"
-                    }`}
-                  >
-                    <EntityHotspot
-                      kind={column.label}
-                      name={opt.displayName}
-                      description={
-                        opt.description?.trim() ||
-                        "No description in catalog yet for this plug."
-                      }
-                      icon={opt.icon}
-                      size={36}
-                      showLabel="never"
-                      meta={[
-                        opt.isEquipped ? "Currently equipped" : "Available on this copy",
-                        opt.isEnhanced ? "Enhanced" : null,
-                      ].filter(Boolean) as string[]}
-                    />
-                    {opt.isEnhanced ? (
-                      <span
-                        className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-accent"
-                        title="Enhanced"
-                        aria-hidden
-                      />
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+      <Stack gap={8}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <Text size="xs" tone="muted" className="uppercase tracking-widest">
+            Per-copy perks
+            {loading || syncBusy ? " · refreshing…" : ""}
+          </Text>
+          <Text size="xs" tone="muted">
+            {optionCount} option{optionCount === 1 ? "" : "s"} · {columns.length}{" "}
+            col{columns.length === 1 ? "" : "s"}
+            {grid.captureStatus !== "complete" ? ` · ${grid.captureStatus}` : ""}
+          </Text>
         </div>
-      )}
-    </Stack>
-  );
-}
 
-function RowHeader({
-  loading,
-  captureStatus,
-  optionCount,
-  columnCount,
-}: {
-  loading: boolean;
-  captureStatus: string;
-  optionCount: number;
-  columnCount: number;
-}) {
-  return (
-    <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <Text size="xs" tone="muted" className="uppercase tracking-widest">
-        Per-copy perks
-        {loading ? " · refreshing…" : ""}
-      </Text>
-      {columnCount > 0 ? (
-        <Text size="xs" tone="muted">
-          {optionCount} perk{optionCount === 1 ? "" : "s"} · {columnCount} col
-          {columnCount === 1 ? "" : "s"}
-          {captureStatus === "complete" ? "" : ` · ${captureStatus}`}
-        </Text>
-      ) : null}
-    </div>
+        {grid.captureStatus === "pending" ? (
+          <Callout tone="warning">
+            <Stack gap={6}>
+              <Text size="sm">
+                Full multi-perk columns need a fresh inventory sync (Bungie
+                reusable plugs). Showing equipped plugs only until capture
+                completes.
+              </Text>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={syncBusy || loading}
+                onClick={() => {
+                  refreshRef.current = createPerkGridRefreshState();
+                  void load({ forceSync: true });
+                }}
+              >
+                {syncBusy ? "Syncing…" : "Sync inventory now"}
+              </Button>
+            </Stack>
+          </Callout>
+        ) : null}
+        {grid.captureStatus === "unavailable" ? (
+          <Callout tone="warning">
+            Per-copy alternate plugs unavailable for this copy — equipped only.
+          </Callout>
+        ) : null}
+
+        {columns.length === 0 ? (
+          <Text size="xs" tone="muted">
+            No perk columns for this copy.
+          </Text>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {columns.map((column) => (
+              <div
+                key={column.socketIndex}
+                className="flex flex-col gap-1.5 min-w-[2.75rem] shrink-0 items-center"
+              >
+                <span
+                  className="text-[9px] tracking-widest uppercase text-muted text-center truncate max-w-[4rem] w-full"
+                  title={column.label}
+                >
+                  {column.label}
+                </span>
+                <div className="flex flex-col gap-1.5 items-center">
+                  {column.options.map((opt) => (
+                    <div
+                      key={opt.hash}
+                      className={`relative rounded-sm p-0.5 ${
+                        opt.isEquipped
+                          ? "ring-2 ring-accent ring-offset-1 ring-offset-surface"
+                          : "opacity-85 hover:opacity-100"
+                      }`}
+                    >
+                      <EntityHotspot
+                        kind={column.label}
+                        name={opt.displayName}
+                        description={
+                          opt.description?.trim() ||
+                          "No description captured for this plug yet."
+                        }
+                        icon={opt.icon}
+                        size={40}
+                        showLabel="never"
+                        meta={[
+                          opt.isEquipped
+                            ? "Currently equipped"
+                            : "Available on this copy",
+                          opt.isEnhanced ? "Enhanced" : null,
+                        ].filter(Boolean) as string[]}
+                      />
+                      {opt.isEnhanced ? (
+                        <span
+                          className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-accent"
+                          title="Enhanced"
+                          aria-hidden
+                        />
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Stack>
+    </Stack>
   );
 }

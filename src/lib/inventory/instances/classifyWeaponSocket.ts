@@ -14,7 +14,18 @@ export interface SocketClassifyResult {
   includeInGrid: boolean;
 }
 
-const EXCLUDED_PATTERNS = [/shader/i, /tracker/i, /ornament/i, /^enhancements\./i];
+const EXCLUDED_PATTERNS = [
+  /shader/i,
+  /tracker/i,
+  /ornament/i,
+  /^enhancements\./i,
+  /kill.?tracker/i,
+  /objective/i,
+  /emote/i,
+  /clan.?banner/i,
+  /armor\.mods/i,
+  /v400\./i, // cosmetic / seasonal UI sockets
+];
 
 const COLUMN_LABELS: Record<Exclude<SocketColumnKind, "trait">, string> = {
   barrel: "Barrel",

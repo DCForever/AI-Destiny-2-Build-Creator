@@ -1,5 +1,4 @@
 import type { RollTag } from "@/lib/db/types";
-import type { ArmorStatName } from "@/data/rules/statBenefits";
 import type { ArmorTier } from "@/data/rules/armorTiers";
 import type { DestinyClassName } from "@/lib/manifest/types/records";
 
@@ -109,7 +108,8 @@ export interface OwnedInstanceDetail {
   isCrafted: boolean;
   rollTags: RollTag[];
   plugs: ResolvedPlug[];
-  statValues?: Partial<Record<ArmorStatName, number>>;
+  /** Armor 3.0 stats and/or weapon combat stats (string keys). */
+  statValues?: Partial<Record<string, number>>;
   totalStats?: number;
   statsIncomplete?: boolean;
   /** Armor only: resolved Armor 3.0 tier (see resolveArmorTier). */

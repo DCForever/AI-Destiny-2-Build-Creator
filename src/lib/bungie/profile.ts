@@ -2,6 +2,7 @@ import { getBungieOAuthConfig } from "@/lib/config/env";
 import type { DestinyClassName } from "@/lib/manifest/types/records";
 import { parseArmorStatValues } from "@/lib/inventory/instances/parseArmorStats";
 import type { BungieStatEntry } from "@/lib/inventory/instances/parseArmorStats";
+import { parseWeaponStatValues } from "@/lib/inventory/instances/weaponStats";
 import {
   EQUIPMENT_BUCKET_DISPLAY_LABELS,
   EQUIPMENT_BUCKET_LABELS,
@@ -43,7 +44,8 @@ function isArmorBucketHash(bucketHash: number): boolean {
   return ARMOR_BUCKET_HASHES.has(bucketHash);
 }
 
-const INVENTORY_COMPONENTS = "102,201,205,300,305,310";
+/** 304 = ItemStats (weapon/armor combat stats); 310 = ItemReusablePlugs. */
+const INVENTORY_COMPONENTS = "102,201,205,300,304,305,310";
 
 function assertBungieEnvelope(data: unknown): unknown {
   if (typeof data !== "object" || data === null) {
@@ -234,7 +236,12 @@ function extractStatsMap(itemComponents: unknown): Record<string, BungieStatEntr
   for (const [id, entry] of Object.entries(s.data as Record<string, unknown>)) {
     if (typeof entry !== "object" || entry === null) continue;
     const e = entry as Record<string, unknown>;
-    const rows = Array.isArray(e.stats) ? e.stats : [];
+    const rawStats = e.stats;
+    const rows: unknown[] = Array.isArray(rawStats)
+      ? rawStats
+      : typeof rawStats === "object" && rawStats !== null
+        ? Object.values(rawStats as Record<string, unknown>)
+        : [];
     const parsed: BungieStatEntry[] = [];
     for (const row of rows) {
       if (typeof row !== "object" || row === null) continue;
@@ -467,9 +474,15 @@ function parseInventoryItemAttempt(
   const isCrafted = parseIsCrafted(instance);
   const plugHashes = parsePlugHashes(socketsMap[instanceId] ?? []);
   const isArmor = isArmorBucketHash(bucketHash);
-  const statValues = isArmor ? parseArmorStatValues(statsMap[instanceId]) : undefined;
+  const isWeapon = isWeaponBucketHash(bucketHash);
+  const statEntries = statsMap[instanceId];
+  const statValues = isArmor
+    ? parseArmorStatValues(statEntries)
+    : isWeapon
+      ? parseWeaponStatValues(statEntries)
+      : undefined;
   const gearTier = isArmor ? parseGearTier(instance) : null;
-  const socketCapture = isWeaponBucketHash(bucketHash)
+  const socketCapture = isWeapon
     ? parseSocketCapture(instanceId, socketsMap[instanceId] ?? [], reusablePlugsMap)
     : undefined;
 

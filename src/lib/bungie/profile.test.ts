@@ -341,7 +341,51 @@ describe("HttpBungieProfileClient.getFullInventory", () => {
     });
   });
 
-  it("omits statValues for weapons and partial armor stats", async () => {
+  it("parses weapon combat stats when present", async () => {
+    const weaponStatsResponse = {
+      Response: {
+        profileInventory: {
+          data: {
+            items: [
+              {
+                itemHash: 900001,
+                itemInstanceId: "w1",
+                bucketHash: 1498876634, // Kinetic Weapons
+              },
+            ],
+          },
+        },
+        characterInventories: { data: {} },
+        characterEquipment: { data: {} },
+        itemComponents: {
+          instances: {
+            data: {
+              w1: { primaryStat: { value: 400 }, isMasterworked: false },
+            },
+          },
+          sockets: { data: { w1: { sockets: [] } } },
+          stats: {
+            data: {
+              w1: {
+                stats: {
+                  "4284893193": { statHash: 4284893193, value: 260 },
+                  "4043523819": { statHash: 4043523819, value: 45 },
+                },
+              },
+            },
+          },
+        },
+      },
+      ErrorCode: 1,
+    };
+    const items = await makeClient(makeOkFetch(weaponStatsResponse)).getFullInventory(
+      ACCESS_TOKEN,
+      membership,
+    );
+    expect(items[0]?.statValues).toEqual({ RPM: 260, Impact: 45 });
+  });
+
+  it("omits full armor stats requirement for partial armor stats", async () => {
     const partialStatsResponse = {
       ...ARMOR_STATS_RESPONSE,
       Response: {

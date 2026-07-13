@@ -5,7 +5,6 @@
  */
 
 import type { DestinyClassName } from "@/lib/manifest/types/records";
-import type { ArmorStatName } from "@/data/rules/statBenefits";
 
 /** Stored inside the encrypted iron-session cookie. */
 export interface BungieTokens {
@@ -72,7 +71,8 @@ export interface RawInventoryItem {
   plugHashes: number[];
   isMasterwork: boolean;
   isCrafted: boolean;
-  statValues?: Partial<Record<ArmorStatName, number>>;
+  /** Armor 3.0 stats and/or weapon combat stats (string keys). */
+  statValues?: Partial<Record<string, number>>;
   gearTier?: number | null;
   /** Weapon copies only: equipped + reusable plugs per socket from Bungie 305/310. */
   socketCapture?: import("@/lib/inventory/instances/types").RawSocketCapture[];

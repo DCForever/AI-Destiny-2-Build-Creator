@@ -4,7 +4,6 @@ import type { AppDatabase } from "../client";
 import { inventoryItems, inventorySyncMeta, users } from "../schema";
 import type { RollTag, UserInventoryItem } from "../types";
 import type { StoredSocketPlug } from "@/lib/inventory/instances/types";
-import type { ArmorStatName } from "@/data/rules/statBenefits";
 
 export function upsertInventoryBatch(
   db: AppDatabase,
@@ -150,7 +149,7 @@ export function queryInventoryByTags(
 
 function rowToItem(row: typeof inventoryItems.$inferSelect): UserInventoryItem {
   const statValues = row.statValues
-    ? (JSON.parse(row.statValues) as Partial<Record<ArmorStatName, number>>)
+    ? (JSON.parse(row.statValues) as Partial<Record<string, number>>)
     : undefined;
   return {
     instanceId: row.instanceId,

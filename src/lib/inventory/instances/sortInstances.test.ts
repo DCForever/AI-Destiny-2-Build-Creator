@@ -22,7 +22,10 @@ function armorInstance(
     syncedAt: "2026-01-01T00:00:00.000Z",
     statValues,
     totalStats: statValues
-      ? Object.values(statValues).reduce((sum, value) => sum + (value ?? 0), 0)
+      ? Object.values(statValues).reduce<number>(
+          (sum, value) => sum + (value ?? 0),
+          0,
+        )
       : undefined,
     statsIncomplete: !statValues,
   };

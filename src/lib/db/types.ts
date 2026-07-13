@@ -22,7 +22,8 @@ export interface UserInventoryItem {
   isCrafted: boolean;
   plugHashes: number[];
   rollTags: RollTag[];
-  statValues?: Partial<Record<ArmorStatName, number>>;
+  /** Armor 3.0 stats and/or weapon combat stats (string keys). */
+  statValues?: Partial<Record<string, number>>;
   gearTier?: number | null;
   socketPlugs?: StoredSocketPlug[] | null;
   syncedAt: string;
