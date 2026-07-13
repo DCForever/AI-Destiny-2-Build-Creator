@@ -1,9 +1,21 @@
 "use client";
 
 import { Suspense, useCallback, useState } from "react";
+
 import { BungieAuthControl, type AuthStatus } from "@/components/BungieAuthControl";
+import { InventorySyncCard } from "@/components/settings/InventorySyncCard";
 import { ManifestCard } from "./ManifestCard";
 import { StatusCard } from "./StatusCard";
+import {
+  Callout,
+  Cluster,
+  FilterChip,
+  PageHeader,
+  Panel,
+  SectionLabel,
+  Stack,
+  Text,
+} from "@/components/ui";
 import type { UserPreferences } from "@/lib/preferences/types";
 
 const BUNGIE_ENV_HINT =
@@ -14,9 +26,12 @@ const CLASSES = ["Titan", "Hunter", "Warlock"] as const;
 async function loadLlmStatus(): Promise<{ ok: boolean; lines: string[] }> {
   const res = await fetch("/api/llm");
   const body: unknown = await res.json();
-  const record = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+  const record =
+    typeof body === "object" && body !== null
+      ? (body as Record<string, unknown>)
+      : {};
   const healthy = record.healthy === true;
-  const lines: string[] = [];
+  const lines: string[] = ["Product generate path is retired — status for local tooling only."];
   if (typeof record.provider === "string") lines.push(`provider: ${record.provider}`);
   if (typeof record.active === "string" && record.active !== "primary") {
     lines.push(`active: ${record.active}`);
@@ -24,7 +39,7 @@ async function loadLlmStatus(): Promise<{ ok: boolean; lines: string[] }> {
   if (typeof record.detail === "string") lines.push(record.detail);
   const fallback =
     typeof record.fallback === "object" && record.fallback !== null
-      ? record.fallback as Record<string, unknown>
+      ? (record.fallback as Record<string, unknown>)
       : null;
   if (fallback && typeof fallback.provider === "string") {
     const fbHealthy = fallback.healthy === true ? "healthy" : "unavailable";
@@ -41,7 +56,10 @@ async function loadLlmStatus(): Promise<{ ok: boolean; lines: string[] }> {
 async function loadSearxngStatus(): Promise<{ ok: boolean; lines: string[] }> {
   const res = await fetch("/api/search");
   const body: unknown = await res.json();
-  const record = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+  const record =
+    typeof body === "object" && body !== null
+      ? (body as Record<string, unknown>)
+      : {};
   return {
     ok: record.healthy === true,
     lines: typeof record.detail === "string" ? [record.detail] : [],
@@ -51,7 +69,10 @@ async function loadSearxngStatus(): Promise<{ ok: boolean; lines: string[] }> {
 async function loadBungieStatus(): Promise<{ ok: boolean; lines: string[] }> {
   const res = await fetch("/api/auth/status");
   const body: unknown = await res.json();
-  const record = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+  const record =
+    typeof body === "object" && body !== null
+      ? (body as Record<string, unknown>)
+      : {};
 
   if (res.status === 503) {
     const message =
@@ -61,7 +82,9 @@ async function loadBungieStatus(): Promise<{ ok: boolean; lines: string[] }> {
 
   if (!res.ok) {
     const message =
-      typeof record.error === "string" ? record.error : "Could not check Bungie sign-in status";
+      typeof record.error === "string"
+        ? record.error
+        : "Could not check Bungie sign-in status";
     return { ok: false, lines: [message] };
   }
 
@@ -72,12 +95,6 @@ async function loadBungieStatus(): Promise<{ ok: boolean; lines: string[] }> {
     lines.push(`membership id: ${record.bungieMembershipId}`);
   }
   return { ok: configured, lines };
-}
-
-function fieldLabel(text: string) {
-  return (
-    <span className="text-[11px] tracking-widest uppercase text-muted">{text}</span>
-  );
 }
 
 export function SettingsPage() {
@@ -95,24 +112,29 @@ export function SettingsPage() {
       return;
     }
     if (!res.ok) {
-      const body = await res.json() as { error?: string };
+      const body = (await res.json()) as { error?: string };
       setPrefsError(body.error ?? "Failed to load preferences");
       return;
     }
-    const body = await res.json() as { preferences: UserPreferences };
+    const body = (await res.json()) as { preferences: UserPreferences };
     setPrefs(body.preferences);
   }, []);
 
-  const handleAuthChange = useCallback((auth: AuthStatus) => {
-    setSignedIn(auth.signedIn);
-    if (auth.signedIn) {
-      void loadPreferences();
-    } else {
-      setPrefs(null);
-    }
-  }, [loadPreferences]);
+  const handleAuthChange = useCallback(
+    (auth: AuthStatus) => {
+      setSignedIn(auth.signedIn);
+      if (auth.signedIn) {
+        void loadPreferences();
+      } else {
+        setPrefs(null);
+      }
+    },
+    [loadPreferences],
+  );
 
-  const saveDefaultClass = async (defaultClass: UserPreferences["defaultClass"]) => {
+  const saveDefaultClass = async (
+    defaultClass: UserPreferences["defaultClass"],
+  ) => {
     if (!signedIn) return;
     setSaving(true);
     setPrefsError(null);
@@ -124,11 +146,11 @@ export function SettingsPage() {
         body: JSON.stringify({ defaultClass }),
       });
       if (!res.ok) {
-        const body = await res.json() as { error?: string };
+        const body = (await res.json()) as { error?: string };
         setPrefsError(body.error ?? "Failed to save preferences");
         return;
       }
-      const body = await res.json() as { preferences: UserPreferences };
+      const body = (await res.json()) as { preferences: UserPreferences };
       setPrefs(body.preferences);
       setPrefsSaved(true);
     } catch {
@@ -139,68 +161,80 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="flex-1 max-w-3xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-lg text-foreground mb-2">Settings</h1>
-        <p className="text-sm text-muted leading-relaxed">
-          Service status for the local toolchain. The app degrades gracefully: only the manifest
-          is required to generate builds.
-        </p>
-      </div>
+    <div className="flex-1 max-w-3xl mx-auto p-6">
+      <Stack gap={16}>
+        <PageHeader
+          title="Settings"
+          description="Account, manifest, inventory sync, and service status. Manifest is required; inventory sync powers Catalog and owned pickers."
+        />
 
-      <div className="panel-notch p-5 space-y-4">
-        <div className="text-[11px] tracking-widest uppercase text-muted">Account</div>
-        <Suspense fallback={<p className="text-xs text-muted">Loading sign-in…</p>}>
-          <BungieAuthControl onAuthChange={handleAuthChange} />
-        </Suspense>
-        {signedIn && (
-          <div className="space-y-2">
-            <div>{fieldLabel("Default Guardian Class")}</div>
-            <div className="flex gap-0 border border-line">
-              {CLASSES.map((cls) => (
-                <button
-                  key={cls}
-                  type="button"
-                  disabled={saving}
-                  onClick={() => void saveDefaultClass(cls)}
-                  className={`flex-1 py-2 text-xs tracking-widest uppercase transition-colors focus-visible:outline-accent disabled:opacity-50 ${
-                    prefs?.defaultClass === cls
-                      ? "bg-accent text-background font-semibold"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  {cls}
-                </button>
-              ))}
-            </div>
-            {prefsSaved && <p className="text-xs text-muted">Preferences saved.</p>}
-            {prefsError && <p className="text-xs text-danger">{prefsError}</p>}
-          </div>
-        )}
-        {!signedIn && (
-          <p className="text-xs text-muted">Sign in to set your default guardian class.</p>
-        )}
-      </div>
+        <Panel tone="raised" pad="md">
+          <Stack gap={12}>
+            <SectionLabel>Account</SectionLabel>
+            <Suspense
+              fallback={
+                <Text size="xs" tone="muted">
+                  Loading sign-in…
+                </Text>
+              }
+            >
+              <BungieAuthControl onAuthChange={handleAuthChange} />
+            </Suspense>
+            {signedIn ? (
+              <Stack gap={8}>
+                <Text size="xs" tone="muted">
+                  Default guardian class
+                </Text>
+                <Cluster gap={6}>
+                  {CLASSES.map((cls) => (
+                    <FilterChip
+                      key={cls}
+                      label={cls}
+                      active={prefs?.defaultClass === cls}
+                      onClick={() => void saveDefaultClass(cls)}
+                      disabled={saving}
+                    />
+                  ))}
+                </Cluster>
+                {prefsSaved ? (
+                  <Text size="xs" tone="muted">
+                    Preferences saved.
+                  </Text>
+                ) : null}
+                {prefsError ? (
+                  <Callout tone="danger">{prefsError}</Callout>
+                ) : null}
+              </Stack>
+            ) : (
+              <Text size="sm" tone="muted">
+                Sign in to set your default guardian class.
+              </Text>
+            )}
+          </Stack>
+        </Panel>
 
-      <ManifestCard signedIn={signedIn} />
+        <ManifestCard signedIn={signedIn} />
 
-      <StatusCard
-        title="Local LLM"
-        description="Generates and analyzes builds. Set LLM_PROVIDER (openai, ollama, or grok). With grok, OLLAMA_* or a local LLM_URL auto-configures a fallback when Grok is unavailable."
-        load={loadLlmStatus}
-      />
+        <InventorySyncCard signedIn={signedIn} />
 
-      <StatusCard
-        title="SearXNG"
-        description="Optional web search for meta-checking. The pipeline works without it. Configure with SEARXNG_URL."
-        load={loadSearxngStatus}
-      />
+        <StatusCard
+          title="Bungie API"
+          description="OAuth for inventory, in-game loadouts, and Apply to character."
+          load={loadBungieStatus}
+        />
 
-      <StatusCard
-        title="Bungie Sign-in"
-        description="Optional OAuth sign-in used by the Analyzer to import your equipped loadout."
-        load={loadBungieStatus}
-      />
+        <StatusCard
+          title="Local LLM"
+          description="Retired from product IA. Optional status for local tooling only."
+          load={loadLlmStatus}
+        />
+
+        <StatusCard
+          title="SearXNG"
+          description="Optional web search helper. Pipeline works without it."
+          load={loadSearxngStatus}
+        />
+      </Stack>
     </div>
   );
 }

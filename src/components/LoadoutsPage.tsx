@@ -8,6 +8,16 @@ import {
   type ExoticPickerOption,
 } from "@/components/loadouts/LoadoutExoticFilterBar";
 import { EditableBuildSheet } from "@/components/sheet/EditableBuildSheet";
+import {
+  Button,
+  Callout,
+  EmptyState,
+  PageHeader,
+  Panel,
+  Row,
+  Stack,
+  Text,
+} from "@/components/ui";
 import type { GeneratedBuild } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import type { SavedLoadout } from "@/lib/db/types";
@@ -265,129 +275,149 @@ export function LoadoutsPage() {
   const openRow = openId ? rows.find((r) => r.id === openId) : undefined;
 
   return (
-    <div className="flex-1 max-w-4xl mx-auto p-6 space-y-6">
-      <LoadoutDiscoveryOverlay
-        open={discovery.open}
-        title={discovery.title}
-        matches={discovery.matches}
-        onClose={() => setDiscovery((d) => ({ ...d, open: false }))}
-      />
+    <div className="flex-1 max-w-4xl mx-auto p-6">
+      <Stack gap={16}>
+        <LoadoutDiscoveryOverlay
+          open={discovery.open}
+          title={discovery.title}
+          matches={discovery.matches}
+          onClose={() => setDiscovery((d) => ({ ...d, open: false }))}
+        />
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-lg text-foreground mb-2">Saved Loadouts</h1>
-          <p className="text-sm text-muted leading-relaxed">
-            Builds you save from the Generator appear here. Sign in with Bungie to sync across sessions.
-          </p>
-        </div>
-        <Suspense fallback={<p className="text-xs text-muted">Loading sign-in…</p>}>
-          <BungieAuthControl compact onAuthChange={handleAuthChange} />
-        </Suspense>
-      </div>
+        <PageHeader
+          title="In-Game Loadouts"
+          description="Saved loadouts and gear snapshots. Sign in with Bungie to sync across sessions."
+          actions={
+            <Suspense
+              fallback={
+                <Text size="xs" tone="muted">
+                  Loading sign-in…
+                </Text>
+              }
+            >
+              <BungieAuthControl compact onAuthChange={handleAuthChange} />
+            </Suspense>
+          }
+        />
 
-      {error && <p className="text-xs text-danger">{error}</p>}
+        {error ? <Callout tone="danger">{error}</Callout> : null}
 
-      {!signedIn && (
-        <div className="panel-notch p-6 text-center">
-          <p className="text-sm text-muted">Sign in with Bungie to view and manage saved loadouts.</p>
-        </div>
-      )}
+        {!signedIn ? (
+          <EmptyState description="Sign in with Bungie to view and manage saved loadouts." />
+        ) : null}
 
-      {signedIn && loading && <p className="text-xs text-muted">Loading loadouts…</p>}
+        {signedIn && loading ? (
+          <Text size="sm" tone="muted">
+            Loading loadouts…
+          </Text>
+        ) : null}
 
-      {signedIn && !loading && rows.length === 0 && (
-        <div className="panel-notch p-6 text-center">
-          <p className="text-sm text-muted">
-            No saved loadouts yet. Generate a build and click <span className="text-accent">Save Loadout</span>.
-          </p>
-        </div>
-      )}
+        {signedIn && !loading && rows.length === 0 ? (
+          <EmptyState description="No saved loadouts yet. Apply or save a loadout from Build to see it here." />
+        ) : null}
 
-      {signedIn && rows.length > 0 && (
-        <>
-          <LoadoutExoticFilterBar
-            criteria={filterCriteria}
-            armorOptions={pickerOptions.armor}
-            weaponOptions={pickerOptions.weapon}
-            onChange={setFilterCriteria}
-            onClearAll={() => setFilterCriteria({})}
-          />
+        {signedIn && rows.length > 0 ? (
+          <Stack gap={12}>
+            <LoadoutExoticFilterBar
+              criteria={filterCriteria}
+              armorOptions={pickerOptions.armor}
+              weaponOptions={pickerOptions.weapon}
+              onChange={setFilterCriteria}
+              onClearAll={() => setFilterCriteria({})}
+            />
 
-          {displayRows.length === 0 && (
-            <p className="text-sm text-muted">No loadouts match the current exotic filters.</p>
-          )}
+            {displayRows.length === 0 ? (
+              <Text size="sm" tone="muted">
+                No loadouts match the current exotic filters.
+              </Text>
+            ) : null}
 
-          <ul className="space-y-2" role="list">
-            {displayRows.map((loadout) => {
-              const isOpen = openId === loadout.id;
-              const isDeleting = deletingId === loadout.id;
-              const exoticLabels = exoticRowLabels(loadout);
-              return (
-                <li key={loadout.id} className="panel-notch overflow-hidden">
-                  <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-                    <div className="min-w-0">
-                      <div className="text-sm text-foreground truncate">{loadout.name}</div>
-                      <div className="text-xs text-muted mt-0.5">
-                        {[loadout.className, loadout.source, formatDate(loadout.updatedAt)]
-                          .filter(Boolean)
-                          .join(" · ")}
+            <Stack gap={8}>
+              {displayRows.map((loadout) => {
+                const isOpen = openId === loadout.id;
+                const isDeleting = deletingId === loadout.id;
+                const exoticLabels = exoticRowLabels(loadout);
+                return (
+                  <Panel key={loadout.id} tone="default" pad="none" className="overflow-hidden">
+                    <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <Stack gap={4} className="min-w-0">
+                        <Text size="sm" weight="medium" className="truncate">
+                          {loadout.name}
+                        </Text>
+                        <Text size="xs" tone="muted">
+                          {[loadout.className, loadout.source, formatDate(loadout.updatedAt)]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </Text>
+                        {exoticLabels.length > 0 ? (
+                          <Text size="xs" tone="accent">
+                            {exoticLabels.join(" · ")}
+                          </Text>
+                        ) : null}
+                      </Stack>
+                      <Row gap={8} className="shrink-0">
+                        <Button
+                          size="sm"
+                          disabled={opening && openId === loadout.id}
+                          onClick={() => void handleOpen(loadout.id)}
+                        >
+                          {isOpen ? "Close" : "Open"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          disabled={isDeleting}
+                          onClick={() => void handleDelete(loadout.id, loadout.name)}
+                        >
+                          {isDeleting ? "Deleting…" : "Delete"}
+                        </Button>
+                      </Row>
+                    </div>
+
+                    {isOpen && opening ? (
+                      <div className="px-4 pb-4">
+                        <Text size="xs" tone="muted">
+                          Loading build…
+                        </Text>
                       </div>
-                      {exoticLabels.length > 0 && (
-                        <div className="text-xs text-accent/90 mt-1">{exoticLabels.join(" · ")}</div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => void handleOpen(loadout.id)}
-                        disabled={opening && openId === loadout.id}
-                        className="text-xs border border-line px-3 py-1 text-muted hover:text-foreground hover:border-foreground/40 transition-colors focus-visible:outline-accent disabled:opacity-50"
-                      >
-                        {isOpen ? "Close" : "Open"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDelete(loadout.id, loadout.name)}
-                        disabled={isDeleting}
-                        className="text-xs border border-line px-3 py-1 text-muted hover:text-danger hover:border-danger/40 transition-colors focus-visible:outline-accent disabled:opacity-50"
-                      >
-                        {isDeleting ? "Deleting…" : "Delete"}
-                      </button>
-                    </div>
-                  </div>
+                    ) : null}
 
-                  {isOpen && opening && (
-                    <div className="px-4 pb-4 text-xs text-muted">Loading build…</div>
-                  )}
-
-                  {isOpen && openLoadout?.id === loadout.id && liveBuild && liveSheet && !opening && (
-                    <div className="border-t border-line p-4">
-                      <EditableBuildSheet
-                        sheet={liveSheet}
-                        build={liveBuild}
-                        activity={activity}
-                        className={openLoadout.buildRequest?.className ?? "Titan"}
-                        staleBanner={staleBanner}
-                        exoticSummary={openRow?.exoticSummary}
-                        onDiscoverLoadouts={openDiscovery}
-                        onUpdate={({ build, sheet }) => {
-                          setLiveBuild(build);
-                          setLiveSheet(sheet);
-                          void fetch(`/api/user/loadouts/${loadout.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ generatedBuild: build, resolvedSheet: sheet }),
-                          });
-                        }}
-                      />
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
+                    {isOpen &&
+                    openLoadout?.id === loadout.id &&
+                    liveBuild &&
+                    liveSheet &&
+                    !opening ? (
+                      <div className="border-t border-line p-4">
+                        <EditableBuildSheet
+                          sheet={liveSheet}
+                          build={liveBuild}
+                          activity={activity}
+                          className={openLoadout.buildRequest?.className ?? "Titan"}
+                          staleBanner={staleBanner}
+                          exoticSummary={openRow?.exoticSummary}
+                          onDiscoverLoadouts={openDiscovery}
+                          onUpdate={({ build, sheet }) => {
+                            setLiveBuild(build);
+                            setLiveSheet(sheet);
+                            void fetch(`/api/user/loadouts/${loadout.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                generatedBuild: build,
+                                resolvedSheet: sheet,
+                              }),
+                            });
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </Panel>
+                );
+              })}
+            </Stack>
+          </Stack>
+        ) : null}
+      </Stack>
     </div>
   );
 }
