@@ -101,13 +101,18 @@ export interface WeaponRecord extends EntityRecordBase {
 export type OriginTraitRecord = PerkRecord;
 
 export interface ArtifactPerkRecord extends PerkRecord {
-  /** 0-based column within the artifact grid. */
+  /** 0-based column within the artifact grid / socket index. */
   column: number;
-  /** 0-based row within the column. */
+  /** 0-based row within the column / plug list. */
   row: number;
+  /** Parent artifact display name (e.g. "Tablet of Ruin"). */
+  artifactName?: string;
 }
 
-/** One of the seven permanent Artifacts 2.0 artifacts. */
+/**
+ * Artifact unlock tree and/or equippable multi-artifact (Moment of Triumph).
+ * Built from DestinyArtifactDefinition and/or inventory Artifact items with sockets.
+ */
 export interface ArtifactRecord extends EntityRecordBase {
   description: string;
   perks: ArtifactPerkRecord[];

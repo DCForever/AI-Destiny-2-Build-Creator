@@ -20,8 +20,8 @@ interface AppShellProps {
 
 export function AppShell({ active, children }: AppShellProps) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="border-b border-line bg-surface/95 backdrop-blur-sm sticky top-0 z-20">
+    <div className="flex flex-col h-dvh max-h-dvh overflow-hidden">
+      <header className="shrink-0 border-b border-line bg-surface/95 backdrop-blur-sm z-20">
         <div className="max-w-[1600px] mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-3">
           <span className="font-display text-[10px] sm:text-sm tracking-[0.14em] sm:tracking-[0.18em] uppercase text-accent select-none shrink-0">
             <span className="hidden sm:inline">DESTINY 2 // BUILD CREATOR</span>
@@ -53,7 +53,9 @@ export function AppShell({ active, children }: AppShellProps) {
           </div>
         </div>
       </header>
-      {children}
+      <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {children}
+      </main>
     </div>
   );
 }

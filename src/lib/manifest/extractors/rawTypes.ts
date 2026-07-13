@@ -72,6 +72,7 @@ export interface RawInventoryItem {
   hash: number;
   displayProperties: RawDisplayProperties;
   itemType?: number;
+  /** e.g. "Artifact", "Seasonal Artifact", "Auto Rifle" */
   itemTypeDisplayName?: string;
   flavorText?: string;
   classType?: number;

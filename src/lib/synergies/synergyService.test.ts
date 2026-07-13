@@ -3,10 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import { API_ERROR_CODES } from "@/lib/api/errors";
 import { createTestDb } from "@/lib/db/client";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
+import { createSynergyRecord } from "@/lib/db/repositories/synergyRepository";
 import {
+  consolidateDuplicateDesignations,
+  createInputFromSynergy,
   createUserSynergy,
+  duplicateUserSynergy,
+  enrichSynergiesWithUsage,
   getUserSynergy,
   listUserSynergies,
+  listUserSynergiesConsolidated,
   mergeUserSynergies,
   reverseLookupSynergies,
   updateUserSynergy,
@@ -118,7 +124,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("Melee: Base — Cast No Shadows");
+    expect(synergy.name).toBe("Melee: Base");
     expect(synergy.links).toHaveLength(1);
     expect(synergy.links[0]?.originTraitHash).toBe(9001);
   });
@@ -138,7 +144,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("DPS — Cast No Shadows");
+    expect(synergy.name).toBe("DPS");
     expect(synergy.subType).toBeNull();
   });
 
@@ -157,7 +163,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("Solo — Cast No Shadows");
+    expect(synergy.name).toBe("Solo");
     expect(synergy.type).toBe("solo");
     expect(synergy.subType).toBeNull();
   });
@@ -180,7 +186,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("Verb: Scorch — Eutechnology 2pc");
+    expect(synergy.name).toBe("Verb: Scorch");
     expect(synergy.links[0]?.armorSetHash).toBe(8001);
   });
 
@@ -277,7 +283,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("Weapon Archetype: Micro-Missile Frame — Cast No Shadows");
+    expect(synergy.name).toBe("Weapon Archetype: Micro-Missile Frame");
     expect(synergy.subType).toBe("Micro-Missile Frame");
   });
 
@@ -297,7 +303,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("Weapon Archetype: Pulse Rifle — Cast No Shadows");
+    expect(synergy.name).toBe("Weapon Archetype: Pulse Rifle");
     expect(synergy.subType).toBe("Pulse Rifle");
   });
 
@@ -355,7 +361,7 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(synergy.name).toBe("Verb: Void Breach — The Ringing Nail");
+    expect(synergy.name).toBe("Verb: Void Breach");
     expect(synergy.subType).toBe("Void Breach");
   });
 
@@ -381,16 +387,59 @@ describe("synergyService", () => {
       ],
     });
 
-    expect(updated?.name).toBe("Melee: Base — Eutechnology 2pc");
+    expect(updated?.name).toBe("Melee: Base");
     expect(updated?.links).toHaveLength(1);
     expect(updated?.links[0]?.kind).toBe("armor_set_bonus");
+  });
+
+  it("duplicate of same designation consolidates back to one library row", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-dup", 3, "Player");
+
+    const source = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Scorch",
+      description: "Original note",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+
+    const payload = createInputFromSynergy(source);
+    expect(payload.type).toBe("verb");
+    expect(payload.subType).toBe("Scorch");
+    expect(payload.description).toBe("Original note");
+    expect(payload.links).toHaveLength(1);
+
+    // One-row-per-designation: clone folds into oldest survivor.
+    const clone = await duplicateUserSynergy(db, user.id, source.id);
+    expect(clone).not.toBeNull();
+    expect(clone!.id).toBe(source.id);
+    expect(clone!.type).toBe(source.type);
+    expect(clone!.subType).toBe(source.subType);
+    expect(clone!.links).toHaveLength(1);
+    expect(listUserSynergies(db, user.id)).toHaveLength(1);
+  });
+
+  it("returns null when duplicating a missing synergy", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-dup-miss", 3, "Player");
+    expect(await duplicateUserSynergy(db, user.id, "no-such-id")).toBeNull();
   });
 
   it("merges same-designation synergies: unions links and deletes sources", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "syn-merge", 3, "Player");
 
-    const survivor = await createUserSynergy(db, user.id, {
+    // Bypass create consolidation so two same-designation rows exist for manual merge.
+    const now = new Date().toISOString();
+    const survivor = createSynergyRecord(db, user.id, {
+      id: crypto.randomUUID(),
+      name: "Verb: Scorch",
       type: "verb",
       subType: "Scorch",
       description: "Survivor note",
@@ -401,8 +450,11 @@ describe("synergyService", () => {
           originTraitName: "Cast No Shadows",
         },
       ],
+      now,
     });
-    const source = await createUserSynergy(db, user.id, {
+    const source = createSynergyRecord(db, user.id, {
+      id: crypto.randomUUID(),
+      name: "Verb: Scorch",
       type: "verb",
       subType: "Scorch",
       description: "Source note",
@@ -413,6 +465,7 @@ describe("synergyService", () => {
           itemHash: 4206550094,
         },
       ],
+      now: new Date(Date.now() + 1000).toISOString(),
     });
 
     const result = await mergeUserSynergies(db, user.id, {
@@ -428,6 +481,114 @@ describe("synergyService", () => {
     expect(result.synergy.description).toContain("Source note");
     expect(getUserSynergy(db, user.id, source.id)).toBeNull();
     expect(listUserSynergies(db, user.id)).toHaveLength(1);
+  });
+
+  it("auto-consolidates same designation on create and list", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-auto-merge", 3, "Player");
+
+    const first = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Devour",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+    const second = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Devour",
+      links: [
+        {
+          kind: "weapon",
+          displayName: "The Ringing Nail",
+          itemHash: 4206550094,
+        },
+      ],
+    });
+
+    // Second create folds same designation into one row with unioned links.
+    expect(listUserSynergies(db, user.id)).toHaveLength(1);
+    expect(second.links).toHaveLength(2);
+    expect(second.id).toBe(listUserSynergies(db, user.id)[0]!.id);
+    // First id may have been deleted if timestamps tied; survivor is the list row.
+    expect(
+      getUserSynergy(db, user.id, first.id) ?? getUserSynergy(db, user.id, second.id),
+    ).not.toBeNull();
+
+    const listed = await listUserSynergiesConsolidated(db, user.id);
+    expect(listed).toHaveLength(1);
+    expect(listed[0]!.name).toBe("Verb: Devour");
+    expect(listed[0]!.objectCount).toBe(2);
+    expect(listed[0]!.buildCount).toBe(0);
+  });
+
+  it("consolidateDuplicateDesignations merges raw duplicates", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-consol", 3, "Player");
+    const t0 = "2026-01-01T00:00:00.000Z";
+    const t1 = "2026-02-01T00:00:00.000Z";
+    createSynergyRecord(db, user.id, {
+      id: "old-id",
+      name: "Verb: Devour — A",
+      type: "verb",
+      subType: "Devour",
+      description: "A",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+      now: t0,
+    });
+    createSynergyRecord(db, user.id, {
+      id: "new-id",
+      name: "Verb: Devour — B",
+      type: "verb",
+      subType: "Devour",
+      description: "B",
+      links: [
+        {
+          kind: "weapon",
+          displayName: "The Ringing Nail",
+          itemHash: 4206550094,
+        },
+      ],
+      now: t1,
+    });
+
+    const result = await consolidateDuplicateDesignations(db, user.id);
+    expect(result.deletedIds).toContain("new-id");
+    expect(result.survivorIds).toContain("old-id");
+    const rows = listUserSynergies(db, user.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.id).toBe("old-id");
+    expect(rows[0]!.links).toHaveLength(2);
+    expect(rows[0]!.name).toBe("Verb: Devour");
+  });
+
+  it("enrichSynergiesWithUsage reports objectCount", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-usage", 3, "Player");
+    const s = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Scorch",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+    const enriched = enrichSynergiesWithUsage(db, user.id, [s]);
+    expect(enriched[0]!.objectCount).toBe(1);
+    expect(enriched[0]!.buildCount).toBe(0);
   });
 
   it("rejects merge across different type/subType", async () => {

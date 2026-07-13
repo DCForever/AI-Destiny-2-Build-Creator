@@ -69,6 +69,11 @@ const PLUG_SET_TABLE: RawTable = {
 
 const SANDBOX_PERK_TABLE: RawTable = {
   "8001": { hash: 8001, displayProperties: dp("Hive Mind", "Bonus for 2-piece set.") },
+  // Artifact perk body text when inventory plug description is blank
+  "8701": {
+    hash: 8701,
+    displayProperties: dp("Volatile Flow Effect", "Picking up an orb grants Volatile Rounds."),
+  },
 };
 
 // ─── DestinyArtifactDefinition ────────────────────────────────────────────
@@ -264,7 +269,12 @@ const ITEM_TABLE: RawTable = {
   }),
 
   // Artifact perk items
-  "7001": { hash: 7001, displayProperties: dp("Volatile Flow", "Picking up an orb grants Volatile Rounds.", "/vflow.png") },
+  // 7001: blank inventory description — real body lives on sandbox perk (typical Bungie shape)
+  "7001": {
+    hash: 7001,
+    displayProperties: dp("Volatile Flow", "", "/vflow.png"),
+    perks: [{ perkHash: 8701 }],
+  },
   "7002": { hash: 7002, displayProperties: dp("Overload Auto Rifles", "Auto rifles stun Overload champions.", "/oar.png") },
   "7003": { hash: 7003, displayProperties: dp("Unstoppable Hand Cannon", "Hand cannons stun Unstoppable champions.", "/uhc.png") },
 };

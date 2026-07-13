@@ -16,11 +16,20 @@ import {
   Button,
   Cluster,
   FilterChip,
+  OfficialFilterIcon,
   Row,
   Stack,
   Text,
   TextField,
+  WeaponTypeIcon,
 } from "@/components/ui";
+import {
+  AMMO_OFFICIAL,
+  ELEMENT_OFFICIAL,
+  officialActiveStyle,
+  visualForArmorArchetype,
+} from "@/lib/destiny/catalogFilterVisuals";
+import type { DestinyElement } from "@/lib/destiny/identityVisuals";
 
 export type CatalogPick = {
   hash: number;
@@ -179,16 +188,38 @@ export function CatalogItemPicker({
                   {elements.length > 0 ? ` · ${elements.length}` : ""}
                 </Text>
                 <Cluster gap={6}>
-                  {CATALOG_ELEMENTS.map((el) => (
-                    <FilterChip
-                      key={el}
-                      label={el}
-                      active={elements.includes(el)}
-                      onClick={() =>
-                        setElements((prev) => toggleFilterValue(prev, el))
-                      }
-                    />
-                  ))}
+                  {CATALOG_ELEMENTS.map((el) => {
+                    const visual = ELEMENT_OFFICIAL[el as DestinyElement];
+                    return (
+                      <FilterChip
+                        key={el}
+                        label={el}
+                        iconOnly
+                        icon={
+                          visual ? (
+                            <OfficialFilterIcon
+                              icon={visual.icon}
+                              label={el}
+                              size={18}
+                            />
+                          ) : null
+                        }
+                        active={elements.includes(el)}
+                        activeStyle={
+                          visual
+                            ? {
+                                borderColor: visual.color,
+                                boxShadow: `0 0 0 1px ${visual.color}`,
+                                backgroundColor: `color-mix(in srgb, ${visual.color} 14%, transparent)`,
+                              }
+                            : undefined
+                        }
+                        onClick={() =>
+                          setElements((prev) => toggleFilterValue(prev, el))
+                        }
+                      />
+                    );
+                  })}
                 </Cluster>
               </Stack>
               <Stack gap={2}>
@@ -201,16 +232,32 @@ export function CatalogItemPicker({
                   {ammos.length > 0 ? ` · ${ammos.length}` : ""}
                 </Text>
                 <Cluster gap={6}>
-                  {CATALOG_AMMO_TYPES.map((a) => (
-                    <FilterChip
-                      key={a}
-                      label={a}
-                      active={ammos.includes(a)}
-                      onClick={() =>
-                        setAmmos((prev) => toggleFilterValue(prev, a))
-                      }
-                    />
-                  ))}
+                  {CATALOG_AMMO_TYPES.map((a) => {
+                    const visual = AMMO_OFFICIAL[a];
+                    return (
+                      <FilterChip
+                        key={a}
+                        label={a}
+                        iconOnly
+                        icon={
+                          <OfficialFilterIcon
+                            icon={visual.icon}
+                            label={a}
+                            size={18}
+                          />
+                        }
+                        active={ammos.includes(a)}
+                        activeStyle={{
+                          borderColor: visual.color,
+                          boxShadow: `0 0 0 1px ${visual.color}`,
+                          backgroundColor: `color-mix(in srgb, ${visual.color} 14%, transparent)`,
+                        }}
+                        onClick={() =>
+                          setAmmos((prev) => toggleFilterValue(prev, a))
+                        }
+                      />
+                    );
+                  })}
                 </Cluster>
               </Stack>
               <Stack gap={2}>
@@ -219,7 +266,7 @@ export function CatalogItemPicker({
                   tone="muted"
                   className="uppercase tracking-widest"
                 >
-                  Archetype
+                  Weapon type
                   {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
                 </Text>
                 <Cluster gap={6}>
@@ -227,6 +274,8 @@ export function CatalogItemPicker({
                     <FilterChip
                       key={t}
                       label={t}
+                      iconOnly
+                      icon={<WeaponTypeIcon typeName={t} size={14} />}
                       active={archetypes.includes(t)}
                       onClick={() =>
                         setArchetypes((prev) => toggleFilterValue(prev, t))
@@ -247,16 +296,32 @@ export function CatalogItemPicker({
                 {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
               </Text>
               <Cluster gap={6}>
-                {CATALOG_ARMOR_ARCHETYPES.map((t) => (
-                  <FilterChip
-                    key={t}
-                    label={t}
-                    active={archetypes.includes(t)}
-                    onClick={() =>
-                      setArchetypes((prev) => toggleFilterValue(prev, t))
-                    }
-                  />
-                ))}
+                {CATALOG_ARMOR_ARCHETYPES.map((t) => {
+                  const visual = visualForArmorArchetype(t);
+                  return (
+                    <FilterChip
+                      key={t}
+                      label={t}
+                      iconOnly={Boolean(visual)}
+                      icon={
+                        visual ? (
+                          <OfficialFilterIcon
+                            icon={visual.icon}
+                            label={t}
+                            size={16}
+                          />
+                        ) : null
+                      }
+                      active={archetypes.includes(t)}
+                      activeStyle={
+                        visual ? officialActiveStyle(visual) : undefined
+                      }
+                      onClick={() =>
+                        setArchetypes((prev) => toggleFilterValue(prev, t))
+                      }
+                    />
+                  );
+                })}
               </Cluster>
             </Stack>
           )}
@@ -323,6 +388,14 @@ export function CatalogItemPicker({
                       .join(" · ")}
                     {item.ownedCount > 0 ? ` · ×${item.ownedCount}` : ""}
                   </span>
+                  {item.description?.trim() ? (
+                    <span
+                      className="block text-xs text-muted leading-snug line-clamp-2 mt-0.5"
+                      title={item.description}
+                    >
+                      {item.description}
+                    </span>
+                  ) : null}
                 </span>
               </span>
             </button>

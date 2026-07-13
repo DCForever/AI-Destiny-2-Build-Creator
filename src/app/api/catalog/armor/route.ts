@@ -7,9 +7,17 @@ import { filterArmorCatalog } from "@/lib/catalog/filterItems";
 import { resolveInventoryHashProjections } from "@/lib/catalog/inventoryHashProjections";
 import { loadLegendaryArmorRows } from "@/lib/catalog/legendaryArmor";
 import { resolveSetBonusFilter } from "@/lib/catalog/setBonusFilter";
+import {
+  intersectAllowlists,
+  resolveSynergyCatalogAllowlists,
+} from "@/lib/catalog/synergyCatalogFilter";
+import { requireAuthenticatedUser } from "@/lib/api/requireUser";
 import { attachInstancePointers } from "@/lib/inventory/instances/catalogPointer";
 import { getDb } from "@/lib/db/client";
+import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
 import { getServices } from "@/lib/services";
+import { loadPerkWeaponIndex } from "@/lib/manifest/perkWeaponIndex";
+import type { SetBonusRecord } from "@/lib/manifest/types/records";
 
 export const runtime = "nodejs";
 
@@ -35,6 +43,7 @@ const querySchema = z.object({
   frame: z.string().trim().optional(),
   frames: z.array(z.string().trim().min(1)).optional(),
   setBonus: z.string().trim().optional(),
+  synergyIds: z.array(z.string().trim().min(1)).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   includeInstancePointer: z.enum(["0", "1"]).optional(),
 });
@@ -49,6 +58,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     frame: url.searchParams.get("frame") ?? undefined,
     frames: multiQuery(url, ["frame", "frames"]),
     setBonus: url.searchParams.get("setBonus") ?? undefined,
+    synergyIds: multiQuery(url, ["synergyId", "synergyIds"]),
     limit: url.searchParams.get("limit") ?? "100",
     includeInstancePointer: url.searchParams.get("includeInstancePointer") ?? undefined,
   });
@@ -89,6 +99,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     let legendaryArmor:
       | Awaited<ReturnType<typeof loadLegendaryArmorRows>>
       | undefined;
+    let setBonusesForLegendary: SetBonusRecord[] | undefined;
 
     if (parsed.data.setBonus?.trim()) {
       const setBonuses = await entityCache.getStore("set-bonuses");
@@ -103,13 +114,76 @@ export async function GET(request: Request): Promise<NextResponse> {
         });
       }
       armorHashAllowlist = resolution.armorHashes;
-      if (manifestStatus.cachedVersion) {
-        legendaryArmor = await loadLegendaryArmorRows(
-          resolution.sets,
-          manifest,
-          manifestStatus.cachedVersion,
+      setBonusesForLegendary = resolution.sets;
+    }
+
+    if (parsed.data.synergyIds?.length) {
+      const auth = await requireAuthenticatedUser(request);
+      if (!auth) {
+        return NextResponse.json({
+          items: [],
+          count: 0,
+          scope: parsed.data.scope,
+          syncPrompt: false,
+          message: "Sign in to filter by your synergies",
+        });
+      }
+      const rows = getSynergiesByIds(db, auth.user.id, parsed.data.synergyIds);
+      if (rows.length === 0) {
+        return NextResponse.json({
+          items: [],
+          count: 0,
+          scope: parsed.data.scope,
+          syncPrompt: parsed.data.scope === "owned" ? syncPrompt : false,
+          message: "No catalog items match these synergies",
+        });
+      }
+      const setBonuses = await entityCache.getStore("set-bonuses");
+      const weapons = await entityCache.getStore("weapons");
+      const perkIndex = manifestStatus.cachedVersion
+        ? await loadPerkWeaponIndex(manifestStatus.cachedVersion)
+        : null;
+      const allow = resolveSynergyCatalogAllowlists(rows, {
+        perkIndex,
+        weapons,
+        setBonuses,
+      });
+      if (allow.empty || allow.armorHashes.size === 0) {
+        return NextResponse.json({
+          items: [],
+          count: 0,
+          scope: parsed.data.scope,
+          syncPrompt: parsed.data.scope === "owned" ? syncPrompt : false,
+          message: "No armor matches these synergies",
+        });
+      }
+      armorHashAllowlist = intersectAllowlists(
+        armorHashAllowlist,
+        allow.armorHashes,
+      );
+      if (armorHashAllowlist && armorHashAllowlist.size === 0) {
+        return NextResponse.json({
+          items: [],
+          count: 0,
+          scope: parsed.data.scope,
+          syncPrompt: parsed.data.scope === "owned" ? syncPrompt : false,
+          message: "No armor matches these synergies",
+        });
+      }
+      // Legendary set pieces needed when allowlist includes set armor hashes.
+      if (!setBonusesForLegendary) {
+        setBonusesForLegendary = setBonuses.filter((s) =>
+          s.itemHashes.some((h) => allow.armorHashes.has(h)),
         );
       }
+    }
+
+    if (setBonusesForLegendary?.length && manifestStatus.cachedVersion) {
+      legendaryArmor = await loadLegendaryArmorRows(
+        setBonusesForLegendary,
+        manifest,
+        manifestStatus.cachedVersion,
+      );
     }
 
     const storeHashes = new Set([

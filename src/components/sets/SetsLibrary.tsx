@@ -26,8 +26,8 @@ export function SetsLibrary({
   loading: boolean;
 }) {
   return (
-    <Panel as="aside" className="flex flex-col min-h-[420px]">
-      <Stack gap={12}>
+    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -37,7 +37,9 @@ export function SetsLibrary({
             New
           </Button>
         </Row>
+      </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto mt-3">
         {loading ? (
           <Text size="sm" tone="muted">
             Loading sets…
@@ -86,7 +88,7 @@ export function SetsLibrary({
             })}
           </Stack>
         )}
-      </Stack>
+      </div>
     </Panel>
   );
 }

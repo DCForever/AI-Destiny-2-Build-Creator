@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Button,
-  Chip,
   Cluster,
+  DesignationLabel,
   FilterChip,
   Panel,
   Row,
@@ -255,8 +255,14 @@ export function SynergyFilters({
                         type="button"
                         onClick={() => toggleSubType(name)}
                         title="Remove subtype filter"
+                        className="inline-flex items-center gap-1 border border-accent/50 px-1.5 py-0.5"
                       >
-                        <Chip accent>{name} ×</Chip>
+                        <DesignationLabel
+                          type={expandedType ?? "verb"}
+                          subType={name}
+                          size={16}
+                        />
+                        <span className="text-[10px] text-accent">×</span>
                       </button>
                     ))}
                   </Cluster>

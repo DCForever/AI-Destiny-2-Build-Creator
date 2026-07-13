@@ -10,9 +10,15 @@ import {
   resolveOriginTraitFilter,
   resolvePerkFilter,
 } from "@/lib/catalog/perkTraitFilters";
+import {
+  intersectAllowlists,
+  resolveSynergyCatalogAllowlists,
+} from "@/lib/catalog/synergyCatalogFilter";
 import { attachInstancePointers } from "@/lib/inventory/instances/catalogPointer";
 import { loadPerkWeaponIndex } from "@/lib/manifest/perkWeaponIndex";
+import { requireAuthenticatedUser } from "@/lib/api/requireUser";
 import { getDb } from "@/lib/db/client";
+import { getSynergiesByIds } from "@/lib/db/repositories/synergyRepository";
 import { getServices } from "@/lib/services";
 
 export const runtime = "nodejs";
@@ -43,6 +49,7 @@ const querySchema = z.object({
   ammos: z.array(z.string().trim().min(1)).optional(),
   perk: z.string().trim().optional(),
   originTrait: z.string().trim().optional(),
+  synergyIds: z.array(z.string().trim().min(1)).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   includeInstancePointer: z.enum(["0", "1"]).optional(),
 });
@@ -61,6 +68,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     slot: url.searchParams.get("slot") ?? undefined,
     perk: url.searchParams.get("perk") ?? undefined,
     originTrait: url.searchParams.get("originTrait") ?? undefined,
+    synergyIds: multiQuery(url, ["synergyId", "synergyIds"]),
     limit: url.searchParams.get("limit") ?? "100",
     includeInstancePointer: url.searchParams.get("includeInstancePointer") ?? undefined,
   });
@@ -105,12 +113,16 @@ export async function GET(request: Request): Promise<NextResponse> {
     let weaponHashAllowlist: Set<number> | undefined;
     let filterMessage: string | null = null;
 
-    if (parsed.data.perk?.trim() || parsed.data.originTrait?.trim()) {
-      const perkIndex =
-        parsed.data.perk?.trim() && manifestStatus.cachedVersion
-          ? await loadPerkWeaponIndex(manifestStatus.cachedVersion)
-          : null;
+    const needsPerkIndex =
+      Boolean(parsed.data.perk?.trim()) ||
+      Boolean(parsed.data.synergyIds?.length);
 
+    const perkIndex =
+      needsPerkIndex && manifestStatus.cachedVersion
+        ? await loadPerkWeaponIndex(manifestStatus.cachedVersion)
+        : null;
+
+    if (parsed.data.perk?.trim() || parsed.data.originTrait?.trim()) {
       const perkResolution = parsed.data.perk?.trim()
         ? resolvePerkFilter(parsed.data.perk, weaponPerks, perkIndex)
         : null;
@@ -133,6 +145,42 @@ export async function GET(request: Request): Promise<NextResponse> {
               perk: parsed.data.perk,
               originTrait: parsed.data.originTrait,
             }) ?? "No matching weapons";
+        }
+      }
+    }
+
+    if (!filterMessage && parsed.data.synergyIds?.length) {
+      const auth = await requireAuthenticatedUser(request);
+      if (!auth) {
+        return NextResponse.json({
+          items: [],
+          count: 0,
+          scope: parsed.data.scope,
+          syncPrompt: false,
+          message: "Sign in to filter by your synergies",
+        });
+      }
+      const rows = getSynergiesByIds(db, auth.user.id, parsed.data.synergyIds);
+      if (rows.length === 0) {
+        filterMessage = "No catalog items match these synergies";
+      } else {
+        const setBonuses = await entityCache.getStore("set-bonuses");
+        const allow = resolveSynergyCatalogAllowlists(rows, {
+          perkIndex,
+          weapons,
+          setBonuses,
+          originTraits,
+        });
+        if (allow.empty || allow.weaponHashes.size === 0) {
+          filterMessage = "No weapons match these synergies";
+        } else {
+          weaponHashAllowlist = intersectAllowlists(
+            weaponHashAllowlist,
+            allow.weaponHashes,
+          );
+          if (weaponHashAllowlist && weaponHashAllowlist.size === 0) {
+            filterMessage = "No weapons match these synergies";
+          }
         }
       }
     }

@@ -13,10 +13,14 @@ import {
   ConceptTagFilterChip,
   EmptyState,
   FilterChip,
+  PageFrame,
+  PageFrameBody,
+  PageFrameChrome,
   PageHeader,
   Panel,
   Row,
   SectionLabel,
+  SignedOutGate,
   Stack,
   TextField,
   Workspace,
@@ -146,14 +150,11 @@ export function SetsPage() {
 
   if (signedIn === false) {
     return (
-      <div className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <Stack gap={16}>
-          <PageHeader
-            title="Sets"
-            description="Sign in with Bungie to curate weapon, armor, pair, and fashion sets."
-          />
-        </Stack>
-      </div>
+      <SignedOutGate
+        title="Sets"
+        description="Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants."
+        emptyDescription="Sign in with Bungie using the control in the header to curate weapon, armor, pair, and fashion sets."
+      />
     );
   }
 
@@ -195,13 +196,15 @@ export function SetsPage() {
     );
   } else if (!detail) {
     main = (
-      <EmptyState
-        description={
-          loading
-            ? "Loading…"
-            : "Select a set from the library, or create a new one."
-        }
-      />
+      <WorkspaceMain>
+        <EmptyState
+          description={
+            loading
+              ? "Loading…"
+              : "Select a set from the library, or create a new one."
+          }
+        />
+      </WorkspaceMain>
     );
   } else {
     main = (
@@ -225,74 +228,77 @@ export function SetsPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <Stack gap={16}>
-        <PageHeader
-          title="Sets"
-          description="Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants."
-        />
-
-        {error ? <Callout tone="danger">{error}</Callout> : null}
-
-        <Panel tone="muted" pad="md">
-          <Stack gap={10}>
-            <SectionLabel>Filters</SectionLabel>
-            <TextField
-              label="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search name · type · tag…"
-            />
-            <Cluster>
-              {SET_TYPES.map((t) => (
-                <FilterChip
-                  key={t}
-                  label={t}
-                  active={typeFilter.includes(t)}
-                  onClick={() =>
-                    setTypeFilter((prev) =>
-                      prev.includes(t)
-                        ? prev.filter((x) => x !== t)
-                        : [...prev, t],
-                    )
-                  }
-                />
-              ))}
-            </Cluster>
-            <Cluster>
-              {CONCEPT_TAGS.slice(0, 14).map((tag) => (
-                <ConceptTagFilterChip
-                  key={tag.id}
-                  tagId={tag.id}
-                  active={tagFilter.includes(tag.id)}
-                  onClick={() =>
-                    setTagFilter((prev) =>
-                      prev.includes(tag.id)
-                        ? prev.filter((x) => x !== tag.id)
-                        : [...prev, tag.id],
-                    )
-                  }
-                />
-              ))}
-            </Cluster>
-            {(typeFilter.length > 0 || tagFilter.length > 0 || query.trim()) && (
-              <Row>
-                <button
-                  type="button"
-                  className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground"
-                  onClick={() => {
-                    setTypeFilter([]);
-                    setTagFilter([]);
-                    setQuery("");
-                  }}
-                >
-                  Clear filters
-                </button>
-              </Row>
-            )}
-          </Stack>
-        </Panel>
-
+    <PageFrame>
+      <PageFrameChrome>
+        <Stack gap={12}>
+          <PageHeader
+            title="Sets"
+            description="Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants."
+          />
+          {error ? <Callout tone="danger">{error}</Callout> : null}
+          <Panel tone="muted" pad="md">
+            <Stack gap={10}>
+              <SectionLabel>Filters</SectionLabel>
+              <TextField
+                label="Search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search name · type · tag…"
+              />
+              <Cluster>
+                {SET_TYPES.map((t) => (
+                  <FilterChip
+                    key={t}
+                    label={t}
+                    active={typeFilter.includes(t)}
+                    onClick={() =>
+                      setTypeFilter((prev) =>
+                        prev.includes(t)
+                          ? prev.filter((x) => x !== t)
+                          : [...prev, t],
+                      )
+                    }
+                  />
+                ))}
+              </Cluster>
+              <Cluster>
+                {CONCEPT_TAGS.slice(0, 14).map((tag) => (
+                  <ConceptTagFilterChip
+                    key={tag.id}
+                    tagId={tag.id}
+                    active={tagFilter.includes(tag.id)}
+                    onClick={() =>
+                      setTagFilter((prev) =>
+                        prev.includes(tag.id)
+                          ? prev.filter((x) => x !== tag.id)
+                          : [...prev, tag.id],
+                      )
+                    }
+                  />
+                ))}
+              </Cluster>
+              {(typeFilter.length > 0 ||
+                tagFilter.length > 0 ||
+                query.trim()) && (
+                <Row>
+                  <button
+                    type="button"
+                    className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground"
+                    onClick={() => {
+                      setTypeFilter([]);
+                      setTagFilter([]);
+                      setQuery("");
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                </Row>
+              )}
+            </Stack>
+          </Panel>
+        </Stack>
+      </PageFrameChrome>
+      <PageFrameBody>
         <Workspace
           rail={
             <SetsLibrary
@@ -317,7 +323,7 @@ export function SetsPage() {
           }
           main={main}
         />
-      </Stack>
-    </div>
+      </PageFrameBody>
+    </PageFrame>
   );
 }

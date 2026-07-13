@@ -16,6 +16,8 @@ export type SynergyPickerItem = {
   originTraitHash?: number;
   perkHash?: number;
   parentItemHash?: number;
+  /** Parent artifact name for artifact_perk (e.g. "Tablet of Ruin"). */
+  artifactName?: string;
   armorSetName?: string;
   bonusPieces?: 2 | 4;
   bonusName?: string;
@@ -66,8 +68,15 @@ function finalizePickerItems(
   return dedupePickerItemsByName(ranked).slice(0, limit);
 }
 
+export type SynergyPickerLinkKind =
+  | "origin_trait"
+  | "weapon_perk"
+  | "armor_set_bonus"
+  | "exotic_armor"
+  | "artifact_perk";
+
 export async function searchSynergyLinkPickerItems(
-  kind: "origin_trait" | "weapon_perk" | "armor_set_bonus",
+  kind: SynergyPickerLinkKind,
   query: string,
   limit: number,
 ): Promise<SynergyPickerItem[]> {
@@ -121,31 +130,84 @@ export async function searchSynergyLinkPickerItems(
     return finalizePickerItems(items, limit, query);
   }
 
-  const sets = await entityCache.getStore("set-bonuses");
+  if (kind === "armor_set_bonus") {
+    const sets = await entityCache.getStore("set-bonuses");
+    const items: SynergyPickerItem[] = [];
+    for (const set of sets) {
+      for (const perk of set.perks) {
+        const matched =
+          !q ||
+          matchDescriptionQuery(q, {
+            name: set.name,
+            searchName: set.searchName,
+            otherTexts: [perk.name, perk.description],
+          }).matched;
+        if (!matched) continue;
+        items.push({
+          kind: "armor_set_bonus",
+          name: `${set.name} ${perk.requiredCount}pc — ${perk.name}`,
+          description: perk.description,
+          icon: set.icon,
+          armorSetName: set.name,
+          bonusPieces: perk.requiredCount as 2 | 4,
+          bonusName: perk.name,
+          armorSetHash: set.hash,
+        });
+        if (items.length >= limit * 2) break;
+      }
+      if (items.length >= limit * 2) break;
+    }
+    return finalizePickerItems(items, limit, query);
+  }
+
+  if (kind === "exotic_armor") {
+    const armor = await entityCache.getStore("exotic-armor");
+    const items = armor
+      .filter(
+        (a) =>
+          !q ||
+          matchDescriptionQuery(q, {
+            name: a.name,
+            searchName: a.searchName,
+            description: a.intrinsic?.description ?? "",
+          }).matched,
+      )
+      .map((a) => ({
+        kind: "exotic_armor" as const,
+        hash: a.hash,
+        name: a.name,
+        description: a.intrinsic?.description ?? "",
+        icon: a.icon,
+      }));
+    return finalizePickerItems(items, limit, query);
+  }
+
+  // artifact_perk — name is the mod; artifactName labels which tree it comes from
+  const artifacts = await entityCache.getStore("artifacts");
   const items: SynergyPickerItem[] = [];
-  for (const set of sets) {
-    for (const perk of set.perks) {
+  for (const art of artifacts) {
+    for (const perk of art.perks ?? []) {
+      const artifactName = perk.artifactName?.trim() || art.name;
       const matched =
         !q ||
         matchDescriptionQuery(q, {
-          name: set.name,
-          searchName: set.searchName,
-          otherTexts: [perk.name, perk.description],
+          name: perk.name,
+          searchName: perk.searchName,
+          description: perk.description,
+          otherTexts: [artifactName, art.name],
         }).matched;
       if (!matched) continue;
       items.push({
-        kind: "armor_set_bonus",
-        name: `${set.name} ${perk.requiredCount}pc — ${perk.name}`,
-        description: perk.description,
-        icon: set.icon,
-        armorSetName: set.name,
-        bonusPieces: perk.requiredCount as 2 | 4,
-        bonusName: perk.name,
-        armorSetHash: set.hash,
+        kind: "artifact_perk",
+        hash: perk.hash,
+        name: perk.name,
+        description: perk.description ?? "",
+        icon: perk.icon ?? art.icon,
+        perkHash: perk.hash,
+        parentItemHash: art.hash,
+        artifactName,
       });
-      if (items.length >= limit * 2) break;
     }
-    if (items.length >= limit * 2) break;
   }
   return finalizePickerItems(items, limit, query);
 }

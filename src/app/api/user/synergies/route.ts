@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { createSynergySchema } from "@/lib/synergies/schemas";
 import {
   createUserSynergy,
-  listUserSynergies,
+  listUserSynergiesConsolidated,
   withLinkDescriptions,
 } from "@/lib/synergies/synergyService";
 import type { SynergyType } from "@/lib/synergies/schemas";
@@ -21,7 +21,11 @@ export async function GET(request: Request): Promise<NextResponse> {
   const type = url.searchParams.get("type") as SynergyType | null;
 
   const db = getDb();
-  const synergies = listUserSynergies(db, auth.user.id, type ?? undefined);
+  const synergies = await listUserSynergiesConsolidated(
+    db,
+    auth.user.id,
+    type ?? undefined,
+  );
   return NextResponse.json({ synergies });
 }
 

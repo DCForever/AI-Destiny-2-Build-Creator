@@ -200,8 +200,8 @@ describe("buildService", () => {
       synergyTypes: [{ type: "verb", subType: "Devour" }],
     });
 
-    expect(build?.synergyTypes).toHaveLength(1);
-    expect(build?.synergyTypes?.[0]?.label).toBe("Verb: Devour");
+    // Verb designation plus implied element (Devour → Void) when implication applies.
+    expect(build?.synergyTypes?.some((t) => t.label === "Verb: Devour")).toBe(true);
     expect(build?.synergies).toHaveLength(0);
   });
 

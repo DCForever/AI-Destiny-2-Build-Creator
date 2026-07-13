@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeSoftStatTargets, mergeSoftStatTargets } from "@/lib/builds/softStatTargets";
+import {
+  normalizeSoftStatTargets,
+  mergeSoftStatTargets,
+  softStatDraftFromTargets,
+  softStatTargetsFromDraft,
+  clampSoftStatDraftValue,
+  emptySoftStatDraft,
+} from "@/lib/builds/softStatTargets";
 import { softStatWarnings, estimateLoadoutStats } from "@/lib/builds/statEstimate";
 import { suggestStatNudges, targetsFromAcceptedNudges } from "@/lib/builds/statNudges";
 import { API_ERROR_CODES } from "@/lib/api/errors";
@@ -25,6 +32,46 @@ describe("softStatTargets", () => {
       Health: 120,
       Melee: 80,
     });
+  });
+});
+
+describe("softStat draft ↔ payload (structured editor)", () => {
+  it("round-trips set targets and clears blanks", () => {
+    const draft = softStatDraftFromTargets({ Health: 100, Weapons: 70 });
+    expect(draft.Health).toBe("100");
+    expect(draft.Weapons).toBe("70");
+    expect(draft.Melee).toBe("");
+    expect(softStatTargetsFromDraft(draft)).toEqual({ Health: 100, Weapons: 70 });
+  });
+
+  it("empty draft yields empty targets (clear all)", () => {
+    expect(softStatTargetsFromDraft(emptySoftStatDraft())).toEqual({});
+  });
+
+  it("rejects invalid draft values without producing partial corrupt payload", () => {
+    const draft = softStatDraftFromTargets({ Health: 100 });
+    draft.Weapons = "not-a-number";
+    expect(() => softStatTargetsFromDraft(draft)).toThrow(/integer/i);
+    draft.Weapons = "250";
+    expect(() => softStatTargetsFromDraft(draft)).toThrow(/between 1 and/);
+  });
+
+  it("clamps draft strings into 1..STAT_MAX", () => {
+    expect(clampSoftStatDraftValue("")).toBe("");
+    expect(clampSoftStatDraftValue("  0 ")).toBe("1");
+    expect(clampSoftStatDraftValue("999")).toBe("200");
+    expect(clampSoftStatDraftValue("100.9")).toBe("100");
+  });
+
+  it("BuildEditPanel wires SoftStatTargetsEditor (no JSON textarea)", () => {
+    const src = readFileSync(
+      join(process.cwd(), "src/components/build/BuildEditPanel.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/SoftStatTargetsEditor/);
+    expect(src).toMatch(/softStatTargetsFromDraft/);
+    expect(src).not.toMatch(/Soft stat targets \(JSON\)/);
+    expect(src).not.toMatch(/JSON\.stringify\(build\.softStatTargets/);
   });
 });
 

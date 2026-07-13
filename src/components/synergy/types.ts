@@ -30,11 +30,15 @@ export type SynergyDetail = {
   links: SynergyLink[];
   createdAt?: string;
   updatedAt?: string;
+  /** Builds whose synergyTypes include this designation. */
+  buildCount?: number;
+  /** Linked objects on this library row. */
+  objectCount?: number;
 };
 
 export type SynergySummary = Pick<
   SynergyDetail,
-  "id" | "name" | "type" | "subType"
+  "id" | "name" | "type" | "subType" | "buildCount" | "objectCount"
 > & {
   links?: SynergyLink[];
 };
@@ -46,6 +50,8 @@ export const LINK_KINDS = [
   "weapon_perk",
   "origin_trait",
   "armor_set_bonus",
+  "exotic_armor",
+  "artifact_perk",
 ] as const;
 
 export type LinkKind = (typeof LINK_KINDS)[number];
@@ -55,4 +61,6 @@ export const LINK_KIND_LABEL: Record<string, string> = {
   weapon_perk: "Weapon perk",
   origin_trait: "Origin trait",
   armor_set_bonus: "Armor set bonus",
+  exotic_armor: "Exotic Armor",
+  artifact_perk: "Artifact perk",
 };

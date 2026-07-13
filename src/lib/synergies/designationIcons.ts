@@ -6,6 +6,10 @@
 
 import { SYNERGY_ELEMENTS } from "@/data/synergyElements";
 import { SYNERGY_VERB_NAMES } from "@/data/synergyVerbs";
+import {
+  ARMOR_ARCHETYPE_OFFICIAL,
+  WEAPON_FRAME_OFFICIAL,
+} from "@/lib/destiny/catalogFilterVisuals";
 import { getServices } from "@/lib/services";
 import {
   designationIconKey,
@@ -87,18 +91,14 @@ export async function buildDesignationNameIconIndex(opts?: {
   indexEntityIcons(mods, "mods", byName);
   indexEntityIcons(setBonuses, "set-bonuses", byName);
 
-  for (const w of weapons) {
-    if (w.frame) {
-      if (!lookupIconByName(byName, w.frame) && w.icon) {
-        putDesignationNameIcon(byName, w.frame, w.icon, "weapon-frame");
-      }
-    }
-    if (w.itemTypeName && w.icon) {
-      if (!lookupIconByName(byName, w.itemTypeName)) {
-        putDesignationNameIcon(byName, w.itemTypeName, w.icon, "weapon-type");
-      }
-    }
+  // Official frame + armor archetype plug icons (not random weapon portraits).
+  for (const [name, visual] of Object.entries(WEAPON_FRAME_OFFICIAL)) {
+    putDesignationNameIcon(byName, name, visual.icon, "weapon-frame");
   }
+  for (const [name, visual] of Object.entries(ARMOR_ARCHETYPE_OFFICIAL)) {
+    putDesignationNameIcon(byName, name, visual.icon, "armor-archetype");
+  }
+  // Never map weapon *type* names (Auto Rifle) to a specific weapon's item art.
 
   const status = await manifest.getStatus();
   if (status.cachedVersion) {

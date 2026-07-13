@@ -27,6 +27,12 @@ export async function validateSynergyLink(
         return { valid: false, reason: "armorSetName, bonusPieces, bonusName required" };
       }
       return validateArmorSetBonus(link);
+    case "exotic_armor":
+      if (!link.itemHash) return { valid: false, reason: "itemHash required" };
+      return validateExoticArmor(link);
+    case "artifact_perk":
+      if (!link.perkHash) return { valid: false, reason: "perkHash required" };
+      return validateArtifactPerk(link);
     default:
       return { valid: false, reason: "unknown kind" };
   }
@@ -118,6 +124,50 @@ async function validateArmorSetBonus(
         armorSetHash: set.set.hash,
       },
     };
+  } catch {
+    return { valid: true, link };
+  }
+}
+
+async function validateExoticArmor(
+  link: SynergyLinkInput,
+): Promise<{ valid: true; link: ValidatedSynergyLink } | { valid: false; reason: string }> {
+  try {
+    const { entityCache } = await getServices();
+    const armor = await entityCache.getStore("exotic-armor");
+    const match = armor.find((a) => a.hash === link.itemHash);
+    if (!match) {
+      return { valid: false, reason: `exotic armor hash ${link.itemHash} not found in manifest` };
+    }
+    return {
+      valid: true,
+      link: { ...link, displayName: link.displayName || match.name },
+    };
+  } catch {
+    return { valid: true, link };
+  }
+}
+
+async function validateArtifactPerk(
+  link: SynergyLinkInput,
+): Promise<{ valid: true; link: ValidatedSynergyLink } | { valid: false; reason: string }> {
+  try {
+    const { entityCache } = await getServices();
+    const artifacts = await entityCache.getStore("artifacts");
+    for (const art of artifacts) {
+      const perk = art.perks?.find((p) => p.hash === link.perkHash);
+      if (perk) {
+        return {
+          valid: true,
+          link: {
+            ...link,
+            displayName: link.displayName || perk.name,
+            parentItemHash: link.parentItemHash ?? art.hash,
+          },
+        };
+      }
+    }
+    return { valid: false, reason: `artifact perk hash ${link.perkHash} not found in manifest` };
   } catch {
     return { valid: true, link };
   }

@@ -12,6 +12,11 @@ import { listActiveSetItems } from "@/lib/sets/setItemService";
 export type SetAttachmentInput = {
   setId: string;
   mode: "live" | "snapshot";
+  /**
+   * When mode is snapshot and provided, freeze these configs (including modHashes)
+   * instead of re-reading live set items. Used by the variant Mods tab.
+   */
+  snapshotConfigs?: SnapshotConfig[] | null;
 };
 
 async function buildSnapshotConfigs(db: AppDatabase, setId: string): Promise<SnapshotConfig[]> {
@@ -53,7 +58,10 @@ export async function prepareAttachments(
 
     let snapshotConfigs: SnapshotConfig[] | null = null;
     if (input.mode === "snapshot") {
-      snapshotConfigs = await buildSnapshotConfigs(db, input.setId);
+      snapshotConfigs =
+        input.snapshotConfigs != null
+          ? input.snapshotConfigs
+          : await buildSnapshotConfigs(db, input.setId);
     }
 
     prepared.push({

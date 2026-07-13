@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { GuardianClass, BuildSummary } from "@/components/build/types";
 import {
   Button,
+  ClassFilterChip,
   ClassIcon,
   Cluster,
   ElementIcon,
@@ -97,8 +98,8 @@ export function BuildLibrary({
   }
 
   return (
-    <Panel as="aside" className="flex flex-col min-h-[min(420px,70vh)] lg:min-h-[420px]">
-      <Stack gap={10}>
+    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <Stack gap={10} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -119,11 +120,12 @@ export function BuildLibrary({
           </Text>
           <Cluster>
             {CLASSES.map((cls) => (
-              <FilterChip
+              <ClassFilterChip
                 key={cls}
-                label={cls}
+                className={cls}
                 active={classFilter === cls}
                 onClick={() => onClassFilter(classFilter === cls ? null : cls)}
+                size="md"
               />
             ))}
           </Cluster>
@@ -157,7 +159,9 @@ export function BuildLibrary({
             Clear filters
           </button>
         ) : null}
+      </Stack>
 
+      <div className="flex-1 min-h-0 overflow-y-auto mt-2">
         {loading ? (
           <Text size="sm" tone="muted">
             Loading builds…
@@ -263,7 +267,7 @@ export function BuildLibrary({
             })}
           </Stack>
         )}
-      </Stack>
+      </div>
     </Panel>
   );
 }

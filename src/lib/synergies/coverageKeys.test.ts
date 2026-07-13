@@ -33,6 +33,18 @@ describe("coverageKeyFromLink", () => {
       }),
     ).toBe("origin_trait:hash:9");
   });
+
+  it("keys exotic armor by item hash", () => {
+    expect(coverageKeyFromLink({ kind: "exotic_armor", itemHash: 55 })).toBe(
+      "exotic_armor:55",
+    );
+  });
+
+  it("keys artifact perks by perk hash", () => {
+    expect(coverageKeyFromLink({ kind: "artifact_perk", perkHash: 77 })).toBe(
+      "artifact_perk:77",
+    );
+  });
 });
 
 describe("collectCoveredKeys", () => {

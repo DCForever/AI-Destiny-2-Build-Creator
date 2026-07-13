@@ -6,7 +6,13 @@ import { searchSynergyLinkPickerItems } from "@/lib/synergies/synergyPickerLinks
 export const runtime = "nodejs";
 
 const querySchema = z.object({
-  kind: z.enum(["origin_trait", "weapon_perk", "armor_set_bonus"]),
+  kind: z.enum([
+    "origin_trait",
+    "weapon_perk",
+    "armor_set_bonus",
+    "exotic_armor",
+    "artifact_perk",
+  ]),
   q: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(2000).optional(),
 });

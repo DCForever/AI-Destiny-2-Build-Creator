@@ -11,10 +11,15 @@ import { EditableBuildSheet } from "@/components/sheet/EditableBuildSheet";
 import {
   Button,
   Callout,
+  ClassFilterChip,
   ClassIcon,
   EmptyState,
+  FilterChip,
   LoadoutColorBar,
   LoadoutIconPlate,
+  PageFrame,
+  PageFrameBody,
+  PageFrameChrome,
   PageHeader,
   Panel,
   Row,
@@ -392,34 +397,38 @@ export function LoadoutsPage() {
   const openRow = openId ? localRows.find((r) => r.id === openId) : undefined;
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <Stack gap={16}>
-        <LoadoutDiscoveryOverlay
-          open={discovery.open}
-          title={discovery.title}
-          matches={discovery.matches}
-          onClose={() => setDiscovery((d) => ({ ...d, open: false }))}
-        />
+    <PageFrame>
+      <LoadoutDiscoveryOverlay
+        open={discovery.open}
+        title={discovery.title}
+        matches={discovery.matches}
+        onClose={() => setDiscovery((d) => ({ ...d, open: false }))}
+      />
 
-        <PageHeader
-          title="In-Game Loadouts"
-          description="Bungie character loadouts with real icon and color (same source as DIM). Sign in to sync from your profile."
-          actions={
-            <Suspense
-              fallback={
-                <Text size="xs" tone="muted">
-                  Loading sign-in…
-                </Text>
-              }
-            >
-              <BungieAuthControl compact onAuthChange={handleAuthChange} />
-            </Suspense>
-          }
-        />
+      <PageFrameChrome>
+        <Stack gap={12}>
+          <PageHeader
+            title="In-Game Loadouts"
+            description="Bungie character loadouts with real icon and color (same source as DIM). Sign in to sync from your profile."
+            actions={
+              <Suspense
+                fallback={
+                  <Text size="xs" tone="muted">
+                    Loading sign-in…
+                  </Text>
+                }
+              >
+                <BungieAuthControl compact onAuthChange={handleAuthChange} />
+              </Suspense>
+            }
+          />
+          {error ? <Callout tone="danger">{error}</Callout> : null}
+          {bungieHint ? <Callout tone="warning">{bungieHint}</Callout> : null}
+        </Stack>
+      </PageFrameChrome>
 
-        {error ? <Callout tone="danger">{error}</Callout> : null}
-        {bungieHint ? <Callout tone="warning">{bungieHint}</Callout> : null}
-
+      <PageFrameBody scroll>
+        <Stack gap={16}>
         {!signedIn ? (
           <EmptyState description="Sign in with Bungie to view your in-game loadout slots and icons." />
         ) : null}
@@ -457,16 +466,15 @@ export function LoadoutsPage() {
                       {hideEmpty ? "Hiding empty" : "Show empty"}
                     </Button>
                     {(["Titan", "Hunter", "Warlock"] as const).map((cls) => (
-                      <Button
+                      <ClassFilterChip
                         key={cls}
-                        size="sm"
-                        variant={classFilter === cls ? "accent" : "outline"}
+                        className={cls}
+                        active={classFilter === cls}
                         onClick={() =>
                           setClassFilter((prev) => (prev === cls ? null : cls))
                         }
-                      >
-                        {cls}
-                      </Button>
+                        size="md"
+                      />
                     ))}
                   </Row>
                 </Row>
@@ -784,7 +792,8 @@ export function LoadoutsPage() {
             </Stack>
           </Stack>
         ) : null}
-      </Stack>
-    </div>
+        </Stack>
+      </PageFrameBody>
+    </PageFrame>
   );
 }

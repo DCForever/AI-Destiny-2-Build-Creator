@@ -21,7 +21,13 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
-import type { SoftStatTargets } from "@/lib/builds/softStatTargets";
+import { SoftStatTargetsEditor } from "@/components/build/SoftStatTargetsEditor";
+import {
+  softStatDraftFromTargets,
+  softStatTargetsFromDraft,
+  type SoftStatDraft,
+} from "@/lib/builds/softStatTargets";
+import { ApiError } from "@/lib/api/errors";
 
 function designationsFromBuild(build: BuildDetail): SynergyTypeSelection[] {
   return (build.synergyTypes ?? []).map((t) => ({
@@ -55,8 +61,8 @@ export function BuildEditPanel({
   const [synergyTypes, setSynergyTypes] = useState<SynergyTypeSelection[]>(
     designationsFromBuild(build),
   );
-  const [softStatsDraft, setSoftStatsDraft] = useState(
-    build.softStatTargets ? JSON.stringify(build.softStatTargets, null, 2) : "",
+  const [softStatsDraft, setSoftStatsDraft] = useState<SoftStatDraft>(() =>
+    softStatDraftFromTargets(build.softStatTargets),
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,13 +119,17 @@ export function BuildEditPanel({
     );
   }
 
-  function parseSoftStats(): SoftStatTargets | null | undefined {
-    const raw = softStatsDraft.trim();
-    if (!raw) return null;
+  function parseSoftStats() {
     try {
-      return JSON.parse(raw) as SoftStatTargets;
-    } catch {
-      setError("Soft stat targets must be valid JSON");
+      return softStatTargetsFromDraft(softStatsDraft);
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Invalid soft stat targets";
+      setError(message);
       return undefined;
     }
   }
@@ -228,17 +238,13 @@ export function BuildEditPanel({
           />
         </Section>
 
-        <Stack gap={4}>
-          <Text size="xs" tone="muted">
-            Soft stat targets (JSON)
-          </Text>
-          <textarea
-            className="w-full bg-surface-raised border border-line px-2 py-1.5 text-sm text-foreground min-h-[88px] font-mono"
-            value={softStatsDraft}
-            onChange={(e) => setSoftStatsDraft(e.target.value)}
-            placeholder='{"resilience":100,"discipline":100}'
+        <Section label="Soft stat targets">
+          <SoftStatTargetsEditor
+            draft={softStatsDraft}
+            onChange={setSoftStatsDraft}
+            disabled={busy}
           />
-        </Stack>
+        </Section>
 
         <Row gap={8} wrap>
           <Button

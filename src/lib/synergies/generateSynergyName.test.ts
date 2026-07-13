@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { FIXTURE_AUTO_NAMES, FIXTURE_LINK_DISPLAY } from "@/lib/synergies/__fixtures__/synergyRefinementFixtures";
-import { generateSynergyName } from "@/lib/synergies/generateSynergyName";
+import {
+  formatSynergyTypeDesignation,
+  generateSynergyName,
+} from "@/lib/synergies/generateSynergyName";
 
 describe("generateSynergyName", () => {
-  it("formats verb with sub-type and link", () => {
+  it("formats verb with sub-type only (no object)", () => {
     expect(
       generateSynergyName({
         type: "verb",
@@ -59,15 +62,9 @@ describe("generateSynergyName", () => {
     ).toBe(expected);
   });
 
-  it("truncates long link names preserving category and sub-type", () => {
-    const longLink = "A".repeat(200);
-    const name = generateSynergyName({
-      type: "verb",
-      subType: "Scorch",
-      linkDisplayName: longLink,
-    });
-    expect(name.length).toBeLessThanOrEqual(120);
-    expect(name.startsWith("Verb: Scorch —")).toBe(true);
-    expect(name.endsWith("…")).toBe(true);
+  it("matches formatSynergyTypeDesignation", () => {
+    expect(
+      generateSynergyName({ type: "verb", subType: "Devour", linkDisplayName: "X" }),
+    ).toBe(formatSynergyTypeDesignation({ type: "verb", subType: "Devour" }));
   });
 });

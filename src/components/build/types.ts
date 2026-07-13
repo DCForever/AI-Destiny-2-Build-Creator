@@ -66,10 +66,22 @@ export type SlotClaimSummary = {
   perks?: PresentedEntity[];
 };
 
+export type VariantAttachmentSnapshotConfig = {
+  slot: string;
+  itemHash: number;
+  itemName: string;
+  selectedPerks?: number[];
+  masterworkHash?: number | null;
+  modHashes?: number[] | null;
+  instanceId?: string | null;
+};
+
 export type VariantAttachment = {
   setId: string;
   mode: "live" | "snapshot";
   set?: { id: string; name: string; type: string };
+  /** Present when mode is snapshot (includes per-slot modHashes). */
+  snapshotConfigs?: VariantAttachmentSnapshotConfig[] | null;
 };
 
 export type BuildVariantDetail = {

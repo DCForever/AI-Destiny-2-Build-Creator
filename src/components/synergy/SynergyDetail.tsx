@@ -8,7 +8,7 @@ import {
   Button,
   Chip,
   Cluster,
-  DesignationIcon,
+  DesignationLabel,
   EntityHotspot,
   InfoHotspot,
   Panel,
@@ -16,10 +16,11 @@ import {
   Section,
   Stack,
   Text,
-  Heading,
-  useDesignationIcons,
 } from "@/components/ui";
-import { getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
+import {
+  formatSynergyTypeDesignation,
+  getSynergyTypeLabel,
+} from "@/lib/synergies/generateSynergyName";
 
 function groupLinks(detail: SynergyDetail) {
   const groups = new Map<string, SynergyDetail["links"]>();
@@ -53,33 +54,40 @@ export function SynergyDetail({
 }) {
   const grouped = groupLinks(synergy);
   const typeLabel = getSynergyTypeLabel(synergy.type);
-  const { getIcon } = useDesignationIcons([
-    { type: synergy.type, subType: synergy.subType },
-  ]);
-  const designationIcon = getIcon(synergy.type, synergy.subType);
+  const title = formatSynergyTypeDesignation({
+    type: synergy.type,
+    subType: synergy.subType,
+  });
+  const builds = synergy.buildCount ?? 0;
+  const objects = synergy.objectCount ?? synergy.links.length;
+  const usageLine = `${builds === 1 ? "1 build linked" : `${builds} builds linked`} · ${
+    objects === 1 ? "1 object linked" : `${objects} objects linked`
+  }`;
 
   return (
     <Panel tone="raised" className="w-full">
       <Stack gap={14}>
         <Row justify="between" align="start" gap={12} wrap>
           <Stack gap={6} className="min-w-0 flex-1">
-            <Row gap={12} align="center">
-              <DesignationIcon
-                type={synergy.type}
-                subType={synergy.subType}
-                icon={designationIcon}
-                size={40}
-                label={synergy.name}
-              />
-              <Heading level={1}>{synergy.name}</Heading>
-            </Row>
+            <Stack gap={4} className="min-w-0">
+              <div className="text-lg text-foreground flex items-center gap-2 flex-wrap">
+                <DesignationLabel
+                  type={synergy.type}
+                  subType={synergy.subType}
+                  size={32}
+                />
+              </div>
+              <Text size="sm" tone="muted">
+                {usageLine}
+              </Text>
+            </Stack>
             <Cluster>
               <InfoHotspot
                 kind="Synergy type"
                 title={typeLabel}
                 lines={[
                   "Creatable library category",
-                  "Drives auto-generated display name",
+                  "Display name is Type: Subtype (designation)",
                   `Internal key: ${synergy.type}`,
                 ]}
               >
@@ -87,29 +95,19 @@ export function SynergyDetail({
               </InfoHotspot>
               {synergy.subType ? (
                 <InfoHotspot
-                  kind="Subtype"
-                  title={synergy.subType}
-                  icon={designationIcon}
+                  kind="Designation"
+                  title={title}
                   lines={[
                     "Required for some types (verb, melee, archetype, …)",
                     "Matched when resolving coverage on builds",
-                    designationIcon
-                      ? "Official Bungie icon resolved from manifest"
-                      : "No matching inventory icon yet",
+                    "Icon shown when official art is available",
                   ]}
                 >
-                  <Row gap={4} align="center">
-                    <DesignationIcon
-                      type={synergy.type}
-                      subType={synergy.subType}
-                      icon={designationIcon}
-                      size={28}
-                      label={synergy.subType}
-                    />
-                    {!designationIcon ? (
-                      <Chip>{synergy.subType}</Chip>
-                    ) : null}
-                  </Row>
+                  <DesignationLabel
+                    type={synergy.type}
+                    subType={synergy.subType}
+                    size={22}
+                  />
                 </InfoHotspot>
               ) : null}
             </Cluster>

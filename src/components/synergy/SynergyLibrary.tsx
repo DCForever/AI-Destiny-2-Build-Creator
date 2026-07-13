@@ -3,16 +3,23 @@
 import type { SynergySummary } from "@/components/synergy/types";
 import {
   Button,
-  Chip,
-  DesignationIcon,
+  DesignationLabel,
   Panel,
   Row,
   SectionLabel,
   Stack,
   Text,
-  useDesignationIcons,
 } from "@/components/ui";
-import { getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
+import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
+
+function usageSubtitle(row: SynergySummary): string {
+  const builds = row.buildCount ?? 0;
+  const objects = row.objectCount ?? row.links?.length ?? 0;
+  const buildLabel = builds === 1 ? "1 build linked" : `${builds} builds linked`;
+  const objectLabel =
+    objects === 1 ? "1 object linked" : `${objects} objects linked`;
+  return `${buildLabel} · ${objectLabel}`;
+}
 
 export function SynergyLibrary({
   synergies,
@@ -24,7 +31,9 @@ export function SynergyLibrary({
   onClearChecked,
   onNew,
   onMerge,
+  onDuplicate,
   mergeBusy,
+  duplicateBusy,
   mergeEnabled,
   mergeBlockedReason,
   loading,
@@ -38,20 +47,18 @@ export function SynergyLibrary({
   onClearChecked: () => void;
   onNew: () => void;
   onMerge: () => void;
+  onDuplicate: () => void;
   mergeBusy: boolean;
-  /** True when 2+ checked and designations match, with a survivor chosen. */
+  duplicateBusy: boolean;
   mergeEnabled: boolean;
   mergeBlockedReason: string | null;
   loading: boolean;
 }) {
   const checkedCount = checkedIds.size;
-  const { getIcon } = useDesignationIcons(
-    synergies.map((s) => ({ type: s.type, subType: s.subType })),
-  );
 
   return (
-    <Panel as="aside" className="flex flex-col min-h-[420px]">
-      <Stack gap={12}>
+    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <Stack gap={8} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -63,8 +70,8 @@ export function SynergyLibrary({
         </Row>
 
         {synergies.length > 0 ? (
-          <Stack gap={8}>
-            <Row gap={8} wrap align="center">
+          <Stack gap={6}>
+            <Row gap={6} wrap align="center">
               <Button
                 variant="ghost"
                 size="sm"
@@ -82,10 +89,10 @@ export function SynergyLibrary({
                 Clear
               </Button>
               <Button
-                variant="outline"
+                variant="accent"
                 size="sm"
                 onClick={onMerge}
-                disabled={!mergeEnabled || mergeBusy}
+                disabled={!mergeEnabled || mergeBusy || duplicateBusy}
                 title={
                   mergeEnabled
                     ? "Merge checked rows into the selected survivor"
@@ -97,6 +104,26 @@ export function SynergyLibrary({
                   : checkedCount > 1
                     ? `Merge ${checkedCount}`
                     : "Merge"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onDuplicate}
+                disabled={
+                  loading ||
+                  mergeBusy ||
+                  duplicateBusy ||
+                  (selectedId == null && checkedCount !== 1)
+                }
+                title={
+                  selectedId
+                    ? "Duplicate the selected library row"
+                    : checkedCount === 1
+                      ? "Duplicate the checked library row"
+                      : "Select a row to duplicate"
+                }
+              >
+                {duplicateBusy ? "Duplicating…" : "Duplicate"}
               </Button>
             </Row>
             {checkedCount > 0 && !mergeEnabled && mergeBlockedReason ? (
@@ -112,7 +139,9 @@ export function SynergyLibrary({
             ) : null}
           </Stack>
         ) : null}
+      </Stack>
 
+      <div className="flex-1 min-h-0 overflow-y-auto mt-2">
         {loading ? (
           <Text size="sm" tone="muted">
             Loading synergies…
@@ -131,7 +160,10 @@ export function SynergyLibrary({
             {synergies.map((row) => {
               const selected = row.id === selectedId;
               const checked = checkedIds.has(row.id);
-              const linkCount = row.links?.length ?? 0;
+              const title = formatSynergyTypeDesignation({
+                type: row.type,
+                subType: row.subType,
+              });
               return (
                 <div key={row.id} className="flex gap-2 items-start">
                   <input
@@ -139,7 +171,7 @@ export function SynergyLibrary({
                     className="mt-3 shrink-0 accent-current"
                     checked={checked}
                     onChange={() => onToggleCheck(row.id)}
-                    aria-label={`Select ${row.name} for merge`}
+                    aria-label={`Select ${title} for merge`}
                     onClick={(e) => e.stopPropagation()}
                   />
                   <button
@@ -156,35 +188,24 @@ export function SynergyLibrary({
                           : "hover:border-line-strong transition-colors"
                       }
                     >
-                      <Row gap={10} align="start">
-                        <DesignationIcon
-                          type={row.type}
-                          subType={row.subType}
-                          icon={getIcon(row.type, row.subType)}
-                          size={36}
-                          label={row.name}
-                        />
-                        <Stack gap={4} className="min-w-0">
-                          <Text size="sm" weight="medium">
-                            {row.name}
-                            {selected && checkedCount > 1 ? (
-                              <Text size="xs" tone="muted" as="span">
-                                {" "}
-                                · survivor
-                              </Text>
-                            ) : null}
-                          </Text>
-                          <Row gap={6} wrap>
-                            <Chip accent>
-                              {getSynergyTypeLabel(row.type)}
-                            </Chip>
-                            {row.subType ? <Chip>{row.subType}</Chip> : null}
+                      <Stack gap={4} className="min-w-0">
+                        <Row gap={6} align="center" wrap>
+                          <DesignationLabel
+                            type={row.type}
+                            subType={row.subType}
+                            size={28}
+                            className="text-sm font-medium text-foreground"
+                          />
+                          {selected && checkedCount > 1 ? (
                             <Text size="xs" tone="muted" as="span">
-                              {linkCount} link{linkCount === 1 ? "" : "s"}
+                              · survivor
                             </Text>
-                          </Row>
-                        </Stack>
-                      </Row>
+                          ) : null}
+                        </Row>
+                        <Text size="xs" tone="muted">
+                          {usageSubtitle(row)}
+                        </Text>
+                      </Stack>
                     </Panel>
                   </button>
                 </div>
@@ -192,7 +213,7 @@ export function SynergyLibrary({
             })}
           </Stack>
         )}
-      </Stack>
+      </div>
     </Panel>
   );
 }

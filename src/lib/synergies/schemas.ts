@@ -32,6 +32,8 @@ export const synergyLinkKindSchema = z.enum([
   "weapon_perk",
   "origin_trait",
   "armor_set_bonus",
+  "exotic_armor",
+  "artifact_perk",
 ]);
 
 export const synergyLinkSchema = z.object({

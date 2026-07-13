@@ -55,6 +55,47 @@ vi.mock("@/lib/services", () => ({
             },
           ];
         }
+        if (store === "exotic-armor") {
+          return [
+            {
+              hash: 5001,
+              name: "Synthoceps",
+              searchName: "synthoceps",
+              icon: "/syntho.png",
+              classType: "Titan",
+              slot: "Gauntlets",
+              intrinsic: {
+                name: "Biotic Enhancements",
+                description: "Improved melee lunge when surrounded.",
+              },
+              archetype: null,
+              flavorText: "",
+            },
+          ];
+        }
+        if (store === "artifacts") {
+          return [
+            {
+              hash: 6000,
+              name: "Tablet of Ruin",
+              searchName: "tablet of ruin",
+              icon: null,
+              description: "Season pass.",
+              perks: [
+                {
+                  hash: 6001,
+                  name: "Anti-Barrier Rounds",
+                  searchName: "anti-barrier rounds",
+                  icon: "/ab.png",
+                  description: "Unstoppable? No — barrier champions.",
+                  column: 0,
+                  row: 0,
+                  artifactName: "Tablet of Ruin",
+                },
+              ],
+            },
+          ];
+        }
         return [];
       }),
     },
@@ -123,6 +164,29 @@ describe("searchSynergyLinkPickerItems", () => {
     const items = await searchSynergyLinkPickerItems("armor_set_bonus", "gift", 10);
     expect(items[0]?.bonusName).toBe("Gift of the Ley Lines");
     expect(items[0]?.armorSetName).toBe("Eutechnology");
+  });
+
+  it("returns exotic armor with intrinsic description", async () => {
+    const items = await searchSynergyLinkPickerItems("exotic_armor", "syntho", 10);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.kind).toBe("exotic_armor");
+    expect(items[0]?.hash).toBe(5001);
+    expect(items[0]?.description).toContain("melee lunge");
+  });
+
+  it("returns artifact perks with description and parent artifact name", async () => {
+    const items = await searchSynergyLinkPickerItems("artifact_perk", "barrier", 10);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.kind).toBe("artifact_perk");
+    expect(items[0]?.perkHash).toBe(6001);
+    expect(items[0]?.parentItemHash).toBe(6000);
+    expect(items[0]?.artifactName).toBe("Tablet of Ruin");
+    expect(items[0]?.description).toContain("barrier");
+  });
+
+  it("matches artifact perks by parent artifact name", async () => {
+    const items = await searchSynergyLinkPickerItems("artifact_perk", "tablet", 10);
+    expect(items.some((i) => i.name === "Anti-Barrier Rounds")).toBe(true);
   });
 
   it("matches weapon perks by description when name does not match", async () => {

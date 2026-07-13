@@ -24,21 +24,28 @@ export async function enrichSynergyLinks(
   const kinds = new Set(links.map((l) => l.kind));
   const { entityCache } = await getServices();
 
-  const [weapons, exoticWeapons, perks, traits, setBonuses] = await Promise.all([
-    kinds.has("weapon") ? entityCache.getStore("weapons") : Promise.resolve([]),
-    kinds.has("weapon")
-      ? entityCache.getStore("exotic-weapons")
-      : Promise.resolve([]),
-    kinds.has("weapon_perk")
-      ? entityCache.getStore("weapon-perks")
-      : Promise.resolve([]),
-    kinds.has("origin_trait")
-      ? entityCache.getStore("origin-traits")
-      : Promise.resolve([]),
-    kinds.has("armor_set_bonus")
-      ? entityCache.getStore("set-bonuses")
-      : Promise.resolve([]),
-  ]);
+  const [weapons, exoticWeapons, perks, traits, setBonuses, exoticArmor, artifacts] =
+    await Promise.all([
+      kinds.has("weapon") ? entityCache.getStore("weapons") : Promise.resolve([]),
+      kinds.has("weapon")
+        ? entityCache.getStore("exotic-weapons")
+        : Promise.resolve([]),
+      kinds.has("weapon_perk")
+        ? entityCache.getStore("weapon-perks")
+        : Promise.resolve([]),
+      kinds.has("origin_trait")
+        ? entityCache.getStore("origin-traits")
+        : Promise.resolve([]),
+      kinds.has("armor_set_bonus")
+        ? entityCache.getStore("set-bonuses")
+        : Promise.resolve([]),
+      kinds.has("exotic_armor")
+        ? entityCache.getStore("exotic-armor")
+        : Promise.resolve([]),
+      kinds.has("artifact_perk")
+        ? entityCache.getStore("artifacts")
+        : Promise.resolve([]),
+    ]);
 
   const legendaryByHash = new Map(weapons.map((w) => [w.hash, w] as const));
   const exoticByHash = new Map(exoticWeapons.map((w) => [w.hash, w] as const));
@@ -46,6 +53,12 @@ export async function enrichSynergyLinks(
   const traitByHash = new Map(traits.map((t) => [t.hash, t] as const));
   const traitByName = new Map(
     traits.map((t) => [t.name.trim().toLowerCase(), t] as const),
+  );
+  const exoticArmorByHash = new Map(exoticArmor.map((a) => [a.hash, a] as const));
+  const artifactPerkByHash = new Map(
+    artifacts.flatMap((art) =>
+      (art.perks ?? []).map((p) => [p.hash, { perk: p, art }] as const),
+    ),
   );
 
   return links.map((link) => {
@@ -114,6 +127,31 @@ export async function enrichSynergyLinks(
               set.perks.find((p) => p.requiredCount === link.bonusPieces);
             description = perk?.description?.trim() ?? "";
           }
+        }
+        break;
+      }
+      case "exotic_armor": {
+        if (link.itemHash != null) {
+          const armor = exoticArmorByHash.get(link.itemHash);
+          description = armor?.intrinsic?.description?.trim() ?? "";
+          icon = armor?.icon ?? null;
+        }
+        break;
+      }
+      case "artifact_perk": {
+        if (link.perkHash != null) {
+          const hit = artifactPerkByHash.get(link.perkHash);
+          const body = hit?.perk.description?.trim() ?? "";
+          const from =
+            hit?.perk.artifactName?.trim() ||
+            hit?.art.name?.trim() ||
+            "";
+          description = from
+            ? body
+              ? `${from} — ${body}`
+              : from
+            : body;
+          icon = hit?.perk.icon ?? hit?.art.icon ?? null;
         }
         break;
       }

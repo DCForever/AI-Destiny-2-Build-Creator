@@ -15,6 +15,7 @@ Not a product roadmap and not Spec Kit acceptance criteria — those stay under 
 | `partial` | Some work landed; still short of intent |
 | `done` | Good enough to close; move to **Recently closed** with a short note |
 | `wontfix` | Explicitly declined; keep one line of why |
+| `deferred` | Intentionally postponed with reason |
 
 **When adding an item:** one concrete outcome, surface (Build / Sets / …), optional owner note.  
 **When closing:** set status to `done`, add date + commit or PR if handy, move under **Recently closed**.  
@@ -30,6 +31,7 @@ Last reviewed: 2026-07-13
 ### Catalog
 | Status | Item | Notes |
 |--------|------|--------|
+| `done` | Icon+color density pass | Element/ammo/class/armor archetype/frame + DesignationLabel; weapon types via vendored destiny-icons (DIM set) |
 
 ### Sets
 | Status | Item | Notes |
@@ -40,27 +42,24 @@ Last reviewed: 2026-07-13
 ### Build
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | Mods tab **slot-level** editing | Still largely “edit on Sets” |
-| `open` | Soft-stat targets editor (not raw JSON) | JSON textarea is functional only |
 
 ### Synergy
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | **Duplicate** library row | Merge exists; no clone |
 | `open` | Promote **gap-scan** into product nav (optional) | Lives at `/debug/synergy-gaps` |
-| `partial` | Designation icons for all curated names | Mapping + API landed; some names still miss art until alias/hunt improves |
+| `deferred` | Designation icons for all curated names | Mapping + API landed; residual alias/hunt art gaps — improve opportunistically, not a polish gate |
 
 ### Loadouts
 | Status | Item | Notes |
 |--------|------|--------|
-| `partial` | Full equip / sheet from Bungie slot instances | List + real icon/color landed; equip/sheet import still thin |
+| `deferred` | Full equip / sheet from Bungie slot instances | List + real icon/color landed; equip/sheet import still thin — needs deeper Bungie parity beyond polish |
 
 ### Shell / global
 | Status | Item | Notes |
 |--------|------|--------|
-| `partial` | Further mobile density / touch targets | Responsive padding + nav improved |
-| `partial` | **Entity InfoHotspots** across all entity chips | `EntityHotspot` + presentation enrich; icon-first when art exists; remaining gaps where APIs still omit description |
-| `open` | Pixel-perfect canvas hi-fi parity | Icons/hotspots/loadout chrome largely done |
+| `deferred` | Further mobile density / touch targets | Responsive padding + nav improved; remaining density tweaks optional |
+| `deferred` | **Entity InfoHotspots** across all entity chips | `EntityHotspot` + presentation enrich; icon-first when art exists; remaining gaps where APIs still omit description |
+| `deferred` | Pixel-perfect canvas hi-fi parity | Icons/hotspots/loadout chrome largely done; absolute visual gate unbounded — not a polish finish requirement |
 
 ---
 
@@ -70,6 +69,12 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Weapon type destiny-icons | Vendored justrealmilk SVGs (DIM mapping); `WeaponTypeIcon` on Catalog/picker filters + meta |
+| 2026-07-13 | Designation + filter icon density | `DesignationLabel`, armor archetype/frame official maps, class icon filters, meta chips |
+| 2026-07-13 | Cross-screen UI alignment (signed-out, primitives, filters) | `SignedOutGate` on Build/Sets/Synergy; Loadouts FilterChip class filters; LoadoutExoticFilterBar + Analyze on `Panel`/ui primitives |
+| 2026-07-13 | Soft-stat targets editor (not raw JSON) | Structured per-stat Armor 3.0 controls; draft→payload via `softStatTargetsFromDraft` + build PATCH |
+| 2026-07-13 | Mods tab **slot-level** editing | Variant Mods tab edits armor slot modHashes via snapshot attachment path; mod-set attach/detach |
+| 2026-07-13 | Synergy library **Duplicate** | `duplicateUserSynergy` + POST `…/duplicate`; new id, source preserved; opens edit |
 | 2026-07-13 | Verb → **implied element** synergy | Ionic Trace⇒Arc etc.; matching + dashed UI chip; concept tags |
 | 2026-07-13 | Build **load performance** | Unblock library from Bungie loadouts; batch exotic slots + presentation enrichment on detail |
 | 2026-07-13 | Richer variant card **gear rows** | Loadout icon strip; dense slot rows with element/source/perk icons; conflicts |

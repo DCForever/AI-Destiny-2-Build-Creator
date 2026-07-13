@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { InstancePerkGridView } from "@/components/catalog/InstancePerkGridView";
 import { filterCatalogClient } from "@/lib/catalog/filterCatalogClient";
 import {
   CATALOG_AMMO_TYPES,
+  CATALOG_ARMOR_ARCHETYPES,
   CATALOG_ELEMENTS,
   CATALOG_WEAPON_ARCHETYPES,
   toggleFilterValue,
@@ -22,10 +23,17 @@ import {
   Button,
   Callout,
   Chip,
+  ClassFilterChip,
+  ClassIcon,
   Cluster,
   EmptyState,
   EntityHotspot,
   FilterChip,
+  MetaChip,
+  OfficialFilterIcon,
+  PageFrame,
+  PageFrameBody,
+  PageFrameChrome,
   PageHeader,
   Panel,
   Row,
@@ -34,15 +42,28 @@ import {
   Stack,
   Text,
   TextField,
+  WeaponTypeIcon,
   Workspace,
   WorkspaceMain,
   Heading,
 } from "@/components/ui";
 import {
+  AMMO_OFFICIAL,
+  ELEMENT_OFFICIAL,
+  officialActiveStyle,
+  visualForAmmo,
+  visualForArmorArchetype,
+  visualForElement,
+  visualForWeaponFrame,
+} from "@/lib/destiny/catalogFilterVisuals";
+import {
+  CLASS_CSS_COLOR,
   ELEMENT_CSS_COLOR,
   isDestinyElement,
+  isGuardianClass,
   type DestinyElement,
 } from "@/lib/destiny/identityVisuals";
+import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
 
 type Kind = "weapons" | "armor";
 type Scope = "all" | "owned";
@@ -88,8 +109,16 @@ export function CatalogPage() {
   const [elements, setElements] = useState<string[]>([]);
   const [ammos, setAmmos] = useState<string[]>([]);
   const [archetypes, setArchetypes] = useState<string[]>([]);
+  const [librarySynergies, setLibrarySynergies] = useState<
+    Array<{ id: string; name: string; type: string; subType: string | null }>
+  >([]);
+  const [synergyIds, setSynergyIds] = useState<string[]>([]);
+  const [synergiesSignedIn, setSynergiesSignedIn] = useState(false);
+  const [synergyQuery, setSynergyQuery] = useState("");
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
 
-  const [items, setItems] = useState<CatalogItem[]>([]);
+  /** Server base set (kind/scope/synergy only). */
+  const [baseItems, setBaseItems] = useState<CatalogItem[]>([]);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [instances, setInstances] = useState<InstanceRow[]>([]);
   const [linkedSynergies, setLinkedSynergies] = useState<
@@ -98,64 +127,136 @@ export function CatalogPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
+  /** Debounced free-text for client filter (typing stays live without fetch). */
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  const runSearch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setSyncMessage(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/user/synergies");
+        if (res.status === 401) {
+          if (!cancelled) {
+            setSynergiesSignedIn(false);
+            setLibrarySynergies([]);
+          }
+          return;
+        }
+        if (!res.ok) return;
+        const body = (await res.json()) as {
+          synergies?: Array<{
+            id: string;
+            name: string;
+            type: string;
+            subType: string | null;
+          }>;
+        };
+        if (!cancelled) {
+          setSynergiesSignedIn(true);
+          setLibrarySynergies(sortByName(body.synergies ?? []));
+        }
+      } catch {
+        /* optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQuery(query), 150);
+    return () => window.clearTimeout(t);
+  }, [query]);
+
+  /** Base catalog fill: server only for kind / scope / synergy. */
+  const loadBase = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setError(null);
+      setSyncMessage(null);
+      try {
+        const params = new URLSearchParams({
+          scope,
+          includeInstancePointer: "1",
+          limit: "500",
+        });
+        for (const id of synergyIds) {
+          params.append("synergyId", id);
+        }
+
+        const res = await fetch(`/api/catalog/${kind}?${params}`, { signal });
+        const body = (await res.json()) as {
+          items?: CatalogItem[];
+          error?: string;
+          message?: string;
+          syncPrompt?: boolean;
+        };
+        if (signal?.aborted) return;
+        if (!res.ok) {
+          setError(body.error ?? "Catalog load failed");
+          setBaseItems([]);
+          return;
+        }
+        setBaseItems(sortByName(body.items ?? []));
+        if (body.message) setSyncMessage(body.message);
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setError("Catalog load failed");
+        setBaseItems([]);
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [kind, scope, synergyIds],
+  );
+
+  useEffect(() => {
+    const ac = new AbortController();
+    void loadBase(ac.signal);
+    return () => ac.abort();
+  }, [loadBase]);
+
+  /** Live client filter on base set (instant chip / text updates). */
+  const items = useMemo(
+    () =>
+      filterCatalogClient(baseItems, {
+        query: debouncedQuery,
+        slot,
+        elements,
+        ammos,
+        archetypes,
+        className,
+        onlyExotic,
+      }),
+    [
+      baseItems,
+      debouncedQuery,
+      slot,
+      elements,
+      ammos,
+      archetypes,
+      className,
+      onlyExotic,
+    ],
+  );
+
+  // Drop selection when live filters hide the current item.
+  useEffect(() => {
+    if (!selected) return;
+    if (!items.some((i) => i.hash === selected.hash)) {
+      setSelected(null);
+      setInstances([]);
+      setLinkedSynergies([]);
+    }
+  }, [items, selected]);
+
+  const refreshBase = useCallback(() => {
     setSelected(null);
     setInstances([]);
     setLinkedSynergies([]);
-    setHasSearched(true);
-    try {
-      const params = new URLSearchParams({
-        scope,
-        includeInstancePointer: "1",
-        limit: "100",
-      });
-      if (query.trim()) params.set("q", query.trim());
-      if (slot) params.set("slot", slot);
-      if (kind === "armor" && className) params.set("className", className);
-      if (kind === "weapons") {
-        if (elements.length) params.set("element", elements.join(","));
-        if (ammos.length) params.set("ammo", ammos.join(","));
-        if (archetypes.length) params.set("itemType", archetypes.join(","));
-      }
-
-      const res = await fetch(`/api/catalog/${kind}?${params}`);
-      const body = (await res.json()) as {
-        items?: CatalogItem[];
-        error?: string;
-        message?: string;
-        syncPrompt?: boolean;
-      };
-      if (!res.ok) {
-        setError(body.error ?? "Catalog search failed");
-        setItems([]);
-        return;
-      }
-      let rows = body.items ?? [];
-      rows = filterCatalogClient(rows, { onlyExotic });
-      setItems(sortByName(rows));
-      if (body.syncPrompt && body.message) setSyncMessage(body.message);
-    } catch {
-      setError("Catalog search failed");
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    kind,
-    scope,
-    query,
-    slot,
-    className,
-    onlyExotic,
-    elements,
-    ammos,
-    archetypes,
-  ]);
+    void loadBase();
+  }, [loadBase]);
 
   const selectItem = useCallback(
     async (item: CatalogItem) => {
@@ -207,11 +308,56 @@ export function CatalogPage() {
     [items, groupDims],
   );
 
+  const synergyLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of librarySynergies) {
+      map.set(
+        s.id,
+        formatSynergyTypeDesignation({ type: s.type, subType: s.subType }),
+      );
+    }
+    return map;
+  }, [librarySynergies]);
+
+  const synergyPickerOptions = useMemo(() => {
+    const q = synergyQuery.trim().toLowerCase();
+    return librarySynergies
+      .filter((s) => !synergyIds.includes(s.id))
+      .map((s) => ({
+        id: s.id,
+        label:
+          synergyLabelById.get(s.id) ??
+          formatSynergyTypeDesignation({ type: s.type, subType: s.subType }),
+      }))
+      .filter((o) => !q || o.label.toLowerCase().includes(q))
+      .slice(0, 12);
+  }, [librarySynergies, synergyIds, synergyQuery, synergyLabelById]);
+
+  const multiFilterCount =
+    elements.length +
+    ammos.length +
+    archetypes.length +
+    synergyIds.length +
+    groupDims.length +
+    (slot ? 1 : 0) +
+    (className ? 1 : 0);
+
   function toggleGroupDim(dim: CatalogGroupDimension) {
     setGroupDims((prev) => {
       if (prev.includes(dim)) return prev.filter((d) => d !== dim);
       return [...prev, dim];
     });
+  }
+
+  function clearMultiFilters() {
+    setElements([]);
+    setAmmos([]);
+    setArchetypes([]);
+    setSynergyIds([]);
+    setSlot(null);
+    setClassName(null);
+    setGroupDims([]);
+    setSynergyQuery("");
   }
 
   function renderResultRow(item: CatalogItem) {
@@ -239,15 +385,93 @@ export function CatalogPage() {
               <Row gap={6} wrap>
                 {item.isExotic ? <Chip accent>Exotic</Chip> : null}
                 {item.slot ? <Chip>{item.slot}</Chip> : null}
-                {item.element ? <Chip>{item.element}</Chip> : null}
-                {item.ammo ? <Chip>{item.ammo}</Chip> : null}
-                {item.itemTypeName ? <Chip>{item.itemTypeName}</Chip> : null}
+                {item.element
+                  ? (() => {
+                      const v = visualForElement(item.element);
+                      return v ? (
+                        <MetaChip
+                          label={item.element!}
+                          iconOnly
+                          accentColor={v.color}
+                          icon={
+                            <OfficialFilterIcon
+                              icon={v.icon}
+                              label={item.element!}
+                              size={14}
+                            />
+                          }
+                        />
+                      ) : (
+                        <Chip>{item.element}</Chip>
+                      );
+                    })()
+                  : null}
+                {item.ammo
+                  ? (() => {
+                      const v = visualForAmmo(item.ammo);
+                      return v ? (
+                        <MetaChip
+                          label={item.ammo!}
+                          iconOnly
+                          accentColor={v.color}
+                          icon={
+                            <OfficialFilterIcon
+                              icon={v.icon}
+                              label={item.ammo!}
+                              size={14}
+                            />
+                          }
+                        />
+                      ) : (
+                        <Chip>{item.ammo}</Chip>
+                      );
+                    })()
+                  : null}
+                {item.frame
+                  ? (() => {
+                      const v = visualForWeaponFrame(item.frame);
+                      return v ? (
+                        <MetaChip
+                          label={item.frame!}
+                          iconOnly
+                          icon={
+                            <OfficialFilterIcon
+                              icon={v.icon}
+                              label={item.frame!}
+                              size={14}
+                            />
+                          }
+                        />
+                      ) : (
+                        <Chip>{item.frame}</Chip>
+                      );
+                    })()
+                  : item.itemTypeName ? (
+                      <MetaChip
+                        label={item.itemTypeName}
+                        iconOnly
+                        icon={
+                          <WeaponTypeIcon
+                            typeName={item.itemTypeName}
+                            size={12}
+                          />
+                        }
+                      />
+                    ) : null}
                 {item.ownedCount > 0 ? (
                   <Text size="xs" tone="muted" as="span">
                     ×{item.ownedCount}
                   </Text>
                 ) : null}
               </Row>
+              {item.description?.trim() ? (
+                <span
+                  className="text-[11px] text-muted leading-snug line-clamp-2"
+                  title={item.description}
+                >
+                  {item.description}
+                </span>
+              ) : null}
             </Stack>
           </Row>
         </Panel>
@@ -256,21 +480,22 @@ export function CatalogPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <Stack gap={16}>
-        <PageHeader
-          title="Catalog"
-          description="Browse weapons and armor from the manifest or your owned inventory."
-        />
+    <PageFrame>
+      <PageFrameChrome>
+        <Stack gap={12}>
+          <PageHeader
+            title="Catalog"
+            description="Browse weapons and armor from the manifest or your owned inventory."
+          />
+          {error ? <Callout tone="danger">{error}</Callout> : null}
+          {syncMessage ? <Callout tone="warning">{syncMessage}</Callout> : null}
 
-        {error ? <Callout tone="danger">{error}</Callout> : null}
-        {syncMessage ? <Callout tone="warning">{syncMessage}</Callout> : null}
-
-        <Panel tone="muted" pad="md">
-          <Stack gap={10}>
-            <SectionLabel>Browse</SectionLabel>
-            <Cluster gap={6}>
+          <Panel tone="muted" pad="sm">
+          <Stack gap={6}>
+            {/* Browse + scope */}
+            <Cluster gap={4}>
               <FilterChip
+                size="xs"
                 label="Weapons"
                 active={kind === "weapons"}
                 onClick={() => {
@@ -284,6 +509,7 @@ export function CatalogPage() {
                 }}
               />
               <FilterChip
+                size="xs"
                 label="Armor"
                 active={kind === "armor"}
                 onClick={() => {
@@ -296,59 +522,71 @@ export function CatalogPage() {
                 }}
               />
               <FilterChip
+                size="xs"
                 label="Owned"
                 active={scope === "owned"}
                 onClick={() => setScope("owned")}
               />
               <FilterChip
+                size="xs"
                 label="Manifest"
                 active={scope === "all"}
                 onClick={() => setScope("all")}
               />
               <FilterChip
+                size="xs"
                 label="Exotic only"
                 active={onlyExotic}
                 onClick={() => setOnlyExotic((v) => !v)}
               />
             </Cluster>
-            <TextField
-              label="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void runSearch();
-              }}
-              placeholder="Name, frame, perk…"
-            />
-            <Stack gap={4}>
-              <Text size="xs" tone="muted" className="uppercase tracking-widest">
-                Slot
-              </Text>
-              <Cluster gap={6}>
+
+            {/* Search + action */}
+            <Row gap={6} align="end" wrap>
+              <TextField
+                label="Search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") refreshBase();
+                }}
+                placeholder="Name, frame, perk… (live filter)"
+                className="min-w-[200px] flex-1"
+              />
+              <Button
+                size="sm"
+                variant="accent"
+                disabled={loading}
+                onClick={() => refreshBase()}
+              >
+                {loading ? "…" : "Refresh"}
+              </Button>
+              {multiFilterCount > 0 ? (
+                <Button size="sm" variant="ghost" onClick={clearMultiFilters}>
+                  Clear
+                </Button>
+              ) : null}
+            </Row>
+
+            {/* Dense toolbar: slot · class · element · ammo */}
+            <Row gap={8} align="center" wrap className="gap-y-2">
+              <Cluster gap={3}>
                 {slotOptions.map((s) => (
                   <FilterChip
                     key={s}
+                    size="xs"
                     label={s}
                     active={slot === s}
                     onClick={() => setSlot((prev) => (prev === s ? null : s))}
                   />
                 ))}
               </Cluster>
-            </Stack>
-            {kind === "armor" ? (
-              <Stack gap={4}>
-                <Text
-                  size="xs"
-                  tone="muted"
-                  className="uppercase tracking-widest"
-                >
-                  Class
-                </Text>
-                <Cluster gap={6}>
+              {kind === "armor" ? (
+                <Cluster gap={3}>
                   {CLASSES.map((c) => (
-                    <FilterChip
+                    <ClassFilterChip
                       key={c}
-                      label={c}
+                      className={c}
                       active={className === c}
                       onClick={() =>
                         setClassName((prev) => (prev === c ? null : c))
@@ -356,151 +594,270 @@ export function CatalogPage() {
                     />
                   ))}
                 </Cluster>
+              ) : null}
+              {kind === "weapons" ? (
+                <>
+                  <Cluster gap={3}>
+                    {CATALOG_ELEMENTS.map((el) => {
+                      const visual = ELEMENT_OFFICIAL[el as DestinyElement];
+                      const color =
+                        visual?.color ?? ELEMENT_CSS_COLOR[el as DestinyElement];
+                      return (
+                        <FilterChip
+                          key={el}
+                          size="xs"
+                          label={el}
+                          iconOnly
+                          icon={
+                            visual ? (
+                              <OfficialFilterIcon
+                                icon={visual.icon}
+                                label={el}
+                                size={16}
+                              />
+                            ) : null
+                          }
+                          active={elements.includes(el)}
+                          activeStyle={{
+                            borderColor: color,
+                            boxShadow: `0 0 0 1px ${color}`,
+                            backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
+                          }}
+                          onClick={() =>
+                            setElements((prev) => toggleFilterValue(prev, el))
+                          }
+                        />
+                      );
+                    })}
+                  </Cluster>
+                  <Cluster gap={3}>
+                    {CATALOG_AMMO_TYPES.map((a) => {
+                      const visual = AMMO_OFFICIAL[a];
+                      return (
+                        <FilterChip
+                          key={a}
+                          size="xs"
+                          label={a}
+                          iconOnly
+                          icon={
+                            <OfficialFilterIcon
+                              icon={visual.icon}
+                              label={a}
+                              size={16}
+                            />
+                          }
+                          active={ammos.includes(a)}
+                          activeStyle={{
+                            borderColor: visual.color,
+                            boxShadow: `0 0 0 1px ${visual.color}`,
+                            backgroundColor: `color-mix(in srgb, ${visual.color} 14%, transparent)`,
+                          }}
+                          onClick={() =>
+                            setAmmos((prev) => toggleFilterValue(prev, a))
+                          }
+                        />
+                      );
+                    })}
+                  </Cluster>
+                </>
+              ) : null}
+            </Row>
+
+            {/* Synergy: search + selected chips only */}
+            {synergiesSignedIn && librarySynergies.length > 0 ? (
+              <Stack gap={4}>
+                <Row gap={6} align="end" wrap>
+                  <TextField
+                    label={`Synergy${synergyIds.length ? ` · ${synergyIds.length}` : ""}`}
+                    value={synergyQuery}
+                    onChange={(e) => setSynergyQuery(e.target.value)}
+                    placeholder="Filter synergies… e.g. tangle, melee"
+                    className="min-w-[180px] flex-1"
+                  />
+                </Row>
+                {synergyIds.length > 0 ? (
+                  <Cluster gap={3}>
+                    {synergyIds.map((id) => (
+                      <FilterChip
+                        key={id}
+                        size="xs"
+                        label={synergyLabelById.get(id) ?? id}
+                        active
+                        onClick={() =>
+                          setSynergyIds((prev) =>
+                            prev.filter((x) => x !== id),
+                          )
+                        }
+                      />
+                    ))}
+                  </Cluster>
+                ) : null}
+                {synergyQuery.trim() || synergyPickerOptions.length <= 8 ? (
+                  <Cluster gap={3}>
+                    {synergyPickerOptions.map((o) => (
+                      <FilterChip
+                        key={o.id}
+                        size="xs"
+                        label={o.label}
+                        active={false}
+                        onClick={() => {
+                          setSynergyIds((prev) =>
+                            prev.includes(o.id) ? prev : [...prev, o.id],
+                          );
+                          setSynergyQuery("");
+                        }}
+                      />
+                    ))}
+                    {synergyQuery.trim() && synergyPickerOptions.length === 0 ? (
+                      <Text size="xs" tone="muted">
+                        No matches
+                      </Text>
+                    ) : null}
+                  </Cluster>
+                ) : (
+                  <Text size="xs" tone="muted">
+                    Type to search {librarySynergies.length} synergies
+                  </Text>
+                )}
               </Stack>
             ) : null}
-            {kind === "weapons" ? (
-              <>
-                <Stack gap={4}>
-                  <Text
-                    size="xs"
-                    tone="muted"
-                    className="uppercase tracking-widest"
-                  >
-                    Element
-                    {elements.length > 0 ? ` · ${elements.length}` : ""}
-                  </Text>
-                  <Cluster gap={6}>
-                    {CATALOG_ELEMENTS.map((el) => (
-                      <FilterChip
-                        key={el}
-                        label={el}
-                        active={elements.includes(el)}
-                        onClick={() =>
-                          setElements((prev) => toggleFilterValue(prev, el))
-                        }
-                      />
-                    ))}
-                  </Cluster>
-                </Stack>
-                <Stack gap={4}>
-                  <Text
-                    size="xs"
-                    tone="muted"
-                    className="uppercase tracking-widest"
-                  >
-                    Ammo
-                    {ammos.length > 0 ? ` · ${ammos.length}` : ""}
-                  </Text>
-                  <Cluster gap={6}>
-                    {CATALOG_AMMO_TYPES.map((a) => (
-                      <FilterChip
-                        key={a}
-                        label={a}
-                        active={ammos.includes(a)}
-                        onClick={() =>
-                          setAmmos((prev) => toggleFilterValue(prev, a))
-                        }
-                      />
-                    ))}
-                  </Cluster>
-                </Stack>
-                <Stack gap={4}>
-                  <Text
-                    size="xs"
-                    tone="muted"
-                    className="uppercase tracking-widest"
-                  >
-                    Archetype
-                    {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
-                  </Text>
-                  <Cluster gap={6}>
-                    {CATALOG_WEAPON_ARCHETYPES.map((t) => (
-                      <FilterChip
-                        key={t}
-                        label={t}
-                        active={archetypes.includes(t)}
-                        onClick={() =>
-                          setArchetypes((prev) => toggleFilterValue(prev, t))
-                        }
-                      />
-                    ))}
-                  </Cluster>
-                </Stack>
-                {elements.length + ammos.length + archetypes.length > 0 ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setElements([]);
-                      setAmmos([]);
-                      setArchetypes([]);
-                    }}
-                  >
-                    Clear multi-filters
-                  </Button>
-                ) : null}
-              </>
-            ) : null}
-            <Stack gap={4}>
-              <Text size="xs" tone="muted" className="uppercase tracking-widest">
-                Group by
-                {groupDims.length > 0
-                  ? ` · ${groupDims.map((d) => groupDimOptions.find((o) => o.id === d)?.label ?? d).join(" · ")}`
-                  : " · none"}
-              </Text>
-              <Cluster gap={6}>
-                {groupDimOptions.map((opt) => (
-                  <FilterChip
-                    key={opt.id}
-                    label={opt.label}
-                    active={groupDims.includes(opt.id)}
-                    onClick={() => toggleGroupDim(opt.id)}
-                  />
-                ))}
-                {groupDims.length > 0 ? (
-                  <FilterChip
-                    label="Clear groups"
-                    active={false}
-                    onClick={() => setGroupDims([])}
-                  />
-                ) : null}
-              </Cluster>
-            </Stack>
-            <Row gap={8}>
+
+            {/* More filters: archetype + group by */}
+            <Row gap={6} align="center" wrap>
               <Button
                 size="sm"
-                variant="accent"
-                disabled={loading}
-                onClick={() => void runSearch()}
+                variant="ghost"
+                onClick={() => setMoreFiltersOpen((v) => !v)}
               >
-                {loading ? "Searching…" : "Search"}
+                {moreFiltersOpen ? "▾ More filters" : "▸ More filters"}
+                {archetypes.length + groupDims.length > 0
+                  ? ` · ${archetypes.length + groupDims.length}`
+                  : ""}
               </Button>
             </Row>
+            {moreFiltersOpen ? (
+              <Stack gap={6}>
+                <Stack gap={2}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-wide"
+                  >
+                    {kind === "weapons" ? "Weapon type" : "Armor archetype"}
+                    {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
+                  </Text>
+                  <Cluster gap={3}>
+                    {kind === "weapons"
+                      ? CATALOG_WEAPON_ARCHETYPES.map((t) => (
+                          <FilterChip
+                            key={t}
+                            size="xs"
+                            label={t}
+                            iconOnly
+                            icon={<WeaponTypeIcon typeName={t} size={14} />}
+                            active={archetypes.includes(t)}
+                            onClick={() =>
+                              setArchetypes((prev) =>
+                                toggleFilterValue(prev, t),
+                              )
+                            }
+                          />
+                        ))
+                      : CATALOG_ARMOR_ARCHETYPES.map((t) => {
+                          const visual = visualForArmorArchetype(t);
+                          return (
+                            <FilterChip
+                              key={t}
+                              size="xs"
+                              label={t}
+                              iconOnly={Boolean(visual)}
+                              icon={
+                                visual ? (
+                                  <OfficialFilterIcon
+                                    icon={visual.icon}
+                                    label={t}
+                                    size={16}
+                                  />
+                                ) : null
+                              }
+                              active={archetypes.includes(t)}
+                              activeStyle={
+                                visual
+                                  ? officialActiveStyle(visual)
+                                  : undefined
+                              }
+                              onClick={() =>
+                                setArchetypes((prev) =>
+                                  toggleFilterValue(prev, t),
+                                )
+                              }
+                            />
+                          );
+                        })}
+                  </Cluster>
+                </Stack>
+                <Stack gap={2}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    className="uppercase tracking-wide"
+                  >
+                    Group by
+                    {groupDims.length > 0
+                      ? ` · ${groupDims
+                          .map(
+                            (d) =>
+                              groupDimOptions.find((o) => o.id === d)?.label ??
+                              d,
+                          )
+                          .join(" · ")}`
+                      : ""}
+                  </Text>
+                  <Cluster gap={3}>
+                    {groupDimOptions.map((opt) => (
+                      <FilterChip
+                        key={opt.id}
+                        size="xs"
+                        label={opt.label}
+                        active={groupDims.includes(opt.id)}
+                        onClick={() => toggleGroupDim(opt.id)}
+                      />
+                    ))}
+                  </Cluster>
+                </Stack>
+              </Stack>
+            ) : null}
           </Stack>
         </Panel>
+        </Stack>
+      </PageFrameChrome>
 
+      <PageFrameBody>
         <Workspace
           rail={
-            <Panel as="aside" className="flex flex-col min-h-[420px]">
-              <Stack gap={12}>
+            <Panel
+              as="aside"
+              className="h-full min-h-0 flex flex-col overflow-hidden"
+            >
+              <div className="shrink-0">
                 <SectionLabel>
                   Results
                   {items.length > 0 ? ` · ${items.length}` : ""}
                 </SectionLabel>
-                {loading ? (
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto mt-3">
+                {loading && baseItems.length === 0 ? (
                   <Text size="sm" tone="muted">
-                    Searching…
-                  </Text>
-                ) : !hasSearched ? (
-                  <Text size="sm" tone="muted">
-                    Run a search to list items.
+                    Loading catalog…
                   </Text>
                 ) : items.length === 0 ? (
                   <Text size="sm" tone="muted">
-                    No items match.
+                    {baseItems.length === 0
+                      ? (syncMessage ?? "No items in this catalog.")
+                      : "No items match filters."}
                   </Text>
                 ) : (
-                  <Stack gap={10} className="max-h-[70vh] overflow-auto">
+                  <Stack gap={10}>
                     {groupDims.length === 0
                       ? items.map((item) => renderResultRow(item))
                       : grouped.map((group) => (
@@ -518,18 +875,22 @@ export function CatalogPage() {
                               </Text>
                             </Row>
                             <Stack gap={6}>
-                              {group.items.map((item) => renderResultRow(item))}
+                              {group.items.map((item) =>
+                                renderResultRow(item),
+                              )}
                             </Stack>
                           </Stack>
                         ))}
                   </Stack>
                 )}
-              </Stack>
+              </div>
             </Panel>
           }
           main={
             !selected ? (
-              <EmptyState description="Select an item to see detail and owned instances." />
+              <WorkspaceMain>
+                <EmptyState description="Select an item to see detail and owned instances." />
+              </WorkspaceMain>
             ) : (
               <WorkspaceMain>
                 <Panel tone="raised" className="w-full">
@@ -557,16 +918,95 @@ export function CatalogPage() {
                             <Chip accent>Exotic</Chip>
                           ) : null}
                           {selected.slot ? <Chip>{selected.slot}</Chip> : null}
-                          {selected.element ? (
-                            <Chip>{selected.element}</Chip>
-                          ) : null}
-                          {selected.ammo ? <Chip>{selected.ammo}</Chip> : null}
+                          {selected.element
+                            ? (() => {
+                                const v = visualForElement(selected.element);
+                                return v ? (
+                                  <MetaChip
+                                    label={selected.element!}
+                                    iconOnly
+                                    accentColor={v.color}
+                                    icon={
+                                      <OfficialFilterIcon
+                                        icon={v.icon}
+                                        label={selected.element!}
+                                        size={14}
+                                      />
+                                    }
+                                  />
+                                ) : (
+                                  <Chip>{selected.element}</Chip>
+                                );
+                              })()
+                            : null}
+                          {selected.ammo
+                            ? (() => {
+                                const v = visualForAmmo(selected.ammo);
+                                return v ? (
+                                  <MetaChip
+                                    label={selected.ammo!}
+                                    iconOnly
+                                    accentColor={v.color}
+                                    icon={
+                                      <OfficialFilterIcon
+                                        icon={v.icon}
+                                        label={selected.ammo!}
+                                        size={14}
+                                      />
+                                    }
+                                  />
+                                ) : (
+                                  <Chip>{selected.ammo}</Chip>
+                                );
+                              })()
+                            : null}
                           {selected.itemTypeName ? (
-                            <Chip>{selected.itemTypeName}</Chip>
+                            <MetaChip
+                              label={selected.itemTypeName}
+                              icon={
+                                <WeaponTypeIcon
+                                  typeName={selected.itemTypeName}
+                                  size={12}
+                                />
+                              }
+                            />
                           ) : null}
-                          {selected.frame ? <Chip>{selected.frame}</Chip> : null}
+                          {selected.frame
+                            ? (() => {
+                                const v = visualForWeaponFrame(selected.frame);
+                                return v ? (
+                                  <MetaChip
+                                    label={selected.frame!}
+                                    iconOnly
+                                    icon={
+                                      <OfficialFilterIcon
+                                        icon={v.icon}
+                                        label={selected.frame!}
+                                        size={14}
+                                      />
+                                    }
+                                  />
+                                ) : (
+                                  <Chip>{selected.frame}</Chip>
+                                );
+                              })()
+                            : null}
                           {selected.classType ? (
-                            <Chip>{selected.classType}</Chip>
+                            <Chip
+                              icon={
+                                isGuardianClass(selected.classType) ? (
+                                  <ClassIcon
+                                    className={selected.classType}
+                                    color={
+                                      CLASS_CSS_COLOR[selected.classType]
+                                    }
+                                    size={12}
+                                  />
+                                ) : null
+                              }
+                            >
+                              {selected.classType}
+                            </Chip>
                           ) : null}
                         </Cluster>
                       </Stack>
@@ -660,7 +1100,7 @@ export function CatalogPage() {
             )
           }
         />
-      </Stack>
-    </div>
+      </PageFrameBody>
+    </PageFrame>
   );
 }

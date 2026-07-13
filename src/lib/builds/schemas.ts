@@ -55,12 +55,24 @@ export const updateBuildSchema = createBuildSchema
     acceptStatNudges: z.boolean().optional(),
   });
 
+const snapshotConfigSchema = z.object({
+  slot: z.string().min(1),
+  itemHash: z.number().int().positive(),
+  itemName: z.string().min(1),
+  selectedPerks: z.array(z.number().int()).optional(),
+  masterworkHash: z.number().int().nullable().optional(),
+  modHashes: z.array(z.number().int()).nullable().optional(),
+  instanceId: z.string().nullable().optional(),
+});
+
 export const updateVariantSchema = buildVariantSchema.extend({
   attachments: z
     .array(
       z.object({
         setId: z.string().min(1),
         mode: z.enum(["live", "snapshot"]),
+        /** Optional freeze payload for snapshot mode (slot mods, etc.). */
+        snapshotConfigs: z.array(snapshotConfigSchema).optional(),
       }),
     )
     .optional(),

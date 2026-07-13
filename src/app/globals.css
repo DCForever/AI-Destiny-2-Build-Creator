@@ -21,12 +21,13 @@
   --success: #6fc28b;
   --warning: #d9a93f;
 
-  --element-kinetic: #d8d8d8;
-  --element-arc: #7ad1f5;
-  --element-solar: #f0793e;
+  /* Official damage-type colors (DestinyDamageTypeDefinition.color) */
+  --element-kinetic: #ffffff;
+  --element-arc: #85c5ec;
+  --element-solar: #f2721b;
   --element-void: #b184c5;
   --element-stasis: #4d88ff;
-  --element-strand: #3fd680;
+  --element-strand: #35e366;
   --element-prismatic: #d67ee2;
 }
 

@@ -23,10 +23,14 @@ import {
   Cluster,
   EmptyState,
   FilterChip,
+  PageFrame,
+  PageFrameBody,
+  PageFrameChrome,
   PageHeader,
   Panel,
   Row,
   SectionLabel,
+  SignedOutGate,
   Stack,
   Text,
   Workspace,
@@ -466,14 +470,11 @@ export function BuildPage() {
 
   if (signedIn === false) {
     return (
-      <div className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <Stack gap={16}>
-          <PageHeader
-            title="Build"
-            description="Sign in with Bungie to browse and apply your curated builds."
-          />
-        </Stack>
-      </div>
+      <SignedOutGate
+        title="Build"
+        description="Curated library — create builds, edit variants, apply to a character or export to DIM."
+        emptyDescription="Sign in with Bungie using the control in the header to browse and apply your curated builds."
+      />
     );
   }
 
@@ -492,22 +493,26 @@ export function BuildPage() {
   let main: ReactNode;
   if (creating) {
     main = (
-      <CreateBuildPanel
-        busy={createBusy}
-        error={createError}
-        onCancel={() => setCreating(false)}
-        onCreate={(input) => void handleCreate(input)}
-      />
+      <WorkspaceMain>
+        <CreateBuildPanel
+          busy={createBusy}
+          error={createError}
+          onCancel={() => setCreating(false)}
+          onCreate={(input) => void handleCreate(input)}
+        />
+      </WorkspaceMain>
     );
   } else if (!detail) {
     main = (
-      <EmptyState
-        description={
-          loading
-            ? "Loading…"
-            : "Select a build from the library, or create a new one."
-        }
-      />
+      <WorkspaceMain>
+        <EmptyState
+          description={
+            loading
+              ? "Loading…"
+              : "Select a build from the library, or create a new one."
+          }
+        />
+      </WorkspaceMain>
     );
   } else if (editingBuild) {
     main = (
@@ -644,15 +649,17 @@ export function BuildPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <Stack gap={16}>
-        <PageHeader
-          title="Build"
-          description="Curated library — create builds, edit variants (General · Sets · Artifact · Mods · Abilities · Aspects · Fragments), apply to a character or export to DIM."
-        />
-
-        {error ? <Callout tone="danger">{error}</Callout> : null}
-
+    <PageFrame>
+      <PageFrameChrome>
+        <Stack gap={12}>
+          <PageHeader
+            title="Build"
+            description="Curated library — create builds, edit variants (General · Sets · Artifact · Mods · Abilities · Aspects · Fragments), apply to a character or export to DIM."
+          />
+          {error ? <Callout tone="danger">{error}</Callout> : null}
+        </Stack>
+      </PageFrameChrome>
+      <PageFrameBody>
         <Workspace
           rail={
             <BuildLibrary
@@ -684,9 +691,8 @@ export function BuildPage() {
             />
           }
           main={main}
-          /* railPosition="end" moves library to the right */
         />
-      </Stack>
-    </div>
+      </PageFrameBody>
+    </PageFrame>
   );
 }

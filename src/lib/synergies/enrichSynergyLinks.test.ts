@@ -75,6 +75,37 @@ describe("enrichSynergyLinks", () => {
           },
         ];
       }
+      if (store === "exotic-armor") {
+        return [
+          {
+            hash: 501,
+            name: "Synthoceps",
+            icon: "/syntho.png",
+            intrinsic: {
+              name: "Biotic Enhancements",
+              description: "Improved melee lunge when surrounded.",
+            },
+          },
+        ];
+      }
+      if (store === "artifacts") {
+        return [
+          {
+            hash: 600,
+            name: "Tablet of Ruin",
+            icon: null,
+            perks: [
+              {
+                hash: 601,
+                name: "Anti-Barrier",
+                description: "Barrier champion stun.",
+                icon: "/ab.png",
+                artifactName: "Tablet of Ruin",
+              },
+            ],
+          },
+        ];
+      }
       return [];
     });
   });
@@ -170,6 +201,46 @@ describe("enrichSynergyLinks", () => {
       "Targets explode and Scorch nearby foes.",
     );
     expect(exoticOnly[0]?.icon).toBe("/sunshot.png");
+  });
+
+  it("attaches descriptions for exotic armor and artifact perks", async () => {
+    const enriched = await enrichSynergyLinks([
+      {
+        id: "6",
+        synergyId: "s",
+        kind: "exotic_armor",
+        displayName: "Synthoceps",
+        itemHash: 501,
+        perkHash: null,
+        parentItemHash: null,
+        originTraitName: null,
+        originTraitHash: null,
+        armorSetName: null,
+        bonusPieces: null,
+        bonusName: null,
+        armorSetHash: null,
+      },
+      {
+        id: "7",
+        synergyId: "s",
+        kind: "artifact_perk",
+        displayName: "Anti-Barrier",
+        itemHash: null,
+        perkHash: 601,
+        parentItemHash: 600,
+        originTraitName: null,
+        originTraitHash: null,
+        armorSetName: null,
+        bonusPieces: null,
+        bonusName: null,
+        armorSetHash: null,
+      },
+    ]);
+    expect(enriched[0]?.description).toContain("melee lunge");
+    expect(enriched[0]?.icon).toBe("/syntho.png");
+    expect(enriched[1]?.description).toMatch(/Tablet of Ruin/);
+    expect(enriched[1]?.description).toContain("Barrier");
+    expect(enriched[1]?.icon).toBe("/ab.png");
   });
 
   it("returns empty description when catalog miss", async () => {

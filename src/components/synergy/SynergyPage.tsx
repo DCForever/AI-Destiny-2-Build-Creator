@@ -10,11 +10,16 @@ import type { SynergyDetail as SynergyDetailType, SynergySummary } from "@/compo
 import {
   Callout,
   EmptyState,
+  PageFrame,
+  PageFrameBody,
+  PageFrameChrome,
   PageHeader,
+  SignedOutGate,
   Stack,
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
+import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
 import { filterSynergies } from "@/lib/synergies/filterSynergies";
 import { sameSynergyDesignation } from "@/lib/synergies/mergeSynergies";
 import { sortByName } from "@/lib/sortByName";
@@ -44,6 +49,7 @@ export function SynergyPage() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
   const [mergeBusy, setMergeBusy] = useState(false);
+  const [duplicateBusy, setDuplicateBusy] = useState(false);
 
   const loadList = useCallback(async () => {
     const res = await fetch("/api/user/synergies");
@@ -130,11 +136,52 @@ export function SynergyPage() {
     };
   }, [rows, checkedIds, selectedId]);
 
+  async function handleDuplicate() {
+    const sourceId =
+      selectedId ??
+      (checkedIds.size === 1 ? [...checkedIds][0]! : null);
+    if (!sourceId) {
+      setError("Select a synergy to duplicate.");
+      return;
+    }
+    setDuplicateBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/user/synergies/${sourceId}/duplicate`, {
+        method: "POST",
+      });
+      const body = (await res.json()) as {
+        error?: string;
+        synergy?: SynergyDetailType;
+      };
+      if (!res.ok || !body.synergy) {
+        setError(body.error ?? "Failed to duplicate synergy");
+        return;
+      }
+      setRows((prev) => sortByName([...prev, body.synergy!]));
+      setSelectedId(body.synergy.id);
+      setDetail(body.synergy);
+      setCheckedIds(new Set());
+      setCreating(false);
+      setEditing(true);
+    } catch {
+      setError("Failed to duplicate synergy");
+    } finally {
+      setDuplicateBusy(false);
+    }
+  }
+
   async function handleMerge() {
     if (!mergeState.enabled || !mergeState.survivorId) return;
     const survivor = rows.find((r) => r.id === mergeState.survivorId);
+    const survivorLabel = survivor
+      ? formatSynergyTypeDesignation({
+          type: survivor.type,
+          subType: survivor.subType,
+        })
+      : "selected";
     const confirmed = window.confirm(
-      `Merge ${mergeState.sourceIds.length + 1} synergies into “${survivor?.name ?? "selected"}”?\n\n` +
+      `Merge ${mergeState.sourceIds.length + 1} synergies into “${survivorLabel}”?\n\n` +
         `Links will be combined; the other ${mergeState.sourceIds.length} row(s) will be deleted. Builds that use this type/subtype are unaffected.`,
     );
     if (!confirmed) return;
@@ -231,14 +278,11 @@ export function SynergyPage() {
 
   if (signedIn === false) {
     return (
-      <div className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <Stack gap={16}>
-          <PageHeader
-            title="Synergy"
-            description="Sign in with Bungie to curate synergies used by Build."
-          />
-        </Stack>
-      </div>
+      <SignedOutGate
+        title="Synergy"
+        description="Curate designations Build uses — filter by type and subtype, open detail, create or edit links."
+        emptyDescription="Sign in with Bungie using the control in the header to curate synergies used by Build."
+      />
     );
   }
 
@@ -267,19 +311,27 @@ export function SynergyPage() {
     );
   } else if (!detail) {
     main = (
-      <EmptyState
-        description={
-          loading
-            ? "Loading…"
-            : "Select a synergy from the library, or create a new one."
-        }
-      />
+      <WorkspaceMain>
+        <EmptyState
+          description={
+            loading
+              ? "Loading…"
+              : "Select a synergy from the library, or create a new one."
+          }
+        />
+      </WorkspaceMain>
     );
   } else {
+    const listMeta = rows.find((r) => r.id === detail.id);
     main = (
       <WorkspaceMain>
         <SynergyDetail
-          synergy={detail}
+          synergy={{
+            ...detail,
+            buildCount: listMeta?.buildCount ?? detail.buildCount,
+            objectCount:
+              listMeta?.objectCount ?? detail.objectCount ?? detail.links.length,
+          }}
           onEdit={() => setEditing(true)}
           onDelete={() => void handleDelete()}
           deleteBusy={deleteBusy}
@@ -289,24 +341,25 @@ export function SynergyPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <Stack gap={16}>
-        <PageHeader
-          title="Synergy"
-          description="Curate designations Build uses — filter by type and subtype submenu, open detail, create or edit links."
-        />
-
-        {error ? <Callout tone="danger">{error}</Callout> : null}
-
-        <SynergyFilters
-          query={query}
-          onQueryChange={setQuery}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-          subTypeFilter={subTypeFilter}
-          onSubTypeFilterChange={setSubTypeFilter}
-        />
-
+    <PageFrame>
+      <PageFrameChrome>
+        <Stack gap={12}>
+          <PageHeader
+            title="Synergy"
+            description="Curate designations Build uses — filter by type and subtype submenu, open detail, create or edit links."
+          />
+          {error ? <Callout tone="danger">{error}</Callout> : null}
+          <SynergyFilters
+            query={query}
+            onQueryChange={setQuery}
+            typeFilter={typeFilter}
+            onTypeFilterChange={setTypeFilter}
+            subTypeFilter={subTypeFilter}
+            onSubTypeFilterChange={setSubTypeFilter}
+          />
+        </Stack>
+      </PageFrameChrome>
+      <PageFrameBody>
         <Workspace
           rail={
             <SynergyLibrary
@@ -315,6 +368,7 @@ export function SynergyPage() {
               checkedIds={checkedIds}
               loading={loading}
               mergeBusy={mergeBusy}
+              duplicateBusy={duplicateBusy}
               mergeEnabled={mergeState.enabled}
               mergeBlockedReason={mergeState.reason}
               onSelect={(id) => {
@@ -336,6 +390,7 @@ export function SynergyPage() {
               }}
               onClearChecked={() => setCheckedIds(new Set())}
               onMerge={() => void handleMerge()}
+              onDuplicate={() => void handleDuplicate()}
               onNew={() => {
                 setCreating(true);
                 setEditing(false);
@@ -346,7 +401,7 @@ export function SynergyPage() {
           }
           main={main}
         />
-      </Stack>
-    </div>
+      </PageFrameBody>
+    </PageFrame>
   );
 }

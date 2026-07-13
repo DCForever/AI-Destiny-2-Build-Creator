@@ -201,4 +201,23 @@ describe("artifactsExtractor", () => {
     expect(col0[1].row).toBe(1);
     expect(col1[0].row).toBe(0);
   });
+
+  it("fills perk description from sandbox perk when inventory description is blank", async () => {
+    const [rec] = await artifactsExtractor.extract(makeLoader());
+    const volatile = rec.perks.find((p) => p.name === "Volatile Flow");
+    expect(volatile?.description).toContain("Volatile Rounds");
+  });
+
+  it("keeps inventory description when present", async () => {
+    const [rec] = await artifactsExtractor.extract(makeLoader());
+    const overload = rec.perks.find((p) => p.name === "Overload Auto Rifles");
+    expect(overload?.description).toContain("Overload champions");
+  });
+
+  it("labels each perk with its parent artifact name", async () => {
+    const [rec] = await artifactsExtractor.extract(makeLoader());
+    expect(rec.perks.every((p) => p.artifactName === "Disc of Pestilence")).toBe(
+      true,
+    );
+  });
 });

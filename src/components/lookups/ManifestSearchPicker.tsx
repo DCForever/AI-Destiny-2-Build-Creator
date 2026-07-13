@@ -188,9 +188,9 @@ export function ManifestSearchPicker({
                     {item.kind ? (
                       <span className="ml-2 text-xs text-muted">{item.kind}</span>
                     ) : null}
-                    {item.description ? (
+                    {item.description?.trim() ? (
                       <span
-                        className="block text-xs text-muted truncate max-w-[240px]"
+                        className="block text-xs text-muted leading-snug line-clamp-2 mt-0.5"
                         title={item.description}
                       >
                         {item.description}

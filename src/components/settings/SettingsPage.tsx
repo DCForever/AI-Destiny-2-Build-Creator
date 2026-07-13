@@ -10,6 +10,9 @@ import {
   Callout,
   Cluster,
   FilterChip,
+  PageFrame,
+  PageFrameBody,
+  PageFrameChrome,
   PageHeader,
   Panel,
   SectionLabel,
@@ -161,80 +164,83 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <Stack gap={16}>
+    <PageFrame width="narrow">
+      <PageFrameChrome>
         <PageHeader
           title="Settings"
           description="Account, manifest, inventory sync, and service status. Manifest is required; inventory sync powers Catalog and owned pickers."
         />
-
-        <Panel tone="raised" pad="md">
-          <Stack gap={12}>
-            <SectionLabel>Account</SectionLabel>
-            <Suspense
-              fallback={
-                <Text size="xs" tone="muted">
-                  Loading sign-in…
-                </Text>
-              }
-            >
-              <BungieAuthControl onAuthChange={handleAuthChange} />
-            </Suspense>
-            {signedIn ? (
-              <Stack gap={8}>
-                <Text size="xs" tone="muted">
-                  Default guardian class
-                </Text>
-                <Cluster gap={6}>
-                  {CLASSES.map((cls) => (
-                    <FilterChip
-                      key={cls}
-                      label={cls}
-                      active={prefs?.defaultClass === cls}
-                      onClick={() => void saveDefaultClass(cls)}
-                      disabled={saving}
-                    />
-                  ))}
-                </Cluster>
-                {prefsSaved ? (
+      </PageFrameChrome>
+      <PageFrameBody scroll>
+        <Stack gap={16}>
+          <Panel tone="raised" pad="md">
+            <Stack gap={12}>
+              <SectionLabel>Account</SectionLabel>
+              <Suspense
+                fallback={
                   <Text size="xs" tone="muted">
-                    Preferences saved.
+                    Loading sign-in…
                   </Text>
-                ) : null}
-                {prefsError ? (
-                  <Callout tone="danger">{prefsError}</Callout>
-                ) : null}
-              </Stack>
-            ) : (
-              <Text size="sm" tone="muted">
-                Sign in to set your default guardian class.
-              </Text>
-            )}
-          </Stack>
-        </Panel>
+                }
+              >
+                <BungieAuthControl onAuthChange={handleAuthChange} />
+              </Suspense>
+              {signedIn ? (
+                <Stack gap={8}>
+                  <Text size="xs" tone="muted">
+                    Default guardian class
+                  </Text>
+                  <Cluster gap={6}>
+                    {CLASSES.map((cls) => (
+                      <FilterChip
+                        key={cls}
+                        label={cls}
+                        active={prefs?.defaultClass === cls}
+                        onClick={() => void saveDefaultClass(cls)}
+                        disabled={saving}
+                      />
+                    ))}
+                  </Cluster>
+                  {prefsSaved ? (
+                    <Text size="xs" tone="muted">
+                      Preferences saved.
+                    </Text>
+                  ) : null}
+                  {prefsError ? (
+                    <Callout tone="danger">{prefsError}</Callout>
+                  ) : null}
+                </Stack>
+              ) : (
+                <Text size="sm" tone="muted">
+                  Sign in to set your default guardian class.
+                </Text>
+              )}
+            </Stack>
+          </Panel>
 
-        <ManifestCard signedIn={signedIn} />
+          <ManifestCard signedIn={signedIn} />
 
-        <InventorySyncCard signedIn={signedIn} />
+          <InventorySyncCard signedIn={signedIn} />
 
-        <StatusCard
-          title="Bungie API"
-          description="OAuth for inventory, in-game loadouts, and Apply to character."
-          load={loadBungieStatus}
-        />
+          <StatusCard
+            title="Bungie API"
+            description="OAuth for inventory, in-game loadouts, and Apply to character."
+            load={loadBungieStatus}
+          />
 
-        <StatusCard
-          title="Local LLM"
-          description="Retired from product IA. Optional status for local tooling only."
-          load={loadLlmStatus}
-        />
+          <StatusCard
+            title="Local LLM"
+            description="Retired from product IA. Optional status for local tooling only."
+            load={loadLlmStatus}
+          />
 
-        <StatusCard
-          title="SearXNG"
-          description="Optional web search helper. Pipeline works without it."
-          load={loadSearxngStatus}
-        />
-      </Stack>
-    </div>
+          <StatusCard
+            title="SearXNG"
+            description="Optional web search helper. Pipeline works without it."
+            load={loadSearxngStatus}
+          />
+        </Stack>
+      </PageFrameBody>
+    </PageFrame>
   );
 }

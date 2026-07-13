@@ -63,6 +63,69 @@ describe("attachmentService", () => {
     expect(liveItems[0]?.itemHash).toBe(100);
   });
 
+  it("uses provided snapshotConfigs including modHashes (Mods tab path)", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "a-mods", 3, "Player");
+    seedDefaultSynergies(db, user.id);
+    const now = new Date().toISOString();
+
+    createBuildRecord(db, user.id, {
+      id: "build-mods",
+      name: "Test",
+      className: "Titan",
+      subclass: { name: "Sunbreaker" },
+      exoticArmorHash: 1,
+      exoticArmorName: "X",
+      exoticWeaponHash: null,
+      exoticWeaponName: null,
+      pinnedSuper: null,
+      tagIds: [],
+      synergyTypes: [{ type: "melee", subType: "Base" }],
+      now,
+    });
+
+    createSetRecord(db, user.id, { id: "set-arm", name: "Armor", type: "armor", tagIds: [], now });
+    await upsertSetItem(db, "set-arm", "armor", {
+      slot: "helmet",
+      itemHash: 100,
+      itemName: "Helm",
+      modHashes: [1],
+    });
+
+    createVariantRecord(db, {
+      id: "var-mods",
+      buildId: "build-mods",
+      name: "Default",
+      isDefault: true,
+      now,
+    });
+
+    await prepareAttachments(
+      db,
+      user.id,
+      "var-mods",
+      [
+        {
+          setId: "set-arm",
+          mode: "snapshot",
+          snapshotConfigs: [
+            {
+              slot: "helmet",
+              itemHash: 100,
+              itemName: "Helm",
+              modHashes: [501, 502],
+            },
+          ],
+        },
+      ],
+      now,
+    );
+
+    const attachments = listAttachments(db, "var-mods");
+    expect(attachments[0]?.mode).toBe("snapshot");
+    expect(attachments[0]?.snapshotConfigs?.[0]?.modHashes).toEqual([501, 502]);
+  });
+
   it("live attachment reflects set changes", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "a2", 3, "Player");

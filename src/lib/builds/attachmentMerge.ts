@@ -1,4 +1,19 @@
-export type AttachmentInput = { setId: string; mode: "live" | "snapshot" };
+export type AttachmentSnapshotConfig = {
+  slot: string;
+  itemHash: number;
+  itemName: string;
+  selectedPerks?: number[];
+  masterworkHash?: number | null;
+  modHashes?: number[] | null;
+  instanceId?: string | null;
+};
+
+export type AttachmentInput = {
+  setId: string;
+  mode: "live" | "snapshot";
+  /** Optional; preserved when merging/removing other rows. */
+  snapshotConfigs?: AttachmentSnapshotConfig[];
+};
 
 export function mergeAttachment(
   current: AttachmentInput[],
@@ -11,7 +26,9 @@ export function mergeAttachment(
   }
 
   return current.map((attachment) =>
-    attachment.setId === next.setId ? { ...attachment, mode: next.mode } : attachment,
+    attachment.setId === next.setId
+      ? { ...attachment, ...next, setId: next.setId, mode: next.mode }
+      : attachment,
   );
 }
 

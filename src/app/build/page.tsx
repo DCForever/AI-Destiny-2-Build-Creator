@@ -12,7 +12,7 @@ export default function BuildRoute() {
     <AppShell active="build">
       <Suspense
         fallback={
-          <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6 text-sm text-muted">
+          <div className="h-full min-h-0 flex items-start max-w-[1600px] mx-auto w-full px-3 sm:px-6 py-3 sm:py-4 text-sm text-muted">
             Loading builds…
           </div>
         }

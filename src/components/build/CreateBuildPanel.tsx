@@ -14,7 +14,7 @@ import {
 import {
   Button,
   Cluster,
-  FilterChip,
+  ClassFilterChip,
   Panel,
   Row,
   Section,
@@ -117,11 +117,12 @@ export function CreateBuildPanel({
         <Section label="Class">
           <Cluster>
             {CLASSES.map((cls) => (
-              <FilterChip
+              <ClassFilterChip
                 key={cls}
-                label={cls}
+                className={cls}
                 active={className === cls}
                 onClick={() => handleClassChange(cls)}
+                size="md"
               />
             ))}
           </Cluster>

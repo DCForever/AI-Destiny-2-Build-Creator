@@ -19,7 +19,10 @@ export const CLASS_TEXT_CLASS: Record<GuardianClassName, string> = {
   Warlock: "text-void",
 };
 
-/** CSS custom property colors for SVG fills/strokes. */
+/**
+ * Element tints aligned with DestinyDamageTypeDefinition.color (official).
+ * CSS vars in globals.css mirror these for Tailwind utility classes.
+ */
 export const ELEMENT_CSS_COLOR: Record<DestinyElement, string> = {
   Kinetic: "var(--element-kinetic)",
   Arc: "var(--element-arc)",

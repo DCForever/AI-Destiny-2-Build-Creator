@@ -1,10 +1,11 @@
 import type { LoadoutAnalysis } from "@/lib/llm/analyzeSchema";
+import { Panel, SectionLabel } from "@/components/ui";
 
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="mb-4">
-      <h3 className="text-[11px] tracking-widest uppercase text-muted mb-1">{title}</h3>
-      <div className="keyline" />
+      <SectionLabel>{title}</SectionLabel>
+      <div className="keyline mt-1" />
     </div>
   );
 }
@@ -56,7 +57,7 @@ export function AnalysisReport({ analysis }: AnalysisReportProps) {
   const showGrid = hasStrengths || hasGaps;
 
   return (
-    <div className="panel-notch p-6 space-y-8">
+    <Panel pad="lg" className="space-y-8">
       <section>
         <SectionHeader title="Assessment" />
         <p className="text-sm text-foreground leading-relaxed">{analysis.assessment}</p>
@@ -89,6 +90,6 @@ export function AnalysisReport({ analysis }: AnalysisReportProps) {
           </div>
         </section>
       )}
-    </div>
+    </Panel>
   );
 }

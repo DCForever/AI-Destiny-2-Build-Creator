@@ -196,6 +196,50 @@ export function SuperIcon({
   );
 }
 
+export type AmmoTypeName = "Primary" | "Special" | "Heavy";
+
+/** Compact ammo-type glyph for icon-only catalog filters. */
+export function AmmoIcon({
+  ammo,
+  size = 14,
+  title,
+  color = "currentColor",
+}: IconProps & { ammo: AmmoTypeName; color?: string }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 16 16",
+    fill: "none" as const,
+    "aria-label": title ?? ammo,
+    role: "img" as const,
+  };
+  if (ammo === "Primary") {
+    return (
+      <svg {...common}>
+        <title>{title ?? ammo}</title>
+        <circle cx="8" cy="8" r="3.2" stroke={color} strokeWidth="1.4" fill={color} fillOpacity="0.35" />
+      </svg>
+    );
+  }
+  if (ammo === "Special") {
+    return (
+      <svg {...common}>
+        <title>{title ?? ammo}</title>
+        <circle cx="5" cy="8" r="2.4" stroke={color} strokeWidth="1.3" fill={color} fillOpacity="0.35" />
+        <circle cx="11" cy="8" r="2.4" stroke={color} strokeWidth="1.3" fill={color} fillOpacity="0.35" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <title>{title ?? ammo}</title>
+      <circle cx="3.5" cy="8" r="2" stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.35" />
+      <circle cx="8" cy="8" r="2" stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.35" />
+      <circle cx="12.5" cy="8" r="2" stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.35" />
+    </svg>
+  );
+}
+
 /** Compact glyph badge used next to labels. */
 export function IconBadge({
   label,

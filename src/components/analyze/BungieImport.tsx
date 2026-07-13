@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { BungieAuthControl, type AuthStatus } from "@/components/BungieAuthControl";
+import { Panel, SectionLabel, Stack, Text } from "@/components/ui";
 
 type GuardianClass = "Titan" | "Hunter" | "Warlock";
 
@@ -123,58 +124,70 @@ export function BungieImport({ onImport }: BungieImportProps) {
   const isLoading = importPhase !== "idle";
 
   return (
-    <div className="panel-notch p-5 space-y-4">
-      <div className="text-[11px] tracking-widest uppercase text-muted">
-        Import from Bungie
-      </div>
+    <Panel pad="lg">
+      <Stack gap={12}>
+        <SectionLabel>Import from Bungie</SectionLabel>
 
-      <BungieAuthControl onAuthChange={handleAuthChange} />
+        <BungieAuthControl onAuthChange={handleAuthChange} />
 
-      {auth?.configured && auth.signedIn && (
-        <div className="space-y-3">
-          <div className="text-xs text-muted truncate">
-            {characters?.membership.displayName ?? "Loading characters…"}
-          </div>
+        {auth?.configured && auth.signedIn && (
+          <Stack gap={10}>
+            <Text size="xs" tone="muted" className="truncate">
+              {characters?.membership.displayName ?? "Loading characters…"}
+            </Text>
 
-          {charError && <p className="text-xs text-danger">{charError}</p>}
+            {charError && (
+              <Text size="xs" tone="danger">
+                {charError}
+              </Text>
+            )}
 
-          {characters && (
-            <ul className="space-y-1" role="listbox" aria-label="Characters">
-              {characters.characters.map((character) => {
-                const isSelected = selectedId === character.characterId;
-                const isBusy = isSelected && importPhase === "loading-equipment";
-                return (
-                  <li key={character.characterId}>
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      disabled={isLoading}
-                      onClick={() => void handleSelectCharacter(character)}
-                      className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left border transition-colors focus-visible:outline-accent disabled:opacity-50 ${
-                        isSelected
-                          ? "border-accent bg-accent/5"
-                          : "border-line hover:border-foreground/30"
-                      }`}
-                    >
-                      <span className="text-xs tracking-widest uppercase text-foreground">
-                        {character.classType}
-                      </span>
-                      <span className="text-xs text-muted">
-                        {character.light} · {formatLastPlayed(character.dateLastPlayed)}
-                      </span>
-                      {isBusy && <Spinner />}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+            {characters && (
+              <ul className="space-y-1" role="listbox" aria-label="Characters">
+                {characters.characters.map((character) => {
+                  const isSelected = selectedId === character.characterId;
+                  const isBusy = isSelected && importPhase === "loading-equipment";
+                  return (
+                    <li key={character.characterId}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        disabled={isLoading}
+                        onClick={() => void handleSelectCharacter(character)}
+                        className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left border transition-colors focus-visible:outline-accent disabled:opacity-50 ${
+                          isSelected
+                            ? "border-accent bg-accent/5"
+                            : "border-line hover:border-foreground/30"
+                        }`}
+                      >
+                        <span className="text-xs tracking-widest uppercase text-foreground">
+                          {character.classType}
+                        </span>
+                        <span className="text-xs text-muted">
+                          {character.light} · {formatLastPlayed(character.dateLastPlayed)}
+                        </span>
+                        {isBusy && <Spinner />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
 
-          {importWarning && <p className="text-xs text-warning">{importWarning}</p>}
-          {importError && <p className="text-xs text-danger">{importError}</p>}
-        </div>
-      )}
-    </div>
+            {importWarning && (
+              <Text size="xs" tone="warning">
+                {importWarning}
+              </Text>
+            )}
+            {importError && (
+              <Text size="xs" tone="danger">
+                {importError}
+              </Text>
+            )}
+          </Stack>
+        )}
+      </Stack>
+    </Panel>
   );
 }

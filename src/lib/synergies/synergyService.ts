@@ -1,10 +1,12 @@
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import type { AppDatabase } from "@/lib/db/client";
+import { listBuilds } from "@/lib/db/repositories/buildRepository";
 import {
   createSynergyRecord,
   deleteSynergyRecord,
   findSynergiesByTarget,
   getSynergiesByIds,
+  getSynergiesByTypeSubType,
   getSynergy,
   listSynergies,
   updateSynergyRecord,
@@ -13,7 +15,12 @@ import {
 } from "@/lib/db/repositories/synergyRepository";
 import type { CreateSynergyInput, MergeSynergiesInput } from "@/lib/synergies/schemas";
 import type { SynergyType } from "@/lib/synergies/schemas";
-import { generateSynergyName } from "@/lib/synergies/generateSynergyName";
+import { planDesignationConsolidations } from "@/lib/synergies/consolidateDesignations";
+import { buildCountByDesignationKey } from "@/lib/synergies/countBuildsByDesignation";
+import {
+  generateSynergyName,
+  synergyTypeDesignationKey,
+} from "@/lib/synergies/generateSynergyName";
 import { normalizeLegacySynergyType } from "@/lib/synergies/legacySynergyTypes";
 import {
   enrichSynergyWithLinkDescriptions,
@@ -27,6 +34,12 @@ import {
 import { isValidSubTypeForCategory, listSubTypeOptions } from "@/lib/synergies/subTypeVocabularies";
 import { validateSynergyLinks } from "@/lib/synergies/validateSynergyLink";
 import { validateSynergySubType } from "@/lib/synergies/validateSynergySubType";
+
+/** Library list row with usage counts for UI subtitles. */
+export type SynergyListItem = SynergyWithLinks & {
+  buildCount: number;
+  objectCount: number;
+};
 
 async function validateLinksOrThrow(links: CreateSynergyInput["links"]) {
   try {
@@ -79,6 +92,63 @@ export function listUserSynergies(db: AppDatabase, userId: number, type?: Synerg
   return listSynergies(db, userId, type);
 }
 
+/**
+ * Merge same type+subtype library rows into one (oldest survivor).
+ * Safe to call on every list; no-op when already unique per designation.
+ */
+export async function consolidateDuplicateDesignations(
+  db: AppDatabase,
+  userId: number,
+): Promise<{ deletedIds: string[]; survivorIds: string[] }> {
+  const rows = listSynergies(db, userId);
+  const plans = planDesignationConsolidations(rows);
+  const deletedIds: string[] = [];
+  const survivorIds: string[] = [];
+
+  for (const plan of plans) {
+    const result = await mergeUserSynergies(db, userId, {
+      survivorId: plan.survivorId,
+      sourceIds: plan.sourceIds,
+    });
+    deletedIds.push(...result.deletedIds);
+    survivorIds.push(result.synergy.id);
+  }
+
+  return { deletedIds, survivorIds };
+}
+
+/** Attach buildCount / objectCount for library list subtitles. */
+export function enrichSynergiesWithUsage(
+  db: AppDatabase,
+  userId: number,
+  synergies: SynergyWithLinks[],
+): SynergyListItem[] {
+  const builds = listBuilds(db, userId);
+  const counts = buildCountByDesignationKey(builds);
+  return synergies.map((s) => {
+    const key = synergyTypeDesignationKey({ type: s.type, subType: s.subType });
+    return {
+      ...s,
+      buildCount: counts.get(key) ?? 0,
+      objectCount: s.links.length,
+    };
+  });
+}
+
+/**
+ * List library after auto-merge cleanup, with usage counts.
+ * Prefer this for GET /api/user/synergies.
+ */
+export async function listUserSynergiesConsolidated(
+  db: AppDatabase,
+  userId: number,
+  type?: SynergyType,
+): Promise<SynergyListItem[]> {
+  await consolidateDuplicateDesignations(db, userId);
+  const rows = listSynergies(db, userId, type);
+  return enrichSynergiesWithUsage(db, userId, rows);
+}
+
 export async function createUserSynergy(
   db: AppDatabase,
   userId: number,
@@ -94,7 +164,7 @@ export async function createUserSynergy(
 
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
-  return createSynergyRecord(db, userId, {
+  createSynergyRecord(db, userId, {
     id,
     name: resolved.name,
     type: resolved.type,
@@ -103,6 +173,79 @@ export async function createUserSynergy(
     links,
     now,
   });
+
+  // Collapse same-designation forks so create cannot re-fork a type+subtype.
+  await consolidateDuplicateDesignations(db, userId);
+
+  // Always return the surviving designation row (may not be the just-created id).
+  const remaining = getSynergiesByTypeSubType(
+    db,
+    userId,
+    resolved.type,
+    resolved.subType,
+  );
+  if (remaining[0]) return remaining[0];
+  const stillThere = getSynergy(db, userId, id);
+  if (stillThere) return stillThere;
+  throw new ApiError(
+    API_ERROR_CODES.INVALID_ITEM,
+    "Synergy was created but could not be reloaded after consolidation.",
+  );
+}
+
+/** Map a library row into a create payload (clone fields; new id assigned on create). */
+export function createInputFromSynergy(source: {
+  type: string;
+  subType?: string | null;
+  description?: string | null;
+  links: Array<{
+    kind: string;
+    displayName: string;
+    itemHash?: number | null;
+    perkHash?: number | null;
+    parentItemHash?: number | null;
+    originTraitName?: string | null;
+    originTraitHash?: number | null;
+    armorSetName?: string | null;
+    bonusPieces?: number | null;
+    bonusName?: string | null;
+    armorSetHash?: number | null;
+  }>;
+}): CreateSynergyInput {
+  return {
+    type: source.type as CreateSynergyInput["type"],
+    subType: source.subType ?? null,
+    description: source.description ?? "",
+    links: source.links.map((l) => ({
+      kind: l.kind as CreateSynergyInput["links"][number]["kind"],
+      displayName: l.displayName,
+      itemHash: l.itemHash ?? undefined,
+      perkHash: l.perkHash ?? undefined,
+      parentItemHash: l.parentItemHash ?? undefined,
+      originTraitName: l.originTraitName ?? undefined,
+      originTraitHash: l.originTraitHash ?? undefined,
+      armorSetName: l.armorSetName ?? undefined,
+      bonusPieces: (l.bonusPieces === 2 || l.bonusPieces === 4
+        ? l.bonusPieces
+        : undefined) as 2 | 4 | undefined,
+      bonusName: l.bonusName ?? undefined,
+      armorSetHash: l.armorSetHash ?? undefined,
+    })),
+  };
+}
+
+/**
+ * Duplicate an existing library row into a new independent entry.
+ * Source id is never mutated; returns the new row.
+ */
+export async function duplicateUserSynergy(
+  db: AppDatabase,
+  userId: number,
+  sourceId: string,
+): Promise<SynergyWithLinks | null> {
+  const existing = getSynergy(db, userId, sourceId);
+  if (!existing) return null;
+  return createUserSynergy(db, userId, createInputFromSynergy(existing));
 }
 
 export async function updateUserSynergy(

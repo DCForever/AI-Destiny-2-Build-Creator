@@ -42,11 +42,15 @@ function linksToDraft(detail: SynergyDetail): SynergyDraftLink[] {
       kind: link.kind as SynergyDraftLink["kind"],
       displayName: link.displayName,
     };
-    if (link.kind === "weapon") {
+    if (link.kind === "weapon" || link.kind === "exotic_armor") {
       return { ...base, itemHash: link.itemHash ?? undefined };
     }
-    if (link.kind === "weapon_perk") {
-      return { ...base, perkHash: link.perkHash ?? undefined };
+    if (link.kind === "weapon_perk" || link.kind === "artifact_perk") {
+      return {
+        ...base,
+        perkHash: link.perkHash ?? undefined,
+        parentItemHash: link.parentItemHash ?? undefined,
+      };
     }
     if (link.kind === "origin_trait") {
       return {
@@ -193,7 +197,7 @@ export function SynergyEditPanel({
           originTraitHash: picker.originTraitHash,
         };
       case "weapon_perk":
-        return { ...base, perkHash: picker.perkHash };
+        return { ...base, perkHash: picker.perkHash ?? picker.hash };
       case "armor_set_bonus":
         return {
           ...base,
@@ -201,6 +205,17 @@ export function SynergyEditPanel({
           bonusPieces: picker.bonusPieces!,
           bonusName: picker.bonusName!,
           armorSetHash: picker.armorSetHash,
+        };
+      case "exotic_armor":
+        return {
+          ...base,
+          itemHash: picker.hash,
+        };
+      case "artifact_perk":
+        return {
+          ...base,
+          perkHash: picker.perkHash ?? picker.hash,
+          parentItemHash: picker.parentItemHash,
         };
       default:
         return null;
@@ -400,44 +415,84 @@ export function SynergyEditPanel({
               </Button>
             </Row>
             {pickerRows.length > 0 ? (
-              <SelectField
-                label="Result"
-                value={
-                  selectedLink
-                    ? "hash" in selectedLink && !("kind" in selectedLink)
-                      ? String(selectedLink.hash)
-                      : `${(selectedLink as SynergyPickerItem).kind}-${selectedLink.name}`
-                    : ""
-                }
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (linkKind === "weapon") {
-                    const item =
-                      weaponOptions.find((w) => String(w.hash) === value) ??
-                      null;
-                    setSelectedLink(item);
-                    return;
-                  }
-                  const item =
-                    linkOptions.find(
-                      (o) => `${o.kind}-${o.name}` === value,
-                    ) ?? null;
-                  setSelectedLink(item);
-                }}
-              >
-                <option value="">Select…</option>
+              <Stack gap={4} className="max-h-48 overflow-auto">
+                <Text size="xs" tone="muted">
+                  Results · {pickerRows.length}
+                </Text>
                 {pickerRows.map((item) => {
+                  const picker = item as SynergyPickerItem | { hash: number; name: string; description?: string };
                   const value =
                     "hash" in item && !("kind" in item)
                       ? String(item.hash)
-                      : `${(item as SynergyPickerItem).kind}-${item.name}`;
+                      : "kind" in picker && picker.kind === "artifact_perk"
+                        ? `artifact_perk-${(picker as SynergyPickerItem).perkHash ?? picker.hash}-${(picker as SynergyPickerItem).parentItemHash ?? ""}`
+                        : `${(picker as SynergyPickerItem).kind}-${item.name}`;
+                  const selectedValue = selectedLink
+                    ? "hash" in selectedLink && !("kind" in selectedLink)
+                      ? String(selectedLink.hash)
+                      : selectedLink &&
+                          "kind" in selectedLink &&
+                          selectedLink.kind === "artifact_perk"
+                        ? `artifact_perk-${selectedLink.perkHash ?? selectedLink.hash}-${selectedLink.parentItemHash ?? ""}`
+                        : `${(selectedLink as SynergyPickerItem).kind}-${selectedLink.name}`
+                    : "";
+                  const active = selectedValue === value;
+                  const description =
+                    "description" in item && typeof item.description === "string"
+                      ? item.description.trim()
+                      : "";
+                  const artifactName =
+                    "artifactName" in item && typeof item.artifactName === "string"
+                      ? item.artifactName.trim()
+                      : "";
                   return (
-                    <option key={value} value={value}>
-                      {item.name}
-                    </option>
+                    <button
+                      key={value}
+                      type="button"
+                      className={`text-left px-2 py-1.5 text-sm border ${
+                        active
+                          ? "border-accent bg-accent/10 text-foreground"
+                          : "border-line bg-surface-raised hover:border-line-strong text-foreground"
+                      }`}
+                      onClick={() => {
+                        if (linkKind === "weapon") {
+                          const found =
+                            weaponOptions.find((w) => String(w.hash) === value) ??
+                            null;
+                          setSelectedLink(found);
+                          return;
+                        }
+                        const found =
+                          linkOptions.find((o) => {
+                            if (o.kind === "artifact_perk") {
+                              return (
+                                `artifact_perk-${o.perkHash ?? o.hash}-${o.parentItemHash ?? ""}` ===
+                                value
+                              );
+                            }
+                            return `${o.kind}-${o.name}` === value;
+                          }) ?? null;
+                        setSelectedLink(found);
+                      }}
+                    >
+                      <span className="font-medium">{item.name}</span>
+                      {artifactName ? (
+                        <span className="block text-[10px] tracking-wide uppercase text-muted mt-0.5">
+                          {artifactName}
+                        </span>
+                      ) : null}
+                      {description ? (
+                        <span
+                          className="block text-xs text-muted leading-snug line-clamp-2 mt-0.5"
+                          title={description}
+                        >
+                          {description}
+                        </span>
+                      ) : null}
+                    </button>
                   );
                 })}
-              </SelectField>
+              </Stack>
             ) : null}
             <Button
               size="sm"

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type {
   BuildDetail,
   BuildSubclass,
   BuildVariantDetail,
 } from "@/components/build/types";
+import { SLOT_LABEL } from "@/components/build/types";
 import { ManifestSearchPicker, type ManifestPick } from "@/components/lookups/ManifestSearchPicker";
 import { SetAttachPicker } from "@/components/lookups/SetAttachPicker";
 import {
@@ -27,6 +28,13 @@ import {
   removeAttachment,
   type AttachmentInput,
 } from "@/lib/builds/attachmentMerge";
+import {
+  ARMOR_MOD_SLOTS,
+  applySlotModHashes,
+  attachmentsWithSlotMods,
+  configsFromSetItems,
+  type SlotModConfig,
+} from "@/lib/builds/variantMods";
 
 export type VariantEditTab =
   | "general"
@@ -47,8 +55,15 @@ const TABS: { id: VariantEditTab; label: string }[] = [
   { id: "fragments", label: "Fragments" },
 ];
 
+/** Attachment list for PATCH, including snapshot configs when present. */
 function attachmentsOf(variant: BuildVariantDetail): AttachmentInput[] {
-  return variant.attachments.map((a) => ({ setId: a.setId, mode: a.mode }));
+  return variant.attachments.map((a) => ({
+    setId: a.setId,
+    mode: a.mode,
+    ...(a.snapshotConfigs != null
+      ? { snapshotConfigs: a.snapshotConfigs }
+      : {}),
+  }));
 }
 
 function toggleList(list: string[], value: string): string[] {
@@ -72,6 +87,22 @@ function initialArtifact(variant: BuildVariantDetail): ManifestPick | null {
       }
     : null;
 }
+
+type LoadedSetDetail = {
+  id: string;
+  name: string;
+  type: string;
+  items: Array<{
+    slot: string;
+    itemHash: number;
+    itemName: string;
+    selectedPerks?: number[] | null;
+    masterworkHash?: number | null;
+    modHashes?: number[] | null;
+    instanceId?: string | null;
+    removedAt?: string | null;
+  }>;
+};
 
 /** Parent should pass key={variant.id} so form state resets on variant switch. */
 export function VariantEditPanel({
@@ -105,6 +136,12 @@ export function VariantEditPanel({
     () => variant.artifactConfig ?? [],
   );
   const [subclass, setSubclass] = useState<BuildSubclass>(() => build.subclass);
+
+  /** Mods tab: setId → loaded set detail (for armor slots / mod sets). */
+  const [modSets, setModSets] = useState<Record<string, LoadedSetDetail>>({});
+  const [modSetsLoading, setModSetsLoading] = useState(false);
+  /** Local draft of slot modHashes before save (key: setId:slot). */
+  const [slotModDraft, setSlotModDraft] = useState<Record<string, number[]>>({});
 
   async function patchVariant(
     payload: Record<string, unknown>,
@@ -211,12 +248,170 @@ export function VariantEditPanel({
     );
   }
 
+  const loadModSets = useCallback(async () => {
+    if (variant.attachments.length === 0) {
+      setModSets({});
+      setSlotModDraft({});
+      return;
+    }
+    setModSetsLoading(true);
+    try {
+      const entries = await Promise.all(
+        variant.attachments.map(async (a) => {
+          try {
+            const res = await fetch(`/api/user/sets/${a.setId}`);
+            if (!res.ok) return null;
+            const body = (await res.json()) as { set?: LoadedSetDetail };
+            return body.set ? ([a.setId, body.set] as const) : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      const next: Record<string, LoadedSetDetail> = {};
+      const draft: Record<string, number[]> = {};
+      for (const entry of entries) {
+        if (!entry) continue;
+        const [setId, set] = entry;
+        next[setId] = set;
+        const attachment = variant.attachments.find((a) => a.setId === setId);
+        // Prefer snapshot configs (variant-level mods) over live set items.
+        if (
+          attachment?.mode === "snapshot" &&
+          attachment.snapshotConfigs &&
+          attachment.snapshotConfigs.length > 0
+        ) {
+          for (const cfg of attachment.snapshotConfigs) {
+            if ((ARMOR_MOD_SLOTS as readonly string[]).includes(cfg.slot)) {
+              draft[`${setId}:${cfg.slot}`] = [...(cfg.modHashes ?? [])];
+            }
+          }
+        } else {
+          for (const item of set.items ?? []) {
+            if (item.removedAt) continue;
+            if ((ARMOR_MOD_SLOTS as readonly string[]).includes(item.slot)) {
+              draft[`${setId}:${item.slot}`] = [...(item.modHashes ?? [])];
+            }
+          }
+        }
+      }
+      setModSets(next);
+      setSlotModDraft(draft);
+    } finally {
+      setModSetsLoading(false);
+    }
+  }, [variant.attachments]);
+
+  useEffect(() => {
+    if (tab === "mods") void loadModSets();
+  }, [tab, loadModSets]);
+
+  const armorModRows = useMemo(() => {
+    const rows: Array<{
+      setId: string;
+      setName: string;
+      slot: string;
+      itemHash: number;
+      itemName: string;
+      configs: SlotModConfig[];
+      modHashes: number[];
+    }> = [];
+    for (const a of variant.attachments) {
+      const set = modSets[a.setId];
+      const setType = a.set?.type ?? set?.type;
+      if (setType !== "armor") continue;
+
+      // Snapshot attachment: edit frozen configs; live: start from set items.
+      const configs: SlotModConfig[] =
+        a.mode === "snapshot" && a.snapshotConfigs && a.snapshotConfigs.length > 0
+          ? a.snapshotConfigs.map((cfg) => ({
+              slot: cfg.slot,
+              itemHash: cfg.itemHash,
+              itemName: cfg.itemName,
+              selectedPerks: cfg.selectedPerks,
+              masterworkHash: cfg.masterworkHash,
+              modHashes: cfg.modHashes ?? [],
+              instanceId: cfg.instanceId,
+            }))
+          : configsFromSetItems(set?.items ?? []);
+
+      for (const cfg of configs) {
+        if (!(ARMOR_MOD_SLOTS as readonly string[]).includes(cfg.slot)) continue;
+        const key = `${a.setId}:${cfg.slot}`;
+        rows.push({
+          setId: a.setId,
+          setName: set?.name ?? a.set?.name ?? a.setId,
+          slot: cfg.slot,
+          itemHash: cfg.itemHash,
+          itemName: cfg.itemName,
+          configs,
+          modHashes: slotModDraft[key] ?? cfg.modHashes ?? [],
+        });
+      }
+    }
+    return rows;
+  }, [variant.attachments, modSets, slotModDraft]);
+
+  const modTypeAttachments = useMemo(
+    () =>
+      variant.attachments.filter((a) => {
+        const t = a.set?.type ?? modSets[a.setId]?.type;
+        return t === "mod";
+      }),
+    [variant.attachments, modSets],
+  );
+
+  const modCount = useMemo(() => {
+    let n = 0;
+    for (const hashes of Object.values(slotModDraft)) n += hashes.length;
+    n += modTypeAttachments.length;
+    return n;
+  }, [slotModDraft, modTypeAttachments.length]);
+
+  async function saveSlotMods(setId: string, slot: string) {
+    const attachment = variant.attachments.find((a) => a.setId === setId);
+    const set = modSets[setId];
+    const base: SlotModConfig[] =
+      attachment?.mode === "snapshot" &&
+      attachment.snapshotConfigs &&
+      attachment.snapshotConfigs.length > 0
+        ? attachment.snapshotConfigs.map((cfg) => ({
+            slot: cfg.slot,
+            itemHash: cfg.itemHash,
+            itemName: cfg.itemName,
+            selectedPerks: cfg.selectedPerks,
+            masterworkHash: cfg.masterworkHash,
+            modHashes: cfg.modHashes ?? [],
+            instanceId: cfg.instanceId,
+          }))
+        : configsFromSetItems(set?.items ?? []);
+    if (base.length === 0) {
+      setError("No armor pieces available for this set");
+      return;
+    }
+    const key = `${setId}:${slot}`;
+    const modHashes = slotModDraft[key] ?? [];
+    let configs: SlotModConfig[];
+    try {
+      configs = applySlotModHashes(base, slot, modHashes);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to apply mods");
+      return;
+    }
+    const attachments = attachmentsWithSlotMods(
+      attachmentsOf(variant),
+      setId,
+      configs,
+    );
+    await patchVariant({ attachments }, `Mods saved · ${SLOT_LABEL[slot] ?? slot}`);
+  }
+
   const setCount = variant.attachments.length;
   const tabCounts: Record<VariantEditTab, number | null> = {
     general: null,
     sets: setCount,
     artifact: selectedPerkHashes.length || (artifact ? 1 : 0),
-    mods: null,
+    mods: modCount || null,
     abilities: 3,
     aspects: subclass.aspects.length,
     fragments: subclass.fragments.length,
@@ -453,23 +648,146 @@ export function VariantEditPanel({
         ) : null}
 
         {tab === "mods" ? (
-          <Stack gap={8}>
-            <Text size="sm" tone="muted">
-              Armor mods live on set instances and resolve through attached sets.
-              Edit mod rolls on the Sets screen, then attach here.
+          <Stack gap={12}>
+            <Text size="xs" tone="muted">
+              Slot-level armor mods save on this variant as a snapshot of the
+              armor set (attachment path). Attach a dedicated mod set below for
+              combat/armor plugs that are not piece-bound.
             </Text>
-            <Cluster gap={6}>
-              {variant.attachments.map((a) => (
-                <Chip key={a.setId} accent>
-                  {a.set?.name ?? a.setId}
-                </Chip>
-              ))}
-            </Cluster>
-            {variant.attachments.length === 0 ? (
+
+            {modSetsLoading ? (
               <Text size="xs" tone="muted">
-                No sets attached yet.
+                Loading attached sets…
               </Text>
             ) : null}
+
+            <Section label="Armor slot mods">
+              {armorModRows.length === 0 ? (
+                <Text size="xs" tone="muted">
+                  Attach an armor set (Sets tab) with pieces filled, then return
+                  here to assign mods per slot.
+                </Text>
+              ) : (
+                <Stack gap={12}>
+                  {armorModRows.map((row) => {
+                    const key = `${row.setId}:${row.slot}`;
+                    return (
+                      <Stack
+                        key={key}
+                        gap={8}
+                        className="border border-line p-3 bg-surface-raised/40"
+                      >
+                        <Row justify="between" align="center" gap={8} wrap>
+                          <Stack gap={2}>
+                            <Text size="sm" weight="medium">
+                              {SLOT_LABEL[row.slot] ?? row.slot}
+                            </Text>
+                            <Text size="xs" tone="muted">
+                              {row.itemName} · {row.setName}
+                            </Text>
+                          </Stack>
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            disabled={busy}
+                            onClick={() => void saveSlotMods(row.setId, row.slot)}
+                          >
+                            Save slot mods
+                          </Button>
+                        </Row>
+                        <Cluster gap={6}>
+                          {row.modHashes.length === 0 ? (
+                            <Text size="xs" tone="muted">
+                              No mods selected
+                            </Text>
+                          ) : (
+                            row.modHashes.map((hash) => (
+                              <FilterChip
+                                key={hash}
+                                label={`#${hash}`}
+                                active
+                                onClick={() =>
+                                  setSlotModDraft((prev) => ({
+                                    ...prev,
+                                    [key]: (prev[key] ?? []).filter((h) => h !== hash),
+                                  }))
+                                }
+                              />
+                            ))
+                          )}
+                        </Cluster>
+                        <ManifestSearchPicker
+                          label="Add armor / combat mod"
+                          category="mods"
+                          disabled={busy}
+                          onSelect={(item) => {
+                            if (!item) return;
+                            setSlotModDraft((prev) => {
+                              const cur = prev[key] ?? [];
+                              if (cur.includes(item.hash)) return prev;
+                              return { ...prev, [key]: [...cur, item.hash] };
+                            });
+                          }}
+                        />
+                      </Stack>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Section>
+
+            <Section label="Mod sets">
+              {modTypeAttachments.length === 0 ? (
+                <Text size="xs" tone="muted">
+                  No mod-type sets attached.
+                </Text>
+              ) : (
+                <Stack gap={6}>
+                  {modTypeAttachments.map((a) => (
+                    <Row key={a.setId} justify="between" align="center" gap={8}>
+                      <Chip accent>{a.set?.name ?? modSets[a.setId]?.name ?? a.setId}</Chip>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={busy}
+                        onClick={() =>
+                          void patchVariant(
+                            {
+                              attachments: removeAttachment(
+                                attachmentsOf(variant),
+                                a.setId,
+                              ),
+                            },
+                            "Mod set detached",
+                          )
+                        }
+                      >
+                        Detach
+                      </Button>
+                    </Row>
+                  ))}
+                </Stack>
+              )}
+              <SetAttachPicker
+                disabled={busy}
+                excludeIds={variant.attachments.map((a) => a.setId)}
+                onAttach={(attachment) =>
+                  void patchVariant(
+                    {
+                      attachments: mergeAttachment(
+                        attachmentsOf(variant),
+                        attachment,
+                      ),
+                    },
+                    "Mod set attached",
+                  )
+                }
+              />
+              <Text size="xs" tone="muted">
+                Prefer set type <strong>mod</strong> when attaching combat/armor
+                plug collections.
+              </Text>
+            </Section>
           </Stack>
         ) : null}
 

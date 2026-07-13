@@ -4,7 +4,9 @@ export type CoverageLinkKind =
   | "weapon"
   | "weapon_perk"
   | "origin_trait"
-  | "armor_set_bonus";
+  | "armor_set_bonus"
+  | "exotic_armor"
+  | "artifact_perk";
 
 /** Stable key for “is this synergizable object already linked in the library?” */
 export function coverageKeyFromLink(link: {
@@ -38,6 +40,12 @@ export function coverageKeyFromLink(link: {
       const bonus = link.bonusName?.trim().toLowerCase() ?? "";
       return `armor_set_bonus:${set}:${link.bonusPieces}:${bonus}`;
     }
+    case "exotic_armor":
+      if (link.itemHash == null) return null;
+      return `exotic_armor:${link.itemHash}`;
+    case "artifact_perk":
+      if (link.perkHash == null) return null;
+      return `artifact_perk:${link.perkHash}`;
     default:
       return null;
   }
@@ -67,6 +75,7 @@ export function linkInputFromCoverageCandidate(candidate: {
   bonusPieces?: 2 | 4;
   bonusName?: string;
   armorSetHash?: number;
+  parentItemHash?: number;
 }): SynergyLinkInput {
   switch (candidate.kind) {
     case "weapon":
@@ -96,6 +105,19 @@ export function linkInputFromCoverageCandidate(candidate: {
         bonusPieces: candidate.bonusPieces,
         bonusName: candidate.bonusName,
         armorSetHash: candidate.armorSetHash,
+      };
+    case "exotic_armor":
+      return {
+        kind: "exotic_armor",
+        displayName: candidate.displayName,
+        itemHash: candidate.itemHash,
+      };
+    case "artifact_perk":
+      return {
+        kind: "artifact_perk",
+        displayName: candidate.displayName,
+        perkHash: candidate.perkHash,
+        parentItemHash: candidate.parentItemHash,
       };
   }
 }
