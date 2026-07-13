@@ -162,6 +162,7 @@ export function SlotFillPanel({
               scope={scope}
               selected={picked}
               disabled={busy}
+              showMultiFilters
               onSelect={(item) => {
                 setPicked(item);
                 setManifestPick(null);
@@ -172,6 +173,10 @@ export function SlotFillPanel({
                 }
               }}
             />
+            <Text size="xs" tone="muted">
+              Multi-select element / ammo / archetype narrows catalog results
+              (OR within each group). Slot is already fixed for this fill.
+            </Text>
           </>
         ) : null}
 

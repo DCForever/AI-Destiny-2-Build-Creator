@@ -5,6 +5,12 @@ import { useCallback, useMemo, useState } from "react";
 import { InstancePerkGridView } from "@/components/catalog/InstancePerkGridView";
 import { filterCatalogClient } from "@/lib/catalog/filterCatalogClient";
 import {
+  CATALOG_AMMO_TYPES,
+  CATALOG_ELEMENTS,
+  CATALOG_WEAPON_ARCHETYPES,
+  toggleFilterValue,
+} from "@/lib/catalog/filterOptions";
+import {
   ARMOR_GROUP_DIMENSIONS,
   groupCatalogItems,
   WEAPON_GROUP_DIMENSIONS,
@@ -65,42 +71,6 @@ function accentFor(element: string | null | undefined): string | undefined {
 const WEAPON_SLOTS = ["Kinetic", "Energy", "Power"] as const;
 const ARMOR_SLOTS = ["Helmet", "Gauntlets", "Chest", "Legs", "ClassItem"] as const;
 const CLASSES = ["Titan", "Hunter", "Warlock"] as const;
-const ELEMENTS = [
-  "Kinetic",
-  "Arc",
-  "Solar",
-  "Void",
-  "Stasis",
-  "Strand",
-  "Prismatic",
-] as const;
-const AMMO_TYPES = ["Primary", "Special", "Heavy"] as const;
-/** Common weapon archetypes (itemTypeName) for multi-filter chips. */
-const WEAPON_ARCHETYPES = [
-  "Auto Rifle",
-  "Pulse Rifle",
-  "Scout Rifle",
-  "Hand Cannon",
-  "Sidearm",
-  "Submachine Gun",
-  "Bow",
-  "Fusion Rifle",
-  "Glaive",
-  "Sniper Rifle",
-  "Shotgun",
-  "Trace Rifle",
-  "Grenade Launcher",
-  "Rocket Launcher",
-  "Linear Fusion Rifle",
-  "Machine Gun",
-  "Sword",
-] as const;
-
-function toggleInList(list: string[], value: string): string[] {
-  return list.includes(value)
-    ? list.filter((v) => v !== value)
-    : [...list, value];
-}
 
 /**
  * Catalog browse: filters · results rail · item detail + owned instances.
@@ -400,12 +370,14 @@ export function CatalogPage() {
                     {elements.length > 0 ? ` · ${elements.length}` : ""}
                   </Text>
                   <Cluster gap={6}>
-                    {ELEMENTS.map((el) => (
+                    {CATALOG_ELEMENTS.map((el) => (
                       <FilterChip
                         key={el}
                         label={el}
                         active={elements.includes(el)}
-                        onClick={() => setElements((prev) => toggleInList(prev, el))}
+                        onClick={() =>
+                          setElements((prev) => toggleFilterValue(prev, el))
+                        }
                       />
                     ))}
                   </Cluster>
@@ -420,12 +392,14 @@ export function CatalogPage() {
                     {ammos.length > 0 ? ` · ${ammos.length}` : ""}
                   </Text>
                   <Cluster gap={6}>
-                    {AMMO_TYPES.map((a) => (
+                    {CATALOG_AMMO_TYPES.map((a) => (
                       <FilterChip
                         key={a}
                         label={a}
                         active={ammos.includes(a)}
-                        onClick={() => setAmmos((prev) => toggleInList(prev, a))}
+                        onClick={() =>
+                          setAmmos((prev) => toggleFilterValue(prev, a))
+                        }
                       />
                     ))}
                   </Cluster>
@@ -440,13 +414,13 @@ export function CatalogPage() {
                     {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
                   </Text>
                   <Cluster gap={6}>
-                    {WEAPON_ARCHETYPES.map((t) => (
+                    {CATALOG_WEAPON_ARCHETYPES.map((t) => (
                       <FilterChip
                         key={t}
                         label={t}
                         active={archetypes.includes(t)}
                         onClick={() =>
-                          setArchetypes((prev) => toggleInList(prev, t))
+                          setArchetypes((prev) => toggleFilterValue(prev, t))
                         }
                       />
                     ))}

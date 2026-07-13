@@ -4,6 +4,13 @@ import { useState } from "react";
 
 import { ItemIcon } from "@/components/sheet/ItemIcon";
 import type { CatalogItem } from "@/lib/catalog/types";
+import {
+  CATALOG_AMMO_TYPES,
+  CATALOG_ARMOR_ARCHETYPES,
+  CATALOG_ELEMENTS,
+  CATALOG_WEAPON_ARCHETYPES,
+  toggleFilterValue,
+} from "@/lib/catalog/filterOptions";
 import { setSlotToCatalogBucket } from "@/lib/sets/catalogSlotMap";
 import {
   Button,
@@ -23,6 +30,10 @@ export type CatalogPick = {
   instancesHref?: string;
 };
 
+/**
+ * Catalog search for Sets fill-slot and similar pickers.
+ * Weapons: multi element / ammo / archetype. Armor: multi archetype (frame).
+ */
 export function CatalogItemPicker({
   kind,
   setSlot,
@@ -30,6 +41,8 @@ export function CatalogItemPicker({
   selected,
   onSelect,
   disabled,
+  /** When true (default), show multi-select element/archetype filters. */
+  showMultiFilters = true,
 }: {
   kind: "weapons" | "armor";
   /** Set domain slot (primary, helmet, …) mapped to catalog bucket. */
@@ -38,12 +51,16 @@ export function CatalogItemPicker({
   selected?: CatalogPick | null;
   onSelect: (item: CatalogPick | null) => void;
   disabled?: boolean;
+  showMultiFilters?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CatalogItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [elements, setElements] = useState<string[]>([]);
+  const [ammos, setAmmos] = useState<string[]>([]);
+  const [archetypes, setArchetypes] = useState<string[]>([]);
 
   async function runSearch() {
     setBusy(true);
@@ -58,6 +75,14 @@ export function CatalogItemPicker({
       if (query.trim()) params.set("q", query.trim());
       const bucket = setSlot ? setSlotToCatalogBucket(setSlot) : null;
       if (bucket) params.set("slot", bucket);
+      if (kind === "weapons") {
+        if (elements.length) params.set("element", elements.join(","));
+        if (ammos.length) params.set("ammo", ammos.join(","));
+        if (archetypes.length) params.set("itemType", archetypes.join(","));
+      } else if (kind === "armor") {
+        // Armor uses `frame` for Armor 3.0 archetype name.
+        if (archetypes.length) params.set("frame", archetypes.join(","));
+      }
       const res = await fetch(`/api/catalog/${kind}?${params}`);
       const body = (await res.json()) as {
         items?: CatalogItem[];
@@ -79,6 +104,9 @@ export function CatalogItemPicker({
       setBusy(false);
     }
   }
+
+  const multiActive =
+    elements.length + ammos.length + archetypes.length > 0;
 
   return (
     <Stack gap={8}>
@@ -114,7 +142,11 @@ export function CatalogItemPicker({
           className="min-w-[200px] flex-1"
           placeholder="Name, perk, frame…"
         />
-        <Button size="sm" disabled={disabled || busy} onClick={() => void runSearch()}>
+        <Button
+          size="sm"
+          disabled={disabled || busy}
+          onClick={() => void runSearch()}
+        >
           {busy ? "…" : "Search"}
         </Button>
       </Row>
@@ -124,8 +156,127 @@ export function CatalogItemPicker({
           active
           onClick={() => undefined}
         />
-        {setSlot ? <FilterChip label={`Slot · ${setSlot}`} active onClick={() => undefined} /> : null}
+        {setSlot ? (
+          <FilterChip
+            label={`Slot · ${setSlot}`}
+            active
+            onClick={() => undefined}
+          />
+        ) : null}
       </Cluster>
+
+      {showMultiFilters ? (
+        <Stack gap={6}>
+          {kind === "weapons" ? (
+            <>
+              <Stack gap={2}>
+                <Text
+                  size="xs"
+                  tone="muted"
+                  className="uppercase tracking-widest"
+                >
+                  Element
+                  {elements.length > 0 ? ` · ${elements.length}` : ""}
+                </Text>
+                <Cluster gap={6}>
+                  {CATALOG_ELEMENTS.map((el) => (
+                    <FilterChip
+                      key={el}
+                      label={el}
+                      active={elements.includes(el)}
+                      onClick={() =>
+                        setElements((prev) => toggleFilterValue(prev, el))
+                      }
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
+              <Stack gap={2}>
+                <Text
+                  size="xs"
+                  tone="muted"
+                  className="uppercase tracking-widest"
+                >
+                  Ammo
+                  {ammos.length > 0 ? ` · ${ammos.length}` : ""}
+                </Text>
+                <Cluster gap={6}>
+                  {CATALOG_AMMO_TYPES.map((a) => (
+                    <FilterChip
+                      key={a}
+                      label={a}
+                      active={ammos.includes(a)}
+                      onClick={() =>
+                        setAmmos((prev) => toggleFilterValue(prev, a))
+                      }
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
+              <Stack gap={2}>
+                <Text
+                  size="xs"
+                  tone="muted"
+                  className="uppercase tracking-widest"
+                >
+                  Archetype
+                  {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
+                </Text>
+                <Cluster gap={6}>
+                  {CATALOG_WEAPON_ARCHETYPES.map((t) => (
+                    <FilterChip
+                      key={t}
+                      label={t}
+                      active={archetypes.includes(t)}
+                      onClick={() =>
+                        setArchetypes((prev) => toggleFilterValue(prev, t))
+                      }
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
+            </>
+          ) : (
+            <Stack gap={2}>
+              <Text
+                size="xs"
+                tone="muted"
+                className="uppercase tracking-widest"
+              >
+                Armor archetype
+                {archetypes.length > 0 ? ` · ${archetypes.length}` : ""}
+              </Text>
+              <Cluster gap={6}>
+                {CATALOG_ARMOR_ARCHETYPES.map((t) => (
+                  <FilterChip
+                    key={t}
+                    label={t}
+                    active={archetypes.includes(t)}
+                    onClick={() =>
+                      setArchetypes((prev) => toggleFilterValue(prev, t))
+                    }
+                  />
+                ))}
+              </Cluster>
+            </Stack>
+          )}
+          {multiActive ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={disabled}
+              onClick={() => {
+                setElements([]);
+                setAmmos([]);
+                setArchetypes([]);
+              }}
+            >
+              Clear filters
+            </Button>
+          ) : null}
+        </Stack>
+      ) : null}
+
       {error ? (
         <Text size="xs" tone="danger">
           {error}
@@ -161,7 +312,13 @@ export function CatalogItemPicker({
                 <span className="min-w-0">
                   <span className="font-medium">{item.name}</span>
                   <span className="ml-2 text-xs text-muted">
-                    {[item.slot, item.element, item.isExotic ? "Exotic" : null]
+                    {[
+                      item.slot,
+                      item.element,
+                      item.ammo,
+                      item.itemTypeName ?? item.frame,
+                      item.isExotic ? "Exotic" : null,
+                    ]
                       .filter(Boolean)
                       .join(" · ")}
                     {item.ownedCount > 0 ? ` · ×${item.ownedCount}` : ""}

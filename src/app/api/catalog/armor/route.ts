@@ -13,12 +13,27 @@ import { getServices } from "@/lib/services";
 
 export const runtime = "nodejs";
 
+/** Collect multi-value query params: repeated keys and/or comma-separated. */
+function multiQuery(url: URL, keys: string[]): string[] | undefined {
+  const values: string[] = [];
+  for (const key of keys) {
+    for (const raw of url.searchParams.getAll(key)) {
+      for (const part of raw.split(",")) {
+        const t = part.trim();
+        if (t) values.push(t);
+      }
+    }
+  }
+  return values.length > 0 ? [...new Set(values)] : undefined;
+}
+
 const querySchema = z.object({
   scope: z.enum(["all", "owned"]).default("all"),
   q: z.string().trim().optional(),
   slot: z.enum(["Helmet", "Gauntlets", "Chest", "Legs", "ClassItem"]).optional(),
   className: z.enum(["Titan", "Hunter", "Warlock"]).optional(),
   frame: z.string().trim().optional(),
+  frames: z.array(z.string().trim().min(1)).optional(),
   setBonus: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   includeInstancePointer: z.enum(["0", "1"]).optional(),
@@ -32,6 +47,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     slot: url.searchParams.get("slot") ?? undefined,
     className: url.searchParams.get("className") ?? undefined,
     frame: url.searchParams.get("frame") ?? undefined,
+    frames: multiQuery(url, ["frame", "frames"]),
     setBonus: url.searchParams.get("setBonus") ?? undefined,
     limit: url.searchParams.get("limit") ?? "100",
     includeInstancePointer: url.searchParams.get("includeInstancePointer") ?? undefined,
