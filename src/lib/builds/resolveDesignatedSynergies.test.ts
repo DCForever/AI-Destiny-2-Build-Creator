@@ -58,6 +58,43 @@ describe("resolveDesignatedSynergies", () => {
     expect(links.map((l) => l.displayName).sort()).toEqual(["Perk B", "Weapon A"]);
   });
 
+  it("matches Element: Arc library rows when only Verb: Ionic Trace is designated", () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "bridge-implied-arc", 3, "Player");
+    const now = new Date().toISOString();
+
+    createSynergyRecord(db, user.id, {
+      id: "syn-ionic",
+      name: "Verb: Ionic Trace — Trace Rifle",
+      type: "verb",
+      subType: "Ionic Trace",
+      description: "",
+      links: [{ kind: "weapon", displayName: "Trace", itemHash: 1 }],
+      now,
+    });
+    createSynergyRecord(db, user.id, {
+      id: "syn-arc",
+      name: "Element: Arc — Arc weapon",
+      type: "element",
+      subType: "Arc",
+      description: "",
+      links: [{ kind: "weapon", displayName: "Arc Wep", itemHash: 2 }],
+      now,
+    });
+
+    const bridge = resolveDesignatedSynergies(db, user.id, [
+      { type: "verb", subType: "Ionic Trace" },
+    ]);
+
+    expect(bridge.impliedDesignations).toEqual([
+      { type: "element", subType: "Arc" },
+    ]);
+    expect(bridge.matchedSynergies.map((s) => s.id).sort()).toEqual([
+      "syn-arc",
+      "syn-ionic",
+    ]);
+  });
+
   it("aggregates coverage per designation from unioned links", () => {
     const db = createTestDb();
     const user = ensureUser(db, "bridge-2", 3, "Player");

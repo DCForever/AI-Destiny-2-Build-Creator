@@ -8,6 +8,10 @@ import {
   formatSynergyTypeDesignation,
   synergyTypeDesignationKey,
 } from "@/lib/synergies/generateSynergyName";
+import {
+  expandDesignationsWithImpliedElements,
+  impliedElementDesignations,
+} from "@/lib/synergies/impliedElements";
 
 export type SynergyTypeDesignation = {
   type: SynergyType;
@@ -15,7 +19,17 @@ export type SynergyTypeDesignation = {
 };
 
 export type DesignationBridgeResult = {
+  /** Explicit build designations as stored (no implied rows). */
   designations: SynergyTypeDesignation[];
+  /**
+   * Element designations inferred from verbs (e.g. Ionic Trace → Arc)
+   * that were not already explicit on the build.
+   */
+  impliedDesignations: SynergyTypeDesignation[];
+  /**
+   * Explicit + implied — used for library matching and coverage.
+   */
+  effectiveDesignations: SynergyTypeDesignation[];
   matchedSynergies: SynergyWithLinks[];
   byDesignation: Map<string, SynergyWithLinks[]>;
 };
@@ -33,10 +47,12 @@ export function resolveDesignatedSynergies(
   userId: number,
   designations: SynergyTypeDesignation[],
 ): DesignationBridgeResult {
+  const implied = impliedElementDesignations(designations);
+  const effective = expandDesignationsWithImpliedElements(designations);
   const byDesignation = new Map<string, SynergyWithLinks[]>();
   const matchedById = new Map<string, SynergyWithLinks>();
 
-  for (const designation of designations) {
+  for (const designation of effective) {
     const key = designationKey(designation);
     const matches = getSynergiesByTypeSubType(
       db,
@@ -52,6 +68,8 @@ export function resolveDesignatedSynergies(
 
   return {
     designations,
+    impliedDesignations: implied,
+    effectiveDesignations: effective,
     matchedSynergies: [...matchedById.values()],
     byDesignation,
   };

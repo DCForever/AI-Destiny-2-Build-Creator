@@ -48,6 +48,8 @@ export type SynergyTypeSummary = {
   subType: string | null;
   label: string;
   key: string;
+  /** True when inferred from a verb (e.g. Ionic Trace → Element: Arc). */
+  implied?: boolean;
 };
 
 export type SlotClaimSummary = {

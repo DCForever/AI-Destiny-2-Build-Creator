@@ -70,6 +70,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Verb → **implied element** synergy | Ionic Trace⇒Arc etc.; matching + dashed UI chip; concept tags |
 | 2026-07-13 | Build **load performance** | Unblock library from Bungie loadouts; batch exotic slots + presentation enrichment on detail |
 | 2026-07-13 | Richer variant card **gear rows** | Loadout icon strip; dense slot rows with element/source/perk icons; conflicts |
 | 2026-07-13 | Variant **Details vs Edit** dual mode | Variant chips + Details/Edit toggle; focused read-only card vs edit panel |

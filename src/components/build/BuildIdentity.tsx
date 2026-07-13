@@ -207,10 +207,18 @@ export function BuildIdentity({
                     lines={[
                       `Type: ${t.type}`,
                       t.subType ? `Subtype: ${t.subType}` : "No subtype",
-                      "Designation matched against library synergies for coverage",
+                      t.implied
+                        ? "Implied by a verb designation (not stored on the build)"
+                        : "Designation matched against library synergies for coverage",
                     ]}
                   >
-                    <span className="inline-flex items-center gap-1.5 border border-line px-1.5 py-0.5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 border px-1.5 py-0.5 ${
+                        t.implied
+                          ? "border-line/60 border-dashed opacity-90"
+                          : "border-line"
+                      }`}
+                    >
                       <DesignationIcon
                         type={t.type}
                         subType={t.subType}
@@ -219,9 +227,9 @@ export function BuildIdentity({
                         label={t.label}
                         accentColor={accent}
                       />
-                      {!icon ? (
+                      {!icon || t.implied ? (
                         <span className="text-[10px] tracking-wide text-muted whitespace-nowrap">
-                          {chipLabel}
+                          {t.implied ? t.label : chipLabel}
                         </span>
                       ) : null}
                     </span>

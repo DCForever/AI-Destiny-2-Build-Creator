@@ -1,4 +1,6 @@
 import type { ConceptTagId } from "@/data/conceptTags";
+import { isConceptTagId } from "@/data/conceptTags";
+import { impliedElementForVerb } from "@/data/synergyVerbs";
 import type { SynergyWithLinks } from "@/lib/db/repositories/synergyRepository";
 
 const SYNERGY_TYPE_TAGS: Partial<Record<string, ConceptTagId[]>> = {
@@ -18,6 +20,15 @@ const SYNERGY_TYPE_TAGS: Partial<Record<string, ConceptTagId[]>> = {
   heavy_weapon: ["ability"],
   kinetic_weapon: ["kinetic"],
 };
+
+function addElementConceptTag(
+  tagIds: Set<ConceptTagId>,
+  elementName: string | null | undefined,
+): void {
+  if (!elementName?.trim()) return;
+  const id = elementName.trim().toLowerCase();
+  if (isConceptTagId(id)) tagIds.add(id);
+}
 
 export type MergedRollContext = {
   synergies: Array<{ id: string; name: string; type: string }>;
@@ -42,6 +53,13 @@ export function mergeSynergyContext(
   for (const synergy of synergies) {
     for (const tag of SYNERGY_TYPE_TAGS[synergy.type] ?? []) {
       tagIds.add(tag);
+    }
+
+    // Element rows and element-implied verbs contribute element concept tags.
+    if (synergy.type === "element") {
+      addElementConceptTag(tagIds, synergy.subType);
+    } else if (synergy.type === "verb" && synergy.subType) {
+      addElementConceptTag(tagIds, impliedElementForVerb(synergy.subType));
     }
 
     if (synergy.type === "weapon_archetype" && synergy.subType) {

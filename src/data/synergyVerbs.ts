@@ -1,11 +1,19 @@
 /**
  * Curated Destiny 2 keyword verbs for Verb synergy sub-types (007).
  * Sourced from Destinypedia element verb pages; elements are separate (synergyElements.ts).
+ * Many verbs imply an element synergy (e.g. Ionic Trace → Arc).
  */
+
+import type { SynergyElement } from "@/data/synergyElements";
 
 export type SynergyVerbEntry = {
   name: string;
   description: string;
+  /**
+   * Damage element this verb belongs to when it is element-specific.
+   * Null for subclass-agnostic keywords (Armor Charge, Exhaust, Sliding, …).
+   */
+  element: SynergyElement | null;
 };
 
 /** Legacy / plural display names accepted and normalized to canonical names. */
@@ -17,54 +25,187 @@ export const SYNERGY_VERB_ALIASES: Readonly<Record<string, string>> = {
 
 export const SYNERGY_VERBS: readonly SynergyVerbEntry[] = [
   // Solar
-  { name: "Scorch", description: "Solar damage over time; stacks lead to Ignition." },
-  { name: "Ignition", description: "Large Solar explosion." },
-  { name: "Restoration", description: "Regenerates health and shields over time." },
-  { name: "Cure", description: "Instant heal." },
-  { name: "Radiant", description: "Increases weapon damage." },
-  { name: "Firesprite", description: "Solar pickup companion." },
+  {
+    name: "Scorch",
+    description: "Solar damage over time; stacks lead to Ignition.",
+    element: "Solar",
+  },
+  {
+    name: "Ignition",
+    description: "Large Solar explosion.",
+    element: "Solar",
+  },
+  {
+    name: "Restoration",
+    description: "Regenerates health and shields over time.",
+    element: "Solar",
+  },
+  { name: "Cure", description: "Instant heal.", element: "Solar" },
+  {
+    name: "Radiant",
+    description: "Increases weapon damage.",
+    element: "Solar",
+  },
+  {
+    name: "Firesprite",
+    description: "Solar pickup companion.",
+    element: "Solar",
+  },
   // Arc
-  { name: "Jolt", description: "Chains lightning; stuns Overload champions." },
-  { name: "Blind", description: "Disorients targets; stuns Unstoppable champions." },
-  { name: "Amplified", description: "Increased movement speed and weapon handling." },
-  { name: "Bolt Charge", description: "Arc stacks that proc a lightning bolt at max." },
-  { name: "Ionic Trace", description: "Arc pickup that grants Bolt Charge stacks." },
+  {
+    name: "Jolt",
+    description: "Chains lightning; stuns Overload champions.",
+    element: "Arc",
+  },
+  {
+    name: "Blind",
+    description: "Disorients targets; stuns Unstoppable champions.",
+    element: "Arc",
+  },
+  {
+    name: "Amplified",
+    description: "Increased movement speed and weapon handling.",
+    element: "Arc",
+  },
+  {
+    name: "Bolt Charge",
+    description: "Arc stacks that proc a lightning bolt at max.",
+    element: "Arc",
+  },
+  {
+    name: "Ionic Trace",
+    description: "Arc pickup that grants Bolt Charge stacks.",
+    element: "Arc",
+  },
   // Subclass-agnostic / armor keyword (distinct from Bolt Charge)
   {
     name: "Armor Charge",
     description: "Stacks from orbs/armor mods that empower armor-charge effects.",
+    element: null,
   },
   // Void
-  { name: "Suppression", description: "Disables abilities; stuns Overload champions." },
-  { name: "Volatile", description: "Unstable Void energy; explodes on further damage." },
-  { name: "Weaken", description: "Reduces target damage output." },
-  { name: "Void Breach", description: "Void pickup orb." },
-  { name: "Devour", description: "Defeating targets heals you." },
-  { name: "Void Overshield", description: "Bonus Void shields." },
-  { name: "Invisibility", description: "Void stealth buff." },
+  {
+    name: "Suppression",
+    description: "Disables abilities; stuns Overload champions.",
+    element: "Void",
+  },
+  {
+    name: "Volatile",
+    description: "Unstable Void energy; explodes on further damage.",
+    element: "Void",
+  },
+  {
+    name: "Weaken",
+    description: "Reduces target damage output.",
+    element: "Void",
+  },
+  {
+    name: "Void Breach",
+    description: "Void pickup orb.",
+    element: "Void",
+  },
+  {
+    name: "Devour",
+    description: "Defeating targets heals you.",
+    element: "Void",
+  },
+  {
+    name: "Void Overshield",
+    description: "Bonus Void shields.",
+    element: "Void",
+  },
+  {
+    name: "Invisibility",
+    description: "Void stealth buff.",
+    element: "Void",
+  },
   // Stasis
-  { name: "Slow", description: "Reduces movement; stuns Overload champions." },
-  { name: "Freeze", description: "Immobilizes targets for shatter combos." },
-  { name: "Shatter", description: "Burst on frozen break; stuns Unstoppable champions." },
-  { name: "Frost Armor", description: "Damage reduction buff." },
-  { name: "Stasis Crystal", description: "Solidified Stasis matter; freezes nearby targets." },
-  { name: "Stasis Shard", description: "Stasis pickup; grants melee and grenade energy." },
+  {
+    name: "Slow",
+    description: "Reduces movement; stuns Overload champions.",
+    element: "Stasis",
+  },
+  {
+    name: "Freeze",
+    description: "Immobilizes targets for shatter combos.",
+    element: "Stasis",
+  },
+  {
+    name: "Shatter",
+    description: "Burst on frozen break; stuns Unstoppable champions.",
+    element: "Stasis",
+  },
+  {
+    name: "Frost Armor",
+    description: "Damage reduction buff.",
+    element: "Stasis",
+  },
+  {
+    name: "Stasis Crystal",
+    description: "Solidified Stasis matter; freezes nearby targets.",
+    element: "Stasis",
+  },
+  {
+    name: "Stasis Shard",
+    description: "Stasis pickup; grants melee and grenade energy.",
+    element: "Stasis",
+  },
   // Strand
-  { name: "Suspend", description: "Lifts and immobilizes; stuns Unstoppable champions." },
-  { name: "Unravel", description: "Strand damage propagates to linked targets." },
-  { name: "Sever", description: "Reduces target damage output." },
-  { name: "Threadling", description: "Seeking Strand creature." },
-  { name: "Woven Mail", description: "Damage reduction buff." },
-  { name: "Tangle", description: "Strand pickup; can be thrown for damage." },
+  {
+    name: "Suspend",
+    description: "Lifts and immobilizes; stuns Unstoppable champions.",
+    element: "Strand",
+  },
+  {
+    name: "Unravel",
+    description: "Strand damage propagates to linked targets.",
+    element: "Strand",
+  },
+  {
+    name: "Sever",
+    description: "Reduces target damage output.",
+    element: "Strand",
+  },
+  {
+    name: "Threadling",
+    description: "Seeking Strand creature.",
+    element: "Strand",
+  },
+  {
+    name: "Woven Mail",
+    description: "Damage reduction buff.",
+    element: "Strand",
+  },
+  {
+    name: "Tangle",
+    description: "Strand pickup; can be thrown for damage.",
+    element: "Strand",
+  },
   // Prismatic
-  { name: "Transcendence", description: "Light and Darkness harmony state." },
+  {
+    name: "Transcendence",
+    description: "Light and Darkness harmony state.",
+    element: "Prismatic",
+  },
   // Subclass-agnostic
-  { name: "Exhaust", description: "Reduces enemy damage output; applied across elements." },
+  {
+    name: "Exhaust",
+    description: "Reduces enemy damage output; applied across elements.",
+    element: null,
+  },
   /** Movement / weapon keyword used by many perks and exotics (slide-shoot loops). */
-  { name: "Sliding", description: "Slide-based movement and slide-shoot interactions." },
+  {
+    name: "Sliding",
+    description: "Slide-based movement and slide-shoot interactions.",
+    element: null,
+  },
 ] as const;
 
 export const SYNERGY_VERB_NAMES: readonly string[] = SYNERGY_VERBS.map((v) => v.name);
+
+const VERB_BY_NAME = new Map(
+  SYNERGY_VERBS.map((v) => [v.name.toLowerCase(), v] as const),
+);
 
 function singularPluralForms(name: string): string[] {
   const t = name.trim();
@@ -130,4 +271,26 @@ export function resolveVerbSubType(name: string): string | null {
 
 export function isKnownVerbSubType(name: string): boolean {
   return resolveVerbSubType(name) !== null;
+}
+
+/**
+ * Element implied by a curated verb (Ionic Trace → Arc).
+ * Accepts free-text / aliases via resolveVerbSubType.
+ */
+export function impliedElementForVerb(
+  verbName: string | null | undefined,
+): SynergyElement | null {
+  if (!verbName?.trim()) return null;
+  const canonical = resolveVerbSubType(verbName);
+  if (!canonical) return null;
+  return VERB_BY_NAME.get(canonical.toLowerCase())?.element ?? null;
+}
+
+export function getSynergyVerbEntry(
+  verbName: string | null | undefined,
+): SynergyVerbEntry | undefined {
+  if (!verbName?.trim()) return undefined;
+  const canonical = resolveVerbSubType(verbName);
+  if (!canonical) return undefined;
+  return VERB_BY_NAME.get(canonical.toLowerCase());
 }

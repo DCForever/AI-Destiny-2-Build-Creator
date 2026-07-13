@@ -181,11 +181,21 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
   const variants = listVariants(db, buildId);
   const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
   const synergies = bridge.matchedSynergies;
-  const synergyTypes = bridge.designations.map((d) => ({
-    ...d,
-    label: designationLabel(d),
-    key: designationKey(d),
-  }));
+  // Explicit designations first; implied element synergies (from verbs) follow.
+  const synergyTypes = [
+    ...bridge.designations.map((d) => ({
+      ...d,
+      label: designationLabel(d),
+      key: designationKey(d),
+      implied: false as const,
+    })),
+    ...bridge.impliedDesignations.map((d) => ({
+      ...d,
+      label: `${designationLabel(d)} (implied)`,
+      key: `${designationKey(d)}::implied`,
+      implied: true as const,
+    })),
+  ];
 
   // Batch exotic slot lookups once (stores load once; not per variant).
   const weaponHashes = variants.map(
