@@ -284,4 +284,7 @@ export const RAW_TABLES: Record<RawTableName, RawTable> = {
   DestinyArtifactDefinition: ARTIFACT_TABLE,
   DestinyEquipmentSlotDefinition: SLOT_TABLE,
   DestinyEquipableItemSetDefinition: SET_TABLE,
+  DestinyLoadoutIconDefinition: {},
+  DestinyLoadoutColorDefinition: {},
+  DestinyLoadoutNameDefinition: {},
 };

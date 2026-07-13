@@ -21,6 +21,10 @@ export const RAW_TABLES = [
   "DestinyArtifactDefinition",
   "DestinyEquipmentSlotDefinition",
   "DestinyEquipableItemSetDefinition",
+  /** In-game loadout presentation (icon / color / name) — same tables DIM uses */
+  "DestinyLoadoutIconDefinition",
+  "DestinyLoadoutColorDefinition",
+  "DestinyLoadoutNameDefinition",
 ] as const;
 
 export type RawTableName = (typeof RAW_TABLES)[number];

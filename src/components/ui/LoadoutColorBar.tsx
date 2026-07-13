@@ -3,16 +3,27 @@
 /** Left color stripe + optional glyph for In-Game Loadout chrome. */
 export function LoadoutColorBar({
   color,
+  /** When set (Bungie colorImagePath CDN URL), used as stripe background. */
+  colorImageUrl,
   children,
 }: {
   color: string;
+  colorImageUrl?: string | null;
   children?: React.ReactNode;
 }) {
+  const stripeStyle = colorImageUrl
+    ? {
+        backgroundImage: `url(${colorImageUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : { background: color };
+
   return (
     <div className="flex min-w-0 flex-1">
       <div
         className="w-1.5 shrink-0 self-stretch rounded-sm"
-        style={{ background: color }}
+        style={stripeStyle}
         aria-hidden
       />
       <div className="min-w-0 flex-1 flex items-start gap-3 pl-3">

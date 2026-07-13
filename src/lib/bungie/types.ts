@@ -136,6 +136,14 @@ export interface BungieProfileClient {
     membership: DestinyMembership,
     characterId: string,
   ): Promise<CharacterEquipment>;
+  /**
+   * Characters (200) + CharacterLoadouts (206). Returns the raw GetProfile
+   * Response so callers can parse loadouts with manifest presentation tables.
+   */
+  getCharacterLoadoutsProfile(
+    accessToken: string,
+    membership: DestinyMembership,
+  ): Promise<unknown>;
   getFullInventory(
     accessToken: string,
     membership: DestinyMembership,

@@ -62,6 +62,7 @@ function createMockProfileClient(): BungieProfileClient {
     getMemberships: vi.fn().mockResolvedValue([destinyMembership]),
     getCharacters: vi.fn(),
     getCharacterEquipment: vi.fn(),
+    getCharacterLoadoutsProfile: vi.fn(),
     getFullInventory: vi.fn().mockResolvedValue(rawItems),
     getFullInventoryWithDiagnostics: vi.fn().mockResolvedValue({
       items: rawItems,
@@ -148,6 +149,7 @@ describe("syncUserInventory", () => {
       getMemberships: vi.fn().mockResolvedValue([]),
       getCharacters: vi.fn(),
       getCharacterEquipment: vi.fn(),
+      getCharacterLoadoutsProfile: vi.fn(),
       getFullInventory: vi.fn(),
       getFullInventoryWithDiagnostics: vi.fn(),
     };

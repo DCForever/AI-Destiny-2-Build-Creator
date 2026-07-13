@@ -24,6 +24,7 @@ import {
 import type { GeneratedBuild } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import type { SavedLoadout } from "@/lib/db/types";
+import type { BungieInGameLoadout } from "@/lib/bungie/characterLoadouts";
 import {
   CLASS_CSS_COLOR,
   isGuardianClass,
@@ -84,11 +85,17 @@ function exoticRowLabels(row: LoadoutListRow): string[] {
 
 export function LoadoutsPage() {
   const [signedIn, setSignedIn] = useState(false);
-  const [rows, setRows] = useState<LoadoutListRow[]>([]);
+  const [bungieLoadouts, setBungieLoadouts] = useState<BungieInGameLoadout[]>(
+    [],
+  );
+  const [localRows, setLocalRows] = useState<LoadoutListRow[]>([]);
   const [curatedBuilds, setCuratedBuilds] = useState<BuildMatchInput[]>([]);
-  const [filterCriteria, setFilterCriteria] = useState<ExoticFilterCriteria>({});
+  const [filterCriteria, setFilterCriteria] = useState<ExoticFilterCriteria>(
+    {},
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bungieHint, setBungieHint] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [openLoadout, setOpenLoadout] = useState<SavedLoadout | null>(null);
   const [liveBuild, setLiveBuild] = useState<GeneratedBuild | null>(null);
@@ -96,21 +103,35 @@ export function LoadoutsPage() {
   const [staleBanner, setStaleBanner] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedBungieId, setExpandedBungieId] = useState<string | null>(null);
   const [discovery, setDiscovery] = useState<{
     open: boolean;
     title: string;
     matches: LoadoutListRow[];
   }>({ open: false, title: "", matches: [] });
+  const [classFilter, setClassFilter] = useState<string | null>(null);
+  const [hideEmpty, setHideEmpty] = useState(true);
 
-  const pickerOptions = useMemo(() => collectPickerOptions(rows), [rows]);
-  const displayRows = useMemo(
-    () => filterLoadoutRows(rows, filterCriteria),
-    [rows, filterCriteria],
+  const pickerOptions = useMemo(
+    () => collectPickerOptions(localRows),
+    [localRows],
   );
+  const displayLocalRows = useMemo(
+    () => filterLoadoutRows(localRows, filterCriteria),
+    [localRows, filterCriteria],
+  );
+
+  const displayBungie = useMemo(() => {
+    return bungieLoadouts.filter((lo) => {
+      if (hideEmpty && lo.empty) return false;
+      if (classFilter && lo.className !== classFilter) return false;
+      return true;
+    });
+  }, [bungieLoadouts, hideEmpty, classFilter]);
 
   const matchByLoadoutId = useMemo(() => {
     const map = new Map<string, ReturnType<typeof matchLoadoutToBuilds>>();
-    for (const lo of rows) {
+    for (const lo of localRows) {
       map.set(
         lo.id,
         matchLoadoutToBuilds(
@@ -123,29 +144,64 @@ export function LoadoutsPage() {
         ),
       );
     }
+    for (const lo of bungieLoadouts) {
+      map.set(
+        lo.id,
+        matchLoadoutToBuilds(
+          {
+            className: lo.className,
+            // Exotics not resolved from instances in v1 — class-only partials possible later
+            exoticArmorHash: null,
+            exoticWeaponHash: null,
+          },
+          curatedBuilds,
+        ),
+      );
+    }
     return map;
-  }, [rows, curatedBuilds]);
+  }, [localRows, bungieLoadouts, curatedBuilds]);
 
   const fetchLoadouts = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setBungieHint(null);
     try {
-      const [loRes, buildRes] = await Promise.all([
+      const [bungieRes, localRes, buildRes] = await Promise.all([
+        fetch("/api/bungie/loadouts"),
         fetch("/api/user/loadouts"),
         fetch("/api/user/builds"),
       ]);
-      if (loRes.status === 401) {
-        setRows([]);
+
+      if (bungieRes.status === 401 || localRes.status === 401) {
+        setBungieLoadouts([]);
+        setLocalRows([]);
         setCuratedBuilds([]);
         return;
       }
-      if (!loRes.ok) {
-        const body = (await loRes.json()) as { error?: string };
-        setError(body.error ?? "Failed to load loadouts");
-        return;
+
+      if (bungieRes.ok) {
+        const body = (await bungieRes.json()) as {
+          loadouts?: BungieInGameLoadout[];
+        };
+        setBungieLoadouts(body.loadouts ?? []);
+      } else {
+        const body = (await bungieRes.json()) as {
+          error?: string;
+          detail?: string;
+        };
+        setBungieLoadouts([]);
+        setBungieHint(
+          body.error ??
+            "Could not load Bungie in-game loadouts. Refresh the manifest from Settings if icons are missing.",
+        );
       }
-      const body = (await loRes.json()) as { loadouts: LoadoutListRow[] };
-      setRows(body.loadouts);
+
+      if (localRes.ok) {
+        const body = (await localRes.json()) as { loadouts: LoadoutListRow[] };
+        setLocalRows(body.loadouts ?? []);
+      } else {
+        setLocalRows([]);
+      }
 
       if (buildRes.ok) {
         const bBody = (await buildRes.json()) as {
@@ -182,7 +238,8 @@ export function LoadoutsPage() {
       if (auth.signedIn) {
         void fetchLoadouts();
       } else {
-        setRows([]);
+        setBungieLoadouts([]);
+        setLocalRows([]);
         setCuratedBuilds([]);
         setOpenId(null);
         setOpenLoadout(null);
@@ -190,6 +247,7 @@ export function LoadoutsPage() {
         setLiveSheet(null);
         setStaleBanner(null);
         setFilterCriteria({});
+        setExpandedBungieId(null);
         setDiscovery({ open: false, title: "", matches: [] });
         setLoading(false);
       }
@@ -199,73 +257,74 @@ export function LoadoutsPage() {
 
   const openDiscovery = useCallback(
     (title: string, criteria: ExoticFilterCriteria) => {
-      const matches = buildDiscoveryMatches(rows, criteria, openId ?? undefined);
+      const matches = buildDiscoveryMatches(
+        localRows,
+        criteria,
+        openId ?? undefined,
+      );
       setDiscovery({ open: true, title, matches });
     },
-    [rows, openId],
+    [localRows, openId],
   );
 
   const reResolveIfStale = async (
     loadout: SavedLoadout,
-  ): Promise<{ build: GeneratedBuild; sheet: ResolvedBuildSheet; banner: string | null }> => {
+  ): Promise<{
+    build: GeneratedBuild;
+    sheet: ResolvedBuildSheet;
+    banner: string | null;
+  }> => {
     let manifestVersion: string | null = null;
     try {
       const statusRes = await fetch("/api/manifest");
       if (statusRes.ok) {
-        const status = (await statusRes.json()) as { cachedVersion: string | null };
+        const status = (await statusRes.json()) as {
+          cachedVersion: string | null;
+        };
         manifestVersion = status.cachedVersion;
       }
     } catch {
-      return { build: loadout.generatedBuild, sheet: loadout.resolvedSheet, banner: null };
+      return {
+        build: loadout.generatedBuild,
+        sheet: loadout.resolvedSheet,
+        banner: null,
+      };
     }
 
     if (!manifestVersion || loadout.manifestVersion === manifestVersion) {
-      return { build: loadout.generatedBuild, sheet: loadout.resolvedSheet, banner: null };
+      return {
+        build: loadout.generatedBuild,
+        sheet: loadout.resolvedSheet,
+        banner: null,
+      };
     }
 
-    const activity = loadout.buildRequest?.activity ?? loadout.resolvedSheet.activity;
+    const activity =
+      loadout.buildRequest?.activity ?? loadout.resolvedSheet.activity;
     const res = await fetch("/api/build/resolve-slot", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        kind: "full",
         build: loadout.generatedBuild,
         activity,
       }),
     });
-
     if (!res.ok) {
       return {
         build: loadout.generatedBuild,
         sheet: loadout.resolvedSheet,
-        banner: "Could not re-validate against the current manifest.",
+        banner: "Manifest updated; re-resolve failed — showing cached sheet.",
       };
     }
-
-    const body = (await res.json()) as {
-      build: GeneratedBuild;
-      sheet: ResolvedBuildSheet;
-      manifestVersion: string;
-    };
-
-    void fetch(`/api/user/loadouts/${loadout.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        generatedBuild: body.build,
-        resolvedSheet: body.sheet,
-        manifestVersion: body.manifestVersion,
-      }),
-    });
-
+    const body = (await res.json()) as { sheet: ResolvedBuildSheet };
     return {
-      build: body.build,
+      build: loadout.generatedBuild,
       sheet: body.sheet,
-      banner: "Re-validated against current manifest.",
+      banner: "Sheet re-resolved against the current manifest.",
     };
   };
 
-  const handleOpen = async (id: string) => {
+  const handleOpenLocal = async (id: string) => {
     if (openId === id) {
       setOpenId(null);
       setOpenLoadout(null);
@@ -274,11 +333,10 @@ export function LoadoutsPage() {
       setStaleBanner(null);
       return;
     }
-
-    setOpenId(id);
     setOpening(true);
+    setOpenId(id);
     setError(null);
-    setStaleBanner(null);
+    setExpandedBungieId(null);
     try {
       const res = await fetch(`/api/user/loadouts/${id}`);
       if (!res.ok) {
@@ -288,12 +346,11 @@ export function LoadoutsPage() {
         return;
       }
       const body = (await res.json()) as { loadout: SavedLoadout };
+      const { build, sheet, banner } = await reResolveIfStale(body.loadout);
       setOpenLoadout(body.loadout);
-
-      const resolved = await reResolveIfStale(body.loadout);
-      setLiveBuild(resolved.build);
-      setLiveSheet(resolved.sheet);
-      setStaleBanner(resolved.banner);
+      setLiveBuild(build);
+      setLiveSheet(sheet);
+      setStaleBanner(banner);
     } catch {
       setError("Failed to open loadout");
       setOpenId(null);
@@ -302,9 +359,8 @@ export function LoadoutsPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
-
+  const handleDeleteLocal = async (id: string, name: string) => {
+    if (!window.confirm(`Delete local snapshot “${name}”?`)) return;
     setDeletingId(id);
     setError(null);
     try {
@@ -321,7 +377,7 @@ export function LoadoutsPage() {
         setLiveSheet(null);
         setStaleBanner(null);
       }
-      setRows((prev) => prev.filter((l) => l.id !== id));
+      setLocalRows((prev) => prev.filter((l) => l.id !== id));
     } catch {
       setError("Failed to delete loadout");
     } finally {
@@ -330,9 +386,11 @@ export function LoadoutsPage() {
   };
 
   const activity =
-    openLoadout?.buildRequest?.activity ?? openLoadout?.resolvedSheet.activity ?? "General PvE";
+    openLoadout?.buildRequest?.activity ??
+    openLoadout?.resolvedSheet.activity ??
+    "General PvE";
 
-  const openRow = openId ? rows.find((r) => r.id === openId) : undefined;
+  const openRow = openId ? localRows.find((r) => r.id === openId) : undefined;
 
   return (
     <div className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
@@ -346,7 +404,7 @@ export function LoadoutsPage() {
 
         <PageHeader
           title="In-Game Loadouts"
-          description="Saved loadouts and gear snapshots. Sign in with Bungie to sync across sessions."
+          description="Bungie character loadouts with real icon and color (same source as DIM). Sign in to sync from your profile."
           actions={
             <Suspense
               fallback={
@@ -361,148 +419,362 @@ export function LoadoutsPage() {
         />
 
         {error ? <Callout tone="danger">{error}</Callout> : null}
+        {bungieHint ? <Callout tone="warning">{bungieHint}</Callout> : null}
 
         {!signedIn ? (
-          <EmptyState description="Sign in with Bungie to view and manage saved loadouts." />
+          <EmptyState description="Sign in with Bungie to view your in-game loadout slots and icons." />
         ) : null}
 
         {signedIn && loading ? (
           <Text size="sm" tone="muted">
-            Loading loadouts…
+            Loading Bungie loadouts…
           </Text>
         ) : null}
 
-        {signedIn && !loading && rows.length === 0 ? (
-          <EmptyState description="No saved loadouts yet. Apply or save a loadout from Build to see it here." />
-        ) : null}
+        {signedIn && !loading ? (
+          <Stack gap={16}>
+            <Panel tone="muted" pad="md">
+              <Stack gap={10}>
+                <Row justify="between" align="center" wrap gap={8}>
+                  <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                    Bungie slots · {displayBungie.length}
+                    {bungieLoadouts.length !== displayBungie.length
+                      ? ` of ${bungieLoadouts.length}`
+                      : ""}
+                  </Text>
+                  <Row gap={8} wrap>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void fetchLoadouts()}
+                    >
+                      Refresh
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={hideEmpty ? "accent" : "outline"}
+                      onClick={() => setHideEmpty((v) => !v)}
+                    >
+                      {hideEmpty ? "Hiding empty" : "Show empty"}
+                    </Button>
+                    {(["Titan", "Hunter", "Warlock"] as const).map((cls) => (
+                      <Button
+                        key={cls}
+                        size="sm"
+                        variant={classFilter === cls ? "accent" : "outline"}
+                        onClick={() =>
+                          setClassFilter((prev) => (prev === cls ? null : cls))
+                        }
+                      >
+                        {cls}
+                      </Button>
+                    ))}
+                  </Row>
+                </Row>
 
-        {signedIn && rows.length > 0 ? (
-          <Stack gap={12}>
-            <LoadoutExoticFilterBar
-              criteria={filterCriteria}
-              armorOptions={pickerOptions.armor}
-              weaponOptions={pickerOptions.weapon}
-              onChange={setFilterCriteria}
-              onClearAll={() => setFilterCriteria({})}
-            />
+                {displayBungie.length === 0 ? (
+                  <EmptyState description="No in-game loadouts to show. Equip a loadout in Destiny or turn off “Hiding empty”." />
+                ) : (
+                  <Stack gap={8}>
+                    {displayBungie.map((lo) => {
+                      const expanded = expandedBungieId === lo.id;
+                      const cls = isGuardianClass(lo.className)
+                        ? lo.className
+                        : "Titan";
+                      const fallbackAccent = loadoutAccentColor(
+                        `${lo.id}:${lo.name}`,
+                      );
+                      const classColor = CLASS_CSS_COLOR[cls];
+                      const match = matchByLoadoutId.get(lo.id);
+                      const matchLabel = match
+                        ? loadoutMatchLabel(match)
+                        : "No linked build";
 
-            {displayRows.length === 0 ? (
-              <Text size="sm" tone="muted">
-                No loadouts match the current exotic filters.
-              </Text>
-            ) : null}
-
-            <Stack gap={8}>
-              {displayRows.map((loadout) => {
-                const isOpen = openId === loadout.id;
-                const isDeleting = deletingId === loadout.id;
-                const exoticLabels = exoticRowLabels(loadout);
-                const buildMatch =
-                  matchByLoadoutId.get(loadout.id) ?? {
-                    kind: "none" as const,
-                    builds: [],
-                  };
-                const matchLabel = loadoutMatchLabel(buildMatch);
-                const cls = isGuardianClass(loadout.className ?? "")
-                  ? loadout.className!
-                  : "Titan";
-                const accent = loadoutAccentColor(
-                  `${loadout.id}:${loadout.name}:${cls}`,
-                );
-                const classColor = CLASS_CSS_COLOR[cls];
-                return (
-                  <Panel key={loadout.id} tone="default" pad="none" className="overflow-hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
-                      <LoadoutColorBar color={accent}>
-                        <LoadoutIconPlate color={accent}>
-                          <ClassIcon
-                            className={cls}
-                            color={classColor}
-                            size={18}
-                            title={cls}
-                          />
-                        </LoadoutIconPlate>
-                        <Stack gap={4} className="min-w-0">
-                          <Text size="sm" weight="medium" className="truncate">
-                            {loadout.name}
-                          </Text>
-                          <Text size="xs" tone="muted">
-                            {[loadout.className, loadout.source, formatDate(loadout.updatedAt)]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </Text>
-                          {exoticLabels.length > 0 ? (
-                            <Text size="xs" tone="accent">
-                              {exoticLabels.join(" · ")}
-                            </Text>
+                      return (
+                        <Panel
+                          key={lo.id}
+                          tone="default"
+                          pad="none"
+                          className="overflow-hidden"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
+                            <LoadoutColorBar
+                              color={fallbackAccent}
+                              colorImageUrl={lo.colorUrl}
+                            >
+                              <LoadoutIconPlate color={classColor}>
+                                {lo.iconUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={lo.iconUrl}
+                                    alt=""
+                                    width={28}
+                                    height={28}
+                                    className="size-7 object-contain"
+                                  />
+                                ) : (
+                                  <ClassIcon
+                                    className={cls}
+                                    color={classColor}
+                                    size={18}
+                                    title={cls}
+                                  />
+                                )}
+                              </LoadoutIconPlate>
+                              <Stack gap={4} className="min-w-0">
+                                <Row gap={8} align="center" wrap>
+                                  <Text
+                                    size="sm"
+                                    weight="medium"
+                                    className="truncate"
+                                  >
+                                    {lo.name}
+                                  </Text>
+                                  {lo.colorUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={lo.colorUrl}
+                                      alt=""
+                                      className="h-3 w-10 object-cover border border-line"
+                                      title="Loadout color"
+                                    />
+                                  ) : null}
+                                </Row>
+                                <Text size="xs" tone="muted">
+                                  {lo.className} · Light {lo.characterLight} ·
+                                  Slot {lo.index + 1}
+                                  {lo.empty ? " · Empty" : ""}
+                                  {!lo.empty
+                                    ? ` · ${lo.itemInstanceIds.length} items`
+                                    : ""}
+                                </Text>
+                                <Text
+                                  size="xs"
+                                  tone={
+                                    match?.kind === "none" || !match
+                                      ? "muted"
+                                      : "accent"
+                                  }
+                                >
+                                  {matchLabel}
+                                </Text>
+                              </Stack>
+                            </LoadoutColorBar>
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                setExpandedBungieId((id) =>
+                                  id === lo.id ? null : lo.id,
+                                )
+                              }
+                            >
+                              {expanded ? "Hide" : "Details"}
+                            </Button>
+                          </div>
+                          {expanded ? (
+                            <div className="border-t border-line p-4">
+                              <Stack gap={8}>
+                                <Text size="xs" tone="muted">
+                                  Character id {lo.characterId} · iconHash{" "}
+                                  {lo.iconHash} · colorHash {lo.colorHash}
+                                </Text>
+                                {lo.iconUrl ? (
+                                  <Row gap={8} align="center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={lo.iconUrl}
+                                      alt=""
+                                      className="size-12 object-contain border border-line bg-surface-raised"
+                                    />
+                                    <Text size="xs" tone="muted">
+                                      Real Bungie loadout icon
+                                    </Text>
+                                  </Row>
+                                ) : null}
+                                {lo.empty ? (
+                                  <Text size="sm" tone="muted">
+                                    This slot is empty in Destiny.
+                                  </Text>
+                                ) : (
+                                  <Text size="sm" tone="muted">
+                                    {lo.itemInstanceIds.length} item
+                                    instance(s) snapshot from Bungie. Equip /
+                                    sheet import can be wired next.
+                                  </Text>
+                                )}
+                              </Stack>
+                            </div>
                           ) : null}
-                          <Text
-                            size="xs"
-                            tone={buildMatch.kind === "none" ? "muted" : "accent"}
-                          >
-                            {matchLabel}
-                          </Text>
-                        </Stack>
-                      </LoadoutColorBar>
-                      <Row gap={8} className="shrink-0">
-                        <Button
-                          size="sm"
-                          disabled={opening && openId === loadout.id}
-                          onClick={() => void handleOpen(loadout.id)}
-                        >
-                          {isOpen ? "Close" : "Open"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          disabled={isDeleting}
-                          onClick={() => void handleDelete(loadout.id, loadout.name)}
-                        >
-                          {isDeleting ? "Deleting…" : "Delete"}
-                        </Button>
-                      </Row>
-                    </div>
+                        </Panel>
+                      );
+                    })}
+                  </Stack>
+                )}
+              </Stack>
+            </Panel>
 
-                    {isOpen && opening ? (
-                      <div className="px-4 pb-4">
-                        <Text size="xs" tone="muted">
-                          Loading build…
-                        </Text>
-                      </div>
-                    ) : null}
+            {/* Local app snapshots (generator / analyzer) — secondary */}
+            <Stack gap={12}>
+              <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                Local app snapshots · {displayLocalRows.length}
+              </Text>
+              <Text size="xs" tone="muted">
+                Builds saved inside this app (not Bungie slots). Kept for generator
+                / analyzer history.
+              </Text>
 
-                    {isOpen &&
-                    openLoadout?.id === loadout.id &&
-                    liveBuild &&
-                    liveSheet &&
-                    !opening ? (
-                      <div className="border-t border-line p-4">
-                        <EditableBuildSheet
-                          sheet={liveSheet}
-                          build={liveBuild}
-                          activity={activity}
-                          className={openLoadout.buildRequest?.className ?? "Titan"}
-                          staleBanner={staleBanner}
-                          exoticSummary={openRow?.exoticSummary}
-                          onDiscoverLoadouts={openDiscovery}
-                          onUpdate={({ build, sheet }) => {
-                            setLiveBuild(build);
-                            setLiveSheet(sheet);
-                            void fetch(`/api/user/loadouts/${loadout.id}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                generatedBuild: build,
-                                resolvedSheet: sheet,
-                              }),
-                            });
-                          }}
-                        />
-                      </div>
-                    ) : null}
-                  </Panel>
-                );
-              })}
+              {localRows.length > 0 ? (
+                <LoadoutExoticFilterBar
+                  criteria={filterCriteria}
+                  armorOptions={pickerOptions.armor}
+                  weaponOptions={pickerOptions.weapon}
+                  onChange={setFilterCriteria}
+                  onClearAll={() => setFilterCriteria({})}
+                />
+              ) : null}
+
+              {localRows.length === 0 ? (
+                <Text size="sm" tone="muted">
+                  No local snapshots yet.
+                </Text>
+              ) : displayLocalRows.length === 0 ? (
+                <Text size="sm" tone="muted">
+                  No local snapshots match the current exotic filters.
+                </Text>
+              ) : (
+                <Stack gap={8}>
+                  {displayLocalRows.map((loadout) => {
+                    const isOpen = openId === loadout.id;
+                    const isDeleting = deletingId === loadout.id;
+                    const exoticLabels = exoticRowLabels(loadout);
+                    const buildMatch = matchByLoadoutId.get(loadout.id) ?? {
+                      kind: "none" as const,
+                      builds: [],
+                    };
+                    const matchLabel = loadoutMatchLabel(buildMatch);
+                    const cls = isGuardianClass(loadout.className ?? "")
+                      ? loadout.className!
+                      : "Titan";
+                    const accent = loadoutAccentColor(
+                      `${loadout.id}:${loadout.name}:${cls}`,
+                    );
+                    const classColor = CLASS_CSS_COLOR[cls];
+                    return (
+                      <Panel
+                        key={loadout.id}
+                        tone="default"
+                        pad="none"
+                        className="overflow-hidden"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
+                          <LoadoutColorBar color={accent}>
+                            <LoadoutIconPlate color={accent}>
+                              <ClassIcon
+                                className={cls}
+                                color={classColor}
+                                size={18}
+                                title={cls}
+                              />
+                            </LoadoutIconPlate>
+                            <Stack gap={4} className="min-w-0">
+                              <Text
+                                size="sm"
+                                weight="medium"
+                                className="truncate"
+                              >
+                                {loadout.name}
+                              </Text>
+                              <Text size="xs" tone="muted">
+                                {[
+                                  loadout.className,
+                                  loadout.source,
+                                  formatDate(loadout.updatedAt),
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </Text>
+                              {exoticLabels.length > 0 ? (
+                                <Text size="xs" tone="accent">
+                                  {exoticLabels.join(" · ")}
+                                </Text>
+                              ) : null}
+                              <Text
+                                size="xs"
+                                tone={
+                                  buildMatch.kind === "none" ? "muted" : "accent"
+                                }
+                              >
+                                {matchLabel}
+                              </Text>
+                            </Stack>
+                          </LoadoutColorBar>
+                          <Row gap={8} className="shrink-0">
+                            <Button
+                              size="sm"
+                              disabled={opening && openId === loadout.id}
+                              onClick={() => void handleOpenLocal(loadout.id)}
+                            >
+                              {isOpen ? "Close" : "Open"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              disabled={isDeleting}
+                              onClick={() =>
+                                void handleDeleteLocal(loadout.id, loadout.name)
+                              }
+                            >
+                              {isDeleting ? "Deleting…" : "Delete"}
+                            </Button>
+                          </Row>
+                        </div>
+
+                        {isOpen && opening ? (
+                          <div className="px-4 pb-4">
+                            <Text size="xs" tone="muted">
+                              Loading build…
+                            </Text>
+                          </div>
+                        ) : null}
+
+                        {isOpen &&
+                        openLoadout?.id === loadout.id &&
+                        liveBuild &&
+                        liveSheet &&
+                        !opening ? (
+                          <div className="border-t border-line p-4">
+                            <EditableBuildSheet
+                              sheet={liveSheet}
+                              build={liveBuild}
+                              activity={activity}
+                              className={
+                                openLoadout.buildRequest?.className ?? "Titan"
+                              }
+                              staleBanner={staleBanner}
+                              exoticSummary={openRow?.exoticSummary}
+                              onDiscoverLoadouts={openDiscovery}
+                              onUpdate={({ build, sheet }) => {
+                                setLiveBuild(build);
+                                setLiveSheet(sheet);
+                                void fetch(`/api/user/loadouts/${loadout.id}`, {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    generatedBuild: build,
+                                    resolvedSheet: sheet,
+                                  }),
+                                });
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                      </Panel>
+                    );
+                  })}
+                </Stack>
+              )}
             </Stack>
           </Stack>
         ) : null}

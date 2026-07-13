@@ -113,6 +113,15 @@ export class HttpBungieProfileClient implements BungieProfileClient {
     return parseEquipmentResponse(response, characterId);
   }
 
+  async getCharacterLoadoutsProfile(
+    accessToken: string,
+    membership: DestinyMembership,
+  ): Promise<unknown> {
+    // 200 Characters + 206 CharacterLoadouts (same source DIM uses for icons/colors)
+    const path = `/Destiny2/${membership.membershipType}/Profile/${membership.membershipId}/?components=200,206`;
+    return this.bungieGet(path, accessToken);
+  }
+
   async getFullInventory(
     accessToken: string,
     membership: DestinyMembership,
