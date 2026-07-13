@@ -6,25 +6,40 @@ export type StoredProposePass = {
   proposals: Proposal[];
 };
 
-const STORE = new Map<string, StoredProposePass>();
+/**
+ * In-memory propose-pass store. Bound to globalThis so Next.js HMR and
+ * route-module re-evaluation do not drop passes mid-session (which caused
+ * "Unknown propose pass <uuid>" on confirm after a gap scan).
+ */
+const globalForPropose = globalThis as typeof globalThis & {
+  __destinyProposePassStore?: Map<string, StoredProposePass>;
+};
+
+function store(): Map<string, StoredProposePass> {
+  if (!globalForPropose.__destinyProposePassStore) {
+    globalForPropose.__destinyProposePassStore = new Map();
+  }
+  return globalForPropose.__destinyProposePassStore;
+}
+
 const TTL_MS = 60 * 60 * 1000;
 
 export function clearProposePassStoreForTests(): void {
-  STORE.clear();
+  store().clear();
 }
 
 function prune(now = Date.now()): void {
-  for (const [id, pass] of STORE) {
-    if (now - Date.parse(pass.createdAt) > TTL_MS) STORE.delete(id);
+  for (const [id, pass] of store()) {
+    if (now - Date.parse(pass.createdAt) > TTL_MS) store().delete(id);
   }
 }
 
 export function saveProposePass(pass: StoredProposePass): void {
   prune();
-  STORE.set(pass.passId, pass);
+  store().set(pass.passId, pass);
 }
 
 export function getProposePass(passId: string): StoredProposePass | null {
   prune();
-  return STORE.get(passId) ?? null;
+  return store().get(passId) ?? null;
 }

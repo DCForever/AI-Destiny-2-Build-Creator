@@ -51,6 +51,11 @@ export const proposePassRequestSchema = z.object({
 export const confirmPassRequestSchema = z.object({
   acceptedIds: z.array(z.string()).default([]),
   skippedIds: z.array(z.string()).default([]),
+  /**
+   * Optional client copy of the pass proposals. Used when the in-memory pass
+   * was lost (dev HMR, process restart) so confirm can still create synergies.
+   */
+  proposals: z.array(proposalSchema).optional(),
 });
 
 export type Proposal = z.infer<typeof proposalSchema>;

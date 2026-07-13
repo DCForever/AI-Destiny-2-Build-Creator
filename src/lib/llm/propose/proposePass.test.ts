@@ -42,4 +42,26 @@ describe("llm propose-for-confirm", () => {
     expect(result.created[0]?.synergyId).toBeTruthy();
     expect(listSynergies(db, user.id)).toHaveLength(1);
   });
+
+  it("confirms from client proposals fallback when pass is missing", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "llm3", 3, "G");
+    const { proposals } = await runProposePass("descriptions", { useMock: true });
+    const synergy = proposals.find((p) => p.kind === "synergy");
+    expect(synergy).toBeTruthy();
+
+    clearProposePassStoreForTests();
+
+    const result = await confirmProposals(
+      db,
+      user.id,
+      "00000000-0000-0000-0000-000000000099",
+      [synergy!.id],
+      [],
+      proposals,
+    );
+
+    expect(result.created).toHaveLength(1);
+    expect(listSynergies(db, user.id)).toHaveLength(1);
+  });
 });
