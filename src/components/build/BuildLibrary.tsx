@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import type { GuardianClass, BuildSummary } from "@/components/build/types";
 import {
   Button,
@@ -22,6 +24,11 @@ import {
   elementFromSubclass,
   isGuardianClass,
 } from "@/lib/destiny/identityVisuals";
+import {
+  collectExoticArmorOptions,
+  filterBuilds,
+  type ExoticArmorFilterKey,
+} from "@/lib/builds/filterBuilds";
 
 const CLASSES: GuardianClass[] = ["Titan", "Hunter", "Warlock"];
 
@@ -42,9 +49,47 @@ export function BuildLibrary({
   onNew: () => void;
   loading: boolean;
 }) {
-  const filtered = classFilter
-    ? builds.filter((b) => b.className === classFilter)
-    : builds;
+  const [exoticKeys, setExoticKeys] = useState<ExoticArmorFilterKey[]>([]);
+
+  /** Exotic chips scoped to current class filter (or full library). */
+  const exoticOptions = useMemo(() => {
+    const scope = classFilter
+      ? builds.filter((b) => b.className === classFilter)
+      : builds;
+    return collectExoticArmorOptions(scope);
+  }, [builds, classFilter]);
+
+  // Drop exotic selections that vanished after class filter / library changes.
+  const activeExoticKeys = useMemo(() => {
+    if (exoticKeys.length === 0) return exoticKeys;
+    const allowed = new Set(exoticOptions.map((o) => o.key));
+    return exoticKeys.filter((k) => allowed.has(k));
+  }, [exoticKeys, exoticOptions]);
+
+  const filtered = useMemo(
+    () =>
+      filterBuilds(builds, {
+        className: classFilter,
+        exoticArmorKeys: activeExoticKeys,
+      }),
+    [builds, classFilter, activeExoticKeys],
+  );
+
+  const hasFilters = Boolean(classFilter) || activeExoticKeys.length > 0;
+
+  function toggleExotic(key: ExoticArmorFilterKey) {
+    setExoticKeys((prev) => {
+      const next = prev.includes(key)
+        ? prev.filter((k) => k !== key)
+        : [...prev, key];
+      return next;
+    });
+  }
+
+  function clearFilters() {
+    onClassFilter(null);
+    setExoticKeys([]);
+  }
 
   return (
     <Panel as="aside" className="flex flex-col min-h-[min(420px,70vh)] lg:min-h-[420px]">
@@ -63,16 +108,50 @@ export function BuildLibrary({
           </Button>
         </Row>
 
-        <Cluster>
-          {CLASSES.map((cls) => (
-            <FilterChip
-              key={cls}
-              label={cls}
-              active={classFilter === cls}
-              onClick={() => onClassFilter(classFilter === cls ? null : cls)}
-            />
-          ))}
-        </Cluster>
+        <Stack gap={6}>
+          <Text size="xs" tone="muted" className="uppercase tracking-widest">
+            Class
+          </Text>
+          <Cluster>
+            {CLASSES.map((cls) => (
+              <FilterChip
+                key={cls}
+                label={cls}
+                active={classFilter === cls}
+                onClick={() => onClassFilter(classFilter === cls ? null : cls)}
+              />
+            ))}
+          </Cluster>
+        </Stack>
+
+        {exoticOptions.length > 0 ? (
+          <Stack gap={6}>
+            <Text size="xs" tone="muted" className="uppercase tracking-widest">
+              Exotic armor
+            </Text>
+            <Cluster>
+              {exoticOptions.map((opt) => (
+                <FilterChip
+                  key={opt.key}
+                  label={opt.label}
+                  active={activeExoticKeys.includes(opt.key)}
+                  onClick={() => toggleExotic(opt.key)}
+                  title={opt.label}
+                />
+              ))}
+            </Cluster>
+          </Stack>
+        ) : null}
+
+        {hasFilters ? (
+          <button
+            type="button"
+            className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground self-start"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
+        ) : null}
 
         {loading ? (
           <Text size="sm" tone="muted">
@@ -83,11 +162,17 @@ export function BuildLibrary({
             <Text size="sm" tone="muted">
               {builds.length === 0
                 ? "No curated builds yet."
-                : "No builds match this class filter."}
+                : "No builds match these filters."}
             </Text>
-            <Button variant="ghost" size="sm" onClick={onNew}>
-              Create build
-            </Button>
+            {hasFilters ? (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={onNew}>
+                Create build
+              </Button>
+            )}
           </Stack>
         ) : (
           <Stack gap={6}>
