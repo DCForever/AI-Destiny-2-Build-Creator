@@ -3,12 +3,14 @@
 import { useState } from "react";
 
 import type { GuardianClass } from "@/components/build/types";
-import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
-import { PinnedSuperLookup } from "@/components/debug/PinnedSuperLookup";
 import {
   SynergyTypeMultiSelect,
   type SynergyTypeSelection,
-} from "@/components/debug/SynergyTypeMultiSelect";
+} from "@/components/build/SynergyTypeMultiSelect";
+import {
+  ManifestSearchPicker,
+  type ManifestPick,
+} from "@/components/lookups/ManifestSearchPicker";
 import {
   Button,
   Cluster,
@@ -139,13 +141,32 @@ export function CreateBuildPanel({
           </select>
         </Section>
 
-        <PinnedSuperLookup
-          subclassName={subclassName}
-          selected={pinnedSuper}
-          onSelect={setPinnedSuper}
-        />
+        <Section label="Pinned super (optional)">
+          <ManifestSearchPicker
+            label="Search supers"
+            category="abilities"
+            kind="super"
+            subclass={subclassName}
+            selected={
+              pinnedSuper
+                ? ({ hash: 0, name: pinnedSuper } satisfies ManifestPick)
+                : null
+            }
+            onSelect={(item) => setPinnedSuper(item?.name ?? null)}
+          />
+        </Section>
 
-        <ExoticArmorLookup className={className} selected={exotic} onSelect={setExotic} />
+        <Section label="Exotic armor">
+          <ManifestSearchPicker
+            label="Search exotic armor"
+            category="exotic-armor"
+            classType={className}
+            selected={exotic}
+            onSelect={(item) =>
+              setExotic(item ? { hash: item.hash, name: item.name } : null)
+            }
+          />
+        </Section>
 
         <Section label="Synergy Types (required)">
           <Text size="xs" tone="muted" className="mb-2">

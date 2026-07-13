@@ -24,9 +24,17 @@ export type SetItem = {
   stale: boolean;
 };
 
+export type SetUsedByBuild = {
+  buildId: string;
+  buildName: string;
+  variantNames: string[];
+};
+
 export type SetDetail = SetSummary & {
   items: SetItem[];
   modEncourage?: boolean;
+  /** Builds that attach this set on one or more variants. */
+  usedByBuilds?: SetUsedByBuild[];
 };
 
 export const SLOT_LABEL: Record<string, string> = {

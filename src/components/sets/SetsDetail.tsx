@@ -92,6 +92,29 @@ export function SetsDetail({
           </Text>
         ) : null}
 
+        <Section label="Used by builds">
+          {(set.usedByBuilds?.length ?? 0) === 0 ? (
+            <Text size="sm" tone="muted">
+              No curated builds use this set yet.
+            </Text>
+          ) : (
+            <Stack gap={6}>
+              {set.usedByBuilds!.map((b) => (
+                <Panel key={b.buildId} tone="muted" pad="sm">
+                  <Stack gap={2}>
+                    <Text size="sm" weight="medium">
+                      {b.buildName}
+                    </Text>
+                    <Text size="xs" tone="muted">
+                      Variants: {b.variantNames.join(", ")}
+                    </Text>
+                  </Stack>
+                </Panel>
+              ))}
+            </Stack>
+          )}
+        </Section>
+
         {isMods ? (
           <Section label="Mods">
             <Stack gap={10}>

@@ -1,6 +1,7 @@
 import type { ConceptTagId } from "@/data/conceptTags";
 import { conceptTagIdsSchema } from "@/data/conceptTags";
 import type { AppDatabase } from "@/lib/db/client";
+import { listBuilds } from "@/lib/db/repositories/buildRepository";
 import {
   createSetRecord,
   deleteSetRecord,
@@ -39,10 +40,37 @@ export async function getSetDetail(db: AppDatabase, userId: number, setId: strin
   if (!set) return null;
   const items = await listSetItems(db, setId);
   const activeItems = items.filter((i) => !i.removedAt);
+
+  const attachmentRefs = findAttachmentsBySetId(db, setId);
+  const userBuildIds = new Set(listBuilds(db, userId).map((b) => b.id));
+  const byBuild = new Map<
+    string,
+    { buildId: string; buildName: string; variantNames: string[] }
+  >();
+  for (const ref of attachmentRefs) {
+    if (!userBuildIds.has(ref.buildId)) continue;
+    const existing = byBuild.get(ref.buildId);
+    if (existing) {
+      if (!existing.variantNames.includes(ref.variantName)) {
+        existing.variantNames.push(ref.variantName);
+      }
+    } else {
+      byBuild.set(ref.buildId, {
+        buildId: ref.buildId,
+        buildName: ref.buildName,
+        variantNames: [ref.variantName],
+      });
+    }
+  }
+  const usedByBuilds = [...byBuild.values()].sort((a, b) =>
+    a.buildName.localeCompare(b.buildName, undefined, { sensitivity: "base" }),
+  );
+
   return {
     ...set,
     items,
     modEncourage: hasEmptyModSlots(set.type, activeItems),
+    usedByBuilds,
   };
 }
 

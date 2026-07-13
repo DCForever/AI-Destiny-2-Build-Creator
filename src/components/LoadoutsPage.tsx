@@ -22,6 +22,11 @@ import type { GeneratedBuild } from "@/lib/llm/buildSchema";
 import type { ResolvedBuildSheet } from "@/lib/build/types";
 import type { SavedLoadout } from "@/lib/db/types";
 import { buildDiscoveryMatches, filterLoadoutRows } from "@/lib/loadouts/loadoutListApi";
+import {
+  loadoutMatchLabel,
+  matchLoadoutToBuilds,
+  type BuildMatchInput,
+} from "@/lib/loadouts/matchLoadoutToBuilds";
 import type { ExoticFilterCriteria, LoadoutListRow } from "@/lib/loadouts/types";
 
 function formatDate(iso: string): string {
@@ -72,6 +77,7 @@ function exoticRowLabels(row: LoadoutListRow): string[] {
 export function LoadoutsPage() {
   const [signedIn, setSignedIn] = useState(false);
   const [rows, setRows] = useState<LoadoutListRow[]>([]);
+  const [curatedBuilds, setCuratedBuilds] = useState<BuildMatchInput[]>([]);
   const [filterCriteria, setFilterCriteria] = useState<ExoticFilterCriteria>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,22 +100,67 @@ export function LoadoutsPage() {
     [rows, filterCriteria],
   );
 
+  const matchByLoadoutId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof matchLoadoutToBuilds>>();
+    for (const lo of rows) {
+      map.set(
+        lo.id,
+        matchLoadoutToBuilds(
+          {
+            className: lo.className,
+            exoticArmorHash: lo.exoticSummary.exoticArmor?.hash ?? null,
+            exoticWeaponHash: lo.exoticSummary.exoticWeapon?.hash ?? null,
+          },
+          curatedBuilds,
+        ),
+      );
+    }
+    return map;
+  }, [rows, curatedBuilds]);
+
   const fetchLoadouts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/user/loadouts");
-      if (res.status === 401) {
+      const [loRes, buildRes] = await Promise.all([
+        fetch("/api/user/loadouts"),
+        fetch("/api/user/builds"),
+      ]);
+      if (loRes.status === 401) {
         setRows([]);
+        setCuratedBuilds([]);
         return;
       }
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
+      if (!loRes.ok) {
+        const body = (await loRes.json()) as { error?: string };
         setError(body.error ?? "Failed to load loadouts");
         return;
       }
-      const body = (await res.json()) as { loadouts: LoadoutListRow[] };
+      const body = (await loRes.json()) as { loadouts: LoadoutListRow[] };
       setRows(body.loadouts);
+
+      if (buildRes.ok) {
+        const bBody = (await buildRes.json()) as {
+          builds?: Array<{
+            id: string;
+            name: string;
+            className: string;
+            exoticArmorHash?: number | null;
+            exoticWeaponHash?: number | null;
+          }>;
+        };
+        setCuratedBuilds(
+          (bBody.builds ?? []).map((b) => ({
+            id: b.id,
+            name: b.name,
+            className: b.className,
+            exoticArmorHash: b.exoticArmorHash ?? null,
+            exoticWeaponHash: b.exoticWeaponHash ?? null,
+          })),
+        );
+      } else {
+        setCuratedBuilds([]);
+      }
     } catch {
       setError("Failed to load loadouts");
     } finally {
@@ -124,6 +175,7 @@ export function LoadoutsPage() {
         void fetchLoadouts();
       } else {
         setRows([]);
+        setCuratedBuilds([]);
         setOpenId(null);
         setOpenLoadout(null);
         setLiveBuild(null);
@@ -337,6 +389,12 @@ export function LoadoutsPage() {
                 const isOpen = openId === loadout.id;
                 const isDeleting = deletingId === loadout.id;
                 const exoticLabels = exoticRowLabels(loadout);
+                const buildMatch =
+                  matchByLoadoutId.get(loadout.id) ?? {
+                    kind: "none" as const,
+                    builds: [],
+                  };
+                const matchLabel = loadoutMatchLabel(buildMatch);
                 return (
                   <Panel key={loadout.id} tone="default" pad="none" className="overflow-hidden">
                     <div className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -354,6 +412,12 @@ export function LoadoutsPage() {
                             {exoticLabels.join(" · ")}
                           </Text>
                         ) : null}
+                        <Text
+                          size="xs"
+                          tone={buildMatch.kind === "none" ? "muted" : "accent"}
+                        >
+                          {matchLabel}
+                        </Text>
                       </Stack>
                       <Row gap={8} className="shrink-0">
                         <Button

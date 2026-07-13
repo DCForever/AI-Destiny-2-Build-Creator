@@ -3,12 +3,14 @@
 import { useState } from "react";
 
 import type { BuildDetail } from "@/components/build/types";
-import { ExoticArmorLookup } from "@/components/debug/ExoticArmorLookup";
-import { PinnedSuperLookup } from "@/components/debug/PinnedSuperLookup";
 import {
   SynergyTypeMultiSelect,
   type SynergyTypeSelection,
-} from "@/components/debug/SynergyTypeMultiSelect";
+} from "@/components/build/SynergyTypeMultiSelect";
+import {
+  ManifestSearchPicker,
+  type ManifestPick,
+} from "@/components/lookups/ManifestSearchPicker";
 import {
   Button,
   Callout,
@@ -193,18 +195,29 @@ export function BuildEditPanel({
         />
 
         <Section label="Exotic armor">
-          <ExoticArmorLookup
-            className={build.className}
+          <ManifestSearchPicker
+            label="Search exotic armor"
+            category="exotic-armor"
+            classType={build.className as "Titan" | "Hunter" | "Warlock"}
             selected={exoticArmor}
-            onSelect={setExoticArmor}
+            onSelect={(item) =>
+              setExoticArmor(item ? { hash: item.hash, name: item.name } : null)
+            }
           />
         </Section>
 
         <Section label="Pinned super">
-          <PinnedSuperLookup
-            subclassName={build.subclass.name}
-            selected={pinnedSuper}
-            onSelect={setPinnedSuper}
+          <ManifestSearchPicker
+            label="Search supers"
+            category="abilities"
+            kind="super"
+            subclass={build.subclass.name}
+            selected={
+              pinnedSuper
+                ? ({ hash: 0, name: pinnedSuper } satisfies ManifestPick)
+                : null
+            }
+            onSelect={(item) => setPinnedSuper(item?.name ?? null)}
           />
         </Section>
 

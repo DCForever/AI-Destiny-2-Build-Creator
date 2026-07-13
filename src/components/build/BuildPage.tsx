@@ -16,7 +16,7 @@ import type {
   BungieCharacter,
   GuardianClass,
 } from "@/components/build/types";
-import type { SynergyTypeSelection } from "@/components/debug/SynergyTypeMultiSelect";
+import type { SynergyTypeSelection } from "@/components/build/SynergyTypeMultiSelect";
 import {
   Callout,
   CardGrid,
