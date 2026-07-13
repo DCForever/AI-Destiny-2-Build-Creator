@@ -96,6 +96,14 @@ export function plugNameFromMap(
   return lookupPlug(plugMap, hash)?.name ?? null;
 }
 
+/** Full presentation when available (icon + description). */
+export function plugPresentationFromMap(
+  plugMap: PlugLookup,
+  hash: number,
+): PlugPresentation | null {
+  return lookupPlug(plugMap, hash);
+}
+
 export function resolvePlugs(
   plugHashes: number[],
   plugMap: PlugLookup,

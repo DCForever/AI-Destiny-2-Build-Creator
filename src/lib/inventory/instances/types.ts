@@ -33,6 +33,10 @@ export interface InstancePerkOption {
   displayName: string;
   isEnhanced: boolean;
   isEquipped: boolean;
+  /** Bungie relative icon when known from entity stores. */
+  icon?: string | null;
+  /** Catalog description when known. */
+  description?: string;
 }
 
 export interface InstancePerkColumn {

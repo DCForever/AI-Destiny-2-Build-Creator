@@ -6,7 +6,11 @@ import {
   isEnhancedPlug,
 } from "./classifyWeaponSocket";
 import { deriveCaptureStatus, buildStoredSocketPlugs } from "./buildStoredSocketPlugs";
-import { plugNameFromMap, type PlugLookup } from "./resolvePlugs";
+import {
+  plugNameFromMap,
+  plugPresentationFromMap,
+  type PlugLookup,
+} from "./resolvePlugs";
 
 const COLUMN_ORDER: Record<InstancePerkColumn["columnKind"], number> = {
   barrel: 0,
@@ -36,7 +40,8 @@ function buildColumnOptions(
     : [stored.equippedPlugHash];
 
   return hashes.map((hash) => {
-    const name = plugNameFromMap(plugMap, hash);
+    const presentation = plugPresentationFromMap(plugMap, hash);
+    const name = presentation?.name ?? plugNameFromMap(plugMap, hash);
     const category = plugCategoryByHash.get(hash) ?? "";
     const enhanced = isEnhancedPlug(name, category);
     return {
@@ -45,6 +50,8 @@ function buildColumnOptions(
       displayName: formatPerkDisplayName(name, hash, enhanced),
       isEnhanced: enhanced,
       isEquipped: hash === stored.equippedPlugHash,
+      icon: presentation?.icon ?? null,
+      description: presentation?.description ?? "",
     };
   });
 }

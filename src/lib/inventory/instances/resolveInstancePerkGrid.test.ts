@@ -81,6 +81,37 @@ describe("resolveInstancePerkGrid", () => {
     );
   });
 
+  it("attaches icon and description from presentation plug maps", () => {
+    const richMap = new Map([
+      [
+        101,
+        {
+          name: "Corkscrew Rifling",
+          icon: "/cork.png",
+          description: "Slightly improved range and stability.",
+        },
+      ],
+      [102, { name: "Fluted Barrel", icon: "/flute.png", description: "" }],
+      [201, { name: "Accurized Rounds", icon: null, description: "" }],
+      [301, { name: "Zen Moment", icon: "/zen.png", description: "Stability on hit." }],
+      [
+        302,
+        {
+          name: "Zen Moment",
+          icon: "/zen-e.png",
+          description: "Enhanced stability on hit.",
+        },
+      ],
+    ]);
+    const grid = resolveInstancePerkGrid({
+      ...gridInput(weaponItem()),
+      plugMap: richMap,
+    });
+    const cork = grid.columns[0]?.options.find((o) => o.hash === 101);
+    expect(cork?.icon).toBe("/cork.png");
+    expect(cork?.description).toContain("range");
+  });
+
   it("produces different options for two copies with different stored plugs", () => {
     const copyA = resolveInstancePerkGrid(gridInput(weaponItem()));
     const copyB = resolveInstancePerkGrid(

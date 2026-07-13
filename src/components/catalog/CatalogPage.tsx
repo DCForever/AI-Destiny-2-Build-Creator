@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
+import { InstancePerkGridView } from "@/components/catalog/InstancePerkGridView";
 import { filterCatalogClient } from "@/lib/catalog/filterCatalogClient";
 import {
   ARMOR_GROUP_DIMENSIONS,
@@ -467,10 +468,10 @@ export function CatalogPage() {
 
                     {instances.length > 0 ? (
                       <Section label="Owned instances">
-                        <Stack gap={8}>
+                        <Stack gap={10}>
                           {instances.map((inst) => (
                             <Panel key={inst.instanceId} tone="muted" pad="sm">
-                              <Stack gap={4}>
+                              <Stack gap={8}>
                                 <Row gap={8} wrap>
                                   <Text size="sm">
                                     {inst.power != null
@@ -486,12 +487,17 @@ export function CatalogPage() {
                                     </Text>
                                   ) : null}
                                 </Row>
-                                {(inst.plugs?.length ?? 0) > 0 ? (
+                                {kind === "weapons" ? (
+                                  <InstancePerkGridView
+                                    instanceId={inst.instanceId}
+                                    enabled
+                                  />
+                                ) : (inst.plugs?.length ?? 0) > 0 ? (
                                   <Cluster gap={6}>
                                     {inst.plugs!.map((p) => (
                                       <EntityHotspot
                                         key={`${inst.instanceId}-${p.hash ?? p.displayName}`}
-                                        kind="Plug"
+                                        kind="Mod / plug"
                                         name={p.displayName}
                                         description={p.description}
                                         icon={p.icon}

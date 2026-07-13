@@ -30,7 +30,6 @@ Last reviewed: 2026-07-13
 ### Catalog
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | Deeper **instance perk-grid** UX | Beyond plug name list; relates to 011 |
 | `open` | Richer ammo/element/archetype multi-filters | Partial filters exist |
 
 ### Sets
@@ -77,6 +76,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 | Closed | Item | Note |
 |--------|------|------|
+| 2026-07-13 | Catalog **instance perk-grid** UX (011) | DIM-style columns in Catalog; icons; auto re-sync pending |
 | 2026-07-13 | Catalog multi **Group by** (ammo / element / archetype / …) | Multi-select dims; composite keys; `ammo` on catalog weapons |
 | 2026-07-13 | Entity hotspot primitive + presentation resolver | `EntityHotspot`, `entityPresentation`, build/set/plug enrich |
 | 2026-07-13 | Class / element / super icons on Build library + identity | Vault Terminal glyphs + subclass element |
