@@ -9,7 +9,9 @@ describe("validateSynergySubType", () => {
   });
 
   it("rejects unknown verb subType", () => {
-    expect(validateSynergySubType("verb", "Foo").ok).toBe(false);
+    // Lowercase / non-keyword forms (Title Case open keywords may still pass isKeywordLike)
+    expect(validateSynergySubType("verb", "foo").ok).toBe(false);
+    expect(validateSynergySubType("verb", "not a verb!!!").ok).toBe(false);
   });
 
   it("accepts Destinypedia verb staples", () => {

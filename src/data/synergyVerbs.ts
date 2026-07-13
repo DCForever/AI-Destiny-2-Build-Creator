@@ -8,9 +8,11 @@ export type SynergyVerbEntry = {
   description: string;
 };
 
-/** Legacy display names accepted at validation and normalized to canonical names. */
+/** Legacy / plural display names accepted and normalized to canonical names. */
 export const SYNERGY_VERB_ALIASES: Readonly<Record<string, string>> = {
   Suppress: "Suppression",
+  /** Object text often uses plural. */
+  "Stasis Shards": "Stasis Shard",
 };
 
 export const SYNERGY_VERBS: readonly SynergyVerbEntry[] = [
@@ -27,6 +29,11 @@ export const SYNERGY_VERBS: readonly SynergyVerbEntry[] = [
   { name: "Amplified", description: "Increased movement speed and weapon handling." },
   { name: "Bolt Charge", description: "Arc stacks that proc a lightning bolt at max." },
   { name: "Ionic Trace", description: "Arc pickup that grants Bolt Charge stacks." },
+  // Subclass-agnostic / armor keyword (distinct from Bolt Charge)
+  {
+    name: "Armor Charge",
+    description: "Stacks from orbs/armor mods that empower armor-charge effects.",
+  },
   // Void
   { name: "Suppression", description: "Disables abilities; stuns Overload champions." },
   { name: "Volatile", description: "Unstable Void energy; explodes on further damage." },
@@ -53,13 +60,72 @@ export const SYNERGY_VERBS: readonly SynergyVerbEntry[] = [
   { name: "Transcendence", description: "Light and Darkness harmony state." },
   // Subclass-agnostic
   { name: "Exhaust", description: "Reduces enemy damage output; applied across elements." },
+  /** Movement / weapon keyword used by many perks and exotics (slide-shoot loops). */
+  { name: "Sliding", description: "Slide-based movement and slide-shoot interactions." },
 ] as const;
 
 export const SYNERGY_VERB_NAMES: readonly string[] = SYNERGY_VERBS.map((v) => v.name);
 
+function singularPluralForms(name: string): string[] {
+  const t = name.trim();
+  if (!t) return [];
+  const forms = new Set<string>([t]);
+  if (/s$/i.test(t) && !/ss$/i.test(t) && t.length > 3) {
+    forms.add(t.replace(/s$/i, ""));
+  } else {
+    forms.add(`${t}s`);
+  }
+  return [...forms];
+}
+
+/**
+ * Exact / alias / plural match only (no multi-word suffix walk).
+ */
+function resolveVerbSubTypeExact(name: string): string | null {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+
+  for (const form of singularPluralForms(trimmed)) {
+    if ((SYNERGY_VERB_NAMES as readonly string[]).includes(form)) return form;
+    const aliasExact = SYNERGY_VERB_ALIASES[form];
+    if (aliasExact) return aliasExact;
+  }
+
+  const lowerForms = singularPluralForms(trimmed).map((f) => f.toLowerCase());
+  for (const canonical of SYNERGY_VERB_NAMES) {
+    if (lowerForms.includes(canonical.toLowerCase())) return canonical;
+  }
+  for (const [alias, canonical] of Object.entries(SYNERGY_VERB_ALIASES)) {
+    if (lowerForms.includes(alias.toLowerCase())) return canonical;
+    if (lowerForms.includes(canonical.toLowerCase())) return canonical;
+  }
+
+  return null;
+}
+
+/**
+ * Map a free-text verb name to the canonical curated subType.
+ * Case-insensitive; accepts aliases, simple plurals (Stasis Shards → Stasis Shard),
+ * and element-prefixed phrases (Solar Firesprite → Firesprite).
+ */
 export function resolveVerbSubType(name: string): string | null {
-  if ((SYNERGY_VERB_NAMES as readonly string[]).includes(name)) return name;
-  return SYNERGY_VERB_ALIASES[name] ?? null;
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+
+  const exact = resolveVerbSubTypeExact(trimmed);
+  if (exact) return exact;
+
+  // "Solar Firesprite", "Arc Ionic Traces" → trailing curated verb / multi-word verb
+  const parts = trimmed.split(/\s+/);
+  if (parts.length < 2) return null;
+  // Longest trailing span first so "Void Breach" wins over bare "Breach" if both existed
+  for (let start = 1; start < parts.length; start++) {
+    const suffix = parts.slice(start).join(" ");
+    const hit = resolveVerbSubTypeExact(suffix);
+    if (hit) return hit;
+  }
+
+  return null;
 }
 
 export function isKnownVerbSubType(name: string): boolean {

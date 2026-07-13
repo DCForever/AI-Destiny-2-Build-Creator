@@ -1,6 +1,7 @@
 import { SYNERGY_ELEMENTS } from "@/data/synergyElements";
 import { resolveVerbSubType } from "@/data/synergyVerbs";
 import type { SynergyType } from "@/lib/synergies/schemas";
+import { isKeywordLikeSubType } from "@/lib/synergies/keywordScan";
 import { allowsBaseSubType, requiresSubType } from "@/lib/synergies/synergyTypeRules";
 
 export type SubTypeValidationResult =
@@ -28,10 +29,14 @@ export function validateSynergySubType(
     }
     if (type === "verb") {
       const canonical = resolveVerbSubType(trimmed);
-      if (!canonical) {
-        return { ok: false, reason: `Unknown verb subType: ${trimmed}` };
+      if (canonical) {
+        return { ok: true, subType: canonical };
       }
-      return { ok: true, subType: canonical };
+      // Object-discovered keywords (e.g. Sliding before curated list) may still be curated.
+      if (isKeywordLikeSubType(trimmed)) {
+        return { ok: true, subType: trimmed };
+      }
+      return { ok: false, reason: `Unknown verb subType: ${trimmed}` };
     }
     if (allowsBaseSubType(type) && trimmed === "Base") {
       return { ok: true, subType: "Base" };

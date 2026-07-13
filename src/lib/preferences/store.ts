@@ -47,5 +47,40 @@ export function mergePreferences(
       ...server.weaponTypeFilters,
       ...client.weaponTypeFilters,
     },
+    // Client payload replaces the list when provided (including []).
+    ignoredSynergyTypeKeys:
+      client.ignoredSynergyTypeKeys !== undefined
+        ? client.ignoredSynergyTypeKeys
+        : (server.ignoredSynergyTypeKeys ?? DEFAULT_PREFERENCES.ignoredSynergyTypeKeys),
   });
+}
+
+/** Add coverage keys to the ignore list (deduped). */
+export function addIgnoredSynergyTypeKeys(
+  prefs: UserPreferences,
+  keys: string[],
+): UserPreferences {
+  const next = new Set(prefs.ignoredSynergyTypeKeys ?? []);
+  for (const k of keys) {
+    const t = k.trim();
+    if (t) next.add(t);
+  }
+  return {
+    ...prefs,
+    ignoredSynergyTypeKeys: [...next].sort((a, b) => a.localeCompare(b)),
+  };
+}
+
+/** Remove coverage keys from the ignore list. */
+export function removeIgnoredSynergyTypeKeys(
+  prefs: UserPreferences,
+  keys: string[],
+): UserPreferences {
+  const drop = new Set(keys.map((k) => k.trim()).filter(Boolean));
+  return {
+    ...prefs,
+    ignoredSynergyTypeKeys: (prefs.ignoredSynergyTypeKeys ?? []).filter(
+      (k) => !drop.has(k),
+    ),
+  };
 }
