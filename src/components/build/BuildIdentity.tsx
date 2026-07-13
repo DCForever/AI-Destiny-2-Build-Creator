@@ -1,11 +1,10 @@
 "use client";
 
-import type { BuildDetail, PresentedEntity } from "@/components/build/types";
+import type { BuildDetail } from "@/components/build/types";
 import {
   Button,
   Chip,
   ClassIcon,
-  Cluster,
   DesignationIcon,
   ElementIcon,
   EntityHotspot,
@@ -27,41 +26,13 @@ import {
   elementFromSubclass,
   isDestinyElement,
   isGuardianClass,
-  type DestinyElement,
 } from "@/lib/destiny/identityVisuals";
 
 function accentFor(element: string | null | undefined): string | undefined {
   if (element && isDestinyElement(element)) {
-    return ELEMENT_CSS_COLOR[element as DestinyElement];
+    return ELEMENT_CSS_COLOR[element];
   }
   return undefined;
-}
-
-function AbilityHotspot({
-  entity,
-  kind,
-  fallbackName,
-  elementColor,
-}: {
-  entity?: PresentedEntity | null;
-  kind: string;
-  fallbackName?: string | null;
-  elementColor?: string;
-}) {
-  const name = entity?.name || fallbackName;
-  if (!name) return null;
-  return (
-    <EntityHotspot
-      kind={entity?.kindLabel ?? kind}
-      name={name}
-      description={entity?.description}
-      icon={entity?.icon}
-      accentColor={accentFor(entity?.element) ?? elementColor}
-      size={28}
-      showLabel="auto"
-      meta={entity?.element ? [entity.element] : undefined}
-    />
-  );
 }
 
 export function BuildIdentity({
@@ -215,91 +186,6 @@ export function BuildIdentity({
             ) : null}
           </Row>
         </Row>
-
-        <Section label="Abilities">
-          <Cluster gap={8}>
-            <AbilityHotspot
-              entity={sp?.classAbility}
-              kind="Class ability"
-              fallbackName={subclass.classAbility}
-              elementColor={elementColor}
-            />
-            <AbilityHotspot
-              entity={sp?.movement}
-              kind="Movement"
-              fallbackName={subclass.movement}
-              elementColor={elementColor}
-            />
-            <AbilityHotspot
-              entity={sp?.melee}
-              kind="Melee"
-              fallbackName={subclass.melee}
-              elementColor={elementColor}
-            />
-            <AbilityHotspot
-              entity={sp?.grenade}
-              kind="Grenade"
-              fallbackName={subclass.grenade}
-              elementColor={elementColor}
-            />
-          </Cluster>
-        </Section>
-
-        {(sp?.aspects?.length ?? subclass.aspects?.length ?? 0) > 0 ? (
-          <Section label="Aspects">
-            <Cluster gap={8}>
-              {(sp?.aspects?.length
-                ? sp.aspects
-                : subclass.aspects.map((name) => ({
-                    hash: null,
-                    name,
-                    icon: null,
-                    description: "",
-                    element: null,
-                    kindLabel: "Aspect",
-                  }))
-              ).map((a) => (
-                <EntityHotspot
-                  key={a.name}
-                  kind="Aspect"
-                  name={a.name}
-                  description={a.description}
-                  icon={a.icon}
-                  accentColor={accentFor(a.element) ?? elementColor}
-                  size={28}
-                />
-              ))}
-            </Cluster>
-          </Section>
-        ) : null}
-
-        {(sp?.fragments?.length ?? subclass.fragments?.length ?? 0) > 0 ? (
-          <Section label="Fragments">
-            <Cluster gap={8}>
-              {(sp?.fragments?.length
-                ? sp.fragments
-                : subclass.fragments.map((name) => ({
-                    hash: null,
-                    name,
-                    icon: null,
-                    description: "",
-                    element: null,
-                    kindLabel: "Fragment",
-                  }))
-              ).map((f) => (
-                <EntityHotspot
-                  key={f.name}
-                  kind="Fragment"
-                  name={f.name}
-                  description={f.description}
-                  icon={f.icon}
-                  accentColor={accentFor(f.element) ?? elementColor}
-                  size={28}
-                />
-              ))}
-            </Cluster>
-          </Section>
-        ) : null}
 
         {(build.synergyTypes?.length ?? 0) > 0 ? (
           <Section label="Synergy Types">
