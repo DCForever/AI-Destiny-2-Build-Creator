@@ -4,6 +4,8 @@ export interface SocketClassifyInput {
   socketIndex: number;
   equippedPlugHash: number;
   plugCategoryByHash: Map<number, string>;
+  /** Optional itemTypeDisplayName by plug hash (e.g. "Enhanced Trait"). */
+  plugItemTypeByHash?: Map<number, string>;
   /** Ordered weapon-perk-category socket indexes (barrel, mag, traits). */
   weaponPerkSocketIndexes: number[];
 }
@@ -49,13 +51,32 @@ function isCosmeticCategory(category: string): boolean {
   return EXCLUDED_PATTERNS.some((pattern) => pattern.test(category));
 }
 
-function kindFromCategory(category: string): SocketColumnKind | null {
+function kindFromCategory(
+  category: string,
+  itemTypeDisplayName?: string | null,
+): SocketColumnKind | null {
   if (/masterwork/.test(category)) return "masterwork";
   if (/catalyst/.test(category)) return "catalyst";
-  if (/intrinsics|^frames/.test(category)) return "intrinsic";
   if (/origins/.test(category)) return "origin";
-  if (/barrels\.|launchers\.|sights\.|scopes\./.test(category)) return "barrel";
-  if (/magazines\.|batteries\.|hilt\.|guard\./.test(category)) return "magazine";
+  if (/^intrinsics$/i.test(category) || /^intrinsics\./i.test(category)) {
+    return "intrinsic";
+  }
+  // Bare "frames" is often Enhanced Traits (Keep Away, Adagio, …) — not the
+  // weapon intrinsic. True frames/intrinsics use "intrinsics".
+  // Check after origin: "Origin Trait" item type must not become a trait column.
+  if (
+    /trait/i.test(itemTypeDisplayName ?? "") &&
+    !/origin/i.test(itemTypeDisplayName ?? "")
+  ) {
+    return "trait";
+  }
+  if (/^frames$/i.test(category)) {
+    // Fall through to socket-index trait labeling when type is unknown.
+    return null;
+  }
+  if (/^frames\./i.test(category)) return "intrinsic";
+  if (/barrels\.?|launchers\.|sights\.|scopes\./.test(category)) return "barrel";
+  if (/magazines\.?|batteries\.|hilt\.|guard\./.test(category)) return "magazine";
   if (/traits\.|perks\.|trait/.test(category)) return "trait";
   return null;
 }
@@ -69,7 +90,13 @@ function traitLabelForIndex(perkPosition: number): string {
 
 export function classifyWeaponSocket(input: SocketClassifyInput): SocketClassifyResult {
   const category = categoryFor(input);
-  const kind = category ? kindFromCategory(category) : null;
+  const itemType =
+    input.plugItemTypeByHash?.get(input.equippedPlugHash) ?? null;
+  const kind = category
+    ? kindFromCategory(category, itemType)
+    : itemType && /trait/i.test(itemType)
+      ? ("trait" as const)
+      : null;
 
   if (kind === "intrinsic") {
     return {
@@ -86,6 +113,10 @@ export function classifyWeaponSocket(input: SocketClassifyInput): SocketClassify
     };
   }
   if (kind === "masterwork") {
+    // Kill trackers often use a masterwork-like category; hide pure trackers.
+    if (/tracker/i.test(itemType ?? "") || /tracker/i.test(category)) {
+      return { columnKind: "masterwork", columnLabel: "", includeInGrid: false };
+    }
     return {
       columnKind: "masterwork",
       columnLabel: COLUMN_LABELS.masterwork,

@@ -26,6 +26,7 @@ export interface ResolveInstancePerkGridInput {
   item: UserInventoryItem;
   plugMap: PlugLookup;
   plugCategoryByHash: Map<number, string>;
+  plugItemTypeByHash?: Map<number, string>;
   weaponPerkSocketIndexes: number[];
 }
 
@@ -128,6 +129,17 @@ export function resolveInstancePerkGrid(input: ResolveInstancePerkGridInput): In
     columns.push(...buildPendingEquippedColumns(input));
   } else {
     for (const stored of storedRows) {
+      // Re-classify at read time so vault-era rows get correct Trait vs Frame
+      // labels without requiring another inventory sync.
+      const reclass = classifyWeaponSocket({
+        socketIndex: stored.socketIndex,
+        equippedPlugHash: stored.equippedPlugHash,
+        plugCategoryByHash: input.plugCategoryByHash,
+        plugItemTypeByHash: input.plugItemTypeByHash,
+        weaponPerkSocketIndexes: input.weaponPerkSocketIndexes,
+      });
+      if (!reclass.includeInGrid) continue;
+
       const options = buildColumnOptions(
         stored,
         input.plugMap,
@@ -136,8 +148,8 @@ export function resolveInstancePerkGrid(input: ResolveInstancePerkGridInput): In
       );
       if (options.length === 0) continue;
       columns.push({
-        columnKind: stored.columnKind,
-        label: stored.columnLabel,
+        columnKind: reclass.columnKind,
+        label: reclass.columnLabel,
         socketIndex: stored.socketIndex,
         equippedPlugHash: stored.equippedPlugHash,
         options,

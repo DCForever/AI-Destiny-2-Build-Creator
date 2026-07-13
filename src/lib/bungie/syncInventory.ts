@@ -216,6 +216,7 @@ async function buildSocketPlugsForItems(
     const stored = buildStoredSocketPlugs({
       socketCapture: raw.socketCapture,
       plugCategoryByHash: ctx.plugCategoryByHash,
+      plugItemTypeByHash: ctx.plugItemTypeByHash,
       weaponPerkSocketIndexes: ctx.weaponPerkSocketIndexes,
     });
     byInstance.set(raw.instanceId, stored);

@@ -57,6 +57,7 @@ export async function GET(
     item,
     plugMap,
     plugCategoryByHash: plugCtx.plugCategoryByHash,
+    plugItemTypeByHash: plugCtx.plugItemTypeByHash,
     weaponPerkSocketIndexes: plugCtx.weaponPerkSocketIndexes,
   });
 

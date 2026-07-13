@@ -183,28 +183,62 @@ describe("resolveInstancePerkGrid", () => {
   });
 
   it("disambiguates duplicate column labels using equipped plug names", () => {
-    const grid = resolveInstancePerkGrid(
-      gridInput(
-        weaponItem({
-          socketPlugs: [
-            {
-              socketIndex: 0,
-              equippedPlugHash: 101,
-              reusablePlugHashes: [101],
-              columnKind: "intrinsic",
-              columnLabel: "Intrinsic",
-            },
-            {
-              socketIndex: 1,
-              equippedPlugHash: 301,
-              reusablePlugHashes: [301],
-              columnKind: "intrinsic",
-              columnLabel: "Intrinsic",
-            },
-          ],
-        }),
-      ),
-    );
-    expect(grid.columns.map((col) => col.label)).toEqual(["Arrowhead Brake", "Zen Moment"]);
+    // Two sockets both classify as Masterwork → labels collide → use plug names.
+    const plugCategoryByHash = new Map([
+      [101, "v400.weapon.masterwork"],
+      [301, "v400.weapon.masterwork"],
+    ]);
+    const grid = resolveInstancePerkGrid({
+      item: weaponItem({
+        socketPlugs: [
+          {
+            socketIndex: 8,
+            equippedPlugHash: 101,
+            reusablePlugHashes: [101],
+            columnKind: "masterwork",
+            columnLabel: "Masterwork",
+          },
+          {
+            socketIndex: 9,
+            equippedPlugHash: 301,
+            reusablePlugHashes: [301],
+            columnKind: "masterwork",
+            columnLabel: "Masterwork",
+          },
+        ],
+      }),
+      plugMap,
+      plugCategoryByHash,
+      weaponPerkSocketIndexes: [0, 1, 2],
+    });
+    expect(grid.columns.map((col) => col.label)).toEqual([
+      "Arrowhead Brake",
+      "Zen Moment",
+    ]);
+  });
+
+  it("reclassifies enhanced traits stored as frames into trait columns", () => {
+    const grid = resolveInstancePerkGrid({
+      item: weaponItem({
+        socketPlugs: [
+          {
+            socketIndex: 3,
+            equippedPlugHash: 301,
+            reusablePlugHashes: [301, 302],
+            columnKind: "intrinsic",
+            columnLabel: "Frame",
+          },
+        ],
+      }),
+      plugMap,
+      plugCategoryByHash: new Map([[301, "frames"], [302, "frames"]]),
+      plugItemTypeByHash: new Map([
+        [301, "Enhanced Trait"],
+        [302, "Enhanced Trait"],
+      ]),
+      weaponPerkSocketIndexes: [0, 1, 2, 3],
+    });
+    expect(grid.columns[0]?.columnKind).toBe("trait");
+    expect(grid.columns[0]?.options).toHaveLength(2);
   });
 });

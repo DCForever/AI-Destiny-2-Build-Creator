@@ -62,15 +62,27 @@ describe("classifyWeaponSocket", () => {
     ).toBe(false);
   });
 
-  it("labels weapon frame intrinsics as Frame", () => {
+  it("labels true intrinsics as Intrinsic (not bare frames category)", () => {
     expect(
       classifyWeaponSocket({
-        socketIndex: 4,
+        socketIndex: 0,
         equippedPlugHash: 401,
-        plugCategoryByHash: new Map([[401, "frames"]]),
+        plugCategoryByHash: new Map([[401, "intrinsics"]]),
         weaponPerkSocketIndexes: [0, 1, 2, 3],
       }).columnLabel,
-    ).toBe("Frame");
+    ).toBe("Intrinsic");
+  });
+
+  it("treats Enhanced Trait plugs under frames category as traits", () => {
+    expect(
+      classifyWeaponSocket({
+        socketIndex: 3,
+        equippedPlugHash: 402,
+        plugCategoryByHash: new Map([[402, "frames"]]),
+        plugItemTypeByHash: new Map([[402, "Enhanced Trait"]]),
+        weaponPerkSocketIndexes: [0, 1, 2, 3],
+      }),
+    ).toMatchObject({ columnKind: "trait", includeInGrid: true });
   });
 
   it("includes masterwork before generic enhancements exclusion", () => {

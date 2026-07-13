@@ -39,7 +39,6 @@ type PerkGridResponse = InstancePerkGrid & {
 export function InstancePerkGridView({
   instanceId,
   enabled = true,
-  /** Catalog frame name (e.g. Rapid-Fire Frame) for intrinsic strip. */
   frameHint,
 }: {
   instanceId: string;
@@ -51,6 +50,7 @@ export function InstancePerkGridView({
   const [error, setError] = useState<string | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
   const refreshRef = useRef(createPerkGridRefreshState());
+  const cancelledRef = useRef(false);
 
   async function fetchGrid(): Promise<PerkGridResponse | null> {
     const res = await fetch(
@@ -58,9 +58,7 @@ export function InstancePerkGridView({
     );
     const body = (await res.json()) as PerkGridResponse;
     if (!res.ok) {
-      setError(body.error ?? "Failed to load perk grid");
-      setGrid(null);
-      return null;
+      throw new Error(body.error ?? "Failed to load perk grid");
     }
     return body;
   }
@@ -71,6 +69,8 @@ export function InstancePerkGridView({
     setError(null);
     try {
       let next = await fetchGrid();
+      if (cancelledRef.current) return;
+
       const needSync =
         opts?.forceSync ||
         (next?.captureStatus === "pending" &&
@@ -85,32 +85,32 @@ export function InstancePerkGridView({
           refreshRef.current = markSyncFinished(refreshRef.current);
           setSyncBusy(false);
         }
+        if (cancelledRef.current) return;
         next = await fetchGrid();
       }
-      setGrid(next);
-    } catch {
-      setError("Failed to load perk grid");
-      setGrid(null);
+      if (!cancelledRef.current) setGrid(next);
+    } catch (e) {
+      if (!cancelledRef.current) {
+        setError(e instanceof Error ? e.message : "Failed to load perk grid");
+        setGrid(null);
+      }
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }
 
   useEffect(() => {
+    cancelledRef.current = false;
     if (!enabled || !instanceId) {
       setGrid(null);
       setError(null);
       return;
     }
-    let cancelled = false;
-    void (async () => {
-      if (cancelled) return;
-      await load();
-    })();
+    void load();
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload only when instance changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instanceId, enabled]);
 
   if (!enabled) return null;
@@ -125,9 +125,14 @@ export function InstancePerkGridView({
 
   if (error) {
     return (
-      <Text size="xs" tone="danger">
-        {error}
-      </Text>
+      <Stack gap={6}>
+        <Text size="xs" tone="danger">
+          {error}
+        </Text>
+        <Button size="sm" variant="outline" onClick={() => void load({ forceSync: true })}>
+          Retry / sync
+        </Button>
+      </Stack>
     );
   }
 
@@ -136,23 +141,19 @@ export function InstancePerkGridView({
   const optionCount = grid.columns.reduce((n, c) => n + c.options.length, 0);
   const rpm = grid.stats?.find((s) => s.name === "RPM")?.value;
   const impact = grid.stats?.find((s) => s.name === "Impact")?.value;
-  const frameLabel =
-    grid.intrinsic?.name ||
-    frameHint ||
-    null;
+  const frameLabel = grid.intrinsic?.name || frameHint || null;
   const frameSub =
     rpm != null && impact != null
       ? `${rpm} rpm / ${impact} impact`
       : grid.intrinsic?.description?.slice(0, 80) || null;
 
-  // Main combat sockets first (barrel/mag/traits/origin); keep others after.
+  // Combat sockets first; de-emphasize trackers / orphan masterworks.
   const primaryKinds = new Set([
+    "intrinsic",
     "barrel",
     "magazine",
     "trait",
     "origin",
-    "intrinsic",
-    "masterwork",
     "catalyst",
   ]);
   const mainColumns = grid.columns.filter((c) => primaryKinds.has(c.columnKind));
@@ -176,7 +177,7 @@ export function InstancePerkGridView({
           <Text size="xs" tone="muted">
             {optionCount} option{optionCount === 1 ? "" : "s"} · {columns.length}{" "}
             col{columns.length === 1 ? "" : "s"}
-            {grid.captureStatus !== "complete" ? ` · ${grid.captureStatus}` : ""}
+            {grid.captureStatus === "complete" ? " · complete" : ` · ${grid.captureStatus}`}
           </Text>
         </div>
 
@@ -202,10 +203,12 @@ export function InstancePerkGridView({
             </Stack>
           </Callout>
         ) : null}
-        {grid.captureStatus === "unavailable" ? (
-          <Callout tone="warning">
-            Per-copy alternate plugs unavailable for this copy — equipped only.
-          </Callout>
+
+        {grid.captureStatus === "complete" && optionCount > columns.length ? (
+          <Text size="xs" tone="muted">
+            Columns with multiple icons are perks this copy can switch between
+            (equipped ring). Hover any icon for name and description.
+          </Text>
         ) : null}
 
         {columns.length === 0 ? (
@@ -213,52 +216,61 @@ export function InstancePerkGridView({
             No perk columns for this copy.
           </Text>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="flex gap-4 overflow-x-auto pb-2 items-start">
             {columns.map((column) => (
               <div
                 key={column.socketIndex}
-                className="flex flex-col gap-1.5 min-w-[2.75rem] shrink-0 items-center"
+                className="flex flex-col gap-1.5 shrink-0 items-center min-w-[3rem]"
               >
-                <span
-                  className="text-[9px] tracking-widest uppercase text-muted text-center truncate max-w-[4rem] w-full"
-                  title={column.label}
-                >
-                  {column.label}
-                </span>
-                <div className="flex flex-col gap-1.5 items-center">
-                  {column.options.map((opt) => (
-                    <div
-                      key={opt.hash}
-                      className={`relative rounded-sm p-0.5 ${
-                        opt.isEquipped
-                          ? "ring-2 ring-accent ring-offset-1 ring-offset-surface"
-                          : "opacity-85 hover:opacity-100"
-                      }`}
-                    >
-                      <EntityHotspot
-                        kind={column.label}
-                        name={opt.displayName}
-                        description={
-                          opt.description?.trim() ||
-                          "No description captured for this plug yet."
-                        }
-                        icon={opt.icon}
-                        size={40}
-                        showLabel="never"
-                        meta={[
-                          opt.isEquipped
-                            ? "Currently equipped"
-                            : "Available on this copy",
-                          opt.isEnhanced ? "Enhanced" : null,
-                        ].filter(Boolean) as string[]}
-                      />
-                      {opt.isEnhanced ? (
+                <div className="text-center w-full">
+                  <div
+                    className="text-[9px] tracking-widest uppercase text-muted truncate max-w-[4.5rem] mx-auto"
+                    title={column.label}
+                  >
+                    {column.label}
+                  </div>
+                  {column.options.length > 1 ? (
+                    <div className="text-[9px] text-accent tabular-nums">
+                      ×{column.options.length}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-0 items-center">
+                  {column.options.map((opt, i) => (
+                    <div key={opt.hash} className="flex flex-col items-center">
+                      {i > 0 ? (
                         <span
-                          className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-accent"
-                          title="Enhanced"
+                          className="text-accent text-[10px] leading-none py-0.5"
                           aria-hidden
-                        />
+                        >
+                          ▴
+                        </span>
                       ) : null}
+                      <div
+                        className={`relative rounded-sm p-0.5 ${
+                          opt.isEquipped
+                            ? "ring-2 ring-accent ring-offset-1 ring-offset-surface"
+                            : "opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        <EntityHotspot
+                          kind={column.label}
+                          name={opt.displayName}
+                          description={
+                            opt.description?.trim() ||
+                            "No description captured for this plug yet."
+                          }
+                          icon={opt.icon}
+                          size={40}
+                          showLabel="never"
+                          meta={[
+                            opt.isEquipped
+                              ? "Currently equipped"
+                              : "Available on this copy",
+                            opt.isEnhanced ? "Enhanced" : null,
+                          ].filter(Boolean) as string[]}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

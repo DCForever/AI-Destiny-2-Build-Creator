@@ -4,6 +4,7 @@ import { classifyWeaponSocket, type SocketClassifyInput } from "./classifyWeapon
 export interface BuildStoredSocketPlugsInput {
   socketCapture: RawSocketCapture[];
   plugCategoryByHash: Map<number, string>;
+  plugItemTypeByHash?: Map<number, string>;
   weaponPerkSocketIndexes: number[];
 }
 
@@ -15,6 +16,7 @@ export function buildStoredSocketPlugs(input: BuildStoredSocketPlugsInput): Stor
       socketIndex: row.socketIndex,
       equippedPlugHash: row.equippedPlugHash,
       plugCategoryByHash: input.plugCategoryByHash,
+      plugItemTypeByHash: input.plugItemTypeByHash,
       weaponPerkSocketIndexes: input.weaponPerkSocketIndexes,
     } satisfies SocketClassifyInput);
 
