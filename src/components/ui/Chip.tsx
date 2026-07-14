@@ -63,6 +63,8 @@ export function MetaChip({
   );
 }
 
+export type FilterChipMode = "off" | "include" | "exclude";
+
 export function FilterChip({
   label,
   active,
@@ -72,6 +74,8 @@ export function FilterChip({
   iconOnly = false,
   size = "md",
   activeStyle,
+  /** off | include | exclude — when set, overrides binary `active` styling. */
+  mode,
   ...rest
 }: {
   label: string;
@@ -86,16 +90,42 @@ export function FilterChip({
   size?: "xs" | "md";
   /** Inline style overrides for active state (e.g. element-colored border). */
   activeStyle?: CSSProperties;
+  mode?: FilterChipMode;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "onClick">) {
   const dense = size === "xs";
+  const resolved: FilterChipMode =
+    mode ?? (active ? "include" : "off");
+  const pressed = resolved !== "off";
+  const modeTitle =
+    resolved === "include"
+      ? `${label} (include) — click to exclude`
+      : resolved === "exclude"
+        ? `${label} (exclude) — click to clear`
+        : `${label} — click to include`;
+  const toneClass =
+    resolved === "include"
+      ? "border-accent text-accent bg-accent/10"
+      : resolved === "exclude"
+        ? "border-danger/60 text-danger bg-danger/10 line-through decoration-danger/80"
+        : "border-line text-muted hover:text-foreground";
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-pressed={active}
-      aria-label={label}
-      title={label}
-      style={active ? activeStyle : undefined}
+      aria-pressed={pressed}
+      aria-label={modeTitle}
+      title={modeTitle}
+      style={
+        resolved === "include" && activeStyle
+          ? activeStyle
+          : resolved === "exclude" && activeStyle
+            ? {
+                ...activeStyle,
+                borderColor: "var(--danger, #e85d5d)",
+                opacity: 0.95,
+              }
+            : undefined
+      }
       className={`${
         iconOnly
           ? dense
@@ -104,11 +134,7 @@ export function FilterChip({
           : dense
             ? "text-[9px] tracking-wide uppercase px-1.5 py-0.5 border transition-colors"
             : "text-[10px] tracking-widest uppercase px-2 py-1 border transition-colors"
-      } ${
-        active
-          ? "border-accent text-accent bg-accent/10"
-          : "border-line text-muted hover:text-foreground"
-      } ${className}`.trim()}
+      } ${toneClass} ${className}`.trim()}
       {...rest}
     >
       {iconOnly ? (

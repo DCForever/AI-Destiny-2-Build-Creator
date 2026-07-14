@@ -61,8 +61,9 @@ export const ELEMENT_OFFICIAL: Record<DestinyElement, OfficialFilterVisual> = {
 };
 
 /**
- * Official ammo-type glyphs from Ammo Finder inventory items
- * (Primary/Special/Heavy Finder Helmet Armor Mod icons).
+ * Ammo type colors (game language). Catalog filter chips use destiny-icons
+ * SVGs via AmmoTypeIcon; `icon` remains a Bungie Ammo Finder path for meta
+ * chips / fallbacks that still go through OfficialFilterIcon.
  */
 export const AMMO_OFFICIAL: Record<CatalogAmmoType, OfficialFilterVisual> = {
   Primary: {

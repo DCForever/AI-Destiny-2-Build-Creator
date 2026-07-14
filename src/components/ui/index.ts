@@ -7,6 +7,7 @@
 
 export { Panel } from "./Panel";
 export { Section, SectionLabel } from "./Section";
+export { CollapsibleFilterSection } from "./CollapsibleFilterSection";
 export { Stack, Row, Cluster } from "./Stack";
 export { Text, Heading } from "./Text";
 export { Button } from "./Button";
@@ -32,6 +33,7 @@ export {
 export type { AmmoTypeName } from "./DestinyIcons";
 export { OfficialFilterIcon } from "./OfficialFilterIcon";
 export { WeaponTypeIcon } from "./WeaponTypeIcon";
+export { AmmoTypeIcon } from "./AmmoTypeIcon";
 export { SlotIcon } from "./SlotIcon";
 export { InfoHotspot } from "./InfoHotspot";
 export { EntityHotspot } from "./EntityHotspot";
