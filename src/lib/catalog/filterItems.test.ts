@@ -274,7 +274,7 @@ describe("filterArmorCatalog", () => {
     expect(results[0]?.setBonusName).toBe("Eutechnology");
   });
 
-  it("excludes legendary armor when set bonus filter not active", () => {
+  it("includes legendary armor whenever rows are provided (not set-bonus gated)", () => {
     const legendary = buildLegendaryArmorRows([FIXTURE_SET_EUTECHNOLOGY], () => ({
       name: "Eutech Helm",
       searchName: "eutech helm",
@@ -287,8 +287,38 @@ describe("filterArmorCatalog", () => {
       { scope: "all" },
     );
 
-    expect(results).toHaveLength(1);
-    expect(results[0]?.hash).toBe(3001);
+    expect(results.map((r) => r.hash).sort()).toEqual(
+      [3001, ...legendary.map((l) => l.hash)].sort(),
+    );
+  });
+
+  it("filters owned unknown rows by projected slot", () => {
+    const owned = new Map([[9999, 1]]);
+    const projections = new Map([
+      [
+        9999,
+        {
+          name: "Owned Helm",
+          searchName: "owned helm",
+          icon: null as string | null,
+          slot: "Helmet",
+        },
+      ],
+    ]);
+    const results = filterArmorCatalog(
+      { exoticArmor: [exoticHelmet] },
+      {
+        scope: "owned",
+        ownedHashes: owned,
+        inventoryProjections: projections,
+        slot: "Helmet",
+      },
+    );
+    expect(results.some((r) => r.hash === 9999 && r.slot === "Helmet")).toBe(
+      true,
+    );
+    // Exotic helm not owned — excluded
+    expect(results.some((r) => r.hash === 3001)).toBe(false);
   });
 });
 

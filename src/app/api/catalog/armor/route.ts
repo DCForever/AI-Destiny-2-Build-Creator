@@ -178,9 +178,14 @@ export async function GET(request: Request): Promise<NextResponse> {
       }
     }
 
-    if (setBonusesForLegendary?.length && manifestStatus.cachedVersion) {
+    // Always load legendary set pieces so armor catalog is not exotic-only.
+    // Set-bonus / synergy filters still restrict via allowlist when present.
+    if (manifestStatus.cachedVersion) {
+      const setBonuses =
+        setBonusesForLegendary ??
+        (await entityCache.getStore("set-bonuses"));
       legendaryArmor = await loadLegendaryArmorRows(
-        setBonusesForLegendary,
+        setBonuses,
         manifest,
         manifestStatus.cachedVersion,
       );

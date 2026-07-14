@@ -47,6 +47,9 @@ export type InventoryHashProjection = {
   name: string;
   searchName: string;
   icon: string | null;
+  /** Equipment bucket when known (Helmet, Kinetic, …) — needed for slot-locked fill. */
+  slot?: string;
+  classType?: string;
 };
 
 export function aggregateOwnedCountsBySearchName(
@@ -121,6 +124,8 @@ function unknownOwnedRow(
     name: projection?.name ?? `Unknown (${hash})`,
     searchName: projection?.searchName ?? String(hash),
     icon: projection?.icon ?? null,
+    slot: projection?.slot,
+    classType: projection?.classType,
     isExotic: false,
     owned: true,
     ownedCount: count,
@@ -324,9 +329,11 @@ export function filterArmorCatalog(
 ): CatalogItem[] {
   const owned = params.ownedHashes ?? new Map<number, number>();
   const projections = params.inventoryProjections ?? new Map<number, InventoryHashProjection>();
-  const includeLegendary = Boolean(params.setBonus?.trim() || params.armorHashAllowlist);
+  // Always merge legendary rows when the caller loaded them. (Previously gated on
+  // setBonus/allowlist, so default armor browse was exotic-only and set fill
+  // with excludeExotic could show nothing.)
   let rows: SearchableCatalogRow[] = source.exoticArmor.map((a) => armorToCatalog(a, 0));
-  if (includeLegendary && source.legendaryArmor) {
+  if (source.legendaryArmor?.length) {
     rows = [
       ...rows,
       ...source.legendaryArmor.map((a) => legendaryArmorToCatalog(a, 0)),
