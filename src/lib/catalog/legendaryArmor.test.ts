@@ -32,6 +32,11 @@ describe("buildLegendaryArmorRows", () => {
       hash: 9001,
       setBonusName: "Eutechnology",
       setBonusHash: 8001,
+      setBonusIcon: "/common/destiny2_content/icons/set.png",
+      setBonusPerks: [
+        { requiredCount: 2, name: "2pc", description: "Two piece" },
+        { requiredCount: 4, name: "4pc", description: "Four piece" },
+      ],
       slot: "Helmet",
     });
   });

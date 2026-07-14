@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 
 import { BungieAuthControl } from "@/components/BungieAuthControl";
+import {
+  APP_SHELL_MAIN_CLASSES,
+  APP_SHELL_ROOT_CLASSES,
+} from "@/lib/ui/viewportLayout";
 
 const NAV_LINKS = [
   { href: "/loadouts", label: "In-Game Loadouts", short: "Loadouts", key: "loadouts" as const },
@@ -20,16 +24,16 @@ interface AppShellProps {
 
 export function AppShell({ active, children }: AppShellProps) {
   return (
-    <div className="flex flex-col h-dvh max-h-dvh overflow-hidden">
+    <div className={APP_SHELL_ROOT_CLASSES}>
       <header className="shrink-0 border-b border-line bg-surface/95 backdrop-blur-sm z-20">
-        <div className="max-w-[1600px] mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-3">
+        <div className="max-w-[1600px] mx-auto px-2 sm:px-6 h-11 sm:h-14 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
           <span className="font-display text-[10px] sm:text-sm tracking-[0.14em] sm:tracking-[0.18em] uppercase text-accent select-none shrink-0">
             <span className="hidden sm:inline">DESTINY 2 // BUILD CREATOR</span>
             <span className="sm:hidden">D2 // BC</span>
           </span>
-          <div className="flex items-center gap-2 sm:gap-6 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-6 min-w-0 flex-1 justify-end">
             <nav
-              className="flex items-center gap-1 sm:gap-4 overflow-x-auto max-w-[min(100vw-8rem,42rem)] scrollbar-none"
+              className="flex items-center gap-0.5 sm:gap-4 overflow-x-auto max-w-[min(100%,calc(100vw-7.5rem))] sm:max-w-[min(100vw-8rem,42rem)] scrollbar-none touch-pan-x"
               aria-label="Main navigation"
             >
               {NAV_LINKS.map(({ href, label, short, key }) => (
@@ -53,9 +57,7 @@ export function AppShell({ active, children }: AppShellProps) {
           </div>
         </div>
       </header>
-      <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        {children}
-      </main>
+      <main className={APP_SHELL_MAIN_CLASSES}>{children}</main>
     </div>
   );
 }

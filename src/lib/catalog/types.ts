@@ -13,6 +13,14 @@ export type CatalogItem = {
   classType?: string;
   setBonusName?: string;
   setBonusHash?: number;
+  /** Bungie relative icon for the equipable item set, when known. */
+  setBonusIcon?: string | null;
+  /** 2pc / 4pc effects — item-level, not per owned copy. */
+  setBonusPerks?: Array<{
+    requiredCount: number;
+    name: string;
+    description: string;
+  }>;
   isExotic: boolean;
   owned: boolean;
   ownedCount: number;

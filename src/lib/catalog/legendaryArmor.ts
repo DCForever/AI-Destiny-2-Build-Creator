@@ -21,6 +21,12 @@ export type LegendaryArmorRow = {
   classType?: string;
   setBonusName: string;
   setBonusHash: number;
+  setBonusIcon?: string | null;
+  setBonusPerks?: Array<{
+    requiredCount: number;
+    name: string;
+    description: string;
+  }>;
 };
 
 export type LegendaryArmorItemProjection = {
@@ -68,6 +74,12 @@ export function buildLegendaryArmorRows(
         classType: projection.classType,
         setBonusName: set.name,
         setBonusHash: set.hash,
+        setBonusIcon: set.icon ?? null,
+        setBonusPerks: set.perks.map((p) => ({
+          requiredCount: p.requiredCount,
+          name: p.name,
+          description: p.description,
+        })),
       });
     }
   }

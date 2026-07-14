@@ -32,6 +32,7 @@ Last reviewed: 2026-07-13
 | Status | Item | Notes |
 |--------|------|--------|
 | `done` | Icon+color density pass | Element/ammo/class/armor archetype/frame + DesignationLabel; weapon types via vendored destiny-icons (DIM set) |
+| `done` | Catalog as set-fill sub-screen | `CatalogScreen` constraints + pick mode; SlotFill embeds Catalog (locked slot); retired `CatalogItemPicker` |
 
 ### Sets
 | Status | Item | Notes |

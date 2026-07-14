@@ -183,17 +183,6 @@ export function SetsPage() {
         />
       </WorkspaceMain>
     );
-  } else if (fillSlot && detail) {
-    main = (
-      <WorkspaceMain>
-        <SlotFillPanel
-          set={detail}
-          slot={fillSlot}
-          onClose={() => setFillSlot(null)}
-          onFilled={applySaved}
-        />
-      </WorkspaceMain>
-    );
   } else if (!detail) {
     main = (
       <WorkspaceMain>
@@ -224,6 +213,32 @@ export function SetsPage() {
           deleteBusy={deleteBusy}
         />
       </WorkspaceMain>
+    );
+  }
+
+  // Set-fill: single full-pane Catalog (no Sets filters + library rail + embed).
+  // Nested triple chrome left ~0px for catalog body on short phones.
+  if (fillSlot && detail) {
+    return (
+      <PageFrame>
+        <PageFrameBody>
+          <div className="h-full min-h-0 overflow-hidden flex flex-col">
+            {error ? (
+              <div className="shrink-0 pb-2">
+                <Callout tone="danger">{error}</Callout>
+              </div>
+            ) : null}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <SlotFillPanel
+                set={detail}
+                slot={fillSlot}
+                onClose={() => setFillSlot(null)}
+                onFilled={applySaved}
+              />
+            </div>
+          </div>
+        </PageFrameBody>
+      </PageFrame>
     );
   }
 

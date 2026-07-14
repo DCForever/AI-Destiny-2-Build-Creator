@@ -197,6 +197,8 @@ function legendaryArmorToCatalog(record: LegendaryArmorRow, ownedCount: number):
     classType: record.classType,
     setBonusName: record.setBonusName,
     setBonusHash: record.setBonusHash,
+    setBonusIcon: record.setBonusIcon ?? null,
+    setBonusPerks: record.setBonusPerks,
     isExotic: false,
     owned: ownedCount > 0,
     ownedCount,

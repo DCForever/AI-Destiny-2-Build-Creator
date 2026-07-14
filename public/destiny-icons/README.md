@@ -1,7 +1,8 @@
 # destiny-icons (vendored)
 
-Weapon-type SVGs from [justrealmilk/destiny-icons](https://github.com/justrealmilk/destiny-icons) (CC0), the same set DIM uses via its `destiny-icons/*` alias.
+SVGs from [justrealmilk/destiny-icons](https://github.com/justrealmilk/destiny-icons) (CC0), the same set DIM uses.
 
-Source paths match DIM’s `itemCategory.ts` imports (e.g. `weapons/auto_rifle.svg`).
+- `weapons/` — weapon type silhouettes (`auto_rifle.svg`, …)
+- `armor_types/` — armor slot glyphs (`helmet.svg`, `gloves.svg` for Gauntlets, …)
 
-Re-sync: download from the upstream `weapons/` folder into `weapons/` here when icons update.
+Re-sync from the upstream folders when icons update.

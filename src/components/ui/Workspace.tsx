@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
 
+import {
+  WORKSPACE_MAIN_BOX_CLASSES,
+  WORKSPACE_RAIL_BOX_CLASSES,
+  WORKSPACE_ROOT_CLASSES,
+} from "@/lib/ui/viewportLayout";
+
 import { Stack } from "./Stack";
 
 type RailWidth = 240 | 280 | 320;
@@ -23,7 +29,7 @@ const RAIL_COLS: Record<RailWidth, { start: string; end: string }> = {
  * Two-pane feature layout sized by the parent (viewport frame), not content.
  *
  * Desktop (lg+): grid fills height; rail and main scroll independently.
- * Mobile: stacked; rail capped (~40dvh), main takes remaining height.
+ * Narrow: stacked column; rail height-capped; main flex-1 min-h-0 for usable scroll.
  */
 export function Workspace({
   rail,
@@ -40,23 +46,19 @@ export function Workspace({
 }) {
   const cols = RAIL_COLS[railWidth][railPosition];
 
-  const railBox =
-    "min-h-0 min-w-0 overflow-hidden max-h-[40dvh] lg:max-h-none lg:h-full";
-  const mainBox = "min-h-0 min-w-0 overflow-hidden flex-1 lg:h-full";
-
   return (
     <div
-      className={`h-full min-h-0 flex flex-col gap-3 lg:gap-4 lg:grid lg:items-stretch ${cols} ${className}`.trim()}
+      className={`${WORKSPACE_ROOT_CLASSES} ${cols} ${className}`.trim()}
     >
       {railPosition === "start" ? (
         <>
-          <div className={railBox}>{rail}</div>
-          <div className={mainBox}>{main}</div>
+          <div className={WORKSPACE_RAIL_BOX_CLASSES}>{rail}</div>
+          <div className={WORKSPACE_MAIN_BOX_CLASSES}>{main}</div>
         </>
       ) : (
         <>
-          <div className={mainBox}>{main}</div>
-          <div className={railBox}>{rail}</div>
+          <div className={WORKSPACE_MAIN_BOX_CLASSES}>{main}</div>
+          <div className={WORKSPACE_RAIL_BOX_CLASSES}>{rail}</div>
         </>
       )}
     </div>
@@ -81,7 +83,7 @@ export function WorkspaceMain({
 }) {
   return (
     <div
-      className={`h-full min-h-0 ${scroll ? "overflow-y-auto" : "overflow-hidden"} ${className}`.trim()}
+      className={`h-full min-h-0 ${scroll ? "overflow-y-auto overscroll-contain" : "overflow-hidden"} ${className}`.trim()}
     >
       <Stack gap={gap}>{children}</Stack>
     </div>

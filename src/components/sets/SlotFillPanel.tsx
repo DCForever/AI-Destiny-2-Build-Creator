@@ -3,16 +3,14 @@
 import { useMemo, useState } from "react";
 
 import {
-  CatalogItemPicker,
-  type CatalogPick,
-} from "@/components/lookups/CatalogItemPicker";
+  CatalogScreen,
+  type CatalogPickResult,
+} from "@/components/catalog/CatalogScreen";
 import { ManifestSearchPicker } from "@/components/lookups/ManifestSearchPicker";
 import { SLOT_LABEL, type SetDetail } from "@/components/sets/types";
 import {
   Button,
   Callout,
-  Cluster,
-  FilterChip,
   Panel,
   Row,
   Stack,
@@ -20,14 +18,8 @@ import {
   TextField,
 } from "@/components/ui";
 import { fillStrategyForSet } from "@/lib/sets/fillSlotStrategy";
-import { modSlotForHash, type SetType } from "@/lib/sets/schemas";
-
-type InstanceRow = {
-  instanceId: string;
-  power?: number;
-  location?: string;
-  plugs?: { displayName: string; resolved: boolean }[];
-};
+import { setSlotToCatalogBucket } from "@/lib/sets/catalogSlotMap";
+import type { SetType } from "@/lib/sets/schemas";
 
 export function SlotFillPanel({
   set,
@@ -46,40 +38,19 @@ export function SlotFillPanel({
     [setType, slot],
   );
 
-  const [scope, setScope] = useState<"all" | "owned">("owned");
-  const [picked, setPicked] = useState<CatalogPick | null>(null);
+  const catalogBucket = useMemo(
+    () => setSlotToCatalogBucket(slot),
+    [slot],
+  );
+
   const [manifestPick, setManifestPick] = useState<{
     hash: number;
     name: string;
   } | null>(null);
   const [manualHash, setManualHash] = useState("");
   const [manualName, setManualName] = useState("");
-  const [instances, setInstances] = useState<InstanceRow[]>([]);
-  const [instanceId, setInstanceId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  async function loadInstances(item: CatalogPick, catalogKind: "weapons" | "armor") {
-    setInstances([]);
-    setInstanceId(null);
-    if (item.ownedCount <= 0) return;
-    const href =
-      item.instancesHref ??
-      `/api/user/inventory/instances?itemHash=${item.hash}&kind=${
-        catalogKind === "armor" ? "armor" : "weapons"
-      }`;
-    try {
-      const res = await fetch(href);
-      const body = (await res.json()) as {
-        instances?: InstanceRow[];
-        message?: string;
-      };
-      if (!res.ok) return;
-      setInstances(body.instances ?? []);
-    } catch {
-      /* optional */
-    }
-  }
 
   async function putItem(
     hash: number,
@@ -103,23 +74,62 @@ export function SlotFillPanel({
       });
       const body = (await res.json()) as { set?: SetDetail; error?: string };
       if (!res.ok || !body.set) {
-        setError(body.error ?? "Failed to put item in slot");
+        setError(body.error ?? "Failed to put item in set slot");
         return;
       }
       onFilled(body.set);
     } catch {
-      setError("Failed to put item in slot");
+      setError("Failed to put item in set slot");
     } finally {
       setBusy(false);
     }
   }
 
+  function handleCatalogConfirm(pick: CatalogPickResult) {
+    void putItem(pick.hash, pick.name, pick.instanceId);
+  }
+
   const canSubmit =
-    strategy.kind === "catalog"
-      ? picked != null
-      : strategy.kind === "manifest"
-        ? manifestPick != null
-        : Number(manualHash.trim()) > 0 && manualName.trim().length > 0;
+    strategy.kind === "manifest"
+      ? manifestPick != null
+      : strategy.kind === "manual_hash_name"
+        ? Number(manualHash.trim()) > 0 && manualName.trim().length > 0
+        : false;
+
+  if (strategy.kind === "catalog") {
+    return (
+      <div className="h-full min-h-0 flex flex-col gap-2 overflow-hidden">
+        {error ? (
+          <div className="shrink-0">
+            <Callout tone="danger">{error}</Callout>
+          </div>
+        ) : null}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <CatalogScreen
+            constraints={{
+              kind: strategy.catalogKind,
+              slot: catalogBucket,
+              scope: "owned",
+              lockKind: true,
+              lockSlot: Boolean(catalogBucket),
+            }}
+            selection={{
+              enabled: true,
+              busy,
+              confirmLabel: "Fill slot",
+              onConfirm: handleCatalogConfirm,
+              onCancel: onClose,
+            }}
+            chrome={{
+              title: `Fill slot · ${SLOT_LABEL[slot] ?? slot}`,
+              description: `${set.name} · ${set.type}`,
+              embedded: true,
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Panel tone="accent" className="w-full">
@@ -141,44 +151,6 @@ export function SlotFillPanel({
         </Row>
 
         {error ? <Callout tone="danger">{error}</Callout> : null}
-
-        {strategy.kind === "catalog" ? (
-          <>
-            <Cluster gap={6}>
-              <FilterChip
-                label="Owned"
-                active={scope === "owned"}
-                onClick={() => setScope("owned")}
-              />
-              <FilterChip
-                label="Manifest"
-                active={scope === "all"}
-                onClick={() => setScope("all")}
-              />
-            </Cluster>
-            <CatalogItemPicker
-              kind={strategy.catalogKind}
-              setSlot={slot}
-              scope={scope}
-              selected={picked}
-              disabled={busy}
-              showMultiFilters
-              onSelect={(item) => {
-                setPicked(item);
-                setManifestPick(null);
-                if (item) void loadInstances(item, strategy.catalogKind);
-                else {
-                  setInstances([]);
-                  setInstanceId(null);
-                }
-              }}
-            />
-            <Text size="xs" tone="muted">
-              Multi-select element / ammo / archetype narrows catalog results
-              (OR within each group). Slot is already fixed for this fill.
-            </Text>
-          </>
-        ) : null}
 
         {strategy.kind === "manifest" ? (
           <ManifestSearchPicker
@@ -219,87 +191,24 @@ export function SlotFillPanel({
           </Stack>
         ) : null}
 
-        {instances.length > 0 ? (
-          <Stack gap={6}>
-            <Text size="xs" tone="muted">
-              Owned copies
-            </Text>
-            <Stack gap={4} className="max-h-40 overflow-auto">
-              {instances.map((inst) => (
-                <button
-                  key={inst.instanceId}
-                  type="button"
-                  className={`text-left px-2 py-1.5 text-sm border ${
-                    instanceId === inst.instanceId
-                      ? "border-accent bg-accent/10"
-                      : "border-line bg-surface-raised"
-                  }`}
-                  onClick={() => setInstanceId(inst.instanceId)}
-                >
-                  <Text size="sm" as="span">
-                    {inst.power != null ? `Power ${inst.power}` : inst.instanceId}
-                  </Text>
-                  {inst.location ? (
-                    <Text size="xs" tone="muted" as="span" className="ml-2">
-                      {inst.location}
-                    </Text>
-                  ) : null}
-                  {(inst.plugs?.length ?? 0) > 0 ? (
-                    <Text size="xs" tone="muted" className="mt-1">
-                      {inst.plugs!
-                        .slice(0, 4)
-                        .map((p) => p.displayName)
-                        .join(" · ")}
-                    </Text>
-                  ) : null}
-                </button>
-              ))}
-            </Stack>
-          </Stack>
-        ) : null}
-
         <Row gap={8}>
           <Button
-            size="sm"
             variant="accent"
-            disabled={busy || !canSubmit}
+            disabled={!canSubmit || busy}
             onClick={() => {
-              if (strategy.kind === "catalog" && picked) {
-                void putItem(picked.hash, picked.name, instanceId);
-                return;
-              }
               if (strategy.kind === "manifest" && manifestPick) {
-                const targetSlot =
-                  setType === "mod"
-                    ? modSlotForHash(manifestPick.hash)
-                    : slot;
+                void putItem(manifestPick.hash, manifestPick.name);
+              } else if (strategy.kind === "manual_hash_name") {
                 void putItem(
-                  manifestPick.hash,
-                  manifestPick.name,
-                  null,
-                  targetSlot,
+                  Number(manualHash.trim()),
+                  manualName.trim(),
                 );
-                return;
-              }
-              if (strategy.kind === "manual_hash_name") {
-                const hash = Number(manualHash.trim());
-                if (!Number.isFinite(hash) || hash <= 0) {
-                  setError("Item hash must be a positive number");
-                  return;
-                }
-                if (!manualName.trim()) {
-                  setError("Item name is required for fashion items");
-                  return;
-                }
-                void putItem(hash, manualName.trim(), null);
               }
             }}
           >
-            {setType === "mod"
-              ? "Add mod to set"
-              : `Put in ${SLOT_LABEL[slot] ?? slot}`}
+            {busy ? "Saving…" : "Save to slot"}
           </Button>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={onClose}>
+          <Button variant="ghost" disabled={busy} onClick={onClose}>
             Cancel
           </Button>
         </Row>

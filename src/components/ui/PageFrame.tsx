@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 
+import {
+  PAGE_FRAME_CHROME_CLASSES,
+  PAGE_FRAME_ROOT_CLASSES,
+} from "@/lib/ui/viewportLayout";
+
 /**
  * Viewport-stable page shell under AppShell main.
  * Fills remaining height; chrome (header/filters) should be shrink-0,
@@ -15,18 +20,20 @@ export function PageFrame({
   className?: string;
   width?: "wide" | "narrow";
 }) {
-  const max =
-    width === "narrow" ? "max-w-3xl" : "max-w-[1600px]";
+  const max = width === "narrow" ? "max-w-3xl" : "max-w-[1600px]";
   return (
     <div
-      className={`h-full min-h-0 flex flex-col w-full ${max} mx-auto px-3 sm:px-6 py-3 sm:py-4 ${className}`.trim()}
+      className={`${PAGE_FRAME_ROOT_CLASSES} ${max} ${className}`.trim()}
     >
       {children}
     </div>
   );
 }
 
-/** Non-scrolling chrome at top of PageFrame (title, filters). */
+/**
+ * Page title/filters. Height-capped + scrollable below lg so list/detail
+ * panes keep a usable share of the viewport on phones.
+ */
 export function PageFrameChrome({
   children,
   className = "",
@@ -35,7 +42,9 @@ export function PageFrameChrome({
   className?: string;
 }) {
   return (
-    <div className={`shrink-0 ${className}`.trim()}>{children}</div>
+    <div className={`${PAGE_FRAME_CHROME_CLASSES} ${className}`.trim()}>
+      {children}
+    </div>
   );
 }
 
@@ -55,7 +64,7 @@ export function PageFrameBody({
 }) {
   return (
     <div
-      className={`flex-1 min-h-0 ${scroll ? "overflow-y-auto" : "overflow-hidden"} ${className}`.trim()}
+      className={`flex-1 min-h-0 ${scroll ? "overflow-y-auto overscroll-contain" : "overflow-hidden"} ${className}`.trim()}
     >
       {children}
     </div>

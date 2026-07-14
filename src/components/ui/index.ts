@@ -21,6 +21,7 @@ export { SignedOutGate } from "./SignedOutGate";
 export { Callout } from "./Callout";
 export { Workspace, WorkspaceMain, CardGrid } from "./Workspace";
 export { PageFrame, PageFrameChrome, PageFrameBody } from "./PageFrame";
+// Viewport layout contract lives in @/lib/ui/viewportLayout (imported by shell/workspace).
 export {
   AmmoIcon,
   ClassIcon,
@@ -31,6 +32,7 @@ export {
 export type { AmmoTypeName } from "./DestinyIcons";
 export { OfficialFilterIcon } from "./OfficialFilterIcon";
 export { WeaponTypeIcon } from "./WeaponTypeIcon";
+export { SlotIcon } from "./SlotIcon";
 export { InfoHotspot } from "./InfoHotspot";
 export { EntityHotspot } from "./EntityHotspot";
 export type { EntityHotspotShowLabel } from "./EntityHotspot";
