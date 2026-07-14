@@ -25,10 +25,15 @@ type SetType = 'weapon' | 'armor' | 'mod' | 'pair' | 'fashion';
 const SLOTS_BY_SET_TYPE: Record<SetType, EquipmentSlot[] | 'mods_only' | 'cosmetic'> = {
   weapon: ['primary', 'special', 'heavy'],
   armor: ['helmet', 'arms', 'chest', 'legs', 'class_item'],
+  /** Dynamic: `{armorSlot}:{itemHash}` e.g. helmet:123; legacy `mod` / `mod:hash` still readable. */
   mod: 'mods_only',
   pair: ['exotic_weapon', 'exotic_armor'],
   fashion: 'cosmetic', // BR-FASH-003: excluded from slot resolution
 };
+
+// BR-SLOT-010 — Mod set multi-plug storage
+// slot = `${armorSlot}:${itemHash}` so multiple mods coexist per armor piece.
+// Energy capacity per piece group: 10 (default) / 11 (tier 5 when known).
 ```
 
 ## SetItem Shape

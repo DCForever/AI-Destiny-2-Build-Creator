@@ -1,8 +1,9 @@
 # Domain Business Rules — Destiny 2 Builds
 
 **Created**: 2026-07-10  
+**Updated**: 2026-07-14  
 **Status**: Canonical domain layer  
-**Source**: Clarification session 2026-07-09 → 2026-07-10  
+**Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14  
 
 High-level rules for how Destiny 2 builds work in this system and how the product should use them. Feature-level BRs remain in [`business-rules.md`](./business-rules.md); where they conflict, **this document wins** (see Supersessions).
 
@@ -91,7 +92,7 @@ Identity is what makes two loadouts the “same build” vs a different build.
 
 | ID | Rule |
 |----|------|
-| DBR-SYN-001 | A Synergy is **Type linked with an Object**: a curated play-pattern (`type` + optional `subType`) with linked gear evidence (Objects: weapon, perk, origin trait, armor set bonus, etc.). |
+| DBR-SYN-001 | A Synergy is **Type linked with an Object**: a curated play-pattern (`type` + optional `subType`) with linked gear evidence (Objects: weapon, perk, origin trait, armor set bonus, exotic armor, artifact perk, etc.). |
 | DBR-SYN-002 | Builds are created **intent-first**: user designates **Synergy Types** (`type` + optional `subType` only — e.g. Verb: Devour, Melee, Primary Weapon). The system **bridges** those Types to matching curated Synergies (Type + Object) for coverage and suggestions. A library Synergy need not exist for a Type designation to be valid. |
 | DBR-SYN-003 | Every Build must designate **≥1 Synergy Type** to save (`NO_SYNERGY` otherwise). |
 | DBR-SYN-004 | Multiple designated Synergy Types contribute **equally** to suggestions and coverage. Soft UI nudge toward roughly **2–5**; no hard maximum. Matched library Synergies for the same Type are **unioned** (equal weight). |
@@ -102,6 +103,9 @@ Identity is what makes two loadouts the “same build” vs a different build.
 | DBR-SYN-009 | Multiple required links on one synergy are **AND** — all must be satisfied. |
 | DBR-SYN-010 | Required-link hard checks apply to the **default variant only**; other variants get soft warnings. |
 | DBR-SYN-011 | Non-default variants receive **soft guidance** for synergy coverage (suggestions/warnings); weak coverage does not block save. |
+| DBR-SYN-012 | A library Synergy’s **designation** (`type` + `subType`) is **immutable after create**. Create may set type/subtype; edit may change description and linked Objects only. Attempts to change type or subtype after create are rejected. |
+| DBR-SYN-013 | When a build designates a **verb** with a known element alignment (e.g. Ionic Trace → Arc, Jolt → Arc), the system may **imply** the matching **element** designation for bridging, matching, and coverage — without requiring the user to also designate Element explicitly. Explicit element designations still take precedence when present. |
+| DBR-SYN-014 | **Weapon perk** evidence includes **exotic weapon trait plugs** (and other exotic WEAPON PERKS sockets), not only legendary perk rolls — e.g. Lodestar **Arc Alignment** is a valid `weapon_perk` target for a Verb: Jolt library synergy. |
 
 ### LLM-assisted discovery
 
@@ -142,6 +146,7 @@ Identity is what makes two loadouts the “same build” vs a different build.
 | DBR-ROLL-007 | **Catalysts**: display status only — equipped; unequipped (warn); unfinished (warn); unacquired. Do not gate save/equip. |
 | DBR-ROLL-008 | **Deepsight / pattern progress**: display-only with warns; no save/equip gate. |
 | DBR-ROLL-009 | Exotic class item variants store **full selected perk config** (instance or wishlist desired config). |
+| DBR-ROLL-010 | Catalog **browse** for composition supports multi-dimension filtering (e.g. element, ammo, archetype/frame, slot, class, exotic constraint, free-text, optional synergy membership) with **include OR within a facet**, **AND across facets**, and **exclude** drops; optional **group-by** one or more dimensions for browse. Catalog is a composition aid, not a separate product job (see DBR-PUR-002). |
 
 ---
 
@@ -219,7 +224,7 @@ Identity is what makes two loadouts the “same build” vs a different build.
 |----|------|
 | DBR-GUID-001 | Soft guidance uses **passive indicators** and a **coverage breakdown** (supported / weak / missing + hints). |
 | DBR-GUID-002 | Suggestions primarily optimize for **synergy coverage**. |
-| DBR-GUID-003 | Hard blocks are reserved for true Destiny/system constraints (exotics limits, energy, illegal kits, ownership/pins for equip, required links on default, etc.). |
+| DBR-GUID-003 | Hard blocks are reserved for true Destiny/system constraints (exotics limits, energy, illegal kits, ownership/pins for equip, required links on default, etc.). Where pickers exist, **hard constraints must not be UI-selectable** (filter/disable illegal options); primary Save/Create/Fill actions stay **disabled** when hard blocks remain. Soft guidance never disables Save on non-default variants. API remains authoritative. |
 
 ---
 
@@ -244,6 +249,10 @@ Identity is what makes two loadouts the “same build” vs a different build.
 
 Summarized decisions from the domain Q&A (Q1–Q101). Corrections applied in-place: Q14→B (curated synergies); Q16→B (exotic armor optional); Q47→A (save without pins OK).
 
+### Product reconciliation 2026-07-14
+
+Landed product rules from `feature/overhall` commits + in-progress work: library designation immutability (type+subtype); verb→element implied bridging; catalog multi-facet browse; exotic trait plugs as `weapon_perk` evidence.
+
 ---
 
 ## Supersessions vs `business-rules.md`
@@ -256,5 +265,7 @@ Summarized decisions from the domain Q&A (Q1–Q101). Corrections applied in-pla
 | BR-FASH-002 (fashion never in composition/equip) | DBR-FASH-001–005 (fashion in equip; still not synergies/stats) |
 | BR-VAR-002 (variants typically snapshots) | DBR-CMP-003 (live default; snapshot optional) |
 | BR-SUG-001 emphasis | DBR-GUID-002 (synergy coverage primary) |
+| BR-SYN-001 unrestricted “CRUD” of type after create | DBR-SYN-012 (designation immutable after create; links/description remain editable) |
+| BR-CAT-001–003 vague “filter/search” only | DBR-ROLL-010 + BR-CAT-006–008 (facet include/exclude + group-by) |
 
 Feature FRs remain historically useful; implementers should follow **DBR-*** when conflicting.

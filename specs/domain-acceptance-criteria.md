@@ -1,8 +1,9 @@
 # Domain Acceptance Criteria — Destiny 2 Builds
 
 **Created**: 2026-07-10  
+**Updated**: 2026-07-14  
 **Status**: Canonical domain layer  
-**Source**: Clarification session 2026-07-09 → 2026-07-10  
+**Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14  
 
 High-level, testable acceptance criteria for the Build Composer. Trace to [`domain-business-rules.md`](./domain-business-rules.md) (`DBR-*`).
 
@@ -27,8 +28,9 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **When** they state intent via controlled vocabulary (Synergy Types: type + optional subType)  
 **Then** the user designates ≥1 Synergy Type (library Synergy records are not required to save)  
 **And** the system bridges designations to matching curated Synergies (Type + Object) for coverage/suggestions when present  
+**And** when a designated verb implies an element, that element is included in effective bridging without requiring a separate element designation  
 **And** save is rejected with `NO_SYNERGY` if zero Synergy Types are designated  
-**Refs**: DBR-SYN-001–003, DBR-PUR-003
+**Refs**: DBR-SYN-001–003, DBR-SYN-013, DBR-PUR-003
 
 ### DAC-P1-002 — Build identity established
 
@@ -99,10 +101,21 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 ### DAC-P2-001 — Curated synergies with evidence links
 
 **Given** a user curating synergies  
-**When** they create/edit a synergy with links to weapons, perks, origin traits, set bonuses, etc.  
+**When** they create/edit a synergy with links to weapons, perks, origin traits, set bonuses, exotic armor, artifact perks, etc.  
 **Then** links validate against manifest data  
 **And** links are evidence by default; any link kind may be marked required (AND semantics)  
-**Refs**: DBR-SYN-001, DBR-SYN-007–009
+**And** exotic weapon trait plugs are valid `weapon_perk` evidence targets (not only legendary perk rolls)  
+**And** objects already linked on this synergy are omitted from that synergy’s link search results (no duplicate evidence targets on one row)  
+**And** weapon-perk search shows whether a hit is an exotic intrinsic/trait vs a legendary perk  
+**Refs**: DBR-SYN-001, DBR-SYN-007–009, DBR-SYN-014, BR-SYN-011, BR-SYN-012
+
+### DAC-P2-001a — Library designation immutable after create
+
+**Given** a library synergy already created with a type and optional subtype  
+**When** the user edits that synergy  
+**Then** they may change description and linked Objects  
+**And** they cannot change type or subtype (UI read-only; API rejects designation changes)  
+**Refs**: DBR-SYN-012
 
 ### DAC-P2-002 — Required links on default variant
 
@@ -193,6 +206,7 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **Given** a variant that would equip two exotic weapons or two exotic armor pieces  
 **When** the user saves  
 **Then** save is rejected  
+**And** the normal UI prevents selecting / completing the second exotic when composition is known  
 **Refs**: DBR-CMP-007
 
 ### DAC-DST-002 — Mod energy
@@ -200,6 +214,7 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **Given** armor tier ≤4 (10 energy) or tier 5 (11 energy)  
 **When** mods exceed capacity or are illegal for the piece  
 **Then** save is rejected  
+**And** the Mods UI shows remaining energy and refuses over-cap picks when cost is known  
 **Refs**: DBR-MOD-001–003
 
 ### DAC-DST-003 — Subclass slot limits
@@ -207,11 +222,12 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **Given** a subclass kit over aspect/fragment limits or otherwise illegal  
 **When** the user saves  
 **Then** save is rejected  
+**And** the Aspects/Fragments UI caps picks (max 2 aspects; fragments ≤ aspect capacity) when capacity is known  
 **Refs**: DBR-SUB-004
 
 ### DAC-DST-004 — Exotic ability requirements
 
-**Given** an exotic that requires a specific ability  
+**Given** an exotic that requires a specific ability (curated `exoticAbilityRequirements`)  
 **When** it is set on the build  
 **Then** the system proposes pinning that ability at build level  
 **And** after confirm, mismatched kits cannot save  
@@ -247,6 +263,14 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **And** neither gates save/equip  
 **Refs**: DBR-ROLL-007–008
 
+### DAC-DST-009 — UI prevention of hard composition constraints
+
+**Given** a user composing a Set (slot fill) or Build/variant (equipment, exotics, kit, mods)  
+**When** an action would violate a Destiny hard rule (illegal set slot item, **second exotic in a weapon/armor set**, dual exotic on a variant, slot conflict, illegal kit, mod energy, exotic ability mismatch)  
+**Then** the normal UI filters or blocks the action with plain-language reasons  
+**And** the API still rejects the same invalid payload if submitted  
+**Refs**: DBR-GUID-003, DBR-CMP-006, DBR-CMP-007, DBR-SUB-004, DBR-SUB-005, DBR-MOD-001–002, BR-SLOT-008–009, BR-UI-001
+
 ---
 
 ## Naming & browsing
@@ -266,6 +290,23 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **Then** matching builds appear  
 **And** changing tags does not trigger identity confirm/fork  
 **Refs**: DBR-ID-002
+
+### DAC-NME-003 — Catalog multi-facet browse
+
+**Given** a user browsing weapons or armor in Catalog (including set-fill constrained pick)  
+**When** they combine free-text with multi-value facets (e.g. element, ammo, archetype) including include and exclude  
+**Then** results respect OR-within-facet, AND-across-facets, and exclude-drop semantics  
+**And** optional group-by dimensions partition the result list without changing filter semantics  
+**Refs**: DBR-ROLL-010
+
+### DAC-NME-004 — Armor set stats and item detail
+
+**Given** an Armor set with one or more **pinned inventory instances**  
+**When** the user opens set detail  
+**Then** they see per-piece Health, Melee, Grenade, Super, Class, Weapons (when synced) and set **totals** for those stats  
+**And** each item row shows identity meta (element, type/frame, tier, origin trait), selected trait perks (not barrel/mag/stock), available trait names, and linked library synergies when present  
+**And** wishlist/unpinned pieces show that stats are unknown  
+**Refs**: DBR-STAT-001, DBR-CMP-001, BR-SET-010
 
 ---
 
@@ -287,7 +328,7 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 | AC pack | Primary DBRs |
 |---------|----------------|
 | DAC-P1-* | DBR-PUR-*, DBR-SYN-*, DBR-CMPL-*, DBR-EQP-*, DBR-ROLL-*, DBR-GUID-* |
-| DAC-P2-* | DBR-SYN-*, DBR-LLM-*, DBR-PUR-004–005 |
+| DAC-P2-* | DBR-SYN-*, DBR-LLM-*, DBR-PUR-004–005 (incl. DBR-SYN-012–014) |
 | DAC-VAR-* | DBR-ID-*, DBR-ART-*, DBR-FASH-*, DBR-CMPL-* |
-| DAC-DST-* | DBR-CMP-007, DBR-MOD-*, DBR-SUB-*, DBR-STAT-*, DBR-ROLL-* |
-| DAC-NME-* | DBR-NAME-*, DBR-ID-002 |
+| DAC-DST-* | DBR-CMP-007, DBR-MOD-*, DBR-SUB-*, DBR-STAT-*, DBR-ROLL-*, DBR-GUID-003 (UI prevention via DAC-DST-009) |
+| DAC-NME-* | DBR-NAME-*, DBR-ID-002, DBR-ROLL-010, DBR-STAT-001, DBR-CMP-001 |
