@@ -14,6 +14,7 @@ import {
   Callout,
   Chip,
   Cluster,
+  DesignationLabel,
   FilterChip,
   Panel,
   Row,
@@ -23,7 +24,13 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
+import {
+  filterOutLinkedPickerItems,
+  filterOutLinkedWeapons,
+  pickerItemToMergeable,
+} from "@/lib/synergies/filterLinkedPickerResults";
 import { generateSynergyName, getSynergyTypeLabel } from "@/lib/synergies/generateSynergyName";
+import { linkDedupeKey } from "@/lib/synergies/mergeSynergies";
 import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
 import type { SynergyPickerItem } from "@/lib/synergies/synergyPickerLinks";
 import { requiresSubType } from "@/lib/synergies/synergyTypeRules";
@@ -228,6 +235,12 @@ export function SynergyEditPanel({
       setError("Select a catalog link first");
       return;
     }
+    const key = linkDedupeKey(link);
+    if (draftLinks.some((d) => linkDedupeKey(d) === key)) {
+      setError("That object is already linked");
+      setSelectedLink(null);
+      return;
+    }
     setDraftLinks((prev) => [...prev, link]);
     setSelectedLink(null);
     setError(null);
@@ -244,12 +257,19 @@ export function SynergyEditPanel({
     }
     setBusy(true);
     setError(null);
-    const payload = {
-      type,
-      subType: needsSubType ? subType.trim() : null,
-      description: description.trim(),
-      links: draftLinks,
-    };
+    // Edit: omit type/subType — designation is immutable after create.
+    const payload =
+      mode === "edit"
+        ? {
+            description: description.trim(),
+            links: draftLinks,
+          }
+        : {
+            type,
+            subType: needsSubType ? subType.trim() : null,
+            description: description.trim(),
+            links: draftLinks,
+          };
     try {
       const url =
         mode === "edit" && initial
@@ -276,8 +296,34 @@ export function SynergyEditPanel({
     }
   }
 
-  const pickerRows =
-    linkKind === "weapon" ? weaponOptions : linkOptions;
+  const pickerRows = useMemo(() => {
+    if (linkKind === "weapon") {
+      return filterOutLinkedWeapons(weaponOptions, draftLinks);
+    }
+    return filterOutLinkedPickerItems(linkOptions, draftLinks);
+  }, [linkKind, weaponOptions, linkOptions, draftLinks]);
+
+  // Drop selection if it is now filtered out (already linked).
+  useEffect(() => {
+    if (!selectedLink) return;
+    if (linkKind === "weapon" && "hash" in selectedLink && !("kind" in selectedLink)) {
+      const stillVisible = pickerRows.some(
+        (row) =>
+          "hash" in row &&
+          !("kind" in row) &&
+          (row as { hash: number }).hash === selectedLink.hash,
+      );
+      if (!stillVisible) setSelectedLink(null);
+      return;
+    }
+    const key = linkDedupeKey(
+      pickerItemToMergeable(selectedLink as SynergyPickerItem),
+    );
+    const stillVisible = (pickerRows as SynergyPickerItem[]).some(
+      (row) => "kind" in row && linkDedupeKey(pickerItemToMergeable(row)) === key,
+    );
+    if (!stillVisible) setSelectedLink(null);
+  }, [selectedLink, pickerRows, linkKind]);
 
   return (
     <Panel tone="accent" className="w-full">
@@ -298,48 +344,66 @@ export function SynergyEditPanel({
 
         {error ? <Callout tone="danger">{error}</Callout> : null}
 
-        <Section label="Type">
-          <Cluster>
-            {SORTED_TYPES.map((t) => (
-              <FilterChip
-                key={t}
-                label={getSynergyTypeLabel(t)}
-                active={type === t}
-                onClick={() => {
-                  setType(t);
-                  setSubType("");
-                  setSubTypeSearch("");
-                }}
-              />
-            ))}
-          </Cluster>
-        </Section>
+        {mode === "edit" ? (
+          <Section label="Designation">
+            <Stack gap={6}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <DesignationLabel type={type} subType={subType || null} size={24} />
+                <Chip accent>{getSynergyTypeLabel(type)}</Chip>
+                {subType ? <Chip>{subType}</Chip> : null}
+              </div>
+              <Text size="xs" tone="muted">
+                Type and subtype cannot be changed after create. Edit description
+                and linked objects only.
+              </Text>
+            </Stack>
+          </Section>
+        ) : (
+          <>
+            <Section label="Type">
+              <Cluster>
+                {SORTED_TYPES.map((t) => (
+                  <FilterChip
+                    key={t}
+                    label={getSynergyTypeLabel(t)}
+                    active={type === t}
+                    onClick={() => {
+                      setType(t);
+                      setSubType("");
+                      setSubTypeSearch("");
+                    }}
+                  />
+                ))}
+              </Cluster>
+            </Section>
 
-        {needsSubType ? (
-          <Stack gap={8}>
-            <TextField
-              label="Subtype search"
-              value={subTypeSearch}
-              onChange={(e) => setSubTypeSearch(e.target.value)}
-              placeholder="Filter subtypes…"
-            />
-            <SelectField
-              label="Subtype"
-              value={subType}
-              onChange={(e) => setSubType(e.target.value)}
-            >
-              {subTypeOptions.length === 0 ? (
-                <option value="">Loading…</option>
-              ) : (
-                subTypeOptions.map((opt) => (
-                  <option key={opt.name} value={opt.name}>
-                    {opt.name}
-                  </option>
-                ))
-              )}
-            </SelectField>
-          </Stack>
-        ) : null}
+            {needsSubType ? (
+              <Stack gap={8}>
+                <TextField
+                  label="Subtype search"
+                  value={subTypeSearch}
+                  onChange={(e) => setSubTypeSearch(e.target.value)}
+                  placeholder="Filter subtypes…"
+                />
+                <SelectField
+                  label="Subtype"
+                  value={subType}
+                  onChange={(e) => setSubType(e.target.value)}
+                >
+                  {subTypeOptions.length === 0 ? (
+                    <option value="">Loading…</option>
+                  ) : (
+                    subTypeOptions.map((opt) => (
+                      <option key={opt.name} value={opt.name}>
+                        {opt.name}
+                      </option>
+                    ))
+                  )}
+                </SelectField>
+              </Stack>
+            ) : null}
+          </>
+        )}
 
         <Stack gap={4}>
           <Text size="xs" tone="muted">
@@ -353,36 +417,7 @@ export function SynergyEditPanel({
           />
         </Stack>
 
-        <Section label="Draft links">
-          {draftLinks.length === 0 ? (
-            <Text size="xs" tone="muted">
-              No links yet
-            </Text>
-          ) : (
-            <Stack gap={6}>
-              {draftLinks.map((link, index) => (
-                <Row key={`${link.kind}-${link.displayName}-${index}`} justify="between" align="center" gap={8}>
-                  <Cluster>
-                    <Chip>{LINK_KIND_LABEL[link.kind] ?? link.kind}</Chip>
-                    <Chip accent>{link.displayName}</Chip>
-                  </Cluster>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() =>
-                      setDraftLinks((prev) =>
-                        prev.filter((_, i) => i !== index),
-                      )
-                    }
-                  >
-                    Remove
-                  </Button>
-                </Row>
-              ))}
-            </Stack>
-          )}
-        </Section>
-
+        {/* Add link first so draft growth does not push search/results down */}
         <Section label="Add link">
           <Stack gap={8}>
             <SelectField
@@ -445,6 +480,11 @@ export function SynergyEditPanel({
                     "artifactName" in item && typeof item.artifactName === "string"
                       ? item.artifactName.trim()
                       : "";
+                  const sourceLabel =
+                    "sourceLabel" in item &&
+                    typeof (item as SynergyPickerItem).sourceLabel === "string"
+                      ? (item as SynergyPickerItem).sourceLabel!.trim()
+                      : "";
                   return (
                     <button
                       key={value}
@@ -476,7 +516,11 @@ export function SynergyEditPanel({
                       }}
                     >
                       <span className="font-medium">{item.name}</span>
-                      {artifactName ? (
+                      {sourceLabel ? (
+                        <span className="block text-[10px] tracking-wide uppercase text-muted mt-0.5">
+                          {sourceLabel}
+                        </span>
+                      ) : artifactName ? (
                         <span className="block text-[10px] tracking-wide uppercase text-muted mt-0.5">
                           {artifactName}
                         </span>
@@ -502,6 +546,36 @@ export function SynergyEditPanel({
               Add to draft
             </Button>
           </Stack>
+        </Section>
+
+        <Section label="Draft links">
+          {draftLinks.length === 0 ? (
+            <Text size="xs" tone="muted">
+              No links yet
+            </Text>
+          ) : (
+            <Stack gap={6} className="max-h-40 overflow-y-auto overscroll-contain">
+              {draftLinks.map((link, index) => (
+                <Row key={`${link.kind}-${link.displayName}-${index}`} justify="between" align="center" gap={8}>
+                  <Cluster>
+                    <Chip>{LINK_KIND_LABEL[link.kind] ?? link.kind}</Chip>
+                    <Chip accent>{link.displayName}</Chip>
+                  </Cluster>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() =>
+                      setDraftLinks((prev) =>
+                        prev.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </Row>
+              ))}
+            </Stack>
+          )}
         </Section>
 
         <Row gap={8} wrap>

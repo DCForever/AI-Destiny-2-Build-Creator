@@ -31,6 +31,13 @@ import {
   sameSynergyDesignation,
   unionSynergyLinks,
 } from "@/lib/synergies/mergeSynergies";
+
+/** Collapse duplicate evidence targets on one library row. */
+function dedupeLinksInput(
+  links: CreateSynergyInput["links"],
+): CreateSynergyInput["links"] {
+  return unionSynergyLinks([links]);
+}
 import { isValidSubTypeForCategory, listSubTypeOptions } from "@/lib/synergies/subTypeVocabularies";
 import { validateSynergyLinks } from "@/lib/synergies/validateSynergyLink";
 import { validateSynergySubType } from "@/lib/synergies/validateSynergySubType";
@@ -154,7 +161,7 @@ export async function createUserSynergy(
   userId: number,
   input: CreateSynergyInput,
 ): Promise<SynergyWithLinks> {
-  const links = await validateLinksOrThrow(input.links);
+  const links = await validateLinksOrThrow(dedupeLinksInput(input.links));
   const resolved = await resolveSynergyFields({
     type: input.type,
     subType: input.subType,
@@ -248,6 +255,11 @@ export async function duplicateUserSynergy(
   return createUserSynergy(db, userId, createInputFromSynergy(existing));
 }
 
+function normalizeSubTypeForCompare(subType: string | null | undefined): string | null {
+  const t = subType?.trim() ?? "";
+  return t === "" ? null : t;
+}
+
 export async function updateUserSynergy(
   db: AppDatabase,
   userId: number,
@@ -257,9 +269,27 @@ export async function updateUserSynergy(
   const existing = getSynergy(db, userId, synergyId);
   if (!existing) return null;
 
-  const links = input.links ? await validateLinksOrThrow(input.links) : undefined;
-  const mergedType = (input.type ?? existing.type) as SynergyType;
-  const mergedSubType = input.subType !== undefined ? input.subType : existing.subType;
+  // Designation (type + subtype) is immutable after create.
+  if (input.type != null && input.type !== existing.type) {
+    throw new ApiError(
+      API_ERROR_CODES.INVALID_SYNERGY_TYPE,
+      "Synergy type cannot be changed after create",
+    );
+  }
+  if (input.subType !== undefined) {
+    const next = normalizeSubTypeForCompare(input.subType);
+    const prev = normalizeSubTypeForCompare(existing.subType);
+    if (next !== prev) {
+      throw new ApiError(
+        API_ERROR_CODES.INVALID_SYNERGY_SUBTYPE,
+        "Synergy subtype cannot be changed after create",
+      );
+    }
+  }
+
+  const links = input.links
+    ? await validateLinksOrThrow(dedupeLinksInput(input.links))
+    : undefined;
   const mergedLinks = links ?? existing.links.map((l) => ({
     kind: l.kind as CreateSynergyInput["links"][number]["kind"],
     displayName: l.displayName,
@@ -275,8 +305,8 @@ export async function updateUserSynergy(
   }));
 
   const resolved = await resolveSynergyFields({
-    type: mergedType,
-    subType: mergedSubType,
+    type: existing.type,
+    subType: existing.subType,
     links: mergedLinks,
     name: input.name,
   });
@@ -284,8 +314,8 @@ export async function updateUserSynergy(
   const now = new Date().toISOString();
   return updateSynergyRecord(db, userId, synergyId, {
     name: resolved.name,
-    type: resolved.type,
-    subType: resolved.subType,
+    type: existing.type,
+    subType: existing.subType,
     description: input.description,
     links,
     now,

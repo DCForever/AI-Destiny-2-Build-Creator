@@ -392,6 +392,85 @@ describe("synergyService", () => {
     expect(updated?.links[0]?.kind).toBe("armor_set_bonus");
   });
 
+  it("dedupes identical evidence targets on create", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-dedupe", 3, "Player");
+    const link = {
+      kind: "origin_trait" as const,
+      displayName: "Cast No Shadows",
+      originTraitName: "Cast No Shadows",
+    };
+    const created = await createUserSynergy(db, user.id, {
+      type: "melee",
+      subType: "Base",
+      links: [link, { ...link }],
+    });
+    expect(created.links).toHaveLength(1);
+  });
+
+  it("rejects type change on update", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-lock-type", 3, "Player");
+    const created = await createUserSynergy(db, user.id, {
+      type: "melee",
+      subType: "Base",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+
+    await expect(
+      updateUserSynergy(db, user.id, created.id, { type: "verb", subType: "Jolt" }),
+    ).rejects.toMatchObject({
+      code: "INVALID_SYNERGY_TYPE",
+      message: expect.stringMatching(/type cannot be changed/i),
+    });
+
+    const still = await updateUserSynergy(db, user.id, created.id, {
+      description: "links only",
+    });
+    expect(still?.type).toBe("melee");
+    expect(still?.subType).toBe("Base");
+    expect(still?.description).toBe("links only");
+  });
+
+  it("rejects subtype change on update", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-lock-sub", 3, "Player");
+    const created = await createUserSynergy(db, user.id, {
+      type: "verb",
+      subType: "Jolt",
+      links: [
+        {
+          kind: "origin_trait",
+          displayName: "Cast No Shadows",
+          originTraitName: "Cast No Shadows",
+        },
+      ],
+    });
+
+    await expect(
+      updateUserSynergy(db, user.id, created.id, { subType: "Scorch" }),
+    ).rejects.toMatchObject({
+      code: "INVALID_SYNERGY_SUBTYPE",
+      message: expect.stringMatching(/subtype cannot be changed/i),
+    });
+
+    // Same designation values are allowed (no-op).
+    const same = await updateUserSynergy(db, user.id, created.id, {
+      type: "verb",
+      subType: "Jolt",
+      description: "kept",
+    });
+    expect(same?.type).toBe("verb");
+    expect(same?.subType).toBe("Jolt");
+    expect(same?.description).toBe("kept");
+  });
+
   it("duplicate of same designation consolidates back to one library row", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "syn-dup", 3, "Player");

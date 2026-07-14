@@ -5,6 +5,7 @@ import {
   sortByMatchRankThenName,
 } from "@/lib/search/descriptionMatch";
 import type { SynergyLinkInput } from "@/lib/synergies/schemas";
+import { formatWeaponPerkSourceLabel } from "@/lib/synergies/weaponPerkSourceLabel";
 
 export type SynergyPickerItem = {
   kind: SynergyLinkInput["kind"];
@@ -18,6 +19,8 @@ export type SynergyPickerItem = {
   parentItemHash?: number;
   /** Parent artifact name for artifact_perk (e.g. "Tablet of Ruin"). */
   artifactName?: string;
+  /** weapon_perk: "Exotic trait" / "Legendary perk" / etc. */
+  sourceLabel?: string;
   armorSetName?: string;
   bonusPieces?: 2 | 4;
   bonusName?: string;
@@ -126,6 +129,7 @@ export async function searchSynergyLinkPickerItems(
         description: p.description,
         icon: p.icon,
         perkHash: p.hash,
+        sourceLabel: formatWeaponPerkSourceLabel(p.source, p.plugTypeName),
       }));
     return finalizePickerItems(items, limit, query);
   }

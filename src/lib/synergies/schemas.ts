@@ -61,6 +61,10 @@ export const createSynergySchema = z.object({
 export type SynergyLinkInput = z.infer<typeof synergyLinkSchema>;
 export type CreateSynergyInput = z.infer<typeof createSynergySchema>;
 
+/**
+ * Partial update. Prefer omitting `type` / `subType` on edit — designation is
+ * immutable after create; the service rejects changes to either field.
+ */
 export const updateSynergySchema = createSynergySchema.partial();
 export type UpdateSynergyInput = z.infer<typeof updateSynergySchema>;
 

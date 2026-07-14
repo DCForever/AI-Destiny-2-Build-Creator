@@ -5,11 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Cluster,
+  CollapsibleFilterSection,
   DesignationLabel,
   FilterChip,
   Panel,
   Row,
-  SectionLabel,
   Stack,
   Text,
   TextField,
@@ -29,7 +29,7 @@ const SORTED_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
 type SubTypeOption = { name: string; description?: string };
 
 /**
- * Type chips + expandable subtype submenu (canvas: "Filters with subtype submenu").
+ * Type chips + expandable subtype submenu, collapsible like Catalog filters.
  */
 export function SynergyFilters({
   query,
@@ -46,6 +46,7 @@ export function SynergyFilters({
   subTypeFilter: string[];
   onSubTypeFilterChange: (next: string[]) => void;
 }) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [expandedType, setExpandedType] = useState<SubTypeRequiredType | null>(
     null,
   );
@@ -127,7 +128,6 @@ export function SynergyFilters({
   }, [expandedType, subQuery]);
 
   const visibleSubs = useMemo(() => {
-    // Server already filters when subQuery is set; still sort client-side for stability.
     return [...subOptions].sort((a, b) =>
       compareDisplayName(a.name, b.name),
     );
@@ -158,13 +158,63 @@ export function SynergyFilters({
     );
   }
 
-  const hasFilters =
-    typeFilter.length > 0 || subTypeFilter.length > 0 || query.trim().length > 0;
+  const activeCount =
+    typeFilter.length +
+    subTypeFilter.length +
+    (query.trim().length > 0 ? 1 : 0);
+
+  function clearFilters() {
+    onTypeFilterChange([]);
+    onSubTypeFilterChange([]);
+    onQueryChange("");
+    setExpandedType(null);
+    setSubQuery("");
+  }
 
   return (
-    <Panel tone="muted" pad="md">
+    <CollapsibleFilterSection
+      open={filtersOpen}
+      onOpenChange={setFiltersOpen}
+      activeCount={activeCount}
+      onClear={clearFilters}
+      summary={
+        <Cluster gap={3}>
+          {query.trim() ? (
+            <FilterChip
+              size="xs"
+              label={
+                query.trim().length > 18
+                  ? `${query.trim().slice(0, 16)}…`
+                  : query.trim()
+              }
+              active
+              onClick={() => onQueryChange("")}
+            />
+          ) : null}
+          {typeFilter.map((t) => (
+            <FilterChip
+              key={t}
+              size="xs"
+              label={getSynergyTypeLabel(t)}
+              active
+              onClick={() =>
+                onTypeFilterChange(typeFilter.filter((x) => x !== t))
+              }
+            />
+          ))}
+          {subTypeFilter.map((name) => (
+            <FilterChip
+              key={name}
+              size="xs"
+              label={name}
+              active
+              onClick={() => toggleSubType(name)}
+            />
+          ))}
+        </Cluster>
+      }
+    >
       <Stack gap={12}>
-        <SectionLabel>Filters</SectionLabel>
         <TextField
           label="Search"
           value={query}
@@ -281,25 +331,7 @@ export function SynergyFilters({
             </Stack>
           </Panel>
         ) : null}
-
-        {hasFilters ? (
-          <Row>
-            <button
-              type="button"
-              className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground"
-              onClick={() => {
-                onTypeFilterChange([]);
-                onSubTypeFilterChange([]);
-                onQueryChange("");
-                setExpandedType(null);
-                setSubQuery("");
-              }}
-            >
-              Clear filters
-            </button>
-          </Row>
-        ) : null}
       </Stack>
-    </Panel>
+    </CollapsibleFilterSection>
   );
 }
