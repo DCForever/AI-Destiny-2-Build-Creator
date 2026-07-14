@@ -19,14 +19,20 @@
 - Q: When create-from-build or materialize runs with attach-now and the variant already has a live Set of that type attached, what happens? → A: Replace same-type live attachment(s) on the variant (detach old → attach new).
 - Q: When inventory cannot fill every armor slot under hard constraints, return gapped kits or only complete kits? → A: Only complete five-slot kits; exclude incomplete combinations.
 - Q: On create-from-build / materialize, if the intended Set name already exists for that type? → A: Auto-generate a unique name with numeric suffix; never fail solely for name collision.
-- Q: Does materialize create new Sets or update existing ones? → A: Always create new Armor Set (+ optional Mod Set); never overwrite an existing Set’s items.
+- Q: Does materialize create new Sets or update existing ones? → A: Always create new Armor Set (+ optional Mod Set); never overwrite an existing Set’s items. **Superseded below for constrained Sets.**
 - Q: How should stat priorities rank combinations when soft thresholds do not hard-filter? → A: Ordered lexicographic on estimated stats (priority order), then total of those stats.
+- Q: Should optimizer constraints live on the Armor Set so better inventory can refresh the kit later? → A: Yes — persist constraints on the Armor Set.
+- Q: When a better combination is found for a Set that already stores constraints, how is it applied? → A: Update items in place on that Armor Set (constraints unchanged unless edited); optionally refresh a linked Mod Set.
+- Q: When should a constrained Armor Set be re-evaluated against newer inventory? → A: After inventory sync, surface a soft suggestion that a better kit exists; user confirms apply (no silent auto-apply).
+- Q: After sync, which constrained Armor Sets are checked for a better kit? → A: Only those attached to ≥1 Build; opening an unattached constrained Set also triggers a check. Manual refresh remains available.
+- Q: When create-from-build snapshots an Armor Set, which optimizer constraints are seeded? → A: Seed exotic lock + soft-stat priorities/thresholds from the Build when present; set-bonus goals start empty until the user adds them.
+- Q: Which Armor Sets count as constrained for post-sync / on-open improvement checks? → A: Any Set with a stored optimizer-constraints payload (exotic and/or soft stats only is enough; empty set-bonus goals OK). User may clear constraints to opt out.
 
 ## Iteration Scope
 
-**In scope (this iteration)**: (1) Create one or more Sets from an existing Build and attach them to that build immediately; (2) advanced **Armor Set** evaluation that returns ranked full-kit armor combinations under user constraints (exotic, set-bonus coverage goals, stat priorities), including estimated bonuses from candidate armor mods; (3) apply a chosen combination into an Armor Set (and optionally a companion Mod Set) with optional immediate attach. Verification remains debug/API-first per project convention.
+**In scope (this iteration)**: (1) Create one or more Sets from an existing Build and attach them to that build immediately; (2) advanced **Armor Set** evaluation that returns ranked full-kit armor combinations under user constraints (exotic, set-bonus coverage goals, stat priorities), including estimated bonuses from candidate armor mods; (3) **persist those constraints on the Armor Set** when materializing; (4) **re-run optimization against a Set’s stored constraints** and apply a better complete kit by **updating that Set’s items in place** (optional Mod Set refresh); (5) after inventory sync, **soft-suggest** improvements for constrained Armor Sets **attached to Builds** (and when opening an unattached constrained Set); user confirms apply; (6) optional immediate attach on first materialize. Verification remains debug/API-first per project convention.
 
-**Out of scope (this iteration)**: Production-polished optimizer UX; weapon-set or fashion-set “fill from build” beyond what is needed to snapshot currently attached gear; automatic background re-optimization when inventory changes; PvP/activity-specific loadout scoring beyond the user’s stated constraints; shipping a third-party optimizer as a black-box dependency without validation (evaluation of DIM/other approaches is deferred to planning/research).
+**Out of scope (this iteration)**: Production-polished optimizer UX; weapon-set or fashion-set “fill from build” beyond what is needed to snapshot currently attached gear; **silent automatic apply** of better kits without user confirmation; PvP/activity-specific loadout scoring beyond the user’s stated constraints; shipping a third-party optimizer as a black-box dependency without validation (evaluation of DIM/other approaches is deferred to planning/research).
 
 **Verification**: Signed-in debug Builds and Sets surfaces plus automated contract tests exercise create-from-build → attach, constraint → combination list → materialize set, and mod-aware estimates.
 
@@ -43,11 +49,12 @@ A user working on a Build wants to capture the current composed gear into reusab
 **Acceptance Scenarios**:
 
 1. **Given** a Build whose default variant has armor filled across slots, **When** the user creates Sets from the Build with attach-now, **Then** an Armor Set is created containing the current armor identities/instances for filled slots and is attached to that Build immediately.
-2. **Given** the Build also has weapon and/or mod selections, **When** the user includes those categories in create-from-build, **Then** corresponding Weapon and/or Mod Sets are created and attached the same way (empty categories are skipped).
-3. **Given** a created Set would collide with an existing name for that set type, **When** create runs, **Then** the system auto-assigns a unique name with a numeric suffix (e.g. `… Armor (2)`) and proceeds — it never silently overwrites another Set and does not fail solely for name collision.
-4. **Given** attach-now succeeds, **When** the user opens the Build’s attachments, **Then** the new Sets appear as live attachments without requiring a second attach action.
-5. **Given** the user declines attach-now (create only), **When** create completes, **Then** Sets are saved to the library and the Build’s attachments are unchanged.
-6. **Given** the variant already has a live Armor Set attached, **When** create-from-build attaches a new Armor Set with attach-now, **Then** the previous Armor Set is detached and only the new Armor Set remains attached for that type (same replace rule for Weapon and Mod categories when those are included).
+2. **Given** the Build has exotic armor identity and/or soft stat targets, **When** an Armor Set is created from the Build, **Then** the Set’s stored optimizer constraints are seeded with that exotic lock (when set) and soft-stat priorities/thresholds derived from those targets; set-bonus coverage goals remain empty until the user adds them.
+3. **Given** the Build also has weapon and/or mod selections, **When** the user includes those categories in create-from-build, **Then** corresponding Weapon and/or Mod Sets are created and attached the same way (empty categories are skipped).
+4. **Given** a created Set would collide with an existing name for that set type, **When** create runs, **Then** the system auto-assigns a unique name with a numeric suffix (e.g. `… Armor (2)`) and proceeds — it never silently overwrites another Set and does not fail solely for name collision.
+5. **Given** attach-now succeeds, **When** the user opens the Build’s attachments, **Then** the new Sets appear as live attachments without requiring a second attach action.
+6. **Given** the user declines attach-now (create only), **When** create completes, **Then** Sets are saved to the library and the Build’s attachments are unchanged.
+7. **Given** the variant already has a live Armor Set attached, **When** create-from-build attaches a new Armor Set with attach-now, **Then** the previous Armor Set is detached and only the new Armor Set remains attached for that type (same replace rule for Weapon and Mod categories when those are included).
 
 ---
 
@@ -103,20 +110,40 @@ When ranking combinations, the user wants estimates to include **potential armor
 
 ---
 
-### User Story 5 - Materialize a Combination into Sets (Priority: P2)
+### User Story 5 - Materialize a Combination into a Constrained Armor Set (Priority: P2)
 
-After choosing a combination, the user turns it into an Armor Set (and optionally a Mod Set reflecting assumed mods) and can attach those Sets to a Build immediately — connecting the optimizer back to composition.
+After choosing a combination, the user turns it into an Armor Set that **stores the optimizer constraints used for the search**, optionally creates a companion Mod Set, and can attach immediately — so the Set remains a living constrained kit, not a one-off snapshot.
 
-**Why this priority**: Completes the value loop; ranked results that cannot become Sets would leave the library unused.
+**Why this priority**: Completes the value loop and enables later refresh when inventory improves.
 
-**Independent Test**: Select a combination from search results, confirm materialize (+ optional attach to a Build), reload Sets/Build attachments, and verify slots and optional mod plugs match the chosen combination.
+**Independent Test**: Materialize a combination with known constraints; reload the Armor Set; confirm pieces match and stored constraints equal the search request (exotic, set-bonus goals, priorities/thresholds, mod-aware flag as applicable).
 
 **Acceptance Scenarios**:
 
-1. **Given** a selected combination, **When** the user confirms materialize, **Then** a **new** Armor Set is created with one item per filled armor slot from the combination (respecting existing Armor Set slot rules, including at most one exotic armor). Existing Sets are never overwritten by this action.
-2. **Given** the combination included assumed mods and the user opts to save them, **When** materialize completes, **Then** a **new** Mod Set is created with those mods organized per armor piece within energy rules.
-3. **Given** the user chooses attach-now to a Build, **When** materialize completes, **Then** the new/updated Sets are attached to that Build immediately (live by default), **replacing** any existing live attachment of the same set type on that variant.
-4. **Given** materialize would violate exotic-slot rules or ownership checks, **When** confirm runs, **Then** the operation fails with a clear error and no partial silent attach. Name collisions are resolved by auto-suffix (same as create-from-build), not by failing the request.
+1. **Given** a selected combination from a constrained search, **When** the user confirms first-time materialize, **Then** a **new** Armor Set is created with the five pieces and the **search constraints are persisted** on that Set.
+2. **Given** the combination included assumed mods and the user opts to save them, **When** materialize completes, **Then** a **new** Mod Set is created (or linked) with those mods; the Armor Set records the link when applicable.
+3. **Given** the user chooses attach-now to a Build, **When** materialize completes, **Then** the new Sets are attached live, **replacing** any existing live attachment of the same set type on that variant.
+4. **Given** materialize would violate exotic-slot rules or ownership checks, **When** confirm runs, **Then** the operation fails with a clear error and no partial silent attach. Name collisions are resolved by auto-suffix.
+
+---
+
+### User Story 5b - Refresh a Constrained Armor Set from Inventory (Priority: P2)
+
+As the user acquires better armor, they re-run evaluation using the **constraints stored on an existing Armor Set** and apply an improved complete kit by **updating that Set’s items in place**, without creating a duplicate Set or breaking existing Build attachments to it.
+
+**Why this priority**: Core reason to persist constraints on the Set; without in-place refresh, constrained Sets go stale.
+
+**Independent Test**: Fixture Armor Set with stored dual-2pc + exotic + Melee priority; add a superior owned piece that still satisfies constraints; refresh; confirm Set id unchanged, items updated, constraints unchanged, and attached Builds still reference the same Set id.
+
+**Acceptance Scenarios**:
+
+1. **Given** an Armor Set with stored constraints, **When** the user runs refresh/optimize-from-set, **Then** search uses those constraints (editable for this run only if the product allows override — default is stored values) against current owned inventory.
+2. **Given** a better complete combination than the current pieces (lexicographic rank), **When** the user confirms apply, **Then** the Armor Set’s slot items are **replaced in place**; Set id and name remain the same; stored constraints remain unless the user explicitly edits and saves them.
+3. **Given** no better valid combination exists, **When** refresh completes, **Then** the user is told the current kit is already best (or shown equals); items are not needlessly rewritten.
+4. **Given** a linked Mod Set and mod-aware estimates, **When** apply includes assumed mods, **Then** the linked Mod Set may be updated in place to match (or created if missing and user opts in).
+5. **Given** a successful inventory sync and constrained Armor Sets **attached to at least one Build**, **When** a better complete kit exists under a Set’s stored constraints, **Then** the user sees a **soft suggestion** (not an automatic item swap); **When** they confirm apply, **Then** items update in place per scenarios 2–4.
+6. **Given** sync completes and no **attached** constrained Set has a better kit, **When** the user views Builds, **Then** no improvement suggestion is shown for those Sets.
+7. **Given** an unattached Armor Set with stored constraints, **When** the user opens that Set, **Then** the system checks for a better kit and soft-suggests if one exists (same confirm-to-apply rule).
 
 ---
 
@@ -145,12 +172,17 @@ A user opens Sets (without starting from a Build) and runs the same constrained 
 - Wishlist-only / unowned catalog pieces → out of scope for combination search (owned inventory only); create-from-build may still snapshot wishlist pins as set items per existing wishlist rules where applicable.
 - Manifest refresh making a piece stale → soft-stale behavior consistent with existing Sets rules; optimizer should not prefer invalid references for new assignments.
 - Very large inventories → search still returns a ranked top slice in a usable time for interactive verification; user is told when results are truncated.
+- Refresh finds no improvement → current kit retained; user sees a clear “already optimal under constraints” (or equivalent) outcome.
+- Post-sync suggestion dismissed → Set items unchanged; suggestion may reappear on a later sync if still relevant.
+- User clears stored constraints → Set no longer receives post-sync / on-open improvement suggestions until constraints are set again.
+- User edits stored constraints to something currently unsatisfiable → search empty with explanation; existing items remain until a successful apply.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: Users MUST be able to create Sets from a Build’s current composed gear (Armor at minimum; Weapons and Mods when present and selected) in one action.
+- **FR-001a**: When create-from-build creates an Armor Set, the system MUST seed stored optimizer constraints with the Build’s exotic armor identity (when set) and soft-stat priorities/thresholds derived from the Build’s soft stat targets (when present). Set-bonus coverage goals MUST start empty. Users MAY add or edit constraints afterward (FR-010b).
 - **FR-002**: Users MUST be able to attach newly created Sets to that same Build immediately as part of the create-from-build action (opt-out allowed).
 - **FR-002a**: When attach-now attaches a Set and the variant already has a live attachment of the **same set type**, the system MUST detach the previous same-type attachment(s) and attach the new Set (replace-by-type). Other set types on the variant remain unchanged. Detached Sets remain in the library.
 - **FR-003**: Create-from-build MUST respect existing Set type rules (slot occupancy, exotic limits) and MUST NOT silently overwrite unrelated Sets. On name collision within the set type, the system MUST auto-assign a unique name via numeric suffix rather than failing the request.
@@ -161,8 +193,12 @@ A user opens Sets (without starting from a Build) and runs the same constrained 
 - **FR-007**: The system MUST return only combinations that satisfy all stated hard constraints; soft targets affect ranking/warnings, not hard exclusion, unless the user marks a threshold as required for this search.
 - **FR-008**: Each returned combination MUST expose piece identities, estimated six-stat totals, set-bonus summary, and exotic slot contents sufficient to compare alternatives.
 - **FR-009**: Users MUST be able to enable or disable inclusion of candidate armor-mod stat bonuses in estimates; when enabled, assumed mods MUST respect energy capacity and remain visible/auditable.
-- **FR-010**: Users MUST be able to materialize a selected combination into a **new** Armor Set and optionally a **new** Mod Set, with optional immediate attach to a Build. Materialize MUST NOT overwrite items on an existing Set. Attach-now uses the same replace-by-type rule as FR-002a.
-- **FR-011**: The same constrained evaluation and materialize flow MUST be available from Sets without a Build context (manual constraint entry).
+- **FR-010**: First-time materialize MUST create a **new** Armor Set (and optionally a **new** Mod Set) from a selected combination, persist the **optimizer constraints** used for that search onto the Armor Set, and support optional attach-now (replace-by-type per FR-002a). Auto-unique naming applies (FR-003a).
+- **FR-010a**: Users MUST be able to re-run optimization using an Armor Set’s **stored constraints** and apply a chosen better combination by **updating that Set’s items in place** (same Set id). Stored constraints MUST NOT change unless the user explicitly edits and saves them.
+- **FR-010b**: Users MUST be able to view and edit an Armor Set’s stored optimizer constraints (exotic lock, set-bonus goals, stat priorities/thresholds, mod-aware flag) independently of a one-off search.
+- **FR-010c**: After a successful inventory sync, the system MUST evaluate Armor Sets that have a **stored optimizer-constraints payload** and are **attached to at least one Build**, and surface a **soft suggestion** when a better complete kit exists. Opening an **unattached** Armor Set that has stored constraints MUST also trigger the same check. A payload with only exotic and/or soft-stat fields (empty set-bonus goals) still qualifies. Clearing stored constraints opts the Set out of these checks. The system MUST NOT apply item changes until the user confirms. Manual refresh/re-optimize remains available without waiting for sync.
+- **FR-010d**: Users MUST be able to clear an Armor Set’s stored optimizer constraints, after which post-sync and on-open improvement checks no longer apply to that Set until constraints are set again.
+- **FR-011**: The same constrained evaluation and materialize flow MUST be available from Sets without a Build context (manual constraint entry); saving constraints onto the resulting Armor Set still applies.
 - **FR-012**: Empty or failed searches MUST explain which constraints could not be satisfied.
 - **FR-013**: Optimizer outputs used for new set assignments MUST NOT introduce invalid or stale manifest references beyond existing soft-stale display rules.
 - **FR-014**: Verification MUST be possible via signed-in debug/API surfaces without requiring production-polished UI.
@@ -172,8 +208,9 @@ A user opens Sets (without starting from a Build) and runs the same constrained 
 - **Armor Optimization Request**: User-defined search intent — class, optional Build link, locked exotic, set-bonus coverage goals, stat priorities/thresholds, mod-aware flag, inventory scope (owned).
 - **Armor Combination**: A candidate **complete** five-slot armor kit — piece references per slot, estimated stats, set-bonus summary, optional assumed mods, rank/score explanation. Gapped kits are out of scope for search results.
 - **Set Bonus Coverage Goal**: A requirement such as “at least 2 pieces from set-bonus family X” (and optionally 4pc); multiple goals may be combined.
-- **Materialized Sets**: **New** Armor Set and optional **new** Mod Set produced from a chosen combination (never an in-place overwrite of an existing Set in this iteration).
-- **Create-from-Build Result**: One or more Sets derived from a Build’s current composition, with optional immediate attachments recorded on that Build.
+- **Armor Set Optimizer Constraints**: Persisted search intent on an **Armor Set** — locked exotic, set-bonus coverage goals, ordered stat priorities, optional thresholds / requireThresholds, includeModEstimates. Presence of this payload (even partial) makes the Set eligible for improvement checks; clearing it opts out.
+- **Materialized Sets**: First apply creates a new Armor Set (+ optional Mod Set) with constraints stored; later refresh **updates items in place** on that constrained Armor Set.
+- **Create-from-Build Result**: One or more Sets derived from a Build’s current composition, with optional immediate attachments recorded on that Build. (Create-from-build does not itself invent optimizer constraints unless the user later adds them.)
 
 ## Success Criteria *(mandatory)*
 
@@ -183,7 +220,9 @@ A user opens Sets (without starting from a Build) and runs the same constrained 
 - **SC-002**: For a fixture inventory and a constraint set matching the melee + dual-2pc + exotic example, 100% of returned combinations satisfy every hard constraint in automated checks.
 - **SC-003**: In the same fixture, at least one returned combination is among the top-ranked kits a human reviewer would accept when comparing estimated prioritized stats (agreement on top result or top-3 membership in review).
 - **SC-004**: With mod-aware evaluation on, kits that only meet a soft Melee target after legal mods are ranked above otherwise similar kits that cannot meet it after mods (demonstrated by a fixed test fixture).
-- **SC-005**: Users can materialize a chosen combination into an Armor Set and see it attached to a Build (when requested) without a second manual attach step, with ≤2 confirmations total.
+- **SC-005**: Users can materialize a chosen combination into an Armor Set (with constraints stored) and attach it to a Build (when requested) without a second manual attach step, with ≤2 confirmations total.
+- **SC-005a**: After inventory improves, a user can refresh a constrained Armor Set and apply a better kit in place in under 1 minute; Set id remains stable for any Builds already attaching it.
+- **SC-005b**: After sync, when a better kit exists for an **attached** constrained Armor Set, a soft suggestion appears; confirming apply updates items in place; dismissing leaves items unchanged. Opening an unattached constrained Set likewise soft-suggests when a better kit exists (verified in debug/API fixtures).
 - **SC-006**: Empty-constraint-failure cases show a actionable reason in 100% of automated empty-result fixtures (no silent empty list without explanation).
 - **SC-007**: Interactive constrained search on a large but realistic owned inventory returns an initial ranked result slice quickly enough for debug verification (target: first useful results feel interactive — under ~5 seconds on typical dev hardware for the fixture size used in tests; document measured baseline in planning if fixture grows).
 
@@ -195,10 +234,11 @@ A user opens Sets (without starting from a Build) and runs the same constrained 
 - “2pcs from 2 different armor sets” means user-configurable **set-bonus coverage goals** (at least 2pc of family A and at least 2pc of family B), not a single fixed preset.
 - Stat “focus” is an **ordered priority list** over the EoF six with lexicographic ranking (plus optional soft thresholds). Weighted multi-objective scores are out of scope for this iteration.
 - Mod-aware evaluation considers **stat-granting armor mods** (and capacity-legal assignments). Activity-gated or highly situational mods may be included with soft warnings later; v1 may limit the candidate mod pool to clearly stat-relevant plugs.
-- Create-from-build snapshots **current composition** (resolved pins / attached set contents as shown on the Build), not a re-optimized kit — optimization is a separate action that can then materialize + attach.
+- Create-from-build snapshots **current composition** (resolved pins / attached set contents as shown on the Build), not a re-optimized kit — optimization/refresh is a separate action. Armor Sets created this way **seed** exotic + soft-stat constraint fields from the Build; set-bonus goals are not inferred from equipped pieces.
 - Attach-now (create-from-build and materialize) uses **replace-by-type**: detaches existing live attachments of the same set type on the variant before attaching the new Set(s); detached Sets stay in the library.
-- Set names for create-from-build and materialize are **auto-uniqued** with a numeric suffix on collision; users may still supply a preferred base name.
-- Materialize always **creates new** Sets; updating an existing Set’s items from a combination is out of scope for this iteration.
+- Set names for create-from-build and **first-time** materialize are **auto-uniqued** with a numeric suffix on collision; users may still supply a preferred base name.
+- Optimizer **constraints persist on the Armor Set**. First materialize creates the Set and stores constraints; later refresh applies better kits by **updating items in place** on that Set (linked Mod Set may update in place when applicable).
+- Post-sync improvement checks run for Armor Sets that have a **stored constraints payload** and are **attached to ≥1 Build**; **opening** an unattached Set with a constraints payload also triggers a check. Exotic-only or soft-stats-only payloads qualify; empty set-bonus goals are OK. Clearing constraints opts out. Suggestions are **suggest-then-confirm** (soft); never silent auto-apply. Manual re-optimize remains available anytime.
 - Debug/API-first delivery matches prior slices; production polish is deferred.
 - Planning/research SHOULD evaluate established Destiny loadout-optimizer approaches (including DIM Loadout Optimizer algorithms/patterns and any reusable libraries or ports) for correctness and licensing fit; the product requirement is DIM-**like** constrained combination quality, not a mandatory dependency on DIM itself.
 

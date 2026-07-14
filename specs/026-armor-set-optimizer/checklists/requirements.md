@@ -32,5 +32,6 @@
 ## Notes
 
 - Validation pass 1 (2026-07-14): All items pass. DIM / library evaluation is documented as a planning assumption (product requires DIM-like outcomes, not a mandatory DIM dependency). No clarification markers.
-- Clarification session 2026-07-14: 5 decisions recorded (replace-by-type attach, complete kits only, auto-unique names, materialize creates new Sets only, lexicographic stat ranking). Checklist re-validated: still all passing.
-- Plan/contracts exist from earlier `/speckit-plan` — sync them with clarifications before or during `/speckit-tasks`.
+- Clarification session 2026-07-14 (1): replace-by-type attach, complete kits only, auto-unique names, materialize creates new Sets only, lexicographic ranking.
+- Clarification session 2026-07-14 (2): constraints persist on Armor Set; in-place refresh; post-sync soft suggest (attached + on-open); create-from-build seeds exotic+soft stats; any constraints payload qualifies for checks (clear to opt out). Supersedes “never overwrite” for constrained refresh.
+- Plan/contracts/data-model are stale vs clarifications — sync before `/speckit-tasks`.
