@@ -42,4 +42,43 @@ describe("buildPerkWeaponIndex", () => {
     expect(index.byPerk["200"]?.[0]?.column).toBe(2);
     expect(index.byPerk["200"]?.[0]?.curated).toBe(true);
   });
+
+  it("indexes exotic weapon trait plugs (e.g. Lodestar Arc Alignment)", () => {
+    const index = buildPerkWeaponIndex("1.0", {
+      weapons: [],
+      "exotic-weapons": [
+        {
+          hash: 3725585710,
+          name: "Lodestar",
+          searchName: "lodestar",
+          icon: null,
+          slot: "Energy",
+          element: "Arc",
+          ammo: "Primary",
+          frame: "Starlight Beam",
+          intrinsic: {
+            name: "Starlight Beam",
+            description: "Arc beam.",
+          },
+          catalyst: null,
+          flavorText: "",
+          perkColumns: [
+            { column: 0, curated: [2174503023], randomized: [] },
+          ],
+        },
+      ],
+      "weapon-perks": [
+        {
+          hash: 2174503023,
+          name: "Arc Alignment",
+          searchName: "arc alignment",
+          icon: null,
+          description: "Enable hip-fired beam to apply Jolt.",
+        },
+      ],
+    });
+
+    expect(index.byPerk["2174503023"]?.[0]?.weaponName).toBe("Lodestar");
+    expect(index.byPerk["2174503023"]?.[0]?.weaponHash).toBe(3725585710);
+  });
 });

@@ -127,9 +127,10 @@ describe("weaponsExtractor", () => {
 // ─── Weapon Perks ─────────────────────────────────────────────────────────
 
 describe("weaponPerksExtractor", () => {
-  it("returns 4 perk records (barrels + traits)", async () => {
+  it("returns legendary barrels/traits plus exotic intrinsic", async () => {
     const records = await weaponPerksExtractor.extract(makeLoader());
-    expect(records).toHaveLength(4);
+    // 4 legendary (2 barrels + 2 traits) + Gjallarhorn Wolfpack Rounds intrinsic
+    expect(records).toHaveLength(5);
   });
 
   it("includes barrel perks", async () => {
@@ -152,6 +153,14 @@ describe("weaponPerksExtractor", () => {
     expect(killClip?.name).toBe("Kill Clip");
     expect(killClip?.searchName).toBe("kill clip");
     expect(killClip?.description).toBeTruthy();
+    expect(killClip?.source).toBe("legendary");
+  });
+
+  it("marks exotic intrinsic plugs as exotic source", async () => {
+    const records = await weaponPerksExtractor.extract(makeLoader());
+    const wolfpack = records.find((r) => r.hash === 1005);
+    expect(wolfpack?.name).toBe("Wolfpack Rounds");
+    expect(wolfpack?.source).toBe("exotic");
   });
 });
 

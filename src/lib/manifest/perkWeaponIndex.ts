@@ -6,7 +6,12 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
-import type { Hash, WeaponRecord, WeaponSlotName } from "./types/records";
+import type {
+  ExoticWeaponRecord,
+  Hash,
+  WeaponRecord,
+  WeaponSlotName,
+} from "./types/records";
 import type { EntityStores } from "./types/stores";
 import { perkWeaponIndexPath } from "./cachePaths";
 
@@ -56,11 +61,11 @@ export function buildPerkWeaponIndex(
   };
 
   for (const weapon of stores.weapons) {
-    indexWeapon(weapon, false, addEntry);
+    indexWeapon(weapon, addEntry);
   }
 
   for (const exo of stores["exotic-weapons"]) {
-    indexWeapon(exo as unknown as WeaponRecord, true, addEntry);
+    indexExoticWeapon(exo, addEntry);
   }
 
   return {
@@ -72,12 +77,8 @@ export function buildPerkWeaponIndex(
 
 function indexWeapon(
   weapon: WeaponRecord,
-  isExotic: boolean,
   addEntry: (perkHash: Hash, entry: PerkWeaponIndexEntry) => void,
 ): void {
-  if (isExotic) {
-    return;
-  }
   for (const col of weapon.perkColumns) {
     const curatedSet = new Set(col.curated);
     for (const hash of [...col.curated, ...col.randomized]) {
@@ -86,6 +87,26 @@ function indexWeapon(
         weaponName: weapon.name,
         slot: weapon.slot,
         itemTypeName: weapon.itemTypeName,
+        frame: weapon.frame,
+        column: col.column,
+        curated: curatedSet.has(hash),
+      });
+    }
+  }
+}
+
+function indexExoticWeapon(
+  weapon: ExoticWeaponRecord,
+  addEntry: (perkHash: Hash, entry: PerkWeaponIndexEntry) => void,
+): void {
+  for (const col of weapon.perkColumns ?? []) {
+    const curatedSet = new Set(col.curated);
+    for (const hash of [...col.curated, ...col.randomized]) {
+      addEntry(hash, {
+        weaponHash: weapon.hash,
+        weaponName: weapon.name,
+        slot: weapon.slot,
+        itemTypeName: weapon.frame || "Exotic",
         frame: weapon.frame,
         column: col.column,
         curated: curatedSet.has(hash),

@@ -186,7 +186,9 @@ const EXCLUDED_CAT_PATTERNS = [
 
 /**
  * Return true if a socket should be excluded from weapon perk columns.
- * Excludes intrinsic, origin, masterwork, shader, mod, and frame sockets.
+ * Excludes intrinsic (intrinsics category), origin, masterwork, shader, and
+ * Intrinsic-type frame plugs. Trait plugs also use plugCategory "frames" in
+ * Bungie's data (e.g. Voltshot, Arc Alignment) — those must stay included.
  */
 export function isExcludedPerkSocket(
   socket: RawSocketEntry,
@@ -198,7 +200,10 @@ export function isExcludedPerkSocket(
   }
   const plug = asRawInventoryItem(getRaw(itemTable, h));
   const cat = plug?.plug?.plugCategoryIdentifier ?? "";
-  return cat === "frames" || EXCLUDED_CAT_PATTERNS.some((p) => p.test(cat));
+  if (EXCLUDED_CAT_PATTERNS.some((p) => p.test(cat))) return true;
+  // "frames" category is shared by legendary Intrinsic frames AND trait plugs.
+  if (cat === "frames" && plug?.itemTypeDisplayName === "Intrinsic") return true;
+  return false;
 }
 
 /** Return socket indexes for a named socket category on an item. */

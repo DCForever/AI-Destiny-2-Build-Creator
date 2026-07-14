@@ -1,4 +1,9 @@
-import type { ExoticWeaponRecord, WeaponSlotName, ElementName } from "../types/records";
+import type {
+  ExoticWeaponRecord,
+  WeaponPerkColumn,
+  WeaponSlotName,
+  ElementName,
+} from "../types/records";
 import type { Extractor, RawTable, RawTableName } from "../types/services";
 import type { RawInventoryItem } from "./rawTypes";
 import { asRawEquipmentSlot, asRawDamageType } from "./rawTypes";
@@ -9,10 +14,14 @@ import {
   toAmmoType,
   toElementName,
   findSocketPlug,
+  socketPlugHashes,
+  isExcludedPerkSocket,
+  getPerkSocketIndexes,
 } from "./common";
 
 const ITEM_TYPE_WEAPON = 3;
 const TIER_EXOTIC = 6;
+const WEAPON_PERKS_CATEGORY_HASH = 4241085061;
 
 type LoadTable = (table: RawTableName) => Promise<RawTable>;
 
@@ -70,11 +79,36 @@ function resolveElement(item: RawInventoryItem, damageMap: Map<number, ElementNa
   return h != null ? (damageMap.get(h) ?? null) : null;
 }
 
+/** WEAPON PERKS category columns (traits, batteries, barrels) on exotics. */
+function buildPerkColumns(
+  item: RawInventoryItem,
+  itemTable: RawTable,
+  plugSets: RawTable,
+): WeaponPerkColumn[] {
+  const indexes = getPerkSocketIndexes(item, WEAPON_PERKS_CATEGORY_HASH);
+  const sockets = item.sockets?.socketEntries ?? [];
+  const columns: WeaponPerkColumn[] = [];
+  let colIdx = 0;
+
+  for (const idx of indexes) {
+    const socket = sockets[idx];
+    if (!socket) continue;
+    if (isExcludedPerkSocket(socket, itemTable)) continue;
+    const { curated, randomized } = socketPlugHashes(socket, plugSets);
+    if (curated.length === 0 && randomized.length === 0) continue;
+    columns.push({ column: colIdx, curated, randomized });
+    colIdx++;
+  }
+
+  return columns;
+}
+
 async function extractExoticWeapons(loadTable: LoadTable): Promise<ExoticWeaponRecord[]> {
-  const [itemTable, slotTable, damageTable] = await Promise.all([
+  const [itemTable, slotTable, damageTable, plugSets] = await Promise.all([
     loadTable("DestinyInventoryItemDefinition"),
     loadTable("DestinyEquipmentSlotDefinition"),
     loadTable("DestinyDamageTypeDefinition"),
+    loadTable("DestinyPlugSetDefinition"),
   ]);
 
   const slotMap = buildSlotMap(slotTable);
@@ -115,6 +149,7 @@ async function extractExoticWeapons(loadTable: LoadTable): Promise<ExoticWeaponR
           }
         : null,
       flavorText: item.flavorText ?? "",
+      perkColumns: buildPerkColumns(item, itemTable, plugSets),
     });
   }
 

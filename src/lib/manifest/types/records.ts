@@ -55,8 +55,15 @@ export interface EntityRecordBase {
   icon: string | null;
 }
 
+/** Which weapon tiers host this plug in the weapon-perks extract. */
+export type WeaponPerkSource = "legendary" | "exotic" | "both";
+
 export interface PerkRecord extends EntityRecordBase {
   description: string;
+  /** Host weapon tier(s): legendary rolls vs exotic-only plugs vs both. */
+  source?: WeaponPerkSource;
+  /** Manifest itemTypeDisplayName (Trait, Intrinsic, Barrel, …). */
+  plugTypeName?: string | null;
 }
 
 export interface ExoticArmorRecord extends EntityRecordBase {
@@ -68,6 +75,13 @@ export interface ExoticArmorRecord extends EntityRecordBase {
   flavorText: string;
 }
 
+export interface WeaponPerkColumn {
+  /** 0-based perk column index (barrels, magazines, trait 1, trait 2...). */
+  column: number;
+  curated: Hash[];
+  randomized: Hash[];
+}
+
 export interface ExoticWeaponRecord extends EntityRecordBase {
   slot: WeaponSlotName;
   element: ElementName;
@@ -77,13 +91,13 @@ export interface ExoticWeaponRecord extends EntityRecordBase {
   intrinsic: { name: string; description: string };
   catalyst: { name: string; description: string } | null;
   flavorText: string;
-}
-
-export interface WeaponPerkColumn {
-  /** 0-based perk column index (barrels, magazines, trait 1, trait 2...). */
-  column: number;
-  curated: Hash[];
-  randomized: Hash[];
+  /**
+   * Exotic trait / battery / barrel sockets from the WEAPON PERKS category
+   * (same shape as legendary weapons). Used for synergy weapon_perk linking
+   * and reverse perk→weapon index (e.g. Lodestar → Arc Alignment / Jolt).
+   * Optional for older entity-cache snapshots; treat missing as [].
+   */
+  perkColumns?: WeaponPerkColumn[];
 }
 
 /** Legendary weapon with pre-computed perk pools (hashes into weapon-perks). */
