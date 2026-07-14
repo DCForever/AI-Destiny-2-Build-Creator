@@ -128,9 +128,14 @@ describe("abilitiesExtractor", () => {
 // ─── Mods ─────────────────────────────────────────────────────────────────
 
 describe("modsExtractor", () => {
-  it("returns exactly 3 mods", async () => {
+  it("returns unique mods (dedupes cheap artifact variants)", async () => {
     const records = await modsExtractor.extract(makeLoader());
-    expect(records).toHaveLength(3);
+    // 1028 (1 energy) + 1029 (2 energy) Focusing Strike → keep one
+    expect(records).toHaveLength(5);
+    const focusing = records.filter((r) => r.name === "Focusing Strike");
+    expect(focusing).toHaveLength(1);
+    expect(focusing[0]?.energyCost).toBe(2);
+    expect(focusing[0]?.hash).toBe(1029);
   });
 
   it("Charged Up: helmet slot, energyCost 1", async () => {
@@ -152,6 +157,24 @@ describe("modsExtractor", () => {
     const rec = records.find((r) => r.hash === 1025);
     expect(rec?.slotCategory).toBe("tuning");
     expect(rec?.energyCost).toBeNull();
+  });
+
+  it("fills blank display description from tooltip when no sandbox effect", async () => {
+    const records = await modsExtractor.extract(makeLoader());
+    const rec = records.find((r) => r.hash === 1027);
+    expect(rec?.description).toMatch(/find ammo more quickly/i);
+    expect(rec?.slotCategory).toBe("helmet");
+    expect(rec?.energyCost).toBe(1);
+  });
+
+  it("prefers sandbox perk effect over stacking-only tooltip", async () => {
+    const records = await modsExtractor.extract(makeLoader());
+    // 1029 wins dedupe (higher energy) over cheap 1028; both share sandbox effect
+    const rec = records.find((r) => r.name === "Focusing Strike");
+    expect(rec?.hash).toBe(1029);
+    expect(rec?.description).toMatch(/class ability energy/i);
+    expect(rec?.description).toMatch(/powered melee/i);
+    expect(rec?.description).not.toMatch(/multiple copies/i);
   });
 });
 

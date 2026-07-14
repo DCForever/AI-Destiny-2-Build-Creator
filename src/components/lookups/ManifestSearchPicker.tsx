@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
@@ -13,6 +13,10 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
+import {
+  groupAndSortModSearchResults,
+  modSlotCategoryLabel,
+} from "@/lib/manifest/modSearchGroups";
 
 export type ManifestPick = {
   hash: number;
@@ -20,6 +24,12 @@ export type ManifestPick = {
   icon?: string | null;
   kind?: string;
   description?: string;
+  /** Aspects: sockets for fragments. */
+  fragmentCapacity?: number;
+  /** Mods: armor energy cost. */
+  energyCost?: number | null;
+  /** Mods: helmet | arms | chest | legs | classItem | general | tuning */
+  slotCategory?: string;
   perks?: Array<{ hash: number; name: string; column?: number; row?: number }>;
 };
 
@@ -44,8 +54,17 @@ export function ManifestSearchPicker({
   multi,
   selectedNames,
   onToggleName,
+  /** Prefer when capacity/cost meta is needed (aspects/mods). */
+  onTogglePick,
   disabled,
   emptyBrowse = true,
+  /** When multi, block adding beyond this count (aspects). */
+  maxSelected,
+  /**
+   * Mod fill context: only show plugs legal for this armor piece
+   * (matching category + general/tuning). Filters search/browse results.
+   */
+  targetArmorSlot,
 }: {
   label: string;
   category: Category;
@@ -57,8 +76,11 @@ export function ManifestSearchPicker({
   multi?: boolean;
   selectedNames?: string[];
   onToggleName?: (name: string) => void;
+  onTogglePick?: (item: ManifestPick) => void;
   disabled?: boolean;
   emptyBrowse?: boolean;
+  maxSelected?: number;
+  targetArmorSlot?: string | null;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ManifestPick[]>([]);
@@ -74,11 +96,14 @@ export function ManifestSearchPicker({
       const params = new URLSearchParams({
         category,
         q,
-        limit: q ? "20" : "50",
+        limit: q ? "20" : category === "mods" ? "80" : "50",
       });
       if (kind) params.set("kind", kind);
       if (classType) params.set("classType", classType);
       if (subclass) params.set("subclass", subclass);
+      if (category === "mods" && targetArmorSlot) {
+        params.set("armorSlot", targetArmorSlot);
+      }
       const res = await fetch(`/api/manifest/search?${params}`);
       const body = (await res.json()) as {
         results?: ManifestPick[];
@@ -96,6 +121,79 @@ export function ManifestSearchPicker({
     } finally {
       setBusy(false);
     }
+  }
+
+  const modGroups = useMemo(() => {
+    if (category !== "mods" || results.length === 0) return null;
+    return groupAndSortModSearchResults(results, {
+      targetArmorSlot,
+      hideDeprecated: true,
+    });
+  }, [category, results, targetArmorSlot]);
+
+  function renderResultButton(item: ManifestPick) {
+    const active = multi
+      ? selectedNames?.includes(item.name)
+      : selected?.hash === item.hash;
+    const atMax =
+      multi &&
+      maxSelected != null &&
+      !active &&
+      (selectedNames?.length ?? 0) >= maxSelected;
+    const slotLabel = modSlotCategoryLabel(item.slotCategory);
+    return (
+      <button
+        key={`${item.hash}-${item.name}`}
+        type="button"
+        disabled={disabled || atMax}
+        className={`text-left px-2 py-1.5 text-sm border ${
+          active
+            ? "border-accent bg-accent/10 text-foreground"
+            : "border-line bg-surface-raised hover:border-line-strong text-foreground"
+        } disabled:opacity-50`}
+        onClick={() => {
+          if (multi) {
+            if (onTogglePick) onTogglePick(item);
+            else onToggleName?.(item.name);
+          } else {
+            onSelect?.(item);
+            setResults([]);
+            setQuery("");
+          }
+        }}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <ItemIcon icon={item.icon ?? null} name={item.name} size={32} />
+          <span className="min-w-0">
+            <span className="font-medium">{item.name}</span>
+            {item.kind ? (
+              <span className="ml-2 text-xs text-muted">{item.kind}</span>
+            ) : null}
+            {typeof item.fragmentCapacity === "number" ? (
+              <span className="ml-2 text-xs text-muted">
+                +{item.fragmentCapacity} frag
+              </span>
+            ) : null}
+            {typeof item.energyCost === "number" ? (
+              <span className="ml-2 text-xs text-muted">
+                {item.energyCost} energy
+              </span>
+            ) : null}
+            {slotLabel ? (
+              <span className="ml-2 text-xs text-muted">{slotLabel}</span>
+            ) : null}
+            {item.description?.trim() ? (
+              <span
+                className="block text-xs text-muted leading-snug line-clamp-2 mt-0.5"
+                title={item.description}
+              >
+                {item.description}
+              </span>
+            ) : null}
+          </span>
+        </span>
+      </button>
+    );
   }
 
   return (
@@ -155,52 +253,39 @@ export function ManifestSearchPicker({
           {error}
         </Text>
       ) : null}
-      {results.length > 0 ? (
-        <Stack gap={4} className="max-h-48 overflow-auto">
-          {results.map((item) => {
-            const active = multi
-              ? selectedNames?.includes(item.name)
-              : selected?.hash === item.hash;
-            return (
-              <button
-                key={`${item.hash}-${item.name}`}
-                type="button"
-                disabled={disabled}
-                className={`text-left px-2 py-1.5 text-sm border ${
-                  active
-                    ? "border-accent bg-accent/10 text-foreground"
-                    : "border-line bg-surface-raised hover:border-line-strong text-foreground"
-                } disabled:opacity-50`}
-                onClick={() => {
-                  if (multi) {
-                    onToggleName?.(item.name);
-                  } else {
-                    onSelect?.(item);
-                    setResults([]);
-                    setQuery("");
-                  }
-                }}
+      {modGroups && modGroups.length > 0 ? (
+        <Stack gap={10} className="max-h-72 overflow-auto">
+          {modGroups.map((group) => (
+            <Stack key={group.key} gap={4}>
+              <Text
+                size="xs"
+                tone="muted"
+                weight="medium"
+                className="uppercase tracking-wide sticky top-0 bg-surface z-[1] py-0.5"
               >
-                <span className="flex items-center gap-2 min-w-0">
-                  <ItemIcon icon={item.icon ?? null} name={item.name} size={32} />
-                  <span className="min-w-0">
-                    <span className="font-medium">{item.name}</span>
-                    {item.kind ? (
-                      <span className="ml-2 text-xs text-muted">{item.kind}</span>
-                    ) : null}
-                    {item.description?.trim() ? (
-                      <span
-                        className="block text-xs text-muted leading-snug line-clamp-2 mt-0.5"
-                        title={item.description}
-                      >
-                        {item.description}
-                      </span>
-                    ) : null}
-                  </span>
+                {group.label}
+                <span className="ml-1 font-normal opacity-70">
+                  ({group.items.length})
                 </span>
-              </button>
-            );
-          })}
+              </Text>
+              <Stack gap={4}>
+                {group.items.map((item) =>
+                  renderResultButton({
+                    hash: item.hash,
+                    name: item.name,
+                    description: item.description ?? undefined,
+                    slotCategory: item.slotCategory ?? undefined,
+                    energyCost: item.energyCost,
+                    icon: (item.icon as string | null | undefined) ?? null,
+                  }),
+                )}
+              </Stack>
+            </Stack>
+          ))}
+        </Stack>
+      ) : results.length > 0 ? (
+        <Stack gap={4} className="max-h-48 overflow-auto">
+          {results.map((item) => renderResultButton(item))}
         </Stack>
       ) : null}
     </Stack>

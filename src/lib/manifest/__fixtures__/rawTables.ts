@@ -74,6 +74,22 @@ const SANDBOX_PERK_TABLE: RawTable = {
     hash: 8701,
     displayProperties: dp("Volatile Flow Effect", "Picking up an orb grants Volatile Rounds."),
   },
+  // Mod sandbox fallback when tooltip missing
+  "8702": {
+    hash: 8702,
+    displayProperties: dp(
+      "Heavy Ammo Finder Effect",
+      "Increases the effect of all contributions towards the Heavy ammo meter.",
+    ),
+  },
+  // Focusing Strike — true effect (tooltip is stacking-only boilerplate)
+  "8703": {
+    hash: 8703,
+    displayProperties: dp(
+      "Focusing Strike",
+      "Grants class ability energy when you cause damage with a powered melee attack.",
+    ),
+  },
 };
 
 // ─── DestinyArtifactDefinition ────────────────────────────────────────────
@@ -267,6 +283,52 @@ const ITEM_TABLE: RawTable = {
     itemType: 19,
     plug: { plugCategoryIdentifier: "enhancements.tuning" },
   }),
+  // Blank display desc + effect tooltip only (no sandbox) — tooltip used as body
+  "1027": {
+    hash: 1027,
+    displayProperties: dp("Heavy Ammo Finder", ""),
+    itemType: 19,
+    plug: {
+      plugCategoryIdentifier: "enhancements.v2_head",
+      energyCost: { energyCost: 1 },
+    },
+    tooltipNotifications: [
+      {
+        displayString:
+          "Primary ammo weapon final blows help you find ammo more quickly. Does not function in Crucible.",
+        displayStyle: "ui_display_style_perk_info",
+      },
+    ],
+  },
+  // Focusing Strike shape: stacking-only tooltip + real effect on sandbox perk
+  "1028": {
+    hash: 1028,
+    displayProperties: dp("Focusing Strike", ""),
+    itemType: 19,
+    plug: {
+      plugCategoryIdentifier: "enhancements.v2_arms",
+      energyCost: { energyCost: 1 },
+    },
+    perks: [{ perkHash: 8703 }],
+    tooltipNotifications: [
+      {
+        displayString:
+          "Multiple copies of this mod can be stacked to increase the potency of its effect, with diminishing returns for each additional copy of the mod.",
+        displayStyle: "ui_display_style_perk_info",
+      },
+    ],
+  },
+  // Same mod, higher cost (normal). Extract should keep this over 1028.
+  "1029": {
+    hash: 1029,
+    displayProperties: dp("Focusing Strike", ""),
+    itemType: 19,
+    plug: {
+      plugCategoryIdentifier: "enhancements.v2_arms",
+      energyCost: { energyCost: 2 },
+    },
+    perks: [{ perkHash: 8703 }],
+  },
 
   // Artifact perk items
   // 7001: blank inventory description — real body lives on sandbox perk (typical Bungie shape)

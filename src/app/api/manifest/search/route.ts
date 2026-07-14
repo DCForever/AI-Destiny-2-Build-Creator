@@ -38,7 +38,15 @@ const querySchema = z.object({
   element: z.string().trim().min(1).optional(),
   subclass: z.string().trim().min(1).optional(),
   verb: z.string().trim().min(1).optional(),
-  limit: z.coerce.number().int().min(1).max(50).optional(),
+  /**
+   * Armor piece for mod browse/fill: helmet | arms | chest | legs | class_item.
+   * Keeps piece-scoped plugs for that slot plus general/tuning.
+   */
+  armorSlot: z
+    .enum(["helmet", "arms", "chest", "legs", "class_item"])
+    .optional(),
+  /** Browse/list (e.g. mods) may request more than search hits. */
+  limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 type SearchResult = {
@@ -150,22 +158,48 @@ function verbFilter(
   );
 }
 
+function modArmorSlotFilter(
+  results: SearchResult[],
+  category: string,
+  armorSlot: string | undefined,
+) {
+  if (category !== "mods" || !armorSlot) return results;
+  // Inline legality: piece category OR general/tuning (matches isModLegalForArmorSlot)
+  const piece =
+    armorSlot === "class_item"
+      ? "classItem"
+      : armorSlot;
+  return results.filter((r) => {
+    const cat =
+      "slotCategory" in r.record
+        ? (r.record as { slotCategory?: string }).slotCategory
+        : undefined;
+    if (!cat) return true;
+    if (cat === "general" || cat === "tuning") return true;
+    return cat === piece;
+  });
+}
+
 function applyFilters(results: SearchResult[], query: z.infer<typeof querySchema>) {
-  return verbFilter(
-    subclassFilter(
-      elementFilter(
-        classTypeFilter(
-          kindFilter(slotFilter(results, query.slot), query.category, query.kind),
-          query.classType,
-          query.kind,
+  return modArmorSlotFilter(
+    verbFilter(
+      subclassFilter(
+        elementFilter(
+          classTypeFilter(
+            kindFilter(slotFilter(results, query.slot), query.category, query.kind),
+            query.classType,
+            query.kind,
+          ),
+          query.element,
         ),
-        query.element,
+        query.category,
+        query.subclass,
       ),
       query.category,
-      query.subclass,
+      query.verb,
     ),
     query.category,
-    query.verb,
+    query.armorSlot,
   );
 }
 
@@ -190,6 +224,13 @@ function toResponseResult(result: SearchResult, store: string) {
         }))
       : undefined;
 
+  const rec = result.record as SearchResult["record"] & {
+    fragmentCapacity?: number;
+    energyCost?: number | null;
+    slotCategory?: string;
+    description?: string;
+  };
+
   return {
     name: result.record.name,
     hash: result.record.hash,
@@ -205,6 +246,11 @@ function toResponseResult(result: SearchResult, store: string) {
       ? { subclassAffinities: result.record.subclassAffinities }
       : {}),
     ...(result.record.verbs !== undefined ? { verbs: result.record.verbs } : {}),
+    ...(typeof rec.fragmentCapacity === "number"
+      ? { fragmentCapacity: rec.fragmentCapacity }
+      : {}),
+    ...(rec.energyCost !== undefined ? { energyCost: rec.energyCost } : {}),
+    ...(rec.slotCategory !== undefined ? { slotCategory: rec.slotCategory } : {}),
     ...(perks ? { perks } : {}),
     confidence: result.confidence,
     isExotic: store === "exotic-weapons",
@@ -222,6 +268,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     element: url.searchParams.get("element") ?? undefined,
     subclass: url.searchParams.get("subclass") ?? undefined,
     verb: url.searchParams.get("verb") ?? undefined,
+    armorSlot: url.searchParams.get("armorSlot") ?? undefined,
     limit: url.searchParams.get("limit") ?? undefined,
   });
 
@@ -243,7 +290,9 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     const { entityCache, resolver } = await getServices();
     const store = parsed.data.category;
-    const limit = parsed.data.limit ?? (parsed.data.q ? 8 : 50);
+    const limit =
+      parsed.data.limit ??
+      (parsed.data.q ? 8 : parsed.data.category === "mods" ? 80 : 50);
     if (!parsed.data.q && !BROWSE_CATEGORIES.has(store)) {
       return NextResponse.json({ error: "Empty search is not supported for this category" }, { status: 400 });
     }

@@ -79,13 +79,13 @@ describe("FileEntityCache.rebuild", () => {
     expect(meta.counts["exotic-armor"]).toBe(1);
     expect(meta.counts["exotic-weapons"]).toBe(1);
     expect(meta.counts.weapons).toBe(1);
-    expect(meta.counts["weapon-perks"]).toBe(4);
+    expect(meta.counts["weapon-perks"]).toBe(5);
     expect(meta.counts["origin-traits"]).toBe(1);
     expect(meta.counts.artifacts).toBe(1);
     expect(meta.counts.aspects).toBe(2);
     expect(meta.counts.fragments).toBe(2);
     expect(meta.counts.abilities).toBe(6);
-    expect(meta.counts.mods).toBe(3);
+    expect(meta.counts.mods).toBe(5);
     expect(meta.counts["set-bonuses"]).toBe(1);
     expect(meta.counts.stats).toBe(7);
   });

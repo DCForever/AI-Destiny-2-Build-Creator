@@ -68,6 +68,11 @@ export interface RawPerkEntry {
   perkHash?: number;
 }
 
+export interface RawTooltipNotification {
+  displayString?: string;
+  displayStyle?: string;
+}
+
 export interface RawInventoryItem {
   hash: number;
   displayProperties: RawDisplayProperties;
@@ -84,6 +89,8 @@ export interface RawInventoryItem {
   investmentStats?: RawInvestmentStat[];
   plug?: RawPlugBlock;
   perks?: RawPerkEntry[];
+  /** Armor mods often put full effect text here (DIM-style) when display desc is blank. */
+  tooltipNotifications?: RawTooltipNotification[];
 }
 
 export interface RawPlugSet {
