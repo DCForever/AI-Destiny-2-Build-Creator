@@ -32,4 +32,5 @@
 ## Notes
 
 - Validation pass 1 (2026-07-14): All items pass. DIM / library evaluation is documented as a planning assumption (product requires DIM-like outcomes, not a mandatory DIM dependency). No clarification markers.
-- Ready for `/speckit-plan` (optional `/speckit-clarify` if stakeholders want to narrow create-from-build categories or required-vs-soft thresholds before planning).
+- Clarification session 2026-07-14: 5 decisions recorded (replace-by-type attach, complete kits only, auto-unique names, materialize creates new Sets only, lexicographic stat ranking). Checklist re-validated: still all passing.
+- Plan/contracts exist from earlier `/speckit-plan` — sync them with clarifications before or during `/speckit-tasks`.
