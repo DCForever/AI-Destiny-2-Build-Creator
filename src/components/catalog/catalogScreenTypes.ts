@@ -9,7 +9,13 @@ export type CatalogConstraints = {
   /** Catalog bucket label: Kinetic, Gauntlets, … */
   slot?: string | null;
   scope?: CatalogScope;
+  /** When true, catalog is locked to exotic-only (e.g. pair fill). */
   onlyExotic?: boolean;
+  /**
+   * When true, catalog excludes exotics (set already has one exotic of this
+   * kind — second exotic would violate set exclusivity).
+   */
+  excludeExotic?: boolean;
   lockKind?: boolean;
   lockSlot?: boolean;
 };
