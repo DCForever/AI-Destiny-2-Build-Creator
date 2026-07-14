@@ -1,0 +1,29 @@
+{
+  "name": "search_files",
+  "description": "Case-insensitive literal-substring search across textual files in a project. Returns up to max matches with file, 1-indexed line, and snippet.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Project id (UUID) or name substring. Optional; defaults to the active project (expires after ~5 minutes of no Open Design activity)."
+      },
+      "query": {
+        "type": "string",
+        "description": "Literal substring (not a regex), case-insensitive."
+      },
+      "pattern": {
+        "type": "string",
+        "description": "Optional glob on file name, e.g. \"*.jsx\"."
+      },
+      "max": {
+        "type": "number",
+        "description": "Cap on matches (default 200, hard cap 1000)."
+      }
+    },
+    "required": [
+      "query"
+    ],
+    "additionalProperties": false
+  }
+}

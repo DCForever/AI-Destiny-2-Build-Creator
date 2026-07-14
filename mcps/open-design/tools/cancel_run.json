@@ -1,0 +1,17 @@
+{
+  "name": "cancel_run",
+  "description": "Request cancellation of an in-flight run started by start_run.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "runId": {
+        "type": "string",
+        "description": "Run id returned by start_run."
+      }
+    },
+    "required": [
+      "runId"
+    ],
+    "additionalProperties": false
+  }
+}

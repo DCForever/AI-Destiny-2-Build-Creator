@@ -1,0 +1,18 @@
+{
+  "name": "list_files",
+  "description": "Project file metadata: name, path, mime, kind, size, mtime, optional artifactManifest. Pass since=<unix-ms> to cheap-poll for changes.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Project id (UUID) or name substring. Optional; defaults to the active project (expires after ~5 minutes of no Open Design activity)."
+      },
+      "since": {
+        "type": "number",
+        "description": "Unix-ms; only return files with mtime > since."
+      }
+    },
+    "additionalProperties": false
+  }
+}

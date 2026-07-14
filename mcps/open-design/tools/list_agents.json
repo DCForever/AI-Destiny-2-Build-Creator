@@ -1,0 +1,14 @@
+{
+  "name": "list_agents",
+  "description": "List the agent CLIs Open Design can run for start_run.agent. Returns only installed (available) agents by default — pass includeUnavailable:true to also see agents we know about but that are not on PATH (each carries an installUrl for the user). Each entry includes id, name, version, and up to 10 sample models (modelsCount carries the real total).",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "includeUnavailable": {
+        "type": "boolean",
+        "description": "When true, include agents whose binary is not installed. Defaults to false."
+      }
+    },
+    "additionalProperties": false
+  }
+}

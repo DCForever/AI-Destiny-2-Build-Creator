@@ -1,0 +1,34 @@
+{
+  "name": "write_file",
+  "description": "Write (or overwrite) a project file. Unlike create_artifact this does not require an ArtifactManifest and tolerates existing targets, so it is the right tool for iterating on a file the agent (or the user) already created. Project optional; defaults to the active project.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Project id (UUID) or name substring. Optional; defaults to the active project (expires after ~5 minutes of no Open Design activity)."
+      },
+      "path": {
+        "type": "string",
+        "description": "Output path relative to the project root, e.g. \"deck.html\" or \"components/Hero.tsx\"."
+      },
+      "content": {
+        "type": "string",
+        "description": "File contents. Use encoding=\"base64\" for binary payloads."
+      },
+      "encoding": {
+        "type": "string",
+        "enum": [
+          "utf8",
+          "base64"
+        ],
+        "description": "utf8 (default) | base64"
+      }
+    },
+    "required": [
+      "path",
+      "content"
+    ],
+    "additionalProperties": false
+  }
+}
