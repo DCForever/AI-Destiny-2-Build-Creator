@@ -1,0 +1,53 @@
+# electron-builder config for Windows-first packaging.
+# Phase 2: uncomment / extend mac + linux targets.
+# See docs/packaging-desktop.md
+
+appId: com.destiny2buildcreator.app
+productName: Destiny 2 Build Creator
+copyright: Copyright © Destiny2BuildCreator contributors
+
+directories:
+  output: ../dist/desktop
+  buildResources: resources
+
+# Extra Next standalone tree (prepare with scripts/prepare-standalone.sh)
+extraResources:
+  - from: ../.next/standalone
+    to: standalone
+    filter:
+      - "**/*"
+
+files:
+  - main.cjs
+  - preload.cjs
+  - package.json
+
+asar: true
+
+# Prefer per-user Windows install for non-tech friends
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: "${productName}-Setup-${version}.${ext}"
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Destiny 2 Build Creator
+
+# Phase 2 — Mac / Linux (same shell + sidecar; separate CI runners)
+# mac:
+#   target:
+#     - dmg
+#   category: public.app-category.games
+# linux:
+#   target:
+#     - AppImage
+#   category: Game
+
+# Smoke / release checklist lives in docs/packaging-desktop.md § NSIS smoke plan
