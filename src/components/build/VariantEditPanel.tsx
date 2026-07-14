@@ -24,10 +24,27 @@ import {
   TextField,
 } from "@/components/ui";
 import {
+  hasAbilityRequirements,
+  lookupExoticAbilityRequirements,
+} from "@/data/exoticAbilityRequirements";
+import { applyAbilityRequirementPins } from "@/lib/builds/assertExoticAbilityPins";
+import {
   mergeAttachment,
   removeAttachment,
   type AttachmentInput,
 } from "@/lib/builds/attachmentMerge";
+import {
+  evaluateExoticAbilityMatch,
+  evaluateExoticLimits,
+  evaluateModEnergy,
+  evaluateSubclassKit,
+  MAX_SUBCLASS_ASPECTS,
+} from "@/lib/builds/destinyBuildConstraints";
+import {
+  armorEnergyCapacity,
+  isModLegalForArmorSlot,
+  sumEnergyCosts,
+} from "@/lib/builds/modEnergy";
 import {
   ARMOR_MOD_SLOTS,
   applySlotModHashes,
@@ -101,7 +118,14 @@ type LoadedSetDetail = {
     modHashes?: number[] | null;
     instanceId?: string | null;
     removedAt?: string | null;
+    tier?: number | null;
   }>;
+};
+
+type ModMeta = {
+  name: string;
+  energyCost: number;
+  slotCategory?: string;
 };
 
 /** Parent should pass key={variant.id} so form state resets on variant switch. */
@@ -136,12 +160,133 @@ export function VariantEditPanel({
     () => variant.artifactConfig ?? [],
   );
   const [subclass, setSubclass] = useState<BuildSubclass>(() => build.subclass);
+  /** Aspect name → fragmentCapacity when known from picker. */
+  const [aspectCapacityByName, setAspectCapacityByName] = useState<
+    Record<string, number>
+  >({});
+  /** Mod hash → energy/cost meta from picker. */
+  const [modMetaByHash, setModMetaByHash] = useState<Record<number, ModMeta>>(
+    {},
+  );
 
   /** Mods tab: setId → loaded set detail (for armor slots / mod sets). */
   const [modSets, setModSets] = useState<Record<string, LoadedSetDetail>>({});
   const [modSetsLoading, setModSetsLoading] = useState(false);
   /** Local draft of slot modHashes before save (key: setId:slot). */
   const [slotModDraft, setSlotModDraft] = useState<Record<string, number[]>>({});
+
+  const exoticAbilityRequired = useMemo(
+    () =>
+      lookupExoticAbilityRequirements({
+        hash: build.exoticArmorHash,
+        name: build.exoticArmorName,
+      }),
+    [build.exoticArmorHash, build.exoticArmorName],
+  );
+
+  const fragmentCapacity = useMemo(() => {
+    let cap = 0;
+    let resolved = 0;
+    for (const name of subclass.aspects) {
+      const c = aspectCapacityByName[name];
+      if (typeof c === "number") {
+        cap += c;
+        resolved += 1;
+      }
+    }
+    return {
+      capacity: cap,
+      capacityResolved:
+        subclass.aspects.length === 0 || resolved === subclass.aspects.length,
+    };
+  }, [subclass.aspects, aspectCapacityByName]);
+
+  const kitHardBlocks = useMemo(() => {
+    return evaluateSubclassKit({
+      aspectCount: subclass.aspects.length,
+      fragmentCount: subclass.fragments.length,
+      fragmentCapacity: fragmentCapacity.capacity,
+      maxAspects: MAX_SUBCLASS_ASPECTS,
+      capacityResolved: fragmentCapacity.capacityResolved,
+    }).hardBlocks;
+  }, [subclass.aspects.length, subclass.fragments.length, fragmentCapacity]);
+
+  const abilityHardBlocks = useMemo(() => {
+    if (!hasAbilityRequirements(exoticAbilityRequired)) return [];
+    return evaluateExoticAbilityMatch({
+      required: exoticAbilityRequired!,
+      kit: {
+        super: subclass.super,
+        melee: subclass.melee,
+        grenade: subclass.grenade,
+        classAbility: subclass.classAbility,
+      },
+      pinnedSuper: build.pinnedSuper,
+    }).hardBlocks;
+  }, [
+    exoticAbilityRequired,
+    subclass.super,
+    subclass.melee,
+    subclass.grenade,
+    subclass.classAbility,
+    build.pinnedSuper,
+  ]);
+
+  /**
+   * Lightweight client hard-blocks for dual exotic when we already know hashes
+   * (build exotic armor + variant exotic weapon + resolved equipment that is
+   * already known exotic via pair/override). Full composition is server-enforced.
+   */
+  const generalHardBlocks = useMemo(() => {
+    const exoticWeaponHashes: number[] = [];
+    const exoticArmorHashes: number[] = [];
+
+    const effectiveWeapon =
+      exoticWeapon?.hash ??
+      variant.exoticWeaponHash ??
+      build.exoticWeaponHash ??
+      null;
+    if (effectiveWeapon != null) exoticWeaponHashes.push(effectiveWeapon);
+
+    // Second exotic weapon from resolved equipment (different hash / pair slot)
+    const equipment = variant.resolved?.equipment;
+    if (equipment) {
+      for (const claim of Object.values(equipment)) {
+        if (!claim) continue;
+        if (
+          claim.slot === "exotic_weapon" ||
+          claim.source === "variant_exotic_weapon" ||
+          claim.source === "pair_set"
+        ) {
+          if (
+            claim.slot === "exotic_weapon" ||
+            claim.source === "variant_exotic_weapon"
+          ) {
+            exoticWeaponHashes.push(claim.itemHash);
+          }
+          if (claim.slot === "exotic_armor") {
+            exoticArmorHashes.push(claim.itemHash);
+          }
+        }
+        if (claim.source === "build_exotic_armor" || claim.slot === "exotic_armor") {
+          exoticArmorHashes.push(claim.itemHash);
+        }
+      }
+    }
+
+    if (build.exoticArmorHash != null) {
+      exoticArmorHashes.push(build.exoticArmorHash);
+    }
+
+    return evaluateExoticLimits({ exoticWeaponHashes, exoticArmorHashes })
+      .hardBlocks;
+  }, [
+    build.exoticArmorHash,
+    build.exoticWeaponHash,
+    exoticWeapon?.hash,
+    variant.exoticWeaponHash,
+    variant.resolved?.equipment,
+  ]);
 
   async function patchVariant(
     payload: Record<string, unknown>,
@@ -315,6 +460,9 @@ export function VariantEditPanel({
       itemName: string;
       configs: SlotModConfig[];
       modHashes: number[];
+      tier: number | null;
+      energyUsed: number;
+      energyCapacity: number;
     }> = [];
     for (const a of variant.attachments) {
       const set = modSets[a.setId];
@@ -338,6 +486,15 @@ export function VariantEditPanel({
       for (const cfg of configs) {
         if (!(ARMOR_MOD_SLOTS as readonly string[]).includes(cfg.slot)) continue;
         const key = `${a.setId}:${cfg.slot}`;
+        const itemTier =
+          set?.items?.find((i) => i.slot === cfg.slot && !i.removedAt)?.tier ??
+          null;
+        const draftMods = slotModDraft[key] ?? cfg.modHashes ?? [];
+        const costs = draftMods.map(
+          (h) => modMetaByHash[h]?.energyCost ?? 0,
+        );
+        const energyUsed = sumEnergyCosts(costs);
+        const energyCapacity = armorEnergyCapacity(itemTier);
         rows.push({
           setId: a.setId,
           setName: set?.name ?? a.set?.name ?? a.setId,
@@ -345,12 +502,27 @@ export function VariantEditPanel({
           itemHash: cfg.itemHash,
           itemName: cfg.itemName,
           configs,
-          modHashes: slotModDraft[key] ?? cfg.modHashes ?? [],
+          modHashes: draftMods,
+          tier: itemTier,
+          energyUsed,
+          energyCapacity,
         });
       }
     }
     return rows;
-  }, [variant.attachments, modSets, slotModDraft]);
+  }, [variant.attachments, modSets, slotModDraft, modMetaByHash]);
+
+  const modEnergyHardBlocks = useMemo(
+    () =>
+      evaluateModEnergy(
+        armorModRows.map((r) => ({
+          slot: SLOT_LABEL[r.slot] ?? r.slot,
+          energyUsed: r.energyUsed,
+          energyCapacity: r.energyCapacity,
+        })),
+      ).hardBlocks,
+    [armorModRows],
+  );
 
   const modTypeAttachments = useMemo(
     () =>
@@ -473,6 +645,7 @@ export function VariantEditPanel({
             <Section label="Exotic weapon override">
               <Text size="xs" tone="muted" className="mb-2">
                 Optional. Overrides build-level exotic weapon for this variant.
+                Destiny allows at most one exotic weapon and one exotic armor.
               </Text>
               <ManifestSearchPicker
                 label="Exotic weapon"
@@ -483,11 +656,18 @@ export function VariantEditPanel({
                 disabled={busy}
               />
             </Section>
+            {generalHardBlocks.length > 0 ? (
+              <Callout tone="danger">
+                {generalHardBlocks.map((b) => b.message).join(" · ")}
+              </Callout>
+            ) : null}
             <Row gap={8} wrap>
               <Button
                 variant="accent"
                 size="sm"
-                disabled={busy || !name.trim()}
+                disabled={
+                  busy || !name.trim() || generalHardBlocks.length > 0
+                }
                 onClick={() =>
                   void patchVariant(
                     {
@@ -651,14 +831,20 @@ export function VariantEditPanel({
           <Stack gap={12}>
             <Text size="xs" tone="muted">
               Slot-level armor mods save on this variant as a snapshot of the
-              armor set (attachment path). Attach a dedicated mod set below for
-              combat/armor plugs that are not piece-bound.
+              armor set (attachment path). Energy capacity is 10 (tier ≤4) or 11
+              (tier 5). Over-capacity saves are blocked.
             </Text>
 
             {modSetsLoading ? (
               <Text size="xs" tone="muted">
                 Loading attached sets…
               </Text>
+            ) : null}
+
+            {modEnergyHardBlocks.length > 0 ? (
+              <Callout tone="danger">
+                {modEnergyHardBlocks.map((b) => b.message).join(" · ")}
+              </Callout>
             ) : null}
 
             <Section label="Armor slot mods">
@@ -671,6 +857,8 @@ export function VariantEditPanel({
                 <Stack gap={12}>
                   {armorModRows.map((row) => {
                     const key = `${row.setId}:${row.slot}`;
+                    const remaining = row.energyCapacity - row.energyUsed;
+                    const over = row.energyUsed > row.energyCapacity;
                     return (
                       <Stack
                         key={key}
@@ -685,11 +873,21 @@ export function VariantEditPanel({
                             <Text size="xs" tone="muted">
                               {row.itemName} · {row.setName}
                             </Text>
+                            <Text
+                              size="xs"
+                              tone={over ? "danger" : "muted"}
+                            >
+                              Energy {row.energyUsed}/{row.energyCapacity}
+                              {row.tier != null ? ` · tier ${row.tier}` : ""}
+                              {remaining >= 0
+                                ? ` · ${remaining} free`
+                                : " · over capacity"}
+                            </Text>
                           </Stack>
                           <Button
                             size="sm"
                             variant="accent"
-                            disabled={busy}
+                            disabled={busy || over}
                             onClick={() => void saveSlotMods(row.setId, row.slot)}
                           >
                             Save slot mods
@@ -704,7 +902,11 @@ export function VariantEditPanel({
                             row.modHashes.map((hash) => (
                               <FilterChip
                                 key={hash}
-                                label={`#${hash}`}
+                                label={
+                                  modMetaByHash[hash]
+                                    ? `${modMetaByHash[hash]!.name} (${modMetaByHash[hash]!.energyCost})`
+                                    : `#${hash}`
+                                }
                                 active
                                 onClick={() =>
                                   setSlotModDraft((prev) => ({
@@ -722,6 +924,37 @@ export function VariantEditPanel({
                           disabled={busy}
                           onSelect={(item) => {
                             if (!item) return;
+                            const cost =
+                              typeof item.energyCost === "number"
+                                ? item.energyCost
+                                : 0;
+                            if (
+                              item.slotCategory &&
+                              !isModLegalForArmorSlot(
+                                row.slot,
+                                item.slotCategory,
+                              )
+                            ) {
+                              setError(
+                                `${item.name} is not legal for ${SLOT_LABEL[row.slot] ?? row.slot}`,
+                              );
+                              return;
+                            }
+                            if (row.energyUsed + cost > row.energyCapacity) {
+                              setError(
+                                `${item.name} costs ${cost} energy; only ${remaining} free on this piece`,
+                              );
+                              return;
+                            }
+                            setError(null);
+                            setModMetaByHash((prev) => ({
+                              ...prev,
+                              [item.hash]: {
+                                name: item.name,
+                                energyCost: cost,
+                                slotCategory: item.slotCategory,
+                              },
+                            }));
                             setSlotModDraft((prev) => {
                               const cur = prev[key] ?? [];
                               if (cur.includes(item.hash)) return prev;
@@ -797,6 +1030,85 @@ export function VariantEditPanel({
               {build.subclass.name} · {build.className}. Pick from manifest
               abilities for this subclass.
             </Text>
+            {hasAbilityRequirements(exoticAbilityRequired) ? (
+              <Callout
+                tone={abilityHardBlocks.length > 0 ? "danger" : "info"}
+                title="Exotic ability requirements"
+              >
+                {build.exoticArmorName ?? "Exotic armor"} requires:{" "}
+                {[
+                  exoticAbilityRequired?.super
+                    ? `Super ${exoticAbilityRequired.super}`
+                    : null,
+                  exoticAbilityRequired?.melee
+                    ? `melee ${exoticAbilityRequired.melee}`
+                    : null,
+                  exoticAbilityRequired?.grenade
+                    ? `grenade ${exoticAbilityRequired.grenade}`
+                    : null,
+                  exoticAbilityRequired?.classAbility
+                    ? `class ability ${exoticAbilityRequired.classAbility}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+                .{" "}
+                {abilityHardBlocks.length > 0
+                  ? abilityHardBlocks.map((b) => b.message).join(" · ")
+                  : "Kit matches."}
+              </Callout>
+            ) : null}
+            {hasAbilityRequirements(exoticAbilityRequired) &&
+            abilityHardBlocks.length > 0 ? (
+              <Button
+                size="sm"
+                variant="accent"
+                disabled={busy}
+                onClick={() => {
+                  if (!exoticAbilityRequired) return;
+                  setSubclass((s) =>
+                    applyAbilityRequirementPins(s, exoticAbilityRequired),
+                  );
+                  void (async () => {
+                    const next = applyAbilityRequirementPins(
+                      subclass,
+                      exoticAbilityRequired,
+                    );
+                    setBusy(true);
+                    setError(null);
+                    try {
+                      const res = await fetch(`/api/user/builds/${build.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          subclass: next,
+                          pinnedSuper:
+                            exoticAbilityRequired.super ?? build.pinnedSuper,
+                          identityAction: "confirm",
+                        }),
+                      });
+                      const body = (await res.json()) as {
+                        error?: string;
+                        build?: BuildDetail;
+                      };
+                      if (!res.ok || !body.build) {
+                        setError(body.error ?? "Failed to apply ability pins");
+                        return;
+                      }
+                      setSubclass(next);
+                      setMessage("Ability pins applied");
+                      onSaved(body.build, variant.id);
+                    } catch {
+                      setError("Failed to apply ability pins");
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              >
+                Apply required ability pins
+              </Button>
+            ) : null}
             {(
               [
                 ["melee", "Melee"],
@@ -823,10 +1135,15 @@ export function VariantEditPanel({
                 />
               </Stack>
             ))}
+            {abilityHardBlocks.length > 0 ? (
+              <Callout tone="danger">
+                {abilityHardBlocks.map((b) => b.message).join(" · ")}
+              </Callout>
+            ) : null}
             <Button
               variant="accent"
               size="sm"
-              disabled={busy}
+              disabled={busy || abilityHardBlocks.length > 0}
               onClick={() => void patchBuildSubclass("Abilities saved")}
             >
               Save abilities
@@ -838,20 +1155,40 @@ export function VariantEditPanel({
           <Stack gap={12}>
             <Text size="xs" tone="muted">
               Toggle aspects on this build&apos;s subclass (shared across
-              variants).
+              variants). Max {MAX_SUBCLASS_ASPECTS} aspects.
             </Text>
+            <Text size="xs" tone="muted">
+              Fragment capacity from aspects: {fragmentCapacity.capacity}
+              {!fragmentCapacity.capacityResolved
+                ? " (partial — re-select aspects to resolve capacity)"
+                : ""}
+            </Text>
+            {kitHardBlocks.length > 0 ? (
+              <Callout tone="danger">
+                {kitHardBlocks.map((b) => b.message).join(" · ")}
+              </Callout>
+            ) : null}
             <Cluster gap={6}>
               {subclass.aspects.map((aspect) => (
                 <FilterChip
                   key={aspect}
-                  label={aspect}
+                  label={
+                    typeof aspectCapacityByName[aspect] === "number"
+                      ? `${aspect} (+${aspectCapacityByName[aspect]} frag)`
+                      : aspect
+                  }
                   active
-                  onClick={() =>
+                  onClick={() => {
                     setSubclass((s) => ({
                       ...s,
                       aspects: toggleList(s.aspects, aspect),
-                    }))
-                  }
+                    }));
+                    setAspectCapacityByName((prev) => {
+                      const next = { ...prev };
+                      delete next[aspect];
+                      return next;
+                    });
+                  }}
                 />
               ))}
             </Cluster>
@@ -860,19 +1197,43 @@ export function VariantEditPanel({
               category="aspects"
               classType={build.className}
               multi
+              maxSelected={MAX_SUBCLASS_ASPECTS}
               selectedNames={subclass.aspects}
-              onToggleName={(name) =>
+              onTogglePick={(item) => {
+                const selected = subclass.aspects.includes(item.name);
+                if (
+                  !selected &&
+                  subclass.aspects.length >= MAX_SUBCLASS_ASPECTS
+                ) {
+                  setError(`At most ${MAX_SUBCLASS_ASPECTS} aspects`);
+                  return;
+                }
+                setError(null);
                 setSubclass((s) => ({
                   ...s,
-                  aspects: toggleList(s.aspects, name),
-                }))
-              }
+                  aspects: toggleList(s.aspects, item.name),
+                }));
+                setAspectCapacityByName((prev) => {
+                  if (selected) {
+                    const next = { ...prev };
+                    delete next[item.name];
+                    return next;
+                  }
+                  return {
+                    ...prev,
+                    [item.name]:
+                      typeof item.fragmentCapacity === "number"
+                        ? item.fragmentCapacity
+                        : 0,
+                  };
+                });
+              }}
               disabled={busy}
             />
             <Button
               variant="accent"
               size="sm"
-              disabled={busy}
+              disabled={busy || kitHardBlocks.some((b) => b.message.includes("aspect"))}
               onClick={() => void patchBuildSubclass("Aspects saved")}
             >
               Save aspects
@@ -884,8 +1245,17 @@ export function VariantEditPanel({
           <Stack gap={12}>
             <Text size="xs" tone="muted">
               Toggle fragments on this build&apos;s subclass (shared across
-              variants).
+              variants). Capacity {subclass.fragments.length}/
+              {fragmentCapacity.capacityResolved
+                ? fragmentCapacity.capacity
+                : "?"}{" "}
+              from aspects.
             </Text>
+            {kitHardBlocks.length > 0 ? (
+              <Callout tone="danger">
+                {kitHardBlocks.map((b) => b.message).join(" · ")}
+              </Callout>
+            ) : null}
             <Cluster gap={6}>
               {subclass.fragments.map((fragment) => (
                 <FilterChip
@@ -905,19 +1275,39 @@ export function VariantEditPanel({
               label="Add fragment"
               category="fragments"
               multi
+              maxSelected={
+                fragmentCapacity.capacityResolved
+                  ? fragmentCapacity.capacity
+                  : undefined
+              }
               selectedNames={subclass.fragments}
-              onToggleName={(name) =>
+              onToggleName={(name) => {
+                const selected = subclass.fragments.includes(name);
+                if (
+                  !selected &&
+                  fragmentCapacity.capacityResolved &&
+                  subclass.fragments.length >= fragmentCapacity.capacity
+                ) {
+                  setError(
+                    `Fragment capacity is ${fragmentCapacity.capacity} (from aspects)`,
+                  );
+                  return;
+                }
+                setError(null);
                 setSubclass((s) => ({
                   ...s,
                   fragments: toggleList(s.fragments, name),
-                }))
-              }
+                }));
+              }}
               disabled={busy}
             />
             <Button
               variant="accent"
               size="sm"
-              disabled={busy}
+              disabled={
+                busy ||
+                kitHardBlocks.some((b) => b.message.toLowerCase().includes("fragment"))
+              }
               onClick={() => void patchBuildSubclass("Fragments saved")}
             >
               Save fragments
