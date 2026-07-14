@@ -22,6 +22,7 @@ import {
   upsertSetItem,
 } from "@/lib/sets/setItemService";
 import type { SetItemInput } from "@/lib/sets/schemas";
+import { enrichSetItems } from "@/lib/sets/enrichSetItems";
 
 function parseTagIds(tagIds: unknown): ConceptTagId[] {
   const result = conceptTagIdsSchema.safeParse(tagIds ?? []);
@@ -38,7 +39,8 @@ export type SetDetail = Awaited<ReturnType<typeof getSetDetail>>;
 export async function getSetDetail(db: AppDatabase, userId: number, setId: string) {
   const set = getSet(db, userId, setId);
   if (!set) return null;
-  const items = await listSetItems(db, setId);
+  const rawItems = await listSetItems(db, setId);
+  const { items, armorStatTotals } = await enrichSetItems(db, userId, rawItems);
   const activeItems = items.filter((i) => !i.removedAt);
 
   const attachmentRefs = findAttachmentsBySetId(db, setId);
@@ -69,6 +71,8 @@ export async function getSetDetail(db: AppDatabase, userId: number, setId: strin
   return {
     ...set,
     items,
+    armorStatTotals:
+      set.type === "armor" ? armorStatTotals : null,
     modEncourage: hasEmptyModSlots(set.type, activeItems),
     usedByBuilds,
   };

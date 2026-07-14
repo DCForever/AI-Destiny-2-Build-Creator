@@ -9,6 +9,16 @@ export type SetSummary = {
   updatedAt?: string;
 };
 
+export type SetItemPerkName = {
+  hash: number;
+  name: string;
+};
+
+export type SetItemLinkedSynergy = {
+  id: string;
+  label: string;
+};
+
 export type SetItem = {
   id: string;
   setId: string;
@@ -25,6 +35,31 @@ export type SetItem = {
   sortOrder: number;
   removedAt: string | null;
   stale: boolean;
+  itemTypeName?: string | null;
+  frame?: string | null;
+  ammo?: string | null;
+  classType?: string | null;
+  isExotic?: boolean;
+  power?: number | null;
+  location?: string | null;
+  tier?: number | null;
+  tierLabel?: string | null;
+  originTraitName?: string | null;
+  selectedTraitPerks?: SetItemPerkName[];
+  availableTraitPerks?: SetItemPerkName[];
+  linkedSynergies?: SetItemLinkedSynergy[];
+  statValues?: Partial<Record<string, number>> | null;
+  totalStats?: number | null;
+  statsIncomplete?: boolean | null;
+  energyCost?: number | null;
+  slotCategory?: string | null;
+};
+
+export type ArmorSetStatTotals = {
+  statValues: Partial<Record<string, number>>;
+  grandTotal: number;
+  incomplete: boolean;
+  piecesWithStats: number;
 };
 
 export type SetUsedByBuild = {
@@ -38,7 +73,9 @@ export type SetDetail = SetSummary & {
   modEncourage?: boolean;
   /** Builds that attach this set on one or more variants. */
   usedByBuilds?: SetUsedByBuild[];
-};
+  /** Armor sets only — summed instance rolls when available. */
+  armorStatTotals?: ArmorSetStatTotals | null;
+}
 
 export const SLOT_LABEL: Record<string, string> = {
   primary: "Primary",
