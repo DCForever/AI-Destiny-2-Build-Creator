@@ -19,10 +19,11 @@ describe("fillStrategyForSet", () => {
   });
 
   it("uses mods manifest search for mod sets — never weapons", () => {
-    const strategy = fillStrategyForSet("mod", "mod:1");
+    const strategy = fillStrategyForSet("mod", "helmet");
     expect(strategy.kind).toBe("manifest");
     if (strategy.kind === "manifest") {
       expect(strategy.category).toBe("mods");
+      expect(strategy.label.toLowerCase()).toMatch(/helmet/);
     }
   });
 
@@ -56,11 +57,13 @@ describe("fillStrategyForSet", () => {
 });
 
 describe("mod set slots", () => {
-  it("accepts mod and mod:<hash> slots for mod sets", () => {
+  it("accepts legacy mod keys and per-piece keys", () => {
     expect(isModSetSlot("mod")).toBe(true);
     expect(isModSetSlot(modSlotForHash(123))).toBe(true);
     expect(isSlotValidForSetType("mod", "mod")).toBe(true);
     expect(isSlotValidForSetType("mod", "mod:999")).toBe(true);
-    expect(isSlotValidForSetType("mod", "helmet")).toBe(false);
+    expect(isSlotValidForSetType("mod", "helmet")).toBe(true);
+    expect(isSlotValidForSetType("mod", "helmet:42")).toBe(true);
+    expect(isSlotValidForSetType("mod", "primary")).toBe(false);
   });
 });

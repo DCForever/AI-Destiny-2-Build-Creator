@@ -25,10 +25,24 @@ export function fillStrategyForSet(type: SetType, slot: string): FillStrategy {
     return { kind: "catalog", catalogKind: "armor" };
   }
   if (type === "mod") {
+    const piece =
+      slot === "helmet"
+        ? "Helmet"
+        : slot === "arms"
+          ? "Arms"
+          : slot === "chest"
+            ? "Chest"
+            : slot === "legs"
+              ? "Legs"
+              : slot === "class_item"
+                ? "Class item"
+                : slot.includes(":")
+                  ? slot.split(":")[0]
+                  : "armor";
     return {
       kind: "manifest",
       category: "mods",
-      label: "Search armor / combat mods",
+      label: `Mods for ${piece} (slot-scoped or general)`,
     };
   }
   if (type === "pair") {

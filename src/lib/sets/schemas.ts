@@ -26,16 +26,64 @@ export const EQUIPMENT_SLOTS = [
 export type EquipmentSlot = (typeof EQUIPMENT_SLOTS)[number];
 export type FashionSlot = (typeof FASHION_SLOTS)[number];
 
+export type ArmorSetSlot = (typeof ARMOR_SLOTS)[number];
+
 export const SLOTS_BY_SET_TYPE: Record<SetType, readonly string[] | "mods_only"> = {
   weapon: WEAPON_SLOTS,
   armor: ARMOR_SLOTS,
+  /** Dynamic keys: `{armorSlot}:{itemHash}` plus legacy `mod` / `mod:<hash>`. */
   mod: "mods_only",
   pair: PAIR_SLOTS,
   fashion: FASHION_SLOTS,
 };
 
-/** Mod sets store each plug as an item; slots are `mod` or unique `mod:<hash>`. */
+export function isArmorSetSlot(slot: string): slot is ArmorSetSlot {
+  return (ARMOR_SLOTS as readonly string[]).includes(slot);
+}
+
+/**
+ * Storage key for a mod plug on a piece so multiple mods coexist per piece.
+ * Example: `helmet:123456789`
+ */
+export function modSetSlotKey(armorSlot: ArmorSetSlot | string, itemHash: number): string {
+  return `${armorSlot}:${itemHash}`;
+}
+
+/** Parse `helmet:123` style keys. */
+export function parseModSetSlot(
+  slot: string,
+): { armorSlot: ArmorSetSlot; itemHash: number } | null {
+  const colon = slot.indexOf(":");
+  if (colon <= 0) return null;
+  const armorSlot = slot.slice(0, colon);
+  const hashPart = slot.slice(colon + 1);
+  if (!isArmorSetSlot(armorSlot)) return null;
+  const itemHash = Number(hashPart);
+  if (!Number.isInteger(itemHash) || itemHash <= 0) return null;
+  return { armorSlot, itemHash };
+}
+
+/** Armor piece group for a mod-set item slot (new or legacy). */
+export function modSetArmorSlotOf(slot: string): ArmorSetSlot | null {
+  const parsed = parseModSetSlot(slot);
+  if (parsed) return parsed.armorSlot;
+  if (isArmorSetSlot(slot)) return slot;
+  return null;
+}
+
+/**
+ * Mod set item slots:
+ * - Preferred: `helmet:hash`, `arms:hash`, …
+ * - Legacy free-list: `mod`, `mod:<hash>`
+ * - Bare armor slot names accepted for fill entry (normalized before write)
+ */
 export function isModSetSlot(slot: string): boolean {
+  if (slot === "mod" || slot.startsWith("mod:")) return true;
+  if (isArmorSetSlot(slot)) return true;
+  return parseModSetSlot(slot) != null;
+}
+
+export function isLegacyModSetSlot(slot: string): boolean {
   return slot === "mod" || slot.startsWith("mod:");
 }
 
@@ -45,7 +93,9 @@ export function isSlotValidForSetType(type: SetType, slot: string): boolean {
   return (allowed as readonly string[]).includes(slot);
 }
 
-/** Unique slot for a mod plug so multiple mods can coexist in one set. */
+/**
+ * @deprecated Prefer {@link modSetSlotKey}. Legacy free-list uniqueness key.
+ */
 export function modSlotForHash(itemHash: number): string {
   return `mod:${itemHash}`;
 }
