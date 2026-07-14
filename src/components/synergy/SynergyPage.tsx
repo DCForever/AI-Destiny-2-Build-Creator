@@ -302,6 +302,7 @@ export function SynergyPage() {
     main = (
       <WorkspaceMain>
         <SynergyEditPanel
+          key={detail.id}
           mode="edit"
           initial={detail}
           onClose={() => setEditing(false)}
@@ -361,6 +362,13 @@ export function SynergyPage() {
       </PageFrameChrome>
       <PageFrameBody>
         <Workspace
+          focusMain={Boolean(creating || editing || detail)}
+          onBackToLibrary={() => {
+            setCreating(false);
+            setEditing(false);
+            setSelectedId(null);
+            setDetail(null);
+          }}
           rail={
             <SynergyLibrary
               synergies={filtered}

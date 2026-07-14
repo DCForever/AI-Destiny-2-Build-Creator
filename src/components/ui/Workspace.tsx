@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 
 import {
-  WORKSPACE_MAIN_BOX_CLASSES,
-  WORKSPACE_RAIL_BOX_CLASSES,
+  WORKSPACE_BACK_TO_LIBRARY_CLASSES,
   WORKSPACE_ROOT_CLASSES,
+  workspaceMainBoxClasses,
+  workspaceRailBoxClasses,
 } from "@/lib/ui/viewportLayout";
 
+import { Button } from "./Button";
 import { Stack } from "./Stack";
 
 type RailWidth = 240 | 280 | 320;
@@ -29,22 +31,51 @@ const RAIL_COLS: Record<RailWidth, { start: string; end: string }> = {
  * Two-pane feature layout sized by the parent (viewport frame), not content.
  *
  * Desktop (lg+): grid fills height; rail and main scroll independently.
- * Narrow: stacked column; rail height-capped; main flex-1 min-h-0 for usable scroll.
+ * Narrow + no selection: library rail owns the column (main hidden).
+ * Narrow + detail focused (`focusMain`): library collapses; main is full height
+ * with an optional back-to-library control (same contract as Catalog).
  */
 export function Workspace({
   rail,
   main,
   railWidth = 280,
   railPosition = "start",
+  focusMain = false,
+  onBackToLibrary,
+  backLabel = "Back to library",
   className = "",
 }: {
   rail: ReactNode;
   main: ReactNode;
   railWidth?: RailWidth;
   railPosition?: "start" | "end";
+  /**
+   * When true, narrow viewports hide the library and show main only.
+   * When false, narrow viewports hide main empty chrome and show library only.
+   */
+  focusMain?: boolean;
+  /** Called from the narrow-only back control when `focusMain` is true. */
+  onBackToLibrary?: () => void;
+  backLabel?: string;
   className?: string;
 }) {
   const cols = RAIL_COLS[railWidth][railPosition];
+  const railBox = workspaceRailBoxClasses(focusMain);
+  const mainBox = workspaceMainBoxClasses(focusMain);
+
+  const mainContent =
+    focusMain && onBackToLibrary ? (
+      <div className="h-full min-h-0 flex flex-col overflow-hidden">
+        <div className={WORKSPACE_BACK_TO_LIBRARY_CLASSES}>
+          <Button size="sm" variant="ghost" onClick={onBackToLibrary}>
+            ← {backLabel}
+          </Button>
+        </div>
+        <div className="flex-1 min-h-0 overflow-hidden">{main}</div>
+      </div>
+    ) : (
+      main
+    );
 
   return (
     <div
@@ -52,13 +83,13 @@ export function Workspace({
     >
       {railPosition === "start" ? (
         <>
-          <div className={WORKSPACE_RAIL_BOX_CLASSES}>{rail}</div>
-          <div className={WORKSPACE_MAIN_BOX_CLASSES}>{main}</div>
+          <div className={railBox}>{rail}</div>
+          <div className={mainBox}>{mainContent}</div>
         </>
       ) : (
         <>
-          <div className={WORKSPACE_MAIN_BOX_CLASSES}>{main}</div>
-          <div className={WORKSPACE_RAIL_BOX_CLASSES}>{rail}</div>
+          <div className={mainBox}>{mainContent}</div>
+          <div className={railBox}>{rail}</div>
         </>
       )}
     </div>

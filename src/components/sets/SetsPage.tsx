@@ -10,6 +10,7 @@ import type { SetDetail, SetSummary } from "@/components/sets/types";
 import {
   Callout,
   Cluster,
+  CollapsibleFilterSection,
   ConceptTagFilterChip,
   EmptyState,
   FilterChip,
@@ -17,9 +18,6 @@ import {
   PageFrameBody,
   PageFrameChrome,
   PageHeader,
-  Panel,
-  Row,
-  SectionLabel,
   SignedOutGate,
   Stack,
   TextField,
@@ -46,6 +44,7 @@ export function SetsPage() {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [fillSlot, setFillSlot] = useState<string | null>(null);
@@ -251,9 +250,58 @@ export function SetsPage() {
             description="Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants."
           />
           {error ? <Callout tone="danger">{error}</Callout> : null}
-          <Panel tone="muted" pad="md">
+          <CollapsibleFilterSection
+            open={filtersOpen}
+            onOpenChange={setFiltersOpen}
+            activeCount={
+              typeFilter.length +
+              tagFilter.length +
+              (query.trim() ? 1 : 0)
+            }
+            onClear={() => {
+              setTypeFilter([]);
+              setTagFilter([]);
+              setQuery("");
+            }}
+            summary={
+              <Cluster gap={3}>
+                {query.trim() ? (
+                  <FilterChip
+                    size="xs"
+                    label={
+                      query.trim().length > 18
+                        ? `${query.trim().slice(0, 16)}…`
+                        : query.trim()
+                    }
+                    active
+                    onClick={() => setQuery("")}
+                  />
+                ) : null}
+                {typeFilter.map((t) => (
+                  <FilterChip
+                    key={t}
+                    size="xs"
+                    label={t}
+                    active
+                    onClick={() =>
+                      setTypeFilter((prev) => prev.filter((x) => x !== t))
+                    }
+                  />
+                ))}
+                {tagFilter.map((id) => (
+                  <ConceptTagFilterChip
+                    key={id}
+                    tagId={id}
+                    active
+                    onClick={() =>
+                      setTagFilter((prev) => prev.filter((x) => x !== id))
+                    }
+                  />
+                ))}
+              </Cluster>
+            }
+          >
             <Stack gap={10}>
-              <SectionLabel>Filters</SectionLabel>
               <TextField
                 label="Search"
                 value={query}
@@ -292,29 +340,20 @@ export function SetsPage() {
                   />
                 ))}
               </Cluster>
-              {(typeFilter.length > 0 ||
-                tagFilter.length > 0 ||
-                query.trim()) && (
-                <Row>
-                  <button
-                    type="button"
-                    className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground"
-                    onClick={() => {
-                      setTypeFilter([]);
-                      setTagFilter([]);
-                      setQuery("");
-                    }}
-                  >
-                    Clear filters
-                  </button>
-                </Row>
-              )}
             </Stack>
-          </Panel>
+          </CollapsibleFilterSection>
         </Stack>
       </PageFrameChrome>
       <PageFrameBody>
         <Workspace
+          focusMain={Boolean(creating || editing || detail)}
+          onBackToLibrary={() => {
+            setCreating(false);
+            setEditing(false);
+            setFillSlot(null);
+            setSelectedId(null);
+            setDetail(null);
+          }}
           rail={
             <SetsLibrary
               sets={filtered}

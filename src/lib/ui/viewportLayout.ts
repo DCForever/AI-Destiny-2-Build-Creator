@@ -16,19 +16,49 @@ export const VIEWPORT_DUAL_PANE_BREAKPOINT = "lg" as const;
  * panels (shrink-0 filters + flex-1 list) get a real flex container height.
  * 40dvh leaves ~60% for main; no tight rem floor that clips dense filters.
  * Desktop: fill grid cell; overflow hidden so list scrolls inside the rail.
+ *
+ * Prefer {@link workspaceRailBoxClasses} when the page has master–detail focus
+ * (library collapses below lg while a detail is open).
  */
 export const WORKSPACE_RAIL_BOX_CLASSES =
-  "min-h-0 min-w-0 shrink-0 h-[40dvh] max-h-[40dvh] overflow-hidden lg:h-full lg:max-h-none";
+  "min-h-0 min-w-0 shrink-0 h-[40dvh] max-h-[40dvh] overflow-hidden lg:h-full lg:max-h-none lg:flex lg:flex-col";
 
 /**
  * Main pane takes remaining height on stack; full height in dual-pane grid.
  */
 export const WORKSPACE_MAIN_BOX_CLASSES =
-  "min-h-0 min-w-0 overflow-hidden flex-1 basis-0 lg:h-full";
+  "min-h-0 min-w-0 overflow-hidden flex-1 basis-0 lg:h-full lg:flex lg:flex-col";
 
 /** Root workspace: column stack below lg, grid at lg+. */
 export const WORKSPACE_ROOT_CLASSES =
   "h-full min-h-0 flex flex-col gap-2 lg:gap-4 lg:grid lg:items-stretch";
+
+/**
+ * Library rail allocation for Workspace master–detail.
+ * - No detail focused: rail uses full stack height below lg (list is primary).
+ * - Detail focused: rail **hidden** below lg; dual-pane rail at lg+.
+ */
+export function workspaceRailBoxClasses(focusMain: boolean): string {
+  if (!focusMain) {
+    return "min-h-0 min-w-0 flex-1 basis-0 overflow-hidden flex flex-col h-full lg:h-full lg:max-h-none lg:flex-none lg:shrink-0";
+  }
+  return "min-h-0 min-w-0 overflow-hidden hidden lg:flex lg:flex-col lg:h-full";
+}
+
+/**
+ * Main pane allocation for Workspace master–detail.
+ * - No detail focused: hide empty/main chrome below lg so library owns the column.
+ * - Detail focused: main fills the stack below lg.
+ */
+export function workspaceMainBoxClasses(focusMain: boolean): string {
+  if (!focusMain) {
+    return "min-h-0 min-w-0 overflow-hidden hidden lg:flex lg:flex-col lg:h-full lg:flex-1 lg:basis-0";
+  }
+  return "min-h-0 min-w-0 overflow-hidden flex-1 basis-0 flex flex-col h-full lg:h-full";
+}
+
+/** Back control for library master–detail (visible only below lg). */
+export const WORKSPACE_BACK_TO_LIBRARY_CLASSES = "shrink-0 lg:hidden mb-2";
 
 /**
  * Page filter/title chrome: scrollable + height-capped on narrow viewports so
@@ -89,4 +119,4 @@ export function catalogDetailPaneClasses(): string {
 }
 
 /** Back control for master–detail (visible only below lg). */
-export const CATALOG_BACK_TO_RESULTS_CLASSES = "shrink-0 lg:hidden mb-2";
+export const CATALOG_BACK_TO_RESULTS_CLASSES = WORKSPACE_BACK_TO_LIBRARY_CLASSES;

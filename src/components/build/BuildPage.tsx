@@ -661,6 +661,18 @@ export function BuildPage() {
       </PageFrameChrome>
       <PageFrameBody>
         <Workspace
+          focusMain={Boolean(creating || editingBuild || detail)}
+          onBackToLibrary={() => {
+            setCreating(false);
+            setEditingBuild(false);
+            setVariantMode("details");
+            setSelectedId(null);
+            setDetail(null);
+            setVariantId(null);
+            setCreateError(null);
+            setActionMessage(null);
+            writeBuildQuery(null);
+          }}
           rail={
             <BuildLibrary
               builds={builds}

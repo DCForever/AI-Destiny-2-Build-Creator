@@ -12,12 +12,26 @@ function readSrc(rel: string): string {
 }
 
 describe("viewport layout wiring", () => {
-  it("Workspace uses shared rail/main/root class contract", () => {
+  it("Workspace uses shared rail/main/root class contract + master–detail focus", () => {
     const src = readSrc("src/components/ui/Workspace.tsx");
     expect(src).toContain("@/lib/ui/viewportLayout");
     expect(src).toContain("WORKSPACE_ROOT_CLASSES");
-    expect(src).toContain("WORKSPACE_RAIL_BOX_CLASSES");
-    expect(src).toContain("WORKSPACE_MAIN_BOX_CLASSES");
+    expect(src).toContain("workspaceRailBoxClasses");
+    expect(src).toContain("workspaceMainBoxClasses");
+    expect(src).toContain("focusMain");
+    expect(src).toContain("WORKSPACE_BACK_TO_LIBRARY_CLASSES");
+  });
+
+  it("Sets/Build/Synergy pass focusMain so library collapses on narrow detail", () => {
+    for (const rel of [
+      "src/components/sets/SetsPage.tsx",
+      "src/components/build/BuildPage.tsx",
+      "src/components/synergy/SynergyPage.tsx",
+    ]) {
+      const src = readSrc(rel);
+      expect(src).toContain("focusMain=");
+      expect(src).toContain("onBackToLibrary");
+    }
   });
 
   it("PageFrame chrome uses height-capped scroll contract", () => {
@@ -45,9 +59,9 @@ describe("viewport layout wiring", () => {
     expect(src).toContain("catalogResultsPaneClasses");
     expect(src).toContain("catalogDetailPaneClasses");
     expect(src).toContain("CATALOG_BACK_TO_RESULTS_CLASSES");
-    expect(src).toContain("filtersExpanded");
+    expect(src).toContain("filtersOpen");
     expect(src).toContain("useState(false)");
-    expect(src).toContain("filtersExpanded ? (");
+    expect(src).toContain("filtersOpen");
     expect(src).toContain("Results");
     // Body uses master-detail helpers, not dual-pane <Workspace .../>
     expect(src).not.toContain("<Workspace ");

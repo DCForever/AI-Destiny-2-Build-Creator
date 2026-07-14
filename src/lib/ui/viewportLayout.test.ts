@@ -7,6 +7,7 @@ import {
   PAGE_FRAME_CHROME_CLASSES,
   PAGE_FRAME_ROOT_CLASSES,
   VIEWPORT_DUAL_PANE_BREAKPOINT,
+  WORKSPACE_BACK_TO_LIBRARY_CLASSES,
   WORKSPACE_MAIN_BOX_CLASSES,
   WORKSPACE_RAIL_BOX_CLASSES,
   WORKSPACE_RAIL_LIST_MIN_FRACTION,
@@ -14,6 +15,8 @@ import {
   catalogBodyRootClasses,
   catalogDetailPaneClasses,
   catalogResultsPaneClasses,
+  workspaceMainBoxClasses,
+  workspaceRailBoxClasses,
 } from "@/lib/ui/viewportLayout";
 
 /**
@@ -103,6 +106,27 @@ describe("viewportLayout contract", () => {
     expect(resultsWhenEmpty).toMatch(/flex-1/);
     expect(resultsWhenEmpty.split(/\s+/)).not.toContain("hidden");
     expect(catalogBodyRootClasses(false)).not.toContain("lg:grid");
+  });
+
+  it("Workspace master–detail: library collapses below lg when focusMain", () => {
+    const railBrowse = workspaceRailBoxClasses(false);
+    const railDetail = workspaceRailBoxClasses(true);
+    const mainBrowse = workspaceMainBoxClasses(false);
+    const mainDetail = workspaceMainBoxClasses(true);
+
+    // Browse: rail fills column; main hidden on narrow
+    expect(railBrowse.split(/\s+/)).not.toContain("hidden");
+    expect(railBrowse).toMatch(/flex-1/);
+    expect(mainBrowse.split(/\s+/)).toContain("hidden");
+    expect(mainBrowse).toMatch(/lg:flex/);
+
+    // Detail: rail hidden on narrow; main fills column
+    expect(railDetail.split(/\s+/)).toContain("hidden");
+    expect(railDetail).toMatch(/lg:flex/);
+    expect(mainDetail.split(/\s+/)).not.toContain("hidden");
+    expect(mainDetail).toMatch(/flex-1/);
+
+    expect(WORKSPACE_BACK_TO_LIBRARY_CLASSES).toMatch(/lg:hidden/);
   });
 });
 
