@@ -148,7 +148,11 @@ function normalizeItems(
 ): UserInventoryItem[] {
   return rawItems.map((raw) => {
     const catalogEntry = weaponLookup.get(raw.itemHash) ?? null;
-    const weaponRecord = catalogEntry && "perkColumns" in catalogEntry ? catalogEntry : null;
+    // Legendary WeaponRecord only — exotics also have perkColumns but not roll columns.
+    const weaponRecord =
+      catalogEntry && "originTraitHashes" in catalogEntry
+        ? (catalogEntry as WeaponRecord)
+        : null;
     const rollTags = computeRollTags(raw.plugHashes, perkNameMap, weaponRecord, {
       isCrafted: raw.isCrafted,
     });

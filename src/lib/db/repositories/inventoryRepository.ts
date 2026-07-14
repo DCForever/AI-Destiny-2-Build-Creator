@@ -134,6 +134,26 @@ export function listInventoryItems(db: AppDatabase, userId: number): UserInvento
   return rows.map(rowToItem);
 }
 
+/** Batch load inventory copies by instance id (set/detail enrichment). */
+export function queryInventoryByInstanceIds(
+  db: AppDatabase,
+  userId: number,
+  instanceIds: string[],
+): UserInventoryItem[] {
+  if (instanceIds.length === 0) return [];
+  const rows = db
+    .select()
+    .from(inventoryItems)
+    .where(
+      and(
+        eq(inventoryItems.userId, userId),
+        inArray(inventoryItems.instanceId, instanceIds),
+      ),
+    )
+    .all();
+  return rows.map(rowToItem);
+}
+
 export function queryInventoryByTags(
   db: AppDatabase,
   userId: number,
