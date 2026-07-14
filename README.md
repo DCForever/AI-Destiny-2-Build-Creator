@@ -128,8 +128,14 @@ See **[DEBUG.md](./DEBUG.md)** for the Debug / Service UI (`/debug/*`): prerequi
 | `npm run typecheck` | TypeScript check, no emit                |
 | `npm run test`      | Vitest unit tests                        |
 | `npm run lint`      | ESLint                                   |
-| `npm run build`     | Production build                         |
+| `npm run build`     | Production build (includes standalone)   |
 | `npm run gate`      | typecheck + lint + test + build          |
+| `npm run spike:standalone` | Packaging spike: standalone + SQLite |
+| `npm run spike:electron`   | Packaging spike: Electron shell (needs `electron` devDependency) |
+
+## Desktop packaging
+
+Research and Windows-first installer direction (Electron + Next standalone sidecar): **[docs/packaging-desktop.md](./docs/packaging-desktop.md)**.
 
 ## Debug / Service UI
 

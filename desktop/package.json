@@ -1,0 +1,13 @@
+{
+  "name": "destiny2-build-creator-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron shell for Destiny2BuildCreator (sidecar packaging spike)",
+  "main": "main.cjs",
+  "author": "Destiny2BuildCreator",
+  "scripts": {
+    "start": "electron .",
+    "spike:headless": "D2BC_SPIKE_HEADLESS=1 electron .",
+    "dist:win": "electron-builder --win nsis --config electron-builder.yml"
+  }
+}
