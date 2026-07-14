@@ -15,7 +15,53 @@ import {
 vi.mock("@/lib/services", () => ({
   getServices: vi.fn(async () => ({
     entityCache: {
-      getStore: vi.fn(async () => []),
+      getStore: vi.fn(async (name: string) => {
+        // Minimal hashes used by set-item + exotic-limit checks in these tests.
+        if (name === "exotic-armor") {
+          return [
+            {
+              hash: 100,
+              name: "Hallowfire Heart",
+              searchName: "hallowfire heart",
+              icon: null,
+              classType: "Titan",
+              slot: "Chest",
+              intrinsic: { name: "", description: "" },
+              archetype: null,
+              flavorText: "",
+            },
+            {
+              hash: 999,
+              name: "Wrong Armor",
+              searchName: "wrong armor",
+              icon: null,
+              classType: "Titan",
+              slot: "Helmet",
+              intrinsic: { name: "", description: "" },
+              archetype: null,
+              flavorText: "",
+            },
+          ];
+        }
+        if (name === "weapons") {
+          return [
+            {
+              hash: 500,
+              name: "Gun",
+              searchName: "gun",
+              icon: null,
+              slot: "Kinetic",
+              element: "Kinetic",
+              ammo: "Primary",
+              frame: "Adaptive",
+              itemTypeName: "Auto Rifle",
+              originTraitHashes: [],
+              perkColumns: [],
+            },
+          ];
+        }
+        return [];
+      }),
     },
   })),
 }));

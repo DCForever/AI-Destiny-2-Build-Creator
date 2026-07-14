@@ -34,6 +34,10 @@ import {
 import { buildInventoryPinIndex, computeEquipReady } from "@/lib/builds/equipReady";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
 import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
+import { assertExoticAbilityPins } from "@/lib/builds/assertExoticAbilityPins";
+import { assertExoticLimits } from "@/lib/builds/assertExoticLimits";
+import { assertModEnergyForAttachments } from "@/lib/builds/assertModEnergy";
+import { assertSubclassKitLegal } from "@/lib/builds/assertSubclassKit";
 import {
   assertFullCombatLoadout,
   assertNoSlotConflicts,
@@ -299,6 +303,13 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
   const tags = parseTags(input.tagIds);
   const synergyTypes = normalizeDesignations(input.synergyTypes ?? []);
   assertTypesPresent(synergyTypes);
+  await assertSubclassKitLegal(input.subclass);
+  assertExoticAbilityPins({
+    exoticArmorHash: input.exoticArmorHash,
+    exoticArmorName: input.exoticArmorName,
+    pinnedSuper: input.pinnedSuper,
+    subclass: input.subclass,
+  });
 
   const name = resolveCreateName(
     db,
@@ -515,6 +526,36 @@ export async function updateUserBuild(
       input.softStatTargets === null ? {} : normalizeSoftStatTargets(input.softStatTargets);
   }
 
+  const nextSubclass = (input.subclass ?? existing.subclass) as {
+    aspects?: string[] | null;
+    fragments?: string[] | null;
+    super?: string | null;
+    melee?: string | null;
+    grenade?: string | null;
+    classAbility?: string | null;
+    name?: string | null;
+  };
+  const nextExoticHash =
+    input.exoticArmorHash !== undefined
+      ? input.exoticArmorHash
+      : existing.exoticArmorHash;
+  const nextExoticName =
+    input.exoticArmorName !== undefined
+      ? input.exoticArmorName
+      : existing.exoticArmorName;
+  const nextPinnedSuper =
+    input.pinnedSuper !== undefined ? input.pinnedSuper : existing.pinnedSuper;
+
+  if (input.subclass) {
+    await assertSubclassKitLegal(input.subclass);
+  }
+  assertExoticAbilityPins({
+    exoticArmorHash: nextExoticHash,
+    exoticArmorName: nextExoticName,
+    pinnedSuper: nextPinnedSuper,
+    subclass: nextSubclass,
+  });
+
   updateBuildRecord(db, userId, buildId, {
     name: input.name?.trim() || undefined,
     className: input.className,
@@ -572,6 +613,15 @@ export async function updateUserVariant(
 
   if (input.attachments) {
     await prepareAttachments(db, userId, variantId, input.attachments, now);
+  }
+
+  // Equipment-affecting fields must re-run hard Destiny constraints (CMP-006/007).
+  const equipmentAffecting =
+    input.attachments != null ||
+    input.exoticWeaponHash !== undefined ||
+    input.exoticWeaponName !== undefined;
+
+  if (equipmentAffecting) {
     await validateVariantSave(db, userId, buildId, variantId);
   }
 
@@ -597,6 +647,19 @@ export async function validateVariantSave(
   });
 
   assertNoSlotConflicts(resolved);
+
+  // Exotic limits across resolved slots (different buckets can still dual-exotic).
+  const exoticClaims = Object.values(resolved.equipment).filter(
+    (c): c is NonNullable<typeof c> => c != null,
+  );
+  await assertExoticLimits(exoticClaims);
+
+  await assertModEnergyForAttachments(
+    attachments,
+    resolved.equipment,
+    (setId) => listActiveSetItems(db, setId),
+  );
+
   if (variant.isDefault) {
     const hasMods = await variantHasMods(db, userId, attachments);
     assertFullCombatLoadout(resolved, build, { hasMods });
