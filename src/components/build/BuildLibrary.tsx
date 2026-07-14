@@ -8,6 +8,7 @@ import {
   ClassFilterChip,
   ClassIcon,
   Cluster,
+  CollapsibleFilterSection,
   ElementIcon,
   FilterChip,
   IconBadge,
@@ -56,6 +57,7 @@ export function BuildLibrary({
   loadoutMatchesByBuildId?: Map<string, BuildLoadoutMatch>;
 }) {
   const [exoticKeys, setExoticKeys] = useState<ExoticArmorFilterKey[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   /** Exotic chips scoped to current class filter (or full library). */
   const exoticOptions = useMemo(() => {
@@ -114,51 +116,84 @@ export function BuildLibrary({
           </Button>
         </Row>
 
-        <Stack gap={6}>
-          <Text size="xs" tone="muted" className="uppercase tracking-widest">
-            Class
-          </Text>
-          <Cluster>
-            {CLASSES.map((cls) => (
-              <ClassFilterChip
-                key={cls}
-                className={cls}
-                active={classFilter === cls}
-                onClick={() => onClassFilter(classFilter === cls ? null : cls)}
-                size="md"
-              />
-            ))}
-          </Cluster>
-        </Stack>
-
-        {exoticOptions.length > 0 ? (
-          <Stack gap={6}>
-            <Text size="xs" tone="muted" className="uppercase tracking-widest">
-              Exotic armor
-            </Text>
-            <Cluster>
-              {exoticOptions.map((opt) => (
-                <FilterChip
-                  key={opt.key}
-                  label={opt.label}
-                  active={activeExoticKeys.includes(opt.key)}
-                  onClick={() => toggleExotic(opt.key)}
-                  title={opt.label}
+        <CollapsibleFilterSection
+          panel={false}
+          open={filtersOpen}
+          onOpenChange={setFiltersOpen}
+          activeCount={
+            (classFilter ? 1 : 0) + activeExoticKeys.length
+          }
+          onClear={clearFilters}
+          summary={
+            <Cluster gap={3}>
+              {classFilter ? (
+                <ClassFilterChip
+                  className={classFilter}
+                  active
+                  onClick={() => onClassFilter(null)}
+                  size="md"
                 />
-              ))}
+              ) : null}
+              {activeExoticKeys.map((key) => {
+                const opt = exoticOptions.find((o) => o.key === key);
+                return (
+                  <FilterChip
+                    key={key}
+                    size="xs"
+                    label={opt?.label ?? key}
+                    active
+                    onClick={() => toggleExotic(key)}
+                    title={opt?.label ?? key}
+                  />
+                );
+              })}
             </Cluster>
-          </Stack>
-        ) : null}
+          }
+        >
+          <Stack gap={8}>
+            <Stack gap={6}>
+              <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                Class
+              </Text>
+              <Cluster>
+                {CLASSES.map((cls) => (
+                  <ClassFilterChip
+                    key={cls}
+                    className={cls}
+                    active={classFilter === cls}
+                    onClick={() =>
+                      onClassFilter(classFilter === cls ? null : cls)
+                    }
+                    size="md"
+                  />
+                ))}
+              </Cluster>
+            </Stack>
 
-        {hasFilters ? (
-          <button
-            type="button"
-            className="text-[10px] tracking-widest uppercase text-muted hover:text-foreground self-start"
-            onClick={clearFilters}
-          >
-            Clear filters
-          </button>
-        ) : null}
+            {exoticOptions.length > 0 ? (
+              <Stack gap={6}>
+                <Text
+                  size="xs"
+                  tone="muted"
+                  className="uppercase tracking-widest"
+                >
+                  Exotic armor
+                </Text>
+                <Cluster>
+                  {exoticOptions.map((opt) => (
+                    <FilterChip
+                      key={opt.key}
+                      label={opt.label}
+                      active={activeExoticKeys.includes(opt.key)}
+                      onClick={() => toggleExotic(opt.key)}
+                      title={opt.label}
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
+            ) : null}
+          </Stack>
+        </CollapsibleFilterSection>
       </Stack>
 
       <div className="flex-1 min-h-0 overflow-y-auto mt-2">

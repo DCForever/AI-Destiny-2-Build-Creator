@@ -13,6 +13,8 @@ import {
   Callout,
   ClassFilterChip,
   ClassIcon,
+  Cluster,
+  CollapsibleFilterSection,
   EmptyState,
   FilterChip,
   LoadoutColorBar,
@@ -116,6 +118,7 @@ export function LoadoutsPage() {
   }>({ open: false, title: "", matches: [] });
   const [classFilter, setClassFilter] = useState<string | null>(null);
   const [hideEmpty, setHideEmpty] = useState(true);
+  const [bungieFiltersOpen, setBungieFiltersOpen] = useState(false);
 
   const pickerOptions = useMemo(
     () => collectPickerOptions(localRows),
@@ -443,14 +446,24 @@ export function LoadoutsPage() {
           <Stack gap={16}>
             <Panel tone="muted" pad="md">
               <Stack gap={10}>
-                <Row justify="between" align="center" wrap gap={8}>
-                  <Text size="xs" tone="muted" className="uppercase tracking-widest">
-                    Bungie slots · {displayBungie.length}
-                    {bungieLoadouts.length !== displayBungie.length
-                      ? ` of ${bungieLoadouts.length}`
-                      : ""}
-                  </Text>
-                  <Row gap={8} wrap>
+                <Text size="xs" tone="muted" className="uppercase tracking-widest">
+                  Bungie slots · {displayBungie.length}
+                  {bungieLoadouts.length !== displayBungie.length
+                    ? ` of ${bungieLoadouts.length}`
+                    : ""}
+                </Text>
+                <CollapsibleFilterSection
+                  panel={false}
+                  open={bungieFiltersOpen}
+                  onOpenChange={setBungieFiltersOpen}
+                  activeCount={
+                    (classFilter ? 1 : 0) + (hideEmpty ? 1 : 0)
+                  }
+                  onClear={() => {
+                    setClassFilter(null);
+                    setHideEmpty(false);
+                  }}
+                  trailing={
                     <Button
                       size="sm"
                       variant="ghost"
@@ -458,26 +471,53 @@ export function LoadoutsPage() {
                     >
                       Refresh
                     </Button>
-                    <Button
-                      size="sm"
-                      variant={hideEmpty ? "accent" : "outline"}
-                      onClick={() => setHideEmpty((v) => !v)}
-                    >
-                      {hideEmpty ? "Hiding empty" : "Show empty"}
-                    </Button>
-                    {(["Titan", "Hunter", "Warlock"] as const).map((cls) => (
-                      <ClassFilterChip
-                        key={cls}
-                        className={cls}
-                        active={classFilter === cls}
-                        onClick={() =>
-                          setClassFilter((prev) => (prev === cls ? null : cls))
-                        }
-                        size="md"
-                      />
-                    ))}
-                  </Row>
-                </Row>
+                  }
+                  summary={
+                    <Cluster gap={3}>
+                      {hideEmpty ? (
+                        <FilterChip
+                          size="xs"
+                          label="Hiding empty"
+                          active
+                          onClick={() => setHideEmpty(false)}
+                        />
+                      ) : null}
+                      {classFilter && isGuardianClass(classFilter) ? (
+                        <ClassFilterChip
+                          className={classFilter}
+                          active
+                          onClick={() => setClassFilter(null)}
+                          size="md"
+                        />
+                      ) : null}
+                    </Cluster>
+                  }
+                >
+                  <Stack gap={8}>
+                    <Row gap={8} wrap>
+                      <Button
+                        size="sm"
+                        variant={hideEmpty ? "accent" : "outline"}
+                        onClick={() => setHideEmpty((v) => !v)}
+                      >
+                        {hideEmpty ? "Hiding empty" : "Show empty"}
+                      </Button>
+                      {(["Titan", "Hunter", "Warlock"] as const).map((cls) => (
+                        <ClassFilterChip
+                          key={cls}
+                          className={cls}
+                          active={classFilter === cls}
+                          onClick={() =>
+                            setClassFilter((prev) =>
+                              prev === cls ? null : cls,
+                            )
+                          }
+                          size="md"
+                        />
+                      ))}
+                    </Row>
+                  </Stack>
+                </CollapsibleFilterSection>
 
                 {displayBungie.length === 0 ? (
                   <EmptyState description="No in-game loadouts to show. Equip a loadout in Destiny or turn off “Hiding empty”." />
