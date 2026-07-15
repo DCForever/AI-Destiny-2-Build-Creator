@@ -74,7 +74,7 @@ describe("viewport layout wiring", () => {
     expect(sets).toContain("Set-fill: single full-pane Catalog");
     const start = sets.indexOf("if (fillSlot && detail)");
     expect(start).toBeGreaterThanOrEqual(0);
-    const afterFill = sets.slice(start);
+    const afterFill = sets.slice(start).replace(/\r\n/g, "\n");
     const endRel = afterFill.indexOf("\n  return (\n    <PageFrame>");
     const fillBlock =
       endRel >= 0 ? afterFill.slice(0, endRel) : afterFill.slice(0, 800);

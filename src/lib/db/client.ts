@@ -77,6 +77,17 @@ function ensureSoftStatTargetsColumn(db: Database.Database): void {
   }
 }
 
+function ensureSetOptimizerColumns(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(sets)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "optimizer_constraints")) {
+    db.exec("ALTER TABLE sets ADD COLUMN optimizer_constraints TEXT");
+  }
+  if (!cols.some((c) => c.name === "linked_mod_set_id")) {
+    db.exec("ALTER TABLE sets ADD COLUMN linked_mod_set_id TEXT");
+  }
+}
+
 function ensureVariantArtifactColumns(db: Database.Database): void {
   const cols = db.prepare("PRAGMA table_info(build_variants)").all() as { name: string }[];
   if (cols.length === 0) return;
@@ -225,6 +236,8 @@ export function runMigrations(db: Database.Database): void {
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       type TEXT NOT NULL,
+      optimizer_constraints TEXT,
+      linked_mod_set_id TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -343,6 +356,7 @@ export function runMigrations(db: Database.Database): void {
   ensureBuildsIdentityColumns(db);
   ensureVariantArtifactColumns(db);
   ensureSoftStatTargetsColumn(db);
+  ensureSetOptimizerColumns(db);
   ensureBuildSynergyTypesTable(db);
 }
 

@@ -41,7 +41,6 @@ import {
   ClassIcon,
   Cluster,
   DesignationLabel,
-  EmptyState,
   EntityHotspot,
   FilterChip,
   MetaChip,

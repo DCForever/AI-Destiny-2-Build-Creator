@@ -15,6 +15,10 @@ import {
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import type { CreateSetInput, SetType, UpdateSetInput } from "@/lib/sets/schemas";
 import {
+  parseOptimizerConstraints,
+  serializeOptimizerConstraints,
+} from "@/lib/optimizer/types";
+import {
   hasEmptyModSlots,
   listActiveSetItems,
   listSetItems,
@@ -70,6 +74,7 @@ export async function getSetDetail(db: AppDatabase, userId: number, setId: strin
 
   return {
     ...set,
+    optimizerConstraints: parseOptimizerConstraints(set.optimizerConstraints),
     items,
     armorStatTotals:
       set.type === "armor" ? armorStatTotals : null,
@@ -100,7 +105,21 @@ export async function createUserSet(db: AppDatabase, userId: number, input: Crea
 
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
-  createSetRecord(db, userId, { id, name: input.name, type: input.type, tagIds: tags, now });
+  const constraintsJson =
+    input.optimizerConstraints === undefined
+      ? null
+      : input.optimizerConstraints === null
+        ? null
+        : serializeOptimizerConstraints(input.optimizerConstraints);
+  createSetRecord(db, userId, {
+    id,
+    name: input.name,
+    type: input.type,
+    tagIds: tags,
+    now,
+    optimizerConstraints: constraintsJson,
+    linkedModSetId: input.linkedModSetId ?? null,
+  });
   return getSetDetail(db, userId, id);
 }
 
@@ -125,11 +144,19 @@ export async function updateUserSet(
   }
 
   const now = new Date().toISOString();
+  const constraintsJson =
+    input.optimizerConstraints === undefined
+      ? undefined
+      : input.optimizerConstraints === null
+        ? null
+        : serializeOptimizerConstraints(input.optimizerConstraints);
   updateSetRecord(db, userId, setId, {
     name: input.name,
     type: input.type,
     tagIds: input.tagIds,
     now,
+    ...(constraintsJson !== undefined ? { optimizerConstraints: constraintsJson } : {}),
+    ...(input.linkedModSetId !== undefined ? { linkedModSetId: input.linkedModSetId } : {}),
   });
   return getSetDetail(db, userId, setId);
 }

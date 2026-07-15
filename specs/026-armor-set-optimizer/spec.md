@@ -41,6 +41,15 @@
 
 **Verification**: Signed-in debug Builds and Sets surfaces plus automated contract tests exercise create-from-build → attach, constraint → combination list → materialize set, and mod-aware estimates.
 
+## Future UX (deferred)
+
+This iteration ships **debug/API-first** verification only (forms, ranked result tables, JSON panels, soft-suggestion banners on `/debug/builds` and `/debug/sets`). A later polish slice SHOULD deliver production-facing UX that reuses the same APIs and domain rules without changing them, for example:
+
+- **Builds compose**: “Create Sets from this build,” “Optimize armor,” and soft “better kit available” prompts inline with the build/variant editor (not only debug).
+- **Sets library**: Constraint editor and refresh/apply flows as first-class Set tooling, with clear reuse annotations (“also in …”) and prefer-reuse controls.
+- **Optimizer results**: DIM-like comparison of full kits (piece icons, six-stat totals, set-bonus chips, assumed mods, truncated/search-budget feedback) with explicit confirm before materialize or in-place apply.
+- **Non-goals for that polish slice unless separately scoped**: embedding DIM’s LO UI, background worker progress chrome copied from DIM, or changing hard/soft constraint semantics defined here.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Create Sets from a Build and Attach Immediately (Priority: P1)

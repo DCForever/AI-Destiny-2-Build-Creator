@@ -10,7 +10,9 @@ import { SubclassStructuredForm, type SubclassFormValue } from "@/components/deb
 import { SynergyTypeMultiSelect, type SynergyTypeSelection } from "@/components/debug/SynergyTypeMultiSelect";
 import { VariantSelect } from "@/components/debug/VariantSelect";
 import { mergeAttachment, removeAttachment, type AttachmentInput } from "@/lib/builds/attachmentMerge";
+import { pickOptimizerConstraints } from "@/lib/debug/optimizerConstraintsFromRequest";
 import { emptyLookupMessage } from "@/lib/debug/lookupParity";
+import type { ImprovementSuggestion } from "@/lib/optimizer/improvementSuggestions";
 import { sortByName } from "@/lib/sortByName";
 
 type GuardianClass = "Titan" | "Hunter" | "Warlock";
@@ -105,6 +107,23 @@ export function BuildsDebugPage() {
     Array<{ characterId: string; classType: GuardianClass; light: number }>
   >([]);
   const [equipCharacterId, setEquipCharacterId] = useState("");
+  const [createSetsAttachNow, setCreateSetsAttachNow] = useState(true);
+  const [optimizeConstraintsJson, setOptimizeConstraintsJson] = useState('{\n  "maxResults": 25\n}');
+  const [optimizeIncludeModEstimates, setOptimizeIncludeModEstimates] = useState(true);
+  const [optimizePreferReuse, setOptimizePreferReuse] = useState(false);
+  const [optimizeResult, setOptimizeResult] = useState<{
+    combinations: Array<Record<string, unknown>>;
+    truncated?: boolean;
+    evaluatedCount?: number;
+    emptyReason?: unknown;
+  } | null>(null);
+  const [lastOptimizeRequest, setLastOptimizeRequest] = useState<Record<string, unknown> | null>(null);
+  const [materializeForm, setMaterializeForm] = useState({
+    armorSetName: "",
+    createModSet: false,
+    attachNow: false,
+  });
+  const [suggestions, setSuggestions] = useState<ImprovementSuggestion[]>([]);
 
   const record = useCallback((next: JsonPanel) => setPanel(next), []);
   const tagFacets = useMemo(() => conceptTagsByFacet(), []);
@@ -512,6 +531,137 @@ export function BuildsDebugPage() {
     record({ label: "POST /api/user/suggestions/rolls", request: payload, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
   }
 
+  async function createSetsFromBuildCall() {
+    if (!selectedBuildId) return;
+    const payload = {
+      attachNow: createSetsAttachNow,
+      categories: ["armor", "weapon", "mod"] as const,
+    };
+    const url = `/api/user/builds/${selectedBuildId}/create-sets`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: `POST ${url}`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
+    if (res.ok) void loadBuildData();
+  }
+
+  async function optimizeArmorCall() {
+    if (!selectedBuildId) return;
+    let extras: Record<string, unknown> = {};
+    try {
+      extras = optimizeConstraintsJson.trim() ? (JSON.parse(optimizeConstraintsJson) as Record<string, unknown>) : {};
+    } catch {
+      record({ label: "Optimize armor blocked", error: { message: "Constraints JSON is invalid." } });
+      return;
+    }
+    const payload = {
+      buildId: selectedBuildId,
+      ...extras,
+      includeModEstimates: optimizeIncludeModEstimates,
+      preferReuse: optimizePreferReuse,
+    };
+    const url = "/api/user/armor/optimize";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: `POST ${url}`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
+    if (res.ok) {
+      setOptimizeResult(body as typeof optimizeResult);
+      setLastOptimizeRequest(payload);
+    } else {
+      setOptimizeResult(null);
+    }
+  }
+
+  async function materializeCombinationCall(combo: Record<string, unknown>) {
+    if (!lastOptimizeRequest) return;
+    const pieces = ((combo.pieces as Array<{ slot: string; itemHash: number; instanceId: string }>) ?? []).map(
+      (p) => ({ slot: p.slot, itemHash: p.itemHash, instanceId: p.instanceId }),
+    );
+    const assumedMods = ((combo.assumedMods as Array<{ armorSlot: string; itemHash: number }>) ?? []).map((m) => ({
+      armorSlot: m.armorSlot,
+      itemHash: m.itemHash,
+    }));
+    const payload: Record<string, unknown> = {
+      pieces,
+      constraints: pickOptimizerConstraints(lastOptimizeRequest),
+      armorSetName: materializeForm.armorSetName.trim() || `${buildDetail?.name ?? "Optimized"} Armor`,
+      createModSet: materializeForm.createModSet,
+      attachNow: materializeForm.attachNow,
+    };
+    if (assumedMods.length) payload.assumedMods = assumedMods;
+    if (materializeForm.attachNow) {
+      payload.buildId = selectedBuildId;
+      payload.variantId = selectedVariantId;
+    }
+    const url = "/api/user/armor/optimize/materialize";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: `POST ${url}`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
+  }
+
+  async function fetchSuggestionsCall() {
+    const url = "/api/user/armor/improvement-suggestions";
+    const res = await fetch(url);
+    const body = await res.json();
+    record({ label: `GET ${url}`, response: res.ok ? body : undefined, error: res.ok ? undefined : body });
+    setSuggestions(res.ok ? ((body.suggestions ?? []) as ImprovementSuggestion[]) : []);
+  }
+
+  async function confirmSuggestionCall(suggestion: ImprovementSuggestion) {
+    const combo = suggestion.betterCombination;
+    if (!combo) return;
+    const payload: Record<string, unknown> = {
+      pieces: combo.pieces.map((p) => ({ slot: p.slot, itemHash: p.itemHash, instanceId: p.instanceId })),
+    };
+    if (combo.assumedMods.length) {
+      payload.assumedMods = combo.assumedMods.map((m) => ({ armorSlot: m.armorSlot, itemHash: m.itemHash }));
+    }
+    const url = `/api/user/sets/${suggestion.armorSetId}/apply-combination`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    record({
+      label: `POST ${url}`,
+      request: payload,
+      response: res.ok ? body : undefined,
+      error: res.ok ? undefined : body,
+    });
+    if (res.ok) setSuggestions((prev) => prev.filter((s) => s.armorSetId !== suggestion.armorSetId));
+  }
+
+  function dismissSuggestion(armorSetId: string) {
+    setSuggestions((prev) => prev.filter((s) => s.armorSetId !== armorSetId));
+  }
+
   return (
     <div className="grid min-w-0 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
       <section className="space-y-4">
@@ -531,6 +681,186 @@ export function BuildsDebugPage() {
               </option>
             ))}
           </select>
+        </fieldset>
+
+        <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Create sets from build (026)</legend>
+          <p className="text-xs text-zinc-500">
+            Snapshots resolved armor/weapons into new Sets, seeds armor optimizer constraints, optional live attach
+            (replace-by-type).
+          </p>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={createSetsAttachNow}
+              onChange={(e) => setCreateSetsAttachNow(e.target.checked)}
+            />
+            attachNow
+          </label>
+          <button
+            type="button"
+            className={buttonClass(!selectedBuildId)}
+            disabled={!selectedBuildId}
+            onClick={() => void createSetsFromBuildCall()}
+          >
+            Create sets from build
+          </button>
+        </fieldset>
+
+        <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Optimize armor (026)</legend>
+          <p className="text-xs text-zinc-500">
+            Seeds class/exotic/soft targets from the selected build. Extra JSON merges into the request body.
+          </p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={optimizeIncludeModEstimates}
+                onChange={(e) => setOptimizeIncludeModEstimates(e.target.checked)}
+              />
+              includeModEstimates
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={optimizePreferReuse}
+                onChange={(e) => setOptimizePreferReuse(e.target.checked)}
+              />
+              preferReuse
+            </label>
+          </div>
+          <textarea
+            className={`${zincInputClass()} min-h-24 font-mono text-xs`}
+            value={optimizeConstraintsJson}
+            onChange={(e) => setOptimizeConstraintsJson(e.target.value)}
+          />
+          <button
+            type="button"
+            className={buttonClass(!selectedBuildId)}
+            disabled={!selectedBuildId}
+            onClick={() => void optimizeArmorCall()}
+          >
+            Optimize armor
+          </button>
+          {optimizeResult ? (
+            <div className="space-y-2 overflow-x-auto text-xs">
+              <p className="text-zinc-400">
+                {optimizeResult.combinations?.length ?? 0} kits
+                {optimizeResult.truncated ? " (truncated)" : ""} · evaluated{" "}
+                {optimizeResult.evaluatedCount ?? "—"}
+              </p>
+              {optimizeResult.emptyReason ? (
+                <pre className="whitespace-pre-wrap text-amber-400">
+                  {JSON.stringify(optimizeResult.emptyReason, null, 2)}
+                </pre>
+              ) : null}
+              <div className="flex flex-wrap items-end gap-2 rounded border border-zinc-800 bg-zinc-950 p-2">
+                <input
+                  className={zincInputClass()}
+                  placeholder="Armor set name (blank derives default)"
+                  value={materializeForm.armorSetName}
+                  onChange={(e) => setMaterializeForm((f) => ({ ...f, armorSetName: e.target.value }))}
+                />
+                <label className="flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={materializeForm.createModSet}
+                    onChange={(e) => setMaterializeForm((f) => ({ ...f, createModSet: e.target.checked }))}
+                  />
+                  createModSet
+                </label>
+                <label className="flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={materializeForm.attachNow}
+                    disabled={!canUseVariant}
+                    onChange={(e) => setMaterializeForm((f) => ({ ...f, attachNow: e.target.checked }))}
+                  />
+                  attachNow (to {selectedVariant ? selectedVariant.name : "selected variant"})
+                </label>
+              </div>
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-zinc-700 text-zinc-400">
+                    <th className="p-1">#</th>
+                    <th className="p-1">Score</th>
+                    <th className="p-1">Reuse</th>
+                    <th className="p-1">Stats</th>
+                    <th className="p-1">Set bonuses</th>
+                    <th className="p-1">Pieces</th>
+                    <th className="p-1">Materialize</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(optimizeResult.combinations ?? []).slice(0, 25).map((c, i) => (
+                    <tr key={i} className="border-b border-zinc-800 align-top">
+                      <td className="p-1">{i + 1}</td>
+                      <td className="p-1">{String(c.score ?? "")}</td>
+                      <td className="p-1">{String(c.reusePieceCount ?? "")}</td>
+                      <td className="p-1 font-mono">
+                        {JSON.stringify(c.estimatedStats ?? {})}
+                      </td>
+                      <td className="p-1 font-mono">
+                        {JSON.stringify(c.setBonusSummary ?? [])}
+                      </td>
+                      <td className="p-1 font-mono">
+                        {Array.isArray(c.pieces)
+                          ? (c.pieces as Array<{ slot?: string; itemName?: string; itemHash?: number }>)
+                              .map((p) => `${p.slot}:${p.itemName ?? p.itemHash}`)
+                              .join(", ")
+                          : ""}
+                      </td>
+                      <td className="p-1">
+                        <button
+                          type="button"
+                          className="rounded bg-emerald-700 px-2 py-0.5 text-xs"
+                          onClick={() => void materializeCombinationCall(c)}
+                        >
+                          Materialize
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </fieldset>
+
+        <fieldset className="space-y-3 rounded border border-zinc-800 p-3">
+          <legend className="px-1 text-sm">Improvement suggestions (026)</legend>
+          <p className="text-xs text-zinc-500">
+            Soft, suggest-then-confirm: better kits for constrained Armor Sets attached to a Build. Never auto-applies.
+          </p>
+          <button type="button" className={buttonClass(false)} onClick={() => void fetchSuggestionsCall()}>
+            Fetch improvement suggestions
+          </button>
+          {suggestions.length === 0 ? (
+            <p className="text-xs text-zinc-500">No suggestions loaded.</p>
+          ) : (
+            <div className="space-y-2">
+              {suggestions.map((s) => (
+                <div key={s.armorSetId} className="space-y-2 rounded border border-amber-700/60 bg-amber-950/40 p-2 text-xs text-amber-100">
+                  <p>
+                    {s.armorSetName} · used by {s.buildIds.length} build(s)
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className={buttonClass()} onClick={() => void confirmSuggestionCall(s)}>
+                      Confirm apply
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded bg-zinc-700 px-3 py-1 text-sm"
+                      onClick={() => dismissSuggestion(s.armorSetId)}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </fieldset>
 
         <fieldset className="space-y-3 rounded border border-zinc-800 p-3">

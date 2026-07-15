@@ -48,4 +48,18 @@ describe("schema migrations", () => {
     expect(col).toBeDefined();
     expect(col?.notnull).toBe(0);
   });
+
+  it("adds nullable sets.optimizer_constraints and linked_mod_set_id columns", () => {
+    const sqlite = createTestSqlite();
+    const cols = sqlite.prepare("PRAGMA table_info(sets)").all() as Array<{
+      name: string;
+      notnull: number;
+    }>;
+    const constraints = cols.find((c) => c.name === "optimizer_constraints");
+    const linked = cols.find((c) => c.name === "linked_mod_set_id");
+    expect(constraints).toBeDefined();
+    expect(constraints?.notnull).toBe(0);
+    expect(linked).toBeDefined();
+    expect(linked?.notnull).toBe(0);
+  });
 });

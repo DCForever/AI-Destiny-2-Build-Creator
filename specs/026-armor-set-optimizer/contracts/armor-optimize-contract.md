@@ -1,8 +1,8 @@
 # Contract: Armor Optimize (Combination Search)
 
 **Type**: Authenticated API + debug UI  
-**Stories**: US2, US3, US4, US6  
-**Rules**: DBR-CMP-007, DBR-STAT-001–005, DBR-MOD-001–002, DBR-SETB-001
+**Stories**: US2, US3, US4, US6, US7  
+**Rules**: DBR-CMP-007, DBR-STAT-001–005, DBR-MOD-001–002, DBR-SETB-001, BR-OPT-003 (prefer-reuse)
 
 ## Endpoint
 
@@ -25,6 +25,8 @@ type SetBonusCoverageGoal = {
 type ArmorOptimizeBody = {
   buildId?: string;
   variantId?: string;
+  /** When refreshing / excluding self from reuse annotations */
+  armorSetId?: string;
   /** Required if buildId omitted */
   classType?: "Titan" | "Hunter" | "Warlock";
 
@@ -40,6 +42,8 @@ type ArmorOptimizeBody = {
   requireThresholds?: boolean; // default false
 
   includeModEstimates?: boolean; // default true
+  /** Soft tie-break after lexicographic stats; default false */
+  preferReuse?: boolean;
   maxResults?: number; // 1–50, default 25
 };
 ```
@@ -49,6 +53,7 @@ type ArmorOptimizeBody = {
 - `lockedExoticItemHash` from build exotic armor identity when set (overridable)
 - `statThresholds` from `softStatTargets` when caller omits thresholds
 - `statPriorities` default: stats with targets first (descending target), then remaining EoF six
+- `preferReuse` default false unless caller sets it
 
 ### Response 200
 
@@ -73,6 +78,7 @@ type ArmorOptimizeResponse = {
     lockedExoticItemHash?: number;
     statThresholds?: Partial<Record<ArmorStatName, number>>;
     statPriorities?: ArmorStatName[];
+    preferReuse?: boolean;
   };
 };
 
@@ -85,6 +91,8 @@ type ArmorCombination = {
     isExotic: boolean;
     setBonusKey?: string;
     statValues?: Partial<Record<ArmorStatName, number>>;
+    /** Other Armor Sets (exclude armorSetId under search) with this instance active */
+    usedInOtherSets: Array<{ id: string; name: string }>;
   }>;
   estimatedStats: Partial<Record<ArmorStatName, number>>;
   incompleteEstimate: boolean;
@@ -101,6 +109,8 @@ type ArmorCombination = {
     energyCost: number;
     statDeltas?: Partial<Record<ArmorStatName, number>>;
   }>;
+  /** 0–5 pieces that appear in ≥1 other Armor Set */
+  reusePieceCount: number;
   score: number;
   meetsSoftThresholds: boolean;
 };
@@ -108,13 +118,15 @@ type ArmorCombination = {
 
 ### Invariants (testable)
 
-1. Every combination has ≤1 exotic armor piece.
+1. Every combination has exactly five armor slots filled and ≤1 exotic armor piece.
 2. If `lockedExoticItemHash` set, every combination includes that hash in the correct slot.
 3. Every `setBonusGoals` entry is satisfied by piece counts in that combination.
-4. Results sorted by `score` descending (stable tie-break documented in score module).
-5. When `includeModEstimates` is false, `assumedMods` is `[]` and estimates exclude auto mods.
-6. When `includeModEstimates` is true, assumed mods respect per-piece energy capacity.
-7. `combinations.length === 0` ⇒ `emptyReason` present.
+4. Results sorted by lexicographic estimated stats in `statPriorities` order, then sum of prioritized stats; when `preferReuse` is true, higher `reusePieceCount` ranks higher only after those ties (FR-005).
+5. When `preferReuse` is false, order ignores reuse (annotations still present).
+6. When `includeModEstimates` is false, `assumedMods` is `[]` and estimates exclude auto mods.
+7. When `includeModEstimates` is true, assumed mods respect per-piece energy capacity.
+8. Soft-removed Set items never appear in `usedInOtherSets` / `reusePieceCount`.
+9. `combinations.length === 0` ⇒ `emptyReason` present.
 
 ### Errors
 
@@ -127,5 +139,5 @@ type ArmorCombination = {
 
 ### Debug UI
 
-- **Builds**: “Optimize armor” prefilled from build → result table (pieces, stats, set bonuses, assumed mods).
-- **Sets**: Same form with manual class / exotic / goals (US6).
+- **Builds**: “Optimize armor” prefilled from build → result table (pieces, stats, set bonuses, assumed mods, reuse annotations, prefer-reuse toggle).
+- **Sets**: Same form with manual class / exotic / goals (US6); prefer-reuse control.

@@ -12,6 +12,7 @@ import {
   Stack,
   Text,
 } from "@/components/ui";
+import type { ImprovementSuggestion } from "@/lib/optimizer/improvementSuggestions";
 import {
   inventorySyncSummary,
   type InventorySyncStatus,
@@ -32,6 +33,7 @@ export function InventorySyncCard({ signedIn }: { signedIn: boolean }) {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<ImprovementSuggestion[]>([]);
 
   const loadStatus = useCallback(async (): Promise<InventorySyncStatus | null> => {
     if (!signedIn) return null;
@@ -70,6 +72,45 @@ export function InventorySyncCard({ signedIn }: { signedIn: boolean }) {
     };
   }, [signedIn, loadStatus]);
 
+  /** Soft, suggest-then-confirm check after a successful sync — never auto-applies (BR-OPT-004). */
+  async function fetchPostSyncSuggestions() {
+    try {
+      const res = await fetch("/api/user/armor/improvement-suggestions?afterSync=1");
+      if (!res.ok) return;
+      const body = (await res.json()) as { suggestions?: ImprovementSuggestion[] };
+      setSuggestions(body.suggestions ?? []);
+    } catch {
+      // Soft suggestions are best-effort; ignore failures.
+    }
+  }
+
+  async function confirmSuggestion(suggestion: ImprovementSuggestion) {
+    const combo = suggestion.betterCombination;
+    if (!combo) return;
+    const payload: Record<string, unknown> = {
+      pieces: combo.pieces.map((p) => ({ slot: p.slot, itemHash: p.itemHash, instanceId: p.instanceId })),
+    };
+    if (combo.assumedMods.length) {
+      payload.assumedMods = combo.assumedMods.map((m) => ({ armorSlot: m.armorSlot, itemHash: m.itemHash }));
+    }
+    try {
+      const res = await fetch(`/api/user/sets/${suggestion.armorSetId}/apply-combination`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setSuggestions((prev) => prev.filter((s) => s.armorSetId !== suggestion.armorSetId));
+      }
+    } catch {
+      // Leave the suggestion visible so the user can retry.
+    }
+  }
+
+  function dismissSuggestion(armorSetId: string) {
+    setSuggestions((prev) => prev.filter((s) => s.armorSetId !== armorSetId));
+  }
+
   async function runSync() {
     setSyncing(true);
     setError(null);
@@ -96,6 +137,7 @@ export function InventorySyncCard({ signedIn }: { signedIn: boolean }) {
       } finally {
         setLoading(false);
       }
+      void fetchPostSyncSuggestions();
     } catch {
       setError("Inventory sync failed");
     } finally {
@@ -169,6 +211,25 @@ export function InventorySyncCard({ signedIn }: { signedIn: boolean }) {
         ) : null}
         {error ? <Callout tone="danger">{error}</Callout> : null}
         {message ? <Callout tone="success">{message}</Callout> : null}
+        {suggestions.length > 0 ? (
+          <Callout tone="info" title="Better armor kits found">
+            <Stack gap={8}>
+              {suggestions.map((suggestion) => (
+                <Row key={suggestion.armorSetId} justify="between" align="center" gap={8} wrap>
+                  <Text size="sm">{suggestion.armorSetName}</Text>
+                  <Row gap={6}>
+                    <Button size="sm" variant="accent" onClick={() => void confirmSuggestion(suggestion)}>
+                      Confirm
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(suggestion.armorSetId)}>
+                      Dismiss
+                    </Button>
+                  </Row>
+                </Row>
+              ))}
+            </Stack>
+          </Callout>
+        ) : null}
 
         <Row gap={8}>
           <Button
