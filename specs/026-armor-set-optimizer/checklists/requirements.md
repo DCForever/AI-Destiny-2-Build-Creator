@@ -34,4 +34,5 @@
 - Validation pass 1 (2026-07-14): All items pass. DIM / library evaluation is documented as a planning assumption (product requires DIM-like outcomes, not a mandatory DIM dependency). No clarification markers.
 - Clarification session 2026-07-14 (1): replace-by-type attach, complete kits only, auto-unique names, materialize creates new Sets only, lexicographic ranking.
 - Clarification session 2026-07-14 (2): constraints persist on Armor Set; in-place refresh; post-sync soft suggest (attached + on-open); create-from-build seeds exotic+soft stats; any constraints payload qualifies for checks (clear to opt out). Supersedes “never overwrite” for constrained refresh.
-- Plan/contracts/data-model are stale vs clarifications — sync before `/speckit-tasks`.
+- Clarification session 2026-07-14 (3): cross-Set reuse annotations; prefer-reuse soft tie-break (piece count 0–5); all other Armor Sets; active items only; preferReuse persisted default off.
+- Plan/contracts/data-model/tasks are stale vs clarifications — sync (T001–T005 + add US7 tasks) before or during implement.
