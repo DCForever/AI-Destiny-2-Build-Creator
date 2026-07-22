@@ -27,7 +27,7 @@ export function SetsLibrary({
 }) {
   return (
     <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
-      <div className="shrink-0">
+      <Stack gap={8} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -37,9 +37,15 @@ export function SetsLibrary({
             New
           </Button>
         </Row>
-      </div>
+        {sets.length > 0 ? (
+          <Text size="xs" tone="muted">
+            Browse kits by type, then open a set to fill slots for Build
+            variants.
+          </Text>
+        ) : null}
+      </Stack>
 
-      <div className="flex-1 min-h-0 overflow-y-auto mt-3">
+      <div className="flex-1 min-h-0 overflow-y-auto mt-2">
         {loading ? (
           <Text size="sm" tone="muted">
             Loading sets…
@@ -63,19 +69,22 @@ export function SetsLibrary({
                   type="button"
                   onClick={() => onSelect(row.id)}
                   className="text-left"
+                  aria-current={selected ? "true" : undefined}
                 >
                   <Panel
                     tone={selected ? "accent" : "muted"}
                     pad="sm"
                     className={
-                      selected ? "" : "hover:border-line-strong transition-colors"
+                      selected
+                        ? ""
+                        : "hover:border-line-strong transition-colors"
                     }
                   >
-                    <Stack gap={4}>
+                    <Stack gap={4} className="min-w-0">
                       <Text size="sm" weight="medium">
                         {row.name}
                       </Text>
-                      <Row gap={6} wrap>
+                      <Row gap={6} wrap align="center">
                         <Chip accent>{row.type}</Chip>
                         {(row.tagIds ?? []).slice(0, 3).map((t) => (
                           <ConceptTagChip key={t} tagId={t} size={18} />

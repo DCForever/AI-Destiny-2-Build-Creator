@@ -4,12 +4,14 @@ import { useState } from "react";
 
 import type { SetDetail } from "@/components/sets/types";
 import {
+  Badge,
   Button,
   Callout,
   Cluster,
   ConceptTagFilterChip,
   Panel,
   Row,
+  SectionLabel,
   Stack,
   Text,
   TextField,
@@ -83,12 +85,36 @@ export function SetsEditPanel({
   }
 
   return (
-    <Panel tone="accent" className="w-full">
+    <Panel tone="default" className="w-full">
       <Stack gap={14}>
-        <Row justify="between" align="center">
-          <Text size="sm" weight="medium">
-            {mode === "create" ? "Create set" : `Edit · ${initial?.name}`}
-          </Text>
+        <Row justify="between" align="start" gap={8} wrap>
+          <Stack gap={6} className="min-w-0 flex-1">
+            <Text size="sm" weight="medium">
+              {mode === "create" ? "New set" : "Edit set meta"}
+            </Text>
+            <Row gap={6} align="center" wrap>
+              <Text size="sm" tone="muted" className="min-w-0 truncate">
+                {mode === "edit"
+                  ? (initial?.name ?? "Set")
+                  : name.trim() || "Name this kit"}
+              </Text>
+              <Badge
+                tone={mode === "edit" ? "verified" : "accent"}
+                title={
+                  mode === "edit"
+                    ? "Type is locked after create"
+                    : "Choose kit type before filling slots"
+                }
+              >
+                {type}
+              </Badge>
+            </Row>
+            <Text size="xs" tone="muted">
+              {mode === "edit"
+                ? "Update name and tags only — fill slots from the set detail."
+                : "Create the kit shell, then fill slots from the open set."}
+            </Text>
+          </Stack>
           <Button size="sm" variant="ghost" onClick={onClose} disabled={busy}>
             Close
           </Button>
@@ -117,9 +143,7 @@ export function SetsEditPanel({
         </SelectField>
 
         <Stack gap={6}>
-          <Text size="xs" tone="muted">
-            Concept tags
-          </Text>
+          <SectionLabel>Concept tags</SectionLabel>
           <Cluster gap={6}>
             {CONCEPT_TAGS.map((tag) => (
               <ConceptTagFilterChip

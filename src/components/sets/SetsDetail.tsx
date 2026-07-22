@@ -196,7 +196,7 @@ export function SetsDetail({
     <Panel as="article" tone="raised" className="w-full">
       <Stack gap={16}>
         <Row justify="between" align="start" gap={12} wrap>
-          <Stack gap={8} className="min-w-0 flex-1">
+          <Stack gap={6} className="min-w-0 flex-1">
             <Heading level={1}>{set.name}</Heading>
             <Cluster gap={6}>
               <Badge tone="accent">{set.type}</Badge>
@@ -260,87 +260,6 @@ export function SetsDetail({
           </Text>
         ) : null}
 
-        {isArmor ? (
-          <Section label="Armor stats" gap={8}>
-            <Text size="xs" tone="muted">
-              Totals use pinned inventory copies; wishlist pieces have no rolls.
-            </Text>
-            {totals && totals.piecesWithStats > 0 ? (
-              <Stack gap={6}>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
-                  {ARMOR_STAT_NAMES.map((name) => (
-                    <Row key={name} justify="between" gap={8}>
-                      <Text size="xs" tone="muted">
-                        {name}
-                      </Text>
-                      <Text size="xs" weight="medium" className="tabular-nums">
-                        {totals.statValues[name] ?? "—"}
-                      </Text>
-                    </Row>
-                  ))}
-                </div>
-                <Text size="xs" weight="medium">
-                  Total {totals.grandTotal}
-                  {totals.incomplete ? " · incomplete" : ""}
-                  {totals.piecesWithStats > 0
-                    ? ` · ${totals.piecesWithStats} piece${
-                        totals.piecesWithStats === 1 ? "" : "s"
-                      }`
-                    : ""}
-                </Text>
-              </Stack>
-            ) : (
-              <Text size="sm" tone="muted">
-                No instance stats yet — pin owned armor copies when filling
-                slots.
-              </Text>
-            )}
-          </Section>
-        ) : null}
-
-        <Section
-          label={
-            usedBy.length > 0
-              ? `Used by builds · ${usedBy.length}`
-              : "Used by builds"
-          }
-          gap={8}
-        >
-          {usedBy.length === 0 ? (
-            <Text size="sm" tone="muted">
-              No curated builds use this set yet. Attach it on a build variant
-              to see it here.
-            </Text>
-          ) : (
-            <Stack gap={6}>
-              {usedBy.map((b) => (
-                <Link
-                  key={b.buildId}
-                  href={buildDetailHref(b.buildId)}
-                  className="block focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                >
-                  <Panel
-                    tone="muted"
-                    pad="sm"
-                    className="hover:border-line-strong transition-colors"
-                  >
-                    <Stack gap={2}>
-                      <Text size="sm" weight="medium">
-                        {b.buildName}
-                      </Text>
-                      {b.variantNames.length > 0 ? (
-                        <Text size="xs" tone="muted">
-                          {b.variantNames.join(" · ")}
-                        </Text>
-                      ) : null}
-                    </Stack>
-                  </Panel>
-                </Link>
-              ))}
-            </Stack>
-          )}
-        </Section>
-
         {isMods ? (
           <Section label="Mods by armor piece" gap={10}>
             <Text size="xs" tone="muted">
@@ -358,8 +277,18 @@ export function SetsDetail({
                   pieceMods.map((m) => m.energyCost),
                 );
                 const overEnergy = used > capacity;
+                const emptyPiece = pieceMods.length === 0;
                 return (
-                  <Panel key={armorSlot} tone="muted" pad="sm">
+                  <Panel
+                    key={armorSlot}
+                    tone={emptyPiece ? "default" : "muted"}
+                    pad="sm"
+                    className={
+                      emptyPiece
+                        ? "border-dashed border-line-strong/70"
+                        : undefined
+                    }
+                  >
                     <Stack gap={8}>
                       <Row justify="between" align="center" gap={8} wrap>
                         <Stack gap={4} className="min-w-0">
@@ -389,7 +318,7 @@ export function SetsDetail({
                           Add mod
                         </Button>
                       </Row>
-                      {pieceMods.length === 0 ? (
+                      {emptyPiece ? (
                         <Text size="xs" tone="muted">
                           No mods on this piece yet.
                         </Text>
@@ -500,11 +429,18 @@ export function SetsDetail({
             }
             gap={8}
           >
-            <Stack gap={8}>
+            <Stack gap={6}>
               {slotList.map((slot) => {
                 const item = activeItems.find((i) => i.slot === slot);
                 return (
-                  <Panel key={slot} tone="muted" pad="sm">
+                  <Panel
+                    key={slot}
+                    tone={item ? "muted" : "default"}
+                    pad="sm"
+                    className={
+                      item ? undefined : "border-dashed border-line-strong/70"
+                    }
+                  >
                     <Row justify="between" align="start" gap={8} wrap>
                       <Stack gap={6} className="min-w-0 flex-1">
                         <Row gap={6} align="center" wrap>
@@ -588,6 +524,87 @@ export function SetsDetail({
             Some armor pieces may have empty mod slots.
           </Text>
         ) : null}
+
+        {isArmor ? (
+          <Section label="Armor stats" gap={8}>
+            <Text size="xs" tone="muted">
+              Totals use pinned inventory copies; wishlist pieces have no rolls.
+            </Text>
+            {totals && totals.piecesWithStats > 0 ? (
+              <Stack gap={6}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+                  {ARMOR_STAT_NAMES.map((name) => (
+                    <Row key={name} justify="between" gap={8}>
+                      <Text size="xs" tone="muted">
+                        {name}
+                      </Text>
+                      <Text size="xs" weight="medium" className="tabular-nums">
+                        {totals.statValues[name] ?? "—"}
+                      </Text>
+                    </Row>
+                  ))}
+                </div>
+                <Text size="xs" weight="medium">
+                  Total {totals.grandTotal}
+                  {totals.incomplete ? " · incomplete" : ""}
+                  {totals.piecesWithStats > 0
+                    ? ` · ${totals.piecesWithStats} piece${
+                        totals.piecesWithStats === 1 ? "" : "s"
+                      }`
+                    : ""}
+                </Text>
+              </Stack>
+            ) : (
+              <Text size="sm" tone="muted">
+                No instance stats yet — pin owned armor copies when filling
+                slots.
+              </Text>
+            )}
+          </Section>
+        ) : null}
+
+        <Section
+          label={
+            usedBy.length > 0
+              ? `Used by builds · ${usedBy.length}`
+              : "Used by builds"
+          }
+          gap={8}
+        >
+          {usedBy.length === 0 ? (
+            <Text size="sm" tone="muted">
+              No curated builds use this set yet. Attach it on a build variant
+              to see it here.
+            </Text>
+          ) : (
+            <Stack gap={6}>
+              {usedBy.map((b) => (
+                <Link
+                  key={b.buildId}
+                  href={buildDetailHref(b.buildId)}
+                  className="block focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <Panel
+                    tone="muted"
+                    pad="sm"
+                    className="hover:border-line-strong transition-colors"
+                  >
+                    <Stack gap={2}>
+                      <Text size="sm" weight="medium">
+                        {b.buildName}
+                      </Text>
+                      {b.variantNames.length > 0 ? (
+                        <Text size="xs" tone="muted">
+                          {b.variantNames.join(" · ")}
+                        </Text>
+                      ) : null}
+                    </Stack>
+                  </Panel>
+                </Link>
+              ))}
+            </Stack>
+          )}
+        </Section>
       </Stack>
     </Panel>
   );
