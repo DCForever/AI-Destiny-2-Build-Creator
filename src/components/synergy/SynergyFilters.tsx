@@ -6,7 +6,6 @@ import {
   Button,
   Cluster,
   CollapsibleFilterSection,
-  DesignationLabel,
   FilterChip,
   Panel,
   Row,
@@ -22,14 +21,34 @@ import {
 } from "@/lib/synergies/synergyTypeRules";
 import { compareDisplayName } from "@/lib/sortByName";
 
-const SORTED_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
-  compareDisplayName(getSynergyTypeLabel(a), getSynergyTypeLabel(b)),
-);
+type CreatableType = (typeof CREATABLE_SYNERGY_TYPES)[number];
+
+/** Stable family groups — reduces the flat 15-chip wall. */
+const TYPE_FAMILIES: { label: string; types: CreatableType[] }[] = [
+  {
+    label: "Kit",
+    types: ["melee", "verb", "grenade", "super", "element"],
+  },
+  {
+    label: "Weapons",
+    types: [
+      "primary_weapon",
+      "special_weapon",
+      "heavy_weapon",
+      "general_weapon",
+      "weapon_archetype",
+    ],
+  },
+  {
+    label: "Play",
+    types: ["dps", "healing", "solo", "damage_resist", "team"],
+  },
+];
 
 type SubTypeOption = { name: string; description?: string };
 
 /**
- * Type chips + expandable subtype submenu, collapsible like Catalog filters.
+ * Type chips (by family) + expandable subtype picker, collapsible like Catalog.
  */
 export function SynergyFilters({
   query,
@@ -222,29 +241,41 @@ export function SynergyFilters({
           placeholder="Search name, subtype, or link…"
         />
 
-        <Stack gap={6}>
+        <Stack gap={10}>
           <Text size="xs" tone="muted" className="uppercase tracking-widest">
             Type
           </Text>
-          <Cluster gap={6}>
-            {SORTED_TYPES.map((t) => {
-              const hasSubs = requiresSubType(t);
-              const active =
-                typeFilter.includes(t) || expandedType === t;
-              return (
-                <FilterChip
-                  key={t}
-                  label={
-                    hasSubs
-                      ? `${getSynergyTypeLabel(t)} +`
-                      : getSynergyTypeLabel(t)
-                  }
-                  active={active}
-                  onClick={() => onTypeClick(t)}
-                />
-              );
-            })}
-          </Cluster>
+          {TYPE_FAMILIES.map((family) => (
+            <Stack key={family.label} gap={4}>
+              <Text size="xs" tone="muted">
+                {family.label}
+              </Text>
+              <Cluster gap={6}>
+                {family.types.map((t) => {
+                  const hasSubs = requiresSubType(t);
+                  const active =
+                    typeFilter.includes(t) || expandedType === t;
+                  return (
+                    <FilterChip
+                      key={t}
+                      label={
+                        hasSubs
+                          ? `${getSynergyTypeLabel(t)} ·`
+                          : getSynergyTypeLabel(t)
+                      }
+                      active={active}
+                      onClick={() => onTypeClick(t)}
+                      title={
+                        hasSubs
+                          ? `${getSynergyTypeLabel(t)} — open subtypes`
+                          : getSynergyTypeLabel(t)
+                      }
+                    />
+                  );
+                })}
+              </Cluster>
+            </Stack>
+          ))}
         </Stack>
 
         {expandedType ? (
@@ -252,7 +283,7 @@ export function SynergyFilters({
             <Stack gap={10}>
               <Row justify="between" align="center" gap={8} wrap>
                 <Text size="sm" weight="medium">
-                  {getSynergyTypeLabel(expandedType)} — specific options
+                  {getSynergyTypeLabel(expandedType)} — subtypes
                 </Text>
                 <Button
                   size="sm"
@@ -300,20 +331,14 @@ export function SynergyFilters({
                   </Text>
                   <Cluster gap={6}>
                     {subTypeFilter.map((name) => (
-                      <button
+                      <FilterChip
                         key={name}
-                        type="button"
+                        size="xs"
+                        label={name}
+                        active
                         onClick={() => toggleSubType(name)}
                         title="Remove subtype filter"
-                        className="inline-flex items-center gap-1 border border-accent/50 px-1.5 py-0.5"
-                      >
-                        <DesignationLabel
-                          type={expandedType ?? "verb"}
-                          subType={name}
-                          size={16}
-                        />
-                        <span className="text-[10px] text-accent">×</span>
-                      </button>
+                      />
                     ))}
                   </Cluster>
                 </Stack>

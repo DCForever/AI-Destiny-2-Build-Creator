@@ -5,22 +5,21 @@ import {
   type SynergyDetail,
 } from "@/components/synergy/types";
 import {
+  Badge,
   Button,
-  Chip,
   Cluster,
   DesignationLabel,
   EntityHotspot,
+  Heading,
   InfoHotspot,
   Panel,
   Row,
   Section,
+  SectionLabel,
   Stack,
   Text,
 } from "@/components/ui";
-import {
-  formatSynergyTypeDesignation,
-  getSynergyTypeLabel,
-} from "@/lib/synergies/generateSynergyName";
+import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
 
 function groupLinks(detail: SynergyDetail) {
   const groups = new Map<string, SynergyDetail["links"]>();
@@ -41,6 +40,10 @@ function linkMeta(link: SynergyDetail["links"][number]): string | null {
   return null;
 }
 
+function countLabel(n: number, one: string, many: string): string {
+  return n === 1 ? `1 ${one}` : `${n} ${many}`;
+}
+
 export function SynergyDetail({
   synergy,
   onEdit,
@@ -53,66 +56,58 @@ export function SynergyDetail({
   deleteBusy?: boolean;
 }) {
   const grouped = groupLinks(synergy);
-  const typeLabel = getSynergyTypeLabel(synergy.type);
   const title = formatSynergyTypeDesignation({
     type: synergy.type,
     subType: synergy.subType,
   });
   const builds = synergy.buildCount ?? 0;
   const objects = synergy.objectCount ?? synergy.links.length;
-  const usageLine = `${builds === 1 ? "1 build linked" : `${builds} builds linked`} · ${
-    objects === 1 ? "1 object linked" : `${objects} objects linked`
-  }`;
+  const description = synergy.description?.trim() ?? "";
+  const linkTotal = synergy.links.length;
 
   return (
-    <Panel tone="raised" className="w-full">
-      <Stack gap={14}>
+    <Panel as="article" tone="raised" className="w-full">
+      <Stack gap={16}>
         <Row justify="between" align="start" gap={12} wrap>
-          <Stack gap={6} className="min-w-0 flex-1">
-            <Stack gap={4} className="min-w-0">
-              <div className="text-lg text-foreground flex items-center gap-2 flex-wrap">
+          <Stack gap={8} className="min-w-0 flex-1">
+            <InfoHotspot
+              kind="Designation"
+              title={title}
+              lines={[
+                "Build matches this type/subtype for coverage",
+                "Linked catalog objects are evidence for the designation",
+                synergy.subType
+                  ? `Subtype: ${synergy.subType}`
+                  : "No subtype on this row",
+              ]}
+            >
+              <Heading level={1} className="min-w-0">
                 <DesignationLabel
                   type={synergy.type}
                   subType={synergy.subType}
-                  size={32}
+                  size={28}
+                  className="text-lg font-medium text-foreground"
                 />
-              </div>
-              <Text size="sm" tone="muted">
-                {usageLine}
-              </Text>
-            </Stack>
-            <Cluster>
-              <InfoHotspot
-                kind="Synergy type"
-                title={typeLabel}
-                lines={[
-                  "Creatable library category",
-                  "Display name is Type: Subtype (designation)",
-                  `Internal key: ${synergy.type}`,
-                ]}
+              </Heading>
+            </InfoHotspot>
+
+            <Cluster gap={6}>
+              <Badge
+                tone={builds > 0 ? "verified" : "unresolved"}
+                title="Builds that list this designation"
               >
-                <Chip accent>{typeLabel}</Chip>
-              </InfoHotspot>
-              {synergy.subType ? (
-                <InfoHotspot
-                  kind="Designation"
-                  title={title}
-                  lines={[
-                    "Required for some types (verb, melee, archetype, …)",
-                    "Matched when resolving coverage on builds",
-                    "Icon shown when official art is available",
-                  ]}
-                >
-                  <DesignationLabel
-                    type={synergy.type}
-                    subType={synergy.subType}
-                    size={22}
-                  />
-                </InfoHotspot>
-              ) : null}
+                {countLabel(builds, "build", "builds")}
+              </Badge>
+              <Badge
+                tone={objects > 0 ? "accent" : "unresolved"}
+                title="Linked catalog objects on this library row"
+              >
+                {countLabel(objects, "object", "objects")}
+              </Badge>
             </Cluster>
           </Stack>
-          <Row gap={4} wrap>
+
+          <Row gap={4} wrap className="shrink-0">
             <Button size="sm" onClick={onEdit}>
               Edit
             </Button>
@@ -122,40 +117,50 @@ export function SynergyDetail({
               disabled={deleteBusy}
               onClick={onDelete}
             >
-              Delete
+              {deleteBusy ? "Deleting…" : "Delete"}
             </Button>
           </Row>
         </Row>
 
-        {synergy.description ? (
-          <Section label="Description">
-            <Text size="sm" className="leading-relaxed whitespace-pre-wrap">
-              {synergy.description}
-            </Text>
-          </Section>
-        ) : (
-          <Text size="xs" tone="muted">
-            No description
-          </Text>
-        )}
+        <div className="h-px w-full bg-gradient-to-r from-accent/70 to-transparent" />
 
-        <Section label="Links">
-          {grouped.length === 0 ? (
-            <Text size="xs" tone="muted">
-              No links
+        <Section label="Description">
+          {description ? (
+            <Text size="sm" className="leading-relaxed whitespace-pre-wrap">
+              {description}
             </Text>
           ) : (
-            <Stack gap={14}>
+            <Text size="sm" tone="muted">
+              No description yet — add notes when you edit so builds know the
+              intent behind this designation.
+            </Text>
+          )}
+        </Section>
+
+        <Section
+          label={linkTotal > 0 ? `Links · ${linkTotal}` : "Links"}
+          gap={10}
+        >
+          {grouped.length === 0 ? (
+            <Stack gap={6}>
+              <Text size="sm" tone="muted">
+                No catalog objects linked. Edit to attach weapons, perks, armor
+                bonuses, or artifact perks this designation covers.
+              </Text>
+              <div>
+                <Button size="sm" variant="accent" onClick={onEdit}>
+                  Add links
+                </Button>
+              </div>
+            </Stack>
+          ) : (
+            <Stack gap={16}>
               {grouped.map(([kind, links]) => (
                 <Stack key={kind} gap={8}>
-                  <Text
-                    size="xs"
-                    tone="muted"
-                    className="uppercase tracking-widest"
-                  >
+                  <SectionLabel>
                     {LINK_KIND_LABEL[kind] ?? kind}
-                    {links.length > 0 ? ` · ${links.length}` : ""}
-                  </Text>
+                    {` · ${links.length}`}
+                  </SectionLabel>
                   <Cluster gap={10}>
                     {links.map((link) => {
                       const meta = linkMeta(link);

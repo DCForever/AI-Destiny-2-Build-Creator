@@ -2,6 +2,7 @@
 
 import type { SynergySummary } from "@/components/synergy/types";
 import {
+  Badge,
   Button,
   DesignationLabel,
   Panel,
@@ -25,10 +26,14 @@ export function SynergyLibrary({
   synergies,
   selectedId,
   checkedIds,
+  survivorId,
+  hygieneMode,
+  onHygieneModeChange,
   onSelect,
   onToggleCheck,
   onCheckAllVisible,
   onClearChecked,
+  onSurvivorChange,
   onNew,
   onMerge,
   onDuplicate,
@@ -41,10 +46,14 @@ export function SynergyLibrary({
   synergies: SynergySummary[];
   selectedId: string | null;
   checkedIds: ReadonlySet<string>;
+  survivorId: string | null;
+  hygieneMode: boolean;
+  onHygieneModeChange: (next: boolean) => void;
   onSelect: (id: string) => void;
   onToggleCheck: (id: string) => void;
   onCheckAllVisible: () => void;
   onClearChecked: () => void;
+  onSurvivorChange: (id: string) => void;
   onNew: () => void;
   onMerge: () => void;
   onDuplicate: () => void;
@@ -64,14 +73,34 @@ export function SynergyLibrary({
             Library
             {synergies.length > 0 ? ` · ${synergies.length}` : ""}
           </SectionLabel>
-          <Button variant="accent" size="sm" onClick={onNew}>
-            New
-          </Button>
+          <Row gap={6} align="center">
+            {synergies.length > 0 ? (
+              <Button
+                variant={hygieneMode ? "accent" : "ghost"}
+                size="sm"
+                onClick={() => onHygieneModeChange(!hygieneMode)}
+                aria-pressed={hygieneMode}
+                title={
+                  hygieneMode
+                    ? "Exit library hygiene (hide merge tools)"
+                    : "Enter library hygiene to merge duplicate designations"
+                }
+              >
+                {hygieneMode ? "Exit hygiene" : "Hygiene"}
+              </Button>
+            ) : null}
+            <Button variant="accent" size="sm" onClick={onNew}>
+              New
+            </Button>
+          </Row>
         </Row>
 
-        {synergies.length > 0 ? (
+        {hygieneMode && synergies.length > 0 ? (
           <Stack gap={6}>
             <Row gap={6} wrap align="center">
+              <Badge tone="fuzzy" title="Merge and bulk tools">
+                Hygiene
+              </Badge>
               <Button
                 variant="ghost"
                 size="sm"
@@ -95,8 +124,8 @@ export function SynergyLibrary({
                 disabled={!mergeEnabled || mergeBusy || duplicateBusy}
                 title={
                   mergeEnabled
-                    ? "Merge checked rows into the selected survivor"
-                    : (mergeBlockedReason ?? "Select rows to merge")
+                    ? "Review merge into the chosen survivor"
+                    : (mergeBlockedReason ?? "Check rows and pick a survivor")
                 }
               >
                 {mergeBusy
@@ -131,13 +160,24 @@ export function SynergyLibrary({
                 {mergeBlockedReason}
               </Text>
             ) : null}
-            {mergeEnabled ? (
+            {checkedCount >= 2 ? (
               <Text size="xs" tone="muted">
-                Merge keeps the <strong>selected</strong> row and absorbs the
-                other checked rows (same type + subtype only).
+                Pick the <strong>survivor</strong> radio on a checked row. That
+                designation stays; other checked rows are absorbed (same type +
+                subtype only).
               </Text>
-            ) : null}
+            ) : (
+              <Text size="xs" tone="muted">
+                Check two or more same-type designations, choose which survives,
+                then Merge.
+              </Text>
+            )}
           </Stack>
+        ) : synergies.length > 0 ? (
+          <Text size="xs" tone="muted">
+            Browse and open a designation. Use Hygiene when you need to merge
+            duplicates.
+          </Text>
         ) : null}
       </Stack>
 
@@ -160,24 +200,48 @@ export function SynergyLibrary({
             {synergies.map((row) => {
               const selected = row.id === selectedId;
               const checked = checkedIds.has(row.id);
+              const isSurvivor = survivorId === row.id && checked;
               const title = formatSynergyTypeDesignation({
                 type: row.type,
                 subType: row.subType,
               });
               return (
                 <div key={row.id} className="flex gap-2 items-start">
-                  <input
-                    type="checkbox"
-                    className="mt-3 shrink-0 accent-current"
-                    checked={checked}
-                    onChange={() => onToggleCheck(row.id)}
-                    aria-label={`Select ${title} for merge`}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  {hygieneMode ? (
+                    <div className="mt-3 shrink-0 flex flex-col gap-2 items-center">
+                      <input
+                        type="checkbox"
+                        className="accent-current"
+                        checked={checked}
+                        onChange={() => onToggleCheck(row.id)}
+                        aria-label={`Include ${title} in merge`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {checked ? (
+                        <input
+                          type="radio"
+                          name="synergy-merge-survivor"
+                          className="accent-current"
+                          checked={isSurvivor}
+                          onChange={() => onSurvivorChange(row.id)}
+                          aria-label={`Keep ${title} as merge survivor`}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Survivor — this row is kept"
+                        />
+                      ) : (
+                        <span
+                          className="block w-3.5 h-3.5"
+                          aria-hidden
+                          title="Check this row to choose it as survivor"
+                        />
+                      )}
+                    </div>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => onSelect(row.id)}
                     className="text-left flex-1 min-w-0"
+                    aria-current={selected ? "true" : undefined}
                   >
                     <Panel
                       tone={selected ? "accent" : "muted"}
@@ -196,10 +260,10 @@ export function SynergyLibrary({
                             size={28}
                             className="text-sm font-medium text-foreground"
                           />
-                          {selected && checkedCount > 1 ? (
-                            <Text size="xs" tone="muted" as="span">
-                              · survivor
-                            </Text>
+                          {isSurvivor ? (
+                            <Badge tone="verified" title="Kept after merge">
+                              Survivor
+                            </Badge>
                           ) : null}
                         </Row>
                         <Text size="xs" tone="muted">
