@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 /*
- * Vault Terminal design system — dark, angular, Destiny-flavored.
- * Panels use notched corners (see .panel-notch); amber is the single
- * dominant accent, element colors appear only on element-typed data.
+ * Matte Flap Ledger — void-black split-flap board.
+ * Square plates, fixed-column libraries, Destiny element ink, amber lamps.
+ * No brushed steel. No notched vault plates.
  */
 
 :root {
-  --background: #0a0c10;
-  --surface: #11151d;
-  --surface-raised: #161b25;
-  --line: #232b3a;
-  --line-strong: #36415677;
-  --foreground: #d9dee8;
-  --muted: #8b94a7;
-  --accent: #e8b86d;
-  --accent-strong: #f5cf8e;
-  --accent-dim: #e8b86d2c;
+  --background: #050608;
+  --surface: #0c0e12;
+  --surface-raised: #12151c;
+  --line: #1c212c;
+  --line-strong: #2a3140;
+  --foreground: #e8eaef;
+  --muted: #8a93a6;
+  --accent: #e6b35c;
+  --accent-strong: #f0c878;
+  --accent-dim: #e6b35c24;
   --danger: #e2654f;
   --success: #6fc28b;
   --warning: #d9a93f;
@@ -36,6 +36,7 @@
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
@@ -54,10 +55,7 @@
 }
 
 body {
-  background:
-    radial-gradient(1100px 500px at 75% -10%, #1a2030 0%, transparent 60%),
-    radial-gradient(900px 600px at -10% 110%, #14181f 0%, transparent 55%),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), sans-serif;
 }
@@ -67,21 +65,16 @@ h2,
 h3,
 h4 {
   font-family: var(--font-display), sans-serif;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-/* Signature panel: top-left and bottom-right corners notched at 45°. */
+/* Square matte plate (legacy class name kept for one release). */
 .panel-notch {
   background: var(--surface);
   border: 1px solid var(--line);
-  clip-path: polygon(
-    12px 0,
-    100% 0,
-    100% calc(100% - 12px),
-    calc(100% - 12px) 100%,
-    0 100%,
-    0 12px
-  );
+  /* notches retired — square board */
+  clip-path: none;
 }
 
 .panel-notch-raised {
@@ -139,6 +132,157 @@ h4 {
   background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
+/* Flap board rows */
+.flap-board {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.flap-row {
+  display: grid;
+  width: 100%;
+  align-items: center;
+  gap: 0 8px;
+  padding: 6px 8px;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  position: relative;
+  min-height: 2.25rem;
+  transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.flap-row:last-child {
+  border-bottom: 0;
+}
+
+.flap-row:hover {
+  background: color-mix(in srgb, var(--surface-raised) 80%, transparent);
+}
+
+.flap-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  z-index: 1;
+}
+
+.flap-row[data-selected="true"] {
+  background: var(--accent-dim);
+}
+
+.flap-row[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+}
+
+.flap-row[data-lamp="warning"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--warning);
+}
+
+.flap-row[data-lamp="danger"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--danger);
+}
+
+.flap-cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flap-cell-name {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flap-cell-meta {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flap-cell-tally {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  justify-content: flex-end;
+}
+
+.flap-cell-tally[data-ready="true"] {
+  color: var(--accent);
+}
+
+.flap-header {
+  display: grid;
+  gap: 0 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+
+.flap-header-cell {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.flap-seal {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.flap-seal img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 /* Staged progress shimmer for the generation pipeline indicator. */
 @keyframes pulse-line {
   0%,
@@ -153,3 +297,4 @@ h4 {
 .pulse-line {
   animation: pulse-line 1.6s ease-in-out infinite;
 }
+

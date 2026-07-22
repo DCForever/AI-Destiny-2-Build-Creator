@@ -449,7 +449,7 @@ export function SetsPage() {
         </Stack>
       </PageFrameChrome>
       <PageFrameBody>
-        <Workspace
+        <Workspace railWidth={320}
           focusMain={focusMain}
           onBackToLibrary={() => {
             detailRequestSeq.current += 1;
@@ -481,3 +481,4 @@ export function SetsPage() {
     </PageFrame>
   );
 }
+

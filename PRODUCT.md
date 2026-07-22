@@ -85,9 +85,9 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 ## Brand Commitments
 
 - **Product name:** Destiny 2 Build Creator.
-- **UI system name in-repo:** “Vault Terminal” (`src/components/ui`) — shared primitives (Panel, Workspace, chips, hotspots, etc.); production screens should compose these rather than one-off chrome.
+- **UI system name in-repo:** “Matte Flap Ledger” (`src/components/ui`) — shared primitives (Panel, FlapRow, Workspace, chips, hotspots, etc.); production screens should compose these rather than one-off chrome.
 - **Voice:** Operator / arsenal clarity—precise Destiny terminology (class, subclass, synergy type, set, variant, pin, equip-ready). Prefer plain status and coverage language over hype.
-- **Visual world is not decided here.** Incumbent implementation exists (dark terminal-adjacent app shell, Chakra Petch + IBM Plex, Destiny iconography). Document or redesign via Impeccable `document` / design commands; do not invent a new brand system in this file.
+- **Visual world is not decided here.** Incumbent implementation exists (dark matte flap-board shell, Barlow Condensed + IBM Plex, Destiny iconography). Document or redesign via Impeccable `document` / design commands; do not invent a new brand system in this file.
 - Binding external brand: Destiny 2 / Bungie game terminology and official-ish icon paths where the app already vendors or maps them; do not invent official Bungie marketing claims.
 
 ## Evidence on Hand
@@ -110,3 +110,4 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 ## Accessibility & Inclusion
 
 No product-specific accessibility standard was locked in init. Default expectation for future UI work: keyboard-reachable primary actions, visible focus, and text that doesn’t rely on color alone for critical save/equip blockers—formal WCAG target remains open.
+

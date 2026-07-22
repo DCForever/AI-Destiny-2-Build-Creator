@@ -5,9 +5,9 @@ type PanelPad = "none" | "sm" | "md" | "lg";
 
 const PAD: Record<PanelPad, string> = {
   none: "p-0",
-  sm: "p-3",
-  md: "p-4",
-  lg: "p-5",
+  sm: "p-2",
+  md: "p-3",
+  lg: "p-4",
 };
 
 const TONE: Record<PanelTone, string> = {

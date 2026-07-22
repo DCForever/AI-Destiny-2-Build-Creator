@@ -1,49 +1,42 @@
-# Vault Terminal UI (`src/components/ui`)
+# Matte Flap Ledger UI (`src/components/ui`)
 
 Shared primitives for production screens. Feature pages should **compose** these
-instead of sprinkling `panel-notch` / raw Tailwind.
+instead of sprinkling raw board / badge classes.
 
-**Polish backlog:** [docs/ui-polish-tracker.md](../../../docs/ui-polish-tracker.md) — living list of fidelity / nice-to-have UI work (not Spec Kit).
+**Polish backlog:** [docs/ui-polish-tracker.md](../../../docs/ui-polish-tracker.md)
 
 ## Primitives
 
 | Export | Role |
 |--------|------|
-| `InfoHotspot` | Hover/pin popover (portaled); optional icon + accent in header |
-| `EntityHotspot` | Icon-first entity chip + description; prefers art over name when available |
-| `Panel` | Notched surface (`default` / `raised` / `accent` / `muted` / …) |
-| `Section` + `SectionLabel` | Labeled content block inside a panel |
+| `FlapRow` / `FlapBoard` / `FlapHeader` / `FlapCell` / `FlapSeal` | Dense split-flap library rows |
+| `InfoHotspot` | Hover/pin popover (portaled) |
+| `EntityHotspot` | Icon-first entity chip + description |
+| `Panel` | Square matte surface |
+| `Section` + `SectionLabel` | Labeled content block |
 | `Stack` / `Row` / `Cluster` | Spacing + alignment |
 | `Text` / `Heading` | Typography tones |
 | `Button` | `accent` / `outline` / `ghost` / `danger` |
-| `Badge` | Status wash chips: `verified` / `accent` / `fuzzy` / `unresolved` / `illegal` (+ `warning`/`danger` aliases) |
+| `Badge` | Status wash chips |
 | `Chip` / `FilterChip` | Tags + toggle filters |
 | `TextField` / `SelectField` | Form controls |
 | `PageHeader` | Title + description + actions |
 | `EmptyState` / `Callout` | Empty / status messaging |
 | `Workspace` / `WorkspaceMain` / `CardGrid` | Page layout slots |
 
-## Rearranging a screen
+## Library boards
 
-`BuildPage` is the reference:
+Prefer `FlapBoard` + `FlapRow` for Sets / Synergy / Build libraries — not nested
+`Panel` cards per row. Use `railWidth={320}` when columns need air.
 
 ```tsx
-<Stack>
-  <PageHeader … />
-  <Workspace
-    rail={<BuildLibrary … />}
-    main={
-      <WorkspaceMain>
-        <BuildIdentity … />
-        <CardGrid>…</CardGrid>
-        <BuildActions … />
-      </WorkspaceMain>
-    }
-    // railPosition="end"  → library on the right
-    // railWidth={320}     → wider rail
-  />
-</Stack>
+<FlapBoard>
+  <FlapHeader columns={COLS} cells={["Name", "Type", "Tags"]} />
+  {rows.map((row) => (
+    <FlapRow key={row.id} columns={COLS} selected={…} onClick={…}>
+      <FlapCell variant="name">{row.name}</FlapCell>
+      …
+    </FlapRow>
+  ))}
+</FlapBoard>
 ```
-
-Reorder `WorkspaceMain` children, swap `railPosition`, or replace a slot with
-another panel — styling stays consistent because everything is a primitive.

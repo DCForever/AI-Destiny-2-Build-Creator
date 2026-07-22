@@ -5,6 +5,10 @@ import {
   Badge,
   Button,
   DesignationLabel,
+  FlapBoard,
+  FlapCell,
+  FlapHeader,
+  FlapRow,
   Panel,
   Row,
   SectionLabel,
@@ -13,14 +17,14 @@ import {
 } from "@/components/ui";
 import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
 
-function usageSubtitle(row: SynergySummary): string {
+function usageTally(row: SynergySummary): string {
   const builds = row.buildCount ?? 0;
   const objects = row.objectCount ?? row.links?.length ?? 0;
-  const buildLabel = builds === 1 ? "1 build linked" : `${builds} builds linked`;
-  const objectLabel =
-    objects === 1 ? "1 object linked" : `${objects} objects linked`;
-  return `${buildLabel} · ${objectLabel}`;
+  return `${builds}B · ${objects}O`;
 }
+
+const COLS = "minmax(0,1fr) 5.5rem";
+const COLS_HYGIENE = "1.5rem minmax(0,1fr) 5.5rem";
 
 export function SynergyLibrary({
   synergies,
@@ -64,10 +68,11 @@ export function SynergyLibrary({
   loading: boolean;
 }) {
   const checkedCount = checkedIds.size;
+  const columns = hygieneMode ? COLS_HYGIENE : COLS;
 
   return (
-    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
-      <Stack gap={8} className="shrink-0">
+    <Panel as="aside" pad="sm" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <Stack gap={6} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -96,7 +101,7 @@ export function SynergyLibrary({
         </Row>
 
         {hygieneMode && synergies.length > 0 ? (
-          <Stack gap={6}>
+          <Stack gap={4}>
             <Row gap={6} wrap align="center">
               <Badge tone="fuzzy" title="Merge and bulk tools">
                 Hygiene
@@ -173,11 +178,6 @@ export function SynergyLibrary({
               </Text>
             )}
           </Stack>
-        ) : synergies.length > 0 ? (
-          <Text size="xs" tone="muted">
-            Browse and open a designation. Use Hygiene when you need to merge
-            duplicates.
-          </Text>
         ) : null}
       </Stack>
 
@@ -196,7 +196,15 @@ export function SynergyLibrary({
             </Button>
           </Stack>
         ) : (
-          <Stack gap={8}>
+          <FlapBoard>
+            <FlapHeader
+              columns={columns}
+              cells={
+                hygieneMode
+                  ? ["", "Designation", "Links"]
+                  : ["Designation", "Links"]
+              }
+            />
             {synergies.map((row) => {
               const selected = row.id === selectedId;
               const checked = checkedIds.has(row.id);
@@ -206,9 +214,19 @@ export function SynergyLibrary({
                 subType: row.subType,
               });
               return (
-                <div key={row.id} className="flex gap-2 items-start">
+                <FlapRow
+                  key={row.id}
+                  columns={columns}
+                  selected={selected}
+                  onClick={() => onSelect(row.id)}
+                  aria-current={selected ? "true" : undefined}
+                  aria-label={title}
+                >
                   {hygieneMode ? (
-                    <div className="mt-3 shrink-0 flex flex-col gap-2 items-center">
+                    <FlapCell
+                      className="justify-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
                         className="accent-current"
@@ -228,54 +246,29 @@ export function SynergyLibrary({
                           onClick={(e) => e.stopPropagation()}
                           title="Survivor — this row is kept"
                         />
-                      ) : (
-                        <span
-                          className="block w-3.5 h-3.5"
-                          aria-hidden
-                          title="Check this row to choose it as survivor"
-                        />
-                      )}
-                    </div>
+                      ) : null}
+                    </FlapCell>
                   ) : null}
-                  <button
-                    type="button"
-                    onClick={() => onSelect(row.id)}
-                    className="text-left flex-1 min-w-0"
-                    aria-current={selected ? "true" : undefined}
-                  >
-                    <Panel
-                      tone={selected ? "accent" : "muted"}
-                      pad="sm"
-                      className={
-                        selected
-                          ? ""
-                          : "hover:border-line-strong transition-colors"
-                      }
-                    >
-                      <Stack gap={4} className="min-w-0">
-                        <Row gap={6} align="center" wrap>
-                          <DesignationLabel
-                            type={row.type}
-                            subType={row.subType}
-                            size={28}
-                            className="text-sm font-medium text-foreground"
-                          />
-                          {isSurvivor ? (
-                            <Badge tone="verified" title="Kept after merge">
-                              Survivor
-                            </Badge>
-                          ) : null}
-                        </Row>
-                        <Text size="xs" tone="muted">
-                          {usageSubtitle(row)}
-                        </Text>
-                      </Stack>
-                    </Panel>
-                  </button>
-                </div>
+                  <FlapCell className="min-w-0 gap-2">
+                    <DesignationLabel
+                      type={row.type}
+                      subType={row.subType}
+                      size={22}
+                      className="text-[13px] font-medium text-foreground min-w-0"
+                    />
+                    {isSurvivor ? (
+                      <Badge tone="verified" title="Kept after merge">
+                        Surv
+                      </Badge>
+                    ) : null}
+                  </FlapCell>
+                  <FlapCell variant="tally" title={usageTally(row)}>
+                    {usageTally(row)}
+                  </FlapCell>
+                </FlapRow>
               );
             })}
-          </Stack>
+          </FlapBoard>
         )}
       </div>
     </Panel>

@@ -682,7 +682,7 @@ export function SynergyPage() {
         </Stack>
       </PageFrameChrome>
       <PageFrameBody>
-        <Workspace
+        <Workspace railWidth={320}
           focusMain={focusMain}
           onBackToLibrary={() => {
             clearSelection();
@@ -729,3 +729,4 @@ export function SynergyPage() {
     </PageFrame>
   );
 }
+

@@ -660,7 +660,7 @@ export function BuildPage() {
         </Stack>
       </PageFrameChrome>
       <PageFrameBody>
-        <Workspace
+        <Workspace railWidth={320}
           focusMain={Boolean(creating || editingBuild || detail)}
           onBackToLibrary={() => {
             setCreating(false);
@@ -708,3 +708,4 @@ export function BuildPage() {
     </PageFrame>
   );
 }
+

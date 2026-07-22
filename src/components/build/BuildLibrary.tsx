@@ -11,7 +11,11 @@ import {
   CollapsibleFilterSection,
   ElementIcon,
   FilterChip,
-  IconBadge,
+  FlapBoard,
+  FlapCell,
+  FlapHeader,
+  FlapRow,
+  FlapSeal,
   Panel,
   Row,
   SectionLabel,
@@ -21,7 +25,6 @@ import {
 } from "@/components/ui";
 import {
   CLASS_CSS_COLOR,
-  CLASS_TEXT_CLASS,
   ELEMENT_CSS_COLOR,
   elementFromSubclass,
   isGuardianClass,
@@ -35,6 +38,7 @@ import type { BuildLoadoutMatch } from "@/lib/loadouts/matchLoadoutToBuilds";
 import { buildLoadoutMatchLabel } from "@/lib/loadouts/matchLoadoutToBuilds";
 
 const CLASSES: GuardianClass[] = ["Titan", "Hunter", "Warlock"];
+const COLS = "minmax(0,1.35fr) 4.25rem 5.5rem minmax(0,0.9fr)";
 
 export function BuildLibrary({
   builds,
@@ -100,8 +104,8 @@ export function BuildLibrary({
   }
 
   return (
-    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
-      <Stack gap={10} className="shrink-0">
+    <Panel as="aside" pad="sm" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <Stack gap={6} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -120,9 +124,7 @@ export function BuildLibrary({
           panel={false}
           open={filtersOpen}
           onOpenChange={setFiltersOpen}
-          activeCount={
-            (classFilter ? 1 : 0) + activeExoticKeys.length
-          }
+          activeCount={(classFilter ? 1 : 0) + activeExoticKeys.length}
           onClear={clearFilters}
           summary={
             <Cluster gap={3}>
@@ -219,7 +221,11 @@ export function BuildLibrary({
             )}
           </Stack>
         ) : (
-          <Stack gap={6}>
+          <FlapBoard>
+            <FlapHeader
+              columns={COLS}
+              cells={["Name", "Id", "Exotic", "Meta"]}
+            />
             {filtered.map((build) => {
               const selected = build.id === selectedId;
               const cls = isGuardianClass(build.className)
@@ -230,77 +236,62 @@ export function BuildLibrary({
               const superName = build.pinnedSuper ?? build.superName ?? null;
               const elementColor = ELEMENT_CSS_COLOR[element];
               const classColor = CLASS_CSS_COLOR[cls];
+              const match = loadoutMatchesByBuildId?.get(build.id);
+              const ready =
+                match?.kind === "exact" && (match.loadouts?.length ?? 0) > 0;
 
               return (
-                <button
+                <FlapRow
                   key={build.id}
-                  type="button"
+                  columns={COLS}
+                  selected={selected}
                   onClick={() => onSelect(build.id)}
-                  className="text-left w-full"
+                  aria-label={build.name}
                 >
-                  <Panel
-                    tone={selected ? "accent" : "muted"}
-                    pad="sm"
-                    className={
-                      selected
-                        ? ""
-                        : "hover:border-line-strong transition-colors"
-                    }
-                  >
-                    <Stack gap={4}>
-                      <Text size="sm" weight="medium" className="truncate">
-                        {build.name}
-                      </Text>
-                      <Row gap={6} align="center" wrap>
-                        <IconBadge label={cls}>
-                          <ClassIcon className={cls} color={classColor} size={14} />
-                        </IconBadge>
-                        <Text
-                          size="xs"
-                          as="span"
-                          className={CLASS_TEXT_CLASS[cls]}
-                        >
-                          {cls}
-                        </Text>
-                        {subclass ? (
-                          <>
-                            <IconBadge label={element}>
-                              <ElementIcon
-                                element={element}
-                                color={elementColor}
-                                size={12}
-                                title={subclass}
-                              />
-                            </IconBadge>
-                            <Text size="xs" tone="muted" as="span">
-                              {subclass}
-                            </Text>
-                          </>
-                        ) : null}
-                        {superName ? (
-                          <IconBadge label={superName}>
-                            <SuperIcon
-                              color={elementColor}
-                              size={13}
-                              title={superName}
-                            />
-                          </IconBadge>
-                        ) : null}
-                      </Row>
-                      {build.exoticArmorName ? (
-                        <Text size="xs" tone="muted" as="span">
-                          {build.exoticArmorName}
-                        </Text>
-                      ) : null}
-                      <BuildLoadoutBadges
-                        match={loadoutMatchesByBuildId?.get(build.id)}
+                  <FlapCell variant="name" title={build.name}>
+                    {build.name}
+                  </FlapCell>
+                  <FlapCell className="gap-1" title={`${cls}${subclass ? ` · ${subclass}` : ""}`}>
+                    <ClassIcon className={cls} color={classColor} size={14} />
+                    {subclass ? (
+                      <ElementIcon
+                        element={element}
+                        color={elementColor}
+                        size={12}
+                        title={subclass}
                       />
-                    </Stack>
-                  </Panel>
-                </button>
+                    ) : null}
+                    {superName ? (
+                      <SuperIcon
+                        color={elementColor}
+                        size={12}
+                        title={superName}
+                      />
+                    ) : null}
+                  </FlapCell>
+                  <FlapCell title={build.exoticArmorName ?? "No exotic"}>
+                    {build.exoticArmorName ? (
+                      <FlapSeal label={build.exoticArmorName} title={build.exoticArmorName} />
+                    ) : (
+                      <span className="flap-cell-meta">—</span>
+                    )}
+                    {build.exoticWeaponName ? (
+                      <FlapSeal label={build.exoticWeaponName} title={build.exoticWeaponName} />
+                    ) : null}
+                  </FlapCell>
+                  <FlapCell className="justify-end gap-2 min-w-0">
+                    <BuildLoadoutBadges match={match} compact />
+                    <span
+                      className="flap-cell-tally"
+                      data-ready={ready ? "true" : undefined}
+                    >
+                      {ready ? "READY" : match && match.kind !== "none" ? "HOLD" : "—"}
+                    </span>
+                  </FlapCell>
+                </FlapRow>
               );
             })}
-          </Stack>
+          </FlapBoard>
         )}
       </div>
     </Panel>
@@ -309,59 +300,51 @@ export function BuildLibrary({
 
 function BuildLoadoutBadges({
   match,
+  compact = false,
 }: {
   match: BuildLoadoutMatch | undefined;
+  compact?: boolean;
 }) {
   if (!match || match.kind === "none" || match.loadouts.length === 0) {
     return null;
   }
 
   const label = buildLoadoutMatchLabel(match);
-  const shown = match.loadouts.slice(0, 3);
+  const shown = match.loadouts.slice(0, compact ? 2 : 3);
   const extra = match.loadouts.length - shown.length;
 
   return (
-    <Row gap={4} align="center" wrap>
-      <span className="inline-flex items-center gap-1" title={label}>
-        {shown.map((lo) => (
-          <span
-            key={lo.id}
-            className="inline-flex size-5 shrink-0 items-center justify-center border border-line bg-surface-raised overflow-hidden"
-            title={
-              match.kind === "exact"
-                ? `In-game loadout: ${lo.name}`
-                : `Partial match: ${lo.name}`
-            }
-          >
-            {lo.iconUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={lo.iconUrl}
-                alt=""
-                width={16}
-                height={16}
-                className="size-4 object-contain"
-              />
-            ) : (
-              <span className="text-[8px] text-muted tracking-tight">LO</span>
-            )}
-          </span>
-        ))}
-      </span>
+    <span className="inline-flex items-center gap-1 min-w-0" title={label}>
+      {shown.map((lo) => (
+        <span
+          key={lo.id}
+          className="inline-flex size-5 shrink-0 items-center justify-center border border-line bg-surface-raised overflow-hidden"
+          title={
+            match.kind === "exact"
+              ? `In-game loadout: ${lo.name}`
+              : `Partial match: ${lo.name}`
+          }
+        >
+          {lo.iconUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={lo.iconUrl}
+              alt=""
+              width={16}
+              height={16}
+              className="size-4 object-contain"
+            />
+          ) : (
+            <span className="text-[10px] text-muted tracking-tight">LO</span>
+          )}
+        </span>
+      ))}
       {extra > 0 ? (
         <Text size="xs" tone="muted" as="span">
           +{extra}
         </Text>
       ) : null}
-      <Text
-        size="xs"
-        tone={match.kind === "exact" ? "accent" : "muted"}
-        as="span"
-        className="truncate max-w-[140px]"
-      >
-        {match.kind === "exact" ? "In-game" : "Partial"}
-        {match.loadouts.length === 1 ? ` · ${match.loadouts[0]!.name}` : ""}
-      </Text>
-    </Row>
+    </span>
   );
 }
+

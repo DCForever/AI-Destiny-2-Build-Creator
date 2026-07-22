@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
-const display = Chakra_Petch({
+const display = Barlow_Condensed({
   variable: "--font-display",
   weight: ["500", "600", "700"],
   subsets: ["latin"],
