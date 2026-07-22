@@ -6,7 +6,9 @@
  */
 
 export { Panel } from "./Panel";
-export { FlapRow, FlapBoard, FlapHeader, FlapCell, FlapSeal } from "./FlapRow";
+export { FlapRow, FlapBoard, FlapHeader, FlapCell, FlapSeal, FlapTypeStamp } from "./FlapRow";
+export { ThemeProvider, useTheme } from "./ThemeProvider";
+export { ThemeToggle } from "./ThemeToggle";
 export { Section, SectionLabel } from "./Section";
 export { CollapsibleFilterSection } from "./CollapsibleFilterSection";
 export { Stack, Row, Cluster } from "./Stack";
@@ -47,4 +49,5 @@ export {
   useCuratedDesignationIcons,
   useDesignationIcons,
 } from "./useDesignationIcons";
+
 

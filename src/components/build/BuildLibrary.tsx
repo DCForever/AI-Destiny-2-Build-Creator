@@ -240,18 +240,28 @@ export function BuildLibrary({
               const ready =
                 match?.kind === "exact" && (match.loadouts?.length ?? 0) > 0;
 
+const hold = Boolean(match && match.kind !== "none" && !ready);
+              const channel =
+                element !== "Kinetic" ? elementColor : classColor;
+
               return (
                 <FlapRow
                   key={build.id}
                   columns={COLS}
                   selected={selected}
+                  channel={channel}
+                  lamp={hold ? "warning" : "none"}
                   onClick={() => onSelect(build.id)}
                   aria-label={build.name}
                 >
                   <FlapCell variant="name" title={build.name}>
                     {build.name}
                   </FlapCell>
-                  <FlapCell className="gap-1" title={`${cls}${subclass ? ` · ${subclass}` : ""}`}>
+                  <FlapCell
+                    variant="channel"
+                    className="gap-1"
+                    title={`${cls}${subclass ? ` · ${subclass}` : ""}`}
+                  >
                     <ClassIcon className={cls} color={classColor} size={14} />
                     {subclass ? (
                       <ElementIcon
@@ -271,12 +281,20 @@ export function BuildLibrary({
                   </FlapCell>
                   <FlapCell title={build.exoticArmorName ?? "No exotic"}>
                     {build.exoticArmorName ? (
-                      <FlapSeal label={build.exoticArmorName} title={build.exoticArmorName} />
+                      <FlapSeal
+                        kind="exotic"
+                        label={build.exoticArmorName}
+                        title={build.exoticArmorName}
+                      />
                     ) : (
                       <span className="flap-cell-meta">—</span>
                     )}
                     {build.exoticWeaponName ? (
-                      <FlapSeal label={build.exoticWeaponName} title={build.exoticWeaponName} />
+                      <FlapSeal
+                        kind="exotic"
+                        label={build.exoticWeaponName}
+                        title={build.exoticWeaponName}
+                      />
                     ) : null}
                   </FlapCell>
                   <FlapCell className="justify-end gap-2 min-w-0">
@@ -284,8 +302,9 @@ export function BuildLibrary({
                     <span
                       className="flap-cell-tally"
                       data-ready={ready ? "true" : undefined}
+                      data-hold={hold ? "true" : undefined}
                     >
-                      {ready ? "READY" : match && match.kind !== "none" ? "HOLD" : "—"}
+                      {ready ? "READY" : hold ? "HOLD" : "—"}
                     </span>
                   </FlapCell>
                 </FlapRow>
@@ -316,9 +335,19 @@ function BuildLoadoutBadges({
   return (
     <span className="inline-flex items-center gap-1 min-w-0" title={label}>
       {shown.map((lo) => (
-        <span
+<span
           key={lo.id}
-          className="inline-flex size-5 shrink-0 items-center justify-center border border-line bg-surface-raised overflow-hidden"
+          className="inline-flex size-5 shrink-0 items-center justify-center border overflow-hidden"
+          style={{
+            borderColor:
+              match.kind === "exact"
+                ? "color-mix(in srgb, var(--accent) 55%, transparent)"
+                : "color-mix(in srgb, var(--warning) 45%, transparent)",
+            background:
+              match.kind === "exact"
+                ? "color-mix(in srgb, var(--accent) 12%, var(--surface-raised))"
+                : "color-mix(in srgb, var(--warning) 10%, var(--surface-raised))",
+          }}
           title={
             match.kind === "exact"
               ? `In-game loadout: ${lo.name}`

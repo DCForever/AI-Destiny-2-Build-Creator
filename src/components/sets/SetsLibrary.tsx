@@ -8,6 +8,7 @@ import {
   FlapCell,
   FlapHeader,
   FlapRow,
+  FlapTypeStamp,
   Panel,
   Row,
   SectionLabel,
@@ -15,7 +16,16 @@ import {
   Text,
 } from "@/components/ui";
 
-const COLS = "minmax(0,1.4fr) 4.5rem minmax(0,1fr)";
+const COLS = "minmax(0,1.4fr) 4.75rem minmax(0,1fr)";
+
+/** Channel ink for set kit type (scan without reading the stamp). */
+const SET_TYPE_CHANNEL: Record<string, string> = {
+  Weapon: "var(--foreground)",
+  Armor: "var(--element-stasis)",
+  Mod: "var(--warning)",
+  Pair: "var(--element-prismatic)",
+  Fashion: "var(--element-solar)",
+};
 
 export function SetsLibrary({
   sets,
@@ -64,19 +74,22 @@ export function SetsLibrary({
             {sets.map((row) => {
               const selected = row.id === selectedId;
               const tags = row.tagIds ?? [];
+              const typeKey = String(row.type);
+              const channel = SET_TYPE_CHANNEL[typeKey];
               return (
                 <FlapRow
                   key={row.id}
                   columns={COLS}
                   selected={selected}
+                  channel={channel}
                   onClick={() => onSelect(row.id)}
                   aria-current={selected ? "true" : undefined}
                 >
                   <FlapCell variant="name" title={row.name}>
                     {row.name}
                   </FlapCell>
-                  <FlapCell variant="meta" title={String(row.type)}>
-                    {row.type}
+                  <FlapCell title={typeKey}>
+                    <FlapTypeStamp type={typeKey} />
                   </FlapCell>
                   <FlapCell className="flex-wrap gap-1">
                     {tags.length === 0 ? (

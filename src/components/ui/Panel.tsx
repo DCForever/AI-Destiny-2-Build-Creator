@@ -13,10 +13,10 @@ const PAD: Record<PanelPad, string> = {
 const TONE: Record<PanelTone, string> = {
   default: "panel-notch",
   raised: "panel-notch panel-notch-raised",
-  accent: "panel-notch border-accent",
+  accent: "panel-notch border-accent bg-[color-mix(in_srgb,var(--accent)_6%,var(--surface))]",
   muted: "panel-notch bg-surface-raised/40",
-  danger: "panel-notch border-danger/40",
-  warning: "panel-notch border-warning/40",
+  danger: "panel-notch border-danger/40 bg-[color-mix(in_srgb,var(--danger)_6%,var(--surface))]",
+  warning: "panel-notch border-warning/40 bg-[color-mix(in_srgb,var(--warning)_6%,var(--surface))]",
 };
 
 export function Panel({

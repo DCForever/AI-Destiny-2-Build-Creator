@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCountByDesignationKey,
   countBuildsForDesignation,
+  listBuildsForDesignation,
 } from "@/lib/synergies/countBuildsByDesignation";
 
 describe("countBuildsForDesignation", () => {
@@ -41,5 +42,36 @@ describe("buildCountByDesignationKey", () => {
       },
     ]);
     expect(map.get("verb::Devour")).toBe(1);
+  });
+});
+
+describe("listBuildsForDesignation", () => {
+  it("returns named builds sorted by name", () => {
+    const builds = [
+      {
+        id: "b2",
+        name: "Zebra",
+        className: "Hunter",
+        synergyTypes: [{ type: "verb", subType: "Scorch" }],
+      },
+      {
+        id: "b1",
+        name: "Alpha",
+        className: "Warlock",
+        synergyTypes: [{ type: "verb", subType: "Scorch" }],
+      },
+      {
+        id: "b3",
+        name: "Other",
+        className: "Titan",
+        synergyTypes: [{ type: "verb", subType: "Jolt" }],
+      },
+    ];
+    expect(
+      listBuildsForDesignation(builds, { type: "verb", subType: "Scorch" }),
+    ).toEqual([
+      { id: "b1", name: "Alpha", className: "Warlock" },
+      { id: "b2", name: "Zebra", className: "Hunter" },
+    ]);
   });
 });

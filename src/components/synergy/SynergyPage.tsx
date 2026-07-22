@@ -40,13 +40,13 @@ import { sameSynergyDesignation } from "@/lib/synergies/mergeSynergies";
 import { sortByName } from "@/lib/sortByName";
 
 /**
- * Synergy screen composition.
+ * Synergy screen composition (board-first).
  *
  * Layout slots:
- *   PageHeader
- *   Filters panel
+ *   PageHeader (title only)
+ *   Instrument strip → SynergyFilters (search always; facets collapsed)
  *   Workspace
- *     rail  → SynergyLibrary
+ *     rail  → SynergyLibrary (hygiene mode lives here)
  *     main  → SynergyEditPanel | SynergyDetail | loading | EmptyState
  */
 export function SynergyPage() {
@@ -395,15 +395,15 @@ export function SynergyPage() {
     setEditing(false);
   }
 
-  const pageDescription =
-    "Library of Type:Subtype designations Build uses for coverage — open a row, link catalog evidence, or create a new designation.";
+const pageDescription =
+    "Type:Subtype designations Build uses for coverage.";
 
   if (signedIn === false) {
     return (
       <SignedOutGate
         title="Synergy"
         description={pageDescription}
-        emptyDescription="Sign in with Bungie (header control) to curate the designation library Build reads for coverage."
+emptyDescription="Sign in with Bungie (header control) to curate designations Build reads for coverage."
       />
     );
   }
@@ -486,13 +486,17 @@ export function SynergyPage() {
       <WorkspaceMain>
         <div aria-busy="false">
           <SynergyDetail
-            synergy={{
+synergy={{
               ...detail!,
-              buildCount: listMeta?.buildCount ?? detail!.buildCount,
+              buildCount:
+                detail!.usedByBuilds?.length ??
+                listMeta?.buildCount ??
+                detail!.buildCount,
               objectCount:
                 listMeta?.objectCount ??
                 detail!.objectCount ??
                 detail!.links.length,
+              usedByBuilds: detail!.usedByBuilds,
             }}
             onEdit={() => {
               setDeleteConfirmOpen(false);
@@ -507,12 +511,12 @@ export function SynergyPage() {
   } else {
     main = (
       <WorkspaceMain>
-        <EmptyState
+<EmptyState
           title={loading ? "Loading library" : "No designation open"}
           description={
             loading
               ? "Fetching your synergy library…"
-              : "Pick a row in the library, or create a designation so Build can show coverage for that Type:Subtype."
+              : "Pick a row on the board, or create a designation."
           }
           action={
             loading ? undefined : (
@@ -531,10 +535,10 @@ export function SynergyPage() {
   );
 
   return (
-    <PageFrame>
+<PageFrame>
       <PageFrameChrome>
-        <Stack gap={12}>
-          <PageHeader title="Synergy" description={pageDescription} />
+        <Stack gap={8}>
+          <PageHeader title="Synergy" />
           {error ? <Callout tone="danger">{error}</Callout> : null}
           {statusMessage ? (
             <Callout tone="success">{statusMessage}</Callout>

@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import Script from "next/script";
+
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/ui/theme";
+
 import "./globals.css";
 
 const display = Barlow_Condensed({
@@ -31,12 +36,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html
+return (
+<html
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
+      data-theme="dark"
+      data-theme-pref="system"
+      suppressHydrationWarning
     >
-      <body className="h-full overflow-hidden flex flex-col">{children}</body>
+      <body className="h-full overflow-hidden flex flex-col">
+        <Script
+          id="theme-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }}
+        />
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -15,7 +15,44 @@ import {
   Stack,
   Text,
 } from "@/components/ui";
+import {
+  ELEMENT_CSS_COLOR,
+  isDestinyElement,
+} from "@/lib/destiny/identityVisuals";
 import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
+
+/** Soft channel ink by synergy designation category (element uses subType). */
+function synergyChannel(type: string, subType: string | null | undefined): string | null {
+  if (type === "element" && subType && isDestinyElement(subType)) {
+    return ELEMENT_CSS_COLOR[subType];
+  }
+  switch (type) {
+    case "verb":
+      return "var(--element-arc)";
+    case "melee":
+    case "grenade":
+    case "super":
+      return "var(--element-solar)";
+    case "healing":
+    case "damage_resist":
+    case "solo":
+      return "var(--success)";
+    case "dps":
+    case "primary_weapon":
+    case "special_weapon":
+    case "heavy_weapon":
+    case "general_weapon":
+    case "weapon_archetype":
+    case "kinetic_weapon":
+      return "var(--foreground)";
+    case "team":
+      return "var(--element-prismatic)";
+    case "damage":
+      return "var(--danger)";
+    default:
+      return "var(--accent)";
+  }
+}
 
 function usageTally(row: SynergySummary): string {
   const builds = row.buildCount ?? 0;
@@ -213,11 +250,14 @@ export function SynergyLibrary({
                 type: row.type,
                 subType: row.subType,
               });
+const channel = synergyChannel(String(row.type), row.subType);
+
               return (
                 <FlapRow
                   key={row.id}
                   columns={columns}
                   selected={selected}
+                  channel={channel}
                   onClick={() => onSelect(row.id)}
                   aria-current={selected ? "true" : undefined}
                   aria-label={title}

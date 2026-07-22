@@ -178,19 +178,27 @@ Palette character: colder and blacker than the prior vault—pure matte void wit
 - Kinetic `#ffffff` · Arc `#85c5ec` · Solar `#f2721b` · Void `#b184c5` · Stasis `#4d88ff` · Strand `#35e366` · Prismatic `#d67ee2`
 - Full strength on icons and identity cells. Never recolor neutral chrome.
 
-### Neutral
+### Neutral (dark default)
 - **Void** `#050608` canvas
 - **Flap** `#0c0e12` surface
 - **Raised flap** `#12151c`
 - **Rule** `#1c212c` / **Rule strong** `#2a3140`
 - **Lettering** `#e8eaef` / **Dim** `#8a93a6`
 
+### Theme switching
+- Preferences: **dark** | **light** | **system** (`localStorage` key `d2bc-theme`).
+- Resolved theme on `html[data-theme="dark"|"light"]`; preference on `data-theme-pref`.
+- Light ledger remaps neutrals to paper board (`#e8e6e1` field / `#f4f2ec` plates) and deepens accent/status for AA on light surfaces; Destiny element hexes stay sandbox-true at higher contrast on paper.
+- Shell **ThemeToggle** cycles Dark → Light → System. Default preference is system (resolved dark when OS is dark).
+
 ### Named Rules
 **The No Steel Rule.** No brushed metal, chrome bezels, or metallic gradients. Matte only.
 
-**The One Lamp Rule.** Amber marks readiness and selection—not every border.
+**The One Lamp Rule.** Amber marks readiness and selection—not every border. Channel lamps may show element/class ink on idle rows; amber always wins when selected.
 
-**The Element Ink Rule.** Element hexes stay correct for damage-type truth; they tint identity cells and seals, never the whole board.
+**The Element Ink Rule.** Element hexes stay correct for damage-type truth; they tint identity cells, channel washes, and seals—not neutral chrome.
+
+**The Channel Lattice Rule.** Flap rows may carry a `--flap-channel` CSS color for left lamp + hover/select wash. Dosage stays thin (~8–12% washes); full chroma only on icons, type stamps, and READY stamps.
 
 **The Badge Wash Rule.** Status badges use ~10–12% fills and ~45% borders via `color-mix`.
 
@@ -260,8 +268,9 @@ Tonal only: Void → Flap → Raised. No resting shadows. Hotspot popovers may u
 
 ### FlapRow (signature)
 - Full-width button/row with CSS grid columns per surface
-- States: idle, hover (rule brighten), selected (amber wash + left lamp 2px), warning (caution lamp), danger (coral lamp)
-- Cells: name (truncate), identity (class/element icons), exotics (icon seals 20–24px), synergy (verbs/types truncate), status (V# · READY/HOLD mono)
+- States: idle, hover (channel-tinted), selected (amber + channel wash + amber lamp), warning/danger lamps, optional `--flap-channel` identity ink
+- Cells: name (truncate), identity (class/element icons in channel wash), exotics (gold seals 20–24px), synergy (verbs/types), status (READY/HOLD stamps)
+- Type stamps: Weapon/Armor/Mod/Pair/Fashion category chroma
 
 ### Chips / Filters
 - Square dense; include = amber wash; exclude = coral + line-through

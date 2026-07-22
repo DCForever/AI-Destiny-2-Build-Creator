@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { BungieAuthControl } from "@/components/BungieAuthControl";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import {
   APP_SHELL_MAIN_CLASSES,
   APP_SHELL_ROOT_CLASSES,
@@ -25,7 +26,7 @@ interface AppShellProps {
 export function AppShell({ active, children }: AppShellProps) {
   return (
     <div className={APP_SHELL_ROOT_CLASSES}>
-      <header className="shrink-0 border-b border-line bg-surface z-20">
+<header className="shrink-0 border-b border-line bg-surface z-20 shadow-[inset_0_-1px_0_0_color-mix(in_srgb,var(--accent)_18%,transparent)]">
         <div className="max-w-[1600px] mx-auto px-2 sm:px-5 h-10 sm:h-12 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
           <span className="font-display text-[11px] sm:text-sm tracking-[0.12em] sm:tracking-[0.16em] uppercase text-accent select-none shrink-0">
             <span className="hidden sm:inline">DESTINY 2 // BUILD CREATOR</span>
@@ -51,6 +52,7 @@ export function AppShell({ active, children }: AppShellProps) {
                 </a>
               ))}
             </nav>
+<ThemeToggle />
             <Suspense fallback={null}>
               <BungieAuthControl compact />
             </Suspense>
