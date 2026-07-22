@@ -11,6 +11,8 @@ export { CollapsibleFilterSection } from "./CollapsibleFilterSection";
 export { Stack, Row, Cluster } from "./Stack";
 export { Text, Heading } from "./Text";
 export { Button } from "./Button";
+export { Badge, badgeToneClass } from "./Badge";
+export type { BadgeTone } from "./Badge";
 export { Chip, FilterChip, MetaChip } from "./Chip";
 export { ClassFilterChip } from "./ClassFilterChip";
 export { ConceptTagChip, ConceptTagFilterChip } from "./ConceptTagChip";

@@ -16,6 +16,7 @@ instead of sprinkling `panel-notch` / raw Tailwind.
 | `Stack` / `Row` / `Cluster` | Spacing + alignment |
 | `Text` / `Heading` | Typography tones |
 | `Button` | `accent` / `outline` / `ghost` / `danger` |
+| `Badge` | Status wash chips: `verified` / `accent` / `fuzzy` / `unresolved` / `illegal` (+ `warning`/`danger` aliases) |
 | `Chip` / `FilterChip` | Tags + toggle filters |
 | `TextField` / `SelectField` | Form controls |
 | `PageHeader` | Title + description + actions |

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { Badge, type BadgeTone } from "@/components/ui";
+
 interface ManifestStatus {
   cachedVersion: string | null;
   remoteVersion: string | null;
@@ -59,18 +61,18 @@ function parseManifestStatus(value: unknown): ManifestStatus | null {
 
 function manifestBadge(status: ManifestStatus | null): {
   label: string;
-  className: string;
+  tone: BadgeTone;
 } {
   if (!status?.cachedVersion) {
-    return { label: "NOT DOWNLOADED", className: "badge-unresolved" };
+    return { label: "NOT DOWNLOADED", tone: "unresolved" };
   }
   if (status.isStale) {
-    return { label: "STALE", className: "badge-fuzzy" };
+    return { label: "STALE", tone: "fuzzy" };
   }
   if (status.entityCache) {
-    return { label: "READY", className: "badge-verified" };
+    return { label: "READY", tone: "verified" };
   }
-  return { label: "STALE", className: "badge-fuzzy" };
+  return { label: "STALE", tone: "fuzzy" };
 }
 
 async function fetchManifestStatus(): Promise<{
@@ -269,7 +271,7 @@ export function ManifestCard({ signedIn = false }: ManifestCardProps) {
             <Spinner />
           </span>
         ) : (
-          <span className={`badge ${badge.className}`}>{badge.label}</span>
+          <Badge tone={badge.tone}>{badge.label}</Badge>
         )}
       </div>
 

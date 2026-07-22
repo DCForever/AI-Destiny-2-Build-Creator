@@ -1,14 +1,15 @@
 import type { ResolutionStatus } from "@/lib/build/types";
+import { Badge, type BadgeTone } from "@/components/ui";
 
 interface StatusConfig {
   label: string;
-  modifier: string;
+  tone: BadgeTone;
 }
 
 const STATUS_CONFIG: Record<ResolutionStatus, StatusConfig> = {
-  verified: { label: "VERIFIED", modifier: "badge-verified" },
-  fuzzy: { label: "FUZZY MATCH", modifier: "badge-fuzzy" },
-  unresolved: { label: "NOT FOUND", modifier: "badge-unresolved" },
+  verified: { label: "VERIFIED", tone: "verified" },
+  fuzzy: { label: "FUZZY MATCH", tone: "fuzzy" },
+  unresolved: { label: "NOT FOUND", tone: "unresolved" },
 };
 
 interface ResolutionBadgeProps {
@@ -16,8 +17,8 @@ interface ResolutionBadgeProps {
 }
 
 export function ResolutionBadge({ status }: ResolutionBadgeProps) {
-  const { label, modifier } = STATUS_CONFIG[status];
-  return <span className={`badge ${modifier}`}>{label}</span>;
+  const { label, tone } = STATUS_CONFIG[status];
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
 interface IllegalBadgeProps {
@@ -26,8 +27,8 @@ interface IllegalBadgeProps {
 
 export function IllegalBadge({ reason }: IllegalBadgeProps) {
   return (
-    <span className="badge badge-illegal" title={reason}>
+    <Badge tone="illegal" title={reason}>
       ILLEGAL PERK
-    </span>
+    </Badge>
   );
 }

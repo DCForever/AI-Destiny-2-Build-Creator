@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui";
+
 export interface StatusCardProps {
   title: string;
   description: string;
@@ -27,10 +29,10 @@ function StatusBadge({ loading, ok }: { loading: boolean; ok: boolean }) {
   }
 
   if (ok) {
-    return <span className="badge badge-verified">ONLINE</span>;
+    return <Badge tone="verified">ONLINE</Badge>;
   }
 
-  return <span className="badge badge-unresolved">OFFLINE</span>;
+  return <Badge tone="unresolved">OFFLINE</Badge>;
 }
 
 export function StatusCard({ title, description, load }: StatusCardProps) {
