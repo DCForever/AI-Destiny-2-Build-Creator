@@ -1,1 +1,9 @@
-{"feature_directory":"specs/031-finish-armor-optimize-ui"}
+{
+  "id": "038-ci-pwsh-gate",
+  "branch": "038-ci-pwsh-gate",
+  "title": "GitHub Actions CI and PowerShell-friendly gate",
+  "status": "in-progress",
+  "feature_directory": "specs/038-ci-pwsh-gate",
+  "source_improve": "specs/ci-dx/improve/github-actions-and-pwsh-gate.md",
+  "created": "2026-07-23"
+}
