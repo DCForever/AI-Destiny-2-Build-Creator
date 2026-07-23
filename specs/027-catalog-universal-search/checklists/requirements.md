@@ -33,3 +33,5 @@
 
 - Validation pass 1 (2026-07-23): All items pass. Defaults documented in Assumptions (composition-relevant kinds, Catalog home, reuse of Set/Synergy hard rules, sign-in for mutations).
 - Ready for `/speckit-clarify` (optional) or `/speckit-plan`.
+
+- Clarification session 2026-07-23: 5 Qs integrated (Universal mode, Set+Synergy only, create wizard, Pair targets, instance pin rules). Checklist still fully passing.

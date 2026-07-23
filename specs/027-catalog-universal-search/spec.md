@@ -10,19 +10,30 @@
 
 ## Iteration Scope
 
-**In scope (this iteration)**: One Catalog-wide search that finds composition-relevant entities (weapons, armor, mods, perks, origin traits, artifact perks, exotic armor/weapons, armor set bonuses, subclass pieces used in builds, and other attachable/linkable targets) by name and description; result browsing with kind labels; item detail from a result; from detail, create a new Set or Synergy or add the item to an existing Set or Synergy using the same attachment/link rules the product already enforces.
+**In scope (this iteration)**: A Catalog **Universal** mode (or equivalent tab) with one mixed-kind search that finds composition-relevant entities (weapons, armor, mods, perks, origin traits, artifact perks, exotic armor/weapons, armor set bonuses, subclass pieces used in builds, and other attachable/linkable targets) by name and description; result browsing with kind labels; item detail from a result; from detail, create a new Set or Synergy or add the item to an existing Set or Synergy using the same attachment/link rules the product already enforces.
 
-**Out of scope (this iteration)**: Replacing every specialized filter UI; fashion-only cosmetics that never attach to combat sets/builds/synergies; bulk multi-select add; offline/unsigned full personal-library actions; redesign of non-Catalog library pages beyond deep-links opened from Catalog detail.
+**Out of scope (this iteration)**: Build/variant kit attach from Catalog detail (aspects/fragments/abilities are searchable only); replacing every specialized filter UI; fashion-only cosmetics that never attach to combat sets/builds/synergies; bulk multi-select add; offline/unsigned full personal-library actions; redesign of non-Catalog library pages beyond deep-links opened from Catalog detail.
 
 **Builds on**: [008-sets-catalog-lookup](../008-sets-catalog-lookup/spec.md), [009-description-search](../009-description-search/spec.md), [006-synergy-refinement](../006-synergy-refinement/spec.md), domain composition and synergy rules (`DBR-CMP-*`, `DBR-SYN-*`, `DBR-ROLL-010`).
 
 **Verification**: Signed-in user can type one query in Catalog, see mixed-kind hits, open a hit's detail, and complete at least one create-or-add path for a Set and one for a Synergy without leaving the Catalog flow (except confirmation dialogs).
 
+
+## Clarifications
+
+### Session 2026-07-23
+
+- Q: From Catalog Universal detail, which composition targets are in scope for create/add actions? → A: **Set and Synergy only** in this iteration; subclass kit pieces remain searchable without Build attach CTAs (Option A).
+- Q: On Create Set from a gear hit, when is the piece placed in a slot? → A: Always use a create wizard (name, type if needed, slot, optional instance) before writing the item (Option B).
+- Q: When adding exotic weapon/armor from Universal detail, which Set types may be targets? → A: Exotic weapon → Weapon or Pair; exotic armor → Armor or Pair; user picks type; exotic exclusivity unchanged (Option A).
+- Q: When user owns copies and chooses Add/Create Set, how is instance pinning handled? → A: If exactly one owned copy, auto-pin it; if multiple, force pick; if none, wishlist/catalog identity (Option C).
+- Q: How should universal search sit in Catalog next to today’s weapon/armor browse? → A: Dedicated **Universal** mode/tab for mixed-kind search; keep existing weapons/armor browse modes unchanged (Option B).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Find any composition piece from one Catalog search (Priority: P1)
 
-A Guardian building loadouts wants a single search box in Catalog that finds weapons, armor, origin traits, artifact perks, mods, and other pieces they might put on a Set, Build, or Synergy—without guessing which specialized browser to open first.
+A Guardian building loadouts opens Catalog **Universal** mode and uses a single search box that finds weapons, armor, origin traits, artifact perks, mods, and other pieces they might put on a Set, Build, or Synergy—without guessing which specialized browser to open first.
 
 **Why this priority**: This is the core ask; without universal discovery, create/add-from-detail has nothing coherent to attach to.
 
@@ -65,7 +76,7 @@ From an item's detail, the user can start a new Set with that piece or add it to
 **Acceptance Scenarios**:
 
 1. **Given** detail for an attachable gear piece and the user is signed in, **When** they choose **Add to existing Set**, **Then** they can pick a compatible Set and slot (or the system proposes the only legal slot) and complete attachment under existing Set rules.
-2. **Given** detail for an attachable gear piece and the user is signed in, **When** they choose **Create Set**, **Then** they can name a Set of a legal type for that piece and the piece is placed in a legal slot on create (or immediately offered for placement).
+2. **Given** detail for an attachable gear piece and the user is signed in, **When** they choose **Create Set**, **Then** they complete a create wizard (Set name, type when needed, slot, optional owned instance) and only then is the piece written to that slot.
 3. **Given** the target Set slot is occupied, **When** the user confirms add/replace, **Then** the existing occupied-slot replace confirmation still applies.
 4. **Given** adding the piece would violate exotic exclusivity or slot legality, **When** the user attempts the action, **Then** the action is not completable and the reason is understandable (same class of Destiny hard constraints as Set fill).
 5. **Given** the user is signed out, **When** they attempt create/add to Set, **Then** they are prompted to sign in and no partial personal Set is created.
@@ -111,7 +122,7 @@ While using universal search, the user can optionally filter the mixed result li
 - Very short queries may return large sets → results remain usable (grouped or capped with clear "refine query" guidance); system does not hang or freeze the Catalog shell.
 - Same display name on different kinds → both can appear; kind label disambiguates.
 - Stale or redacted manifest entries → excluded or marked unavailable; cannot be attached/linked.
-- Wishlist vs owned instance: Catalog detail may start from catalog identity; pinning a specific owned copy uses existing instance-selection rules when the Set path requires an instance.
+- Wishlist vs owned instance: On Set create/add from Universal, if the user owns **exactly one** copy, auto-pin that instance; if **multiple**, require instance pick; if **none**, attach catalog/wishlist identity only (Option C).
 - Fashion-only cosmetics not used in Sets/Builds/Synergies → excluded from universal composition search by default.
 - Unsigned browse: search and detail work for manifest entities; personal create/add actions require sign-in.
 - Concurrent edit: if target Set/Synergy was deleted before save, user sees a clear failure and can pick another target.
@@ -120,7 +131,7 @@ While using universal search, the user can optionally filter the mixed result li
 
 ### Functional Requirements
 
-- **FR-001**: Catalog MUST provide a **universal search** entry point that accepts free-text queries and returns composition-relevant entities across kinds in one result set.
+- **FR-001**: Catalog MUST provide a distinct **Universal** mode (or tab) with a **universal search** entry point that accepts free-text queries and returns composition-relevant entities across kinds in one result set. Existing weapons/armor browse modes MUST remain available and are not replaced by universal results.
 - **FR-002**: Universal search MUST include at least: weapons, exotic weapons, armor (including exotic armor), armor mods, weapon perks, origin traits, artifact perks, armor set bonuses, and subclass-related pieces that Builds already treat as selectable kit parts (abilities/aspects/fragments as applicable to current product composition).
 - **FR-003**: Each result MUST show a human-readable **kind**, **name**, and enough secondary context (icon and/or short meta) to scan without opening detail.
 - **FR-004**: Search MUST match against **name** and **description/effect text** where those fields exist for the kind (not name-only for perks/traits whose value is in the description).
@@ -134,6 +145,9 @@ While using universal search, the user can optionally filter the mixed result li
 - **FR-012**: Optional kind filters MAY narrow the current result set without clearing the query (User Story 5).
 - **FR-013**: Actions that would violate Destiny/product hard constraints MUST be prevented in the same spirit as existing Set fill and Synergy link flows (not selectable or blocked with clear reason before a confusing failure).
 - **FR-014**: Completing create/add MUST leave the user with confirmation of success (updated target name or navigation to the Set/Synergy) so they know the composition change stuck.
+- **FR-015**: Detail MUST NOT offer Build/variant kit attach actions in this iteration. Subclass-related hits (abilities/aspects/fragments) MAY appear in search results with actions.set and actions.synergy false unless separately valid as Set/Synergy targets.
+- **FR-016**: **Create Set** from detail MUST use an explicit wizard (name, type when not implied, slot, optional instance) and MUST NOT silently auto-place into a slot without user confirmation of slot choice when more than one slot could apply; even single-slot types still confirm via the wizard before write.
+- **FR-017**: For exotic weapon hits, Set create/add targets MAY be **Weapon** or **Pair** sets. For exotic armor hits, targets MAY be **Armor** or **Pair** sets. The user chooses the set type (or existing set). Exotic exclusivity and pair-armor match rules remain those already enforced for Sets.
 
 ### Key Entities
 
@@ -156,14 +170,15 @@ While using universal search, the user can optionally filter the mixed result li
 
 ## Assumptions
 
-- Catalog remains the primary home for this search; Sets/Synergies pickers may later reuse the same discovery language but are not required to be rewritten in this iteration.
+- Catalog remains the primary home for this search via a dedicated **Universal** mode/tab alongside (not replacing) specialized weapons/armor browse. Sets/Synergies pickers may later reuse the same discovery language but are not required to be rewritten in this iteration.
 - "Anything used in a set or build or synergy" means **composition-relevant** entities already modeled in the product's library flows—not every Destiny string in the universe (e.g. pure lore triumphs stay out).
 - Existing Set slot legality, exotic exclusivity, mod energy, and Synergy link-kind validation remain authoritative; this feature routes into them rather than inventing parallel rules.
 - Description search quality may follow the same name + description expectation established for [009-description-search](../009-description-search/spec.md); exact ranking algorithm is a planning concern.
 - Create Set / Create Synergy from detail uses the same naming uniqueness and type rules as creating those entities elsewhere.
 - Unsigned users may browse search hits; personal mutations require sign-in.
 - Fashion-only items that are not part of combat composition are out of default result scope.
-- Instance pinning (specific owned copy) continues to use existing owned-instance selection when the user chooses a Set path that needs a copy; universal search detail may begin at catalog identity.
+- Instance pinning on Set create/add from Universal: auto-pin when exactly one owned copy; force pick when multiple; wishlist/catalog identity when none (see FR-018).
+- Build kit placement from Catalog Universal detail is deferred; v1 composition actions are Set and Synergy only.
 
 ## Dependencies
 
