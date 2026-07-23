@@ -29,6 +29,17 @@ export type BuildRecord = {
   updatedAt: string;
 };
 
+function mapBuildSynergyTypeRow(r: {
+  type: string;
+  subType: string | null;
+}): SynergyTypeDesignation {
+  return {
+    type: r.type as SynergyType,
+    // Empty string stored for UNIQUE null-safety; expose as null
+    subType: r.subType?.trim() ? r.subType : null,
+  };
+}
+
 function loadBuildTags(db: AppDatabase, buildId: string): ConceptTagId[] {
   return db
     .select({ tagId: buildTags.tagId })
@@ -48,14 +59,65 @@ function loadBuildSynergyTypes(db: AppDatabase, buildId: string): SynergyTypeDes
     .from(buildSynergyTypes)
     .where(eq(buildSynergyTypes.buildId, buildId))
     .all()
-    .map((r) => ({
-      type: r.type as SynergyType,
-      // Empty string stored for UNIQUE null-safety; expose as null
-      subType: r.subType?.trim() ? r.subType : null,
-    }));
+    .map(mapBuildSynergyTypeRow);
 }
 
-function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildRecord {
+/** Batch-load tags for many builds (one query). Tag ids sorted per build. */
+function loadBuildTagsForIds(db: AppDatabase, buildIds: string[]): Map<string, ConceptTagId[]> {
+  const map = new Map<string, ConceptTagId[]>();
+  for (const id of buildIds) map.set(id, []);
+  if (buildIds.length === 0) return map;
+
+  const rows = db
+    .select({ buildId: buildTags.buildId, tagId: buildTags.tagId })
+    .from(buildTags)
+    .where(inArray(buildTags.buildId, buildIds))
+    .all();
+
+  for (const row of rows) {
+    const list = map.get(row.buildId);
+    if (list) list.push(row.tagId as ConceptTagId);
+    else map.set(row.buildId, [row.tagId as ConceptTagId]);
+  }
+  for (const [id, tags] of map) {
+    map.set(id, tags.sort());
+  }
+  return map;
+}
+
+/** Batch-load synergy type designations for many builds (one query). */
+function loadBuildSynergyTypesForIds(
+  db: AppDatabase,
+  buildIds: string[],
+): Map<string, SynergyTypeDesignation[]> {
+  const map = new Map<string, SynergyTypeDesignation[]>();
+  for (const id of buildIds) map.set(id, []);
+  if (buildIds.length === 0) return map;
+
+  const rows = db
+    .select({
+      buildId: buildSynergyTypes.buildId,
+      type: buildSynergyTypes.type,
+      subType: buildSynergyTypes.subType,
+    })
+    .from(buildSynergyTypes)
+    .where(inArray(buildSynergyTypes.buildId, buildIds))
+    .all();
+
+  for (const row of rows) {
+    const designation = mapBuildSynergyTypeRow(row);
+    const list = map.get(row.buildId);
+    if (list) list.push(designation);
+    else map.set(row.buildId, [designation]);
+  }
+  return map;
+}
+
+function rowToBuildCore(
+  row: typeof builds.$inferSelect,
+  tagIds: ConceptTagId[],
+  synergyTypes: SynergyTypeDesignation[],
+): BuildRecord {
   return {
     id: row.id,
     userId: row.userId,
@@ -68,20 +130,31 @@ function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildReco
     exoticWeaponName: row.exoticWeaponName ?? null,
     pinnedSuper: row.pinnedSuper ?? null,
     softStatTargets: parseSoftStatTargets(row.softStatTargets),
-    tagIds: loadBuildTags(db, row.id),
-    synergyTypes: loadBuildSynergyTypes(db, row.id),
+    tagIds,
+    synergyTypes,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
 }
 
+function rowToBuild(db: AppDatabase, row: typeof builds.$inferSelect): BuildRecord {
+  return rowToBuildCore(row, loadBuildTags(db, row.id), loadBuildSynergyTypes(db, row.id));
+}
+
+/** Hydrate many build rows with two child queries total. */
+function rowsToBuilds(db: AppDatabase, rows: (typeof builds.$inferSelect)[]): BuildRecord[] {
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+  const tagsByBuild = loadBuildTagsForIds(db, ids);
+  const synergyByBuild = loadBuildSynergyTypesForIds(db, ids);
+  return rows.map((row) =>
+    rowToBuildCore(row, tagsByBuild.get(row.id) ?? [], synergyByBuild.get(row.id) ?? []),
+  );
+}
+
 export function listBuilds(db: AppDatabase, userId: number): BuildRecord[] {
-  return db
-    .select()
-    .from(builds)
-    .where(eq(builds.userId, userId))
-    .all()
-    .map((row) => rowToBuild(db, row));
+  const rows = db.select().from(builds).where(eq(builds.userId, userId)).all();
+  return rowsToBuilds(db, rows);
 }
 
 export function listBuildsByTags(
@@ -104,12 +177,12 @@ export function listBuildsByTags(
   }
   if (!matching || matching.length === 0) return [];
 
-  return db
+  const rows = db
     .select()
     .from(builds)
     .where(and(eq(builds.userId, userId), inArray(builds.id, matching)))
-    .all()
-    .map((row) => rowToBuild(db, row));
+    .all();
+  return rowsToBuilds(db, rows);
 }
 
 export function listBuildsFiltered(
