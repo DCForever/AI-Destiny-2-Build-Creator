@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>New Build Flow — Collaborative Diagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06080c;
+      --surface: #0d1118;
+      --raised: #141a24;
+      --line: #243044;
+      --line-strong: #3a4a66;
+      --fg: #e9edf5;
+      --muted: #8b97ad;
+      --accent: #e6b35c;
+      --accent-strong: #f3cb7a;
+      --accent-dim: rgba(230, 179, 92, 0.14);
+      --success: #6fc28b;
+      --danger: #e2654f;
+      --info: #5b9fd4;
+      --void: #b184c5;
+      --stasis: #4d88ff;
+      --solar: #f0713c;
+      --current: #7aa2ff;
+      --target: #e6b35c;
+      --shared: #6fc28b;
+      --note-bg: #2a2214;
+      --note-border: #c9a24a;
+      --font-display: "Barlow Condensed", "Segoe UI", sans-serif;
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --board-w: 1680px;
+      --board-h: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--fg);
+      background:
+        radial-gradient(1100px 520px at 12% -10%, rgba(77, 136, 255, 0.08), transparent 55%),
+        radial-gradient(900px 480px at 88% 0%, rgba(230, 179, 92, 0.07), transparent 50%),
+        var(--bg);
+      overflow: hidden;
+    }
+
+    /* ── chrome ── */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+    }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 18px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 220px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      flex: 1;
+    }
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--raised);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      padding: 7px 12px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .btn:hover { border-color: var(--line-strong); }
+    .btn.accent {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: var(--accent-dim);
+      color: var(--accent-strong);
+      font-weight: 600;
+    }
+    .btn.ghost { background: transparent; color: var(--muted); }
+    .btn.danger {
+      border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+      color: var(--danger);
+      background: color-mix(in srgb, var(--danger) 10%, transparent);
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .sep {
+      width: 1px;
+      height: 22px;
+      background: var(--line);
+      margin: 0 2px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swatch i {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      display: inline-block;
+      border: 1px solid transparent;
+    }
+    .swatch.current i { background: color-mix(in srgb, var(--current) 35%, transparent); border-color: var(--current); }
+    .swatch.target i { background: var(--accent-dim); border-color: var(--accent); }
+    .swatch.shared i { background: color-mix(in srgb, var(--shared) 22%, transparent); border-color: var(--shared); }
+    .swatch.decision i {
+      background: transparent;
+      border-color: var(--void);
+      transform: rotate(45deg);
+      width: 10px;
+      height: 10px;
+    }
+    .status {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .status strong { color: var(--accent-strong); font-weight: 500; }
+
+    /* ── workspace ── */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      min-height: 0;
+    }
+    @media (max-width: 980px) {
+      .workspace { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+      .side { max-height: 40vh; border-left: 0; border-top: 1px solid var(--line); }
+    }
+
+    .canvas-wrap {
+      position: relative;
+      overflow: auto;
+      min-height: 0;
+      background:
+        linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+        linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+        var(--bg);
+      background-blend-mode: soft-light, soft-light, normal;
+      cursor: grab;
+    }
+    .canvas-wrap.panning { cursor: grabbing; }
+    .canvas-wrap.note-mode { cursor: crosshair; }
+
+    .board {
+      position: relative;
+      width: var(--board-w);
+      height: var(--board-h);
+      margin: 28px;
+      transform-origin: 0 0;
+    }
+
+    /* ── flow nodes ── */
+    .node {
+      position: absolute;
+      width: 200px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      border-radius: 3px;
+      user-select: none;
+      transition: box-shadow 0.15s, border-color 0.15s, transform 0.12s;
+      z-index: 2;
+    }
+    .node:hover {
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line-strong));
+      z-index: 4;
+    }
+    .node.selected {
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent),
+        0 14px 32px rgba(0, 0, 0, 0.45);
+      z-index: 5;
+    }
+    .node.lane-current {
+      border-color: color-mix(in srgb, var(--current) 55%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--current) 10%, var(--surface)), var(--surface));
+    }
+    .node.lane-target {
+      border-color: color-mix(in srgb, var(--target) 55%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--target) 12%, var(--surface)), var(--surface));
+    }
+    .node.lane-shared {
+      border-color: color-mix(in srgb, var(--shared) 50%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--shared) 10%, var(--surface)), var(--surface));
+    }
+    .node.decision {
+      width: 168px;
+      height: 168px;
+      border-radius: 4px;
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--void) 16%, var(--surface)), var(--surface));
+      border-color: color-mix(in srgb, var(--void) 55%, var(--line));
+    }
+    .node.decision .inner {
+      transform: rotate(-45deg);
+      width: 118px;
+      text-align: center;
+      padding: 8px;
+    }
+    .node.start, .node.end {
+      width: 170px;
+      border-radius: 999px;
+      text-align: center;
+    }
+    .node-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px 6px;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    }
+    .node.decision .node-head,
+    .node.start .node-head,
+    .node.end .node-head {
+      border-bottom: 0;
+      padding: 0;
+      justify-content: center;
+    }
+    .node-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      line-height: 1.15;
+    }
+    .node-body {
+      padding: 8px 12px 12px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .node.decision .node-body,
+    .node.start .node-body,
+    .node.end .node-body {
+      padding: 4px 0 0;
+      color: var(--muted);
+    }
+    .tag {
+      font-family: var(--font-display);
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tag.current { color: var(--current); border-color: color-mix(in srgb, var(--current) 50%, transparent); }
+    .tag.target { color: var(--accent-strong); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+    .tag.shared { color: var(--success); border-color: color-mix(in srgb, var(--success) 45%, transparent); }
+    .tag.code {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--muted);
+    }
+    .node-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .pin {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--raised);
+      border: 2px solid var(--line-strong);
+      z-index: 3;
+    }
+    .pin.n { top: -6px; left: 50%; transform: translateX(-50%); }
+    .pin.s { bottom: -6px; left: 50%; transform: translateX(-50%); }
+    .pin.e { right: -6px; top: 50%; transform: translateY(-50%); }
+    .pin.w { left: -6px; top: 50%; transform: translateY(-50%); }
+    .node.decision .pin { display: none; }
+
+    /* ── edges ── */
+    .edges {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+    .edge path {
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .edge.current path { stroke: color-mix(in srgb, var(--current) 75%, #fff); }
+    .edge.target path { stroke: color-mix(in srgb, var(--target) 85%, #fff); stroke-dasharray: 7 5; }
+    .edge.shared path { stroke: color-mix(in srgb, var(--shared) 80%, #fff); }
+    .edge.muted path { stroke: var(--line-strong); stroke-dasharray: 3 5; opacity: 0.7; }
+    .edge-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      fill: var(--muted);
+    }
+    .edge-label.bg {
+      fill: var(--bg);
+      stroke: var(--bg);
+      stroke-width: 4px;
+      paint-order: stroke;
+    }
+
+    /* ── swimlane banners ── */
+    .lane-banner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--raised) 88%, transparent);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .lane-banner h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .lane-banner span {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .lane-banner.current {
+      top: 0;
+      border-color: color-mix(in srgb, var(--current) 35%, var(--line));
+      background: color-mix(in srgb, var(--current) 8%, var(--raised));
+    }
+    .lane-banner.current h2 { color: var(--current); }
+    .lane-banner.target {
+      top: 560px;
+      border-color: color-mix(in srgb, var(--target) 40%, var(--line));
+      background: color-mix(in srgb, var(--target) 9%, var(--raised));
+    }
+    .lane-banner.target h2 { color: var(--accent-strong); }
+
+    .callout-box {
+      position: absolute;
+      width: 280px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--raised) 90%, transparent);
+      z-index: 2;
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .callout-box strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--fg);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .callout-box.desired {
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, var(--raised));
+    }
+    .callout-box code {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--accent-strong);
+    }
+
+    /* ── sticky notes ── */
+    .note {
+      position: absolute;
+      width: 190px;
+      min-height: 120px;
+      background: linear-gradient(160deg, #3a2f18, var(--note-bg));
+      border: 1px solid var(--note-border);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+      padding: 10px 12px 28px;
+      z-index: 10;
+      cursor: grab;
+      resize: both;
+      overflow: auto;
+    }
+    .note.selected {
+      outline: 2px solid var(--accent-strong);
+      outline-offset: 1px;
+    }
+    .note.dragging { cursor: grabbing; z-index: 20; }
+    .note-color {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+    }
+    .note-color button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 0;
+      cursor: pointer;
+    }
+    .note textarea {
+      width: 100%;
+      min-height: 84px;
+      border: 0;
+      background: transparent;
+      color: #f6e7b8;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      line-height: 1.35;
+      resize: none;
+      outline: none;
+    }
+    .note .note-meta {
+      position: absolute;
+      left: 10px;
+      bottom: 6px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: rgba(246, 231, 184, 0.55);
+    }
+    .note .del {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: rgba(246, 231, 184, 0.7);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0;
+    }
+    .note.tone-amber { background: linear-gradient(160deg, #3a2f18, #2a2214); border-color: #c9a24a; }
+    .note.tone-blue { background: linear-gradient(160deg, #172636, #101a28); border-color: #4d88ff; }
+    .note.tone-blue textarea, .note.tone-blue .note-meta, .note.tone-blue .del { color: #cfe2ff; }
+    .note.tone-green { background: linear-gradient(160deg, #173024, #102018); border-color: #6fc28b; }
+    .note.tone-green textarea, .note.tone-green .note-meta, .note.tone-green .del { color: #d4f0de; }
+    .note.tone-rose { background: linear-gradient(160deg, #351a1a, #241212); border-color: #e2654f; }
+    .note.tone-rose textarea, .note.tone-rose .note-meta, .note.tone-rose .del { color: #ffd4cc; }
+
+    /* ── side panel ── */
+    .side {
+      border-left: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .side-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+    }
+    .side-tabs button {
+      flex: 1;
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 12px 8px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .side-tabs button.active {
+      color: var(--accent-strong);
+      border-bottom-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .side-body {
+      padding: 14px;
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .side h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .side p, .side li {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .side p { margin: 0 0 10px; }
+    .side ul { margin: 0 0 14px; padding-left: 1.1rem; }
+    .side li { margin-bottom: 6px; }
+    .side .field {
+      margin-bottom: 12px;
+    }
+    .side label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .side textarea, .side input, .side select {
+      width: 100%;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      border-radius: 2px;
+    }
+    .side textarea { min-height: 120px; resize: vertical; line-height: 1.4; }
+    .empty-hint {
+      border: 1px dashed var(--line);
+      padding: 14px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+    .note-list {
+      display: grid;
+      gap: 8px;
+    }
+    .note-list-item {
+      border: 1px solid var(--line);
+      background: var(--raised);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .note-list-item:hover, .note-list-item.active {
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      color: var(--fg);
+    }
+    .note-list-item strong {
+      display: block;
+      color: var(--fg);
+      font-weight: 500;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .help-kbd {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      border: 1px solid var(--line-strong);
+      background: var(--raised);
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: var(--fg);
+      margin: 0 2px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--raised);
+      border: 1px solid var(--line-strong);
+      color: var(--fg);
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>New Build Flow</h1>
+        <p>Editable diagram · annotate together · autosaves locally</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn accent" id="btnAddNote" type="button" title="Click board to place sticky">+ Sticky note</button>
+        <button class="btn" id="btnExport" type="button">Export JSON</button>
+        <button class="btn" id="btnImport" type="button">Import JSON</button>
+        <button class="btn ghost" id="btnCopy" type="button">Copy notes</button>
+        <span class="sep"></span>
+        <button class="btn ghost" id="btnZoomOut" type="button">−</button>
+        <button class="btn ghost" id="btnZoomReset" type="button">100%</button>
+        <button class="btn ghost" id="btnZoomIn" type="button">+</button>
+        <span class="sep"></span>
+        <button class="btn danger" id="btnClearNotes" type="button">Clear notes</button>
+      </div>
+      <div class="legend">
+        <span class="swatch current"><i></i> Current shipped</span>
+        <span class="swatch target"><i></i> Desired path</span>
+        <span class="swatch shared"><i></i> Shared / keep</span>
+        <span class="swatch decision"><i></i> Decision</span>
+      </div>
+      <div class="status" id="status">Ready · <strong>0</strong> notes</div>
+    </header>
+
+    <div class="workspace">
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="board" id="board">
+          <svg class="edges" id="edges" aria-hidden="true"></svg>
+
+          <div class="lane-banner current">
+            <h2>Lane A · Current flow</h2>
+            <span>CreateBuildPanel → build detail → Finish walkthrough (028–031)</span>
+          </div>
+          <div class="lane-banner target">
+            <h2>Lane B · Desired flow</h2>
+            <span>New build → Armor Set view (pick existing | create new) → optimizer …</span>
+          </div>
+
+          <!-- CURRENT LANE -->
+          <div class="node start lane-shared" data-id="start" style="left:40px; top:90px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">New build</h3></div>
+            <div class="node-body">Library rail CTA<br/><span class="tag shared">entry</span></div>
+            <span class="pin e"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-current" data-id="c-identity" style="left:280px; top:80px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Create build identity</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Class · subclass · pinned super · exotic · synergy types
+              <div class="node-meta"><span class="tag code">CreateBuildPanel</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin e"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-current" data-id="c-detail" style="left:540px; top:80px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Build detail · variant</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Opens incomplete build. User must enter Finish separately.
+              <div class="node-meta"><span class="tag code">BuildPage</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node lane-current" data-id="c-finish" style="left:800px; top:80px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Finish build</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Guided walkthrough · order Armor → Weapons → Mods
+              <div class="node-meta"><span class="tag code">FinishBuildWalkthrough</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin e"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node decision lane-current" data-id="c-armor-gate" style="left:1060px; top:70px;" tabindex="0">
+            <div class="inner">
+              <div class="node-head"><h3 class="node-title">Armor gap?</h3></div>
+              <div class="node-body">needs_set · capture · needs_fill</div>
+            </div>
+          </div>
+
+          <div class="node lane-current" data-id="c-armor-actions" style="left:1280px; top:40px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Armor category step</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Capture gear (preferred if resolved) · one-tap Create set · Skip
+              <div class="node-meta"><span class="tag code">create-set-attach</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin s"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node lane-shared" data-id="c-opt" style="left:1280px; top:220px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Armor set optimizer</h3>
+              <span class="tag shared">keep</span>
+            </div>
+            <div class="node-body">
+              Goals (exotic, set bonuses, stats) → Find kits → top-3 compare → Apply
+              <div class="node-meta">
+                <span class="tag code">FinishArmorOptimizeWorkspace</span>
+                <span class="tag shared">031</span>
+              </div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span><span class="pin w"></span>
+          </div>
+
+          <div class="node lane-current" data-id="c-wep" style="left:980px; top:360px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Weapons gap</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              One-tap create / capture → slot-first fill loop
+              <div class="node-meta"><span class="tag code">BuildSlotFillHost</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin w"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node lane-current" data-id="c-mod" style="left:720px; top:360px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Mods gap</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">Create / capture → fill empty mod slots · Skip for now</div>
+            <span class="pin e"></span><span class="pin w"></span>
+          </div>
+
+          <div class="node end lane-shared" data-id="c-done" style="left:460px; top:370px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">Complete loadout</h3></div>
+            <div class="node-body">Combat categories satisfied</div>
+            <span class="pin e"></span>
+          </div>
+
+          <div class="callout-box" style="left:40px; top:280px;">
+            <strong>Friction today</strong>
+            Identity create and armor set choice are decoupled. After Save build, user still opens Finish, then Armor, then Create — optimizer is three steps deep, not the first armor surface.
+          </div>
+
+          <!-- DESIRED LANE -->
+          <div class="node start lane-target" data-id="d-new" style="left:40px; top:650px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">New build</h3></div>
+            <div class="node-body">Same entry CTA<br/><span class="tag target">desired</span></div>
+            <span class="pin e"></span>
+          </div>
+
+          <div class="node lane-target" data-id="d-armor-view" style="left:280px; top:630px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Armor Set view</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">
+              First composition surface after starting a build. Two clear choices for armor coverage.
+            </div>
+            <span class="pin w"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node decision lane-target" data-id="d-choice" style="left:560px; top:620px;" tabindex="0">
+            <div class="inner">
+              <div class="node-head"><h3 class="node-title">Armor source</h3></div>
+              <div class="node-body">existing set<br/>or create new</div>
+            </div>
+          </div>
+
+          <div class="node lane-target" data-id="d-pick" style="left:800px; top:560px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Select existing set</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">
+              Library Armor sets compatible with class / exotic story · live-attach
+              <div class="node-meta"><span class="tag code">SetAttachPicker-ish</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin e"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-target" data-id="d-create" style="left:800px; top:740px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Create new Armor set</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">
+              One-tap inherit name from build · live-attach empty Armor set
+              <div class="node-meta"><span class="tag code">create-set-attach</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin e"></span><span class="pin n"></span>
+          </div>
+
+          <div class="node lane-shared" data-id="d-opt" style="left:1080px; top:640px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Armor Set optimizer</h3>
+              <span class="tag shared">shared</span>
+            </div>
+            <div class="node-body">
+              Same 031 workspace: goals · Find kits · top-3 · Apply combination. Manual slot fill as fallback.
+            </div>
+            <span class="pin w"></span><span class="pin e"></span><span class="pin n"></span>
+          </div>
+
+          <div class="node lane-target" data-id="d-identity" style="left:1080px; top:860px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Build identity (when?)</h3>
+              <span class="tag target">open</span>
+            </div>
+            <div class="node-body">
+              Annotate: before armor view, parallel rail, or deferred until equip? Class still needed for optimizer.
+            </div>
+            <span class="pin n"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node lane-target" data-id="d-rest" style="left:1360px; top:640px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Weapons → Mods → done</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">
+              Continue finish gaps after armor kit applied. Same slot-first paths.
+            </div>
+            <span class="pin w"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node end lane-shared" data-id="d-done" style="left:1580px; top:660px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">Ready build</h3></div>
+            <div class="node-body">Armor-first composition</div>
+            <span class="pin w"></span>
+          </div>
+
+          <div class="callout-box desired" style="left:40px; top:860px; width:320px;">
+            <strong>Target spine (your words)</strong>
+            Click <code>New build</code> → opens <code>Armor Set view</code> (2 choices: select from existing sets <em>or</em> create new) → <code>Create new</code> → <code>Armor Set optimizer</code> → …
+          </div>
+
+          <div class="callout-box" style="left:400px; top:920px; width:340px;">
+            <strong>Open design questions</strong>
+            1) When is class / exotic / synergy collected?<br/>
+            2) Does “existing set” skip optimizer or offer “improve kit”?<br/>
+            3) Is identity a modal before armor, or a side panel?
+          </div>
+
+          <!-- notes mount -->
+          <div id="notesLayer"></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="side-tabs">
+          <button type="button" class="active" data-tab="inspect">Inspect</button>
+          <button type="button" data-tab="notes">Notes</button>
+          <button type="button" data-tab="help">Help</button>
+        </div>
+        <div class="side-body" id="tabInspect">
+          <h3>Selected node</h3>
+          <div id="inspectEmpty" class="empty-hint">Click a flow node to inspect it and attach a discussion note.</div>
+          <div id="inspectContent" hidden>
+            <div class="field">
+              <label>Title</label>
+              <div id="inspectTitle" style="font-weight:600;color:var(--fg)"></div>
+            </div>
+            <div class="field">
+              <label>Lane</label>
+              <div id="inspectLane"></div>
+            </div>
+            <div class="field">
+              <label>Detail</label>
+              <div id="inspectDetail" style="color:var(--muted);font-size:0.8rem;line-height:1.4"></div>
+            </div>
+            <div class="field">
+              <label>Annotation on this node</label>
+              <textarea id="nodeAnnotation" placeholder="Decisions, risks, copy ideas…"></textarea>
+            </div>
+            <button class="btn accent" id="btnSaveNodeNote" type="button">Save node note</button>
+          </div>
+          <hr style="border:0;border-top:1px solid var(--line);margin:18px 0" />
+          <h3>Flow snapshot</h3>
+          <ul>
+            <li><strong style="color:var(--current)">Current:</strong> identity first, Finish later, armor create inside walkthrough, then optimizer.</li>
+            <li><strong style="color:var(--accent-strong)">Desired:</strong> armor set choice immediately after New build, then optimizer as primary create path.</li>
+            <li><strong style="color:var(--success)">Shared:</strong> 031 optimizer workspace + weapons/mods finish loops.</li>
+          </ul>
+        </div>
+        <div class="side-body" id="tabNotes" hidden>
+          <h3>Sticky notes</h3>
+          <p>Board stickies autosave in this browser (<span class="help-kbd">localStorage</span>).</p>
+          <div class="note-list" id="noteList"></div>
+          <button class="btn" id="btnAddNoteSide" type="button" style="margin-top:10px;width:100%">+ Add sticky at center</button>
+        </div>
+        <div class="side-body" id="tabHelp" hidden>
+          <h3>How we collab</h3>
+          <ul>
+            <li><span class="help-kbd">Click node</span> — inspect + write a node-linked note</li>
+            <li><span class="help-kbd">+ Sticky note</span> then click board — place freeform annotation</li>
+            <li><span class="help-kbd">Drag</span> stickies to reposition</li>
+            <li><span class="help-kbd">Middle-drag / Space+drag</span> — pan canvas</li>
+            <li><span class="help-kbd">Ctrl/⌘ + scroll</span> — zoom</li>
+            <li><span class="help-kbd">Export JSON</span> — share notes with me; paste back via Import</li>
+            <li><span class="help-kbd">Copy notes</span> — clipboard dump for chat</li>
+          </ul>
+          <h3>Source of truth in code</h3>
+          <ul>
+            <li><code style="color:var(--accent-strong)">CreateBuildPanel.tsx</code></li>
+            <li><code style="color:var(--accent-strong)">FinishBuildWalkthrough.tsx</code></li>
+            <li><code style="color:var(--accent-strong)">finishNextSlot.ts</code> → <code>armor_optimize</code></li>
+            <li><code style="color:var(--accent-strong)">FinishArmorOptimizeWorkspace.tsx</code></li>
+            <li>Plan: <code style="color:var(--accent-strong)">Local Temp Plans/Slot-first Finish build flow.md</code></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden />
+
+  <script>
+    const STORAGE_KEY = "d2bc-new-build-flow-diagram-v1";
+    const board = document.getElementById("board");
+    const edgesSvg = document.getElementById("edges");
+    const notesLayer = document.getElementById("notesLayer");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const statusEl = document.getElementById("status");
+    const toastEl = document.getElementById("toast");
+
+    /** @type {{ id: string, x: number, y: number, text: string, tone: string, createdAt: string }[]} */
+    let stickies = [];
+    /** @type {Record<string, string>} */
+    let nodeNotes = {};
+    let selectedNodeId = null;
+    let selectedStickyId = null;
+    let placeNoteMode = false;
+    let zoom = 1;
+
+    const NODES = {
+      "start": { title: "New build", lane: "Shared entry", detail: "Build library rail onNew → setCreating(true). Shared start for both lanes." },
+      "c-identity": { title: "Create build identity", lane: "Current", detail: "CreateBuildPanel collects class, subclass, super, exotic, required synergy types, then POST create build." },
+      "c-detail": { title: "Build detail · variant", lane: "Current", detail: "User lands on incomplete build/variant. Finish is a separate toggle, not automatic." },
+      "c-finish": { title: "Finish build", lane: "Current", detail: "FinishBuildWalkthrough overview of gaps in Armor → Weapons → Mods order." },
+      "c-armor-gate": { title: "Armor gap?", lane: "Current", detail: "Gap status drives capture_available / needs_set / needs_fill / satisfied via finishGaps." },
+      "c-armor-actions": { title: "Armor category step", lane: "Current", detail: "Capture preferred when gear resolved; else one-tap Create set & fill (create-set-attach). No primary link picker in simplified Finish chrome." },
+      "c-opt": { title: "Armor set optimizer", lane: "Shared (031)", detail: "resolvePostMutationStep opens armor_optimize when live covering armor set exists and not satisfied. Goals + kits + apply-combination." },
+      "c-wep": { title: "Weapons gap", lane: "Current", detail: "After armor satisfied, weapons one-tap create/capture then slot-first BuildSlotFillHost." },
+      "c-mod": { title: "Mods gap", lane: "Current", detail: "Same pattern as weapons; Skip for now leaves incomplete." },
+      "c-done": { title: "Complete loadout", lane: "Shared", detail: "gapsResult.complete → done callout." },
+      "d-new": { title: "New build", lane: "Desired", detail: "Same CTA; product intent is to enter armor composition sooner." },
+      "d-armor-view": { title: "Armor Set view", lane: "Desired", detail: "YOUR TARGET: first major surface after New build — not buried under Finish → Armor category." },
+      "d-choice": { title: "Armor source", lane: "Desired", detail: "Binary choice: select from existing library sets OR create new." },
+      "d-pick": { title: "Select existing set", lane: "Desired", detail: "Attach compatible Armor set. Open question: jump straight to done-for-armor or still offer improve-via-optimizer?" },
+      "d-create": { title: "Create new Armor set", lane: "Desired", detail: "Create + live-attach empty armor set (reuse create-set-attach), then go straight into optimizer." },
+      "d-opt": { title: "Armor Set optimizer", lane: "Shared", detail: "Same workspace as current 031 path — goals, find kits, top-3, apply." },
+      "d-identity": { title: "Build identity (when?)", lane: "Desired · open", detail: "Unresolved sequencing: identity before armor view vs parallel vs minimal class gate only for optimizer." },
+      "d-rest": { title: "Weapons → Mods → done", lane: "Desired", detail: "After armor kit applied, continue remaining finish categories." },
+      "d-done": { title: "Ready build", lane: "Shared", detail: "Armor-first happy path complete." },
+    };
+
+    // Edge definitions: [from, to, lane, label, fromSide, toSide]
+    const EDGES = [
+      ["start", "c-identity", "current", "save", "e", "w"],
+      ["c-identity", "c-detail", "current", "", "e", "w"],
+      ["c-detail", "c-finish", "current", "Finish build", "e", "w"],
+      ["c-finish", "c-armor-gate", "current", "Armor first", "e", "w"],
+      ["c-armor-gate", "c-armor-actions", "current", "gap", "e", "w"],
+      ["c-armor-actions", "c-opt", "shared", "create/capture", "s", "n"],
+      ["c-opt", "c-wep", "current", "armor ok", "s", "n"],
+      ["c-wep", "c-mod", "current", "", "w", "e"],
+      ["c-mod", "c-done", "shared", "", "w", "e"],
+
+      ["d-new", "d-armor-view", "target", "opens", "e", "w"],
+      ["d-armor-view", "d-choice", "target", "", "e", "w"],
+      ["d-choice", "d-pick", "target", "existing", "e", "w"],
+      ["d-choice", "d-create", "target", "create new", "e", "w"],
+      ["d-pick", "d-opt", "target", "optional improve?", "e", "w"],
+      ["d-create", "d-opt", "shared", "always", "e", "w"],
+      ["d-opt", "d-rest", "target", "apply kit", "e", "w"],
+      ["d-rest", "d-done", "shared", "", "e", "w"],
+      ["d-identity", "d-opt", "muted", "class/exotic seed", "n", "s"],
+    ];
+
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toastEl.classList.remove("show"), 1800);
+    }
+
+    function uid() {
+      return "n_" + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        stickies = Array.isArray(data.stickies) ? data.stickies : [];
+        nodeNotes = data.nodeNotes && typeof data.nodeNotes === "object" ? data.nodeNotes : {};
+      } catch { /* ignore */ }
+    }
+
+    function save() {
+      const payload = {
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        stickies,
+        nodeNotes,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      statusEl.innerHTML = `Saved · <strong>${stickies.length}</strong> stickies · <strong>${Object.keys(nodeNotes).filter(k => nodeNotes[k]?.trim()).length}</strong> node notes`;
+    }
+
+    function nodeEl(id) {
+      return board.querySelector(`.node[data-id="${id}"]`);
+    }
+
+    function pinPoint(el, side) {
+      const br = board.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const x0 = (r.left - br.left) / zoom;
+      const y0 = (r.top - br.top) / zoom;
+      const w = r.width / zoom;
+      const h = r.height / zoom;
+      const map = {
+        n: [x0 + w / 2, y0],
+        s: [x0 + w / 2, y0 + h],
+        e: [x0 + w, y0 + h / 2],
+        w: [x0, y0 + h / 2],
+      };
+      return map[side] || [x0 + w / 2, y0 + h / 2];
+    }
+
+    function curve(x1, y1, x2, y2, s1, s2) {
+      const dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
+      const dy = Math.max(40, Math.abs(y2 - y1) * 0.45);
+      const c1 = {
+        n: [x1, y1 - dy],
+        s: [x1, y1 + dy],
+        e: [x1 + dx, y1],
+        w: [x1 - dx, y1],
+      }[s1] || [x1 + dx, y1];
+      const c2 = {
+        n: [x2, y2 - dy],
+        s: [x2, y2 + dy],
+        e: [x2 + dx, y2],
+        w: [x2 - dx, y2],
+      }[s2] || [x2 - dx, y2];
+      return `M ${x1} ${y1} C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${x2} ${y2}`;
+    }
+
+    function drawEdges() {
+      const parts = [];
+      // marker defs
+      parts.push(`
+        <defs>
+          <marker id="arrow-current" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#7aa2ff"/>
+          </marker>
+          <marker id="arrow-target" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#e6b35c"/>
+          </marker>
+          <marker id="arrow-shared" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6fc28b"/>
+          </marker>
+          <marker id="arrow-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#3a4a66"/>
+          </marker>
+        </defs>
+      `);
+
+      for (const [from, to, lane, label, s1, s2] of EDGES) {
+        const a = nodeEl(from);
+        const b = nodeEl(to);
+        if (!a || !b) continue;
+        // decision nodes: approximate sides without pins
+        const sideA = a.classList.contains("decision") ? s1 : s1;
+        const sideB = b.classList.contains("decision") ? s2 : s2;
+        const [x1, y1] = pinPoint(a, sideA);
+        const [x2, y2] = pinPoint(b, sideB);
+        const d = curve(x1, y1, x2, y2, sideA, sideB);
+        const marker = `url(#arrow-${lane})`;
+        parts.push(`<g class="edge ${lane}"><path d="${d}" marker-end="${marker}"/></g>`);
+        if (label) {
+          const mx = (x1 + x2) / 2;
+          const my = (y1 + y2) / 2 - 8;
+          parts.push(`<text class="edge-label bg" x="${mx}" y="${my}" text-anchor="middle">${escapeXml(label)}</text>`);
+          parts.push(`<text class="edge-label" x="${mx}" y="${my}" text-anchor="middle">${escapeXml(label)}</text>`);
+        }
+      }
+      edgesSvg.innerHTML = parts.join("");
+    }
+
+    function escapeXml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    function renderStickies() {
+      notesLayer.innerHTML = "";
+      for (const n of stickies) {
+        const el = document.createElement("div");
+        el.className = `note tone-${n.tone || "amber"}`;
+        el.dataset.id = n.id;
+        el.style.left = n.x + "px";
+        el.style.top = n.y + "px";
+        if (n.id === selectedStickyId) el.classList.add("selected");
+        el.innerHTML = `
+          <div class="note-color">
+            <button type="button" data-tone="amber" style="background:#c9a24a" title="Amber"></button>
+            <button type="button" data-tone="blue" style="background:#4d88ff" title="Blue"></button>
+            <button type="button" data-tone="green" style="background:#6fc28b" title="Green"></button>
+            <button type="button" data-tone="rose" style="background:#e2654f" title="Rose"></button>
+          </div>
+          <textarea placeholder="Write annotation…">${escapeHtml(n.text || "")}</textarea>
+          <div class="note-meta">
+            <span>${new Date(n.createdAt).toLocaleString()}</span>
+            <button type="button" class="del" title="Delete">✕</button>
+          </div>
+        `;
+        notesLayer.appendChild(el);
+        wireSticky(el, n);
+      }
+      renderNoteList();
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function wireSticky(el, n) {
+      const ta = el.querySelector("textarea");
+      ta.addEventListener("input", () => {
+        n.text = ta.value;
+        save();
+        renderNoteList();
+      });
+      ta.addEventListener("pointerdown", (e) => e.stopPropagation());
+
+      el.querySelectorAll("[data-tone]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          n.tone = btn.getAttribute("data-tone");
+          el.className = `note tone-${n.tone}`;
+          if (n.id === selectedStickyId) el.classList.add("selected");
+          save();
+        });
+      });
+
+      el.querySelector(".del").addEventListener("click", (e) => {
+        e.stopPropagation();
+        stickies = stickies.filter((s) => s.id !== n.id);
+        if (selectedStickyId === n.id) selectedStickyId = null;
+        save();
+        renderStickies();
+        toast("Sticky deleted");
+      });
+
+      let dragging = false;
+      let ox = 0, oy = 0;
+      el.addEventListener("pointerdown", (e) => {
+        if (e.target.closest("textarea") || e.target.closest("button")) return;
+        selectedStickyId = n.id;
+        selectedNodeId = null;
+        updateNodeSelection();
+        renderStickies();
+        dragging = true;
+        el.classList.add("dragging");
+        el.setPointerCapture(e.pointerId);
+        ox = e.clientX / zoom - n.x;
+        oy = e.clientY / zoom - n.y;
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        n.x = Math.round(e.clientX / zoom - ox);
+        n.y = Math.round(e.clientY / zoom - oy);
+        el.style.left = n.x + "px";
+        el.style.top = n.y + "px";
+      });
+      el.addEventListener("pointerup", () => {
+        if (!dragging) return;
+        dragging = false;
+        el.classList.remove("dragging");
+        save();
+      });
+    }
+
+    function renderNoteList() {
+      const list = document.getElementById("noteList");
+      if (!stickies.length) {
+        list.innerHTML = `<div class="empty-hint">No stickies yet. Use + Sticky note and click the board.</div>`;
+        return;
+      }
+      list.innerHTML = stickies
+        .slice()
+        .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+        .map((n) => {
+          const preview = (n.text || "").trim() || "(empty)";
+          return `<div class="note-list-item ${n.id === selectedStickyId ? "active" : ""}" data-id="${n.id}">
+            <strong>${escapeHtml(preview.split("\n")[0].slice(0, 48))}</strong>
+            ${escapeHtml(preview.slice(0, 90))}
+          </div>`;
+        })
+        .join("");
+      list.querySelectorAll(".note-list-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const id = item.getAttribute("data-id");
+          const n = stickies.find((s) => s.id === id);
+          if (!n) return;
+          selectedStickyId = id;
+          renderStickies();
+          // scroll sticky into view
+          canvasWrap.scrollTo({
+            left: Math.max(0, n.x * zoom - 80),
+            top: Math.max(0, n.y * zoom - 80),
+            behavior: "smooth",
+          });
+        });
+      });
+    }
+
+    function updateNodeSelection() {
+      board.querySelectorAll(".node").forEach((el) => {
+        el.classList.toggle("selected", el.dataset.id === selectedNodeId);
+      });
+      const empty = document.getElementById("inspectEmpty");
+      const content = document.getElementById("inspectContent");
+      if (!selectedNodeId || !NODES[selectedNodeId]) {
+        empty.hidden = false;
+        content.hidden = true;
+        return;
+      }
+      empty.hidden = true;
+      content.hidden = false;
+      const meta = NODES[selectedNodeId];
+      document.getElementById("inspectTitle").textContent = meta.title;
+      document.getElementById("inspectLane").textContent = meta.lane;
+      document.getElementById("inspectDetail").textContent = meta.detail;
+      document.getElementById("nodeAnnotation").value = nodeNotes[selectedNodeId] || "";
+    }
+
+    function addSticky(x, y, text = "") {
+      const n = {
+        id: uid(),
+        x: Math.round(x),
+        y: Math.round(y),
+        text,
+        tone: "amber",
+        createdAt: new Date().toISOString(),
+      };
+      stickies.push(n);
+      selectedStickyId = n.id;
+      save();
+      renderStickies();
+      return n;
+    }
+
+    function boardCoordsFromEvent(e) {
+      const rect = board.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) / zoom,
+        y: (e.clientY - rect.top) / zoom,
+      };
+    }
+
+    function setZoom(next) {
+      zoom = Math.min(1.6, Math.max(0.45, next));
+      board.style.transform = `scale(${zoom})`;
+      document.getElementById("btnZoomReset").textContent = Math.round(zoom * 100) + "%";
+      // edges use getBoundingClientRect which accounts for zoom already
+      requestAnimationFrame(drawEdges);
+    }
+
+    // Node click
+    board.querySelectorAll(".node").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (placeNoteMode) return;
+        selectedNodeId = el.dataset.id;
+        selectedStickyId = null;
+        updateNodeSelection();
+        renderStickies();
+        // switch to inspect tab
+        activateTab("inspect");
+      });
+    });
+
+    board.addEventListener("click", (e) => {
+      if (!placeNoteMode) {
+        if (e.target === board || e.target === edgesSvg || e.target.classList.contains("lane-banner") || e.target.classList.contains("callout-box")) {
+          selectedNodeId = null;
+          selectedStickyId = null;
+          updateNodeSelection();
+          renderStickies();
+        }
+        return;
+      }
+      const { x, y } = boardCoordsFromEvent(e);
+      addSticky(x - 20, y - 20);
+      placeNoteMode = false;
+      canvasWrap.classList.remove("note-mode");
+      document.getElementById("btnAddNote").textContent = "+ Sticky note";
+      toast("Sticky placed");
+    });
+
+    // Tabs
+    function activateTab(name) {
+      document.querySelectorAll(".side-tabs button").forEach((b) => {
+        b.classList.toggle("active", b.dataset.tab === name);
+      });
+      document.getElementById("tabInspect").hidden = name !== "inspect";
+      document.getElementById("tabNotes").hidden = name !== "notes";
+      document.getElementById("tabHelp").hidden = name !== "help";
+    }
+    document.querySelectorAll(".side-tabs button").forEach((b) => {
+      b.addEventListener("click", () => activateTab(b.dataset.tab));
+    });
+
+    document.getElementById("btnSaveNodeNote").addEventListener("click", () => {
+      if (!selectedNodeId) return;
+      nodeNotes[selectedNodeId] = document.getElementById("nodeAnnotation").value;
+      save();
+      toast("Node note saved");
+    });
+
+    document.getElementById("btnAddNote").addEventListener("click", () => {
+      placeNoteMode = !placeNoteMode;
+      canvasWrap.classList.toggle("note-mode", placeNoteMode);
+      document.getElementById("btnAddNote").textContent = placeNoteMode ? "Click board…" : "+ Sticky note";
+      if (placeNoteMode) toast("Click the board to place a sticky");
+    });
+
+    document.getElementById("btnAddNoteSide").addEventListener("click", () => {
+      const x = (canvasWrap.scrollLeft + canvasWrap.clientWidth / 2) / zoom - 95;
+      const y = (canvasWrap.scrollTop + canvasWrap.clientHeight / 2) / zoom - 60;
+      addSticky(x, y);
+      activateTab("notes");
+      toast("Sticky added");
+    });
+
+    document.getElementById("btnClearNotes").addEventListener("click", () => {
+      if (!confirm("Clear all stickies and node notes?")) return;
+      stickies = [];
+      nodeNotes = {};
+      selectedStickyId = null;
+      selectedNodeId = null;
+      save();
+      renderStickies();
+      updateNodeSelection();
+      toast("Cleared");
+    });
+
+    document.getElementById("btnExport").addEventListener("click", () => {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        title: "New Build Flow diagram annotations",
+        stickies,
+        nodeNotes,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `new-build-flow-notes-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast("Exported JSON");
+    });
+
+    document.getElementById("btnImport").addEventListener("click", () => {
+      document.getElementById("importFile").click();
+    });
+    document.getElementById("importFile").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (Array.isArray(data.stickies)) stickies = data.stickies;
+        if (data.nodeNotes && typeof data.nodeNotes === "object") nodeNotes = data.nodeNotes;
+        save();
+        renderStickies();
+        updateNodeSelection();
+        toast("Imported");
+      } catch {
+        toast("Import failed");
+      }
+      e.target.value = "";
+    });
+
+    document.getElementById("btnCopy").addEventListener("click", async () => {
+      const lines = ["# New Build Flow — notes", ""];
+      const nn = Object.entries(nodeNotes).filter(([, v]) => v?.trim());
+      if (nn.length) {
+        lines.push("## Node notes");
+        for (const [id, text] of nn) {
+          const title = NODES[id]?.title || id;
+          lines.push(`### ${title} (\`${id}\`)`, text.trim(), "");
+        }
+      }
+      if (stickies.length) {
+        lines.push("## Stickies");
+        for (const s of stickies) {
+          lines.push(`- (${Math.round(s.x)},${Math.round(s.y)}) ${s.tone || "amber"}: ${(s.text || "").trim() || "(empty)"}`);
+        }
+      }
+      if (lines.length <= 2) lines.push("_No notes yet._");
+      try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        toast("Notes copied");
+      } catch {
+        toast("Clipboard blocked");
+      }
+    });
+
+    document.getElementById("btnZoomIn").addEventListener("click", () => setZoom(zoom + 0.1));
+    document.getElementById("btnZoomOut").addEventListener("click", () => setZoom(zoom - 0.1));
+    document.getElementById("btnZoomReset").addEventListener("click", () => setZoom(1));
+
+    canvasWrap.addEventListener("wheel", (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      setZoom(zoom + (e.deltaY < 0 ? 0.08 : -0.08));
+    }, { passive: false });
+
+    // Pan with space/middle mouse
+    let panning = false;
+    let panX = 0, panY = 0, scroll0x = 0, scroll0y = 0;
+    let spaceDown = false;
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && !e.repeat && e.target === document.body) {
+        e.preventDefault();
+        spaceDown = true;
+      }
+      if (e.key === "Escape") {
+        placeNoteMode = false;
+        canvasWrap.classList.remove("note-mode");
+        document.getElementById("btnAddNote").textContent = "+ Sticky note";
+      }
+    });
+    window.addEventListener("keyup", (e) => {
+      if (e.code === "Space") spaceDown = false;
+    });
+    canvasWrap.addEventListener("pointerdown", (e) => {
+      if (e.button === 1 || (e.button === 0 && spaceDown)) {
+        panning = true;
+        canvasWrap.classList.add("panning");
+        panX = e.clientX;
+        panY = e.clientY;
+        scroll0x = canvasWrap.scrollLeft;
+        scroll0y = canvasWrap.scrollTop;
+        canvasWrap.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      }
+    });
+    canvasWrap.addEventListener("pointermove", (e) => {
+      if (!panning) return;
+      canvasWrap.scrollLeft = scroll0x - (e.clientX - panX);
+      canvasWrap.scrollTop = scroll0y - (e.clientY - panY);
+    });
+    canvasWrap.addEventListener("pointerup", () => {
+      panning = false;
+      canvasWrap.classList.remove("panning");
+    });
+
+    // Seed one starter sticky if empty
+    function seedIfEmpty() {
+      if (stickies.length || Object.keys(nodeNotes).length) return;
+      addSticky(40, 430, "Discuss: should New build skip full identity form and land on Armor Set view immediately?");
+      addSticky(980, 860, "Open: existing set → attach only, or attach + optional optimizer improve?");
+      // keep seed
+    }
+
+    // init
+    load();
+    seedIfEmpty();
+    renderStickies();
+    updateNodeSelection();
+    setZoom(0.85);
+    requestAnimationFrame(() => {
+      drawEdges();
+      // nudge scroll to show both lanes a bit
+      canvasWrap.scrollTop = 0;
+      canvasWrap.scrollLeft = 0;
+    });
+    window.addEventListener("resize", () => requestAnimationFrame(drawEdges));
+
+    // Redraw edges after fonts load (layout shift)
+    document.fonts?.ready?.then(() => requestAnimationFrame(drawEdges));
+  </script>
+</body>
+</html>
