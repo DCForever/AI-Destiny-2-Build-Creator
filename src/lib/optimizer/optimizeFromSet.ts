@@ -22,10 +22,14 @@ import {
   type CandidatePiece,
 } from "./types";
 
+const destinyClassNameSchema = z.enum(["Titan", "Hunter", "Warlock"]);
+
 /** Zod contract for `POST /api/user/sets/[id]/optimize`. */
 export const refreshOptimizeBodySchema = z.object({
   overrides: armorSetOptimizerConstraintsSchema.partial().optional(),
   maxResults: z.number().int().min(1).max(50).optional(),
+  /** When the set has no pieces, clients (Finish) pass build class. */
+  classType: destinyClassNameSchema.optional(),
 });
 
 export type RefreshOptimizeBody = z.infer<typeof refreshOptimizeBodySchema>;

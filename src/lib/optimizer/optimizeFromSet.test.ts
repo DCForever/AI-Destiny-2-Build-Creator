@@ -111,4 +111,59 @@ describe("optimizeFromSet", () => {
       optimizeFromSet({ db, userId: user.id, setId: "missing", classType: "Titan", candidates: [] }),
     ).rejects.toMatchObject({ code: API_ERROR_CODES.SET_NOT_FOUND });
   });
+
+  it("optimizes empty armor set when classType is provided", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "of5", 3, "Player");
+    const now = new Date().toISOString();
+    createSetRecord(db, user.id, {
+      id: "empty-armor",
+      name: "Empty",
+      type: "armor",
+      tagIds: [],
+      now,
+      optimizerConstraints: serializeOptimizerConstraints({
+        setBonusGoals: [],
+        statPriorities: ["Melee"],
+        includeModEstimates: false,
+      }),
+    });
+
+    const result = await optimizeFromSet({
+      db,
+      userId: user.id,
+      setId: "empty-armor",
+      classType: "Warlock",
+      candidates: candidatePool(),
+    });
+
+    expect(result.armorSetId).toBe("empty-armor");
+    expect(result.combinations.length).toBeGreaterThan(0);
+  });
+
+  it("fails class resolution on empty set without classType", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "of6", 3, "Player");
+    const now = new Date().toISOString();
+    createSetRecord(db, user.id, {
+      id: "empty-no-class",
+      name: "Empty2",
+      type: "armor",
+      tagIds: [],
+      now,
+      optimizerConstraints: serializeOptimizerConstraints({
+        setBonusGoals: [],
+        includeModEstimates: false,
+      }),
+    });
+
+    await expect(
+      optimizeFromSet({
+        db,
+        userId: user.id,
+        setId: "empty-no-class",
+        candidates: candidatePool(),
+      }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_ITEM });
+  });
 });

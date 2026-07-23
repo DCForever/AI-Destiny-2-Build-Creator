@@ -38,6 +38,7 @@ export async function POST(request: Request, context: RouteContext): Promise<Nex
       setId: id,
       ...(parsed.data.overrides ? { overrides: parsed.data.overrides } : {}),
       ...(parsed.data.maxResults != null ? { maxResults: parsed.data.maxResults } : {}),
+      ...(parsed.data.classType ? { classType: parsed.data.classType } : {}),
     });
     return NextResponse.json(result);
   } catch (error) {
