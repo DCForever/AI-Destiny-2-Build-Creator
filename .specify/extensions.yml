@@ -1,6 +1,8 @@
 installed:
 - agent-context
 - git
+- improve
+- iterate
 settings:
   auto_execute_hooks: true
 hooks:
