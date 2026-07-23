@@ -6,7 +6,7 @@ branch_numbering: sequential
 
 # Parent branch for new feature branches created by before_specify (speckit.git.feature).
 # Leave unset to branch from the current HEAD. Scripts check local branch first, then origin/<name>.
-base_branch: feature/overhall
+base_branch: main
 
 # Commit message used by `git commit` during repository initialization
 init_commit_message: "[Spec Kit] Initial commit"
