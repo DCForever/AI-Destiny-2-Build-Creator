@@ -28,10 +28,9 @@ import {
   PageHeader,
   Panel,
   SectionLabel,
-  SignedOutGate,
+SignedOutGate,
   Stack,
   Text,
-  TextField,
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
@@ -41,9 +40,10 @@ import { SET_TYPES } from "@/lib/sets/schemas";
 import { sortByName } from "@/lib/sortByName";
 
 /**
- * Sets screen composition.
+ * Sets screen composition (board-first).
  *
- * Layout: PageHeader · Filters · Workspace(rail library · main detail/edit/fill)
+ * Layout: title · instrument filters · Workspace(rail library · detail/edit)
+ * Slot-fill still takes over the full page body.
  */
 export function SetsPage() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -188,8 +188,8 @@ export function SetsPage() {
     }
   }
 
-  const pageDescription =
-    "Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants.";
+const pageDescription =
+    "Reusable weapon, armor, mod, pair, and fashion kits for Build variants.";
 
   if (signedIn === false) {
     return (
@@ -293,12 +293,12 @@ export function SetsPage() {
   } else {
     main = (
       <WorkspaceMain>
-        <EmptyState
+<EmptyState
           title={loading ? "Loading library" : "No set open"}
           description={
             loading
               ? "Fetching your set library…"
-              : "Pick a kit in the library, or create a set so Build variants can attach weapon, armor, mod, pair, or fashion loadouts."
+              : "Pick a kit on the board, or create a set."
           }
           action={
             loading ? undefined : (
@@ -342,39 +342,48 @@ export function SetsPage() {
     creating || editing || detailReady || detailPendingId,
   );
 
+const filterActiveCount =
+    typeFilter.length + tagFilter.length + (query.trim() ? 1 : 0);
+
   return (
     <PageFrame>
       <PageFrameChrome>
-        <Stack gap={12}>
-          <PageHeader title="Sets" description={pageDescription} />
+        <Stack gap={8}>
+          <PageHeader title="Sets" />
           {error ? <Callout tone="danger">{error}</Callout> : null}
           <CollapsibleFilterSection
             open={filtersOpen}
             onOpenChange={setFiltersOpen}
-            activeCount={
-              typeFilter.length +
-              tagFilter.length +
-              (query.trim() ? 1 : 0)
+            panel={false}
+            label="Type & tags"
+            activeCount={filterActiveCount}
+            onClear={
+              filterActiveCount > 0
+                ? () => {
+                    setTypeFilter([]);
+                    setTagFilter([]);
+                    setQuery("");
+                    setFiltersOpen(false);
+                  }
+                : undefined
             }
-            onClear={() => {
-              setTypeFilter([]);
-              setTagFilter([]);
-              setQuery("");
-            }}
+            leading={
+              <div className="min-w-0 flex-1 max-w-md">
+                <label className="sr-only" htmlFor="sets-search">
+                  Search sets
+                </label>
+                <input
+                  id="sets-search"
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search name · type · tag…"
+                  className="w-full bg-surface-raised border border-line px-2 py-1.5 text-sm text-foreground placeholder:text-muted"
+                />
+              </div>
+            }
             summary={
               <Cluster gap={3}>
-                {query.trim() ? (
-                  <FilterChip
-                    size="xs"
-                    label={
-                      query.trim().length > 18
-                        ? `${query.trim().slice(0, 16)}…`
-                        : query.trim()
-                    }
-                    active
-                    onClick={() => setQuery("")}
-                  />
-                ) : null}
                 {typeFilter.map((t) => (
                   <FilterChip
                     key={t}
@@ -400,12 +409,6 @@ export function SetsPage() {
             }
           >
             <Stack gap={10}>
-              <TextField
-                label="Search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name · type · tag…"
-              />
               <Stack gap={4}>
                 <SectionLabel>Type</SectionLabel>
                 <Cluster>
