@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-23 (BR-SET-011 Sets armor board base stats exclude equipped mods)
+**Updated**: 2026-07-23 (BR-CAT-009 Catalog Universal search mode)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -79,7 +79,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | ID | Rule | FR |
 |----|------|-----|
 | BR-FASH-001 | Fashion Sets are cosmetic/organizational (not identity). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-FASH-002 | Fashion Sets must not participate in synergies, suggestions, or stats. **Updated**: they **do** participate in **full equip / DIM export** when attached per variant — see [DBR-FASH-001–005](./domain-business-rules.md). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-FASH-002 | Fashion Sets must not participate in synergies, suggestions, or stats. **Updated**: 2026-07-23 (BR-CAT-009 Catalog Universal search mode)
 | BR-FASH-003 | Fashion is resolved on the variant fashion layer for equip/export; still excluded from combat synergy/stat resolution. **See** [DBR-FASH-*](./domain-business-rules.md). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
 
 ---
@@ -217,6 +217,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-CAT-006 | Multi-value facets support **include OR within dimension**, **AND across dimensions**, and **exclude** (any exclude match drops). Free-text further ANDs. Affirmed by [DBR-ROLL-010](./domain-business-rules.md). | [DBR-ROLL-010](./domain-business-rules.md), [013](013-item-filter-enrichment/spec.md) |
 | BR-CAT-007 | Catalog results may **group by** one or more dimensions (element, ammo, archetype, frame, slot, class) for browse; group-by does not replace filter semantics. | [DBR-ROLL-010](./domain-business-rules.md) |
 | BR-CAT-008 | Catalog may filter by library **synergy membership** (include/exclude) via server allowlist and/or client hash sets when mixed. | [DBR-ROLL-010](./domain-business-rules.md) |
+| BR-CAT-009 | Catalog provides a **Universal** mode for mixed-kind composition search (weapons, armor, mods, perks, traits, set bonuses, artifact perks, subclass pieces). From hit detail, users may create/add **Sets** (wizard + instance pin rules) or **Synergies** only—not Build kit attach. | [027](027-catalog-universal-search/spec.md) |
 
 ---
 

@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { OwnedInstanceCard } from "@/components/catalog/OwnedInstanceCard";
+import { UniversalSearchPanel } from "@/components/catalog/UniversalSearchPanel";
 import {
   cycleFacetValue,
   emptyFacet,
@@ -87,6 +88,7 @@ import {
   catalogResultsPaneClasses,
 } from "@/lib/ui/viewportLayout";
 import type {
+  CatalogBrowseMode,
   CatalogChromeConfig,
   CatalogConstraints,
   CatalogKind,
@@ -95,6 +97,7 @@ import type {
 } from "@/components/catalog/catalogScreenTypes";
 
 export type {
+  CatalogBrowseMode,
   CatalogChromeConfig,
   CatalogConstraints,
   CatalogKind,
@@ -163,8 +166,18 @@ export function CatalogScreen({
   const pickMode = selection?.enabled === true;
   const embedded = chrome?.embedded === true;
 
-  const [kind, setKind] = useState<CatalogKind>(
-    () => constraints?.kind ?? "weapons",
+  const [browseMode, setBrowseMode] = useState<CatalogBrowseMode>(() =>
+    constraints?.kind ?? "weapons",
+  );
+  const kind: CatalogKind =
+    browseMode === "universal" ? "weapons" : browseMode;
+  const isUniversal = browseMode === "universal" && !lockKind;
+
+  const setKind = useCallback(
+    (next: CatalogKind) => {
+      setBrowseMode(next);
+    },
+    [],
   );
   const [scope, setScope] = useState<CatalogScope>(
     () => constraints?.scope ?? "owned",
@@ -362,10 +375,11 @@ export function CatalogScreen({
   );
 
   useEffect(() => {
+    if (isUniversal) return;
     const ac = new AbortController();
     void loadBase(ac.signal);
     return () => ac.abort();
-  }, [loadBase]);
+  }, [loadBase, isUniversal]);
 
   /** Live client filter on base set (instant chip / text updates). */
   const items = useMemo(
@@ -418,7 +432,7 @@ export function CatalogScreen({
 
   // Keep locked constraints enforced if parent props change.
   useEffect(() => {
-    if (lockKind && constraints?.kind) setKind(constraints.kind);
+    if (lockKind && constraints?.kind) setBrowseMode(constraints.kind);
   }, [lockKind, constraints?.kind]);
   useEffect(() => {
     if (lockSlot && constraints?.slot) {
@@ -796,7 +810,9 @@ export function CatalogScreen({
     chrome?.title ?? "Catalog";
   const description =
     chrome?.description ??
-    "Browse weapons and armor from the manifest or your owned inventory.";
+    (isUniversal
+      ? "Search composition entities across weapons, armor, mods, perks, and more."
+      : "Browse weapons and armor from the manifest or your owned inventory.");
 
   /** R2 compact result card — no description; meta is icon-dense. */
   function renderResultCard(item: CatalogItem) {
@@ -941,7 +957,7 @@ export function CatalogScreen({
                     <FilterChip
                       size="xs"
                       label="Weapons"
-                      active={kind === "weapons"}
+                      active={browseMode === "weapons"}
                       onClick={() => {
                         setKind("weapons");
                         if (!lockSlot) setSlotsFacet(emptyFacet());
@@ -955,7 +971,7 @@ export function CatalogScreen({
                     <FilterChip
                       size="xs"
                       label="Armor"
-                      active={kind === "armor"}
+                      active={browseMode === "armor"}
                       onClick={() => {
                         setKind("armor");
                         if (!lockSlot) setSlotsFacet(emptyFacet());
@@ -965,12 +981,20 @@ export function CatalogScreen({
                         setArchetypes(emptyFacet());
                       }}
                     />
+                    <FilterChip
+                      size="xs"
+                      label="Universal"
+                      active={browseMode === "universal"}
+                      onClick={() => setBrowseMode("universal")}
+                    />
                   </>
                 ) : (
                   <Chip accent>
                     {kind === "weapons" ? "Weapons" : "Armor"}
                   </Chip>
                 )}
+                {!isUniversal ? (
+                  <>
                 <FilterChip
                   size="xs"
                   label="Owned"
@@ -983,7 +1007,9 @@ export function CatalogScreen({
                   active={scope === "all"}
                   onClick={() => setScope("all")}
                 />
-                {filtersOpen ? (
+                  </>
+                ) : null}
+                {!isUniversal && filtersOpen ? (
                   <FilterChip
                     size="xs"
                     label={
@@ -1011,6 +1037,7 @@ export function CatalogScreen({
                 ) : null}
               </Cluster>
 
+              {!isUniversal ? (
               <Button
                 size="sm"
                 variant={filtersOpen ? "accent" : "ghost"}
@@ -1019,8 +1046,9 @@ export function CatalogScreen({
                 {filtersOpen ? "▾ Filters" : "▸ Filters"}
                 {multiFilterCount > 0 ? ` · ${multiFilterCount}` : ""}
               </Button>
+              ) : null}
 
-              {!filtersOpen && appliedSummaryChips.length > 0 ? (
+              {!isUniversal && !filtersOpen && appliedSummaryChips.length > 0 ? (
                 <Cluster gap={3} className="min-w-0 flex-1">
                   {appliedSummaryChips.map((chip) => (
                     <FilterChip
@@ -1038,6 +1066,7 @@ export function CatalogScreen({
                 </Cluster>
               ) : null}
 
+              {!isUniversal ? (
               <div className="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
                 <Button
                   size="sm"
@@ -1053,10 +1082,11 @@ export function CatalogScreen({
                   </Button>
                 ) : null}
               </div>
+              ) : null}
             </div>
 
             {/* Expanded: S5 grid — Search | Synergy | facets */}
-            {filtersOpen ? (
+            {!isUniversal && filtersOpen ? (
             <div
               className={
                 synergyAvailable
@@ -1747,7 +1777,7 @@ export function CatalogScreen({
               </WorkspaceMain>
   ) : null;
 
-  const body = (
+  const gearBody = (
     <div className={catalogBodyRootClasses(hasSelection)}>
       <div className={catalogResultsPaneClasses(hasSelection)}>
         {resultsPane}
@@ -1758,9 +1788,12 @@ export function CatalogScreen({
     </div>
   );
 
+  const body = isUniversal ? <UniversalSearchPanel /> : gearBody;
+
   if (embedded) {
     // Parent must be a height-locked flex child (Sets fill pane). Chrome
     // height-capped on small screens; dual-pane body scrolls rail/detail.
+    // lockKind embeds never show Universal (set fill).
     return (
       <div className="h-full min-h-0 flex flex-col overflow-hidden w-full">
         <div className={EMBEDDED_CATALOG_CHROME_CLASSES}>{chromeBlock}</div>
@@ -1771,7 +1804,33 @@ export function CatalogScreen({
 
   return (
     <PageFrame>
-      <PageFrameChrome>{chromeBlock}</PageFrameChrome>
+      <PageFrameChrome>{isUniversal ? (
+        <Stack gap={12}>
+          <PageHeader title={title} description={description} />
+          <Panel tone="muted" pad="sm">
+            <Cluster gap={4}>
+              <FilterChip
+                size="xs"
+                label="Weapons"
+                active={false}
+                onClick={() => setBrowseMode("weapons")}
+              />
+              <FilterChip
+                size="xs"
+                label="Armor"
+                active={false}
+                onClick={() => setBrowseMode("armor")}
+              />
+              <FilterChip
+                size="xs"
+                label="Universal"
+                active
+                onClick={() => setBrowseMode("universal")}
+              />
+            </Cluster>
+          </Panel>
+        </Stack>
+      ) : chromeBlock}</PageFrameChrome>
       <PageFrameBody>{body}</PageFrameBody>
     </PageFrame>
   );

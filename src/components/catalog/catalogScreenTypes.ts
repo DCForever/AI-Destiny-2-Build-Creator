@@ -1,6 +1,9 @@
 import type { CatalogItem } from "@/lib/catalog/types";
 
+/** Specialized gear browse (constraints / embed). */
 export type CatalogKind = "weapons" | "armor";
+/** Free Catalog browse modes including Universal composition search (027). */
+export type CatalogBrowseMode = "weapons" | "armor" | "universal";
 export type CatalogScope = "all" | "owned";
 
 /** Locks / initial filters when Catalog is embedded (e.g. Set slot fill). */

@@ -684,7 +684,6 @@ export function SetsDetail({
                             size="sm"
                             weight="medium"
                             className="leading-snug line-clamp-2"
-                            title={item.itemName}
                           >
                             {item.itemName}
                           </Text>
@@ -828,7 +827,6 @@ export function SetsDetail({
                             size="sm"
                             weight="medium"
                             className="leading-snug line-clamp-2"
-                            title={item.itemName}
                           >
                             {item.itemName}
                           </Text>
