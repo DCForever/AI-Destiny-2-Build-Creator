@@ -72,7 +72,7 @@ describe("viewport layout wiring", () => {
   it("Set-fill omits Sets chrome + library rail (single Catalog pane)", () => {
     const sets = readSrc("src/components/sets/SetsPage.tsx");
     expect(sets).toContain("Set-fill: single full-pane Catalog");
-    const start = sets.indexOf("if (fillSlot && detail)");
+    const start = sets.indexOf("if (fillSlot && detailReady && detail)");
     expect(start).toBeGreaterThanOrEqual(0);
     const afterFill = sets.slice(start).replace(/\r\n/g, "\n");
     const endRel = afterFill.indexOf("\n  return (\n    <PageFrame>");

@@ -85,7 +85,8 @@ describe("FileEntityCache.rebuild", () => {
     expect(meta.counts.aspects).toBe(2);
     expect(meta.counts.fragments).toBe(2);
     expect(meta.counts.abilities).toBe(6);
-    expect(meta.counts.mods).toBe(5);
+    // Includes general armor-stat fixtures used by base-roll / strip-mod tests.
+    expect(meta.counts.mods).toBe(7);
     expect(meta.counts["set-bonuses"]).toBe(1);
     expect(meta.counts.stats).toBe(7);
   });
