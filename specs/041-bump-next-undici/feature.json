@@ -1,0 +1,12 @@
+{
+  "id": "041-bump-next-undici",
+  "title": "Bump next + undici for npm audit highs",
+  "branch": "041-bump-next-undici",
+  "status": "in_progress",
+  "priority": "P2",
+  "effort": "S",
+  "risk": "MED",
+  "category": "migration",
+  "improve": "specs/deps-security/improve/bump-next-undici-audit.md",
+  "base": "350e435"
+}
