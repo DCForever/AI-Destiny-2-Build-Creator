@@ -13,6 +13,8 @@ declare global {
   var __d2bcSqlite: Database.Database | undefined;
 }
 
+let migrated = false;
+
 function openDatabase(): Database.Database {
   const dbPath = appDbPath();
   mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -51,8 +53,6 @@ export function resetAppSqliteForTests(): void {
   }
   migrated = false;
 }
-
-let migrated = false;
 
 function ensureSynergySubTypeColumn(db: Database.Database): void {
   const cols = db.prepare("PRAGMA table_info(synergies)").all() as { name: string }[];
