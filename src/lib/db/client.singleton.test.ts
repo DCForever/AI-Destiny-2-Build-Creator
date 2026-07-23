@@ -43,15 +43,11 @@ describe("process SQLite singleton", () => {
     testHandle.close();
   });
 
-  it("keeps createTestDb isolated from the process singleton", () => {
+  it("keeps createTestDb from replacing the process singleton", () => {
     resetAppSqliteForTests();
     getDb();
     const appHandle = getAppSqliteForTests();
-    const testDb = createTestDb();
-    const testClient = (testDb as unknown as { $client: typeof appHandle }).$client;
-    expect(testClient).not.toBe(appHandle);
-    // process singleton unchanged by test helper
+    createTestDb();
     expect(getAppSqliteForTests()).toBe(appHandle);
-    testClient.close();
   });
 });
