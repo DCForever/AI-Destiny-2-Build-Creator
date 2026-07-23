@@ -32,10 +32,10 @@ describe("buildLegendaryArmorRows", () => {
       hash: 9001,
       setBonusName: "Eutechnology",
       setBonusHash: 8001,
-      setBonusIcon: "/common/destiny2_content/icons/set.png",
+      setBonusIcon: null,
       setBonusPerks: [
-        { requiredCount: 2, name: "2pc", description: "Two piece" },
-        { requiredCount: 4, name: "4pc", description: "Four piece" },
+        { requiredCount: 2, name: "Gift of the Ley Lines", description: "2pc" },
+        { requiredCount: 4, name: "Techeun's Foresight", description: "4pc" },
       ],
       slot: "Helmet",
     });

@@ -3,10 +3,13 @@ import type { AppDatabase } from "@/lib/db/client";
 import { queryInventoryByInstanceIds } from "@/lib/db/repositories/inventoryRepository";
 import { findSynergiesByTarget } from "@/lib/db/repositories/synergyRepository";
 import { resolveInventoryHashProjections } from "@/lib/catalog/inventoryHashProjections";
+import { computeArmorBaseStatsFromPlugs } from "@/lib/inventory/instances/armorBaseStats";
 import {
   computeTotalArmorStats,
   isCompleteArmorStats,
 } from "@/lib/inventory/instances/parseArmorStats";
+import { stripArmorModStats } from "@/lib/inventory/instances/stripArmorModStats";
+import { asRawInventoryItem } from "@/lib/manifest/extractors/rawTypes";
 import { getServices } from "@/lib/services";
 import {
   formatSynergyTypeDesignation,
@@ -130,11 +133,52 @@ export async function enrichSetItems(
     }
   }
 
-  const instanceIds = items
+const instanceIds = items
     .map((i) => i.instanceId)
     .filter((id): id is string => Boolean(id));
   const invRows = queryInventoryByInstanceIds(db, userId, instanceIds);
   const invByInstance = new Map(invRows.map((r) => [r.instanceId, r]));
+
+  // Plug defs for base-stat sum (armor_stats investments) — one raw table load.
+  const plugDefByHash = new Map<
+    number,
+    {
+      plugCategoryIdentifier?: string | null;
+      investmentStats?: Array<{
+        statTypeHash: number;
+        value: number;
+        isConditionallyActive?: boolean;
+      }> | null;
+    }
+  >();
+  const armorPlugHashes = [
+    ...new Set(
+      invRows
+        .filter((r) => r.statValues)
+        .flatMap((r) => r.plugHashes ?? []),
+    ),
+  ];
+  if (armorPlugHashes.length > 0 && manifest?.getStatus) {
+    try {
+      const status = await manifest.getStatus();
+      if (status.cachedVersion) {
+        const itemTable = await manifest.loadRawTable(
+          status.cachedVersion,
+          "DestinyInventoryItemDefinition",
+        );
+        for (const h of armorPlugHashes) {
+          const raw = asRawInventoryItem(itemTable[String(h)]);
+          if (!raw) continue;
+          plugDefByHash.set(h, {
+            plugCategoryIdentifier: raw.plug?.plugCategoryIdentifier ?? null,
+            investmentStats: raw.investmentStats ?? null,
+          });
+        }
+      }
+    } catch {
+      // Offline / tests: fall back to live-minus-mods stripping.
+    }
+  }
 
   const enriched: EnrichedSetItem[] = [];
 
@@ -225,15 +269,28 @@ export async function enrichSetItems(
         inv.bucket === "Legs" ||
         inv.bucket === "ClassItem";
 
-      if (inv.statValues && (isArmorBucket || exoA || isArmorSetSlot(item.slot))) {
-        next.statValues = inv.statValues;
-        next.totalStats = computeTotalArmorStats(inv.statValues);
-        next.statsIncomplete = !isCompleteArmorStats(inv.statValues);
+if (inv.statValues && (isArmorBucket || exoA || isArmorSetSlot(item.slot))) {
+        // Prefer DIM-style base: sum of armor_stats roll plugs.
+        // Fallback: strip equipped catalog mod investments from live ItemStats.
+        const fromRollPlugs = computeArmorBaseStatsFromPlugs(
+          inv.plugHashes,
+          (h) => plugDefByHash.get(h),
+        );
+        const fromStrip = stripArmorModStats(
+          inv.statValues,
+          inv.plugHashes,
+          modByHash,
+        );
+        const baseStats = fromRollPlugs ?? fromStrip ?? inv.statValues;
+        next.statValues = baseStats;
+        next.totalStats = computeTotalArmorStats(baseStats);
+        next.statsIncomplete = !isCompleteArmorStats(baseStats);
         const tier = resolveArmorTier({
           gearTier: inv.gearTier ?? null,
-          totalStats: next.totalStats,
+          // Tier bands use live total when API gearTier is null (research 010).
+          totalStats: computeTotalArmorStats(inv.statValues),
           isExotic: next.isExotic ?? false,
-          statsComplete: !next.statsIncomplete,
+          statsComplete: isCompleteArmorStats(inv.statValues),
         });
         next.tier = tier.tier;
         next.tierLabel = tier.label;

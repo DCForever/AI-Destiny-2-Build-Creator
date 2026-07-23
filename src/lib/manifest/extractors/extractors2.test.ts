@@ -128,14 +128,25 @@ describe("abilitiesExtractor", () => {
 // ─── Mods ─────────────────────────────────────────────────────────────────
 
 describe("modsExtractor", () => {
-  it("returns unique mods (dedupes cheap artifact variants)", async () => {
+it("returns unique mods (dedupes cheap artifact variants)", async () => {
     const records = await modsExtractor.extract(makeLoader());
     // 1028 (1 energy) + 1029 (2 energy) Focusing Strike → keep one
-    expect(records).toHaveLength(5);
+    // + Major Melee / Minor Health fixtures
+    expect(records).toHaveLength(7);
     const focusing = records.filter((r) => r.name === "Focusing Strike");
     expect(focusing).toHaveLength(1);
     expect(focusing[0]?.energyCost).toBe(2);
     expect(focusing[0]?.hash).toBe(1029);
+  });
+
+  it("captures Armor 3.0 investment stat deltas on stat mods", async () => {
+    const records = await modsExtractor.extract(makeLoader());
+    const majorMelee = records.find((r) => r.hash === 1030);
+    expect(majorMelee?.statModifiers).toEqual({ Melee: 10 });
+    const minorHealth = records.find((r) => r.hash === 1031);
+    expect(minorHealth?.statModifiers).toEqual({ Health: 5 });
+    const charged = records.find((r) => r.hash === 1023);
+    expect(charged?.statModifiers).toEqual({});
   });
 
   it("Charged Up: helmet slot, energyCost 1", async () => {

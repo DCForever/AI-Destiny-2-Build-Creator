@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Synergy — shape preview (Matte Flap Ledger)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --background: #050608;
+      --surface: #0c0e12;
+      --surface-raised: #12151c;
+      --line: #1c212c;
+      --line-strong: #2a3140;
+      --foreground: #e8eaef;
+      --muted: #8a93a6;
+      --accent: #e6b35c;
+      --accent-dim: #e6b35c24;
+      --danger: #e2654f;
+      --success: #6fc28b;
+      --warning: #d9a93f;
+      --arc: #85c5ec;
+      --solar: #f2721b;
+      --void: #b184c5;
+      --stasis: #4d88ff;
+      --strand: #35e366;
+      --prismatic: #d67ee2;
+      --font-display: "Barlow Condensed", sans-serif;
+      --font-body: "IBM Plex Sans", sans-serif;
+      --font-mono: "IBM Plex Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--foreground);
+      background:
+        radial-gradient(900px 420px at 70% -8%, color-mix(in srgb, var(--stasis) 7%, transparent) 0%, transparent 58%),
+        radial-gradient(700px 380px at -5% 105%, color-mix(in srgb, var(--accent) 5%, transparent) 0%, transparent 52%),
+        var(--background);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .banner {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 16px;
+      background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+      border-bottom: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+      font-size: 12px;
+    }
+    .banner strong { font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--warning); }
+    .banner a { color: var(--accent); }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .tab[aria-pressed="true"] {
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      background: var(--accent-dim);
+    }
+    .shell-header {
+      flex: 0 0 auto;
+      height: 48px;
+      border-bottom: 1px solid var(--line);
+      box-shadow: inset 0 -1px 0 0 color-mix(in srgb, var(--accent) 18%, transparent);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .nav {
+      display: flex;
+      gap: 14px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .nav span { color: var(--muted); border-bottom: 2px solid transparent; padding-bottom: 4px; }
+    .nav .on { color: var(--accent); border-color: var(--accent); }
+    .page {
+      flex: 1;
+      min-height: 0;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 10px 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .title-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .caption {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 42rem;
+    }
+    .caption.hidden { display: none; }
+    .instrument {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 0;
+    }
+    .search {
+      flex: 1;
+      min-width: 160px;
+      max-width: 320px;
+      background: var(--surface-raised);
+      border: 1px solid var(--line);
+      color: var(--foreground);
+      padding: 6px 8px;
+      font-size: 13px;
+      font-family: var(--font-body);
+    }
+    .search::placeholder { color: var(--muted); }
+    .btn {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--foreground);
+      cursor: pointer;
+    }
+    .btn-accent {
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .btn-ghost { color: var(--muted); border-color: transparent; }
+    .btn-danger {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+    }
+    .filter-panel {
+      display: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 10px 12px;
+      margin-bottom: 2px;
+    }
+    .filter-panel.open { display: block; }
+    .filter-label {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--accent) 35%, var(--muted));
+      margin-bottom: 6px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .chip.on {
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      background: var(--accent-dim);
+    }
+    .workspace {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .rail { max-height: 40vh; }
+    }
+    .plate {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .plate-raised { background: var(--surface-raised); }
+    .rail-head, .main-head {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-label {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .flap-board {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border-top: 0;
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+    .flap-header, .flap-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 4.5rem;
+      gap: 0 8px;
+      padding: 6px 8px;
+      align-items: center;
+    }
+    .flap-header {
+      position: sticky;
+      top: 0;
+      background: color-mix(in srgb, var(--accent) 4%, var(--surface-raised));
+      border-bottom: 1px solid var(--line);
+      z-index: 1;
+    }
+    .flap-header span {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--accent) 35%, var(--muted));
+    }
+    .flap-row {
+      position: relative;
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      --ch: transparent;
+    }
+    .flap-row:nth-of-type(even) {
+      background: color-mix(in srgb, var(--surface-raised) 35%, transparent);
+    }
+    .flap-row::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: color-mix(in srgb, var(--ch) 70%, transparent);
+    }
+    .flap-row[data-selected="true"] {
+      background: color-mix(in srgb, var(--ch) 10%, var(--accent-dim));
+    }
+    .flap-row[data-selected="true"]::before { background: var(--accent); }
+    .flap-row:hover {
+      background: color-mix(in srgb, var(--ch) 8%, color-mix(in srgb, var(--surface-raised) 85%, transparent));
+    }
+    .name {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .name .dot {
+      width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0;
+      background: var(--ch);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--ch) 40%, transparent);
+    }
+    .tally {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+      justify-self: end;
+    }
+    .hygiene .flap-header, .hygiene .flap-row {
+      grid-template-columns: 1.75rem minmax(0, 1fr) 4.5rem;
+    }
+    .hygiene-bar {
+      display: none;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line);
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+    }
+    .hygiene .hygiene-bar { display: flex; }
+    .badge {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid;
+    }
+    .badge-ok {
+      color: var(--success);
+      border-color: color-mix(in srgb, var(--success) 45%, transparent);
+      background: color-mix(in srgb, var(--success) 10%, transparent);
+    }
+    .badge-accent {
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .badge-warn {
+      color: var(--warning);
+      border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+      background: color-mix(in srgb, var(--warning) 10%, transparent);
+    }
+    .badge-bad {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+      background: color-mix(in srgb, var(--danger) 10%, transparent);
+    }
+    .main-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+    }
+    .identity {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .identity h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .identity .ch-swatch {
+      width: 14px; height: 14px;
+      background: var(--arc);
+      border: 1px solid color-mix(in srgb, var(--arc) 50%, transparent);
+    }
+    .usage {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      margin-bottom: 14px;
+      border: 1px solid color-mix(in srgb, var(--success) 30%, var(--line));
+      background: color-mix(in srgb, var(--success) 6%, var(--surface));
+    }
+    .build-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      background: var(--surface-raised);
+      color: var(--foreground);
+      text-decoration: none;
+    }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .ev-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .ev-group { margin-bottom: 14px; }
+    .ev-group h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .ev-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .seal {
+      width: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .seal .box {
+      width: 36px; height: 36px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--foreground);
+    }
+    .seal.exotic .box {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+      color: var(--accent);
+    }
+    .notes {
+      margin-top: 8px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    .notes summary {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .notes p {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .empty-main {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .keyline {
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
+      margin: 0 0 12px;
+    }
+    .compare {
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 28rem;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 4px 0 0;
+    }
+    .legend i {
+      display: inline-block;
+      width: 10px; height: 10px;
+      margin-right: 4px;
+      vertical-align: -1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <div>
+      <strong>Shape preview</strong>
+      — not live app data. Proposed Synergy restructure (board-first · thin filters · denser detail).
+      Open via <code>/previews/synergy-shape.html</code> with dev server, or open this file directly.
+    </div>
+    <div class="tabs" role="tablist" aria-label="Preview state">
+      <button type="button" class="tab" data-state="browse" aria-pressed="true">Browse + detail</button>
+      <button type="button" class="tab" data-state="filters" aria-pressed="false">Filters open</button>
+      <button type="button" class="tab" data-state="hygiene" aria-pressed="false">Hygiene mode</button>
+      <button type="button" class="tab" data-state="empty" aria-pressed="false">Empty main</button>
+    </div>
+  </div>
+
+  <header class="shell-header">
+    <div class="brand">Destiny 2 // Build Creator</div>
+    <nav class="nav" aria-label="Main">
+      <span>Loadouts</span>
+      <span>Build</span>
+      <span class="on">Synergy</span>
+      <span>Sets</span>
+      <span>Catalog</span>
+      <span>Settings</span>
+    </nav>
+  </header>
+
+  <div class="page">
+    <div class="title-row">
+      <div>
+        <h1>Synergy</h1>
+        <p class="caption" id="caption">Coverage lexicon Build reads — board-first; description only when useful.</p>
+      </div>
+      <p class="compare" id="compareNote">
+        vs today: no tall always-open filter wall; detail shows builds + evidence grid first.
+      </p>
+    </div>
+
+    <div class="instrument">
+      <input class="search" type="search" placeholder="Search designations…" value="" aria-label="Search" />
+      <button type="button" class="btn" id="filterToggle">Filters · 0</button>
+      <button type="button" class="btn btn-ghost" id="hygieneToggle">Hygiene</button>
+      <button type="button" class="btn btn-accent">New</button>
+    </div>
+
+    <div class="filter-panel" id="filterPanel" aria-hidden="true">
+      <div class="filter-label">Kit</div>
+      <div class="chips">
+        <span class="chip on">Verb</span>
+        <span class="chip">Element</span>
+        <span class="chip">Grenade</span>
+        <span class="chip">Melee</span>
+        <span class="chip">Super</span>
+      </div>
+      <div class="filter-label" style="margin-top:10px">Weapons</div>
+      <div class="chips">
+        <span class="chip">Primary</span>
+        <span class="chip">Special</span>
+        <span class="chip">Heavy</span>
+        <span class="chip">Archetype</span>
+      </div>
+      <div class="filter-label" style="margin-top:10px">Play</div>
+      <div class="chips">
+        <span class="chip">DPS</span>
+        <span class="chip">Healing</span>
+        <span class="chip">Solo</span>
+        <span class="chip">Team</span>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <aside class="plate rail" id="rail">
+        <div class="rail-head">
+          <span class="section-label">Library · 24</span>
+          <span class="badge badge-accent" id="modeBadge" hidden>Hygiene</span>
+        </div>
+        <div class="hygiene-bar" id="hygieneBar">
+          <span class="badge badge-warn">Mode</span>
+          <button type="button" class="btn btn-ghost">Check all</button>
+          <button type="button" class="btn btn-ghost">Clear</button>
+          <button type="button" class="btn btn-accent">Merge 2</button>
+          <button type="button" class="btn">Duplicate</button>
+        </div>
+        <div class="flap-board" id="board">
+          <div class="flap-header">
+            <span class="h-check" hidden></span>
+            <span>Designation</span>
+            <span>Links</span>
+          </div>
+          <!-- rows injected -->
+        </div>
+      </aside>
+
+      <section class="plate plate-raised" id="main">
+        <div class="main-head">
+          <span class="section-label">Designation</span>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="btn">Edit</button>
+            <button type="button" class="btn btn-danger">Delete</button>
+          </div>
+        </div>
+        <div class="main-scroll" id="mainBody">
+          <!-- filled by JS -->
+        </div>
+      </section>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--arc)"></i> Channel lamp = type/element ink</span>
+      <span><i style="background:var(--accent)"></i> Amber = selection / readiness</span>
+      <span><i style="background:var(--success)"></i> Builds usage strip</span>
+      <span>Synthetic demo data · shape brief only</span>
+    </div>
+  </div>
+
+  <script>
+    const ROWS = [
+      { id: "scorch", label: "Verb: Scorch", ch: "var(--solar)", b: 6, o: 11 },
+      { id: "jolt", label: "Verb: Jolt", ch: "var(--arc)", b: 4, o: 8 },
+      { id: "arc", label: "Element: Arc", ch: "var(--arc)", b: 9, o: 14 },
+      { id: "ionic", label: "Verb: Ionic Trace", ch: "var(--arc)", b: 3, o: 7 },
+      { id: "devour", label: "Verb: Devour", ch: "var(--void)", b: 5, o: 6 },
+      { id: "sever", label: "Verb: Sever", ch: "var(--strand)", b: 2, o: 5 },
+      { id: "freeze", label: "Verb: Freeze", ch: "var(--stasis)", b: 1, o: 4 },
+      { id: "heal", label: "Healing", ch: "var(--success)", b: 3, o: 3 },
+      { id: "dps", label: "DPS", ch: "var(--foreground)", b: 7, o: 9 },
+      { id: "team", label: "Team", ch: "var(--prismatic)", b: 2, o: 2 },
+    ];
+
+    const board = document.getElementById("board");
+    const mainBody = document.getElementById("mainBody");
+    const filterPanel = document.getElementById("filterPanel");
+    const filterToggle = document.getElementById("filterToggle");
+    const hygieneToggle = document.getElementById("hygieneToggle");
+    const rail = document.getElementById("rail");
+    const caption = document.getElementById("caption");
+    const modeBadge = document.getElementById("modeBadge");
+    let selected = "scorch";
+    let hygiene = false;
+    let filtersOpen = false;
+
+    function renderBoard() {
+      const header = board.querySelector(".flap-header");
+      board.querySelectorAll(".flap-row").forEach((n) => n.remove());
+      header.querySelector(".h-check").hidden = !hygiene;
+      ROWS.forEach((r, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "flap-row";
+        btn.style.setProperty("--ch", r.ch);
+        btn.dataset.selected = r.id === selected ? "true" : "false";
+        btn.innerHTML = `
+          ${hygiene ? `<span><input type="checkbox" ${i < 2 ? "checked" : ""} aria-label="Include ${r.label}" /></span>` : ""}
+          <span class="name"><span class="dot"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.label}</span></span>
+          <span class="tally">${r.b}B · ${r.o}O</span>
+        `;
+        btn.addEventListener("click", (e) => {
+          if (e.target.closest("input")) return;
+          selected = r.id;
+          renderBoard();
+          renderMain();
+        });
+        board.appendChild(btn);
+      });
+    }
+
+    function renderMain() {
+      if (document.body.dataset.state === "empty") {
+        mainBody.innerHTML = `
+          <div class="empty-main">
+            <div>
+              <div style="font-family:var(--font-display);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;color:var(--foreground)">No designation open</div>
+              <p>Pick a row on the board, or create a designation so Build can show coverage.</p>
+              <button type="button" class="btn btn-accent" style="margin-top:12px">New designation</button>
+            </div>
+          </div>`;
+        return;
+      }
+      const r = ROWS.find((x) => x.id === selected) || ROWS[0];
+      mainBody.innerHTML = `
+        <div class="identity">
+          <div>
+            <h2><span class="ch-swatch" style="background:${r.ch}"></span>${r.label}</h2>
+            <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+              <span class="badge badge-ok">${r.b} builds</span>
+              <span class="badge badge-accent">${r.o} objects</span>
+            </div>
+          </div>
+        </div>
+        <div class="keyline"></div>
+        <div class="usage">
+          <span class="section-label" style="color:var(--success)">Used by builds</span>
+          <div class="build-pills">
+            <a class="pill" href="#">Solar Warlock · Touch</a>
+            <a class="pill" href="#">Strand Titan · Banner</a>
+            <a class="pill" href="#">Arc Hunter · Assassin</a>
+            <span class="pill" style="color:var(--muted);border-style:dashed">+${Math.max(0, r.b - 3)} more</span>
+          </div>
+        </div>
+        <div class="ev-head">
+          <span class="section-label">Evidence · ${r.o}</span>
+          <button type="button" class="btn btn-accent">Add links</button>
+        </div>
+        <div class="ev-group">
+          <h3>Exotic armor · 2</h3>
+          <div class="ev-grid">
+            <div class="seal exotic"><div class="box">★</div>Starfire</div>
+            <div class="seal exotic"><div class="box">★</div>Sunbracers</div>
+          </div>
+        </div>
+        <div class="ev-group">
+          <h3>Weapon perk · 5</h3>
+          <div class="ev-grid">
+            <div class="seal"><div class="box">IP</div>Incandescent</div>
+            <div class="seal"><div class="box">HE</div class="box">Heal Clip</div>
+            <div class="seal"><div class="box">VP</div>Volatile</div>
+            <div class="seal"><div class="box">ES</div>Eddy Current</div>
+            <div class="seal"><div class="box">+</div>+1</div>
+          </div>
+        </div>
+        <div class="ev-group">
+          <h3>Artifact perk · 2</h3>
+          <div class="ev-grid">
+            <div class="seal"><div class="box">A1</div>Facet</div>
+            <div class="seal"><div class="box">A2</div>Trace</div>
+          </div>
+        </div>
+        <details class="notes">
+          <summary>Notes</summary>
+          <p>Optional curator notes stay secondary so evidence and build usage win the floor. Long guidance no longer competes with the first viewport.</p>
+        </details>
+      `;
+    }
+
+    function setState(state) {
+      document.body.dataset.state = state;
+      document.querySelectorAll(".tab").forEach((t) => {
+        t.setAttribute("aria-pressed", t.dataset.state === state ? "true" : "false");
+      });
+      hygiene = state === "hygiene";
+      filtersOpen = state === "filters";
+      rail.classList.toggle("hygiene", hygiene);
+      modeBadge.hidden = !hygiene;
+      filterPanel.classList.toggle("open", filtersOpen);
+      filterPanel.setAttribute("aria-hidden", filtersOpen ? "false" : "true");
+      filterToggle.textContent = filtersOpen ? "Filters · 1" : "Filters · 0";
+      filterToggle.classList.toggle("btn-accent", filtersOpen);
+      hygieneToggle.classList.toggle("btn-accent", hygiene);
+      caption.classList.toggle("hidden", state !== "empty");
+      if (state === "empty") selected = null;
+      else if (!selected) selected = "scorch";
+      renderBoard();
+      renderMain();
+    }
+
+    document.querySelectorAll(".tab").forEach((t) => {
+      t.addEventListener("click", () => setState(t.dataset.state));
+    });
+    filterToggle.addEventListener("click", () => {
+      setState(filtersOpen ? "browse" : "filters");
+    });
+    hygieneToggle.addEventListener("click", () => {
+      setState(hygiene ? "browse" : "hygiene");
+    });
+
+    setState("browse");
+  </script>
+</body>
+</html>
+

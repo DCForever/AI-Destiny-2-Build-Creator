@@ -18,6 +18,8 @@ export type SetRecord = {
   name: string;
   type: SetType;
   tagIds: ConceptTagId[];
+  optimizerConstraints: string | null;
+  linkedModSetId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -36,6 +38,8 @@ function rowToSet(row: typeof sets.$inferSelect, tagIds: ConceptTagId[]): SetRec
     name: row.name,
     type: row.type as SetType,
     tagIds,
+    optimizerConstraints: row.optimizerConstraints ?? null,
+    linkedModSetId: row.linkedModSetId ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -114,7 +118,15 @@ export function getSet(db: AppDatabase, userId: number, id: string): SetRecord |
 export function createSetRecord(
   db: AppDatabase,
   userId: number,
-  input: { id: string; name: string; type: SetType; tagIds: ConceptTagId[]; now: string },
+  input: {
+    id: string;
+    name: string;
+    type: SetType;
+    tagIds: ConceptTagId[];
+    now: string;
+    optimizerConstraints?: string | null;
+    linkedModSetId?: string | null;
+  },
 ): SetRecord {
   db.insert(sets)
     .values({
@@ -122,6 +134,8 @@ export function createSetRecord(
       userId,
       name: input.name,
       type: input.type,
+      optimizerConstraints: input.optimizerConstraints ?? null,
+      linkedModSetId: input.linkedModSetId ?? null,
       createdAt: input.now,
       updatedAt: input.now,
     })
@@ -137,6 +151,8 @@ export function createSetRecord(
     name: input.name,
     type: input.type,
     tagIds: input.tagIds,
+    optimizerConstraints: input.optimizerConstraints ?? null,
+    linkedModSetId: input.linkedModSetId ?? null,
     createdAt: input.now,
     updatedAt: input.now,
   };
@@ -146,7 +162,14 @@ export function updateSetRecord(
   db: AppDatabase,
   userId: number,
   id: string,
-  patch: { name?: string; type?: SetType; tagIds?: ConceptTagId[]; now: string },
+  patch: {
+    name?: string;
+    type?: SetType;
+    tagIds?: ConceptTagId[];
+    optimizerConstraints?: string | null;
+    linkedModSetId?: string | null;
+    now: string;
+  },
 ): SetRecord | null {
   const existing = getSet(db, userId, id);
   if (!existing) return null;
@@ -155,6 +178,12 @@ export function updateSetRecord(
     .set({
       name: patch.name ?? existing.name,
       type: patch.type ?? existing.type,
+      optimizerConstraints:
+        patch.optimizerConstraints !== undefined
+          ? patch.optimizerConstraints
+          : existing.optimizerConstraints,
+      linkedModSetId:
+        patch.linkedModSetId !== undefined ? patch.linkedModSetId : existing.linkedModSetId,
       updatedAt: patch.now,
     })
     .where(and(eq(sets.id, id), eq(sets.userId, userId)))

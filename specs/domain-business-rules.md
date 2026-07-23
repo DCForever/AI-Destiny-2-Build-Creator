@@ -162,6 +162,7 @@ Identity is what makes two loadouts the “same build” vs a different build.
 ---
 
 ## 10. Stats (Edge of Fate)
+<!-- Updated 2026-07-23: DBR-STAT-008 Armor Set board base roll excludes equipped mods -->
 
 | ID | Rule |
 |----|------|
@@ -172,6 +173,7 @@ Identity is what makes two loadouts the “same build” vs a different build.
 | DBR-STAT-005 | Coverage uses a **full loadout estimate**: armor (including class item), mods, fragments/aspects, and other known loadout bonuses. |
 | DBR-STAT-006 | Designated synergies may **suggest/nudge** related soft stat targets; user accepts or ignores. |
 | DBR-STAT-007 | Weapon damage type vs subclass element is **soft / synergy-based** — no blanket hard element lock. |
+| DBR-STAT-008 | **Armor Set** piece/board stats are the piece **base roll** (sum of `armor_stats` plug investments). Equipped armor mods, masterwork, and tuning are excluded from that board. Full-loadout soft-target coverage still follows DBR-STAT-005. |
 
 ---
 

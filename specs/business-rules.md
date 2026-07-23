@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-14 (BR-UI-001 Destiny hard-constraint UI prevention)
+**Updated**: 2026-07-23 (BR-SET-011 Sets armor board base stats exclude equipped mods)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -53,6 +53,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-SET-003 | Sets are **private per user**; no sharing in initial scope. | [001 assumptions](001-build-sets-synergies/spec.md#assumptions) |
 | BR-SET-004 | Sets store **manifest item references**, not full copies. | [001 assumptions](001-build-sets-synergies/spec.md#assumptions) |
 | BR-SET-010 | **Armor** set detail shows EoF six-stat **totals** and **per-piece** stats when owned instances are pinned (wishlist has no rolls). Item rows show catalog identity (element, type/frame, **tier**, **origin trait**), **selected trait perks** (not barrel/magazine/stock), **available trait names**, and **linked library synergies**. | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md) |
+| BR-SET-011 | **Armor** set per-piece stats and set totals use the piece’s **base roll** only: sum of equipped `armor_stats` plug investments (DIM white base). Equipped armor mods, masterwork, and tuning are excluded. Catalog instance cards and inventory sort continue to use live ItemStats. Distinct from full-loadout soft-target coverage ([DBR-STAT-005](./domain-business-rules.md)). | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md), [DBR-STAT-008](./domain-business-rules.md) |
 
 ---
 
@@ -255,6 +256,17 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | BR-PERF-001 | Set attach and slot-conflict checks: <100ms. | [001 plan](001-build-sets-synergies/plan.md) |
 | BR-PERF-002 | Support ≥30 sets and ≥20 synergies without UI lag. | [SC-007](001-build-sets-synergies/spec.md#measurable-outcomes) |
 | BR-PERF-003 | Tag filter on 30+ sets: <5 seconds. | [FR-031](001-build-sets-synergies/spec.md#functional-requirements), [SC-002](001-build-sets-synergies/spec.md#measurable-outcomes) |
+
+---
+
+## 19. Armor Set Optimizer (Feature 026) — stubs
+
+| ID | Rule | FR |
+|----|------|-----|
+| BR-OPT-001 | Create-from-build and first-time materialize with **attach-now** use **replace-by-type**: detach existing live attachment(s) of the **same set type** on the variant, then attach the new Set(s). Other types unchanged; detached Sets remain in the library. Names auto-suffix on collision. | [026 FR-002a](026-armor-set-optimizer/spec.md#functional-requirements), [FR-003](026-armor-set-optimizer/spec.md#functional-requirements), [FR-003a](026-armor-set-optimizer/spec.md#functional-requirements), [FR-010](026-armor-set-optimizer/spec.md#functional-requirements) |
+| BR-OPT-002 | Armor Sets MAY store **`optimizerConstraints`** (JSON): exotic lock, set-bonus goals, ordered stat priorities/thresholds, mod-aware flag, **`preferReuse`** (default false). Create-from-build **seeds** exotic + soft-stat fields (empty set-bonus goals). First materialize **persists** search constraints; refresh **updates items in place** without changing constraints unless the user edits/saves or **clears** them (clear opts out of improvement checks). | [026 FR-001a](026-armor-set-optimizer/spec.md#functional-requirements), [FR-010](026-armor-set-optimizer/spec.md#functional-requirements)–[FR-010d](026-armor-set-optimizer/spec.md#functional-requirements) |
+| BR-OPT-003 | Optimize results **annotate** pieces with other Armor Sets that already use the instance (active items only; self excluded). Optional **prefer-reuse** is a **soft tie-break** after lexicographic stats (+ prioritized-stat sum); never ranks a worse-stat kit above a better one. | [026 FR-005](026-armor-set-optimizer/spec.md#functional-requirements), [FR-005a](026-armor-set-optimizer/spec.md#functional-requirements) |
+| BR-OPT-004 | After inventory sync, soft-**suggest** better complete kits for constrained Armor Sets **attached to ≥1 Build**; opening an unattached constrained Set also checks. **Suggest-then-confirm** — never silent auto-apply. Manual refresh remains available. | [026 FR-010c](026-armor-set-optimizer/spec.md#functional-requirements), [FR-010a](026-armor-set-optimizer/spec.md#functional-requirements) |
 
 ---
 

@@ -54,3 +54,34 @@ export function buildCountByDesignationKey(
   }
   return map;
 }
+
+export type BuildUsageRef = {
+  id: string;
+  name: string;
+  className: string;
+};
+
+/** Builds that list the designation (stable name order). */
+export function listBuildsForDesignation<
+  T extends BuildWithDesignations & { id: string; name: string; className?: string },
+>(builds: T[], designation: DesignationRef): BuildUsageRef[] {
+  const key = synergyTypeDesignationKey({
+    type: designation.type,
+    subType: designation.subType ?? null,
+  });
+  const matched = builds.filter((build) =>
+    build.synergyTypes.some(
+      (d) =>
+        synergyTypeDesignationKey({
+          type: d.type,
+          subType: d.subType ?? null,
+        }) === key,
+    ),
+  );
+  matched.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+  return matched.map((b) => ({
+    id: b.id,
+    name: b.name,
+    className: b.className ?? "",
+  }));
+}

@@ -22,7 +22,7 @@ Not a product roadmap and not Spec Kit acceptance criteria — those stay under 
 **Do not** track domain bugs or missing APIs here — use specs/issues for those.  
 **Agents:** after polish feedback or a polish PR, update this file in the same change set when practical.
 
-Last reviewed: 2026-07-13
+Last reviewed: 2026-07-22
 
 ---
 
@@ -58,6 +58,9 @@ Last reviewed: 2026-07-13
 ### Shell / global
 | Status | Item | Notes |
 |--------|------|--------|
+| `partial` | **Matte Flap Ledger redesign** | Square matte plates; FlapRow boards on Sets/Synergy/Build; denser variants; gather feedback on columns/colors |
+| `partial` | **Synergy board-first restructure** | Thin chrome + instrument search; denser detail (usedByBuilds + evidence-first); hygiene remains mode |
+| `partial` | **Sets board-first restructure** | Instrument filters; readiness + slot board + fill-next CTA; used-by pills; detail-only fill tallies |
 | `deferred` | Further mobile density / touch targets | Responsive padding + nav improved; remaining density tweaks optional |
 | `deferred` | **Entity InfoHotspots** across all entity chips | `EntityHotspot` + presentation enrich; icon-first when art exists; remaining gaps where APIs still omit description |
 | `deferred` | Pixel-perfect canvas hi-fi parity | Icons/hotspots/loadout chrome largely done; absolute visual gate unbounded — not a polish finish requirement |
@@ -121,3 +124,4 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 - Operator APIs: `DEBUG.md`  
 - Domain slices: `specs/domain-slice-roadmap.md`  
 - Design system notes: `src/components/ui/README.md` (if present)
+

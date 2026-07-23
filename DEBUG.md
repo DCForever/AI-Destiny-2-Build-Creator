@@ -4,7 +4,7 @@
 
 > **Maintenance (required):** Update this file in the same change whenever you modify debug routes, prerequisites, owned-catalog/inventory flows, sync behavior, or related APIs. Feature `quickstart.md` files are scenario checklists; **this file is the single consolidated reference.**
 
-**Last reviewed:** 2026-07-08 (feature 012 build pipeline consistency)
+**Last reviewed:** 2026-07-14 (feature 026 armor set optimizer)
 
 ---
 
@@ -83,8 +83,8 @@ Nav: header on every debug page (`src/app/debug/layout.tsx`).
 
 | Route | Purpose | Primary APIs |
 |-------|---------|--------------|
-| [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict, **instance disambiguation carousel** (owned copies with Tier/stats/set-bonus or weapon perks), **per-copy weapon perk grid** (DIM-style columns from instance capture) | `/api/user/sets`, `/api/concept-tags`, `/api/catalog/{weapons,armor}`, `/api/user/inventory/instances`, `/api/user/inventory/instances/:instanceId/perk-grid`, `/api/bungie/sync` |
-| [`/debug/builds`](src/app/debug/builds/page.tsx) | Build pipeline UI: exotic armor/weapon lookup, explicit synergies, structured subclass, variant selection, set attach/detach, suggestions, compare | `/api/user/builds`, variants, `/api/manifest/search`, suggest-* |
+| [`/debug/sets`](src/app/debug/sets/page.tsx) | Set CRUD, concept tags, slot items, `confirmReplace` on slot conflict, **instance disambiguation carousel** (owned copies with Tier/stats/set-bonus or weapon perks), **per-copy weapon perk grid** (DIM-style columns from instance capture), **armor optimizer** (026): manual optimize, constraints editor, on-open improvement check, materialize / apply-in-place | `/api/user/sets`, `/api/concept-tags`, `/api/catalog/{weapons,armor}`, `/api/user/inventory/instances`, `/api/user/inventory/instances/:instanceId/perk-grid`, `/api/bungie/sync`, `/api/user/armor/optimize`, `/api/user/armor/optimize/materialize`, `/api/user/sets/:id/optimize`, `/api/user/sets/:id/apply-combination` |
+| [`/debug/builds`](src/app/debug/builds/page.tsx) | Build pipeline UI: exotic armor/weapon lookup, explicit synergies, structured subclass, variant selection, set attach/detach, suggestions, compare, **armor optimizer** (026): create-sets-from-build, optimize + materialize, soft improvement suggestions | `/api/user/builds`, variants, `/api/manifest/search`, suggest-*, `/api/user/builds/:id/create-sets`, `/api/user/armor/optimize`, `/api/user/armor/optimize/materialize`, `/api/user/armor/improvement-suggestions` |
 | [`/debug/synergies`](src/app/debug/synergies/page.tsx) | Synergy CRUD with auto-generated names, sub-type pickers, catalog-backed link search, description preview | `/api/user/synergies`, `/api/catalog/synergy-pickers/*` |
 | [`/debug/catalog`](src/app/debug/catalog/page.tsx) | Catalog browse (`scope=all\|owned`), owned instance drill-down, weapon synergy badges, synergy reverse lookup, direct instance API panel | `/api/catalog/weapons`, `/api/catalog/armor`, `/api/user/inventory/instances`, `/api/user/synergies/by-target` |
 | [`/debug/suggestions`](src/app/debug/suggestions/page.tsx) | Roll / set / synergy suggestion requests | `/api/user/suggestions/rolls`, build suggest endpoints |
@@ -246,6 +246,23 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 
 ---
 
+## Flow: Armor Set Optimizer (026)
+
+**Pages:** `/debug/builds`, `/debug/sets`, **Settings** (`/settings` — post-sync hook)
+**Needs:** manifest + sign-in + inventory sync; owned armor for the selected class
+
+1. **Create Sets from Build**: `/debug/builds` → **Create sets from build (026)** → `attachNow` → new Armor Set seeded with `optimizerConstraints` (Build exotic + soft-stat priorities), replace-by-type attach.
+2. **Optimize armor**: `/debug/builds` (seeds class/exotic/soft targets from the selected build) or `/debug/sets` (manual `classType`, required when no build) → checkboxes for `includeModEstimates` / `preferReuse`, extra JSON constraints (set-bonus goals, thresholds, etc.) → ranked complete five-slot kits.
+3. **Materialize**: fill the armor set name / `createModSet` / `attachNow` inputs above the results table, click **Materialize** on a row → `POST /api/user/armor/optimize/materialize` creates a new Armor Set with the search's constraints persisted (never the response `seed`).
+4. **Apply in place**: on `/debug/sets`, with an Armor Set selected, result rows show **Apply in place** → `POST /api/user/sets/:id/apply-combination` rewrites that Set's items without touching stored constraints or its id.
+5. **Constraints editor** (`/debug/sets` → **Optimizer constraints (026)**): JSON textarea + **Save constraints** (`PATCH` `optimizerConstraints`) + **Clear constraints** (`PATCH` `optimizerConstraints: null`, opts the Set out of suggestions per FR-010d).
+6. **On-open improvement check**: selecting an Armor Set with stored constraints on `/debug/sets` auto-calls `POST /api/user/sets/:id/optimize`; a soft banner (Confirm / Dismiss) appears when a better kit exists. Never auto-applies.
+7. **Post-sync soft suggestions**: Settings → **Sync inventory** success calls `GET /api/user/armor/improvement-suggestions?afterSync=1`; a **"Better armor kits found"** banner lists constrained Armor Sets attached to a Build with a better kit (Confirm applies in place; Dismiss only clears the banner). Same endpoint is available as a manual **Fetch improvement suggestions** button on `/debug/builds`.
+
+**Checklist:** `specs/026-armor-set-optimizer/quickstart.md`
+
+---
+
 ## Flow: Synergies (001 P4 + 006 refinement)
 
 **Pages:** `/debug/synergies`, `/debug/catalog` (reverse lookup + weapon badges)
@@ -319,6 +336,7 @@ Feature-specific scenario checklists:
 | Exotic loadout filters | [`specs/002-exotic-loadouts-by-type/quickstart.md`](specs/002-exotic-loadouts-by-type/quickstart.md) |
 | Owned inventory instances | [`specs/003-owned-inventory-instances/quickstart.md`](specs/003-owned-inventory-instances/quickstart.md) |
 | Full plug resolution | [`specs/004-full-plug-resolution/quickstart.md`](specs/004-full-plug-resolution/quickstart.md) |
+| Armor Set Optimizer | [`specs/026-armor-set-optimizer/quickstart.md`](specs/026-armor-set-optimizer/quickstart.md) |
 
 Contract reference: [`specs/001-build-sets-synergies/contracts/debug-service-contract.md`](specs/001-build-sets-synergies/contracts/debug-service-contract.md)
 

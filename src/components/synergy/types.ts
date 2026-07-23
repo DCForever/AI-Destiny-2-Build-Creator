@@ -21,6 +21,12 @@ export type SynergyLink = {
   icon?: string | null;
 };
 
+export type SynergyUsedByBuild = {
+  id: string;
+  name: string;
+  className: string;
+};
+
 export type SynergyDetail = {
   id: string;
   name: string;
@@ -34,6 +40,8 @@ export type SynergyDetail = {
   buildCount?: number;
   /** Linked objects on this library row. */
   objectCount?: number;
+  /** Named builds using this designation (detail responses). */
+  usedByBuilds?: SynergyUsedByBuild[];
 };
 
 export type SynergySummary = Pick<

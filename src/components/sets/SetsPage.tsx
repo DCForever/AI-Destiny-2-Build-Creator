@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { SetsDetail } from "@/components/sets/SetsDetail";
 import { SetsEditPanel } from "@/components/sets/SetsEditPanel";
@@ -8,6 +15,7 @@ import { SetsLibrary } from "@/components/sets/SetsLibrary";
 import { SlotFillPanel } from "@/components/sets/SlotFillPanel";
 import type { SetDetail, SetSummary } from "@/components/sets/types";
 import {
+  Button,
   Callout,
   Cluster,
   CollapsibleFilterSection,
@@ -18,9 +26,11 @@ import {
   PageFrameBody,
   PageFrameChrome,
   PageHeader,
-  SignedOutGate,
+  Panel,
+  SectionLabel,
+SignedOutGate,
   Stack,
-  TextField,
+  Text,
   Workspace,
   WorkspaceMain,
 } from "@/components/ui";
@@ -30,15 +40,18 @@ import { SET_TYPES } from "@/lib/sets/schemas";
 import { sortByName } from "@/lib/sortByName";
 
 /**
- * Sets screen composition.
+ * Sets screen composition (board-first).
  *
- * Layout: PageHeader · Filters · Workspace(rail library · main detail/edit/fill)
+ * Layout: title · instrument filters · Workspace(rail library · detail/edit)
+ * Slot-fill still takes over the full page body.
  */
 export function SetsPage() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [rows, setRows] = useState<SetSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<SetDetail | null>(null);
+  /** When set, main is loading this id; never show another row's detail. */
+  const [detailPendingId, setDetailPendingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -49,6 +62,9 @@ export function SetsPage() {
   const [editing, setEditing] = useState(false);
   const [fillSlot, setFillSlot] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+
+  /** Monotonic token so slower loadDetail responses cannot overwrite newer selection. */
+  const detailRequestSeq = useRef(0);
 
   const loadList = useCallback(async () => {
     const res = await fetch("/api/user/sets");
@@ -69,16 +85,37 @@ export function SetsPage() {
   }, []);
 
   const loadDetail = useCallback(async (id: string) => {
+    const seq = ++detailRequestSeq.current;
     setError(null);
-    const res = await fetch(`/api/user/sets/${id}`);
-    if (!res.ok) {
-      const body = (await res.json()) as { error?: string };
-      setError(body.error ?? "Failed to load set");
+    setDetailPendingId(id);
+    // Drop stale pane immediately so Edit/Delete never target the previous row.
+    setDetail((prev) => (prev?.id === id ? prev : null));
+    try {
+      const res = await fetch(`/api/user/sets/${id}`);
+      if (seq !== detailRequestSeq.current) return;
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        setError(body.error ?? "Failed to load set");
+        setDetail(null);
+        setDetailPendingId(null);
+        return;
+      }
+      const body = (await res.json()) as { set: SetDetail };
+      if (seq !== detailRequestSeq.current) return;
+      if (body.set?.id !== id) {
+        setError("Loaded set did not match the selection.");
+        setDetail(null);
+        setDetailPendingId(null);
+        return;
+      }
+      setDetail(body.set);
+      setDetailPendingId(null);
+    } catch {
+      if (seq !== detailRequestSeq.current) return;
+      setError("Failed to load set");
       setDetail(null);
-      return;
+      setDetailPendingId(null);
     }
-    const body = (await res.json()) as { set: SetDetail };
-    setDetail(body.set);
   }, []);
 
   useEffect(() => {
@@ -100,6 +137,7 @@ export function SetsPage() {
   );
 
   function applySaved(set: SetDetail) {
+    detailRequestSeq.current += 1;
     setRows((prev) => {
       const exists = prev.some((r) => r.id === set.id);
       const summary: SetSummary = {
@@ -115,13 +153,14 @@ export function SetsPage() {
     });
     setSelectedId(set.id);
     setDetail(set);
+    setDetailPendingId(null);
     setCreating(false);
     setEditing(false);
     setFillSlot(null);
   }
 
   async function handleDelete() {
-    if (!detail) return;
+    if (!detail || detailPendingId || detail.id !== selectedId) return;
     const confirmed = window.confirm(
       `Delete set “${detail.name}”? This cannot be undone.`,
     );
@@ -135,9 +174,11 @@ export function SetsPage() {
         setError(body.error ?? "Failed to delete set");
         return;
       }
+      detailRequestSeq.current += 1;
       setRows((prev) => prev.filter((r) => r.id !== detail.id));
       setSelectedId(null);
       setDetail(null);
+      setDetailPendingId(null);
       setEditing(false);
       setFillSlot(null);
     } catch {
@@ -147,15 +188,44 @@ export function SetsPage() {
     }
   }
 
+const pageDescription =
+    "Reusable weapon, armor, mod, pair, and fashion kits for Build variants.";
+
   if (signedIn === false) {
     return (
       <SignedOutGate
         title="Sets"
-        description="Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants."
+        description={pageDescription}
         emptyDescription="Sign in with Bungie using the control in the header to curate weapon, armor, pair, and fashion sets."
       />
     );
   }
+
+  function startCreate() {
+    detailRequestSeq.current += 1;
+    setCreating(true);
+    setEditing(false);
+    setFillSlot(null);
+    setSelectedId(null);
+    setDetail(null);
+    setDetailPendingId(null);
+  }
+
+  const detailReady =
+    detail != null &&
+    selectedId != null &&
+    detail.id === selectedId &&
+    detailPendingId == null;
+
+  const pendingLabel = (() => {
+    if (!detailPendingId) return null;
+    const row = rows.find((r) => r.id === detailPendingId);
+    if (!row) return "Loading set…";
+    return `Loading ${row.name}…`;
+  })();
+
+  const createPrefillType =
+    typeFilter.length === 1 ? (typeFilter[0] ?? null) : null;
 
   let main: ReactNode;
   if (creating) {
@@ -164,52 +234,79 @@ export function SetsPage() {
         <SetsEditPanel
           key="create"
           mode="create"
-          prefillType={typeFilter[0] ?? null}
+          prefillType={createPrefillType}
           onClose={() => setCreating(false)}
           onSaved={applySaved}
         />
       </WorkspaceMain>
     );
-  } else if (editing && detail) {
+  } else if (editing && detailReady) {
     main = (
       <WorkspaceMain>
         <SetsEditPanel
-          key={`edit-${detail.id}`}
+          key={`edit-${detail!.id}`}
           mode="edit"
-          initial={detail}
+          initial={detail!}
           onClose={() => setEditing(false)}
           onSaved={applySaved}
         />
       </WorkspaceMain>
     );
-  } else if (!detail) {
+  } else if (detailPendingId) {
     main = (
       <WorkspaceMain>
-        <EmptyState
-          description={
-            loading
-              ? "Loading…"
-              : "Select a set from the library, or create a new one."
-          }
-        />
+        <div aria-busy="true" aria-live="polite">
+          <Panel tone="muted" pad="lg">
+            <Stack gap={8}>
+              <Text size="sm" weight="medium">
+                Loading set
+              </Text>
+              <Text size="sm" tone="muted">
+                {pendingLabel}
+              </Text>
+            </Stack>
+          </Panel>
+        </div>
+      </WorkspaceMain>
+    );
+  } else if (detailReady) {
+    main = (
+      <WorkspaceMain>
+        <div aria-busy="false">
+          <SetsDetail
+            set={detail!}
+            onEdit={() => {
+              setFillSlot(null);
+              setEditing(true);
+            }}
+            onFillSlot={(slot) => {
+              setEditing(false);
+              setFillSlot(slot);
+            }}
+            onUpdated={applySaved}
+            onDelete={() => void handleDelete()}
+            deleteBusy={deleteBusy}
+          />
+        </div>
       </WorkspaceMain>
     );
   } else {
     main = (
       <WorkspaceMain>
-        <SetsDetail
-          set={detail}
-          onEdit={() => {
-            setFillSlot(null);
-            setEditing(true);
-          }}
-          onFillSlot={(slot) => {
-            setEditing(false);
-            setFillSlot(slot);
-          }}
-          onUpdated={applySaved}
-          onDelete={() => void handleDelete()}
-          deleteBusy={deleteBusy}
+<EmptyState
+          title={loading ? "Loading library" : "No set open"}
+          description={
+            loading
+              ? "Fetching your set library…"
+              : "Pick a kit on the board, or create a set."
+          }
+          action={
+            loading ? undefined : (
+              <Button variant="accent" size="sm" onClick={startCreate}>
+                New set
+              </Button>
+            )
+          }
         />
       </WorkspaceMain>
     );
@@ -217,7 +314,7 @@ export function SetsPage() {
 
   // Set-fill: single full-pane Catalog (no Sets filters + library rail + embed).
   // Nested triple chrome left ~0px for catalog body on short phones.
-  if (fillSlot && detail) {
+  if (fillSlot && detailReady && detail) {
     return (
       <PageFrame>
         <PageFrameBody>
@@ -241,42 +338,52 @@ export function SetsPage() {
     );
   }
 
+  const focusMain = Boolean(
+    creating || editing || detailReady || detailPendingId,
+  );
+
+const filterActiveCount =
+    typeFilter.length + tagFilter.length + (query.trim() ? 1 : 0);
+
   return (
     <PageFrame>
       <PageFrameChrome>
-        <Stack gap={12}>
-          <PageHeader
-            title="Sets"
-            description="Curate reusable weapon, armor, mod, pair, and fashion kits for Build variants."
-          />
+        <Stack gap={8}>
+          <PageHeader title="Sets" />
           {error ? <Callout tone="danger">{error}</Callout> : null}
           <CollapsibleFilterSection
             open={filtersOpen}
             onOpenChange={setFiltersOpen}
-            activeCount={
-              typeFilter.length +
-              tagFilter.length +
-              (query.trim() ? 1 : 0)
+            panel={false}
+            label="Type & tags"
+            activeCount={filterActiveCount}
+            onClear={
+              filterActiveCount > 0
+                ? () => {
+                    setTypeFilter([]);
+                    setTagFilter([]);
+                    setQuery("");
+                    setFiltersOpen(false);
+                  }
+                : undefined
             }
-            onClear={() => {
-              setTypeFilter([]);
-              setTagFilter([]);
-              setQuery("");
-            }}
+            leading={
+              <div className="min-w-0 flex-1 max-w-md">
+                <label className="sr-only" htmlFor="sets-search">
+                  Search sets
+                </label>
+                <input
+                  id="sets-search"
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search name · type · tag…"
+                  className="w-full bg-surface-raised border border-line px-2 py-1.5 text-sm text-foreground placeholder:text-muted"
+                />
+              </div>
+            }
             summary={
               <Cluster gap={3}>
-                {query.trim() ? (
-                  <FilterChip
-                    size="xs"
-                    label={
-                      query.trim().length > 18
-                        ? `${query.trim().slice(0, 16)}…`
-                        : query.trim()
-                    }
-                    active
-                    onClick={() => setQuery("")}
-                  />
-                ) : null}
                 {typeFilter.map((t) => (
                   <FilterChip
                     key={t}
@@ -302,57 +409,59 @@ export function SetsPage() {
             }
           >
             <Stack gap={10}>
-              <TextField
-                label="Search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name · type · tag…"
-              />
-              <Cluster>
-                {SET_TYPES.map((t) => (
-                  <FilterChip
-                    key={t}
-                    label={t}
-                    active={typeFilter.includes(t)}
-                    onClick={() =>
-                      setTypeFilter((prev) =>
-                        prev.includes(t)
-                          ? prev.filter((x) => x !== t)
-                          : [...prev, t],
-                      )
-                    }
-                  />
-                ))}
-              </Cluster>
-              <Cluster>
-                {CONCEPT_TAGS.slice(0, 14).map((tag) => (
-                  <ConceptTagFilterChip
-                    key={tag.id}
-                    tagId={tag.id}
-                    active={tagFilter.includes(tag.id)}
-                    onClick={() =>
-                      setTagFilter((prev) =>
-                        prev.includes(tag.id)
-                          ? prev.filter((x) => x !== tag.id)
-                          : [...prev, tag.id],
-                      )
-                    }
-                  />
-                ))}
-              </Cluster>
+              <Stack gap={4}>
+                <SectionLabel>Type</SectionLabel>
+                <Cluster>
+                  {SET_TYPES.map((t) => (
+                    <FilterChip
+                      key={t}
+                      label={t}
+                      active={typeFilter.includes(t)}
+                      onClick={() =>
+                        setTypeFilter((prev) =>
+                          prev.includes(t)
+                            ? prev.filter((x) => x !== t)
+                            : [...prev, t],
+                        )
+                      }
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
+              <Stack gap={4}>
+                <SectionLabel>Tags</SectionLabel>
+                <Cluster>
+                  {CONCEPT_TAGS.slice(0, 14).map((tag) => (
+                    <ConceptTagFilterChip
+                      key={tag.id}
+                      tagId={tag.id}
+                      active={tagFilter.includes(tag.id)}
+                      onClick={() =>
+                        setTagFilter((prev) =>
+                          prev.includes(tag.id)
+                            ? prev.filter((x) => x !== tag.id)
+                            : [...prev, tag.id],
+                        )
+                      }
+                    />
+                  ))}
+                </Cluster>
+              </Stack>
             </Stack>
           </CollapsibleFilterSection>
         </Stack>
       </PageFrameChrome>
       <PageFrameBody>
-        <Workspace
-          focusMain={Boolean(creating || editing || detail)}
+        <Workspace railWidth={320}
+          focusMain={focusMain}
           onBackToLibrary={() => {
+            detailRequestSeq.current += 1;
             setCreating(false);
             setEditing(false);
             setFillSlot(null);
             setSelectedId(null);
             setDetail(null);
+            setDetailPendingId(null);
           }}
           rail={
             <SetsLibrary
@@ -366,13 +475,7 @@ export function SetsPage() {
                 setSelectedId(id);
                 void loadDetail(id);
               }}
-              onNew={() => {
-                setCreating(true);
-                setEditing(false);
-                setFillSlot(null);
-                setSelectedId(null);
-                setDetail(null);
-              }}
+              onNew={startCreate}
             />
           }
           main={main}
@@ -381,3 +484,4 @@ export function SetsPage() {
     </PageFrame>
   );
 }
+

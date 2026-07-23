@@ -3,14 +3,29 @@
 import type { SetSummary } from "@/components/sets/types";
 import {
   Button,
-  Chip,
   ConceptTagChip,
+  FlapBoard,
+  FlapCell,
+  FlapHeader,
+  FlapRow,
+  FlapTypeStamp,
   Panel,
   Row,
   SectionLabel,
   Stack,
   Text,
 } from "@/components/ui";
+
+const COLS = "minmax(0,1.4fr) 4.75rem minmax(0,1fr)";
+
+/** Channel ink for set kit type (scan without reading the stamp). */
+const SET_TYPE_CHANNEL: Record<string, string> = {
+  Weapon: "var(--foreground)",
+  Armor: "var(--element-stasis)",
+  Mod: "var(--warning)",
+  Pair: "var(--element-prismatic)",
+  Fashion: "var(--element-solar)",
+};
 
 export function SetsLibrary({
   sets,
@@ -26,8 +41,8 @@ export function SetsLibrary({
   loading: boolean;
 }) {
   return (
-    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
-      <div className="shrink-0">
+    <Panel as="aside" pad="sm" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <Stack gap={6} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
@@ -37,9 +52,9 @@ export function SetsLibrary({
             New
           </Button>
         </Row>
-      </div>
+      </Stack>
 
-      <div className="flex-1 min-h-0 overflow-y-auto mt-3">
+      <div className="flex-1 min-h-0 overflow-y-auto mt-2">
         {loading ? (
           <Text size="sm" tone="muted">
             Loading sets…
@@ -54,39 +69,44 @@ export function SetsLibrary({
             </Button>
           </Stack>
         ) : (
-          <Stack gap={8}>
+          <FlapBoard>
+            <FlapHeader columns={COLS} cells={["Name", "Type", "Tags"]} />
             {sets.map((row) => {
               const selected = row.id === selectedId;
+              const tags = row.tagIds ?? [];
+              const typeKey = String(row.type);
+              const channel = SET_TYPE_CHANNEL[typeKey];
               return (
-                <button
+                <FlapRow
                   key={row.id}
-                  type="button"
+                  columns={COLS}
+                  selected={selected}
+                  channel={channel}
                   onClick={() => onSelect(row.id)}
-                  className="text-left"
+                  aria-current={selected ? "true" : undefined}
                 >
-                  <Panel
-                    tone={selected ? "accent" : "muted"}
-                    pad="sm"
-                    className={
-                      selected ? "" : "hover:border-line-strong transition-colors"
-                    }
-                  >
-                    <Stack gap={4}>
-                      <Text size="sm" weight="medium">
-                        {row.name}
-                      </Text>
-                      <Row gap={6} wrap>
-                        <Chip accent>{row.type}</Chip>
-                        {(row.tagIds ?? []).slice(0, 3).map((t) => (
-                          <ConceptTagChip key={t} tagId={t} size={18} />
-                        ))}
-                      </Row>
-                    </Stack>
-                  </Panel>
-                </button>
+                  <FlapCell variant="name" title={row.name}>
+                    {row.name}
+                  </FlapCell>
+                  <FlapCell title={typeKey}>
+                    <FlapTypeStamp type={typeKey} />
+                  </FlapCell>
+                  <FlapCell className="flex-wrap gap-1">
+                    {tags.length === 0 ? (
+                      <span className="flap-cell-meta">—</span>
+                    ) : (
+                      tags.slice(0, 4).map((t) => (
+                        <ConceptTagChip key={t} tagId={t} size={16} />
+                      ))
+                    )}
+                    {tags.length > 4 ? (
+                      <span className="flap-cell-tally">+{tags.length - 4}</span>
+                    ) : null}
+                  </FlapCell>
+                </FlapRow>
               );
             })}
-          </Stack>
+          </FlapBoard>
         )}
       </div>
     </Panel>

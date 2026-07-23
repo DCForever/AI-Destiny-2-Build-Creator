@@ -71,7 +71,7 @@ function AbilityHotspot({
       description={entity?.description}
       icon={entity?.icon}
       accentColor={accentFor(entity?.element) ?? elementColor}
-      size={28}
+      size={24}
       showLabel="auto"
       meta={entity?.element ? [entity.element] : undefined}
     />
@@ -112,7 +112,7 @@ function GearStrip({
           description={claim.description}
           icon={claim.icon}
           accentColor={accentFor(claim.element)}
-          size={40}
+          size={32}
           showLabel="never"
           meta={[
             SLOT_LABEL[slot] ?? slot,
@@ -142,7 +142,7 @@ function GearSlotRow({
   const perks = claim?.perks ?? [];
 
   return (
-    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 items-start py-1 border-b border-line/60 last:border-b-0">
+    <div className="grid grid-cols-[3.75rem_minmax(0,1fr)] gap-x-2 gap-y-0.5 items-start py-0.5 border-b border-line/60 last:border-b-0">
       <Text
         size="xs"
         tone="muted"
@@ -160,7 +160,7 @@ function GearSlotRow({
                 description={claim.description}
                 icon={claim.icon}
                 accentColor={accentFor(claim.element)}
-                size={36}
+                size={24}
                 showLabel="always"
                 meta={[
                   claim.element,
@@ -273,7 +273,7 @@ export function VariantCard({
       tone={focused || selected ? "accent" : "default"}
       className="h-full"
     >
-      <Stack gap={12}>
+      <Stack gap={8}>
         <Row justify="between" align="center" gap={8} wrap>
           {focused ? (
             <Stack gap={2} className="min-w-0">
@@ -423,7 +423,7 @@ export function VariantCard({
                   description={a.description}
                   icon={a.icon}
                   accentColor={accentFor(a.element) ?? elementColor}
-                  size={28}
+                  size={24}
                 />
               ))}
             </Cluster>
@@ -451,7 +451,7 @@ export function VariantCard({
                   description={f.description}
                   icon={f.icon}
                   accentColor={accentFor(f.element) ?? elementColor}
-                  size={28}
+                  size={24}
                 />
               ))}
             </Cluster>
@@ -485,7 +485,7 @@ export function VariantCard({
                   name={artifact?.name ?? variant.artifactName!}
                   description={artifact?.description}
                   icon={artifact?.icon}
-                  size={28}
+                  size={24}
                   showLabel="auto"
                 />
               ) : null}
@@ -496,7 +496,7 @@ export function VariantCard({
                   name={p.name}
                   description={p.description}
                   icon={p.icon}
-                  size={28}
+                  size={24}
                 />
               ))}
               {!artifactPerks.length &&
@@ -565,3 +565,4 @@ export function VariantCard({
     </Panel>
   );
 }
+

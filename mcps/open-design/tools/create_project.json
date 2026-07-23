@@ -1,0 +1,29 @@
+{
+  "name": "create_project",
+  "description": "Create a new empty Open Design project to generate into, then call start_run against it. Returns the project (with its id) plus a conversationId. The id is derived from name unless you pass one explicitly.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Human-readable project name."
+      },
+      "id": {
+        "type": "string",
+        "description": "Optional project id slug ([A-Za-z0-9._-], <=128 chars). Derived from name when omitted."
+      },
+      "designSystem": {
+        "type": "string",
+        "description": "Optional design system id to attach (see the od://design-systems/... resources)."
+      },
+      "skill": {
+        "type": "string",
+        "description": "Optional skill id to seed the project with."
+      }
+    },
+    "required": [
+      "name"
+    ],
+    "additionalProperties": false
+  }
+}

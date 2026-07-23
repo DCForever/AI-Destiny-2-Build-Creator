@@ -16,7 +16,11 @@ import {
 import type { CreateSynergyInput, MergeSynergiesInput } from "@/lib/synergies/schemas";
 import type { SynergyType } from "@/lib/synergies/schemas";
 import { planDesignationConsolidations } from "@/lib/synergies/consolidateDesignations";
-import { buildCountByDesignationKey } from "@/lib/synergies/countBuildsByDesignation";
+import {
+  buildCountByDesignationKey,
+  listBuildsForDesignation,
+  type BuildUsageRef,
+} from "@/lib/synergies/countBuildsByDesignation";
 import {
   generateSynergyName,
   synergyTypeDesignationKey,
@@ -439,15 +443,33 @@ export function getUserSynergy(db: AppDatabase, userId: number, synergyId: strin
   return getSynergy(db, userId, synergyId);
 }
 
+/** Detail payload with catalog descriptions + usage for the designation floor. */
+export type SynergyDetailPayload = SynergyWithLinkDescriptions & {
+  buildCount: number;
+  objectCount: number;
+  usedByBuilds: BuildUsageRef[];
+};
+
 /** Detail payload with catalog descriptions for each linked object. */
 export async function getUserSynergyDetail(
   db: AppDatabase,
   userId: number,
   synergyId: string,
-): Promise<SynergyWithLinkDescriptions | null> {
+): Promise<SynergyDetailPayload | null> {
   const synergy = getSynergy(db, userId, synergyId);
   if (!synergy) return null;
-  return enrichSynergyWithLinkDescriptions(synergy);
+  const enriched = await enrichSynergyWithLinkDescriptions(synergy);
+  const builds = listBuilds(db, userId);
+  const usedByBuilds = listBuildsForDesignation(builds, {
+    type: synergy.type,
+    subType: synergy.subType,
+  });
+  return {
+    ...enriched,
+    buildCount: usedByBuilds.length,
+    objectCount: synergy.links.length,
+    usedByBuilds,
+  };
 }
 
 /** Attach link descriptions after create/update/merge for the detail UI. */

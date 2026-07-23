@@ -1,16 +1,21 @@
 /**
- * Vault Terminal UI primitives.
+ * Matte Flap Ledger UI primitives.
  *
- * Compose screens from these — avoid ad-hoc panel-notch / badge classes in
+ * Compose screens from these — avoid ad-hoc flap / badge classes in
  * feature components so layout can be rearranged without restyling.
  */
 
 export { Panel } from "./Panel";
+export { FlapRow, FlapBoard, FlapHeader, FlapCell, FlapSeal, FlapTypeStamp } from "./FlapRow";
+export { ThemeProvider, useTheme } from "./ThemeProvider";
+export { ThemeToggle } from "./ThemeToggle";
 export { Section, SectionLabel } from "./Section";
 export { CollapsibleFilterSection } from "./CollapsibleFilterSection";
 export { Stack, Row, Cluster } from "./Stack";
 export { Text, Heading } from "./Text";
 export { Button } from "./Button";
+export { Badge, badgeToneClass } from "./Badge";
+export type { BadgeTone } from "./Badge";
 export { Chip, FilterChip, MetaChip } from "./Chip";
 export { ClassFilterChip } from "./ClassFilterChip";
 export { ConceptTagChip, ConceptTagFilterChip } from "./ConceptTagChip";
@@ -44,3 +49,5 @@ export {
   useCuratedDesignationIcons,
   useDesignationIcons,
 } from "./useDesignationIcons";
+
+

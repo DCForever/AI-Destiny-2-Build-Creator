@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 import { conceptTagIdsSchema } from "@/data/conceptTags";
+import { armorSetOptimizerConstraintsSchema } from "@/lib/optimizer/constraintsSchema";
+import {
+  parseOptimizerConstraints,
+  serializeOptimizerConstraints,
+  type ArmorSetOptimizerConstraints,
+} from "@/lib/optimizer/types";
 
 export const SET_TYPES = ["weapon", "armor", "mod", "pair", "fashion"] as const;
 export type SetType = (typeof SET_TYPES)[number];
@@ -110,6 +116,8 @@ export const createSetSchema = z.object({
   name: z.string().trim().min(1).max(120),
   type: setTypeSchema,
   tagIds: conceptTagIdsSchema.default([]),
+  optimizerConstraints: armorSetOptimizerConstraintsSchema.nullable().optional(),
+  linkedModSetId: z.string().min(1).nullable().optional(),
 });
 
 export const updateSetSchema = createSetSchema.partial();
@@ -128,3 +136,5 @@ export const setItemInputSchema = z.object({
 export type CreateSetInput = z.infer<typeof createSetSchema>;
 export type UpdateSetInput = z.infer<typeof updateSetSchema>;
 export type SetItemInput = z.infer<typeof setItemInputSchema>;
+export type { ArmorSetOptimizerConstraints };
+export { parseOptimizerConstraints, serializeOptimizerConstraints };

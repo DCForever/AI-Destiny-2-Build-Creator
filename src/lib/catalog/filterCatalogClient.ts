@@ -179,12 +179,12 @@ export function filterCatalogClient(
   const ammos = normalizeFacet(filters.ammos);
   const archetypes = normalizeFacet(filters.archetypes);
 
-  let slots = normalizeFacet(
+  const slots = normalizeFacet(
     filters.slots ??
       (filters.slot ? { include: [filters.slot], exclude: [] } : undefined),
   );
 
-  let classNames = normalizeFacet(
+  const classNames = normalizeFacet(
     filters.classNames ??
       (filters.className
         ? { include: [filters.className], exclude: [] }

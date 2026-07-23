@@ -2,33 +2,79 @@
 
 import type { SynergySummary } from "@/components/synergy/types";
 import {
+  Badge,
   Button,
   DesignationLabel,
+  FlapBoard,
+  FlapCell,
+  FlapHeader,
+  FlapRow,
   Panel,
   Row,
   SectionLabel,
   Stack,
   Text,
 } from "@/components/ui";
+import {
+  ELEMENT_CSS_COLOR,
+  isDestinyElement,
+} from "@/lib/destiny/identityVisuals";
 import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
 
-function usageSubtitle(row: SynergySummary): string {
+/** Soft channel ink by synergy designation category (element uses subType). */
+function synergyChannel(type: string, subType: string | null | undefined): string | null {
+  if (type === "element" && subType && isDestinyElement(subType)) {
+    return ELEMENT_CSS_COLOR[subType];
+  }
+  switch (type) {
+    case "verb":
+      return "var(--element-arc)";
+    case "melee":
+    case "grenade":
+    case "super":
+      return "var(--element-solar)";
+    case "healing":
+    case "damage_resist":
+    case "solo":
+      return "var(--success)";
+    case "dps":
+    case "primary_weapon":
+    case "special_weapon":
+    case "heavy_weapon":
+    case "general_weapon":
+    case "weapon_archetype":
+    case "kinetic_weapon":
+      return "var(--foreground)";
+    case "team":
+      return "var(--element-prismatic)";
+    case "damage":
+      return "var(--danger)";
+    default:
+      return "var(--accent)";
+  }
+}
+
+function usageTally(row: SynergySummary): string {
   const builds = row.buildCount ?? 0;
   const objects = row.objectCount ?? row.links?.length ?? 0;
-  const buildLabel = builds === 1 ? "1 build linked" : `${builds} builds linked`;
-  const objectLabel =
-    objects === 1 ? "1 object linked" : `${objects} objects linked`;
-  return `${buildLabel} · ${objectLabel}`;
+  return `${builds}B · ${objects}O`;
 }
+
+const COLS = "minmax(0,1fr) 5.5rem";
+const COLS_HYGIENE = "1.5rem minmax(0,1fr) 5.5rem";
 
 export function SynergyLibrary({
   synergies,
   selectedId,
   checkedIds,
+  survivorId,
+  hygieneMode,
+  onHygieneModeChange,
   onSelect,
   onToggleCheck,
   onCheckAllVisible,
   onClearChecked,
+  onSurvivorChange,
   onNew,
   onMerge,
   onDuplicate,
@@ -41,10 +87,14 @@ export function SynergyLibrary({
   synergies: SynergySummary[];
   selectedId: string | null;
   checkedIds: ReadonlySet<string>;
+  survivorId: string | null;
+  hygieneMode: boolean;
+  onHygieneModeChange: (next: boolean) => void;
   onSelect: (id: string) => void;
   onToggleCheck: (id: string) => void;
   onCheckAllVisible: () => void;
   onClearChecked: () => void;
+  onSurvivorChange: (id: string) => void;
   onNew: () => void;
   onMerge: () => void;
   onDuplicate: () => void;
@@ -55,23 +105,44 @@ export function SynergyLibrary({
   loading: boolean;
 }) {
   const checkedCount = checkedIds.size;
+  const columns = hygieneMode ? COLS_HYGIENE : COLS;
 
   return (
-    <Panel as="aside" className="h-full min-h-0 flex flex-col overflow-hidden">
-      <Stack gap={8} className="shrink-0">
+    <Panel as="aside" pad="sm" className="h-full min-h-0 flex flex-col overflow-hidden">
+      <Stack gap={6} className="shrink-0">
         <Row justify="between" align="center">
           <SectionLabel>
             Library
             {synergies.length > 0 ? ` · ${synergies.length}` : ""}
           </SectionLabel>
-          <Button variant="accent" size="sm" onClick={onNew}>
-            New
-          </Button>
+          <Row gap={6} align="center">
+            {synergies.length > 0 ? (
+              <Button
+                variant={hygieneMode ? "accent" : "ghost"}
+                size="sm"
+                onClick={() => onHygieneModeChange(!hygieneMode)}
+                aria-pressed={hygieneMode}
+                title={
+                  hygieneMode
+                    ? "Exit library hygiene (hide merge tools)"
+                    : "Enter library hygiene to merge duplicate designations"
+                }
+              >
+                {hygieneMode ? "Exit hygiene" : "Hygiene"}
+              </Button>
+            ) : null}
+            <Button variant="accent" size="sm" onClick={onNew}>
+              New
+            </Button>
+          </Row>
         </Row>
 
-        {synergies.length > 0 ? (
-          <Stack gap={6}>
+        {hygieneMode && synergies.length > 0 ? (
+          <Stack gap={4}>
             <Row gap={6} wrap align="center">
+              <Badge tone="fuzzy" title="Merge and bulk tools">
+                Hygiene
+              </Badge>
               <Button
                 variant="ghost"
                 size="sm"
@@ -95,8 +166,8 @@ export function SynergyLibrary({
                 disabled={!mergeEnabled || mergeBusy || duplicateBusy}
                 title={
                   mergeEnabled
-                    ? "Merge checked rows into the selected survivor"
-                    : (mergeBlockedReason ?? "Select rows to merge")
+                    ? "Review merge into the chosen survivor"
+                    : (mergeBlockedReason ?? "Check rows and pick a survivor")
                 }
               >
                 {mergeBusy
@@ -131,12 +202,18 @@ export function SynergyLibrary({
                 {mergeBlockedReason}
               </Text>
             ) : null}
-            {mergeEnabled ? (
+            {checkedCount >= 2 ? (
               <Text size="xs" tone="muted">
-                Merge keeps the <strong>selected</strong> row and absorbs the
-                other checked rows (same type + subtype only).
+                Pick the <strong>survivor</strong> radio on a checked row. That
+                designation stays; other checked rows are absorbed (same type +
+                subtype only).
               </Text>
-            ) : null}
+            ) : (
+              <Text size="xs" tone="muted">
+                Check two or more same-type designations, choose which survives,
+                then Merge.
+              </Text>
+            )}
           </Stack>
         ) : null}
       </Stack>
@@ -156,62 +233,82 @@ export function SynergyLibrary({
             </Button>
           </Stack>
         ) : (
-          <Stack gap={8}>
+          <FlapBoard>
+            <FlapHeader
+              columns={columns}
+              cells={
+                hygieneMode
+                  ? ["", "Designation", "Links"]
+                  : ["Designation", "Links"]
+              }
+            />
             {synergies.map((row) => {
               const selected = row.id === selectedId;
               const checked = checkedIds.has(row.id);
+              const isSurvivor = survivorId === row.id && checked;
               const title = formatSynergyTypeDesignation({
                 type: row.type,
                 subType: row.subType,
               });
+const channel = synergyChannel(String(row.type), row.subType);
+
               return (
-                <div key={row.id} className="flex gap-2 items-start">
-                  <input
-                    type="checkbox"
-                    className="mt-3 shrink-0 accent-current"
-                    checked={checked}
-                    onChange={() => onToggleCheck(row.id)}
-                    aria-label={`Select ${title} for merge`}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onSelect(row.id)}
-                    className="text-left flex-1 min-w-0"
-                  >
-                    <Panel
-                      tone={selected ? "accent" : "muted"}
-                      pad="sm"
-                      className={
-                        selected
-                          ? ""
-                          : "hover:border-line-strong transition-colors"
-                      }
+                <FlapRow
+                  key={row.id}
+                  columns={columns}
+                  selected={selected}
+                  channel={channel}
+                  onClick={() => onSelect(row.id)}
+                  aria-current={selected ? "true" : undefined}
+                  aria-label={title}
+                >
+                  {hygieneMode ? (
+                    <FlapCell
+                      className="justify-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Stack gap={4} className="min-w-0">
-                        <Row gap={6} align="center" wrap>
-                          <DesignationLabel
-                            type={row.type}
-                            subType={row.subType}
-                            size={28}
-                            className="text-sm font-medium text-foreground"
-                          />
-                          {selected && checkedCount > 1 ? (
-                            <Text size="xs" tone="muted" as="span">
-                              · survivor
-                            </Text>
-                          ) : null}
-                        </Row>
-                        <Text size="xs" tone="muted">
-                          {usageSubtitle(row)}
-                        </Text>
-                      </Stack>
-                    </Panel>
-                  </button>
-                </div>
+                      <input
+                        type="checkbox"
+                        className="accent-current"
+                        checked={checked}
+                        onChange={() => onToggleCheck(row.id)}
+                        aria-label={`Include ${title} in merge`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {checked ? (
+                        <input
+                          type="radio"
+                          name="synergy-merge-survivor"
+                          className="accent-current"
+                          checked={isSurvivor}
+                          onChange={() => onSurvivorChange(row.id)}
+                          aria-label={`Keep ${title} as merge survivor`}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Survivor — this row is kept"
+                        />
+                      ) : null}
+                    </FlapCell>
+                  ) : null}
+                  <FlapCell className="min-w-0 gap-2">
+                    <DesignationLabel
+                      type={row.type}
+                      subType={row.subType}
+                      size={22}
+                      className="text-[13px] font-medium text-foreground min-w-0"
+                    />
+                    {isSurvivor ? (
+                      <Badge tone="verified" title="Kept after merge">
+                        Surv
+                      </Badge>
+                    ) : null}
+                  </FlapCell>
+                  <FlapCell variant="tally" title={usageTally(row)}>
+                    {usageTally(row)}
+                  </FlapCell>
+                </FlapRow>
               );
             })}
-          </Stack>
+          </FlapBoard>
         )}
       </div>
     </Panel>

@@ -1,0 +1,9 @@
+{
+  "name": "list_plugins",
+  "description": "List installed Open Design plugins (packaged design workflows) you can pass to start_run as plugin + inputs.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  }
+}

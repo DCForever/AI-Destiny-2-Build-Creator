@@ -56,6 +56,10 @@ export const sets = sqliteTable(
       .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     type: text("type").notNull(),
+    /** JSON: ArmorSetOptimizerConstraints (nullable). */
+    optimizerConstraints: text("optimizer_constraints"),
+    /** Optional companion Mod Set id for armor optimizer materialize. */
+    linkedModSetId: text("linked_mod_set_id"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },

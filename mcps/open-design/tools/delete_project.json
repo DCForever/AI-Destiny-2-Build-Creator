@@ -1,0 +1,22 @@
+{
+  "name": "delete_project",
+  "description": "Permanently delete an Open Design project including its files and conversations. Requires both an explicit project id/name AND confirm:true — there is no active-project fallback because the operation is irreversible.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Project id (UUID) or name substring. Required — active-context fallback is intentionally disabled."
+      },
+      "confirm": {
+        "type": "boolean",
+        "description": "Must be literally true. Guards against an agent accidentally deleting a project while cleaning up."
+      }
+    },
+    "required": [
+      "project",
+      "confirm"
+    ],
+    "additionalProperties": false
+  }
+}

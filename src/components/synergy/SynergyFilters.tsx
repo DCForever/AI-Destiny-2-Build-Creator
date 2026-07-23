@@ -6,7 +6,6 @@ import {
   Button,
   Cluster,
   CollapsibleFilterSection,
-  DesignationLabel,
   FilterChip,
   Panel,
   Row,
@@ -22,14 +21,34 @@ import {
 } from "@/lib/synergies/synergyTypeRules";
 import { compareDisplayName } from "@/lib/sortByName";
 
-const SORTED_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
-  compareDisplayName(getSynergyTypeLabel(a), getSynergyTypeLabel(b)),
-);
+type CreatableType = (typeof CREATABLE_SYNERGY_TYPES)[number];
+
+/** Stable family groups — reduces the flat 15-chip wall. */
+const TYPE_FAMILIES: { label: string; types: CreatableType[] }[] = [
+  {
+    label: "Kit",
+    types: ["melee", "verb", "grenade", "super", "element"],
+  },
+  {
+    label: "Weapons",
+    types: [
+      "primary_weapon",
+      "special_weapon",
+      "heavy_weapon",
+      "general_weapon",
+      "weapon_archetype",
+    ],
+  },
+  {
+    label: "Play",
+    types: ["dps", "healing", "solo", "damage_resist", "team"],
+  },
+];
 
 type SubTypeOption = { name: string; description?: string };
 
 /**
- * Type chips + expandable subtype submenu, collapsible like Catalog filters.
+ * Instrument strip: search always visible; type/subtype facets collapsed by default.
  */
 export function SynergyFilters({
   query,
@@ -46,7 +65,9 @@ export function SynergyFilters({
   subTypeFilter: string[];
   onSubTypeFilterChange: (next: string[]) => void;
 }) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+const facetCount = typeFilter.length + subTypeFilter.length;
+  const activeCount = facetCount + (query.trim().length > 0 ? 1 : 0);
+  const [filtersOpen, setFiltersOpen] = useState(() => facetCount > 0);
   const [expandedType, setExpandedType] = useState<SubTypeRequiredType | null>(
     null,
   );
@@ -54,6 +75,11 @@ export function SynergyFilters({
   const [subOptions, setSubOptions] = useState<SubTypeOption[]>([]);
   const [subLoading, setSubLoading] = useState(false);
   const [subError, setSubError] = useState<string | null>(null);
+
+  // Open facets when filters become active from outside; never force-open on clear.
+  useEffect(() => {
+    if (facetCount > 0) setFiltersOpen(true);
+  }, [facetCount]);
 
   const loadSubTypes = useCallback(async (category: SubTypeRequiredType, q: string) => {
     setSubLoading(true);
@@ -158,39 +184,40 @@ export function SynergyFilters({
     );
   }
 
-  const activeCount =
-    typeFilter.length +
-    subTypeFilter.length +
-    (query.trim().length > 0 ? 1 : 0);
-
   function clearFilters() {
     onTypeFilterChange([]);
     onSubTypeFilterChange([]);
     onQueryChange("");
     setExpandedType(null);
     setSubQuery("");
+    setFiltersOpen(false);
   }
 
   return (
     <CollapsibleFilterSection
       open={filtersOpen}
       onOpenChange={setFiltersOpen}
-      activeCount={activeCount}
-      onClear={clearFilters}
+activeCount={activeCount}
+      onClear={activeCount > 0 ? clearFilters : undefined}
+      panel={false}
+      label="Type filters"
+      leading={
+        <div className="min-w-0 flex-1 max-w-md">
+          <label className="sr-only" htmlFor="synergy-search">
+            Search designations
+          </label>
+          <input
+            id="synergy-search"
+            type="search"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Search name, subtype, or link…"
+            className="w-full bg-surface-raised border border-line px-2 py-1.5 text-sm text-foreground placeholder:text-muted"
+          />
+        </div>
+      }
       summary={
         <Cluster gap={3}>
-          {query.trim() ? (
-            <FilterChip
-              size="xs"
-              label={
-                query.trim().length > 18
-                  ? `${query.trim().slice(0, 16)}…`
-                  : query.trim()
-              }
-              active
-              onClick={() => onQueryChange("")}
-            />
-          ) : null}
           {typeFilter.map((t) => (
             <FilterChip
               key={t}
@@ -214,37 +241,42 @@ export function SynergyFilters({
         </Cluster>
       }
     >
-      <Stack gap={12}>
-        <TextField
-          label="Search"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search name, subtype, or link…"
-        />
-
-        <Stack gap={6}>
+      <Stack gap={10}>
+        <Stack gap={10}>
           <Text size="xs" tone="muted" className="uppercase tracking-widest">
             Type
           </Text>
-          <Cluster gap={6}>
-            {SORTED_TYPES.map((t) => {
-              const hasSubs = requiresSubType(t);
-              const active =
-                typeFilter.includes(t) || expandedType === t;
-              return (
-                <FilterChip
-                  key={t}
-                  label={
-                    hasSubs
-                      ? `${getSynergyTypeLabel(t)} +`
-                      : getSynergyTypeLabel(t)
-                  }
-                  active={active}
-                  onClick={() => onTypeClick(t)}
-                />
-              );
-            })}
-          </Cluster>
+          {TYPE_FAMILIES.map((family) => (
+            <Stack key={family.label} gap={4}>
+              <Text size="xs" tone="muted">
+                {family.label}
+              </Text>
+              <Cluster gap={6}>
+                {family.types.map((t) => {
+                  const hasSubs = requiresSubType(t);
+                  const active =
+                    typeFilter.includes(t) || expandedType === t;
+                  return (
+                    <FilterChip
+                      key={t}
+                      label={
+                        hasSubs
+                          ? `${getSynergyTypeLabel(t)} ·`
+                          : getSynergyTypeLabel(t)
+                      }
+                      active={active}
+                      onClick={() => onTypeClick(t)}
+                      title={
+                        hasSubs
+                          ? `${getSynergyTypeLabel(t)} — open subtypes`
+                          : getSynergyTypeLabel(t)
+                      }
+                    />
+                  );
+                })}
+              </Cluster>
+            </Stack>
+          ))}
         </Stack>
 
         {expandedType ? (
@@ -252,7 +284,7 @@ export function SynergyFilters({
             <Stack gap={10}>
               <Row justify="between" align="center" gap={8} wrap>
                 <Text size="sm" weight="medium">
-                  {getSynergyTypeLabel(expandedType)} — specific options
+                  {getSynergyTypeLabel(expandedType)} — subtypes
                 </Text>
                 <Button
                   size="sm"
@@ -300,20 +332,14 @@ export function SynergyFilters({
                   </Text>
                   <Cluster gap={6}>
                     {subTypeFilter.map((name) => (
-                      <button
+                      <FilterChip
                         key={name}
-                        type="button"
+                        size="xs"
+                        label={name}
+                        active
                         onClick={() => toggleSubType(name)}
                         title="Remove subtype filter"
-                        className="inline-flex items-center gap-1 border border-accent/50 px-1.5 py-0.5"
-                      >
-                        <DesignationLabel
-                          type={expandedType ?? "verb"}
-                          subType={name}
-                          size={16}
-                        />
-                        <span className="text-[10px] text-accent">×</span>
-                      </button>
+                      />
                     ))}
                   </Cluster>
                 </Stack>

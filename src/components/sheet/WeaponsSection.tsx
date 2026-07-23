@@ -1,6 +1,6 @@
 import type { ResolvedWeapon, ResolvedPerkPick } from "@/lib/build/types";
 import type { ChampionType } from "@/data/rules/championCounters";
-import { EntityHotspot } from "@/components/ui";
+import { Badge, EntityHotspot } from "@/components/ui";
 import {
   ELEMENT_CSS_COLOR,
   isDestinyElement,
@@ -124,9 +124,7 @@ function WeaponCard({ weapon, editable = false, onClick }: {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-foreground truncate">{name}</span>
             <ResolutionBadge status={weapon.reference.status} />
-            {weapon.isExotic && (
-              <span className="badge badge-fuzzy">Exotic</span>
-            )}
+            {weapon.isExotic && <Badge tone="fuzzy">Exotic</Badge>}
           </div>
           <ElementLine weapon={weapon} />
         </div>

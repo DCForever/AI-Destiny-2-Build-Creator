@@ -102,7 +102,7 @@ export function Workspace({
  */
 export function WorkspaceMain({
   children,
-  gap = 16,
+  gap = 12,
   className = "",
   scroll = true,
 }: {
@@ -131,9 +131,10 @@ export function CardGrid({
 }) {
   return (
     <div
-      className={`grid gap-3 md:grid-cols-2 xl:grid-cols-3 ${className}`.trim()}
+      className={`grid gap-2 md:grid-cols-2 xl:grid-cols-3 ${className}`.trim()}
     >
       {children}
     </div>
   );
 }
+

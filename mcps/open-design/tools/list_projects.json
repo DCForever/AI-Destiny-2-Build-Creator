@@ -1,0 +1,9 @@
+{
+  "name": "list_projects",
+  "description": "List every Open Design project on this daemon.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  }
+}

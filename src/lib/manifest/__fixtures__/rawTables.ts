@@ -270,7 +270,7 @@ const ITEM_TABLE: RawTable = {
     plug: { plugCategoryIdentifier: "warlock.solar.class_abilities" },
   }),
 
-  // Mods
+// Mods
   "1023": mkItem(1023, "Charged Up", "Increases the maximum number of stacks.", {
     itemType: 19,
     plug: { plugCategoryIdentifier: "enhancements.v2_head", energyCost: { energyCost: 1 } },
@@ -282,6 +282,18 @@ const ITEM_TABLE: RawTable = {
   "1025": mkItem(1025, "Harmonic Tuning", "Tuning mod.", {
     itemType: 19,
     plug: { plugCategoryIdentifier: "enhancements.tuning" },
+  }),
+// Major Melee (+10 Melee) — live cat is enhancements.v2_general
+  "1030": mkItem(1030, "Major Melee", "+10 Melee.", {
+    itemType: 19,
+    plug: { plugCategoryIdentifier: "enhancements.v2_general", energyCost: { energyCost: 3 } },
+    investmentStats: [{ statTypeHash: 4244567218, value: 10 }],
+  }),
+  // Minor Health (+5 Health)
+  "1031": mkItem(1031, "Minor Health", "+5 Health.", {
+    itemType: 19,
+    plug: { plugCategoryIdentifier: "enhancements.v2_chest", energyCost: { energyCost: 1 } },
+    investmentStats: [{ statTypeHash: 392767087, value: 5 }],
   }),
   // Blank display desc + effect tooltip only (no sandbox) — tooltip used as body
   "1027": {
