@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getBungieOAuthConfig, getSessionSecret } from "@/lib/config/env";
 import { createBungieAuthClient } from "@/lib/bungie/oauth";
 import { getSession } from "@/lib/bungie/session";
+import { sanitizeReturnUrl } from "@/lib/auth/returnUrl";
 
 export const runtime = "nodejs";
 
@@ -12,18 +13,6 @@ const NOT_CONFIGURED = {
 
 const HTTPS_DEV_HINT =
   "Bungie OAuth requires HTTPS in development. Run npm run dev:https and open https://127.0.0.1:3000.";
-
-/** Allow only same-origin relative paths (no protocol-relative or external URLs). */
-function sanitizeReturnUrl(raw: string | null, requestUrl: URL): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/analyze";
-  try {
-    const resolved = new URL(raw, requestUrl.origin);
-    if (resolved.origin !== requestUrl.origin) return "/analyze";
-    return resolved.pathname + resolved.search;
-  } catch {
-    return "/analyze";
-  }
-}
 
 export async function GET(request: Request): Promise<NextResponse> {
   if (!getBungieOAuthConfig() || !getSessionSecret()) {
