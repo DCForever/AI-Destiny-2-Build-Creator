@@ -184,9 +184,6 @@ export class OpenAiCompatibleClient implements LlmClient {
   private async request(path: string, init: RequestInit): Promise<Response> {
     const label = `OpenAI ${path}`;
     const url = `${this.baseUrl}${path}`;
-    // #region agent log
-    fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'openAiClient.ts:request',message:'llm fetch start',data:{url,signalAborted:init.signal?.aborted??false},timestamp:Date.now(),hypothesisId:'A,C'})}).catch(()=>{});
-    // #endregion
     try {
       const response = await this.fetchFn(url, {
         ...init,
@@ -198,9 +195,6 @@ export class OpenAiCompatibleClient implements LlmClient {
       }
       return response;
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'openAiClient.ts:request:catch',message:'llm fetch failed',data:{url,message:error instanceof Error?error.message:'unknown',name:error instanceof Error?error.name:'unknown',cause:error instanceof Error&&'cause' in error?String((error as Error&{cause?:unknown}).cause):undefined,signalAborted:init.signal?.aborted??false},timestamp:Date.now(),hypothesisId:'A,C'})}).catch(()=>{});
-      // #endregion
       throw formatLlmFetchError(url, error);
     }
   }

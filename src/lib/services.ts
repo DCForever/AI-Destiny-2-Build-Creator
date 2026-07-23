@@ -30,7 +30,6 @@ import type {
   PerkValidator,
 } from "@/lib/manifest/types/services";
 import { createSearxngClient, type SearxngClient } from "@/lib/search/searxng";
-import { getLlmConfig } from "@/lib/config/env";
 import type { AppDatabase } from "@/lib/db/client";
 
 export interface Services {
@@ -128,14 +127,7 @@ export async function runBuildGeneration(
   signal?: AbortSignal,
   context?: BuildGenerationContext,
 ): Promise<BuildGenerationOutcome> {
-  // #region agent log
-  fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'services.ts:runBuildGeneration',message:'pipeline start',data:{className:request.className,subclass:request.subclass,signalAborted:signal?.aborted??false},timestamp:Date.now(),hypothesisId:'C,D'})}).catch(()=>{});
-  // #endregion
   const { entityCache, resolver, validator, llm, searxng } = await getServices();
-  const llmConfig = getLlmConfig();
-  // #region agent log
-  fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'services.ts:runBuildGeneration',message:'llm config',data:{provider:llmConfig.provider,url:llmConfig.url,model:llmConfig.model},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   const meta = await entityCache.getMeta();
   if (!meta) {
     throw new ManifestNotReadyError();

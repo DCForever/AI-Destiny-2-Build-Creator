@@ -119,9 +119,6 @@ export function GeneratorPage({ multiPassAvailable = false }: { multiPassAvailab
 
       if (!res.ok) {
         const body = await res.json() as { error: string };
-        // #region agent log
-        fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'GeneratorPage.tsx:handleSubmit',message:'api non-ok response',data:{status:res.status,error:body.error},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         const hint = res.status === 503 ? " — Open Settings to download the manifest." : "";
         setState({ phase: "error", message: `${body.error}${hint}` });
         return;
@@ -139,9 +136,6 @@ export function GeneratorPage({ multiPassAvailable = false }: { multiPassAvailab
       const message = formatClientFetchError(
         err instanceof Error ? err.message : "Build generation failed",
       );
-      // #region agent log
-      fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'GeneratorPage.tsx:catch',message:'client fetch threw',data:{message,name:err instanceof Error?err.name:'unknown',cause:err instanceof Error&&'cause' in err?String((err as Error&{cause?:unknown}).cause):undefined},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       setState({ phase: "error", message });
     }
   };

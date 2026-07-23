@@ -42,9 +42,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       return new NextResponse(null, { status: 499 });
     }
     const message = error instanceof Error ? error.message : "Build generation failed";
-    // #region agent log
-    fetch('http://127.0.0.1:7497/ingest/c1e77a25-b3cb-458d-a22e-6f4c8c0c4060',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7c9b57'},body:JSON.stringify({sessionId:'7c9b57',location:'build/route.ts:catch',message:'runBuildGeneration failed',data:{message,name:error instanceof Error?error.name:'unknown',cause:error instanceof Error&&'cause' in error?String((error as Error&{cause?:unknown}).cause):undefined,signalAborted:request.signal.aborted},timestamp:Date.now(),hypothesisId:'A,C,D'})}).catch(()=>{});
-    // #endregion
     return NextResponse.json({ error: message }, { status: errorStatus(error) });
   }
 }
