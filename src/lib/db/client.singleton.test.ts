@@ -48,9 +48,10 @@ describe("process SQLite singleton", () => {
     getDb();
     const appHandle = getAppSqliteForTests();
     const testDb = createTestDb();
-    expect(testDb.$client).not.toBe(appHandle);
+    const testClient = (testDb as unknown as { $client: typeof appHandle }).$client;
+    expect(testClient).not.toBe(appHandle);
     // process singleton unchanged by test helper
     expect(getAppSqliteForTests()).toBe(appHandle);
-    testDb.$client.close();
+    testClient.close();
   });
 });
