@@ -13,6 +13,8 @@ declare global {
   var __d2bcSqlite: Database.Database | undefined;
 }
 
+let migrated = false;
+
 function openDatabase(): Database.Database {
   const dbPath = appDbPath();
   mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -22,17 +24,35 @@ function openDatabase(): Database.Database {
   return db;
 }
 
+/**
+ * One native better-sqlite3 handle per Node process for the on-disk app DB.
+ * Multi-worker / Edge against a single SQLite file remains unsupported
+ * (local-first single-process product constraint).
+ */
 function getSqlite(): Database.Database {
-  if (process.env.NODE_ENV === "development") {
-    if (!global.__d2bcSqlite) {
-      global.__d2bcSqlite = openDatabase();
-    }
-    return global.__d2bcSqlite;
+  if (!global.__d2bcSqlite) {
+    global.__d2bcSqlite = openDatabase();
   }
-  return openDatabase();
+  return global.__d2bcSqlite;
 }
 
-let migrated = false;
+/** Test-only: expose process singleton handle for reuse assertions. */
+export function getAppSqliteForTests(): Database.Database {
+  return getSqlite();
+}
+
+/** Test-only: drop process singleton without closing external test DBs. */
+export function resetAppSqliteForTests(): void {
+  if (global.__d2bcSqlite) {
+    try {
+      global.__d2bcSqlite.close();
+    } catch {
+      /* already closed */
+    }
+    global.__d2bcSqlite = undefined;
+  }
+  migrated = false;
+}
 
 function ensureSynergySubTypeColumn(db: Database.Database): void {
   const cols = db.prepare("PRAGMA table_info(synergies)").all() as { name: string }[];

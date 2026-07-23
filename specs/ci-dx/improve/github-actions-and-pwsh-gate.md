@@ -1,5 +1,5 @@
 ---
-status: DONE
+status: TODO
 priority: P2
 effort: S
 risk: LOW
@@ -7,7 +7,6 @@ category: dx
 depends: []
 planned_at: 799a9d6
 issue: ""
-implemented_by: specs/038-ci-pwsh-gate
 ---
 
 # Add GitHub Actions CI and a PowerShell-friendly gate
