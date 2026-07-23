@@ -4,6 +4,7 @@ import { listBuilds } from "@/lib/db/repositories/buildRepository";
 import {
   createSynergyRecord,
   deleteSynergyRecord,
+  findSynergiesByItemHashes,
   findSynergiesByTarget,
   getSynergiesByIds,
   getSynergiesByTypeSubType,
@@ -485,4 +486,19 @@ export function reverseLookupSynergies(
   query: SynergyTargetQuery,
 ): SynergyWithLinks[] {
   return findSynergiesByTarget(db, userId, query);
+}
+
+/** Batch reverse-lookup keyed by item hash (weapon / exotic_armor). */
+export function reverseLookupSynergiesByItemHashes(
+  db: AppDatabase,
+  userId: number,
+  kind: string,
+  itemHashes: number[],
+): Record<string, SynergyWithLinks[]> {
+  const map = findSynergiesByItemHashes(db, userId, kind, itemHashes);
+  const out: Record<string, SynergyWithLinks[]> = {};
+  for (const [hash, list] of map) {
+    out[String(hash)] = list;
+  }
+  return out;
 }

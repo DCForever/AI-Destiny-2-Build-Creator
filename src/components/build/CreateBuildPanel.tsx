@@ -32,6 +32,7 @@ import {
 } from "@/lib/build/createBuildLookups";
 import { createBuildPayload } from "@/lib/build/createBuildPayload";
 import { fetchSubclassKitForCreate } from "@/lib/build/createSubclassKit";
+import { resolveSubclassScope } from "@/lib/debug/subclassScope";
 
 const CLASSES: GuardianClass[] = ["Titan", "Hunter", "Warlock"];
 
@@ -55,7 +56,8 @@ export function CreateBuildPanel({
   const [kitError, setKitError] = useState<string | null>(null);
   const [sourcingKit, setSourcingKit] = useState(false);
 
-  const canSubmit = synergyTypes.length > 0 && !busy && !sourcingKit;
+const canSubmit = synergyTypes.length > 0 && !busy && !sourcingKit;
+  const subclassScope = resolveSubclassScope(subclassName);
 
   function handleClassChange(next: GuardianClass) {
     setClassName(next);
@@ -147,6 +149,8 @@ export function CreateBuildPanel({
             label="Search supers"
             category="abilities"
             kind="super"
+            classType={subclassScope?.classType ?? className}
+            element={subclassScope?.element}
             subclass={subclassName}
             selected={
               pinnedSuper

@@ -289,6 +289,60 @@ export function findSynergiesByTarget(
   return getSynergiesByIds(db, userId, unique);
 }
 
+/**
+ * Batch reverse-lookup for item-hash link kinds (weapon, exotic_armor, …).
+ * Returns a map keyed by itemHash string → distinct synergies for that hash.
+ */
+export function findSynergiesByItemHashes(
+  db: AppDatabase,
+  userId: number,
+  kind: string,
+  itemHashes: number[],
+): Map<number, SynergyWithLinks[]> {
+  const uniqueHashes = [...new Set(itemHashes.filter((h) => Number.isFinite(h)))];
+  const result = new Map<number, SynergyWithLinks[]>();
+  for (const h of uniqueHashes) result.set(h, []);
+  if (uniqueHashes.length === 0) return result;
+
+  const rows = db
+    .select({
+      synergyId: synergyLinks.synergyId,
+      itemHash: synergyLinks.itemHash,
+    })
+    .from(synergyLinks)
+    .innerJoin(synergies, eq(synergyLinks.synergyId, synergies.id))
+    .where(
+      and(
+        eq(synergies.userId, userId),
+        eq(synergyLinks.kind, kind),
+        inArray(synergyLinks.itemHash, uniqueHashes),
+      ),
+    )
+    .all();
+
+  const synergyIds = [...new Set(rows.map((r) => r.synergyId))];
+  const synergiesById = new Map(
+    getSynergiesByIds(db, userId, synergyIds).map((s) => [s.id, s] as const),
+  );
+
+  const seenPerHash = new Map<number, Set<string>>();
+  for (const row of rows) {
+    if (row.itemHash == null) continue;
+    const synergy = synergiesById.get(row.synergyId);
+    if (!synergy) continue;
+    let seen = seenPerHash.get(row.itemHash);
+    if (!seen) {
+      seen = new Set();
+      seenPerHash.set(row.itemHash, seen);
+    }
+    if (seen.has(synergy.id)) continue;
+    seen.add(synergy.id);
+    result.get(row.itemHash)!.push(synergy);
+  }
+
+  return result;
+}
+
 export function seedDefaultSynergies(db: AppDatabase, userId: number): SynergyWithLinks[] {
   const existing = listSynergies(db, userId);
   if (existing.length > 0) return existing;

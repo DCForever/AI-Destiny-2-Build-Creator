@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ItemIcon } from "@/components/sheet/ItemIcon";
 import {
   Button,
+  Chip,
   Cluster,
   EntityHotspot,
   FilterChip,
@@ -13,6 +14,8 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
+import { formatSynergyTypeDesignation } from "@/lib/synergies/generateSynergyName";
+import { groupAndSortExoticArmorSearchResults } from "@/lib/manifest/exoticArmorSearchGroups";
 import {
   groupAndSortModSearchResults,
   modSlotCategoryLabel,
@@ -24,6 +27,8 @@ export type ManifestPick = {
   icon?: string | null;
   kind?: string;
   description?: string;
+  /** Exotic armor / weapons: slot name from manifest. */
+  slot?: string;
   /** Aspects: sockets for fragments. */
   fragmentCapacity?: number;
   /** Mods: armor energy cost. */
@@ -31,6 +36,7 @@ export type ManifestPick = {
   /** Mods: helmet | arms | chest | legs | classItem | general | tuning */
   slotCategory?: string;
   perks?: Array<{ hash: number; name: string; column?: number; row?: number }>;
+  linkedSynergies?: Array<{ id: string; label: string }>;
 };
 
 type Category =
@@ -43,27 +49,24 @@ type Category =
   | "abilities"
   | "artifacts";
 
+type LinkedSynergyChip = { id: string; label: string };
+
 export function ManifestSearchPicker({
   label,
   category,
   kind,
   classType,
   subclass,
+  element,
   selected,
   onSelect,
   multi,
   selectedNames,
   onToggleName,
-  /** Prefer when capacity/cost meta is needed (aspects/mods). */
   onTogglePick,
   disabled,
   emptyBrowse = true,
-  /** When multi, block adding beyond this count (aspects). */
   maxSelected,
-  /**
-   * Mod fill context: only show plugs legal for this armor piece
-   * (matching category + general/tuning). Filters search/browse results.
-   */
   targetArmorSlot,
 }: {
   label: string;
@@ -71,6 +74,7 @@ export function ManifestSearchPicker({
   kind?: "super" | "grenade" | "melee" | "classAbility" | "movement";
   classType?: "Titan" | "Hunter" | "Warlock";
   subclass?: string;
+  element?: string;
   selected?: ManifestPick | null;
   onSelect?: (item: ManifestPick | null) => void;
   multi?: boolean;
@@ -86,6 +90,12 @@ export function ManifestSearchPicker({
   const [results, setResults] = useState<ManifestPick[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [synergiesByHash, setSynergiesByHash] = useState<
+    Record<string, LinkedSynergyChip[]>
+  >({});
+
+  const singleSelected = !multi && selected;
+  const showSearchChrome = multi || !selected;
 
   async function runSearch(forceEmpty = false) {
     const q = query.trim();
@@ -101,6 +111,7 @@ export function ManifestSearchPicker({
       if (kind) params.set("kind", kind);
       if (classType) params.set("classType", classType);
       if (subclass) params.set("subclass", subclass);
+      if (element) params.set("element", element);
       if (category === "mods" && targetArmorSlot) {
         params.set("armorSlot", targetArmorSlot);
       }
@@ -112,16 +123,83 @@ export function ManifestSearchPicker({
       if (!res.ok) {
         setError(body.error ?? "Search failed");
         setResults([]);
+        setSynergiesByHash({});
         return;
       }
       setResults(body.results ?? []);
     } catch {
       setError("Search failed");
       setResults([]);
+      setSynergiesByHash({});
     } finally {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (category !== "exotic-armor" || results.length === 0) {
+      setSynergiesByHash({});
+      return;
+    }
+    let cancelled = false;
+    const hashes = results.map((r) => r.hash).filter((h) => h > 0);
+    if (hashes.length === 0) {
+      setSynergiesByHash({});
+      return;
+    }
+
+    async function load() {
+      try {
+        const params = new URLSearchParams({ kind: "exotic_armor" });
+        for (const h of hashes) params.append("itemHash", String(h));
+        const res = await fetch(`/api/user/synergies/by-target?${params}`);
+        if (!res.ok || cancelled) {
+          if (!cancelled) setSynergiesByHash({});
+          return;
+        }
+        const body = (await res.json()) as {
+          byItemHash?: Record<
+            string,
+            Array<{ id: string; type: string; subType?: string | null }>
+          >;
+          synergies?: Array<{
+            id: string;
+            type: string;
+            subType?: string | null;
+          }>;
+        };
+
+        const next: Record<string, LinkedSynergyChip[]> = {};
+        if (body.byItemHash) {
+          for (const [hash, list] of Object.entries(body.byItemHash)) {
+            next[hash] = (list ?? []).map((s) => ({
+              id: s.id,
+              label: formatSynergyTypeDesignation({
+                type: s.type,
+                subType: s.subType,
+              }),
+            }));
+          }
+        } else if (body.synergies && hashes.length === 1) {
+          next[String(hashes[0])] = body.synergies.map((s) => ({
+            id: s.id,
+            label: formatSynergyTypeDesignation({
+              type: s.type,
+              subType: s.subType,
+            }),
+          }));
+        }
+        if (!cancelled) setSynergiesByHash(next);
+      } catch {
+        if (!cancelled) setSynergiesByHash({});
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [category, results]);
 
   const modGroups = useMemo(() => {
     if (category !== "mods" || results.length === 0) return null;
@@ -130,6 +208,11 @@ export function ManifestSearchPicker({
       hideDeprecated: true,
     });
   }, [category, results, targetArmorSlot]);
+
+  const exoticGroups = useMemo(() => {
+    if (category !== "exotic-armor" || results.length === 0) return null;
+    return groupAndSortExoticArmorSearchResults(results);
+  }, [category, results]);
 
   function renderResultButton(item: ManifestPick) {
     const active = multi
@@ -141,6 +224,8 @@ export function ManifestSearchPicker({
       !active &&
       (selectedNames?.length ?? 0) >= maxSelected;
     const slotLabel = modSlotCategoryLabel(item.slotCategory);
+    const chips =
+      synergiesByHash[String(item.hash)] ?? item.linkedSynergies ?? [];
     return (
       <button
         key={`${item.hash}-${item.name}`}
@@ -159,10 +244,11 @@ export function ManifestSearchPicker({
             onSelect?.(item);
             setResults([]);
             setQuery("");
+            setSynergiesByHash({});
           }
         }}
       >
-        <span className="flex items-center gap-2 min-w-0">
+        <span className="flex items-start gap-2 min-w-0">
           <ItemIcon icon={item.icon ?? null} name={item.name} size={32} />
           <span className="min-w-0">
             <span className="font-medium">{item.name}</span>
@@ -190,6 +276,15 @@ export function ManifestSearchPicker({
                 {item.description}
               </span>
             ) : null}
+            {chips.length > 0 ? (
+              <Cluster gap={4} className="mt-1">
+                {chips.map((c) => (
+                  <Chip key={c.id} accent>
+                    {c.label}
+                  </Chip>
+                ))}
+              </Cluster>
+            ) : null}
           </span>
         </span>
       </button>
@@ -201,7 +296,7 @@ export function ManifestSearchPicker({
       <Text size="xs" tone="muted">
         {label}
       </Text>
-      {!multi && selected ? (
+      {singleSelected ? (
         <Row justify="between" align="center" gap={8}>
           <EntityHotspot
             kind={selected.kind ?? category}
@@ -233,60 +328,101 @@ export function ManifestSearchPicker({
           ))}
         </Cluster>
       ) : null}
-      <Row gap={8} align="end" wrap>
-        <TextField
-          label="Search"
-          value={query}
-          disabled={disabled}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void runSearch();
-          }}
-          className="min-w-[200px] flex-1"
-        />
-        <Button size="sm" disabled={disabled || busy} onClick={() => void runSearch()}>
-          {busy ? "…" : emptyBrowse && !query.trim() ? "Browse" : "Search"}
-        </Button>
-      </Row>
-      {error ? (
-        <Text size="xs" tone="danger">
-          {error}
-        </Text>
-      ) : null}
-      {modGroups && modGroups.length > 0 ? (
-        <Stack gap={10} className="max-h-72 overflow-auto">
-          {modGroups.map((group) => (
-            <Stack key={group.key} gap={4}>
-              <Text
-                size="xs"
-                tone="muted"
-                weight="medium"
-                className="uppercase tracking-wide sticky top-0 bg-surface z-[1] py-0.5"
-              >
-                {group.label}
-                <span className="ml-1 font-normal opacity-70">
-                  ({group.items.length})
-                </span>
-              </Text>
-              <Stack gap={4}>
-                {group.items.map((item) =>
-                  renderResultButton({
-                    hash: item.hash,
-                    name: item.name,
-                    description: item.description ?? undefined,
-                    slotCategory: item.slotCategory ?? undefined,
-                    energyCost: item.energyCost,
-                    icon: (item.icon as string | null | undefined) ?? null,
-                  }),
-                )}
-              </Stack>
+      {showSearchChrome ? (
+        <>
+          <Row gap={8} align="end" wrap>
+            <TextField
+              label="Search"
+              value={query}
+              disabled={disabled}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void runSearch();
+              }}
+              className="min-w-[200px] flex-1"
+            />
+            <Button
+              size="sm"
+              disabled={disabled || busy}
+              onClick={() => void runSearch()}
+            >
+              {busy ? "…" : emptyBrowse && !query.trim() ? "Browse" : "Search"}
+            </Button>
+          </Row>
+          {error ? (
+            <Text size="xs" tone="danger">
+              {error}
+            </Text>
+          ) : null}
+          {modGroups && modGroups.length > 0 ? (
+            <Stack gap={10} className="max-h-72 overflow-auto">
+              {modGroups.map((group) => (
+                <Stack key={group.key} gap={4}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    weight="medium"
+                    className="uppercase tracking-wide sticky top-0 bg-surface z-[1] py-0.5"
+                  >
+                    {group.label}
+                    <span className="ml-1 font-normal opacity-70">
+                      ({group.items.length})
+                    </span>
+                  </Text>
+                  <Stack gap={4}>
+                    {group.items.map((item) =>
+                      renderResultButton({
+                        hash: item.hash,
+                        name: item.name,
+                        description: item.description ?? undefined,
+                        slotCategory: item.slotCategory ?? undefined,
+                        energyCost: item.energyCost,
+                        icon: (item.icon as string | null | undefined) ?? null,
+                      }),
+                    )}
+                  </Stack>
+                </Stack>
+              ))}
             </Stack>
-          ))}
-        </Stack>
-      ) : results.length > 0 ? (
-        <Stack gap={4} className="max-h-48 overflow-auto">
-          {results.map((item) => renderResultButton(item))}
-        </Stack>
+          ) : exoticGroups && exoticGroups.length > 0 ? (
+            <Stack gap={10} className="max-h-72 overflow-auto">
+              {exoticGroups.map((group) => (
+                <Stack key={group.key} gap={4}>
+                  <Text
+                    size="xs"
+                    tone="muted"
+                    weight="medium"
+                    className="uppercase tracking-wide sticky top-0 bg-surface z-[1] py-0.5"
+                  >
+                    {group.label}
+                    <span className="ml-1 font-normal opacity-70">
+                      ({group.items.length})
+                    </span>
+                  </Text>
+                  <Stack gap={4}>
+                    {group.items.map((item) =>
+                      renderResultButton({
+                        hash: item.hash,
+                        name: item.name,
+                        description:
+                          typeof item.description === "string"
+                            ? item.description
+                            : undefined,
+                        slot:
+                          typeof item.slot === "string" ? item.slot : undefined,
+                        icon: (item.icon as string | null | undefined) ?? null,
+                      }),
+                    )}
+                  </Stack>
+                </Stack>
+              ))}
+            </Stack>
+          ) : results.length > 0 ? (
+            <Stack gap={4} className="max-h-48 overflow-auto">
+              {results.map((item) => renderResultButton(item))}
+            </Stack>
+          ) : null}
+        </>
       ) : null}
     </Stack>
   );

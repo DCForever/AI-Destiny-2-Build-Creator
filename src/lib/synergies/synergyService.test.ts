@@ -15,6 +15,7 @@ import {
   listUserSynergiesConsolidated,
   mergeUserSynergies,
   reverseLookupSynergies,
+  reverseLookupSynergiesByItemHashes,
   updateUserSynergy,
 } from "@/lib/synergies/synergyService";
 
@@ -233,6 +234,43 @@ describe("synergyService", () => {
     });
     expect(matches).toHaveLength(2);
     expect(matches.map((m) => m.type).sort()).toEqual(["dps", "verb"]);
+  });
+
+  it("batch reverse-lookup maps multiple exotic armor hashes", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "syn-batch-exo", 3, "Player");
+    const a = 111;
+    const b = 222;
+    const now = new Date().toISOString();
+
+    // Bypass manifest validation — exercise reverse index only.
+    createSynergyRecord(db, user.id, {
+      id: crypto.randomUUID(),
+      name: "Verb: Devour",
+      type: "verb",
+      subType: "Devour",
+      description: "",
+      links: [{ kind: "exotic_armor", displayName: "Nezarec's Sin", itemHash: a }],
+      now,
+    });
+    createSynergyRecord(db, user.id, {
+      id: crypto.randomUUID(),
+      name: "Verb: Volatile",
+      type: "verb",
+      subType: "Volatile",
+      description: "",
+      links: [{ kind: "exotic_armor", displayName: "Cenotaph", itemHash: b }],
+      now,
+    });
+
+    const byHash = reverseLookupSynergiesByItemHashes(db, user.id, "exotic_armor", [
+      a,
+      b,
+      999,
+    ]);
+    expect(byHash[String(a)]?.map((s) => s.subType)).toEqual(["Devour"]);
+    expect(byHash[String(b)]?.map((s) => s.subType)).toEqual(["Volatile"]);
+    expect(byHash["999"]).toEqual([]);
   });
 
   it("rejects invalid armor set bonus", async () => {

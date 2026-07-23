@@ -28,6 +28,7 @@ import {
   type SoftStatDraft,
 } from "@/lib/builds/softStatTargets";
 import { ApiError } from "@/lib/api/errors";
+import { resolveSubclassScope } from "@/lib/debug/subclassScope";
 
 function designationsFromBuild(build: BuildDetail): SynergyTypeSelection[] {
   return (build.synergyTypes ?? []).map((t) => ({
@@ -71,6 +72,12 @@ export function BuildEditPanel({
     string,
     unknown
   > | null>(null);
+  const subclassScope = resolveSubclassScope(build.subclass.name);
+  const classType = (build.className === "Hunter" ||
+  build.className === "Warlock" ||
+  build.className === "Titan"
+    ? build.className
+    : subclassScope?.classType) as "Titan" | "Hunter" | "Warlock" | undefined;
 
   async function patchBuild(
     payload: Record<string, unknown>,
@@ -208,7 +215,7 @@ export function BuildEditPanel({
           <ManifestSearchPicker
             label="Search exotic armor"
             category="exotic-armor"
-            classType={build.className as "Titan" | "Hunter" | "Warlock"}
+            classType={classType}
             selected={exoticArmor}
             onSelect={(item) =>
               setExoticArmor(item ? { hash: item.hash, name: item.name } : null)
@@ -221,6 +228,8 @@ export function BuildEditPanel({
             label="Search supers"
             category="abilities"
             kind="super"
+            classType={classType ?? subclassScope?.classType}
+            element={subclassScope?.element}
             subclass={build.subclass.name}
             selected={
               pinnedSuper
