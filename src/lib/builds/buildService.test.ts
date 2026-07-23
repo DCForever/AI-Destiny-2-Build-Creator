@@ -6,6 +6,7 @@ import { createSetRecord } from "@/lib/db/repositories/setRepository";
 import { seedDefaultSynergies } from "@/lib/db/repositories/synergyRepository";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
 import { upsertSetItem } from "@/lib/sets/setItemService";
+import { listAttachments } from "@/lib/db/repositories/variantRepository";
 import {
   createUserBuild,
   listUserBuilds,
@@ -138,6 +139,9 @@ describe("buildService", () => {
         attachments: [{ setId: "set-w", mode: "live" }],
       }),
     ).rejects.toMatchObject({ code: API_ERROR_CODES.DEFAULT_VARIANT_INCOMPLETE });
+
+    // Illegal save must not leave attachments committed (transactional rollback).
+    expect(listAttachments(db, build!.variants[0]!.id)).toHaveLength(0);
 
     const emptySet = crypto.randomUUID();
     createSetRecord(db, user.id, { id: emptySet, name: "Empty Set", type: "mod", tagIds: [], now });

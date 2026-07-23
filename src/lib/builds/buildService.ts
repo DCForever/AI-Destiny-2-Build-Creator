@@ -368,8 +368,14 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
   });
 
   if (defaultVariant.attachments?.length) {
-    await prepareAttachments(db, userId, variantId, defaultVariant.attachments, now);
-    await validateVariantSave(db, userId, buildId, variantId);
+    try {
+      await prepareAttachments(db, userId, variantId, defaultVariant.attachments, now);
+      await validateVariantSave(db, userId, buildId, variantId);
+    } catch (error) {
+      // R2: failed hard validation must not leave illegal default variant / attachments
+      deleteBuildRecord(db, userId, buildId);
+      throw error;
+    }
   }
 
   return getBuildDetail(db, userId, buildId);
@@ -602,6 +608,26 @@ export async function updateUserVariant(
     },
   });
 
+  // Equipment-affecting fields must re-run hard Destiny constraints (CMP-006/007).
+  const equipmentAffecting =
+    input.attachments != null ||
+    input.exoticWeaponHash !== undefined ||
+    input.exoticWeaponName !== undefined;
+
+  const previousAttachments = equipmentAffecting ? listAttachments(db, variantId) : null;
+  const previousVariantSnapshot = equipmentAffecting
+    ? {
+        name: existing.name,
+        exoticWeaponHash: existing.exoticWeaponHash,
+        exoticWeaponName: existing.exoticWeaponName,
+        artifactHash: existing.artifactHash,
+        artifactName: existing.artifactName,
+        artifactConfig: existing.artifactConfig,
+        notes: existing.notes,
+        updatedAt: existing.updatedAt,
+      }
+    : null;
+
   updateVariantRecord(db, buildId, variantId, {
     name: input.name,
     exoticWeaponHash: input.exoticWeaponHash,
@@ -615,14 +641,34 @@ export async function updateUserVariant(
     await prepareAttachments(db, userId, variantId, input.attachments, now);
   }
 
-  // Equipment-affecting fields must re-run hard Destiny constraints (CMP-006/007).
-  const equipmentAffecting =
-    input.attachments != null ||
-    input.exoticWeaponHash !== undefined ||
-    input.exoticWeaponName !== undefined;
-
-  if (equipmentAffecting) {
-    await validateVariantSave(db, userId, buildId, variantId);
+  if (equipmentAffecting && previousAttachments && previousVariantSnapshot) {
+    try {
+      await validateVariantSave(db, userId, buildId, variantId);
+    } catch (error) {
+      // R1: restore prior variant + attachments so illegal state is not committed
+      updateVariantRecord(db, buildId, variantId, {
+        name: previousVariantSnapshot.name,
+        exoticWeaponHash: previousVariantSnapshot.exoticWeaponHash,
+        exoticWeaponName: previousVariantSnapshot.exoticWeaponName,
+        artifactHash: previousVariantSnapshot.artifactHash,
+        artifactName: previousVariantSnapshot.artifactName,
+        artifactConfig: previousVariantSnapshot.artifactConfig,
+        notes: previousVariantSnapshot.notes,
+        now: previousVariantSnapshot.updatedAt,
+      });
+      replaceAttachments(
+        db,
+        variantId,
+        previousAttachments.map((a) => ({
+          id: a.id,
+          setId: a.setId,
+          mode: a.mode,
+          snapshotConfigs: a.snapshotConfigs,
+        })),
+        previousAttachments[0]?.attachedAt ?? previousVariantSnapshot.updatedAt,
+      );
+      throw error;
+    }
   }
 
   return getBuildDetail(db, userId, buildId);
