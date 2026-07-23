@@ -4,9 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BuildSlotFillHost } from "@/components/build/BuildSlotFillHost";
 import { CaptureSetsFromBuild } from "@/components/build/CaptureSetsFromBuild";
-import { CreateSetAttachForm } from "@/components/build/CreateSetAttachForm";
 import type { BuildDetail, BuildVariantDetail } from "@/components/build/types";
-import { SetAttachPicker } from "@/components/lookups/SetAttachPicker";
 import {
   Button,
   Callout,
@@ -23,8 +21,12 @@ import {
   type FinishGapsResult,
 } from "@/lib/builds/finishGaps";
 import { evaluateFinishGapsFromVariant } from "@/lib/builds/finishGapsFromDetail";
-
-type Step = "overview" | "category" | "fill" | "done";
+import {
+  finishCategoryToSetType,
+  resolvePostMutationStep,
+  showFinishCreateActions,
+  type FinishWalkthroughStep,
+} from "@/lib/builds/finishNextSlot";
 
 export function FinishBuildWalkthrough({
   build,
@@ -42,7 +44,7 @@ export function FinishBuildWalkthrough({
   const [equipment, setEquipment] = useState<
     Partial<Record<string, { slot?: string; itemHash?: number; itemName?: string }>>
   >({});
-  const [step, setStep] = useState<Step>("overview");
+  const [step, setStep] = useState<FinishWalkthroughStep>("overview");
   const [activeCategory, setActiveCategory] = useState<FinishCategory | null>(
     null,
   );
@@ -75,8 +77,6 @@ export function FinishBuildWalkthrough({
     const hasModCoverage = variant.attachments.some(
       (a) => a.set?.type === "mod" || (a.mode === "snapshot" && false),
     );
-    // armor-embedded mods: treat any attachment snapshot/live with mods later;
-    // for now mod set attachment or skip.
     return evaluateFinishGapsFromVariant({
       variantId: variant.id,
       isDefaultVariant: Boolean(variant.isDefault),
@@ -108,9 +108,17 @@ export function FinishBuildWalkthrough({
 
   function openCategory(cat: FinishCategory) {
     setActiveCategory(cat);
+    setMessage(null);
+    const gap = gapsResult.gaps.find((g) => g.category === cat);
+    const target = resolvePostMutationStep({ gap });
+    // 031 may later intercept armor post-create; until then armor uses the same fill path.
+    if (target.step === "fill" && target.fillSlot) {
+      setFillSlot(target.fillSlot);
+      setStep("fill");
+      return;
+    }
     setFillSlot(null);
     setStep("category");
-    setMessage(null);
   }
 
   function skipCategory(cat: FinishCategory) {
@@ -120,48 +128,89 @@ export function FinishBuildWalkthrough({
     setMessage(`${finishCategoryLabel(cat)} skipped for now`);
     setStep("overview");
     setActiveCategory(null);
+    setFillSlot(null);
   }
 
-  async function attachExisting(setId: string, type: string) {
+  async function oneTapCreate(cat: FinishCategory) {
     setBusy(true);
     setMessage(null);
     try {
-      // Replace-by-type via create-set-attach is empty-only; for link use variant PATCH
-      // after detach same type: send full attachment list with new set live.
-      const others = variant.attachments.filter((a) => a.set?.type !== type);
-      const attachments = [
-        ...others.map((a) => ({
-          setId: a.setId,
-          mode: a.mode as "live" | "snapshot",
-          snapshotConfigs: a.snapshotConfigs ?? undefined,
-        })),
-        { setId, mode: "live" as const },
-      ];
-      const res = await fetch(
-        `/api/user/builds/${build.id}/variants/${variant.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ attachments }),
-        },
-      );
-      const body = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        setMessage(body.error ?? "Failed to attach set");
+      const res = await fetch(`/api/user/builds/${build.id}/create-set-attach`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          variantId: variant.id,
+          type: finishCategoryToSetType(cat),
+          attachNow: true,
+        }),
+      });
+      const body = (await res.json()) as {
+        error?: string;
+        set?: { id: string; name: string; type: string };
+      };
+      if (!res.ok || !body.set) {
+        setMessage(
+          body.error ??
+            (res.status === 401
+              ? "Sign in to create a Set."
+              : "Failed to create set"),
+        );
         return;
       }
-      setMessage("Set linked");
+      setMessage(`Created ${body.set.name}`);
       await refresh();
+      // Parent will pass updated variant on next render; use equipment after loadResolved.
+      // Defer step decision to effect on gapsResult when activeCategory set.
+      setActiveCategory(cat);
+      setPendingAdvance(cat);
     } catch {
-      setMessage("Failed to attach set");
+      setMessage("Failed to create set");
     } finally {
       setBusy(false);
     }
   }
 
+  const [pendingAdvance, setPendingAdvance] = useState<FinishCategory | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!pendingAdvance) return;
+    const gap = gapsResult.gaps.find((g) => g.category === pendingAdvance);
+    if (!gap) return;
+    // Wait until covering set appears or status left needs_set
+    if (gap.status === "needs_set") return;
+    const target = resolvePostMutationStep({ gap });
+    setFillSlot(target.fillSlot);
+    setStep(target.step === "overview" && gapsResult.complete ? "done" : target.step);
+    if (target.step === "overview") {
+      setActiveCategory(null);
+    } else {
+      setActiveCategory(target.category ?? pendingAdvance);
+    }
+    setPendingAdvance(null);
+  }, [pendingAdvance, gapsResult]);
+
   useEffect(() => {
     if (gapsResult.complete) setStep("done");
   }, [gapsResult.complete]);
+
+  async function afterFill(slot: string) {
+    setMessage(`Filled ${slot}`);
+    await refresh();
+    if (activeCategory) setPendingAdvance(activeCategory);
+  }
+
+  async function afterCapture(cat: FinishCategory, createdNames: string[]) {
+    setMessage(
+      createdNames.length
+        ? `Captured ${createdNames.join(", ")}`
+        : "Capture finished",
+    );
+    await refresh();
+    setActiveCategory(cat);
+    setPendingAdvance(cat);
+  }
 
   return (
     <Panel tone="accent" className="w-full">
@@ -172,8 +221,8 @@ export function FinishBuildWalkthrough({
               Finish build · {variant.name}
             </Text>
             <Text size="xs" tone="muted">
-              Armor → Weapons → Mods. Create, link, or capture Sets, then fill
-              empty slots. Skip for now leaves gaps unfinished.
+              Armor → Weapons → Mods. Create or capture a Set, then fill empty
+              slots. Skip for now leaves gaps unfinished.
             </Text>
           </Stack>
           <Button size="sm" variant="ghost" onClick={onClose} disabled={busy}>
@@ -268,59 +317,45 @@ export function FinishBuildWalkthrough({
             </Text>
 
             {activeGap.canCapture ? (
-              <CaptureSetsFromBuild
-                buildId={build.id}
-                variantId={variant.id}
-                categories={[activeGap.category === "weapon" ? "weapon" : activeGap.category === "mod" ? "mod" : "armor"]}
-                onDone={async () => {
-                  setMessage("Captured gear into Set(s)");
-                  await refresh();
-                }}
-              />
-            ) : null}
-
-            {activeGap.status === "needs_set" ||
-            activeGap.status === "capture_available" ? (
-              <>
-                <CreateSetAttachForm
+              <Stack gap={4}>
+                <Text size="xs" weight="medium">
+                  Preferred · capture current gear
+                </Text>
+                <CaptureSetsFromBuild
                   buildId={build.id}
                   variantId={variant.id}
-                  defaultType={
-                    activeGap.category === "weapon"
-                      ? "weapon"
-                      : activeGap.category === "mod"
-                        ? "mod"
-                        : "armor"
-                  }
-                  allowPair={false}
-                  busy={busy}
-                  onCreated={async (r) => {
-                    setMessage(`Created ${r.set.name}`);
-                    await refresh();
+                  categories={[finishCategoryToSetType(activeGap.category)]}
+                  onDone={async (r) => {
+                    await afterCapture(
+                      activeGap.category,
+                      r.createdSets.map((s) => s.name),
+                    );
                   }}
                 />
-                <Stack gap={4}>
-                  <Text size="xs" tone="muted">
-                    Or link an existing Set
-                  </Text>
-                  <SetAttachPicker
-                    disabled={busy}
-                    excludeIds={variant.attachments.map((a) => a.setId)}
-                    onAttach={(att, selected) => {
-                      void attachExisting(
-                        att.setId,
-                        selected?.type === "weapon"
-                          ? "weapon"
-                          : selected?.type === "mod"
-                            ? "mod"
-                            : selected?.type === "pair"
-                              ? "pair"
-                              : "armor",
-                      );
-                    }}
-                  />
-                </Stack>
-              </>
+              </Stack>
+            ) : null}
+
+            {showFinishCreateActions(activeGap.status) ? (
+              <Stack gap={6}>
+                <Text size="xs" tone="muted">
+                  Creates{" "}
+                  <strong className="text-foreground font-medium">
+                    {build.name}{" "}
+                    {finishCategoryLabel(activeGap.category)}
+                  </strong>{" "}
+                  · live-attach · no tags
+                </Text>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => void oneTapCreate(activeGap.category)}
+                >
+                  {busy
+                    ? "Creating…"
+                    : `Create ${finishCategoryLabel(activeGap.category)} set & fill`}
+                </Button>
+              </Stack>
             ) : null}
 
             {activeGap.status === "needs_fill" &&
@@ -328,29 +363,29 @@ export function FinishBuildWalkthrough({
             activeGap.coveringMode === "live" ? (
               <Stack gap={6}>
                 <Text size="xs" tone="muted">
-                  Empty slots
+                  Empty slots — continuing slot-first
                 </Text>
-                {activeGap.emptySlots.map((slot) => (
-                  <Button
-                    key={slot}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setFillSlot(slot);
-                      setStep("fill");
-                    }}
-                  >
-                    Fill {slot}
-                  </Button>
-                ))}
+                <Button
+                  size="sm"
+                  variant="accent"
+                  disabled={busy || activeGap.emptySlots.length === 0}
+                  onClick={() => {
+                    const slot = activeGap.emptySlots[0];
+                    if (!slot) return;
+                    setFillSlot(slot);
+                    setStep("fill");
+                  }}
+                >
+                  Fill {activeGap.emptySlots[0] ?? "slot"}
+                </Button>
               </Stack>
             ) : null}
 
             {activeGap.status === "needs_fill" &&
             activeGap.coveringMode === "snapshot" ? (
               <Callout tone="warning">
-                Covering Set is snapshot-only. Create or link a live Set to fill
-                from Builds.
+                Covering Set is snapshot-only. Create a live Set from Finish or
+                link a live Set on the variant Sets tab to fill from Builds.
               </Callout>
             ) : null}
 
@@ -368,6 +403,7 @@ export function FinishBuildWalkthrough({
                 onClick={() => {
                   setStep("overview");
                   setActiveCategory(null);
+                  setFillSlot(null);
                 }}
               >
                 Back
@@ -389,8 +425,7 @@ export function FinishBuildWalkthrough({
               setStep("category");
             }}
             onFilled={() => {
-              setMessage(`Filled ${fillSlot}`);
-              void refresh();
+              void afterFill(fillSlot);
             }}
           />
         ) : null}
@@ -398,5 +433,3 @@ export function FinishBuildWalkthrough({
     </Panel>
   );
 }
-
-// silence unused import if tree-shaken differently

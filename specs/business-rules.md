@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-23 (BR-BLD-007 Finish build walkthrough on Builds; 028 v1 freeze — slot-first/optimizer Finish deferred to 029–031)
+**Updated**: 2026-07-23 (BR-BLD-008 Finish slot-first chrome on 029)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -117,7 +117,8 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-BLD-004 | **Exotic weapon** may be variant-level **or** build-shared (build-shared ⇒ identity). **See** [DBR-ID-006](./domain-business-rules.md). | [FR-023](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-BLD-005 | Shared build-level fields edited on parent build, not per variant. | [001 edge cases](001-build-sets-synergies/spec.md#edge-cases) |
 | BR-BLD-006 | Exactly one default variant per build. | [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-BLD-007 | Production Builds provides a **guided finish walkthrough** (Armor → Weapons → Mods): create empty Set + live attach (replace-by-type), link existing, capture-from-build when resolved gear exists, fill slots from Builds; Skip for now does not satisfy. **v1 shipped in 028.** Slot-first Finish chrome simplification and Armor optimizer Finish path (goals → kits → apply) are **follow-on** product work under 029–031 — not implied complete by this rule. | [028](028-build-inline-sets/spec.md) |
+| BR-BLD-007 | Production Builds provides a **guided finish walkthrough** (Armor → Weapons → Mods): create empty Set + live attach (replace-by-type), link existing, capture-from-build when resolved gear exists, fill slots from Builds; Skip for now does not satisfy. **v1 shipped in 028.** | [028](028-build-inline-sets/spec.md) |
+| BR-BLD-008 | Finish primary path is **slot-first**: one-tap Create (inherited name, category type, no tags) or preferred Capture, then first empty required slot fill loop. Finish does not require link/name/type/tag chrome; variant Sets tab retains advanced create/link. Armor manual fill until optimizer Finish (031). | [029](029-finish-slot-first/spec.md) |
 
 ---
 
