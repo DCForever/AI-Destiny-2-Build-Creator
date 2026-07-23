@@ -1,7 +1,10 @@
 # Quickstart: Build Inline Sets
 
 **Feature**: 028-build-inline-sets  
-**Date**: 2026-07-23
+**Date**: 2026-07-23  
+**Path**: **028 v1 smoke** (guided walkthrough create/link/capture/fill)
+
+**Not in 028 v1**: Armor Find kits / top-3 compare / apply-combination from Finish → **031** after **030** foundation.
 
 ## Prerequisites
 

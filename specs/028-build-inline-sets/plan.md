@@ -97,3 +97,21 @@ src/
 ## Complexity Tracking
 
 > No constitution violations requiring justification.
+
+## Delivery status
+
+**028 implementation complete** on branch `028-build-inline-sets` (tasks T001–T029). This plan describes the shipped v1 walkthrough only.
+
+## Follow-on delivery (not this feature)
+
+Product source: Warp plan `1ee4d5e0-4c18-436d-8c1d-81be268c9ae3` (slot-first Finish + Armor optimizer).
+
+UI mocks: `docs/ui-mocks/finish-build-slot-first.html` (canonical V2+V5 / V6), `docs/ui-mocks/armor-picking-variants.html` (exploration archive).
+
+| Slice | Feature (planned id) | Owns |
+|-------|----------------------|------|
+| A | 029-finish-slot-first (name TBD at specify) | Finish chrome: one-tap create/capture, no link/tags in Finish, weapons/mods slot-first loop, inherit names |
+| B | 030-finish-optimizer-foundation | `classType` on empty-set optimize; synergy→setBonus ranking helper; seed/constraints payload helpers; tests |
+| C | 031-finish-armor-optimize-ui | Armor workspace UI V2+V5 / V6; PATCH constraints; optimize; top-3 compare; apply-combination; wire Finish after Armor create |
+
+Create 029–031 via `/speckit.specify`; do not reopen 028 tasks for this work.

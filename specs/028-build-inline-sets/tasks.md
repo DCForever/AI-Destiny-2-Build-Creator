@@ -5,6 +5,8 @@
 **Tests**: Constitution requires test-first for new behavior (co-located vitest).  
 **Organization**: By user story for independent delivery.
 
+> **All tasks complete (v1).** Do not add optimizer / slot-first Finish tasks here — use follow-on features **029–031**.
+
 ## Format: `[ID] [P?] [Story?] Description`
 
 - **[P]**: Parallelizable (different files, no incomplete deps)

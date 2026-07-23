@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finish · Armor picking — 6 variants</title>
+  <style>
+    :root {
+      --background: #050608;
+      --surface: #0c0e12;
+      --surface-raised: #12151c;
+      --line: #1c212c;
+      --line-strong: #2a3140;
+      --foreground: #e8eaef;
+      --muted: #8a93a6;
+      --accent: #e6b35c;
+      --accent-strong: #f0c878;
+      --accent-dim: #e6b35c24;
+      --success: #6fc28b;
+      --danger: #e2654f;
+      --stasis: #4d88ff;
+      --void: #b184c5;
+      --solar: #f2721b;
+      --arc: #85c5ec;
+      --font-display: "Barlow Condensed", "Segoe UI", system-ui, sans-serif;
+      --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--foreground);
+      background:
+        radial-gradient(900px 420px at 72% -10%, color-mix(in srgb, var(--stasis) 7%, transparent), transparent 58%),
+        var(--background);
+      padding: 28px 22px 64px;
+      line-height: 1.35;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin: 0 0 6px;
+    }
+    .lede {
+      color: var(--muted);
+      font-size: .88rem;
+      max-width: 88ch;
+      margin: 0 0 10px;
+    }
+    .toc {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin: 0 0 22px;
+    }
+    .toc a {
+      font-family: var(--font-display);
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 5px 10px;
+      background: var(--surface);
+    }
+    .toc a:hover { color: var(--accent-strong); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+    .variant {
+      margin: 0 0 28px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+    .variant > header {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--accent) 4%, var(--surface-raised));
+    }
+    .variant > header h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: .95rem;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .meta { color: var(--muted); font-size: .78rem; max-width: 70ch; margin: 4px 0 0; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-family: var(--font-display);
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .tag.axis { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-dim); }
+    .tag.rec { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); background: color-mix(in srgb, var(--success) 10%, transparent); }
+    .stage { padding: 14px; }
+    .steps {
+      display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;
+    }
+    .step {
+      font-family: var(--font-display);
+      font-size: .68rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .step.current {
+      color: var(--accent-strong);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      background: var(--accent-dim);
+    }
+    .step.done {
+      color: var(--success);
+      border-color: color-mix(in srgb, var(--success) 40%, transparent);
+    }
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface-raised);
+      color: var(--foreground);
+      font-family: var(--font-body);
+      font-size: .78rem;
+      padding: 7px 12px;
+      cursor: default;
+    }
+    .btn.accent {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
+      color: var(--accent-strong);
+      font-weight: 600;
+    }
+    .btn.ghost { background: transparent; color: var(--muted); }
+    .btn.block { width: 100%; text-align: left; }
+    .btn.sm { font-size: .72rem; padding: 4px 8px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .field {
+      border: 1px solid var(--line);
+      background: var(--surface-raised);
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .field label, .k {
+      display: block;
+      font-family: var(--font-display);
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .val { font-size: .84rem; }
+    .muted { color: var(--muted); font-size: .76rem; margin: 0 0 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .chip {
+      font-size: .7rem;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: transparent;
+    }
+    .chip.on {
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: var(--accent-dim);
+    }
+    .chip.syn {
+      color: var(--void);
+      border-color: color-mix(in srgb, var(--void) 45%, transparent);
+      background: color-mix(in srgb, var(--void) 12%, transparent);
+    }
+    .chip.syn.on {
+      color: var(--accent-strong);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      background: var(--accent-dim);
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 6px 8px;
+    }
+    .stat .v {
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      margin-top: 2px;
+    }
+    .kit {
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
+      padding: 10px;
+      margin: 8px 0 0;
+    }
+    .kit.sel {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: var(--accent-dim);
+    }
+    .kit h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: .8rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .pieces { display: grid; gap: 3px; font-size: .76rem; margin: 6px 0; }
+    .pieces span { color: var(--muted); }
+    .mono {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    .callout {
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      padding: 8px 10px;
+      font-size: .78rem;
+      margin: 0 0 10px;
+    }
+    .section-label {
+      font-family: var(--font-display);
+      font-size: .65rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--accent) 55%, var(--muted));
+      margin: 12px 0 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* V2 split */
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 0;
+      border: 1px solid var(--line);
+      min-height: 380px;
+    }
+    .split > * { min-width: 0; }
+    .split-pane { padding: 12px; background: var(--surface); }
+    .split-pane + .split-pane { border-left: 1px solid var(--line); background: color-mix(in srgb, var(--surface-raised) 70%, var(--surface)); }
+    .split-pane h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* V3 wizard strip */
+    .wiz-nav {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      border: 1px solid var(--line);
+      margin-bottom: 12px;
+    }
+    .wiz-nav button {
+      appearance: none;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: var(--surface-raised);
+      color: var(--muted);
+      font-family: var(--font-display);
+      font-size: .68rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 10px 8px;
+      text-align: left;
+    }
+    .wiz-nav button:last-child { border-right: 0; }
+    .wiz-nav button.current {
+      color: var(--accent-strong);
+      background: var(--accent-dim);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .wiz-nav button.done { color: var(--success); }
+    .wiz-nav .n {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      color: color-mix(in srgb, var(--muted) 80%, transparent);
+      margin-bottom: 2px;
+    }
+
+    /* V4 flap rows */
+    .flap {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1fr) 72px 56px;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+      font-size: .78rem;
+      align-items: center;
+      min-height: 36px;
+    }
+    .flap.head {
+      font-family: var(--font-display);
+      font-size: .6rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface-raised);
+      min-height: 28px;
+    }
+    .flap > * { padding: 6px 8px; border-right: 1px solid var(--line); min-width: 0; }
+    .flap > *:last-child { border-right: 0; }
+    .flap.sel { background: var(--accent-dim); }
+    .flap .rank { font-family: var(--font-mono); color: var(--muted); text-align: center; }
+    .flap .score { font-family: var(--font-mono); color: var(--accent-strong); }
+    .board { border: 1px solid var(--line); background: var(--surface); }
+
+    /* V5 compare */
+    .compare {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      border: 1px solid var(--line);
+    }
+    .compare .col {
+      padding: 10px;
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .compare .col:last-child { border-right: 0; }
+    .compare .col.sel { background: var(--accent-dim); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+    .bar-row { display: grid; grid-template-columns: 52px 1fr 36px; gap: 6px; align-items: center; margin: 3px 0; font-size: .68rem; }
+    .bar-row .nm { color: var(--muted); font-family: var(--font-display); letter-spacing: .06em; text-transform: uppercase; }
+    .bar-row .n { font-family: var(--font-mono); text-align: right; }
+    .bar {
+      height: 6px;
+      background: var(--line);
+      position: relative;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      background: color-mix(in srgb, var(--accent) 70%, var(--line-strong));
+    }
+    .bar > i.hit { background: var(--success); }
+
+    /* V6 compact sticky */
+    .compact-shell {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      max-width: 480px;
+    }
+    .compact-body { padding: 12px; max-height: 420px; overflow: auto; }
+    .sticky-cta {
+      position: sticky;
+      bottom: 0;
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+      backdrop-filter: blur(6px);
+    }
+    .rail {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      padding: 6px 0 2px;
+    }
+    .pc {
+      width: 36px; height: 36px;
+      border: 1px solid var(--line);
+      background: var(--surface-raised);
+      font-size: .55rem;
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      line-height: 1.1;
+      font-family: var(--font-display);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .pc.fill {
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+      color: var(--accent-strong);
+      background: var(--accent-dim);
+    }
+
+    .pros {
+      margin: 10px 0 0;
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-raised) 50%, transparent);
+      font-size: .76rem;
+      color: var(--muted);
+    }
+    .pros strong { color: var(--foreground); }
+    .pros ul { margin: 6px 0 0 16px; padding: 0; }
+    .footnote {
+      margin-top: 8px;
+      max-width: 96ch;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+    .footnote code { color: var(--foreground); }
+    @media (max-width: 900px) {
+      .split { grid-template-columns: 1fr; }
+      .split-pane + .split-pane { border-left: 0; border-top: 1px solid var(--line); }
+      .compare { grid-template-columns: 1fr; }
+      .compare .col { border-right: 0; border-bottom: 1px solid var(--line); }
+      .wiz-nav { grid-template-columns: 1fr 1fr; }
+      .flap { grid-template-columns: 28px minmax(0, 1fr) 56px; }
+      .flap .hide-sm { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Armor picking flow · six variants</h1>
+  <p class="lede">
+    Interaction alternatives for Finish → Create Armor → <strong>set goals → find kits → apply</strong>.
+    Shared product rules: inherit from build, synergy-linked set bonuses first, seed exotic + soft stats,
+    apply-combination in place. Visual system: Matte Flap Ledger (square, amber readiness only).
+    <strong style="color:var(--success)">Selection locked:</strong> <strong>V2 + V5</strong> desktop/wide,
+    <strong>V6</strong> phone/narrow — see canonical <code>finish-build-slot-first.html</code>.
+  </p>
+  <nav class="toc" aria-label="Variants">
+    <a href="#v1">V1 Stacked</a>
+    <a href="#v2">V2 Split workspace</a>
+    <a href="#v3">V3 Micro-wizard</a>
+    <a href="#v4">V4 Flap board</a>
+    <a href="#v5">V5 Kit compare</a>
+    <a href="#v6">V6 Compact rail</a>
+  </nav>
+
+  <!-- ========== V1 ========== -->
+  <article class="variant" id="v1">
+    <header>
+      <div>
+        <h2>V1 · Stacked form → list</h2>
+        <p class="meta">Baseline from current plan mock. Single column: lock exotic, pick bonuses, set stats, run, pick kit.</p>
+      </div>
+      <div class="tags">
+        <span class="tag axis">Axis: hierarchy</span>
+        <span class="tag">Density: comfortable</span>
+        <span class="tag">Closest to plan</span>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="steps">
+        <span class="step current">Armor · goals</span>
+        <span class="step">Weapons</span>
+        <span class="step">Mods</span>
+      </div>
+      <div class="field">
+        <label>Locked exotic (from build)</label>
+        <div class="val">Osmiomancy Gloves · Warlock</div>
+      </div>
+      <div class="field">
+        <label>Set bonus goals</label>
+        <p class="muted" style="margin:0 0 4px">Selected</p>
+        <div class="chips">
+          <span class="chip on">Two-Piece · 2pc ✕</span>
+          <span class="chip on">Terminal Lucerne · 2pc ✕</span>
+        </div>
+        <p class="section-label" style="border:0;padding:0;margin:10px 0 4px">Linked to your synergies</p>
+        <div class="chips">
+          <span class="chip syn on">Two-Piece · via Melee</span>
+          <span class="chip syn on">Terminal Lucerne · via Grenade</span>
+          <span class="chip syn">Swarmers-adjacent · via Super</span>
+        </div>
+        <p class="section-label" style="border:0;padding:0;margin:10px 0 4px">All set bonuses</p>
+        <div class="field" style="margin:0 0 6px"><label>Search</label><div class="val" style="color:var(--muted)">Filter name…</div></div>
+        <div class="chips">
+          <span class="chip">Hunter's Instinct</span>
+          <span class="chip">Pyrogale line</span>
+          <span class="chip">…</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Stat targets (EoF six)</label>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">Melee</div><div class="v">100</div></div>
+          <div class="stat"><div class="k">Grenade</div><div class="v">70</div></div>
+          <div class="stat"><div class="k">Super</div><div class="v">—</div></div>
+          <div class="stat"><div class="k">Class</div><div class="v">—</div></div>
+          <div class="stat"><div class="k">Health</div><div class="v">—</div></div>
+          <div class="stat"><div class="k">Weapons</div><div class="v">—</div></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip on">Mod estimates on</span>
+        <span class="chip">Prefer reuse off</span>
+      </div>
+      <button class="btn accent block" type="button">Find armor kits</button>
+      <p class="muted" style="margin-top:12px">After run → stacked kit cards (shown in V5/V4). Manual fill remains ghost link.</p>
+    </div>
+    <div class="pros">
+      <strong>Tradeoff</strong>
+      <ul>
+        <li>Pros: simplest mental model; matches existing plan mock; easy to implement.</li>
+        <li>Cons: long scroll; goals and results never co-visible; weak for iterate-edit-rerun loops.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== V2 ========== -->
+  <article class="variant" id="v2">
+    <header>
+      <div>
+        <h2>V2 · Split workspace (goals | kits)</h2>
+        <p class="meta">Left pane owns constraints; right pane owns ranked kits. Primary CTA stays left; selection + Apply live right. Best for goal↔result iteration.</p>
+      </div>
+      <div class="tags">
+        <span class="tag axis">Axis: layout topology</span>
+        <span class="tag">Density: medium</span>
+        <span class="tag rec">SELECTED · desktop goals pane</span>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="steps">
+        <span class="step current">Armor · optimize</span>
+        <span class="step">Weapons</span>
+        <span class="step">Mods</span>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <h3>Goals · Melee Lock Armor</h3>
+          <div class="field" style="margin-bottom:8px">
+            <label>Exotic</label>
+            <div class="val">Osmiomancy Gloves</div>
+          </div>
+          <p class="section-label" style="margin-top:0">Synergy bonuses</p>
+          <div class="chips">
+            <span class="chip syn on">Two-Piece 2pc</span>
+            <span class="chip syn on">Terminal Lucerne 2pc</span>
+            <span class="chip syn">+ add linked</span>
+          </div>
+          <p class="section-label">Stats</p>
+          <div class="stat-grid">
+            <div class="stat"><div class="k">Melee</div><div class="v">100</div></div>
+            <div class="stat"><div class="k">Grenade</div><div class="v">70</div></div>
+            <div class="stat"><div class="k">Super</div><div class="v">—</div></div>
+          </div>
+          <div class="chips">
+            <span class="chip on">Mods on</span>
+            <span class="chip">Reuse off</span>
+          </div>
+          <button class="btn accent block" type="button">Find / refresh kits</button>
+          <div class="row" style="margin-top:8px">
+            <button class="btn ghost sm" type="button">Fill manually</button>
+          </div>
+        </div>
+        <div class="split-pane">
+          <h3>Proposed kits · 12</h3>
+          <div class="kit sel">
+            <h3>#1 · 842 · reuse 1</h3>
+            <div class="chips">
+              <span class="chip on">Two-Piece 2</span>
+              <span class="chip on">T. Lucerne 2</span>
+              <span class="chip on">Osmiomancy</span>
+            </div>
+            <div class="mono">M 112 · G 74 · S 48 · C 41 · H 36 · W 30</div>
+            <div class="pieces">
+              <div>Helm <span>Legacy's Oath</span></div>
+              <div>Arms <span>Osmiomancy</span></div>
+              <div>Chest <span>Two-Piece</span></div>
+              <div>Legs <span>Terminal Lucerne</span></div>
+              <div>Class <span>Bond</span></div>
+            </div>
+            <button class="btn accent" type="button">Apply this kit</button>
+          </div>
+          <div class="kit">
+            <h3>#2 · 819 · reuse 2</h3>
+            <div class="mono">M 108 · G 71 · …</div>
+            <button class="btn sm" type="button">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros">
+      <strong>Tradeoff</strong>
+      <ul>
+        <li>Pros: edit goals without losing kit context; natural re-run loop; desktop-first Finish panel.</li>
+        <li>Cons: needs width; mobile collapses to stack (same as V1); more chrome than a guided one-shot.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== V3 ========== -->
+  <article class="variant" id="v3">
+    <header>
+      <div>
+        <h2>V3 · Micro-wizard (4 beats)</h2>
+        <p class="meta">Hard step gate: Bonuses → Stats → Confirm → Results. One decision surface at a time; progress strip always visible.</p>
+      </div>
+      <div class="tags">
+        <span class="tag axis">Axis: structural decomposition</span>
+        <span class="tag">Density: focused</span>
+        <span class="tag">Best for first-time Finish</span>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="wiz-nav" role="tablist" aria-label="Armor optimize steps">
+        <button type="button" class="done"><span class="n">01</span>Bonuses</button>
+        <button type="button" class="current"><span class="n">02</span>Stats</button>
+        <button type="button"><span class="n">03</span>Confirm</button>
+        <button type="button"><span class="n">04</span>Pick kit</button>
+      </div>
+      <div class="callout">Step 2 of 4 · Soft targets from build softStatTargets. Leave blank stats unconstrained.</div>
+      <div class="field">
+        <label>Locked exotic</label>
+        <div class="val">Osmiomancy Gloves · carried from step 1</div>
+      </div>
+      <div class="field">
+        <label>Stat targets · tap to edit</label>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">Melee ★</div><div class="v">100</div></div>
+          <div class="stat"><div class="k">Grenade</div><div class="v">70</div></div>
+          <div class="stat"><div class="k">Super</div><div class="v">—</div></div>
+          <div class="stat"><div class="k">Class</div><div class="v">—</div></div>
+          <div class="stat"><div class="k">Health</div><div class="v">—</div></div>
+          <div class="stat"><div class="k">Weapons</div><div class="v">—</div></div>
+        </div>
+        <p class="muted" style="margin:6px 0 0">★ = higher priority weight in score when thresholds tie.</p>
+      </div>
+      <div class="row">
+        <button class="btn ghost" type="button">← Bonuses</button>
+        <button class="btn accent" type="button">Next · Confirm →</button>
+      </div>
+      <p class="muted" style="margin-top:12px">
+        <strong style="color:var(--foreground)">Step 1 (done)</strong> already showed synergy-first bonus picker only.
+        <strong style="color:var(--foreground)">Step 3</strong> is a one-screen summary + Find kits.
+        <strong style="color:var(--foreground)">Step 4</strong> is kit list/compare.
+      </p>
+    </div>
+    <div class="pros">
+      <strong>Tradeoff</strong>
+      <ul>
+        <li>Pros: lowest cognitive load; forces bonus-before-stats order; great onboarding.</li>
+        <li>Cons: more clicks for experts; re-edit means walking back steps; slower iterate-rerun.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== V4 ========== -->
+  <article class="variant" id="v4">
+    <header>
+      <div>
+        <h2>V4 · Flap board (library-native)</h2>
+        <p class="meta">Goals as compact chip rail + toggles; kits as zero-gap flap rows (rank · bonuses · six-stat mono · score · apply). Most aligned with Sets/Synergy libraries.</p>
+      </div>
+      <div class="tags">
+        <span class="tag axis">Axis: density + identity</span>
+        <span class="tag">Density: dense</span>
+        <span class="tag rec">On-brand default candidate</span>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="steps">
+        <span class="step current">Armor · pick kit</span>
+        <span class="step">Weapons</span>
+        <span class="step">Mods</span>
+      </div>
+      <div class="field">
+        <label>Constraints · Melee Lock Armor</label>
+        <div class="row" style="margin-bottom:6px">
+          <span class="chip on">Osmiomancy</span>
+          <span class="chip syn on">Two-Piece 2</span>
+          <span class="chip syn on">T. Lucerne 2</span>
+          <span class="chip">M100</span>
+          <span class="chip">G70</span>
+          <span class="chip on">Mods</span>
+          <button class="btn sm ghost" type="button">Edit goals</button>
+          <button class="btn sm accent" type="button">Refresh</button>
+        </div>
+        <p class="muted" style="margin:0">Synergy section collapsed into chips; full editor is a drawer/overlay on Edit goals.</p>
+      </div>
+      <div class="board">
+        <div class="flap head">
+          <div>#</div>
+          <div>Set bonuses · pieces</div>
+          <div class="hide-sm">Stats M·G·S·C·H·W</div>
+          <div>Score</div>
+          <div></div>
+        </div>
+        <div class="flap sel">
+          <div class="rank">1</div>
+          <div>
+            <div>Two-Piece 2 · Lucerne 2 · Osmiomancy</div>
+            <div class="mono">Helm Legacy · Arms Osmi · Chest Two-P · Legs Luc · Class Bond</div>
+          </div>
+          <div class="mono hide-sm">112 74 48 41 36 30</div>
+          <div class="score">842</div>
+          <div><button class="btn sm accent" type="button">Apply</button></div>
+        </div>
+        <div class="flap">
+          <div class="rank">2</div>
+          <div>
+            <div>Two-Piece 2 · Lucerne 2 · Osmiomancy</div>
+            <div class="mono">… five pieces · reuse 2</div>
+          </div>
+          <div class="mono hide-sm">108 71 52 40 34 33</div>
+          <div class="score">819</div>
+          <div><button class="btn sm" type="button">Apply</button></div>
+        </div>
+        <div class="flap">
+          <div class="rank">3</div>
+          <div>
+            <div>Two-Piece 4 · Osmiomancy</div>
+            <div class="mono">… five pieces · reuse 0</div>
+          </div>
+          <div class="mono hide-sm">120 60 44 38 40 28</div>
+          <div class="score">801</div>
+          <div><button class="btn sm" type="button">Apply</button></div>
+        </div>
+        <div class="flap">
+          <div class="rank">4</div>
+          <div>
+            <div>Lucerne 4 · Osmiomancy</div>
+            <div class="mono">… five pieces</div>
+          </div>
+          <div class="mono hide-sm">95 88 50 42 35 31</div>
+          <div class="score">788</div>
+          <div><button class="btn sm" type="button">Apply</button></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost" type="button">Fill slots manually</button>
+      </div>
+    </div>
+    <div class="pros">
+      <strong>Tradeoff</strong>
+      <ul>
+        <li>Pros: scans like the rest of the app; high kit throughput; chip summary keeps goals visible without a second pane.</li>
+        <li>Cons: piece names truncated; first-time users may miss full constraint editor behind “Edit goals”.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== V5 ========== -->
+  <article class="variant" id="v5">
+    <header>
+      <div>
+        <h2>V5 · Kit compare (top 3)</h2>
+        <p class="meta">After Find kits, land on three-up comparison with per-stat bars vs thresholds. Emphasizes pick quality over browsing long lists.</p>
+      </div>
+      <div class="tags">
+        <span class="tag axis">Axis: hierarchy (results-first)</span>
+        <span class="tag">Density: comfortable</span>
+        <span class="tag rec">SELECTED · desktop kits pane</span>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="steps">
+        <span class="step done">Armor · goals</span>
+        <span class="step current">Armor · compare</span>
+        <span class="step">Weapons</span>
+      </div>
+      <div class="callout">Goals met: Melee ≥100 · Grenade ≥70 · Two-Piece 2 · Terminal Lucerne 2 · Osmiomancy. Showing top 3 of 12.</div>
+      <div class="compare">
+        <div class="col sel">
+          <h3 style="margin:0 0 4px;font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase;font-size:.78rem">#1 · 842</h3>
+          <div class="chips">
+            <span class="chip on">2pc×2</span>
+            <span class="chip on">reuse 1</span>
+          </div>
+          <div class="bar-row"><span class="nm">Melee</span><div class="bar"><i class="hit" style="width:93%"></i></div><span class="n">112</span></div>
+          <div class="bar-row"><span class="nm">Gren</span><div class="bar"><i class="hit" style="width:74%"></i></div><span class="n">74</span></div>
+          <div class="bar-row"><span class="nm">Super</span><div class="bar"><i style="width:48%"></i></div><span class="n">48</span></div>
+          <div class="bar-row"><span class="nm">Class</span><div class="bar"><i style="width:41%"></i></div><span class="n">41</span></div>
+          <div class="bar-row"><span class="nm">Hlth</span><div class="bar"><i style="width:36%"></i></div><span class="n">36</span></div>
+          <div class="bar-row"><span class="nm">Wep</span><div class="bar"><i style="width:30%"></i></div><span class="n">30</span></div>
+          <div class="pieces" style="margin-top:8px">
+            <div>H <span>Legacy</span></div>
+            <div>A <span>Osmiomancy</span></div>
+            <div>C <span>Two-Piece</span></div>
+            <div>L <span>Lucerne</span></div>
+            <div>Cl <span>Bond</span></div>
+          </div>
+          <button class="btn accent block" type="button" style="margin-top:8px">Apply #1</button>
+        </div>
+        <div class="col">
+          <h3 style="margin:0 0 4px;font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase;font-size:.78rem">#2 · 819</h3>
+          <div class="chips"><span class="chip">2pc×2</span><span class="chip">reuse 2</span></div>
+          <div class="bar-row"><span class="nm">Melee</span><div class="bar"><i class="hit" style="width:90%"></i></div><span class="n">108</span></div>
+          <div class="bar-row"><span class="nm">Gren</span><div class="bar"><i class="hit" style="width:71%"></i></div><span class="n">71</span></div>
+          <div class="bar-row"><span class="nm">Super</span><div class="bar"><i style="width:52%"></i></div><span class="n">52</span></div>
+          <div class="bar-row"><span class="nm">Class</span><div class="bar"><i style="width:40%"></i></div><span class="n">40</span></div>
+          <div class="bar-row"><span class="nm">Hlth</span><div class="bar"><i style="width:34%"></i></div><span class="n">34</span></div>
+          <div class="bar-row"><span class="nm">Wep</span><div class="bar"><i style="width:33%"></i></div><span class="n">33</span></div>
+          <div class="pieces" style="margin-top:8px"><div>… five pieces …</div></div>
+          <button class="btn block" type="button" style="margin-top:8px">Apply #2</button>
+        </div>
+        <div class="col">
+          <h3 style="margin:0 0 4px;font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase;font-size:.78rem">#3 · 801</h3>
+          <div class="chips"><span class="chip">Two-P 4</span><span class="chip">reuse 0</span></div>
+          <div class="bar-row"><span class="nm">Melee</span><div class="bar"><i class="hit" style="width:100%"></i></div><span class="n">120</span></div>
+          <div class="bar-row"><span class="nm">Gren</span><div class="bar"><i style="width:60%"></i></div><span class="n">60</span></div>
+          <div class="bar-row"><span class="nm">Super</span><div class="bar"><i style="width:44%"></i></div><span class="n">44</span></div>
+          <div class="bar-row"><span class="nm">Class</span><div class="bar"><i style="width:38%"></i></div><span class="n">38</span></div>
+          <div class="bar-row"><span class="nm">Hlth</span><div class="bar"><i style="width:40%"></i></div><span class="n">40</span></div>
+          <div class="bar-row"><span class="nm">Wep</span><div class="bar"><i style="width:28%"></i></div><span class="n">28</span></div>
+          <div class="pieces" style="margin-top:8px"><div>… five pieces …</div></div>
+          <button class="btn block" type="button" style="margin-top:8px">Apply #3</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost" type="button">See all 12 as list</button>
+        <button class="btn ghost" type="button">Edit goals</button>
+      </div>
+    </div>
+    <div class="pros">
+      <strong>Tradeoff</strong>
+      <ul>
+        <li>Pros: forces a clear choice; bars make threshold hits obvious; great “last mile” after optimize.</li>
+        <li>Cons: not a goals editor; needs V1/V2/V4 for constraint entry; top-3 may hide a #7 the user wanted.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== V6 ========== -->
+  <article class="variant" id="v6">
+    <header>
+      <div>
+        <h2>V6 · Compact Finish rail</h2>
+        <p class="meta">Narrow single column sized for Finish side panel / drawer. Goals collapsed; five-slot piece rail on each kit; sticky Find/Apply CTA.</p>
+      </div>
+      <div class="tags">
+        <span class="tag axis">Axis: density + platform</span>
+        <span class="tag">Density: packed</span>
+        <span class="tag rec">SELECTED · phone / narrow</span>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="compact-shell">
+        <div class="compact-body">
+          <div class="steps">
+            <span class="step current">Armor</span>
+            <span class="step">Weapons</span>
+            <span class="step">Mods</span>
+          </div>
+          <p class="muted" style="margin-top:0">Melee Lock Armor · Osmiomancy locked</p>
+          <p class="section-label" style="margin-top:0">Goals</p>
+          <div class="chips">
+            <span class="chip syn on">Two-Piece 2</span>
+            <span class="chip syn on">Lucerne 2</span>
+            <span class="chip on">M100</span>
+            <span class="chip on">G70</span>
+            <span class="chip">+ edit</span>
+          </div>
+          <p class="section-label">Kits · 12</p>
+          <div class="kit sel" style="margin-top:0">
+            <h3>#1 · 842</h3>
+            <div class="rail">
+              <div class="pc fill">Helm</div>
+              <div class="pc fill">Arms<br/>Ex</div>
+              <div class="pc fill">Chest</div>
+              <div class="pc fill">Legs</div>
+              <div class="pc fill">Class</div>
+            </div>
+            <div class="mono">M112 G74 · Two-P+Luc</div>
+          </div>
+          <div class="kit">
+            <h3>#2 · 819</h3>
+            <div class="rail">
+              <div class="pc fill">H</div>
+              <div class="pc fill">A</div>
+              <div class="pc fill">C</div>
+              <div class="pc fill">L</div>
+              <div class="pc fill">Cl</div>
+            </div>
+            <div class="mono">M108 G71</div>
+          </div>
+          <div class="kit">
+            <h3>#3 · 801</h3>
+            <div class="rail">
+              <div class="pc fill">H</div>
+              <div class="pc fill">A</div>
+              <div class="pc fill">C</div>
+              <div class="pc fill">L</div>
+              <div class="pc fill">Cl</div>
+            </div>
+            <div class="mono">Two-Piece 4</div>
+          </div>
+        </div>
+        <div class="sticky-cta">
+          <button class="btn accent block" type="button">Apply kit #1 to set</button>
+          <div class="row" style="margin-top:6px">
+            <button class="btn ghost sm" type="button">Refresh kits</button>
+            <button class="btn ghost sm" type="button">Manual fill</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros">
+      <strong>Tradeoff</strong>
+      <ul>
+        <li>Pros: fits Finish walkthrough chrome; sticky Apply reduces miss-clicks; piece rail is glanceable.</li>
+        <li>Cons: deep bonus search is secondary; less room for six-stat detail without expand.</li>
+      </ul>
+    </div>
+  </article>
+
+  <p class="footnote">
+    <strong style="color:var(--success)">Locked selection</strong> —
+    Desktop/wide: <strong style="color:var(--foreground)">V2 + V5</strong> (split goals | top-3 compare, See all escape).
+    Phone/narrow: <strong style="color:var(--foreground)">V6</strong> (chip goals, piece rails, sticky Apply — not a squeezed split).
+    Canonical mock: <code>docs/ui-mocks/finish-build-slot-first.html</code>.
+  </p>
+  <p class="footnote">File: <code>docs/ui-mocks/armor-picking-variants.html</code> · parent flow mock: <code>docs/ui-mocks/finish-build-slot-first.html</code></p>
+</body>
+</html>

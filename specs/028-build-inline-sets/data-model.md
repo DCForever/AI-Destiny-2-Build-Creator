@@ -98,3 +98,7 @@ Build Variant → Attachments → Sets → SetItems
 ## Non-goals
 
 No walkthrough persistence table; no change to set item schema; no Fashion finish path.
+
+## Follow-on (030 / 031 — not 028 schema)
+
+Finish armor optimize workspace is **ephemeral client state** plus existing Set `optimizerConstraints` (026). No 028 durable schema change. Ranking helpers and optional optimize `classType` live under 030; UI session shape under 031.

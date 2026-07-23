@@ -4,7 +4,9 @@
 
 **Created**: 2026-07-23
 
-**Status**: Draft
+**Updated**: 2026-07-23
+
+**Status**: Shipped v1 — follow-ons 029–031
 
 **Input**: User description: "I want to make it so I can from the builds page fully create sets so that I can finish the build. I want it to be a seamless experience"
 
@@ -22,11 +24,31 @@
 - Q: Can the user skip or defer a gap and still continue the walkthrough? → A: **Yes — Skip for now** on a category or empty slot (Option B). Skipped items remain on the remaining-gaps list; the build stays incomplete until satisfied. User may exit entirely and resume later.
 - Q: When the variant already has resolved gear but no covering Sets, how should the walkthrough handle that category? → A: **Prefer Capture current gear into a Set** (create-from-build for that category) when resolved gear exists (Option A); also allow create empty Set and link existing Set.
 
+### Session 2026-07-23 (post-v1 direction — not 028 tasks)
+
+- Post-v1 product direction (Warp plan slot-first + Armor optimizer): Armor primary path becomes create → set-bonus/stat goals → run 026 optimizer → top-3 kit compare → apply-combination; weapons/mods stay slot-first after one-tap create; Finish hides link/tags/name/type chrome; UI pairing **V2+V5** wide / **V6** phone. **Implemented under follow-on features 029–031, not by reopening 028 US/FR acceptance.**
+
+## Iterations
+
+### Iteration 2026-07-23: Freeze v1 and hand off to 029–031
+
+**Change**: Mark 028 shipped v1; defer slot-first Finish chrome and Armor optimizer Finish path to three follow-on specs.
+**Scope**: Feature-wide
+**Artifacts updated**: spec.md, plan.md, tasks.md, data-model.md, research.md, quickstart.md, business-rules.md (light)
+**Tasks added**: —
+**Tasks removed**: —
+**Tasks marked complete**: T001–T029 (already complete before iteration)
+
 ## Iteration Scope
 
-**In scope (this iteration)**: On the **production Builds** experience (build detail / variant edit — not debug-only), let a signed-in user **finish a combat loadout via a guided walkthrough** that stays on Builds. The walkthrough **detects missing pieces**, then **step by step** lets the user **create a new Set or link an existing Set** for each gap and **fill empty slots** until the loadout is complete or they exit. Supporting capabilities: (1) create empty/named combat Sets and live-attach; (2) attach/link existing library Sets; (3) fill/replace Set slots under existing Set rules; (4) optional create-Sets-from-current-gear (snapshot) with attach-now / replace-by-type when gear is already resolved; (5) clear incomplete-loadout entry into the walkthrough.
+**In scope (this iteration / v1 shipped)**: On the **production Builds** experience (build detail / variant edit — not debug-only), let a signed-in user **finish a combat loadout via a guided walkthrough** that stays on Builds. The walkthrough **detects missing pieces**, then **step by step** lets the user **create a new Set or link an existing Set** for each gap and **fill empty slots** until the loadout is complete or they exit. Supporting capabilities: (1) create empty/named combat Sets and live-attach; (2) attach/link existing library Sets; (3) fill/replace Set slots under existing Set rules; (4) optional create-Sets-from-current-gear (snapshot) with attach-now / replace-by-type when gear is already resolved; (5) clear incomplete-loadout entry into the walkthrough.
 
-**Out of scope (this iteration)**: Redesigning the standalone Sets library shell; Fashion Sets as a finish-build path; full armor **optimizer** search/materialize UI on Builds (remains 026 / later polish); Catalog Universal Build-kit attach; multi-build bulk set factory; sharing/export of newly created Sets beyond normal library privacy; changing Destiny hard constraints or attachment semantics (live/snapshot, exotic exclusivity, slot conflicts).
+**Out of scope (this iteration / v1)**: Redesigning the standalone Sets library shell; Fashion Sets as a finish-build path; full armor **optimizer** search/materialize UI on Builds; Catalog Universal Build-kit attach; multi-build bulk set factory; sharing/export of newly created Sets beyond normal library privacy; changing Destiny hard constraints or attachment semantics (live/snapshot, exotic exclusivity, slot conflicts).
+
+**Deferred to follow-on features (not 028 v1)**:
+- **029** — Slot-first Finish create chrome (hide link/tags/name/type from Finish primary path; one-tap create/capture → first empty slot for weapons/mods; armor manual fill as fallback only).
+- **030** — Optimizer foundation: empty-set optional `classType`, synergy set-bonus ranking helpers, constraints payload helpers + tests.
+- **031** — Armor Finish optimize UI: V2+V5 wide workspace, V6 phone rail, constraints editor, top-3 compare, apply-combination from Finish.
 
 **Builds on**: Existing Set attach picker, Set fill/catalog rules, create-sets-from-build behavior and BR-OPT-001/002 seeds, completeness rules for default variants.
 
@@ -212,6 +234,16 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - Create-from-build API semantics, replace-by-type, optimizer constraint seed: [026](../026-armor-set-optimizer/spec.md), BR-OPT-001/002.
 - Default variant completeness and identity: domain `DBR-CMPL-*`, `DBR-ID-*`, `DBR-CMP-*`.
 - Concept tags on Sets: BR-TAG-*.
+
+## Follow-on features (post-v1)
+
+Full specs are created under new feature dirs via `/speckit.specify` (not part of 028 implement). Intent only:
+
+- **029 (finish slot-first chrome)** — One-tap Create/Capture in Finish with inherited names; hide link/tags/name/type from Finish primary path (Sets tab retains advanced controls); weapons/mods enter slot-first fill immediately; armor manual fill remains fallback until 031.
+- **030 (finish optimizer foundation)** — Optional `classType` when optimizing empty armor sets; pure helpers to rank set bonuses with synergy-linked first; constraints payload helpers from `seedConstraintsFromBuild` + user edits; unit tests only (no production Finish chrome required).
+- **031 (finish armor optimize UI)** — After Armor create/capture, open optimize workspace: wide **V2+V5** (goals | top-3 compare), narrow **V6** compact rail; PATCH constraints → optimize → apply-combination; depends on 030 (and preferably 029 Finish chrome baseline).
+
+Product source: Warp plan slot-first Finish + Armor optimizer; UI mocks `docs/ui-mocks/finish-build-slot-first.html`, `docs/ui-mocks/armor-picking-variants.html`.
 
 
 

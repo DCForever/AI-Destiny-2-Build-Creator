@@ -68,6 +68,18 @@
 
 **Decision**: Pair available on create-type list (P3). Fashion excluded from walkthrough primary types.
 
+## R9 — Post-v1 slice split
+
+**Decision**: Freeze 028 as shipped v1. Split the Warp slot-first + Armor optimizer plan into **029** Finish chrome, **030** optimizer foundation (API/helpers), **031** Armor Finish UI.
+
+**Rationale**: 028 tasks T001–T029 are complete and green; armor optimizer UI was explicitly out of 028 scope; rewriting shipped FR/US would falsely reopen acceptance. Follow-ons get their own Spec Kit lifecycle.
+
+**Alternatives considered**: Extend 028 tasks in place (rejected — mixes shipped v1 with new scope); single mega-029 (rejected — user chose three logical slices).
+
+## R10 — UI pairing locked (pointer for 031)
+
+**Decision**: Desktop/wide = V2 split goals|kits + V5 top-3 compare; phone/narrow = V6 compact rail (sticky Apply, chip goals). Full research and implement live in **031**.
+
 ## Cross-cutting
 
 - No new SQLite tables.

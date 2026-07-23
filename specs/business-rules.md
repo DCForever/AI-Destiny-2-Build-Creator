@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-23 (BR-BLD-007 Finish build walkthrough on Builds)
+**Updated**: 2026-07-23 (BR-BLD-007 Finish build walkthrough on Builds; 028 v1 freeze — slot-first/optimizer Finish deferred to 029–031)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -79,7 +79,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | ID | Rule | FR |
 |----|------|-----|
 | BR-FASH-001 | Fashion Sets are cosmetic/organizational (not identity). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-FASH-002 | Fashion Sets must not participate in synergies, suggestions, or stats. **Updated**: 2026-07-23 (BR-BLD-007 Finish build walkthrough on Builds)
+| BR-FASH-002 | Fashion Sets must not participate in synergies, suggestions, or stats. | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-FASH-003 | Fashion is resolved on the variant fashion layer for equip/export; still excluded from combat synergy/stat resolution. **See** [DBR-FASH-*](./domain-business-rules.md). | [FR-018](001-build-sets-synergies/spec.md#functional-requirements) |
 
 ---
@@ -117,7 +117,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-BLD-004 | **Exotic weapon** may be variant-level **or** build-shared (build-shared ⇒ identity). **See** [DBR-ID-006](./domain-business-rules.md). | [FR-023](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-BLD-005 | Shared build-level fields edited on parent build, not per variant. | [001 edge cases](001-build-sets-synergies/spec.md#edge-cases) |
 | BR-BLD-006 | Exactly one default variant per build. | [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-BLD-007 | Production Builds provides a **guided finish walkthrough** (Armor → Weapons → Mods): create empty Set + live attach (replace-by-type), link existing, capture-from-build when resolved gear exists, fill slots from Builds; Skip for now does not satisfy. | [028](028-build-inline-sets/spec.md) |
+| BR-BLD-007 | Production Builds provides a **guided finish walkthrough** (Armor → Weapons → Mods): create empty Set + live attach (replace-by-type), link existing, capture-from-build when resolved gear exists, fill slots from Builds; Skip for now does not satisfy. **v1 shipped in 028.** Slot-first Finish chrome simplification and Armor optimizer Finish path (goals → kits → apply) are **follow-on** product work under 029–031 — not implied complete by this rule. | [028](028-build-inline-sets/spec.md) |
 
 ---
 
