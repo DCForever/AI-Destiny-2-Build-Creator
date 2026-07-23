@@ -12,15 +12,25 @@
 
 **Prior slices**: [001-build-sets-synergies](../001-build-sets-synergies/spec.md) (sets, attachments, attach picker), [008-sets-catalog-lookup](../008-sets-catalog-lookup/spec.md) (set fill / catalog), [012-build-pipeline-consistency](../012-build-pipeline-consistency/spec.md), [026-armor-set-optimizer](../026-armor-set-optimizer/spec.md) (create-sets-from-build API + replace-by-type; production Builds UX deferred), [027-catalog-universal-search](../027-catalog-universal-search/spec.md) (catalog composition entry points)
 
+## Clarifications
+
+### Session 2026-07-23
+
+- Q: How should the primary finish-the-build experience work when pieces are missing? → A: **One guided walkthrough** (Option B): detect gaps → for each gap, create or link a Set → fill empty slots → next gap until done (or user exits). Discrete one-off CTAs alone are not the primary incomplete-build path.
+- Q: In what order should the guided walkthrough present missing combat pieces? → A: **Armor → Weapons → Mods** (Option B); skip categories already satisfied.
+- Q: When is a category satisfied so the walkthrough can skip it? → A: **Covering Set attached and required slots filled** (Option C). Empty attached Sets still need fill steps; filled gear without a covering Set still needs create/link (or create-from-build).
+- Q: Can the user skip or defer a gap and still continue the walkthrough? → A: **Yes — Skip for now** on a category or empty slot (Option B). Skipped items remain on the remaining-gaps list; the build stays incomplete until satisfied. User may exit entirely and resume later.
+- Q: When the variant already has resolved gear but no covering Sets, how should the walkthrough handle that category? → A: **Prefer Capture current gear into a Set** (create-from-build for that category) when resolved gear exists (Option A); also allow create empty Set and link existing Set.
+
 ## Iteration Scope
 
-**In scope (this iteration)**: On the **production Builds** experience (build detail / variant edit — not debug-only), let a signed-in user **fully author Sets without leaving the build journey** so they can finish a combat loadout. That includes: (1) **create empty or named Sets** of combat types needed by the build and **attach them live** in one flow; (2) **fill Set slots** (pick catalog/owned pieces, pins, rolls as already required by Set rules) from the Builds context; (3) **create Sets from the build’s current resolved gear** (snapshot armor/weapons/mods when present) with attach-now and replace-by-type, promoting the existing create-from-build capability into the main UI; (4) clear empty-slot / incomplete-loadout guidance that routes into these set-create/fill actions so finishing the build feels continuous.
+**In scope (this iteration)**: On the **production Builds** experience (build detail / variant edit — not debug-only), let a signed-in user **finish a combat loadout via a guided walkthrough** that stays on Builds. The walkthrough **detects missing pieces**, then **step by step** lets the user **create a new Set or link an existing Set** for each gap and **fill empty slots** until the loadout is complete or they exit. Supporting capabilities: (1) create empty/named combat Sets and live-attach; (2) attach/link existing library Sets; (3) fill/replace Set slots under existing Set rules; (4) optional create-Sets-from-current-gear (snapshot) with attach-now / replace-by-type when gear is already resolved; (5) clear incomplete-loadout entry into the walkthrough.
 
 **Out of scope (this iteration)**: Redesigning the standalone Sets library shell; Fashion Sets as a finish-build path; full armor **optimizer** search/materialize UI on Builds (remains 026 / later polish); Catalog Universal Build-kit attach; multi-build bulk set factory; sharing/export of newly created Sets beyond normal library privacy; changing Destiny hard constraints or attachment semantics (live/snapshot, exotic exclusivity, slot conflicts).
 
 **Builds on**: Existing Set attach picker, Set fill/catalog rules, create-sets-from-build behavior and BR-OPT-001/002 seeds, completeness rules for default variants.
 
-**Verification**: Signed-in user can open a Build with missing gear, create and fill the Sets they need (or snapshot existing composition into Sets), see them attached on the variant, and reach a complete combat loadout **without** navigating away to Sets as a required step (optional deep-link to Sets for advanced edit is allowed but not required).
+**Verification**: Signed-in user can open a Build with missing gear, start the **guided finish walkthrough**, create or link Sets and fill slots step by step (or snapshot existing composition when applicable), see attachments on the variant, and reach a complete combat loadout **without** navigating away to Sets as a required step (optional deep-link to Sets for advanced edit is allowed but not required).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -79,19 +89,25 @@ A user who already has gear resolved on a variant (from pins, prior attachments,
 
 ---
 
-### User Story 4 - Seamless finish-the-build guidance (Priority: P2)
+### User Story 4 - Guided finish walkthrough for all missing pieces (Priority: P1)
 
-When a build/variant is incomplete (missing combat slots on the default path, or no Sets covering gear), the Builds UI surfaces short, actionable prompts — Create Armor Set, Fill empty slots, Capture current gear into Sets — that start the flows above in context, rather than only showing abstract validation errors.
+When a build/variant is incomplete, the user starts a **guided walkthrough** that lists missing combat pieces in order and, for each gap, lets them **create a new Set or link an existing library Set**, then **fill empty slots** for that Set, then advances to the next gap until the loadout is complete or they exit. This is the primary incomplete-build path—not only scattered CTAs.
 
-**Why this priority**: Makes the experience feel seamless; secondary to the actual create/fill capabilities but required for the stated product goal.
+**Why this priority**: User-stated goal is step-by-step create-or-link of all missing pieces; without a single walkthrough, finishing stays fragmented.
 
-**Independent Test**: Open an incomplete default variant; confirm at least one prompt leads into create or fill; after completing gear, prompts clear or switch to ready state.
+**Independent Test**: Open an incomplete default variant; start Finish build; complete at least two different gaps (e.g. attach/create Armor Set and fill one slot, then Weapon path); exit and resume; confirm progress persists on the variant.
 
 **Acceptance Scenarios**:
 
-1. **Given** the default variant lacks a full combat loadout, **When** the user views build/variant detail, **Then** they see which gear areas are missing (e.g. armor/weapons) in plain language.
-2. **Given** missing armor (or weapons), **When** the user follows the primary CTA, **Then** they enter create-Set, fill-slot, or create-from-build as appropriate — not a dead-end error only.
-3. **Given** the loadout becomes complete after set create/fill, **When** the view refreshes, **Then** incomplete guidance for those slots is cleared and success is obvious (attached sets and resolved pieces visible).
+1. **Given** the default variant lacks a full combat loadout, **When** the user views build/variant detail, **Then** they see which gear areas are missing and a primary **Finish build** (or equivalent) action that starts the guided walkthrough.
+2. **Given** the walkthrough is active, **When** the user is on a gap step, **Then** they can **create a new Set** or **link an existing compatible Set** for that gap before or as part of filling slots.
+3. **Given** a gap's Set is attached with empty slots, **When** the user continues the walkthrough, **Then** they are guided to fill those slots under existing Set rules before the walkthrough treats that gap as done.
+4. **Given** the user completes or skips through all remaining gaps, **When** the loadout meets completeness for the variant, **Then** the walkthrough ends with clear success and incomplete guidance clears.
+5. **Given** the user exits mid-walkthrough, **When** they return later, **Then** progress already saved (created/linked Sets, filled slots) remains; they can restart the walkthrough for remaining gaps without undoing prior work.
+6. **Given** multiple categories are missing, **When** the walkthrough runs, **Then** it addresses **Armor before Weapons before Mods**, skipping categories already satisfied.
+7. **Given** an Armor Set is attached but armor slots are still empty, **When** the walkthrough evaluates Armor, **Then** it does **not** skip Armor and continues into fill steps. **Given** armor slots appear filled without a covering Armor Set, **When** evaluated, **Then** Armor is not skipped until create/link (or create-from-build) attaches a covering Set.
+8. **Given** the user chooses **Skip for now** on Mods (or an empty slot), **When** the walkthrough continues, **Then** later categories or end state are reachable, the skipped gap remains unfinished, and incomplete guidance still reflects that gap.
+9. **Given** armor is resolved on the variant but no Armor Set is attached, **When** the walkthrough reaches Armor, **Then** **Capture current gear into a Set** is the preferred action and create-empty / link-existing remain available.
 
 ---
 
@@ -120,7 +136,8 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - Incomplete mod category in create-from-build → skip with message rather than half-written Mod Sets (align with current capability; if mod snapshot is still limited, UI must not claim mods were created).
 - Slot conflicts after attaching multiple Sets → existing SLOT_CONFLICT / hard-block messaging still applies before save/equip.
 - Non-default variant may remain gapped per domain completeness rules; guidance should not force false "must complete" on optional variants beyond product rules.
-- User cancels mid-wizard → no orphan attach; no partial Set unless explicitly saved as empty Set by design (empty Set create is allowed and attached).
+- User cancels mid-wizard / exits guided walkthrough → no orphan attach from an unconfirmed step; Sets already confirmed created/linked and slots already filled remain; empty Set create is allowed once confirmed and attached.`r`n- Guided walkthrough mid-progress → remaining gaps still available on resume; completed gaps are not re-forced unless the user undoes attachments/fills.
+- Walkthrough category order Armor → Weapons → Mods; if user fills Weapons first outside the walkthrough, resume skips Armor only when Armor is satisfied.
 
 ## Requirements *(mandatory)*
 
@@ -135,7 +152,7 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - **FR-007**: Production Builds MUST expose **Create Sets from this build** (or equivalent) that snapshots current resolved gear into Sets and supports attach-now with **replace-by-type** for live attachments, consistent with existing create-from-build rules (BR-OPT-001/002).
 - **FR-008**: Create-from-build MUST skip empty categories with user-visible feedback and MUST refuse with a clear nothing-to-create outcome when no categories produce Sets.
 - **FR-009**: After create/attach/fill mutations, Builds MUST refresh attached-set and resolved-loadout presentation so the user sees the finished state without a manual full page reload.
-- **FR-010**: Incomplete combat loadout states on the relevant variant MUST surface **actionable** guidance into FR-001/005/007 flows (not errors alone).
+- **FR-010**: Incomplete combat loadout states on the relevant variant MUST surface **actionable** entry into the **guided finish walkthrough** (FR-018), not errors alone. Supporting entry into FR-001/005/007 outside the walkthrough remains allowed.
 - **FR-011**: All create/fill/attach mutations from Builds MUST require an authenticated owner of the build.
 - **FR-012**: Snapshot attachment semantics MUST be preserved: editing a live library Set updates live attachments; snapshot variants do not silently rewrite frozen configs via live Set item edits.
 - **FR-013**: Fashion MUST NOT be required or promoted as a path to complete combat loadout in this feature's primary CTAs.
@@ -143,6 +160,12 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - **FR-015**: Detach remains available; deleting a Set still blocked when in use per existing deletion rules (detach-first).
 - **FR-016**: Success feedback MUST name the created/updated Set(s) and confirm attachment when attach-now ran.
 - **FR-017**: Optional deep-link to open a Set in the Sets library for advanced edit MAY exist but MUST NOT be the only way to fill slots needed to finish the build.
+- **FR-018**: Production Builds MUST provide a **guided finish walkthrough** as the primary path when combat loadout pieces are missing. The walkthrough MUST detect gaps, present them **step by step**, and at each Set-level gap allow **create new Set** or **link existing Set**, then guide **slot fill** for empty slots on the attached Set until that gap is resolved or the user exits.
+- **FR-019**: Discrete Set controls (attach picker, create, fill, create-from-build snapshot) MAY remain available for advanced use, but MUST NOT be the only way to discover how to finish an incomplete build.
+- **FR-020**: The guided finish walkthrough MUST present missing combat categories in fixed order **Armor → Weapons → Mods**, skipping any category that is already **satisfied**: a covering Set of that type is attached **and** every combat slot required for default-variant completeness in that category is filled on the resolved loadout. An empty attached Set is **not** satisfied; filled slots without a covering Set are **not** satisfied until create/link (or create-from-build) establishes one.
+- **FR-021**: A walkthrough category is **satisfied** only when both: (1) a covering Set for that category is attached to the active variant, and (2) all slots required for that category under default-variant combat completeness are filled. Neither condition alone is enough to skip the category.
+- **FR-022**: The guided walkthrough MUST offer **Skip for now** on a category step and on individual empty-slot fill steps. Skipping MUST NOT mark the category satisfied; skipped gaps remain listed as remaining work and completeness guidance stays active. Exit walkthrough remains available and preserves confirmed work.
+- **FR-023**: When a walkthrough category is unsatisfied and the variant already has **resolved gear** in that category without a covering Set, the category step MUST offer **Capture current gear into a Set** (create-from-build for that category, attach-now / replace-by-type per existing rules) as the **preferred** action, and MUST still offer **create empty Set** and **link existing Set**.
 
 ### Key Entities
 
@@ -161,7 +184,7 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - **SC-003**: At least **90%** of first-time test users complete **fill at least one empty slot** from Builds without assistance.
 - **SC-004**: At least **90%** of users with an already-filled variant complete **Create Sets from this build** with attach-now and correctly see Sets on the variant without a second attach step.
 - **SC-005**: Zero regressions in SetAttachPicker, Set hard constraints, and create-from-build replace-by-type behavior as verified by automated gates and smoke of prior Builds/Sets paths.
-- **SC-006**: In a scripted incomplete-build pass, users always receive at least one actionable CTA toward create or fill (checklist pass/fail) rather than only a blocking error with no next step.
+- **SC-006**: In a scripted incomplete-build pass, users can start the **guided finish walkthrough** and advance through at least one create-or-link gap and one fill step without assistance (checklist pass/fail), rather than only a blocking error with no next step.
 
 ## Assumptions
 
@@ -171,6 +194,11 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - Create-from-build already defined under 026 remains the behavioral baseline for snapshot + attach-now + constraint seeding; this feature **surfaces and completes** it in production UX and ensures empty create + fill cover the cold-start case.
 - If mod snapshot from build is still incomplete in the current product, the UI must not over-promise; Weapon/Armor paths remain P1.
 - Seamless means **no mandatory context switch** to Sets for create/fill; optional advanced edit in Sets is fine.
+- Primary incomplete-build UX is a **single guided walkthrough** that create-or-links Sets and fills slots gap-by-gap (clarification session 2026-07-23), not only a menu of disconnected CTAs.
+- Walkthrough category order is **Armor → Weapons → Mods** (skip satisfied).
+- A category is **satisfied only when** a covering Set is attached **and** required slots are filled (clarification session 2026-07-23).
+- Users may **Skip for now** on gaps; skip does not equal satisfied.
+- When resolved gear exists without a covering Set, walkthrough **prefers Capture current gear into a Set** for that category.
 - Live attach is the default for new Sets created to finish a build; snapshot remains opt-in via existing attachment controls where already offered.
 - Catalog/Universal search may be reused inside fill pickers; this feature does not replace Catalog.
 - Unsigned users cannot mutate personal Sets/Builds.
@@ -182,3 +210,9 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - Create-from-build API semantics, replace-by-type, optimizer constraint seed: [026](../026-armor-set-optimizer/spec.md), BR-OPT-001/002.
 - Default variant completeness and identity: domain `DBR-CMPL-*`, `DBR-ID-*`, `DBR-CMP-*`.
 - Concept tags on Sets: BR-TAG-*.
+
+
+
+
+
+
