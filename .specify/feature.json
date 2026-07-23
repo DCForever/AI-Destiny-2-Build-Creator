@@ -1,1 +1,3 @@
-{"feature_directory":"specs/036-equip-post-sync"}
+{
+  "feature_directory": "specs/037-reject-proposal-fallback"
+}
