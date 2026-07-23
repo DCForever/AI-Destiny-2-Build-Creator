@@ -54,7 +54,7 @@ export function LlmProposeDebugPage() {
       .map(([id]) => id);
     const skippedIds = proposals.map((p) => p.id).filter((id) => !acceptedIds.includes(id));
     const url = `/api/llm/propose-pass/${passId}/confirm`;
-    const payload = { acceptedIds, skippedIds, proposals };
+    const payload = { acceptedIds, skippedIds };
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

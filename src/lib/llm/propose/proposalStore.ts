@@ -4,6 +4,8 @@ export type StoredProposePass = {
   passId: string;
   createdAt: string;
   proposals: Proposal[];
+  /** Authenticated user that created the pass; confirm must match when set. */
+  userId?: number;
 };
 
 /**

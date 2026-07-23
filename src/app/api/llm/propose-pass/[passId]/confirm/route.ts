@@ -38,7 +38,6 @@ export async function POST(request: Request, context: RouteContext): Promise<Nex
       passId,
       parsed.data.acceptedIds,
       parsed.data.skippedIds,
-      parsed.data.proposals,
     );
     return NextResponse.json(result);
   } catch (error) {

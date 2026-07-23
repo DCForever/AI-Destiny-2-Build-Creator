@@ -50,6 +50,8 @@ function assignIds(raw: ProposePassLlmOutput): Proposal[] {
 export type RunProposePassDeps = {
   client?: LlmClient | null;
   useMock?: boolean;
+  /** Authenticated user that owns the resulting pass (required for confirm). */
+  userId?: number;
 };
 
 export async function runProposePass(
@@ -91,6 +93,7 @@ export async function runProposePass(
     passId,
     createdAt: new Date().toISOString(),
     proposals,
+    userId: deps.userId,
   });
   return { passId, proposals };
 }

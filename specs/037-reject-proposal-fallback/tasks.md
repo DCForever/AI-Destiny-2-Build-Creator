@@ -7,21 +7,21 @@
 
 ## Phase 2: Foundational implementation
 
-- [ ] T003 Remove `proposalsFallback` rebuild from `confirmProposals.ts`; keep 404 unknown-pass message
-- [ ] T004 Drop `proposals` from `confirmPassRequestSchema` and confirm route args
-- [ ] T005 Bind `userId` on `StoredProposePass`; set from `runProposePass` / `runGapScan` / propose route
-- [ ] T006 Reject confirm when pass `userId` mismatches caller
-- [ ] T007 Stop debug clients from sending `proposals` on confirm
-- [ ] T008 Update `specs/023-llm-propose/contracts/propose-confirm-contract.md`
+- [x] T003 Remove `proposalsFallback` rebuild from `confirmProposals.ts`; keep 404 unknown-pass message
+- [x] T004 Drop `proposals` from `confirmPassRequestSchema` and confirm route args
+- [x] T005 Bind `userId` on `StoredProposePass`; set from `runProposePass` / `runGapScan` / propose route
+- [x] T006 Reject confirm when pass `userId` mismatches caller
+- [x] T007 Stop debug clients from sending `proposals` on confirm
+- [x] T008 Update `specs/023-llm-propose/contracts/propose-confirm-contract.md`
 
 ## Phase 3: Tests (US1 + US2 + US3)
 
-- [ ] T009 [US2] Replace fallback-success test with missing-pass + malicious proposals → throw, zero synergies
-- [ ] T010 [US1] Keep/assert happy path confirm with server pass
-- [ ] T011 [US3] Assert foreign userId cannot confirm another user's pass
+- [x] T009 [US2] Replace fallback-success test with missing-pass + malicious proposals → throw, zero synergies
+- [x] T010 [US1] Keep/assert happy path confirm with server pass
+- [x] T011 [US3] Assert foreign userId cannot confirm another user's pass
 
 ## Phase 4: Polish
 
-- [ ] T012 `rg` guard: no `proposalsFallback` trust path under `src`
-- [ ] T013 Run typecheck, lint, propose tests; fix breakages
-- [ ] T014 Mark improve prompt status if appropriate; commit phases
+- [x] T012 `rg` guard: no `proposalsFallback` trust path under `src`
+- [x] T013 Run typecheck, lint, propose tests; fix breakages
+- [x] T014 Mark improve prompt status if appropriate; commit phases

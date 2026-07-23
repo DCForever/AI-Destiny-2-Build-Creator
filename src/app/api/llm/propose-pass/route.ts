@@ -32,6 +32,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const result = await runProposePass(parsed.data.descriptions, {
       client,
       useMock: parsed.data.useMock ?? process.env.LLM_PROPOSE_MOCK === "1",
+      userId: auth.user.id,
     });
     return NextResponse.json(result);
   } catch (error) {

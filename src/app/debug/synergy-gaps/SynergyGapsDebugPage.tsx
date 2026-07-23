@@ -224,8 +224,6 @@ export function SynergyGapsDebugPage() {
           body: JSON.stringify({
             acceptedIds,
             skippedIds,
-            // Client copy so confirm still works if the in-memory pass was dropped
-            proposals: result.proposals ?? [],
           }),
         },
       );

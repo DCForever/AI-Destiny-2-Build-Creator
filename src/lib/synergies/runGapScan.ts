@@ -233,6 +233,7 @@ export async function runGapScan(
     passId,
     createdAt: new Date().toISOString(),
     proposals,
+    userId,
   });
 
   return {
