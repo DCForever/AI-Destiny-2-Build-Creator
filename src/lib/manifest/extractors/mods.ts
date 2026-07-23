@@ -1,3 +1,6 @@
+import type { ArmorStatName } from "@/data/rules/statBenefits";
+import { ARMOR_STAT_HASH_TO_NAME } from "@/lib/inventory/instances/parseArmorStats";
+
 import type { ModRecord, ModSlotCategory } from "../types/records";
 import type { Extractor, RawTable, RawTableName } from "../types/services";
 import { dedupeModVariantsByNameAndSlot } from "../modSearchGroups";
@@ -28,13 +31,35 @@ function toModSlotCategory(cat: string): ModSlotCategory | null {
   if (/enhancements\.(v2_)?legs/.test(cat)) return "legs";
   if (/enhancements\.(v2_)?class/.test(cat)) return "classItem";
   if (/tuning/.test(cat)) return "tuning";
-  if (/enhancements\.general/.test(cat) || /enhancements\.universal/.test(cat)) return "general";
+// Live cats include enhancements.v2_general (Grenade Mod etc.) and .universal.
+  if (
+    /enhancements\.(v2_)?general/.test(cat) ||
+    /enhancements\.(v2_)?universal/.test(cat) ||
+    /enhancements\.universal/.test(cat)
+  ) {
+    return "general";
+  }
   return null;
 }
 
 function resolveEnergyCost(item: RawInventoryItem): number | null {
   const cost = item.plug?.energyCost?.energyCost;
   return typeof cost === "number" ? cost : null;
+}
+
+/** Unconditional Armor 3.0 investment deltas from the plug definition. */
+function buildArmorStatModifiers(
+  item: RawInventoryItem,
+): Partial<Record<ArmorStatName, number>> {
+  const mods: Partial<Record<ArmorStatName, number>> = {};
+  for (const stat of item.investmentStats ?? []) {
+    if (stat.isConditionallyActive) continue;
+    if (stat.value === 0) continue;
+    const name = ARMOR_STAT_HASH_TO_NAME[stat.statTypeHash];
+    if (!name) continue;
+    mods[name] = (mods[name] ?? 0) + stat.value;
+  }
+  return mods;
 }
 
 function isStackingOnlyTooltip(text: string): boolean {
@@ -116,11 +141,12 @@ async function extractMods(loadTable: LoadTable): Promise<ModRecord[]> {
     const slotCategory = toModSlotCategory(cat);
     if (!slotCategory) continue;
 
-    result.push({
+result.push({
       ...projectBase(item),
       description: resolveModDescription(item, sandboxPerks),
       slotCategory,
       energyCost: resolveEnergyCost(item),
+      statModifiers: buildArmorStatModifiers(item),
     });
   }
 

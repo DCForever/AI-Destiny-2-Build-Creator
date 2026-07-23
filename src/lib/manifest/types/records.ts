@@ -161,6 +161,17 @@ export interface ModRecord extends EntityRecordBase {
   description: string;
   slotCategory: ModSlotCategory;
   energyCost: number | null;
+  /**
+   * Unconditional investment stat deltas for the six Armor 3.0 stats
+   * (e.g. Major Melee → { Melee: 10 }). Empty when the plug grants none.
+   * Optional on older entity-cache snapshots — treat missing as {}.
+   */
+  statModifiers?: Partial<
+    Record<
+      "Health" | "Melee" | "Grenade" | "Super" | "Class" | "Weapons",
+      number
+    >
+  >;
 }
 
 /** Armor 3.0 set bonus (DestinyEquipableItemSetDefinition). */

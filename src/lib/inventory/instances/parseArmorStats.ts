@@ -6,7 +6,8 @@ export type BungieStatEntry = {
   value: number;
 };
 
-const STAT_HASH_TO_NAME: Record<number, ArmorStatName> = {
+/** Bungie stat hashes → Armor 3.0 display names (EoF). */
+export const ARMOR_STAT_HASH_TO_NAME: Record<number, ArmorStatName> = {
   392767087: "Health",
   4244567218: "Melee",
   1735777505: "Grenade",
@@ -21,7 +22,7 @@ export function parseArmorStatValues(
   if (!stats?.length) return null;
   const result: Partial<Record<ArmorStatName, number>> = {};
   for (const entry of stats) {
-    const name = STAT_HASH_TO_NAME[entry.statHash];
+    const name = ARMOR_STAT_HASH_TO_NAME[entry.statHash];
     if (!name) continue;
     result[name] = entry.value;
   }

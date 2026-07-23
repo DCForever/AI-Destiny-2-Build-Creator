@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-14 (026 armor optimizer BR-OPT stubs; BR-UI-001 Destiny hard-constraint UI prevention)
+**Updated**: 2026-07-23 (BR-SET-011 Sets armor board base stats exclude equipped mods)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -53,6 +53,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-SET-003 | Sets are **private per user**; no sharing in initial scope. | [001 assumptions](001-build-sets-synergies/spec.md#assumptions) |
 | BR-SET-004 | Sets store **manifest item references**, not full copies. | [001 assumptions](001-build-sets-synergies/spec.md#assumptions) |
 | BR-SET-010 | **Armor** set detail shows EoF six-stat **totals** and **per-piece** stats when owned instances are pinned (wishlist has no rolls). Item rows show catalog identity (element, type/frame, **tier**, **origin trait**), **selected trait perks** (not barrel/magazine/stock), **available trait names**, and **linked library synergies**. | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md) |
+| BR-SET-011 | **Armor** set per-piece stats and set totals use the piece’s **base roll** only: sum of equipped `armor_stats` plug investments (DIM white base). Equipped armor mods, masterwork, and tuning are excluded. Catalog instance cards and inventory sort continue to use live ItemStats. Distinct from full-loadout soft-target coverage ([DBR-STAT-005](./domain-business-rules.md)). | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md), [DBR-STAT-008](./domain-business-rules.md) |
 
 ---
 
