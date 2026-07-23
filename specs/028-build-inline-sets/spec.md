@@ -136,7 +136,8 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - Incomplete mod category in create-from-build → skip with message rather than half-written Mod Sets (align with current capability; if mod snapshot is still limited, UI must not claim mods were created).
 - Slot conflicts after attaching multiple Sets → existing SLOT_CONFLICT / hard-block messaging still applies before save/equip.
 - Non-default variant may remain gapped per domain completeness rules; guidance should not force false "must complete" on optional variants beyond product rules.
-- User cancels mid-wizard / exits guided walkthrough → no orphan attach from an unconfirmed step; Sets already confirmed created/linked and slots already filled remain; empty Set create is allowed once confirmed and attached.`r`n- Guided walkthrough mid-progress → remaining gaps still available on resume; completed gaps are not re-forced unless the user undoes attachments/fills.
+- User cancels mid-wizard / exits guided walkthrough → no orphan attach from an unconfirmed step; Sets already confirmed created/linked and slots already filled remain; empty Set create is allowed once confirmed and attached.
+- Guided walkthrough mid-progress → remaining gaps still available on resume; completed gaps are not re-forced unless the user undoes attachments/fills.
 - Walkthrough category order Armor → Weapons → Mods; if user fills Weapons first outside the walkthrough, resume skips Armor only when Armor is satisfied.
 
 ## Requirements *(mandatory)*
@@ -173,6 +174,7 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - **Inline Set Create Intent**: Name, type, optional tags, target variant, attach-now flag originating from Builds.
 - **Inline Slot Fill Intent**: Target attached Set, slot, item identity, optional instance/perks — same meaning as Set fill, initiated from Builds.
 - **Create-from-Build Snapshot Intent**: Build + variant + categories + attach-now + naming prefix; produces one Set per non-empty category.
+- **Finish Walkthrough Session**: Ephemeral guided flow over a build variant that sequences Finish-Build Gaps; user may exit and resume remaining gaps later.
 - **Finish-Build Gap**: User-visible missing combat coverage (e.g. no armor set / empty slots) driving CTAs.
 
 ## Success Criteria *(mandatory)*
@@ -210,6 +212,7 @@ If the build's exotic story needs a Pair Set, the user can create/attach a Pair 
 - Create-from-build API semantics, replace-by-type, optimizer constraint seed: [026](../026-armor-set-optimizer/spec.md), BR-OPT-001/002.
 - Default variant completeness and identity: domain `DBR-CMPL-*`, `DBR-ID-*`, `DBR-CMP-*`.
 - Concept tags on Sets: BR-TAG-*.
+
 
 
 
