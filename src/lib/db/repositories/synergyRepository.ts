@@ -62,6 +62,44 @@ function listSynergyLinks(db: AppDatabase, synergyId: string): SynergyLinkRecord
   return db.select().from(synergyLinks).where(eq(synergyLinks.synergyId, synergyId)).all();
 }
 
+/** Batch-load links for many synergies (one query). */
+function listSynergyLinksForIds(
+  db: AppDatabase,
+  synergyIds: string[],
+): Map<string, SynergyLinkRecord[]> {
+  const map = new Map<string, SynergyLinkRecord[]>();
+  for (const id of synergyIds) map.set(id, []);
+  if (synergyIds.length === 0) return map;
+
+  const rows = db
+    .select()
+    .from(synergyLinks)
+    .where(inArray(synergyLinks.synergyId, synergyIds))
+    .all();
+
+  for (const row of rows) {
+    const list = map.get(row.synergyId);
+    if (list) list.push(row);
+    else map.set(row.synergyId, [row]);
+  }
+  return map;
+}
+
+function rowsToSynergiesWithLinks(
+  db: AppDatabase,
+  rows: (typeof synergies.$inferSelect)[],
+): SynergyWithLinks[] {
+  if (rows.length === 0) return [];
+  const linksBySynergy = listSynergyLinksForIds(
+    db,
+    rows.map((r) => r.id),
+  );
+  return rows.map((row) => ({
+    ...rowToSynergy(row),
+    links: linksBySynergy.get(row.id) ?? [],
+  }));
+}
+
 function insertLinks(db: AppDatabase, synergyId: string, links: SynergyLinkInput[]): void {
   for (const link of links) {
     db.insert(synergyLinks)
@@ -90,10 +128,7 @@ export function listSynergies(db: AppDatabase, userId: number, type?: SynergyTyp
     .from(synergies)
     .where(type ? and(eq(synergies.userId, userId), eq(synergies.type, type)) : eq(synergies.userId, userId))
     .all();
-  return rows.map((row) => ({
-    ...rowToSynergy(row),
-    links: listSynergyLinks(db, row.id),
-  }));
+  return rowsToSynergiesWithLinks(db, rows);
 }
 
 export function getSynergy(db: AppDatabase, userId: number, id: string): SynergyWithLinks | null {
@@ -113,7 +148,7 @@ export function getSynergiesByIds(db: AppDatabase, userId: number, ids: string[]
     .from(synergies)
     .where(and(eq(synergies.userId, userId), inArray(synergies.id, ids)))
     .all();
-  return rows.map((row) => ({ ...rowToSynergy(row), links: listSynergyLinks(db, row.id) }));
+  return rowsToSynergiesWithLinks(db, rows);
 }
 
 /** Match library synergies by type + subType (null-safe). */
@@ -129,12 +164,11 @@ export function getSynergiesByTypeSubType(
     .where(and(eq(synergies.userId, userId), eq(synergies.type, type)))
     .all();
   const normalizedSub = subType?.trim() || null;
-  return rows
-    .filter((row) => {
-      const rowSub = row.subType?.trim() || null;
-      return rowSub === normalizedSub;
-    })
-    .map((row) => ({ ...rowToSynergy(row), links: listSynergyLinks(db, row.id) }));
+  const matched = rows.filter((row) => {
+    const rowSub = row.subType?.trim() || null;
+    return rowSub === normalizedSub;
+  });
+  return rowsToSynergiesWithLinks(db, matched);
 }
 
 export function createSynergyRecord(

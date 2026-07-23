@@ -55,6 +55,38 @@ function loadTagsForSet(db: AppDatabase, setId: string): ConceptTagId[] {
     .sort();
 }
 
+/** Batch-load tags for many sets (one query). Tag ids sorted per set. */
+function loadTagsForSetIds(db: AppDatabase, setIds: string[]): Map<string, ConceptTagId[]> {
+  const map = new Map<string, ConceptTagId[]>();
+  for (const id of setIds) map.set(id, []);
+  if (setIds.length === 0) return map;
+
+  const rows = db
+    .select({ setId: setTags.setId, tagId: setTags.tagId })
+    .from(setTags)
+    .where(inArray(setTags.setId, setIds))
+    .all();
+
+  for (const row of rows) {
+    const list = map.get(row.setId);
+    if (list) list.push(row.tagId as ConceptTagId);
+    else map.set(row.setId, [row.tagId as ConceptTagId]);
+  }
+  for (const [id, tags] of map) {
+    map.set(id, tags.sort());
+  }
+  return map;
+}
+
+function rowsToSets(db: AppDatabase, rows: (typeof sets.$inferSelect)[]): SetRecord[] {
+  if (rows.length === 0) return [];
+  const tagsBySet = loadTagsForSetIds(
+    db,
+    rows.map((r) => r.id),
+  );
+  return rows.map((row) => rowToSet(row, tagsBySet.get(row.id) ?? []));
+}
+
 export function listSets(db: AppDatabase, userId: number, type?: SetType): SetRecord[] {
   const rows = db
     .select()
@@ -66,7 +98,7 @@ export function listSets(db: AppDatabase, userId: number, type?: SetType): SetRe
     )
     .all();
 
-  return rows.map((row) => rowToSet(row, loadTagsForSet(db, row.id)));
+  return rowsToSets(db, rows);
 }
 
 export function listSetsByTags(
@@ -102,7 +134,7 @@ export function listSetsByTags(
     )
     .all();
 
-  return rows.map((row) => rowToSet(row, loadTagsForSet(db, row.id)));
+  return rowsToSets(db, rows);
 }
 
 export function getSet(db: AppDatabase, userId: number, id: string): SetRecord | null {
