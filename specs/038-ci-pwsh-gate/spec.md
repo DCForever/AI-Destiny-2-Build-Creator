@@ -2,7 +2,7 @@
 
 **Feature Branch**: `038-ci-pwsh-gate`  
 **Created**: 2026-07-23  
-**Status**: Draft  
+**Status**: Implemented  
 **Input**: Improve prompt [`specs/ci-dx/improve/github-actions-and-pwsh-gate.md`](../ci-dx/improve/github-actions-and-pwsh-gate.md)
 
 ## Iteration Scope
