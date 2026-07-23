@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-23 (BR-BLD-008 Finish slot-first chrome on 029)
+**Updated**: 2026-07-23 (BR-BLD-009 Finish armor optimize UI on 031)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -118,7 +118,8 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-BLD-005 | Shared build-level fields edited on parent build, not per variant. | [001 edge cases](001-build-sets-synergies/spec.md#edge-cases) |
 | BR-BLD-006 | Exactly one default variant per build. | [FR-022](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-BLD-007 | Production Builds provides a **guided finish walkthrough** (Armor → Weapons → Mods): create empty Set + live attach (replace-by-type), link existing, capture-from-build when resolved gear exists, fill slots from Builds; Skip for now does not satisfy. **v1 shipped in 028.** | [028](028-build-inline-sets/spec.md) |
-| BR-BLD-008 | Finish primary path is **slot-first**: one-tap Create (inherited name, category type, no tags) or preferred Capture, then first empty required slot fill loop. Finish does not require link/name/type/tag chrome; variant Sets tab retains advanced create/link. Armor manual fill until optimizer Finish (031). | [029](029-finish-slot-first/spec.md) |
+| BR-BLD-008 | Finish primary path is **slot-first**: one-tap Create (inherited name, category type, no tags) or preferred Capture, then first empty required slot fill loop. Finish does not require link/name/type/tag chrome; variant Sets tab retains advanced create/link. | [029](029-finish-slot-first/spec.md) |
+| BR-BLD-009 | Finish **Armor** after a live covering Set: goals (synergy-linked set bonuses first, seeded stats) → Find kits (optimize with build class) → top-3 compare → apply-combination in place; manual fill fallback; weapons/mods remain slot-first. | [031](031-finish-armor-optimize-ui/spec.md) |
 
 ---
 

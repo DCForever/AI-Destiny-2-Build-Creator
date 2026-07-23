@@ -57,7 +57,23 @@ describe("finishNextSlot", () => {
       requiredSlotCount: 5,
     });
     expect(firstEmptyRequiredSlot(g)).toBe("helmet");
-    expect(resolvePostMutationStep({ gap: g }).fillSlot).toBe("helmet");
+    expect(resolvePostMutationStep({ gap: g, preferArmorOptimize: false }).fillSlot).toBe("helmet");
+  });
+
+  it("opens armor_optimize for live covering armor by default", () => {
+    const g = gap({
+      category: "armor",
+      status: "needs_fill",
+      coveringSetId: "a1",
+      coveringMode: "live",
+      emptySlots: ["helmet"],
+      requiredSlotCount: 5,
+    });
+    expect(resolvePostMutationStep({ gap: g })).toEqual({
+      step: "armor_optimize",
+      fillSlot: null,
+      category: "armor",
+    });
   });
 
   it("after synthetic needs_fill with only special left opens special", () => {

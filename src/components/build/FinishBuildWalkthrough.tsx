@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BuildSlotFillHost } from "@/components/build/BuildSlotFillHost";
+import { FinishArmorOptimizeWorkspace } from "@/components/build/FinishArmorOptimizeWorkspace";
 import { CaptureSetsFromBuild } from "@/components/build/CaptureSetsFromBuild";
 import type { BuildDetail, BuildVariantDetail } from "@/components/build/types";
 import {
@@ -111,7 +112,7 @@ export function FinishBuildWalkthrough({
     setMessage(null);
     const gap = gapsResult.gaps.find((g) => g.category === cat);
     const target = resolvePostMutationStep({ gap });
-    // 031 may later intercept armor post-create; until then armor uses the same fill path.
+    // Armor with live covering set opens optimizer workspace (031).
     if (target.step === "fill" && target.fillSlot) {
       setFillSlot(target.fillSlot);
       setStep("fill");
@@ -410,6 +411,31 @@ export function FinishBuildWalkthrough({
               </Button>
             </Row>
           </Stack>
+        ) : null}
+
+        {step === "armor_optimize" && activeGap?.coveringSetId && activeGap.category === "armor" ? (
+          <FinishArmorOptimizeWorkspace
+            build={build}
+            setId={activeGap.coveringSetId}
+            setName={activeGap.coveringSetName}
+            onApplied={async () => {
+              setMessage("Armor kit applied");
+              await refresh();
+              setPendingAdvance("armor");
+            }}
+            onManualFill={() => {
+              const slot = activeGap.emptySlots[0];
+              if (slot) {
+                setFillSlot(slot);
+                setStep("fill");
+              } else {
+                setStep("category");
+              }
+            }}
+            onBack={() => {
+              setStep("category");
+            }}
+          />
         ) : null}
 
         {step === "fill" &&
