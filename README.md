@@ -106,7 +106,10 @@ Operator / API verification UI lives under **`/debug/*`** (non-production, signe
 | `npm run lint` | ESLint |
 | `npm run build` | Production build |
 | `npm run start` | Production server |
-| `npm run gate` | typecheck + lint + test + build |
+| `npm run gate` | Cross-platform quality gate: typecheck → lint → test → build (`scripts/gate.mjs`; works on Windows without bash) |
+| `npm run gate:bash` | Same sequence via `scripts/gate.sh` (Unix / Git Bash) |
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the same four checks on pull requests and pushes to `main`/`master` (Node 22, `npm ci`). Requires Node `>=20 <25` (`package.json` `engines`).
 
 ## Project layout
 

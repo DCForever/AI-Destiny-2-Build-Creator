@@ -2,6 +2,9 @@
   "name": "destiny2-build-creator",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20 <25"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:https": "next dev --experimental-https -H 127.0.0.1",
@@ -11,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "gate": "bash scripts/gate.sh"
+    "gate": "node scripts/gate.mjs",
+    "gate:bash": "bash scripts/gate.sh"
   },
   "dependencies": {
     "@destinyitemmanager/dim-api-types": "^1.40.0",
