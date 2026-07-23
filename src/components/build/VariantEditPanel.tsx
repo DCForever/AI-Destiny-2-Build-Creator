@@ -9,6 +9,9 @@ import type {
 } from "@/components/build/types";
 import { SLOT_LABEL } from "@/components/build/types";
 import { ManifestSearchPicker, type ManifestPick } from "@/components/lookups/ManifestSearchPicker";
+import { BuildSlotFillHost } from "@/components/build/BuildSlotFillHost";
+import { CaptureSetsFromBuild } from "@/components/build/CaptureSetsFromBuild";
+import { CreateSetAttachForm } from "@/components/build/CreateSetAttachForm";
 import { SetAttachPicker } from "@/components/lookups/SetAttachPicker";
 import {
   Button,
@@ -145,6 +148,11 @@ export function VariantEditPanel({
 }) {
   const [tab, setTab] = useState<VariantEditTab>("general");
   const [busy, setBusy] = useState(false);
+  const [fillTarget, setFillTarget] = useState<{
+    setId: string;
+    slot: string;
+    mode: "live" | "snapshot";
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -732,6 +740,34 @@ export function VariantEditPanel({
                 </Stack>
               )}
             </Section>
+            <Section label="Create set">
+              <CreateSetAttachForm
+                buildId={build.id}
+                variantId={variant.id}
+                busy={busy}
+                onCreated={(r) => {
+                  setMessage(`Created ${r.set.name}`);
+                  void (async () => {
+                    const res = await fetch(`/api/user/builds/${build.id}`);
+                    const body = (await res.json()) as { build?: BuildDetail };
+                    if (body.build) onSaved(body.build, variant.id);
+                  })();
+                }}
+              />
+            </Section>
+            <Section label="Capture gear">
+              <CaptureSetsFromBuild
+                buildId={build.id}
+                variantId={variant.id}
+                onDone={() => {
+                  void (async () => {
+                    const res = await fetch(`/api/user/builds/${build.id}`);
+                    const body = (await res.json()) as { build?: BuildDetail };
+                    if (body.build) onSaved(body.build, variant.id);
+                  })();
+                }}
+              />
+            </Section>
             <Section label="Attach set">
               <SetAttachPicker
                 disabled={busy}
@@ -749,6 +785,49 @@ export function VariantEditPanel({
                 }
               />
             </Section>
+            {variant.attachments.some((a) => a.mode === "live" && a.set) ? (
+              <Section label="Fill slots">
+                <Stack gap={6}>
+                  {variant.attachments
+                    .filter((a) => a.mode === "live" && a.set)
+                    .map((a) => (
+                      <Row key={a.setId} gap={6} wrap align="center">
+                        <Text size="xs">{a.set?.name}</Text>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() =>
+                            setFillTarget({
+                              setId: a.setId,
+                              slot: a.set?.type === "weapon" ? "primary" : "helmet",
+                              mode: "live",
+                            })
+                          }
+                        >
+                          Fill…
+                        </Button>
+                      </Row>
+                    ))}
+                  {fillTarget ? (
+                    <BuildSlotFillHost
+                      setId={fillTarget.setId}
+                      slot={fillTarget.slot}
+                      attachmentMode={fillTarget.mode}
+                      onClose={() => setFillTarget(null)}
+                      onFilled={() => {
+                        setMessage("Slot filled");
+                        void (async () => {
+                          const res = await fetch(`/api/user/builds/${build.id}`);
+                          const body = (await res.json()) as { build?: BuildDetail };
+                          if (body.build) onSaved(body.build, variant.id);
+                        })();
+                      }}
+                    />
+                  ) : null}
+                </Stack>
+              </Section>
+            ) : null}
           </Stack>
         ) : null}
 

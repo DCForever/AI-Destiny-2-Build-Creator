@@ -9,6 +9,7 @@ import { BuildIdentity } from "@/components/build/BuildIdentity";
 import { BuildLibrary } from "@/components/build/BuildLibrary";
 import { CreateBuildPanel } from "@/components/build/CreateBuildPanel";
 import { VariantCard } from "@/components/build/VariantCard";
+import { FinishBuildWalkthrough } from "@/components/build/FinishBuildWalkthrough";
 import { VariantEditPanel } from "@/components/build/VariantEditPanel";
 import type {
   BuildDetail,
@@ -19,6 +20,7 @@ import type {
 } from "@/components/build/types";
 import type { SynergyTypeSelection } from "@/components/build/SynergyTypeMultiSelect";
 import {
+  Button,
   Callout,
   Cluster,
   EmptyState,
@@ -72,6 +74,7 @@ export function BuildPage() {
   const [classFilter, setClassFilter] = useState<GuardianClass | null>(null);
   const [creating, setCreating] = useState(false);
   const [editingBuild, setEditingBuild] = useState(false);
+  const [finishOpen, setFinishOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -594,20 +597,41 @@ export function BuildPage() {
         </Panel>
 
         {selectedVariant && variantMode === "edit" ? (
-          <VariantEditPanel
-            key={selectedVariant.id}
-            build={detail}
-            variant={selectedVariant}
-            closeLabel="Back to details"
-            onClose={() => setVariantMode("details")}
-            onSaved={(next, preferredVariantId) => {
-              applySavedBuild(next);
-              if (preferredVariantId) {
-                setVariantId(preferredVariantId);
-                setVariantMode("edit");
-              }
-            }}
-          />
+          <>
+            {finishOpen && detail ? (
+              <FinishBuildWalkthrough
+                build={detail}
+                variant={selectedVariant}
+                onClose={() => setFinishOpen(false)}
+                onBuildMutated={async () => {
+                  await loadDetail(detail.id);
+                }}
+              />
+            ) : null}
+            <div className="mb-2">
+              <Button
+                size="sm"
+                variant={finishOpen ? "accent" : "ghost"}
+                onClick={() => setFinishOpen((v) => !v)}
+              >
+                {finishOpen ? "Hide finish walkthrough" : "Finish build"}
+              </Button>
+            </div>
+            <VariantEditPanel
+              key={selectedVariant.id}
+              build={detail}
+              variant={selectedVariant}
+              closeLabel="Back to details"
+              onClose={() => setVariantMode("details")}
+              onSaved={(next, preferredVariantId) => {
+                applySavedBuild(next);
+                if (preferredVariantId) {
+                  setVariantId(preferredVariantId);
+                  setVariantMode("edit");
+                }
+              }}
+            />
+          </>
         ) : selectedVariant ? (
           <VariantCard
             key={selectedVariant.id}
@@ -708,4 +732,5 @@ export function BuildPage() {
     </PageFrame>
   );
 }
+
 
