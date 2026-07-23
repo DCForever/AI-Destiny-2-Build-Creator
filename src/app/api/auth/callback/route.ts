@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getBungieOAuthConfig, getSessionSecret } from "@/lib/config/env";
 import { createBungieAuthClient } from "@/lib/bungie/oauth";
 import { getSession } from "@/lib/bungie/session";
+import { DEFAULT_POST_LOGIN_PATH } from "@/lib/auth/returnUrl";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const session = await getSession();
   const expectedState = session.oauthState;
-  const returnUrl = session.oauthReturnUrl ?? "/analyze";
+  const returnUrl = session.oauthReturnUrl ?? DEFAULT_POST_LOGIN_PATH;
 
   if (!expectedState || expectedState !== state) {
     return NextResponse.json({ error: "OAuth state mismatch — possible CSRF attempt" }, { status: 400 });
