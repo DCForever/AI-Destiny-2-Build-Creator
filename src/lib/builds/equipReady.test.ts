@@ -113,4 +113,91 @@ describe("computeEquipReady", () => {
       expect.objectContaining({ code: API_ERROR_CODES.NOT_EQUIP_READY }),
     );
   });
+
+  it("post-sync: pre-ready pins become not equip-ready when instance missing after refresh", () => {
+    const equipment = {
+      primary: {
+        slot: "primary" as const,
+        itemHash: 1,
+        itemName: "Gun",
+        source: "set" as const,
+        instanceId: "pin-a",
+      },
+      helmet: {
+        slot: "helmet" as const,
+        itemHash: 2,
+        itemName: "Helm",
+        source: "set" as const,
+        instanceId: "pin-b",
+      },
+    };
+
+    const preSync = computeEquipReady(
+      resolved(equipment),
+      buildInventoryPinIndex([
+        { instanceId: "pin-a", itemHash: 1 },
+        { instanceId: "pin-b", itemHash: 2 },
+      ]),
+    );
+    expect(preSync.equipReady).toBe(true);
+
+    // Post-sync inventory lost pin-b (sold/transferred out of account view).
+    const postSync = computeEquipReady(
+      resolved(equipment),
+      buildInventoryPinIndex([{ instanceId: "pin-a", itemHash: 1 }]),
+    );
+    expect(postSync.equipReady).toBe(false);
+    expect(postSync.pinStatuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          slot: "helmet",
+          status: "stale",
+          reason: "instance_missing",
+          instanceId: "pin-b",
+        }),
+      ]),
+    );
+    expect(() => assertEquipReady(postSync)).toThrow(
+      expect.objectContaining({
+        code: API_ERROR_CODES.NOT_EQUIP_READY,
+        status: 409,
+      }),
+    );
+  });
+
+  it("post-sync happy path: all claimed instances still present remain equip-ready", () => {
+    const equipment = {
+      primary: {
+        slot: "primary" as const,
+        itemHash: 1,
+        itemName: "Gun",
+        source: "set" as const,
+        instanceId: "pin-a",
+      },
+      special: {
+        slot: "special" as const,
+        itemHash: 3,
+        itemName: "Special",
+        source: "set" as const,
+        instanceId: "pin-c",
+      },
+      helmet: {
+        slot: "helmet" as const,
+        itemHash: 2,
+        itemName: "Helm",
+        source: "set" as const,
+        instanceId: "pin-b",
+      },
+    };
+    const postSync = computeEquipReady(
+      resolved(equipment),
+      buildInventoryPinIndex([
+        { instanceId: "pin-a", itemHash: 1 },
+        { instanceId: "pin-b", itemHash: 2 },
+        { instanceId: "pin-c", itemHash: 3 },
+      ]),
+    );
+    expect(postSync.equipReady).toBe(true);
+    expect(() => assertEquipReady(postSync)).not.toThrow();
+  });
 });

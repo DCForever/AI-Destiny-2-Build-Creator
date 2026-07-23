@@ -24,12 +24,12 @@
 
 ### Tests
 
-- [ ] T003 [P] [US1] Add test: post-sync style missing instance → computeEquipReady false + assertEquipReady NOT_EQUIP_READY in `src/lib/builds/equipReady.test.ts`
-- [ ] T004 [P] [US1] Add test documenting multi-pin happy readiness still true when all instances present (if not already covered)
+- [x] T003 [P] [US1] Add test: post-sync style missing instance → computeEquipReady false + assertEquipReady NOT_EQUIP_READY in `src/lib/builds/equipReady.test.ts`
+- [x] T004 [P] [US1] Add test documenting multi-pin happy readiness still true when all instances present (if not already covered)
 
 ### Implementation
 
-- [ ] T005 [US1] After `listInventoryItems` in `src/app/api/user/builds/[id]/variants/[variantId]/equip/route.ts`, call `computeEquipReady` + `buildInventoryPinIndex` + `assertEquipReady` before `planEquipSteps`
+- [x] T005 [US1] After `listInventoryItems` in `src/app/api/user/builds/[id]/variants/[variantId]/equip/route.ts`, call `computeEquipReady` + `buildInventoryPinIndex` + `assertEquipReady` before `planEquipSteps`
 
 **Checkpoint**: Post-sync reassert on route
 
@@ -43,12 +43,12 @@
 
 ### Tests
 
-- [ ] T006 [P] [US2] Add test: missing inventory for claimed instanceId throws in `src/lib/builds/equipPlan.test.ts`
-- [ ] T007 [P] [US2] Add test: happy path plans equip steps for multiple pinned combat slots in `src/lib/builds/equipPlan.test.ts`
+- [x] T006 [P] [US2] Add test: missing inventory for claimed instanceId throws in `src/lib/builds/equipPlan.test.ts`
+- [x] T007 [P] [US2] Add test: happy path plans equip steps for multiple pinned combat slots in `src/lib/builds/equipPlan.test.ts`
 
 ### Implementation
 
-- [ ] T008 [US2] Replace silent skip in `src/lib/builds/equipPlan.ts` with `ApiError` NOT_EQUIP_READY hard error
+- [x] T008 [US2] Replace silent skip in `src/lib/builds/equipPlan.ts` with `ApiError` NOT_EQUIP_READY hard error
 
 **Checkpoint**: Planner defense-in-depth
 
@@ -56,8 +56,8 @@
 
 ## Phase 5: Polish
 
-- [ ] T009 Run `npm run test`, `npm run typecheck`, `npm run lint`; fix failures
-- [ ] T010 Mark improve prompt acceptance notes if needed; final commit
+- [x] T009 Run `npm run test`, `npm run typecheck`, `npm run lint`; fix failures
+- [x] T010 Mark improve prompt acceptance notes if needed; final commit
 
 ---
 

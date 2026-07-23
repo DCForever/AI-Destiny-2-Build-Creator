@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { API_ERROR_CODES } from "@/lib/api/errors";
 import { planEquipSteps } from "@/lib/builds/equipPlan";
 import { executeEquipPlan } from "@/lib/builds/equipOrchestrator";
 import { createMockWriteClient } from "@/lib/bungie/writeClient";
@@ -121,6 +122,83 @@ describe("planEquipSteps (US2)", () => {
       inventory: [],
     });
     expect(plan).toEqual([]);
+  });
+
+  it("throws NOT_EQUIP_READY when combat instanceId is missing from inventory", () => {
+    expect(() =>
+      planEquipSteps({
+        characterId: "char-a",
+        equipment: {
+          helmet: {
+            slot: "helmet",
+            itemHash: 10,
+            itemName: "Helm",
+            source: "set",
+            instanceId: "missing-helm",
+          },
+        },
+        artifact: null,
+        fashion: null,
+        inventory: [],
+      }),
+    ).toThrow(expect.objectContaining({ code: API_ERROR_CODES.NOT_EQUIP_READY, status: 409 }));
+  });
+
+  it("plans equip steps for all pinned combat slots on happy path", () => {
+    const plan = planEquipSteps({
+      characterId: "char-a",
+      equipment: {
+        primary: {
+          slot: "primary",
+          itemHash: 1,
+          itemName: "Gun",
+          source: "set",
+          instanceId: "i-primary",
+        },
+        helmet: {
+          slot: "helmet",
+          itemHash: 10,
+          itemName: "Helm",
+          source: "set",
+          instanceId: "i-helm",
+        },
+        arms: {
+          slot: "arms",
+          itemHash: 11,
+          itemName: "Arms",
+          source: "set",
+          instanceId: "i-arms",
+        },
+      },
+      artifact: null,
+      fashion: null,
+      inventory: [
+        inv({
+          instanceId: "i-primary",
+          itemHash: 1,
+          location: "character",
+          characterId: "char-a",
+        }),
+        inv({
+          instanceId: "i-helm",
+          itemHash: 10,
+          location: "character",
+          characterId: "char-a",
+        }),
+        inv({
+          instanceId: "i-arms",
+          itemHash: 11,
+          location: "character",
+          characterId: "char-a",
+        }),
+      ],
+    });
+
+    expect(plan.filter((s) => s.kind === "equip").map((s) => s.id)).toEqual([
+      "equip-primary",
+      "equip-helmet",
+      "equip-arms",
+    ]);
   });
 });
 
