@@ -30,8 +30,8 @@ describe("list batch child hydration", () => {
       softStatTargets: {},
       tagIds: ["pve", "solar"],
       synergyTypes: [
-        { type: "Verb", subType: "Jolt" },
-        { type: "Element", subType: null },
+        { type: "verb", subType: "Jolt" },
+        { type: "element", subType: null },
       ],
       now,
     });
@@ -47,7 +47,7 @@ describe("list batch child hydration", () => {
       pinnedSuper: null,
       softStatTargets: {},
       tagIds: ["pvp"],
-      synergyTypes: [{ type: "Verb", subType: "" }],
+      synergyTypes: [{ type: "verb", subType: "" }],
       now,
     });
 
@@ -58,13 +58,13 @@ describe("list batch child hydration", () => {
     expect(one.tagIds).toEqual(["pve", "solar"]);
     expect(one.synergyTypes).toEqual(
       expect.arrayContaining([
-        { type: "Verb", subType: "Jolt" },
-        { type: "Element", subType: null },
+        { type: "verb", subType: "Jolt" },
+        { type: "element", subType: null },
       ]),
     );
     expect(two.tagIds).toEqual(["pvp"]);
     // empty string subType exposed as null
-    expect(two.synergyTypes).toEqual([{ type: "Verb", subType: null }]);
+    expect(two.synergyTypes).toEqual([{ type: "verb", subType: null }]);
   });
 
   it("listSets returns sorted tags for multiple sets", () => {
@@ -99,7 +99,7 @@ describe("list batch child hydration", () => {
     createSynergyRecord(db, user.id, {
       id: "y1",
       name: "Jolt",
-      type: "Verb",
+      type: "verb",
       subType: "Jolt",
       description: "",
       links: [
@@ -111,7 +111,7 @@ describe("list batch child hydration", () => {
     createSynergyRecord(db, user.id, {
       id: "y2",
       name: "Devour",
-      type: "Verb",
+      type: "verb",
       subType: "Devour",
       description: "",
       links: [{ kind: "exotic_armor", displayName: "Nezarec", itemHash: 3 }],
