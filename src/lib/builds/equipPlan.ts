@@ -1,3 +1,4 @@
+import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import type { ResolvedArtifact, ResolvedFashion } from "@/lib/builds/resolveArtifactFashion";
 import type { ResolvedVariantEquipment } from "@/lib/builds/resolveVariant";
 import type { UserInventoryItem } from "@/lib/db/types";
@@ -109,7 +110,19 @@ export function planEquipSteps(input: EquipPlanInput): PlannedEquipStep[] {
     const claim = input.equipment[slot];
     if (!claim?.instanceId) continue;
     const item = byInstance.get(claim.instanceId);
-    if (!item) continue;
+    if (!item) {
+      throw new ApiError(
+        API_ERROR_CODES.NOT_EQUIP_READY,
+        `Combat pin instance missing from inventory for slot ${slot}`,
+        {
+          slot,
+          instanceId: claim.instanceId,
+          reason: "instance_missing",
+          allowed: false,
+        },
+        409,
+      );
+    }
 
     if (needsTransfer(item, input.characterId)) {
       appendTransfers(steps, slot, item, input.characterId);

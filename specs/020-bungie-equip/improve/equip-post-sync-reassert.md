@@ -1,5 +1,5 @@
 ---
-status: TODO
+status: DONE
 priority: P1
 effort: S
 risk: LOW
@@ -7,6 +7,7 @@ category: bug
 depends: []
 planned_at: 799a9d6
 issue: ""
+completed_in: specs/036-equip-post-sync
 ---
 
 # Re-assert equip-ready after inventory sync before planning steps
@@ -70,10 +71,10 @@ export function computeEquipReady(resolved, inventory): EquipReadyResult {
 
 ### Acceptance criteria
 
-- [ ] `npm run test` passes with new/updated tests for post-sync stale pin and planner missing-instance behavior
-- [ ] `npm run typecheck` and `npm run lint` pass
-- [ ] Code review: equip route orders sync → recompute readiness → plan → execute
-- [ ] No silent `continue` on missing inventory for combat claims that carried `instanceId` without a hard error path
+- [x] `npm run test` passes with new/updated tests for post-sync stale pin and planner missing-instance behavior
+- [x] `npm run typecheck` and `npm run lint` pass
+- [x] Code review: equip route orders sync → recompute readiness → plan → execute
+- [x] No silent `continue` on missing inventory for combat claims that carried `instanceId` without a hard error path
 
 ### Scope boundaries
 

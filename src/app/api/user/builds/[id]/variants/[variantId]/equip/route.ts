@@ -4,7 +4,11 @@ import { z } from "zod";
 import { requireAuthenticatedUser } from "@/lib/api/requireUser";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { apiErrorResponse, unauthorizedResponse } from "@/lib/api/response";
-import { assertEquipReady } from "@/lib/builds/equipReady";
+import {
+  assertEquipReady,
+  buildInventoryPinIndex,
+  computeEquipReady,
+} from "@/lib/builds/equipReady";
 import { getBuildDetail, getResolvedVariant } from "@/lib/builds/buildService";
 import { planEquipSteps } from "@/lib/builds/equipPlan";
 import { executeEquipPlan } from "@/lib/builds/equipOrchestrator";
@@ -97,6 +101,13 @@ export async function POST(request: Request, context: RouteContext): Promise<Nex
     );
 
     const inventory = listInventoryItems(db, auth.user.id);
+    // Authoritative post-sync readiness: do not trust pre-sync resolved.equipReady alone.
+    assertEquipReady(
+      computeEquipReady(
+        { equipment: resolved.equipment, conflicts: resolved.conflicts ?? [] },
+        buildInventoryPinIndex(inventory),
+      ),
+    );
     const plan = planEquipSteps({
       equipment: resolved.equipment,
       artifact: resolved.artifact,
