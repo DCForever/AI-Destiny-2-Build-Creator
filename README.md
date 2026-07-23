@@ -1,150 +1,146 @@
 # Destiny 2 Build Creator
 
-A local-first web app that generates and analyzes Destiny 2 builds. A local LLM
-researches and composes the build using tool calls against the real Bungie
-manifest plus optional web search (SearXNG); the app then validates every item,
-perk, and stat against manifest data before rendering a build sheet with DIM
-exports.
+Local-first web app for **assembling and maintaining Destiny 2 builds** on the final **9.7.0 / Edge of Fate** sandbox (Armor 3.0, set bonuses, artifacts, Anti-Champion 2.0).
 
-Built against the **Update 9.7.0 "Monument of Triumph"** (June 9, 2026) sandbox:
-Anti-Champion 2.0, Armor 3.0 (12 archetypes, 0-200 stats with enhanced benefits
-past 100), Artifacts 2.0 (seven permanent artifacts), and the final ability
-economy.
+Primary loop: **intent → compose → equip**.
+
+You designate play-pattern intent (synergy types), compose a class-bound **Build** from reusable **Sets** and **Synergies** (with variants and soft guidance), then equip in-game or export to DIM when pins are owned-instance ready. Soft suggestions never auto-apply; illegal kits and exotic limits hard-block where the game does.
+
+Optional LLM tooling exists for propose-for-confirm discovery and legacy generation paths. It is **not required** for core compose, and is not the primary product surface.
+
+Product framing: [`PRODUCT.md`](./PRODUCT.md). Domain rules: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md).
 
 ## Stack
 
-- Next.js (App Router) + TypeScript strict + Tailwind CSS
-- Local LLM via **OpenAI-compatible API** (default; LM Studio, vLLM, etc.),
-  **Ollama**, or **Grok (xAI)** with optional auto-fallback to a local LLM —
-  two-phase pipeline: tool-call research loop, then JSON-schema composition
-- Bungie API manifest (versioned disk cache, derived entity stores) and
-  optional OAuth sign-in for character import
-- zod (LLM output validation), fuse.js (fuzzy name resolution), iron-session
-  (encrypted session cookie), **SQLite** (inventory + saved loadouts via
-  Drizzle + better-sqlite3), vitest (unit tests)
+- **Next.js** (App Router) + React 19 + TypeScript + Tailwind CSS
+- **Bungie API** — manifest cache, OAuth, inventory sync, in-game equip
+- **SQLite** (Drizzle + better-sqlite3) — builds, sets, synergies, inventory (`.cache/app.db`)
+- **DIM** export / optional dim.gg share when configured
+- Optional **OpenAI-compatible / Ollama / Grok** LLM and **SearXNG** for advanced/debug flows only
+- **vitest** unit tests; `npm run gate` for typecheck + lint + test + build
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.local.example .env.local   # fill in values, see below
-npm run dev                        # http://localhost:3000
+cp .env.local.example .env.local   # fill in values — see Environment
+npm run dev                        # http://localhost:3000 → redirects to /build
 ```
 
 ### Prerequisites
 
-1. **Local LLM** — one of:
-   - **LM Studio** (recommended default): enable *Local Server*, load a
-     tool-capable model, copy its model id into `LLM_MODEL`. Set
-     `LLM_PROVIDER=openai` and `LLM_URL=http://127.0.0.1:1234/v1`.
-   - **Ollama**: `ollama pull gemma4` (12B+ recommended), set
-     `LLM_PROVIDER=ollama`, `OLLAMA_URL=http://127.0.0.1:11434`,
-     `OLLAMA_MODEL=gemma4`.
-   - **Grok (xAI)**: set `LLM_PROVIDER=grok` and `XAI_API_KEY` (or
-     `LLM_API_KEY`) from [console.x.ai](https://console.x.ai). Defaults to
-     `grok-4.3` at `https://api.x.ai/v1` (`LLM_MODEL_GROK` overrides the model).
-     To auto-fallback to a local LLM when Grok is unavailable, also set
-     `OLLAMA_URL`/`OLLAMA_MODEL` or a local `LLM_URL` + `LLM_MODEL` (e.g. LM Studio).
-   - Any other **OpenAI-compatible** server on `/v1/chat/completions` with
-     function/tool calling support.
+1. **Bungie API app** (required for manifest, sign-in, inventory, equip):
+   - Create at <https://www.bungie.net/en/Application>
+   - OAuth type **Confidential**
+   - Redirect: `https://127.0.0.1:3000/api/auth/callback`
+   - Origin: `https://127.0.0.1:3000`
+   - Bungie requires HTTPS and refuses `localhost`. For sign-in use:
+     ```bash
+     npm run dev:https
+     ```
+     then open `https://127.0.0.1:3000`.
 
-   The model should support **tool/function calling** for Phase A (manifest
-   research). Phase B prefers **JSON schema / structured output**; if your
-   server rejects `response_format`, the app retries without it and validates
-   with zod.
+2. **Session secret** — 32+ character random string in `SESSION_SECRET` (cookie encryption).
 
-2. **SearXNG** (optional, for live meta checks):
-   `docker run -d -p 8888:8080 searxng/searxng`, then enable the JSON output
-   format in its `settings.yml` (`search.formats: [html, json]`). Without it,
-   the built-in curated meta pack covers meta questions.
+3. **First-run data** (in the app):
+   1. **Settings** → **Refresh manifest** (needs `BUNGIE_API_KEY`). Builds derived entity stores used by catalog, sets, and composition.
+   2. **Sign in with Bungie**, then refresh manifest again (or sync inventory) so owned instances are available for pins, optimizer, and equip.
+   3. Start on **Build** (`/build`): create or open a build, attach sets, fill slots, work variants toward equip-ready.
 
-3. **Bungie API app** (only needed for character import / analyzer sign-in):
-   create one at <https://www.bungie.net/en/Application> with OAuth type
-   *Confidential*, redirect `https://127.0.0.1:3000/api/auth/callback`, origin
-   `https://127.0.0.1:3000`. Bungie requires HTTPS and refuses `localhost`, so
-   use `npm run dev:https` and open `https://127.0.0.1:3000` when signing in.
+4. **Optional**
+   - `DIM_API_KEY` — dim.gg share links (see [DIM API](https://github.com/DestinyItemManager/dim-api#get-an-api-key)).
+   - LLM / SearXNG — only if you use optional generation or `/debug/llm-propose`. See [Optional LLM](#optional-llm) below.
 
 ### Environment
 
-Copy `.env.local.example` to `.env.local`. Key LLM variables:
+Copy `.env.local.example` to `.env.local`.
 
-| Variable | Purpose |
-| --- | --- |
-| `LLM_PROVIDER` | `openai` (default), `ollama`, or `grok` |
-| `LLM_URL` | Base URL — include `/v1` for OpenAI-compatible servers |
-| `LLM_MODEL` | Model id for openai/ollama or local Grok fallback (LM Studio server tab) |
-| `LLM_MODEL_GROK` | Grok model id when `LLM_PROVIDER=grok` (default `grok-4.3`) |
-| `LLM_API_KEY` | Optional Bearer token if your server requires auth |
-| `XAI_API_KEY` | xAI API key when `LLM_PROVIDER=grok` (alias for `LLM_API_KEY`) |
-| `OLLAMA_URL` / `OLLAMA_MODEL` | Ollama config; also used as Grok fallback when set |
+| Variable | Required for | Purpose |
+| --- | --- | --- |
+| `BUNGIE_API_KEY` | Manifest, API | Bungie application API key |
+| `BUNGIE_CLIENT_ID` / `BUNGIE_CLIENT_SECRET` | OAuth | Confidential client credentials |
+| `SESSION_SECRET` | Sign-in | iron-session cookie encryption (32+ chars) |
+| `DIM_API_KEY` | dim.gg shares | Optional DIM Sync API key |
+| `LLM_*` / `OLLAMA_*` / `XAI_API_KEY` / `SEARXNG_URL` | Optional LLM | See [Optional LLM](#optional-llm); not needed for compose |
 
-Other variables are optional except when using the corresponding feature
-(Bungie keys for sign-in, `SESSION_SECRET` for sessions, `DIM_API_KEY` for
-dim.gg shares).
+### SQLite
 
-### SQLite (inventory + loadouts)
+Builds, sets, synergies, and inventory live in `.cache/app.db`. Preferences may also use `.cache/users/{id}/`.
 
-User inventory and saved loadouts are stored in `.cache/app.db` (SQLite). User
-preferences remain in `.cache/users/{id}/preferences.json`.
-
-**Deployment constraint:** SQLite is intended for **single-process local use**
-only (`npm run dev` or `npm start`). Do not run multiple Node instances against
-the same file, and do not deploy to Edge or serverless — the DB file is not
-shared across workers. If the dev DB becomes corrupted after hot reload, delete
-`.cache/app.db` and re-sync inventory from Bungie.
+**Deployment constraint:** single-process local use only (`npm run dev` or `npm start`). Do not run multiple Node workers against the same DB file, and do not deploy to Edge/serverless. If the dev DB corrupts after hot reload, delete `.cache/app.db` and re-sync inventory from Bungie.
 
 ## Using the app
 
-See **[DEBUG.md](./DEBUG.md)** for the Debug / Service UI (`/debug/*`): prerequisites (manifest, Bungie sign-in, inventory sync), per-page flows, and owned-instance drill-down.
+Primary nav (production shell):
 
-1. **First run**: open **Settings** and click *Refresh manifest*. This
-   downloads the Bungie manifest tables and builds the derived entity stores
-   (requires `BUNGIE_API_KEY`). Generation refuses to run without them.
-2. **Generator** (`/`): pick class/subclass/activity/playstyle, optionally pin
-   an exotic or weapon, filter weapon types, and generate. The model researches
-   with manifest tools before composing; the app then resolves every name,
-   flags fuzzy matches, illegal perks, slot mismatches (with visible
-   auto-remediation), and missing champion coverage, and renders the build
-   sheet. Sign in and sync inventory to prioritize owned weapons.
-   *Regenerate* reruns the same request; *Try a Different Angle* asks for a
-   different exotic and engine. Enable multi-pass generation in Settings when
-   `LLM_MULTI_PASS_ENABLED=true`.
-3. **Analyzer** (`/analyze`): paste your current loadout (or sign in with
-   Bungie and import a character's equipped gear) and get an assessment,
-   prioritized swaps, and an optimized build sheet.
-4. **Loadouts** (`/loadouts`): save, list, and edit generated builds when
-   signed in. Swap weapons client-side with manifest re-resolve; optional LLM
-   partial refine for locked sections.
-5. **Exports**: every build sheet offers a DIM wishlist, Loadout Optimizer
-   parameters, raw JSON, and — when signed in with Bungie and `DIM_API_KEY` is
-   set — a dim.gg share link.
+| Route | Role |
+| --- | --- |
+| [`/build`](./src/app/build) | **Home.** Compose builds: identity (synergy types, exotic/super pins), variants, set attachments, slot pins, soft guidance, equip / DIM export |
+| [`/sets`](./src/app/sets) | Library of Weapon / Armor / Mod / Pair / Fashion sets; slot fill from catalog/owned; armor optimizer paths |
+| [`/synergy`](./src/app/synergy) | Curated Type+Object synergies with evidence links; reusable play-pattern library |
+| [`/catalog`](./src/app/catalog) | Multi-facet browse (all / owned) as a composition aid for filling sets and slots |
+| [`/loadouts`](./src/app/loadouts) | In-game / legacy loadout list surfaces |
+| [`/settings`](./src/app/settings) | Manifest refresh, Bungie auth, inventory sync, preferences |
+
+`/` redirects to `/build`. **Analyze** (`/analyze`) remains available as an adjacent tool; it is not the primary compose job.
+
+Typical session:
+
+1. Refresh manifest (and sign in + inventory when you need owned pins).
+2. Optionally curate **Synergies** and **Sets**, or create them in-flow from Build.
+3. On **Build**, set class-bound identity and designated synergy types, attach sets, pin instances, review soft coverage/stat guidance.
+4. When the active variant is equip-ready, equip via Bungie or export to DIM.
+
+Soft guidance and optimizer suggestions are **suggest-then-confirm** — nothing mutates silently.
+
+Operator / API verification UI lives under **`/debug/*`** (non-production, signed-in). See **[DEBUG.md](./DEBUG.md)**.
 
 ## Scripts
 
-| Script              | Purpose                                  |
-| ------------------- | ---------------------------------------- |
-| `npm run dev`       | Dev server (HTTP)                        |
-| `npm run dev:https` | Dev server with local HTTPS (for OAuth)  |
-| `npm run typecheck` | TypeScript check, no emit                |
-| `npm run test`      | Vitest unit tests                        |
-| `npm run lint`      | ESLint                                   |
-| `npm run build`     | Production build                         |
-| `npm run gate`      | typecheck + lint + test + build          |
-
-## Debug / Service UI
-
-Local API verification uses `/debug/*` pages (signed in, non-production only). See **[DEBUG.md](./DEBUG.md)** for setup, inventory sync, and per-page flows.
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Dev server (HTTP) |
+| `npm run dev:https` | Dev server with local HTTPS (Bungie OAuth) |
+| `npm run typecheck` | TypeScript check, no emit |
+| `npm run test` | Vitest unit tests |
+| `npm run lint` | ESLint |
+| `npm run build` | Production build |
+| `npm run start` | Production server |
+| `npm run gate` | typecheck + lint + test + build |
 
 ## Project layout
 
-- `src/lib/manifest/` — manifest download/cache, entity extractors, item
-  resolver, perk validator
-- `src/lib/llm/` — LLM clients (OpenAI-compatible, Ollama, Grok with fallback),
-  tool loop, build schema, prompts, optional multi-pass pipeline
-- `src/lib/db/` — SQLite schema, repositories (inventory, loadouts, users)
-- `src/lib/search/` — SearXNG JSON API client
-- `src/lib/bungie/` — OAuth, session, profile import, inventory sync
-- `src/data/meta/` — curated 9.7.0 meta pack (with cached sources)
-- `src/data/rules/` — deterministic sandbox rule tables (anti-champion mapping,
-  armor archetypes, stat benefit curves, activity rules)
-- `src/app/` — pages (`/` generator, `/analyze`, `/loadouts`, `/settings`) and API routes
+- `src/app/` — routes: `build`, `sets`, `synergy`, `catalog`, `loadouts`, `analyze`, `settings`, `debug/*`, and API routes
+- `src/components/` — production UI (build, sets, synergy, catalog, sheet, Matte Flap Ledger primitives under `ui/`)
+- `src/lib/builds/`, `sets/`, `synergies/` — domain services for composition and libraries
+- `src/lib/manifest/` — manifest download/cache, extractors, resolution
+- `src/lib/bungie/` — OAuth, session, profile, inventory sync, equip
+- `src/lib/catalog/`, `inventory/`, `optimizer/`, `dim/` — browse, owned instances, armor optimizer, export
+- `src/lib/db/` — SQLite schema and repositories
+- `src/lib/llm/` — optional generation / propose pipelines (not the primary path)
+- `src/data/` — meta pack, sandbox rule tables, synergy vocabulary
+- `specs/` — domain rules (`DBR-*` / `DAC-*` / `BR-*`) and feature slices `00N-*`
+- `PRODUCT.md`, `DEBUG.md`, `DESIGN.md`, `docs/` — product and operator docs
+
+## Optional LLM
+
+LLM is **optional**. Core Build / Sets / Synergy / Catalog work without a model.
+
+When configured (see `.env.local.example`):
+
+- OpenAI-compatible local servers (LM Studio, vLLM, …), Ollama, or Grok (xAI) with optional local fallback
+- Optional multi-pass generation (`LLM_MULTI_PASS_ENABLED`) — experimental
+- Optional SearXNG for live meta search
+- Propose-for-confirm synergy/evidence flows under debug (e.g. `/debug/llm-propose`) — **nothing becomes canonical without user confirmation**
+
+Generator-style multi-pass LLM is **not** restored as a primary nav tab. Prefer compose surfaces for day-to-day work; use LLM only when you want assisted discovery.
+
+## Related docs
+
+| Doc | Contents |
+| --- | --- |
+| [`PRODUCT.md`](./PRODUCT.md) | Purpose, positioning, capabilities, constraints |
+| [`DEBUG.md`](./DEBUG.md) | `/debug/*` setup and API verification flows |
+| [`DESIGN.md`](./DESIGN.md) | Design notes |
+| [`AGENTS.md`](./AGENTS.md) | Agent / Spec Kit domain doc rules |
+| [`specs/`](./specs/) | Domain and feature specifications |
