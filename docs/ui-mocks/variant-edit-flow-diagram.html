@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Variant Edit Flow — Collaborative Diagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06080c;
+      --surface: #0d1118;
+      --raised: #141a24;
+      --line: #243044;
+      --line-strong: #3a4a66;
+      --fg: #e9edf5;
+      --muted: #8b97ad;
+      --accent: #e6b35c;
+      --accent-strong: #f3cb7a;
+      --accent-dim: rgba(230, 179, 92, 0.14);
+      --success: #6fc28b;
+      --danger: #e2654f;
+      --void: #b184c5;
+      --stasis: #4d88ff;
+      --current: #7aa2ff;
+      --target: #e6b35c;
+      --shared: #6fc28b;
+      --build-scope: #c47cff;
+      --variant-scope: #5ec8d8;
+      --note-bg: #2a2214;
+      --note-border: #c9a24a;
+      --font-display: "Barlow Condensed", "Segoe UI", sans-serif;
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --board-w: 980px;
+      --board-h: 2920px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--fg);
+      background:
+        radial-gradient(1100px 520px at 18% -10%, rgba(94, 200, 216, 0.07), transparent 55%),
+        radial-gradient(900px 480px at 90% 0%, rgba(196, 124, 255, 0.06), transparent 50%),
+        var(--bg);
+      overflow: hidden;
+    }
+    .app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+    .topbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;
+      padding: 12px 16px; border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: blur(10px); z-index: 20;
+    }
+    .brand { display: flex; flex-direction: column; gap: 2px; min-width: 240px; }
+    .brand h1 {
+      margin: 0; font-family: var(--font-display); font-size: 1.05rem;
+      letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;
+    }
+    .brand p { margin: 0; color: var(--muted); font-size: 0.78rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1; }
+    .btn {
+      appearance: none; border: 1px solid var(--line); background: var(--raised);
+      color: var(--fg); font-family: var(--font-body); font-size: 0.78rem;
+      padding: 7px 12px; border-radius: 2px; cursor: pointer;
+    }
+    .btn:hover { border-color: var(--line-strong); }
+    .btn.accent {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: var(--accent-dim); color: var(--accent-strong); font-weight: 600;
+    }
+    .btn.ghost { background: transparent; color: var(--muted); }
+    .btn.danger {
+      border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+      color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent);
+    }
+    .sep { width: 1px; height: 22px; background: var(--line); margin: 0 2px; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+      font-size: 0.72rem; color: var(--muted);
+    }
+    .swatch { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch i {
+      width: 12px; height: 12px; border-radius: 2px; display: inline-block;
+      border: 1px solid transparent;
+    }
+    .swatch.current i { background: color-mix(in srgb, var(--current) 35%, transparent); border-color: var(--current); }
+    .swatch.target i { background: var(--accent-dim); border-color: var(--accent); }
+    .swatch.shared i { background: color-mix(in srgb, var(--shared) 22%, transparent); border-color: var(--shared); }
+    .swatch.variant i { background: color-mix(in srgb, var(--variant-scope) 28%, transparent); border-color: var(--variant-scope); }
+    .swatch.build i { background: color-mix(in srgb, var(--build-scope) 28%, transparent); border-color: var(--build-scope); }
+    .status {
+      font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); margin-left: auto;
+    }
+    .status strong { color: var(--accent-strong); font-weight: 500; }
+    .workspace { display: grid; grid-template-columns: 1fr 330px; min-height: 0; }
+    @media (max-width: 980px) {
+      .workspace { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+      .side { max-height: 40vh; border-left: 0; border-top: 1px solid var(--line); }
+    }
+    .canvas-wrap {
+      position: relative; overflow: auto; min-height: 0;
+      background:
+        linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+        linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+        var(--bg);
+      background-blend-mode: soft-light, soft-light, normal;
+      cursor: grab;
+    }
+    .canvas-wrap.panning { cursor: grabbing; }
+    .canvas-wrap.note-mode { cursor: crosshair; }
+    .board {
+      position: relative; width: var(--board-w); height: var(--board-h);
+      margin: 28px; transform-origin: 0 0;
+    }
+    .node {
+      position: absolute; width: 200px; border: 1px solid var(--line-strong);
+      background: var(--surface);
+      box-shadow: 0 10px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
+      border-radius: 3px; user-select: none; z-index: 2;
+      transition: box-shadow .15s, border-color .15s;
+    }
+    .node:hover {
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line-strong));
+      z-index: 4;
+    }
+    .node.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), 0 14px 32px rgba(0,0,0,.45);
+      z-index: 5;
+    }
+    .node.lane-current {
+      border-color: color-mix(in srgb, var(--current) 55%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--current) 10%, var(--surface)), var(--surface));
+    }
+    .node.lane-target {
+      border-color: color-mix(in srgb, var(--target) 55%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--target) 12%, var(--surface)), var(--surface));
+    }
+    .node.lane-shared {
+      border-color: color-mix(in srgb, var(--shared) 50%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--shared) 10%, var(--surface)), var(--surface));
+    }
+    .node.scope-variant {
+      border-color: color-mix(in srgb, var(--variant-scope) 55%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--variant-scope) 12%, var(--surface)), var(--surface));
+    }
+    .node.scope-build {
+      border-color: color-mix(in srgb, var(--build-scope) 55%, var(--line));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--build-scope) 12%, var(--surface)), var(--surface));
+    }
+    .node.decision {
+      width: 158px; height: 158px; border-radius: 4px; transform: rotate(45deg);
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--void) 16%, var(--surface)), var(--surface));
+      border-color: color-mix(in srgb, var(--void) 55%, var(--line));
+    }
+    .node.decision .inner { transform: rotate(-45deg); width: 112px; text-align: center; padding: 8px; }
+    .node.start, .node.end { width: 170px; border-radius: 999px; text-align: center; }
+    .node.wide { width: 240px; }
+    .node-head {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+      padding: 10px 12px 6px;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    }
+    .node.decision .node-head, .node.start .node-head, .node.end .node-head {
+      border-bottom: 0; padding: 0; justify-content: center;
+    }
+    .node-title {
+      margin: 0; font-family: var(--font-display); font-size: 0.82rem;
+      letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; line-height: 1.15;
+    }
+    .node-body { padding: 8px 12px 12px; font-size: 0.74rem; color: var(--muted); line-height: 1.35; }
+    .node.decision .node-body, .node.start .node-body, .node.end .node-body { padding: 4px 0 0; }
+    .tag {
+      font-family: var(--font-display); font-size: 0.58rem; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 2px 6px; border: 1px solid var(--line);
+      color: var(--muted); white-space: nowrap; flex-shrink: 0;
+    }
+    .tag.current { color: var(--current); border-color: color-mix(in srgb, var(--current) 50%, transparent); }
+    .tag.target { color: var(--accent-strong); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+    .tag.shared { color: var(--success); border-color: color-mix(in srgb, var(--success) 45%, transparent); }
+    .tag.variant { color: var(--variant-scope); border-color: color-mix(in srgb, var(--variant-scope) 50%, transparent); }
+    .tag.build { color: #e0b8ff; border-color: color-mix(in srgb, var(--build-scope) 50%, transparent); }
+    .tag.code {
+      font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0;
+      text-transform: none; color: var(--muted);
+    }
+    .node-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .pin {
+      position: absolute; width: 10px; height: 10px; border-radius: 50%;
+      background: var(--raised); border: 2px solid var(--line-strong); z-index: 3;
+    }
+    .pin.n { top: -6px; left: 50%; transform: translateX(-50%); }
+    .pin.s { bottom: -6px; left: 50%; transform: translateX(-50%); }
+    .pin.e { right: -6px; top: 50%; transform: translateY(-50%); }
+    .pin.w { left: -6px; top: 50%; transform: translateY(-50%); }
+    .node.decision .pin { display: none; }
+    .edges {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 1; overflow: visible;
+    }
+    .edge path { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .edge.current path { stroke: color-mix(in srgb, var(--current) 75%, #fff); }
+    .edge.target path { stroke: color-mix(in srgb, var(--target) 85%, #fff); stroke-dasharray: 7 5; }
+    .edge.shared path { stroke: color-mix(in srgb, var(--shared) 80%, #fff); }
+    .edge.muted path { stroke: var(--line-strong); stroke-dasharray: 3 5; opacity: 0.7; }
+    .edge.variant path { stroke: color-mix(in srgb, var(--variant-scope) 80%, #fff); }
+    .edge.build path { stroke: color-mix(in srgb, var(--build-scope) 80%, #fff); }
+    .edge-label {
+      font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase; fill: var(--muted);
+    }
+    .edge-label.bg { fill: var(--bg); stroke: var(--bg); stroke-width: 4px; paint-order: stroke; }
+    .lane-banner {
+      position: absolute; left: 16px; right: 16px; min-height: 44px; display: flex;
+      flex-direction: column; justify-content: center; gap: 2px; padding: 8px 14px;
+      border: 1px solid var(--line); border-left-width: 4px;
+      background: color-mix(in srgb, var(--raised) 88%, transparent); z-index: 0; pointer-events: none;
+    }
+    .lane-banner h2 {
+      margin: 0; font-family: var(--font-display); font-size: 0.78rem;
+      letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600;
+    }
+    .lane-banner span { font-size: 0.72rem; color: var(--muted); }
+    .lane-banner.entry {
+      top: 8px; border-color: color-mix(in srgb, var(--shared) 35%, var(--line));
+      border-left-color: var(--success);
+      background: color-mix(in srgb, var(--shared) 8%, var(--raised));
+    }
+    .lane-banner.entry h2 { color: var(--success); }
+    .lane-banner.tabs {
+      top: 700px; border-color: color-mix(in srgb, var(--current) 35%, var(--line));
+      border-left-color: var(--current);
+      background: color-mix(in srgb, var(--current) 8%, var(--raised));
+    }
+    .lane-banner.tabs h2 { color: var(--current); }
+    .lane-banner.sets {
+      top: 1340px; border-color: color-mix(in srgb, var(--variant-scope) 40%, var(--line));
+      border-left-color: var(--variant-scope);
+      background: color-mix(in srgb, var(--variant-scope) 9%, var(--raised));
+    }
+    .lane-banner.sets h2 { color: var(--variant-scope); }
+    .lane-banner.desired {
+      top: 2040px; border-color: color-mix(in srgb, var(--target) 40%, var(--line));
+      border-left-color: var(--accent-strong);
+      background: color-mix(in srgb, var(--target) 9%, var(--raised));
+    }
+    .lane-banner.desired h2 { color: var(--accent-strong); }
+    .spine-guide {
+      position: absolute; left: 50%; top: 70px; bottom: 40px; width: 2px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg,
+        color-mix(in srgb, var(--shared) 35%, transparent),
+        color-mix(in srgb, var(--current) 30%, transparent) 30%,
+        color-mix(in srgb, var(--variant-scope) 30%, transparent) 60%,
+        color-mix(in srgb, var(--target) 35%, transparent));
+      z-index: 0; pointer-events: none; opacity: 0.55;
+    }
+    .callout-box {
+      position: absolute; width: 280px; padding: 12px 14px; border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--raised) 90%, transparent); z-index: 2;
+      font-size: 0.76rem; color: var(--muted); line-height: 1.4;
+    }
+    .callout-box strong {
+      display: block; font-family: var(--font-display); font-size: 0.7rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg);
+      margin-bottom: 6px; font-weight: 600;
+    }
+    .callout-box.desired {
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, var(--raised));
+    }
+    .callout-box code {
+      font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent-strong);
+    }
+    .note {
+      position: absolute; width: 190px; min-height: 120px;
+      background: linear-gradient(160deg, #3a2f18, var(--note-bg));
+      border: 1px solid var(--note-border); box-shadow: 0 12px 24px rgba(0,0,0,.4);
+      padding: 10px 12px 28px; z-index: 10; cursor: grab; resize: both; overflow: auto;
+    }
+    .note.selected { outline: 2px solid var(--accent-strong); outline-offset: 1px; }
+    .note.dragging { cursor: grabbing; z-index: 20; }
+    .note-color { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+    .note-color button {
+      width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25);
+      padding: 0; cursor: pointer;
+    }
+    .note textarea {
+      width: 100%; min-height: 84px; border: 0; background: transparent; color: #f6e7b8;
+      font-family: var(--font-body); font-size: 0.8rem; line-height: 1.35; resize: none; outline: none;
+    }
+    .note .note-meta {
+      position: absolute; left: 10px; bottom: 6px; right: 10px; display: flex;
+      justify-content: space-between; align-items: center; font-family: var(--font-mono);
+      font-size: 0.58rem; color: rgba(246,231,184,.55);
+    }
+    .note .del {
+      appearance: none; border: 0; background: transparent; color: rgba(246,231,184,.7);
+      cursor: pointer; font-size: 0.7rem; padding: 0;
+    }
+    .note.tone-amber { background: linear-gradient(160deg, #3a2f18, #2a2214); border-color: #c9a24a; }
+    .note.tone-blue { background: linear-gradient(160deg, #172636, #101a28); border-color: #4d88ff; }
+    .note.tone-blue textarea, .note.tone-blue .note-meta, .note.tone-blue .del { color: #cfe2ff; }
+    .note.tone-green { background: linear-gradient(160deg, #173024, #102018); border-color: #6fc28b; }
+    .note.tone-green textarea, .note.tone-green .note-meta, .note.tone-green .del { color: #d4f0de; }
+    .note.tone-rose { background: linear-gradient(160deg, #351a1a, #241212); border-color: #e2654f; }
+    .note.tone-rose textarea, .note.tone-rose .note-meta, .note.tone-rose .del { color: #ffd4cc; }
+    .side {
+      border-left: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    .side-tabs { display: flex; border-bottom: 1px solid var(--line); }
+    .side-tabs button {
+      flex: 1; appearance: none; border: 0; background: transparent; color: var(--muted);
+      font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 12px 8px; cursor: pointer; border-bottom: 2px solid transparent;
+    }
+    .side-tabs button.active {
+      color: var(--accent-strong); border-bottom-color: var(--accent); background: var(--accent-dim);
+    }
+    .side-body { padding: 14px; overflow: auto; flex: 1; min-height: 0; }
+    .side h3 {
+      margin: 0 0 8px; font-family: var(--font-display); font-size: 0.78rem;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 600;
+    }
+    .side p, .side li { font-size: 0.8rem; color: var(--muted); line-height: 1.45; }
+    .side p { margin: 0 0 10px; }
+    .side ul { margin: 0 0 14px; padding-left: 1.1rem; }
+    .side li { margin-bottom: 6px; }
+    .side .field { margin-bottom: 12px; }
+    .side label {
+      display: block; font-family: var(--font-display); font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
+    }
+    .side textarea {
+      width: 100%; background: var(--raised); border: 1px solid var(--line); color: var(--fg);
+      font-family: var(--font-body); font-size: 0.82rem; padding: 8px 10px; border-radius: 2px;
+      min-height: 120px; resize: vertical; line-height: 1.4;
+    }
+    .empty-hint {
+      border: 1px dashed var(--line); padding: 14px; color: var(--muted);
+      font-size: 0.78rem; line-height: 1.4;
+    }
+    .note-list { display: grid; gap: 8px; }
+    .note-list-item {
+      border: 1px solid var(--line); background: var(--raised); padding: 8px 10px;
+      cursor: pointer; font-size: 0.76rem; color: var(--muted);
+    }
+    .note-list-item:hover, .note-list-item.active {
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--fg);
+    }
+    .note-list-item strong {
+      display: block; color: var(--fg); font-weight: 500; margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .help-kbd {
+      display: inline-block; font-family: var(--font-mono); font-size: 0.68rem;
+      border: 1px solid var(--line-strong); background: var(--raised);
+      padding: 1px 6px; border-radius: 3px; color: var(--fg); margin: 0 2px;
+    }
+    .toast {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--raised); border: 1px solid var(--line-strong); color: var(--fg);
+      padding: 10px 14px; font-size: 0.8rem; opacity: 0; pointer-events: none;
+      transition: opacity .2s, transform .2s; z-index: 100; box-shadow: 0 12px 30px rgba(0,0,0,.4);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Variant Edit Flow</h1>
+        <p>Editable diagram · annotate together · autosaves locally</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn accent" id="btnAddNote" type="button">+ Sticky note</button>
+        <button class="btn" id="btnExport" type="button">Export JSON</button>
+        <button class="btn" id="btnImport" type="button">Import JSON</button>
+        <button class="btn ghost" id="btnCopy" type="button">Copy notes</button>
+        <span class="sep"></span>
+        <button class="btn ghost" id="btnZoomOut" type="button">−</button>
+        <button class="btn ghost" id="btnZoomReset" type="button">100%</button>
+        <button class="btn ghost" id="btnZoomIn" type="button">+</button>
+        <span class="sep"></span>
+        <button class="btn danger" id="btnClearNotes" type="button">Clear notes</button>
+      </div>
+      <div class="legend">
+        <span class="swatch current"><i></i> Current UI</span>
+        <span class="swatch variant"><i></i> Variant-scoped</span>
+        <span class="swatch build"><i></i> Build-scoped</span>
+        <span class="swatch target"><i></i> Desired / open</span>
+        <span class="swatch shared"><i></i> Shared / keep</span>
+      </div>
+      <div class="status" id="status">Ready · <strong>0</strong> notes</div>
+    </header>
+
+    <div class="workspace">
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="board" id="board">
+          <svg class="edges" id="edges" aria-hidden="true"></svg>
+          <div class="spine-guide" aria-hidden="true"></div>
+
+          <div class="lane-banner entry">
+            <h2>1 · Entry &amp; shell</h2>
+            <span>Top → bottom: open build, pick variant, Details vs Edit</span>
+          </div>
+
+          <div class="node start lane-shared" data-id="e-build" style="left:390px; top:80px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">Open build</h3></div>
+            <div class="node-body">Library select<br/><span class="tag shared">entry</span></div>
+            <span class="pin s"></span>
+          </div>
+
+          <div class="node lane-current" data-id="e-identity" style="left:375px; top:200px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Build identity</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Class · exotic armor · synergy · soft stats
+              <div class="node-meta"><span class="tag code">BuildIdentity</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-current" data-id="e-variant-pick" style="left:375px; top:340px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Pick variant</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Chip list · default · Details | Edit toggle
+              <div class="node-meta"><span class="tag code">BuildPage</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node decision lane-current" data-id="e-mode" style="left:396px; top:470px;" tabindex="0">
+            <div class="inner">
+              <div class="node-head"><h3 class="node-title">Mode?</h3></div>
+              <div class="node-body">details<br/>or edit</div>
+            </div>
+          </div>
+
+          <div class="node lane-current" data-id="e-details" style="left:80px; top:500px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Details view</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Read-only loadout · Edit CTA
+              <div class="node-meta"><span class="tag code">VariantCard</span></div>
+            </div>
+            <span class="pin e"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-shared wide" data-id="e-edit-shell" style="left:620px; top:500px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Edit variant shell</h3>
+              <span class="tag shared">hub</span>
+            </div>
+            <div class="node-body">
+              7 tab chips · per-tab Save · Back to details
+              <div class="node-meta"><span class="tag code">VariantEditPanel</span></div>
+            </div>
+            <span class="pin w"></span><span class="pin s"></span><span class="pin n"></span>
+          </div>
+
+          <div class="node lane-current" data-id="e-actions" style="left:80px; top:640px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Build actions</h3>
+              <span class="tag current">now</span>
+            </div>
+            <div class="node-body">
+              Equip · DIM — below surface
+              <div class="node-meta"><span class="tag code">BuildActions</span></div>
+            </div>
+            <span class="pin n"></span>
+          </div>
+
+          <div class="node lane-current" data-id="e-finish" style="left:640px; top:660px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Finish walkthrough</h3>
+              <span class="tag current">overlay</span>
+            </div>
+            <div class="node-body">
+              Optional · Armor→Weapons→Mods · hosts optimizer
+              <div class="node-meta"><span class="tag code">FinishBuildWalkthrough</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="callout-box" style="left:80px; top:760px; width:280px;">
+            <strong>Shell today</strong>
+            Edit is a <em>mode</em>, not a wizard. Gear lives in Sets; subclass kit is build-scoped.
+          </div>
+
+          <div class="lane-banner tabs">
+            <h2>2 · Edit tabs</h2>
+            <span>Variant-scoped (cyan) down the left · build-scoped kit (purple) down the right</span>
+          </div>
+
+          <div class="node scope-variant" data-id="t-general" style="left:120px; top:780px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">General</h3>
+              <span class="tag variant">variant</span>
+            </div>
+            <div class="node-body">
+              Name · notes · exotic weapon · Duplicate
+              <div class="node-meta"><span class="tag code">PATCH variant</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node scope-variant wide" data-id="t-sets" style="left:100px; top:940px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Sets</h3>
+              <span class="tag variant">gear source</span>
+            </div>
+            <div class="node-body">
+              Attach · create · capture · fill
+              <div class="node-meta"><span class="tag code">attachments</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span><span class="pin e"></span>
+          </div>
+
+          <div class="node scope-variant" data-id="t-artifact" style="left:120px; top:1110px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Artifact</h3>
+              <span class="tag variant">variant</span>
+            </div>
+            <div class="node-body">Seasonal artifact + perk chips</div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-variant" data-id="t-mods" style="left:120px; top:1240px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Mods</h3>
+              <span class="tag variant">variant</span>
+            </div>
+            <div class="node-body">
+              Slot energy mods · needs armor pieces
+              <div class="node-meta"><span class="tag code">slotModDraft</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-build" data-id="t-abilities" style="left:620px; top:940px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Abilities</h3>
+              <span class="tag build">build</span>
+            </div>
+            <div class="node-body">
+              Melee · grenade · class · exotic pins
+              <div class="node-meta"><span class="tag code">build.subclass</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span><span class="pin w"></span>
+          </div>
+
+          <div class="node scope-build" data-id="t-aspects" style="left:620px; top:1110px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Aspects</h3>
+              <span class="tag build">build</span>
+            </div>
+            <div class="node-body">Max 2 · fragment capacity · shared</div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-build" data-id="t-fragments" style="left:620px; top:1240px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Fragments</h3>
+              <span class="tag build">build</span>
+            </div>
+            <div class="node-body">Capacity from aspects · shared</div>
+            <span class="pin n"></span>
+          </div>
+
+          <div class="callout-box" style="left:360px; top:820px; width:220px;">
+            <strong>Scope split</strong>
+            Left = this variant.<br/>Right = build.subclass for all variants.
+          </div>
+
+          <div class="callout-box" style="left:360px; top:1240px; width:220px;">
+            <strong>Save model</strong>
+            Per-tab Save / immediate attach PATCH. No Save all.
+          </div>
+
+          <div class="lane-banner sets">
+            <h2>3 · Sets deep dive</h2>
+            <span>How gear enters the variant — four parallel paths + Finish optimizer</span>
+          </div>
+
+          <div class="node scope-variant" data-id="s-list" style="left:375px; top:1420px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Attached sets</h3>
+              <span class="tag variant">list</span>
+            </div>
+            <div class="node-body">Name · live|snapshot · type · Detach</div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node decision lane-current" data-id="s-how" style="left:396px; top:1550px;" tabindex="0">
+            <div class="inner">
+              <div class="node-head"><h3 class="node-title">How gear?</h3></div>
+              <div class="node-body">4 paths<br/>in parallel</div>
+            </div>
+          </div>
+
+          <div class="node scope-variant" data-id="s-create" style="left:40px; top:1740px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Create set</h3>
+              <span class="tag current">form</span>
+            </div>
+            <div class="node-body">
+              Name + type + tags
+              <div class="node-meta"><span class="tag code">CreateSetAttachForm</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-variant" data-id="s-capture" style="left:260px; top:1740px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Capture gear</h3>
+              <span class="tag current">snapshot</span>
+            </div>
+            <div class="node-body">
+              From resolved claims
+              <div class="node-meta"><span class="tag code">CaptureSetsFromBuild</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-variant" data-id="s-attach" style="left:480px; top:1740px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Attach existing</h3>
+              <span class="tag current">library</span>
+            </div>
+            <div class="node-body">SetAttachPicker · merge</div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-variant" data-id="s-fill" style="left:700px; top:1740px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Fill slots</h3>
+              <span class="tag current">live only</span>
+            </div>
+            <div class="node-body">
+              BuildSlotFillHost
+              <div class="node-meta"><span class="tag code">manual pieces</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-shared" data-id="s-opt" style="left:590px; top:1900px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Armor optimizer</h3>
+              <span class="tag shared">finish only</span>
+            </div>
+            <div class="node-body">
+              Not on Sets tab — Finish after create/capture
+              <div class="node-meta"><span class="tag code">FinishArmorOptimize…</span></div>
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node scope-variant" data-id="s-mods-dep" style="left:120px; top:1900px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Mods tab depends</h3>
+              <span class="tag variant">downstream</span>
+            </div>
+            <div class="node-body">Needs filled armor pieces first</div>
+            <span class="pin n"></span>
+          </div>
+
+          <div class="callout-box" style="left:40px; top:2040px; width:300px;">
+            <strong>Friction</strong>
+            Four parallel gear paths + Finish as a fifth. No forced existing|create binary; optimizer not in Edit Sets.
+          </div>
+
+          <div class="lane-banner desired">
+            <h2>4 · Desired spine</h2>
+            <span>Armor-first Edit: existing set or create new → optimizer → rest of loadout</span>
+          </div>
+
+          <div class="node start lane-target" data-id="d-enter" style="left:390px; top:2120px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">Enter Edit</h3></div>
+            <div class="node-body">From Details or deep link<br/><span class="tag target">desired</span></div>
+            <span class="pin s"></span>
+          </div>
+
+          <div class="node lane-target wide" data-id="d-hub" style="left:355px; top:2240px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Variant hub</h3>
+              <span class="tag target">open</span>
+            </div>
+            <div class="node-body">
+              Rethink 7-tab peer model · loadout-first?
+            </div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node decision lane-target" data-id="d-armor" style="left:396px; top:2380px;" tabindex="0">
+            <div class="inner">
+              <div class="node-head"><h3 class="node-title">Armor set</h3></div>
+              <div class="node-body">existing<br/>or create</div>
+            </div>
+          </div>
+
+          <div class="node lane-target" data-id="d-pick" style="left:80px; top:2400px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Select existing</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">Attach · optional improve</div>
+            <span class="pin e"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-target" data-id="d-create" style="left:680px; top:2400px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Create new</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">One-tap create → optimizer</div>
+            <span class="pin w"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-shared" data-id="d-opt" style="left:375px; top:2560px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Armor optimizer</h3>
+              <span class="tag shared">in Edit?</span>
+            </div>
+            <div class="node-body">Promote 031 into Edit armor section</div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node lane-target" data-id="d-rest" style="left:375px; top:2690px;" tabindex="0">
+            <div class="node-head">
+              <h3 class="node-title">Weapons · Mods · Kit</h3>
+              <span class="tag target">desired</span>
+            </div>
+            <div class="node-body">Rest of composition · kit scope?</div>
+            <span class="pin n"></span><span class="pin s"></span>
+          </div>
+
+          <div class="node end lane-shared" data-id="d-done" style="left:390px; top:2820px;" tabindex="0">
+            <div class="node-head"><h3 class="node-title">Ready variant</h3></div>
+            <div class="node-body">Details + equip/export</div>
+            <span class="pin n"></span>
+          </div>
+
+          <div class="callout-box desired" style="left:40px; top:2560px; width:280px;">
+            <strong>Your direction</strong>
+            Armor Set view: existing | create → Create → optimizer. Primary in <em>Edit</em>, Finish, or shared component?
+          </div>
+
+          <div class="callout-box" style="left:640px; top:2560px; width:280px;">
+            <strong>Open questions</strong>
+            1) Finish into Sets?<br/>
+            2) Kit under Build only?<br/>
+            3) Single vs per-section save?<br/>
+            4) Keep Details|Edit dual mode?
+          </div>
+
+          <div id="notesLayer"></div>
+
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="side-tabs">
+          <button type="button" class="active" data-tab="inspect">Inspect</button>
+          <button type="button" data-tab="notes">Notes</button>
+          <button type="button" data-tab="help">Help</button>
+        </div>
+        <div class="side-body" id="tabInspect">
+          <h3>Selected node</h3>
+          <div id="inspectEmpty" class="empty-hint">Click a flow node to inspect it and attach a discussion note.</div>
+          <div id="inspectContent" hidden>
+            <div class="field">
+              <label>Title</label>
+              <div id="inspectTitle" style="font-weight:600;color:var(--fg)"></div>
+            </div>
+            <div class="field">
+              <label>Lane / scope</label>
+              <div id="inspectLane"></div>
+            </div>
+            <div class="field">
+              <label>Detail</label>
+              <div id="inspectDetail" style="color:var(--muted);font-size:0.8rem;line-height:1.4"></div>
+            </div>
+            <div class="field">
+              <label>Annotation on this node</label>
+              <textarea id="nodeAnnotation" placeholder="Decisions, risks, copy ideas…"></textarea>
+            </div>
+            <button class="btn accent" id="btnSaveNodeNote" type="button">Save node note</button>
+          </div>
+          <hr style="border:0;border-top:1px solid var(--line);margin:18px 0" />
+          <h3>Current snapshot</h3>
+          <ul>
+            <li><strong style="color:var(--current)">Shell:</strong> Details | Edit dual mode on selected variant; Finish optional overlay.</li>
+            <li><strong style="color:var(--variant-scope)">Variant tabs:</strong> General, Sets, Artifact, Mods.</li>
+            <li><strong style="color:#e0b8ff">Build tabs:</strong> Abilities, Aspects, Fragments (shared subclass).</li>
+            <li><strong style="color:var(--accent-strong)">Desired:</strong> armor-first set choice + optimizer inside Edit, not buried.</li>
+          </ul>
+        </div>
+        <div class="side-body" id="tabNotes" hidden>
+          <h3>Sticky notes</h3>
+          <p>Autosave key <span class="help-kbd">d2bc-variant-edit-flow-v1</span></p>
+          <div class="note-list" id="noteList"></div>
+          <button class="btn" id="btnAddNoteSide" type="button" style="margin-top:10px;width:100%">+ Add sticky at center</button>
+        </div>
+        <div class="side-body" id="tabHelp" hidden>
+          <h3>How we collab</h3>
+          <ul>
+            <li><span class="help-kbd">Click node</span> — inspect + node note</li>
+            <li><span class="help-kbd">+ Sticky</span> then click board</li>
+            <li><span class="help-kbd">Drag</span> stickies · color dots · ✕ delete</li>
+            <li><span class="help-kbd">Space+drag / middle</span> pan · <span class="help-kbd">Ctrl+scroll</span> zoom</li>
+            <li><span class="help-kbd">Export / Copy notes</span> to share back in chat</li>
+          </ul>
+          <h3>Code map</h3>
+          <ul>
+            <li><code style="color:var(--accent-strong)">BuildPage.tsx</code> — details/edit mode, Finish toggle</li>
+            <li><code style="color:var(--accent-strong)">VariantEditPanel.tsx</code> — 7 tabs</li>
+            <li><code style="color:var(--accent-strong)">VariantCard.tsx</code> — details layout</li>
+            <li><code style="color:var(--accent-strong)">FinishBuildWalkthrough.tsx</code></li>
+            <li><code style="color:var(--accent-strong)">CreateSetAttachForm</code> / <code style="color:var(--accent-strong)">SetAttachPicker</code> / <code style="color:var(--accent-strong)">BuildSlotFillHost</code></li>
+          </ul>
+          <p>Related board: <code style="color:var(--accent-strong)">new-build-flow-diagram.html</code></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden />
+
+  <script>
+    const STORAGE_KEY = "d2bc-variant-edit-flow-diagram-v1";
+    const board = document.getElementById("board");
+    const edgesSvg = document.getElementById("edges");
+    const notesLayer = document.getElementById("notesLayer");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const statusEl = document.getElementById("status");
+    const toastEl = document.getElementById("toast");
+
+    let stickies = [];
+    let nodeNotes = {};
+    let selectedNodeId = null;
+    let selectedStickyId = null;
+    let placeNoteMode = false;
+    let zoom = 1;
+
+    const NODES = {
+      "e-build": { title: "Open build", lane: "Entry", detail: "Select build from BuildLibrary rail; loads detail + variants." },
+      "e-identity": { title: "Build identity", lane: "Entry · current", detail: "BuildIdentity shows class/exotic/synergy. Separate BuildEditPanel for identity edits (not variant tabs)." },
+      "e-variant-pick": { title: "Pick variant", lane: "Entry · current", detail: "Variant chips + Details|Edit FilterChips. variantMode state on BuildPage." },
+      "e-mode": { title: "Mode?", lane: "Entry · decision", detail: "details → VariantCard layout=detail; edit → VariantEditPanel + optional Finish." },
+      "e-details": { title: "Details view", lane: "Entry · current", detail: "Read-only overview: loadout strips, abilities, attachments, Edit button." },
+      "e-edit-shell": { title: "Edit variant shell", lane: "Hub", detail: "VariantEditPanel: seven FilterChip tabs, per-section save, closeLabel Back to details." },
+      "e-finish": { title: "Finish walkthrough", lane: "Overlay · current", detail: "Toggle above edit panel. Guided gaps; armor optimizer lives here after create/capture, not in Sets tab." },
+      "e-actions": { title: "Build actions", lane: "Entry · current", detail: "Equip / DIM below the variant surface; independent of active tab." },
+      "t-general": { title: "General", lane: "Tab · variant-scoped", detail: "Name, notes, exotic weapon override, hard exotic limits, Save general, Duplicate variant." },
+      "t-sets": { title: "Sets", lane: "Tab · variant-scoped", detail: "Primary gear composition surface in Edit: list, create, capture, attach, fill live sets." },
+      "t-artifact": { title: "Artifact", lane: "Tab · variant-scoped", detail: "Artifact hash/name + artifactConfig perk hashes; Save artifact / Clear." },
+      "t-mods": { title: "Mods", lane: "Tab · variant-scoped", detail: "Armor slot mods via snapshot configs on attachments; energy 10/11; also attach mod-type sets." },
+      "t-abilities": { title: "Abilities", lane: "Tab · build-scoped", detail: "Melee/grenade/classAbility on build.subclass; exotic ability requirement pins with identityAction confirm." },
+      "t-aspects": { title: "Aspects", lane: "Tab · build-scoped", detail: "MAX_SUBCLASS_ASPECTS; fragment capacity; shared across all variants of the build." },
+      "t-fragments": { title: "Fragments", lane: "Tab · build-scoped", detail: "Capacity gated by aspects; build.subclass.fragments." },
+      "s-list": { title: "Attached sets", lane: "Sets deep dive", detail: "Shows each attachment with mode and type; Detach via removeAttachment PATCH." },
+      "s-how": { title: "How gear?", lane: "Sets · decision", detail: "Four parallel entry points today — no forced order or binary choose-existing-vs-create." },
+      "s-create": { title: "Create set", lane: "Sets · current", detail: "CreateSetAttachForm — full form (name/type/tags) unlike Finish one-tap create." },
+      "s-capture": { title: "Capture gear", lane: "Sets · current", detail: "Snapshot resolved claims into sets + attach/replace-by-type." },
+      "s-attach": { title: "Attach existing", lane: "Sets · current", detail: "SetAttachPicker for library sets; mergeAttachment." },
+      "s-fill": { title: "Fill slots", lane: "Sets · current", detail: "Only for live attachments; opens BuildSlotFillHost. Manual piece path." },
+      "s-opt": { title: "Armor optimizer", lane: "Finish-only today", detail: "031 workspace not mounted from Sets tab — gap vs desired armor-first Edit flow." },
+      "s-mods-dep": { title: "Mods tab depends", lane: "Downstream", detail: "Empty until armor attachment has pieces; coupling between Sets fill and Mods UX." },
+      "d-enter": { title: "Enter Edit", lane: "Desired", detail: "Same entry; product question is what the first screen emphasizes." },
+      "d-hub": { title: "Variant hub (rethink)", lane: "Desired · open", detail: "Replace or restructure 7-tab peer model. Annotate preferred IA." },
+      "d-armor": { title: "Armor set", lane: "Desired · decision", detail: "Binary: select existing OR create new — your stated spine." },
+      "d-pick": { title: "Select existing", lane: "Desired", detail: "Attach path; open whether optimizer improve is offered." },
+      "d-create": { title: "Create new", lane: "Desired", detail: "One-tap create+attach then optimizer (Finish-like, but primary in Edit)." },
+      "d-opt": { title: "Armor optimizer", lane: "Shared · promote?", detail: "Reuse FinishArmorOptimizeWorkspace inside Edit armor section." },
+      "d-rest": { title: "Weapons · Mods · Kit", lane: "Desired", detail: "Order and whether kit stays in variant edit or moves to build-only." },
+      "d-done": { title: "Ready variant", lane: "Shared end", detail: "Return to details; equip/export available." },
+    };
+
+    const EDGES = [
+      ["e-build", "e-identity", "shared", "", "s", "n"],
+      ["e-identity", "e-variant-pick", "current", "", "s", "n"],
+      ["e-variant-pick", "e-mode", "current", "", "s", "n"],
+      ["e-mode", "e-details", "current", "details", "w", "e"],
+      ["e-mode", "e-edit-shell", "shared", "edit", "e", "w"],
+      ["e-details", "e-edit-shell", "muted", "Edit CTA", "e", "w"],
+      ["e-details", "e-actions", "muted", "", "s", "n"],
+      ["e-edit-shell", "e-finish", "muted", "optional", "s", "n"],
+      ["e-edit-shell", "t-general", "variant", "tabs", "s", "n"],
+      ["t-general", "t-sets", "variant", "", "s", "n"],
+      ["t-sets", "t-artifact", "variant", "", "s", "n"],
+      ["t-artifact", "t-mods", "variant", "", "s", "n"],
+      ["e-edit-shell", "t-abilities", "build", "kit", "s", "n"],
+      ["t-abilities", "t-aspects", "build", "", "s", "n"],
+      ["t-aspects", "t-fragments", "build", "", "s", "n"],
+      ["t-sets", "s-list", "variant", "deep", "s", "n"],
+      ["s-list", "s-how", "current", "", "s", "n"],
+      ["s-how", "s-create", "current", "create", "w", "n"],
+      ["s-how", "s-capture", "current", "capture", "s", "n"],
+      ["s-how", "s-attach", "current", "attach", "e", "n"],
+      ["s-how", "s-fill", "current", "fill", "e", "n"],
+      ["e-finish", "s-opt", "shared", "armor", "s", "n"],
+      ["s-create", "s-mods-dep", "muted", "", "s", "n"],
+      ["s-fill", "s-mods-dep", "muted", "pieces", "s", "n"],
+      ["s-capture", "s-opt", "muted", "", "s", "n"],
+      ["d-enter", "d-hub", "target", "", "s", "n"],
+      ["d-hub", "d-armor", "target", "armor first", "s", "n"],
+      ["d-armor", "d-pick", "target", "existing", "w", "e"],
+      ["d-armor", "d-create", "target", "create", "e", "w"],
+      ["d-pick", "d-opt", "target", "optional?", "s", "n"],
+      ["d-create", "d-opt", "shared", "always", "s", "n"],
+      ["d-opt", "d-rest", "target", "", "s", "n"],
+      ["d-rest", "d-done", "shared", "", "s", "n"],
+      ["t-sets", "d-hub", "muted", "evolve", "s", "n"],
+    ];
+
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toastEl.classList.remove("show"), 1800);
+    }
+    function uid() {
+      return "n_" + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        stickies = Array.isArray(data.stickies) ? data.stickies : [];
+        nodeNotes = data.nodeNotes && typeof data.nodeNotes === "object" ? data.nodeNotes : {};
+      } catch { /* ignore */ }
+    }
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        stickies,
+        nodeNotes,
+      }));
+      statusEl.innerHTML = `Saved · <strong>${stickies.length}</strong> stickies · <strong>${Object.keys(nodeNotes).filter(k => nodeNotes[k]?.trim()).length}</strong> node notes`;
+    }
+    function nodeEl(id) { return board.querySelector(`.node[data-id="${id}"]`); }
+    function pinPoint(el, side) {
+      const br = board.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const x0 = (r.left - br.left) / zoom;
+      const y0 = (r.top - br.top) / zoom;
+      const w = r.width / zoom;
+      const h = r.height / zoom;
+      const map = {
+        n: [x0 + w / 2, y0],
+        s: [x0 + w / 2, y0 + h],
+        e: [x0 + w, y0 + h / 2],
+        w: [x0, y0 + h / 2],
+      };
+      return map[side] || [x0 + w / 2, y0 + h / 2];
+    }
+    function curve(x1, y1, x2, y2, s1, s2) {
+      const dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
+      const dy = Math.max(40, Math.abs(y2 - y1) * 0.45);
+      const c1 = { n: [x1, y1 - dy], s: [x1, y1 + dy], e: [x1 + dx, y1], w: [x1 - dx, y1] }[s1] || [x1 + dx, y1];
+      const c2 = { n: [x2, y2 - dy], s: [x2, y2 + dy], e: [x2 + dx, y2], w: [x2 - dx, y2] }[s2] || [x2 - dx, y2];
+      return `M ${x1} ${y1} C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${x2} ${y2}`;
+    }
+    function escapeXml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function drawEdges() {
+      const colors = {
+        current: "#7aa2ff", target: "#e6b35c", shared: "#6fc28b",
+        muted: "#3a4a66", variant: "#5ec8d8", build: "#c47cff",
+      };
+      const parts = ["<defs>"];
+      for (const [k, c] of Object.entries(colors)) {
+        parts.push(`<marker id="arrow-${k}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="${c}"/></marker>`);
+      }
+      parts.push("</defs>");
+      for (const [from, to, lane, label, s1, s2] of EDGES) {
+        const a = nodeEl(from); const b = nodeEl(to);
+        if (!a || !b) continue;
+        const [x1, y1] = pinPoint(a, s1);
+        const [x2, y2] = pinPoint(b, s2);
+        const d = curve(x1, y1, x2, y2, s1, s2);
+        parts.push(`<g class="edge ${lane}"><path d="${d}" marker-end="url(#arrow-${lane})"/></g>`);
+        if (label) {
+          const mx = (x1 + x2) / 2; const my = (y1 + y2) / 2 - 8;
+          parts.push(`<text class="edge-label bg" x="${mx}" y="${my}" text-anchor="middle">${escapeXml(label)}</text>`);
+          parts.push(`<text class="edge-label" x="${mx}" y="${my}" text-anchor="middle">${escapeXml(label)}</text>`);
+        }
+      }
+      edgesSvg.innerHTML = parts.join("");
+    }
+    function renderStickies() {
+      notesLayer.innerHTML = "";
+      for (const n of stickies) {
+        const el = document.createElement("div");
+        el.className = `note tone-${n.tone || "amber"}`;
+        el.dataset.id = n.id;
+        el.style.left = n.x + "px";
+        el.style.top = n.y + "px";
+        if (n.id === selectedStickyId) el.classList.add("selected");
+        el.innerHTML = `
+          <div class="note-color">
+            <button type="button" data-tone="amber" style="background:#c9a24a"></button>
+            <button type="button" data-tone="blue" style="background:#4d88ff"></button>
+            <button type="button" data-tone="green" style="background:#6fc28b"></button>
+            <button type="button" data-tone="rose" style="background:#e2654f"></button>
+          </div>
+          <textarea placeholder="Write annotation…">${escapeHtml(n.text || "")}</textarea>
+          <div class="note-meta">
+            <span>${new Date(n.createdAt).toLocaleString()}</span>
+            <button type="button" class="del">✕</button>
+          </div>`;
+        notesLayer.appendChild(el);
+        wireSticky(el, n);
+      }
+      renderNoteList();
+    }
+    function wireSticky(el, n) {
+      const ta = el.querySelector("textarea");
+      ta.addEventListener("input", () => { n.text = ta.value; save(); renderNoteList(); });
+      ta.addEventListener("pointerdown", (e) => e.stopPropagation());
+      el.querySelectorAll("[data-tone]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          n.tone = btn.getAttribute("data-tone");
+          el.className = `note tone-${n.tone}`;
+          if (n.id === selectedStickyId) el.classList.add("selected");
+          save();
+        });
+      });
+      el.querySelector(".del").addEventListener("click", (e) => {
+        e.stopPropagation();
+        stickies = stickies.filter((s) => s.id !== n.id);
+        if (selectedStickyId === n.id) selectedStickyId = null;
+        save(); renderStickies(); toast("Sticky deleted");
+      });
+      let dragging = false, ox = 0, oy = 0;
+      el.addEventListener("pointerdown", (e) => {
+        if (e.target.closest("textarea") || e.target.closest("button")) return;
+        selectedStickyId = n.id; selectedNodeId = null;
+        updateNodeSelection(); renderStickies();
+        dragging = true; el.classList.add("dragging");
+        el.setPointerCapture(e.pointerId);
+        ox = e.clientX / zoom - n.x; oy = e.clientY / zoom - n.y;
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        n.x = Math.round(e.clientX / zoom - ox);
+        n.y = Math.round(e.clientY / zoom - oy);
+        el.style.left = n.x + "px"; el.style.top = n.y + "px";
+      });
+      el.addEventListener("pointerup", () => {
+        if (!dragging) return;
+        dragging = false; el.classList.remove("dragging"); save();
+      });
+    }
+    function renderNoteList() {
+      const list = document.getElementById("noteList");
+      if (!stickies.length) {
+        list.innerHTML = `<div class="empty-hint">No stickies yet.</div>`;
+        return;
+      }
+      list.innerHTML = stickies.slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||"")).map((n) => {
+        const preview = (n.text || "").trim() || "(empty)";
+return `<div class="note-list-item ${n.id===selectedStickyId?"active":""}" data-id="${n.id}">
+          <strong>${escapeHtml(preview.split("\n")[0].slice(0,48))}</strong>
+          ${escapeHtml(preview.slice(0,90))}
+        </div>`;
+      }).join("");
+      list.querySelectorAll(".note-list-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const id = item.getAttribute("data-id");
+          const n = stickies.find((s) => s.id === id);
+          if (!n) return;
+          selectedStickyId = id; renderStickies();
+          canvasWrap.scrollTo({ left: Math.max(0, n.x*zoom-80), top: Math.max(0, n.y*zoom-80), behavior: "smooth" });
+        });
+      });
+    }
+    function updateNodeSelection() {
+      board.querySelectorAll(".node").forEach((el) => {
+        el.classList.toggle("selected", el.dataset.id === selectedNodeId);
+      });
+      const empty = document.getElementById("inspectEmpty");
+      const content = document.getElementById("inspectContent");
+      if (!selectedNodeId || !NODES[selectedNodeId]) {
+        empty.hidden = false; content.hidden = true; return;
+      }
+      empty.hidden = true; content.hidden = false;
+      const meta = NODES[selectedNodeId];
+      document.getElementById("inspectTitle").textContent = meta.title;
+      document.getElementById("inspectLane").textContent = meta.lane;
+      document.getElementById("inspectDetail").textContent = meta.detail;
+      document.getElementById("nodeAnnotation").value = nodeNotes[selectedNodeId] || "";
+    }
+    function addSticky(x, y, text = "") {
+      const n = { id: uid(), x: Math.round(x), y: Math.round(y), text, tone: "amber", createdAt: new Date().toISOString() };
+      stickies.push(n); selectedStickyId = n.id; save(); renderStickies(); return n;
+    }
+    function boardCoordsFromEvent(e) {
+      const rect = board.getBoundingClientRect();
+      return { x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom };
+    }
+    function setZoom(next) {
+      zoom = Math.min(1.6, Math.max(0.45, next));
+      board.style.transform = `scale(${zoom})`;
+      document.getElementById("btnZoomReset").textContent = Math.round(zoom * 100) + "%";
+      requestAnimationFrame(drawEdges);
+    }
+    function activateTab(name) {
+      document.querySelectorAll(".side-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+      document.getElementById("tabInspect").hidden = name !== "inspect";
+      document.getElementById("tabNotes").hidden = name !== "notes";
+      document.getElementById("tabHelp").hidden = name !== "help";
+    }
+
+    board.querySelectorAll(".node").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (placeNoteMode) return;
+        selectedNodeId = el.dataset.id; selectedStickyId = null;
+        updateNodeSelection(); renderStickies(); activateTab("inspect");
+      });
+    });
+    board.addEventListener("click", (e) => {
+      if (!placeNoteMode) {
+        if (e.target === board || e.target === edgesSvg || e.target.classList.contains("lane-banner") || e.target.classList.contains("callout-box")) {
+          selectedNodeId = null; selectedStickyId = null; updateNodeSelection(); renderStickies();
+        }
+        return;
+      }
+      const { x, y } = boardCoordsFromEvent(e);
+      addSticky(x - 20, y - 20);
+      placeNoteMode = false; canvasWrap.classList.remove("note-mode");
+      document.getElementById("btnAddNote").textContent = "+ Sticky note";
+      toast("Sticky placed");
+    });
+    document.querySelectorAll(".side-tabs button").forEach((b) => b.addEventListener("click", () => activateTab(b.dataset.tab)));
+    document.getElementById("btnSaveNodeNote").addEventListener("click", () => {
+      if (!selectedNodeId) return;
+      nodeNotes[selectedNodeId] = document.getElementById("nodeAnnotation").value;
+      save(); toast("Node note saved");
+    });
+    document.getElementById("btnAddNote").addEventListener("click", () => {
+      placeNoteMode = !placeNoteMode;
+      canvasWrap.classList.toggle("note-mode", placeNoteMode);
+      document.getElementById("btnAddNote").textContent = placeNoteMode ? "Click board…" : "+ Sticky note";
+      if (placeNoteMode) toast("Click the board to place a sticky");
+    });
+    document.getElementById("btnAddNoteSide").addEventListener("click", () => {
+      const x = (canvasWrap.scrollLeft + canvasWrap.clientWidth / 2) / zoom - 95;
+      const y = (canvasWrap.scrollTop + canvasWrap.clientHeight / 2) / zoom - 60;
+      addSticky(x, y); activateTab("notes"); toast("Sticky added");
+    });
+    document.getElementById("btnClearNotes").addEventListener("click", () => {
+      if (!confirm("Clear all stickies and node notes?")) return;
+      stickies = []; nodeNotes = {}; selectedStickyId = null; selectedNodeId = null;
+      save(); renderStickies(); updateNodeSelection(); toast("Cleared");
+    });
+    document.getElementById("btnExport").addEventListener("click", () => {
+      const payload = { version: 1, exportedAt: new Date().toISOString(), title: "Variant Edit Flow annotations", stickies, nodeNotes };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `variant-edit-flow-notes-${new Date().toISOString().slice(0,10)}.json`;
+      a.click(); URL.revokeObjectURL(a.href); toast("Exported JSON");
+    });
+    document.getElementById("btnImport").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0]; if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (Array.isArray(data.stickies)) stickies = data.stickies;
+        if (data.nodeNotes && typeof data.nodeNotes === "object") nodeNotes = data.nodeNotes;
+        save(); renderStickies(); updateNodeSelection(); toast("Imported");
+      } catch { toast("Import failed"); }
+      e.target.value = "";
+    });
+    document.getElementById("btnCopy").addEventListener("click", async () => {
+      const lines = ["# Variant Edit Flow — notes", ""];
+      const nn = Object.entries(nodeNotes).filter(([, v]) => v?.trim());
+      if (nn.length) {
+        lines.push("## Node notes");
+        for (const [id, text] of nn) {
+          lines.push(`### ${NODES[id]?.title || id} (\`${id}\`)`, text.trim(), "");
+        }
+      }
+      if (stickies.length) {
+        lines.push("## Stickies");
+        for (const s of stickies) {
+          lines.push(`- (${Math.round(s.x)},${Math.round(s.y)}) ${s.tone || "amber"}: ${(s.text || "").trim() || "(empty)"}`);
+        }
+      }
+      if (lines.length <= 2) lines.push("_No notes yet._");
+try { await navigator.clipboard.writeText(lines.join("\n")); toast("Notes copied"); }
+      catch { toast("Clipboard blocked"); }
+    });
+    document.getElementById("btnZoomIn").addEventListener("click", () => setZoom(zoom + 0.1));
+    document.getElementById("btnZoomOut").addEventListener("click", () => setZoom(zoom - 0.1));
+    document.getElementById("btnZoomReset").addEventListener("click", () => setZoom(1));
+    canvasWrap.addEventListener("wheel", (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      setZoom(zoom + (e.deltaY < 0 ? 0.08 : -0.08));
+    }, { passive: false });
+
+    let panning = false, panX = 0, panY = 0, scroll0x = 0, scroll0y = 0, spaceDown = false;
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && !e.repeat && e.target === document.body) { e.preventDefault(); spaceDown = true; }
+      if (e.key === "Escape") {
+        placeNoteMode = false; canvasWrap.classList.remove("note-mode");
+        document.getElementById("btnAddNote").textContent = "+ Sticky note";
+      }
+    });
+    window.addEventListener("keyup", (e) => { if (e.code === "Space") spaceDown = false; });
+    canvasWrap.addEventListener("pointerdown", (e) => {
+      if (e.button === 1 || (e.button === 0 && spaceDown)) {
+        panning = true; canvasWrap.classList.add("panning");
+        panX = e.clientX; panY = e.clientY;
+        scroll0x = canvasWrap.scrollLeft; scroll0y = canvasWrap.scrollTop;
+        canvasWrap.setPointerCapture(e.pointerId); e.preventDefault();
+      }
+    });
+    canvasWrap.addEventListener("pointermove", (e) => {
+      if (!panning) return;
+      canvasWrap.scrollLeft = scroll0x - (e.clientX - panX);
+      canvasWrap.scrollTop = scroll0y - (e.clientY - panY);
+    });
+    canvasWrap.addEventListener("pointerup", () => { panning = false; canvasWrap.classList.remove("panning"); });
+
+    function seedIfEmpty() {
+      if (stickies.length || Object.keys(nodeNotes).length) return;
+      addSticky(700, 820, "Should Finish collapse into Sets tab, or stay a separate guided mode?");
+      addSticky(40, 1080, "Build-scoped kit tabs in Variant Edit are surprising — move under Build edit only?");
+      addSticky(40, 2240, "Desired: Armor binary (existing|create) as first Edit surface after entering variant edit.");
+    }
+
+    load(); seedIfEmpty(); renderStickies(); updateNodeSelection(); setZoom(0.9);
+    requestAnimationFrame(() => { drawEdges(); canvasWrap.scrollTop = 0; canvasWrap.scrollLeft = 0; });
+    window.addEventListener("resize", () => requestAnimationFrame(drawEdges));
+    document.fonts?.ready?.then(() => requestAnimationFrame(drawEdges));
+  </script>
+</body>
+</html>
