@@ -21,6 +21,7 @@
 - Q: After Armor Reuse attach, optimize behavior? → A: Attach + optional Improve kit (not required) (Option B)
 - Q: Non-default variant tab model? → A: Same full tabs always; lighter edits allowed inside tabs (Option A)
 - Q: Tab access before class/subclass set? → A: Block opening Subclass/Armor/Weapon until class (and subclass where required) is set on General (Option B)
+- Q: Analyze remediation 2026-07-24 — tab open vs attach? → A: FR-022 unlocks tab navigation by class/subclass; attach/create mutations still require persisted buildId (draft: show save-General-to-continue). Shared exotic weapon only if already on create/edit identity; else out of scope for 043. Armor Create bonuses = existing optimizer goals UI (FinishArmorOptimizeWorkspace), not a new bonus model.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -165,6 +166,7 @@ For a **non-default** variant, the product uses the **same full primary tabs** a
 
 - Until guardian **class** is set on General, Subclass, Armor & Mod Set, and Weapon Set tabs cannot be opened (Finish and General remain available).
 - Until **subclass** is set where required for kit picks, Subclass tab remains blocked even if class is set; Armor/Weapon may unlock with class alone when catalog scoping only needs class.
+- **Tab open ≠ attach:** FR-022 controls navigation only. Live attach, create-set-attach, optimize apply, and kit PATCH require a persisted `buildId`/`variantId`. In draft mode after class is set but before first General save, Armor/Weapon tabs may open for layout preview but mutation controls stay disabled with a clear “save General to continue” reason.
 - Thin library: Create paths remain available; Reuse empty states must not hard-block compose.
 - Class change after sets attached: existing detach/invalidation/clear rules apply; Reuse lists re-constrain to new class.
 - Optimize with no inventory or no feasible kits: empty results with recovery (manual create, Reuse, or adjust bonuses)—no silent fake kits.
@@ -180,14 +182,14 @@ For a **non-default** variant, the product uses the **same full primary tabs** a
 
 - **FR-001**: Default-variant composition MUST present primary tabs: General, Subclass, Armor & Mod Set, Weapon Set, plus an always-visible **Finish** surface (see FR-017).
 - **FR-002**: Tab switches MUST preserve in-progress default-variant edits already accepted into the working form/state for that session (no reset on tab change alone).
-- **FR-003**: General MUST support synergy-type intent designation and build identity fields required by domain (class, subclass context, exotic armor identity, optional shared exotic weapon, optional pinned Super).
+- **FR-003**: General MUST support synergy-type intent designation and build identity fields required by domain (class, subclass context, exotic armor identity, optional shared exotic weapon, optional pinned Super). Optional shared exotic weapon is in scope **only if** create/edit identity already exposes it; otherwise it is out of scope for 043 (do not invent a new identity field).
 - **FR-004**: General MUST support default-variant artifact selection and perk configuration when an artifact is chosen.
 - **FR-005**: Soft guidance for synergies/stats MUST remain visible without auto-applying loadout changes.
 - **FR-006**: Subclass MUST expose grouped selection for class ability, melee, grenade, movement, aspects, and fragments subject to existing legality and capacity rules.
 - **FR-007**: Armor & Mod Set MUST offer **Reuse** and **Create** sub-paths.
 - **FR-008**: Armor Reuse MUST list/search armor sets constrained to the build's class and support attach to the default variant; mod sets MUST be listable/attachable in the same tab context.
 - **FR-021**: After a successful Armor Reuse attach, the system MUST offer an optional **Improve kit** (optimize) action for that armor attachment. Improve MUST be skippable; it MUST NOT auto-apply results; Create remains the path where optimize is a first-class create step.
-- **FR-009**: Armor Create MUST support choosing armor set bonuses and an Optimize entry that yields selectable optimized armor and mod candidates without auto-apply.
+- **FR-009**: Armor Create MUST support choosing armor set bonuses and an Optimize entry that yields selectable optimized armor and mod candidates without auto-apply. Armor set “bonuses”/goals means the **existing** optimizer goals surface (as used by `FinishArmorOptimizeWorkspace`), not a new bonus domain model.
 - **FR-010**: When the user confirms selection of a newly created armor set from Create/Optimize, the system MUST generate a set name and MUST attach concept tags derived from the build's designated synergies.
 - **FR-011**: After armor is chosen, the user MUST be able to establish a mod set (from optimize list, library, or by saving mods configured on pieces) under existing mod-set rules.
 - **FR-012**: Weapon Set MUST offer **Reuse** and **Create** sub-paths.
@@ -197,9 +199,9 @@ For a **non-default** variant, the product uses the **same full primary tabs** a
 - **FR-016**: Domain hard blocks (no synergy designations when required, illegal kits, mod capacity, exotic limits) and wishlist vs equip-ready gates MUST remain enforced.
 - **FR-017**: A Finish surface for equip / DIM export (and clear wishlist/equip-ready status) MUST always be visible during default-variant composition. Equip and DIM export on Finish MUST stay disabled until the default meets the product's "default finished" completeness bar, with a clear missing-reason summary; when complete, equip/export further respect equip-ready gates. Finish MUST NOT be required as the only path to create armor/weapon sets.
 - **FR-018**: Non-default variants MUST present the same full primary tab set as the default variant (General, Subclass, Armor & Mod Set, Weapon Set, Finish). The product MUST allow lighter edits (e.g. weapons-only changes) without forcing full default create rituals on every tab.
-- **FR-019**: Canonical interaction structure for this feature is the Future direction Excalidraw board; deviations require an explicit spec update.
+- **FR-019**: Canonical interaction structure for this feature is the Future direction Excalidraw board; deviations require an explicit spec update. This is a **process** requirement for implementers/reviewers (not a runtime feature): any intentional IA deviation from the board MUST update this spec in the same change.
 - **FR-020**: **New build** MUST open the tabbed default-variant composer immediately (starting on General). Intent and build identity MUST be collected in General (and related tabs), not via a separate pre-composer identity-only create step.
-- **FR-022**: Until build **class** is set on General, the product MUST prevent opening Subclass, Armor & Mod Set, and Weapon Set tabs (controls disabled or non-activatable with a clear reason). **Subclass** tab further MUST remain blocked until subclass is set when subclass is required for kit composition. General and Finish remain reachable.
+- **FR-022**: Until build **class** is set on General, the product MUST prevent opening Subclass, Armor & Mod Set, and Weapon Set tabs (controls disabled or non-activatable with a clear reason). **Subclass** tab further MUST remain blocked until subclass is set when subclass is required for kit composition. General and Finish remain reachable. **Separately**, attach/create/optimize-apply and other mutations that need server IDs MUST stay disabled until a build (and default variant) is persisted—even if the tab is navigable after class is set.
 
 ### Key Entities
 
@@ -239,6 +241,7 @@ For a **non-default** variant, the product uses the **same full primary tabs** a
 - Capture-current-gear and dense concept-tag filter walls are not primary chrome on the future board; optional advanced actions may remain if they do not restore the old busy default layout.
 - Fashion and non-combat cosmetics are out of the default tab spine unless already reachable elsewhere unchanged.
 - LLM propose-for-confirm remains out of this composer spine.
+- Soft guidance on General: reuse existing build coverage/guidance UI if present; if none exists yet, ship a minimal read-only placeholder fed by existing guidance/coverage data paths—do not block 043 on a full guidance redesign.
 
 ## Out of Scope
 

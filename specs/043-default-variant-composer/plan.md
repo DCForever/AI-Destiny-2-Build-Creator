@@ -28,6 +28,8 @@ Replace the multi-surface create → detail → Finish walkthrough / flat Varian
 
 **Scale/Scope**: Build page shell + composer tabs + helpers; retire CreateBuildPanel as primary New build path; fold Finish walkthrough equip actions into Finish tab; non-default variants share same shell
 
+**Analyze remediations (2026-07-24)**: Tab nav (FR-022) vs mutation (`buildId`); shared exotic only if pre-existing; armor bonuses = existing optimizer goals; FR-019 process/T051; per-story gate + extra helper tests for US3/4/7/8.
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*

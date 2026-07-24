@@ -86,11 +86,11 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Implement General form UI in `src/components/build/composer/GeneralTab.tsx` (name, class, subclass, synergy types, pinned super, exotic armor, optional shared exotic weapon if already supported)
+- [ ] T016 [US2] Implement General form UI in `src/components/build/composer/GeneralTab.tsx` (name, class, subclass, synergy types, pinned super, exotic armor; include shared exotic weapon **only if** already on create/edit identity—else skip)
 - [ ] T017 [US2] Wire 042-scoped `ManifestSearchPicker` usage in `GeneralTab.tsx` (class exotic; class+subclass super)
 - [ ] T018 [US2] Implement draft **Save general** → `POST /api/user/builds` using `createBuildPayload` / kit sourcing patterns from `CreateBuildPanel.tsx`; transition composer to live mode with returned ids in `DefaultVariantComposer.tsx`
 - [ ] T019 [US2] Add artifact + perk configuration on General for live mode in `GeneralTab.tsx` (port from `VariantEditPanel.tsx` artifact section)
-- [ ] T020 [US2] Surface soft guidance read-only on General in `GeneralTab.tsx` (reuse existing coverage/guidance components if present on Build detail; never auto-apply)
+- [ ] T020 [US2] Surface soft guidance read-only on General in `GeneralTab.tsx`: locate existing coverage/guidance UI first; if absent, minimal read-only placeholder from existing guidance APIs; never auto-apply
 
 **Checkpoint**: Draft create + identity edit works from General alone
 
@@ -101,6 +101,10 @@ description: "Task list for Default Variant Composer implementation"
 **Goal**: Grouped subclass kit pickers on one tab with capacity/legality preserved
 
 **Independent Test**: With class+subclass set, Subclass tab unlocks; abilities/aspects/fragments editable and save via existing variant/build PATCH paths
+
+### Tests for User Story 3
+
+- [ ] T021a [P] [US3] Add/extend unit coverage that subclass tab remains disallowed without subclass via `composerTabAccess` cases in `src/lib/builds/composerTabAccess.test.ts` (manual kit UI OK after)
 
 ### Implementation for User Story 3
 
@@ -118,12 +122,16 @@ description: "Task list for Default Variant Composer implementation"
 
 **Independent Test**: Attach class-compatible armor set; Improve optional; detach works; empty library → Create still available
 
+### Tests for User Story 4
+
+- [ ] T024a [P] [US4] Document/assert mutation-disabled-without-buildId behavior in `composerTabAccess` comments or a small pure helper test if extracted (manual attach E2E in quickstart)
+
 ### Implementation for User Story 4
 
 - [ ] T024 [US4] Implement Armor **Reuse | Create** sub-path chrome in `src/components/build/composer/ArmorModSetTab.tsx`
 - [ ] T025 [US4] Integrate class-constrained armor + mod set attach UI (reuse `SetAttachPicker` / list patterns) in `ArmorModSetTab.tsx` with live attach + detach via existing merge/remove attachment helpers
 - [ ] T026 [US4] After successful armor attach, show skippable **Improve kit** entry mounting `FinishArmorOptimizeWorkspace.tsx` (suggest-then-confirm only) in `ArmorModSetTab.tsx`
-- [ ] T027 [US4] Disable attach actions when `buildId` null; show “save General to continue” in `ArmorModSetTab.tsx`
+- [ ] T027 [US4] Disable attach/create/improve-apply when `buildId` null even if Armor tab is navigable (FR-022 nav vs mutation); show “save General to continue” in `ArmorModSetTab.tsx`
 
 **Checkpoint**: Reuse attach + optional Improve without Create path
 
@@ -142,7 +150,7 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Implementation for User Story 5
 
-- [ ] T030 [US5] Implement Armor **Create** UI (bonuses entry + Optimize workspace + result confirm) in `ArmorModSetTab.tsx`
+- [ ] T030 [US5] Implement Armor **Create** UI in `ArmorModSetTab.tsx` using **existing** optimizer goals/bonuses UI from `FinishArmorOptimizeWorkspace.tsx` (no new bonus domain model) + Optimize workspace + result confirm
 - [ ] T031 [US5] On confirm, call create-set-attach / materialize with name + conceptTags inheritance; live-attach to variant from `ArmorModSetTab.tsx`
 - [ ] T032 [US5] Support mod set attach/create after armor chosen (library pick or save-from-pieces patterns already in product) in `ArmorModSetTab.tsx`
 
@@ -177,6 +185,10 @@ description: "Task list for Default Variant Composer implementation"
 
 **Independent Test**: Incomplete → Finish open, actions disabled + reasons; complete equip-ready → actions work
 
+### Tests for User Story 7
+
+- [ ] T038a [P] [US7] Extend `finishMissingReasons.test.ts` for incomplete vs complete copy; equip button enablement stays pure-function composed in tests if extracted
+
 ### Implementation for User Story 7
 
 - [ ] T038 [US7] Implement `src/components/build/composer/FinishTab.tsx` using `evaluateFinishGapsFromVariant` / `finishGaps` + `finishMissingReasons` + `computeEquipReady`
@@ -193,6 +205,10 @@ description: "Task list for Default Variant Composer implementation"
 **Goal**: Same full tab set for non-default variants; light edits allowed
 
 **Independent Test**: Non-default opens same tabs; weapon-only save; equip-with-gaps unchanged
+
+### Tests for User Story 8
+
+- [ ] T042a [P] [US8] Assert tab id list for non-default equals default (shared constant test in `src/components/build/composer/types.ts` or adjacent `*.test.ts`)
 
 ### Implementation for User Story 8
 
@@ -214,6 +230,7 @@ description: "Task list for Default Variant Composer implementation"
 - [ ] T048 Run `npm run gate` and fix typecheck/lint/test/build issues
 - [ ] T049 [P] Update `docs/ui-polish-tracker.md` or operator notes only if needed for pure UI notes (no domain DAC change unless product rule shipped)
 - [ ] T050 Verify no domain rule regressions (NO_SYNERGY, exotic limits, soft guidance never auto-applies) via existing tests + spot check
+- [ ] T051 [P] Process check for FR-019: if implementation intentionally deviates from `docs/build-composer-flow - Future direction.excalidraw`, update `specs/043-default-variant-composer/spec.md` in the same change (no runtime code)
 
 ---
 
@@ -308,3 +325,6 @@ Each US phase is a vertical demo slice; do not block armor work on Finish polish
 - Canonical UX: `docs/build-composer-flow - Future direction.excalidraw`
 - Contract: `contracts/default-variant-composer-contract.md`
 - Commit only on green gate (constitution III)
+- Run `npm run gate` after each user-story checkpoint before commit (not only T048)
+- FR-019 is process-only (T051); Excalidraw board remains canonical IA
+- Analyze remediations 2026-07-24 applied: buildId mutation guard, exotic scope, optimizer bonuses, FR-019 task, extra test hooks US3/4/7/8

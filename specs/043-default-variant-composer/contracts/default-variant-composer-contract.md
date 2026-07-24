@@ -55,7 +55,7 @@ function composerTabAccess(input: {
 |-----|----------------|
 | general, finish | always |
 | subclass | class set ∧ subclass set |
-| armor, weapon | class set (UI open); mutating attach requires buildId (separate guard) |
+| armor, weapon | class set (UI open); **mutating** attach/create/improve-apply requires buildId (separate guard; draft shows save-General-to-continue) |
 
 ## finishMissingReasons (pure)
 
@@ -86,6 +86,10 @@ Response unchanged shape: `{ set, attachment }`.
 | Optimize routes used by FinishArmorOptimizeWorkspace | Create/Improve |
 | Equip / DIM routes | Finish tab actions |
 | Manifest/catalog search | Weapon/armor fills |
+
+## Armor Create bonuses
+
+Reuse existing optimizer **goals** UI inside/alongside `FinishArmorOptimizeWorkspace` — do not invent a new set-bonus entity for 043.
 
 ## Non-goals
 
