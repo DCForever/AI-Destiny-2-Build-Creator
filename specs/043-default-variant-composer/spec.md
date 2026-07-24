@@ -12,11 +12,21 @@
 
 **Related product spine**: Intent → Compose → Equip (DAC-P1-001 … DAC-P1-008). This feature reshapes **how** the default variant is composed in the UI; it does not weaken hard blocks, soft guidance, or equip-ready rules.
 
+## Clarifications
+
+### Session 2026-07-24
+
+- Q: Finish visibility when default is incomplete? → A: Show Finish always; equip/export disabled with clear missing-reason until complete (Option B)
+- Q: What does New build open? → A: Opens tabbed default-variant composer immediately (General first; identity collected there) (Option A)
+- Q: After Armor Reuse attach, optimize behavior? → A: Attach + optional Improve kit (not required) (Option B)
+- Q: Non-default variant tab model? → A: Same full tabs always; lighter edits allowed inside tabs (Option A)
+- Q: Tab access before class/subclass set? → A: Block opening Subclass/Armor/Weapon until class (and subclass where required) is set on General (Option B)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Tabbed Default Variant Shell (Priority: P1)
 
-A signed-in user starts or opens a build's **default variant** and works in a single composer shell with primary tabs: **General**, **Subclass**, **Armor & Mod Set**, and **Weapon Set**. They can move between tabs without losing in-progress choices on the variant. Soft guidance remains visible in context (at least on General and when reviewing readiness). Hard illegal states still prevent save where domain rules require it.
+A signed-in user chooses **New build** (or opens an existing build's **default variant**) and lands in a single composer shell with primary tabs: **General**, **Subclass**, **Armor & Mod Set**, and **Weapon Set**, plus always-visible **Finish**. **New build** does not use a separate pre-composer identity-only create step—General is where intent and identity are collected. They can move between tabs without losing in-progress choices on the variant. Soft guidance remains visible in context (at least on General and when reviewing readiness). Hard illegal states still prevent save where domain rules require it.
 
 **Why this priority**: The future board's primary change is structure—one tabbed default-variant path instead of a flat multi-section dump and a separate Finish walkthrough for core combat categories.
 
@@ -24,10 +34,12 @@ A signed-in user starts or opens a build's **default variant** and works in a si
 
 **Acceptance Scenarios**:
 
-1. **Given** a build with a default variant, **When** the user opens default-variant composition, **Then** they see primary tabs General, Subclass, Armor & Mod Set, and Weapon Set.
-2. **Given** the user changes a field on one tab, **When** they switch to another primary tab and return, **Then** the prior change is still reflected (no silent reset).
-3. **Given** designated synergies and optional soft targets, **When** the user views General (and readiness surfaces), **Then** soft coverage/stat guidance is available without auto-applying changes.
-4. **Given** an illegal subclass kit, over-capacity mods, or exotic limit violation, **When** the user attempts a save that domain rules hard-block, **Then** save is rejected with a clear reason (existing domain behavior preserved).
+1. **Given** a signed-in user on Build, **When** they choose **New build**, **Then** they enter the tabbed default-variant composer on **General** without a separate identity-only create panel first.
+2. **Given** a build with a default variant, **When** the user opens default-variant composition, **Then** they see primary tabs General, Subclass, Armor & Mod Set, and Weapon Set, plus Finish.
+3. **Given** the user changes a field on one tab, **When** they switch to another primary tab and return, **Then** the prior change is still reflected (no silent reset).
+4. **Given** designated synergies and optional soft targets, **When** the user views General (and readiness surfaces), **Then** soft coverage/stat guidance is available without auto-applying changes.
+5. **Given** an illegal subclass kit, over-capacity mods, or exotic limit violation, **When** the user attempts a save that domain rules hard-block, **Then** save is rejected with a clear reason (existing domain behavior preserved).
+6. **Given** a new build with class unset, **When** the user tries to open Subclass, Armor & Mod Set, or Weapon Set, **Then** those tabs do not activate and the UI indicates class must be set on General first.
 
 ---
 
@@ -66,7 +78,7 @@ On **Subclass**, the user completes the legal subclass kit using grouped lists: 
 
 ### User Story 4 - Armor & Mod Set: Reuse Existing Sets (Priority: P1)
 
-On **Armor & Mod Set**, the user chooses **Reuse**. They search/filter **Armor** sets constrained to the build's class (and other existing attach filters as appropriate), see an armor sets list and a mod sets list, and attach selected sets live to the default variant (replace-by-type semantics for the same set type remain as today).
+On **Armor & Mod Set**, the user chooses **Reuse**. They search/filter **Armor** sets constrained to the build's class (and other existing attach filters as appropriate), see an armor sets list and a mod sets list, and attach selected sets live to the default variant (replace-by-type semantics for the same set type remain as today). After an armor set is attached, the user may optionally run **Improve kit** (optimize) on that attachment; improve is never required to leave Reuse or complete the tab.
 
 **Why this priority**: Library reuse is the fast path for compose-via-sets (DAC-P1-004, DAC-P2-005).
 
@@ -78,6 +90,7 @@ On **Armor & Mod Set**, the user chooses **Reuse**. They search/filter **Armor**
 2. **Given** a listed armor set compatible with the build, **When** the user attaches it, **Then** it is live-attached to the default variant (or equivalent current attach mode default).
 3. **Given** a set already attached of the same type under replace-by-type rules, **When** the user attaches another, **Then** existing merge/replace behavior is preserved.
 4. **Given** no matching library sets, **When** Reuse lists are empty, **Then** the user can still switch to Create without a hard library gate.
+5. **Given** an armor set is live-attached via Reuse, **When** the user chooses optional Improve kit, **Then** optimize suggestions appear for confirm-only apply; dismissing or skipping improve leaves the attachment unchanged.
 
 ---
 
@@ -118,31 +131,31 @@ On **Weapon Set**, the user chooses **Reuse** (search/filter weapon sets, list, 
 
 ### User Story 7 - Finish Surfaces After Default Combat Categories Ready (Priority: P2)
 
-Once the default variant's required combat categories for "finished default" are satisfied (per existing completeness rules: legal kit, weapons, armor, mods as required), a **Finish** area/tab becomes available for equip / DIM export / wishlist terminal actions. Until then, Finish is not the place users must go to create armor/weapons.
+**Finish** is always present as a primary surface alongside composition tabs. Until the default variant meets the product's "finished default" completeness bar (legal kit, weapons, armor, mods as required), equip and DIM export actions on Finish stay **disabled** and Finish shows a clear reason listing what is still missing. Finish is never the only path to create armor/weapon sets. When complete and equip-ready, equip/export unlock; when complete but wishlist-only, equip/export stay blocked by readiness with clear status.
 
-**Why this priority**: Matches the board note that Finish appears after the default variant is finished; secondary to getting compose tabs right.
+**Why this priority**: Matches the board note that terminal equip actions follow default composition; secondary to getting compose tabs right. Always-visible Finish avoids a disappearing tab while still gating actions.
 
-**Independent Test**: Incomplete default → Finish hidden or clearly unavailable for equip path; complete default → Finish shows equip/export/wishlist outcomes consistent with equip-ready gates.
+**Independent Test**: Incomplete default → Finish visible, equip/export disabled with missing reasons; complete equip-ready → actions enabled; wishlist-complete → blocked with readiness status.
 
 **Acceptance Scenarios**:
 
-1. **Given** the default variant is missing required combat coverage, **When** the user looks for Finish, **Then** Finish is absent or does not present equip/export as available until completeness rules are met (wishlist save may still exist elsewhere if already allowed).
+1. **Given** the default variant is missing required combat coverage, **When** the user opens Finish, **Then** Finish is visible, equip and DIM export are disabled, and the UI states what categories or gaps remain.
 2. **Given** the default variant meets completeness and is equip-ready, **When** the user opens Finish, **Then** they can equip in-game and/or export to DIM per DAC-P1-007–008.
-3. **Given** a complete but not equip-ready (wishlist) default, **When** the user opens Finish, **Then** equip/export remain blocked with clear status; save of desired rolls remains allowed per domain.
+3. **Given** a complete but not equip-ready (wishlist) default, **When** the user opens Finish, **Then** equip/export remain blocked with clear readiness status; save of desired rolls remains allowed per domain.
 
 ---
 
 ### User Story 8 - Non-Default Variants Reuse the Flow Lightly (Priority: P2)
 
-For a **non-default** variant, the product reuses the same tabbed composer patterns where practical, but allows lighter edits (e.g. start from default and change only weapons). Empty combat slots on non-default variants still follow equip-with-gaps rules after confirmation.
+For a **non-default** variant, the product uses the **same full primary tabs** as the default (General, Subclass, Armor & Mod Set, Weapon Set, plus Finish). The user may make lighter edits (e.g. change only weapons) without being forced through full create rituals on every tab. Empty combat slots on non-default variants still follow equip-with-gaps rules after confirmation.
 
-**Why this priority**: Board explicitly calls out reuse without forcing full default rigor on every variant.
+**Why this priority**: Board explicitly calls out reuse without forcing full default rigor on every field—while keeping one interaction model.
 
-**Independent Test**: Open a non-default variant; confirm same tab model or a documented subset; save with partial weapons only; equip-with-gaps confirm still works.
+**Independent Test**: Open a non-default variant; confirm full tab set; save after weapon-only edits; equip-with-gaps confirm still works.
 
 **Acceptance Scenarios**:
 
-1. **Given** a non-default variant, **When** the user opens composition, **Then** they can use the same primary tab categories (or an explicit subset) without a wholly separate interaction model.
+1. **Given** a non-default variant, **When** the user opens composition, **Then** they see the same primary tabs as default (General, Subclass, Armor & Mod Set, Weapon Set, Finish)—not a reduced tab strip.
 2. **Given** a non-default variant with only weapon differences from default, **When** the user edits Weapon Set only, **Then** they can save without being forced through full armor create.
 3. **Given** empty slots on a non-default variant, **When** the user equips with gaps after confirm, **Then** DAC-VAR-001 behavior is preserved.
 
@@ -150,6 +163,8 @@ For a **non-default** variant, the product reuses the same tabbed composer patte
 
 ### Edge Cases
 
+- Until guardian **class** is set on General, Subclass, Armor & Mod Set, and Weapon Set tabs cannot be opened (Finish and General remain available).
+- Until **subclass** is set where required for kit picks, Subclass tab remains blocked even if class is set; Armor/Weapon may unlock with class alone when catalog scoping only needs class.
 - Thin library: Create paths remain available; Reuse empty states must not hard-block compose.
 - Class change after sets attached: existing detach/invalidation/clear rules apply; Reuse lists re-constrain to new class.
 - Optimize with no inventory or no feasible kits: empty results with recovery (manual create, Reuse, or adjust bonuses)—no silent fake kits.
@@ -163,7 +178,7 @@ For a **non-default** variant, the product reuses the same tabbed composer patte
 
 ### Functional Requirements
 
-- **FR-001**: Default-variant composition MUST present primary tabs: General, Subclass, Armor & Mod Set, Weapon Set.
+- **FR-001**: Default-variant composition MUST present primary tabs: General, Subclass, Armor & Mod Set, Weapon Set, plus an always-visible **Finish** surface (see FR-017).
 - **FR-002**: Tab switches MUST preserve in-progress default-variant edits already accepted into the working form/state for that session (no reset on tab change alone).
 - **FR-003**: General MUST support synergy-type intent designation and build identity fields required by domain (class, subclass context, exotic armor identity, optional shared exotic weapon, optional pinned Super).
 - **FR-004**: General MUST support default-variant artifact selection and perk configuration when an artifact is chosen.
@@ -171,6 +186,7 @@ For a **non-default** variant, the product reuses the same tabbed composer patte
 - **FR-006**: Subclass MUST expose grouped selection for class ability, melee, grenade, movement, aspects, and fragments subject to existing legality and capacity rules.
 - **FR-007**: Armor & Mod Set MUST offer **Reuse** and **Create** sub-paths.
 - **FR-008**: Armor Reuse MUST list/search armor sets constrained to the build's class and support attach to the default variant; mod sets MUST be listable/attachable in the same tab context.
+- **FR-021**: After a successful Armor Reuse attach, the system MUST offer an optional **Improve kit** (optimize) action for that armor attachment. Improve MUST be skippable; it MUST NOT auto-apply results; Create remains the path where optimize is a first-class create step.
 - **FR-009**: Armor Create MUST support choosing armor set bonuses and an Optimize entry that yields selectable optimized armor and mod candidates without auto-apply.
 - **FR-010**: When the user confirms selection of a newly created armor set from Create/Optimize, the system MUST generate a set name and MUST attach concept tags derived from the build's designated synergies.
 - **FR-011**: After armor is chosen, the user MUST be able to establish a mod set (from optimize list, library, or by saving mods configured on pieces) under existing mod-set rules.
@@ -179,9 +195,11 @@ For a **non-default** variant, the product reuses the same tabbed composer patte
 - **FR-014**: Weapon Create MUST provide Primary, Secondary, and Heavy selection with slot-constrained catalog search.
 - **FR-015**: Weapon catalog results MUST prioritize and indicate items that match the build's synergies while still allowing other legal weapons.
 - **FR-016**: Domain hard blocks (no synergy designations when required, illegal kits, mod capacity, exotic limits) and wishlist vs equip-ready gates MUST remain enforced.
-- **FR-017**: A Finish surface for equip / DIM export (and clear wishlist/equip-ready status) MUST become available when the default variant meets the product's "default finished" completeness bar; it MUST NOT be required as the only path to create armor/weapon sets.
-- **FR-018**: Non-default variants MUST reuse the tabbed composer model (full or documented subset) and MUST allow lighter edits without forcing full default create rituals.
+- **FR-017**: A Finish surface for equip / DIM export (and clear wishlist/equip-ready status) MUST always be visible during default-variant composition. Equip and DIM export on Finish MUST stay disabled until the default meets the product's "default finished" completeness bar, with a clear missing-reason summary; when complete, equip/export further respect equip-ready gates. Finish MUST NOT be required as the only path to create armor/weapon sets.
+- **FR-018**: Non-default variants MUST present the same full primary tab set as the default variant (General, Subclass, Armor & Mod Set, Weapon Set, Finish). The product MUST allow lighter edits (e.g. weapons-only changes) without forcing full default create rituals on every tab.
 - **FR-019**: Canonical interaction structure for this feature is the Future direction Excalidraw board; deviations require an explicit spec update.
+- **FR-020**: **New build** MUST open the tabbed default-variant composer immediately (starting on General). Intent and build identity MUST be collected in General (and related tabs), not via a separate pre-composer identity-only create step.
+- **FR-022**: Until build **class** is set on General, the product MUST prevent opening Subclass, Armor & Mod Set, and Weapon Set tabs (controls disabled or non-activatable with a clear reason). **Subclass** tab further MUST remain blocked until subclass is set when subclass is required for kit composition. General and Finish remain reachable.
 
 ### Key Entities
 
@@ -203,15 +221,20 @@ For a **non-default** variant, the product reuses the same tabbed composer patte
 - **SC-005**: Soft guidance never changes pins/attachments without an explicit user confirm in any of the new paths (spot-check optimize + guidance).
 - **SC-006**: Equip and DIM export remain impossible for non–equip-ready variants and possible for equip-ready complete defaults (regression on DAC-P1-005/007/008).
 - **SC-007**: Non-default variant can be saved after weapon-only edits without mandatory armor recreate.
+- **SC-008**: With an incomplete default, Finish is still reachable and shows at least one concrete missing reason; equip/export controls are not actionable until completeness (and then equip-ready) rules pass.
+- **SC-009**: Choosing New build lands the user on General inside the tabbed composer with no intermediate identity-only create screen.
+- **SC-010**: On a new build with no class, attempting to activate Subclass/Armor/Weapon tabs fails closed (no usable compose controls on those tabs) until class is set on General.
 
 ## Assumptions
 
 - Canonical UX is `docs/build-composer-flow - Future direction.excalidraw` (Future lane + Default Variant Creation Flow section).
+- **New build** enters the tabbed composer directly; a separate Create Build identity-only panel is retired for this flow (edit-existing still opens the same composer on the selected variant).
 - Domain rules in `specs/domain-business-rules.md` and `specs/domain-acceptance-criteria.md` win on conflicts; this feature is primarily interaction architecture.
 - Existing set attach modes (live default), replace-by-type, and library APIs remain the composition backend; UI is re-orchestrated rather than inventing a new domain model.
 - Create-build picker scoping from `042-create-build-pickers` remains in force for exotic/super lookups on General.
-- "Default finished" for revealing Finish means the same combat completeness bar already used for default variant completion (class, legal subclass kit, weapons, armor, mods)—not a new softer bar.
+- "Default finished" for **enabling** Finish equip/export means the same combat completeness bar already used for default variant completion (class, legal subclass kit, weapons, armor, mods)—not a new softer bar. Finish itself is always visible.
 - Optimize may require signed-in inventory; empty inventory yields empty optimize results, not errors that brick Create.
+- Armor Reuse is attach-first; optimize on Reuse is optional Improve kit only (never a forced gate).
 - Generated armor set names may be pattern-based (e.g. build name + armor + disambiguator); exact pattern is an implementation detail as long as SC-003 holds.
 - Capture-current-gear and dense concept-tag filter walls are not primary chrome on the future board; optional advanced actions may remain if they do not restore the old busy default layout.
 - Fashion and non-combat cosmetics are out of the default tab spine unless already reachable elsewhere unchanged.
