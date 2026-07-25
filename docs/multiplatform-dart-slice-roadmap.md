@@ -221,3 +221,5 @@ Spec Kit specify must **not** include porting all evaluators — those are **DAR
 | [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) | Git / worktree isolation |
 | `specs/dart-NNN-*/` | Per-slice Spec Kit artifacts (DART workstream only) |
 | `.grok/workflows/explore-flutter-port.rhai` | Optional re-exploration only |
+| `.grok/workflows/dart-speckit-loop.rhai` | Auto Spec Kit advance for DART-001… |
+| [multiplatform-dart-speckit-loop.md](./multiplatform-dart-speckit-loop.md) | Operator notes for the auto-loop |
