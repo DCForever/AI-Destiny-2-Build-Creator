@@ -29,7 +29,7 @@
 ## Phase 5: Finish
 
 - [x] T009 Update roadmap DART-061 done; Current pointer program complete
-- [ ] T010 Mark tasks complete; commit; merge `--no-edit` into `feature/multiplatform-dart`; commit base
+- [x] T010 Mark tasks complete; commit; merge `--no-edit` into `feature/multiplatform-dart`; commit base
 
 ## Dependencies & Execution Order
 
