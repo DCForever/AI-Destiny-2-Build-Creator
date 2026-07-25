@@ -32,4 +32,4 @@
 
 - [x] T011 Update roadmap DART-058 done; Current → DART-059
 - [x] T012 Run tests: bungie matrix, client_secret_scan, cutover validator
-- [ ] T013 Commit; merge `--no-edit` into `feature/multiplatform-dart`; commit base
+- [x] T013 Commit; merge `--no-edit` into `feature/multiplatform-dart`; commit base
