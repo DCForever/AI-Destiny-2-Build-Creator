@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-038** `flutter-equip-ui` (P4 — character pick + equip CTA + step report) |
-| **Active branch** | (create) `dart-038-flutter-equip-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-038-flutter-equip-ui/` (created at specify) |
+| **Next / active slice** | **DART-039** `flutter-dim-export-ui` (P4 — DIM jsonOnly / clipboard export) |
+| **Active branch** | (create) `dart-039-flutter-dim-export-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-039-flutter-dim-export-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-038 note (completed)
+
+Windows Builds detail **Equip / Apply** panel: class-filtered character pick (`getCharacters`), equip-ready gate (wishlist/stale block CTA), empty combat **gaps confirm**, `planEquipSteps` + `executeEquipPlan` with **step report**. Soft never auto-applies. Tests: `equip_format_test` + `equip_panel_test` + bungie `character_parse_test`.
 
 ### DART-037 note (completed)
 
