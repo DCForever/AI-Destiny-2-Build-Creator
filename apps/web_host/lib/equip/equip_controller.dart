@@ -32,6 +32,8 @@ class EquipController extends ChangeNotifier {
     required this.profileClient,
     required this.writeClient,
     this.skipSyncIfStale = false,
+    this.equipmentBucketLookup,
+    this.equipmentBucketLookupBuilder,
   });
 
   final AppDatabase db;
@@ -41,6 +43,13 @@ class EquipController extends ChangeNotifier {
 
   /// When true, equip path does not call [syncIfStale] (tests / offline).
   final bool skipSyncIfStale;
+
+  /// Explicit vault resolution map (DART-050).
+  final Map<int, int>? equipmentBucketLookup;
+
+  /// Catalog/entity slot builder for vault/postmaster resolution (DART-050).
+  /// Web Settings full-depth sync is DART-056; equip path still must wire lookup.
+  final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
 
   String? _buildId;
   String? _variantId;
@@ -323,11 +332,14 @@ class EquipController extends ChangeNotifier {
 
     try {
       if (!skipSyncIfStale) {
+        // DART-050: vault/postmaster resolution on every production sync path.
         await syncIfStale(
           db: db,
           userId: userId,
           accessToken: tokens.accessToken,
           profileClient: profileClient,
+          equipmentBucketLookup: equipmentBucketLookup,
+          equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
         );
       }
 

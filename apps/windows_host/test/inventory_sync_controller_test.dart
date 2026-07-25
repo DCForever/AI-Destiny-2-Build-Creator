@@ -63,6 +63,89 @@ void main() {
       expect(items, hasLength(2));
     });
 
+    test('vault transfer fixtures require lookup (fail without)', () async {
+      profile.items = [
+        const RawInventoryItem(
+          instanceId: 'vault-gun',
+          itemHash: 555,
+          bucketHash: 138197802, // vault general — needs lookup
+          location: 'vault',
+          power: 1800,
+        ),
+      ];
+      // Controller without lookup builder — production wiring must not do this.
+      await controller.syncNow();
+      expect(controller.phase, InventorySyncPhase.idle);
+      expect(controller.itemCount, 0);
+      expect(controller.lastResolvedFromTransfer, 0);
+      final empty = await listInventoryItems(db, controller.localUserId!);
+      expect(empty, isEmpty);
+    });
+
+    test('vault fixtures store Kinetic when lookup wired', () async {
+      profile.items = [
+        const RawInventoryItem(
+          instanceId: 'vault-gun',
+          itemHash: 555,
+          bucketHash: 138197802,
+          location: 'vault',
+          power: 1800,
+        ),
+        const RawInventoryItem(
+          instanceId: 'post-helm',
+          itemHash: 666,
+          bucketHash: 215593132, // postmaster
+          location: 'character',
+          characterId: 'c1',
+          power: 1700,
+        ),
+      ];
+      controller.dispose();
+      controller = InventorySyncController(
+        db: db,
+        session: session,
+        profileClient: profile,
+        lock: lock,
+        equipmentBucketLookupBuilder: (hashes) async {
+          expect(hashes, containsAll([555, 666]));
+          return buildEquipmentBucketLookup(
+            {
+              '555': {
+                'hash': 555,
+                'inventory': {'bucketTypeHash': 1498876634},
+              },
+              '666': {
+                'hash': 666,
+                'inventory': {'bucketTypeHash': 3448274439},
+              },
+            },
+            hashes,
+          );
+        },
+      );
+
+      await controller.syncNow();
+
+      expect(controller.phase, InventorySyncPhase.idle);
+      expect(controller.itemCount, 2);
+      expect(controller.lastResolvedFromTransfer, greaterThan(0));
+      expect(controller.lastResolvedFromTransfer, 2);
+      final items = await listInventoryItems(db, controller.localUserId!);
+      expect(items, hasLength(2));
+      expect(
+        items.where((e) => e.instanceId == 'vault-gun').single.bucket,
+        'Kinetic',
+      );
+      expect(
+        items.where((e) => e.instanceId == 'vault-gun').single.location,
+        'vault',
+      );
+      expect(
+        items.where((e) => e.instanceId == 'post-helm').single.bucket,
+        'Helmet',
+      );
+    });
+
     test('second sync replaces inventory and bumps version', () async {
       await controller.syncNow();
       profile.items = [

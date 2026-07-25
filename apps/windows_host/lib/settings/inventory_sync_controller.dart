@@ -16,6 +16,10 @@ enum InventorySyncPhase {
 ///
 /// Tokens come from [WindowsOAuthSession] only — never written to SQLite.
 /// Soft guidance never auto-applies.
+///
+/// **DART-050:** production hosts MUST inject [equipmentBucketLookupBuilder]
+/// (and/or [equipmentBucketLookup]) so vault/postmaster gear is stored. Empty
+/// lookup is test-only.
 class InventorySyncController extends ChangeNotifier {
   InventorySyncController({
     required AppDatabase db,
@@ -23,6 +27,8 @@ class InventorySyncController extends ChangeNotifier {
     required BungieProfileClient profileClient,
     InventoryBusyLock? lock,
     DateTime Function()? clock,
+    this.equipmentBucketLookup,
+    this.equipmentBucketLookupBuilder,
   })  : _db = db,
         _session = session,
         _profileClient = profileClient,
@@ -35,12 +41,20 @@ class InventorySyncController extends ChangeNotifier {
   final InventoryBusyLock? _lock;
   final DateTime Function() _clock;
 
+  /// Explicit itemHash → equipment bucketHash (tests / overrides).
+  final Map<int, int>? equipmentBucketLookup;
+
+  /// Production builder: raw DestinyInventoryItemDefinition and/or catalog slots.
+  final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
+
   InventorySyncPhase _phase = InventorySyncPhase.idle;
   int? _itemCount;
   int? _syncVersion;
   String? _lastFullSyncAt;
   String? _errorMessage;
   int? _localUserId;
+  int? _lastResolvedFromTransfer;
+  int? _lastDroppedNonEquipment;
 
   InventorySyncPhase get phase => _phase;
   int? get itemCount => _itemCount;
@@ -48,6 +62,10 @@ class InventorySyncController extends ChangeNotifier {
   String? get lastFullSyncAt => _lastFullSyncAt;
   String? get errorMessage => _errorMessage;
   int? get localUserId => _localUserId;
+
+  /// From last successful sync diagnostics (DART-050 / future DART-053 UI).
+  int? get lastResolvedFromTransfer => _lastResolvedFromTransfer;
+  int? get lastDroppedNonEquipment => _lastDroppedNonEquipment;
 
   bool get isSyncing => _phase == InventorySyncPhase.syncing;
   bool get isLoadingStatus => _phase == InventorySyncPhase.loadingStatus;
@@ -123,12 +141,18 @@ class InventorySyncController extends ChangeNotifier {
         userId: user.id,
         accessToken: accessToken,
         profileClient: _profileClient,
+        equipmentBucketLookup: equipmentBucketLookup,
+        equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
         lock: _lock,
       );
 
       _itemCount = result.itemCount;
       _syncVersion = result.syncVersion;
       _lastFullSyncAt = result.lastFullSyncAt;
+      _lastResolvedFromTransfer =
+          result.diagnostics.resolution?.resolvedFromTransfer;
+      _lastDroppedNonEquipment =
+          result.diagnostics.resolution?.droppedNonEquipment;
       _phase = InventorySyncPhase.idle;
       _errorMessage = null;
     } on SyncInProgressError catch (e) {

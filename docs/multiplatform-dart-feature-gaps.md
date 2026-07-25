@@ -103,8 +103,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | ID | Feature | Product evidence | Dart today | Plan | Slices / GAP |
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
-| **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts exist; **vault/postmaster dropped** without lookup | **planned** (P0) | **DART-050** / GAP-INV-01 / RB-06 |
-| **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Library has resolver; hosts omit lookup | **planned** (P0) | **DART-050** |
+| **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts; vault lookup wired (DART-050) | **shipped** + enrichment residual | **DART-050** done; RB-06 until 051–054 |
+| **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Lookup + host wiring (DART-050) | **shipped** (fixture) | **DART-050**; live harness DART-054 |
 | **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Crafted-only | **planned** (P1) | **DART-051** / GAP-INV-02 |
 | **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Raw socketCapture only | **planned** (P1) | **DART-052** / GAP-INV-03 |
 | **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | itemCount only in UI | **planned** (P1) | **DART-053** / GAP-INV-04 |
@@ -160,13 +160,13 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | ID | Area | Severity | Status | Next.js evidence | Dart today | Planned slices | Cutover link |
 | -- | ---- | -------- | ------ | ---------------- | ---------- | -------------- | ------------ |
-| **GAP-INV-01** | Vault/postmaster bucket resolution | **P0** | `open` | `buildEquipmentBucketLookup` + `resolveTransferContainerBuckets` in `src/lib/bungie/syncInventory.ts` | `resolveTransferContainerBuckets` exists + unit proof, but hosts omit lookup → vault/postmaster dropped before Drift | **DART-050** | RB-06 / RC-SYNC fidelity; equip pins |
+| **GAP-INV-01** | Vault/postmaster bucket resolution | **P0** | `closed` (DART-050) | `buildEquipmentBucketLookup` + `resolveTransferContainerBuckets` in `src/lib/bungie/syncInventory.ts` | `buildEquipmentBucketLookup` + host wiring on Windows Settings/equip + Jaspr equip; package+host fixtures assert `resolvedFromTransfer > 0` | **DART-050** done | RB-06 partial (enrichment/harness remain 051–054) |
 | **GAP-INV-02** | Roll tags enrichment | **P1** | `open` | `computeRollTags` + weapon-perks / WeaponRecord | `_normalizeItems` only emits `Crafted` when `isCrafted` | **DART-051** | Owned pickers / quality UX |
 | **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `open` | `buildStoredSocketPlugs` + weapon socket context | Raw `socketCapture` JSON; no `columnKind`/`columnLabel` | **DART-052** | Instance perk grids |
 | **GAP-INV-04** | Sync diagnostics UI | **P1** | `open` | `formatSyncDiagnostics` + `[inventory-sync]` logs | Controller keeps itemCount only; Card has no diagnostics | **DART-053** | Makes drops visible |
 | **GAP-INV-05** | Live Next-vs-Dart inventory harness | **P0** | `planned` | Manual dual sync | No harness under apps/packages/tool | **DART-054** | Prevents silent drift; equip pin fidelity |
 | **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `partial` | Manifest refresh always online | `OwnedCatalogBridge` joins inventory counts onto entity baseItems; empty cache ≠ empty vault | **DART-050** docs residual + **DART-053** UX warning | UX after sync |
-| **GAP-INV-07** | Weapon combat `statValues` on inventory rows | **P2** | `open` | `parseWeaponStatValues` for weapons + transfer containers | `_parseArmorStatValues` reused for `isWeapon\|\|isTransfer` | **DART-050** (optional deliverable) | Combat stats on vault weapons |
+| **GAP-INV-07** | Weapon combat `statValues` on inventory rows | **P2** | `closed` (DART-050 opt) | `parseWeaponStatValues` for weapons + transfer containers | `parseWeaponStatValues` + transfer merge in `inventory_parse.dart` | **DART-050** optional delivered | Combat stats on vault weapons |
 | **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `open` | `/loadouts` AppShell + page | MISS all shells (schema only) | **DART-055** | RB-01 / RC-NAV |
 | **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `open` | Full Settings sync + owned catalog | Thinner web path; equip optional when write clients missing | **DART-056** | RB-02 / RC-SYNC |
 | **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `partial` | Full desktop-class AppShell | Bottom nav Builds\|Settings only; catalog MISS; equip/DIM MISS; settings minimum | **DART-057** | Phone surface matrix |
@@ -190,26 +190,25 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 **Problem:** Vault (General) and Postmaster items use transfer bucket hashes. Without itemHash → equipment bucket lookup from Destiny definitions, they are **dropped** before Drift write. Equip-ready pin pool under-reports vault-owned gear vs Next.
 
-**Evidence (2026-07-25 scan):**
+**Evidence (2026-07-25 scan → closed by DART-050):**
 - Next `performSync` always `buildEquipmentBucketLookup` + `resolveTransferContainerBuckets`.
-- Dart library implements `resolveTransferContainerBuckets` + unit proof (vault General drops without lookup; Kinetic stores with lookup) but has **no** `buildEquipmentBucketLookup` and hosts never build/wire lookup.
-- Production call sites omit lookup: Windows `InventorySyncController.syncNow`, Windows/Jaspr equip `syncIfStale` (PROC-02).
-- Package tests expect without-lookup vault count **0** — green suite coexists with empty production wiring.
+- **DART-050 delivered:** `buildEquipmentBucketLookup` / `buildEquipmentBucketLookupFromSlots` in `packages/bungie`; `equipmentBucketLookupBuilder` on `syncUserInventory` / `syncIfStale`; Windows Settings + equip + Jaspr equip wire lookup; package/host fixtures assert `resolvedFromTransfer > 0` for vault fixtures; empty lookup remains only for drop-path tests (not production-OK in docs).
+- Live dual-account count harness remains **DART-054** (RB-06 full clearance after 050–054).
 
 **Next:** `src/lib/bungie/resolveEquipmentBuckets.ts` + `syncInventory.ts`  
-**Dart:** `packages/bungie/lib/src/sync/sync_inventory.dart`; Windows `apps/windows_host/lib/settings/inventory_sync_controller.dart`.
+**Dart:** `packages/bungie/lib/src/profile/equipment_bucket_lookup.dart`; host providers under `apps/windows_host` / `apps/web_host`.
 
-**Planned slice: DART-050 `inventory-vault-resolution`**
+**Slice: DART-050 `inventory-vault-resolution` — done**
 
 | Field | Value |
 | ----- | ----- |
 | Branch / specs | `dart-050-inventory-vault-resolution` |
 | Depends | DART-024, DART-018/017 (manifest entity path) |
-| Deliverables | (1) Build itemHash→equipmentBucket lookup from `DestinyInventoryItemDefinition` / entity stores (parity with Next `buildEquipmentBucketLookup`). (2) Wire **non-empty** `equipmentBucketLookup` into **every** production `syncUserInventory` / `syncIfStale` path: Windows Settings `syncNow`, Windows equip, Jaspr equip, future web Settings. (3) Package docs stop treating empty lookup as production-OK. (4) Document Owned catalog still needs entity stores (GAP-INV-06 residual → DART-053 UX). (5) Optional: weapon combat `statValues` via `parseWeaponStatValues` parity (GAP-INV-07 P2). |
-| Exit criteria | After sync, vault/postmaster weapon/armor instances exist in Drift with Kinetic/Energy/Power/armor buckets; unit + host fixtures assert `diagnostics.resolution.resolvedFromTransfer > 0` when fixtures include vault; host tests **fail** if lookup omitted for vault fixtures; live item counts within agreed tolerance of Next for same membership (or documented remaining delta); equip-ready can pin vault-owned instances that Next pins within agreed count tolerance; finish-spec rejects “user can sync” alone (PROC-01) and opens GAP+RB for any intentional thinning (PROC-06) |
-| Status | `planned` |
-| Process | PROC-01, PROC-02, PROC-06 |
-| Cutover | RB-06 |
+| Deliverables | (1) `buildEquipmentBucketLookup` from DestinyInventoryItemDefinition + slot fallback. (2) Wired into Windows Settings `syncNow`, Windows equip `syncIfStale`, Jaspr equip `syncIfStale` (web Settings depth → DART-056). (3) Package docs require production lookup. (4) GAP-INV-06 residual → DART-053. (5) GAP-INV-07 parseWeaponStatValues delivered. |
+| Exit criteria | Vault/postmaster fixtures land in Drift with equipment buckets; `resolvedFromTransfer > 0` asserted; host tests document fail-without-lookup path; finish-spec rejects “user can sync” alone |
+| Status | **`closed`** (fixture proof; live harness DART-054) |
+| Process | PROC-01/02 addressed; PROC-06: no intentional thinning in this slice |
+| Cutover | RB-06 remains open until DART-051–054 enrichment + harness |
 
 ---
 
@@ -293,30 +292,29 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 **Dart:** `owned_catalog_bridge.dart`; catalog_page empty messages for noVersion/noStores vs empty inventory
 
 **Ownership (dual):**
-- **DART-050:** Document entity-store dependency remains after vault resolution; do not claim Owned “works” from inventory sync alone.
+- **DART-050 (done):** Documented entity-store dependency remains after vault resolution; packages/README states empty entity cache ≠ empty vault / Owned needs entities.
 - **DART-053:** Ship Settings/Catalog empty-cache warning UX so empty Owned is not blamed solely on sync.
 
 | Field | Value |
 | ----- | ----- |
 | Exit criteria | After inventory sync, Owned scope is usable when entity cache is populated; Settings/Catalog UX clearly warns when entity cache missing/empty; documented dependency remains after DART-050 vault fix |
-| Status | `partial` |
-| Planned slices | **DART-050** (docs residual) + **DART-053** (UX) |
+| Status | `partial` (docs residual from DART-050; UX half open) |
+| Planned slices | **DART-050** (docs residual **done**) + **DART-053** (UX) |
 
 ---
 
 ### GAP-INV-07 — Weapon combat `statValues` on inventory rows (**P2**)
 
-**Problem:** Next uses `parseWeaponStatValues` for weapons and vault transfer containers; Dart reuses `_parseArmorStatValues` (armor-only hashes) for `isWeapon \|\| isTransfer`, so RPM/Impact/Range/etc. are not stored on weapon inventory rows. Parse baseline (vault/character/equipped, transfer buckets, socketCapture) is otherwise largely aligned.
+**Problem (historical):** Dart reused armor-hash parser for weapons/transfer.  
+**DART-050 fix:** `parseWeaponStatValues` + transfer merge (weapon or armor hashes) in `inventory_parse.dart`.
 
-**Next:** `src/lib/bungie/profile.ts` `parseWeaponStatValues`  
-**Dart:** `packages/bungie/lib/src/profile/inventory_parse.dart`
-
-**Planned into: DART-050** (optional deliverable; not a cutover P0)
+**Next:** `src/lib/inventory/instances/weaponStats.ts`  
+**Dart:** `packages/bungie/lib/src/profile/inventory_parse.dart` (`kWeaponStatHashToName`, `parseWeaponStatValues`)
 
 | Field | Value |
 | ----- | ----- |
 | Exit criteria | Weapon and vault/postmaster weapon instances store combat stats (RPM/Impact/Range/etc.) comparable to Next `parseWeaponStatValues` fixtures; armor stats remain armor-hash mapped |
-| Status | `open` |
+| Status | **`closed`** (DART-050 optional deliverable) |
 | Severity | P2 |
 
 ---
@@ -472,8 +470,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | ID | Severity | Status | Process miss | Fix (planned into slices) | Exit criteria |
 | -- | -------- | ------ | ------------ | ------------------------- | ------------- |
-| **PROC-01** | P0 | `partial` | DART-024/025 success criteria closed on “user can sync” / full-replace, not vault/postmaster parity | **DART-050** exit criteria + finish-spec | Finish-spec rejects “user can sync” alone: vault/postmaster fixtures must land in Drift with correct equipment buckets; `resolvedFromTransfer > 0` asserted in package + host tests; roadmap Success Criteria for inventory slices cites Next parity fields |
-| **PROC-02** | P0 | `open` | `equipmentBucketLookup` optional/defaults empty; production Settings + equip `syncIfStale` never pass lookup | **DART-050** host wiring | Every production path that calls `syncUserInventory`/`syncIfStale` builds/passes non-empty lookup when entity/manifest data is available; host tests fail if lookup omitted for vault fixtures; package docs stop advertising optional-empty as production-OK |
+| **PROC-01** | P0 | `closed` (DART-050) | DART-024/025 closed on “user can sync” only | **DART-050** exit criteria + finish-spec | Vault/postmaster fixtures land in Drift with equipment buckets; `resolvedFromTransfer > 0` asserted in package + host tests |
+| **PROC-02** | P0 | `closed` (DART-050) | Production hosts omitted lookup | **DART-050** host wiring | Windows Settings/equip + Jaspr equip wire builder; package docs require production lookup; host tests assert vault resolution |
 | **PROC-03** | P0 | `planned` | No live dual-account Next-vs-Dart inventory harness | **DART-054** | Documented operator procedure + optional script compares counts by location/bucket (and raw/stored/`resolvedFromTransfer`); CI or pre-merge operator gate; closes GAP-INV-05 |
 | **PROC-04** | P1 | `partial` | RC-SYNC pass = “documented sync path works”; evaluation coarse vs RB-06 fidelity | **DART-054** checklist update | Cutover RC-SYNC pass condition requires vault/postmaster present within agreed Next tolerance (or documented residual), referencing DART-050–054 evidence; RB-06 clearance tied to fidelity metrics |
 | **PROC-05** | P1 | `open` | Spec Kit / pure `p0_parity_gate` green ≠ product inventory sameness; unit tests pass with empty lookup | **DART-054** + gaps workflow | `dart-gaps-analysis` (or successor) required after inventory slices; DART-054 harness or fixture-compare gate blocks claiming inventory parity; `p0_parity_gate` remains domain-only but inventory fidelity has an explicit separate gate in this catalog |
@@ -511,8 +509,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-050** `inventory-vault-resolution` |
-| **Next phase** | P6 inventory fidelity (DART-050–054 → P7 055–057 → P8 058–061) |
-| **Blocker for cutover** | Residual RB-01…06; inventory P0 is **GAP-INV-01** (blocks trusted equip pins); all open P0/P1 map to DART-050–061 |
+| **Next planned slice** | **DART-051** `inventory-roll-tags` |
+| **Next phase** | P6 inventory fidelity (DART-050 done → 051–054 → P7 055–057 → P8 058–061) |
+| **Blocker for cutover** | Residual RB-01…06; inventory fidelity continues GAP-INV-02…05 (DART-051–054); GAP-INV-01 closed by DART-050 |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |

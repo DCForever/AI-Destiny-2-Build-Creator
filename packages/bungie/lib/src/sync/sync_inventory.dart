@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:destiny2_db/destiny2_db.dart';
 
 import '../profile/bungie_profile_client.dart';
+import '../profile/equipment_bucket_lookup.dart';
 import '../profile/inventory_buckets.dart';
 import '../profile/inventory_parse.dart';
 import '../profile/profile_types.dart';
@@ -36,8 +39,11 @@ class SyncInProgressError implements Exception {
 ///
 /// - Uses first membership from [BungieProfileClient.getMemberships] (primary-sorted).
 /// - Updates local user membership type/display when changed.
-/// - Optional [equipmentBucketLookup] maps itemHash → equipment bucketHash for
-///   vault/postmaster resolution; without it, transfer-container items are dropped.
+/// - [equipmentBucketLookup] / [equipmentBucketLookupBuilder] map itemHash → equipment
+///   bucketHash for vault/postmaster resolution.
+/// - **Production hosts MUST wire a non-empty lookup** whenever entity/manifest data
+///   is available (DART-050 / GAP-INV-01). Empty lookup is test-only — transfer
+///   containers (vault General / postmaster) are dropped before Drift write.
 /// - [now] ISO-8601 timestamp written as syncedAt / lastFullSyncAt (injectable for tests).
 Future<SyncInventoryResult> syncUserInventory({
   required AppDatabase db,
@@ -45,6 +51,7 @@ Future<SyncInventoryResult> syncUserInventory({
   required String accessToken,
   required BungieProfileClient profileClient,
   Map<int, int>? equipmentBucketLookup,
+  EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
   String? now,
   InventoryBusyLock? lock,
 }) async {
@@ -55,7 +62,8 @@ Future<SyncInventoryResult> syncUserInventory({
         userId: userId,
         accessToken: accessToken,
         profileClient: profileClient,
-        equipmentBucketLookup: equipmentBucketLookup ?? const {},
+        equipmentBucketLookup: equipmentBucketLookup,
+        equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
         now: now ?? DateTime.now().toUtc().toIso8601String(),
       );
     });
@@ -69,7 +77,8 @@ Future<SyncInventoryResult> _performSync({
   required int userId,
   required String accessToken,
   required BungieProfileClient profileClient,
-  required Map<int, int> equipmentBucketLookup,
+  Map<int, int>? equipmentBucketLookup,
+  EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
   required String now,
 }) async {
   final memberships = await profileClient.getMemberships(accessToken);
@@ -97,9 +106,19 @@ Future<SyncInventoryResult> _performSync({
     membership,
   );
 
+  final transferHashes = <int>[
+    for (final item in parsed.items)
+      if (needsEquipmentBucketResolution(item.bucketHash)) item.itemHash,
+  ];
+  final lookup = await _resolveEquipmentBucketLookup(
+    transferHashes: transferHashes,
+    equipmentBucketLookup: equipmentBucketLookup,
+    equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+  );
+
   final resolved = resolveTransferContainerBuckets(
     parsed.items,
-    equipmentBucketLookup,
+    lookup,
   );
   final records = _normalizeItems(resolved.items, now);
 
@@ -125,6 +144,22 @@ Future<SyncInventoryResult> _performSync({
     lastFullSyncAt: status.lastFullSyncAt ?? now,
     diagnostics: parsed.diagnostics,
   );
+}
+
+/// Merge explicit map with async builder (explicit entries win on conflict).
+Future<Map<int, int>> _resolveEquipmentBucketLookup({
+  required List<int> transferHashes,
+  Map<int, int>? equipmentBucketLookup,
+  EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
+}) async {
+  final merged = <int, int>{};
+  if (equipmentBucketLookupBuilder != null && transferHashes.isNotEmpty) {
+    merged.addAll(await equipmentBucketLookupBuilder(transferHashes));
+  }
+  if (equipmentBucketLookup != null) {
+    merged.addAll(equipmentBucketLookup);
+  }
+  return merged;
 }
 
 List<InventoryItemRecord> _normalizeItems(

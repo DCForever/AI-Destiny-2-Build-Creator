@@ -11,6 +11,24 @@ const Map<int, String> kArmorStatHashToName = {
   2996146975: 'Weapons',
 };
 
+/// Weapon combat stat hash → display name (product parseWeaponStatValues).
+///
+/// Parity: `src/lib/inventory/instances/weaponStats.ts` STAT_HASH_TO_NAME.
+const Map<int, String> kWeaponStatHashToName = {
+  4284893193: 'RPM',
+  4043523819: 'Impact',
+  1240592695: 'Range',
+  155624089: 'Stability',
+  943549884: 'Handling',
+  4188031367: 'Reload Speed',
+  1345609583: 'Aim Assistance',
+  2714451661: 'Airborne',
+  3555269338: 'Zoom',
+  3022301683: 'Ammo Gen',
+  2715839340: 'Recoil Direction',
+  3871231066: 'Magazine',
+};
+
 /// Parse GetProfile Response into raw inventory items + diagnostics.
 FullInventoryParseResult parseFullInventoryResponse(
   Object? response,
@@ -261,11 +279,16 @@ _ParseAttempt _parseItemAttempt(
   final isWeapon = isWeaponBucketHash(bucketHash);
   final isTransfer = kTransferContainerBuckets.contains(bucketHash);
   final statEntries = statsMap[instanceId];
+  // Armor uses armor-hash map; weapons + transfer containers use combat stats
+  // (GAP-INV-07 / product parseWeaponStatValues). Transfer may be armor or
+  // weapon — merge combat + armor maps when both present.
   final statValues = isArmor
       ? _parseArmorStatValues(statEntries)
-      : isWeapon || isTransfer
-          ? _parseArmorStatValues(statEntries)
-          : null;
+      : isWeapon
+          ? parseWeaponStatValues(_statPairs(statEntries))
+          : isTransfer
+              ? _parseTransferStatValues(statEntries)
+              : null;
   final gearTier =
       isArmor || isTransfer ? _parseGearTier(instance) : null;
   final socketCapture = isWeapon || isTransfer
@@ -471,6 +494,42 @@ Map<String, Object?>? _parseArmorStatValues(List<_StatEntry>? stats) {
     if (name != null) result[name] = entry.value;
   }
   return result.isEmpty ? null : result;
+}
+
+/// Combat weapon stats for weapon equipment buckets and vault/postmaster weapons.
+///
+/// Public for unit tests; product `parseWeaponStatValues`.
+Map<String, Object?>? parseWeaponStatValues(
+  Iterable<({int statHash, int value})>? stats,
+) {
+  if (stats == null) return null;
+  final result = <String, Object?>{};
+  for (final entry in stats) {
+    final name = kWeaponStatHashToName[entry.statHash];
+    if (name != null) result[name] = entry.value;
+  }
+  return result.isEmpty ? null : result;
+}
+
+/// Transfer containers may hold weapons or armor — accept either hash map.
+Map<String, Object?>? _parseTransferStatValues(List<_StatEntry>? stats) {
+  if (stats == null || stats.isEmpty) return null;
+  final result = <String, Object?>{};
+  for (final entry in stats) {
+    final weaponName = kWeaponStatHashToName[entry.statHash];
+    if (weaponName != null) {
+      result[weaponName] = entry.value;
+      continue;
+    }
+    final armorName = kArmorStatHashToName[entry.statHash];
+    if (armorName != null) result[armorName] = entry.value;
+  }
+  return result.isEmpty ? null : result;
+}
+
+Iterable<({int statHash, int value})>? _statPairs(List<_StatEntry>? stats) {
+  if (stats == null) return null;
+  return stats.map((e) => (statHash: e.statHash, value: e.value));
 }
 
 List<RawSocketCapture>? _parseSocketCapture(

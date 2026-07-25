@@ -24,6 +24,8 @@ class ComposeServices {
     DimClipboardWriter? clipboardWriter,
     String Function()? loadoutIdFactory,
     bool skipSyncIfStale = true,
+    Map<int, int>? equipmentBucketLookup,
+    EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
   })  : builds = BuildsController(db: db),
         sets = SetsController(db: db),
         synergies = SynergiesController(db: db),
@@ -41,6 +43,8 @@ class ComposeServices {
                 profileClient: profileClient,
                 writeClient: writeClient,
                 skipSyncIfStale: skipSyncIfStale,
+                equipmentBucketLookup: equipmentBucketLookup,
+                equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
               )
             : null;
 

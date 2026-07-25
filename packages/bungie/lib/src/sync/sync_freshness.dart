@@ -1,6 +1,7 @@
 import 'package:destiny2_db/destiny2_db.dart';
 
 import '../profile/bungie_profile_client.dart';
+import '../profile/equipment_bucket_lookup.dart';
 import 'sync_inventory.dart';
 
 /// Reuse inventory sync when last full sync is within this window (DBR-EQP-007).
@@ -39,12 +40,16 @@ bool isInventoryFresh(
 }
 
 /// Sync inventory only when last full sync is missing or older than 60s.
+///
+/// Production hosts MUST pass [equipmentBucketLookup] and/or
+/// [equipmentBucketLookupBuilder] so vault/postmaster gear is stored (DART-050).
 Future<SyncIfStaleResult> syncIfStale({
   required AppDatabase db,
   required int userId,
   required String accessToken,
   required BungieProfileClient profileClient,
   Map<int, int>? equipmentBucketLookup,
+  EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
   String? now,
   int? nowMs,
   InventoryBusyLock? lock,
@@ -68,6 +73,7 @@ Future<SyncIfStaleResult> syncIfStale({
     accessToken: accessToken,
     profileClient: profileClient,
     equipmentBucketLookup: equipmentBucketLookup,
+    equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
     now: now ??
         DateTime.fromMillisecondsSinceEpoch(clock, isUtc: true)
             .toIso8601String(),

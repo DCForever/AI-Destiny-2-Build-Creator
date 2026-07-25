@@ -285,6 +285,8 @@ void main() {
         lock: lock,
       );
       expect(without.itemCount, 0);
+      expect(without.diagnostics.resolution?.resolvedFromTransfer, 0);
+      expect(without.diagnostics.resolution?.droppedNonEquipment, 1);
 
       final withLookup = await syncUserInventory(
         db: db,
@@ -296,9 +298,71 @@ void main() {
         lock: lock,
       );
       expect(withLookup.itemCount, 1);
+      expect(withLookup.diagnostics.resolution?.resolvedFromTransfer, greaterThan(0));
+      expect(withLookup.diagnostics.resolution?.resolvedFromTransfer, 1);
       final listed = await listInventoryItems(db, userId);
       expect(listed.single.bucket, 'Kinetic');
       expect(listed.single.location, 'vault');
+    });
+
+    test('lookup builder resolves vault using DestinyInventoryItemDefinition',
+        () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'vault-gun',
+            itemHash: 777,
+            bucketHash: 138197802,
+            location: 'vault',
+            power: 1800,
+          ),
+          RawInventoryItem(
+            instanceId: 'post-helm',
+            itemHash: 888,
+            bucketHash: 215593132,
+            location: 'character',
+            characterId: 'c1',
+            power: 1700,
+          ),
+        ],
+      );
+
+      final table = <String, dynamic>{
+        '777': {
+          'hash': 777,
+          'inventory': {'bucketTypeHash': 1498876634},
+        },
+        '888': {
+          'hash': 888,
+          'inventory': {'bucketTypeHash': 3448274439},
+        },
+      };
+
+      final result = await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        equipmentBucketLookupBuilder: (hashes) async {
+          expect(hashes, containsAll([777, 888]));
+          return buildEquipmentBucketLookup(table, hashes);
+        },
+        now: now,
+        lock: lock,
+      );
+
+      expect(result.itemCount, 2);
+      expect(result.diagnostics.resolution?.resolvedFromTransfer, 2);
+      final listed = await listInventoryItems(db, userId);
+      expect(
+        listed.map((e) => e.bucket).toSet(),
+        {'Kinetic', 'Helmet'},
+      );
+      expect(
+        listed.where((e) => e.location == 'vault').single.bucket,
+        'Kinetic',
+      );
     });
   });
 }

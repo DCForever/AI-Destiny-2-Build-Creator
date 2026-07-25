@@ -8,6 +8,7 @@ import 'auth/browser_launcher.dart';
 import 'auth/loopback_callback_server.dart';
 import 'auth/token_store.dart';
 import 'auth/windows_oauth_session.dart';
+import 'settings/equipment_bucket_lookup_provider.dart';
 import 'settings/inventory_sync_controller.dart';
 
 /// Default Windows loopback redirect (must match Bungie Public app registration).
@@ -145,12 +146,21 @@ class HostBootstrap {
           ),
         );
 
+    // DART-050: production Settings/equip sync must resolve vault/postmaster.
+    final WindowsManifestRefresh? windowsRefresh =
+        refresh is WindowsManifestRefresh ? refresh : null;
+    final lookupBuilder = createWindowsEquipmentBucketLookupBuilder(
+      offlineCatalog: catalog,
+      manifestService: windowsRefresh?.service,
+    );
+
     final sync = inventorySync ??
         InventorySyncController(
           db: db,
           session: session,
           profileClient: resolvedProfile,
           lock: inventoryLock,
+          equipmentBucketLookupBuilder: lookupBuilder,
         );
 
     final resolvedWrite = writeClient ??

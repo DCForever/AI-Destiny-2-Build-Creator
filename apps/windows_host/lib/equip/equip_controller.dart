@@ -31,6 +31,8 @@ class EquipController extends ChangeNotifier {
     required this.writeClient,
     required this.inventorySync,
     this.skipSyncIfStale = false,
+    this.equipmentBucketLookup,
+    this.equipmentBucketLookupBuilder,
   });
 
   final AppDatabase db;
@@ -41,6 +43,12 @@ class EquipController extends ChangeNotifier {
 
   /// When true, equip path does not call [syncIfStale] (tests).
   final bool skipSyncIfStale;
+
+  /// Explicit vault resolution map (DART-050). Defaults to [inventorySync] wiring.
+  final Map<int, int>? equipmentBucketLookup;
+
+  /// Builder for vault/postmaster resolution (DART-050). Defaults to [inventorySync].
+  final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
 
   String? _buildId;
   String? _variantId;
@@ -318,11 +326,16 @@ class EquipController extends ChangeNotifier {
 
     try {
       if (!skipSyncIfStale) {
+        // DART-050: wire equipmentBucketLookup so vault/postmaster copies store.
         await syncIfStale(
           db: db,
           userId: userId,
           accessToken: tokens.accessToken,
           profileClient: profileClient,
+          equipmentBucketLookup:
+              equipmentBucketLookup ?? inventorySync.equipmentBucketLookup,
+          equipmentBucketLookupBuilder: equipmentBucketLookupBuilder ??
+              inventorySync.equipmentBucketLookupBuilder,
         );
         await inventorySync.refreshStatus();
       }

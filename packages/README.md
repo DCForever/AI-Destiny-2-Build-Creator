@@ -41,6 +41,8 @@ apps/
 
 packages/
   README.md               # this file
+  ui_tokens/              # pure Matte Flap tokens + FlapBoard contracts (DART-029)
+  ui_flutter/             # Flutter-only ThemeExtension + board kit (Windows/mobile only)
   domain/                 # pure domain (models + evaluators)
     pubspec.yaml          # package name: destiny2_domain
     lib/
@@ -268,23 +270,35 @@ import 'package:destiny2_db/destiny2_db.dart';
 
 final profile = HttpBungieProfileClient(http: BungieHttpClient(apiKey: publicApiKey));
 
+// DART-050: production hosts MUST wire equipmentBucketLookup / builder so
+// vault General + Postmaster weapon/armor are stored with equipment buckets.
+// Empty lookup is test-only — transfer containers are dropped before Drift.
 final result = await syncUserInventory(
   db: db,
   userId: userId,
   accessToken: accessToken,
   profileClient: profile,
-  // optional: equipmentBucketLookup: { itemHash: equipmentBucketHash },
+  equipmentBucketLookupBuilder: (transferHashes) async {
+    // Prefer DestinyInventoryItemDefinition raw table (Windows after DART-018).
+    // Fallback: buildEquipmentBucketLookupFromSlots from OfflineCatalog slots.
+    return buildEquipmentBucketLookup(rawItemDefs, transferHashes);
+  },
 );
 
+// diagnostics.resolution.resolvedFromTransfer > 0 when vault items resolved
+final resolved = result.diagnostics.resolution?.resolvedFromTransfer ?? 0;
+
 if (!isInventoryFresh(result.lastFullSyncAt)) {
-  // or: await syncIfStale(...)
+  // or: await syncIfStale(..., equipmentBucketLookupBuilder: ...)
 }
 ```
 
 - Full-replace uses DART-016 exclusive busy lock; concurrent sync → `SyncInProgressError`
 - Bumps `inventory_sync_meta.sync_version` / `last_full_sync_at` / `item_count`
 - Fresh window: `kEquipSyncFreshMs` = **60_000** (DBR-EQP-007)
-- Settings sync UI is **DART-025** (not this package)
+- **Vault/postmaster resolution (DART-050 / GAP-INV-01):** `buildEquipmentBucketLookup` + host wiring on every production path (Windows Settings `syncNow`, Windows/Jaspr equip `syncIfStale`). Empty lookup is **not** production-OK.
+- **Owned catalog** still needs entity stores populated (`OwnedCatalogBridge` joins counts onto entity baseItems) — empty entity cache ≠ empty vault (**GAP-INV-06** residual → **DART-053** UX warning).
+- Settings sync UI is **DART-025** (not this package); diagnostics UI is **DART-053**
 
 ```powershell
 dart test packages/bungie
