@@ -190,11 +190,19 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-035** `optimizer-isolate` (P4 — Run enumerate in isolate; materialize Armor Set use case) |
-| **Active branch** | (create) `dart-035-optimizer-isolate` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-035-optimizer-isolate/` (created at specify) |
+| **Next / active slice** | **DART-036** `flutter-optimizer-ui` (P4 — Finish/optimizer workspace on Windows) |
+| **Active branch** | (create) `dart-036-flutter-optimizer-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-036-flutter-optimizer-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-035 note (completed)
+
+- Pure `optimizeArmorCore` pipeline (prune → enumerate → score/rank) in `destiny2_domain`
+- `optimizeArmorInIsolate` via `Isolate.run` + local runner in `destiny2_app` (UI-thread safe)
+- Confirm-only `materializeArmorCombination` / `applyArmorCombinationInPlace` — optimize never writes sets
+- Soft thresholds filter only when `requireThresholds`; soft never auto-applies; auto-stat-mods deferred
+- Tests: `dart test packages/domain packages/app` (pipeline + isolate + materialize suites)
 
 ### DART-034 note (completed) — **P3 phase gate**
 
