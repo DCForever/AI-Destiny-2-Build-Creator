@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-048 done — legacy Next app.db → StorageRoot dry-run + apply)  
+**Updated:** 2026-07-25 (DART-049 done — cutover parity checklist; P5 / program gate)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -140,7 +140,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-046** | **done** | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
 | **DART-047** | **done** | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
 | **DART-048** | **done** | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
-| **DART-049** | pending | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
+| **DART-049** | **done** | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
 
 ---
 
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-049** `cutover-parity-checklist` (P5 — program gate) |
-| **Active branch** | (create) `dart-049-cutover-parity-checklist` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-049-cutover-parity-checklist/` (created at specify) |
+| **Next / active slice** | **(none)** — planned DART-001…049 complete; **P5 / program gate closed** |
+| **Active branch** | `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-049-cutover-parity-checklist/` (done) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | — |
+| **Blocked on** | Production cutover **NO-GO** until `docs/multiplatform-dart-cutover-parity-checklist.md` residual blockers / `RC-*` pass (not a new DART slice by default) |
+
+### DART-049 note (completed) — **P5 / program gate**
+
+Written cutover parity checklist vs PRODUCT `AppShell` production nav + compose→equip capability matrix (Windows / mobile / Jaspr). Next retirement criteria `RC-*`; dual verdicts: `PROGRAM_GATE: GO`, `PRODUCTION_CUTOVER: NO-GO` (residual loadouts surface, web sync polish, prod Public redirects, dual-run ops, entity bundle channel). Validator: `dart test tool/test/cutover_parity_checklist_validate_test.dart` (7 green). Canonical doc: `docs/multiplatform-dart-cutover-parity-checklist.md`. Soft never auto-applies; no CLIENT_SECRET. **Program planned slices complete** — production Next retirement is a separate human gate.
 
 ### DART-048 note (completed)
 

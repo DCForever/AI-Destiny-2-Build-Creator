@@ -1,0 +1,200 @@
+# Multiplatform Dart — Cutover Parity Checklist (DART-049)
+
+**Status:** active program gate artifact  
+**Updated:** 2026-07-25  
+**Program ID:** DART-049  
+**Phase:** P5 / **program gate**  
+**Integration base:** `feature/multiplatform-dart`  
+**Architecture:** [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md)  
+**Roadmap:** [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md)  
+**Product production nav source:** `src/components/AppShell.tsx` (`NAV_LINKS`)  
+**Product intent:** `PRODUCT.md` (compose→equip spine)
+
+This document is the **canonical written parity checklist** for retiring Next.js as the production host. It does **not** by itself flip production traffic.
+
+---
+
+## Dual gates
+
+| Gate | Meaning | Marker |
+| ---- | ------- | ------ |
+| **P5 / program gate** | Planned DART-001…049 slices delivered; checklist + residual list exist | `PROGRAM_GATE` |
+| **Production cutover** | Next may stop being the production web host | `PRODUCTION_CUTOVER` |
+
+Program completion ≠ automatic Next retirement.
+
+---
+
+## Verdict
+
+```
+PROGRAM_GATE: GO
+PRODUCTION_CUTOVER: NO-GO
+```
+
+**Date:** 2026-07-25  
+
+**PROGRAM_GATE rationale:** All planned multiplatform slices through DART-049 are specified/implemented on `feature/multiplatform-dart` (domain → Drift → Flutter Windows → mobile → Jaspr → import → this checklist). Validator for this document is green. P5 exit (“Next retirement gates **documented**”) is satisfied.
+
+**PRODUCTION_CUTOVER rationale:** Residual blockers remain (see [Residual blockers](#residual-blockers)). Do **not** delete Next, merge this line to `main` as sole production, or drop Confidential OAuth until every `RC-*` criterion is **pass**.
+
+### Residual blockers
+
+| ID | Blocker | Blocks |
+| -- | ------- | ------ |
+| RB-01 | Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface | RC-NAV |
+| RB-02 | Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode | RC-SYNC, RC-NAV |
+| RB-03 | Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed | RC-AUTH |
+| RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS |
+| RB-05 | Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened | RC-WEB-DATA |
+
+When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
+
+---
+
+## Product production nav parity
+
+Source of truth: `AppShell` `NAV_LINKS` (not `/debug/*`).
+
+Status legend:
+
+| Status | Meaning |
+| ------ | ------- |
+| **PASS** | Primary surface exists and supports the product job for that shell |
+| **PARTIAL** | Present with reduced density or subset of actions |
+| **MISS** | Not present as a first-class surface |
+| **N/A** | Explicit non-goal for multiplatform port / not required for cutover |
+
+| Nav key | Product path | Product label | Windows Flutter | Mobile Flutter | Jaspr web | Notes / evidence |
+| ------- | ------------ | ------------- | --------------- | -------------- | --------- | ---------------- |
+| `build` | `/build` | Build | **PASS** | **PARTIAL** | **PASS** | Windows: library + identity + variants + soft + equip + DIM + optimizer. Mobile: list + linear compose (DART-041). Web: compose + equip/DIM (DART-046/047). |
+| `synergy` | `/synergy` | Synergy | **PASS** | **N/A**\* | **PASS** | Windows DART-031; web DART-046. \*Mobile: in-flow only via build compose; no top-level library nav (acceptable for phone density). |
+| `sets` | `/sets` | Sets | **PASS** | **N/A**\* | **PASS** | Windows DART-030; web DART-046. \*Same mobile note as synergy. |
+| `catalog` | `/catalog` | Catalog | **PASS** | **MISS** | **PASS** | Windows offline+owned (DART-020/026). Web facets + prebuilt bundles (DART-044). Mobile catalog browse not primary nav. |
+| `settings` | `/settings` | Settings | **PASS** | **PARTIAL** | **PASS** | Windows: OAuth, inventory sync, manifest, legacy import. Mobile: settings shell. Web: account + OPFS writer status. |
+| `loadouts` | `/loadouts` | In-Game Loadouts | **MISS** | **MISS** | **MISS** | Bungie in-game loadout browser is product nav but **not** the compose→equip spine. **Residual RB-01** — required for full nav parity (`RC-NAV`) unless product demotes the link. |
+
+### Adjacent product surfaces (not AppShell gates)
+
+| Surface | Product | Cutover treatment |
+| ------- | ------- | ----------------- |
+| `/analyze` | Adjacent / legacy generator entry | **N/A** — not AppShell primary; do not block cutover |
+| `/debug/*` | Operator tooling (404 in production) | **N/A (non-goal)** — port roadmap forbids as primary nav |
+| LLM propose / multi-pass generator | Optional product capability | **N/A (non-goal)** for early port / cutover |
+| dim.gg share | Optional | **N/A (non-goal)** — jsonOnly DIM is enough for cutover spine |
+| Flutter Web | — | **N/A** — Jaspr is web target |
+
+---
+
+## Capability parity (compose→equip spine)
+
+Domain packages are shared; UI shells differ.
+
+| Capability | Product (Next) | Windows | Mobile | Web (Jaspr) | Notes |
+| ---------- | -------------- | ------- | ------ | ----------- | ----- |
+| Hard constraints on save/attach | Yes | **PASS** | **PASS** | **PASS** | DART-003 + app use cases DART-028; golden/domain suite DART-011 |
+| Soft coverage display (never auto-apply) | Yes | **PASS** | **PASS** | **PASS** | DART-004/034/041/046 — soft is display-only |
+| Soft stat targets (explicit save) | Yes | **PASS** | **PASS** | **PARTIAL** | Soft never auto-applies on all hosts |
+| Resolve variant / conflicts | Yes | **PASS** | **PASS** | **PASS** | DART-005 |
+| Equip-ready / wishlist vs owned pins | Yes | **PASS** | **PARTIAL** | **PASS** | DART-006/038/047 |
+| Finish gaps helpers | Yes | **PASS** | **PARTIAL** | **PARTIAL** | DART-007 pure; host UX varies |
+| Armor optimizer (confirm-only) | Yes | **PASS** | **MISS** | **MISS** | DART-035/036 Windows; not required on mobile/web for program gate; product cutover may accept Windows-only optimizer |
+| Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 — **no CLIENT_SECRET** |
+| Inventory sync full-replace | Yes | **PASS** | **PARTIAL** | **PARTIAL** | DART-024/025 Windows primary; web thinner (**RB-02**) |
+| Bungie equip (partial OK) | Yes | **PASS** | **MISS** | **PASS** | DART-037/038/047 |
+| DIM jsonOnly export | Yes | **PASS** | **MISS** | **PASS** | DART-010/039/047; blocked when not equip-ready |
+| Legacy `app.db` import | N/A (source) | **PASS** | **N/A** | **N/A** | DART-048 dry-run + apply → StorageRoot |
+| OPFS single-tab writer (web) | N/A (Node SQLite) | N/A | N/A | **PASS** | DART-043 |
+| Prebuilt entity bundles (web) | Full manifest pipeline | N/A | N/A | **PASS** | DART-044; prod channel **RB-05** |
+| Pure Dart I/O (no Node sidecar) | Next is current product | **PASS** | **PASS** | **PASS** | D-IO locked |
+
+---
+
+## Next retirement criteria
+
+All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance auto-apply and CLIENT_SECRET in clients are **hard non-regressions**.
+
+| ID | Criterion | Pass condition | Evidence pointer | Status (2026-07-25) |
+| -- | --------- | -------------- | ---------------- | ------------------- |
+| **RC-NAV** | Production nav parity for required spine | `build`, `synergy`, `sets`, `catalog`, `settings` are **PASS** on **web** (Jaspr) and **Windows**; `loadouts` is **PASS** **or** product explicitly demotes/removes it from AppShell | This matrix; AppShell diff | **FAIL** (loadouts MISS — RB-01) |
+| **RC-DOMAIN** | Hard/soft domain parity non-regression | Pure domain suite + hard-block codes stable; soft never implies hard block; soft never auto-applies | `dart run tool/p0_parity_gate.dart`; DBR/DAC | **PASS** (suite maintained; re-run before cutover day) |
+| **RC-COMPOSE** | Intent→compose path on production web host | User can create build, attach sets, pin slots, see soft guidance on Jaspr without Next | DART-046 manual/scripted path | **PASS** (feature complete; re-verify on cutover build) |
+| **RC-EQUIP** | Equip-ready + equip and/or DIM on production web | Equip-ready gate enforced; DIM jsonOnly blocked when not ready; optional equip partial OK | DART-047 tests + smoke | **PASS** (feature complete; re-verify live Bungie in dual-run) |
+| **RC-AUTH** | Public+PKCE production auth | Prod Public Bungie app; HTTPS origin redirects registered; **no** `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr artifacts | Bungie portal config; binary/string scan | **FAIL** (RB-03) |
+| **RC-SYNC** | Owned inventory available for equip pins | Documented sync path works on the cutover-primary hosts (Windows + web at minimum for equip) | Settings sync card / web sync notes | **FAIL** (web thinner — RB-02) |
+| **RC-DATA** | Local data migration path | Legacy Next `.cache/app.db` → StorageRoot dry-run + apply documented and tested | [multiplatform-dart-legacy-db-import.md](./multiplatform-dart-legacy-db-import.md); DART-048 tests | **PASS** |
+| **RC-WEB-DATA** | Web entity/DB limits accepted | OPFS single-writer UX documented; prebuilt bundles load offline; prod distribution chosen | [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md); RB-05 | **FAIL** (prod channel open — RB-05) |
+| **RC-SECRETS** | No confidential secrets in clients | Scan clients/packages for `CLIENT_SECRET` / `SESSION_SECRET` embedding — none | Package/app source + build defines | **PASS** (architecture + code review baseline) |
+| **RC-SOFT** | Soft never auto-applies | Optimizer/guidance/improvement paths remain confirm-only | Domain + UI tests across hosts | **PASS** |
+| **RC-OPS** | Dual-run and rollback | Written ops steps executed once: Dart web + Next available; rollback = keep Next live | Ops note / release checklist (attach when run) | **FAIL** (RB-04) |
+| **RC-BRANCH** | Integration merge policy | Explicit decision to merge `feature/multiplatform-dart` → production branch/`main` only after PRODUCTION_CUTOVER GO | [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) | **FAIL** (blocked on cutover GO) |
+
+### RC evaluation rules
+
+1. Any **FAIL** ⇒ `PRODUCTION_CUTOVER` must remain **NO-GO**.
+2. Re-run **RC-DOMAIN** and smoke **RC-COMPOSE** / **RC-EQUIP** on the cutover candidate build (not only historical slice merges).
+3. Product may change AppShell; if a new primary nav key appears, add a row before GO.
+4. Mobile reduced nav does **not** fail **RC-NAV** for Next web retirement (Windows + Jaspr are the production-nav targets).
+
+---
+
+## Explicit non-goals (do not block cutover)
+
+- `/debug/*` as primary Dart nav  
+- Multi-pass LLM generator as primary spine  
+- Full DIM product parity / dim.gg  
+- Flutter Web product target  
+- Node sidecar / dual runtime  
+- Confidential cookie parity on Jaspr  
+- Cloud multi-tenant / multi-worker Edge SQLite  
+- Shareable public build links (product open)  
+- Formal WCAG level (product open) — track separately; not a DART program gate  
+
+---
+
+## How to use this checklist
+
+1. **Before claiming program complete:** ensure `PROGRAM_GATE: GO` and validator green (`dart test tool/test/cutover_parity_checklist_validate_test.dart`).
+2. **Before retiring Next:** walk every `RC-*`; clear residual blockers; set `PRODUCTION_CUTOVER: GO`; update **Updated** date.
+3. **After GO:** follow branching doc — only then merge multiplatform line toward production/`main` and schedule Next domain route retirement.
+4. **Domain conflicts:** DBR / DAC / BR win over this checklist.
+
+---
+
+## Related artifacts
+
+| Artifact | Role |
+| -------- | ---- |
+| [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md) | Architecture freezes |
+| [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md) | Slice table + phase gates |
+| [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) | Worktree / merge rules |
+| [multiplatform-dart-legacy-db-import.md](./multiplatform-dart-legacy-db-import.md) | RC-DATA path |
+| [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md) | RC-WEB-DATA limits |
+| `specs/dart-049-cutover-parity-checklist/` | Spec Kit slice |
+| `tool/cutover_parity_checklist_validate.dart` | Structural validator |
+
+---
+
+## Document markers (machine-checked)
+
+The following markers MUST remain present for automated validation:
+
+- `PROGRAM_GATE:`
+- `PRODUCTION_CUTOVER:`
+- `## Product production nav parity`
+- `## Capability parity`
+- `## Next retirement criteria`
+- `## Residual blockers` **or** residual blockers table under Verdict
+- `RC-NAV`
+- `RC-DOMAIN`
+- `RC-COMPOSE`
+- `RC-EQUIP`
+- `RC-AUTH`
+- `RC-SYNC`
+- `RC-DATA`
+- `RC-WEB-DATA`
+- `RC-SECRETS`
+- `RC-SOFT`
+- `RC-OPS`
+- `RC-BRANCH`
+- AppShell nav keys: `loadouts`, `build`, `synergy`, `sets`, `catalog`, `settings`
