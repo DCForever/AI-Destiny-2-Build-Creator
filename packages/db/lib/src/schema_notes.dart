@@ -5,6 +5,8 @@
 /// uniqueness behavior must match.
 ///
 /// PRAGMA policy on open: `foreign_keys = ON`.
+///
+/// Migration / ensure* version table: see [migration_version_table.dart] (DART-014).
 library;
 
 /// Expected core table names after clean create.

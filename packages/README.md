@@ -53,7 +53,7 @@ packages/
 | `packages/domain` | `destiny2_domain` | Pure domain library (models DART-002; evaluators DART-003+) | **SDK only** at runtime; `test` / pure lints as dev_dependencies. **No** Flutter, Jaspr, Drift, http, path_provider, or other IO/UI packages. |
 | `packages/sandbox_data` | `destiny2_sandbox_data` | Pure static sandbox constants (stat benefits, synergy verbs, exotic ability requirements, archetypes, champion counters, vocabularies) | **SDK only** at runtime. Soft display tables only — never auto-apply / hard-block. |
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
-| `packages/db` | `destiny2_db` | Drift SQLite **schema** for core tables (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013). | `drift`, `sqlite3`, `path`. Migrations DART-014; repos DART-015+. **Not** pure. |
+| `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations** for core tables (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014). | `drift`, `sqlite3`, `path`. Repos DART-015+. **Not** pure. |
 
 UI shells (Flutter Windows/mobile, Jaspr web) land under `apps/` in later slices (DART-019+, DART-042+).
 
@@ -83,7 +83,7 @@ await root.ensureLayout();
 
 `versionDir` = `versionToDirName` (unsafe chars → `_`). Unit tests inject a fake base path (no real AppData required).
 
-## Drift schema (DART-013)
+## Drift schema + migrations (DART-013 / DART-014)
 
 `destiny2_db` mirrors product `src/lib/db` core tables. Open helpers:
 
@@ -92,9 +92,12 @@ import 'package:destiny2_db/destiny2_db.dart';
 
 final mem = AppDatabase.memory();
 final file = AppDatabase.file(root.appDbPath); // StorageRoot from destiny2_storage
+// beforeOpen: foreign_keys ON + applyEnsureUpgrades (product ensure* parity)
 ```
 
 - **PRAGMA**: `foreign_keys = ON` on open
+- **schemaVersion**: **1** = current create-all; see `migration_version_table.dart` + `specs/dart-014-drift-migrations/data-model.md`
+- **Ensure upgrades**: idempotent ADD COLUMN / table create / builds rebuild mirroring `src/lib/db/client.ts` (import prep for DART-048)
 - **Critical uniques**: `users.bungie_membership_id`; `inventory_items(user_id, instance_id)`; `sets(user_id, type, name)`; tag/synergy-type pairs — see `schema_notes.dart` and `specs/dart-013-drift-schema/data-model.md`
 - **RESTRICT**: cannot delete a set while `variant_set_attachments` reference it
 - Tests: `dart test packages/db`

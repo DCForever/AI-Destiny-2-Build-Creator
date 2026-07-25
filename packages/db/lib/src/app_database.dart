@@ -4,14 +4,17 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 
+import 'ensure_upgrades.dart';
+import 'migration_version_table.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
 
-/// Drift database for multiplatform app data (DART-013 schema baseline).
+/// Drift database for multiplatform app data.
 ///
-/// schemaVersion **1** = greenfield create-all matching product current columns.
-/// Historical migrations: DART-014.
+/// schemaVersion **[driftSchemaVersionCurrent]** (1) = greenfield create-all
+/// matching product current columns (DART-013). Historical ensure* upgrades
+/// run on open (DART-014) so partial / import-shaped DBs heal to current.
 @DriftDatabase(
   tables: [
     Users,
@@ -56,16 +59,23 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => driftSchemaVersionCurrent;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
         },
+        onUpgrade: (Migrator m, int from, int to) async {
+          // schemaVersion is still 1 (DART-014). No stepped Drift upgrades yet.
+          // Future bumps: add versioned steps here. Column heals for import /
+          // partial files also run via applyEnsureUpgrades in beforeOpen.
+        },
         beforeOpen: (details) async {
           // Product client.ts: foreign_keys = ON
           await customStatement('PRAGMA foreign_keys = ON');
+          // Product runMigrations always runs ensure* after CREATE IF NOT EXISTS.
+          await applyEnsureUpgrades(DriftEnsureUpgradeExecutor(this));
         },
       );
 
