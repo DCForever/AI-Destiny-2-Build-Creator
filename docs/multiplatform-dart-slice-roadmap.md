@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-035 done — optimizer isolate + confirm-only materialize)  
+**Updated:** 2026-07-24 (DART-036 done — Flutter optimizer UI suggest → confirm)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -127,7 +127,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-033** | **done** | `flutter-variant-compose-ui` | `dart-033-flutter-variant-compose-ui` | P3 | DART-032, DART-030 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
 | **DART-034** | **done** | `flutter-soft-guidance-ui` | `dart-034-flutter-soft-guidance-ui` | P3 | DART-033, DART-004 | Soft coverage chips + soft stat targets UI (display only) | Soft never auto-applies; **P3 phase gate** (compose without equip) |
 | **DART-035** | **done** | `optimizer-isolate` | `dart-035-optimizer-isolate` | P4 | DART-008, DART-028 | Run enumerate in isolate; materialize Armor Set use case | UI thread safe; confirm-only apply path |
-| **DART-036** | pending | `flutter-optimizer-ui` | `dart-036-flutter-optimizer-ui` | P4 | DART-035, DART-030 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
+| **DART-036** | **done** | `flutter-optimizer-ui` | `dart-036-flutter-optimizer-ui` | P4 | DART-035, DART-030 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
 | **DART-037** | pending | `equip-orchestrator` | `dart-037-equip-orchestrator` | P4 | DART-006, DART-024 | planEquipSteps + execute + partial status (write client) | Best-effort partial; no full rollback; tests with mocked write API |
 | **DART-038** | pending | `flutter-equip-ui` | `dart-038-flutter-equip-ui` | P4 | DART-037, DART-033 | Character pick + equip CTA + step report | Equip-ready gate enforced; gaps confirm UX |
 | **DART-039** | pending | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
@@ -190,11 +190,20 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-036** `flutter-optimizer-ui` (P4 — Finish/optimizer workspace on Windows) |
-| **Active branch** | (create) `dart-036-flutter-optimizer-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-036-flutter-optimizer-ui/` (created at specify) |
+| **Next / active slice** | **DART-037** `equip-orchestrator` (P4 — planEquipSteps + execute + partial status) |
+| **Active branch** | (create) `dart-037-equip-orchestrator` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-037-equip-orchestrator/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-036 note (completed)
+
+- Windows Sets detail **Armor optimizer workspace** for `armor` sets (goals → Find kits → suggestions)
+- Find kits uses DART-035 isolate/local runners — **never writes** sets
+- Apply in place / Materialize require **explicit confirm dialog**; cancel leaves set unchanged
+- Soft thresholds / prefer-reuse never auto-apply kits; advisory caption: never silent apply
+- Injectable candidates for tests; inventory bucket map for live candidates
+- Tests: `flutter test test/optimizer_format_test.dart test/optimizer_workspace_test.dart` (18) + sets library green
 
 ### DART-035 note (completed)
 
