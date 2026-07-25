@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
 import 'inventory_sync_card.dart';
+import 'inventory_sync_controller.dart';
 import 'legacy_db_import_card.dart';
 import 'legacy_db_import_controller.dart';
 import 'oauth_account_card.dart';
@@ -37,6 +38,9 @@ class _SettingsPageState extends State<SettingsPage> {
   ManifestStatus? _status;
   Object? _error;
   bool _loading = true;
+  bool _refreshing = false;
+  Object? _refreshError;
+  String? _refreshMessage;
   late final LegacyDbImportController _legacyImport;
   var _ownsLegacyImport = false;
 
@@ -91,8 +95,63 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  /// Download/partial update + rebuild entity stores (DART-018). Inventory sync
+  /// alone cannot populate entity definitions (GAP-INV-06).
+  Future<void> _refreshManifest() async {
+    if (_refreshing) return;
+    setState(() {
+      _refreshing = true;
+      _refreshError = null;
+      _refreshMessage = null;
+    });
+    try {
+      final status = await widget.services.manifestRefresh.refresh();
+      if (!mounted) return;
+
+      var message = 'Manifest refreshed.';
+      if (widget.services.inventorySync.isSignedIn) {
+        await widget.services.inventorySync.syncNow();
+        if (!mounted) return;
+        final syncError = widget.services.inventorySync.errorMessage;
+        if (syncError != null &&
+            widget.services.inventorySync.phase == InventorySyncPhase.error) {
+          message =
+              'Manifest refreshed. Inventory sync failed: $syncError';
+        } else {
+          final count = widget.services.inventorySync.itemCount;
+          message = count == null
+              ? 'Manifest refreshed. Inventory synced.'
+              : 'Manifest refreshed. Inventory synced ($count items).';
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _status = status;
+        _loading = false;
+        _error = null;
+        _refreshing = false;
+        _refreshMessage = message;
+      });
+
+      // Reload entity-backed catalog after UI settles (Catalog also reloads on visit).
+      widget.services.offlineCatalog.loadBase().then(
+        (_) {},
+        onError: (_, __) {},
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _refreshError = e;
+        _refreshing = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final busy = _loading || _refreshing;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -151,6 +210,15 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 8),
           Text(
+            'Bungie manifest tables and derived entity stores. Required for '
+            'catalog, Owned joins, and composition. Inventory sync alone does '
+            'not build entity definitions — use Refresh manifest (needs '
+            'BUNGIE_API_KEY). When signed in, refresh also syncs inventory.',
+            key: const Key('manifest_section_help'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
             'Local SQLite: ${widget.services.storageRoot.appDbPath}',
             key: const Key('db_path'),
             style: Theme.of(context).textTheme.bodySmall,
@@ -185,8 +253,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Text(
                     'Entity cache is empty or missing. Catalog Owned joins '
                     'inventory counts onto entity definitions — empty Owned is '
-                    'not solely an inventory sync problem. Refresh the manifest '
-                    'so entity stores are built (GAP-INV-06).',
+                    'not solely an inventory sync problem. Use Refresh manifest '
+                    'below so entity stores are built (GAP-INV-06).',
                     key: const Key('entity_cache_empty_warning_text'),
                   ),
                 ),
@@ -195,15 +263,68 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
             _ManifestStatusCard(status: _status!),
           ],
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              key: const Key('reload_status'),
-              onPressed: _loading ? null : _loadStatus,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reload status'),
+          if (_refreshing) ...[
+            const SizedBox(height: 12),
+            Row(
+              key: const Key('manifest_refresh_progress'),
+              children: [
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Downloading manifest and rebuilding entity stores… '
+                    'this can take a few minutes',
+                    key: const Key('manifest_refresh_progress_text'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
             ),
+          ],
+          if (_refreshError != null) ...[
+            const SizedBox(height: 12),
+            Card(
+              key: const Key('manifest_refresh_error'),
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Manifest refresh failed: $_refreshError',
+                  key: const Key('manifest_refresh_error_text'),
+                ),
+              ),
+            ),
+          ],
+          if (_refreshMessage != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _refreshMessage!,
+              key: const Key('manifest_refresh_message'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                key: const Key('refresh_manifest'),
+                onPressed: busy ? null : _refreshManifest,
+                icon: const Icon(Icons.cloud_download),
+                label: Text(_refreshing ? 'Refreshing…' : 'Refresh manifest'),
+              ),
+              OutlinedButton.icon(
+                key: const Key('reload_status'),
+                onPressed: busy ? null : _loadStatus,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload status'),
+              ),
+            ],
           ),
         ],
       ),

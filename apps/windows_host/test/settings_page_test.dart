@@ -16,10 +16,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'inventory_sync_test_fakes.dart';
 
 class _FakeRefresh implements ManifestRefreshApi {
-  _FakeRefresh(this._status, {this.throwOnStatus = false});
+  _FakeRefresh(
+    this._status, {
+    this.throwOnStatus = false,
+    this.throwOnRefresh = false,
+    this.refreshDelay = Duration.zero,
+  });
 
   ManifestStatus _status;
   final bool throwOnStatus;
+  final bool throwOnRefresh;
+  final Duration refreshDelay;
+  int refreshCalls = 0;
 
   void setStatus(ManifestStatus status) => _status = status;
 
@@ -30,8 +38,16 @@ class _FakeRefresh implements ManifestRefreshApi {
   Future<ManifestStatus> refresh({
     bool forceFullDownload = false,
     bool rebuildInIsolate = true,
-  }) async =>
-      _status;
+  }) async {
+    refreshCalls += 1;
+    if (refreshDelay > Duration.zero) {
+      await Future<void>.delayed(refreshDelay);
+    }
+    if (throwOnRefresh) {
+      throw StateError('refresh failed');
+    }
+    return _status;
+  }
 
   @override
   Future<ManifestStatus> status() async {
@@ -137,6 +153,8 @@ void main() {
     expect(find.textContaining('5 entities'), findsOneWidget);
     // Populated entity cache → no empty warning (GAP-INV-06 / DART-053).
     expect(find.byKey(const Key('entity_cache_empty_warning')), findsNothing);
+    expect(find.byKey(const Key('refresh_manifest')), findsOneWidget);
+    expect(find.byKey(const Key('reload_status')), findsOneWidget);
   });
 
   testWidgets('missing cached version shows none without crash', (tester) async {
@@ -165,6 +183,105 @@ void main() {
       find.textContaining('not solely an inventory sync problem'),
       findsOneWidget,
     );
+    expect(find.textContaining('Use Refresh manifest'), findsOneWidget);
+    expect(find.byKey(const Key('refresh_manifest')), findsOneWidget);
+  });
+
+  testWidgets('Refresh manifest calls API and shows success message',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    refresh.setStatus(
+      const ManifestStatus(
+        cachedVersion: 'v2',
+        remoteVersion: 'v2',
+        isStale: false,
+        entityCache: EntityCacheMeta(
+          manifestVersion: 'v2',
+          builtAt: '2026-01-02T00:00:00.000Z',
+          counts: {'weapons': 10, 'mods': 4},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: SettingsPage(services: services)),
+    );
+    await _pumpFrames(tester);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('refresh_manifest')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('refresh_manifest')));
+    await _pumpFrames(tester);
+
+    expect(refresh.refreshCalls, 1);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('manifest_refresh_message')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('manifest_refresh_message')), findsOneWidget);
+    expect(find.textContaining('Manifest refreshed'), findsOneWidget);
+    expect(find.textContaining('14 entities'), findsOneWidget);
+    expect(find.byKey(const Key('entity_cache_empty_warning')), findsNothing);
+  });
+
+  testWidgets('Refresh manifest surfaces refresh errors', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final session = _emptySession();
+    await session.restore();
+    final profile = FakeProfileClient();
+    final failRefresh = _FakeRefresh(
+      const ManifestStatus(
+        cachedVersion: null,
+        remoteVersion: null,
+        isStale: true,
+        entityCache: null,
+      ),
+      throwOnRefresh: true,
+    );
+    final errServices = AppServices(
+      storageRoot: services.storageRoot,
+      db: services.db,
+      manifestRefresh: failRefresh,
+      offlineCatalog: OfflineCatalog(storageRoot: services.storageRoot),
+      oauthSession: session,
+      profileClient: profile,
+      inventorySync: InventorySyncController(
+        db: services.db,
+        session: session,
+        profileClient: profile,
+      ),
+      writeClient: createMockWriteClient(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: SettingsPage(services: errServices)),
+    );
+    await _pumpFrames(tester);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('refresh_manifest')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('refresh_manifest')));
+    await _pumpFrames(tester);
+
+    expect(failRefresh.refreshCalls, 1);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('manifest_refresh_error')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('manifest_refresh_error')), findsOneWidget);
+    expect(find.textContaining('refresh failed'), findsOneWidget);
   });
 
   testWidgets('status error surfaces message', (tester) async {
