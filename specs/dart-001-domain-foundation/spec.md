@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-24
 
-**Status**: Active
+**Status**: Done (merged to `feature/multiplatform-dart`)
 
 **Input**: User description: "Melos (or equivalent) monorepo skeleton: package graph, CI-friendly dart test entry, no UI apps yet. Packages resolve; empty/smoke domain package; documented layout; no IO/UI deps allowed in domain pubspec."
 

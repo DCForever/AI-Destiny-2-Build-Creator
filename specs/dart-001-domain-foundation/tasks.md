@@ -67,7 +67,7 @@
 
 - [x] T013 Verify domain pubspec has no IO/UI deps (manual audit: empty `dependencies: {}`)
 - [x] T014 Mark all tasks complete; prepare finish-spec merge to `feature/multiplatform-dart`
-- [ ] T015 Update `docs/multiplatform-dart-slice-roadmap.md` status/pointer on base after merge
+- [x] T015 Update `docs/multiplatform-dart-slice-roadmap.md` status/pointer on base after merge
 
 ---
 

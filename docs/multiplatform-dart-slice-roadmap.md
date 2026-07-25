@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24  
+**Updated:** 2026-07-24 (DART-001 done)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -92,7 +92,7 @@ Order is strict. IDs start at **`DART-001`**.
 
 | ID | Status | Short name | Branch / specs dir | Phase | Depends | Goal (one line) | Exit criteria (must all pass) |
 | -- | ------ | ---------- | ------------------ | ----- | ------- | --------------- | ----------------------------- |
-| **DART-001** | **active** | `domain-foundation` | `dart-001-domain-foundation` | P0 | — | Melos (or equivalent) monorepo skeleton: package graph, CI-friendly `dart test` entry, no UI apps yet | Packages resolve; empty/smoke domain package; documented layout; no IO/UI deps allowed in domain pubspec |
+| **DART-001** | **done** | `domain-foundation` | `dart-001-domain-foundation` | P0 | — | Melos (or equivalent) monorepo skeleton: package graph, CI-friendly `dart test` entry, no UI apps yet | Packages resolve; empty/smoke domain package; documented layout; no IO/UI deps allowed in domain pubspec |
 | **DART-002** | pending | `models` | `dart-002-models` | P0 | DART-001 | Pure DTOs / freezed (or equivalent) models for pins, claims, kits, coverage results, failure codes | Models package has zero IO; maps core build/variant/set/synergy shapes used by evaluators |
 | **DART-003** | pending | `hard-constraints` | `dart-003-hard-constraints` | P0 | DART-002 | Port pure hard evaluators: exotic limits, mod energy, subclass kit, exotic ability match | Golden tests vs TS fixtures; hard-block codes stable; capacityResolved semantics documented |
 | **DART-004** | pending | `soft-coverage` | `dart-004-soft-coverage` | P0 | DART-002 | Port soft coverage + soft stat estimate inputs (no save path imports) | Soft results never imply hard block; tests forbid hard/soft confusion; DBR-GUID soft path parity |
@@ -190,9 +190,9 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-001** `domain-foundation` (monorepo skeleton only — do not expand into all of P0) |
-| **Active branch** | `dart-001-domain-foundation` |
-| **Specs dir** | `specs/dart-001-domain-foundation/` (created at specify) |
+| **Next / active slice** | **DART-002** `models` (pure DTOs / freezed models — depends on DART-001 done) |
+| **Active branch** | (create) `dart-002-models` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-002-models/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
 
