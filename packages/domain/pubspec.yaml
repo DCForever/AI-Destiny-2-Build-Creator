@@ -1,7 +1,8 @@
 name: destiny2_domain
 description: >
   Pure domain library for Destiny 2 Build Creator multiplatform port.
-  Zero IO/UI dependencies. Models (DART-002); evaluators land in later DART slices.
+  Zero IO/UI dependencies. Models (DART-002) and hard evaluators (DART-003);
+  soft/resolve/equip land in later DART slices.
 version: 0.0.1
 publish_to: none
 resolution: workspace

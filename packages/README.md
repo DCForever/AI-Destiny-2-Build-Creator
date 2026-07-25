@@ -14,13 +14,14 @@ melos.yaml                # pointer only (config lives in pubspec.yaml)
 analysis_options.yaml     # shared analyzer defaults
 packages/
   README.md               # this file
-  domain/                 # pure domain (smoke + models; evaluators later)
+  domain/                 # pure domain (models + hard evaluators; soft later)
     pubspec.yaml          # package name: destiny2_domain
     lib/
       destiny2_domain.dart
       src/
         smoke.dart
         models/           # DART-002 pure DTOs
+        evaluators/       # DART-003 hard constraints
     test/
 ```
 
@@ -32,7 +33,7 @@ Future packages (not in early P0) will appear here or under `apps/` when Flutter
 
 ## Domain models (DART-002)
 
-`destiny2_domain` exports pure immutable DTOs used by later evaluators:
+`destiny2_domain` exports pure immutable DTOs used by evaluators:
 
 - Claims / resolved equipment / pins / equip-ready **shapes**
 - Kits (subclass, ability, exotic composition, mod energy pieces)
@@ -40,7 +41,14 @@ Future packages (not in early P0) will appear here or under `apps/` when Flutter
 - Soft coverage result tree + soft stat shapes
 - Core build / variant / set / synergy library shapes
 
-No evaluator algorithms (exotic limits, soft matching, resolve merge) live here yet.
+## Hard evaluators (DART-003)
+
+Pure functions in `src/evaluators/destiny_build_constraints.dart`:
+
+- `evaluateExoticLimits`, `evaluateModEnergy`, `evaluateSubclassKit`
+- `evaluateExoticAbilityMatch`, `evaluateSynergyRequirement`, `mergeConstraintEvaluations`
+- Golden tests: `test/hard_constraints_test.dart` (parity with TS vitest)
+- Soft coverage / resolve / equip-ready algorithms remain later slices
 
 ## Domain purity rule (hard)
 

@@ -155,6 +155,17 @@ class SubclassKitEvalInput {
   final int maxAspects;
 
   /// When false, fragment capacity is not hard-enforced (TS `capacityResolved`).
+  ///
+  /// ## Semantics (DART-003 / TS parity)
+  ///
+  /// - **true** (default): if `fragmentCount > fragmentCapacity`, emit
+  ///   `ILLEGAL_SUBCLASS_KIT`.
+  /// - **false**: skip fragment-capacity hard check (caller could not resolve
+  ///   aspect capacities from the entity store). Aspect max is still enforced.
+  ///
+  /// Do not pass `fragmentCapacity: 0` with `capacityResolved: true` unless
+  /// zero capacity is known-correct — prefer `capacityResolved: false` when
+  /// unknown.
   final bool capacityResolved;
 }
 
