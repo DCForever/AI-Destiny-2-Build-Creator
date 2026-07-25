@@ -1,7 +1,7 @@
 /// Pure armor-optimizer candidate / kit types (TS `src/lib/optimizer/types.ts` core).
 ///
-/// No IO. Used by enumerate / prune / score (DART-008). Full optimizeArmor pipeline
-/// and isolate hosting are later slices.
+/// No IO. Used by enumerate / prune / score (DART-008) and the pure optimize
+/// pipeline / combination DTOs (DART-035). Isolate hosting lives in the app layer.
 library;
 
 import 'equipment.dart';
@@ -202,6 +202,178 @@ class SetBonusSummaryEntry {
   @override
   int get hashCode =>
       Object.hash(setBonusKey, pieceCount, active2pc, active4pc);
+}
+
+/// API-facing piece on a scored combination (TS `ArmorOptimizePiece`).
+class ArmorOptimizePiece {
+  const ArmorOptimizePiece({
+    required this.slot,
+    required this.itemHash,
+    required this.instanceId,
+    this.itemName,
+    required this.isExotic,
+    this.setBonusKey,
+    this.statValues = const {},
+    this.usedInOtherSets = const [],
+  });
+
+  final EquipmentSlot slot;
+  final int itemHash;
+  final String instanceId;
+  final String? itemName;
+  final bool isExotic;
+  final String? setBonusKey;
+  final Map<ArmorStatName, int> statValues;
+  final List<ReuseSetRef> usedInOtherSets;
+}
+
+/// Optional assumed armor mod from auto-stat estimates (empty in DART-035).
+class AssumedMod {
+  const AssumedMod({
+    required this.armorSlot,
+    required this.itemHash,
+    this.name,
+    required this.energyCost,
+    this.statDeltas = const {},
+  });
+
+  final EquipmentSlot armorSlot;
+  final int itemHash;
+  final String? name;
+  final int energyCost;
+  final Map<ArmorStatName, int> statDeltas;
+}
+
+/// Scored complete kit (TS `ArmorCombination`).
+class ArmorCombination {
+  const ArmorCombination({
+    required this.pieces,
+    required this.estimatedStats,
+    required this.incompleteEstimate,
+    required this.setBonusSummary,
+    this.assumedMods = const [],
+    required this.reusePieceCount,
+    required this.score,
+    required this.meetsSoftThresholds,
+  });
+
+  final List<ArmorOptimizePiece> pieces;
+  final Map<ArmorStatName, int> estimatedStats;
+  final bool incompleteEstimate;
+  final List<SetBonusSummaryEntry> setBonusSummary;
+  final List<AssumedMod> assumedMods;
+  final int reusePieceCount;
+  final int score;
+  final bool meetsSoftThresholds;
+
+  RankableCombination get asRankable => RankableCombination(
+        estimatedStats: estimatedStats,
+        reusePieceCount: reusePieceCount,
+      );
+}
+
+/// Empty-result reason codes (TS `ArmorOptimizeEmptyReasonCode`).
+enum ArmorOptimizeEmptyReasonCode {
+  noInventory('NO_INVENTORY'),
+  noClassArmor('NO_CLASS_ARMOR'),
+  exoticUnavailable('EXOTIC_UNAVAILABLE'),
+  setBonusUnsatisfiable('SET_BONUS_UNSATISFIABLE'),
+  thresholdsUnmet('THRESHOLDS_UNMET'),
+  noValidKits('NO_VALID_KITS');
+
+  const ArmorOptimizeEmptyReasonCode(this.wireName);
+  final String wireName;
+}
+
+/// Explain why combinations is empty.
+class ArmorOptimizeEmptyReason {
+  const ArmorOptimizeEmptyReason({
+    required this.code,
+    required this.message,
+    this.details = const {},
+  });
+
+  final ArmorOptimizeEmptyReasonCode code;
+  final String message;
+  final Map<String, Object?> details;
+}
+
+/// Seed echo for hosts (class + soft priorities).
+class ArmorOptimizeSeed {
+  const ArmorOptimizeSeed({
+    this.classType,
+    this.lockedExoticItemHash,
+    this.statThresholds,
+    this.statPriorities,
+    this.preferReuse,
+  });
+
+  final String? classType;
+  final int? lockedExoticItemHash;
+  final Map<ArmorStatName, int>? statThresholds;
+  final List<ArmorStatName>? statPriorities;
+  final bool? preferReuse;
+}
+
+/// Input for pure [optimizeArmorCore] (candidates injected; no inventory IO).
+class ArmorOptimizeRequest {
+  const ArmorOptimizeRequest({
+    required this.candidates,
+    this.constraints = const KitConstraints(),
+    this.statPriorities = const [],
+    this.statThresholds,
+    this.requireThresholds = false,
+    this.preferReuse = false,
+    this.maxResults = 25,
+    this.maxCombinations,
+    this.classType,
+    this.hasInventory = true,
+  });
+
+  final List<CandidatePiece> candidates;
+  final KitConstraints constraints;
+  final List<ArmorStatName> statPriorities;
+  final Map<ArmorStatName, int>? statThresholds;
+  final bool requireThresholds;
+  final bool preferReuse;
+
+  /// Cap on returned combinations (product clamps 1..50).
+  final int maxResults;
+  final int? maxCombinations;
+  final String? classType;
+
+  /// When false and candidates empty, empty reason prefers NO_INVENTORY.
+  final bool hasInventory;
+}
+
+/// Result of pure optimize pipeline (TS `ArmorOptimizeResponse` core).
+class ArmorOptimizeResponse {
+  const ArmorOptimizeResponse({
+    required this.combinations,
+    required this.truncated,
+    required this.evaluatedCount,
+    this.emptyReason,
+    this.seed,
+  });
+
+  final List<ArmorCombination> combinations;
+  final bool truncated;
+  final int evaluatedCount;
+  final ArmorOptimizeEmptyReason? emptyReason;
+  final ArmorOptimizeSeed? seed;
+}
+
+/// Minimal piece identity for materialize / apply validation.
+class CombinationPieceInput {
+  const CombinationPieceInput({
+    required this.slot,
+    required this.itemHash,
+    required this.instanceId,
+  });
+
+  final EquipmentSlot slot;
+  final int itemHash;
+  final String instanceId;
 }
 
 bool _mapEq(Map<ArmorStatName, int> a, Map<ArmorStatName, int> b) {

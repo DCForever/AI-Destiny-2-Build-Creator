@@ -2,7 +2,8 @@ name: destiny2_app
 description: >
   In-process application use cases for Destiny 2 Build Creator multiplatform
   port (DART-027+). Orchestrates destiny2_db repositories with pure
-  destiny2_domain validation. No HTTP, Flutter, or CLIENT_SECRET.
+  destiny2_domain validation. Optimizer isolate runner + confirm-only
+  materialize/apply (DART-035). No HTTP, Flutter, or CLIENT_SECRET.
 version: 0.0.1
 publish_to: none
 resolution: workspace

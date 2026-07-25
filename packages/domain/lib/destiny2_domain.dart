@@ -53,5 +53,9 @@ export 'src/evaluators/optimizer_enumerate.dart';
 export 'src/evaluators/optimizer_prune.dart';
 export 'src/evaluators/optimizer_score.dart';
 
+// Optimizer pure pipeline + empty reasons (DART-035)
+export 'src/evaluators/optimizer_explain_empty.dart';
+export 'src/evaluators/optimizer_pipeline.dart';
+
 // Pure DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010)
 export 'src/evaluators/dim_builders.dart';

@@ -21,7 +21,12 @@ enum UseCaseErrorCode {
   slotConflict('SLOT_CONFLICT'),
   pairArmorMismatch('PAIR_ARMOR_MISMATCH'),
   variantEmpty('VARIANT_EMPTY'),
-  defaultVariantIncomplete('DEFAULT_VARIANT_INCOMPLETE');
+  defaultVariantIncomplete('DEFAULT_VARIANT_INCOMPLETE'),
+
+  /// Optimizer materialize / apply (DART-035).
+  invalidCombination('INVALID_COMBINATION'),
+  instanceNotOwned('INSTANCE_NOT_OWNED'),
+  exoticLimit('EXOTIC_LIMIT');
 
   const UseCaseErrorCode(this.wireName);
   final String wireName;

@@ -32,8 +32,8 @@ packages/
       destiny2_domain.dart
       src/
         smoke.dart
-        models/           # DART-002 pure DTOs
-        evaluators/       # DART-003+ pure evaluators
+        models/           # DART-002 pure DTOs (+ DART-035 combination response types)
+        evaluators/       # DART-003+ pure evaluators (+ DART-035 optimize pipeline)
     test/
   sandbox_data/           # pure static sandbox tables (DART-009)
     pubspec.yaml          # package name: destiny2_sandbox_data
@@ -93,7 +93,7 @@ packages/
         profile/                  # DART-024 memberships + GetProfile inventory parse
         sync/                     # DART-024 full-replace into Drift + 60s freshness
     test/
-  app/                    # In-process application use cases (DART-027/028+) — destiny2_app
+  app/                    # In-process application use cases (DART-027/028/035+) — destiny2_app
     pubspec.yaml          # package name: destiny2_app
     lib/
       destiny2_app.dart
@@ -106,6 +106,8 @@ packages/
         coverage_use_cases.dart   # DART-028 soft coverage query (never blocks)
         hard_gates.dart           # identity + equipment hard gate orchestration
         hard_gate_ports.dart      # injectable manifest/sandbox ports
+        optimizer_isolate.dart    # DART-035 Isolate.run optimize (UI-thread safe)
+        optimizer_use_cases.dart  # DART-035 confirm-only materialize / apply-in-place
         mappers.dart              # db records → pure domain models
         errors.dart
     test/
@@ -131,7 +133,7 @@ packages/
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (DART-018) + **offline catalog facets/browse** (`filterCatalogClient`, `OfflineCatalog`) (DART-020). Offline JSON under StorageRoot; no inventory. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
 | `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP** (DART-021) + **Public+PKCE OAuth** (DART-022) + **profile inventory sync** (DART-024): `X-API-Key`, optional Bearer, envelope unwrap, rate-limit hooks; authorize/token/refresh with S256 PKCE; `HttpBungieProfileClient` + `syncUserInventory` full-replace into Drift + `isInventoryFresh` / `syncIfStale` (60s). | `crypto`, `destiny2_db` + SDK (`dart:io` default transport). **Not** pure. Host-injected public API key + public client id; **no** CLIENT_SECRET / `client_secret` fields. |
-| `packages/app` | `destiny2_app` | **In-process application use cases** (DART-027 library: set/synergy CRUD + attach; DART-028 build/variant save hard gates + soft coverage query). Calls Drift repos + pure domain validators. No HTTP. Soft never auto-applies. | `destiny2_db`, `destiny2_domain`, `destiny2_sandbox_data`. **Not** pure. **No** CLIENT_SECRET. |
+| `packages/app` | `destiny2_app` | **In-process application use cases** (DART-027 library: set/synergy CRUD + attach; DART-028 build/variant save hard gates + soft coverage query; DART-035 optimizer isolate + confirm-only armor materialize/apply). Calls Drift repos + pure domain validators. No HTTP. Soft never auto-applies. | `destiny2_db`, `destiny2_domain`, `destiny2_sandbox_data`. **Not** pure. **No** CLIENT_SECRET. |
 | `packages/ui_tokens` | `destiny2_ui_tokens` | **Matte Flap Ledger tokens + FlapBoard layout contracts** (DART-029). Colors/spacing/radii/typography metrics; rail 320 / gap 0 / column templates. Documented in package README. **No** Flutter/Jaspr widgets. | **SDK only**. Hosts map ARGB → Color/CSS. |
 | `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023/025/026/029): open StorageRoot + single Drift DB; Catalog offline + owned; Settings OAuth + inventory sync; **flap theme stub** (`buildFlapTheme` — square elevation-0 cards, void canvas). Tokens not in SQLite. | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie/ui_tokens. **No** CLIENT_SECRET. |
 
