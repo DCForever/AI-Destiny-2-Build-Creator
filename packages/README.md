@@ -4,7 +4,7 @@
 **Integration base:** `feature/multiplatform-dart`  
 **Architecture:** [docs/multiplatform-dart-port-decisions.md](../docs/multiplatform-dart-port-decisions.md)
 
-This directory holds **pure and host-shared Dart packages** for the multiplatform Destiny 2 Build Creator port. UI shells (Flutter Windows/mobile, Jaspr web) are **not** created in early P0 slices.
+This directory holds **pure and host-shared Dart packages** for the multiplatform Destiny 2 Build Creator port. Flutter Windows host shell lives under **`apps/windows_host`** (DART-019).
 
 ## Layout
 
@@ -12,6 +12,12 @@ This directory holds **pure and host-shared Dart packages** for the multiplatfor
 pubspec.yaml              # workspace root + Melos 7+ `melos:` scripts
 melos.yaml                # pointer only (config lives in pubspec.yaml)
 analysis_options.yaml     # shared analyzer defaults
+apps/
+  windows_host/           # Flutter Windows shell (DART-019) — destiny2_windows_host
+    lib/
+      main.dart
+      host_bootstrap.dart # StorageRoot + single AppDatabase + ManifestRefreshApi
+      settings/           # Settings stub (manifest status only)
 packages/
   README.md               # this file
   domain/                 # pure domain (models + evaluators)
@@ -70,8 +76,9 @@ packages/
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (`status` / `isStale` / `refresh`, partial/full download, isolate rebuild) (DART-018). Offline JSON under StorageRoot. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
+| `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019): open StorageRoot + single Drift DB; Settings stub shows manifest status only. No OAuth. | Flutter, path_provider, sqlite3_flutter_libs; path deps on storage/db/manifest. |
 
-UI shells (Flutter Windows/mobile, Jaspr web) land under `apps/` in later slices (DART-019+, DART-042+).
+Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
 
 ## StorageRoot (DART-012)
 

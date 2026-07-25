@@ -1,0 +1,7 @@
+# Flutter host lints (DART-019). Separate from pure-package root options.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_declarations: true

@@ -11,6 +11,7 @@ workspace:
   - packages/storage
   - packages/db
   - packages/manifest
+  - apps/windows_host
 
 dev_dependencies:
   lints: ^5.0.0
@@ -39,5 +40,5 @@ melos:
       run: dart run tool/p0_parity_gate.dart
 
     analyze:
-      description: Run dart analyze on workspace Dart packages
+      description: "Run dart analyze on workspace Dart packages (Flutter host uses flutter analyze)"
       run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db packages/manifest
