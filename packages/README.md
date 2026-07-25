@@ -283,6 +283,11 @@ final result = await syncUserInventory(
     // Fallback: buildEquipmentBucketLookupFromSlots from OfflineCatalog slots.
     return buildEquipmentBucketLookup(rawItemDefs, transferHashes);
   },
+  // DART-051: roll tags (optional maps/builders — golden parity when provided)
+  perkNameMapBuilder: (plugHashes) async =>
+      buildPerkNameMapFromItemDefs(rawItemDefs, plugHashes),
+  weaponRollMetaLookupBuilder: (itemHashes) async =>
+      buildWeaponRollMetaLookup(catalogWeaponSources, onlyHashes: itemHashes),
 );
 
 // diagnostics.resolution.resolvedFromTransfer > 0 when vault items resolved
@@ -297,6 +302,7 @@ if (!isInventoryFresh(result.lastFullSyncAt)) {
 - Bumps `inventory_sync_meta.sync_version` / `last_full_sync_at` / `item_count`
 - Fresh window: `kEquipSyncFreshMs` = **60_000** (DBR-EQP-007)
 - **Vault/postmaster resolution (DART-050 / GAP-INV-01):** `buildEquipmentBucketLookup` + host wiring on every production path (Windows Settings `syncNow`, Windows/Jaspr equip `syncIfStale`). Empty lookup is **not** production-OK.
+- **Roll tags (DART-051 / GAP-INV-02):** `computeRollTags` (Next parity) tags Crafted / champion / MeleeBuildCandidate / OrbitBuild at normalize time. Pass `perkNameMap` (+ builder) and `weaponRollMetaLookup` (+ builder). Empty maps → Crafted-only when `isCrafted` (no invented tags). Windows hosts resolve plug names from raw `DestinyInventoryItemDefinition` and weapon meta from OfflineCatalog; web equip wires catalog frame meta (perk-name rules need raw or injected map — thinner until entity weapon-perks). Soft metadata only — **never** auto-applies.
 - **Owned catalog** still needs entity stores populated (`OwnedCatalogBridge` joins counts onto entity baseItems) — empty entity cache ≠ empty vault (**GAP-INV-06** residual → **DART-053** UX warning).
 - Settings sync UI is **DART-025** (not this package); diagnostics UI is **DART-053**
 

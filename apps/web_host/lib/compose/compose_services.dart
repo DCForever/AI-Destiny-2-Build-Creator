@@ -26,6 +26,10 @@ class ComposeServices {
     bool skipSyncIfStale = true,
     Map<int, int>? equipmentBucketLookup,
     EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
+    Map<int, String>? perkNameMap,
+    PerkNameMapBuilder? perkNameMapBuilder,
+    Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
+    WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
   })  : builds = BuildsController(db: db),
         sets = SetsController(db: db),
         synergies = SynergiesController(db: db),
@@ -45,6 +49,10 @@ class ComposeServices {
                 skipSyncIfStale: skipSyncIfStale,
                 equipmentBucketLookup: equipmentBucketLookup,
                 equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+                perkNameMap: perkNameMap,
+                perkNameMapBuilder: perkNameMapBuilder,
+                weaponRollMetaLookup: weaponRollMetaLookup,
+                weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
               )
             : null;
 

@@ -105,7 +105,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
 | **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts; vault lookup wired (DART-050) | **shipped** + enrichment residual | **DART-050** done; RB-06 until 051–054 |
 | **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Lookup + host wiring (DART-050) | **shipped** (fixture) | **DART-050**; live harness DART-054 |
-| **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Crafted-only | **planned** (P1) | **DART-051** / GAP-INV-02 |
+| **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Pure + sync + host builders (DART-051) | **shipped** (golden + Windows raw; web frame-meta) | **DART-051** closed GAP-INV-02; residual: web perk names without raw defs |
 | **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Raw socketCapture only | **planned** (P1) | **DART-052** / GAP-INV-03 |
 | **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | itemCount only in UI | **planned** (P1) | **DART-053** / GAP-INV-04 |
 | **FEAT-INV-HARNESS** | Next-vs-Dart live count harness | Manual dual sync | None | **planned** (P0 process) | **DART-054** / GAP-INV-05 |
@@ -212,21 +212,22 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ---
 
-### GAP-INV-02 — Roll tags (**P1**)
+### GAP-INV-02 — Roll tags (**P1**) — **closed** (DART-051)
 
-**Problem:** Next computes god-roll / perk-derived tags (Crafted, champion, build tags via weapon-perks map + WeaponRecord); Dart only tags `Crafted`.
+**Problem (was):** Next computes god-roll / perk-derived tags (Crafted, champion, build tags via weapon-perks map + WeaponRecord); Dart only tagged `Crafted`.
 
 **Next:** `computeRollTags` in `src/lib/inventory/rollTags.ts` + sync normalize  
-**Dart:** `_normalizeItems` rollTags = `[if isCrafted 'Crafted']` only
+**Dart (now):** `packages/bungie` `computeRollTags` + `_normalizeItems` via perkNameMap / weaponRollMetaLookup builders; golden tests match Next fixtures; Windows Settings/equip wire raw plug names + OfflineCatalog frame meta; Jaspr equip wires catalog frame meta.
 
-**Planned slice: DART-051 `inventory-roll-tags`**
+**Slice: DART-051 `inventory-roll-tags`**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-051-inventory-roll-tags` |
-| Depends | DART-050 (stable inventory set), entity perk stores |
+| Depends | DART-050 (stable inventory set) |
 | Exit criteria | Dart inventory normalize emits roll tags matching Next `computeRollTags` golden fixtures for sample crafted/champion/build weapons; soft never auto-applies; intentional thinning opens GAP residual at merge (PROC-06) |
-| Status | `planned` |
+| Status | **`done`** (2026-07-25) |
+| Residual | Web/Jaspr without raw `DestinyInventoryItemDefinition` cannot resolve perk **names** (MeleeBuildCandidate / OrbitBuild / perk-champion) until weapon-perks entity store or injected map — **not** intentional pure-function thinning (golden parity holds). Frame champion + Crafted work from catalog. Track under RB-06 / DART-056 depth if web Settings needs full perk-name parity. Soft never auto-applies. |
 
 ---
 

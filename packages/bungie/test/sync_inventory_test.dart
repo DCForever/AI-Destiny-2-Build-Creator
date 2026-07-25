@@ -364,5 +364,139 @@ void main() {
         'Kinetic',
       );
     });
+
+    test('DART-051: stores MeleeBuildCandidate when perk map + weapon meta provided',
+        () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'hc-melee',
+            itemHash: 100,
+            bucketHash: 1498876634,
+            location: 'vault',
+            power: 1800,
+            plugHashes: [1, 2],
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        perkNameMap: const {
+          1: 'Pugilist',
+          2: 'Swashbuckler',
+        },
+        weaponRollMetaLookup: const {
+          100: RollTagWeaponMeta(
+            frame: 'Adaptive Frame',
+            itemTypeName: 'Hand Cannon',
+          ),
+        },
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      expect(listed.single.rollTags, contains(RollTags.meleeBuildCandidate));
+      expect(listed.single.rollTags, contains(RollTags.championBarrier));
+    });
+
+    test('DART-051: stores ChampionBarrier from weapon frame meta', () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'scout',
+            itemHash: 200,
+            bucketHash: 1498876634,
+            location: 'character',
+            characterId: 'c1',
+            power: 1810,
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        weaponRollMetaLookup: const {
+          200: RollTagWeaponMeta(
+            frame: 'Adaptive Frame',
+            itemTypeName: 'Scout Rifle',
+          ),
+        },
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      expect(listed.single.rollTags, contains(RollTags.championBarrier));
+    });
+
+    test('DART-051: perk name builder enriches OrbitBuild', () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'orbit-gun',
+            itemHash: 300,
+            bucketHash: 2465295065,
+            location: 'vault',
+            power: 1800,
+            plugHashes: [3, 4],
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        perkNameMapBuilder: (plugs) async {
+          expect(plugs, containsAll([3, 4]));
+          return {3: 'Demolitionist', 4: 'Adrenaline Junkie'};
+        },
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      expect(listed.single.rollTags, contains(RollTags.orbitBuild));
+    });
+
+    test('DART-051: empty enrichment maps yield no invented tags', () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'plain',
+            itemHash: 400,
+            bucketHash: 1498876634,
+            location: 'vault',
+            power: 1800,
+            plugHashes: [1, 2],
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      expect(listed.single.rollTags, isEmpty);
+    });
   });
 }

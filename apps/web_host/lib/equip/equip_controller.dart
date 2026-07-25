@@ -34,6 +34,10 @@ class EquipController extends ChangeNotifier {
     this.skipSyncIfStale = false,
     this.equipmentBucketLookup,
     this.equipmentBucketLookupBuilder,
+    this.perkNameMap,
+    this.perkNameMapBuilder,
+    this.weaponRollMetaLookup,
+    this.weaponRollMetaLookupBuilder,
   });
 
   final AppDatabase db;
@@ -50,6 +54,12 @@ class EquipController extends ChangeNotifier {
   /// Catalog/entity slot builder for vault/postmaster resolution (DART-050).
   /// Web Settings full-depth sync is DART-056; equip path still must wire lookup.
   final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
+
+  /// DART-051 roll tag enrichment (catalog frame meta; perk names need raw/injected).
+  final Map<int, String>? perkNameMap;
+  final PerkNameMapBuilder? perkNameMapBuilder;
+  final Map<int, RollTagWeaponMeta>? weaponRollMetaLookup;
+  final WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder;
 
   String? _buildId;
   String? _variantId;
@@ -340,6 +350,10 @@ class EquipController extends ChangeNotifier {
           profileClient: profileClient,
           equipmentBucketLookup: equipmentBucketLookup,
           equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+          perkNameMap: perkNameMap,
+          perkNameMapBuilder: perkNameMapBuilder,
+          weaponRollMetaLookup: weaponRollMetaLookup,
+          weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
         );
       }
 

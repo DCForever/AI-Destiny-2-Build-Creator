@@ -19,6 +19,7 @@ import 'db/web_database_bootstrap.dart';
 import 'db/web_db_status.dart';
 import 'dim_export/dim_export_controller.dart';
 import 'equip/equipment_bucket_lookup_provider.dart';
+import 'equip/roll_tag_lookup_provider.dart';
 import 'pages/auth_callback_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
@@ -111,10 +112,14 @@ class _AppState extends State<App> {
     final db = boot.database;
     if (db != null && _compose == null) {
       // DART-050: equip syncIfStale uses entity catalog slots for vault resolve.
+      // DART-051: catalog frame meta for roll tags (perk names need raw/injected).
       final catalog = component.entityLoader?.catalog;
       final lookupBuilder = catalog == null
           ? null
           : createWebEquipmentBucketLookupBuilder(offlineCatalog: catalog);
+      final rollTags = catalog == null
+          ? null
+          : createWebRollTagEnrichment(offlineCatalog: catalog);
       _compose = ComposeServices(
         db: db,
         session: component.oauthSession,
@@ -123,6 +128,8 @@ class _AppState extends State<App> {
         clipboardWriter: component.clipboardWriter,
         skipSyncIfStale: false,
         equipmentBucketLookupBuilder: lookupBuilder,
+        perkNameMapBuilder: rollTags?.perkNameMapBuilder,
+        weaponRollMetaLookupBuilder: rollTags?.weaponRollMetaLookupBuilder,
       );
     }
   }

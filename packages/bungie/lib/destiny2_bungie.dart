@@ -18,6 +18,8 @@ export 'src/oauth/oauth_pending.dart';
 export 'src/oauth/oauth_state.dart';
 export 'src/oauth/pkce.dart';
 export 'src/oauth/redirect_uri_config.dart';
+export 'src/inventory/roll_tag_lookups.dart';
+export 'src/inventory/roll_tags.dart';
 export 'src/profile/bungie_profile_client.dart';
 export 'src/profile/character_parse.dart';
 export 'src/profile/equipment_bucket_lookup.dart';

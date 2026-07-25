@@ -33,6 +33,10 @@ class EquipController extends ChangeNotifier {
     this.skipSyncIfStale = false,
     this.equipmentBucketLookup,
     this.equipmentBucketLookupBuilder,
+    this.perkNameMap,
+    this.perkNameMapBuilder,
+    this.weaponRollMetaLookup,
+    this.weaponRollMetaLookupBuilder,
   });
 
   final AppDatabase db;
@@ -49,6 +53,12 @@ class EquipController extends ChangeNotifier {
 
   /// Builder for vault/postmaster resolution (DART-050). Defaults to [inventorySync].
   final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
+
+  /// DART-051 roll tag enrichment (defaults to [inventorySync] wiring).
+  final Map<int, String>? perkNameMap;
+  final PerkNameMapBuilder? perkNameMapBuilder;
+  final Map<int, RollTagWeaponMeta>? weaponRollMetaLookup;
+  final WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder;
 
   String? _buildId;
   String? _variantId;
@@ -336,6 +346,13 @@ class EquipController extends ChangeNotifier {
               equipmentBucketLookup ?? inventorySync.equipmentBucketLookup,
           equipmentBucketLookupBuilder: equipmentBucketLookupBuilder ??
               inventorySync.equipmentBucketLookupBuilder,
+          perkNameMap: perkNameMap ?? inventorySync.perkNameMap,
+          perkNameMapBuilder:
+              perkNameMapBuilder ?? inventorySync.perkNameMapBuilder,
+          weaponRollMetaLookup:
+              weaponRollMetaLookup ?? inventorySync.weaponRollMetaLookup,
+          weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder ??
+              inventorySync.weaponRollMetaLookupBuilder,
         );
         await inventorySync.refreshStatus();
       }

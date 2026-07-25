@@ -1,5 +1,7 @@
 import 'package:destiny2_db/destiny2_db.dart';
 
+import '../inventory/roll_tag_lookups.dart';
+import '../inventory/roll_tags.dart';
 import '../profile/bungie_profile_client.dart';
 import '../profile/equipment_bucket_lookup.dart';
 import 'sync_inventory.dart';
@@ -43,6 +45,9 @@ bool isInventoryFresh(
 ///
 /// Production hosts MUST pass [equipmentBucketLookup] and/or
 /// [equipmentBucketLookupBuilder] so vault/postmaster gear is stored (DART-050).
+///
+/// Pass [perkNameMap] / builders + [weaponRollMetaLookup] / builders for
+/// DART-051 roll tag enrichment (Next `computeRollTags` parity).
 Future<SyncIfStaleResult> syncIfStale({
   required AppDatabase db,
   required int userId,
@@ -50,6 +55,10 @@ Future<SyncIfStaleResult> syncIfStale({
   required BungieProfileClient profileClient,
   Map<int, int>? equipmentBucketLookup,
   EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
+  Map<int, String>? perkNameMap,
+  PerkNameMapBuilder? perkNameMapBuilder,
+  Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
+  WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
   String? now,
   int? nowMs,
   InventoryBusyLock? lock,
@@ -74,6 +83,10 @@ Future<SyncIfStaleResult> syncIfStale({
     profileClient: profileClient,
     equipmentBucketLookup: equipmentBucketLookup,
     equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+    perkNameMap: perkNameMap,
+    perkNameMapBuilder: perkNameMapBuilder,
+    weaponRollMetaLookup: weaponRollMetaLookup,
+    weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
     now: now ??
         DateTime.fromMillisecondsSinceEpoch(clock, isUtc: true)
             .toIso8601String(),

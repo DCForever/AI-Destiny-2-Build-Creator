@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:destiny2_db/destiny2_db.dart';
 
+import '../inventory/roll_tag_lookups.dart';
+import '../inventory/roll_tags.dart';
 import '../profile/bungie_profile_client.dart';
 import '../profile/equipment_bucket_lookup.dart';
 import '../profile/inventory_buckets.dart';
@@ -44,6 +46,9 @@ class SyncInProgressError implements Exception {
 /// - **Production hosts MUST wire a non-empty lookup** whenever entity/manifest data
 ///   is available (DART-050 / GAP-INV-01). Empty lookup is test-only — transfer
 ///   containers (vault General / postmaster) are dropped before Drift write.
+/// - [perkNameMap] / [perkNameMapBuilder] + [weaponRollMetaLookup] /
+///   [weaponRollMetaLookupBuilder] supply DART-051 roll tag enrichment inputs
+///   (Next `computeRollTags` parity). Empty maps → Crafted-only when `isCrafted`.
 /// - [now] ISO-8601 timestamp written as syncedAt / lastFullSyncAt (injectable for tests).
 Future<SyncInventoryResult> syncUserInventory({
   required AppDatabase db,
@@ -52,6 +57,10 @@ Future<SyncInventoryResult> syncUserInventory({
   required BungieProfileClient profileClient,
   Map<int, int>? equipmentBucketLookup,
   EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
+  Map<int, String>? perkNameMap,
+  PerkNameMapBuilder? perkNameMapBuilder,
+  Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
+  WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
   String? now,
   InventoryBusyLock? lock,
 }) async {
@@ -64,6 +73,10 @@ Future<SyncInventoryResult> syncUserInventory({
         profileClient: profileClient,
         equipmentBucketLookup: equipmentBucketLookup,
         equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+        perkNameMap: perkNameMap,
+        perkNameMapBuilder: perkNameMapBuilder,
+        weaponRollMetaLookup: weaponRollMetaLookup,
+        weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
         now: now ?? DateTime.now().toUtc().toIso8601String(),
       );
     });
@@ -79,6 +92,10 @@ Future<SyncInventoryResult> _performSync({
   required BungieProfileClient profileClient,
   Map<int, int>? equipmentBucketLookup,
   EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,
+  Map<int, String>? perkNameMap,
+  PerkNameMapBuilder? perkNameMapBuilder,
+  Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
+  WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
   required String now,
 }) async {
   final memberships = await profileClient.getMemberships(accessToken);
@@ -120,7 +137,30 @@ Future<SyncInventoryResult> _performSync({
     parsed.items,
     lookup,
   );
-  final records = _normalizeItems(resolved.items, now);
+
+  final plugHashes = <int>[
+    for (final item in resolved.items) ...item.plugHashes,
+  ];
+  final itemHashes = <int>[
+    for (final item in resolved.items) item.itemHash,
+  ];
+  final resolvedPerkMap = await _resolvePerkNameMap(
+    plugHashes: plugHashes,
+    perkNameMap: perkNameMap,
+    perkNameMapBuilder: perkNameMapBuilder,
+  );
+  final resolvedWeaponMeta = await _resolveWeaponRollMetaLookup(
+    itemHashes: itemHashes,
+    weaponRollMetaLookup: weaponRollMetaLookup,
+    weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+  );
+
+  final records = _normalizeItems(
+    resolved.items,
+    now,
+    perkNameMap: resolvedPerkMap,
+    weaponRollMetaLookup: resolvedWeaponMeta,
+  );
 
   parsed.diagnostics.resolution = InventoryResolutionCounts(
     resolvedFromTransfer: resolved.resolvedFromTransfer,
@@ -162,14 +202,49 @@ Future<Map<int, int>> _resolveEquipmentBucketLookup({
   return merged;
 }
 
+Future<Map<int, String>> _resolvePerkNameMap({
+  required List<int> plugHashes,
+  Map<int, String>? perkNameMap,
+  PerkNameMapBuilder? perkNameMapBuilder,
+}) async {
+  final merged = <int, String>{};
+  if (perkNameMapBuilder != null && plugHashes.isNotEmpty) {
+    merged.addAll(await perkNameMapBuilder(plugHashes));
+  }
+  if (perkNameMap != null) {
+    merged.addAll(perkNameMap);
+  }
+  return merged;
+}
+
+Future<Map<int, RollTagWeaponMeta>> _resolveWeaponRollMetaLookup({
+  required List<int> itemHashes,
+  Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
+  WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
+}) async {
+  final merged = <int, RollTagWeaponMeta>{};
+  if (weaponRollMetaLookupBuilder != null && itemHashes.isNotEmpty) {
+    merged.addAll(await weaponRollMetaLookupBuilder(itemHashes));
+  }
+  if (weaponRollMetaLookup != null) {
+    merged.addAll(weaponRollMetaLookup);
+  }
+  return merged;
+}
+
 List<InventoryItemRecord> _normalizeItems(
   List<RawInventoryItem> rawItems,
-  String syncedAt,
-) {
+  String syncedAt, {
+  Map<int, String> perkNameMap = const {},
+  Map<int, RollTagWeaponMeta> weaponRollMetaLookup = const {},
+}) {
   return rawItems.map((raw) {
-    final rollTags = <String>[
-      if (raw.isCrafted) 'Crafted',
-    ];
+    final rollTags = computeRollTags(
+      raw.plugHashes,
+      perkNameMap,
+      weapon: weaponRollMetaLookup[raw.itemHash],
+      isCrafted: raw.isCrafted,
+    );
     final socketPlugs = raw.socketCapture
         ?.map((s) => s.toJsonMap())
         .toList(growable: false);

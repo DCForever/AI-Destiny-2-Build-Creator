@@ -20,6 +20,10 @@ enum InventorySyncPhase {
 /// **DART-050:** production hosts MUST inject [equipmentBucketLookupBuilder]
 /// (and/or [equipmentBucketLookup]) so vault/postmaster gear is stored. Empty
 /// lookup is test-only.
+///
+/// **DART-051:** inject [perkNameMapBuilder] + [weaponRollMetaLookupBuilder]
+/// (and/or explicit maps) so roll tags match Next `computeRollTags` when data
+/// is available. Soft metadata only — never auto-applies.
 class InventorySyncController extends ChangeNotifier {
   InventorySyncController({
     required AppDatabase db,
@@ -29,6 +33,10 @@ class InventorySyncController extends ChangeNotifier {
     DateTime Function()? clock,
     this.equipmentBucketLookup,
     this.equipmentBucketLookupBuilder,
+    this.perkNameMap,
+    this.perkNameMapBuilder,
+    this.weaponRollMetaLookup,
+    this.weaponRollMetaLookupBuilder,
   })  : _db = db,
         _session = session,
         _profileClient = profileClient,
@@ -46,6 +54,18 @@ class InventorySyncController extends ChangeNotifier {
 
   /// Production builder: raw DestinyInventoryItemDefinition and/or catalog slots.
   final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
+
+  /// Explicit plugHash → perk display name (tests / overrides).
+  final Map<int, String>? perkNameMap;
+
+  /// Production builder: plug names from raw item defs (DART-051).
+  final PerkNameMapBuilder? perkNameMapBuilder;
+
+  /// Explicit itemHash → weapon frame/type meta (tests / overrides).
+  final Map<int, RollTagWeaponMeta>? weaponRollMetaLookup;
+
+  /// Production builder: weapon meta from OfflineCatalog (DART-051).
+  final WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder;
 
   InventorySyncPhase _phase = InventorySyncPhase.idle;
   int? _itemCount;
@@ -143,6 +163,10 @@ class InventorySyncController extends ChangeNotifier {
         profileClient: _profileClient,
         equipmentBucketLookup: equipmentBucketLookup,
         equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+        perkNameMap: perkNameMap,
+        perkNameMapBuilder: perkNameMapBuilder,
+        weaponRollMetaLookup: weaponRollMetaLookup,
+        weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
         lock: _lock,
       );
 

@@ -10,6 +10,7 @@ import 'auth/token_store.dart';
 import 'auth/windows_oauth_session.dart';
 import 'settings/equipment_bucket_lookup_provider.dart';
 import 'settings/inventory_sync_controller.dart';
+import 'settings/roll_tag_lookup_provider.dart';
 
 /// Default Windows loopback redirect (must match Bungie Public app registration).
 const String kDefaultWindowsRedirectUri = 'http://127.0.0.1:8765/callback';
@@ -153,6 +154,11 @@ class HostBootstrap {
       offlineCatalog: catalog,
       manifestService: windowsRefresh?.service,
     );
+    // DART-051: roll tags need plug names + weapon frame meta when available.
+    final rollTags = createWindowsRollTagEnrichment(
+      offlineCatalog: catalog,
+      manifestService: windowsRefresh?.service,
+    );
 
     final sync = inventorySync ??
         InventorySyncController(
@@ -161,6 +167,8 @@ class HostBootstrap {
           profileClient: resolvedProfile,
           lock: inventoryLock,
           equipmentBucketLookupBuilder: lookupBuilder,
+          perkNameMapBuilder: rollTags.perkNameMapBuilder,
+          weaponRollMetaLookupBuilder: rollTags.weaponRollMetaLookupBuilder,
         );
 
     final resolvedWrite = writeClient ??
