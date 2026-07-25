@@ -1,8 +1,11 @@
 import 'dart:io';
 
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
+import 'package:destiny2_windows_host/auth/browser_launcher.dart';
+import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,7 +34,7 @@ void main() {
   late Directory tempDir;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('dart019_bootstrap_');
+    tempDir = await Directory.systemTemp.createTemp('dart023_bootstrap_');
   });
 
   tearDown(() async {
@@ -40,7 +43,8 @@ void main() {
     }
   });
 
-  test('open ensures layout, opens single DB, dispose closes', () async {
+  test('open ensures layout, opens single DB, oauth session, dispose closes',
+      () async {
     final root = StorageRoot(basePath: tempDir.path);
     final db = AppDatabase.file(root.appDbPath);
     final services = await HostBootstrap.open(
@@ -54,10 +58,21 @@ void main() {
           entityCache: null,
         ),
       ),
+      clientId: 'test-client',
+      tokenStore: MemoryTokenStore(),
+      browserLauncher: FakeBrowserLauncher(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
+      ),
     );
 
     expect(services.db, same(db));
     expect(services.offlineCatalog, isNotNull);
+    expect(services.oauthSession, isNotNull);
+    expect(services.oauthSession.hasRestored, isTrue);
+    expect(services.oauthSession.isSignedIn, isFalse);
     expect(File(root.appDbPath).existsSync(), isTrue);
     expect(Directory(root.manifestDir).existsSync(), isTrue);
     expect(Directory(root.entitiesDir).existsSync(), isTrue);
@@ -84,6 +99,14 @@ void main() {
           isStale: false,
           entityCache: null,
         ),
+      ),
+      clientId: 'test-client',
+      tokenStore: MemoryTokenStore(),
+      browserLauncher: FakeBrowserLauncher(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
       ),
     );
 

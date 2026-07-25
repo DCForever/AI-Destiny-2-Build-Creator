@@ -1,8 +1,11 @@
 import 'dart:io';
 
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
+import 'package:destiny2_windows_host/auth/browser_launcher.dart';
+import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/catalog/catalog_page.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +92,14 @@ void main() {
         items: fixtureItems,
         version: 'fixture-1',
       ),
+      clientId: 'test-client',
+      tokenStore: MemoryTokenStore(),
+      browserLauncher: FakeBrowserLauncher(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
+      ),
     );
   });
 
@@ -150,6 +161,7 @@ void main() {
         storageRoot: services.storageRoot,
         items: const [],
       ),
+      oauthSession: services.oauthSession,
     );
 
     await tester.pumpWidget(

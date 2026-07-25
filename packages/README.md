@@ -13,12 +13,14 @@ pubspec.yaml              # workspace root + Melos 7+ `melos:` scripts
 melos.yaml                # pointer only (config lives in pubspec.yaml)
 analysis_options.yaml     # shared analyzer defaults
 apps/
-  windows_host/           # Flutter Windows shell (DART-019/020) — destiny2_windows_host
+  windows_host/           # Flutter Windows shell (DART-019/020/023) — destiny2_windows_host
     lib/
-      main.dart
-      host_bootstrap.dart # StorageRoot + single AppDatabase + ManifestRefreshApi + OfflineCatalog
+      main.dart           # BUNGIE_API_KEY / BUNGIE_CLIENT_ID / BUNGIE_REDIRECT_URI defines
+      host_bootstrap.dart # StorageRoot + single AppDatabase + ManifestRefreshApi + OfflineCatalog + OAuth session
+      auth/               # DART-023: TokenStore, loopback callback, WindowsOAuthSession
       catalog/            # Offline catalog browse (DART-020)
-      settings/           # Settings stub (manifest status only)
+      settings/           # Manifest status + OAuth account card (sign-in/out)
+
 packages/
   README.md               # this file
   domain/                 # pure domain (models + evaluators)
@@ -96,7 +98,7 @@ packages/
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (DART-018) + **offline catalog facets/browse** (`filterCatalogClient`, `OfflineCatalog`) (DART-020). Offline JSON under StorageRoot; no inventory. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
 | `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP** (DART-021) + **Public+PKCE OAuth** (DART-022): `X-API-Key`, optional Bearer, envelope unwrap, rate-limit hooks; authorize/token/refresh with S256 PKCE, CSRF state, `BungieTokens`, platform redirect URI config. | `crypto` + SDK (`dart:io` default transport). **Not** pure. Host-injected public API key + public client id; **no** CLIENT_SECRET / `client_secret` fields. |
-| `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020): open StorageRoot + single Drift DB; Catalog offline browse + Settings manifest status. No OAuth. | Flutter, path_provider, sqlite3_flutter_libs; path deps on storage/db/manifest. |
+| `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023): open StorageRoot + single Drift DB; Catalog offline browse; Settings manifest + **Public+PKCE OAuth** (loopback `127.0.0.1`, `flutter_secure_storage` tokens — not SQLite). | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie. **No** CLIENT_SECRET. |
 
 Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
 

@@ -1,25 +1,37 @@
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Owns host runtime resources for the Windows shell (DART-019/020).
+import 'auth/browser_launcher.dart';
+import 'auth/loopback_callback_server.dart';
+import 'auth/token_store.dart';
+import 'auth/windows_oauth_session.dart';
+
+/// Default Windows loopback redirect (must match Bungie Public app registration).
+const String kDefaultWindowsRedirectUri = 'http://127.0.0.1:8765/callback';
+
+/// Owns host runtime resources for the Windows shell (DART-019/020/023).
 ///
 /// Guarantees a **single** [AppDatabase] instance for the process lifetime of
 /// this object. Call [dispose] on shutdown to close the SQLite connection.
 /// Entity catalog reads use [OfflineCatalog] (file JSON only — no second DB).
+/// OAuth tokens live in [oauthSession] / [TokenStore] — **not** SQLite.
 class AppServices {
   AppServices({
     required this.storageRoot,
     required this.db,
     required this.manifestRefresh,
     required this.offlineCatalog,
+    required this.oauthSession,
   });
 
   final StorageRoot storageRoot;
   final AppDatabase db;
   final ManifestRefreshApi manifestRefresh;
   final OfflineCatalog offlineCatalog;
+  final WindowsOAuthSession oauthSession;
 
   bool _closed = false;
 
@@ -34,11 +46,12 @@ class AppServices {
   }
 }
 
-/// Bootstrap for Flutter Windows host: StorageRoot → single DB → manifest API.
+/// Bootstrap for Flutter Windows host: StorageRoot → single DB → manifest API → OAuth.
 class HostBootstrap {
   HostBootstrap._();
 
-  /// Opens layout + one Drift connection + [ManifestRefreshApi] + [OfflineCatalog].
+  /// Opens layout + one Drift connection + [ManifestRefreshApi] + [OfflineCatalog]
+  /// + [WindowsOAuthSession].
   ///
   /// Overrides exist for tests:
   /// - [storageRoot]: skip path_provider
@@ -47,12 +60,21 @@ class HostBootstrap {
   /// - [offlineCatalog]: pre-seeded or fake catalog
   /// - [resolveApplicationSupportPath]: alternate path_provider
   /// - [apiKey]: public Bungie API key only (never CLIENT_SECRET)
+  /// - [clientId] / [redirectUri]: Public OAuth app (never CLIENT_SECRET)
+  /// - [tokenStore] / [oauthClient] / [browserLauncher] / [waitForCallbackOverride]
   static Future<AppServices> open({
     StorageRoot? storageRoot,
     AppDatabase? database,
     ManifestRefreshApi? manifestRefresh,
     OfflineCatalog? offlineCatalog,
     String? apiKey,
+    String? clientId,
+    String? redirectUri,
+    TokenStore? tokenStore,
+    BungieOAuthClient? oauthClient,
+    BrowserLauncher? browserLauncher,
+    LoopbackCallbackServer? loopbackServer,
+    Future<LoopbackCallbackResult> Function()? waitForCallbackOverride,
     Future<String> Function()? resolveApplicationSupportPath,
   }) async {
     final root = storageRoot ??
@@ -73,11 +95,35 @@ class HostBootstrap {
 
     final catalog = offlineCatalog ?? OfflineCatalog(storageRoot: root);
 
+    final resolvedClientId = clientId ?? '';
+    final resolvedRedirect = (redirectUri == null || redirectUri.isEmpty)
+        ? kDefaultWindowsRedirectUri
+        : redirectUri;
+
+    final store = tokenStore ?? SecureTokenStore();
+    final client = oauthClient ??
+        BungieOAuthClient(
+          clientId: resolvedClientId.isEmpty ? 'unconfigured' : resolvedClientId,
+          redirectUri: resolvedRedirect,
+        );
+
+    final session = WindowsOAuthSession(
+      clientId: resolvedClientId,
+      redirectUri: resolvedRedirect,
+      tokenStore: store,
+      oauthClient: client,
+      browserLauncher: browserLauncher,
+      loopbackServer: loopbackServer,
+      waitForCallbackOverride: waitForCallbackOverride,
+    );
+    await session.restore();
+
     return AppServices(
       storageRoot: root,
       db: db,
       manifestRefresh: refresh,
       offlineCatalog: catalog,
+      oauthSession: session,
     );
   }
 

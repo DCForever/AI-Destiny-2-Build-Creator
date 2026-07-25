@@ -7,6 +7,15 @@ import 'host_bootstrap.dart';
 /// Public Bungie API key only (optional). Never CLIENT_SECRET.
 const String _bungieApiKeyDefine = String.fromEnvironment('BUNGIE_API_KEY');
 
+/// Public OAuth client id only. Never CLIENT_SECRET / BUNGIE_CLIENT_SECRET.
+const String _bungieClientIdDefine = String.fromEnvironment('BUNGIE_CLIENT_ID');
+
+/// Windows loopback redirect URI registered on the Public Bungie app.
+const String _bungieRedirectUriDefine = String.fromEnvironment(
+  'BUNGIE_REDIRECT_URI',
+  defaultValue: kDefaultWindowsRedirectUri,
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -20,7 +29,11 @@ Future<void> main() async {
   Object? bootstrapError;
 
   try {
-    services = await HostBootstrap.open(apiKey: apiKey);
+    services = await HostBootstrap.open(
+      apiKey: apiKey,
+      clientId: _bungieClientIdDefine,
+      redirectUri: _bungieRedirectUriDefine,
+    );
   } catch (e, st) {
     bootstrapError = e;
     debugPrint('Host bootstrap failed: $e\n$st');

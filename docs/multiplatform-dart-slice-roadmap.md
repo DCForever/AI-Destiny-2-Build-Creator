@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-022 done — Public+PKCE OAuth core)  
+**Updated:** 2026-07-24 (DART-023 done — Windows loopback OAuth + secure storage)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -114,7 +114,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-020** | **done** | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
 | **DART-021** | **done** | `bungie-http` | `dart-021-bungie-http` | P2 | DART-011 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
 | **DART-022** | **done** | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
-| **DART-023** | pending | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
+| **DART-023** | **done** | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
 | **DART-024** | pending | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
 | **DART-025** | pending | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
 | **DART-026** | pending | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
@@ -190,11 +190,18 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-023** `flutter-windows-oauth` (P2 — Windows loopback/deep-link OAuth + secure storage) |
-| **Active branch** | (create) `dart-023-flutter-windows-oauth` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-023-flutter-windows-oauth/` (created at specify) |
+| **Next / active slice** | **DART-024** `bungie-profile-sync` (P2 — Profile fetch + inventory sync into Drift) |
+| **Active branch** | (create) `dart-024-bungie-profile-sync` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-024-bungie-profile-sync/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-023 note (completed)
+
+- **Host:** `apps/windows_host` OAuth — loopback `127.0.0.1` callback, system browser, `WindowsOAuthSession`, Settings account card
+- **Storage:** `flutter_secure_storage` / `TokenStore` — access/refresh **not** in SQLite plaintext
+- **Exit:** Sign-in/out E2E (mocked transport + fake browser); `flutter test` 24; no CLIENT_SECRET
+- **Next:** DART-024 profile fetch + inventory sync algorithm
 
 ### DART-022 note (completed)
 

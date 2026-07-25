@@ -2,8 +2,9 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
+import 'oauth_account_card.dart';
 
-/// Settings stub: **manifest status only** (DART-019). No OAuth, no inventory.
+/// Settings: account (OAuth) + manifest status (DART-019/023).
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
@@ -58,6 +59,16 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
+            'Account',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          OAuthAccountCard(
+            key: const Key('settings_oauth_card'),
+            session: widget.services.oauthSession,
+          ),
+          const SizedBox(height: 24),
+          Text(
             'Manifest status',
             style: Theme.of(context).textTheme.titleLarge,
           ),
@@ -98,12 +109,6 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: const Icon(Icons.refresh),
               label: const Text('Reload status'),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'OAuth and inventory sync are not available in this shell yet.',
-            key: const Key('no_oauth_note'),
-            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),

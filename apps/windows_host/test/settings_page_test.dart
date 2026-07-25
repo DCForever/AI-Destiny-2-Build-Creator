@@ -1,8 +1,12 @@
 import 'dart:io';
 
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
+import 'package:destiny2_windows_host/auth/browser_launcher.dart';
+import 'package:destiny2_windows_host/auth/token_store.dart';
+import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:destiny2_windows_host/settings/settings_page.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +46,20 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+WindowsOAuthSession _emptySession() {
+  return WindowsOAuthSession(
+    clientId: 'test-client',
+    redirectUri: kDefaultWindowsRedirectUri,
+    tokenStore: MemoryTokenStore(),
+    oauthClient: BungieOAuthClient(
+      clientId: 'test-client',
+      redirectUri: kDefaultWindowsRedirectUri,
+      transport: (_) async => throw StateError('unused'),
+    ),
+    browserLauncher: FakeBrowserLauncher(),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -50,7 +68,7 @@ void main() {
   late _FakeRefresh refresh;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('dart019_settings_');
+    tempDir = await Directory.systemTemp.createTemp('dart023_settings_');
     final root = StorageRoot(basePath: tempDir.path);
     await root.ensureLayout();
     refresh = _FakeRefresh(
@@ -65,10 +83,20 @@ void main() {
         ),
       ),
     );
+    final session = _emptySession();
+    await session.restore();
     services = await HostBootstrap.open(
       storageRoot: root,
       database: AppDatabase.memory(),
       manifestRefresh: refresh,
+      clientId: 'test-client',
+      tokenStore: MemoryTokenStore(),
+      browserLauncher: FakeBrowserLauncher(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
+      ),
     );
   });
 
@@ -79,13 +107,15 @@ void main() {
     }
   });
 
-  testWidgets('shows cached, remote, stale, entity cache; no OAuth chrome',
-      (tester) async {
+  testWidgets('shows OAuth card + manifest status', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: SettingsPage(services: services)),
     );
     await _pumpFrames(tester);
 
+    expect(find.byKey(const Key('oauth_account_card')), findsOneWidget);
+    expect(find.byKey(const Key('oauth_sign_in')), findsOneWidget);
+    expect(find.byKey(const Key('no_oauth_note')), findsNothing);
     expect(find.byKey(const Key('manifest_status_card')), findsOneWidget);
     expect(find.byKey(const Key('cached_version')), findsOneWidget);
     expect(find.text('v1'), findsWidgets);
@@ -93,9 +123,6 @@ void main() {
     expect(find.text('stale'), findsOneWidget);
     expect(find.byKey(const Key('entity_cache')), findsOneWidget);
     expect(find.textContaining('5 entities'), findsOneWidget);
-    expect(find.byKey(const Key('no_oauth_note')), findsOneWidget);
-    expect(find.textContaining('OAuth'), findsOneWidget);
-    expect(find.text('Sign in'), findsNothing);
   });
 
   testWidgets('missing cached version shows none without crash', (tester) async {
@@ -120,6 +147,8 @@ void main() {
 
   testWidgets('status error surfaces message', (tester) async {
     // Reuse the single open DB (second NativeDatabase.memory can hang on some hosts).
+    final session = _emptySession();
+    await session.restore();
     final errServices = AppServices(
       storageRoot: services.storageRoot,
       db: services.db,
@@ -133,6 +162,7 @@ void main() {
         throwOnStatus: true,
       ),
       offlineCatalog: OfflineCatalog(storageRoot: services.storageRoot),
+      oauthSession: session,
     );
 
     await tester.pumpWidget(
