@@ -1,4 +1,5 @@
 import 'package:destiny2_manifest/destiny2_manifest.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
@@ -13,12 +14,20 @@ class SettingsPage extends StatefulWidget {
     super.key,
     required this.services,
     this.legacyImportController,
+    this.themeMode = ThemeMode.system,
+    this.onThemeModeChanged,
   });
 
   final AppServices services;
 
   /// Optional injectable importer controller (tests).
   final LegacyDbImportController? legacyImportController;
+
+  /// Appearance preference (Cold Graphite dark / Paper Ledger light).
+  final ThemeMode themeMode;
+
+  /// When non-null, shows [FlapThemeModeTile] to cycle appearance.
+  final ValueChanged<ThemeMode>? onThemeModeChanged;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -83,6 +92,20 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (widget.onThemeModeChanged != null) ...[
+            Text(
+              'Appearance',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: FlapThemeModeTile(
+                mode: widget.themeMode,
+                onChanged: widget.onThemeModeChanged!,
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           Text(
             'Account',
             style: Theme.of(context).textTheme.titleLarge,

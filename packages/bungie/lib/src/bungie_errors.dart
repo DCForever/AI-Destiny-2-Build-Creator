@@ -67,4 +67,13 @@ class BungieOAuthException extends BungieClientException {
 
   final int? statusCode;
   final String? bodySnippet;
+
+  @override
+  String toString() {
+    final bits = <String>[message];
+    if (statusCode != null) bits.add('HTTP $statusCode');
+    final snippet = bodySnippet;
+    if (snippet != null && snippet.isNotEmpty) bits.add(snippet);
+    return bits.join(' — ');
+  }
 }

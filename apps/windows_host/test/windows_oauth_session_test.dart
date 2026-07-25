@@ -195,11 +195,18 @@ void main() {
   });
 
   group('parseLoopbackRedirectUri', () {
-    test('parses default Windows redirect', () {
-      final p = parseLoopbackRedirectUri('http://127.0.0.1:8765/callback');
+    test('parses default Windows HTTPS redirect', () {
+      final p = parseLoopbackRedirectUri('https://127.0.0.1:8765/callback');
       expect(p.host, '127.0.0.1');
       expect(p.port, 8765);
       expect(p.path, '/callback');
+      expect(p.useTls, isTrue);
+    });
+
+    test('parses HTTP loopback without TLS', () {
+      final p = parseLoopbackRedirectUri('http://127.0.0.1:8765/callback');
+      expect(p.useTls, isFalse);
+      expect(p.port, 8765);
     });
 
     test('rejects non-loopback host', () {

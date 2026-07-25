@@ -118,6 +118,52 @@ void main() {
         throwsA(isA<BungieOAuthException>()),
       );
     });
+
+    test('accepts string numeric lifetimes and optional refresh', () async {
+      final client = BungieOAuthClient(
+        clientId: 'c',
+        redirectUri: 'https://127.0.0.1:8765/callback',
+        transport: (_) async => BungieHttpResponse(
+          statusCode: 200,
+          body: jsonEncode({
+            'access_token': 'acc',
+            'token_type': 'Bearer',
+            'expires_in': '3600',
+            'membership_id': 999001,
+          }),
+        ),
+      );
+      final fixedNow = DateTime.utc(2026, 7, 25, 12);
+      final tokens = await client.exchangeCode(
+        code: 'c',
+        codeVerifier: 'v',
+        now: fixedNow,
+      );
+      expect(tokens.accessToken, 'acc');
+      expect(tokens.refreshToken, isEmpty);
+      expect(tokens.bungieMembershipId, '999001');
+      expect(
+        tokens.expiresAt,
+        fixedNow
+            .add(const Duration(seconds: 3600))
+            .subtract(kAccessTokenExpiryMargin),
+      );
+    });
+
+    test('accepts string refresh_expires_in', () {
+      final tokens = mapTokenResponse({
+        'access_token': 'a',
+        'refresh_token': 'r',
+        'expires_in': '100',
+        'refresh_expires_in': '200',
+        'membership_id': 'm',
+      }, now: DateTime.utc(2026, 1, 1));
+      expect(tokens.refreshToken, 'r');
+      expect(
+        tokens.refreshExpiresAt,
+        DateTime.utc(2026, 1, 1).add(const Duration(seconds: 200)),
+      );
+    });
   });
 
   group('US2 refresh', () {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:flutter/foundation.dart';
 
@@ -98,6 +100,8 @@ class WindowsOAuthSession extends ChangeNotifier {
 
     OAuthPendingAuth? pending;
     try {
+      // ignore: avoid_print
+      print('OAuth: starting sign-in redirectUri=$redirectUri clientIdLen=${clientId.length}');
       final pkce = generatePkcePair();
       final state = generateOAuthState();
       pending = OAuthPendingAuth(
@@ -111,6 +115,14 @@ class WindowsOAuthSession extends ChangeNotifier {
         state: state,
         codeChallenge: pkce.codeChallenge,
       );
+      final authUri = Uri.parse(authorizeUrl);
+      // ignore: avoid_print
+      print(
+        'OAuth: authorize URL built (len=${authorizeUrl.length}) '
+        'params=${authUri.queryParameters.keys.toList()} '
+        'redirect_uri=${authUri.queryParameters['redirect_uri']} '
+        'client_id=${authUri.queryParameters['client_id']}',
+      );
 
       final loopback = parseLoopbackRedirectUri(redirectUri);
 
@@ -119,16 +131,31 @@ class WindowsOAuthSession extends ChangeNotifier {
           host: loopback.host,
           port: loopback.port,
           callbackPath: loopback.path,
+          useTls: loopback.useTls,
+        );
+        // ignore: avoid_print
+        print(
+          'OAuth: loopback listening on '
+          '${loopback.useTls ? 'https' : 'http'}://'
+          '${loopback.host}:${loopback.port}${loopback.path}',
         );
       }
 
       try {
         await _browser.open(authorizeUrl);
+        // ignore: avoid_print
+        print('OAuth: browser opened; waiting for callback…');
 
         final waitOverride = _waitForCallbackOverride;
         final LoopbackCallbackResult callback = waitOverride != null
             ? await waitOverride()
             : await _loopback.waitForCallback(timeout: _loopbackTimeout);
+
+        // ignore: avoid_print
+        print(
+          'OAuth: callback received hasCode=${callback.hasCode} '
+          'hasError=${callback.hasError} error=${callback.error}',
+        );
 
         if (callback.hasError) {
           final desc = callback.errorDescription;
@@ -153,20 +180,41 @@ class WindowsOAuthSession extends ChangeNotifier {
           );
         }
 
-        final tokens = await _oauthClient.exchangeCode(
-          code: callback.code!,
-          codeVerifier: pending.codeVerifier,
-        );
-        await _tokenStore.write(tokens);
+        // ignore: avoid_print
+        print('OAuth: exchanging code for tokens…');
+        final tokens = await _oauthClient
+            .exchangeCode(
+              code: callback.code!,
+              codeVerifier: pending.codeVerifier,
+            )
+            .timeout(
+              const Duration(seconds: 45),
+              onTimeout: () => throw const BungieOAuthException(
+                'Token exchange timed out after 45s (network or Bungie token endpoint)',
+              ),
+            );
+        // ignore: avoid_print
+        print('OAuth: token exchange OK; writing secure storage…');
+        await _tokenStore.write(tokens).timeout(
+              const Duration(seconds: 15),
+              onTimeout: () => throw const BungieOAuthException(
+                'Secure token storage write timed out',
+              ),
+            );
         _tokens = tokens;
         _status = OAuthSessionStatus.signedIn;
         _errorMessage = null;
+        // ignore: avoid_print
+        print('OAuth: signed in membership=${tokens.bungieMembershipId}');
       } finally {
         if (_waitForCallbackOverride == null) {
           await _loopback.stop();
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('WindowsOAuthSession.signIn failed: $e\n$st');
+      debugPrint('WindowsOAuthSession.signIn failed: $e\n$st');
       _tokens = null;
       _status = OAuthSessionStatus.error;
       _errorMessage = _safeErrorMessage(e);
@@ -175,6 +223,17 @@ class WindowsOAuthSession extends ChangeNotifier {
         await _tokenStore.clear();
       } catch (_) {}
     }
+    notifyListeners();
+  }
+
+  /// Aborts an in-flight loopback wait (e.g. user closed the browser).
+  Future<void> cancelSignIn() async {
+    if (_status != OAuthSessionStatus.signingIn) return;
+    try {
+      await _loopback.stop();
+    } catch (_) {}
+    _status = OAuthSessionStatus.signedOut;
+    _errorMessage = 'Sign-in cancelled';
     notifyListeners();
   }
 
@@ -191,10 +250,13 @@ class WindowsOAuthSession extends ChangeNotifier {
   }
 
   static String _safeErrorMessage(Object e) {
-    final text = e.toString();
-    // Avoid echoing long token-like payloads; keep message short for UI.
-    if (text.length > 240) {
-      return '${text.substring(0, 240)}…';
+    // Prefer full OAuth exception text (includes Bungie error_description).
+    final text = e is BungieOAuthException
+        ? e.toString()
+        : e.toString();
+    // Avoid echoing long token-like payloads; keep message usable for UI.
+    if (text.length > 480) {
+      return '${text.substring(0, 480)}…';
     }
     return text;
   }

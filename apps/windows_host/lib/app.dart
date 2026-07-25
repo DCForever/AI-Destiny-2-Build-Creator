@@ -8,11 +8,10 @@ import 'settings/settings_page.dart';
 import 'synergies/synergies_library_page.dart';
 import 'theme/flap_theme.dart';
 
-/// Root Flutter app for the Windows host (DART-019/020/029/030/031/032/033).
+/// Root Flutter app for the Windows host (DART-019…039 + dual-face theme).
 ///
-/// Shell destinations: Catalog + Sets + Synergies + Builds library (identity +
-/// variant compose DART-032/033) + Settings. Theme: Matte Flap Ledger stub
-/// (DART-029) — square flat cards, void canvas.
+/// Shell destinations: Catalog + Sets + Synergies + Builds + Settings.
+/// Appearance: **Cold Graphite** dark + **Paper Ledger** light ([ThemeMode]).
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
@@ -27,12 +26,16 @@ class Destiny2WindowsApp extends StatefulWidget {
 
 class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   int _index = 0;
+  ThemeMode _themeMode = ThemeMode.system;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Destiny 2 Build Creator',
-      theme: buildFlapTheme(),
+      // MaterialApp: theme=light face, darkTheme=dark face.
+      theme: buildFlapTheme(brightness: Brightness.light),
+      darkTheme: buildFlapTheme(brightness: Brightness.dark),
+      themeMode: _themeMode,
       home: Scaffold(
         body: Row(
           children: [
@@ -93,6 +96,8 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   SettingsPage(
                     key: const Key('settings_page'),
                     services: widget.services,
+                    themeMode: _themeMode,
+                    onThemeModeChanged: (m) => setState(() => _themeMode = m),
                   ),
                 ],
               ),

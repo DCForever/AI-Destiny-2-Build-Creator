@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import 'app.dart';
+import 'config/local_env.dart';
 import 'host_bootstrap.dart';
 import 'theme/flap_theme.dart';
 
@@ -23,17 +24,39 @@ Future<void> main() async {
   // Registers bundled sqlite3 for Drift on Windows (and other Flutter targets).
   await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
 
-  final apiKey =
-      _bungieApiKeyDefine.isEmpty ? null : _bungieApiKeyDefine;
+  // Runtime file (gitignored) so MCP / IDE launches work without dart-define.
+  // Non-empty --dart-define still wins.
+  final fileEnv = loadWindowsLocalEnv();
+  final apiKey = resolveConfigValue(
+    define: _bungieApiKeyDefine,
+    fileEnv: fileEnv,
+    key: 'BUNGIE_API_KEY',
+  );
+  final clientId = resolveConfigValue(
+    define: _bungieClientIdDefine,
+    fileEnv: fileEnv,
+    key: 'BUNGIE_CLIENT_ID',
+  );
+  final redirectUri = resolveConfigValue(
+    define: _bungieRedirectUriDefine,
+    fileEnv: fileEnv,
+    key: 'BUNGIE_REDIRECT_URI',
+    fallback: kDefaultWindowsRedirectUri,
+  );
+
+  debugPrint(
+    'OAuth config: clientIdLen=${clientId.length} '
+    'apiKeyLen=${apiKey.length} redirect=$redirectUri',
+  );
 
   AppServices? services;
   Object? bootstrapError;
 
   try {
     services = await HostBootstrap.open(
-      apiKey: apiKey,
-      clientId: _bungieClientIdDefine,
-      redirectUri: _bungieRedirectUriDefine,
+      apiKey: apiKey.isEmpty ? null : apiKey,
+      clientId: clientId,
+      redirectUri: redirectUri,
     );
   } catch (e, st) {
     bootstrapError = e;
@@ -56,7 +79,9 @@ class _BootstrapErrorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Destiny 2 Build Creator',
-      theme: buildFlapTheme(),
+      theme: buildFlapTheme(brightness: Brightness.light),
+      darkTheme: buildFlapTheme(brightness: Brightness.dark),
+      themeMode: ThemeMode.system,
       home: Scaffold(
         body: Center(
           child: Padding(

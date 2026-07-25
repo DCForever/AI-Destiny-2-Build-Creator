@@ -48,13 +48,22 @@ class OAuthAccountCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
-                if (error != null && status == OAuthSessionStatus.error) ...[
+                // Show whenever present (not only error status) so hangs that
+                // later fail are still visible after navigation.
+                if (error != null && error.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(
-                    error,
-                    key: const Key('oauth_error_text'),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  Material(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        error,
+                        key: const Key('oauth_error_text'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -67,8 +76,27 @@ class OAuthAccountCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
+                // Always show redirect so operators can match Bungie app registration.
+                // Do not reuse Next.js https://127.0.0.1:3000/api/auth/callback here.
+                const SizedBox(height: 8),
+                SelectableText(
+                  'Redirect URI (must match Public Bungie app exactly):\n'
+                  '${session.redirectUri}',
+                  key: const Key('oauth_redirect_uri'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Use a Public + PKCE Bungie application — not the Confidential '
+                  'Next.js client. Register the redirect above exactly '
+                  '(https://127.0.0.1:8765/callback). First browser visit may '
+                  'warn about a self-signed certificate — continue to 127.0.0.1. '
+                  'Do not use https://127.0.0.1:3000/api/auth/callback.',
+                  key: const Key('oauth_public_app_hint'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(height: 12),
-                if (busy)
+                if (busy) ...[
                   const Row(
                     children: [
                       SizedBox(
@@ -77,13 +105,24 @@ class OAuthAccountCard extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       SizedBox(width: 12),
-                      Text(
-                        'Waiting for browser sign-in…',
-                        key: Key('oauth_signing_in'),
+                      Expanded(
+                        child: Text(
+                          'Waiting for browser… Finish Bungie login until the '
+                          'page says “Signed in”, then return here. If nothing '
+                          'happens, the app is still waiting on '
+                          'http://127.0.0.1:8765/callback',
+                          key: Key('oauth_signing_in'),
+                        ),
                       ),
                     ],
-                  )
-                else if (signedIn)
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: const Key('oauth_cancel_sign_in'),
+                    onPressed: () => session.cancelSignIn(),
+                    child: const Text('Cancel sign-in'),
+                  ),
+                ] else if (signedIn)
                   OutlinedButton.icon(
                     key: const Key('oauth_sign_out'),
                     onPressed: () => session.signOut(),
@@ -93,7 +132,25 @@ class OAuthAccountCard extends StatelessWidget {
                 else
                   FilledButton.icon(
                     key: const Key('oauth_sign_in'),
-                    onPressed: configured ? () => session.signIn() : null,
+                    onPressed: configured
+                        ? () async {
+                            await session.signIn();
+                            if (!context.mounted) return;
+                            final msg = session.errorMessage;
+                            if (msg != null &&
+                                msg.isNotEmpty &&
+                                session.status == OAuthSessionStatus.error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(msg),
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.error,
+                                  duration: const Duration(seconds: 12),
+                                ),
+                              );
+                            }
+                          }
+                        : null,
                     icon: const Icon(Icons.login),
                     label: const Text('Sign in'),
                   ),

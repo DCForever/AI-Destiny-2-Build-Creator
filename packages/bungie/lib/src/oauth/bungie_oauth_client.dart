@@ -123,25 +123,29 @@ class BungieOAuthClient {
       headers: const {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
+        // Some edge networks treat missing UA poorly; identify as desktop host.
+        'User-Agent': 'Destiny2BuildCreator-WindowsHost/0.1 (Public+PKCE)',
       },
       body: encoded,
     );
 
     final raw = await transport(request);
+    final Object? decoded = _tryDecodeJson(raw.body);
+
     if (raw.statusCode < 200 || raw.statusCode >= 300) {
       throw BungieOAuthException(
-        'Bungie token endpoint returned ${raw.statusCode}',
+        _oauthErrorMessage(
+          fallback: 'Bungie token endpoint returned ${raw.statusCode}',
+          decoded: decoded,
+        ),
         statusCode: raw.statusCode,
         bodySnippet: _snippet(raw.body),
       );
     }
 
-    final Object? decoded;
-    try {
-      decoded = jsonDecode(raw.body);
-    } on FormatException catch (e) {
+    if (decoded == null) {
       throw BungieOAuthException(
-        'Bungie token response is not JSON: $e',
+        'Bungie token response is not JSON',
         statusCode: raw.statusCode,
         bodySnippet: _snippet(raw.body),
       );
@@ -155,18 +159,60 @@ class BungieOAuthClient {
       );
     }
 
-    try {
-      return mapTokenResponse(
-        Map<String, dynamic>.from(decoded),
-        now: now,
-      );
-    } on FormatException catch (e) {
+    final map = Map<String, dynamic>.from(decoded);
+    // OAuth error object can theoretically arrive with 200.
+    if (map['error'] is String && (map['error'] as String).isNotEmpty) {
       throw BungieOAuthException(
-        e.message,
+        _oauthErrorMessage(
+          fallback: 'Bungie token endpoint returned an error',
+          decoded: map,
+        ),
         statusCode: raw.statusCode,
         bodySnippet: _snippet(raw.body),
       );
     }
+
+    try {
+      return mapTokenResponse(map, now: now);
+    } on FormatException catch (e) {
+      throw BungieOAuthException(
+        e.message,
+        statusCode: raw.statusCode,
+        // Never attach raw body here — it contains access_token.
+        bodySnippet: _shapeOnly(map),
+      );
+    }
+  }
+
+  static Object? _tryDecodeJson(String body) {
+    try {
+      return jsonDecode(body);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Prefer OAuth `error` / `error_description` when present.
+  static String _oauthErrorMessage({
+    required String fallback,
+    required Object? decoded,
+  }) {
+    if (decoded is! Map) return fallback;
+    final err = decoded['error'];
+    final desc = decoded['error_description'];
+    final errText = err is String ? err : null;
+    final descText = desc is String ? desc : null;
+    if ((errText == null || errText.isEmpty) &&
+        (descText == null || descText.isEmpty)) {
+      return fallback;
+    }
+    if (errText != null &&
+        errText.isNotEmpty &&
+        descText != null &&
+        descText.isNotEmpty) {
+      return '$errText: $descText';
+    }
+    return (descText != null && descText.isNotEmpty) ? descText : errText!;
   }
 
   static String _encodeForm(Map<String, String> form) {
@@ -186,7 +232,21 @@ class BungieOAuthClient {
   }
 
   static String _snippet(String body, [int max = 200]) {
-    if (body.length <= max) return body;
-    return '${body.substring(0, max)}…';
+    // Redact bearer material if a 4xx body ever echoes it.
+    final redacted = body
+        .replaceAllMapped(
+          RegExp(r'"(access_token|refresh_token)"\s*:\s*"[^"]*"'),
+          (m) => '"${m[1]}":"[redacted]"',
+        );
+    if (redacted.length <= max) return redacted;
+    return '${redacted.substring(0, max)}…';
+  }
+
+  /// Key:type pairs only — safe for logs/UI.
+  static String _shapeOnly(Map<String, dynamic> map) {
+    if (map.isEmpty) return 'empty';
+    return map.entries
+        .map((e) => '${e.key}:${e.value == null ? 'null' : e.value.runtimeType}')
+        .join(', ');
   }
 }

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'loopback_tls.dart';
+
 /// Result of an OAuth redirect to the loopback listener.
 class LoopbackCallbackResult {
   const LoopbackCallbackResult({
@@ -19,12 +21,33 @@ class LoopbackCallbackResult {
   bool get hasCode => code != null && code!.isNotEmpty;
 }
 
-/// HTTP loopback callback server bound to **127.0.0.1 only** (DART-023).
+/// Parsed loopback redirect for bind + path matching.
+class LoopbackBindConfig {
+  const LoopbackBindConfig({
+    required this.host,
+    required this.port,
+    required this.path,
+    required this.useTls,
+  });
+
+  final String host;
+  final int port;
+  final String path;
+  final bool useTls;
+}
+
+/// HTTP(S) loopback callback server bound to **127.0.0.1 only** (DART-023).
 ///
 /// Listens for a single OAuth redirect, serves a minimal HTML success/error
 /// page, then completes [waitForCallback].
+///
+/// When [useTls] is true (redirect_uri scheme `https`), binds with a local
+/// self-signed cert from [resolveLoopbackTlsMaterial].
 class LoopbackCallbackServer {
-  LoopbackCallbackServer();
+  LoopbackCallbackServer({this.tlsMaterial});
+
+  /// Optional override for tests; production resolves certs automatically.
+  final LoopbackTlsMaterial? tlsMaterial;
 
   HttpServer? _server;
   Completer<LoopbackCallbackResult>? _completer;
@@ -40,6 +63,7 @@ class LoopbackCallbackServer {
     String host = '127.0.0.1',
     required int port,
     String callbackPath = '/callback',
+    bool useTls = false,
   }) async {
     if (_server != null) {
       throw StateError('LoopbackCallbackServer is already running');
@@ -54,13 +78,45 @@ class LoopbackCallbackServer {
 
     final path = callbackPath.startsWith('/') ? callbackPath : '/$callbackPath';
     _completer = Completer<LoopbackCallbackResult>();
-    final server = await HttpServer.bind(host, port);
+
+    final HttpServer server;
+    if (useTls) {
+      final material = tlsMaterial ?? resolveLoopbackTlsMaterial();
+      if (material == null) {
+        throw StateError(
+          'HTTPS loopback requires certs/loopback-cert.pem and '
+          'certs/loopback-key.pem under the windows_host package '
+          '(self-signed for 127.0.0.1).',
+        );
+      }
+      server = await HttpServer.bindSecure(
+        host,
+        port,
+        material.toSecurityContext(),
+      );
+      // ignore: avoid_print
+      print('OAuth loopback HTTPS listening on https://$host:$port$path');
+    } else {
+      server = await HttpServer.bind(host, port);
+      // ignore: avoid_print
+      print('OAuth loopback HTTP listening on http://$host:$port$path');
+    }
     _server = server;
 
     server.listen((request) async {
       try {
         final uri = request.uri;
-        if (uri.path != path) {
+        // Normalize trailing slash so registered vs actual path still match.
+        final requestPath = uri.path.endsWith('/') && uri.path.length > 1
+            ? uri.path.substring(0, uri.path.length - 1)
+            : uri.path;
+        final expectedPath = path.endsWith('/') && path.length > 1
+            ? path.substring(0, path.length - 1)
+            : path;
+        // ignore: avoid_print
+        print('OAuth loopback request: ${uri.path}?${uri.query}');
+
+        if (requestPath != expectedPath) {
           request.response.statusCode = HttpStatus.notFound;
           request.response.write('Not found');
           await request.response.close();
@@ -84,7 +140,9 @@ class LoopbackCallbackServer {
         } else {
           request.response.write(
             '<!DOCTYPE html><html><body><h1>Signed in</h1>'
-            '<p>You can close this window and return to Destiny 2 Build Creator.</p></body></html>',
+            '<p>You can close this window and return to Destiny 2 Build Creator.</p>'
+            '<p>If the browser warned about the certificate, that is expected '
+            'for the local self-signed HTTPS loopback.</p></body></html>',
           );
         }
         await request.response.close();
@@ -136,8 +194,8 @@ class LoopbackCallbackServer {
   }
 }
 
-/// Parses host/port/path from a registered redirect URI for loopback bind.
-({String host, int port, String path}) parseLoopbackRedirectUri(String redirectUri) {
+/// Parses host/port/path/TLS from a registered redirect URI for loopback bind.
+LoopbackBindConfig parseLoopbackRedirectUri(String redirectUri) {
   final uri = Uri.parse(redirectUri);
   if (uri.scheme != 'http' && uri.scheme != 'https') {
     throw FormatException('Loopback redirect_uri must be http(s): $redirectUri');
@@ -150,5 +208,10 @@ class LoopbackCallbackServer {
   }
   final port = uri.hasPort ? uri.port : (uri.scheme == 'https' ? 443 : 80);
   final path = uri.path.isEmpty ? '/' : uri.path;
-  return (host: host == 'localhost' ? '127.0.0.1' : host, port: port, path: path);
+  return LoopbackBindConfig(
+    host: host == 'localhost' ? '127.0.0.1' : host,
+    port: port,
+    path: path,
+    useTls: uri.scheme == 'https',
+  );
 }

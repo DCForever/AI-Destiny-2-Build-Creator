@@ -24,16 +24,37 @@
 
 ## Run
 
+### Bungie OAuth (required for Sign in)
+
+The Windows host uses **Public + PKCE** and a **loopback** callback. It is **not** the same as the Next.js Confidential app.
+
+| | Next.js (product) | Flutter Windows host |
+|--|-------------------|----------------------|
+| Client type | **Confidential** | **Public** |
+| Redirect | `https://127.0.0.1:3000/api/auth/callback` | `https://127.0.0.1:8765/callback` |
+| Secret | `BUNGIE_CLIENT_SECRET` on server | **Never** ship a secret |
+
+1. Create a **second** application at <https://www.bungie.net/en/Application> (or a dedicated Public app).
+2. OAuth type: **Public**.
+3. Redirect URL: **`https://127.0.0.1:8765/callback`** (exact string — **https**, not http).
+4. Use that app’s **Client Id** and API key for `--dart-define` / `.env.windows.local`.
+5. Do **not** reuse the Confidential Next redirect (`:3000/api/auth/callback`).
+6. First browser visit may warn about a **self-signed certificate** (`certs/loopback-*.pem`). Choose Advanced → continue to 127.0.0.1 (local OAuth only).
+
+### Launch
+
 ```powershell
 cd F:\Destiny2BuildCreator-multiplatform-dart\apps\windows_host
 flutter pub get
 flutter run -d windows `
-  --dart-define=BUNGIE_API_KEY=your_public_key `
-  --dart-define=BUNGIE_CLIENT_ID=your_public_client_id
-# optional: --dart-define=BUNGIE_REDIRECT_URI=http://127.0.0.1:8765/callback
+  --dart-define=BUNGIE_API_KEY=your_public_api_key `
+  --dart-define=BUNGIE_CLIENT_ID=your_public_client_id `
+  --dart-define=BUNGIE_REDIRECT_URI=https://127.0.0.1:8765/callback
 ```
 
-Then: Settings → Sign in → **Sync now** → Catalog → **Owned**, or **Sets** / **Synergies** / **Builds** library screens.
+Or fill gitignored `.env.windows.local` and run `.\run-windows.ps1`.
+
+Then: Settings → confirm **Redirect URI** shows `https://127.0.0.1:8765/callback` → Sign in → accept cert warning if prompted → **Sync now** → Catalog / Sets / Synergies / Builds.
 
 ## Test
 
