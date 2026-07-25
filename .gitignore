@@ -54,3 +54,7 @@ next-env.d.ts
 # Playwright atlas auth / local capture state
 .atlas/
 
+
+# Generated atlas captures (recreate via npm run atlas:capture)
+docs/atlas/screenshots/*.png
+

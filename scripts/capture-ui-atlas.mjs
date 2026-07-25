@@ -129,6 +129,97 @@ async function inventoryElements(page) {
   });
 }
 
+/**
+ * Measure deepest nested scrollers BEFORE unlocking (overflow:hidden parents
+ * still report scrollHeight of children).
+ */
+async function measureScrollLayout(page) {
+  return page.evaluate(() => {
+    const scrollers = [];
+    for (const el of document.querySelectorAll("body *")) {
+      if (!(el instanceof HTMLElement)) continue;
+      const cs = getComputedStyle(el);
+      const oy = cs.overflowY;
+      if (oy !== "auto" && oy !== "scroll" && oy !== "hidden") continue;
+      if (el.scrollHeight <= el.clientHeight + 4) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 80 || r.height < 80) continue;
+      scrollers.push({
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        top: r.top + window.scrollY,
+        left: r.left + window.scrollX,
+        width: r.width,
+        tag: el.tagName.toLowerCase(),
+        cls: (el.className || "").toString().slice(0, 80),
+      });
+    }
+    scrollers.sort((a, b) => b.scrollHeight - a.scrollHeight);
+    return {
+      vh: window.innerHeight,
+      vw: window.innerWidth,
+      docH: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+      primary: scrollers[0] || null,
+      scrollerCount: scrollers.length,
+    };
+  });
+}
+
+/**
+ * Unlock viewport-locked AppShell layout so document height grows to content.
+ * body is overflow-hidden + nested flex min-h-0 panes; plain fullPage stays 900px.
+ */
+async function unlockViewportLayout(page) {
+  await page.evaluate(() => {
+    const style = document.getElementById("atlas-capture-unlock") || document.createElement("style");
+    style.id = "atlas-capture-unlock";
+    style.textContent = `
+      html, body, #__next, [data-atlas-unlock] {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+      }
+      body {
+        display: block !important;
+      }
+      body * {
+        max-height: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Mark ancestors of every tall scroller, then force content height.
+    const mark = new Set();
+    for (const el of document.querySelectorAll("body *")) {
+      if (!(el instanceof HTMLElement)) continue;
+      const cs = getComputedStyle(el);
+      const oy = cs.overflowY;
+      if ((oy === "auto" || oy === "scroll" || oy === "hidden") && el.scrollHeight > el.clientHeight + 4) {
+        let n = el;
+        while (n && n !== document.documentElement) {
+          mark.add(n);
+          n = n.parentElement;
+        }
+      }
+    }
+    for (const el of mark) {
+      el.setAttribute("data-atlas-unlock", "1");
+      const sh = el.scrollHeight;
+      el.style.setProperty("overflow", "visible", "important");
+      el.style.setProperty("overflow-y", "visible", "important");
+      el.style.setProperty("height", "auto", "important");
+      el.style.setProperty("max-height", "none", "important");
+      el.style.setProperty("flex", "0 0 auto", "important");
+      if (sh > 0) el.style.setProperty("min-height", `${sh}px`, "important");
+    }
+    document.documentElement.style.setProperty("height", "auto", "important");
+    document.body.style.setProperty("height", "auto", "important");
+    document.body.style.setProperty("overflow", "visible", "important");
+  });
+  await settle(300);
+}
+
 async function captureScreen(page, screen, suffix = "") {
   const file = `${screen.id}${suffix ? `__${suffix}` : ""}.png`;
   const out = path.join(shotDir, file);
@@ -138,7 +229,47 @@ async function captureScreen(page, screen, suffix = "") {
   } catch {
     elements = null;
   }
+
+  const before = await measureScrollLayout(page);
+  await unlockViewportLayout(page);
+
+  // After unlock, grow viewport to content height (capped) then fullPage shot.
+  const after = await page.evaluate(() => ({
+    dh: Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight,
+      document.documentElement.offsetHeight,
+      document.body.offsetHeight,
+    ),
+    dw: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, 1440),
+    vh: window.innerHeight,
+    vw: window.innerWidth,
+  }));
+
+  const targetH = Math.min(
+    Math.max(after.dh, before.primary?.scrollHeight || 0, before.vh),
+    16000,
+  );
+  const targetW = Math.min(Math.max(after.dw, before.vw), 2400);
+
+  // Resize viewport so clipped nested content is in-frame even if doc still clamps.
+  if (targetH > before.vh + 20) {
+    await page.setViewportSize({ width: Math.round(targetW), height: Math.round(targetH) });
+    await settle(200);
+    // Re-apply unlock after resize (some flex recalcs clamp again).
+    await unlockViewportLayout(page);
+  }
+
   await page.screenshot({ path: out, fullPage: true });
+
+  // Restore default viewport for next screen in this context.
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  const finalDim = await page.evaluate(() => ({
+    // read file size is external; store intended target
+  }));
+  void finalDim;
+
   return {
     screenId: screen.id,
     title: screen.title,
@@ -149,6 +280,12 @@ async function captureScreen(page, screen, suffix = "") {
     capturedAt: new Date().toISOString(),
     url: page.url(),
     elements,
+    captureMetrics: {
+      before,
+      after,
+      targetH,
+      targetW,
+    },
   };
 }
 

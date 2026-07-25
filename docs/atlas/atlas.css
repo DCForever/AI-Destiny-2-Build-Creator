@@ -151,9 +151,11 @@ h2.section {
 }
 .shot-stage {
   border: 1px solid var(--line); background: #000; min-height: 320px;
-  display: flex; align-items: center; justify-content: center; position: relative;
+  display: block; position: relative; overflow: auto; max-height: min(85vh, 1400px);
 }
-.shot-stage img { max-width: 100%; max-height: 70vh; display: block; cursor: zoom-in; }
+.shot-stage img {
+  width: 100%; height: auto; max-height: none; display: block; cursor: zoom-in;
+}
 .sidebox { border: 1px solid var(--line); background: var(--surface); padding: 14px; }
 .sidebox h3 {
   margin: 0 0 8px; font-family: var(--font-d); letter-spacing: .08em;
@@ -180,16 +182,21 @@ h2.section {
 .flow-steps .head .stept {
   font-family: var(--font-d); letter-spacing: .04em; text-transform: uppercase; font-size: .85rem;
 }
-.flow-steps img { width: 100%; display: block; cursor: zoom-in; background: #000; }
+.flow-steps img {
+  width: 100%; height: auto; max-height: none; display: block; cursor: zoom-in; background: #000;
+}
 .empty { color: var(--muted); padding: 24px 0; line-height: 1.5; }
 code { color: var(--accent); font-size: .9em; }
 .lightbox {
   position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 50;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding: 48px 24px 24px; overflow: auto;
 }
 .lightbox[hidden] { display: none !important; }
-.lightbox img { max-width: min(96vw, 1600px); max-height: 86vh; object-fit: contain; }
+.lightbox img {
+  max-width: min(96vw, 1600px); width: auto; height: auto; max-height: none;
+  object-fit: contain;
+}
 .lb-close {
   position: absolute; top: 12px; right: 16px; border: 0; background: transparent;
   color: var(--fg); font-size: 2rem; cursor: pointer; line-height: 1;
