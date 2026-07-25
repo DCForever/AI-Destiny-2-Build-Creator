@@ -67,7 +67,7 @@
 - [x] T015 Document package in `packages/README.md`; align quickstart
 - [x] T016 Verify no secrets: package sources have no CLIENT_SECRET; pure graph guard still passes
 - [x] T017 Run `dart pub get` + `dart test packages/bungie` + analyze; mark tasks complete
-- [ ] T018 Commit; merge `dart-021-bungie-http` into `feature/multiplatform-dart` (--no-edit); update `docs/multiplatform-dart-slice-roadmap.md` (DART-021 done, pointer → DART-022)
+- [x] T018 Commit; merge `dart-021-bungie-http` into `feature/multiplatform-dart` (--no-edit); update `docs/multiplatform-dart-slice-roadmap.md` (DART-021 done, pointer → DART-022)
 
 ---
 
