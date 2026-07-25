@@ -1,8 +1,8 @@
 name: destiny2_mobile_host
 description: >
-  Destiny 2 Build Creator — Flutter mobile host (DART-040).
-  Android+iOS shell: bottom nav, Focus Swap routes, shared destiny2_app use
-  cases. Settings + Builds list at minimum. Soft never auto-applies.
+  Destiny 2 Build Creator — Flutter mobile host (DART-040/041).
+  Android+iOS shell: bottom nav, Focus Swap, reduced-density compose
+  (create → attach sheets → soft guidance). Soft never auto-applies.
   No CLIENT_SECRET.
 publish_to: none
 version: 0.0.1+1

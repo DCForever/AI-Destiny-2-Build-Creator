@@ -1,4 +1,4 @@
-# destiny2_mobile_host (DART-040)
+# destiny2_mobile_host (DART-040 / DART-041)
 
 **Flutter Android + iOS** shell for Destiny 2 Build Creator multiplatform port.
 
@@ -8,11 +8,13 @@
 - Opens a **single** Drift `AppDatabase` at `app.db`
 - **Bottom navigation**: Builds | Settings
 - **Focus Swap** (DESIGN.md): Builds list XOR detail route (nested navigator — not dual-pane)
-- **Builds list** via shared `destiny2_app` use cases (`listUserBuilds` / `getBuildDetail`) against local-library user
+- **Create build** via bottom sheet (FAB); optional name + class + synergy type
+- **Linear compose** on detail: variants → attach set sheet → slot pins → soft guidance
+- Shared `destiny2_app` use cases (`createUserBuild`, attach, `queryVariantCoverage`, …)
 - **Settings**: storage/DB path + manifest status
 - Matte Flap Ledger theme (`destiny2_ui_tokens`)
 - **No CLIENT_SECRET**; soft guidance never auto-applies
-- Mobile OAuth / full compose deferred (DART-041+)
+- Mobile OAuth / catalog / equip deferred
 
 ## Run
 
@@ -20,7 +22,6 @@
 cd F:\Destiny2BuildCreator-multiplatform-dart\apps\mobile_host
 flutter pub get
 flutter run -d <android-device>
-# optional: --dart-define=BUNGIE_API_KEY=your_public_key
 ```
 
 ## Test
@@ -41,3 +42,4 @@ iOS project lives under `ios/` (codesigned install requires macOS/Xcode).
 ## Specs
 
 - `specs/dart-040-flutter-mobile-shell-nav/`
+- `specs/dart-041-flutter-mobile-compose/`

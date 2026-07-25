@@ -1,8 +1,14 @@
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:flutter/material.dart';
 
+import 'attach_set_sheet.dart';
 import 'builds_controller.dart';
+import 'soft_guidance_format.dart';
+import 'variant_compose_format.dart';
 
-/// Read-only build identity detail (Focus Swap target). Compose is DART-041.
+/// Linear finish compose detail (Focus Swap). Create → attach → soft guidance.
+///
+/// Soft guidance never auto-applies; hard DBR blocks stay hard.
 class BuildDetailPage extends StatefulWidget {
   const BuildDetailPage({
     super.key,
@@ -18,6 +24,13 @@ class BuildDetailPage extends StatefulWidget {
 }
 
 class _BuildDetailPageState extends State<BuildDetailPage> {
+  final _variantNameCtrl = TextEditingController();
+  final Map<ArmorStatName, TextEditingController> _softStatControllers = {
+    for (final s in ArmorStatName.all) s: TextEditingController(),
+  };
+  String? _statusMessage;
+  bool _busy = false;
+
   @override
   void initState() {
     super.initState();
@@ -26,17 +39,96 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
     if (selected == null || selected.build.id != widget.buildId) {
       // ignore: discarded_futures
       widget.controller.openBuild(widget.buildId);
+    } else {
+      _syncSoftFields();
     }
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onController);
+    _variantNameCtrl.dispose();
+    for (final c in _softStatControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   void _onController() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    _syncSoftFields();
+    setState(() {});
+  }
+
+  void _syncSoftFields() {
+    final targets = widget.controller.softStatTargets;
+    for (final stat in ArmorStatName.all) {
+      final v = targets[stat];
+      final text = v?.toString() ?? '';
+      if (_softStatControllers[stat]!.text != text) {
+        _softStatControllers[stat]!.text = text;
+      }
+    }
+  }
+
+  Future<void> _run(Future<String?> Function() op) async {
+    setState(() {
+      _busy = true;
+      _statusMessage = null;
+    });
+    final err = await op();
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _statusMessage = err;
+    });
+  }
+
+  Future<void> _createVariant() async {
+    final name = _variantNameCtrl.text;
+    await _run(() => widget.controller.createVariant(name: name));
+    if (widget.controller.error == null) {
+      _variantNameCtrl.clear();
+    }
+  }
+
+  Future<void> _openAttachSheet() async {
+    final setId = await showAttachSetSheet(
+      context,
+      controller: widget.controller,
+    );
+    if (setId == null || !mounted) return;
+    await _run(() => widget.controller.attachSet(setId));
+  }
+
+  Future<void> _pinOrClear(SlotPinView pin, {required bool clear}) async {
+    await _run(
+      () => widget.controller.pinSlot(
+        setId: pin.setId,
+        slot: pin.slot,
+        instanceId: clear ? null : 'inst-mobile-1',
+        setItemId: pin.setItemId,
+      ),
+    );
+  }
+
+  Future<void> _saveSoftTargets() async {
+    final fields = <String, String>{
+      for (final stat in ArmorStatName.all)
+        stat.wireName: _softStatControllers[stat]!.text,
+    };
+    await _run(() => widget.controller.saveSoftStatTargetsFromFields(fields));
+  }
+
+  Color _tierColor(CoverageTier tier, ColorScheme scheme) {
+    switch (tier) {
+      case CoverageTier.supported:
+        return scheme.primary;
+      case CoverageTier.weak:
+        return scheme.tertiary;
+      case CoverageTier.missing:
+        return scheme.error;
+    }
   }
 
   @override
@@ -45,6 +137,7 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
     final detail = c.selected;
     final build = detail?.build;
     final title = build != null ? c.titleOf(build) : 'Build';
+    final theme = Theme.of(context);
 
     return Scaffold(
       key: const Key('build_detail_page'),
@@ -55,13 +148,19 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
           ? const Center(
               child: CircularProgressIndicator(key: Key('build_detail_loading')),
             )
-          : ListView(
+          : SingleChildScrollView(
               key: const Key('build_detail_body'),
               padding: const EdgeInsets.all(16),
+              // Column (not lazy ListView) so linear sections are always in tree
+              // for reduced-density compose + widget tests.
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // --- Identity ---
                 Text(
                   'Identity',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  key: const Key('compose_section_identity'),
+                  style: theme.textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 _row('Name', c.titleOf(build), 'detail_name'),
@@ -74,20 +173,258 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
                   'detail_synergies',
                 ),
                 _row('Exotics', c.exoticsSummaryOf(build), 'detail_exotics'),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
+
+                // --- Variants ---
                 Text(
-                  'Variants: ${detail!.variants.length}',
-                  key: const Key('detail_variant_count'),
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'Variants',
+                  key: const Key('compose_section_variants'),
+                  style: theme.textTheme.titleMedium,
                 ),
+                const SizedBox(height: 8),
+                if (c.variants.isEmpty)
+                  const Text('No variants', key: Key('variants_empty'))
+                else
+                  Wrap(
+                    key: const Key('variant_chips'),
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final v in c.variants)
+                        ChoiceChip(
+                          key: Key('variant_chip_${v.id}'),
+                          label: Text(
+                            v.isDefault ? '${v.name} (default)' : v.name,
+                          ),
+                          selected: c.selectedVariant?.id == v.id,
+                          onSelected: _busy
+                              ? null
+                              : (_) {
+                                  // ignore: discarded_futures
+                                  c.selectVariant(v.id);
+                                },
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: const Key('variant_name_field'),
+                        controller: _variantNameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'New variant name',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        enabled: !_busy,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      key: const Key('variant_create_btn'),
+                      onPressed: _busy ? null : _createVariant,
+                      child: const Text('Add'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // --- Attachments / pins ---
+                Text(
+                  'Attachments',
+                  key: const Key('compose_section_attachments'),
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                FilledButton.tonal(
+                  key: const Key('attach_set_open'),
+                  onPressed: _busy || c.selectedVariant == null
+                      ? null
+                      : _openAttachSheet,
+                  child: const Text('Attach set…'),
+                ),
+                const SizedBox(height: 8),
+                if (c.attachments.isEmpty)
+                  const Text(
+                    'No sets attached',
+                    key: Key('attachments_empty'),
+                  )
+                else
+                  Column(
+                    key: const Key('builds_attachments_list'),
+                    children: [
+                      for (final a in c.attachments)
+                        ListTile(
+                          key: Key('attachment_row_${a.record.setId}'),
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(a.summary),
+                          trailing: IconButton(
+                            key: Key('detach_${a.record.setId}'),
+                            icon: const Icon(Icons.link_off),
+                            onPressed: _busy
+                                ? null
+                                : () => _run(
+                                      () => c.detachSet(a.record.setId),
+                                    ),
+                          ),
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                Text('Slot pins', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 4),
+                if (c.slotPins.isEmpty)
+                  const Text(
+                    'No pins yet',
+                    key: Key('slot_pins_empty'),
+                  )
+                else
+                  Column(
+                    key: const Key('builds_slot_pins'),
+                    children: [
+                      for (final pin in c.slotPins)
+                        ListTile(
+                          key: Key('slot_pin_${pin.slot}_${pin.setId}'),
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            '${pin.slot}: ${pin.itemName.isEmpty ? pin.itemHash : pin.itemName}',
+                          ),
+                          subtitle: Text(
+                            pin.pinDetail,
+                            key: Key('pin_label_${pin.slot}'),
+                          ),
+                          trailing: pin.canEditPin
+                              ? TextButton(
+                                  key: Key('pin_toggle_${pin.slot}'),
+                                  onPressed: _busy
+                                      ? null
+                                      : () => _pinOrClear(
+                                            pin,
+                                            clear: pin.instanceId != null &&
+                                                pin.instanceId!
+                                                    .trim()
+                                                    .isNotEmpty,
+                                          ),
+                                  child: Text(
+                                    pin.pinLabel == 'wishlist'
+                                        ? 'Pin'
+                                        : 'Clear',
+                                  ),
+                                )
+                              : null,
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 20),
+
+                // --- Soft guidance ---
+                Text(
+                  'Soft guidance',
+                  key: const Key('builds_soft_guidance'),
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  c.softGuidanceAdvisory,
+                  key: const Key('builds_soft_guidance_advisory'),
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                if (c.synergyCoverageRows.isEmpty)
+                  const Text(
+                    'No synergy coverage rows',
+                    key: Key('soft_coverage_empty'),
+                  )
+                else
+                  Wrap(
+                    key: const Key('builds_soft_coverage_chips'),
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final row in c.synergyCoverageRows)
+                        Chip(
+                          key: Key(
+                            'soft_chip_${row.synergyId}_${row.tier.wireName}',
+                          ),
+                          label: Text(formatSynergyCoverageChipLabel(row)),
+                          backgroundColor: _tierColor(
+                            row.tier,
+                            theme.colorScheme,
+                          ).withValues(alpha: 0.15),
+                        ),
+                    ],
+                  ),
+                if (c.setBonusSoftRows.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  for (final row in c.setBonusSoftRows)
+                    Text(formatSetBonusSoftSummary(row)),
+                ],
+                if (c.elementSoftMismatches.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  for (final row in c.elementSoftMismatches)
+                    Text(formatElementSoftMismatchSummary(row)),
+                ],
+                const SizedBox(height: 12),
+                Text('Soft stat targets', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                for (final stat in ArmorStatName.all)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      key: Key('soft_stat_${stat.wireName}'),
+                      controller: _softStatControllers[stat],
+                      decoration: InputDecoration(
+                        labelText: stat.wireName,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      keyboardType: TextInputType.number,
+                      enabled: !_busy,
+                    ),
+                  ),
+                OutlinedButton(
+                  key: const Key('soft_stat_save'),
+                  onPressed: _busy ? null : _saveSoftTargets,
+                  child: const Text('Save soft targets'),
+                ),
+                if (c.softStatTargetsSummary.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Saved: ${c.softStatTargetsSummary}',
+                    key: const Key('soft_stat_saved_summary'),
+                  ),
+                ],
+                if (c.softStatWarnings.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  for (final w in c.softStatWarnings)
+                    Text(formatSoftStatWarningSummary(w)),
+                ],
+                if (_statusMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _statusMessage!,
+                    key: const Key('compose_status_error'),
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                ],
+                if (c.error != null && _statusMessage == null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    formatComposeError(c.error),
+                    key: const Key('compose_controller_error'),
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Text(
-                  'Full compose (attach / pins / soft guidance) ships in a '
-                  'later mobile slice. Soft guidance never auto-applies.',
+                  'Linear finish · soft never auto-applies · hard limits still block.',
                   key: const Key('detail_compose_note'),
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
+              ),
             ),
     );
   }

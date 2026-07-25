@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'build_detail_page.dart';
 import 'builds_controller.dart';
+import 'create_build_sheet.dart';
 
 /// Builds library list (mobile). Focus Swap: tap → push detail (XOR list).
+/// Create build opens a sheet (DART-041 reduced density).
 class BuildsListPage extends StatefulWidget {
   const BuildsListPage({
     super.key,
@@ -59,6 +61,15 @@ class _BuildsListPageState extends State<BuildsListPage> {
     widget.controller.clearSelection();
   }
 
+  Future<void> _createBuild() async {
+    final id = await showCreateBuildSheet(
+      context,
+      controller: widget.controller,
+    );
+    if (id == null || !mounted) return;
+    await _openDetail(id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
@@ -66,6 +77,12 @@ class _BuildsListPageState extends State<BuildsListPage> {
       key: const Key('builds_list_page'),
       appBar: AppBar(
         title: const Text('Builds'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        key: const Key('create_build_fab'),
+        onPressed: _createBuild,
+        tooltip: 'Create build',
+        child: const Icon(Icons.add),
       ),
       body: _body(c),
     );
@@ -103,7 +120,7 @@ class _BuildsListPageState extends State<BuildsListPage> {
     if (c.builds.isEmpty) {
       return const Center(
         child: Text(
-          'No builds yet.\nCreate builds on desktop or a later mobile slice.',
+          'No builds yet.\nTap + to create a build.',
           key: Key('builds_empty'),
           textAlign: TextAlign.center,
         ),

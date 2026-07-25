@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-040 done — Flutter Android+iOS mobile shell: bottom nav, Focus Swap, Builds+Settings)  
+**Updated:** 2026-07-25 (DART-041 done — Flutter mobile reduced-density compose; **P4 phase gate**)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -132,7 +132,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-038** | **done** | `flutter-equip-ui` | `dart-038-flutter-equip-ui` | P4 | DART-037, DART-033 | Character pick + equip CTA + step report | Equip-ready gate enforced; gaps confirm UX |
 | **DART-039** | **done** | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
 | **DART-040** | **done** | `flutter-mobile-shell-nav` | `dart-040-flutter-mobile-shell-nav` | P4 | DART-034 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
-| **DART-041** | pending | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
+| **DART-041** | **done** | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
 | **DART-042** | pending | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
 | **DART-043** | pending | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
 | **DART-044** | pending | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-041** `flutter-mobile-compose` (P4 — reduced-density compose on phone) |
-| **Active branch** | (create) `dart-041-flutter-mobile-compose` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-041-flutter-mobile-compose/` (created at specify) |
+| **Next / active slice** | **DART-042** `jaspr-app-skeleton` (P5 — Jaspr shell + routing + tokens) |
+| **Active branch** | (create) `dart-042-jaspr-app-skeleton` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-042-jaspr-app-skeleton/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-041 note (completed) — **P4 phase gate**
+
+Mobile reduced-density compose on `apps/mobile_host`: create-build FAB sheet, linear Focus Swap detail (variants → attach sheet → pins → soft guidance chips + explicit soft stat save). Shared `destiny2_app` use cases; soft never auto-applies; hard `SLOT_CONFLICT` surfaces. `flutter test` 23 green. **P4 complete** (optimizer/equip/DIM/Windows + mobile shell + mobile compose). Next: P5 Jaspr.
 
 ### DART-040 note (completed)
 

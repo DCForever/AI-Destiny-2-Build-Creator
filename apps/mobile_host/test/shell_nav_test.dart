@@ -76,6 +76,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('builds_list_page')), findsOneWidget);
-    expect(find.text('No builds yet.\nCreate builds on desktop or a later mobile slice.'), findsOneWidget);
+    expect(find.byKey(const Key('builds_empty')), findsOneWidget);
+    expect(find.textContaining('Tap + to create'), findsOneWidget);
   });
 }
