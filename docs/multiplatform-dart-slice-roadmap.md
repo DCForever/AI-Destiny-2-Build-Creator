@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-046 done — Jaspr compose spine builds/sets/synergy/catalog hard/soft parity)  
+**Updated:** 2026-07-25 (DART-047 done — Jaspr equip-ready + DIM json + optional equip)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -138,7 +138,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-044** | **done** | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
 | **DART-045** | **done** | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
 | **DART-046** | **done** | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
-| **DART-047** | pending | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
+| **DART-047** | **done** | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
 | **DART-048** | pending | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
 | **DART-049** | pending | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
 
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-047** `jaspr-equip-export` (P5 — equip-ready + DIM on web) |
-| **Active branch** | (create) `dart-047-jaspr-equip-export` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-047-jaspr-equip-export/` (created at specify) |
+| **Next / active slice** | **DART-048** `legacy-db-import` (P5 — import Next `.cache/app.db` → StorageRoot) |
+| **Active branch** | (create) `dart-048-legacy-db-import` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-048-legacy-db-import/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-047 note (completed)
+
+Jaspr web Build compose surfaces equip-ready (domain `computeEquipReady`), DIM jsonOnly clipboard export (`buildJsonOnlyDimExport`, blocked when not equip-ready), and optional equip (character pick + gaps confirm + `planEquipSteps`/`executeEquipPlan`). Same domain packages as Flutter. Soft never auto-applies. No CLIENT_SECRET.
 
 ### DART-046 note (completed)
 

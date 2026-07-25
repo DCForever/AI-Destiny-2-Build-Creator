@@ -1,4 +1,4 @@
-# destiny2_web_host (DART-042 – DART-046)
+# destiny2_web_host (DART-042 – DART-047)
 
 Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator port.
 
@@ -13,6 +13,7 @@ Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator po
 | Entities | **Prebuilt entity bundles** (DART-044) — no raw rebuild in browser |
 | Auth | **Public + PKCE** (DART-045) — no `CLIENT_SECRET` |
 | Compose | Builds / Sets / Synergies + hard/soft parity (DART-046) |
+| Equip / DIM | Equip-ready + DIM jsonOnly + optional equip (DART-047) |
 | Next.js | **Not a dependency** |
 
 ## What this host includes
@@ -31,12 +32,13 @@ Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator po
 - **Prebuilt entity bundle** at `web/entities/prebuilt/bundle.json` → offline catalog facets
 - **Browser Public+PKCE** sign-in / sign-out (DART-045)
 - **Compose spine** via `destiny2_app` use cases (DART-046)
+- **Equip-ready** status + pin gaps; **Copy DIM JSON** (jsonOnly, equip-ready gated); **optional equip** Apply + step report (DART-047)
 - Unit/component tests
 
 ## What is still later
 
-- Equip-ready / DIM / equip on web (DART-047)
-- Owned inventory filter on web (sync later)
+- Owned inventory filter / full inventory sync UI on web
+- dim.gg share
 - Optimizer on web
 - Production CDN channel for large entity bundles (fixture ships in-app)
 - Confidential Bungie flow (never in this client)
@@ -53,12 +55,23 @@ In-process library + compose against the **writer** `AppDatabase`:
 
 Hard DBR gates stay hard. Soft never auto-applies and does not block legal attach.
 
+## Equip + DIM (DART-047)
+
+On Build compose when a variant is selected:
+
+1. **Equip-ready** from domain `computeEquipReady` + local inventory pins
+2. **Copy DIM JSON** → pure `buildJsonOnlyDimExport` → clipboard (blocked when not equip-ready)
+3. **Optional equip** (signed-in + public API key): character pick → gaps confirm → `planEquipSteps` / `executeEquipPlan`
+
+Same domain packages as Flutter. Soft never auto-applies. No `CLIENT_SECRET`. No dim.gg.
+
 ```powershell
 cd apps\web_host
 dart test
+dart test test/equip_controller_test.dart test/dim_export_controller_test.dart
 ```
 
-See `specs/dart-046-jaspr-compose-spine/quickstart.md`.
+See `specs/dart-047-jaspr-equip-export/quickstart.md`.
 
 ## OAuth (DART-045)
 

@@ -1,4 +1,4 @@
-/// Root shell + client router for the Jaspr web host (DART-042–046).
+/// Root shell + client router for the Jaspr web host (DART-042–047).
 library;
 
 import 'dart:async';
@@ -6,6 +6,8 @@ import 'dart:async';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
+
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 
 import 'auth/web_oauth_session.dart';
 import 'builds/build_compose_page.dart';
@@ -15,6 +17,7 @@ import 'components/shell_header.dart';
 import 'compose/compose_services.dart';
 import 'db/web_database_bootstrap.dart';
 import 'db/web_db_status.dart';
+import 'dim_export/dim_export_controller.dart';
 import 'pages/auth_callback_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
@@ -34,6 +37,9 @@ class App extends StatefulComponent {
     this.entityLoader,
     this.oauthSession,
     this.compose,
+    this.profileClient,
+    this.writeClient,
+    this.clipboardWriter,
     super.key,
   });
 
@@ -46,8 +52,13 @@ class App extends StatefulComponent {
   /// Browser Public+PKCE session (DART-045). Optional in pure UI tests.
   final WebOAuthSession? oauthSession;
 
-  /// Compose spine services (DART-046). Null when writer DB unavailable.
+  /// Compose spine services (DART-046/047). Null when writer DB unavailable.
   final ComposeServices? compose;
+
+  /// Optional equip clients (DART-047). Used when auto-building ComposeServices.
+  final BungieProfileClient? profileClient;
+  final BungieWriteClient? writeClient;
+  final DimClipboardWriter? clipboardWriter;
 
   @override
   State<App> createState() => _AppState();
@@ -98,7 +109,14 @@ class _AppState extends State<App> {
     if (component.compose != null) return;
     final db = boot.database;
     if (db != null && _compose == null) {
-      _compose = ComposeServices(db: db);
+      _compose = ComposeServices(
+        db: db,
+        session: component.oauthSession,
+        profileClient: component.profileClient,
+        writeClient: component.writeClient,
+        clipboardWriter: component.clipboardWriter,
+        skipSyncIfStale: false,
+      );
     }
   }
 
@@ -161,6 +179,8 @@ class _AppState extends State<App> {
                 builder: (context, state) => BuildComposePage(
                   buildId: state.params['buildId'] ?? '',
                   controller: compose?.builds,
+                  equipController: compose?.equip,
+                  dimExportController: compose?.dimExport,
                 ),
               ),
               Route(
