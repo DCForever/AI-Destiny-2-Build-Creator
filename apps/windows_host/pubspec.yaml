@@ -1,8 +1,8 @@
 name: destiny2_windows_host
 description: >
-  Destiny 2 Build Creator — Flutter Windows host (DART-019/020/023).
-  Opens StorageRoot + single Drift DB; Catalog offline browse; Settings + Public+PKCE OAuth.
-  No CLIENT_SECRET.
+  Destiny 2 Build Creator — Flutter Windows host (DART-019/020/023/025).
+  Opens StorageRoot + single Drift DB; Catalog offline browse; Settings + Public+PKCE OAuth
+  + inventory sync card. No CLIENT_SECRET.
 publish_to: none
 version: 0.0.1+1
 resolution: workspace

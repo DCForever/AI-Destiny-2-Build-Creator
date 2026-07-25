@@ -8,16 +8,18 @@ import 'auth/browser_launcher.dart';
 import 'auth/loopback_callback_server.dart';
 import 'auth/token_store.dart';
 import 'auth/windows_oauth_session.dart';
+import 'settings/inventory_sync_controller.dart';
 
 /// Default Windows loopback redirect (must match Bungie Public app registration).
 const String kDefaultWindowsRedirectUri = 'http://127.0.0.1:8765/callback';
 
-/// Owns host runtime resources for the Windows shell (DART-019/020/023).
+/// Owns host runtime resources for the Windows shell (DART-019/020/023/025).
 ///
 /// Guarantees a **single** [AppDatabase] instance for the process lifetime of
 /// this object. Call [dispose] on shutdown to close the SQLite connection.
 /// Entity catalog reads use [OfflineCatalog] (file JSON only — no second DB).
 /// OAuth tokens live in [oauthSession] / [TokenStore] — **not** SQLite.
+/// Inventory sync UI state lives in [inventorySync] (DART-025).
 class AppServices {
   AppServices({
     required this.storageRoot,
@@ -25,6 +27,8 @@ class AppServices {
     required this.manifestRefresh,
     required this.offlineCatalog,
     required this.oauthSession,
+    required this.profileClient,
+    required this.inventorySync,
   });
 
   final StorageRoot storageRoot;
@@ -32,6 +36,8 @@ class AppServices {
   final ManifestRefreshApi manifestRefresh;
   final OfflineCatalog offlineCatalog;
   final WindowsOAuthSession oauthSession;
+  final BungieProfileClient profileClient;
+  final InventorySyncController inventorySync;
 
   bool _closed = false;
 
@@ -42,16 +48,17 @@ class AppServices {
   Future<void> dispose() async {
     if (_closed) return;
     _closed = true;
+    inventorySync.dispose();
     await db.close();
   }
 }
 
-/// Bootstrap for Flutter Windows host: StorageRoot → single DB → manifest API → OAuth.
+/// Bootstrap for Flutter Windows host: StorageRoot → single DB → manifest API → OAuth → inventory sync.
 class HostBootstrap {
   HostBootstrap._();
 
   /// Opens layout + one Drift connection + [ManifestRefreshApi] + [OfflineCatalog]
-  /// + [WindowsOAuthSession].
+  /// + [WindowsOAuthSession] + [InventorySyncController].
   ///
   /// Overrides exist for tests:
   /// - [storageRoot]: skip path_provider
@@ -62,6 +69,8 @@ class HostBootstrap {
   /// - [apiKey]: public Bungie API key only (never CLIENT_SECRET)
   /// - [clientId] / [redirectUri]: Public OAuth app (never CLIENT_SECRET)
   /// - [tokenStore] / [oauthClient] / [browserLauncher] / [waitForCallbackOverride]
+  /// - [profileClient]: fake inventory profile client for tests
+  /// - [inventorySync]: prebuilt controller (optional)
   static Future<AppServices> open({
     StorageRoot? storageRoot,
     AppDatabase? database,
@@ -76,6 +85,9 @@ class HostBootstrap {
     LoopbackCallbackServer? loopbackServer,
     Future<LoopbackCallbackResult> Function()? waitForCallbackOverride,
     Future<String> Function()? resolveApplicationSupportPath,
+    BungieProfileClient? profileClient,
+    InventorySyncController? inventorySync,
+    InventoryBusyLock? inventoryLock,
   }) async {
     final root = storageRoot ??
         StorageRoot.windowsAppSupport(
@@ -118,12 +130,31 @@ class HostBootstrap {
     );
     await session.restore();
 
+    // Public API key only. Empty → placeholder so bootstrap still works offline;
+    // live profile calls fail until BUNGIE_API_KEY is configured (never CLIENT_SECRET).
+    final resolvedProfile = profileClient ??
+        HttpBungieProfileClient(
+          http: BungieHttpClient(
+            apiKey: (apiKey == null || apiKey.isEmpty) ? 'unconfigured' : apiKey,
+          ),
+        );
+
+    final sync = inventorySync ??
+        InventorySyncController(
+          db: db,
+          session: session,
+          profileClient: resolvedProfile,
+          lock: inventoryLock,
+        );
+
     return AppServices(
       storageRoot: root,
       db: db,
       manifestRefresh: refresh,
       offlineCatalog: catalog,
       oauthSession: session,
+      profileClient: resolvedProfile,
+      inventorySync: sync,
     );
   }
 

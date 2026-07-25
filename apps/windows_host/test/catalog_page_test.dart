@@ -11,6 +11,8 @@ import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'inventory_sync_test_fakes.dart';
+
 class _FakeRefresh implements ManifestRefreshApi {
   @override
   Future<bool> isStale() async => false;
@@ -95,6 +97,7 @@ void main() {
       clientId: 'test-client',
       tokenStore: MemoryTokenStore(),
       browserLauncher: FakeBrowserLauncher(),
+      profileClient: FakeProfileClient(),
       oauthClient: BungieOAuthClient(
         clientId: 'test-client',
         redirectUri: kDefaultWindowsRedirectUri,
@@ -162,6 +165,8 @@ void main() {
         items: const [],
       ),
       oauthSession: services.oauthSession,
+      profileClient: services.profileClient,
+      inventorySync: services.inventorySync,
     );
 
     await tester.pumpWidget(

@@ -2,9 +2,10 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
+import 'inventory_sync_card.dart';
 import 'oauth_account_card.dart';
 
-/// Settings: account (OAuth) + manifest status (DART-019/023).
+/// Settings: account (OAuth) + inventory sync + manifest status (DART-019/023/025).
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
@@ -65,6 +66,17 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 8),
           OAuthAccountCard(
             key: const Key('settings_oauth_card'),
+            session: widget.services.oauthSession,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Inventory',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          InventorySyncCard(
+            key: const Key('settings_inventory_sync_card'),
+            controller: widget.services.inventorySync,
             session: widget.services.oauthSession,
           ),
           const SizedBox(height: 24),

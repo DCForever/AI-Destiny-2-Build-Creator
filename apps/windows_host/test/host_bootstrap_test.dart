@@ -73,6 +73,8 @@ void main() {
     expect(services.oauthSession, isNotNull);
     expect(services.oauthSession.hasRestored, isTrue);
     expect(services.oauthSession.isSignedIn, isFalse);
+    expect(services.inventorySync, isNotNull);
+    expect(services.profileClient, isNotNull);
     expect(File(root.appDbPath).existsSync(), isTrue);
     expect(Directory(root.manifestDir).existsSync(), isTrue);
     expect(Directory(root.entitiesDir).existsSync(), isTrue);

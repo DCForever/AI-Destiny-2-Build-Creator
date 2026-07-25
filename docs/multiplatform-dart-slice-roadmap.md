@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-024 done — profile fetch + inventory full-replace + 60s freshness)  
+**Updated:** 2026-07-24 (DART-025 done — Settings inventory sync UI; **P2 phase gate** closed)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -116,7 +116,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-022** | **done** | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
 | **DART-023** | **done** | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
 | **DART-024** | **done** | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
-| **DART-025** | pending | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
+| **DART-025** | **done** | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
 | **DART-026** | pending | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
 | **DART-027** | pending | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
 | **DART-028** | pending | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-025** `flutter-inventory-sync-ui` (P2 — Settings inventory sync card + busy/error UX) |
-| **Active branch** | (create) `dart-025-flutter-inventory-sync-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-025-flutter-inventory-sync-ui/` (created at specify) |
+| **Next / active slice** | **DART-026** `flutter-catalog-owned` (P2 — Catalog all-vs-owned + instance projections) |
+| **Active branch** | (create) `dart-026-flutter-catalog-owned` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-026-flutter-catalog-owned/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-025 note (completed) — **P2 phase gate**
+
+Settings inventory sync card on Windows host: `InventorySyncController` + `InventorySyncCard` (Sync now → `syncUserInventory`, busy/error, 60s freshness display). Local `ensureUser` from OAuth membership id; tokens stay in secure storage. **P2 complete** (Public+PKCE OAuth + inventory full-replace → owned data local). Tests: `flutter test` apps/windows_host (38). Next: DART-026 catalog owned filter.
 
 ### DART-024 note (completed)
 
