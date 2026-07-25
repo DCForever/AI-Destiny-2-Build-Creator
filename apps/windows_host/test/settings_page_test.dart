@@ -132,6 +132,7 @@ void main() {
         ),
         throwOnStatus: true,
       ),
+      offlineCatalog: OfflineCatalog(storageRoot: services.storageRoot),
     );
 
     await tester.pumpWidget(

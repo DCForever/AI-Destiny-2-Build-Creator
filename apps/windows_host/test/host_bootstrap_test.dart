@@ -57,6 +57,7 @@ void main() {
     );
 
     expect(services.db, same(db));
+    expect(services.offlineCatalog, isNotNull);
     expect(File(root.appDbPath).existsSync(), isTrue);
     expect(Directory(root.manifestDir).existsSync(), isTrue);
     expect(Directory(root.entitiesDir).existsSync(), isTrue);

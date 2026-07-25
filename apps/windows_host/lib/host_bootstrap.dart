@@ -3,20 +3,23 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Owns host runtime resources for the Windows shell (DART-019).
+/// Owns host runtime resources for the Windows shell (DART-019/020).
 ///
 /// Guarantees a **single** [AppDatabase] instance for the process lifetime of
 /// this object. Call [dispose] on shutdown to close the SQLite connection.
+/// Entity catalog reads use [OfflineCatalog] (file JSON only — no second DB).
 class AppServices {
   AppServices({
     required this.storageRoot,
     required this.db,
     required this.manifestRefresh,
+    required this.offlineCatalog,
   });
 
   final StorageRoot storageRoot;
   final AppDatabase db;
   final ManifestRefreshApi manifestRefresh;
+  final OfflineCatalog offlineCatalog;
 
   bool _closed = false;
 
@@ -35,18 +38,20 @@ class AppServices {
 class HostBootstrap {
   HostBootstrap._();
 
-  /// Opens layout + one Drift connection + [ManifestRefreshApi].
+  /// Opens layout + one Drift connection + [ManifestRefreshApi] + [OfflineCatalog].
   ///
   /// Overrides exist for tests:
   /// - [storageRoot]: skip path_provider
   /// - [database]: inject memory/temp DB (must still be the only host connection)
   /// - [manifestRefresh]: fake status API
+  /// - [offlineCatalog]: pre-seeded or fake catalog
   /// - [resolveApplicationSupportPath]: alternate path_provider
   /// - [apiKey]: public Bungie API key only (never CLIENT_SECRET)
   static Future<AppServices> open({
     StorageRoot? storageRoot,
     AppDatabase? database,
     ManifestRefreshApi? manifestRefresh,
+    OfflineCatalog? offlineCatalog,
     String? apiKey,
     Future<String> Function()? resolveApplicationSupportPath,
   }) async {
@@ -66,10 +71,13 @@ class HostBootstrap {
           apiKey: apiKey,
         );
 
+    final catalog = offlineCatalog ?? OfflineCatalog(storageRoot: root);
+
     return AppServices(
       storageRoot: root,
       db: db,
       manifestRefresh: refresh,
+      offlineCatalog: catalog,
     );
   }
 

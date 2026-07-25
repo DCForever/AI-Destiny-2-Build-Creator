@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-019 done — Flutter Windows host skeleton)  
+**Updated:** 2026-07-24 (DART-020 done — offline catalog facets; **P1 phase gate**)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -111,7 +111,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-017** | **done** | `manifest-entities` | `dart-017-manifest-entities` | P1 | DART-012 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
 | **DART-018** | **done** | `manifest-windows-refresh` | `dart-018-manifest-windows-refresh` | P1 | DART-017 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
 | **DART-019** | **done** | `flutter-windows-host-skeleton` | `dart-019-flutter-windows-host-skeleton` | P1 | DART-012, DART-013 | Minimal Flutter Windows app: open DB, show Settings stub (manifest status only) | App launches; single DB connection; no OAuth yet |
-| **DART-020** | pending | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
+| **DART-020** | **done** | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
 | **DART-021** | pending | `bungie-http` | `dart-021-bungie-http` | P2 | DART-011 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
 | **DART-022** | pending | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
 | **DART-023** | pending | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-020** `flutter-catalog-offline` (P1 — catalog facets offline) |
-| **Active branch** | (create) `dart-020-flutter-catalog-offline` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-020-flutter-catalog-offline/` (created at specify) |
+| **Next / active slice** | **DART-021** `bungie-http` (P2 — shared Bungie HTTP client) |
+| **Active branch** | (create) `dart-021-bungie-http` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-021-bungie-http/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-020 note (completed) — **P1 phase gate**
+
+Offline catalog facets + browse: pure `filterCatalogClient` / `FacetFilter` in `packages/manifest/src/catalog/`; `OfflineCatalog` projects MVP entity stores (no inventory); Flutter host Catalog page + nav rail Catalog|Settings. Tests: `dart test packages/manifest` (57); `flutter test` apps/windows_host (9). **P1 complete** (Drift + entities + offline catalog).
 
 ### DART-019 note (completed)
 
