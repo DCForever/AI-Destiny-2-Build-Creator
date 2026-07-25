@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-054 done — inventory live parity harness; next DART-055 in-game loadouts)  
+**Updated:** 2026-07-25 (DART-055 done — in-game loadouts surface; next DART-056 jaspr inventory sync depth)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -150,7 +150,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-052** | **done** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | **GAP-INV-03** closed; stored plugs include columnKind/columnLabel for instance perk grids; parity tests vs Next buildStoredSocketPlugs; web raw-less residual documented (PROC-06) |
 | **DART-053** | **done** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | **GAP-INV-04**, **GAP-INV-06** UX. Controller retains last SyncInventoryResult diagnostics; Settings (Windows + web parity path) surfaces raw/parsed/dropped + resolution.resolvedFromTransfer/droppedNonEquipment/storedTotal; entity-cache empty warning so empty Owned is not blamed solely on inventory sync |
 | **DART-054** | **done** | `inventory-live-parity-harness` | `dart-054-inventory-live-parity-harness` | P6 | DART-050–053 | Live/manual+tool Next-vs-Dart inventory count harness | **GAP-INV-05**, **PROC-03/04/05** closed. Dual-run procedure + compare tool + offline fidelity gate; RC-SYNC fidelity metrics; RB-06 cleared with DART-050–053 evidence |
-| **DART-055** | **planned** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | **GAP-NAV-01**; RB-01 / RC-NAV. Loadouts on Windows primary nav (+ Jaspr plan/route) comparable to product /loadouts, or product demotes AppShell link with PRODUCT note; cutover matrix loadouts PASS or N/A |
+| **DART-055** | **done** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | **GAP-NAV-01** closed; RB-01 cleared; RC-NAV PASS for loadouts. Windows NavigationRail + page; Jaspr `/loadouts`; pure component 206 parse |
 | **DART-056** | **planned** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | **GAP-WEB-01**; RB-02. Same vault/transfer resolution as Windows post-DART-050; Owned usable to pin instances for equip/DIM on Jaspr; RC-SYNC no longer fails solely for web owned depth |
 | **DART-057** | **planned** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires; Jaspr soft-stat editor; finish-gaps host UX | **GAP-MOB-01**, **GAP-UI-01**, **GAP-FEAT-06**, GAP-FEAT-01 deferred. Published mobile matrix PASS/PARTIAL/MISS/N/A for each AppShell key (build/synergy/sets/catalog/settings/loadouts) plus equip/DIM/optimizer; ship equip+DIM jsonOnly with equip-ready gate **or** product-mark N/A; shell_nav tests match matrix. Jaspr soft-stat editor exposes all ArmorStatName with save parity. At least one production host (Windows and/or Jaspr) surfaces `evaluateFinishGaps` readiness comparable to Next FinishTab (category complete reasons; equip/export CTA policy = finish-complete AND equip-ready, or intentional thinning with product note); host tests assert finish-gap display; pure domain remains shared. Optimizer mobile/web remains deferred unless elevated. Soft never auto-applies |
 | **DART-058** | **planned** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01**; RB-03 / RC-AUTH. Published redirect matrix (Windows HTTPS loopback, Jaspr prod origin /auth/callback, mobile schemes); live sign-in smoke; zero BUNGIE_CLIENT_SECRET/SESSION_SECRET in client artifacts |
@@ -218,16 +218,20 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-055** `in-game-loadouts-surface` (**planned** — next after DART-054 inventory live parity harness) |
+| **Next / active slice** | **DART-056** `jaspr-inventory-sync-depth` (**planned** — next after DART-055 in-game loadouts) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB-01…05 / RC-* pass (RB-06 cleared by DART-050–054; inventory fidelity GAP-INV-01…05 closed) |
-| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–057 → P8 DART-058–061 |
+| **Blocked on** | Production cutover **NO-GO** until residual RB-02…05 / RC-* pass (RB-01 cleared by DART-055; RB-06 cleared by DART-050–054) |
+| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055 **done**, DART-056–057 → P8 DART-058–061 |
+
+### DART-055 note (completed) — in-game loadouts surface
+
+Pure `parseCharacterLoadoutsResponse` + presentation tables (component 206 / DIM source) in `packages/bungie`. Profile client `getCharacterLoadoutsProfile` (`components=200,206`). Windows NavigationRail **Loadouts** + list page (class / hide-empty filters, refresh, signed-out gate). Jaspr ShellHeader + `/loadouts` route + page. Cutover loadouts row PASS (Windows+web); RB-01 cleared; RC-NAV PASS for loadouts; GAP-NAV-01 closed. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-055-in-game-loadouts-surface/`. Tests: `character_loadouts_test`, windows_host loadouts/nav, web_host shell/loadouts. Next: **DART-056** jaspr inventory sync depth.
 
 ### DART-054 note (completed) — inventory live parity harness
 
-Dual-run procedure doc `docs/multiplatform-dart-inventory-live-parity-harness.md` (same-membership Next vs Dart counts by location/bucket + raw/stored/resolvedFromTransfer). Pure Dart snapshot compare library + CLI `tool/inventory_fidelity_compare.dart`. Offline CI/operator gate `tool/inventory_fidelity_gate.dart` (fixture pair + doc markers) **separate** from `p0_parity_gate` (PROC-05). Default tolerance exact (0). Cutover RC-SYNC cites harness; RB-06 cleared with DART-050–053 product evidence. GAP-INV-05 + PROC-03/04/05 closed. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-054-inventory-live-parity-harness/`. Tests: `dart test tool/test/inventory_fidelity_*.dart`; `dart run tool/inventory_fidelity_gate.dart`. Next: **DART-055** in-game loadouts surface.
+Dual-run procedure doc `docs/multiplatform-dart-inventory-live-parity-harness.md` (same-membership Next vs Dart counts by location/bucket + raw/stored/resolvedFromTransfer). Pure Dart snapshot compare library + CLI `tool/inventory_fidelity_compare.dart`. Offline CI/operator gate `tool/inventory_fidelity_gate.dart` (fixture pair + doc markers) **separate** from `p0_parity_gate` (PROC-05). Default tolerance exact (0). Cutover RC-SYNC cites harness; RB-06 cleared with DART-050–053 product evidence. GAP-INV-05 + PROC-03/04/05 closed. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-054-inventory-live-parity-harness/`. Tests: `dart test tool/test/inventory_fidelity_*.dart`; `dart run tool/inventory_fidelity_gate.dart`.
 
 ### DART-053 note (completed) — inventory sync diagnostics UI
 

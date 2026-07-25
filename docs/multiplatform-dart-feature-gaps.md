@@ -82,7 +82,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-NAV-SETS** | Sets library | `/sets` | PASS | N/A\* | PASS | **shipped** | DART-030, 046; \*same mobile note |
 | **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | PASS | MISS | PASS | **shipped** + mobile decision | DART-020/026/044; mobile **DART-057** matrix (ship or N/A) |
 | **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | PASS | PARTIAL | PASS | **shipped** + fidelity residual | DART-023/025/045/048; inventory fidelity **DART-050–054**; web sync depth **DART-056** |
-| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | MISS | MISS | MISS | **planned** | **DART-055** / GAP-NAV-01 / RB-01 — or product demotes nav |
+| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | PASS | MISS\* | PASS | **shipped** | **DART-055** / GAP-NAV-01 closed / RB-01 cleared; \*mobile reduced nav OK for RC-NAV |
 
 ### B. Compose → equip spine (PRODUCT primary job)
 
@@ -167,7 +167,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-INV-05** | Live Next-vs-Dart inventory harness | **P0** | **`closed`** (DART-054) | Manual dual sync | Dual-run doc + compare tool + offline gate | **DART-054** | Prevents silent drift; equip pin fidelity |
 | **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `partial` (UX closed DART-053) | Manifest refresh always online | Docs + Settings/Catalog entity empty warning; web Owned equip depth residual | **DART-050** docs + **DART-053** UX done; **DART-056** web depth | UX after sync |
 | **GAP-INV-07** | Weapon combat `statValues` on inventory rows | **P2** | `closed` (DART-050 opt) | `parseWeaponStatValues` for weapons + transfer containers | `parseWeaponStatValues` + transfer merge in `inventory_parse.dart` | **DART-050** optional delivered | Combat stats on vault weapons |
-| **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `open` | `/loadouts` AppShell + page | MISS all shells (schema only) | **DART-055** | RB-01 / RC-NAV |
+| **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `closed` | `/loadouts` AppShell + page | Windows+Jaspr PASS (DART-055); mobile MISS density OK | **DART-055** | RB-01 cleared / RC-NAV PASS |
 | **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `open` | Full Settings sync + owned catalog | Thinner web path; equip optional when write clients missing | **DART-056** | RB-02 / RC-SYNC |
 | **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `partial` | Full desktop-class AppShell | Bottom nav Builds\|Settings only; catalog MISS; equip/DIM MISS; settings minimum | **DART-057** | Phone surface matrix |
 | **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `partial` | Confidential Next HTTPS | Windows loopback + Jaspr origin OK locally; prod matrix not ops-signed; mobile OAuth deferred | **DART-058** | RB-03 / RC-AUTH |
@@ -329,17 +329,17 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ### GAP-NAV-01 — In-Game Loadouts (**P1**)
 
-**Problem:** Next `NAV_LINKS` includes loadouts → `/loadouts` with a real page. Windows NavigationRail omits Loadouts; mobile NavigationBar is Builds|Settings only; Jaspr ShellHeader/Router has no `/loadouts`. Schema table only on Dart; no shell UI. RC-NAV FAIL / RB-01.
+**Problem:** Next `NAV_LINKS` includes loadouts → `/loadouts` with a real page. Windows NavigationRail omitted Loadouts; mobile NavigationBar is Builds|Settings only; Jaspr ShellHeader/Router had no `/loadouts`. Schema table only for local snapshots; no shell UI. RC-NAV FAIL / RB-01.
 
-**Planned slice: DART-055 `in-game-loadouts-surface`**
+**Slice: DART-055 `in-game-loadouts-surface` — closed**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-055-in-game-loadouts-surface` |
-| Depends | DART-024 profile components 200/206 path; Windows host first |
+| Depends | DART-024 profile path; Windows host first |
 | Exit criteria | First-class Loadouts UI reachable from primary shell nav on Windows (and plan/route for Jaspr) listing Bungie in-game loadouts comparable to product `/loadouts`, **or** product removes/demotes loadouts from AppShell NAV_LINKS with explicit PRODUCT note; host greps for nav labels/routes include Loadouts; cutover matrix loadouts row PASS or N/A; clears RB-01/RC-NAV when done |
-| Status | `planned` |
-| Cutover | RB-01 |
+| Status | **`closed`** (2026-07-25) — pure parse component 206 + presentation; Windows nav+page; Jaspr `/loadouts`; matrix PASS Windows+web; RB-01 cleared; RC-NAV PASS for loadouts |
+| Cutover | RB-01 **cleared** |
 
 ---
 
@@ -517,8 +517,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-055** `in-game-loadouts-surface` |
-| **Next phase** | P6 inventory fidelity **done** (DART-050–054) → P7 DART-055–057 → P8 DART-058–061 |
-| **Blocker for cutover** | Residual RB-01…05 (RB-06 cleared); web inventory depth GAP-WEB-01 / DART-056; other residuals per cutover checklist |
+| **Next planned slice** | **DART-056** `jaspr-inventory-sync-depth` |
+| **Next phase** | P7 DART-055 **done** → DART-056–057 → P8 DART-058–061 |
+| **Blocker for cutover** | Residual RB-02…05 (RB-01 + RB-06 cleared); web inventory depth GAP-WEB-01 / DART-056; other residuals per cutover checklist |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |

@@ -1,4 +1,5 @@
 import '../bungie_http_client.dart';
+import 'character_loadouts.dart';
 import 'character_parse.dart';
 import 'inventory_parse.dart';
 import 'profile_types.dart';
@@ -10,7 +11,7 @@ const String kInventoryProfileComponents = '102,201,205,300,304,305,310';
 const String kCharactersProfileComponents = '200';
 
 /// Bungie profile operations used by inventory sync (DART-024) + characters
-/// (DART-038).
+/// (DART-038) + in-game loadouts (DART-055).
 ///
 /// Abstract so tests inject fakes without HTTP.
 abstract class BungieProfileClient {
@@ -18,6 +19,15 @@ abstract class BungieProfileClient {
 
   /// Destiny characters for the membership (class / light / id).
   Future<List<CharacterSummary>> getCharacters(
+    String accessToken,
+    DestinyMembership membership,
+  );
+
+  /// GetProfile Response body with characters (200) + characterLoadouts (206).
+  ///
+  /// Used by in-game loadouts surface (DART-055). Returns the decoded
+  /// `Response` object (not the outer envelope).
+  Future<Object?> getCharacterLoadoutsProfile(
     String accessToken,
     DestinyMembership membership,
   );
@@ -61,6 +71,20 @@ class HttpBungieProfileClient implements BungieProfileClient {
       queryParameters: {'components': kCharactersProfileComponents},
     );
     return parseCharactersResponse(response);
+  }
+
+  @override
+  Future<Object?> getCharacterLoadoutsProfile(
+    String accessToken,
+    DestinyMembership membership,
+  ) async {
+    final path =
+        '/Destiny2/${membership.membershipType}/Profile/${membership.membershipId}/';
+    return http.getJson(
+      path,
+      accessToken: accessToken,
+      queryParameters: {'components': kCharacterLoadoutsProfileComponents},
+    );
   }
 
   @override

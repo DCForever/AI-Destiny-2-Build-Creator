@@ -24,6 +24,7 @@ export 'src/inventory/roll_tag_lookups.dart';
 export 'src/inventory/roll_tags.dart';
 export 'src/inventory/weapon_socket_context.dart';
 export 'src/profile/bungie_profile_client.dart';
+export 'src/profile/character_loadouts.dart';
 export 'src/profile/character_parse.dart';
 export 'src/profile/equipment_bucket_lookup.dart';
 export 'src/profile/inventory_buckets.dart';

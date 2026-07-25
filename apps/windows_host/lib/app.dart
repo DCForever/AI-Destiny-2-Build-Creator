@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'builds/builds_library_page.dart';
 import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
+import 'loadouts/loadouts_page.dart';
 import 'sets/sets_library_page.dart';
 import 'settings/settings_page.dart';
 import 'synergies/synergies_library_page.dart';
 import 'theme/flap_theme.dart';
 
-/// Root Flutter app for the Windows host (DART-019…039 + dual-face theme).
+/// Root Flutter app for the Windows host (DART-019…039 + DART-055 Loadouts).
 ///
-/// Shell destinations: Catalog + Sets + Synergies + Builds + Settings.
+/// Shell destinations: Catalog + Sets + Synergies + Builds + Loadouts + Settings.
 /// Appearance: **Cold Graphite** dark + **Paper Ledger** light ([ThemeMode]).
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
@@ -19,6 +20,16 @@ class Destiny2WindowsApp extends StatefulWidget {
   });
 
   final AppServices services;
+
+  /// Primary nav destination labels (tests / greps — DART-055).
+  static const List<String> navLabels = [
+    'Catalog',
+    'Sets',
+    'Synergies',
+    'Builds',
+    'Loadouts',
+    'Settings',
+  ];
 
   @override
   State<Destiny2WindowsApp> createState() => _Destiny2WindowsAppState();
@@ -66,6 +77,11 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   label: Text('Builds'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.playlist_add_check_outlined),
+                  selectedIcon: Icon(Icons.playlist_add_check),
+                  label: Text('Loadouts'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.settings_outlined),
                   selectedIcon: Icon(Icons.settings),
                   label: Text('Settings'),
@@ -91,6 +107,10 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   ),
                   BuildsLibraryPage(
                     key: const Key('builds_library_page'),
+                    services: widget.services,
+                  ),
+                  LoadoutsPage(
+                    key: const Key('loadouts_page'),
                     services: widget.services,
                   ),
                   SettingsPage(

@@ -10,6 +10,7 @@ class FakeProfileClient implements BungieProfileClient {
     List<DestinyMembership>? memberships,
     List<RawInventoryItem>? items,
     List<CharacterSummary>? characters,
+    Object? characterLoadoutsProfile,
     this.throwOnInventory = false,
     this.inventoryDelay,
   })  : memberships = memberships ??
@@ -21,16 +22,19 @@ class FakeProfileClient implements BungieProfileClient {
               ),
             ],
         items = items ?? defaultItems,
-        characters = characters ?? defaultCharacters;
+        characters = characters ?? defaultCharacters,
+        characterLoadoutsProfile = characterLoadoutsProfile;
 
   List<DestinyMembership> memberships;
   List<RawInventoryItem> items;
   List<CharacterSummary> characters;
+  Object? characterLoadoutsProfile;
   final bool throwOnInventory;
   final Duration? inventoryDelay;
   int inventoryCalls = 0;
   int membershipCalls = 0;
   int characterCalls = 0;
+  int loadoutsProfileCalls = 0;
 
   static final defaultItems = <RawInventoryItem>[
     const RawInventoryItem(
@@ -79,6 +83,43 @@ class FakeProfileClient implements BungieProfileClient {
   ) async {
     characterCalls += 1;
     return characters;
+  }
+
+  @override
+  Future<Object?> getCharacterLoadoutsProfile(
+    String accessToken,
+    DestinyMembership membership,
+  ) async {
+    loadoutsProfileCalls += 1;
+    if (characterLoadoutsProfile != null) {
+      return characterLoadoutsProfile;
+    }
+    // Minimal empty 206 section so parse returns [].
+    return {
+      'characters': {
+        'data': {
+          for (final c in characters)
+            c.characterId: {
+              'characterId': c.characterId,
+              'classType': c.classType == 'Hunter'
+                  ? 1
+                  : c.classType == 'Warlock'
+                      ? 2
+                      : 0,
+              'light': c.light,
+              'dateLastPlayed': c.dateLastPlayed,
+            },
+        },
+      },
+      'characterLoadouts': {
+        'data': {
+          for (final c in characters)
+            c.characterId: {
+              'loadouts': <Object>[],
+            },
+        },
+      },
+    };
   }
 
   @override

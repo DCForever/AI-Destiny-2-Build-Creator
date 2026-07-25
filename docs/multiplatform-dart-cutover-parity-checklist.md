@@ -42,8 +42,8 @@ PRODUCTION_CUTOVER: NO-GO
 
 | ID | Blocker | Blocks | Planned work |
 | -- | ------- | ------ | ------------ |
-| RB-01 | Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface | RC-NAV | **DART-055** / GAP-NAV-01 |
-| RB-02 | Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode | RC-SYNC, RC-NAV | **DART-056** / GAP-WEB-01 (+ **DART-050** shared resolution) |
+| ~~**RB-01**~~ | ~~Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface~~ | ~~RC-NAV~~ | **CLEARED (2026-07-25)** by **DART-055** / GAP-NAV-01: Windows NavigationRail **Loadouts** + Jaspr `/loadouts` list Bungie component 206; pure parse in `destiny2_bungie`. Mobile top-level nav remains reduced (MISS/N/A — does not fail RC-NAV). |
+| RB-02 | Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode | RC-SYNC | **DART-056** / GAP-WEB-01 (+ **DART-050** shared resolution) |
 | RB-03 | Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed | RC-AUTH | **DART-058** / GAP-AUTH-01 |
 | RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS | **DART-060** / GAP-OPS-01 |
 | RB-05 | Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened | RC-WEB-DATA | **DART-059** / GAP-WEB-02 |
@@ -52,7 +52,7 @@ PRODUCTION_CUTOVER: NO-GO
 Canonical **product feature inventory** + gap list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (every AppShell/PRODUCT capability has Plan ownership; open P0/P1 map to DART-050–061).  
 When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
 
-**Cleared residuals:** RB-06 (inventory fidelity program DART-050–054).
+**Cleared residuals:** RB-01 (in-game loadouts surface DART-055); RB-06 (inventory fidelity program DART-050–054).
 
 ---
 
@@ -76,7 +76,7 @@ Status legend:
 | `sets` | `/sets` | Sets | **PASS** | **N/A**\* | **PASS** | Windows DART-030; web DART-046. \*Same mobile note as synergy. |
 | `catalog` | `/catalog` | Catalog | **PASS** | **MISS** | **PASS** | Windows offline+owned (DART-020/026). Web facets + prebuilt bundles (DART-044). Mobile catalog browse not primary nav. |
 | `settings` | `/settings` | Settings | **PASS** | **PARTIAL** | **PASS** | Windows: OAuth, inventory sync, manifest, legacy import. Mobile: settings shell. Web: account + OPFS writer status. |
-| `loadouts` | `/loadouts` | In-Game Loadouts | **MISS** | **MISS** | **MISS** | Bungie in-game loadout browser is product nav but **not** the compose→equip spine. **Residual RB-01** — required for full nav parity (`RC-NAV`) unless product demotes the link. |
+| `loadouts` | `/loadouts` | In-Game Loadouts | **PASS** | **MISS**\* | **PASS** | **DART-055**: Windows NavigationRail + page lists Bungie character loadouts (component 206); Jaspr ShellHeader `/loadouts` route + page. Pure parse/presentation in `packages/bungie`. \*Mobile top-level Loadouts not required for RC-NAV (reduced nav). RB-01 **cleared**. |
 
 ### Adjacent product surfaces (not AppShell gates)
 
@@ -120,7 +120,7 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 
 | ID | Criterion | Pass condition | Evidence pointer | Status (2026-07-25) |
 | -- | --------- | -------------- | ---------------- | ------------------- |
-| **RC-NAV** | Production nav parity for required spine | `build`, `synergy`, `sets`, `catalog`, `settings` are **PASS** on **web** (Jaspr) and **Windows**; `loadouts` is **PASS** **or** product explicitly demotes/removes it from AppShell | This matrix; AppShell diff | **FAIL** (loadouts MISS — RB-01) |
+| **RC-NAV** | Production nav parity for required spine | `build`, `synergy`, `sets`, `catalog`, `settings` are **PASS** on **web** (Jaspr) and **Windows**; `loadouts` is **PASS** **or** product explicitly demotes/removes it from AppShell | This matrix; AppShell diff; DART-055 host tests | **PASS** (loadouts PASS Windows+web — RB-01 cleared; re-verify labels on cutover build) |
 | **RC-DOMAIN** | Hard/soft domain parity non-regression | Pure domain suite + hard-block codes stable; soft never implies hard block; soft never auto-applies | `dart run tool/p0_parity_gate.dart`; DBR/DAC | **PASS** (suite maintained; re-run before cutover day) |
 | **RC-COMPOSE** | Intent→compose path on production web host | User can create build, attach sets, pin slots, see soft guidance on Jaspr without Next | DART-046 manual/scripted path | **PASS** (feature complete; re-verify on cutover build) |
 | **RC-EQUIP** | Equip-ready + equip and/or DIM on production web | Equip-ready gate enforced; DIM jsonOnly blocked when not ready; optional equip partial OK | DART-047 tests + smoke | **PASS** (feature complete; re-verify live Bungie in dual-run) |

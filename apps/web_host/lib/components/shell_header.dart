@@ -15,6 +15,7 @@ class ShellHeader extends StatelessComponent {
     (label: 'Builds', path: '/builds'),
     (label: 'Sets', path: '/sets'),
     (label: 'Synergies', path: '/synergies'),
+    (label: 'Loadouts', path: '/loadouts'),
     (label: 'Settings', path: '/'),
   ];
 

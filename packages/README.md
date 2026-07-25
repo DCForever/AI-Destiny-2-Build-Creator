@@ -22,6 +22,7 @@ apps/
       sets/               # DART-030: Sets library dual-pane + catalog slot picker
       synergies/          # DART-031: Synergy library dual-pane + evidence links (designation immutable)
       settings/           # Manifest status + OAuth account card (sign-in/out)
+      loadouts/           # DART-055: In-Game Loadouts (Bungie component 206)
       theme/              # DART-029: Flap theme stub
   mobile_host/            # Flutter Android+iOS shell (DART-040/041) — destiny2_mobile_host
     lib/
@@ -34,8 +35,9 @@ apps/
   web_host/               # Jaspr web shell (DART-042) — destiny2_web_host (NOT root workspace member)
     lib/
       main.client.dart    # client SPA entry (jaspr mode: client)
-      app.dart            # shell + jaspr_router (Settings primary)
+      app.dart            # shell + jaspr_router (Settings primary + /loadouts DART-055)
       pages/              # Hello Settings stub
+      loadouts/           # DART-055: In-Game Loadouts route page
       theme/              # CSS vars from destiny2_ui_tokens
     # Resolve with: cd apps/web_host && dart pub get  (Jaspr analyzer vs Flutter meta pin)
 
@@ -309,6 +311,7 @@ if (!isInventoryFresh(result.lastFullSyncAt)) {
 - **Socket plugs (DART-052 / GAP-INV-03):** `classifyWeaponSocket` + `buildStoredSocketPlugs` (Next parity) persist weapon `socket_plugs` with `columnKind`/`columnLabel` when `weaponSocketContextBuilder` supplies plug categories + weapon perk socket indexes (`4241085061`). Without context, raw capture maps are stored (no kinds) — incomplete for perk grids. Windows wires raw DestinyInventoryItemDefinition; web MVP has no raw defs (PROC-06 residual until entity/raw channel). Soft metadata only — **never** auto-applies.
 - **Owned catalog** still needs entity stores populated (`OwnedCatalogBridge` joins counts onto entity baseItems) — empty entity cache ≠ empty vault (**GAP-INV-06**). Settings/Catalog empty-cache UX is **DART-053**.
 - Settings sync UI is **DART-025**; diagnostics retention + `formatSyncDiagnostics` surface is **DART-053** (`packages/bungie` exports the pure formatter)
+- **In-game loadouts (DART-055 / GAP-NAV-01):** `parseCharacterLoadoutsResponse` + presentation tables + `getCharacterLoadoutsProfile` (`200,206`) in `destiny2_bungie`. Windows + Jaspr primary nav/route list Bungie character loadouts (not the local Drift `loadouts` snapshot table).
 
 ```powershell
 dart test packages/bungie

@@ -59,6 +59,21 @@ class FakeProfileClient implements BungieProfileClient {
   }
 
   @override
+  Future<Object?> getCharacterLoadoutsProfile(
+    String accessToken,
+    DestinyMembership membership,
+  ) async {
+    return {
+      'characterLoadouts': {
+        'data': {
+          for (final c in characters)
+            c.characterId: {'loadouts': <Object>[]},
+        },
+      },
+    };
+  }
+
+  @override
   Future<List<RawInventoryItem>> getFullInventory(
     String accessToken,
     DestinyMembership membership,

@@ -76,6 +76,58 @@ void main() {
       expect(seen!.headers['Authorization'], 'Bearer tok');
     });
 
+    test('getCharacterLoadoutsProfile uses components 200,206', () async {
+      BungieHttpRequest? seen;
+      final http = BungieHttpClient(
+        apiKey: 'k',
+        transport: (request) async {
+          seen = request;
+          return BungieHttpResponse(
+            statusCode: 200,
+            body: successBody({
+              'characters': {
+                'data': {
+                  'char1': {
+                    'characterId': 'char1',
+                    'classType': 0,
+                    'light': 2000,
+                    'dateLastPlayed': '2026-01-01',
+                  },
+                },
+              },
+              'characterLoadouts': {
+                'data': {
+                  'char1': {
+                    'loadouts': [
+                      {
+                        'iconHash': 0,
+                        'colorHash': 0,
+                        'nameHash': 0,
+                        'items': [
+                          {'itemInstanceId': '99'},
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            }),
+          );
+        },
+      );
+      final client = HttpBungieProfileClient(http: http);
+      final profile = await client.getCharacterLoadoutsProfile('tok', membership);
+      expect(
+        seen!.uri.queryParameters['components'],
+        kCharacterLoadoutsProfileComponents,
+      );
+      final characters = parseCharactersResponse(profile);
+      final loadouts = parseCharacterLoadoutsResponse(profile, characters);
+      expect(loadouts, hasLength(1));
+      expect(loadouts.single.itemInstanceIds, ['99']);
+      expect(loadouts.single.className, 'Titan');
+    });
+
     test('getFullInventory parses vault, character, equipped', () async {
       final http = BungieHttpClient(
         apiKey: 'k',

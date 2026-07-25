@@ -20,6 +20,8 @@ import 'db/web_db_status.dart';
 import 'dim_export/dim_export_controller.dart';
 import 'equip/equipment_bucket_lookup_provider.dart';
 import 'equip/roll_tag_lookup_provider.dart';
+import 'loadouts/loadouts_controller.dart';
+import 'loadouts/loadouts_page.dart';
 import 'pages/auth_callback_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
@@ -42,6 +44,7 @@ class App extends StatefulComponent {
     this.profileClient,
     this.writeClient,
     this.clipboardWriter,
+    this.loadoutsController,
     super.key,
   });
 
@@ -62,6 +65,9 @@ class App extends StatefulComponent {
   final BungieWriteClient? writeClient;
   final DimClipboardWriter? clipboardWriter;
 
+  /// Optional prebuilt loadouts controller (tests inject fixtures).
+  final LoadoutsController? loadoutsController;
+
   @override
   State<App> createState() => _AppState();
 }
@@ -70,11 +76,14 @@ class _AppState extends State<App> {
   late WebDbSessionStatus _dbStatus;
   StreamSubscription<WebDbSessionStatus>? _sub;
   ComposeServices? _compose;
+  LoadoutsController? _loadouts;
 
   @override
   void initState() {
     super.initState();
     _compose = component.compose;
+    _loadouts = component.loadoutsController;
+    _ensureLoadoutsController();
     _dbStatus = component.initialDbStatus ??
         component.bootstrap?.status ??
         WebDbSessionStatus.loadingWriter;
@@ -142,9 +151,25 @@ class _AppState extends State<App> {
 
   ComposeServices? get _effectiveCompose => component.compose ?? _compose;
 
+  LoadoutsController? get _effectiveLoadouts =>
+      component.loadoutsController ?? _loadouts;
+
+  void _ensureLoadoutsController() {
+    if (_loadouts != null) return;
+    final session = component.oauthSession;
+    final profile = component.profileClient;
+    if (session != null && profile != null) {
+      _loadouts = LoadoutsController(
+        session: session,
+        profileClient: profile,
+      );
+    }
+  }
+
   @override
   Component build(BuildContext context) {
     final compose = _effectiveCompose;
+    final loadouts = _effectiveLoadouts;
     return div(classes: 'app-shell', [
       Router(
         routes: [
@@ -209,6 +234,13 @@ class _AppState extends State<App> {
                 title: 'Synergies',
                 builder: (context, state) => SynergiesPage(
                   controller: compose?.synergies,
+                ),
+              ),
+              Route(
+                path: '/loadouts',
+                title: 'In-Game Loadouts',
+                builder: (context, state) => LoadoutsPage(
+                  controller: loadouts,
                 ),
               ),
               Route(
