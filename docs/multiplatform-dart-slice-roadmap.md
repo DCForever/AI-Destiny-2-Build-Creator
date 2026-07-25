@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-011 done — P0 phase gate)  
+**Updated:** 2026-07-24 (DART-012 done — StorageRoot + Windows app-support layout)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -103,7 +103,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-009** | **done** | `static-sandbox-data` | `dart-009-static-sandbox-data` | P0 | DART-001 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
 | **DART-010** | **done** | `dim-builders` | `dart-010-dim-builders` | P0 | DART-006 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
 | **DART-011** | **done** | `domain-parity-gate` | `dart-011-domain-parity-gate` | P0 | DART-003–010 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
-| **DART-012** | pending | `storage-root` | `dart-012-storage-root` | P1 | DART-011 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
+| **DART-012** | **done** | `storage-root` | `dart-012-storage-root` | P1 | DART-011 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
 | **DART-013** | pending | `drift-schema` | `dart-013-drift-schema` | P1 | DART-012 | Drift schema mirroring core tables (users, builds, variants, sets, synergies, inventory) | Schema creates clean DB; PRAGMA/index notes for critical uniques |
 | **DART-014** | pending | `drift-migrations` | `dart-014-drift-migrations` | P1 | DART-013 | Migration strategy mirroring historical ensure* / column upgrades needed for import later | Empty→current migrate green; documented version table |
 | **DART-015** | pending | `repos-library` | `dart-015-repos-library` | P1 | DART-014 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-012** `storage-root` (P1 — StorageRoot + Windows path_provider layout) |
-| **Active branch** | (create) `dart-012-storage-root` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-012-storage-root/` (created at specify) |
+| **Next / active slice** | **DART-013** `drift-schema` (P1 — Drift schema mirroring core tables) |
+| **Active branch** | (create) `dart-013-drift-schema` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-013-drift-schema/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-012 note (completed)
+
+**StorageRoot** package `packages/storage` (`destiny2_storage`): app-support layout paths for `app.db`, `manifest/`, `entities/`, `users/`, `current-version.json` — **not** repo `.cache`. Hosts inject path_provider `getApplicationSupportDirectory().path` via `StorageRoot.windowsAppSupport`. Unit tests: fake base path + temp `ensureLayout` (`dart test packages/storage`, 11 tests). Pure packages unchanged; P0 gate still green.
 
 ### DART-011 note (completed)
 
