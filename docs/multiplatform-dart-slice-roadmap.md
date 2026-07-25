@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-060 done — dual-run + rollback ops; next DART-061)  
+**Updated:** 2026-07-25 (DART-061 done — production cutover re-gate; PRODUCTION_CUTOVER GO; program DART-001–061 complete)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -156,7 +156,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-058** | **done** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01** closed; RB-03 cleared; RC-AUTH **PASS**. Published matrix (Windows HTTPS loopback, Jaspr `/auth/callback`, mobile schemes); secret scan gate; smoke preflight + operator checklist |
 | **DART-059** | **done** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | **GAP-WEB-02** closed; RB-05 cleared; RC-WEB-DATA **PASS**. Hybrid channel (ship-in-app primary + optional CDN) + versioning; prod `/entities/prod/bundle.json` offline; no Next manifest API |
 | **DART-060** | **done** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | **GAP-OPS-01** closed; RB-04 cleared; RC-OPS **PASS**. Runbook + EXECUTED_ONCE notes; Next + Dart web/Windows available; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next sole production; `tool/dual_run_ops_gate.dart` |
-| **DART-061** | **planned** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01**, GAP-FEAT-02 non-goal. All RC-* pass or product-waived; PRODUCTION_CUTOVER: GO with date/rationale; RC-BRANCH allows merge toward production/main only after GO. dim.gg share remains non-goal unless elevated |
+| **DART-061** | **done** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01** closed; GAP-FEAT-02 remains non-goal (jsonOnly). All RC-* PASS incl. RC-BRANCH; PRODUCTION_CUTOVER: GO 2026-07-25 with rationale; merge toward production/main allowed only after GO; offline `tool/production_cutover_regate.dart` |
 
 ---
 
@@ -218,16 +218,20 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-061** `production-cutover-regate` (**planned** — next after DART-060) |
+| **Next / active slice** | *(none — planned DART-001–061 complete)* |
 | **Active branch** | `feature/multiplatform-dart` |
-| **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
+| **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until DART-061 re-gate (RB-01…06 cleared; RC-OPS PASS; remaining RC-BRANCH / formal GO) |
-| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–057 **done** → P8 DART-058–060 **done** → DART-061 |
+| **Blocked on** | **None** for planned program — **PRODUCTION_CUTOVER: GO** (DART-061); human/release may merge toward production/`main` (RC-BRANCH) |
+| **Phase plan** | P6–P8 **done** (DART-050–061); program complete |
+
+### DART-061 note (completed) — production cutover re-gate
+
+All **RC-*** **PASS** including **RC-BRANCH**; **`PRODUCTION_CUTOVER: GO`** (2026-07-25) with date/rationale; **GAP-CUT-01** closed; **GAP-FEAT-02** dim.gg remains non-goal (jsonOnly sufficient). Merge of `feature/multiplatform-dart` toward production/`main` allowed only after GO ([branching.md](./multiplatform-dart-branching.md)). Offline re-gate `tool/production_cutover_regate.dart`. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-061-production-cutover-regate/`. Finish-spec still lands on `feature/multiplatform-dart` only; actual main merge is human/release follow-on.
 
 ### DART-060 note (completed) — dual-run + rollback ops
 
-Written dual-run runbook with Next sole production + Dart Windows/Jaspr available; **EXECUTED_ONCE** notes 2026-07-25; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly) in dual-run window via host tests; **ROLLBACK_PROCEDURE** = keep Next sole production; offline gate `tool/dual_run_ops_gate.dart`. GAP-OPS-01 closed; RB-04 cleared; RC-OPS PASS. Soft never auto-applies; no CLIENT_SECRET. PRODUCTION_CUTOVER remains NO-GO. Specs: `specs/dart-060-dual-run-rollback-ops/`. Doc: `docs/multiplatform-dart-dual-run-rollback-runbook.md`. Next: **DART-061** production cutover re-gate.
+Written dual-run runbook with Next sole production + Dart Windows/Jaspr available; **EXECUTED_ONCE** notes 2026-07-25; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly) in dual-run window via host tests; **ROLLBACK_PROCEDURE** = keep Next sole production; offline gate `tool/dual_run_ops_gate.dart`. GAP-OPS-01 closed; RB-04 cleared; RC-OPS PASS. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-060-dual-run-rollback-ops/`. Doc: `docs/multiplatform-dart-dual-run-rollback-runbook.md`. Next: **DART-061** (done).
 
 ### DART-059 note (completed) — entity bundle prod channel
 

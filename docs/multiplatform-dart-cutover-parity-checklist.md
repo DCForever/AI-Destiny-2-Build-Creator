@@ -1,16 +1,17 @@
 # Multiplatform Dart — Cutover Parity Checklist (DART-049)
 
 **Status:** active program gate artifact  
-**Updated:** 2026-07-25 (DART-060 dual-run + rollback ops; RB-04 cleared / RC-OPS PASS)  
-**Program ID:** DART-049  
-**Phase:** P5 / **program gate**  
+**Updated:** 2026-07-25 (DART-061 production cutover re-gate; **PRODUCTION_CUTOVER_GO**; RC-BRANCH PASS; GAP-CUT-01 closed)  
+**Program ID:** DART-049 (checklist) + **DART-061** (production cutover re-gate)  
+**Phase:** P5 / **program gate** + P8 / **production readiness**  
 **Integration base:** `feature/multiplatform-dart`  
 **Architecture:** [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md)  
 **Roadmap:** [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md)  
 **Product production nav source:** `src/components/AppShell.tsx` (`NAV_LINKS`)  
-**Product intent:** `PRODUCT.md` (compose→equip spine)
+**Product intent:** `PRODUCT.md` (compose→equip spine)  
+**Offline re-gate:** `dart run tool/production_cutover_regate.dart` (DART-061)
 
-This document is the **canonical written parity checklist** for retiring Next.js as the production host. It does **not** by itself flip production traffic.
+This document is the **canonical written parity checklist** for retiring Next.js as the production host. **`PRODUCTION_CUTOVER: GO` authorizes** merge of `feature/multiplatform-dart` toward production/`main` and Next retirement ops; it does **not** auto-merge or delete the Next tree.
 
 ---
 
@@ -19,9 +20,9 @@ This document is the **canonical written parity checklist** for retiring Next.js
 | Gate | Meaning | Marker |
 | ---- | ------- | ------ |
 | **P5 / program gate** | Planned DART-001…049 slices delivered; checklist + residual list exist | `PROGRAM_GATE` |
-| **Production cutover** | Next may stop being the production web host | `PRODUCTION_CUTOVER` |
+| **Production cutover** | Next may stop being the sole production web host; multiplatform line may merge toward production/`main` | `PRODUCTION_CUTOVER` / **PRODUCTION_CUTOVER_GO** |
 
-Program completion ≠ automatic Next retirement.
+Program completion ≠ automatic Next retirement; **GO** is the explicit cutover decision (DART-061 / GAP-CUT-01).
 
 ---
 
@@ -29,14 +30,18 @@ Program completion ≠ automatic Next retirement.
 
 ```
 PROGRAM_GATE: GO
-PRODUCTION_CUTOVER: NO-GO
+PRODUCTION_CUTOVER: GO
 ```
 
 **Date:** 2026-07-25  
 
+**Marker:** `PRODUCTION_CUTOVER_GO` (machine-checked by `tool/production_cutover_regate.dart`)
+
 **PROGRAM_GATE rationale:** All planned multiplatform slices through DART-049 are specified/implemented on `feature/multiplatform-dart` (domain → Drift → Flutter Windows → mobile → Jaspr → import → this checklist). Validator for this document is green. P5 exit (“Next retirement gates **documented**”) is satisfied.
 
-**PRODUCTION_CUTOVER rationale:** Residual blockers remain (see [Residual blockers](#residual-blockers)) — primarily **RC-BRANCH** / formal cutover re-gate (**DART-061** / GAP-CUT-01). Dual-run ops (**RB-04** / **RC-OPS**) cleared by DART-060. Do **not** delete Next, merge this line to `main` as sole production, or drop Confidential OAuth until every `RC-*` criterion is **pass** and a human sets GO.
+**PRODUCTION_CUTOVER rationale (DART-061):** All residual blockers **RB-01…RB-06** are **CLEARED** (DART-050–060). Every **RC-*** criterion is **PASS**, including **RC-BRANCH** (merge of `feature/multiplatform-dart` toward production/`main` is allowed **only after** this GO — see [branching.md](./multiplatform-dart-branching.md)). Offline re-gate green; dual-run ops executed once; inventory fidelity gate green; Public OAuth matrix + secret scan green; entity hybrid channel green; soft never auto-applies; no `CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr clients. **GAP-CUT-01** closed. **GAP-FEAT-02** (dim.gg share) remains **non-goal** — **jsonOnly** DIM is sufficient for the cutover spine unless product elevates share URL parity.
+
+**After GO (ops):** A human/release engineer may merge `feature/multiplatform-dart` toward production/`main` and schedule Next domain-route retirement. DART slice finish-spec still lands on `feature/multiplatform-dart` only. Recommended: re-smoke live Bungie portal redirects + character equip on cutover day (hygiene; not a re-open of RB-*).
 
 ### Residual blockers
 
@@ -49,8 +54,8 @@ PRODUCTION_CUTOVER: NO-GO
 | ~~**RB-05**~~ | ~~Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened~~ | ~~RC-WEB-DATA~~ | **CLEARED (2026-07-25)** by **DART-059** / GAP-WEB-02: **hybrid** channel (ship-in-app primary + optional CDN) documented with versioning ([entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md)); prod path `/entities/channel.json` + `/entities/prod/bundle.json`; loader fallback + source report; offline Catalog without Next manifest API. |
 | ~~**RB-06**~~ | ~~**Inventory fidelity:** vault/postmaster unwired + enrichment thinner + no live harness~~ | ~~RC-SYNC fidelity~~ | **CLEARED (2026-07-25)** by **DART-050–054**: vault lookup (050), roll tags (051), sockets (052), diagnostics UI (053), live/fixture harness + fidelity gate (054 / GAP-INV-05 / PROC-03/04/05). Evidence: package+host fixtures; [multiplatform-dart-inventory-live-parity-harness.md](./multiplatform-dart-inventory-live-parity-harness.md); `dart run tool/inventory_fidelity_gate.dart`. Web owned depth cleared separately by **RB-02** / DART-056. |
 
-Canonical **product feature inventory** + gap list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (every AppShell/PRODUCT capability has Plan ownership; open P0/P1 map to DART-050–061).  
-When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
+Canonical **product feature inventory** + gap list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md).  
+**Formal GO:** All residual blockers cleared **and** all `RC-*` **PASS** → **`PRODUCTION_CUTOVER: GO`** (2026-07-25, **DART-061** / **GAP-CUT-01** closed). **GAP-FEAT-02** dim.gg remains non-goal (jsonOnly sufficient).
 
 **Cleared residuals:** RB-01 (in-game loadouts surface DART-055); RB-02 (Jaspr inventory sync + Owned depth DART-056); RB-03 (prod Public OAuth matrix DART-058); RB-04 (dual-run + rollback ops DART-060); RB-05 (entity bundle prod channel DART-059); RB-06 (inventory fidelity program DART-050–054).
 
@@ -85,7 +90,7 @@ Status legend:
 | `/analyze` | Adjacent / legacy generator entry | **N/A** — not AppShell primary; do not block cutover |
 | `/debug/*` | Operator tooling (404 in production) | **N/A (non-goal)** — port roadmap forbids as primary nav |
 | LLM propose / multi-pass generator | Optional product capability | **N/A (non-goal)** for early port / cutover |
-| dim.gg share | Optional | **N/A (non-goal)** — jsonOnly DIM is enough for cutover spine |
+| dim.gg share | Optional | **N/A (non-goal)** — **GAP-FEAT-02**; jsonOnly DIM is enough for cutover spine (DART-061) |
 | Flutter Web | — | **N/A** — Jaspr is web target |
 
 ---
@@ -131,7 +136,7 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 | **RC-SECRETS** | No confidential secrets in clients | Scan clients/packages for `CLIENT_SECRET` / `SESSION_SECRET` embedding — none | Package/app source + build defines | **PASS** (architecture + code review baseline) |
 | **RC-SOFT** | Soft never auto-applies | Optimizer/guidance/improvement paths remain confirm-only | Domain + UI tests across hosts | **PASS** |
 | **RC-OPS** | Dual-run and rollback | Written ops steps executed once: Dart web + Next available; rollback = keep Next live | [dual-run + rollback runbook](./multiplatform-dart-dual-run-rollback-runbook.md) (EXECUTION_NOTES EXECUTED_ONCE 2026-07-25); `dart run tool/dual_run_ops_gate.dart` | **PASS** (RB-04 cleared DART-060; re-smoke operator live Bungie equip on cutover day) |
-| **RC-BRANCH** | Integration merge policy | Explicit decision to merge `feature/multiplatform-dart` → production branch/`main` only after PRODUCTION_CUTOVER GO | [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) | **FAIL** (blocked on cutover GO) |
+| **RC-BRANCH** | Integration merge policy | Explicit decision to merge `feature/multiplatform-dart` → production branch/`main` only after PRODUCTION_CUTOVER GO | [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) **RC-BRANCH / production merge** section; this verdict **PRODUCTION_CUTOVER_GO**; offline `dart run tool/production_cutover_regate.dart` | **PASS** (DART-061: GO recorded; merge toward production/`main` allowed only after this GO; finish-spec still lands on `feature/multiplatform-dart` only) |
 
 ### RC evaluation rules
 
@@ -161,8 +166,8 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 ## How to use this checklist
 
 1. **Before claiming program complete:** ensure `PROGRAM_GATE: GO` and validator green (`dart test tool/test/cutover_parity_checklist_validate_test.dart`).
-2. **Before retiring Next:** walk every `RC-*`; clear residual blockers; set `PRODUCTION_CUTOVER: GO`; update **Updated** date.
-3. **After GO:** follow branching doc — only then merge multiplatform line toward production/`main` and schedule Next domain route retirement.
+2. **Before retiring Next:** walk every `RC-*`; clear residual blockers; set `PRODUCTION_CUTOVER: GO`; update **Updated** date. (**Done 2026-07-25 — DART-061 / PRODUCTION_CUTOVER_GO.**)
+3. **After GO:** follow branching doc **RC-BRANCH** — merge multiplatform line toward production/`main` is now **allowed**; schedule Next domain route retirement. Run `dart run tool/production_cutover_regate.dart` before release merge.
 4. **Domain conflicts:** DBR / DAC / BR win over this checklist.
 
 ---
@@ -178,9 +183,11 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 | [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md) | RC-WEB-DATA OPFS limits |
 | [multiplatform-dart-entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md) | RC-WEB-DATA prod hybrid channel |
 | [multiplatform-dart-dual-run-rollback-runbook.md](./multiplatform-dart-dual-run-rollback-runbook.md) | RC-OPS dual-run + rollback + EXECUTION_NOTES |
-| `specs/dart-049-cutover-parity-checklist/` | Spec Kit slice |
+| `specs/dart-049-cutover-parity-checklist/` | Spec Kit slice (program gate) |
+| `specs/dart-061-production-cutover-regate/` | Spec Kit slice (PRODUCTION_CUTOVER GO re-gate) |
 | `tool/cutover_parity_checklist_validate.dart` | Structural validator |
 | `tool/dual_run_ops_gate.dart` | RC-OPS offline ops gate (DART-060) |
+| `tool/production_cutover_regate.dart` | PRODUCTION_CUTOVER GO + RC-* PASS re-gate (DART-061) |
 
 ---
 

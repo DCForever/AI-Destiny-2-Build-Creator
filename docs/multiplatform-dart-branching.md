@@ -1,6 +1,6 @@
 # Multiplatform Dart — branch & worktree isolation
 
-**Updated:** 2026-07-24  
+**Updated:** 2026-07-25 (DART-061 **RC-BRANCH** / **PRODUCTION_CUTOVER_GO**)  
 **Purpose:** Keep Spec Kit + Dart/Jaspr/Flutter port work **completely separate** from product UI features (e.g. `043-default-variant-composer`).
 
 ## Topology
@@ -22,11 +22,30 @@ Product line (separate):
 | Dart port **integration** | `feature/multiplatform-dart` | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | Active Dart **slice** | `dart-NNN-short-name` (**DART-NNN** program ID) | Prefer a dedicated worktree per slice, or checkout inside the multiplatform worktree only |
 
+## RC-BRANCH / production merge (after PRODUCTION_CUTOVER GO)
+
+**Marker:** `PRODUCTION_CUTOVER_GO` / **RC-BRANCH**  
+**Canonical verdict:** [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md)  
+**Offline re-gate:** `dart run tool/production_cutover_regate.dart`
+
+| Condition | Merge `feature/multiplatform-dart` → production / `main` |
+| --------- | -------------------------------------------------------- |
+| `PRODUCTION_CUTOVER: NO-GO` | **Forbidden** |
+| `PRODUCTION_CUTOVER: GO` (DART-061, 2026-07-25) | **Allowed** as a human/release step (not automatic) |
+
+Rules for this policy:
+
+1. **RC-BRANCH:** Merge of `feature/multiplatform-dart` toward production/`main` is allowed **only after** `PRODUCTION_CUTOVER: GO`.
+2. DART Spec Kit **finish-spec** still merges each slice onto **`feature/multiplatform-dart` only** (never auto-merge to `main` in agent finish).
+3. After GO, a release engineer may merge the multiplatform integration tip toward `main` / production branch and schedule Next domain-route retirement.
+4. Re-run `dart run tool/production_cutover_regate.dart` (and secret/fidelity/dual-run gates as needed) before the production merge.
+5. Soft never auto-applies; no `CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr clients.
+
 ## Rules
 
 1. **Never** implement multiplatform Dart/Jaspr/Flutter port work on product feature branches (`043-*`, equip/composer slices, etc.).
 2. **Never** merge multiplatform slices into product feature branches. Land slices onto **`feature/multiplatform-dart` only**.
-3. **Do not** merge `feature/multiplatform-dart` → `main` until an explicit cutover decision (see open questions in decisions doc).
+3. **Do not** merge `feature/multiplatform-dart` → `main` until **`PRODUCTION_CUTOVER: GO`** (see **RC-BRANCH** section above; GO set by DART-061). Before GO this merge was forbidden; after GO it is policy-allowed as a human/release step.
 4. Use **full Spec Kit lifecycle** for every slice on this line:
    - `/speckit-specify` → (optional `/speckit-clarify`) → `/speckit-plan` → `/speckit-tasks` → `/speckit-implement` → finish-spec
 5. When finishing a slice, **base branch = `feature/multiplatform-dart`** (not `main`, not `feature/overhall`). Override finish-spec base if `git-config.yml` still says `main`.

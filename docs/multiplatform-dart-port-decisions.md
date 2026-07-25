@@ -63,7 +63,7 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 
 ## Still open (not decided here)
 
-- When Next.js stops being production host — **criteria documented** in [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) (DART-049). As of 2026-07-25: `PRODUCTION_CUTOVER: NO-GO` until residual blockers / `RC-*` pass; `PROGRAM_GATE: GO`.
+- ~~When Next.js stops being production host~~ — **criteria documented** in [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) (DART-049). **Re-gate (DART-061):** `PRODUCTION_CUTOVER: GO` (2026-07-25) with all `RC-*` PASS including RC-BRANCH; merge of `feature/multiplatform-dart` toward production/`main` allowed only after GO ([branching.md](./multiplatform-dart-branching.md)); offline `dart run tool/production_cutover_regate.dart`. Actual main merge + Next route retirement remain human/release follow-on.
 - Entity-cache / raw-manifest tree copy from Next `.cache` (DART-048 covers `app.db` only; re-refresh on Windows).
 - ~~Prebuilt entity bundle distribution channel~~ — **decided (DART-059):** **hybrid** (ship-in-app primary + optional CDN); see [multiplatform-dart-entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md). RB-05 cleared / RC-WEB-DATA PASS.
 - Accessibility WCAG target (still open in PRODUCT.md) and whether mobile raises the bar before web cutover.

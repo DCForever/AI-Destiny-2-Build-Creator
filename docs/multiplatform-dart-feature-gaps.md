@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (DART-060 dual-run + rollback ops; GAP-OPS-01 closed / RB-04 cleared / RC-OPS PASS)  
+**Updated:** 2026-07-25 (DART-061 production cutover re-gate; GAP-CUT-01 closed; PRODUCTION_CUTOVER GO; GAP-FEAT-02 remains non-goal / jsonOnly)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -121,7 +121,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-DATA-LEGACY-IMPORT** | Legacy Next `app.db` → StorageRoot | N/A (source) | Windows dry-run + apply | **shipped** | DART-048; RC-DATA PASS |
 | **FEAT-DATA-OPFS** | Web OPFS single-tab writer | N/A (Node SQLite) | Jaspr OPFS writer | **shipped** | DART-043 |
 | **FEAT-OPS-DUAL-RUN** | Dual-run + rollback procedure | Next sole prod today | Runbook + EXECUTED_ONCE + ops gate | **shipped** (P1) | **DART-060** / GAP-OPS-01 closed / RB-04 cleared |
-| **FEAT-OPS-CUTOVER** | Production cutover re-gate | N/A | Checklist NO-GO | **planned** (P1) | **DART-061** / GAP-CUT-01 |
+| **FEAT-OPS-CUTOVER** | Production cutover re-gate | N/A | Checklist **PRODUCTION_CUTOVER: GO** | **shipped** (P1) | **DART-061** / GAP-CUT-01 **closed**; RC-BRANCH PASS; dim.gg (GAP-FEAT-02) non-goal — jsonOnly sufficient |
 
 ### E. Explicit non-goals / deferred (documented, not unplanned)
 
@@ -142,7 +142,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | Every PRODUCT confirmed capability has a FEAT row | **Yes** (compose spine, inventory, optimizer, equip/export, LLM, legacy) |
 | Every open/partial **P0/P1** maps to DART-050–061 | **Yes** — see master gap table; `unplanned_p0_p1` = empty |
 | Every deferred/n/a has reason | **Yes** — section E + deferred gap table |
-| Next Spec Kit start | **DART-050** `inventory-vault-resolution` |
+| Next Spec Kit start | *(none — DART-050–061 complete; PRODUCTION_CUTOVER GO)* |
 
 ---
 
@@ -173,7 +173,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `closed` (DART-058) | Confidential Next HTTPS | Published matrix + secret scan; Windows HTTPS default; mobile schemes published (session deferred) | **DART-058** done | RB-03 cleared / RC-AUTH PASS |
 | **GAP-WEB-02** | Entity bundle prod distribution | **P1** | `closed` (DART-059) | Full raw manifest pipeline | Hybrid ship-in-app + optional CDN; versioned channel | **DART-059** done | RB-05 cleared / RC-WEB-DATA PASS |
 | **GAP-OPS-01** | Dual-run + rollback procedure | **P1** | `closed` (DART-060) | Next sole prod | Runbook executed once; compose→equip re-verify in dual-run window; rollback = keep Next | **DART-060** done | RB-04 cleared / RC-OPS PASS |
-| **GAP-CUT-01** | Re-gate production cutover | **P1** | `planned` | N/A | Checklist NO-GO | **DART-061** | Flip PRODUCTION_CUTOVER when ready |
+| **GAP-CUT-01** | Re-gate production cutover | **P1** | `closed` (DART-061) | N/A | Checklist **PRODUCTION_CUTOVER: GO** + all RC-* PASS | **DART-061** done | GO 2026-07-25; RC-BRANCH PASS |
 | **GAP-UI-01** | Soft stat targets editor on Jaspr | **P2** | `closed` (DART-057) | Full `ArmorStatName` editor | All six stats + explicit save on web | **DART-057** done | Soft never auto-apply |
 | **GAP-FEAT-01** | Armor optimizer on mobile/web | **P2** | `deferred` | Full UI | Windows only (by design for program gate) | remains deferred | Accept Windows-only |
 | **GAP-FEAT-02** | dim.gg share | **P3** | `deferred` | Optional dim-export share | jsonOnly only | **DART-061** non-goal unless elevated | Cutover N/A |
@@ -458,18 +458,21 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ---
 
-### GAP-CUT-01 — Production cutover re-gate (**P1**)
+### GAP-CUT-01 — Production cutover re-gate (**P1**) — **closed** (DART-061)
 
-**Problem:** `PROGRAM_GATE: GO` / `PRODUCTION_CUTOVER: NO-GO` remains while RB-01…06 and RC-* fail.
+**Problem (was):** `PROGRAM_GATE: GO` / `PRODUCTION_CUTOVER: NO-GO` remained while formal re-gate / RC-BRANCH were incomplete.
 
-**Planned slice: DART-061 `production-cutover-regate`**
+**Closed by: DART-061 `production-cutover-regate`**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-061-production-cutover-regate` |
-| Depends | DART-050–060 as required by residual blockers |
+| Depends | DART-050–060 residual blockers cleared |
 | Exit criteria | All `RC-*` pass or product-waived with written note; `PRODUCTION_CUTOVER: GO` with date/rationale; merge policy allows `feature/multiplatform-dart` toward production/main only after GO (RC-BRANCH); dim.gg share remains non-goal (jsonOnly sufficient) unless product elevates (GAP-FEAT-02) |
-| Status | `planned` |
+| Status | **`closed`** / **done** (2026-07-25) |
+| Cutover | **PRODUCTION_CUTOVER: GO**; **RC-BRANCH PASS**; offline `dart run tool/production_cutover_regate.dart` |
+| Evidence | [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) verdict; [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) RC-BRANCH section; specs `specs/dart-061-production-cutover-regate/` |
+| Residual | GAP-FEAT-02 dim.gg remains **deferred** / non-goal (jsonOnly sufficient); actual main merge + Next tree retirement are human/release follow-on after GO |
 
 ---
 
@@ -491,7 +494,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | ID | Item | Reason | Slice note |
 | -- | ---- | ------ | ---------- |
 | GAP-FEAT-01 | Optimizer on mobile/web | Windows-first acceptable unless product elevates | Remain deferred on **DART-057** unless elevated; then confirm-only materialize/apply, soft never auto-apply |
-| GAP-FEAT-02 | dim.gg share | jsonOnly sufficient for cutover spine | Non-goal on **DART-061** unless product elevates share URL parity without secrets in clients |
+| GAP-FEAT-02 | dim.gg share | jsonOnly sufficient for cutover spine | **Remains non-goal** after **DART-061** GO unless product elevates share URL parity without secrets in clients |
 | GAP-FEAT-03 | LLM multi-pass / propose primary | PRODUCT non-primary | *Non-goal* |
 | GAP-FEAT-04 | `/debug/*` | Operator non-goal for port | *Non-goal* |
 | GAP-FEAT-05 | Analyze primary tab | Adjacent legacy | *Non-goal* |
@@ -502,12 +505,12 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ## Update checklist (after gaps analysis or finish-spec)
 
-- [x] Touch **Updated** date (2026-07-25 — DART-060 closed GAP-OPS-01 / RB-04 / RC-OPS)
+- [x] Touch **Updated** date (2026-07-25 — DART-061 closed GAP-CUT-01 / PRODUCTION_CUTOVER GO; GAP-FEAT-02 remains non-goal / jsonOnly)
 - [x] Refresh **Product feature inventory** (sections A–E) so every PRODUCT/AppShell capability has Plan ownership
-- [x] Set gap **Status** (master table + detailed specs) — GAP-MOB-01 / GAP-UI-01 / GAP-FEAT-06 **closed**
+- [x] Set gap **Status** (master table + detailed specs) — GAP-CUT-01 **closed** / **done**
 - [x] Ensure every `open`/`partial` P0–P1 gap has a **planned DART-NNN** (DART-050–061 only; no DART-062+)
-- [x] Sync residual table in cutover checklist if RB/RC change (RB-06 → DART-050–054; DART-050–061 residuals)
-- [x] Append/enrich DART-050–061 rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md) (DART-057 done)
+- [x] Sync residual table in cutover checklist if RB/RC change (all RB cleared; PRODUCTION_CUTOVER GO)
+- [x] Append/enrich DART-050–061 rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md) (DART-061 done)
 - [x] Inventory planning coverage check table all **Yes** / empty unplanned
 
 ---
@@ -516,8 +519,9 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-061** `production-cutover-regate` |
-| **Next phase** | P8 DART-058–060 **done** → DART-061 |
-| **Blocker for cutover** | Residual RC-BRANCH / formal PRODUCTION_CUTOVER GO (RB-01…06 cleared); DART-061 |
+| **Next planned slice** | *(none — DART-050–061 complete)* |
+| **Next phase** | P8 complete (DART-058–061 **done**); human/release merge toward production/`main` after GO |
+| **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |
+| **Non-goal residual** | **GAP-FEAT-02** dim.gg remains deferred (jsonOnly sufficient) |
