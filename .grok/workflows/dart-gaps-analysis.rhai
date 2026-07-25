@@ -133,12 +133,13 @@ seed_p += "Read with tools (read_file, list_dir, grep) — do not invent paths. 
 seed_p += "PRIMARY worktree (Dart port): " + worktree + " ";
 seed_p += "PRODUCT root (Next.js): " + product_root + " ";
 seed_p += "Required reads: ";
-seed_p += worktree + "/docs/multiplatform-dart-feature-gaps.md ; ";
+seed_p += worktree + "/docs/multiplatform-dart-feature-gaps.md (Product feature inventory FEAT-* + GAP-* tables) ; ";
 seed_p += worktree + "/docs/multiplatform-dart-slice-roadmap.md (header + DART-050+ rows + Current pointer) ; ";
 seed_p += worktree + "/docs/multiplatform-dart-cutover-parity-checklist.md (residual blockers + capability matrix) ; ";
 seed_p += product_root + "/PRODUCT.md (capabilities) ; ";
 seed_p += product_root + "/src/components/AppShell.tsx or NAV links. ";
 seed_p += "Return known_gap_ids from the catalog (GAP-*), next_planned_slice (e.g. DART-050), catalog_path, summary. ";
+seed_p += "In summary note whether Product feature inventory covers all AppShell keys + PRODUCT capabilities. ";
 seed_p += "JSON only per schema.";
 
 let seed_r = agent(seed_p, #{
@@ -231,14 +232,15 @@ let scans_json = json_encode(scans);
 phase("Plan");
 // =============================================================================
 let plan_p = "";
-plan_p += "Synthesize a complete plan so every P0/P1 gap has a DART-NNN slice. ";
-plan_p += "Read " + worktree + "/docs/multiplatform-dart-feature-gaps.md and slice-roadmap DART-050+ rows. ";
+plan_p += "Synthesize a complete plan so every P0/P1 gap has a DART-NNN slice AND every product feature is planned. ";
+plan_p += "Read " + worktree + "/docs/multiplatform-dart-feature-gaps.md (inventory + gaps) and slice-roadmap DART-050+ rows. ";
 plan_p += "SEED: " + seed_json + " ";
 plan_p += "SCANS: " + scans_json + " ";
 plan_p += "List unplanned_p0_p1 (gap ids still without a slice). ";
+plan_p += "Also note any PRODUCT/AppShell features missing from the FEAT inventory or without Plan ownership. ";
 plan_p += "slice_plan: ordered DART-050… with short_name, gap_ids, phase P6|P7|P8, exit_criteria. ";
 plan_p += "Prefer existing DART-050–061 if they already cover gaps; only invent DART-062+ if necessary. ";
-plan_p += "roadmap_edits: bullet strings describing doc updates needed. ";
+plan_p += "roadmap_edits: bullet strings describing doc updates needed (include inventory table if incomplete). ";
 plan_p += "summary: one paragraph. JSON per schema. Use tools to verify paths.";
 
 let plan_r = agent(plan_p, #{
@@ -264,15 +266,20 @@ let write_p = "";
 write_p += "You write/update planning docs in the Dart worktree only: " + worktree + " ";
 write_p += "Use read-write tools. Do NOT edit " + product_root + " product branch files. ";
 write_p += "\n## Required outcomes\n";
-write_p += "1) Ensure docs/multiplatform-dart-feature-gaps.md lists all P0/P1 gaps from SCANS with planned DART-NNN and exit criteria. ";
-write_p += "Merge new findings into existing GAP-* IDs; do not wipe the master table. Update **Updated** date. ";
+write_p += "1) Ensure docs/multiplatform-dart-feature-gaps.md has BOTH: ";
+write_p += "(a) **Product feature inventory** covering AppShell nav + PRODUCT confirmed capabilities + non-goals ";
+write_p += "(FEAT-* rows with Plan ownership: shipped|planned|deferred|n/a and DART slices), and ";
+write_p += "(b) GAP-* master table + detailed specs for all P0/P1 from SCANS with planned DART-NNN and parity-specific exit criteria. ";
+write_p += "Merge new findings into existing FEAT-*/GAP-* IDs; do not wipe tables. Update **Updated** date. ";
+write_p += "Every PRODUCT capability and AppShell nav key must appear in the inventory — no undocumented features. ";
 write_p += "2) Ensure docs/multiplatform-dart-slice-roadmap.md has DART-050+ planned rows for the slice_plan (add missing only). ";
 write_p += "Current pointer next slice = first planned inventory/fidelity slice (usually DART-050). ";
 write_p += "3) Ensure docs/multiplatform-dart-cutover-parity-checklist.md residual table references DART-050–061 / RB-06 inventory fidelity if not already. ";
 write_p += "4) Soft never auto-applies; no CLIENT_SECRET. ";
 write_p += "\nSEED: " + seed_json + "\nSCANS: " + scans_json + "\nPLAN: " + plan_json + "\n";
 write_p += "If unplanned_p0_p1 is non-empty, create GAP rows + DART-NNN plans for each before finishing. ";
-write_p += "Return success=true only if every open P0/P1 has a planned_slice. next_slice e.g. DART-050. JSON per schema.";
+write_p += "If any PRODUCT/AppShell feature lacks inventory Plan ownership, add FEAT row + plan before finishing. ";
+write_p += "Return success=true only if every open P0/P1 has a planned_slice AND feature inventory coverage is complete. next_slice e.g. DART-050. JSON per schema.";
 
 let write_r = agent(write_p, #{
     label: "write-docs",

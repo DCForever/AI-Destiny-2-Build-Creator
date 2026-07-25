@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-049 done; **P6–P8 planned DART-050–061** for Next gaps)  
+**Updated:** 2026-07-25 (DART-049 done; P6–P8 DART-050–061; DART-057 owns GAP-FEAT-06 finish-gaps host UX)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -145,18 +145,18 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-047** | **done** | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
 | **DART-048** | **done** | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
 | **DART-049** | **done** | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
-| **DART-050** | **planned** | `inventory-vault-resolution` | `dart-050-inventory-vault-resolution` | P6 | DART-024, DART-017/018 | Wire equipmentBucketLookup so vault/postmaster copies are stored | GAP-INV-01; vault instances in Drift; diagnostics resolvedFromTransfer |
-| **DART-051** | **planned** | `inventory-roll-tags` | `dart-051-inventory-roll-tags` | P6 | DART-050 | Port computeRollTags parity for weapon inventory rows | GAP-INV-02; golden vs Next fixtures |
-| **DART-052** | **planned** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | GAP-INV-03 |
-| **DART-053** | **planned** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | GAP-INV-04, GAP-INV-06 |
-| **DART-054** | **planned** | `inventory-live-parity-harness` | `dart-054-inventory-live-parity-harness` | P6 | DART-050–053 | Live/manual+tool Next-vs-Dart inventory count harness | GAP-INV-05; process gate |
-| **DART-055** | **planned** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | GAP-NAV-01; RB-01 |
-| **DART-056** | **planned** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | GAP-WEB-01; RB-02 |
-| **DART-057** | **planned** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires | GAP-MOB-01, GAP-UI-01 |
-| **DART-058** | **planned** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | GAP-AUTH-01; RB-03 |
-| **DART-059** | **planned** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | GAP-WEB-02; RB-05 |
-| **DART-060** | **planned** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | GAP-OPS-01; RB-04 |
-| **DART-061** | **planned** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | GAP-CUT-01 |
+| **DART-050** | **planned** | `inventory-vault-resolution` | `dart-050-inventory-vault-resolution` | P6 | DART-024, DART-017/018 | Wire equipmentBucketLookup so vault/postmaster copies are stored | **GAP-INV-01**, GAP-INV-06 docs, GAP-INV-07 opt, **PROC-01/02/06**. Build itemHash→bucket lookup from DestinyInventoryItemDefinition/entity stores; wire non-empty lookup into **every** production sync path (Windows Settings syncNow, Windows equip syncIfStale, Jaspr equip, future web Settings). Vault/postmaster weapon/armor in Drift with Kinetic/Energy/Power/armor buckets; unit+host fixtures assert resolvedFromTransfer>0; host tests fail if vault fixtures omit lookup; package docs stop treating empty lookup as production-OK; finish-spec rejects “user can sync” alone and opens GAP+RB for intentional thinning; document Owned still needs entity stores → DART-053 UX. Optional: parseWeaponStatValues parity (GAP-INV-07). Soft never auto-applies; no CLIENT_SECRET |
+| **DART-051** | **planned** | `inventory-roll-tags` | `dart-051-inventory-roll-tags` | P6 | DART-050 | Port computeRollTags parity for weapon inventory rows | **GAP-INV-02**; roll tags match Next computeRollTags golden fixtures for crafted/champion/build samples; soft never auto-applies; PROC-06 if thinning |
+| **DART-052** | **planned** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | **GAP-INV-03**; stored plugs include columnKind/columnLabel (or equiv) for instance perk grids; parity tests vs Next buildStoredSocketPlugs; PROC-06 if thinning |
+| **DART-053** | **planned** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | **GAP-INV-04**, **GAP-INV-06** UX. Controller retains last SyncInventoryResult diagnostics; Settings (Windows + web parity path) surfaces raw/parsed/dropped + resolution.resolvedFromTransfer/droppedNonEquipment/storedTotal; entity-cache empty warning so empty Owned is not blamed solely on inventory sync |
+| **DART-054** | **planned** | `inventory-live-parity-harness` | `dart-054-inventory-live-parity-harness` | P6 | DART-050–053 | Live/manual+tool Next-vs-Dart inventory count harness | **GAP-INV-05**, **PROC-03/04/05**. Documented dual-run procedure + optional tool comparing counts by location/bucket (and raw/stored/resolvedFromTransfer) for same membership; operator/CI gate for future inventory-sync changes; update cutover **RC-SYNC** to require vault/postmaster fidelity within Next tolerance (or documented residual); inventory fidelity gate **separate** from pure p0_parity_gate. Clears RB-06 when combined with DART-050–053 evidence |
+| **DART-055** | **planned** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | **GAP-NAV-01**; RB-01 / RC-NAV. Loadouts on Windows primary nav (+ Jaspr plan/route) comparable to product /loadouts, or product demotes AppShell link with PRODUCT note; cutover matrix loadouts PASS or N/A |
+| **DART-056** | **planned** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | **GAP-WEB-01**; RB-02. Same vault/transfer resolution as Windows post-DART-050; Owned usable to pin instances for equip/DIM on Jaspr; RC-SYNC no longer fails solely for web owned depth |
+| **DART-057** | **planned** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires; Jaspr soft-stat editor; finish-gaps host UX | **GAP-MOB-01**, **GAP-UI-01**, **GAP-FEAT-06**, GAP-FEAT-01 deferred. Published mobile matrix PASS/PARTIAL/MISS/N/A for each AppShell key (build/synergy/sets/catalog/settings/loadouts) plus equip/DIM/optimizer; ship equip+DIM jsonOnly with equip-ready gate **or** product-mark N/A; shell_nav tests match matrix. Jaspr soft-stat editor exposes all ArmorStatName with save parity. At least one production host (Windows and/or Jaspr) surfaces `evaluateFinishGaps` readiness comparable to Next FinishTab (category complete reasons; equip/export CTA policy = finish-complete AND equip-ready, or intentional thinning with product note); host tests assert finish-gap display; pure domain remains shared. Optimizer mobile/web remains deferred unless elevated. Soft never auto-applies |
+| **DART-058** | **planned** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01**; RB-03 / RC-AUTH. Published redirect matrix (Windows HTTPS loopback, Jaspr prod origin /auth/callback, mobile schemes); live sign-in smoke; zero BUNGIE_CLIENT_SECRET/SESSION_SECRET in client artifacts |
+| **DART-059** | **planned** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | **GAP-WEB-02**; RB-05 / RC-WEB-DATA. Channel (ship-in-app/CDN/hybrid) + versioning; prod web Catalog loads non-fixture entity data offline; offline compose without Next manifest API |
+| **DART-060** | **planned** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | **GAP-OPS-01**; RB-04 / RC-OPS. Runbook executed with Next + Dart web/Windows; live re-verify compose→equip (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next; notes on cutover checklist |
+| **DART-061** | **planned** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01**, GAP-FEAT-02 non-goal. All RC-* pass or product-waived; PRODUCTION_CUTOVER: GO with date/rationale; RC-BRANCH allows merge toward production/main only after GO. dim.gg share remains non-goal unless elevated |
 
 ---
 
@@ -186,6 +186,18 @@ Optimizer and equip are domain+UI pairs. Mobile is **nav shell first**, then com
 
 Skeleton → OPFS writer policy → bundles → auth → compose → equip → import → cutover. Matches locked decisions (OPFS 1a, Public+PKCE, no sidecar).
 
+### P6 — Inventory fidelity (DART-050–054)
+
+Critical path after program gate: production hosts omit `equipmentBucketLookup` so vault/postmaster drops before Drift (GAP-INV-01). **DART-050** wires lookup on every production sync call site and hardens exit criteria (PROC-01/02/06). Enrichment (roll tags, sockets) and diagnostics follow; **DART-054** live harness + RC-SYNC fidelity metrics prevent silent drift. Soft never auto-applies; no CLIENT_SECRET.
+
+### P7 — Nav & shell residuals (DART-055–057)
+
+Loadouts (RB-01), Jaspr owned depth after vault fix (RB-02), mobile surface matrix + Jaspr soft-stat editor completeness + finish-gaps host UX (GAP-FEAT-06; pure DART-007 already shipped).
+
+### P8 — Production readiness (DART-058–061)
+
+Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops with live compose→equip re-verify, production cutover re-gate.
+
 ---
 
 ## Deferred / out of roadmap (explicit)
@@ -206,11 +218,12 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-050** `inventory-vault-resolution` (**planned** — start Spec Kit next) |
+| **Next / active slice** | **DART-050** `inventory-vault-resolution` (**planned** — first P6 inventory/fidelity slice; start Spec Kit next) |
 | **Active branch** | `feature/multiplatform-dart` |
-| **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) |
+| **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB/RC + inventory fidelity (GAP-INV-01…) pass |
+| **Blocked on** | Production cutover **NO-GO** until residual RB-01…06 / RC-* + inventory fidelity (GAP-INV-01, GAP-INV-05 → DART-050–054) pass |
+| **Phase plan** | P6 DART-050–054 → P7 DART-055–057 → P8 DART-058–061 |
 
 ### DART-049 note (completed) — **P5 / program gate**
 
