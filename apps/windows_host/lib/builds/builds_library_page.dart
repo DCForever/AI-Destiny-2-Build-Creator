@@ -1,4 +1,5 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -374,16 +375,9 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               ),
             ),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: kFlapLibraryRailWidth,
-                  child: _buildRail(context),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: _buildDetail(context)),
-              ],
+            child: LibraryWorkspace(
+              rail: _buildRail(context),
+              detail: _buildDetail(context),
             ),
           ),
         ],
@@ -564,24 +558,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               ),
             ),
             const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Row(
-                children: [
-                  for (var i = 0;
-                      i < kFlapColumnsBuilds.headerLabels.length;
-                      i++)
-                    Expanded(
-                      flex: i == 0 || i == 3 ? 2 : 1,
-                      child: Text(
-                        kFlapColumnsBuilds.headerLabels[i].toUpperCase(),
-                        style: Theme.of(context).textTheme.labelSmall,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            const FlapBoardHeader(template: kFlapColumnsBuilds),
             const Divider(height: 1),
             Expanded(child: _buildBuildList()),
           ],
@@ -614,69 +591,37 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       itemBuilder: (context, index) {
         final b = _controller.builds[index];
         final selected = _controller.selected?.build.id == b.id;
-        return InkWell(
+        final identity = _controller.identitySummaryOf(b);
+        final synergy = _controller.synergySummaryOf(b);
+        final exotics = _controller.exoticsSummaryOf(b);
+        return FlapBoardRow(
           key: Key('builds_list_row_${b.id}'),
+          template: kFlapColumnsBuilds,
+          selected: selected,
           onTap: () => _controller.selectBuild(b.id),
-          child: Container(
-            decoration: BoxDecoration(
-              color: selected
-                  ? Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: 0.12)
-                  : null,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                  width: kFlapRuleThickness,
-                ),
-              ),
+          cells: [
+            FlapTextCell(
+              text: b.name,
+              primary: true,
+              textKey: Key('builds_list_name_${b.id}'),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    b.name,
-                    key: Key('builds_list_name_${b.id}'),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    _controller.identitySummaryOf(b),
-                    key: Key('builds_list_identity_${b.id}'),
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    _controller.exoticsSummaryOf(b),
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    _controller.synergySummaryOf(b),
-                    key: Key('builds_list_synergy_${b.id}'),
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'ok',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            FlapInkCell(
+              text: identity,
+              elementHint: synergy,
+              textKey: Key('builds_list_identity_${b.id}'),
             ),
-          ),
+            FlapInkCell(
+              text: exotics,
+              elementHint: synergy,
+              asSeal: true,
+            ),
+            FlapInkCell(
+              text: synergy.isEmpty ? '—' : synergy,
+              elementHint: synergy,
+              textKey: Key('builds_list_synergy_${b.id}'),
+            ),
+            const FlapTextCell(text: 'ok'),
+          ],
         );
       },
     );
@@ -1225,8 +1170,9 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                     'builds_soft_chip_${row.synergyId}_${row.tier.wireName}',
                   ),
                   avatar: CircleAvatar(
-                    backgroundColor: Color(
-                      _toneColor(coverageTierToneKey(row.tier)),
+                    backgroundColor: flapToneColor(
+                      context,
+                      coverageTierToneKey(row.tier),
                     ),
                     radius: 6,
                   ),
@@ -1355,19 +1301,6 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         ],
       ],
     );
-  }
-
-  int _toneColor(String toneKey) {
-    switch (toneKey) {
-      case 'success':
-        return kFlapSuccessDark;
-      case 'warning':
-        return kFlapWarningDark;
-      case 'danger':
-        return kFlapDangerDark;
-      default:
-        return kFlapMutedDark;
-    }
   }
 
   Future<void> _saveSoftStatTargets() async {

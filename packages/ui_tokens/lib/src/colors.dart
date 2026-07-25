@@ -1,98 +1,102 @@
 /// Matte Flap Ledger color tokens as ARGB ints (0xAARRGGBB).
 ///
-/// Values match [DESIGN.md](../../../DESIGN.md) and product `src/app/globals.css`
-/// dark (default) / light palettes. Hosts map with Flutter `Color(value)` or CSS
-/// `#RRGGBB` via [argbToCssHex].
+/// **Flutter dual-face (product choice):**
+/// - Dark default = **Cold Graphite** (blue-gray void, cyan-teal readiness lamp)
+/// - Light = **Paper Ledger** (cream stock, rubber-stamp amber lamp)
 ///
-/// **Rules:** No brushed steel. Amber is a readiness lamp, not a brand flood.
+/// Values match [DESIGN.md](../../../DESIGN.md). Hosts map with Flutter
+/// `Color(value)` or CSS `#RRGGBB` via [argbToCssHex].
+///
+/// **Rules:** No brushed steel. One readiness lamp only (not every border).
 /// Destiny element hexes stay sandbox-true on identity cells only.
+/// Status success never aliases ColorScheme.primary.
 library;
 
 // ---------------------------------------------------------------------------
-// Dark (default product / Windows stub)
+// Dark — Cold Graphite Board (default product / Windows + mobile)
 // ---------------------------------------------------------------------------
 
-/// Void canvas `#050608`.
-const int kFlapBackgroundDark = 0xFF050608;
+/// Cold void canvas `#070b10`.
+const int kFlapBackgroundDark = 0xFF070B10;
 
-/// Flap surface `#0c0e12`.
-const int kFlapSurfaceDark = 0xFF0C0E12;
+/// Graphite flap surface `#0e1319`.
+const int kFlapSurfaceDark = 0xFF0E1319;
 
-/// Raised flap `#12151c`.
-const int kFlapSurfaceRaisedDark = 0xFF12151C;
+/// Raised graphite `#141a22`.
+const int kFlapSurfaceRaisedDark = 0xFF141A22;
 
-/// Hairline rule `#1c212c`.
-const int kFlapLineDark = 0xFF1C212C;
+/// Hairline rule `#1f2733`.
+const int kFlapLineDark = 0xFF1F2733;
 
-/// Strong rule `#2a3140`.
-const int kFlapLineStrongDark = 0xFF2A3140;
+/// Strong rule `#2a3342`.
+const int kFlapLineStrongDark = 0xFF2A3342;
 
-/// Lettering `#e8eaef`.
-const int kFlapForegroundDark = 0xFFE8EAEF;
+/// Lettering `#e4eaf2`.
+const int kFlapForegroundDark = 0xFFE4EAF2;
 
-/// Dim lettering `#8a93a6`.
-const int kFlapMutedDark = 0xFF8A93A6;
+/// Dim lettering `#8492a6`.
+const int kFlapMutedDark = 0xFF8492A6;
 
-/// Readiness amber `#e6b35c`.
-const int kFlapAccentDark = 0xFFE6B35C;
+/// Cyan-teal readiness lamp `#4ec4bc` (One Lamp — selection / CTA only).
+const int kFlapAccentDark = 0xFF4EC4BC;
 
-/// Stronger amber face `#f0c878`.
-const int kFlapAccentStrongDark = 0xFFF0C878;
+/// Stronger teal face `#6fd4cd`.
+const int kFlapAccentStrongDark = 0xFF6FD4CD;
 
-/// Amber wash `#e6b35c` @ ~14% alpha (`#e6b35c24`).
-const int kFlapAccentDimDark = 0x24E6B35C;
+/// Teal wash `#4ec4bc` @ ~14% alpha (`#4ec4bc24`).
+const int kFlapAccentDimDark = 0x244EC4BC;
 
-/// Breach coral `#e2654f`.
-const int kFlapDangerDark = 0xFFE2654F;
+/// Breach coral `#e05a52`.
+const int kFlapDangerDark = 0xFFE05A52;
 
-/// Signal green `#6fc28b`.
-const int kFlapSuccessDark = 0xFF6FC28B;
+/// Signal green `#5cbc8e` (distinct from teal accent).
+const int kFlapSuccessDark = 0xFF5CBC8E;
 
-/// Caution gold `#d9a93f`.
-const int kFlapWarningDark = 0xFFD9A93F;
+/// Caution gold `#c9a84a`.
+const int kFlapWarningDark = 0xFFC9A84A;
 
 // ---------------------------------------------------------------------------
-// Light ledger (constants for later ThemeToggle; not live Windows default)
+// Light — Paper Ledger (ThemeMode.light / ThemeToggle)
 // ---------------------------------------------------------------------------
 
-/// Paper field `#e8e6e1`.
-const int kFlapBackgroundLight = 0xFFE8E6E1;
+/// Cream stock field `#ebe6db`.
+const int kFlapBackgroundLight = 0xFFEBE6DB;
 
-/// Paper plate `#f4f2ec`.
-const int kFlapSurfaceLight = 0xFFF4F2EC;
+/// Paper plate `#f7f3ea`.
+const int kFlapSurfaceLight = 0xFFF7F3EA;
 
-/// Raised paper `#ffffff`.
-const int kFlapSurfaceRaisedLight = 0xFFFFFFFF;
+/// Raised sheet `#fffdf7`.
+const int kFlapSurfaceRaisedLight = 0xFFFFFDF7;
 
-/// Light rule `#c9c4b8`.
-const int kFlapLineLight = 0xFFC9C4B8;
+/// Paper rule `#c4bba8`.
+const int kFlapLineLight = 0xFFC4BBA8;
 
-/// Strong light rule `#9a9488`.
+/// Strong paper rule `#9a9488`.
 const int kFlapLineStrongLight = 0xFF9A9488;
 
-/// Ink on paper `#1a1c22`.
-const int kFlapForegroundLight = 0xFF1A1C22;
+/// Carbon ink `#1a1b1f`.
+const int kFlapForegroundLight = 0xFF1A1B1F;
 
-/// Muted on paper `#5c6170`.
-const int kFlapMutedLight = 0xFF5C6170;
+/// Muted on paper `#5a5f6a`.
+const int kFlapMutedLight = 0xFF5A5F6A;
 
-/// Deepened amber on paper `#9a6b1f`.
-const int kFlapAccentLight = 0xFF9A6B1F;
+/// Rubber-stamp amber `#9a6418` (One Lamp on paper).
+const int kFlapAccentLight = 0xFF9A6418;
 
-/// Strong amber on paper `#7a5214`.
-const int kFlapAccentStrongLight = 0xFF7A5214;
+/// Strong stamp amber `#7a4e12`.
+const int kFlapAccentStrongLight = 0xFF7A4E12;
 
-/// Amber wash on paper `#9a6b1f1f`.
-const int kFlapAccentDimLight = 0x1F9A6B1F;
+/// Amber wash on paper `#9a64181f`.
+const int kFlapAccentDimLight = 0x1F9A6418;
 
 /// Danger on paper `#b53a2a`.
 const int kFlapDangerLight = 0xFFB53A2A;
 
-/// Success on paper `#1f7a45`.
-const int kFlapSuccessLight = 0xFF1F7A45;
+/// Success on paper `#1a6e3f`.
+const int kFlapSuccessLight = 0xFF1A6E3F;
 
-/// Warning on paper `#9a6f12`.
-const int kFlapWarningLight = 0xFF9A6F12;
+/// Warning on paper `#8f6510`.
+const int kFlapWarningLight = 0xFF8F6510;
 
 // ---------------------------------------------------------------------------
 // Destiny element ink (dark board — full strength on icons / identity)
@@ -135,7 +139,7 @@ const int kElementPrismaticLight = 0xFF9A3FB0;
 // Grouped views
 // ---------------------------------------------------------------------------
 
-/// Dark (default) Matte Flap Ledger palette.
+/// Cold Graphite (dark) / Paper Ledger (light) Matte Flap palettes.
 class FlapColorTokens {
   const FlapColorTokens._({
     required this.background,
@@ -181,7 +185,7 @@ class FlapColorTokens {
   final int elementStrand;
   final int elementPrismatic;
 
-  /// Product / Windows stub default.
+  /// Cold Graphite — product dark default.
   static const dark = FlapColorTokens._(
     background: kFlapBackgroundDark,
     surface: kFlapSurfaceDark,
@@ -205,7 +209,7 @@ class FlapColorTokens {
     elementPrismatic: kElementPrismaticDark,
   );
 
-  /// Light ledger constants (ThemeToggle later).
+  /// Paper Ledger — light ThemeMode face.
   static const light = FlapColorTokens._(
     background: kFlapBackgroundLight,
     surface: kFlapSurfaceLight,

@@ -1,5 +1,6 @@
 import 'package:destiny2_app/destiny2_app.dart' show SetDetail;
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -178,16 +179,9 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               ),
             ),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: kFlapLibraryRailWidth,
-                  child: _buildRail(context),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: _buildDetail(context)),
-              ],
+            child: LibraryWorkspace(
+              rail: _buildRail(context),
+              detail: _buildDetail(context),
             ),
           ),
         ],
@@ -253,23 +247,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           ),
         ),
         const Divider(height: 1),
-        // Column header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
-            children: [
-              for (var i = 0; i < kFlapColumnsSets.headerLabels.length; i++)
-                Expanded(
-                  flex: i == 0 ? 2 : 1,
-                  child: Text(
-                    kFlapColumnsSets.headerLabels[i].toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-          ),
-        ),
+        const FlapBoardHeader(template: kFlapColumnsSets),
         const Divider(height: 1),
         Expanded(child: _buildSetList()),
       ],
@@ -303,56 +281,25 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
         final itemCount = selected
             ? _controller.selected!.activeItems.length
             : null;
-        return InkWell(
+        return FlapBoardRow(
           key: Key('sets_list_row_${set.id}'),
+          template: kFlapColumnsSets,
+          selected: selected,
           onTap: () => _controller.selectSet(set.id),
-          child: Container(
-            decoration: BoxDecoration(
-              color: selected
-                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                  : null,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                  width: kFlapRuleThickness,
-                ),
-              ),
+          cells: [
+            FlapTextCell(
+              text: set.name,
+              primary: true,
+              textKey: Key('sets_list_name_${set.id}'),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    set.name,
-                    key: Key('sets_list_name_${set.id}'),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    set.type,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    set.tagIds.isEmpty ? '—' : set.tagIds.join(','),
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    itemCount != null ? '$itemCount filled' : '…',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            FlapTextCell(text: set.type),
+            FlapTextCell(
+              text: set.tagIds.isEmpty ? '—' : set.tagIds.join(','),
             ),
-          ),
+            FlapTextCell(
+              text: itemCount != null ? '$itemCount filled' : '…',
+            ),
+          ],
         );
       },
     );

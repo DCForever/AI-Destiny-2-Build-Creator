@@ -9,7 +9,7 @@ import 'theme/flap_theme.dart';
 /// Root Flutter app for the mobile host (DART-040).
 ///
 /// Bottom nav: Builds | Settings. Builds uses nested [Navigator] for
-/// Focus Swap (list XOR detail). Theme: Matte Flap Ledger.
+/// Focus Swap (list XOR detail). Appearance: Cold Graphite / Paper Ledger.
 class Destiny2MobileApp extends StatefulWidget {
   const Destiny2MobileApp({
     super.key,
@@ -28,6 +28,7 @@ class Destiny2MobileApp extends StatefulWidget {
 
 class _Destiny2MobileAppState extends State<Destiny2MobileApp> {
   int _index = 0;
+  ThemeMode _themeMode = ThemeMode.system;
   late final BuildsController _buildsController;
   bool _ownController = false;
 
@@ -68,7 +69,9 @@ class _Destiny2MobileAppState extends State<Destiny2MobileApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Destiny 2 Build Creator',
-      theme: buildFlapTheme(),
+      theme: buildFlapTheme(brightness: Brightness.light),
+      darkTheme: buildFlapTheme(brightness: Brightness.dark),
+      themeMode: _themeMode,
       home: Scaffold(
         key: const Key('mobile_shell'),
         body: IndexedStack(
@@ -88,6 +91,8 @@ class _Destiny2MobileAppState extends State<Destiny2MobileApp> {
             ),
             SettingsPage(
               services: widget.services,
+              themeMode: _themeMode,
+              onThemeModeChanged: (m) => setState(() => _themeMode = m),
             ),
           ],
         ),

@@ -2,26 +2,28 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('dark Matte Flap Ledger colors (DESIGN.md / globals.css)', () {
+  group('dark Cold Graphite colors', () {
     test('void / surface / raised / rules', () {
-      expect(kFlapBackgroundDark, 0xFF050608);
-      expect(kFlapSurfaceDark, 0xFF0C0E12);
-      expect(kFlapSurfaceRaisedDark, 0xFF12151C);
-      expect(kFlapLineDark, 0xFF1C212C);
-      expect(kFlapLineStrongDark, 0xFF2A3140);
+      expect(kFlapBackgroundDark, 0xFF070B10);
+      expect(kFlapSurfaceDark, 0xFF0E1319);
+      expect(kFlapSurfaceRaisedDark, 0xFF141A22);
+      expect(kFlapLineDark, 0xFF1F2733);
+      expect(kFlapLineStrongDark, 0xFF2A3342);
       expect(FlapColorTokens.dark.background, kFlapBackgroundDark);
       expect(FlapColorTokens.dark.surface, kFlapSurfaceDark);
     });
 
-    test('lettering + readiness amber + status lamps', () {
-      expect(kFlapForegroundDark, 0xFFE8EAEF);
-      expect(kFlapMutedDark, 0xFF8A93A6);
-      expect(kFlapAccentDark, 0xFFE6B35C);
-      expect(kFlapAccentStrongDark, 0xFFF0C878);
-      expect(kFlapAccentDimDark, 0x24E6B35C);
-      expect(kFlapDangerDark, 0xFFE2654F);
-      expect(kFlapSuccessDark, 0xFF6FC28B);
-      expect(kFlapWarningDark, 0xFFD9A93F);
+    test('lettering + cyan-teal readiness + status lamps', () {
+      expect(kFlapForegroundDark, 0xFFE4EAF2);
+      expect(kFlapMutedDark, 0xFF8492A6);
+      expect(kFlapAccentDark, 0xFF4EC4BC);
+      expect(kFlapAccentStrongDark, 0xFF6FD4CD);
+      expect(kFlapAccentDimDark, 0x244EC4BC);
+      expect(kFlapDangerDark, 0xFFE05A52);
+      expect(kFlapSuccessDark, 0xFF5CBC8E);
+      expect(kFlapWarningDark, 0xFFC9A84A);
+      // One Lamp: success must not equal accent.
+      expect(kFlapSuccessDark, isNot(kFlapAccentDark));
     });
 
     test('Destiny element ink (dark board)', () {
@@ -36,16 +38,26 @@ void main() {
     });
 
     test('argbToCssHex formats opaque and dim accent', () {
-      expect(argbToCssHex(kFlapAccentDark), '#e6b35c');
-      expect(argbToCssHex(kFlapBackgroundDark), '#050608');
-      expect(argbToCssHex(kFlapAccentDimDark), '#e6b35c24');
+      expect(argbToCssHex(kFlapAccentDark), '#4ec4bc');
+      expect(argbToCssHex(kFlapBackgroundDark), '#070b10');
+      expect(argbToCssHex(kFlapAccentDimDark), '#4ec4bc24');
     });
   });
 
-  group('light palette constants (future ThemeToggle)', () {
-    test('paper neutrals exist and differ from dark void', () {
-      expect(FlapColorTokens.light.background, 0xFFE8E6E1);
-      expect(FlapColorTokens.light.surface, 0xFFF4F2EC);
+  group('light Paper Ledger colors', () {
+    test('cream neutrals + rubber-stamp amber', () {
+      expect(FlapColorTokens.light.background, 0xFFEBE6DB);
+      expect(FlapColorTokens.light.surface, 0xFFF7F3EA);
+      expect(FlapColorTokens.light.surfaceRaised, 0xFFFFFDF7);
+      expect(FlapColorTokens.light.line, 0xFFC4BBA8);
+      expect(FlapColorTokens.light.foreground, 0xFF1A1B1F);
+      expect(FlapColorTokens.light.muted, 0xFF5A5F6A);
+      expect(FlapColorTokens.light.accent, 0xFF9A6418);
+      expect(FlapColorTokens.light.accentStrong, 0xFF7A4E12);
+      expect(FlapColorTokens.light.accentDim, 0x1F9A6418);
+      expect(FlapColorTokens.light.success, 0xFF1A6E3F);
+      expect(FlapColorTokens.light.danger, 0xFFB53A2A);
+      expect(FlapColorTokens.light.warning, 0xFF8F6510);
       expect(FlapColorTokens.light.background, isNot(kFlapBackgroundDark));
     });
   });

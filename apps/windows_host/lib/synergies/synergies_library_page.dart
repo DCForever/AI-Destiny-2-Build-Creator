@@ -1,5 +1,6 @@
 import 'package:destiny2_app/destiny2_app.dart' show SynergyLinkWrite;
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -183,16 +184,9 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
               ),
             ),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: kFlapLibraryRailWidth,
-                  child: _buildRail(context),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: _buildDetail(context)),
-              ],
+            child: LibraryWorkspace(
+              rail: _buildRail(context),
+              detail: _buildDetail(context),
             ),
           ),
         ],
@@ -277,22 +271,7 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
           ),
         ),
         const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
-            children: [
-              for (var i = 0; i < kFlapColumnsSynergy.headerLabels.length; i++)
-                Expanded(
-                  flex: i == 0 || i == 2 ? 2 : 1,
-                  child: Text(
-                    kFlapColumnsSynergy.headerLabels[i].toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-          ),
-        ),
+        const FlapBoardHeader(template: kFlapColumnsSynergy),
         const Divider(height: 1),
         Expanded(child: _buildSynergyList()),
       ],
@@ -326,61 +305,27 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
         final designation = _controller.designationOf(s);
         final evidenceCount =
             selected ? _controller.draftLinks.length : s.links.length;
-        return InkWell(
+        return FlapBoardRow(
           key: Key('synergies_list_row_${s.id}'),
+          template: kFlapColumnsSynergy,
+          selected: selected,
           onTap: () => _controller.selectSynergy(s.id),
-          child: Container(
-            decoration: BoxDecoration(
-              color: selected
-                  ? Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: 0.12)
-                  : null,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                  width: kFlapRuleThickness,
-                ),
-              ),
+          cells: [
+            FlapTextCell(
+              text: s.name,
+              primary: true,
+              textKey: Key('synergies_list_name_${s.id}'),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    s.name,
-                    key: Key('synergies_list_name_${s.id}'),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    designation,
-                    key: Key('synergies_list_designation_${s.id}'),
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '$evidenceCount link${evidenceCount == 1 ? '' : 's'}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'ok',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            FlapInkCell(
+              text: designation,
+              elementHint: designation,
+              textKey: Key('synergies_list_designation_${s.id}'),
             ),
-          ),
+            FlapTextCell(
+              text: '$evidenceCount link${evidenceCount == 1 ? '' : 's'}',
+            ),
+            const FlapTextCell(text: 'ok'),
+          ],
         );
       },
     );

@@ -14,6 +14,7 @@ workspace:
   - packages/bungie
   - packages/app
   - packages/ui_tokens
+  - packages/ui_flutter
   - apps/windows_host
   - apps/mobile_host
   # apps/web_host is NOT a pub workspace member: Jaspr 0.23 builder
@@ -48,4 +49,4 @@ melos:
 
     analyze:
       description: "Run dart analyze on workspace Dart packages (Flutter host uses flutter analyze)"
-      run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db packages/manifest packages/bungie packages/app packages/ui_tokens
+      run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db packages/manifest packages/bungie packages/app packages/ui_tokens packages/ui_flutter

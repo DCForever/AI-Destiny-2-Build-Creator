@@ -1,4 +1,5 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
 import 'attach_set_sheet.dart';
@@ -120,17 +121,6 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
     await _run(() => widget.controller.saveSoftStatTargetsFromFields(fields));
   }
 
-  Color _tierColor(CoverageTier tier, ColorScheme scheme) {
-    switch (tier) {
-      case CoverageTier.supported:
-        return scheme.primary;
-      case CoverageTier.weak:
-        return scheme.tertiary;
-      case CoverageTier.missing:
-        return scheme.error;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
@@ -164,15 +154,27 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
                 ),
                 const SizedBox(height: 8),
                 _row('Name', c.titleOf(build), 'detail_name'),
-                _row('Class', c.identitySummaryOf(build), 'detail_identity'),
-                _row(
+                _inkRow(
+                  'Class',
+                  c.identitySummaryOf(build),
+                  'detail_identity',
+                  elementHint: c.synergySummaryOf(build),
+                ),
+                _inkRow(
                   'Synergies',
                   c.synergySummaryOf(build).isEmpty
                       ? '—'
                       : c.synergySummaryOf(build),
                   'detail_synergies',
+                  elementHint: c.synergySummaryOf(build),
                 ),
-                _row('Exotics', c.exoticsSummaryOf(build), 'detail_exotics'),
+                _inkRow(
+                  'Exotics',
+                  c.exoticsSummaryOf(build),
+                  'detail_exotics',
+                  elementHint: c.synergySummaryOf(build),
+                  asSeal: true,
+                ),
                 const SizedBox(height: 20),
 
                 // --- Variants ---
@@ -349,10 +351,17 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
                             'soft_chip_${row.synergyId}_${row.tier.wireName}',
                           ),
                           label: Text(formatSynergyCoverageChipLabel(row)),
-                          backgroundColor: _tierColor(
-                            row.tier,
-                            theme.colorScheme,
-                          ).withValues(alpha: 0.15),
+                          // One Lamp: success/warning/danger — never amber primary.
+                          backgroundColor: flapToneWash(
+                            context,
+                            coverageTierToneKey(row.tier),
+                          ),
+                          side: BorderSide(
+                            color: flapToneColor(
+                              context,
+                              coverageTierToneKey(row.tier),
+                            ).withValues(alpha: 0.45),
+                          ),
                         ),
                     ],
                   ),
@@ -444,6 +453,38 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
           ),
           Expanded(
             child: Text(value, key: Key(keyName)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _inkRow(
+    String label,
+    String value,
+    String keyName, {
+    String? elementHint,
+    bool asSeal = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: FlapInkCell(
+              text: value,
+              elementHint: elementHint,
+              asSeal: asSeal,
+              textKey: Key(keyName),
+            ),
           ),
         ],
       ),

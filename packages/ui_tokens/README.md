@@ -16,18 +16,23 @@ Port architecture ([docs/multiplatform-dart-port-decisions.md](../../docs/multip
 
 ## Colors
 
-Dark is the **default** (Windows theme stub). Light constants exist for a future ThemeToggle.
+**Dual face (Flutter product choice):**
 
-| Token | Dark hex | Role |
-| ----- | -------- | ---- |
-| `background` | `#050608` | Void canvas |
-| `surface` | `#0c0e12` | Flap plate |
-| `surfaceRaised` | `#12151c` | Raised flap |
-| `line` / `lineStrong` | `#1c212c` / `#2a3140` | Hairline rules |
-| `foreground` / `muted` | `#e8eaef` / `#8a93a6` | Lettering |
-| `accent` | `#e6b35c` | Readiness / selection lamp |
-| `danger` / `success` / `warning` | coral / green / gold | Status lamps |
-| Element ink | kinetic…prismatic | Identity cells only |
+| Face | Mode | Character |
+| ---- | ---- | --------- |
+| **Cold Graphite** | dark (default) | Blue-gray void, cyan-teal One Lamp `#4ec4bc` |
+| **Paper Ledger** | light | Cream stock, rubber-stamp amber `#9a6418` |
+
+| Token | Dark (Cold Graphite) | Light (Paper Ledger) | Role |
+| ----- | -------------------- | -------------------- | ---- |
+| `background` | `#070b10` | `#ebe6db` | Canvas / stock field |
+| `surface` | `#0e1319` | `#f7f3ea` | Flap plate |
+| `surfaceRaised` | `#141a22` | `#fffdf7` | Raised plate |
+| `line` / `lineStrong` | `#1f2733` / `#2a3342` | `#c4bba8` / `#9a9488` | Hairline rules |
+| `foreground` / `muted` | `#e4eaf2` / `#8492a6` | `#1a1b1f` / `#5a5f6a` | Lettering |
+| `accent` | `#4ec4bc` teal | `#9a6418` amber | Readiness / selection only |
+| `danger` / `success` / `warning` | coral / green / gold | paper-deep status | Status lamps (≠ primary) |
+| Element ink | kinetic…prismatic | paper contrast set | Identity cells only |
 
 ```dart
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -77,14 +82,16 @@ final cols = flapColumnTemplateById('builds');
 - **One lamp** — amber for selection/readiness, not every border  
 - **Element ink** — Destiny colors on identity/seals only  
 
-## Flutter Windows theme stub
+## Flutter host themes
 
-Host maps tokens → `ThemeData` in `apps/windows_host/lib/theme/flap_theme.dart`:
+Hosts map tokens via `destiny2_ui_flutter` / `buildFlapThemeBase`:
 
-- Explicit dark `ColorScheme` from tokens (not `ColorScheme.fromSeed` blue)
-- `cardTheme`: elevation `0`, border radius `0`, surface color = flap surface
+- `theme` = Paper Ledger (light), `darkTheme` = Cold Graphite (dark)
+- `ThemeMode` system | dark | light; Settings **Appearance** cycles faces
+- Explicit `ColorScheme` from tokens (not `ColorScheme.fromSeed`)
+- `FlapPalette` ThemeExtension carries success/warning/element roles
 
-Jaspr maps these tokens to CSS custom properties in `apps/web_host` (DART-042) via `argbToCssHex` — this package stays pure SDK.
+Jaspr maps these tokens to CSS custom properties in `apps/web_host` via `argbToCssHex` — this package stays pure SDK.
 
 ## Tests
 
@@ -94,7 +101,7 @@ dart test packages/ui_tokens
 
 ## Non-goals (this package)
 
-- FlapRow / FlapBoard Flutter widgets  
+- FlapRow / FlapBoard Flutter widgets — see **`packages/ui_flutter`** (`destiny2_ui_flutter`)  
 - Full Settings/Catalog brand rewrite  
 - Soft guidance auto-apply / domain rules  
 - CLIENT_SECRET / network  
