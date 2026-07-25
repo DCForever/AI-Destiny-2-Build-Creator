@@ -69,6 +69,17 @@ packages/
         item_resolver.dart
         perk_validator.dart
     test/
+  bungie/                 # Shared Bungie Platform HTTP client (DART-021)
+    pubspec.yaml          # package name: destiny2_bungie
+    lib/
+      destiny2_bungie.dart
+      src/
+        bungie_http_client.dart   # getJson/postJson + X-API-Key
+        bungie_envelope.dart      # ErrorCode unwrap
+        bungie_errors.dart        # typed exceptions
+        rate_limit.dart           # RateLimitSignal + hooks
+        http_transport.dart       # injectable transport + default HttpClient
+    test/
 ```
 
 | Package path | Pub name | Role | Allowed deps |
@@ -78,6 +89,7 @@ packages/
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (DART-018) + **offline catalog facets/browse** (`filterCatalogClient`, `OfflineCatalog`) (DART-020). Offline JSON under StorageRoot; no inventory. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
+| `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP client** (DART-021): `X-API-Key`, optional Bearer, envelope unwrap, typed errors, rate-limit hooks. | SDK only (`dart:io` default transport). **Not** pure. Host-injected public API key; **no** CLIENT_SECRET. |
 | `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020): open StorageRoot + single Drift DB; Catalog offline browse + Settings manifest status. No OAuth. | Flutter, path_provider, sqlite3_flutter_libs; path deps on storage/db/manifest. |
 
 Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
@@ -107,6 +119,34 @@ await root.ensureLayout();
 | `users/<membershipId>/preferences.json` | Per-user preferences |
 
 `versionDir` = `versionToDirName` (unsafe chars → `_`). Unit tests inject a fake base path (no real AppData required).
+
+## Bungie HTTP (DART-021)
+
+`destiny2_bungie` is the shared Platform client for P2+ (OAuth, profile sync, equip):
+
+```dart
+import 'package:destiny2_bungie/destiny2_bungie.dart';
+
+final client = BungieHttpClient(
+  apiKey: hostPublicApiKey,
+  onRateLimit: (signal) { /* orchestrator may delay or surface WAIT */ },
+);
+
+final response = await client.getJson(
+  '/User/GetMembershipsForCurrentUser/',
+  accessToken: token,
+);
+```
+
+- Always sends `X-API-Key`; optional `Authorization: Bearer …`
+- Unwraps envelope when `ErrorCode == 1`; throws typed `BungieHttpException` / `BungiePlatformException` / `BungieParseException`
+- Rate-limit hooks on HTTP 429, `ThrottleSeconds > 0`, and throttle platform codes
+- Injectable `BungieHttpTransport` for unit tests (no live network)
+- **No** `CLIENT_SECRET`, session secrets, or hard-coded production keys
+
+```powershell
+dart test packages/bungie
+```
 
 ## Manifest entities (DART-017)
 
