@@ -62,6 +62,14 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
+  /// True when entity stores are missing or report zero entities (GAP-INV-06).
+  static bool _isEntityCacheEmpty(ManifestStatus status) {
+    final meta = status.entityCache;
+    if (meta == null) return true;
+    final total = meta.counts.values.fold<int>(0, (a, b) => a + b);
+    return total == 0;
+  }
+
   Future<void> _loadStatus() async {
     setState(() {
       _loading = true;
@@ -167,8 +175,26 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             )
-          else if (_status != null)
+          else if (_status != null) ...[
+            if (_isEntityCacheEmpty(_status!)) ...[
+              Card(
+                key: const Key('entity_cache_empty_warning'),
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Entity cache is empty or missing. Catalog Owned joins '
+                    'inventory counts onto entity definitions — empty Owned is '
+                    'not solely an inventory sync problem. Refresh the manifest '
+                    'so entity stores are built (GAP-INV-06).',
+                    key: const Key('entity_cache_empty_warning_text'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             _ManifestStatusCard(status: _status!),
+          ],
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerLeft,

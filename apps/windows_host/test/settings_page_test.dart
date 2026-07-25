@@ -135,6 +135,8 @@ void main() {
     expect(find.text('stale'), findsOneWidget);
     expect(find.byKey(const Key('entity_cache')), findsOneWidget);
     expect(find.textContaining('5 entities'), findsOneWidget);
+    // Populated entity cache → no empty warning (GAP-INV-06 / DART-053).
+    expect(find.byKey(const Key('entity_cache_empty_warning')), findsNothing);
   });
 
   testWidgets('missing cached version shows none without crash', (tester) async {
@@ -158,6 +160,11 @@ void main() {
     expect(find.text('none'), findsWidgets);
     expect(find.text('unknown'), findsOneWidget);
     expect(find.byKey(const Key('manifest_status_card')), findsOneWidget);
+    expect(find.byKey(const Key('entity_cache_empty_warning')), findsOneWidget);
+    expect(
+      find.textContaining('not solely an inventory sync problem'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('status error surfaces message', (tester) async {

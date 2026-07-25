@@ -17,6 +17,18 @@ void main() {
       expect(find.textContaining('Public+PKCE'), findsComponents);
     });
 
+    testComponents('surfaces Owned/entity-cache dependency warning (DART-053)',
+        (tester) async {
+      tester.pumpComponent(const SettingsPage());
+
+      expect(
+        find.textContaining('not solely an inventory sync problem'),
+        findsOneComponent,
+      );
+      expect(find.textContaining('GAP-INV-06'), findsOneComponent);
+      expect(find.textContaining('GAP-INV-04'), findsOneComponent);
+    });
+
     testComponents('does not expose confidential secret identifiers as config',
         (tester) async {
       tester.pumpComponent(const SettingsPage());

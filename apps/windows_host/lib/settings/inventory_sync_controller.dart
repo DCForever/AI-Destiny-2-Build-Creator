@@ -27,6 +27,9 @@ enum InventorySyncPhase {
 ///
 /// **DART-052:** inject [weaponSocketContextBuilder] so stored weapon plugs
 /// include `columnKind`/`columnLabel` (Next `buildStoredSocketPlugs` parity).
+///
+/// **DART-053:** retains [lastDiagnostics] from the last successful
+/// [syncUserInventory] for Settings diagnostics UI (GAP-INV-04).
 class InventorySyncController extends ChangeNotifier {
   InventorySyncController({
     required AppDatabase db,
@@ -80,8 +83,7 @@ class InventorySyncController extends ChangeNotifier {
   String? _lastFullSyncAt;
   String? _errorMessage;
   int? _localUserId;
-  int? _lastResolvedFromTransfer;
-  int? _lastDroppedNonEquipment;
+  InventoryParseDiagnostics? _lastDiagnostics;
 
   InventorySyncPhase get phase => _phase;
   int? get itemCount => _itemCount;
@@ -90,9 +92,27 @@ class InventorySyncController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   int? get localUserId => _localUserId;
 
-  /// From last successful sync diagnostics (DART-050 / future DART-053 UI).
-  int? get lastResolvedFromTransfer => _lastResolvedFromTransfer;
-  int? get lastDroppedNonEquipment => _lastDroppedNonEquipment;
+  /// Full parse/resolution diagnostics from last successful [syncNow] (DART-053).
+  ///
+  /// Session-ephemeral — not reloaded by [refreshStatus] from Drift.
+  InventoryParseDiagnostics? get lastDiagnostics => _lastDiagnostics;
+
+  /// From last successful sync diagnostics (DART-050 / DART-053 UI).
+  int? get lastResolvedFromTransfer =>
+      _lastDiagnostics?.resolution?.resolvedFromTransfer;
+  int? get lastDroppedNonEquipment =>
+      _lastDiagnostics?.resolution?.droppedNonEquipment;
+  int? get lastStoredTotal => _lastDiagnostics?.resolution?.storedTotal;
+  int? get lastRawTotal => _lastDiagnostics?.raw.total;
+  int? get lastParsedTotal => _lastDiagnostics?.parsed.total;
+  int? get lastDroppedTotal => _lastDiagnostics?.dropped.total;
+
+  /// Human-readable multi-line diagnostics, or null when none retained.
+  String? get lastDiagnosticsFormatted {
+    final d = _lastDiagnostics;
+    if (d == null) return null;
+    return formatSyncDiagnostics(d);
+  }
 
   bool get isSyncing => _phase == InventorySyncPhase.syncing;
   bool get isLoadingStatus => _phase == InventorySyncPhase.loadingStatus;
@@ -112,6 +132,7 @@ class InventorySyncController extends ChangeNotifier {
       _itemCount = null;
       _syncVersion = null;
       _lastFullSyncAt = null;
+      _lastDiagnostics = null;
       _errorMessage = null;
       _phase = InventorySyncPhase.idle;
       notifyListeners();
@@ -181,10 +202,7 @@ class InventorySyncController extends ChangeNotifier {
       _itemCount = result.itemCount;
       _syncVersion = result.syncVersion;
       _lastFullSyncAt = result.lastFullSyncAt;
-      _lastResolvedFromTransfer =
-          result.diagnostics.resolution?.resolvedFromTransfer;
-      _lastDroppedNonEquipment =
-          result.diagnostics.resolution?.droppedNonEquipment;
+      _lastDiagnostics = result.diagnostics;
       _phase = InventorySyncPhase.idle;
       _errorMessage = null;
     } on SyncInProgressError catch (e) {

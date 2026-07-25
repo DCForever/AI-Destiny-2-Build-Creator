@@ -109,6 +109,22 @@ void main() {
     expect(find.byKey(const Key('inventory_sync_version')), findsOneWidget);
     expect(find.textContaining('Sync version: 1'), findsOneWidget);
     expect(profile.inventoryCalls, 1);
+    // DART-053 diagnostics surface after successful sync.
+    expect(find.byKey(const Key('inventory_sync_diagnostics')), findsOneWidget);
+    expect(find.byKey(const Key('inventory_diag_raw')), findsOneWidget);
+    expect(find.byKey(const Key('inventory_diag_parsed')), findsOneWidget);
+    expect(find.byKey(const Key('inventory_diag_dropped')), findsOneWidget);
+    expect(
+      find.byKey(const Key('inventory_diag_resolved_transfer')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('inventory_diag_dropped_non_equipment')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('inventory_diag_stored_total')), findsOneWidget);
+    expect(find.textContaining('Stored total: 2'), findsOneWidget);
+    expect(find.textContaining('Bungie raw items'), findsOneWidget);
 
     controller.dispose();
   });

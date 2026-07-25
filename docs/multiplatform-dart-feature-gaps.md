@@ -107,9 +107,9 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Lookup + host wiring (DART-050) | **shipped** (fixture) | **DART-050**; live harness DART-054 |
 | **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Pure + sync + host builders (DART-051) | **shipped** (golden + Windows raw; web frame-meta) | **DART-051** closed GAP-INV-02; residual: web perk names without raw defs |
 | **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Pure + sync + Windows raw context (DART-052); web raw-less residual | **shipped** (fixture + Windows) | **DART-052** closed GAP-INV-03; residual: web without raw defs |
-| **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | itemCount only in UI | **planned** (P1) | **DART-053** / GAP-INV-04 |
+| **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | Windows retains + surfaces last diagnostics | **shipped** (P1) | **DART-053** / GAP-INV-04 closed |
 | **FEAT-INV-HARNESS** | Next-vs-Dart live count harness | Manual dual sync | None | **planned** (P0 process) | **DART-054** / GAP-INV-05 |
-| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge exists; empty entity cache ≠ empty vault | **partial** | Docs residual **DART-050**; UX warning **DART-053**; web depth **DART-056** / GAP-INV-06 |
+| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + entity-cache empty UX | **partial** | Docs **DART-050**; UX **DART-053** done; web depth **DART-056** / GAP-INV-06 |
 | **FEAT-INV-WEAPON-STATS** | Combat `statValues` on weapon rows | `parseWeaponStatValues` | Armor-hash parser reused | **planned** (P2) | Optional in **DART-050** / GAP-INV-07 |
 
 ### D. Auth, data, and ops
@@ -163,9 +163,9 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-INV-01** | Vault/postmaster bucket resolution | **P0** | `closed` (DART-050) | `buildEquipmentBucketLookup` + `resolveTransferContainerBuckets` in `src/lib/bungie/syncInventory.ts` | `buildEquipmentBucketLookup` + host wiring on Windows Settings/equip + Jaspr equip; package+host fixtures assert `resolvedFromTransfer > 0` | **DART-050** done | RB-06 partial (enrichment/harness remain 051–054) |
 | **GAP-INV-02** | Roll tags enrichment | **P1** | `open` | `computeRollTags` + weapon-perks / WeaponRecord | `_normalizeItems` only emits `Crafted` when `isCrafted` | **DART-051** | Owned pickers / quality UX |
 | **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `closed` (DART-052; web residual) | `buildStoredSocketPlugs` + weapon socket context | `classifyWeaponSocket` + `buildStoredSocketPlugs`; sync wires context builder; Windows raw defs | **DART-052** done | Instance perk grids; web raw-less → unenriched maps (PROC-06 residual, not pure thinning) |
-| **GAP-INV-04** | Sync diagnostics UI | **P1** | `open` | `formatSyncDiagnostics` + `[inventory-sync]` logs | Controller keeps itemCount only; Card has no diagnostics | **DART-053** | Makes drops visible |
+| **GAP-INV-04** | Sync diagnostics UI | **P1** | `closed` (DART-053) | `formatSyncDiagnostics` + `[inventory-sync]` logs | Controller retains last diagnostics; Settings surfaces raw/parsed/dropped/resolution | **DART-053** done | Makes drops visible |
 | **GAP-INV-05** | Live Next-vs-Dart inventory harness | **P0** | `planned` | Manual dual sync | No harness under apps/packages/tool | **DART-054** | Prevents silent drift; equip pin fidelity |
-| **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `partial` | Manifest refresh always online | `OwnedCatalogBridge` joins inventory counts onto entity baseItems; empty cache ≠ empty vault | **DART-050** docs residual + **DART-053** UX warning | UX after sync |
+| **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `partial` (UX closed DART-053) | Manifest refresh always online | Docs + Settings/Catalog entity empty warning; web Owned equip depth residual | **DART-050** docs + **DART-053** UX done; **DART-056** web depth | UX after sync |
 | **GAP-INV-07** | Weapon combat `statValues` on inventory rows | **P2** | `closed` (DART-050 opt) | `parseWeaponStatValues` for weapons + transfer containers | `parseWeaponStatValues` + transfer merge in `inventory_parse.dart` | **DART-050** optional delivered | Combat stats on vault weapons |
 | **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `open` | `/loadouts` AppShell + page | MISS all shells (schema only) | **DART-055** | RB-01 / RC-NAV |
 | **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `open` | Full Settings sync + owned catalog | Thinner web path; equip optional when write clients missing | **DART-056** | RB-02 / RC-SYNC |
@@ -255,22 +255,22 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ---
 
-### GAP-INV-04 — Sync diagnostics UI (**P1**)
+### GAP-INV-04 — Sync diagnostics UI (**P1**) — **closed (DART-053)**
 
-**Problem:** Package computes `InventoryParseDiagnostics` + resolution on `SyncInventoryResult`, but controller only keeps itemCount/syncVersion/lastFullSyncAt and InventorySyncCard has no diagnostics UI — silent vault loss.
+**Problem (was):** Package computed `InventoryParseDiagnostics` + resolution on `SyncInventoryResult`, but controller only kept itemCount/syncVersion/lastFullSyncAt and InventorySyncCard had no diagnostics UI — silent vault loss.
 
 **Next:** `ManifestCard` `formatSyncDiagnostics` + console `logInventorySyncDiagnostics`  
-**Dart:** `inventory_sync_card.dart` / controller discard diagnostics
+**Dart (done):** `formatSyncDiagnostics` in `destiny2_bungie`; `InventorySyncController.lastDiagnostics`; Windows `InventorySyncCard` surfaces raw/parsed/dropped/resolution; web Settings parity path notes GAP-INV-04/06.
 
-**Planned slice: DART-053 `inventory-sync-diagnostics-ui`**
+**Slice: DART-053 `inventory-sync-diagnostics-ui`**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-053-inventory-sync-diagnostics-ui` |
-| Depends | DART-025, DART-050 (so diagnostics are meaningful) |
-| Exit criteria | Controller retains last sync diagnostics from `SyncInventoryResult`; Windows Settings (and parity path on web) surfaces raw total, parsed total, dropped unknown/missing, `resolution.resolvedFromTransfer` / `droppedNonEquipment` / `storedTotal`, plus entity-cache empty warning for Owned catalog so empty Owned is not blamed solely on inventory sync |
-| Status | `planned` |
-| Related | GAP-INV-06 UX half |
+| Depends | DART-025, DART-050 |
+| Exit criteria | Controller retains last sync diagnostics; Windows Settings surfaces raw/parsed/dropped + resolution; entity-cache empty warning; web Owned/entity parity warning |
+| Status | **`closed`** |
+| Related | GAP-INV-06 UX half (also closed under DART-053) |
 
 ---
 
@@ -291,22 +291,22 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ---
 
-### GAP-INV-06 — Owned catalog needs entity stores (**P1** partial)
+### GAP-INV-06 — Owned catalog needs entity stores (**P1** partial → UX closed)
 
 **Problem:** `OwnedCatalogBridge` annotates `OfflineCatalog.baseItems` with inventory counts; Catalog empty states require entity cache version/stores. Inventory sync alone cannot populate Owned definitions — vault fix (DART-050) is necessary but not sufficient.
 
 **Next:** catalog filter / owned join always has manifest entities  
-**Dart:** `owned_catalog_bridge.dart`; catalog_page empty messages for noVersion/noStores vs empty inventory
+**Dart:** `owned_catalog_bridge.dart`; catalog_page empty messages; Settings entity-cache empty warning (DART-053)
 
 **Ownership (dual):**
 - **DART-050 (done):** Documented entity-store dependency remains after vault resolution; packages/README states empty entity cache ≠ empty vault / Owned needs entities.
-- **DART-053:** Ship Settings/Catalog empty-cache warning UX so empty Owned is not blamed solely on sync.
+- **DART-053 (done):** Settings entity-cache empty warning + Catalog Owned empty prefers entity message; web Settings Owned/entity dependency warning. Full web inventory sync depth remains **DART-056**.
 
 | Field | Value |
 | ----- | ----- |
 | Exit criteria | After inventory sync, Owned scope is usable when entity cache is populated; Settings/Catalog UX clearly warns when entity cache missing/empty; documented dependency remains after DART-050 vault fix |
-| Status | `partial` (docs residual from DART-050; UX half open) |
-| Planned slices | **DART-050** (docs residual **done**) + **DART-053** (UX) |
+| Status | `partial` (docs + UX done; web Owned equip depth → DART-056) |
+| Planned slices | **DART-050** (docs **done**) + **DART-053** (UX **done**) + residual web depth **DART-056** |
 
 ---
 

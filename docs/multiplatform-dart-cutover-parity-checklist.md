@@ -102,7 +102,7 @@ Domain packages are shared; UI shells differ.
 | Finish gaps helpers | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | DART-007 pure only; host UX residual **GAP-FEAT-06** → **DART-057** (Next FinishTab gates equip/export); pure never auto-wires |
 | Armor optimizer (confirm-only) | Yes | **PASS** | **MISS** | **MISS** | DART-035/036 Windows; not required on mobile/web for program gate; product cutover may accept Windows-only optimizer |
 | Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 — **no CLIENT_SECRET** |
-| Inventory sync full-replace | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | DART-024/025 present but production hosts omit equipmentBucketLookup → vault/postmaster dropped (**RB-06**, GAP-INV-01; fix **DART-050**); enrichment lag Next (GAP-INV-02…03 → **DART-051/052**); diagnostics UI missing (**DART-053**); live harness **DART-054**; web thinner (**RB-02** → **DART-056**) |
+| Inventory sync full-replace | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | Vault lookup **DART-050**, roll tags **DART-051**, sockets **DART-052**, diagnostics UI **DART-053** shipped on Windows; live harness still **DART-054** (RB-06); web thinner (**RB-02** → **DART-056**) |
 | Bungie equip (partial OK) | Yes | **PASS** | **MISS** | **PASS** | DART-037/038/047 |
 | DIM jsonOnly export | Yes | **PASS** | **MISS** | **PASS** | DART-010/039/047; blocked when not equip-ready |
 | Legacy `app.db` import | N/A (source) | **PASS** | **N/A** | **N/A** | DART-048 dry-run + apply → StorageRoot |

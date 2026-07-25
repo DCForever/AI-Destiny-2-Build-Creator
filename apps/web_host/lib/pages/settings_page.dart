@@ -125,6 +125,23 @@ class SettingsPage extends StatelessComponent {
               'in the browser). Fixture: /entities/prebuilt/bundle.json.',
             ),
           ]),
+          p(
+            classes: 'settings-policy settings-entity-owned-warning',
+            attributes: {
+              'data-testid': 'entity-owned-warning',
+              'role': 'status',
+            },
+            [
+              .text(
+                'Owned catalog joins inventory counts onto entity definitions. '
+                'If entity bundles are empty or missing, empty Owned is not solely '
+                'an inventory sync problem — load entity bundles and sync inventory '
+                '(DART-053 / GAP-INV-06). Full web inventory sync depth is DART-056. '
+                'Windows Settings surfaces last-sync raw/parsed/dropped/resolution '
+                'diagnostics after Sync now (GAP-INV-04).',
+              ),
+            ],
+          ),
         ]),
         div(classes: 'settings-panel', [
           h2([.text('OAuth token storage')]),

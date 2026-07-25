@@ -179,4 +179,36 @@ void main() {
     expect(find.textContaining('entity cache'), findsOneWidget);
     // Do not dispose emptyServices — shares services.db closed in tearDown.
   });
+
+  testWidgets('owned scope with empty entity cache blames entities not only sync',
+      (tester) async {
+    final emptyServices = AppServices(
+      storageRoot: services.storageRoot,
+      db: services.db,
+      manifestRefresh: _FakeRefresh(),
+      offlineCatalog: OfflineCatalog.preloaded(
+        storageRoot: services.storageRoot,
+        items: const [],
+      ),
+      oauthSession: services.oauthSession,
+      profileClient: services.profileClient,
+      inventorySync: services.inventorySync,
+      writeClient: services.writeClient,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: CatalogPage(services: emptyServices)),
+    );
+    await _pumpFrames(tester);
+
+    await tester.tap(find.byKey(const Key('scope_chip_owned')));
+    await _pumpFrames(tester);
+
+    expect(find.byKey(const Key('catalog_empty')), findsOneWidget);
+    expect(
+      find.textContaining('not solely an inventory sync problem'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Entity cache'), findsOneWidget);
+  });
 }

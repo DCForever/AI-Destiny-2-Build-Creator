@@ -29,6 +29,7 @@ export 'src/profile/equipment_bucket_lookup.dart';
 export 'src/profile/inventory_buckets.dart';
 export 'src/profile/inventory_parse.dart';
 export 'src/profile/profile_types.dart';
+export 'src/sync/format_sync_diagnostics.dart';
 export 'src/sync/sync_freshness.dart';
 export 'src/sync/sync_inventory.dart';
 export 'src/write/write_client.dart';

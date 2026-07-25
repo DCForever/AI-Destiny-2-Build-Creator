@@ -395,19 +395,29 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   String _emptyMessage() {
+    // GAP-INV-06 / DART-053: empty entity cache ≠ empty vault / sync-only failure.
+    if (_emptyReason == CatalogEmptyReason.noVersion ||
+        _emptyReason == CatalogEmptyReason.noStores) {
+      if (_scope == CatalogScope.owned) {
+        return 'Entity cache is empty or missing. Owned catalog joins inventory '
+            'onto definitions — refresh the manifest/entity stores in Settings. '
+            'Empty Owned is not solely an inventory sync problem.';
+      }
+      return switch (_emptyReason) {
+        CatalogEmptyReason.noVersion =>
+          'No entity cache version. Open Settings and refresh the manifest when an API key is configured.',
+        CatalogEmptyReason.noStores =>
+          'Entity stores are empty for this version. Rebuild entities from Settings refresh.',
+        CatalogEmptyReason.none => 'No items match the current filters.',
+      };
+    }
     if (_scope == CatalogScope.owned) {
       if (_bridge.inventory.isEmpty) {
         return 'No owned items in local inventory. Sign in and use Settings → Sync now, then reload Catalog.';
       }
       return 'No owned definitions match the current filters.';
     }
-    return switch (_emptyReason) {
-      CatalogEmptyReason.noVersion =>
-        'No entity cache version. Open Settings and refresh the manifest when an API key is configured.',
-      CatalogEmptyReason.noStores =>
-        'Entity stores are empty for this version. Rebuild entities from Settings refresh.',
-      CatalogEmptyReason.none => 'No items match the current filters.',
-    };
+    return 'No items match the current filters.';
   }
 
   Widget _buildInstancePanel() {

@@ -53,6 +53,14 @@ void main() {
       expect(controller.syncVersion, 1);
       expect(controller.lastFullSyncAt, isNotNull);
       expect(profile.inventoryCalls, 1);
+      // DART-053: full diagnostics retained after successful sync.
+      expect(controller.lastDiagnostics, isNotNull);
+      expect(controller.lastRawTotal, isNotNull);
+      expect(controller.lastParsedTotal, isNotNull);
+      expect(controller.lastDroppedTotal, isNotNull);
+      expect(controller.lastStoredTotal, 2);
+      expect(controller.lastDiagnosticsFormatted, contains('Bungie raw items'));
+      expect(controller.lastDiagnosticsFormatted, contains('Stored after resolution'));
 
       final user = await getUserByMembership(
         db,
@@ -172,6 +180,16 @@ void main() {
       expect(controller.phase, InventorySyncPhase.error);
       expect(controller.errorMessage, contains('Sign in'));
       expect(profile.inventoryCalls, 0);
+    });
+
+    test('refreshStatus when signed out clears retained diagnostics', () async {
+      await controller.syncNow();
+      expect(controller.lastDiagnostics, isNotNull);
+      await session.signOut();
+      await controller.refreshStatus();
+      expect(controller.lastDiagnostics, isNull);
+      expect(controller.lastRawTotal, isNull);
+      expect(controller.lastStoredTotal, isNull);
     });
 
     test('profile failure surfaces error', () async {

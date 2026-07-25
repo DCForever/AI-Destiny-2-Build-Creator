@@ -307,8 +307,8 @@ if (!isInventoryFresh(result.lastFullSyncAt)) {
 - **Vault/postmaster resolution (DART-050 / GAP-INV-01):** `buildEquipmentBucketLookup` + host wiring on every production path (Windows Settings `syncNow`, Windows/Jaspr equip `syncIfStale`). Empty lookup is **not** production-OK.
 - **Roll tags (DART-051 / GAP-INV-02):** `computeRollTags` (Next parity) tags Crafted / champion / MeleeBuildCandidate / OrbitBuild at normalize time. Pass `perkNameMap` (+ builder) and `weaponRollMetaLookup` (+ builder). Empty maps → Crafted-only when `isCrafted` (no invented tags). Windows hosts resolve plug names from raw `DestinyInventoryItemDefinition` and weapon meta from OfflineCatalog; web equip wires catalog frame meta (perk-name rules need raw or injected map — thinner until entity weapon-perks). Soft metadata only — **never** auto-applies.
 - **Socket plugs (DART-052 / GAP-INV-03):** `classifyWeaponSocket` + `buildStoredSocketPlugs` (Next parity) persist weapon `socket_plugs` with `columnKind`/`columnLabel` when `weaponSocketContextBuilder` supplies plug categories + weapon perk socket indexes (`4241085061`). Without context, raw capture maps are stored (no kinds) — incomplete for perk grids. Windows wires raw DestinyInventoryItemDefinition; web MVP has no raw defs (PROC-06 residual until entity/raw channel). Soft metadata only — **never** auto-applies.
-- **Owned catalog** still needs entity stores populated (`OwnedCatalogBridge` joins counts onto entity baseItems) — empty entity cache ≠ empty vault (**GAP-INV-06** residual → **DART-053** UX warning).
-- Settings sync UI is **DART-025** (not this package); diagnostics UI is **DART-053**
+- **Owned catalog** still needs entity stores populated (`OwnedCatalogBridge` joins counts onto entity baseItems) — empty entity cache ≠ empty vault (**GAP-INV-06**). Settings/Catalog empty-cache UX is **DART-053**.
+- Settings sync UI is **DART-025**; diagnostics retention + `formatSyncDiagnostics` surface is **DART-053** (`packages/bungie` exports the pure formatter)
 
 ```powershell
 dart test packages/bungie

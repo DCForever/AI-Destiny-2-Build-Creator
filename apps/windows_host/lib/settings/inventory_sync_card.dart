@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../auth/windows_oauth_session.dart';
 import 'inventory_sync_controller.dart';
 
-/// Settings inventory sync card: Sync now + busy/error + meta (DART-025).
+/// Settings inventory sync card: Sync now + busy/error + meta (DART-025)
+/// + last-sync diagnostics (DART-053 / GAP-INV-04).
 class InventorySyncCard extends StatefulWidget {
   const InventorySyncCard({
     super.key,
@@ -114,6 +115,57 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 key: const Key('inventory_freshness'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              if (c.lastDiagnostics != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Last sync diagnostics',
+                  key: const Key('inventory_sync_diagnostics_title'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Raw (Bungie): ${c.lastRawTotal ?? '—'}',
+                  key: const Key('inventory_diag_raw'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  'Parsed: ${c.lastParsedTotal ?? '—'}',
+                  key: const Key('inventory_diag_parsed'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  'Dropped: ${c.lastDroppedTotal ?? '—'} '
+                  '(unknown: ${c.lastDiagnostics!.dropped.unknownBucket}, '
+                  'missing id: ${c.lastDiagnostics!.dropped.missingInstanceId})',
+                  key: const Key('inventory_diag_dropped'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  'Resolved from vault/postmaster: '
+                  '${c.lastResolvedFromTransfer ?? '—'}',
+                  key: const Key('inventory_diag_resolved_transfer'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  'Dropped non-equipment: ${c.lastDroppedNonEquipment ?? '—'}',
+                  key: const Key('inventory_diag_dropped_non_equipment'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  'Stored total: ${c.lastStoredTotal ?? '—'}',
+                  key: const Key('inventory_diag_stored_total'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  c.lastDiagnosticsFormatted ?? '',
+                  key: const Key('inventory_sync_diagnostics'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        height: 1.35,
+                      ),
+                ),
+              ],
             ],
             if (showError) ...[
               const SizedBox(height: 8),
