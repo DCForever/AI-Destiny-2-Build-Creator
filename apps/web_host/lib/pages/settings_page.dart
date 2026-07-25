@@ -38,7 +38,7 @@ class SettingsPage extends StatelessComponent {
   static const String helloText = 'Hello';
   static const String subtitleText =
       'Jaspr web host — Matte Flap tokens, client routing, Drift WASM/OPFS, '
-      'prebuilt entity bundles for Catalog, Public+PKCE Bungie sign-in, '
+      'hybrid entity channel for Catalog (DART-059), Public+PKCE Bungie sign-in, '
       'inventory sync with vault/postmaster resolution (DART-056). '
       'No Next.js dependency. Single-tab writer for local SQLite. '
       'No confidential client secret.';
@@ -120,7 +120,11 @@ class SettingsPage extends StatelessComponent {
                 attributes: {'data-testid': 'db-storage'},
                 [.text('Storage: ${status.storageImplementation}')],
               ),
-            li([.text('Entities: prebuilt bundles (DART-044) — see Catalog')]),
+            li([
+              .text(
+                'Entities: hybrid channel ship-in-app (DART-059) — see Catalog',
+              ),
+            ]),
             li(
               attributes: {'data-testid': 'oauth-host-line'},
               [
@@ -158,8 +162,11 @@ class SettingsPage extends StatelessComponent {
           h2([.text('Entity bundles')]),
           p(classes: 'settings-policy', [
             .text(
-              'Catalog uses prebuilt MVP entity JSON (no full raw manifest rebuild '
-              'in the browser). Fixture: /entities/prebuilt/bundle.json.',
+              'Catalog uses production hybrid entity channel (DART-059): pointer '
+              '/entities/channel.json → ship-in-app /entities/prod/bundle.json '
+              '(optional CDN first when cdnUrl is set). No full raw manifest rebuild '
+              'in the browser; no Next.js manifest API. Offline after install uses '
+              'ship-in-app static assets. Legacy demo: /entities/prebuilt/bundle.json.',
             ),
           ]),
           p(

@@ -117,7 +117,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | ID | Feature | Product evidence | Dart today | Plan | Slices / GAP |
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
 | **FEAT-AUTH-PUBLIC** | Public+PKCE (no client secret in clients) | Next Confidential server | Windows/Jaspr Public+PKCE; mobile schemes published | **shipped** | Local DART-022/023/045; prod matrix **DART-058** / GAP-AUTH-01 **closed** / RB-03 cleared |
-| **FEAT-DATA-MANIFEST** | Manifest / entity definitions | Next manifest pipeline | Entity stores + prebuilt web bundles | **shipped** + prod channel | DART-017/018/044; prod channel **DART-059** / GAP-WEB-02 / RB-05 |
+| **FEAT-DATA-MANIFEST** | Manifest / entity definitions | Next manifest pipeline | Entity stores + prebuilt web bundles | **shipped** | DART-017/018/044; prod hybrid channel **DART-059** / GAP-WEB-02 **closed** / RB-05 cleared |
 | **FEAT-DATA-LEGACY-IMPORT** | Legacy Next `app.db` → StorageRoot | N/A (source) | Windows dry-run + apply | **shipped** | DART-048; RC-DATA PASS |
 | **FEAT-DATA-OPFS** | Web OPFS single-tab writer | N/A (Node SQLite) | Jaspr OPFS writer | **shipped** | DART-043 |
 | **FEAT-OPS-DUAL-RUN** | Dual-run + rollback procedure | Next sole prod today | Not executed | **planned** (P1) | **DART-060** / GAP-OPS-01 / RB-04 |
@@ -171,7 +171,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `closed` (DART-056) | Full Settings sync + owned catalog | Settings Sync now + vault lookup + diagnostics; Catalog All\|Owned + instance pins; equip still optional without write clients | **DART-056** done | RB-02 cleared / RC-SYNC web depth |
 | **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `closed` (DART-057) | Full desktop-class AppShell | Published matrix PASS/PARTIAL/N/A/deferred; Builds\|Settings nav; equip/catalog/DIM N/A | **DART-057** done | Phone surface matrix |
 | **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `closed` (DART-058) | Confidential Next HTTPS | Published matrix + secret scan; Windows HTTPS default; mobile schemes published (session deferred) | **DART-058** done | RB-03 cleared / RC-AUTH PASS |
-| **GAP-WEB-02** | Entity bundle prod distribution | **P1** | `open` | Full raw manifest pipeline | Prebuilt MVP `bundle.json` only; channel TBD | **DART-059** | RB-05 / RC-WEB-DATA |
+| **GAP-WEB-02** | Entity bundle prod distribution | **P1** | `closed` (DART-059) | Full raw manifest pipeline | Hybrid ship-in-app + optional CDN; versioned channel | **DART-059** done | RB-05 cleared / RC-WEB-DATA PASS |
 | **GAP-OPS-01** | Dual-run + rollback procedure | **P1** | `open` | Next sole prod | Not executed (compose→equip re-verify historical only) | **DART-060** | RB-04 / RC-OPS |
 | **GAP-CUT-01** | Re-gate production cutover | **P1** | `planned` | N/A | Checklist NO-GO | **DART-061** | Flip PRODUCTION_CUTOVER when ready |
 | **GAP-UI-01** | Soft stat targets editor on Jaspr | **P2** | `closed` (DART-057) | Full `ArmorStatName` editor | All six stats + explicit save on web | **DART-057** done | Soft never auto-apply |
@@ -422,19 +422,21 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ---
 
-### GAP-WEB-02 — Entity bundle channel (**P1**)
+### GAP-WEB-02 — Entity bundle channel (**P1**) — **closed (DART-059)**
 
-**Problem:** Jaspr loads prebuilt ship-in-app JSON (MVP fixture `bundle.json`) with no browser raw rebuild. Production distribution channel (ship-in-app vs CDN vs hybrid) still open (RC-WEB-DATA FAIL / RB-05).
+**Problem:** Jaspr loaded MVP fixture prebuilt JSON with no production channel decision (RC-WEB-DATA FAIL / RB-05).
 
-**Planned slice: DART-059 `entity-bundle-prod-channel`**
+**Slice: DART-059 `entity-bundle-prod-channel`** — **done**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-059-entity-bundle-prod-channel` |
 | Depends | DART-044 |
 | Exit criteria | Chosen channel (ship-in-app / CDN / hybrid) documented with versioning; prod web Catalog loads non-fixture entity data offline after install; offline compose works without Next manifest API; RC-WEB-DATA PASS and RB-05 cleared |
-| Status | `planned` |
-| Cutover | RB-05 |
+| Status | `closed` |
+| Cutover | RB-05 **cleared** |
+| Evidence | [multiplatform-dart-entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md); `EntityBundleChannel` + hybrid resolve; `WebEntityBundleLoader` channel-aware; `/entities/channel.json` + `/entities/prod/bundle.json`; tests in `packages/manifest` + `apps/web_host` |
+| Residual | Operators replace sample prod bundle with full extract for live catalog size; CDN host optional |
 
 ---
 
@@ -512,8 +514,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-059** `entity-bundle-prod-channel` |
-| **Next phase** | P8 DART-058 **done** → DART-059–061 |
-| **Blocker for cutover** | Residual RB-04…05 (RB-01/02/03/06 cleared); other residuals per cutover checklist |
+| **Next planned slice** | **DART-060** `dual-run-rollback-ops` |
+| **Next phase** | P8 DART-058–059 **done** → DART-060–061 |
+| **Blocker for cutover** | Residual RB-04 (RB-01/02/03/05/06 cleared); other residuals per cutover checklist |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |

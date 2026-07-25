@@ -41,12 +41,12 @@ class CatalogPage extends StatefulComponent {
   static const String emptyOwnedEntitiesText =
       'Owned catalog needs entity definitions. Load prebuilt entity bundles '
       '(empty Owned is not solely an inventory sync problem).';
-  static const String loadingText = 'Loading prebuilt entity bundle…';
+  static const String loadingText = 'Loading production entity channel…';
   static const String subtitleText =
-      'Offline facets from prebuilt entity bundles. '
-      'All | Owned joins local inventory after Settings sync. '
+      'Offline facets from production hybrid entity channel (ship-in-app prebuilt; '
+      'optional CDN). All | Owned joins local inventory after Settings sync. '
       'Select a row to see instance ids for equip/DIM pins. '
-      'No raw manifest rebuild in the browser.';
+      'No raw manifest rebuild in the browser; no Next manifest API.';
 
   @override
   State<CatalogPage> createState() => _CatalogPageState();

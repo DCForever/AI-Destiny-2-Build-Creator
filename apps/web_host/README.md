@@ -10,7 +10,7 @@ Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator po
 | Routing | `jaspr_router` single-page |
 | Tokens | `destiny2_ui_tokens` → CSS custom properties |
 | Database | Drift **WASM + OPFS** (DART-043), single-tab writer |
-| Entities | **Prebuilt entity bundles** (DART-044) — no raw rebuild in browser |
+| Entities | **Hybrid entity channel** (DART-059) — ship-in-app prod + optional CDN; no raw rebuild |
 | Auth | **Public + PKCE** (DART-045) — no `CLIENT_SECRET` |
 | Compose | Builds / Sets / Synergies + hard/soft parity (DART-046) |
 | Equip / DIM | Equip-ready + DIM jsonOnly + optional equip (DART-047) |
@@ -29,7 +29,7 @@ Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator po
 - Matte Flap Ledger design tokens as CSS (from pure package)
 - **Local SQLite via Drift WASM** with OPFS when available
 - **Single-tab writer lock**: second tab is **blocked** with UX banner; compose requires writer
-- **Prebuilt entity bundle** at `web/entities/prebuilt/bundle.json` → offline catalog facets
+- **Production entity channel** at `web/entities/channel.json` + `web/entities/prod/bundle.json` → offline catalog facets (legacy demo: `prebuilt/bundle.json`)
 - **Browser Public+PKCE** sign-in / sign-out (DART-045)
 - **Compose spine** via `destiny2_app` use cases (DART-046)
 - **Equip-ready** status + pin gaps; **Copy DIM JSON** (jsonOnly, equip-ready gated); **optional equip** Apply + step report (DART-047)
@@ -40,7 +40,7 @@ Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator po
 - Owned inventory filter / full inventory sync UI on web
 - dim.gg share
 - Optimizer on web
-- Production CDN channel for large entity bundles (fixture ships in-app)
+- Full-size Destiny catalog extract (operators replace sample `prod/bundle.json`; channel schema fixed in DART-059)
 - Confidential Bungie flow (never in this client)
 
 ## Compose spine (DART-046)

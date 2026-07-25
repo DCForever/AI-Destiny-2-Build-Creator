@@ -76,7 +76,7 @@ Pin versions to the resolved `drift` / `sqlite3` packages when upgrading.
 | **Safari** | Historically weaker OPFS; may be “good” rather than “full” without headers. |
 | **Chrome Android** | Shared workers limited; multi-tab without headers can be unsafe at storage layer — **use single-writer policy**; prefer headers when possible. |
 | **Multiple devices** | No cloud multi-writer; each origin/device has its own OPFS/IDB. |
-| **Full raw manifest rebuild** | Desktop (Windows) first; web uses **prebuilt entity bundles** (DART-044 done): `web/entities/prebuilt/bundle.json` → Catalog facets offline; no isolate raw rebuild in browser. |
+| **Full raw manifest rebuild** | Desktop (Windows) first; web uses **hybrid prebuilt entity channel** (DART-044 + **DART-059**): pointer `web/entities/channel.json` → ship-in-app `web/entities/prod/bundle.json` (optional CDN); legacy demo `prebuilt/bundle.json`. Catalog facets offline after install; no isolate raw rebuild; no Next manifest API. See [multiplatform-dart-entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md). |
 
 ## Explicit non-goals
 

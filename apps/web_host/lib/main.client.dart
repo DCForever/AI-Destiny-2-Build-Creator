@@ -2,7 +2,7 @@
 ///
 /// Compiled to JavaScript and executed in the browser. No Next.js, no secrets.
 /// Opens Drift WASM + OPFS when this tab wins the single-tab writer lock.
-/// Loads prebuilt entity bundles for offline Catalog (no raw rebuild).
+/// Loads production hybrid entity channel for offline Catalog (no raw rebuild).
 /// Public+PKCE OAuth with origin-scoped token storage (DART-045).
 /// Compose spine (builds/sets/synergies) on writer DB (DART-046).
 /// Equip-ready + DIM jsonOnly + optional equip (DART-047).
@@ -56,6 +56,7 @@ void main() {
 
   final entityLoader = WebEntityBundleLoader(
     fetcher: fetchEntityBundleText,
+    channelUrl: kDefaultEntityChannelUrl,
   );
 
   final navigator = BrowserWebAuthNavigator();

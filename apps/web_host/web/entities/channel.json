@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "channelId": "prod",
+  "bundleVersion": "entity-bundle-prod-1",
+  "distribution": "hybrid",
+  "shipInAppPath": "/entities/prod/bundle.json",
+  "cdnUrl": null,
+  "notes": "Ship-in-app primary for offline after install; set cdnUrl for hybrid CDN hot update. Operators replace prod/bundle.json with full extract without changing schema."
+}
