@@ -36,4 +36,4 @@
 
 - [x] T015 Update `packages/README.md` db package row for repos
 - [x] T016 Mark tasks complete; `dart test packages/db` green (33)
-- [ ] T017 Commit; merge `--no-edit` into `feature/multiplatform-dart`; update roadmap pointer to DART-016; commit base
+- [x] T017 Commit; merge `--no-edit` into `feature/multiplatform-dart`; update roadmap pointer to DART-016; commit base
