@@ -8,19 +8,19 @@
 ```
 main
  └── feature/multiplatform-dart          ← long-lived integration base for this line
-       ├── 044-…                         ← Spec Kit feature branches
-       ├── 045-…
+       ├── dart-001-…                    ← DART-001 Spec Kit feature branches
+       ├── dart-002-…
        └── …
 
 Product line (separate):
-  043-default-variant-composer, etc.     ← do not mix commits or worktrees
+  043-default-variant-composer, etc.     ← product Spec Kit 001…; do not mix
 ```
 
 | Role | Git ref | Worktree path |
 | ---- | ------- | ------------- |
-| Product / default | whatever feature you are on (e.g. `043-…`) | `F:\Destiny2BuildCreator` |
+| Product / default | product `0NN-…` (e.g. `043-…`) | `F:\Destiny2BuildCreator` |
 | Dart port **integration** | `feature/multiplatform-dart` | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| Active Dart **slice** | `NNN-short-name` (Spec Kit) | Prefer a **dedicated** worktree per active slice, or checkout the feature branch *inside* the multiplatform worktree only |
+| Active Dart **slice** | `dart-NNN-short-name` (**DART-NNN** program ID) | Prefer a dedicated worktree per slice, or checkout inside the multiplatform worktree only |
 
 ## Rules
 
@@ -30,9 +30,9 @@ Product line (separate):
 4. Use **full Spec Kit lifecycle** for every slice on this line:
    - `/speckit-specify` → (optional `/speckit-clarify`) → `/speckit-plan` → `/speckit-tasks` → `/speckit-implement` → finish-spec
 5. When finishing a slice, **base branch = `feature/multiplatform-dart`** (not `main`, not `feature/overhall`). Override finish-spec base if `git-config.yml` still says `main`.
-6. Spec directories live under `specs/NNN-short-name/` as usual; keep short names clearly multiplatform-scoped (e.g. `dart-domain-foundation`, `dart-data-manifest`, `flutter-windows-shell`).
+6. **Parallel numbering:** this workstream uses **`DART-001`…** only — never product `044+`. Branches and specs: `dart-NNN-short-name` / `specs/dart-NNN-short-name/`.
 7. Architecture freezes: [`multiplatform-dart-port-decisions.md`](./multiplatform-dart-port-decisions.md).
-8. **Slice backlog (canonical):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — all phases broken into ordered Spec Kit slices; update status after every finish-spec.
+8. **Slice backlog (canonical):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — **DART-001–DART-049**; update status after every finish-spec.
 9. Exploration Grok workflow (read-only): `.grok/workflows/explore-flutter-port.rhai` — maintain on this line; optional, not a product runtime dependency.
 
 ## Creating a new Spec Kit slice (agents)
@@ -45,32 +45,27 @@ git checkout feature/multiplatform-dart
 git pull --ff-only   # if remote exists
 ```
 
-Then run Spec Kit **specify** so `before_specify` creates `NNN-…` **from the integration tip**:
-
-- Prefer starting the feature command **while checked out on** `feature/multiplatform-dart` so the new branch’s parent is that tip (if the git extension branches from `HEAD` when base is unset, or from `base_branch`).
-- If the extension always uses `base_branch: main` from `.specify/extensions/git/git-config.yml`, create the branch explicitly:
+Then create the next **DART-NNN** branch from the integration tip (**do not** let Spec Kit auto-pick product `044+`):
 
 ```powershell
-# After Spec Kit assigns NNN and short-name:
-git branch 044-dart-domain-foundation feature/multiplatform-dart
-git checkout 044-dart-domain-foundation
-# Write specs under specs/044-dart-domain-foundation/ via Spec Kit as usual
+# Example: DART-001
+$env:GIT_BRANCH_NAME = "dart-001-domain-foundation"
+git checkout feature/multiplatform-dart
+# create branch from base if needed:
+git checkout -B dart-001-domain-foundation feature/multiplatform-dart
+# Spec dir must match:
+# specs/dart-001-domain-foundation/
 ```
 
-Or set for one shot:
+Always set `GIT_BRANCH_NAME=dart-NNN-short-name` before `create-new-feature-branch` / specify so product sequential numbering is not used.
 
-```powershell
-$env:GIT_BRANCH_NAME = "044-dart-domain-foundation"
-# then run create-new-feature-branch / specify — still ensure parent is feature/multiplatform-dart
-```
-
-**Finish-spec override:** merge into `feature/multiplatform-dart`, not `main`.
+**Finish-spec:** merge into `feature/multiplatform-dart`, not `main`.
 
 ## Slice backlog
 
 Do **not** invent ad-hoc mega-features. Use the master table in  
 [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md)  
-(S01–S49 across phases P0–P5). One Spec Kit feature per row.
+(**DART-001–DART-049** across phases P0–P5). One Spec Kit feature per **DART-NNN** row.
 
 ## Worktree hygiene
 

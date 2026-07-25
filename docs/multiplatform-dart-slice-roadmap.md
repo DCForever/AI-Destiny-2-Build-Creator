@@ -2,6 +2,7 @@
 
 **Status:** active program plan  
 **Updated:** 2026-07-24  
+**Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
 **Pipeline per slice:** Spec Kit `specify → (clarify) → plan → tasks → implement → finish-spec` → **merge into `feature/multiplatform-dart` only** → update this table  
@@ -10,18 +11,38 @@
 **Branch / worktree rules:** [multiplatform-dart-branching.md](./multiplatform-dart-branching.md)  
 **Exploration source:** workflow `explore-flutter-port` + decisions Q1–Q4  
 
-This is the **canonical list of Spec Kit slices** for the full port. Implement **in order** (do not skip phase gates). Each row is one feature branch / one `specs/NNN-short-name/` directory — sized so a single Spec Kit cycle is realistic (roughly days to ~1–2 weeks of focused work, not a whole phase).
+This is the **canonical list of Spec Kit slices** for the full port. Implement **in order** (do not skip phase gates). Each row is one feature branch / one `specs/dart-NNN-short-name/` directory — sized so a single Spec Kit cycle is realistic (roughly days to ~1–2 weeks of focused work, not a whole phase).
+
+---
+
+## Numbering (parallel workstream)
+
+| Line | ID pattern | Examples | Spec dir / branch |
+| ---- | ---------- | -------- | ----------------- |
+| **Product (Next.js)** | Sequential Spec Kit `001`… | `043-default-variant-composer` | `specs/043-…` |
+| **Multiplatform Dart (this doc)** | **`DART-NNN`** | **`DART-001`**, `DART-002`, … | `specs/dart-001-…` / branch `dart-001-…` |
+
+- **Do not** continue product numbers (`044`, `045`, …) for this port.
+- **Do not** reuse product feature numbers for Dart slices.
+- Program IDs in this table are always **`DART-001` … `DART-049`** (zero-padded to three digits).
+- Git branch and `specs/` folder use **lowercase** `dart-NNN-short-name` (filesystem-friendly); the table’s **ID** column is the canonical label (`DART-001`).
+- When running Spec Kit on this line, **force** names so auto-numbering never steals product `044+`:
+
+```powershell
+$env:GIT_BRANCH_NAME = "dart-001-domain-foundation"
+# Prefer explicit feature dir if supported:
+# SPECIFY_FEATURE_DIRECTORY=specs/dart-001-domain-foundation
+```
 
 ---
 
 ## How to use this document
 
 1. Pick the next row with status **`pending`** whose **Depends** are all **`done`**.
-2. From the multiplatform worktree on `feature/multiplatform-dart`, run Spec Kit specify (or continue the assigned branch).
-3. Short name in the table is the Spec Kit short-name; `NNN` is assigned by Spec Kit sequential numbering (044+). Update the **NNN** column when the branch exists.
-4. After finish-spec onto `feature/multiplatform-dart`, set status to **`done`**, fill NNN, and note merge tip if useful.
-5. If a slice is still too large at plan time, **split it here first** (insert rows, renumber order) before implementing — do not ship mega-slices.
-6. Product domain rules (DBR/DAC/BR) still win for game behavior; this roadmap does not redefine them.
+2. From the multiplatform worktree on `feature/multiplatform-dart`, create/checkout `dart-NNN-short-name` and run Spec Kit specify.
+3. After finish-spec onto `feature/multiplatform-dart`, set status to **`done`** and advance **Current pointer**.
+4. If a slice is still too large at plan time, **split it here first** (insert `DART-NNNa` style only if needed, or renumber with a note) before implementing.
+5. Product domain rules (DBR/DAC/BR) still win for game behavior; this roadmap does not redefine them.
 
 ### Status values
 
@@ -67,59 +88,59 @@ Do **not** schedule slices for: `/debug/*` as primary nav, multi-pass LLM genera
 
 ## Master slice table
 
-Order is strict. `NNN` starts at **044** (first branch already created as `044-dart-domain-foundation` — keep that short name for S01 or rename only if you reset the branch before specify).
+Order is strict. IDs start at **`DART-001`**.
 
-| Order | Status | NNN | Short name | Phase | Depends | Goal (one line) | Exit criteria (must all pass) |
-| ----- | ------ | --- | ---------- | ----- | ------- | --------------- | ----------------------------- |
-| S01 | **active** | `044` | `dart-domain-foundation` | P0 | — | Melos (or equivalent) monorepo skeleton: package graph, CI-friendly `dart test` entry, no UI apps yet | Packages resolve; empty/smoke domain package; documented layout; no IO/UI deps allowed in domain pubspec |
-| S02 | pending | | `dart-models` | P0 | S01 | Pure DTOs / freezed (or equivalent) models for pins, claims, kits, coverage results, failure codes | Models package has zero IO; maps core build/variant/set/synergy shapes used by evaluators |
-| S03 | pending | | `dart-hard-constraints` | P0 | S02 | Port pure hard evaluators: exotic limits, mod energy, subclass kit, exotic ability match | Golden tests vs TS fixtures; hard-block codes stable; capacityResolved semantics documented |
-| S04 | pending | | `dart-soft-coverage` | P0 | S02 | Port soft coverage + soft stat estimate inputs (no save path imports) | Soft results never imply hard block; tests forbid hard/soft confusion; DBR-GUID soft path parity |
-| S05 | pending | | `dart-resolve-variant` | P0 | S02 | Port pure resolveVariant merge/conflict/completeness (claims only; no DB load) | Default vs non-default completeness rules tested; conflict detection parity |
-| S06 | pending | | `dart-equip-ready` | P0 | S02,S05 | Port equipReady / wishlist vs owned-pin gates (pure) | Wishlist cannot be equip-ready; stale pin rules covered by tests |
-| S07 | pending | | `dart-finish-gaps` | P0 | S05,S06 | Port finishGaps / next-slot pure helpers | Gap list stable for default vs non-default fixtures |
-| S08 | pending | | `dart-optimizer-core` | P0 | S02 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
-| S09 | pending | | `dart-static-sandbox-data` | P0 | S01 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
-| S10 | pending | | `dart-dim-builders` | P0 | S06 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
-| S11 | pending | | `dart-domain-parity-gate` | P0 | S03–S10 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
-| S12 | pending | | `dart-storage-root` | P1 | S11 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
-| S13 | pending | | `dart-drift-schema` | P1 | S12 | Drift schema mirroring core tables (users, builds, variants, sets, synergies, inventory) | Schema creates clean DB; PRAGMA/index notes for critical uniques |
-| S14 | pending | | `dart-drift-migrations` | P1 | S13 | Migration strategy mirroring historical ensure* / column upgrades needed for import later | Empty→current migrate green; documented version table |
-| S15 | pending | | `dart-repos-library` | P1 | S14 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
-| S16 | pending | | `dart-repos-inventory` | P1 | S14 | Inventory repository + full-replace transaction shape + sync metadata fields | Composite unique; batch insert in one transaction; busy lock hook |
-| S17 | pending | | `dart-manifest-entities` | P1 | S12 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
-| S18 | pending | | `dart-manifest-windows-refresh` | P1 | S17 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
-| S19 | pending | | `flutter-windows-host-skeleton` | P1 | S12,S13 | Minimal Flutter Windows app: open DB, show Settings stub (manifest status only) | App launches; single DB connection; no OAuth yet |
-| S20 | pending | | `flutter-catalog-offline` | P1 | S17,S19 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
-| S21 | pending | | `dart-bungie-http` | P2 | S11 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
-| S22 | pending | | `dart-oauth-pkce` | P2 | S21 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
-| S23 | pending | | `flutter-windows-oauth` | P2 | S22,S19 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
-| S24 | pending | | `dart-bungie-profile-sync` | P2 | S21,S16 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
-| S25 | pending | | `flutter-inventory-sync-ui` | P2 | S23,S24 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
-| S26 | pending | | `flutter-catalog-owned` | P2 | S20,S25 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
-| S27 | pending | | `dart-app-use-cases-library` | P3 | S15,S11 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
-| S28 | pending | | `dart-app-use-cases-build` | P3 | S27,S03–S07 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
-| S29 | pending | | `flutter-design-tokens` | P3 | S19 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
-| S30 | pending | | `flutter-sets-library-ui` | P3 | S27,S29,S26 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
-| S31 | pending | | `flutter-synergy-library-ui` | P3 | S27,S29 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
-| S32 | pending | | `flutter-build-identity-ui` | P3 | S28,S29 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
-| S33 | pending | | `flutter-variant-compose-ui` | P3 | S32,S30 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
-| S34 | pending | | `flutter-soft-guidance-ui` | P3 | S33,S04 | Soft coverage chips + soft stat targets UI (display only) | Soft never auto-applies; **P3 phase gate** (compose without equip) |
-| S35 | pending | | `dart-optimizer-isolate` | P4 | S08,S28 | Run enumerate in isolate; materialize Armor Set use case | UI thread safe; confirm-only apply path |
-| S36 | pending | | `flutter-optimizer-ui` | P4 | S35,S30 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
-| S37 | pending | | `dart-equip-orchestrator` | P4 | S06,S24 | planEquipSteps + execute + partial status (write client) | Best-effort partial; no full rollback; tests with mocked write API |
-| S38 | pending | | `flutter-equip-ui` | P4 | S37,S33 | Character pick + equip CTA + step report | Equip-ready gate enforced; gaps confirm UX |
-| S39 | pending | | `flutter-dim-export-ui` | P4 | S10,S38 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
-| S40 | pending | | `flutter-mobile-shell-nav` | P4 | S34 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
-| S41 | pending | | `flutter-mobile-compose` | P4 | S40,S33–S34 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
-| S42 | pending | | `jaspr-app-skeleton` | P5 | S11,S13 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
-| S43 | pending | | `jaspr-opfs-sqlite` | P5 | S42,S14 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
-| S44 | pending | | `jaspr-entity-bundles` | P5 | S17,S42 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
-| S45 | pending | | `jaspr-oauth-pkce` | P5 | S22,S42 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
-| S46 | pending | | `jaspr-compose-spine` | P5 | S43–S45,S27–S28 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
-| S47 | pending | | `jaspr-equip-export` | P5 | S46,S37,S10 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
-| S48 | pending | | `legacy-db-import` | P5 | S14,S43 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
-| S49 | pending | | `cutover-parity-checklist` | P5 | S47,S41,S38 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
+| ID | Status | Short name | Branch / specs dir | Phase | Depends | Goal (one line) | Exit criteria (must all pass) |
+| -- | ------ | ---------- | ------------------ | ----- | ------- | --------------- | ----------------------------- |
+| **DART-001** | **active** | `domain-foundation` | `dart-001-domain-foundation` | P0 | — | Melos (or equivalent) monorepo skeleton: package graph, CI-friendly `dart test` entry, no UI apps yet | Packages resolve; empty/smoke domain package; documented layout; no IO/UI deps allowed in domain pubspec |
+| **DART-002** | pending | `models` | `dart-002-models` | P0 | DART-001 | Pure DTOs / freezed (or equivalent) models for pins, claims, kits, coverage results, failure codes | Models package has zero IO; maps core build/variant/set/synergy shapes used by evaluators |
+| **DART-003** | pending | `hard-constraints` | `dart-003-hard-constraints` | P0 | DART-002 | Port pure hard evaluators: exotic limits, mod energy, subclass kit, exotic ability match | Golden tests vs TS fixtures; hard-block codes stable; capacityResolved semantics documented |
+| **DART-004** | pending | `soft-coverage` | `dart-004-soft-coverage` | P0 | DART-002 | Port soft coverage + soft stat estimate inputs (no save path imports) | Soft results never imply hard block; tests forbid hard/soft confusion; DBR-GUID soft path parity |
+| **DART-005** | pending | `resolve-variant` | `dart-005-resolve-variant` | P0 | DART-002 | Port pure resolveVariant merge/conflict/completeness (claims only; no DB load) | Default vs non-default completeness rules tested; conflict detection parity |
+| **DART-006** | pending | `equip-ready` | `dart-006-equip-ready` | P0 | DART-002, DART-005 | Port equipReady / wishlist vs owned-pin gates (pure) | Wishlist cannot be equip-ready; stale pin rules covered by tests |
+| **DART-007** | pending | `finish-gaps` | `dart-007-finish-gaps` | P0 | DART-005, DART-006 | Port finishGaps / next-slot pure helpers | Gap list stable for default vs non-default fixtures |
+| **DART-008** | pending | `optimizer-core` | `dart-008-optimizer-core` | P0 | DART-002 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
+| **DART-009** | pending | `static-sandbox-data` | `dart-009-static-sandbox-data` | P0 | DART-001 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
+| **DART-010** | pending | `dim-builders` | `dart-010-dim-builders` | P0 | DART-006 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
+| **DART-011** | pending | `domain-parity-gate` | `dart-011-domain-parity-gate` | P0 | DART-003–010 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
+| **DART-012** | pending | `storage-root` | `dart-012-storage-root` | P1 | DART-011 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
+| **DART-013** | pending | `drift-schema` | `dart-013-drift-schema` | P1 | DART-012 | Drift schema mirroring core tables (users, builds, variants, sets, synergies, inventory) | Schema creates clean DB; PRAGMA/index notes for critical uniques |
+| **DART-014** | pending | `drift-migrations` | `dart-014-drift-migrations` | P1 | DART-013 | Migration strategy mirroring historical ensure* / column upgrades needed for import later | Empty→current migrate green; documented version table |
+| **DART-015** | pending | `repos-library` | `dart-015-repos-library` | P1 | DART-014 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
+| **DART-016** | pending | `repos-inventory` | `dart-016-repos-inventory` | P1 | DART-014 | Inventory repository + full-replace transaction shape + sync metadata fields | Composite unique; batch insert in one transaction; busy lock hook |
+| **DART-017** | pending | `manifest-entities` | `dart-017-manifest-entities` | P1 | DART-012 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
+| **DART-018** | pending | `manifest-windows-refresh` | `dart-018-manifest-windows-refresh` | P1 | DART-017 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
+| **DART-019** | pending | `flutter-windows-host-skeleton` | `dart-019-flutter-windows-host-skeleton` | P1 | DART-012, DART-013 | Minimal Flutter Windows app: open DB, show Settings stub (manifest status only) | App launches; single DB connection; no OAuth yet |
+| **DART-020** | pending | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
+| **DART-021** | pending | `bungie-http` | `dart-021-bungie-http` | P2 | DART-011 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
+| **DART-022** | pending | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
+| **DART-023** | pending | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
+| **DART-024** | pending | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
+| **DART-025** | pending | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
+| **DART-026** | pending | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
+| **DART-027** | pending | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
+| **DART-028** | pending | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
+| **DART-029** | pending | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
+| **DART-030** | pending | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
+| **DART-031** | pending | `flutter-synergy-library-ui` | `dart-031-flutter-synergy-library-ui` | P3 | DART-027, DART-029 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
+| **DART-032** | pending | `flutter-build-identity-ui` | `dart-032-flutter-build-identity-ui` | P3 | DART-028, DART-029 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
+| **DART-033** | pending | `flutter-variant-compose-ui` | `dart-033-flutter-variant-compose-ui` | P3 | DART-032, DART-030 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
+| **DART-034** | pending | `flutter-soft-guidance-ui` | `dart-034-flutter-soft-guidance-ui` | P3 | DART-033, DART-004 | Soft coverage chips + soft stat targets UI (display only) | Soft never auto-applies; **P3 phase gate** (compose without equip) |
+| **DART-035** | pending | `optimizer-isolate` | `dart-035-optimizer-isolate` | P4 | DART-008, DART-028 | Run enumerate in isolate; materialize Armor Set use case | UI thread safe; confirm-only apply path |
+| **DART-036** | pending | `flutter-optimizer-ui` | `dart-036-flutter-optimizer-ui` | P4 | DART-035, DART-030 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
+| **DART-037** | pending | `equip-orchestrator` | `dart-037-equip-orchestrator` | P4 | DART-006, DART-024 | planEquipSteps + execute + partial status (write client) | Best-effort partial; no full rollback; tests with mocked write API |
+| **DART-038** | pending | `flutter-equip-ui` | `dart-038-flutter-equip-ui` | P4 | DART-037, DART-033 | Character pick + equip CTA + step report | Equip-ready gate enforced; gaps confirm UX |
+| **DART-039** | pending | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
+| **DART-040** | pending | `flutter-mobile-shell-nav` | `dart-040-flutter-mobile-shell-nav` | P4 | DART-034 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
+| **DART-041** | pending | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
+| **DART-042** | pending | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
+| **DART-043** | pending | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
+| **DART-044** | pending | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
+| **DART-045** | pending | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
+| **DART-046** | pending | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
+| **DART-047** | pending | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
+| **DART-048** | pending | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
+| **DART-049** | pending | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
 
 ---
 
@@ -127,7 +148,7 @@ Order is strict. `NNN` starts at **044** (first branch already created as `044-d
 
 ### P0 — Pure domain
 
-Split **by pure module**, not “port all of `src/lib`”. Hard constraints, soft coverage, resolve, equip-ready, optimizer, and DIM builders each get their own slice so parity failures stay localized. **S11** is the phase gate: do not start Drift until pure suite is trustworthy.
+Split **by pure module**, not “port all of `src/lib`”. Hard constraints, soft coverage, resolve, equip-ready, optimizer, and DIM builders each get their own slice so parity failures stay localized. **DART-011** is the phase gate: do not start Drift until pure suite is trustworthy.
 
 ### P1 — Data + manifest
 
@@ -169,25 +190,26 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next slice** | **S01** `044-dart-domain-foundation` (monorepo skeleton only — do not expand S01 into all of P0) |
-| **Active branch** | `044-dart-domain-foundation` |
+| **Next / active slice** | **DART-001** `domain-foundation` (monorepo skeleton only — do not expand into all of P0) |
+| **Active branch** | `dart-001-domain-foundation` |
+| **Specs dir** | `specs/dart-001-domain-foundation/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
 
-### S01 scope boundary (important)
+### DART-001 scope boundary (important)
 
-The existing branch name says “domain-foundation” but **this roadmap defines S01 as monorepo skeleton only**.  
-Spec Kit specify for `044` should **not** include porting all evaluators — those are S02–S11. If specify already drifted wide, narrow the spec to S01 exit criteria before plan/tasks.
+**DART-001 is monorepo skeleton only.**  
+Spec Kit specify must **not** include porting all evaluators — those are **DART-002–DART-011**. Keep the branch/spec scoped to DART-001 exit criteria.
 
 ---
 
 ## Update checklist (end of every finish-spec)
 
-- [ ] Row status → `done`, NNN filled  
-- [ ] **Current pointer** advanced to next pending row  
+- [ ] Row status → `done`  
+- [ ] **Current pointer** advanced to next pending `DART-NNN`  
 - [ ] Phase gate row marked done when that phase completes  
 - [ ] Decisions doc still accurate (link only; don’t fork architecture here)  
-- [ ] No product-branch merges  
+- [ ] No product-branch merges; no product `0NN` IDs used for this line  
 
 ---
 
@@ -197,5 +219,5 @@ Spec Kit specify for `044` should **not** include porting all evaluators — tho
 | ---- | ---- |
 | [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md) | Locked architecture |
 | [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) | Git / worktree isolation |
-| `specs/NNN-*/` | Per-slice Spec Kit artifacts |
+| `specs/dart-NNN-*/` | Per-slice Spec Kit artifacts (DART workstream only) |
 | `.grok/workflows/explore-flutter-port.rhai` | Optional re-exploration only |
