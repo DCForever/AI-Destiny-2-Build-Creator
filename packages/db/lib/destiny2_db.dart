@@ -4,10 +4,12 @@
 /// [AppDatabase.file]. Ensure* upgrades (DART-014) heal partial schemas on open.
 /// Library repositories (builds/sets/synergies/variants): DART-015.
 /// Inventory full-replace + sync meta + busy lock: DART-016.
+/// Legacy Next `.cache/app.db` → StorageRoot import (dry-run + apply): DART-048.
 library;
 
 export 'src/app_database.dart';
 export 'src/ensure_upgrades.dart';
+export 'src/legacy_import/legacy_db_import.dart';
 export 'src/migration_version_table.dart';
 export 'src/schema_notes.dart';
 export 'src/tables.dart';

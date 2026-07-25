@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-047 done — Jaspr equip-ready + DIM json + optional equip)  
+**Updated:** 2026-07-25 (DART-048 done — legacy Next app.db → StorageRoot dry-run + apply)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -139,7 +139,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-045** | **done** | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
 | **DART-046** | **done** | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
 | **DART-047** | **done** | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
-| **DART-048** | pending | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
+| **DART-048** | **done** | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
 | **DART-049** | pending | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
 
 ---
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-048** `legacy-db-import` (P5 — import Next `.cache/app.db` → StorageRoot) |
-| **Active branch** | (create) `dart-048-legacy-db-import` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-048-legacy-db-import/` (created at specify) |
+| **Next / active slice** | **DART-049** `cutover-parity-checklist` (P5 — program gate) |
+| **Active branch** | (create) `dart-049-cutover-parity-checklist` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-049-cutover-parity-checklist/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-048 note (completed)
+
+Legacy Next `.cache/app.db` → platform StorageRoot: pure `LegacyDbImporter` dry-run + apply (replace + backup + ensure*); Windows Settings **Data migration** card; docs `docs/multiplatform-dart-legacy-db-import.md`; CLI `tool/legacy_db_import.dart`. Tests: `packages/db` legacy_db_import (8) + full db suite; windows_host controller/card (5). Soft never auto-applies; no CLIENT_SECRET. Next: DART-049 cutover checklist.
 
 ### DART-047 note (completed)
 

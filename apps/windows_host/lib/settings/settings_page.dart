@@ -3,16 +3,22 @@ import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
 import 'inventory_sync_card.dart';
+import 'legacy_db_import_card.dart';
+import 'legacy_db_import_controller.dart';
 import 'oauth_account_card.dart';
 
-/// Settings: account (OAuth) + inventory sync + manifest status (DART-019/023/025).
+/// Settings: account (OAuth) + inventory sync + legacy DB import + manifest (DART-019/023/025/048).
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
     required this.services,
+    this.legacyImportController,
   });
 
   final AppServices services;
+
+  /// Optional injectable importer controller (tests).
+  final LegacyDbImportController? legacyImportController;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -22,11 +28,29 @@ class _SettingsPageState extends State<SettingsPage> {
   ManifestStatus? _status;
   Object? _error;
   bool _loading = true;
+  late final LegacyDbImportController _legacyImport;
+  var _ownsLegacyImport = false;
 
   @override
   void initState() {
     super.initState();
+    if (widget.legacyImportController != null) {
+      _legacyImport = widget.legacyImportController!;
+    } else {
+      _legacyImport = LegacyDbImportController(
+        storageRoot: widget.services.storageRoot,
+      );
+      _ownsLegacyImport = true;
+    }
     _loadStatus();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsLegacyImport) {
+      _legacyImport.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _loadStatus() async {
@@ -78,6 +102,16 @@ class _SettingsPageState extends State<SettingsPage> {
             key: const Key('settings_inventory_sync_card'),
             controller: widget.services.inventorySync,
             session: widget.services.oauthSession,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Data migration',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          LegacyDbImportCard(
+            key: const Key('settings_legacy_db_import_card'),
+            controller: _legacyImport,
           ),
           const SizedBox(height: 24),
           Text(
