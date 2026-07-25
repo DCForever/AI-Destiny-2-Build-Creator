@@ -64,8 +64,8 @@
 
 - [x] T013 Run `dart test packages/db`; pure graph guard still green
 - [x] T014 Mark all tasks [x]; commit remaining work
-- [ ] T015 Checkout `feature/multiplatform-dart`; merge `dart-014-drift-migrations` --no-edit
-- [ ] T016 Update `docs/multiplatform-dart-slice-roadmap.md` (DART-014 done, pointer → DART-015); commit on base
+- [x] T015 Checkout `feature/multiplatform-dart`; merge `dart-014-drift-migrations` --no-edit
+- [x] T016 Update `docs/multiplatform-dart-slice-roadmap.md` (DART-014 done, pointer → DART-015); commit on base
 
 ---
 
