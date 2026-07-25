@@ -1,0 +1,21 @@
+name: destiny2_manifest
+description: >
+  Entity store reader + MVP extractors for Destiny 2 Build Creator multiplatform
+  port (DART-017). Offline JSON under StorageRoot; hard-constraint adapters.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  destiny2_domain:
+    path: ../domain
+  destiny2_storage:
+    path: ../storage
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
