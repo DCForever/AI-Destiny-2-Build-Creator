@@ -59,8 +59,8 @@
 ## Phase 5: Finish
 
 - [x] T016 Mark tasks complete; run full `dart test` in apps/web_host
-- [ ] T017 Commit on `dart-045-jaspr-oauth-pkce`
-- [ ] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-045 done; pointer → DART-046; commit base
+- [x] T017 Commit on `dart-045-jaspr-oauth-pkce`
+- [x] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-045 done; pointer → DART-046; commit base
 
 ---
 
