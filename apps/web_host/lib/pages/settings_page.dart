@@ -1,32 +1,39 @@
-/// Settings surface with Hello + web DB status (DART-042/043).
+/// Settings surface with Hello + web DB status + OAuth account (DART-042–045).
 library;
 
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import '../auth/web_oauth_session.dart';
+import '../components/oauth_account_card.dart';
 import '../db/web_db_status.dart';
 import '../theme/theme.dart';
 
 /// Primary landing surface for the Jaspr web host.
 ///
-/// Shows Settings identity, Hello greeting, and local database / OPFS session
-/// status (writer vs blocked). OAuth remains a later slice (DART-045).
+/// Shows Settings identity, Hello greeting, local database / OPFS session
+/// status (writer vs blocked), and Public+PKCE Bungie account (DART-045).
 class SettingsPage extends StatelessComponent {
   const SettingsPage({
     this.dbStatus,
+    this.oauthSession,
     super.key,
   });
 
   /// When null, shows a loading placeholder for the DB panel.
   final WebDbSessionStatus? dbStatus;
 
+  /// When null, account card is omitted (tests that only cover DB/Hello).
+  final WebOAuthSession? oauthSession;
+
   /// Stable copy for tests and a11y.
   static const String titleText = 'Settings';
   static const String helloText = 'Hello';
   static const String subtitleText =
       'Jaspr web host — Matte Flap tokens, client routing, Drift WASM/OPFS, '
-      'prebuilt entity bundles for Catalog. '
-      'No Next.js dependency. Single-tab writer for local SQLite.';
+      'prebuilt entity bundles for Catalog, Public+PKCE Bungie sign-in. '
+      'No Next.js dependency. Single-tab writer for local SQLite. '
+      'No confidential client secret.';
 
   static const String blockedBannerText =
       'Another tab holds the database writer. This tab is blocked from writing. '
@@ -67,6 +74,7 @@ class SettingsPage extends StatelessComponent {
             },
             [.text(writerReadyHint)],
           ),
+        if (oauthSession != null) OAuthAccountCard(session: oauthSession!),
         div(classes: 'settings-panel', [
           h2([.text('Host status')]),
           ul([
@@ -86,7 +94,18 @@ class SettingsPage extends StatelessComponent {
                 [.text('Storage: ${status.storageImplementation}')],
               ),
             li([.text('Entities: prebuilt bundles (DART-044) — see Catalog')]),
-            li([.text('Sign-in: not configured (DART-045)')]),
+            li(
+              attributes: {'data-testid': 'oauth-host-line'},
+              [
+                .text(
+                  oauthSession == null
+                      ? 'Sign-in: session not injected'
+                      : (oauthSession!.isConfigured
+                          ? 'Sign-in: Public+PKCE (DART-045)'
+                          : 'Sign-in: configure BUNGIE_CLIENT_ID'),
+                ),
+              ],
+            ),
           ]),
         ]),
         div(classes: 'settings-panel', [
@@ -104,6 +123,17 @@ class SettingsPage extends StatelessComponent {
             .text(
               'Catalog uses prebuilt MVP entity JSON (no full raw manifest rebuild '
               'in the browser). Fixture: /entities/prebuilt/bundle.json.',
+            ),
+          ]),
+        ]),
+        div(classes: 'settings-panel', [
+          h2([.text('OAuth token storage')]),
+          p(classes: 'settings-policy', [
+            .text(
+              'Access and refresh tokens use origin-scoped browser storage '
+              '(localStorage), never SQLite/Drift. Pending PKCE lives in '
+              'sessionStorage for the redirect only. Prefer HTTPS origins. '
+              'No CLIENT_SECRET in this client.',
             ),
           ]),
         ]),

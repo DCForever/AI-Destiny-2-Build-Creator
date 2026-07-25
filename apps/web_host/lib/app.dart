@@ -1,4 +1,4 @@
-/// Root shell + client router for the Jaspr web host (DART-042–044).
+/// Root shell + client router for the Jaspr web host (DART-042–045).
 library;
 
 import 'dart:async';
@@ -7,15 +7,17 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
+import 'auth/web_oauth_session.dart';
 import 'catalog/entity_bundle_loader.dart';
 import 'components/shell_header.dart';
 import 'db/web_database_bootstrap.dart';
 import 'db/web_db_status.dart';
+import 'pages/auth_callback_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
 import 'theme/theme.dart' as theme;
 
-/// Main application: shell chrome + routed pages + optional DB / entity bootstrap.
+/// Main application: shell chrome + routed pages + optional DB / entity / OAuth.
 ///
 /// When [bootstrap] is null (tests), Settings shows loading DB status unless
 /// [initialDbStatus] is provided. Catalog uses [entityLoader] or injected page.
@@ -24,6 +26,7 @@ class App extends StatefulComponent {
     this.bootstrap,
     this.initialDbStatus,
     this.entityLoader,
+    this.oauthSession,
     super.key,
   });
 
@@ -32,6 +35,9 @@ class App extends StatefulComponent {
 
   /// Prebuilt entity bundle loader for Catalog (DART-044).
   final WebEntityBundleLoader? entityLoader;
+
+  /// Browser Public+PKCE session (DART-045). Optional in pure UI tests.
+  final WebOAuthSession? oauthSession;
 
   @override
   State<App> createState() => _AppState();
@@ -60,6 +66,11 @@ class _AppState extends State<App> {
         }),
       );
     }
+
+    final oauth = component.oauthSession;
+    if (oauth != null && !oauth.hasRestored) {
+      unawaited(oauth.restore());
+    }
   }
 
   @override
@@ -85,18 +96,31 @@ class _AppState extends State<App> {
               Route(
                 path: '/',
                 title: 'Settings',
-                builder: (context, state) => SettingsPage(dbStatus: _dbStatus),
+                builder: (context, state) => SettingsPage(
+                  dbStatus: _dbStatus,
+                  oauthSession: component.oauthSession,
+                ),
               ),
               Route(
                 path: '/settings',
                 title: 'Settings',
-                builder: (context, state) => SettingsPage(dbStatus: _dbStatus),
+                builder: (context, state) => SettingsPage(
+                  dbStatus: _dbStatus,
+                  oauthSession: component.oauthSession,
+                ),
               ),
               Route(
                 path: '/catalog',
                 title: 'Catalog',
                 builder: (context, state) => CatalogPage(
                   loader: component.entityLoader,
+                ),
+              ),
+              Route(
+                path: '/auth/callback',
+                title: 'Signing in',
+                builder: (context, state) => AuthCallbackPage(
+                  session: component.oauthSession,
                 ),
               ),
             ],

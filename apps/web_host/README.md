@@ -1,4 +1,4 @@
-# destiny2_web_host (DART-042 / DART-043 / DART-044)
+# destiny2_web_host (DART-042 – DART-045)
 
 Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator port.
 
@@ -11,25 +11,55 @@ Jaspr **client-mode** web shell for the multiplatform Destiny 2 Build Creator po
 | Tokens | `destiny2_ui_tokens` → CSS custom properties |
 | Database | Drift **WASM + OPFS** (DART-043), single-tab writer |
 | Entities | **Prebuilt entity bundles** (DART-044) — no raw rebuild in browser |
+| Auth | **Public + PKCE** (DART-045) — no `CLIENT_SECRET` |
 | Next.js | **Not a dependency** |
 
 ## What this host includes
 
 - App shell (header + main)
-- Client routes: `/catalog` → offline **Catalog**; `/` and `/settings` → **Settings**
+- Client routes:
+  - `/catalog` → offline **Catalog**
+  - `/` and `/settings` → **Settings** (DB status + Bungie account)
+  - `/auth/callback` → OAuth PKCE callback
 - Matte Flap Ledger design tokens as CSS (from pure package)
 - **Local SQLite via Drift WASM** with OPFS when available
 - **Single-tab writer lock**: second tab is **blocked** with UX banner
 - **Prebuilt entity bundle** at `web/entities/prebuilt/bundle.json` → offline catalog facets
+- **Browser Public+PKCE** sign-in / sign-out (DART-045)
 - Unit/component tests
 
 ## What is still later
 
-- OAuth PKCE (DART-045)
 - Compose / equip UI (DART-046+)
 - Owned inventory filter on web (sync later)
 - Production CDN channel for large entity bundles (fixture ships in-app)
-- `CLIENT_SECRET` / confidential Bungie flow (never in this client)
+- Confidential Bungie flow (never in this client)
+
+## OAuth (DART-045)
+
+Uses `destiny2_bungie` Public+PKCE only (DART-022). **Never** embed `BUNGIE_CLIENT_SECRET` or `SESSION_SECRET`.
+
+| Concern | Strategy |
+| ------- | -------- |
+| Authorize / token | `BungieOAuthClient` + PKCE S256 |
+| Redirect URI | `{origin}/auth/callback` (or `BUNGIE_REDIRECT_URI`) |
+| Access / refresh tokens | Origin-scoped **`localStorage`** (not SQLite) |
+| Pending PKCE verifier | **`sessionStorage`** for the redirect only |
+| Config | `--dart-define=BUNGIE_CLIENT_ID=...` (public id) |
+
+Register the HTTPS loopback or production callback on a Bungie **Public** application, e.g.:
+
+- `https://127.0.0.1:8080/auth/callback`
+- `https://your.production.origin/auth/callback`
+
+```powershell
+cd apps\web_host
+jaspr serve --dart-define=BUNGIE_CLIENT_ID=your_public_client_id
+```
+
+Settings → **Sign in** → Bungie consent → `/auth/callback` → Settings signed-in.
+
+See `specs/dart-045-jaspr-oauth-pkce/quickstart.md`.
 
 ## Prebuilt entity bundles (DART-044)
 
@@ -60,7 +90,7 @@ powershell -File tool\fetch_drift_web_assets.ps1
 jaspr serve
 ```
 
-Open `http://localhost:8080` — Settings with **Hello** + database role.
+Open the app origin — Settings with **Hello** + database role + account card.
 
 Open a **second tab** → blocked writer banner.
 
@@ -75,4 +105,4 @@ dart test
 
 ## Architecture
 
-See [docs/multiplatform-dart-port-decisions.md](../../docs/multiplatform-dart-port-decisions.md) (Jaspr for web, not Flutter Web; pure Dart I/O; D-WEB-DB OPFS single-writer).
+See [docs/multiplatform-dart-port-decisions.md](../../docs/multiplatform-dart-port-decisions.md) (Jaspr for web, not Flutter Web; pure Dart I/O; D-WEB-AUTH Public+PKCE; D-WEB-DB OPFS single-writer).
