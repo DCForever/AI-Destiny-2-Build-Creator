@@ -68,7 +68,7 @@
 - [x] T016 Document package in `packages/README.md`; align quickstart
 - [x] T017 Verify no CLIENT_SECRET; pure graph guard still passes
 - [x] T018 Run `dart test packages/bungie` (+ db tests if user repo changed); mark tasks complete
-- [ ] T019 Commit; merge `dart-024-bungie-profile-sync` into `feature/multiplatform-dart` (--no-edit); update `docs/multiplatform-dart-slice-roadmap.md` (DART-024 done, pointer → DART-025)
+- [x] T019 Commit; merge `dart-024-bungie-profile-sync` into `feature/multiplatform-dart` (--no-edit); update `docs/multiplatform-dart-slice-roadmap.md` (DART-024 done, pointer → DART-025)
 
 ---
 
