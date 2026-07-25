@@ -50,3 +50,7 @@ next-env.d.ts
 # Cursor IDE / speckit agent logs
 .cursor/*.log
 .cursor/debug*
+
+# Playwright atlas auth / local capture state
+.atlas/
+

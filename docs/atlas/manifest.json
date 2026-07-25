@@ -1,0 +1,525 @@
+{
+  "app": "Destiny 2 Build Creator",
+  "version": 2,
+  "generatedAt": "2026-07-25",
+  "baseUrlDefault": "https://127.0.0.1:3000",
+  "description": "Runtime atlas focused on compose detail flows: build creation, armor/weapon set create & edit, libraries, and finish readiness.",
+  "uses": [
+    "UX teardown of compose and library edit surfaces",
+    "QA coverage for intent\u2192compose\u2192equip and set creation",
+    "Agent context for navigation through Build / Sets / Synergy"
+  ],
+  "productAreas": [
+    {
+      "id": "build",
+      "label": "Build composer",
+      "nav": "/build"
+    },
+    {
+      "id": "sets",
+      "label": "Sets library",
+      "nav": "/sets"
+    },
+    {
+      "id": "synergy",
+      "label": "Synergy library",
+      "nav": "/synergy"
+    },
+    {
+      "id": "catalog",
+      "label": "Catalog",
+      "nav": "/catalog"
+    },
+    {
+      "id": "loadouts",
+      "label": "Loadouts",
+      "nav": "/loadouts"
+    },
+    {
+      "id": "settings",
+      "label": "Settings",
+      "nav": "/settings"
+    },
+    {
+      "id": "debug",
+      "label": "Debug tools",
+      "nav": "/debug"
+    }
+  ],
+  "screens": [
+    {
+      "id": "build-signed-out",
+      "title": "Build \u2014 signed-out gate",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-out"
+    },
+    {
+      "id": "build-library",
+      "title": "Build \u2014 library (no selection)",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "action": "ensure-library"
+    },
+    {
+      "id": "build-library-selected",
+      "title": "Build \u2014 library + selected details",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build"
+    },
+    {
+      "id": "build-create-draft-general",
+      "title": "Build create \u2014 draft General",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "action": "click-new-build",
+      "tab": "general"
+    },
+    {
+      "id": "build-create-draft-locked-tabs",
+      "title": "Build create \u2014 locked Subclass/Armor/Weapon",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "action": "click-new-build",
+      "notes": "Show tab strip with locks before class/subclass"
+    },
+    {
+      "id": "build-edit-general",
+      "title": "Build edit \u2014 General (live identity)",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "general"
+    },
+    {
+      "id": "build-edit-subclass",
+      "title": "Build edit \u2014 Subclass kit",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "subclass"
+    },
+    {
+      "id": "build-edit-armor-reuse",
+      "title": "Build edit \u2014 Armor Reuse",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "armor",
+      "subPath": "reuse"
+    },
+    {
+      "id": "build-edit-armor-create",
+      "title": "Build edit \u2014 Armor Create",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "armor",
+      "subPath": "create"
+    },
+    {
+      "id": "build-edit-armor-improve",
+      "title": "Build edit \u2014 Armor Improve kit",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "armor",
+      "subPath": "reuse",
+      "actionExtra": "open-improve-kit"
+    },
+    {
+      "id": "build-edit-weapon-reuse",
+      "title": "Build edit \u2014 Weapon Reuse",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "weapon",
+      "subPath": "reuse"
+    },
+    {
+      "id": "build-edit-weapon-create",
+      "title": "Build edit \u2014 Weapon Create + fill",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "weapon",
+      "subPath": "create"
+    },
+    {
+      "id": "build-edit-finish",
+      "title": "Build edit \u2014 Finish readiness",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "requires": "selected-build-edit",
+      "tab": "finish"
+    },
+    {
+      "id": "sets-signed-out",
+      "title": "Sets \u2014 signed-out gate",
+      "area": "sets",
+      "path": "/sets",
+      "auth": "signed-out"
+    },
+    {
+      "id": "sets-library",
+      "title": "Sets \u2014 library list",
+      "area": "sets",
+      "path": "/sets",
+      "auth": "signed-in",
+      "action": "ensure-library"
+    },
+    {
+      "id": "sets-detail",
+      "title": "Sets \u2014 set detail / edit",
+      "area": "sets",
+      "path": "/sets",
+      "auth": "signed-in",
+      "requires": "selected-set"
+    },
+    {
+      "id": "sets-create",
+      "title": "Sets \u2014 create set surface",
+      "area": "sets",
+      "path": "/sets",
+      "auth": "signed-in",
+      "action": "click-new-set"
+    },
+    {
+      "id": "synergy-signed-out",
+      "title": "Synergy \u2014 signed-out gate",
+      "area": "synergy",
+      "path": "/synergy",
+      "auth": "signed-out"
+    },
+    {
+      "id": "synergy-library",
+      "title": "Synergy \u2014 library list",
+      "area": "synergy",
+      "path": "/synergy",
+      "auth": "signed-in",
+      "action": "ensure-library"
+    },
+    {
+      "id": "synergy-detail",
+      "title": "Synergy \u2014 detail / evidence edit",
+      "area": "synergy",
+      "path": "/synergy",
+      "auth": "signed-in",
+      "requires": "selected-synergy"
+    },
+    {
+      "id": "synergy-create",
+      "title": "Synergy \u2014 create",
+      "area": "synergy",
+      "path": "/synergy",
+      "auth": "signed-in",
+      "action": "click-new-synergy"
+    },
+    {
+      "id": "catalog",
+      "title": "Catalog browse",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "any"
+    },
+    {
+      "id": "loadouts",
+      "title": "Loadouts",
+      "area": "loadouts",
+      "path": "/loadouts",
+      "auth": "signed-in"
+    },
+    {
+      "id": "settings",
+      "title": "Settings",
+      "area": "settings",
+      "path": "/settings",
+      "auth": "any"
+    },
+    {
+      "id": "debug-builds",
+      "title": "Debug \u2014 Builds",
+      "area": "debug",
+      "path": "/debug/builds",
+      "auth": "signed-in"
+    },
+    {
+      "id": "debug-sets",
+      "title": "Debug \u2014 Sets",
+      "area": "debug",
+      "path": "/debug/sets",
+      "auth": "signed-in"
+    },
+    {
+      "id": "debug-synergies",
+      "title": "Debug \u2014 Synergies",
+      "area": "debug",
+      "path": "/debug/synergies",
+      "auth": "signed-in"
+    }
+  ],
+  "paths": [
+    {
+      "id": "flow-build-create",
+      "title": "Create a new build (draft \u2192 live)",
+      "priority": "P1",
+      "type": "compose",
+      "description": "From library, open New build, land on draft General, then edit tabs after save.",
+      "steps": [
+        {
+          "screenId": "build-library",
+          "label": "Open Build library"
+        },
+        {
+          "screenId": "build-create-draft-general",
+          "label": "New build \u2192 draft General"
+        },
+        {
+          "screenId": "build-create-draft-locked-tabs",
+          "label": "See locked compose tabs"
+        },
+        {
+          "screenId": "build-edit-general",
+          "label": "After save \u2014 live General"
+        },
+        {
+          "screenId": "build-edit-subclass",
+          "label": "Subclass kit"
+        },
+        {
+          "screenId": "build-edit-finish",
+          "label": "Finish readiness"
+        }
+      ]
+    },
+    {
+      "id": "flow-armor-set-compose",
+      "title": "Armor set \u2014 Reuse, Create, Improve",
+      "priority": "P1",
+      "type": "compose",
+      "description": "Detail path for attaching or creating armor/mod sets on a variant.",
+      "steps": [
+        {
+          "screenId": "build-library-selected",
+          "label": "Select existing build"
+        },
+        {
+          "screenId": "build-edit-general",
+          "label": "Enter Edit"
+        },
+        {
+          "screenId": "build-edit-armor-reuse",
+          "label": "Armor \u2192 Reuse attach"
+        },
+        {
+          "screenId": "build-edit-armor-create",
+          "label": "Armor \u2192 Create set"
+        },
+        {
+          "screenId": "build-edit-armor-improve",
+          "label": "Optional Improve kit"
+        }
+      ]
+    },
+    {
+      "id": "flow-weapon-set-compose",
+      "title": "Weapon set \u2014 Reuse / Create / fill slots",
+      "priority": "P1",
+      "type": "compose",
+      "description": "Weapon library attach and create with primary/special/heavy fill.",
+      "steps": [
+        {
+          "screenId": "build-edit-general",
+          "label": "Open build edit"
+        },
+        {
+          "screenId": "build-edit-weapon-reuse",
+          "label": "Weapon \u2192 Reuse"
+        },
+        {
+          "screenId": "build-edit-weapon-create",
+          "label": "Weapon \u2192 Create + Fill"
+        }
+      ]
+    },
+    {
+      "id": "flow-intent-compose-equip",
+      "title": "P1 spine \u2014 Intent \u2192 Compose \u2192 Equip",
+      "priority": "P1",
+      "type": "journey",
+      "description": "Full product spine through the tabbed composer to Finish.",
+      "steps": [
+        {
+          "screenId": "build-create-draft-general",
+          "label": "Intent on General"
+        },
+        {
+          "screenId": "build-edit-subclass",
+          "label": "Subclass kit"
+        },
+        {
+          "screenId": "build-edit-armor-reuse",
+          "label": "Armor compose"
+        },
+        {
+          "screenId": "build-edit-weapon-create",
+          "label": "Weapon compose"
+        },
+        {
+          "screenId": "build-edit-finish",
+          "label": "Finish \u2192 equip/DIM"
+        }
+      ]
+    },
+    {
+      "id": "flow-sets-library-edit",
+      "title": "Sets library \u2014 browse, open, create",
+      "priority": "P2",
+      "type": "library",
+      "steps": [
+        {
+          "screenId": "sets-library",
+          "label": "Browse sets"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Open set detail / edit"
+        },
+        {
+          "screenId": "sets-create",
+          "label": "Create set"
+        }
+      ]
+    },
+    {
+      "id": "flow-synergy-library-edit",
+      "title": "Synergy library \u2014 browse, evidence, create",
+      "priority": "P2",
+      "type": "library",
+      "steps": [
+        {
+          "screenId": "synergy-library",
+          "label": "Browse synergies"
+        },
+        {
+          "screenId": "synergy-detail",
+          "label": "Detail + evidence links"
+        },
+        {
+          "screenId": "synergy-create",
+          "label": "Create synergy"
+        }
+      ]
+    },
+    {
+      "id": "flow-signed-out-gates",
+      "title": "Signed-out gates",
+      "priority": "P0",
+      "type": "auth",
+      "steps": [
+        {
+          "screenId": "build-signed-out",
+          "label": "Build gate"
+        },
+        {
+          "screenId": "sets-signed-out",
+          "label": "Sets gate"
+        },
+        {
+          "screenId": "synergy-signed-out",
+          "label": "Synergy gate"
+        }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from": "build-library",
+      "to": "build-create-draft-general",
+      "action": "New build"
+    },
+    {
+      "from": "build-create-draft-general",
+      "to": "build-edit-general",
+      "action": "Save General \u00b7 create build"
+    },
+    {
+      "from": "build-edit-general",
+      "to": "build-edit-subclass",
+      "action": "Tab \u2192 Subclass"
+    },
+    {
+      "from": "build-edit-subclass",
+      "to": "build-edit-armor-reuse",
+      "action": "Tab \u2192 Armor"
+    },
+    {
+      "from": "build-edit-armor-reuse",
+      "to": "build-edit-armor-create",
+      "action": "Subpath \u2192 Create"
+    },
+    {
+      "from": "build-edit-armor-reuse",
+      "to": "build-edit-armor-improve",
+      "action": "Improve kit"
+    },
+    {
+      "from": "build-edit-armor-create",
+      "to": "build-edit-weapon-reuse",
+      "action": "Tab \u2192 Weapon"
+    },
+    {
+      "from": "build-edit-weapon-reuse",
+      "to": "build-edit-weapon-create",
+      "action": "Subpath \u2192 Create"
+    },
+    {
+      "from": "build-edit-weapon-create",
+      "to": "build-edit-finish",
+      "action": "Tab \u2192 Finish"
+    },
+    {
+      "from": "build-library",
+      "to": "build-library-selected",
+      "action": "Select build"
+    },
+    {
+      "from": "build-library-selected",
+      "to": "build-edit-general",
+      "action": "Edit variant"
+    },
+    {
+      "from": "sets-library",
+      "to": "sets-detail",
+      "action": "Open set"
+    },
+    {
+      "from": "sets-library",
+      "to": "sets-create",
+      "action": "New set"
+    },
+    {
+      "from": "synergy-library",
+      "to": "synergy-detail",
+      "action": "Open synergy"
+    },
+    {
+      "from": "synergy-library",
+      "to": "synergy-create",
+      "action": "New synergy"
+    }
+  ]
+}
