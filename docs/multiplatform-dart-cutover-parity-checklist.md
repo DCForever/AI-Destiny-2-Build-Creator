@@ -1,7 +1,7 @@
 # Multiplatform Dart — Cutover Parity Checklist (DART-049)
 
 **Status:** active program gate artifact  
-**Updated:** 2026-07-25 (DART-056 Jaspr inventory sync + Owned depth; RB-02 cleared)  
+**Updated:** 2026-07-25 (DART-058 prod Public OAuth matrix; RB-03 cleared / RC-AUTH PASS)  
 **Program ID:** DART-049  
 **Phase:** P5 / **program gate**  
 **Integration base:** `feature/multiplatform-dart`  
@@ -44,7 +44,7 @@ PRODUCTION_CUTOVER: NO-GO
 | -- | ------- | ------ | ------------ |
 | ~~**RB-01**~~ | ~~Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface~~ | ~~RC-NAV~~ | **CLEARED (2026-07-25)** by **DART-055** / GAP-NAV-01: Windows NavigationRail **Loadouts** + Jaspr `/loadouts` list Bungie component 206; pure parse in `destiny2_bungie`. Mobile top-level nav remains reduced (MISS/N/A — does not fail RC-NAV). |
 | ~~**RB-02**~~ | ~~Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode~~ | ~~RC-SYNC~~ | **CLEARED (2026-07-25)** by **DART-056** / GAP-WEB-01: Jaspr Settings Sync now + vault/transfer lookup (catalog slots, same rules as DART-050 equip path); diagnostics retained; Catalog All\|Owned + instanceId projections for equip/DIM pins. Host vault fixtures assert `resolvedFromTransfer > 0`. Residual: equip optional when write clients missing; legendary armor without prebuilt slots may drop (entity coverage). |
-| RB-03 | Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed | RC-AUTH | **DART-058** / GAP-AUTH-01 |
+| ~~**RB-03**~~ | ~~Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed~~ | ~~RC-AUTH~~ | **CLEARED (2026-07-25)** by **DART-058** / GAP-AUTH-01: published matrix [multiplatform-dart-prod-public-oauth-matrix.md](./multiplatform-dart-prod-public-oauth-matrix.md) + `ProdPublicOAuthMatrix` (Windows HTTPS loopback, Jaspr `/auth/callback`, mobile schemes); client secret scan `tool/client_secret_scan.dart`; Windows+Jaspr smoke preflight (mocked session tests + operator checklist). |
 | RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS | **DART-060** / GAP-OPS-01 |
 | RB-05 | Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened | RC-WEB-DATA | **DART-059** / GAP-WEB-02 |
 | ~~**RB-06**~~ | ~~**Inventory fidelity:** vault/postmaster unwired + enrichment thinner + no live harness~~ | ~~RC-SYNC fidelity~~ | **CLEARED (2026-07-25)** by **DART-050–054**: vault lookup (050), roll tags (051), sockets (052), diagnostics UI (053), live/fixture harness + fidelity gate (054 / GAP-INV-05 / PROC-03/04/05). Evidence: package+host fixtures; [multiplatform-dart-inventory-live-parity-harness.md](./multiplatform-dart-inventory-live-parity-harness.md); `dart run tool/inventory_fidelity_gate.dart`. Web owned depth cleared separately by **RB-02** / DART-056. |
@@ -52,7 +52,7 @@ PRODUCTION_CUTOVER: NO-GO
 Canonical **product feature inventory** + gap list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (every AppShell/PRODUCT capability has Plan ownership; open P0/P1 map to DART-050–061).  
 When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
 
-**Cleared residuals:** RB-01 (in-game loadouts surface DART-055); RB-02 (Jaspr inventory sync + Owned depth DART-056); RB-06 (inventory fidelity program DART-050–054).
+**Cleared residuals:** RB-01 (in-game loadouts surface DART-055); RB-02 (Jaspr inventory sync + Owned depth DART-056); RB-03 (prod Public OAuth matrix DART-058); RB-06 (inventory fidelity program DART-050–054).
 
 ---
 
@@ -103,7 +103,7 @@ Domain packages are shared; UI shells differ.
 | Equip-ready / wishlist vs owned pins | Yes | **PASS** | **PARTIAL** | **PASS** | DART-006/038/047 |
 | Finish gaps helpers | Yes | **PASS** | **PARTIAL** | **PASS** | DART-007 pure + **DART-057** host panels (Windows+Jaspr); CTA = finish-complete ∧ equip-ready; mobile display-only (equip N/A) |
 | Armor optimizer (confirm-only) | Yes | **PASS** | **MISS** | **MISS** | DART-035/036 Windows; not required on mobile/web for program gate; product cutover may accept Windows-only optimizer |
-| Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 — **no CLIENT_SECRET** |
+| Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 + prod matrix **DART-058** — **no CLIENT_SECRET**; mobile schemes published, session host deferred |
 | Inventory sync full-replace | Yes | **PASS** | **PARTIAL** | **PASS** | Vault lookup **DART-050**, roll tags **DART-051**, sockets **DART-052**, diagnostics UI **DART-053**, live/fixture harness **DART-054** (RB-06 **cleared**); Jaspr Settings sync + Owned depth **DART-056** (RB-02 **cleared**). Mobile residual → DART-057. |
 | Bungie equip (partial OK) | Yes | **PASS** | **MISS** | **PASS** | DART-037/038/047 |
 | DIM jsonOnly export | Yes | **PASS** | **MISS** | **PASS** | DART-010/039/047; blocked when not equip-ready |
@@ -124,7 +124,7 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 | **RC-DOMAIN** | Hard/soft domain parity non-regression | Pure domain suite + hard-block codes stable; soft never implies hard block; soft never auto-applies | `dart run tool/p0_parity_gate.dart`; DBR/DAC | **PASS** (suite maintained; re-run before cutover day) |
 | **RC-COMPOSE** | Intent→compose path on production web host | User can create build, attach sets, pin slots, see soft guidance on Jaspr without Next | DART-046 manual/scripted path | **PASS** (feature complete; re-verify on cutover build) |
 | **RC-EQUIP** | Equip-ready + equip and/or DIM on production web | Equip-ready gate enforced; DIM jsonOnly blocked when not ready; optional equip partial OK | DART-047 tests + smoke | **PASS** (feature complete; re-verify live Bungie in dual-run) |
-| **RC-AUTH** | Public+PKCE production auth | Prod Public Bungie app; HTTPS origin redirects registered; **no** `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr artifacts | Bungie portal config; binary/string scan | **FAIL** (RB-03) |
+| **RC-AUTH** | Public+PKCE production auth | Prod Public Bungie app; HTTPS origin redirects registered; **no** `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr artifacts | [prod Public OAuth matrix](./multiplatform-dart-prod-public-oauth-matrix.md); `ProdPublicOAuthMatrix` tests; `dart run tool/client_secret_scan.dart`; Windows/Jaspr OAuth session tests | **PASS** (RB-03 cleared DART-058; re-verify live portal + operator smoke before cutover day) |
 | **RC-SYNC** | Owned inventory available for equip pins with **inventory fidelity** | (1) Documented sync path works on cutover-primary hosts (Windows + web at minimum for equip). (2) **After DART-050–054:** vault/postmaster weapon/armor present in Drift with correct equipment buckets; counts by location/bucket within agreed Next **tolerance** (default exact / 0) for same membership (or documented residual with GAP/RB note). (3) Diagnostics show resolution (resolvedFromTransfer / dropped) not only itemCount. (4) Inventory fidelity gate + dual-run procedure exist ([inventory live parity harness](./multiplatform-dart-inventory-live-parity-harness.md); `dart run tool/inventory_fidelity_gate.dart`) — separate from pure `p0_parity_gate` (PROC-05). Pass is **not** satisfied by “Settings sync card exists” alone (PROC-04). | Settings sync Windows + Jaspr (DART-056); [harness doc](./multiplatform-dart-inventory-live-parity-harness.md) + fixture gate; GAP-INV-01…06 closed; GAP-WEB-01 closed; live operator dual-run attachable under RC-OPS | **PASS** (RB-02 + RB-06 cleared; vault fixtures + web Settings/Owned depth; re-verify live dual-run under RC-OPS) |
 | **RC-DATA** | Local data migration path | Legacy Next `.cache/app.db` → StorageRoot dry-run + apply documented and tested | [multiplatform-dart-legacy-db-import.md](./multiplatform-dart-legacy-db-import.md); DART-048 tests | **PASS** |
 | **RC-WEB-DATA** | Web entity/DB limits accepted | OPFS single-writer UX documented; prebuilt bundles load offline; prod distribution chosen | [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md); RB-05 | **FAIL** (prod channel open — RB-05) |

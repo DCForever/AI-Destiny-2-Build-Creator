@@ -14,7 +14,10 @@ import 'settings/roll_tag_lookup_provider.dart';
 import 'settings/weapon_socket_context_provider.dart';
 
 /// Default Windows loopback redirect (must match Bungie Public app registration).
-const String kDefaultWindowsRedirectUri = 'http://127.0.0.1:8765/callback';
+///
+/// Production matrix (DART-058): HTTPS loopback — see [kProdWindowsRedirectUri].
+const String kDefaultWindowsRedirectUri = kProdWindowsRedirectUri;
+
 
 /// Owns host runtime resources for the Windows shell (DART-019/020/023/025).
 ///

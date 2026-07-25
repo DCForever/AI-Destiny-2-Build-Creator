@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (DART-057 mobile matrix + Jaspr soft-stats + finish-gaps host UX)  
+**Updated:** 2026-07-25 (DART-058 prod Public OAuth matrix; GAP-AUTH-01 closed / RB-03 cleared)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -116,7 +116,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | ID | Feature | Product evidence | Dart today | Plan | Slices / GAP |
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
-| **FEAT-AUTH-PUBLIC** | Public+PKCE (no client secret in clients) | Next Confidential server | Windows/Jaspr Public+PKCE; mobile deferred | **shipped** + prod matrix | Local DART-022/023/045; prod matrix **DART-058** / GAP-AUTH-01 / RB-03 |
+| **FEAT-AUTH-PUBLIC** | Public+PKCE (no client secret in clients) | Next Confidential server | Windows/Jaspr Public+PKCE; mobile schemes published | **shipped** | Local DART-022/023/045; prod matrix **DART-058** / GAP-AUTH-01 **closed** / RB-03 cleared |
 | **FEAT-DATA-MANIFEST** | Manifest / entity definitions | Next manifest pipeline | Entity stores + prebuilt web bundles | **shipped** + prod channel | DART-017/018/044; prod channel **DART-059** / GAP-WEB-02 / RB-05 |
 | **FEAT-DATA-LEGACY-IMPORT** | Legacy Next `app.db` → StorageRoot | N/A (source) | Windows dry-run + apply | **shipped** | DART-048; RC-DATA PASS |
 | **FEAT-DATA-OPFS** | Web OPFS single-tab writer | N/A (Node SQLite) | Jaspr OPFS writer | **shipped** | DART-043 |
@@ -170,7 +170,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `closed` | `/loadouts` AppShell + page | Windows+Jaspr PASS (DART-055); mobile MISS density OK | **DART-055** | RB-01 cleared / RC-NAV PASS |
 | **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `closed` (DART-056) | Full Settings sync + owned catalog | Settings Sync now + vault lookup + diagnostics; Catalog All\|Owned + instance pins; equip still optional without write clients | **DART-056** done | RB-02 cleared / RC-SYNC web depth |
 | **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `closed` (DART-057) | Full desktop-class AppShell | Published matrix PASS/PARTIAL/N/A/deferred; Builds\|Settings nav; equip/catalog/DIM N/A | **DART-057** done | Phone surface matrix |
-| **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `partial` | Confidential Next HTTPS | Windows loopback + Jaspr origin OK locally; prod matrix not ops-signed; mobile OAuth deferred | **DART-058** | RB-03 / RC-AUTH |
+| **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `closed` (DART-058) | Confidential Next HTTPS | Published matrix + secret scan; Windows HTTPS default; mobile schemes published (session deferred) | **DART-058** done | RB-03 cleared / RC-AUTH PASS |
 | **GAP-WEB-02** | Entity bundle prod distribution | **P1** | `open` | Full raw manifest pipeline | Prebuilt MVP `bundle.json` only; channel TBD | **DART-059** | RB-05 / RC-WEB-DATA |
 | **GAP-OPS-01** | Dual-run + rollback procedure | **P1** | `open` | Next sole prod | Not executed (compose→equip re-verify historical only) | **DART-060** | RB-04 / RC-OPS |
 | **GAP-CUT-01** | Re-gate production cutover | **P1** | `planned` | N/A | Checklist NO-GO | **DART-061** | Flip PRODUCTION_CUTOVER when ready |
@@ -404,19 +404,21 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ---
 
-### GAP-AUTH-01 — Prod Public redirect matrix (**P1**)
+### GAP-AUTH-01 — Prod Public redirect matrix (**P1**) — **closed**
 
-**Problem:** Dart shells implement Public+PKCE only (no client_secret API surface). Windows loopback + Jaspr `/auth/callback` exist; mobile OAuth deferred; prod Public redirect matrix is not ops-signed (RC-AUTH FAIL / RB-03). Confidential secrets remain Next-server-only until cutover.
+**Problem:** Dart shells implement Public+PKCE only (no client_secret API surface). Windows loopback + Jaspr `/auth/callback` exist; mobile OAuth deferred; prod Public redirect matrix was not ops-signed (RC-AUTH FAIL / RB-03). Confidential secrets remain Next-server-only until cutover.
 
-**Planned slice: DART-058 `prod-public-oauth-matrix`**
+**Slice: DART-058 `prod-public-oauth-matrix`**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-058-prod-public-oauth-matrix` |
 | Depends | DART-023/045 |
 | Exit criteria | Published Bungie Public app redirect matrix for Windows HTTPS loopback, Jaspr production origin (`/auth/callback`), and mobile schemes; live sign-in smoke on each cutover-required shell; binary/source scan shows zero `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET`; RC-AUTH PASS and RB-03 cleared |
-| Status | `planned` |
-| Cutover | RB-03 |
+| Status | **`closed`** (2026-07-25) |
+| Cutover | RB-03 **cleared**; RC-AUTH **PASS** |
+| Evidence | [multiplatform-dart-prod-public-oauth-matrix.md](./multiplatform-dart-prod-public-oauth-matrix.md); `ProdPublicOAuthMatrix` in `destiny2_bungie`; Windows default HTTPS; `tool/client_secret_scan.dart`; host OAuth session tests |
+| Residual | Mobile OAuth **session** host still deferred (schemes published); operator live portal re-verify on cutover day |
 
 ---
 
@@ -510,8 +512,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-058** `prod-public-oauth-matrix` |
-| **Next phase** | P7 DART-055–057 **done** → P8 DART-058–061 |
-| **Blocker for cutover** | Residual RB-03…05 (RB-01, RB-02, RB-06 cleared); other residuals per cutover checklist |
+| **Next planned slice** | **DART-059** `entity-bundle-prod-channel` |
+| **Next phase** | P8 DART-058 **done** → DART-059–061 |
+| **Blocker for cutover** | Residual RB-04…05 (RB-01/02/03/06 cleared); other residuals per cutover checklist |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |

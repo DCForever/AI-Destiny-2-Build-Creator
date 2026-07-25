@@ -18,6 +18,8 @@ export 'src/oauth/oauth_pending.dart';
 export 'src/oauth/oauth_state.dart';
 export 'src/oauth/pkce.dart';
 export 'src/oauth/redirect_uri_config.dart';
+export 'src/oauth/prod_public_oauth_matrix.dart';
+
 export 'src/inventory/build_stored_socket_plugs.dart';
 export 'src/inventory/classify_weapon_socket.dart';
 export 'src/inventory/roll_tag_lookups.dart';

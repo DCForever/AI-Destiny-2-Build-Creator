@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-057 done — mobile matrix + Jaspr soft-stats + finish-gaps host UX; next DART-058)  
+**Updated:** 2026-07-25 (DART-058 done — prod Public OAuth matrix; next DART-059)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -153,7 +153,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-055** | **done** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | **GAP-NAV-01** closed; RB-01 cleared; RC-NAV PASS for loadouts. Windows NavigationRail + page; Jaspr `/loadouts`; pure component 206 parse |
 | **DART-056** | **done** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | **GAP-WEB-01** closed; RB-02 cleared; RC-SYNC PASS for web depth. Settings Sync now + vault lookup + diagnostics; Catalog All\|Owned + instanceId pins |
 | **DART-057** | **done** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires; Jaspr soft-stat editor; finish-gaps host UX | **GAP-MOB-01**, **GAP-UI-01**, **GAP-FEAT-06** closed; GAP-FEAT-01 deferred. Published mobile matrix; equip/catalog/DIM **N/A**; shell_nav Matches Builds\|Settings. Jaspr all ArmorStatName soft-stats. Windows+Jaspr finish-gaps host + CTA finish-complete ∧ equip-ready. Soft never auto-applies |
-| **DART-058** | **planned** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01**; RB-03 / RC-AUTH. Published redirect matrix (Windows HTTPS loopback, Jaspr prod origin /auth/callback, mobile schemes); live sign-in smoke; zero BUNGIE_CLIENT_SECRET/SESSION_SECRET in client artifacts |
+| **DART-058** | **done** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01** closed; RB-03 cleared; RC-AUTH **PASS**. Published matrix (Windows HTTPS loopback, Jaspr `/auth/callback`, mobile schemes); secret scan gate; smoke preflight + operator checklist |
 | **DART-059** | **planned** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | **GAP-WEB-02**; RB-05 / RC-WEB-DATA. Channel (ship-in-app/CDN/hybrid) + versioning; prod web Catalog loads non-fixture entity data offline; offline compose without Next manifest API |
 | **DART-060** | **planned** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | **GAP-OPS-01**; RB-04 / RC-OPS. Runbook executed with Next + Dart web/Windows; live re-verify compose→equip (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next; notes on cutover checklist |
 | **DART-061** | **planned** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01**, GAP-FEAT-02 non-goal. All RC-* pass or product-waived; PRODUCTION_CUTOVER: GO with date/rationale; RC-BRANCH allows merge toward production/main only after GO. dim.gg share remains non-goal unless elevated |
@@ -218,16 +218,20 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-058** `prod-public-oauth-matrix` (**planned** — next after DART-057) |
+| **Next / active slice** | **DART-059** `entity-bundle-prod-channel` (**planned** — next after DART-058) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB-03…05 / RC-* pass (RB-01/02/06 cleared) |
-| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–057 **done** → P8 DART-058–061 |
+| **Blocked on** | Production cutover **NO-GO** until residual RB-04…05 / RC-* pass (RB-01/02/03/06 cleared) |
+| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–057 **done** → P8 DART-058 **done** → DART-059–061 |
+
+### DART-058 note (completed) — prod Public OAuth matrix
+
+Published Bungie Public redirect matrix (Windows `https://127.0.0.1:8765/callback`, Jaspr `{origin}/auth/callback`, mobile `d2buildcreator://oauth/callback`) in docs + `ProdPublicOAuthMatrix`. Windows host default HTTPS. Client secret scan `tool/client_secret_scan.dart` (zero BUNGIE_CLIENT_SECRET / SESSION_SECRET in client lib trees). Smoke: mocked Windows/Jaspr OAuth session preflight + operator checklist. GAP-AUTH-01 closed; RB-03 cleared; RC-AUTH PASS. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-058-prod-public-oauth-matrix/`. Next: **DART-059** entity bundle prod channel.
 
 ### DART-057 note (completed) — mobile compose / equip polish
 
-Published mobile surface matrix (`surface_matrix.dart`) PASS/PARTIAL/N/A/deferred for AppShell + equip/DIM/optimizer; bottom nav Builds\|Settings; Settings matrix card; equip/catalog/DIM product-marked **N/A** (OAuth path Windows/Jaspr). Jaspr soft-stat editor all `ArmorStatName` + explicit save. Windows + Jaspr host `evaluateFinishGaps` panels with category reasons; equip/DIM CTAs require finish-complete **AND** equip-ready; mobile finish display-only. GAP-MOB-01 / GAP-UI-01 / GAP-FEAT-06 closed; GAP-FEAT-01 remains deferred. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-057-mobile-compose-equip-polish/`. Tests: mobile surface/shell/finish; windows/web finish + equip/dim format. Next: **DART-058** prod Public OAuth matrix.
+Published mobile surface matrix (`surface_matrix.dart`) PASS/PARTIAL/N/A/deferred for AppShell + equip/DIM/optimizer; bottom nav Builds\|Settings; Settings matrix card; equip/catalog/DIM product-marked **N/A** (OAuth path Windows/Jaspr). Jaspr soft-stat editor all `ArmorStatName` + explicit save. Windows + Jaspr host `evaluateFinishGaps` panels with category reasons; equip/DIM CTAs require finish-complete **AND** equip-ready; mobile finish display-only. GAP-MOB-01 / GAP-UI-01 / GAP-FEAT-06 closed; GAP-FEAT-01 remains deferred. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-057-mobile-compose-equip-polish/`. Tests: mobile surface/shell/finish; windows/web finish + equip/dim format.
 
 ### DART-056 note (completed) — Jaspr inventory sync depth
 

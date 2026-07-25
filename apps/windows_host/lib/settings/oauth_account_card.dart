@@ -89,9 +89,11 @@ class OAuthAccountCard extends StatelessWidget {
                 Text(
                   'Use a Public + PKCE Bungie application — not the Confidential '
                   'Next.js client. Register the redirect above exactly '
-                  '(https://127.0.0.1:8765/callback). First browser visit may '
-                  'warn about a self-signed certificate — continue to 127.0.0.1. '
-                  'Do not use https://127.0.0.1:3000/api/auth/callback.',
+                  '(prod matrix: https://127.0.0.1:8765/callback). First browser '
+                  'visit may warn about a self-signed certificate — continue to '
+                  '127.0.0.1. Do not use '
+                  'https://127.0.0.1:3000/api/auth/callback. See '
+                  'docs/multiplatform-dart-prod-public-oauth-matrix.md.',
                   key: const Key('oauth_public_app_hint'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
@@ -110,7 +112,7 @@ class OAuthAccountCard extends StatelessWidget {
                           'Waiting for browser… Finish Bungie login until the '
                           'page says “Signed in”, then return here. If nothing '
                           'happens, the app is still waiting on '
-                          'http://127.0.0.1:8765/callback',
+                          'https://127.0.0.1:8765/callback',
                           key: Key('oauth_signing_in'),
                         ),
                       ),

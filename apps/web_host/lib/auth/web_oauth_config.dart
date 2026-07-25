@@ -1,10 +1,15 @@
-/// Public OAuth config for the Jaspr web host (DART-045).
+/// Public OAuth config for the Jaspr web host (DART-045 / DART-058).
 ///
 /// Public client id only — never accepts or stores a client secret.
 library;
 
+import 'package:destiny2_bungie/destiny2_bungie.dart'
+    show kProdWebOAuthCallbackPath, prodWebRedirectUri;
+
 /// Default callback path registered with the Bungie Public application.
-const String kWebOAuthCallbackPath = '/auth/callback';
+///
+/// Same as [kProdWebOAuthCallbackPath] (prod Public matrix).
+const String kWebOAuthCallbackPath = kProdWebOAuthCallbackPath;
 
 /// Resolve web host OAuth settings (public id + redirect URI).
 class WebOAuthConfig {
@@ -25,7 +30,7 @@ class WebOAuthConfig {
   /// Builds config from dart-define / injected values.
   ///
   /// [origin] is used when [redirectUriOverride] is empty:
-  /// `{origin}/auth/callback`.
+  /// `{origin}/auth/callback` (DART-058 prod matrix).
   factory WebOAuthConfig.resolve({
     String clientId = const String.fromEnvironment('BUNGIE_CLIENT_ID'),
     String redirectUriOverride =
@@ -34,17 +39,10 @@ class WebOAuthConfig {
   }) {
     final redirect = redirectUriOverride.trim().isNotEmpty
         ? redirectUriOverride.trim()
-        : _defaultRedirectUri(origin);
+        : prodWebRedirectUri(origin);
     return WebOAuthConfig(
       clientId: clientId.trim(),
       redirectUri: redirect,
     );
-  }
-
-  static String _defaultRedirectUri(String origin) {
-    final base = origin.endsWith('/')
-        ? origin.substring(0, origin.length - 1)
-        : origin;
-    return '$base$kWebOAuthCallbackPath';
   }
 }
