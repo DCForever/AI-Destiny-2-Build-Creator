@@ -1,0 +1,32 @@
+name: destiny2_web_host
+description: >
+  Destiny 2 Build Creator — Jaspr web host (DART-042).
+  Client-mode SPA shell + routing + Matte Flap design tokens (CSS).
+  Hello Settings stub. No Next.js runtime dependency; no confidential secrets; no OPFS yet (DART-043).
+publish_to: none
+version: 0.0.1+1
+
+# Intentionally NOT using `resolution: workspace` — Jaspr builder/analyzer
+# conflict with Flutter host meta pins in the root workspace. Path packages
+# still resolve; run `dart pub get` in this directory.
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  destiny2_ui_tokens:
+    path: ../../packages/ui_tokens
+  jaspr: ^0.23.2
+  jaspr_router: ^0.8.3
+
+dev_dependencies:
+  build_runner: ^2.10.0
+  build_web_compilers: ^4.8.0
+  jaspr_builder: ^0.23.2
+  jaspr_test: ^0.23.2
+  lints: ^5.0.0
+  path: ^1.9.0
+  test: ^1.25.0
+
+jaspr:
+  mode: client

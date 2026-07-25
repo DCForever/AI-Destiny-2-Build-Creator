@@ -4,7 +4,7 @@
 **Integration base:** `feature/multiplatform-dart`  
 **Architecture:** [docs/multiplatform-dart-port-decisions.md](../docs/multiplatform-dart-port-decisions.md)
 
-This directory holds **pure and host-shared Dart packages** for the multiplatform Destiny 2 Build Creator port. Flutter Windows host shell lives under **`apps/windows_host`** (DART-019).
+This directory holds **pure and host-shared Dart packages** for the multiplatform Destiny 2 Build Creator port. Host shells live under **`apps/`** (Flutter Windows/mobile + Jaspr web).
 
 ## Layout
 
@@ -23,14 +23,21 @@ apps/
       synergies/          # DART-031: Synergy library dual-pane + evidence links (designation immutable)
       settings/           # Manifest status + OAuth account card (sign-in/out)
       theme/              # DART-029: Flap theme stub
-  mobile_host/            # Flutter Android+iOS shell (DART-040) — destiny2_mobile_host
+  mobile_host/            # Flutter Android+iOS shell (DART-040/041) — destiny2_mobile_host
     lib/
       main.dart           # optional BUNGIE_API_KEY; never CLIENT_SECRET
       host_bootstrap.dart # StorageRoot + single AppDatabase + ManifestRefreshApi
       app.dart            # bottom nav Builds|Settings + Focus Swap nested navigator
-      builds/             # list via destiny2_app + read-only detail
+      builds/             # list + reduced-density compose sheets
       settings/           # path + manifest status
       theme/              # Matte Flap theme
+  web_host/               # Jaspr web shell (DART-042) — destiny2_web_host (NOT root workspace member)
+    lib/
+      main.client.dart    # client SPA entry (jaspr mode: client)
+      app.dart            # shell + jaspr_router (Settings primary)
+      pages/              # Hello Settings stub
+      theme/              # CSS vars from destiny2_ui_tokens
+    # Resolve with: cd apps/web_host && dart pub get  (Jaspr analyzer vs Flutter meta pin)
 
 packages/
   README.md               # this file
@@ -144,8 +151,10 @@ packages/
 | `packages/app` | `destiny2_app` | **In-process application use cases** (DART-027 library: set/synergy CRUD + attach; DART-028 build/variant save hard gates + soft coverage query; DART-035 optimizer isolate + confirm-only armor materialize/apply). Calls Drift repos + pure domain validators. No HTTP. Soft never auto-applies. | `destiny2_db`, `destiny2_domain`, `destiny2_sandbox_data`. **Not** pure. **No** CLIENT_SECRET. |
 | `packages/ui_tokens` | `destiny2_ui_tokens` | **Matte Flap Ledger tokens + FlapBoard layout contracts** (DART-029). Colors/spacing/radii/typography metrics; rail 320 / gap 0 / column templates. Documented in package README. **No** Flutter/Jaspr widgets. | **SDK only**. Hosts map ARGB → Color/CSS. |
 | `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023/025/026/029): open StorageRoot + single Drift DB; Catalog offline + owned; Settings OAuth + inventory sync; **flap theme stub** (`buildFlapTheme` — square elevation-0 cards, void canvas). Tokens not in SQLite. | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie/ui_tokens. **No** CLIENT_SECRET. |
+| `apps/mobile_host` | `destiny2_mobile_host` | **Flutter mobile host** (DART-040/041): bottom nav, Focus Swap, reduced-density compose. Soft never auto-applies. | Flutter; path deps on app/db/domain/manifest/storage/ui_tokens. **No** CLIENT_SECRET. |
+| `apps/web_host` | `destiny2_web_host` | **Jaspr web host** (DART-042): client SPA shell + routing + design tokens CSS; Hello Settings. **Not** a root pub workspace member (Jaspr builder/analyzer vs Flutter `meta` pin). | `jaspr`, `jaspr_router`; path `destiny2_ui_tokens`. **No** Next.js. **No** CLIENT_SECRET. OPFS later (DART-043). |
 
-Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
+Flutter mobile compose is DART-041; Jaspr OPFS/auth/compose are DART-043+.
 
 ## StorageRoot (DART-012)
 

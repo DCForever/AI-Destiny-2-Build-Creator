@@ -84,7 +84,7 @@ Host maps tokens → `ThemeData` in `apps/windows_host/lib/theme/flap_theme.dart
 - Explicit dark `ColorScheme` from tokens (not `ColorScheme.fromSeed` blue)
 - `cardTheme`: elevation `0`, border radius `0`, surface color = flap surface
 
-Jaspr CSS export is **DART-042** (not this package’s job yet).
+Jaspr maps these tokens to CSS custom properties in `apps/web_host` (DART-042) via `argbToCssHex` — this package stays pure SDK.
 
 ## Tests
 

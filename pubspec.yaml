@@ -16,6 +16,9 @@ workspace:
   - packages/ui_tokens
   - apps/windows_host
   - apps/mobile_host
+  # apps/web_host is NOT a pub workspace member: Jaspr 0.23 builder
+  # requires analyzer/meta newer than flutter_test pins. Resolve with
+  # `dart pub get` inside apps/web_host (path deps still work).
 
 dev_dependencies:
   lints: ^5.0.0

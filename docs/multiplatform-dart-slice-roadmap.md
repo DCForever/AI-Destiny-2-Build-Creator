@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-041 done — Flutter mobile reduced-density compose; **P4 phase gate**)  
+**Updated:** 2026-07-25 (DART-042 done — Jaspr app skeleton: shell + routing + tokens CSS; Hello Settings)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -133,7 +133,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-039** | **done** | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
 | **DART-040** | **done** | `flutter-mobile-shell-nav` | `dart-040-flutter-mobile-shell-nav` | P4 | DART-034 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
 | **DART-041** | **done** | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
-| **DART-042** | pending | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
+| **DART-042** | **done** | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
 | **DART-043** | pending | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
 | **DART-044** | pending | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
 | **DART-045** | pending | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
@@ -190,11 +190,19 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-042** `jaspr-app-skeleton` (P5 — Jaspr shell + routing + tokens) |
-| **Active branch** | (create) `dart-042-jaspr-app-skeleton` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-042-jaspr-app-skeleton/` (created at specify) |
+| **Next / active slice** | **DART-043** `jaspr-opfs-sqlite` (P5 — Drift WASM + OPFS + single-tab writer) |
+| **Active branch** | (create) `dart-043-jaspr-opfs-sqlite` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-043-jaspr-opfs-sqlite/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-042 note (completed)
+
+- **Package:** `apps/web_host` / `destiny2_web_host` — Jaspr **client** SPA; `jaspr_router` Settings at `/` and `/settings`.
+- **Tokens CSS:** `lib/theme/flap_tokens_css.dart` maps `destiny2_ui_tokens` → `:root` custom properties (`#050608`, `#e6b35c`, radius `0`).
+- **Workspace:** not a root pub workspace member (Jaspr builder/analyzer requires newer `meta` than Flutter hosts pin). `cd apps/web_host && dart pub get`.
+- **Exit:** Hello Settings page; no Next dependency; `dart test` green.
+- **Next:** DART-043 OPFS/SQLite single-writer.
 
 ### DART-041 note (completed) — **P4 phase gate**
 
