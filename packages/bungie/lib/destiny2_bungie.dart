@@ -1,5 +1,6 @@
 /// Shared Bungie Platform HTTP client + Public+PKCE OAuth + profile sync
-/// (DART-021/022/024).
+/// (DART-021/022/024) + equip write client / best-effort orchestrator
+/// (DART-037).
 ///
 /// Public API key and public client id only — hosts inject credentials.
 /// No `CLIENT_SECRET` / `client_secret` fields.
@@ -23,4 +24,6 @@ export 'src/profile/inventory_parse.dart';
 export 'src/profile/profile_types.dart';
 export 'src/sync/sync_freshness.dart';
 export 'src/sync/sync_inventory.dart';
+export 'src/write/write_client.dart';
+export 'src/write/equip_orchestrator.dart';
 

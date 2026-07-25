@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-036 done — Flutter optimizer UI suggest → confirm)  
+**Updated:** 2026-07-25 (DART-037 done — equip plan + write client + partial execute)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -128,7 +128,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-034** | **done** | `flutter-soft-guidance-ui` | `dart-034-flutter-soft-guidance-ui` | P3 | DART-033, DART-004 | Soft coverage chips + soft stat targets UI (display only) | Soft never auto-applies; **P3 phase gate** (compose without equip) |
 | **DART-035** | **done** | `optimizer-isolate` | `dart-035-optimizer-isolate` | P4 | DART-008, DART-028 | Run enumerate in isolate; materialize Armor Set use case | UI thread safe; confirm-only apply path |
 | **DART-036** | **done** | `flutter-optimizer-ui` | `dart-036-flutter-optimizer-ui` | P4 | DART-035, DART-030 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
-| **DART-037** | pending | `equip-orchestrator` | `dart-037-equip-orchestrator` | P4 | DART-006, DART-024 | planEquipSteps + execute + partial status (write client) | Best-effort partial; no full rollback; tests with mocked write API |
+| **DART-037** | **done** | `equip-orchestrator` | `dart-037-equip-orchestrator` | P4 | DART-006, DART-024 | planEquipSteps + execute + partial status (write client) | Best-effort partial; no full rollback; tests with mocked write API |
 | **DART-038** | pending | `flutter-equip-ui` | `dart-038-flutter-equip-ui` | P4 | DART-037, DART-033 | Character pick + equip CTA + step report | Equip-ready gate enforced; gaps confirm UX |
 | **DART-039** | pending | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
 | **DART-040** | pending | `flutter-mobile-shell-nav` | `dart-040-flutter-mobile-shell-nav` | P4 | DART-034 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-037** `equip-orchestrator` (P4 — planEquipSteps + execute + partial status) |
-| **Active branch** | (create) `dart-037-equip-orchestrator` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-037-equip-orchestrator/` (created at specify) |
+| **Next / active slice** | **DART-038** `flutter-equip-ui` (P4 — character pick + equip CTA + step report) |
+| **Active branch** | (create) `dart-038-flutter-equip-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-038-flutter-equip-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-037 note (completed)
+
+Merged pure `planEquipSteps` into `packages/domain` and `BungieWriteClient` + best-effort `executeEquipPlan` (no full rollback) into `packages/bungie` with mocked write/HTTP tests. Artifact HTTP apply remains season-stub; Flutter equip UI is DART-038.
 
 ### DART-036 note (completed)
 

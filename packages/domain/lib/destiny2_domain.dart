@@ -4,10 +4,10 @@
 /// Drift, network clients, path providers). Models (DART-002), hard evaluators
 /// (DART-003), soft coverage / soft-stat helpers (DART-004), pure
 /// resolveVariant merge/conflict/completeness (DART-005), equip-ready /
-/// wishlist vs owned-pin gates (DART-006), finishGaps / next-slot helpers
-/// (DART-007), optimizer enumerate/prune/score core (DART-008), and pure
-/// DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010) live here;
-/// later slices land next.
+/// wishlist vs owned-pin gates (DART-006), pure equip step planner (DART-037),
+/// finishGaps / next-slot helpers (DART-007), optimizer enumerate/prune/score
+/// core (DART-008), and pure DIM loadout JSON builders + equipReady-gated
+/// jsonOnly (DART-010) live here; later slices land next.
 library;
 
 export 'src/smoke.dart';
@@ -42,6 +42,9 @@ export 'src/evaluators/resolve_variant.dart';
 
 // Equip-ready / wishlist vs owned-pin gates (DART-006)
 export 'src/evaluators/equip_ready.dart';
+
+// Pure equip step planner (DART-037) — transfer/equip/artifact/fashion order
+export 'src/evaluators/equip_plan.dart';
 
 // Finish gaps / next-slot pure helpers (DART-007)
 export 'src/evaluators/finish_gaps.dart';
