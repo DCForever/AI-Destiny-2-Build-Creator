@@ -93,10 +93,11 @@ while slice_index < max_slices {
     resolve_prompt += "You are the DART port Spec Kit dispatcher. ";
     resolve_prompt += "Working directory MUST be: " + worktree + " ";
     resolve_prompt += "Read docs/multiplatform-dart-slice-roadmap.md with tools (read_file). ";
-    resolve_prompt += "Find the first slice whose Status is active or pending and whose Depends are all done ";
+    resolve_prompt += "Find the first slice whose Status is active, pending, or planned and whose Depends are all done ";
     resolve_prompt += "(active counts as the current slice to finish). Prefer the Current pointer section. ";
     resolve_prompt += "Also read docs/multiplatform-dart-port-decisions.md and docs/multiplatform-dart-branching.md. ";
-    resolve_prompt += "Do not invent a product 0NN number. IDs are DART-001..DART-049 only. ";
+    resolve_prompt += "Also skim docs/multiplatform-dart-feature-gaps.md for the next slice exit criteria when Current pointer is DART-050+. ";
+    resolve_prompt += "Do not invent a product 0NN number. IDs are DART-NNN only (DART-001+ including DART-050+). ";
     resolve_prompt += "Set ready=true only if dependencies are satisfied and work can start. ";
     resolve_prompt += "If no slice remains, set ready=false, slice_id=NONE, blocked_reason=all_done. ";
     resolve_prompt += "Return JSON only per schema.";
@@ -147,12 +148,13 @@ while slice_index < max_slices {
     sk += "Goal: " + as_str(slice.goal) + "\n";
     sk += "Exit criteria: " + as_str(slice.exit_criteria) + "\n";
     sk += "\n## Hard rules\n";
-    sk += "- Parallel workstream IDs: DART-NNN only. Branch/specs: dart-NNN-short-name. Never product 044+.\n";
+    sk += "- Parallel workstream IDs: DART-NNN only (including DART-050+). Branch/specs: dart-NNN-short-name. Never product 044+.\n";
     sk += "- Integration base: feature/multiplatform-dart. finish-spec merges THERE only (not main, not product branches).\n";
-    sk += "- Read and obey docs/multiplatform-dart-port-decisions.md and the slice roadmap row.\n";
+    sk += "- Read and obey docs/multiplatform-dart-port-decisions.md, the slice roadmap row, and docs/multiplatform-dart-feature-gaps.md for this GAP/exit criteria.\n";
     sk += "- Do not implement later DART slices in this run.\n";
     sk += "- Pure Dart I/O only; no Node sidecar; no CLIENT_SECRET in clients.\n";
     sk += "- Soft guidance never auto-applies; hard DBR blocks stay hard.\n";
+    sk += "- Exit criteria must be parity-specific (e.g. vault copies stored), not only 'button works'. Open GAP residual if intentional thinning (PROC-06).\n";
     if skip_clarify_unless_needed {
         sk += "- Skip interactive clarify unless the spec would retain NEEDS CLARIFICATION; then make reasonable defaults and document Assumptions.\n";
     }
