@@ -66,7 +66,7 @@
 
 - [x] T015 Verify pure graph guard still passes; `destiny2_db` not in pure list
 - [x] T016 Run `dart pub get` + `dart test packages/db` (+ optional analyze); mark tasks complete
-- [ ] T017 Commit; merge `dart-013-drift-schema` into `feature/multiplatform-dart` (--no-edit); update `docs/multiplatform-dart-slice-roadmap.md` (DART-013 done, pointer → DART-014)
+- [x] T017 Commit; merge `dart-013-drift-schema` into `feature/multiplatform-dart` (--no-edit); update `docs/multiplatform-dart-slice-roadmap.md` (DART-013 done, pointer → DART-014)
 
 ---
 
