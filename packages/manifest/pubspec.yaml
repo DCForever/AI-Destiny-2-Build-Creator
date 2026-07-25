@@ -1,7 +1,8 @@
 name: destiny2_manifest
 description: >
-  Entity store reader + MVP extractors for Destiny 2 Build Creator multiplatform
-  port (DART-017). Offline JSON under StorageRoot; hard-constraint adapters.
+  Entity store reader + MVP extractors (DART-017) and Windows manifest refresh
+  pipeline status/isStale/refresh with isolate rebuild (DART-018). Offline JSON
+  under StorageRoot; hard-constraint adapters. Public API key host-injected only.
 version: 0.0.1
 publish_to: none
 resolution: workspace

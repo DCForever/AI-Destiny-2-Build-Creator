@@ -1,6 +1,7 @@
-/// Entity store reader + MVP extractors + hard-constraint adapters (DART-017).
+/// Entity store reader + MVP extractors + Windows manifest refresh (DART-017/018).
 ///
-/// Pure Dart I/O via [StorageRoot]. No network download (DART-018), no secrets.
+/// Pure Dart I/O via [StorageRoot]. Download + Settings API in DART-018.
+/// No Node sidecar; no CLIENT_SECRET (public API key host-injected only).
 library;
 
 export 'src/adapters/hard_constraints_adapters.dart';
@@ -13,7 +14,11 @@ export 'src/extractors/fragments.dart';
 export 'src/extractors/mods.dart';
 export 'src/extractors/registry.dart';
 export 'src/extractors/weapons.dart';
+export 'src/http_client.dart';
+export 'src/isolate_rebuild.dart';
 export 'src/item_resolver.dart';
+export 'src/manifest_refresh.dart';
+export 'src/manifest_service.dart';
 export 'src/normalize.dart';
 export 'src/perk_validator.dart';
 export 'src/types/records.dart';

@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-017 done — entity store reader + MVP extractors)  
+**Updated:** 2026-07-24 (DART-018 done — Windows manifest refresh pipeline)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -109,7 +109,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-015** | **done** | `repos-library` | `dart-015-repos-library` | P1 | DART-014 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
 | **DART-016** | **done** | `repos-inventory` | `dart-016-repos-inventory` | P1 | DART-014 | Inventory repository + full-replace transaction shape + sync metadata fields | Composite unique; batch insert in one transaction; busy lock hook |
 | **DART-017** | **done** | `manifest-entities` | `dart-017-manifest-entities` | P1 | DART-012 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
-| **DART-018** | pending | `manifest-windows-refresh` | `dart-018-manifest-windows-refresh` | P1 | DART-017 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
+| **DART-018** | **done** | `manifest-windows-refresh` | `dart-018-manifest-windows-refresh` | P1 | DART-017 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
 | **DART-019** | pending | `flutter-windows-host-skeleton` | `dart-019-flutter-windows-host-skeleton` | P1 | DART-012, DART-013 | Minimal Flutter Windows app: open DB, show Settings stub (manifest status only) | App launches; single DB connection; no OAuth yet |
 | **DART-020** | pending | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
 | **DART-021** | pending | `bungie-http` | `dart-021-bungie-http` | P2 | DART-011 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-018** `manifest-windows-refresh` (P1 — Windows manifest refresh pipeline) |
-| **Active branch** | (create) `dart-018-manifest-windows-refresh` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-018-manifest-windows-refresh/` (created at specify) |
+| **Next / active slice** | **DART-019** `flutter-windows-host-skeleton` (P1 — minimal Flutter Windows app) |
+| **Active branch** | (create) `dart-019-flutter-windows-host-skeleton` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-019-flutter-windows-host-skeleton/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-018 note (completed)
+
+Settings-level `WindowsManifestRefresh` (`status` / `isStale` / `refresh`) + `BungieManifestService` partial/full download under StorageRoot; MVP entity rebuild via `Isolate.run`. Injectable HTTP; no CLIENT_SECRET.
 
 ### DART-017 note (completed)
 

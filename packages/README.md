@@ -47,12 +47,15 @@ packages/
         schema_notes.dart
         repos/            # DART-015 library CRUD; DART-016 inventory
     test/
-  manifest/               # Entity stores + MVP extractors (DART-017) — not pure
+  manifest/               # Entity stores + MVP extractors + Windows refresh (DART-017/018)
     pubspec.yaml          # package name: destiny2_manifest
     lib/
       destiny2_manifest.dart
       src/
         entity_cache.dart
+        manifest_service.dart   # BungieManifestService download/status
+        manifest_refresh.dart   # WindowsManifestRefresh status/isStale/refresh
+        isolate_rebuild.dart    # rebuild off UI isolate
         extractors/       # weapons, exotic-armor, aspects, fragments, abilities, mods
         adapters/         # hard constraints adapters
         item_resolver.dart
@@ -66,7 +69,7 @@ packages/
 | `packages/sandbox_data` | `destiny2_sandbox_data` | Pure static sandbox constants (stat benefits, synergy verbs, exotic ability requirements, archetypes, champion counters, vocabularies) | **SDK only** at runtime. Soft display tables only — never auto-apply / hard-block. |
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
-| `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (weapons, exotic-armor, aspects, fragments, abilities, mods) + item/perk resolve + hard-constraint adapters (DART-017). Offline JSON under StorageRoot. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (dart:io). No network download (DART-018). |
+| `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (`status` / `isStale` / `refresh`, partial/full download, isolate rebuild) (DART-018). Offline JSON under StorageRoot. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
 
 UI shells (Flutter Windows/mobile, Jaspr web) land under `apps/` in later slices (DART-019+, DART-042+).
 
