@@ -190,11 +190,21 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-032** `flutter-build-identity-ui` (P3 — Build list + identity) |
-| **Active branch** | (create) `dart-032-flutter-build-identity-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-032-flutter-build-identity-ui/` (created at specify) |
+| **Next / active slice** | **DART-033** `flutter-variant-compose-ui` (P3 — Variants, set attachments, slot pins) |
+| **Active branch** | (create) `dart-033-flutter-variant-compose-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-033-flutter-variant-compose-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-032 note (completed)
+
+- Windows **Builds** nav + dual-pane library (`kFlapLibraryRailWidth` + `kFlapColumnsBuilds`)
+- Create via `destiny2_app` `createUserBuild`; local-library user when signed out
+- Identity: class, ≥1 synergy type designation, optional exotic armor/weapon + pinned Super
+- Hard `NO_SYNERGY` when zero synergy types; soft guidance never auto-applies
+- In-place identity update (confirm/fork deferred); variant compose deferred to DART-033
+- Pure `build_identity_format` helpers (designation list, exotics/identity summaries)
+- Tests: `flutter test test/build_identity_format_test.dart test/builds_library_page_test.dart` (15)
 
 ### DART-031 note (completed)
 
