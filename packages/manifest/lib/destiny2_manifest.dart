@@ -13,6 +13,7 @@ export 'src/catalog/facet_filter.dart';
 export 'src/catalog/filter_catalog.dart';
 export 'src/catalog/filter_options.dart';
 export 'src/catalog/offline_catalog.dart';
+export 'src/catalog/owned_catalog.dart';
 export 'src/entity_cache.dart';
 export 'src/extractors/abilities.dart';
 export 'src/extractors/aspects.dart';

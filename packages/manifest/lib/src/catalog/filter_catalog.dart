@@ -1,6 +1,15 @@
 import 'catalog_item.dart';
 import 'facet_filter.dart';
 
+/// Catalog browse ownership scope (product `scope: "all" | "owned"`).
+enum CatalogScope {
+  /// All base definitions (annotated ownership is informational).
+  all,
+
+  /// Only rows with [CatalogItem.ownedCount] &gt; 0.
+  owned,
+}
+
 /// Combined client-side catalog filters (product `CatalogClientFilters`).
 class CatalogClientFilters {
   const CatalogClientFilters({
@@ -17,6 +26,7 @@ class CatalogClientFilters {
     this.synergies,
     this.itemHashesInclude,
     this.itemHashesExclude,
+    this.scope = CatalogScope.all,
   });
 
   final String? query;
@@ -44,6 +54,9 @@ class CatalogClientFilters {
   final Set<int>? itemHashesInclude;
   final Set<int>? itemHashesExclude;
 
+  /// All vs owned (DART-026). Owned requires annotated [CatalogItem.ownedCount].
+  final CatalogScope scope;
+
   CatalogClientFilters copyWith({
     String? query,
     String? slot,
@@ -58,6 +71,7 @@ class CatalogClientFilters {
     FacetFilter? synergies,
     Set<int>? itemHashesInclude,
     Set<int>? itemHashesExclude,
+    CatalogScope? scope,
   }) {
     return CatalogClientFilters(
       query: query ?? this.query,
@@ -73,6 +87,7 @@ class CatalogClientFilters {
       synergies: synergies ?? this.synergies,
       itemHashesInclude: itemHashesInclude ?? this.itemHashesInclude,
       itemHashesExclude: itemHashesExclude ?? this.itemHashesExclude,
+      scope: scope ?? this.scope,
     );
   }
 }
@@ -147,7 +162,11 @@ List<CatalogItem> filterCatalogClient(
   final hasIncludeHashes = includeHashes != null && includeHashes.isNotEmpty;
   final hasExcludeHashes = excludeHashes != null && excludeHashes.isNotEmpty;
 
+  final ownedOnly = filters.scope == CatalogScope.owned;
+
   return items.where((item) {
+    if (ownedOnly && item.ownedCount <= 0) return false;
+
     if (exotic == true && !item.isExotic) return false;
     if (exotic == false && item.isExotic) return false;
 

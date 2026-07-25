@@ -1,4 +1,4 @@
-# destiny2_windows_host (DART-019…025)
+# destiny2_windows_host (DART-019…026)
 
 **Flutter Windows** host for Destiny 2 Build Creator multiplatform port.
 
@@ -6,7 +6,7 @@
 
 - Resolves **StorageRoot** via path_provider application-support (not repo `.cache`)
 - Opens a **single** Drift `AppDatabase` at `app.db`
-- **Catalog** offline browse from entity stores
+- **Catalog** offline browse from entity stores + **All | Owned** scope after inventory sync (DART-026); instance projections on row select for pickers
 - **Settings**:
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
   - **Inventory sync** card (DART-025): Sync now → full-replace into Drift; busy/error UX; 60s freshness label
@@ -24,7 +24,7 @@ flutter run -d windows `
 # optional: --dart-define=BUNGIE_REDIRECT_URI=http://127.0.0.1:8765/callback
 ```
 
-Then: Settings → Sign in → **Sync now**.
+Then: Settings → Sign in → **Sync now** → Catalog → **Owned**.
 
 ## Test
 
@@ -35,5 +35,7 @@ flutter test
 ## Specs
 
 - `specs/dart-019-flutter-windows-host-skeleton/`
+- `specs/dart-020-flutter-catalog-offline/`
 - `specs/dart-023-flutter-windows-oauth/`
 - `specs/dart-025-flutter-inventory-sync-ui/`
+- `specs/dart-026-flutter-catalog-owned/`

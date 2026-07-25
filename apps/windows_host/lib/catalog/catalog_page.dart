@@ -1,36 +1,55 @@
+import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
+import 'owned_catalog_bridge.dart';
 
-/// Offline catalog browse: facets + free-text, no inventory (DART-020).
+/// Catalog browse with offline entities + all/owned + instance projections (DART-026).
 class CatalogPage extends StatefulWidget {
   const CatalogPage({
     super.key,
     required this.services,
+    this.bridge,
   });
 
   final AppServices services;
+
+  /// Optional injectable bridge (tests). When null, constructed from [services].
+  final OwnedCatalogBridge? bridge;
 
   @override
   State<CatalogPage> createState() => _CatalogPageState();
 }
 
 class _CatalogPageState extends State<CatalogPage> {
+  late final OwnedCatalogBridge _bridge;
+
   bool _loading = true;
   String? _error;
   CatalogEmptyReason _emptyReason = CatalogEmptyReason.none;
   String? _version;
   List<CatalogItem> _results = const [];
+  CatalogScope _scope = CatalogScope.all;
 
   final _queryController = TextEditingController();
   FacetFilter _elements = emptyFacet();
   FacetFilter _ammos = emptyFacet();
   bool? _exotic; // null = off, true = only, false = exclude
 
+  CatalogItem? _selected;
+  List<CatalogInstanceProjection> _instances = const [];
+
   @override
   void initState() {
     super.initState();
+    _bridge = widget.bridge ??
+        OwnedCatalogBridge(
+          db: widget.services.db,
+          offlineCatalog: widget.services.offlineCatalog,
+          session: widget.services.oauthSession,
+          inventorySync: widget.services.inventorySync,
+        );
     _load();
   }
 
@@ -46,14 +65,20 @@ class _CatalogPageState extends State<CatalogPage> {
       _error = null;
     });
     try {
-      final result = await widget.services.offlineCatalog.loadBase();
+      // Refresh sync meta user id when signed in (no network).
+      if (widget.services.oauthSession.isSignedIn) {
+        await widget.services.inventorySync.refreshStatus();
+      }
+      await _bridge.refresh(reloadEntities: true);
+      final load = widget.services.offlineCatalog.lastLoad;
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = result.error;
-        _emptyReason = result.emptyReason;
-        _version = result.version;
+        _error = load?.error;
+        _emptyReason = load?.emptyReason ?? CatalogEmptyReason.none;
+        _version = load?.version;
         _results = _applyFilters();
+        _syncSelection();
       });
     } catch (e) {
       if (!mounted) return;
@@ -61,24 +86,60 @@ class _CatalogPageState extends State<CatalogPage> {
         _loading = false;
         _error = e.toString();
         _results = const [];
+        _instances = const [];
       });
     }
   }
 
-  List<CatalogItem> _applyFilters() {
-    return widget.services.offlineCatalog.browse(
-      CatalogClientFilters(
-        query: _queryController.text,
-        elements: _elements,
-        ammos: _ammos,
-        exotic: _exotic,
-      ),
+  CatalogClientFilters _filters() {
+    return CatalogClientFilters(
+      query: _queryController.text,
+      elements: _elements,
+      ammos: _ammos,
+      exotic: _exotic,
+      scope: _scope,
     );
+  }
+
+  List<CatalogItem> _applyFilters() {
+    return _bridge.browse(_filters());
   }
 
   void _refilter() {
     setState(() {
       _results = _applyFilters();
+      _syncSelection();
+    });
+  }
+
+  void _syncSelection() {
+    final sel = _selected;
+    if (sel == null) {
+      _instances = const [];
+      return;
+    }
+    final stillVisible = _results.any((i) => i.hash == sel.hash);
+    if (!stillVisible) {
+      _selected = null;
+      _instances = const [];
+      return;
+    }
+    _instances = _bridge.instancesFor(sel.hash);
+  }
+
+  void _selectItem(CatalogItem item) {
+    setState(() {
+      _selected = item;
+      _instances = _bridge.instancesFor(item.hash);
+    });
+  }
+
+  void _setScope(CatalogScope scope) {
+    if (_scope == scope) return;
+    setState(() {
+      _scope = scope;
+      _results = _applyFilters();
+      _syncSelection();
     });
   }
 
@@ -86,6 +147,7 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _elements = cycleFacetValue(_elements, value);
       _results = _applyFilters();
+      _syncSelection();
     });
   }
 
@@ -93,6 +155,7 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _ammos = cycleFacetValue(_ammos, value);
       _results = _applyFilters();
+      _syncSelection();
     });
   }
 
@@ -107,6 +170,7 @@ class _CatalogPageState extends State<CatalogPage> {
         _exotic = null;
       }
       _results = _applyFilters();
+      _syncSelection();
     });
   }
 
@@ -124,7 +188,7 @@ class _CatalogPageState extends State<CatalogPage> {
         actions: [
           IconButton(
             key: const Key('catalog_reload'),
-            tooltip: 'Reload from entity stores',
+            tooltip: 'Reload from entity stores + inventory',
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -147,6 +211,27 @@ class _CatalogPageState extends State<CatalogPage> {
               onChanged: (_) => _refilter(),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                FilterChip(
+                  key: const Key('scope_chip_all'),
+                  label: const Text('All'),
+                  selected: _scope == CatalogScope.all,
+                  onSelected: (_) => _setScope(CatalogScope.all),
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  key: const Key('scope_chip_owned'),
+                  label: const Text('Owned'),
+                  selected: _scope == CatalogScope.owned,
+                  onSelected: (_) => _setScope(CatalogScope.owned),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -203,7 +288,19 @@ class _CatalogPageState extends State<CatalogPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-          Expanded(child: _buildBody()),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: _buildBody()),
+                if (_selected != null)
+                  Expanded(
+                    flex: 2,
+                    child: _buildInstancePanel(),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -224,8 +321,11 @@ class _CatalogPageState extends State<CatalogPage> {
     if (_loading) return 'Loading entity stores…';
     if (_error != null) return 'Error: $_error';
     final v = _version ?? 'none';
-    final base = widget.services.offlineCatalog.baseItems.length;
-    return 'Version $v · ${_results.length} shown / $base base · offline (no inventory)';
+    final base = _bridge.annotatedBase.length;
+    final inv = _bridge.inventory.length;
+    final scopeLabel = _scope == CatalogScope.owned ? 'owned' : 'all';
+    return 'Version $v · ${_results.length} shown / $base base · '
+        'scope=$scopeLabel · inventory=$inv copies';
   }
 
   Widget _buildBody() {
@@ -247,14 +347,7 @@ class _CatalogPageState extends State<CatalogPage> {
       );
     }
     if (_results.isEmpty) {
-      final message = switch (_emptyReason) {
-        CatalogEmptyReason.noVersion =>
-          'No entity cache version. Open Settings and refresh the manifest when an API key is configured.',
-        CatalogEmptyReason.noStores =>
-          'Entity stores are empty for this version. Rebuild entities from Settings refresh.',
-        CatalogEmptyReason.none =>
-          'No items match the current filters.',
-      };
+      final message = _emptyMessage();
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -278,14 +371,111 @@ class _CatalogPageState extends State<CatalogPage> {
           if (item.itemTypeName != null) item.itemTypeName!,
           if (item.classType != null) item.classType!,
           if (item.isExotic) 'Exotic',
+          if (item.owned) 'Owned ×${item.ownedCount}',
         ].join(' · ');
+        final selected = _selected?.hash == item.hash;
         return ListTile(
           key: Key('catalog_item_${item.hash}'),
           title: Text(item.name),
           subtitle: Text(subtitle),
           dense: true,
+          selected: selected,
+          trailing: item.owned
+              ? Chip(
+                  key: Key('owned_badge_${item.hash}'),
+                  label: Text('×${item.ownedCount}'),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                )
+              : null,
+          onTap: () => _selectItem(item),
         );
       },
+    );
+  }
+
+  String _emptyMessage() {
+    if (_scope == CatalogScope.owned) {
+      if (_bridge.inventory.isEmpty) {
+        return 'No owned items in local inventory. Sign in and use Settings → Sync now, then reload Catalog.';
+      }
+      return 'No owned definitions match the current filters.';
+    }
+    return switch (_emptyReason) {
+      CatalogEmptyReason.noVersion =>
+        'No entity cache version. Open Settings and refresh the manifest when an API key is configured.',
+      CatalogEmptyReason.noStores =>
+        'Entity stores are empty for this version. Rebuild entities from Settings refresh.',
+      CatalogEmptyReason.none => 'No items match the current filters.',
+    };
+  }
+
+  Widget _buildInstancePanel() {
+    final item = _selected!;
+    return Material(
+      elevation: 1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: Text(
+              item.name,
+              key: const Key('instance_panel_title'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              _instances.isEmpty
+                  ? 'No local copies (wishlist / definition only).'
+                  : '${_instances.length} owned cop${_instances.length == 1 ? 'y' : 'ies'}',
+              key: const Key('instance_panel_count'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const Divider(),
+          Expanded(
+            child: _instances.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No instances',
+                      key: Key('instance_panel_empty'),
+                    ),
+                  )
+                : ListView.builder(
+                    key: const Key('instance_list'),
+                    itemCount: _instances.length,
+                    itemBuilder: (context, index) {
+                      final inst = _instances[index];
+                      final flags = [
+                        if (inst.isMasterwork) 'MW',
+                        if (inst.isCrafted) 'Crafted',
+                      ].join(' · ');
+                      final loc = inst.characterId != null
+                          ? '${inst.location} (${inst.characterId})'
+                          : inst.location;
+                      return ListTile(
+                        key: Key('instance_${inst.instanceId}'),
+                        dense: true,
+                        title: Text('Power ${inst.power}'),
+                        subtitle: Text(
+                          [
+                            inst.instanceId,
+                            loc,
+                            inst.bucket,
+                            if (flags.isNotEmpty) flags,
+                            if (inst.plugHashes.isNotEmpty)
+                              'plugs:${inst.plugHashes.length}',
+                          ].join(' · '),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

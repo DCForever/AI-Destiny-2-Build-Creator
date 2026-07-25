@@ -36,9 +36,10 @@ class OfflineCatalogLoadResult {
   bool get isEmpty => items.isEmpty;
 }
 
-/// Offline catalog: project MVP entity stores and filter without inventory.
+/// Offline catalog: project MVP entity stores and filter facets offline.
 ///
 /// Does **not** open SQLite. Reads entity JSON under [StorageRoot] only.
+/// Ownership annotate lives on the host bridge (DART-026) over inventory.
 class OfflineCatalog {
   OfflineCatalog({
     required this.storageRoot,

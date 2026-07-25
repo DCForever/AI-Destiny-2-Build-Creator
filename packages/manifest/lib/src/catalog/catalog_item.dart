@@ -32,10 +32,10 @@ class CatalogItem {
   final String? description;
   final bool isExotic;
 
-  /// Always false until DART-026 owned mode.
+  /// True when [ownedCount] &gt; 0 after inventory annotate (DART-026).
   final bool owned;
 
-  /// Always 0 until DART-026.
+  /// Local inventory instance count for this definition hash (DART-026).
   final int ownedCount;
 
   /// MVP store stem for debugging / UI grouping (optional).
