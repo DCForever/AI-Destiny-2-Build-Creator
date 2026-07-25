@@ -190,11 +190,20 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-043** `jaspr-opfs-sqlite` (P5 — Drift WASM + OPFS + single-tab writer) |
-| **Active branch** | (create) `dart-043-jaspr-opfs-sqlite` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-043-jaspr-opfs-sqlite/` (created at specify) |
+| **Next / active slice** | **DART-044** `jaspr-entity-bundles` (P5 — prebuilt entity bundles on web) |
+| **Active branch** | (create) `dart-044-jaspr-entity-bundles` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-044-jaspr-entity-bundles/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-043 note (completed)
+
+- **OPFS/WASM:** `WasmWebDatabaseOpener` + `web/sqlite3.wasm` / `drift_worker.js` (fetch script `tool/fetch_drift_web_assets.ps1`).
+- **Single-tab writer:** `TabWriterCoordinator` + localStorage heartbeat; second tab **blocked** with Settings banner.
+- **destiny2_db:** conditional native open (`connection/open_*.dart`); web uses `AppDatabase(executor)`.
+- **Limits:** `docs/multiplatform-dart-web-opfs-limits.md`.
+- **Tests:** `apps/web_host` 20 green (lock + Settings status + prior skeleton); `packages/db` green.
+- **Next:** DART-044 prebuilt entity bundles.
 
 ### DART-042 note (completed)
 
@@ -202,7 +211,7 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 - **Tokens CSS:** `lib/theme/flap_tokens_css.dart` maps `destiny2_ui_tokens` → `:root` custom properties (`#050608`, `#e6b35c`, radius `0`).
 - **Workspace:** not a root pub workspace member (Jaspr builder/analyzer requires newer `meta` than Flutter hosts pin). `cd apps/web_host && dart pub get`.
 - **Exit:** Hello Settings page; no Next dependency; `dart test` green.
-- **Next:** DART-043 OPFS/SQLite single-writer.
+- **Next:** DART-043 OPFS/SQLite single-writer (done).
 
 ### DART-041 note (completed) — **P4 phase gate**
 
