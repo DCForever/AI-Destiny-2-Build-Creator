@@ -19,10 +19,14 @@ Melos **7+** stores scripts under root `pubspec.yaml` → `melos:` (not a full `
 ## Test (CI-friendly entry)
 
 ```powershell
-# Preferred (Melos workspace script)
-melos run test
+# Preferred P0 gate (DART-011): graph guard + full pure suite
+dart run tool/p0_parity_gate.dart
 
-# Equivalent without Melos on PATH:
+# Full pure suite only
+dart run tool/run_all_pure_tests.dart
+# or: dart run melos run test
+
+# Single package
 dart test packages/domain
 ```
 

@@ -81,24 +81,50 @@ Forbidden in `packages/domain/pubspec.yaml` **dependencies** (runtime):
 - `path_provider` and filesystem path packages used for app storage
 - Any package that pulls a Flutter or browser DOM SDK transitively for product logic
 
-Graph guard automation is planned for **DART-011**; until then, review pubspecs in code review.
+Graph guard automation is enforced by **DART-011** (`dart run tool/pure_package_graph_guard.dart` / P0 gate). Review pubspecs in code review as a second line of defense.
+
+## P0 phase gate (DART-011)
+
+Before starting P1 (Drift / StorageRoot), the pure suite must be green and pure packages must stay free of IO/UI runtime deps:
+
+```powershell
+cd F:\Destiny2BuildCreator-multiplatform-dart
+dart pub get
+dart run tool/p0_parity_gate.dart
+```
+
+Equivalents:
+
+| Command | What it does |
+| ------- | ------------ |
+| `dart run tool/p0_parity_gate.dart` | **Gate**: graph guard + full pure suite |
+| `dart run tool/pure_package_graph_guard.dart` | Dependency lint only |
+| `dart run tool/run_all_pure_tests.dart` | All pure package tests only |
+| `dart run melos run p0-gate` | Same gate via Melos (no global Melos required) |
+| `dart run melos run test` | Full pure suite only |
+| `dart run melos run graph-guard` | Graph guard only |
+| `dart test tool/test` | Graph guard unit tests |
+
+Pure packages guarded today: `packages/domain`, `packages/sandbox_data`.
 
 ## Bootstrap
 
 ```powershell
 cd F:\Destiny2BuildCreator-multiplatform-dart
 dart pub get
-# Optional Melos (after: dart pub global activate melos)
-melos bootstrap
+# Optional Melos on PATH (after: dart pub global activate melos)
+# Prefer: dart run melos …
 ```
 
 ## CI-friendly test entry
 
 ```powershell
-# Preferred
-melos run test
+# Preferred — full pure suite (non-interactive)
+dart run tool/run_all_pure_tests.dart
+# or
+dart run melos run test
 
-# Without global Melos
+# Single package
 dart test packages/domain
 dart test packages/sandbox_data
 ```

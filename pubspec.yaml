@@ -12,20 +12,29 @@ workspace:
 dev_dependencies:
   lints: ^5.0.0
   melos: ^7.0.0
+  test: ^1.25.0
 
 # Melos 7+ configuration lives under the melos: key (melos.yaml is obsolete).
+# Scripts are root-level `run:` commands (non-interactive; no nested `melos` on PATH).
+# P0 pure suite + graph guard: DART-011 — prefer `dart run tool/p0_parity_gate.dart`.
 melos:
   scripts:
     test:
-      description: Run dart test in all packages that contain a test/ directory
-      run: dart test
-      exec:
-        concurrency: 1
-      packageFilters:
-        dirExists: test
+      description: >
+        Run full pure-package test suite (domain + sandbox_data).
+        Non-interactive; does not require global Melos on PATH.
+      run: dart run tool/run_all_pure_tests.dart
+
+    graph-guard:
+      description: >
+        Fail if pure packages declare forbidden IO/UI runtime dependencies.
+      run: dart run tool/pure_package_graph_guard.dart
+
+    p0-gate:
+      description: >
+        P0 phase gate — pure package graph guard + full pure test suite (DART-011).
+      run: dart run tool/p0_parity_gate.dart
 
     analyze:
-      description: Run dart analyze on all packages
-      run: dart analyze --fatal-infos
-      exec:
-        concurrency: 1
+      description: Run dart analyze on pure packages
+      run: dart analyze --fatal-infos packages/domain packages/sandbox_data
