@@ -498,5 +498,211 @@ void main() {
       final listed = await listInventoryItems(db, userId);
       expect(listed.single.rollTags, isEmpty);
     });
+
+    test(
+        'DART-052: stores socket plugs with columnKind/columnLabel when context provided',
+        () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'perk-gun',
+            itemHash: 500,
+            bucketHash: 1498876634,
+            location: 'character',
+            characterId: 'c1',
+            power: 1810,
+            plugHashes: [101, 201, 301],
+            socketCapture: [
+              RawSocketCapture(
+                socketIndex: 0,
+                equippedPlugHash: 101,
+                reusablePlugHashes: [101, 102],
+              ),
+              RawSocketCapture(
+                socketIndex: 1,
+                equippedPlugHash: 201,
+                reusablePlugHashes: [201],
+              ),
+              RawSocketCapture(
+                socketIndex: 2,
+                equippedPlugHash: 301,
+                reusablePlugHashes: [301],
+              ),
+              RawSocketCapture(
+                socketIndex: 9,
+                equippedPlugHash: 901,
+                reusablePlugHashes: [],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        weaponSocketContextBuilder: (itemHash, plugHashes) async {
+          expect(itemHash, 500);
+          expect(plugHashes, containsAll([101, 201, 301, 901]));
+          return const WeaponSocketContext(
+            plugCategoryByHash: {
+              101: 'barrels.rifle',
+              201: 'magazines.ar',
+              301: 'traits.weapon',
+              901: 'shader',
+            },
+            weaponPerkSocketIndexes: [0, 1, 2, 3],
+          );
+        },
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      final plugs = listed.single.socketPlugs;
+      expect(plugs, isNotNull);
+      expect(plugs, hasLength(3));
+      expect(plugs![0]['columnKind'], 'barrel');
+      expect(plugs[0]['columnLabel'], 'Barrel');
+      expect(plugs[1]['columnKind'], 'magazine');
+      expect(plugs[2]['columnKind'], 'trait');
+      expect(plugs[2]['columnLabel'], 'Trait 1');
+      expect(plugs.any((p) => p['equippedPlugHash'] == 901), isFalse);
+    });
+
+    test('DART-052: without context falls back to raw capture maps', () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'raw-gun',
+            itemHash: 600,
+            bucketHash: 1498876634,
+            location: 'vault',
+            power: 1800,
+            socketCapture: [
+              RawSocketCapture(
+                socketIndex: 0,
+                equippedPlugHash: 101,
+                reusablePlugHashes: [102],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      final plugs = listed.single.socketPlugs;
+      expect(plugs, isNotNull);
+      expect(plugs!.single['socketIndex'], 0);
+      expect(plugs.single['equippedPlugHash'], 101);
+      expect(plugs.single.containsKey('columnKind'), isFalse);
+    });
+
+    test('DART-052: non-weapon stores null socketPlugs', () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'helm',
+            itemHash: 700,
+            bucketHash: 3448274439,
+            location: 'character',
+            characterId: 'c1',
+            power: 1800,
+          ),
+        ],
+      );
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      expect(listed.single.bucket, 'Helmet');
+      expect(listed.single.socketPlugs, isNull);
+    });
+
+    test('DART-052: context builder from item defs enriches vault weapon',
+        () async {
+      final userId = await seedUser();
+      final client = _FakeProfileClient(
+        items: const [
+          RawInventoryItem(
+            instanceId: 'vault-perk',
+            itemHash: 800,
+            bucketHash: 138197802,
+            location: 'vault',
+            power: 1800,
+            socketCapture: [
+              RawSocketCapture(
+                socketIndex: 0,
+                equippedPlugHash: 101,
+                reusablePlugHashes: [101],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final table = <String, dynamic>{
+        '800': {
+          'hash': 800,
+          'inventory': {'bucketTypeHash': 1498876634},
+          'sockets': {
+            'socketCategories': [
+              {
+                'socketCategoryHash': kWeaponPerksCategoryHash,
+                'socketIndexes': [0, 1, 2],
+              },
+            ],
+          },
+        },
+        '101': {
+          'hash': 101,
+          'plug': {'plugCategoryIdentifier': 'barrels.rifle'},
+        },
+      };
+
+      await syncUserInventory(
+        db: db,
+        userId: userId,
+        accessToken: 't',
+        profileClient: client,
+        equipmentBucketLookup: const {800: 1498876634},
+        weaponSocketContextBuilder: (itemHash, plugHashes) async {
+          return buildWeaponSocketContextFromItemDefs(
+            table,
+            itemHash,
+            plugHashes,
+          );
+        },
+        now: now,
+        lock: lock,
+      );
+
+      final listed = await listInventoryItems(db, userId);
+      expect(listed.single.bucket, 'Kinetic');
+      expect(listed.single.socketPlugs, isNotNull);
+      expect(listed.single.socketPlugs!.single['columnKind'], 'barrel');
+      expect(listed.single.socketPlugs!.single['columnLabel'], 'Barrel');
+    });
   });
 }

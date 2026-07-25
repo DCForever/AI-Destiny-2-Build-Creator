@@ -37,6 +37,7 @@ class EquipController extends ChangeNotifier {
     this.perkNameMapBuilder,
     this.weaponRollMetaLookup,
     this.weaponRollMetaLookupBuilder,
+    this.weaponSocketContextBuilder,
   });
 
   final AppDatabase db;
@@ -59,6 +60,9 @@ class EquipController extends ChangeNotifier {
   final PerkNameMapBuilder? perkNameMapBuilder;
   final Map<int, RollTagWeaponMeta>? weaponRollMetaLookup;
   final WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder;
+
+  /// DART-052 socket enrichment (defaults to [inventorySync] wiring).
+  final WeaponSocketContextBuilder? weaponSocketContextBuilder;
 
   String? _buildId;
   String? _variantId;
@@ -353,6 +357,8 @@ class EquipController extends ChangeNotifier {
               weaponRollMetaLookup ?? inventorySync.weaponRollMetaLookup,
           weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder ??
               inventorySync.weaponRollMetaLookupBuilder,
+          weaponSocketContextBuilder: weaponSocketContextBuilder ??
+              inventorySync.weaponSocketContextBuilder,
         );
         await inventorySync.refreshStatus();
       }

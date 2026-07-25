@@ -24,6 +24,9 @@ enum InventorySyncPhase {
 /// **DART-051:** inject [perkNameMapBuilder] + [weaponRollMetaLookupBuilder]
 /// (and/or explicit maps) so roll tags match Next `computeRollTags` when data
 /// is available. Soft metadata only — never auto-applies.
+///
+/// **DART-052:** inject [weaponSocketContextBuilder] so stored weapon plugs
+/// include `columnKind`/`columnLabel` (Next `buildStoredSocketPlugs` parity).
 class InventorySyncController extends ChangeNotifier {
   InventorySyncController({
     required AppDatabase db,
@@ -37,6 +40,7 @@ class InventorySyncController extends ChangeNotifier {
     this.perkNameMapBuilder,
     this.weaponRollMetaLookup,
     this.weaponRollMetaLookupBuilder,
+    this.weaponSocketContextBuilder,
   })  : _db = db,
         _session = session,
         _profileClient = profileClient,
@@ -66,6 +70,9 @@ class InventorySyncController extends ChangeNotifier {
 
   /// Production builder: weapon meta from OfflineCatalog (DART-051).
   final WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder;
+
+  /// Production builder: weapon socket context for perk-grid plugs (DART-052).
+  final WeaponSocketContextBuilder? weaponSocketContextBuilder;
 
   InventorySyncPhase _phase = InventorySyncPhase.idle;
   int? _itemCount;
@@ -167,6 +174,7 @@ class InventorySyncController extends ChangeNotifier {
         perkNameMapBuilder: perkNameMapBuilder,
         weaponRollMetaLookup: weaponRollMetaLookup,
         weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+        weaponSocketContextBuilder: weaponSocketContextBuilder,
         lock: _lock,
       );
 

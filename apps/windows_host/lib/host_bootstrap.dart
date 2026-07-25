@@ -11,6 +11,7 @@ import 'auth/windows_oauth_session.dart';
 import 'settings/equipment_bucket_lookup_provider.dart';
 import 'settings/inventory_sync_controller.dart';
 import 'settings/roll_tag_lookup_provider.dart';
+import 'settings/weapon_socket_context_provider.dart';
 
 /// Default Windows loopback redirect (must match Bungie Public app registration).
 const String kDefaultWindowsRedirectUri = 'http://127.0.0.1:8765/callback';
@@ -159,6 +160,10 @@ class HostBootstrap {
       offlineCatalog: catalog,
       manifestService: windowsRefresh?.service,
     );
+    // DART-052: socket plugs need plug categories + perk socket indexes.
+    final sockets = createWindowsWeaponSocketEnrichment(
+      manifestService: windowsRefresh?.service,
+    );
 
     final sync = inventorySync ??
         InventorySyncController(
@@ -169,6 +174,7 @@ class HostBootstrap {
           equipmentBucketLookupBuilder: lookupBuilder,
           perkNameMapBuilder: rollTags.perkNameMapBuilder,
           weaponRollMetaLookupBuilder: rollTags.weaponRollMetaLookupBuilder,
+          weaponSocketContextBuilder: sockets.weaponSocketContextBuilder,
         );
 
     final resolvedWrite = writeClient ??

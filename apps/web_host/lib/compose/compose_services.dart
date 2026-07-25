@@ -30,6 +30,7 @@ class ComposeServices {
     PerkNameMapBuilder? perkNameMapBuilder,
     Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
     WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
+    WeaponSocketContextBuilder? weaponSocketContextBuilder,
   })  : builds = BuildsController(db: db),
         sets = SetsController(db: db),
         synergies = SynergiesController(db: db),
@@ -53,6 +54,7 @@ class ComposeServices {
                 perkNameMapBuilder: perkNameMapBuilder,
                 weaponRollMetaLookup: weaponRollMetaLookup,
                 weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+                weaponSocketContextBuilder: weaponSocketContextBuilder,
               )
             : null;
 

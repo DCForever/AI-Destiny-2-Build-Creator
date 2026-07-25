@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (GAP-FEAT-06 finish-gaps host UX; FEAT-COMPOSE-FINISH Windows PARTIAL; DART-057 ownership)  
+**Updated:** 2026-07-25 (DART-052 GAP-INV-03 socket enrichment closed; web raw-less residual)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -106,7 +106,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts; vault lookup wired (DART-050) | **shipped** + enrichment residual | **DART-050** done; RB-06 until 051–054 |
 | **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Lookup + host wiring (DART-050) | **shipped** (fixture) | **DART-050**; live harness DART-054 |
 | **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Pure + sync + host builders (DART-051) | **shipped** (golden + Windows raw; web frame-meta) | **DART-051** closed GAP-INV-02; residual: web perk names without raw defs |
-| **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Raw socketCapture only | **planned** (P1) | **DART-052** / GAP-INV-03 |
+| **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Pure + sync + Windows raw context (DART-052); web raw-less residual | **shipped** (fixture + Windows) | **DART-052** closed GAP-INV-03; residual: web without raw defs |
 | **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | itemCount only in UI | **planned** (P1) | **DART-053** / GAP-INV-04 |
 | **FEAT-INV-HARNESS** | Next-vs-Dart live count harness | Manual dual sync | None | **planned** (P0 process) | **DART-054** / GAP-INV-05 |
 | **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge exists; empty entity cache ≠ empty vault | **partial** | Docs residual **DART-050**; UX warning **DART-053**; web depth **DART-056** / GAP-INV-06 |
@@ -162,7 +162,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | -- | ---- | -------- | ------ | ---------------- | ---------- | -------------- | ------------ |
 | **GAP-INV-01** | Vault/postmaster bucket resolution | **P0** | `closed` (DART-050) | `buildEquipmentBucketLookup` + `resolveTransferContainerBuckets` in `src/lib/bungie/syncInventory.ts` | `buildEquipmentBucketLookup` + host wiring on Windows Settings/equip + Jaspr equip; package+host fixtures assert `resolvedFromTransfer > 0` | **DART-050** done | RB-06 partial (enrichment/harness remain 051–054) |
 | **GAP-INV-02** | Roll tags enrichment | **P1** | `open` | `computeRollTags` + weapon-perks / WeaponRecord | `_normalizeItems` only emits `Crafted` when `isCrafted` | **DART-051** | Owned pickers / quality UX |
-| **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `open` | `buildStoredSocketPlugs` + weapon socket context | Raw `socketCapture` JSON; no `columnKind`/`columnLabel` | **DART-052** | Instance perk grids |
+| **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `closed` (DART-052; web residual) | `buildStoredSocketPlugs` + weapon socket context | `classifyWeaponSocket` + `buildStoredSocketPlugs`; sync wires context builder; Windows raw defs | **DART-052** done | Instance perk grids; web raw-less → unenriched maps (PROC-06 residual, not pure thinning) |
 | **GAP-INV-04** | Sync diagnostics UI | **P1** | `open` | `formatSyncDiagnostics` + `[inventory-sync]` logs | Controller keeps itemCount only; Card has no diagnostics | **DART-053** | Makes drops visible |
 | **GAP-INV-05** | Live Next-vs-Dart inventory harness | **P0** | `planned` | Manual dual sync | No harness under apps/packages/tool | **DART-054** | Prevents silent drift; equip pin fidelity |
 | **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `partial` | Manifest refresh always online | `OwnedCatalogBridge` joins inventory counts onto entity baseItems; empty cache ≠ empty vault | **DART-050** docs residual + **DART-053** UX warning | UX after sync |
@@ -233,19 +233,25 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ### GAP-INV-03 — Socket plug enrichment (**P1**)
 
-**Problem:** Next builds categorized stored socket plugs for perk grids (`columnKind` / `columnLabel`); Dart stores raw `socketCapture` map JSON only.
+**Problem:** Next builds categorized stored socket plugs for perk grids (`columnKind` / `columnLabel`); Dart previously stored raw `socketCapture` map JSON only.
+
+**Evidence (2026-07-25 → closed by DART-052):**
+- Pure `classifyWeaponSocket` + `buildStoredSocketPlugs` mirror Next fixtures (barrel/mag/trait, cosmetics excluded, intrinsic/origin/mw/catalyst, enhanced trait frames).
+- `syncUserInventory` accepts `weaponSocketContextBuilder`; weapons store plugs with `columnKind`/`columnLabel` when context provided; non-weapons null; no-context raw fallback.
+- Windows Settings/equip wire raw DestinyInventoryItemDefinition context builder.
+- **Residual (PROC-06, not pure thinning):** web/Jaspr MVP without raw item defs cannot classify columns until entity/raw channel (DART-056 depth / entity expansion) — raw capture maps only.
 
 **Next:** `buildStoredSocketPlugs` + `loadWeaponSocketContext`  
-**Dart:** `sync_inventory.dart` persists raw socket maps without enrichment
+**Dart:** `packages/bungie/lib/src/inventory/classify_weapon_socket.dart`, `build_stored_socket_plugs.dart`, `weapon_socket_context.dart`; sync + Windows host wiring
 
-**Planned slice: DART-052 `inventory-socket-enrichment`**
+**Slice: DART-052 `inventory-socket-enrichment`**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-052-inventory-socket-enrichment` |
-| Depends | DART-050, manifest weapon socket context port |
+| Depends | DART-050 |
 | Exit criteria | Stored socket plugs for weapons include `columnKind`/`columnLabel` (or equivalent) usable by instance perk grids; parity tests with socket fixtures vs Next `buildStoredSocketPlugs`; intentional thinning opens GAP residual at merge (PROC-06) |
-| Status | `planned` |
+| Status | `done` (package + Windows; web residual documented) |
 
 ---
 

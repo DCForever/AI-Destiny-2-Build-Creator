@@ -38,6 +38,7 @@ class EquipController extends ChangeNotifier {
     this.perkNameMapBuilder,
     this.weaponRollMetaLookup,
     this.weaponRollMetaLookupBuilder,
+    this.weaponSocketContextBuilder,
   });
 
   final AppDatabase db;
@@ -60,6 +61,9 @@ class EquipController extends ChangeNotifier {
   final PerkNameMapBuilder? perkNameMapBuilder;
   final Map<int, RollTagWeaponMeta>? weaponRollMetaLookup;
   final WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder;
+
+  /// DART-052 socket enrichment (raw defs usually missing on web MVP).
+  final WeaponSocketContextBuilder? weaponSocketContextBuilder;
 
   String? _buildId;
   String? _variantId;
@@ -354,6 +358,7 @@ class EquipController extends ChangeNotifier {
           perkNameMapBuilder: perkNameMapBuilder,
           weaponRollMetaLookup: weaponRollMetaLookup,
           weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+          weaponSocketContextBuilder: weaponSocketContextBuilder,
         );
       }
 

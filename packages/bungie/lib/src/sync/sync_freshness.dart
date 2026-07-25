@@ -2,6 +2,7 @@ import 'package:destiny2_db/destiny2_db.dart';
 
 import '../inventory/roll_tag_lookups.dart';
 import '../inventory/roll_tags.dart';
+import '../inventory/weapon_socket_context.dart';
 import '../profile/bungie_profile_client.dart';
 import '../profile/equipment_bucket_lookup.dart';
 import 'sync_inventory.dart';
@@ -48,6 +49,9 @@ bool isInventoryFresh(
 ///
 /// Pass [perkNameMap] / builders + [weaponRollMetaLookup] / builders for
 /// DART-051 roll tag enrichment (Next `computeRollTags` parity).
+///
+/// Pass [weaponSocketContextBuilder] for DART-052 socket plug enrichment
+/// (Next `buildStoredSocketPlugs` parity).
 Future<SyncIfStaleResult> syncIfStale({
   required AppDatabase db,
   required int userId,
@@ -59,6 +63,7 @@ Future<SyncIfStaleResult> syncIfStale({
   PerkNameMapBuilder? perkNameMapBuilder,
   Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
   WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
+  WeaponSocketContextBuilder? weaponSocketContextBuilder,
   String? now,
   int? nowMs,
   InventoryBusyLock? lock,
@@ -87,6 +92,7 @@ Future<SyncIfStaleResult> syncIfStale({
     perkNameMapBuilder: perkNameMapBuilder,
     weaponRollMetaLookup: weaponRollMetaLookup,
     weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+    weaponSocketContextBuilder: weaponSocketContextBuilder,
     now: now ??
         DateTime.fromMillisecondsSinceEpoch(clock, isUtc: true)
             .toIso8601String(),

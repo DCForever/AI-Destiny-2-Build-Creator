@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-051 done — inventory roll tags; next DART-052 socket enrichment)  
+**Updated:** 2026-07-25 (DART-052 done — inventory socket enrichment; next DART-053 sync diagnostics UI)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -147,7 +147,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-049** | **done** | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
 | **DART-050** | **done** | `inventory-vault-resolution` | `dart-050-inventory-vault-resolution` | P6 | DART-024, DART-017/018 | Wire equipmentBucketLookup so vault/postmaster copies are stored | **GAP-INV-01**, GAP-INV-06 docs, GAP-INV-07 opt, **PROC-01/02/06**. Build itemHash→bucket lookup from DestinyInventoryItemDefinition/entity stores; wire non-empty lookup into **every** production sync path (Windows Settings syncNow, Windows equip syncIfStale, Jaspr equip, future web Settings). Vault/postmaster weapon/armor in Drift with Kinetic/Energy/Power/armor buckets; unit+host fixtures assert resolvedFromTransfer>0; host tests fail if vault fixtures omit lookup; package docs stop treating empty lookup as production-OK; finish-spec rejects “user can sync” alone and opens GAP+RB for intentional thinning; document Owned still needs entity stores → DART-053 UX. Optional: parseWeaponStatValues parity (GAP-INV-07). Soft never auto-applies; no CLIENT_SECRET |
 | **DART-051** | **done** | `inventory-roll-tags` | `dart-051-inventory-roll-tags` | P6 | DART-050 | Port computeRollTags parity for weapon inventory rows | **GAP-INV-02** closed; roll tags match Next computeRollTags golden fixtures for crafted/champion/build samples; soft never auto-applies; web perk-name residual (no raw defs) documented not pure thinning |
-| **DART-052** | **planned** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | **GAP-INV-03**; stored plugs include columnKind/columnLabel (or equiv) for instance perk grids; parity tests vs Next buildStoredSocketPlugs; PROC-06 if thinning |
+| **DART-052** | **done** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | **GAP-INV-03** closed; stored plugs include columnKind/columnLabel for instance perk grids; parity tests vs Next buildStoredSocketPlugs; web raw-less residual documented (PROC-06) |
 | **DART-053** | **planned** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | **GAP-INV-04**, **GAP-INV-06** UX. Controller retains last SyncInventoryResult diagnostics; Settings (Windows + web parity path) surfaces raw/parsed/dropped + resolution.resolvedFromTransfer/droppedNonEquipment/storedTotal; entity-cache empty warning so empty Owned is not blamed solely on inventory sync |
 | **DART-054** | **planned** | `inventory-live-parity-harness` | `dart-054-inventory-live-parity-harness` | P6 | DART-050–053 | Live/manual+tool Next-vs-Dart inventory count harness | **GAP-INV-05**, **PROC-03/04/05**. Documented dual-run procedure + optional tool comparing counts by location/bucket (and raw/stored/resolvedFromTransfer) for same membership; operator/CI gate for future inventory-sync changes; update cutover **RC-SYNC** to require vault/postmaster fidelity within Next tolerance (or documented residual); inventory fidelity gate **separate** from pure p0_parity_gate. Clears RB-06 when combined with DART-050–053 evidence |
 | **DART-055** | **planned** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | **GAP-NAV-01**; RB-01 / RC-NAV. Loadouts on Windows primary nav (+ Jaspr plan/route) comparable to product /loadouts, or product demotes AppShell link with PRODUCT note; cutover matrix loadouts PASS or N/A |
@@ -218,16 +218,20 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-052** `inventory-socket-enrichment` (**planned** — next after DART-051 roll tags) |
+| **Next / active slice** | **DART-053** `inventory-sync-diagnostics-ui` (**planned** — next after DART-052 socket enrichment) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB-01…06 / RC-* + inventory fidelity (GAP-INV-03…05 → DART-052–054; GAP-INV-01/02 closed by DART-050/051) pass |
-| **Phase plan** | P6 DART-050–051 **done** → 052–054 → P7 DART-055–057 → P8 DART-058–061 |
+| **Blocked on** | Production cutover **NO-GO** until residual RB-01…06 / RC-* + inventory fidelity (GAP-INV-04…05 → DART-053–054; GAP-INV-01/02/03 closed by DART-050–052) pass |
+| **Phase plan** | P6 DART-050–052 **done** → 053–054 → P7 DART-055–057 → P8 DART-058–061 |
+
+### DART-052 note (completed) — inventory socket enrichment
+
+`classifyWeaponSocket` + `buildStoredSocketPlugs` pure port + golden fixtures matching Next classify tests; `weaponSocketContextBuilder` + `buildWeaponSocketContextFromItemDefs` for plug categories / perk indexes (`4241085061`). `syncUserInventory` stores weapon plugs with `columnKind`/`columnLabel` when context provided; non-weapons null; no-context raw fallback. Windows Settings + equip wire raw DestinyInventoryItemDefinition; web MVP raw-less residual documented (PROC-06). Soft never auto-applies; no CLIENT_SECRET. GAP-INV-03 closed (package + Windows). Specs: `specs/dart-052-inventory-socket-enrichment/`. Tests: `dart test packages/bungie` (99 green). Next: **DART-053** sync diagnostics UI.
 
 ### DART-051 note (completed) — inventory roll tags
 
-`computeRollTags` pure port + golden tests matching Next `rollTags.test.ts` (Crafted, frame/perk champion, MeleeBuildCandidate, OrbitBuild). `_normalizeItems` / `syncUserInventory` accept perkNameMap + weaponRollMetaLookup (maps/builders). Windows Settings + equip wire raw plug names + OfflineCatalog weapon meta; Jaspr equip wires catalog frame meta. Soft never auto-applies; no CLIENT_SECRET. GAP-INV-02 closed; web perk-name residual (no raw defs) documented. Specs: `specs/dart-051-inventory-roll-tags/`. Tests: `dart test packages/bungie` (83 green). Next: **DART-052** socket enrichment.
+`computeRollTags` pure port + golden tests matching Next `rollTags.test.ts` (Crafted, frame/perk champion, MeleeBuildCandidate, OrbitBuild). `_normalizeItems` / `syncUserInventory` accept perkNameMap + weaponRollMetaLookup (maps/builders). Windows Settings + equip wire raw plug names + OfflineCatalog weapon meta; Jaspr equip wires catalog frame meta. Soft never auto-applies; no CLIENT_SECRET. GAP-INV-02 closed; web perk-name residual (no raw defs) documented. Specs: `specs/dart-051-inventory-roll-tags/`. Tests: `dart test packages/bungie`.
 
 ### DART-050 note (completed) — vault / postmaster resolution
 

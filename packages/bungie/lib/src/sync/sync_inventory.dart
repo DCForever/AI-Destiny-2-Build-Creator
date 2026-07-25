@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:destiny2_db/destiny2_db.dart';
 
+import '../inventory/build_stored_socket_plugs.dart';
 import '../inventory/roll_tag_lookups.dart';
 import '../inventory/roll_tags.dart';
+import '../inventory/weapon_socket_context.dart';
 import '../profile/bungie_profile_client.dart';
 import '../profile/equipment_bucket_lookup.dart';
 import '../profile/inventory_buckets.dart';
@@ -49,6 +51,9 @@ class SyncInProgressError implements Exception {
 /// - [perkNameMap] / [perkNameMapBuilder] + [weaponRollMetaLookup] /
 ///   [weaponRollMetaLookupBuilder] supply DART-051 roll tag enrichment inputs
 ///   (Next `computeRollTags` parity). Empty maps → Crafted-only when `isCrafted`.
+/// - [weaponSocketContextBuilder] supplies DART-052 socket plug enrichment
+///   (Next `buildStoredSocketPlugs` + `loadWeaponSocketContext`). Without it,
+///   weapons keep raw capture maps (no columnKind) — incomplete for perk grids.
 /// - [now] ISO-8601 timestamp written as syncedAt / lastFullSyncAt (injectable for tests).
 Future<SyncInventoryResult> syncUserInventory({
   required AppDatabase db,
@@ -61,6 +66,7 @@ Future<SyncInventoryResult> syncUserInventory({
   PerkNameMapBuilder? perkNameMapBuilder,
   Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
   WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
+  WeaponSocketContextBuilder? weaponSocketContextBuilder,
   String? now,
   InventoryBusyLock? lock,
 }) async {
@@ -77,6 +83,7 @@ Future<SyncInventoryResult> syncUserInventory({
         perkNameMapBuilder: perkNameMapBuilder,
         weaponRollMetaLookup: weaponRollMetaLookup,
         weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+        weaponSocketContextBuilder: weaponSocketContextBuilder,
         now: now ?? DateTime.now().toUtc().toIso8601String(),
       );
     });
@@ -96,6 +103,7 @@ Future<SyncInventoryResult> _performSync({
   PerkNameMapBuilder? perkNameMapBuilder,
   Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
   WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
+  WeaponSocketContextBuilder? weaponSocketContextBuilder,
   required String now,
 }) async {
   final memberships = await profileClient.getMemberships(accessToken);
@@ -155,11 +163,17 @@ Future<SyncInventoryResult> _performSync({
     weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
   );
 
+  final socketPlugsByInstance = await _buildSocketPlugsForItems(
+    resolved.items,
+    weaponSocketContextBuilder: weaponSocketContextBuilder,
+  );
+
   final records = _normalizeItems(
     resolved.items,
     now,
     perkNameMap: resolvedPerkMap,
     weaponRollMetaLookup: resolvedWeaponMeta,
+    socketPlugsByInstance: socketPlugsByInstance,
   );
 
   parsed.diagnostics.resolution = InventoryResolutionCounts(
@@ -232,11 +246,82 @@ Future<Map<int, RollTagWeaponMeta>> _resolveWeaponRollMetaLookup({
   return merged;
 }
 
+/// Next parity: `buildSocketPlugsForItems` — weapons only; null for non-weapons.
+Future<Map<String, List<Map<String, Object?>>?>> _buildSocketPlugsForItems(
+  List<RawInventoryItem> rawItems, {
+  WeaponSocketContextBuilder? weaponSocketContextBuilder,
+}) async {
+  final byInstance = <String, List<Map<String, Object?>>?>{};
+  final contextCache = <int, WeaponSocketContext>{};
+
+  for (final raw in rawItems) {
+    if (!isWeaponBucketHash(raw.bucketHash) ||
+        raw.socketCapture == null ||
+        raw.socketCapture!.isEmpty) {
+      byInstance[raw.instanceId] = null;
+      continue;
+    }
+
+    final capture = raw.socketCapture!;
+    final allPlugHashes = <int>{
+      for (final row in capture) ...[
+        row.equippedPlugHash,
+        ...row.reusablePlugHashes,
+      ],
+    }.toList(growable: false);
+
+    if (weaponSocketContextBuilder == null) {
+      // Degradation: raw capture without columnKind (incomplete for perk grids).
+      byInstance[raw.instanceId] =
+          capture.map((s) => s.toJsonMap()).toList(growable: false);
+      continue;
+    }
+
+    var ctx = contextCache[raw.itemHash];
+    if (ctx == null) {
+      ctx = await weaponSocketContextBuilder(raw.itemHash, allPlugHashes);
+      contextCache[raw.itemHash] = ctx;
+    } else {
+      final missing = allPlugHashes
+          .where((h) => !ctx!.plugCategoryByHash.containsKey(h))
+          .toList(growable: false);
+      if (missing.isNotEmpty) {
+        final extra = await weaponSocketContextBuilder(
+          raw.itemHash,
+          [...allPlugHashes, ...missing],
+        );
+        ctx = ctx.mergePlugMaps(extra);
+        contextCache[raw.itemHash] = ctx;
+      }
+    }
+
+    final hasEnrichment = ctx.plugCategoryByHash.isNotEmpty ||
+        ctx.weaponPerkSocketIndexes.isNotEmpty;
+    if (!hasEnrichment) {
+      byInstance[raw.instanceId] =
+          capture.map((s) => s.toJsonMap()).toList(growable: false);
+      continue;
+    }
+
+    final stored = buildStoredSocketPlugs(
+      socketCapture: capture,
+      plugCategoryByHash: ctx.plugCategoryByHash,
+      plugItemTypeByHash: ctx.plugItemTypeByHash,
+      weaponPerkSocketIndexes: ctx.weaponPerkSocketIndexes,
+    );
+    byInstance[raw.instanceId] =
+        stored.map((p) => p.toJsonMap()).toList(growable: false);
+  }
+
+  return byInstance;
+}
+
 List<InventoryItemRecord> _normalizeItems(
   List<RawInventoryItem> rawItems,
   String syncedAt, {
   Map<int, String> perkNameMap = const {},
   Map<int, RollTagWeaponMeta> weaponRollMetaLookup = const {},
+  Map<String, List<Map<String, Object?>>?> socketPlugsByInstance = const {},
 }) {
   return rawItems.map((raw) {
     final rollTags = computeRollTags(
@@ -245,9 +330,13 @@ List<InventoryItemRecord> _normalizeItems(
       weapon: weaponRollMetaLookup[raw.itemHash],
       isCrafted: raw.isCrafted,
     );
-    final socketPlugs = raw.socketCapture
-        ?.map((s) => s.toJsonMap())
-        .toList(growable: false);
+    final socketPlugs = socketPlugsByInstance.containsKey(raw.instanceId)
+        ? socketPlugsByInstance[raw.instanceId]
+        : (!isWeaponBucketHash(raw.bucketHash)
+            ? null
+            : raw.socketCapture
+                ?.map((s) => s.toJsonMap())
+                .toList(growable: false));
     return InventoryItemRecord(
       instanceId: raw.instanceId,
       itemHash: raw.itemHash,
