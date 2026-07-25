@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
+import 'sets/sets_library_page.dart';
 import 'settings/settings_page.dart';
 import 'theme/flap_theme.dart';
 
-/// Root Flutter app for the Windows host (DART-019/020/029).
+/// Root Flutter app for the Windows host (DART-019/020/029/030).
 ///
-/// Shell destinations: Catalog (offline) + Settings (manifest status).
+/// Shell destinations: Catalog + Sets library (DART-030) + Settings.
 /// Theme: Matte Flap Ledger stub (DART-029) — square flat cards, void canvas.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
@@ -44,6 +45,11 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   label: Text('Catalog'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.layers_outlined),
+                  selectedIcon: Icon(Icons.layers),
+                  label: Text('Sets'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.settings_outlined),
                   selectedIcon: Icon(Icons.settings),
                   label: Text('Settings'),
@@ -57,6 +63,10 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                 children: [
                   CatalogPage(
                     key: const Key('catalog_page'),
+                    services: widget.services,
+                  ),
+                  SetsLibraryPage(
+                    key: const Key('sets_library_page'),
                     services: widget.services,
                   ),
                   SettingsPage(

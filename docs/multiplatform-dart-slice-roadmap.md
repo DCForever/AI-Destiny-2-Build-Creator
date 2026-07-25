@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-029 done — Flutter design tokens + FlapBoard layout contracts + Windows theme stub)  
+**Updated:** 2026-07-24 (DART-030 done — Sets library dual-pane + slot fill from catalog/owned)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -121,7 +121,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-027** | **done** | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
 | **DART-028** | **done** | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
 | **DART-029** | **done** | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
-| **DART-030** | pending | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
+| **DART-030** | **done** | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
 | **DART-031** | pending | `flutter-synergy-library-ui` | `dart-031-flutter-synergy-library-ui` | P3 | DART-027, DART-029 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
 | **DART-032** | pending | `flutter-build-identity-ui` | `dart-032-flutter-build-identity-ui` | P3 | DART-028, DART-029 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
 | **DART-033** | pending | `flutter-variant-compose-ui` | `dart-033-flutter-variant-compose-ui` | P3 | DART-032, DART-030 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
@@ -190,11 +190,19 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-030** `flutter-sets-library-ui` (P3 — Sets library + slot fill → catalog pick) |
-| **Active branch** | (create) `dart-030-flutter-sets-library-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-030-flutter-sets-library-ui/` (created at specify) |
+| **Next / active slice** | **DART-031** `flutter-synergy-library-ui` (P3 — Synergy library CRUD + evidence links UI) |
+| **Active branch** | (create) `dart-031-flutter-synergy-library-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-031-flutter-synergy-library-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-030 note (completed)
+
+- Windows **Sets** nav + dual-pane library (`kFlapLibraryRailWidth` list + detail/slots)
+- Create/edit via `destiny2_app` set use cases; local-library user when signed out
+- Slot fill → catalog picker (All|Owned) + optional instance pin; clear slot soft-remove
+- Pure `set_slot_mapping` (slots-for-type, Kinetic→primary, armor buckets)
+- Tests: `flutter test test/set_slot_mapping_test.dart test/sets_library_page_test.dart` (17)
 
 ### DART-029 note (completed)
 
