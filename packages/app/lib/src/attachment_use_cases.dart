@@ -1,4 +1,4 @@
-import 'package:destiny2_db/destiny2_db.dart' hide SetItem, Synergy, SynergyLink;
+import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_domain/destiny2_domain.dart';
 
 import 'clock_ids.dart';

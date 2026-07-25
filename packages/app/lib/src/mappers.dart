@@ -1,6 +1,139 @@
 // Drift schema classes SetItem/Synergy/SynergyLink collide with domain models.
-import 'package:destiny2_db/destiny2_db.dart' hide SetItem, Synergy, SynergyLink;
+import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_domain/destiny2_domain.dart';
+
+/// Parse subclass JSON object from build row into [SubclassKit].
+SubclassKit subclassKitFromJson(Object? raw) {
+  if (raw is! Map) return const SubclassKit();
+  final m = Map<String, Object?>.from(
+    raw.map((k, v) => MapEntry(k.toString(), v)),
+  );
+
+  List<String> strList(Object? v) {
+    if (v is! List) return const [];
+    return v
+        .whereType<String>()
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+  }
+
+  String? str(Object? v) {
+    if (v is! String) return null;
+    final t = v.trim();
+    return t.isEmpty ? null : t;
+  }
+
+  // Product JSON uses `super` key; Dart model uses superAbility.
+  return SubclassKit(
+    aspects: strList(m['aspects']),
+    fragments: strList(m['fragments']),
+    superAbility: str(m['super']) ?? str(m['superAbility']),
+    melee: str(m['melee']),
+    grenade: str(m['grenade']),
+    classAbility: str(m['classAbility']),
+    name: str(m['name']),
+  );
+}
+
+/// Serialize [SubclassKit] to product-shaped JSON map.
+Map<String, Object?> subclassKitToJson(SubclassKit kit) {
+  return {
+    'aspects': kit.aspects,
+    'fragments': kit.fragments,
+    if (kit.superAbility != null) 'super': kit.superAbility,
+    if (kit.melee != null) 'melee': kit.melee,
+    if (kit.grenade != null) 'grenade': kit.grenade,
+    if (kit.classAbility != null) 'classAbility': kit.classAbility,
+    if (kit.name != null) 'name': kit.name,
+  };
+}
+
+/// Soft stat targets JSON map for persistence (Armor 3.0 wire names).
+Map<String, Object?> softStatTargetsToJson(SoftStatTargets targets) {
+  return {
+    for (final e in targets.values.entries) e.key.wireName: e.value,
+  };
+}
+
+/// Best-effort soft targets from stored JSON (unknown keys ignored for domain map).
+SoftStatTargets softStatTargetsFromJson(Map<String, Object?> raw) {
+  if (raw.isEmpty) return const SoftStatTargets();
+  try {
+    return normalizeSoftStatTargets(raw);
+  } on SoftStatTargetsException {
+    // Persistence may hold legacy/partial maps; domain map keeps valid keys only.
+    final out = <ArmorStatName, int>{};
+    for (final e in raw.entries) {
+      final name = ArmorStatName.tryParse(e.key);
+      if (name == null) continue;
+      final v = e.value;
+      if (v is int && v >= 1 && v <= armorStatMax) out[name] = v;
+    }
+    return SoftStatTargets(out);
+  }
+}
+
+/// Designation records → domain designations.
+List<SynergyTypeDesignation> designationsFromRecords(
+  List<SynergyTypeDesignationRecord> rows,
+) {
+  return [
+    for (final r in rows)
+      SynergyTypeDesignation(
+        type: SynergyType(r.type),
+        subType: r.subType,
+      ),
+  ];
+}
+
+/// Domain designations → persistence records.
+List<SynergyTypeDesignationRecord> designationsToRecords(
+  List<SynergyTypeDesignation> rows,
+) {
+  return [
+    for (final d in rows)
+      SynergyTypeDesignationRecord(
+        type: d.type.wireName,
+        subType: d.subType,
+      ),
+  ];
+}
+
+/// Map persistence [BuildRecord] → pure domain [Build].
+Build buildFromRecord(BuildRecord r) {
+  final cls = GuardianClass.tryParse(r.className) ?? GuardianClass.hunter;
+  return Build(
+    id: r.id,
+    name: r.name,
+    className: cls,
+    subclass: subclassKitFromJson(r.subclass),
+    exoticArmorHash: r.exoticArmorHash,
+    exoticArmorName: r.exoticArmorName,
+    exoticWeaponHash: r.exoticWeaponHash,
+    exoticWeaponName: r.exoticWeaponName,
+    pinnedSuper: r.pinnedSuper,
+    softStatTargets: softStatTargetsFromJson(r.softStatTargets),
+    synergyTypes: designationsFromRecords(r.synergyTypes),
+    tagIds: r.tagIds,
+  );
+}
+
+/// Map persistence [VariantRecord] → pure domain [Variant].
+Variant variantFromRecord(VariantRecord r) {
+  return Variant(
+    id: r.id,
+    buildId: r.buildId,
+    name: r.name,
+    isDefault: r.isDefault,
+    exoticWeaponHash: r.exoticWeaponHash,
+    exoticWeaponName: r.exoticWeaponName,
+    artifactHash: r.artifactHash,
+    artifactName: r.artifactName,
+    artifactConfig: r.artifactConfig,
+    notes: r.notes,
+  );
+}
 
 /// Map persistence [SetRecord] → pure domain [GearSet].
 GearSet gearSetFromRecord(SetRecord r) {

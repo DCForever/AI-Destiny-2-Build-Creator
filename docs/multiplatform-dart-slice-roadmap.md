@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-027 done — App use cases: set/synergy CRUD + attach)  
+**Updated:** 2026-07-24 (DART-028 done — Build/variant save hard gates + soft coverage query)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -119,7 +119,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-025** | **done** | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
 | **DART-026** | **done** | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
 | **DART-027** | **done** | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
-| **DART-028** | pending | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
+| **DART-028** | **done** | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
 | **DART-029** | pending | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
 | **DART-030** | pending | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
 | **DART-031** | pending | `flutter-synergy-library-ui` | `dart-031-flutter-synergy-library-ui` | P3 | DART-027, DART-029 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
@@ -190,11 +190,18 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-028** `app-use-cases-build` (P3 — Build/variant save pipeline hard gates + soft coverage) |
-| **Active branch** | (create) `dart-028-app-use-cases-build` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-028-app-use-cases-build/` (created at specify) |
+| **Next / active slice** | **DART-029** `flutter-design-tokens` (P3 — Shared design tokens + FlapBoard layout contracts) |
+| **Active branch** | (create) `dart-029-flutter-design-tokens` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-029-flutter-design-tokens/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-028 note (completed)
+
+- Extended `packages/app`: build/variant save pipeline with hard-gate order parity + soft coverage query
+- Illegal kits hard-block (`NO_SYNERGY`, subclass kit, exotic ability, slot conflict, exotic limits, default completeness); soft misses never block save
+- Injectable `HardGatePorts` for manifest-backed inputs; R1/R2 rollback on failed equipment validation
+- Tests: `dart test packages/app` (33, in-memory Drift)
 
 ### DART-027 note (completed)
 

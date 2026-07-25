@@ -1,4 +1,4 @@
-/// Typed failures for application use cases (DART-027).
+/// Typed failures for application use cases (DART-027 / DART-028).
 enum UseCaseErrorCode {
   invalidArgument('INVALID_ARGUMENT'),
   notFound('NOT_FOUND'),
@@ -10,10 +10,29 @@ enum UseCaseErrorCode {
   designationImmutable('DESIGNATION_IMMUTABLE'),
   invalidAttachmentMode('INVALID_ATTACHMENT_MODE'),
   fashionLimit('FASHION_LIMIT'),
-  setTypeMismatch('SET_TYPE_MISMATCH');
+  setTypeMismatch('SET_TYPE_MISMATCH'),
+
+  /// Hard-gate codes (wire names match [DomainFailureCodes] / product API).
+  noSynergy('NO_SYNERGY'),
+  illegalSubclassKit('ILLEGAL_SUBCLASS_KIT'),
+  exoticAbilityMismatch('EXOTIC_ABILITY_MISMATCH'),
+  tooManyExotics('TOO_MANY_EXOTICS'),
+  modEnergyExceeded('MOD_ENERGY_EXCEEDED'),
+  slotConflict('SLOT_CONFLICT'),
+  pairArmorMismatch('PAIR_ARMOR_MISMATCH'),
+  variantEmpty('VARIANT_EMPTY'),
+  defaultVariantIncomplete('DEFAULT_VARIANT_INCOMPLETE');
 
   const UseCaseErrorCode(this.wireName);
   final String wireName;
+
+  /// Map a domain hard-block code string to a use-case code when known.
+  static UseCaseErrorCode? fromDomainCode(String code) {
+    for (final v in UseCaseErrorCode.values) {
+      if (v.wireName == code) return v;
+    }
+    return null;
+  }
 }
 
 /// Application-layer exception (not HTTP). Hosts map to UI messages later.

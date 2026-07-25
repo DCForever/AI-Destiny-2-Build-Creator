@@ -90,7 +90,7 @@ packages/
         profile/                  # DART-024 memberships + GetProfile inventory parse
         sync/                     # DART-024 full-replace into Drift + 60s freshness
     test/
-  app/                    # In-process application use cases (DART-027+) — destiny2_app
+  app/                    # In-process application use cases (DART-027/028+) — destiny2_app
     pubspec.yaml          # package name: destiny2_app
     lib/
       destiny2_app.dart
@@ -98,6 +98,11 @@ packages/
         set_use_cases.dart        # set/synergy library CRUD orchestration
         synergy_use_cases.dart
         attachment_use_cases.dart # prepareAttachments + replace-by-type
+        build_use_cases.dart      # DART-028 build create/update + identity hard gates
+        variant_use_cases.dart    # DART-028 variant save + validateVariantSave order
+        coverage_use_cases.dart   # DART-028 soft coverage query (never blocks)
+        hard_gates.dart           # identity + equipment hard gate orchestration
+        hard_gate_ports.dart      # injectable manifest/sandbox ports
         mappers.dart              # db records → pure domain models
         errors.dart
     test/
@@ -111,7 +116,7 @@ packages/
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (DART-018) + **offline catalog facets/browse** (`filterCatalogClient`, `OfflineCatalog`) (DART-020). Offline JSON under StorageRoot; no inventory. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
 | `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP** (DART-021) + **Public+PKCE OAuth** (DART-022) + **profile inventory sync** (DART-024): `X-API-Key`, optional Bearer, envelope unwrap, rate-limit hooks; authorize/token/refresh with S256 PKCE; `HttpBungieProfileClient` + `syncUserInventory` full-replace into Drift + `isInventoryFresh` / `syncIfStale` (60s). | `crypto`, `destiny2_db` + SDK (`dart:io` default transport). **Not** pure. Host-injected public API key + public client id; **no** CLIENT_SECRET / `client_secret` fields. |
-| `packages/app` | `destiny2_app` | **In-process application use cases** (DART-027 library: set/synergy CRUD + attach; DART-028+ build save). Calls Drift repos + pure domain validators. No HTTP. Soft never auto-applies. | `destiny2_db`, `destiny2_domain`. **Not** pure. **No** CLIENT_SECRET. |
+| `packages/app` | `destiny2_app` | **In-process application use cases** (DART-027 library: set/synergy CRUD + attach; DART-028 build/variant save hard gates + soft coverage query). Calls Drift repos + pure domain validators. No HTTP. Soft never auto-applies. | `destiny2_db`, `destiny2_domain`, `destiny2_sandbox_data`. **Not** pure. **No** CLIENT_SECRET. |
 | `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023/025): open StorageRoot + single Drift DB; Catalog offline browse; Settings manifest + **Public+PKCE OAuth** + **inventory sync card** (full-replace via DART-024; busy/error UX; 60s freshness). Tokens not in SQLite. | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie. **No** CLIENT_SECRET. |
 
 Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
