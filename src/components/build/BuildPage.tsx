@@ -7,10 +7,8 @@ import { BuildActions } from "@/components/build/BuildActions";
 import { BuildEditPanel } from "@/components/build/BuildEditPanel";
 import { BuildIdentity } from "@/components/build/BuildIdentity";
 import { BuildLibrary } from "@/components/build/BuildLibrary";
-import { CreateBuildPanel } from "@/components/build/CreateBuildPanel";
+import { DefaultVariantComposer } from "@/components/build/DefaultVariantComposer";
 import { VariantCard } from "@/components/build/VariantCard";
-import { FinishBuildWalkthrough } from "@/components/build/FinishBuildWalkthrough";
-import { VariantEditPanel } from "@/components/build/VariantEditPanel";
 import type {
   BuildDetail,
   BuildSubclass,
@@ -20,7 +18,6 @@ import type {
 } from "@/components/build/types";
 import type { SynergyTypeSelection } from "@/components/build/SynergyTypeMultiSelect";
 import {
-  Button,
   Callout,
   Cluster,
   EmptyState,
@@ -74,7 +71,6 @@ export function BuildPage() {
   const [classFilter, setClassFilter] = useState<GuardianClass | null>(null);
   const [creating, setCreating] = useState(false);
   const [editingBuild, setEditingBuild] = useState(false);
-  const [finishOpen, setFinishOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -323,6 +319,7 @@ export function BuildPage() {
         await loadDetail(body.build.id);
         writeBuildQuery(body.build.id);
         setCreating(false);
+        setVariantMode("edit");
       }
     } catch {
       setCreateError("Failed to create build");
@@ -494,14 +491,41 @@ export function BuildPage() {
   }
 
   let main: ReactNode;
-  if (creating) {
+    if (creating) {
     main = (
       <WorkspaceMain>
-        <CreateBuildPanel
-          busy={createBusy}
-          error={createError}
-          onCancel={() => setCreating(false)}
-          onCreate={(input) => void handleCreate(input)}
+        <DefaultVariantComposer
+          mode="draft"
+          build={null}
+          variant={null}
+          createBusy={createBusy}
+          createError={createError}
+          onClose={() => setCreating(false)}
+          onCreated={(input) => void handleCreate(input)}
+          onSaved={(next, preferredVariantId) => {
+            applySavedBuild(next);
+            setCreating(false);
+            setSelectedId(next.id);
+            setDetail(next);
+            const pref =
+              (preferredVariantId
+                ? next.variants.find((v) => v.id === preferredVariantId)
+                : null) ??
+              next.variants.find((v) => v.isDefault) ??
+              next.variants[0] ??
+              null;
+            setVariantId(pref?.id ?? null);
+            setVariantMode("edit");
+            writeBuildQuery(next.id, pref?.name);
+          }}
+          characters={characters}
+          characterId={characterId}
+          onCharacterId={setCharacterId}
+          actionBusy={actionBusy}
+          actionMessage={actionMessage}
+          onEquip={() => void runEquip()}
+          onDimExport={() => void runDim(false)}
+          onDimJson={() => void runDim(true)}
         />
       </WorkspaceMain>
     );
@@ -597,41 +621,31 @@ export function BuildPage() {
         </Panel>
 
         {selectedVariant && variantMode === "edit" ? (
-          <>
-            {finishOpen && detail ? (
-              <FinishBuildWalkthrough
-                build={detail}
-                variant={selectedVariant}
-                onClose={() => setFinishOpen(false)}
-                onBuildMutated={async () => {
-                  await loadDetail(detail.id);
-                }}
-              />
-            ) : null}
-            <div className="mb-2">
-              <Button
-                size="sm"
-                variant={finishOpen ? "accent" : "ghost"}
-                onClick={() => setFinishOpen((v) => !v)}
-              >
-                {finishOpen ? "Hide finish walkthrough" : "Finish build"}
-              </Button>
-            </div>
-            <VariantEditPanel
-              key={selectedVariant.id}
-              build={detail}
-              variant={selectedVariant}
-              closeLabel="Back to details"
-              onClose={() => setVariantMode("details")}
-              onSaved={(next, preferredVariantId) => {
-                applySavedBuild(next);
-                if (preferredVariantId) {
-                  setVariantId(preferredVariantId);
-                  setVariantMode("edit");
-                }
-              }}
-            />
-          </>
+          <DefaultVariantComposer
+            key={selectedVariant.id}
+            mode="live"
+            build={detail}
+            variant={selectedVariant}
+            onClose={() => setVariantMode("details")}
+            onCreated={() => undefined}
+            onSaved={(next, preferredVariantId) => {
+              applySavedBuild(next);
+              if (preferredVariantId) {
+                setVariantId(preferredVariantId);
+                setVariantMode("edit");
+              } else {
+                void loadDetail(next.id);
+              }
+            }}
+            characters={characters}
+            characterId={characterId}
+            onCharacterId={setCharacterId}
+            actionBusy={actionBusy}
+            actionMessage={actionMessage}
+            onEquip={() => void runEquip()}
+            onDimExport={() => void runDim(false)}
+            onDimJson={() => void runDim(true)}
+          />
         ) : selectedVariant ? (
           <VariantCard
             key={selectedVariant.id}
@@ -678,7 +692,7 @@ export function BuildPage() {
         <Stack gap={12}>
           <PageHeader
             title="Build"
-            description="Curated library — create builds, edit variants (General · Sets · Artifact · Mods · Abilities · Aspects · Fragments), apply to a character or export to DIM."
+            description="Curated library — intent → compose → equip. New build opens the tabbed composer (General · Subclass · Armor · Weapons · Finish)."
           />
           {error ? <Callout tone="danger">{error}</Callout> : null}
         </Stack>

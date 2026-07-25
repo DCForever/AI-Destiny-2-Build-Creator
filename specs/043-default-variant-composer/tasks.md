@@ -30,9 +30,9 @@ description: "Task list for Default Variant Composer implementation"
 
 **Purpose**: Scaffold composer module paths and export surface without behavior change yet
 
-- [ ] T001 Create directory `src/components/build/composer/` and barrel `src/components/build/composer/index.ts` exporting placeholders for tab components
-- [ ] T002 [P] Add stub files `src/components/build/DefaultVariantComposer.tsx`, `src/components/build/composer/GeneralTab.tsx`, `src/components/build/composer/SubclassTab.tsx`, `src/components/build/composer/ArmorModSetTab.tsx`, `src/components/build/composer/WeaponSetTab.tsx`, `src/components/build/composer/FinishTab.tsx` (minimal valid React client components)
-- [ ] T003 [P] Confirm UI mock exists at `docs/ui-mocks/default-variant-composer.html` and link it from `specs/043-default-variant-composer/plan.md` Structure section if missing
+- [x] T001 Create directory `src/components/build/composer/` and barrel `src/components/build/composer/index.ts` exporting placeholders for tab components
+- [x] T002 [P] Add stub files `src/components/build/DefaultVariantComposer.tsx`, `src/components/build/composer/GeneralTab.tsx`, `src/components/build/composer/SubclassTab.tsx`, `src/components/build/composer/ArmorModSetTab.tsx`, `src/components/build/composer/WeaponSetTab.tsx`, `src/components/build/composer/FinishTab.tsx` (minimal valid React client components)
+- [x] T003 [P] Confirm UI mock exists at `docs/ui-mocks/default-variant-composer.html` and link it from `specs/043-default-variant-composer/plan.md` Structure section if missing
 
 ---
 
@@ -42,12 +42,12 @@ description: "Task list for Default Variant Composer implementation"
 
 **⚠️ CRITICAL**: No user story UI work until this phase completes
 
-- [ ] T004 [P] Write failing tests for tab gating in `src/lib/builds/composerTabAccess.test.ts` covering General/Finish always, Subclass needs class+subclass, Armor/Weapon need class (per `contracts/default-variant-composer-contract.md`)
-- [ ] T005 Implement `composerTabAccess` in `src/lib/builds/composerTabAccess.ts` until T004 passes
-- [ ] T006 [P] Write failing tests for finish missing-reason copy in `src/lib/builds/finishMissingReasons.test.ts` using fixtures from `finishGaps` shapes
-- [ ] T007 Implement `finishMissingReasons` in `src/lib/builds/finishMissingReasons.ts` until T006 passes
-- [ ] T008 Define shared composer types/session props in `src/components/build/composer/types.ts` (`ComposerTab`, draft|live mode, `buildId`/`variantId`, sub-path enums) per `data-model.md`
-- [ ] T009 Implement tab strip + panel host shell (no domain save yet) in `src/components/build/DefaultVariantComposer.tsx` using `composerTabAccess` and `types.ts` (Finish always listed; blocked tabs non-activatable with reason)
+- [x] T004 [P] Write failing tests for tab gating in `src/lib/builds/composerTabAccess.test.ts` covering General/Finish always, Subclass needs class+subclass, Armor/Weapon need class (per `contracts/default-variant-composer-contract.md`)
+- [x] T005 Implement `composerTabAccess` in `src/lib/builds/composerTabAccess.ts` until T004 passes
+- [x] T006 [P] Write failing tests for finish missing-reason copy in `src/lib/builds/finishMissingReasons.test.ts` using fixtures from `finishGaps` shapes
+- [x] T007 Implement `finishMissingReasons` in `src/lib/builds/finishMissingReasons.ts` until T006 passes
+- [x] T008 Define shared composer types/session props in `src/components/build/composer/types.ts` (`ComposerTab`, draft|live mode, `buildId`/`variantId`, sub-path enums) per `data-model.md`
+- [x] T009 Implement tab strip + panel host shell (no domain save yet) in `src/components/build/DefaultVariantComposer.tsx` using `composerTabAccess` and `types.ts` (Finish always listed; blocked tabs non-activatable with reason)
 
 **Checkpoint**: Foundation ready — shell can render with mocked props; helpers tested
 
@@ -61,14 +61,14 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Extend or add unit coverage that BuildPage “New build” path does not mount `CreateBuildPanel` (component test or thin pure flag helper under `src/components/build/` / co-located test preferred)
+- [x] T010 [P] [US1] Extend or add unit coverage that BuildPage “New build” path does not mount `CreateBuildPanel` (component test or thin pure flag helper under `src/components/build/` / co-located test preferred)
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Wire `BuildPage.tsx` so **New build** opens `DefaultVariantComposer` in draft mode on General (remove/stop primary `creating` → `CreateBuildPanel` flow)
-- [ ] T012 [US1] Wire existing build + variant edit entry in `BuildPage.tsx` to open `DefaultVariantComposer` in live mode with `build`/`variant` props (replace or wrap `VariantEditPanel` call site)
-- [ ] T013 [US1] Ensure tab switches in `DefaultVariantComposer.tsx` preserve in-session form state (single mounted shell; no remount reset of General draft fields)
-- [ ] T014 [US1] Keep hard-block messaging path available in shell (surface existing save errors; no domain rule changes) in `DefaultVariantComposer.tsx` / Finish stub area
+- [x] T011 [US1] Wire `BuildPage.tsx` so **New build** opens `DefaultVariantComposer` in draft mode on General (remove/stop primary `creating` → `CreateBuildPanel` flow)
+- [x] T012 [US1] Wire existing build + variant edit entry in `BuildPage.tsx` to open `DefaultVariantComposer` in live mode with `build`/`variant` props (replace or wrap `VariantEditPanel` call site)
+- [x] T013 [US1] Ensure tab switches in `DefaultVariantComposer.tsx` preserve in-session form state (single mounted shell; no remount reset of General draft fields)
+- [x] T014 [US1] Keep hard-block messaging path available in shell (surface existing save errors; no domain rule changes) in `DefaultVariantComposer.tsx` / Finish stub area
 
 **Checkpoint**: US1 independently demoable — shell + New build entry + locks
 
@@ -82,15 +82,15 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Reuse/adapt create payload tests if needed in `src/lib/build/createBuildPayload` related tests; add any draft→payload helper tests under `src/lib/build/` or `src/lib/builds/` when new helpers appear
+- [x] T015 [P] [US2] Reuse/adapt create payload tests if needed in `src/lib/build/createBuildPayload` related tests; add any draft→payload helper tests under `src/lib/build/` or `src/lib/builds/` when new helpers appear
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Implement General form UI in `src/components/build/composer/GeneralTab.tsx` (name, class, subclass, synergy types, pinned super, exotic armor; include shared exotic weapon **only if** already on create/edit identity—else skip)
-- [ ] T017 [US2] Wire 042-scoped `ManifestSearchPicker` usage in `GeneralTab.tsx` (class exotic; class+subclass super)
-- [ ] T018 [US2] Implement draft **Save general** → `POST /api/user/builds` using `createBuildPayload` / kit sourcing patterns from `CreateBuildPanel.tsx`; transition composer to live mode with returned ids in `DefaultVariantComposer.tsx`
-- [ ] T019 [US2] Add artifact + perk configuration on General for live mode in `GeneralTab.tsx` (port from `VariantEditPanel.tsx` artifact section)
-- [ ] T020 [US2] Surface soft guidance read-only on General in `GeneralTab.tsx`: locate existing coverage/guidance UI first; if absent, minimal read-only placeholder from existing guidance APIs; never auto-apply
+- [x] T016 [US2] Implement General form UI in `src/components/build/composer/GeneralTab.tsx` (name, class, subclass, synergy types, pinned super, exotic armor; include shared exotic weapon **only if** already on create/edit identity—else skip)
+- [x] T017 [US2] Wire 042-scoped `ManifestSearchPicker` usage in `GeneralTab.tsx` (class exotic; class+subclass super)
+- [x] T018 [US2] Implement draft **Save general** → `POST /api/user/builds` using `createBuildPayload` / kit sourcing patterns from `CreateBuildPanel.tsx`; transition composer to live mode with returned ids in `DefaultVariantComposer.tsx`
+- [x] T019 [US2] Add artifact + perk configuration on General for live mode in `GeneralTab.tsx` (port from `VariantEditPanel.tsx` artifact section)
+- [x] T020 [US2] Surface soft guidance read-only on General in `GeneralTab.tsx`: locate existing coverage/guidance UI first; if absent, minimal read-only placeholder from existing guidance APIs; never auto-apply
 
 **Checkpoint**: Draft create + identity edit works from General alone
 
@@ -104,13 +104,13 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 3
 
-- [ ] T021a [P] [US3] Add/extend unit coverage that subclass tab remains disallowed without subclass via `composerTabAccess` cases in `src/lib/builds/composerTabAccess.test.ts` (manual kit UI OK after)
+- [x] T021a [P] [US3] Add/extend unit coverage that subclass tab remains disallowed without subclass via `composerTabAccess` cases in `src/lib/builds/composerTabAccess.test.ts` (manual kit UI OK after)
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Port abilities / aspects / fragments pickers from `VariantEditPanel.tsx` into grouped layout in `src/components/build/composer/SubclassTab.tsx`
-- [ ] T022 [US3] Wire Subclass save/PATCH and exotic-ability checks into `SubclassTab.tsx` / `DefaultVariantComposer.tsx` (preserve `evaluateSubclassKit` / capacity behavior)
-- [ ] T023 [US3] Enforce Subclass tab lock until subclass set via `composerTabAccess` in `DefaultVariantComposer.tsx`
+- [x] T021 [US3] Port abilities / aspects / fragments pickers from `VariantEditPanel.tsx` into grouped layout in `src/components/build/composer/SubclassTab.tsx`
+- [x] T022 [US3] Wire Subclass save/PATCH and exotic-ability checks into `SubclassTab.tsx` / `DefaultVariantComposer.tsx` (preserve `evaluateSubclassKit` / capacity behavior)
+- [x] T023 [US3] Enforce Subclass tab lock until subclass set via `composerTabAccess` in `DefaultVariantComposer.tsx`
 
 **Checkpoint**: Legal kit editable on Subclass tab only when gated open
 
@@ -124,14 +124,14 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 4
 
-- [ ] T024a [P] [US4] Document/assert mutation-disabled-without-buildId behavior in `composerTabAccess` comments or a small pure helper test if extracted (manual attach E2E in quickstart)
+- [x] T024a [P] [US4] Document/assert mutation-disabled-without-buildId behavior in `composerTabAccess` comments or a small pure helper test if extracted (manual attach E2E in quickstart)
 
 ### Implementation for User Story 4
 
-- [ ] T024 [US4] Implement Armor **Reuse | Create** sub-path chrome in `src/components/build/composer/ArmorModSetTab.tsx`
-- [ ] T025 [US4] Integrate class-constrained armor + mod set attach UI (reuse `SetAttachPicker` / list patterns) in `ArmorModSetTab.tsx` with live attach + detach via existing merge/remove attachment helpers
-- [ ] T026 [US4] After successful armor attach, show skippable **Improve kit** entry mounting `FinishArmorOptimizeWorkspace.tsx` (suggest-then-confirm only) in `ArmorModSetTab.tsx`
-- [ ] T027 [US4] Disable attach/create/improve-apply when `buildId` null even if Armor tab is navigable (FR-022 nav vs mutation); show “save General to continue” in `ArmorModSetTab.tsx`
+- [x] T024 [US4] Implement Armor **Reuse | Create** sub-path chrome in `src/components/build/composer/ArmorModSetTab.tsx`
+- [x] T025 [US4] Integrate class-constrained armor + mod set attach UI (reuse `SetAttachPicker` / list patterns) in `ArmorModSetTab.tsx` with live attach + detach via existing merge/remove attachment helpers
+- [x] T026 [US4] After successful armor attach, show skippable **Improve kit** entry mounting `FinishArmorOptimizeWorkspace.tsx` (suggest-then-confirm only) in `ArmorModSetTab.tsx`
+- [x] T027 [US4] Disable attach/create/improve-apply when `buildId` null even if Armor tab is navigable (FR-022 nav vs mutation); show “save General to continue” in `ArmorModSetTab.tsx`
 
 **Checkpoint**: Reuse attach + optional Improve without Create path
 
@@ -145,14 +145,14 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 5
 
-- [ ] T028 [P] [US5] Write failing tests for synergy→conceptTag mapping + default set name helper in `src/lib/builds/` (e.g. `synergyConceptTags.test.ts` / extend `createSetAndAttach.test.ts`)
-- [ ] T029 [US5] Implement mapping/name helpers and extend `src/lib/builds/createSetAndAttach.ts` (and route if needed under `src/app/api/user/builds/[id]/create-set-attach/`) until T028 passes
+- [x] T028 [P] [US5] Write failing tests for synergy→conceptTag mapping + default set name helper in `src/lib/builds/` (e.g. `synergyConceptTags.test.ts` / extend `createSetAndAttach.test.ts`)
+- [x] T029 [US5] Implement mapping/name helpers and extend `src/lib/builds/createSetAndAttach.ts` (and route if needed under `src/app/api/user/builds/[id]/create-set-attach/`) until T028 passes
 
 ### Implementation for User Story 5
 
-- [ ] T030 [US5] Implement Armor **Create** UI in `ArmorModSetTab.tsx` using **existing** optimizer goals/bonuses UI from `FinishArmorOptimizeWorkspace.tsx` (no new bonus domain model) + Optimize workspace + result confirm
-- [ ] T031 [US5] On confirm, call create-set-attach / materialize with name + conceptTags inheritance; live-attach to variant from `ArmorModSetTab.tsx`
-- [ ] T032 [US5] Support mod set attach/create after armor chosen (library pick or save-from-pieces patterns already in product) in `ArmorModSetTab.tsx`
+- [x] T030 [US5] Implement Armor **Create** UI in `ArmorModSetTab.tsx` using **existing** optimizer goals/bonuses UI from `FinishArmorOptimizeWorkspace.tsx` (no new bonus domain model) + Optimize workspace + result confirm
+- [x] T031 [US5] On confirm, call create-set-attach / materialize with name + conceptTags inheritance; live-attach to variant from `ArmorModSetTab.tsx`
+- [x] T032 [US5] Support mod set attach/create after armor chosen (library pick or save-from-pieces patterns already in product) in `ArmorModSetTab.tsx`
 
 **Checkpoint**: Create path matches FR-009–011 without forced optimize
 
@@ -166,14 +166,14 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 6
 
-- [ ] T033 [P] [US6] Write failing tests for `weaponSynergyRank` in `src/lib/builds/weaponSynergyRank.test.ts`
-- [ ] T034 [US6] Implement `src/lib/builds/weaponSynergyRank.ts` until T033 passes
+- [x] T033 [P] [US6] Write failing tests for `weaponSynergyRank` in `src/lib/builds/weaponSynergyRank.test.ts`
+- [x] T034 [US6] Implement `src/lib/builds/weaponSynergyRank.ts` until T033 passes
 
 ### Implementation for User Story 6
 
-- [ ] T035 [US6] Implement Weapon **Reuse | Create** chrome and Reuse attach in `src/components/build/composer/WeaponSetTab.tsx`
-- [ ] T036 [US6] Implement Create Primary/Secondary/Heavy slot-constrained catalog search in `WeaponSetTab.tsx` applying `weaponSynergyRank` + match indicator chips
-- [ ] T037 [US6] Preserve wishlist vs equip-ready pin behavior on weapon saves (no domain change) via existing variant/slot fill hosts from `WeaponSetTab.tsx`
+- [x] T035 [US6] Implement Weapon **Reuse | Create** chrome and Reuse attach in `src/components/build/composer/WeaponSetTab.tsx`
+- [x] T036 [US6] Implement Create Primary/Secondary/Heavy slot-constrained catalog search in `WeaponSetTab.tsx` applying `weaponSynergyRank` + match indicator chips
+- [x] T037 [US6] Preserve wishlist vs equip-ready pin behavior on weapon saves (no domain change) via existing variant/slot fill hosts from `WeaponSetTab.tsx`
 
 **Checkpoint**: Weapon compose path complete
 
@@ -187,14 +187,14 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 7
 
-- [ ] T038a [P] [US7] Extend `finishMissingReasons.test.ts` for incomplete vs complete copy; equip button enablement stays pure-function composed in tests if extracted
+- [x] T038a [P] [US7] Extend `finishMissingReasons.test.ts` for incomplete vs complete copy; equip button enablement stays pure-function composed in tests if extracted
 
 ### Implementation for User Story 7
 
-- [ ] T038 [US7] Implement `src/components/build/composer/FinishTab.tsx` using `evaluateFinishGapsFromVariant` / `finishGaps` + `finishMissingReasons` + `computeEquipReady`
-- [ ] T039 [US7] Port equip / DIM actions from `BuildActions.tsx` into FinishTab with disable rules (complete ∧ equipReady); clear pin/wishlist status copy
-- [ ] T040 [US7] Remove dependency on opening `FinishBuildWalkthrough` as primary path from `BuildPage.tsx` (walkthrough may remain unused or debug-only)
-- [ ] T041 [US7] Ensure Finish never required for set create (no dead-ends forcing Finish for armor/weapons) — verify Armor/Weapon tabs remain the create paths
+- [x] T038 [US7] Implement `src/components/build/composer/FinishTab.tsx` using `evaluateFinishGapsFromVariant` / `finishGaps` + `finishMissingReasons` + `computeEquipReady`
+- [x] T039 [US7] Port equip / DIM actions from `BuildActions.tsx` into FinishTab with disable rules (complete ∧ equipReady); clear pin/wishlist status copy
+- [x] T040 [US7] Remove dependency on opening `FinishBuildWalkthrough` as primary path from `BuildPage.tsx` (walkthrough may remain unused or debug-only)
+- [x] T041 [US7] Ensure Finish never required for set create (no dead-ends forcing Finish for armor/weapons) — verify Armor/Weapon tabs remain the create paths
 
 **Checkpoint**: Finish matches clarify B + FR-017
 
@@ -208,13 +208,13 @@ description: "Task list for Default Variant Composer implementation"
 
 ### Tests for User Story 8
 
-- [ ] T042a [P] [US8] Assert tab id list for non-default equals default (shared constant test in `src/components/build/composer/types.ts` or adjacent `*.test.ts`)
+- [x] T042a [P] [US8] Assert tab id list for non-default equals default (shared constant test in `src/components/build/composer/types.ts` or adjacent `*.test.ts`)
 
 ### Implementation for User Story 8
 
-- [ ] T042 [US8] Confirm `DefaultVariantComposer` receives any variant (default or not) from `BuildPage.tsx` without reduced tab strip
-- [ ] T043 [US8] Soften any default-only forced create rituals on Armor/Weapon for non-default (allow partial combat; keep DAC-VAR-001 equip-with-gaps via existing actions)
-- [ ] T044 [US8] Adjust Finish completeness messaging for non-default (equip-with-gaps path) in `FinishTab.tsx` without hiding Finish
+- [x] T042 [US8] Confirm `DefaultVariantComposer` receives any variant (default or not) from `BuildPage.tsx` without reduced tab strip
+- [x] T043 [US8] Soften any default-only forced create rituals on Armor/Weapon for non-default (allow partial combat; keep DAC-VAR-001 equip-with-gaps via existing actions)
+- [x] T044 [US8] Adjust Finish completeness messaging for non-default (equip-with-gaps path) in `FinishTab.tsx` without hiding Finish
 
 **Checkpoint**: One shell for all variants
 
@@ -224,13 +224,13 @@ description: "Task list for Default Variant Composer implementation"
 
 **Purpose**: Cleanup, gate, docs
 
-- [ ] T045 [P] Thin or delete obsolete primary usage of `CreateBuildPanel.tsx` / reduce `VariantEditPanel.tsx` to re-export of `DefaultVariantComposer` if fully superseded
-- [ ] T046 [P] Remove dead `FinishBuildWalkthrough` imports from production paths in `BuildPage.tsx` once FinishTab covers gaps/optimize entry points
-- [ ] T047 Run `specs/043-default-variant-composer/quickstart.md` unit commands and manual checklist; fix failures
-- [ ] T048 Run `npm run gate` and fix typecheck/lint/test/build issues
-- [ ] T049 [P] Update `docs/ui-polish-tracker.md` or operator notes only if needed for pure UI notes (no domain DAC change unless product rule shipped)
-- [ ] T050 Verify no domain rule regressions (NO_SYNERGY, exotic limits, soft guidance never auto-applies) via existing tests + spot check
-- [ ] T051 [P] Process check for FR-019: if implementation intentionally deviates from `docs/build-composer-flow - Future direction.excalidraw`, update `specs/043-default-variant-composer/spec.md` in the same change (no runtime code)
+- [x] T045 [P] Thin or delete obsolete primary usage of `CreateBuildPanel.tsx` / reduce `VariantEditPanel.tsx` to re-export of `DefaultVariantComposer` if fully superseded
+- [x] T046 [P] Remove dead `FinishBuildWalkthrough` imports from production paths in `BuildPage.tsx` once FinishTab covers gaps/optimize entry points
+- [x] T047 Run `specs/043-default-variant-composer/quickstart.md` unit commands and manual checklist; fix failures
+- [x] T048 Run `npm run gate` and fix typecheck/lint/test/build issues
+- [x] T049 [P] Update `docs/ui-polish-tracker.md` or operator notes only if needed for pure UI notes (no domain DAC change unless product rule shipped)
+- [x] T050 Verify no domain rule regressions (NO_SYNERGY, exotic limits, soft guidance never auto-applies) via existing tests + spot check
+- [x] T051 [P] Process check for FR-019: if implementation intentionally deviates from `docs/build-composer-flow - Future direction.excalidraw`, update `specs/043-default-variant-composer/spec.md` in the same change (no runtime code)
 
 ---
 
