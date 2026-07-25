@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../host_bootstrap.dart';
 import 'builds_library_controller.dart';
 
-/// Builds library dual-pane (list + identity) — DART-032.
+/// Builds library dual-pane (list + identity + variant compose) — DART-032/033.
 class BuildsLibraryPage extends StatefulWidget {
   const BuildsLibraryPage({
     super.key,
@@ -40,6 +40,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   final _editWeaponHashController = TextEditingController();
   final _editWeaponNameController = TextEditingController();
   final _editPinnedSuperController = TextEditingController();
+  final _createVariantNameController = TextEditingController();
+  final _pinInstanceController = TextEditingController();
 
   GuardianClass _createClass = GuardianClass.hunter;
   String _createTypeWire = creatableSynergyTypeWires.first;
@@ -47,6 +49,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   String? _statusMessage;
   bool _ownController = false;
   String? _boundSelectionId;
+  String? _attachSetId;
+  String? _pinTargetKey;
 
   @override
   void initState() {
@@ -85,6 +89,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     _editWeaponHashController.dispose();
     _editWeaponNameController.dispose();
     _editPinnedSuperController.dispose();
+    _createVariantNameController.dispose();
+    _pinInstanceController.dispose();
     super.dispose();
   }
 
@@ -745,15 +751,337 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
             onPressed: _controller.loading ? null : _saveIdentity,
             child: const Text('Save identity'),
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Variants: ${sel.variants.length} '
-            '(compose / attachments in DART-033)',
-            key: const Key('builds_detail_variants_note'),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 8),
+          _buildVariantCompose(context),
         ],
       ),
     );
   }
+
+  Widget _buildVariantCompose(BuildContext context) {
+    final variants = _controller.variants;
+    final selectedVariant = _controller.selectedVariant;
+    final sets = _controller.attachableSets;
+    // Keep dropdown selection valid.
+    final attachValue = (_attachSetId != null &&
+            sets.any((s) => s.id == _attachSetId))
+        ? _attachSetId
+        : (sets.isNotEmpty ? sets.first.id : null);
+    if (attachValue != _attachSetId) {
+      // Defer assignment out of build via post-frame if needed; for tests ok:
+      _attachSetId = attachValue;
+    }
+
+    return Column(
+      key: const Key('builds_variant_compose'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Variants',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        if (variants.isEmpty)
+          const Text(
+            'No variants on this build.',
+            key: Key('builds_variants_empty'),
+          )
+        else
+          Wrap(
+            key: const Key('builds_variants_list'),
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final v in variants)
+                ChoiceChip(
+                  key: Key('builds_variant_chip_${v.id}'),
+                  label: Text(
+                    v.isDefault ? '${v.name} (default)' : v.name,
+                  ),
+                  selected: selectedVariant?.id == v.id,
+                  onSelected: (_) => _controller.selectVariant(v.id),
+                ),
+            ],
+          ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: const Key('builds_create_variant_name'),
+                controller: _createVariantNameController,
+                decoration: const InputDecoration(
+                  labelText: 'New variant name',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _createVariant(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              key: const Key('builds_create_variant_button'),
+              onPressed: _controller.loading ? null : _createVariant,
+              child: const Text('Create variant'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Attachments',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        if (selectedVariant == null)
+          const Text(
+            'Select a variant to attach sets.',
+            key: Key('builds_attach_no_variant'),
+          )
+        else ...[
+          Row(
+            children: [
+              Expanded(
+                child: sets.isEmpty
+                    ? const Text(
+                        'No library sets yet. Create sets in the Sets library.',
+                        key: Key('builds_attach_no_sets'),
+                      )
+                    : DropdownButtonFormField<String>(
+                        key: const Key('builds_attach_set_dropdown'),
+                        // ignore: deprecated_member_use
+                        value: attachValue,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Library set',
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          for (final s in sets)
+                            DropdownMenuItem(
+                              value: s.id,
+                              child: Text('${s.name} (${s.type})'),
+                            ),
+                        ],
+                        onChanged: (v) => setState(() => _attachSetId = v),
+                      ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                key: const Key('builds_attach_set_button'),
+                onPressed: _controller.loading || sets.isEmpty
+                    ? null
+                    : _attachSelectedSet,
+                child: const Text('Attach set'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_controller.attachments.isEmpty)
+            const Text(
+              'No sets attached.',
+              key: Key('builds_attachments_empty'),
+            )
+          else
+            Column(
+              key: const Key('builds_attachments_list'),
+              children: [
+                for (final a in _controller.attachments)
+                  ListTile(
+                    key: Key('builds_attachment_${a.record.setId}'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(a.summary),
+                    trailing: IconButton(
+                      key: Key('builds_detach_${a.record.setId}'),
+                      tooltip: 'Detach',
+                      icon: const Icon(Icons.link_off),
+                      onPressed: _controller.loading
+                          ? null
+                          : () => _detachSet(a.record.setId),
+                    ),
+                  ),
+              ],
+            ),
+        ],
+        const SizedBox(height: 16),
+        Text(
+          'Slot pins',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Wishlist = definition only; instance = owned copy pin.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        if (_controller.slotPins.isEmpty)
+          const Text(
+            'No filled slots from attachments.',
+            key: Key('builds_slot_pins_empty'),
+          )
+        else
+          Column(
+            key: const Key('builds_slot_pins_list'),
+            children: [
+              for (final pin in _controller.slotPins)
+                Card(
+                  key: Key('builds_slot_pin_${pin.slot}_${pin.setId}'),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${pin.slot} · ${pin.itemName}',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                            ),
+                            Chip(
+                              key: Key(
+                                'builds_slot_pin_label_${pin.slot}_${pin.setId}',
+                              ),
+                              label: Text(pin.pinDetail),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                        if (pin.canEditPin) ...[
+                          const SizedBox(height: 8),
+                          if (_pinTargetKey == '${pin.slot}|${pin.setId}')
+                            TextField(
+                              key: Key(
+                                'builds_pin_instance_${pin.slot}_${pin.setId}',
+                              ),
+                              controller: _pinInstanceController,
+                              decoration: const InputDecoration(
+                                labelText: 'Instance id (empty = wishlist)',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            )
+                          else
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                key: Key(
+                                  'builds_pin_edit_${pin.slot}_${pin.setId}',
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _pinTargetKey = '${pin.slot}|${pin.setId}';
+                                    _pinInstanceController.text =
+                                        pin.instanceId ?? '';
+                                  });
+                                },
+                                child: const Text('Edit pin'),
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              OutlinedButton(
+                                key: Key(
+                                  'builds_pin_apply_${pin.slot}_${pin.setId}',
+                                ),
+                                onPressed: _controller.loading
+                                    ? null
+                                    : () => _applyPin(pin),
+                                child: const Text('Pin'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                key: Key(
+                                  'builds_pin_clear_${pin.slot}_${pin.setId}',
+                                ),
+                                onPressed: _controller.loading
+                                    ? null
+                                    : () => _clearPin(pin),
+                                child: const Text('Wishlist'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Future<void> _createVariant() async {
+    final err = await _controller.createVariant(
+      name: _createVariantNameController.text,
+    );
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ??
+          'Created variant ${_createVariantNameController.text.trim()}';
+      if (err == null) _createVariantNameController.clear();
+    });
+  }
+
+  Future<void> _attachSelectedSet() async {
+    final id = _attachSetId;
+    if (id == null) {
+      setState(() => _statusMessage = 'Pick a set to attach');
+      return;
+    }
+    final err = await _controller.attachSet(id);
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Attached set';
+    });
+  }
+
+  Future<void> _detachSet(String setId) async {
+    final err = await _controller.detachSet(setId);
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Detached set';
+    });
+  }
+
+  Future<void> _applyPin(SlotPinView pin) async {
+    final key = '${pin.slot}|${pin.setId}';
+    final text = _pinTargetKey == key
+        ? _pinInstanceController.text
+        : (pin.instanceId ?? '');
+    final err = await _controller.pinSlot(
+      setId: pin.setId,
+      slot: pin.slot,
+      setItemId: pin.setItemId,
+      instanceId: text,
+    );
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Pinned ${pin.slot}';
+      _pinTargetKey = null;
+    });
+  }
+
+  Future<void> _clearPin(SlotPinView pin) async {
+    final err = await _controller.pinSlot(
+      setId: pin.setId,
+      slot: pin.slot,
+      setItemId: pin.setItemId,
+      instanceId: null,
+    );
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Cleared pin on ${pin.slot} (wishlist)';
+      _pinTargetKey = null;
+      _pinInstanceController.clear();
+    });
+  }
 }
+

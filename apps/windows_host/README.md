@@ -1,4 +1,4 @@
-# destiny2_windows_host (DART-019…032)
+# destiny2_windows_host (DART-019…033)
 
 **Flutter Windows** host for Destiny 2 Build Creator multiplatform port.
 
@@ -10,6 +10,7 @@
 - **Sets library** dual-pane (DART-030): create/edit sets via `destiny2_app` use cases; fill slots from catalog/owned picker
 - **Synergy library** dual-pane (DART-031): create synergies via `destiny2_app`; designation immutable after create; evidence links add/remove
 - **Builds library** dual-pane (DART-032): create builds with class + synergy types + optional exotic/super identity pins via `destiny2_app` `createUserBuild`
+- **Variant compose** on Builds detail (DART-033): list/create/select variants; attach/detach library sets; slot pins wishlist vs instance; hard conflicts (e.g. slot overlap) surfaced
 - **Settings**:
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
   - **Inventory sync** card (DART-025): Sync now → full-replace into Drift; busy/error UX; 60s freshness label
@@ -38,8 +39,9 @@ flutter test
 flutter test test/set_slot_mapping_test.dart test/sets_library_page_test.dart
 # Synergy library slice:
 flutter test test/synergy_designation_test.dart test/synergies_library_page_test.dart
-# Builds identity slice:
+# Builds identity + variant compose:
 flutter test test/build_identity_format_test.dart test/builds_library_page_test.dart
+flutter test test/variant_compose_format_test.dart test/variant_compose_page_test.dart
 ```
 
 ## Specs
@@ -53,3 +55,4 @@ flutter test test/build_identity_format_test.dart test/builds_library_page_test.
 - `specs/dart-030-flutter-sets-library-ui/`
 - `specs/dart-031-flutter-synergy-library-ui/`
 - `specs/dart-032-flutter-build-identity-ui/`
+- `specs/dart-033-flutter-variant-compose-ui/`

@@ -6,8 +6,9 @@ import 'package:flutter/foundation.dart';
 import '../auth/windows_oauth_session.dart';
 import '../settings/inventory_sync_controller.dart';
 import 'build_identity_format.dart';
+import 'variant_compose_format.dart';
 
-/// Stable offline library owner when the user is signed out (DART-030/031/032).
+/// Stable offline library owner when the user is signed out (DART-030/031/032/033).
 const String kLocalLibraryMembershipId = 'local-library';
 
 /// Draft synergy type for create / identity edit UI.
@@ -41,9 +42,57 @@ class DraftSynergyType {
   int get hashCode => Object.hash(type, subType);
 }
 
-/// In-process orchestration for Builds library UI (DART-032).
+/// One expanded equipment slot pin for compose display (DART-033).
+class SlotPinView {
+  const SlotPinView({
+    required this.slot,
+    required this.itemHash,
+    required this.itemName,
+    required this.setId,
+    required this.attachmentMode,
+    this.instanceId,
+    this.setItemId,
+  });
+
+  final String slot;
+  final int itemHash;
+  final String itemName;
+  final String setId;
+  final String attachmentMode;
+  final String? instanceId;
+
+  /// Active set item id when known (live attach); used for pin upserts.
+  final String? setItemId;
+
+  String get pinLabel => formatSlotPinLabel(instanceId);
+  String get pinDetail => formatSlotPinDetail(instanceId);
+  bool get isLive => attachmentMode == AttachmentMode.live.wireName;
+  bool get canEditPin => isLive && setItemId != null;
+}
+
+/// Attachment row with resolved set name for UI.
+class AttachmentView {
+  const AttachmentView({
+    required this.record,
+    this.setName,
+    this.setType,
+  });
+
+  final AttachmentRecord record;
+  final String? setName;
+  final String? setType;
+
+  String get summary => formatAttachmentSummary(
+        setId: record.setId,
+        setName: setName,
+        mode: record.mode,
+      );
+}
+
+/// In-process orchestration for Builds library + variant compose UI (DART-032/033).
 ///
-/// Calls [destiny2_app] build use cases against the host's single [AppDatabase].
+/// Calls [destiny2_app] build/variant/attachment/set use cases against the host's
+/// single [AppDatabase]. Soft guidance never auto-applies.
 class BuildsLibraryController extends ChangeNotifier {
   BuildsLibraryController({
     required this.db,
@@ -67,6 +116,12 @@ class BuildsLibraryController extends ChangeNotifier {
   /// Draft synergy types when editing selected identity.
   List<DraftSynergyType> _editDraftTypes = const [];
 
+  // --- DART-033 compose state ---
+  VariantRecord? _selectedVariant;
+  List<AttachmentView> _attachments = const [];
+  List<SlotPinView> _slotPins = const [];
+  List<SetRecord> _attachableSets = const [];
+
   int? get userId => _userId;
   List<BuildRecord> get builds => _builds;
   BuildDetail? get selected => _selected;
@@ -76,6 +131,12 @@ class BuildsLibraryController extends ChangeNotifier {
       List.unmodifiable(_createDraftTypes);
   List<DraftSynergyType> get editDraftTypes =>
       List.unmodifiable(_editDraftTypes);
+
+  VariantRecord? get selectedVariant => _selectedVariant;
+  List<VariantRecord> get variants => _selected?.variants ?? const [];
+  List<AttachmentView> get attachments => List.unmodifiable(_attachments);
+  List<SlotPinView> get slotPins => List.unmodifiable(_slotPins);
+  List<SetRecord> get attachableSets => List.unmodifiable(_attachableSets);
 
   String synergySummaryOf(BuildRecord b) => formatSynergyDesignationList([
         for (final d in b.synergyTypes)
@@ -104,12 +165,15 @@ class BuildsLibraryController extends ChangeNotifier {
       _builds = await listUserBuilds(db, _userId!);
       if (keepSelection && _selected != null) {
         final id = _selected!.build.id;
+        final priorVariantId = _selectedVariant?.id;
         final next = await getBuildDetail(db, _userId!, id);
         _selected = next;
         if (next != null) {
           _editDraftTypes = _recordsToDrafts(next.build.synergyTypes);
+          await _syncComposeAfterBuildLoad(next, preferredVariantId: priorVariantId);
         } else {
           _editDraftTypes = const [];
+          _clearCompose();
         }
       }
       _loading = false;
@@ -151,6 +215,7 @@ class BuildsLibraryController extends ChangeNotifier {
     if (buildId == null) {
       _selected = null;
       _editDraftTypes = const [];
+      _clearCompose();
       notifyListeners();
       return;
     }
@@ -160,6 +225,11 @@ class BuildsLibraryController extends ChangeNotifier {
     _selected = row;
     _editDraftTypes =
         row != null ? _recordsToDrafts(row.build.synergyTypes) : const [];
+    if (row != null) {
+      await _syncComposeAfterBuildLoad(row);
+    } else {
+      _clearCompose();
+    }
     notifyListeners();
   }
 
@@ -243,6 +313,7 @@ class BuildsLibraryController extends ChangeNotifier {
       _selected = created;
       _editDraftTypes = _recordsToDrafts(created.build.synergyTypes);
       _createDraftTypes = const [];
+      await _syncComposeAfterBuildLoad(created);
       _error = null;
       notifyListeners();
       return null;
@@ -284,6 +355,7 @@ class BuildsLibraryController extends ChangeNotifier {
       return msg;
     }
     try {
+      final priorVariantId = _selectedVariant?.id;
       final updated = await updateUserBuild(
         db,
         uid,
@@ -308,6 +380,7 @@ class BuildsLibraryController extends ChangeNotifier {
       _selected = updated;
       _editDraftTypes = _recordsToDrafts(updated.build.synergyTypes);
       _builds = await listUserBuilds(db, uid);
+      await _syncComposeAfterBuildLoad(updated, preferredVariantId: priorVariantId);
       _error = null;
       notifyListeners();
       return null;
@@ -319,6 +392,387 @@ class BuildsLibraryController extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return e.toString();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // DART-033: Variants, attachments, slot pins
+  // ---------------------------------------------------------------------------
+
+  /// Select a variant on the current build for compose.
+  Future<void> selectVariant(String? variantId) async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null || variantId == null) {
+      _selectedVariant = null;
+      _attachments = const [];
+      _slotPins = const [];
+      notifyListeners();
+      return;
+    }
+    VariantRecord? match;
+    for (final v in sel.variants) {
+      if (v.id == variantId) {
+        match = v;
+        break;
+      }
+    }
+    _selectedVariant = match;
+    if (match != null) {
+      await _loadComposeForVariant(uid, sel.build.id, match.id);
+    } else {
+      _attachments = const [];
+      _slotPins = const [];
+    }
+    notifyListeners();
+  }
+
+  /// Create a non-default named variant; selects it on success.
+  Future<String?> createVariant({required String name}) async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null) {
+      return 'No build selected';
+    }
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      const msg = 'Variant name cannot be empty';
+      _error = msg;
+      notifyListeners();
+      return msg;
+    }
+    try {
+      final created = await createUserVariant(
+        db,
+        uid,
+        sel.build.id,
+        CreateVariantCommand(name: trimmed),
+      );
+      if (created == null) {
+        return 'Build not found';
+      }
+      final detail = await getBuildDetail(db, uid, sel.build.id);
+      _selected = detail;
+      if (detail != null) {
+        await _syncComposeAfterBuildLoad(detail, preferredVariantId: created.id);
+      }
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// Attach a library set (live) to the selected variant.
+  ///
+  /// Merges with existing attachments; hard gates + rollback via
+  /// [updateUserVariant]. Returns error message or null.
+  Future<String?> attachSet(
+    String setId, {
+    AttachmentMode mode = AttachmentMode.live,
+  }) async {
+    final sel = _selected;
+    final variant = _selectedVariant;
+    final uid = _userId;
+    if (sel == null || variant == null || uid == null) {
+      return 'No variant selected';
+    }
+    final id = setId.trim();
+    if (id.isEmpty) {
+      return 'Set id required';
+    }
+    if (_attachments.any((a) => a.record.setId == id)) {
+      const msg = 'Set is already attached';
+      _error = msg;
+      notifyListeners();
+      return msg;
+    }
+
+    final next = <SetAttachmentInput>[
+      for (final a in _attachments)
+        SetAttachmentInput(
+          setId: a.record.setId,
+          mode: parseAttachmentModeWire(a.record.mode),
+          snapshotConfigs: a.record.snapshotConfigs,
+        ),
+      SetAttachmentInput(setId: id, mode: mode),
+    ];
+
+    return _replaceAttachments(sel.build.id, variant.id, next);
+  }
+
+  /// Detach a set from the selected variant.
+  Future<String?> detachSet(String setId) async {
+    final sel = _selected;
+    final variant = _selectedVariant;
+    final uid = _userId;
+    if (sel == null || variant == null || uid == null) {
+      return 'No variant selected';
+    }
+    final next = <SetAttachmentInput>[
+      for (final a in _attachments)
+        if (a.record.setId != setId)
+          SetAttachmentInput(
+            setId: a.record.setId,
+            mode: parseAttachmentModeWire(a.record.mode),
+            snapshotConfigs: a.record.snapshotConfigs,
+          ),
+    ];
+    return _replaceAttachments(sel.build.id, variant.id, next);
+  }
+
+  /// Pin or clear instance on a live-attached set slot.
+  ///
+  /// [instanceId] null/empty → wishlist. Returns error or null.
+  Future<String?> pinSlot({
+    required String setId,
+    required String slot,
+    String? instanceId,
+    String? setItemId,
+  }) async {
+    final uid = _userId;
+    final variant = _selectedVariant;
+    if (uid == null || variant == null) {
+      return 'No variant selected';
+    }
+
+    final att = _attachments.where((a) => a.record.setId == setId).toList();
+    if (att.isEmpty) {
+      return 'Set is not attached';
+    }
+    if (att.single.record.mode != AttachmentMode.live.wireName) {
+      const msg = 'Pin edit requires live attachment (snapshot is display-only)';
+      _error = msg;
+      notifyListeners();
+      return msg;
+    }
+
+    try {
+      final detail = await getSetDetail(db, uid, setId);
+      if (detail == null) {
+        return 'Set not found';
+      }
+      final active = detail.activeItems;
+      SetItemRecord? item;
+      if (setItemId != null) {
+        for (final i in active) {
+          if (i.id == setItemId) {
+            item = i;
+            break;
+          }
+        }
+      }
+      item ??= () {
+        for (final i in active) {
+          if (i.slot == slot) return i;
+        }
+        return null;
+      }();
+      if (item == null) {
+        return 'Slot item not found on set';
+      }
+
+      final pin = instanceId?.trim();
+      // Omit id so repo allocates a new row id after soft-removing the active
+      // occupant (reusing the old id hits UNIQUE on set_items.id).
+      final updated = await upsertUserSetItem(
+        db,
+        uid,
+        setId,
+        UpsertSetItemCommand(
+          slot: item.slot,
+          itemHash: item.itemHash,
+          itemName: item.itemName,
+          instanceId: (pin == null || pin.isEmpty) ? null : pin,
+          selectedPerks: item.selectedPerks,
+          masterworkHash: item.masterworkHash,
+          modHashes: item.modHashes,
+          sortOrder: item.sortOrder,
+          replaceExisting: true,
+        ),
+      );
+      if (updated == null) {
+        return 'Set not found';
+      }
+
+      final sel = _selected;
+      if (sel != null) {
+        await _loadComposeForVariant(uid, sel.build.id, variant.id);
+      }
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  Future<String?> _replaceAttachments(
+    String buildId,
+    String variantId,
+    List<SetAttachmentInput> next,
+  ) async {
+    final uid = _userId;
+    if (uid == null) return 'No user';
+    try {
+      await updateUserVariant(
+        db,
+        uid,
+        buildId,
+        variantId,
+        UpdateVariantCommand(attachments: next),
+      );
+      final detail = await getBuildDetail(db, uid, buildId);
+      _selected = detail;
+      if (detail != null) {
+        await _syncComposeAfterBuildLoad(detail, preferredVariantId: variantId);
+      }
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      // Reload compose so UI matches rolled-back DB state.
+      try {
+        await _loadComposeForVariant(uid, buildId, variantId);
+      } catch (_) {}
+      final msg = formatComposeError(e.message);
+      _error = msg;
+      notifyListeners();
+      return msg;
+    } catch (e) {
+      try {
+        await _loadComposeForVariant(uid, buildId, variantId);
+      } catch (_) {}
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  void _clearCompose() {
+    _selectedVariant = null;
+    _attachments = const [];
+    _slotPins = const [];
+    _attachableSets = const [];
+  }
+
+  Future<void> _syncComposeAfterBuildLoad(
+    BuildDetail detail, {
+    String? preferredVariantId,
+  }) async {
+    final uid = _userId;
+    if (uid == null) {
+      _clearCompose();
+      return;
+    }
+    _attachableSets = await listUserSets(db, uid);
+
+    VariantRecord? pick;
+    if (preferredVariantId != null) {
+      for (final v in detail.variants) {
+        if (v.id == preferredVariantId) {
+          pick = v;
+          break;
+        }
+      }
+    }
+    if (pick == null && detail.variants.isNotEmpty) {
+      VariantRecord? def;
+      for (final v in detail.variants) {
+        if (v.isDefault) {
+          def = v;
+          break;
+        }
+      }
+      pick = def ?? detail.variants.first;
+    }
+
+    _selectedVariant = pick;
+    if (pick != null) {
+      await _loadComposeForVariant(uid, detail.build.id, pick.id);
+    } else {
+      _attachments = const [];
+      _slotPins = const [];
+    }
+  }
+
+  Future<void> _loadComposeForVariant(
+    int userId,
+    String buildId,
+    String variantId,
+  ) async {
+    final atts = await getVariantAttachments(db, variantId);
+    final views = <AttachmentView>[];
+    for (final a in atts) {
+      final set = await getSet(db, userId, a.setId);
+      views.add(
+        AttachmentView(
+          record: a,
+          setName: set?.name,
+          setType: set?.type,
+        ),
+      );
+    }
+    _attachments = views;
+
+    final expanded = await expandAttachmentsToItems(db, userId, atts);
+    final pins = <SlotPinView>[];
+    for (final item in expanded) {
+      String? setItemId;
+      String mode = AttachmentMode.live.wireName;
+      for (final a in atts) {
+        if (a.setId == item.setId) {
+          mode = a.mode;
+          break;
+        }
+      }
+      if (mode == AttachmentMode.live.wireName) {
+        final active = await listActiveSetItems(db, item.setId);
+        for (final si in active) {
+          if (si.slot == item.slot.wireName && si.itemHash == item.itemHash) {
+            setItemId = si.id;
+            break;
+          }
+        }
+      }
+      pins.add(
+        SlotPinView(
+          slot: item.slot.wireName,
+          itemHash: item.itemHash,
+          itemName: item.itemName,
+          setId: item.setId,
+          attachmentMode: mode,
+          instanceId: item.instanceId,
+          setItemId: setItemId,
+        ),
+      );
+    }
+    // Stable order by slot wire name.
+    pins.sort((a, b) => a.slot.compareTo(b.slot));
+    _slotPins = pins;
+
+    // Keep selectedVariant pointer fresh from detail if available.
+    final sel = _selected;
+    if (sel != null) {
+      for (final v in sel.variants) {
+        if (v.id == variantId) {
+          _selectedVariant = v;
+          break;
+        }
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-032 done — Builds library dual-pane + identity; create with synergy types)  
+**Updated:** 2026-07-24 (DART-033 done — variant compose: attach set, pin slot wishlist/instance, conflicts surfaced)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -124,7 +124,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-030** | **done** | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
 | **DART-031** | **done** | `flutter-synergy-library-ui` | `dart-031-flutter-synergy-library-ui` | P3 | DART-027, DART-029 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
 | **DART-032** | **done** | `flutter-build-identity-ui` | `dart-032-flutter-build-identity-ui` | P3 | DART-028, DART-029 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
-| **DART-033** | pending | `flutter-variant-compose-ui` | `dart-033-flutter-variant-compose-ui` | P3 | DART-032, DART-030 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
+| **DART-033** | **done** | `flutter-variant-compose-ui` | `dart-033-flutter-variant-compose-ui` | P3 | DART-032, DART-030 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
 | **DART-034** | pending | `flutter-soft-guidance-ui` | `dart-034-flutter-soft-guidance-ui` | P3 | DART-033, DART-004 | Soft coverage chips + soft stat targets UI (display only) | Soft never auto-applies; **P3 phase gate** (compose without equip) |
 | **DART-035** | pending | `optimizer-isolate` | `dart-035-optimizer-isolate` | P4 | DART-008, DART-028 | Run enumerate in isolate; materialize Armor Set use case | UI thread safe; confirm-only apply path |
 | **DART-036** | pending | `flutter-optimizer-ui` | `dart-036-flutter-optimizer-ui` | P4 | DART-035, DART-030 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
@@ -190,11 +190,19 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-033** `flutter-variant-compose-ui` (P3 — Variants, set attachments, slot pins) |
-| **Active branch** | (create) `dart-033-flutter-variant-compose-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-033-flutter-variant-compose-ui/` (created at specify) |
+| **Next / active slice** | **DART-034** `flutter-soft-guidance-ui` (P3 — Soft coverage chips + soft stat targets; display only) |
+| **Active branch** | (create) `dart-034-flutter-soft-guidance-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-034-flutter-soft-guidance-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-033 note (completed)
+
+- Builds detail **variant compose**: list/create/select variants; attach/detach library sets (live)
+- Slot pins board: wishlist vs instance labels; pin/clear instance on live-attached set items
+- Hard `SLOT_CONFLICT` (and other use-case hard gates) surfaced in status; rollback preserves prior attachments
+- Soft guidance never auto-applies; pure `variant_compose_format` helpers
+- Tests: `flutter test test/variant_compose_format_test.dart test/variant_compose_page_test.dart` (+ builds suite green)
 
 ### DART-032 note (completed)
 
@@ -202,7 +210,7 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 - Create via `destiny2_app` `createUserBuild`; local-library user when signed out
 - Identity: class, ≥1 synergy type designation, optional exotic armor/weapon + pinned Super
 - Hard `NO_SYNERGY` when zero synergy types; soft guidance never auto-applies
-- In-place identity update (confirm/fork deferred); variant compose deferred to DART-033
+- In-place identity update (confirm/fork deferred); variant compose delivered in DART-033
 - Pure `build_identity_format` helpers (designation list, exotics/identity summaries)
 - Tests: `flutter test test/build_identity_format_test.dart test/builds_library_page_test.dart` (15)
 
