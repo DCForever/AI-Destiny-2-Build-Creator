@@ -37,7 +37,7 @@ packages/
         storage_root.dart
         version_dir.dart
     test/
-  db/                     # Drift schema (DART-013) — not pure
+  db/                     # Drift schema + library repos (DART-013–015) — not pure
     pubspec.yaml          # package name: destiny2_db
     lib/
       destiny2_db.dart
@@ -45,6 +45,7 @@ packages/
         tables.dart
         app_database.dart
         schema_notes.dart
+        repos/            # DART-015 library CRUD
     test/
 ```
 
@@ -53,7 +54,7 @@ packages/
 | `packages/domain` | `destiny2_domain` | Pure domain library (models DART-002; evaluators DART-003+) | **SDK only** at runtime; `test` / pure lints as dev_dependencies. **No** Flutter, Jaspr, Drift, http, path_provider, or other IO/UI packages. |
 | `packages/sandbox_data` | `destiny2_sandbox_data` | Pure static sandbox constants (stat benefits, synergy verbs, exotic ability requirements, archetypes, champion counters, vocabularies) | **SDK only** at runtime. Soft display tables only — never auto-apply / hard-block. |
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
-| `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations** for core tables (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014). | `drift`, `sqlite3`, `path`. Repos DART-015+. **Not** pure. |
+| `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library repos** (users, inventory tables, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015). | `drift`, `sqlite3`, `path`. Inventory repos DART-016+. **Not** pure. |
 
 UI shells (Flutter Windows/mobile, Jaspr web) land under `apps/` in later slices (DART-019+, DART-042+).
 

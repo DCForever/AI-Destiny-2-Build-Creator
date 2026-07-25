@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-014 done — Drift migrations / ensure* strategy)  
+**Updated:** 2026-07-24 (DART-015 done — library repos CRUD + RESTRICT)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -106,7 +106,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-012** | **done** | `storage-root` | `dart-012-storage-root` | P1 | DART-011 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
 | **DART-013** | **done** | `drift-schema` | `dart-013-drift-schema` | P1 | DART-012 | Drift schema mirroring core tables (users, builds, variants, sets, synergies, inventory) | Schema creates clean DB; PRAGMA/index notes for critical uniques |
 | **DART-014** | **done** | `drift-migrations` | `dart-014-drift-migrations` | P1 | DART-013 | Migration strategy mirroring historical ensure* / column upgrades needed for import later | Empty→current migrate green; documented version table |
-| **DART-015** | pending | `repos-library` | `dart-015-repos-library` | P1 | DART-014 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
+| **DART-015** | **done** | `repos-library` | `dart-015-repos-library` | P1 | DART-014 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
 | **DART-016** | pending | `repos-inventory` | `dart-016-repos-inventory` | P1 | DART-014 | Inventory repository + full-replace transaction shape + sync metadata fields | Composite unique; batch insert in one transaction; busy lock hook |
 | **DART-017** | pending | `manifest-entities` | `dart-017-manifest-entities` | P1 | DART-012 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
 | **DART-018** | pending | `manifest-windows-refresh` | `dart-018-manifest-windows-refresh` | P1 | DART-017 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-015** `repos-library` (P1 — builds/sets/synergies/variants CRUD) |
-| **Active branch** | (create) `dart-015-repos-library` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-015-repos-library/` (created at specify) |
+| **Next / active slice** | **DART-016** `repos-inventory` (P1 — inventory repo + full-replace sync shape) |
+| **Active branch** | (create) `dart-016-repos-inventory` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-016-repos-inventory/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-015 note (completed)
+
+**Library repositories** in `packages/db` (`src/repos/`): builds (tags + synergy types), sets (tags + attachment refs), set items (persist upsert/soft-remove), synergies (+ links), variants (+ replace attachments). `deleteSetRecord` throws `SetInUseException` when attached; schema ON DELETE RESTRICT remains backstop. Round-trip + RESTRICT + user-scope tests: `dart test packages/db` (33). Inventory repos deferred to DART-016.
 
 ### DART-014 note (completed)
 
