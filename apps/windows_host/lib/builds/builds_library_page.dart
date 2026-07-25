@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
 import 'builds_library_controller.dart';
+import 'soft_guidance_format.dart';
 
-/// Builds library dual-pane (list + identity + variant compose) — DART-032/033.
+/// Builds library dual-pane (list + identity + variant compose + soft guidance)
+/// — DART-032/033/034.
 class BuildsLibraryPage extends StatefulWidget {
   const BuildsLibraryPage({
     super.key,
@@ -42,6 +44,9 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   final _editPinnedSuperController = TextEditingController();
   final _createVariantNameController = TextEditingController();
   final _pinInstanceController = TextEditingController();
+  final Map<ArmorStatName, TextEditingController> _softStatControllers = {
+    for (final s in ArmorStatName.all) s: TextEditingController(),
+  };
 
   GuardianClass _createClass = GuardianClass.hunter;
   String _createTypeWire = creatableSynergyTypeWires.first;
@@ -51,6 +56,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   String? _boundSelectionId;
   String? _attachSetId;
   String? _pinTargetKey;
+  String? _boundSoftTargetsKey;
 
   @override
   void initState() {
@@ -91,13 +97,29 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     _editPinnedSuperController.dispose();
     _createVariantNameController.dispose();
     _pinInstanceController.dispose();
+    for (final c in _softStatControllers.values) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  void _syncSoftStatFieldsFromController() {
+    final targets = _controller.softStatTargets;
+    final key =
+        '${_controller.selected?.build.id}|${formatSoftStatTargetsSummary(targets)}';
+    if (key == _boundSoftTargetsKey) return;
+    _boundSoftTargetsKey = key;
+    for (final stat in ArmorStatName.all) {
+      final v = targets[stat];
+      _softStatControllers[stat]!.text = v?.toString() ?? '';
+    }
   }
 
   void _onController() {
     final sel = _controller.selected;
     if (sel != null && sel.build.id != _boundSelectionId) {
       _boundSelectionId = sel.build.id;
+      _boundSoftTargetsKey = null;
       _editNameController.text = sel.build.name;
       _editArmorHashController.text =
           sel.build.exoticArmorHash?.toString() ?? '';
@@ -108,7 +130,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       _editPinnedSuperController.text = sel.build.pinnedSuper ?? '';
     } else if (sel == null) {
       _boundSelectionId = null;
+      _boundSoftTargetsKey = null;
+      for (final c in _softStatControllers.values) {
+        c.clear();
+      }
     }
+    _syncSoftStatFieldsFromController();
     if (mounted) setState(() {});
   }
 
@@ -1014,8 +1041,221 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 ),
             ],
           ),
+        const SizedBox(height: 24),
+        const Divider(),
+        const SizedBox(height: 8),
+        _buildSoftGuidance(context),
       ],
     );
+  }
+
+  Widget _buildSoftGuidance(BuildContext context) {
+    final synergyRows = _controller.synergyCoverageRows;
+    final setBonuses = _controller.setBonusSoftRows;
+    final elements = _controller.elementSoftMismatches;
+    final softStats = _controller.softStatWarnings;
+
+    return Column(
+      key: const Key('builds_soft_guidance'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Soft guidance',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _controller.softGuidanceAdvisory,
+          key: const Key('builds_soft_guidance_advisory'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Coverage chips',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        if (_controller.selectedVariant == null)
+          const Text(
+            'Select a variant to evaluate soft coverage.',
+            key: Key('builds_soft_coverage_no_variant'),
+          )
+        else if (synergyRows.isEmpty)
+          const Text(
+            'No designated synergy coverage rows (add library synergies matching build types).',
+            key: Key('builds_soft_coverage_empty'),
+          )
+        else
+          Wrap(
+            key: const Key('builds_soft_coverage_chips'),
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final row in synergyRows)
+                Chip(
+                  key: Key(
+                    'builds_soft_chip_${row.synergyId}_${row.tier.wireName}',
+                  ),
+                  avatar: CircleAvatar(
+                    backgroundColor: Color(
+                      _toneColor(coverageTierToneKey(row.tier)),
+                    ),
+                    radius: 6,
+                  ),
+                  label: Text(formatSynergyCoverageChipLabel(row)),
+                  visualDensity: VisualDensity.compact,
+                ),
+            ],
+          ),
+        if (setBonuses.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Set-bonus soft',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Column(
+            key: const Key('builds_soft_set_bonuses'),
+            children: [
+              for (var i = 0; i < setBonuses.length; i++)
+                ListTile(
+                  key: Key('builds_soft_set_bonus_$i'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(formatSetBonusSoftSummary(setBonuses[i])),
+                  subtitle: setBonuses[i].hint != null
+                      ? Text(setBonuses[i].hint!)
+                      : null,
+                ),
+            ],
+          ),
+        ],
+        if (elements.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Element soft mismatches',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Column(
+            key: const Key('builds_soft_element_mismatches'),
+            children: [
+              for (var i = 0; i < elements.length; i++)
+                ListTile(
+                  key: Key('builds_soft_element_$i'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(formatElementSoftMismatchSummary(elements[i])),
+                  subtitle: Text(elements[i].hint),
+                ),
+            ],
+          ),
+        ],
+        if (softStats.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Soft stat warnings',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Column(
+            key: const Key('builds_soft_stat_warnings'),
+            children: [
+              for (final row in softStats)
+                ListTile(
+                  key: Key('builds_soft_stat_warn_${row.stat.wireName}'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(formatSoftStatWarningSummary(row)),
+                  subtitle: Text(row.hint),
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 16),
+        Text(
+          'Soft stat targets',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Explicit save only — coverage never writes targets.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          key: const Key('builds_soft_stat_targets_fields'),
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final stat in ArmorStatName.all)
+              SizedBox(
+                width: 120,
+                child: TextField(
+                  key: Key('builds_soft_stat_${stat.wireName}'),
+                  controller: _softStatControllers[stat],
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: stat.wireName,
+                    isDense: true,
+                    border: const OutlineInputBorder(),
+                    hintText: '1–$armorStatMax',
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FilledButton(
+            key: const Key('builds_soft_stat_save'),
+            onPressed: _controller.loading || _controller.selected == null
+                ? null
+                : _saveSoftStatTargets,
+            child: const Text('Save soft targets'),
+          ),
+        ),
+        if (_controller.softStatTargetsSummary.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Saved: ${_controller.softStatTargetsSummary}',
+            key: const Key('builds_soft_stat_saved_summary'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
+    );
+  }
+
+  int _toneColor(String toneKey) {
+    switch (toneKey) {
+      case 'success':
+        return kFlapSuccessDark;
+      case 'warning':
+        return kFlapWarningDark;
+      case 'danger':
+        return kFlapDangerDark;
+      default:
+        return kFlapMutedDark;
+    }
+  }
+
+  Future<void> _saveSoftStatTargets() async {
+    final fields = <String, String>{
+      for (final stat in ArmorStatName.all)
+        stat.wireName: _softStatControllers[stat]!.text,
+    };
+    final err = await _controller.saveSoftStatTargetsFromFields(fields);
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Saved soft stat targets';
+      if (err == null) {
+        _boundSoftTargetsKey = null;
+        _syncSoftStatFieldsFromController();
+      }
+    });
   }
 
   Future<void> _createVariant() async {

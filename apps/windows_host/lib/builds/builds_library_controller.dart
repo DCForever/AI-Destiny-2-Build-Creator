@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../auth/windows_oauth_session.dart';
 import '../settings/inventory_sync_controller.dart';
 import 'build_identity_format.dart';
+import 'soft_guidance_format.dart';
 import 'variant_compose_format.dart';
 
 /// Stable offline library owner when the user is signed out (DART-030/031/032/033).
@@ -89,10 +90,11 @@ class AttachmentView {
       );
 }
 
-/// In-process orchestration for Builds library + variant compose UI (DART-032/033).
+/// In-process orchestration for Builds library + variant compose + soft guidance
+/// (DART-032/033/034).
 ///
-/// Calls [destiny2_app] build/variant/attachment/set use cases against the host's
-/// single [AppDatabase]. Soft guidance never auto-applies.
+/// Calls [destiny2_app] build/variant/attachment/set/coverage use cases against
+/// the host's single [AppDatabase]. Soft guidance never auto-applies.
 class BuildsLibraryController extends ChangeNotifier {
   BuildsLibraryController({
     required this.db,
@@ -122,6 +124,12 @@ class BuildsLibraryController extends ChangeNotifier {
   List<SlotPinView> _slotPins = const [];
   List<SetRecord> _attachableSets = const [];
 
+  // --- DART-034 soft guidance (display only; never auto-applies) ---
+  CoverageQueryResult? _coverage;
+  SoftStatTargets _softStatTargets = const SoftStatTargets();
+  /// Optional estimate for soft-stat warnings (tests may inject).
+  StatEstimate? softStatEstimateOverride;
+
   int? get userId => _userId;
   List<BuildRecord> get builds => _builds;
   BuildDetail? get selected => _selected;
@@ -137,6 +145,23 @@ class BuildsLibraryController extends ChangeNotifier {
   List<AttachmentView> get attachments => List.unmodifiable(_attachments);
   List<SlotPinView> get slotPins => List.unmodifiable(_slotPins);
   List<SetRecord> get attachableSets => List.unmodifiable(_attachableSets);
+
+  CoverageQueryResult? get coverage => _coverage;
+  CoverageResult get coverageResult =>
+      _coverage?.coverage ?? CoverageResult.empty;
+  List<SynergyCoverageRow> get synergyCoverageRows =>
+      List.unmodifiable(coverageResult.synergies);
+  List<SetBonusSoftRow> get setBonusSoftRows =>
+      List.unmodifiable(coverageResult.setBonuses);
+  List<ElementSoftMismatch> get elementSoftMismatches =>
+      List.unmodifiable(coverageResult.elementMismatches);
+  List<SoftStatWarningRow> get softStatWarnings =>
+      List.unmodifiable(coverageResult.softStats);
+  SoftStatTargets get softStatTargets => _softStatTargets;
+  String get softStatTargetsSummary =>
+      formatSoftStatTargetsSummary(_softStatTargets);
+  bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
+  String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
 
   String synergySummaryOf(BuildRecord b) => formatSynergyDesignationList([
         for (final d in b.synergyTypes)
@@ -407,6 +432,7 @@ class BuildsLibraryController extends ChangeNotifier {
       _selectedVariant = null;
       _attachments = const [];
       _slotPins = const [];
+      _coverage = null;
       notifyListeners();
       return;
     }
@@ -423,6 +449,7 @@ class BuildsLibraryController extends ChangeNotifier {
     } else {
       _attachments = const [];
       _slotPins = const [];
+      _coverage = null;
     }
     notifyListeners();
   }
@@ -662,11 +689,92 @@ class BuildsLibraryController extends ChangeNotifier {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // DART-034: Soft coverage chips + soft stat targets (display only)
+  // ---------------------------------------------------------------------------
+
+  /// Re-query soft coverage for the selected variant without mutating kit.
+  ///
+  /// Soft only — never auto-applies attachments, pins, or targets.
+  Future<void> refreshSoftCoverage() async {
+    final sel = _selected;
+    final variant = _selectedVariant;
+    final uid = _userId;
+    if (sel == null || variant == null || uid == null) {
+      _coverage = null;
+      notifyListeners();
+      return;
+    }
+    await _loadSoftCoverage(uid, sel.build.id, variant.id);
+    notifyListeners();
+  }
+
+  /// Explicit save of soft stat targets on the selected build.
+  ///
+  /// Never called automatically from coverage evaluation or nudges.
+  Future<String?> saveSoftStatTargets(SoftStatTargets targets) async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null) {
+      return 'No build selected';
+    }
+    try {
+      final normalized = normalizeSoftStatTargets(targets);
+      final priorVariantId = _selectedVariant?.id;
+      final updated = await updateUserBuild(
+        db,
+        uid,
+        sel.build.id,
+        UpdateBuildCommand(softStatTargets: normalized),
+      );
+      if (updated == null) {
+        return 'Build not found';
+      }
+      _selected = updated;
+      _softStatTargets = softStatTargetsFromJson(updated.build.softStatTargets);
+      _builds = await listUserBuilds(db, uid);
+      await _syncComposeAfterBuildLoad(
+        updated,
+        preferredVariantId: priorVariantId,
+      );
+      _error = null;
+      notifyListeners();
+      return null;
+    } on SoftStatTargetsException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } on UseCaseException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// Save soft targets from wire-name text fields (UI).
+  Future<String?> saveSoftStatTargetsFromFields(Map<String, String> fields) async {
+    try {
+      final targets = softStatTargetsFromFieldMap(fields);
+      return saveSoftStatTargets(targets);
+    } on FormatException catch (e) {
+      final msg = e.message;
+      _error = msg;
+      notifyListeners();
+      return msg;
+    }
+  }
+
   void _clearCompose() {
     _selectedVariant = null;
     _attachments = const [];
     _slotPins = const [];
     _attachableSets = const [];
+    _coverage = null;
+    _softStatTargets = const SoftStatTargets();
   }
 
   Future<void> _syncComposeAfterBuildLoad(
@@ -700,12 +808,16 @@ class BuildsLibraryController extends ChangeNotifier {
       pick = def ?? detail.variants.first;
     }
 
+    _softStatTargets =
+        softStatTargetsFromJson(detail.build.softStatTargets);
+
     _selectedVariant = pick;
     if (pick != null) {
       await _loadComposeForVariant(uid, detail.build.id, pick.id);
     } else {
       _attachments = const [];
       _slotPins = const [];
+      _coverage = null;
     }
   }
 
@@ -773,6 +885,30 @@ class BuildsLibraryController extends ChangeNotifier {
           break;
         }
       }
+      _softStatTargets =
+          softStatTargetsFromJson(sel.build.softStatTargets);
+    }
+
+    // Soft coverage: display only — does not mutate attachments/pins/targets.
+    await _loadSoftCoverage(userId, buildId, variantId);
+  }
+
+  Future<void> _loadSoftCoverage(
+    int userId,
+    String buildId,
+    String variantId,
+  ) async {
+    try {
+      _coverage = await queryVariantCoverage(
+        db,
+        userId,
+        buildId,
+        variantId,
+        statEstimate: softStatEstimateOverride,
+      );
+    } catch (_) {
+      // Soft query failure must not break compose; leave prior or null.
+      _coverage = null;
     }
   }
 
