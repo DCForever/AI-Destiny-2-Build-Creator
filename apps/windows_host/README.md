@@ -1,4 +1,4 @@
-# destiny2_windows_host (DART-019…030)
+# destiny2_windows_host (DART-019…031)
 
 **Flutter Windows** host for Destiny 2 Build Creator multiplatform port.
 
@@ -8,6 +8,7 @@
 - Opens a **single** Drift `AppDatabase` at `app.db`
 - **Catalog** offline browse from entity stores + **All | Owned** scope after inventory sync (DART-026); instance projections on row select for pickers
 - **Sets library** dual-pane (DART-030): create/edit sets via `destiny2_app` use cases; fill slots from catalog/owned picker
+- **Synergy library** dual-pane (DART-031): create synergies via `destiny2_app`; designation immutable after create; evidence links add/remove
 - **Settings**:
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
   - **Inventory sync** card (DART-025): Sync now → full-replace into Drift; busy/error UX; 60s freshness label
@@ -26,7 +27,7 @@ flutter run -d windows `
 # optional: --dart-define=BUNGIE_REDIRECT_URI=http://127.0.0.1:8765/callback
 ```
 
-Then: Settings → Sign in → **Sync now** → Catalog → **Owned**, or **Sets** → create set → Fill slot.
+Then: Settings → Sign in → **Sync now** → Catalog → **Owned**, or **Sets** / **Synergies** library screens.
 
 ## Test
 
@@ -34,6 +35,8 @@ Then: Settings → Sign in → **Sync now** → Catalog → **Owned**, or **Sets
 flutter test
 # Sets library slice:
 flutter test test/set_slot_mapping_test.dart test/sets_library_page_test.dart
+# Synergy library slice:
+flutter test test/synergy_designation_test.dart test/synergies_library_page_test.dart
 ```
 
 ## Specs
@@ -45,3 +48,4 @@ flutter test test/set_slot_mapping_test.dart test/sets_library_page_test.dart
 - `specs/dart-026-flutter-catalog-owned/`
 - `specs/dart-029-flutter-design-tokens/`
 - `specs/dart-030-flutter-sets-library-ui/`
+- `specs/dart-031-flutter-synergy-library-ui/`
