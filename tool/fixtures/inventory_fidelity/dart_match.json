@@ -1,0 +1,47 @@
+{
+  "source": "dart",
+  "capturedAt": "2026-07-25T00:00:00Z",
+  "membership": {
+    "membershipType": 3,
+    "membershipId": "fixture-membership-001",
+    "displayName": "FixtureGuardian"
+  },
+  "raw": {
+    "total": 1250,
+    "vault": 420,
+    "characterInventoriesTotal": 530,
+    "characterEquipmentTotal": 300
+  },
+  "parsed": {
+    "total": 1180,
+    "equipmentTotal": 1100,
+    "subclassTotal": 3,
+    "byLocation": {
+      "vault": 380,
+      "character": 500,
+      "equipped": 300
+    },
+    "byBucket": {
+      "1498876634": 120,
+      "2465295065": 95,
+      "953998645": 80,
+      "3448274439": 45,
+      "3551918588": 45,
+      "14239492": 45,
+      "20886954": 45,
+      "1585787867": 45
+    }
+  },
+  "dropped": {
+    "total": 70,
+    "invalidShape": 20,
+    "unknownBucket": 40,
+    "missingInstanceId": 10
+  },
+  "resolution": {
+    "resolvedFromTransfer": 380,
+    "droppedNonEquipment": 40,
+    "storedTotal": 1140,
+    "storedEquipment": 1100
+  }
+}

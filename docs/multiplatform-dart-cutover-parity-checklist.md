@@ -1,7 +1,7 @@
 # Multiplatform Dart — Cutover Parity Checklist (DART-049)
 
 **Status:** active program gate artifact  
-**Updated:** 2026-07-25  
+**Updated:** 2026-07-25 (DART-054 inventory fidelity harness; RB-06 cleared)  
 **Program ID:** DART-049  
 **Phase:** P5 / **program gate**  
 **Integration base:** `feature/multiplatform-dart`  
@@ -47,10 +47,12 @@ PRODUCTION_CUTOVER: NO-GO
 | RB-03 | Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed | RC-AUTH | **DART-058** / GAP-AUTH-01 |
 | RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS | **DART-060** / GAP-OPS-01 |
 | RB-05 | Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened | RC-WEB-DATA | **DART-059** / GAP-WEB-02 |
-| **RB-06** | **Inventory fidelity:** vault/postmaster resolution unwired in production hosts + enrichment thinner than Next (live dual-use confirmed); equip pins under-report vault copies | RC-SYNC fidelity | **DART-050–054** inventory fidelity program: **DART-050** vault lookup wiring (GAP-INV-01, PROC-01/02/06), **DART-051** roll tags (GAP-INV-02), **DART-052** sockets (GAP-INV-03), **DART-053** diagnostics + entity-cache UX (GAP-INV-04/06), **DART-054** live harness + RC-SYNC fidelity metrics (GAP-INV-05, PROC-03/04/05). Related: **DART-056** web owned depth (RB-02), **DART-055–061** other residuals |
+| ~~**RB-06**~~ | ~~**Inventory fidelity:** vault/postmaster unwired + enrichment thinner + no live harness~~ | ~~RC-SYNC fidelity~~ | **CLEARED (2026-07-25)** by **DART-050–054**: vault lookup (050), roll tags (051), sockets (052), diagnostics UI (053), live/fixture harness + fidelity gate (054 / GAP-INV-05 / PROC-03/04/05). Evidence: package+host fixtures; [multiplatform-dart-inventory-live-parity-harness.md](./multiplatform-dart-inventory-live-parity-harness.md); `dart run tool/inventory_fidelity_gate.dart`. Remaining RC-SYNC web owned depth is **RB-02** / DART-056 only — not vault-unwired. |
 
 Canonical **product feature inventory** + gap list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (every AppShell/PRODUCT capability has Plan ownership; open P0/P1 map to DART-050–061).  
 When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
+
+**Cleared residuals:** RB-06 (inventory fidelity program DART-050–054).
 
 ---
 
@@ -102,7 +104,7 @@ Domain packages are shared; UI shells differ.
 | Finish gaps helpers | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | DART-007 pure only; host UX residual **GAP-FEAT-06** → **DART-057** (Next FinishTab gates equip/export); pure never auto-wires |
 | Armor optimizer (confirm-only) | Yes | **PASS** | **MISS** | **MISS** | DART-035/036 Windows; not required on mobile/web for program gate; product cutover may accept Windows-only optimizer |
 | Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 — **no CLIENT_SECRET** |
-| Inventory sync full-replace | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | Vault lookup **DART-050**, roll tags **DART-051**, sockets **DART-052**, diagnostics UI **DART-053** shipped on Windows; live harness still **DART-054** (RB-06); web thinner (**RB-02** → **DART-056**) |
+| Inventory sync full-replace | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | Vault lookup **DART-050**, roll tags **DART-051**, sockets **DART-052**, diagnostics UI **DART-053**, live/fixture harness **DART-054** (RB-06 **cleared**) on Windows path; web thinner (**RB-02** → **DART-056**) |
 | Bungie equip (partial OK) | Yes | **PASS** | **MISS** | **PASS** | DART-037/038/047 |
 | DIM jsonOnly export | Yes | **PASS** | **MISS** | **PASS** | DART-010/039/047; blocked when not equip-ready |
 | Legacy `app.db` import | N/A (source) | **PASS** | **N/A** | **N/A** | DART-048 dry-run + apply → StorageRoot |
@@ -123,7 +125,7 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 | **RC-COMPOSE** | Intent→compose path on production web host | User can create build, attach sets, pin slots, see soft guidance on Jaspr without Next | DART-046 manual/scripted path | **PASS** (feature complete; re-verify on cutover build) |
 | **RC-EQUIP** | Equip-ready + equip and/or DIM on production web | Equip-ready gate enforced; DIM jsonOnly blocked when not ready; optional equip partial OK | DART-047 tests + smoke | **PASS** (feature complete; re-verify live Bungie in dual-run) |
 | **RC-AUTH** | Public+PKCE production auth | Prod Public Bungie app; HTTPS origin redirects registered; **no** `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr artifacts | Bungie portal config; binary/string scan | **FAIL** (RB-03) |
-| **RC-SYNC** | Owned inventory available for equip pins with **inventory fidelity** | (1) Documented sync path works on cutover-primary hosts (Windows + web at minimum for equip). (2) **After DART-050–054:** vault/postmaster weapon/armor present in Drift with correct equipment buckets; counts by location/bucket within agreed Next tolerance for same membership (or documented residual with GAP/RB note). (3) Diagnostics show resolution (resolvedFromTransfer / dropped) not only itemCount. Pass is **not** satisfied by “Settings sync card exists” alone (PROC-04). Web owned depth still requires DART-056 (RB-02) | Settings sync + dual-run harness notes; GAP-INV-01…05; RB-06 | **FAIL** (RB-06 vault fidelity + RB-02 web thinner) |
+| **RC-SYNC** | Owned inventory available for equip pins with **inventory fidelity** | (1) Documented sync path works on cutover-primary hosts (Windows + web at minimum for equip). (2) **After DART-050–054:** vault/postmaster weapon/armor present in Drift with correct equipment buckets; counts by location/bucket within agreed Next **tolerance** (default exact / 0) for same membership (or documented residual with GAP/RB note). (3) Diagnostics show resolution (resolvedFromTransfer / dropped) not only itemCount. (4) Inventory fidelity gate + dual-run procedure exist ([inventory live parity harness](./multiplatform-dart-inventory-live-parity-harness.md); `dart run tool/inventory_fidelity_gate.dart`) — separate from pure `p0_parity_gate` (PROC-05). Pass is **not** satisfied by “Settings sync card exists” alone (PROC-04). Web owned depth still requires DART-056 (RB-02) | Settings sync + [harness doc](./multiplatform-dart-inventory-live-parity-harness.md) + fixture gate; GAP-INV-01…05 closed on Windows path; live operator dual-run attachable under RC-OPS | **FAIL** (RB-02 web inventory/owned depth only; **RB-06 cleared** by DART-050–054) |
 | **RC-DATA** | Local data migration path | Legacy Next `.cache/app.db` → StorageRoot dry-run + apply documented and tested | [multiplatform-dart-legacy-db-import.md](./multiplatform-dart-legacy-db-import.md); DART-048 tests | **PASS** |
 | **RC-WEB-DATA** | Web entity/DB limits accepted | OPFS single-writer UX documented; prebuilt bundles load offline; prod distribution chosen | [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md); RB-05 | **FAIL** (prod channel open — RB-05) |
 | **RC-SECRETS** | No confidential secrets in clients | Scan clients/packages for `CLIENT_SECRET` / `SESSION_SECRET` embedding — none | Package/app source + build defines | **PASS** (architecture + code review baseline) |
@@ -137,7 +139,7 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 2. Re-run **RC-DOMAIN** and smoke **RC-COMPOSE** / **RC-EQUIP** on the cutover candidate build (not only historical slice merges).
 3. Product may change AppShell; if a new primary nav key appears, add a row before GO.
 4. Mobile reduced nav does **not** fail **RC-NAV** for Next web retirement (Windows + Jaspr are the production-nav targets).
-5. **RC-SYNC** after DART-050–054 must cite vault/postmaster fidelity evidence (counts by location/bucket vs Next, or documented residual) — not only presence of a Settings sync card (PROC-04 / RB-06). Inventory fidelity gate is separate from pure `p0_parity_gate` (PROC-05).
+5. **RC-SYNC** after DART-050–054 must cite vault/postmaster fidelity evidence (counts by location/bucket vs Next, or documented residual) — not only presence of a Settings sync card (PROC-04). **RB-06** is cleared by the DART-050–054 program; remaining RC-SYNC FAIL is web depth (**RB-02**). Inventory fidelity gate (`tool/inventory_fidelity_gate.dart`) is separate from pure `p0_parity_gate` (PROC-05).
 6. Soft never auto-applies; no `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET` in Flutter/Jaspr clients (**RC-SOFT**, **RC-SECRETS**).
 
 ---
