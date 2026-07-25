@@ -3,17 +3,20 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../equip/equip_controller.dart';
+import '../equip/equip_panel.dart';
 import '../host_bootstrap.dart';
 import 'builds_library_controller.dart';
 import 'soft_guidance_format.dart';
 
-/// Builds library dual-pane (list + identity + variant compose + soft guidance)
-/// — DART-032/033/034.
+/// Builds library dual-pane (list + identity + variant compose + soft guidance
+/// + equip — DART-032/033/034/038).
 class BuildsLibraryPage extends StatefulWidget {
   const BuildsLibraryPage({
     super.key,
     required this.services,
     this.controller,
+    this.equipController,
   });
 
   final AppServices services;
@@ -21,12 +24,18 @@ class BuildsLibraryPage extends StatefulWidget {
   /// Optional injectable controller (tests).
   final BuildsLibraryController? controller;
 
+  /// Optional injectable equip controller (tests).
+  final EquipController? equipController;
+
   @override
   State<BuildsLibraryPage> createState() => _BuildsLibraryPageState();
 }
 
 class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   late final BuildsLibraryController _controller;
+  late final EquipController _equipController;
+  bool _ownEquipController = false;
+  String? _boundEquipKey;
   final _createNameController = TextEditingController();
   final _createSubTypeController = TextEditingController();
   final _createArmorHashController = TextEditingController();
@@ -71,15 +80,36 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         inventorySync: widget.services.inventorySync,
       );
     }
+    if (widget.equipController != null) {
+      _equipController = widget.equipController!;
+    } else {
+      _ownEquipController = true;
+      _equipController = EquipController(
+        db: widget.services.db,
+        session: widget.services.oauthSession,
+        profileClient: widget.services.profileClient,
+        writeClient: widget.services.writeClient,
+        inventorySync: widget.services.inventorySync,
+      );
+    }
     _controller.addListener(_onController);
+    _equipController.addListener(_onEquipController);
     _controller.refresh();
+  }
+
+  void _onEquipController() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onController);
+    _equipController.removeListener(_onEquipController);
     if (_ownController) {
       _controller.dispose();
+    }
+    if (_ownEquipController) {
+      _equipController.dispose();
     }
     _createNameController.dispose();
     _createSubTypeController.dispose();
@@ -136,7 +166,37 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       }
     }
     _syncSoftStatFieldsFromController();
+    _syncEquipBinding();
     if (mounted) setState(() {});
+  }
+
+  void _syncEquipBinding() {
+    final sel = _controller.selected;
+    final variant = _controller.selectedVariant;
+    final uid = _controller.userId;
+    if (sel == null || variant == null || uid == null) {
+      if (_boundEquipKey != null) {
+        _boundEquipKey = null;
+        _equipController.clearBinding();
+      }
+      return;
+    }
+    // Include pin fingerprint so attach/pin changes re-evaluate equip-ready.
+    final pinFp = [
+      for (final p in _controller.slotPins)
+        '${p.slot}:${p.itemHash}:${p.instanceId ?? ''}',
+    ].join(',');
+    final key =
+        '${sel.build.id}|${variant.id}|${sel.build.className}|$pinFp';
+    if (key == _boundEquipKey) return;
+    _boundEquipKey = key;
+    // Fire-and-forget; controller notifies when ready.
+    _equipController.bind(
+      userId: uid,
+      buildId: sel.build.id,
+      variantId: variant.id,
+      buildClass: sel.build.className,
+    );
   }
 
   int? _parseOptionalHash(String text) {
@@ -1044,6 +1104,15 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         const SizedBox(height: 24),
         const Divider(),
         const SizedBox(height: 8),
+        if (_controller.selectedVariant != null) ...[
+          EquipPanel(
+            key: const Key('builds_equip_panel'),
+            controller: _equipController,
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+        ],
         _buildSoftGuidance(context),
       ],
     );

@@ -1,4 +1,4 @@
-# destiny2_windows_host (DART-019…036)
+# destiny2_windows_host (DART-019…038)
 
 **Flutter Windows** host for Destiny 2 Build Creator multiplatform port.
 
@@ -13,6 +13,7 @@
 - **Builds library** dual-pane (DART-032): create builds with class + synergy types + optional exotic/super identity pins via `destiny2_app` `createUserBuild`
 - **Variant compose** on Builds detail (DART-033): list/create/select variants; attach/detach library sets; slot pins wishlist vs instance; hard conflicts (e.g. slot overlap) surfaced
 - **Soft guidance** on Builds detail (DART-034): coverage chips (supported/weak/missing), soft stat targets with explicit save; **never auto-applies**; display-only soft path (**P3 phase gate**)
+- **Equip / Apply** on Builds detail (DART-038): class-filtered character pick; equip-ready gate (wishlist/stale block Apply); empty combat **gaps confirm**; plan + best-effort execute (DART-037); **step report** (completed/failed). Soft never auto-applies. No CLIENT_SECRET.
 - **Settings**:
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
   - **Inventory sync** card (DART-025): Sync now → full-replace into Drift; busy/error UX; 60s freshness label
@@ -47,6 +48,8 @@ flutter test test/variant_compose_format_test.dart test/variant_compose_page_tes
 flutter test test/soft_guidance_format_test.dart test/soft_guidance_page_test.dart
 # Armor optimizer workspace (DART-036):
 flutter test test/optimizer_format_test.dart test/optimizer_workspace_test.dart
+# Equip UI (DART-038):
+flutter test test/equip_format_test.dart test/equip_panel_test.dart
 ```
 
 ## Specs
@@ -63,3 +66,4 @@ flutter test test/optimizer_format_test.dart test/optimizer_workspace_test.dart
 - `specs/dart-033-flutter-variant-compose-ui/`
 - `specs/dart-034-flutter-soft-guidance-ui/`
 - `specs/dart-036-flutter-optimizer-ui/`
+- `specs/dart-038-flutter-equip-ui/`

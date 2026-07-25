@@ -17,6 +17,14 @@ class _CountingProfileClient implements BungieProfileClient {
   }
 
   @override
+  Future<List<CharacterSummary>> getCharacters(
+    String accessToken,
+    DestinyMembership membership,
+  ) async {
+    return const [];
+  }
+
+  @override
   Future<List<RawInventoryItem>> getFullInventory(
     String accessToken,
     DestinyMembership membership,

@@ -167,6 +167,7 @@ void main() {
       oauthSession: services.oauthSession,
       profileClient: services.profileClient,
       inventorySync: services.inventorySync,
+      writeClient: services.writeClient,
     );
 
     await tester.pumpWidget(

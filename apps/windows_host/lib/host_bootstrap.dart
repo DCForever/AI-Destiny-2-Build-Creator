@@ -29,6 +29,7 @@ class AppServices {
     required this.oauthSession,
     required this.profileClient,
     required this.inventorySync,
+    required this.writeClient,
   });
 
   final StorageRoot storageRoot;
@@ -38,6 +39,9 @@ class AppServices {
   final WindowsOAuthSession oauthSession;
   final BungieProfileClient profileClient;
   final InventorySyncController inventorySync;
+
+  /// Bungie Platform write client for equip (DART-037/038). Public API key only.
+  final BungieWriteClient writeClient;
 
   bool _closed = false;
 
@@ -71,6 +75,7 @@ class HostBootstrap {
   /// - [tokenStore] / [oauthClient] / [browserLauncher] / [waitForCallbackOverride]
   /// - [profileClient]: fake inventory profile client for tests
   /// - [inventorySync]: prebuilt controller (optional)
+  /// - [writeClient]: equip write client (mock in tests; HTTP with public API key)
   static Future<AppServices> open({
     StorageRoot? storageRoot,
     AppDatabase? database,
@@ -88,6 +93,7 @@ class HostBootstrap {
     BungieProfileClient? profileClient,
     InventorySyncController? inventorySync,
     InventoryBusyLock? inventoryLock,
+    BungieWriteClient? writeClient,
   }) async {
     final root = storageRoot ??
         StorageRoot.windowsAppSupport(
@@ -147,6 +153,13 @@ class HostBootstrap {
           lock: inventoryLock,
         );
 
+    final resolvedWrite = writeClient ??
+        HttpBungieWriteClient(
+          http: BungieHttpClient(
+            apiKey: (apiKey == null || apiKey.isEmpty) ? 'unconfigured' : apiKey,
+          ),
+        );
+
     return AppServices(
       storageRoot: root,
       db: db,
@@ -155,6 +168,7 @@ class HostBootstrap {
       oauthSession: session,
       profileClient: resolvedProfile,
       inventorySync: sync,
+      writeClient: resolvedWrite,
     );
   }
 

@@ -25,6 +25,54 @@ class DestinyMembership {
   int get hashCode => Object.hash(membershipType, membershipId, displayName);
 }
 
+/// Guardian class wire names (product / domain Titan|Hunter|Warlock).
+const Map<int, String> kDestinyClassTypeNames = {
+  0: 'Titan',
+  1: 'Hunter',
+  2: 'Warlock',
+};
+
+/// One Destiny character for equip character pick (profile component 200).
+///
+/// [classType] uses product wire names: Titan, Hunter, Warlock.
+class CharacterSummary {
+  const CharacterSummary({
+    required this.characterId,
+    required this.classType,
+    required this.light,
+    this.emblemPath,
+    this.dateLastPlayed = '',
+  });
+
+  final String characterId;
+
+  /// Titan | Hunter | Warlock
+  final String classType;
+  final int light;
+  final String? emblemPath;
+  final String dateLastPlayed;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CharacterSummary &&
+        other.characterId == characterId &&
+        other.classType == classType &&
+        other.light == light &&
+        other.emblemPath == emblemPath &&
+        other.dateLastPlayed == dateLastPlayed;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        characterId,
+        classType,
+        light,
+        emblemPath,
+        dateLastPlayed,
+      );
+}
+
 /// Inventory location string (product: vault | character | equipped).
 typedef InventoryLocation = String;
 

@@ -9,6 +9,7 @@ class FakeProfileClient implements BungieProfileClient {
   FakeProfileClient({
     List<DestinyMembership>? memberships,
     List<RawInventoryItem>? items,
+    List<CharacterSummary>? characters,
     this.throwOnInventory = false,
     this.inventoryDelay,
   })  : memberships = memberships ??
@@ -19,14 +20,17 @@ class FakeProfileClient implements BungieProfileClient {
                 displayName: 'Guardian',
               ),
             ],
-        items = items ?? defaultItems;
+        items = items ?? defaultItems,
+        characters = characters ?? defaultCharacters;
 
   List<DestinyMembership> memberships;
   List<RawInventoryItem> items;
+  List<CharacterSummary> characters;
   final bool throwOnInventory;
   final Duration? inventoryDelay;
   int inventoryCalls = 0;
   int membershipCalls = 0;
+  int characterCalls = 0;
 
   static final defaultItems = <RawInventoryItem>[
     const RawInventoryItem(
@@ -47,10 +51,34 @@ class FakeProfileClient implements BungieProfileClient {
     ),
   ];
 
+  static const defaultCharacters = <CharacterSummary>[
+    CharacterSummary(
+      characterId: 'char-hunter',
+      classType: 'Hunter',
+      light: 1810,
+      dateLastPlayed: '2026-07-24T12:00:00Z',
+    ),
+    CharacterSummary(
+      characterId: 'char-titan',
+      classType: 'Titan',
+      light: 1820,
+      dateLastPlayed: '2026-07-23T12:00:00Z',
+    ),
+  ];
+
   @override
   Future<List<DestinyMembership>> getMemberships(String accessToken) async {
     membershipCalls += 1;
     return memberships;
+  }
+
+  @override
+  Future<List<CharacterSummary>> getCharacters(
+    String accessToken,
+    DestinyMembership membership,
+  ) async {
+    characterCalls += 1;
+    return characters;
   }
 
   @override

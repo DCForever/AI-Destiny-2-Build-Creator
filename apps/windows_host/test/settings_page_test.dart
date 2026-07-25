@@ -188,6 +188,7 @@ void main() {
         session: session,
         profileClient: profile,
       ),
+      writeClient: createMockWriteClient(),
     );
 
     await tester.pumpWidget(
