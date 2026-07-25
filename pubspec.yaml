@@ -1,0 +1,30 @@
+name: destiny2_build_creator_workspace
+publish_to: none
+environment:
+  sdk: ^3.5.0
+
+# Dart pub workspace — packages listed as members resolve together.
+# (Melos 7+ uses this list instead of melos.yaml packages globs.)
+workspace:
+  - packages/domain
+
+dev_dependencies:
+  lints: ^5.0.0
+  melos: ^7.0.0
+
+# Melos 7+ configuration lives under the melos: key (melos.yaml is obsolete).
+melos:
+  scripts:
+    test:
+      description: Run dart test in all packages that contain a test/ directory
+      run: dart test
+      exec:
+        concurrency: 1
+      packageFilters:
+        dirExists: test
+
+    analyze:
+      description: Run dart analyze on all packages
+      run: dart analyze --fatal-infos
+      exec:
+        concurrency: 1

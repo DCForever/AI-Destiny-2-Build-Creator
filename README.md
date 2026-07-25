@@ -19,6 +19,10 @@ Product framing: [`PRODUCT.md`](./PRODUCT.md). Domain rules: [`specs/domain-busi
 - Optional **OpenAI-compatible / Ollama / Grok** LLM and **SearXNG** for advanced/debug flows only
 - **vitest** unit tests; `npm run gate` for typecheck + lint + test + build
 
+### Multiplatform Dart port (in progress)
+
+Parallel workstream on `feature/multiplatform-dart` (this worktree). Pure Dart packages live under [`packages/`](./packages/README.md) (Melos 7+ / pub workspace). Domain package has **no** Flutter/Jaspr/IO deps. Slice roadmap: [`docs/multiplatform-dart-slice-roadmap.md`](./docs/multiplatform-dart-slice-roadmap.md).
+
 ## Getting started
 
 ```bash

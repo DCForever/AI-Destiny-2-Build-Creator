@@ -50,3 +50,17 @@ next-env.d.ts
 # Cursor IDE / speckit agent logs
 .cursor/*.log
 .cursor/debug*
+
+# Dart / Melos (multiplatform port packages/)
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+.pub-cache/
+.pub/
+**/doc/api/
+# Package-level locks are generated; workspace root lock is committed when present.
+packages/**/pubspec.lock
+.melos/
+melos_destiny2_build_creator.iml

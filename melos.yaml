@@ -1,0 +1,6 @@
+# DEPRECATED for Melos 7+.
+# Workspace package list: root pubspec.yaml `workspace:`.
+# Melos scripts and options: root pubspec.yaml `melos:` key.
+# Kept only as a pointer so contributors finding "melos.yaml" in docs land here.
+#
+# See packages/README.md and specs/dart-001-domain-foundation/quickstart.md.

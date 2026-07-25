@@ -1,0 +1,15 @@
+# Shared analyzer defaults for pure Dart packages in this monorepo.
+# Flutter/Jaspr apps (later slices) may add their own analysis_options.
+include: package:lints/recommended.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - avoid_print
