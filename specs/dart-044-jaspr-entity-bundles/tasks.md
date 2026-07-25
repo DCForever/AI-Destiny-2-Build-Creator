@@ -49,8 +49,8 @@
 ## Phase 4: Finish
 
 - [x] T016 Mark tasks complete; run full slice tests
-- [ ] T017 Commit on `dart-044-jaspr-entity-bundles`
-- [ ] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-044 done; pointer → DART-045; commit base
+- [x] T017 Commit on `dart-044-jaspr-entity-bundles`
+- [x] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-044 done; pointer → DART-045; commit base
 
 ---
 

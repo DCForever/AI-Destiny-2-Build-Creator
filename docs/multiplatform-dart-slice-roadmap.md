@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-043 done — Drift WASM + OPFS + single-tab writer lock; second tab blocked)  
+**Updated:** 2026-07-25 (DART-044 done — prebuilt entity bundles + offline catalog facets on Jaspr web)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -135,7 +135,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-041** | **done** | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
 | **DART-042** | **done** | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
 | **DART-043** | **done** | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
-| **DART-044** | pending | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
+| **DART-044** | **done** | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
 | **DART-045** | pending | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
 | **DART-046** | pending | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
 | **DART-047** | pending | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
@@ -190,11 +190,19 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-044** `jaspr-entity-bundles` (P5 — prebuilt entity bundles on web) |
-| **Active branch** | (create) `dart-044-jaspr-entity-bundles` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-044-jaspr-entity-bundles/` (created at specify) |
+| **Next / active slice** | **DART-045** `jaspr-oauth-pkce` (P5 — browser Public+PKCE) |
+| **Active branch** | (create) `dart-045-jaspr-oauth-pkce` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-045-jaspr-oauth-pkce/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-044 note (completed)
+
+- **Prebuilt bundles:** `EntityBundleDocument` + `MemoryEntityCache` in `destiny2_manifest`; no raw rebuild in browser.
+- **Web-safe IO:** conditional text-file / HTTP / isolate stubs so catalog APIs import on Jaspr web.
+- **Catalog:** `apps/web_host` `/catalog` — query + element/ammo/exotic facets; fixture `web/entities/prebuilt/bundle.json`.
+- **Tests:** `packages/manifest` green (entity_bundle_test); `apps/web_host` 26 green (loader + Catalog page + prior).
+- **Next:** DART-045 browser Public+PKCE OAuth.
 
 ### DART-043 note (completed)
 
@@ -203,7 +211,7 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 - **destiny2_db:** conditional native open (`connection/open_*.dart`); web uses `AppDatabase(executor)`.
 - **Limits:** `docs/multiplatform-dart-web-opfs-limits.md`.
 - **Tests:** `apps/web_host` 20 green (lock + Settings status + prior skeleton); `packages/db` green.
-- **Next:** DART-044 prebuilt entity bundles.
+- **Next:** DART-044 prebuilt entity bundles (done).
 
 ### DART-042 note (completed)
 
