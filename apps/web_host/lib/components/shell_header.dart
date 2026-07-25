@@ -12,6 +12,9 @@ class ShellHeader extends StatelessComponent {
 
   static const routes = [
     (label: 'Catalog', path: '/catalog'),
+    (label: 'Builds', path: '/builds'),
+    (label: 'Sets', path: '/sets'),
+    (label: 'Synergies', path: '/synergies'),
     (label: 'Settings', path: '/'),
   ];
 

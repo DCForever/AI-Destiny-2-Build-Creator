@@ -1,9 +1,10 @@
-/// Client entrypoint for the Jaspr web host (DART-042–045).
+/// Client entrypoint for the Jaspr web host (DART-042–046).
 ///
 /// Compiled to JavaScript and executed in the browser. No Next.js, no secrets.
 /// Opens Drift WASM + OPFS when this tab wins the single-tab writer lock.
 /// Loads prebuilt entity bundles for offline Catalog (no raw rebuild).
 /// Public+PKCE OAuth with origin-scoped token storage (DART-045).
+/// Compose spine (builds/sets/synergies) on writer DB (DART-046).
 library;
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';

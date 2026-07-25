@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-045 done — Jaspr browser Public+PKCE + token storage strategy)  
+**Updated:** 2026-07-25 (DART-046 done — Jaspr compose spine builds/sets/synergy/catalog hard/soft parity)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -137,7 +137,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-043** | **done** | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
 | **DART-044** | **done** | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
 | **DART-045** | **done** | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
-| **DART-046** | pending | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
+| **DART-046** | **done** | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |
 | **DART-047** | pending | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
 | **DART-048** | pending | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
 | **DART-049** | pending | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-046** `jaspr-compose-spine` (P5 — Jaspr compose spine) |
-| **Active branch** | (create) `dart-046-jaspr-compose-spine` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-046-jaspr-compose-spine/` (created at specify) |
+| **Next / active slice** | **DART-047** `jaspr-equip-export` (P5 — equip-ready + DIM on web) |
+| **Active branch** | (create) `dart-047-jaspr-equip-export` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-047-jaspr-equip-export/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-046 note (completed)
+
+Jaspr web host compose spine: Builds/Sets/Synergies routes + Catalog nav; in-process `destiny2_app` use cases; hard attach gates + soft guidance display-only. Writer-tab only. Tests: `dart test` in `apps/web_host` (70 green).
 
 ### DART-045 note (completed)
 

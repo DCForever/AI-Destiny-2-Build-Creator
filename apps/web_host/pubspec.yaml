@@ -1,10 +1,11 @@
 name: destiny2_web_host
 description: >
-  Destiny 2 Build Creator — Jaspr web host (DART-042–045).
+  Destiny 2 Build Creator — Jaspr web host (DART-042–046).
   Client-mode SPA shell + routing + Matte Flap design tokens (CSS).
   Drift WASM + OPFS + single-tab writer lock (DART-043).
   Prebuilt entity bundles + offline catalog facets (DART-044).
   Browser Public+PKCE OAuth + origin-scoped token storage (DART-045).
+  Compose spine: builds / sets / synergies + hard/soft parity (DART-046).
   No Next.js runtime dependency; no confidential secrets.
 publish_to: none
 version: 0.0.1+1
@@ -17,10 +18,14 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
+  destiny2_app:
+    path: ../../packages/app
   destiny2_bungie:
     path: ../../packages/bungie
   destiny2_db:
     path: ../../packages/db
+  destiny2_domain:
+    path: ../../packages/domain
   destiny2_manifest:
     path: ../../packages/manifest
   destiny2_ui_tokens:
