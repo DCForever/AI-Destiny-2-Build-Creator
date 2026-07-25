@@ -3,8 +3,9 @@
 /// This package must remain free of IO and UI dependencies (Flutter, Jaspr,
 /// Drift, network clients, path providers). Models (DART-002), hard evaluators
 /// (DART-003), soft coverage / soft-stat helpers (DART-004), pure
-/// resolveVariant merge/conflict/completeness (DART-005), and equip-ready /
-/// wishlist vs owned-pin gates (DART-006) live here; later slices land next.
+/// resolveVariant merge/conflict/completeness (DART-005), equip-ready /
+/// wishlist vs owned-pin gates (DART-006), and finishGaps / next-slot helpers
+/// (DART-007) live here; later slices land next.
 library;
 
 export 'src/smoke.dart';
@@ -37,3 +38,7 @@ export 'src/evaluators/resolve_variant.dart';
 
 // Equip-ready / wishlist vs owned-pin gates (DART-006)
 export 'src/evaluators/equip_ready.dart';
+
+// Finish gaps / next-slot pure helpers (DART-007)
+export 'src/evaluators/finish_gaps.dart';
+export 'src/evaluators/finish_next_slot.dart';
