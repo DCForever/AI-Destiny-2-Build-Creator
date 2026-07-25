@@ -1,8 +1,8 @@
 name: destiny2_windows_host
 description: >
-  Destiny 2 Build Creator — Flutter Windows host (DART-019/020/023/025/026).
+  Destiny 2 Build Creator — Flutter Windows host (DART-019/020/023/025/026/029).
   Opens StorageRoot + single Drift DB; Catalog offline + all/owned; Settings + Public+PKCE OAuth
-  + inventory sync card. No CLIENT_SECRET.
+  + inventory sync card; Matte Flap Ledger theme stub (DART-029). No CLIENT_SECRET.
 publish_to: none
 version: 0.0.1+1
 resolution: workspace
@@ -21,6 +21,8 @@ dependencies:
     path: ../../packages/manifest
   destiny2_storage:
     path: ../../packages/storage
+  destiny2_ui_tokens:
+    path: ../../packages/ui_tokens
   flutter_secure_storage: ^9.2.4
   path: ^1.9.0
   path_provider: ^2.1.5

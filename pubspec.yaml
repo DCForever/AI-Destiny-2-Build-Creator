@@ -13,6 +13,7 @@ workspace:
   - packages/manifest
   - packages/bungie
   - packages/app
+  - packages/ui_tokens
   - apps/windows_host
 
 dev_dependencies:
@@ -43,4 +44,4 @@ melos:
 
     analyze:
       description: "Run dart analyze on workspace Dart packages (Flutter host uses flutter analyze)"
-      run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db packages/manifest packages/bungie packages/app
+      run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db packages/manifest packages/bungie packages/app packages/ui_tokens

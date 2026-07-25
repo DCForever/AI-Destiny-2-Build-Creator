@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-028 done — Build/variant save hard gates + soft coverage query)  
+**Updated:** 2026-07-24 (DART-029 done — Flutter design tokens + FlapBoard layout contracts + Windows theme stub)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -120,7 +120,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-026** | **done** | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
 | **DART-027** | **done** | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
 | **DART-028** | **done** | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
-| **DART-029** | pending | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
+| **DART-029** | **done** | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
 | **DART-030** | pending | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
 | **DART-031** | pending | `flutter-synergy-library-ui` | `dart-031-flutter-synergy-library-ui` | P3 | DART-027, DART-029 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
 | **DART-032** | pending | `flutter-build-identity-ui` | `dart-032-flutter-build-identity-ui` | P3 | DART-028, DART-029 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
@@ -190,11 +190,18 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-029** `flutter-design-tokens` (P3 — Shared design tokens + FlapBoard layout contracts) |
-| **Active branch** | (create) `dart-029-flutter-design-tokens` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-029-flutter-design-tokens/` (created at specify) |
+| **Next / active slice** | **DART-030** `flutter-sets-library-ui` (P3 — Sets library + slot fill → catalog pick) |
+| **Active branch** | (create) `dart-030-flutter-sets-library-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-030-flutter-sets-library-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-029 note (completed)
+
+- Package `packages/ui_tokens` (`destiny2_ui_tokens`): pure ARGB colors, spacing, radius 0, typography metrics, FlapBoard rail/gap/column templates; README documented.
+- Windows `buildFlapTheme()`: void canvas, accent primary, **cardTheme elevation 0 + square shape** (no Material-card default); wired in `Destiny2WindowsApp`.
+- Tests: `dart test packages/ui_tokens`; `flutter test test/flap_theme_test.dart` in windows_host.
+- Out of scope kept: full FlapRow widget suite, brand rewrite of every surface, Jaspr CSS (DART-042).
 
 ### DART-028 note (completed)
 

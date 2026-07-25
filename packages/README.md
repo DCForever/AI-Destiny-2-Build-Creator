@@ -106,6 +106,18 @@ packages/
         mappers.dart              # db records → pure domain models
         errors.dart
     test/
+  ui_tokens/              # Matte Flap Ledger tokens + FlapBoard layout contracts (DART-029)
+    pubspec.yaml          # package name: destiny2_ui_tokens (SDK only)
+    README.md             # documented tokens + anti-rules
+    lib/
+      destiny2_ui_tokens.dart
+      src/
+        colors.dart               # dark/light + element ARGB
+        spacing.dart
+        radii.dart                # square board (all 0)
+        typography.dart           # family names + metrics
+        flap_board_layout.dart    # rail 320, gap 0, column templates
+    test/
 ```
 
 | Package path | Pub name | Role | Allowed deps |
@@ -117,7 +129,8 @@ packages/
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (DART-018) + **offline catalog facets/browse** (`filterCatalogClient`, `OfflineCatalog`) (DART-020). Offline JSON under StorageRoot; no inventory. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
 | `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP** (DART-021) + **Public+PKCE OAuth** (DART-022) + **profile inventory sync** (DART-024): `X-API-Key`, optional Bearer, envelope unwrap, rate-limit hooks; authorize/token/refresh with S256 PKCE; `HttpBungieProfileClient` + `syncUserInventory` full-replace into Drift + `isInventoryFresh` / `syncIfStale` (60s). | `crypto`, `destiny2_db` + SDK (`dart:io` default transport). **Not** pure. Host-injected public API key + public client id; **no** CLIENT_SECRET / `client_secret` fields. |
 | `packages/app` | `destiny2_app` | **In-process application use cases** (DART-027 library: set/synergy CRUD + attach; DART-028 build/variant save hard gates + soft coverage query). Calls Drift repos + pure domain validators. No HTTP. Soft never auto-applies. | `destiny2_db`, `destiny2_domain`, `destiny2_sandbox_data`. **Not** pure. **No** CLIENT_SECRET. |
-| `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023/025): open StorageRoot + single Drift DB; Catalog offline browse; Settings manifest + **Public+PKCE OAuth** + **inventory sync card** (full-replace via DART-024; busy/error UX; 60s freshness). Tokens not in SQLite. | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie. **No** CLIENT_SECRET. |
+| `packages/ui_tokens` | `destiny2_ui_tokens` | **Matte Flap Ledger tokens + FlapBoard layout contracts** (DART-029). Colors/spacing/radii/typography metrics; rail 320 / gap 0 / column templates. Documented in package README. **No** Flutter/Jaspr widgets. | **SDK only**. Hosts map ARGB → Color/CSS. |
+| `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023/025/026/029): open StorageRoot + single Drift DB; Catalog offline + owned; Settings OAuth + inventory sync; **flap theme stub** (`buildFlapTheme` — square elevation-0 cards, void canvas). Tokens not in SQLite. | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie/ui_tokens. **No** CLIENT_SECRET. |
 
 Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
 
@@ -146,6 +159,28 @@ await root.ensureLayout();
 | `users/<membershipId>/preferences.json` | Per-user preferences |
 
 `versionDir` = `versionToDirName` (unsafe chars → `_`). Unit tests inject a fake base path (no real AppData required).
+
+## Design tokens + FlapBoard contracts (DART-029)
+
+`destiny2_ui_tokens` is pure Matte Flap Ledger data for all shells (Flutter maps to `ThemeData`; Jaspr CSS later in DART-042):
+
+```dart
+import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
+
+final voidBg = FlapColorTokens.dark.background; // #050608
+assert(kFlapLibraryRailWidth == 320);
+assert(kFlapBoardRowGap == 0);
+assert(kFlapRadius == 0);
+final buildsCols = flapColumnTemplateById('builds');
+```
+
+- Documented tokens: package [README](./ui_tokens/README.md)
+- Windows theme stub: `apps/windows_host/lib/theme/flap_theme.dart` → `buildFlapTheme()` (no Material elevated/rounded card default)
+- **Not** a shared widget tree; no FlapRow widgets in this package
+
+```powershell
+dart test packages/ui_tokens
+```
 
 ## Application use cases (DART-027)
 

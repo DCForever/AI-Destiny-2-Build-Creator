@@ -3,6 +3,7 @@ import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import 'app.dart';
 import 'host_bootstrap.dart';
+import 'theme/flap_theme.dart';
 
 /// Public Bungie API key only (optional). Never CLIENT_SECRET.
 const String _bungieApiKeyDefine = String.fromEnvironment('BUNGIE_API_KEY');
@@ -55,6 +56,7 @@ class _BootstrapErrorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Destiny 2 Build Creator',
+      theme: buildFlapTheme(),
       home: Scaffold(
         body: Center(
           child: Padding(

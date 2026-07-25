@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
 import 'settings/settings_page.dart';
+import 'theme/flap_theme.dart';
 
-/// Root Flutter app for the Windows host (DART-019/020).
+/// Root Flutter app for the Windows host (DART-019/020/029).
 ///
 /// Shell destinations: Catalog (offline) + Settings (manifest status).
+/// Theme: Matte Flap Ledger stub (DART-029) — square flat cards, void canvas.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
@@ -26,13 +28,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Destiny 2 Build Creator',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1B4F72),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: buildFlapTheme(),
       home: Scaffold(
         body: Row(
           children: [
