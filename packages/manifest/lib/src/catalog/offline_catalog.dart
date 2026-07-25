@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:destiny2_storage/destiny2_storage.dart';
 
 import '../entity_cache.dart';
+import '../entity_cache_reader.dart';
+import '../io/text_file.dart' as text_file;
 import '../types/records.dart';
 import '../types/services.dart';
 import '../types/stores.dart';
@@ -38,21 +39,30 @@ class OfflineCatalogLoadResult {
 
 /// Offline catalog: project MVP entity stores and filter facets offline.
 ///
-/// Does **not** open SQLite. Reads entity JSON under [StorageRoot] only.
-/// Ownership annotate lives on the host bridge (DART-026) over inventory.
+/// Does **not** open SQLite. Reads entity JSON via [EntityCacheReader]
+/// (file-backed or prebuilt memory bundle). Ownership annotate lives on the
+/// host bridge (DART-026) over inventory.
 class OfflineCatalog {
   OfflineCatalog({
-    required this.storageRoot,
+    this.storageRoot,
     this.version,
-    FileEntityCache? cache,
+    EntityCacheReader? cache,
   })  : _injectedCache = cache,
-        _preloaded = null;
+        _preloaded = null {
+    if (storageRoot == null && cache == null) {
+      throw ArgumentError(
+        'OfflineCatalog requires storageRoot and/or cache '
+        '(or use OfflineCatalog.preloaded)',
+      );
+    }
+  }
 
-  /// In-memory base list (widget tests / fakes) — [loadBase] returns it as-is.
+  /// In-memory base list (widget tests / fakes / web prebuilt) —
+  /// [loadBase] returns it as-is. No [StorageRoot] required (DART-044).
   OfflineCatalog.preloaded({
-    required this.storageRoot,
     required List<CatalogItem> items,
     this.version,
+    this.storageRoot,
   })  : _injectedCache = null,
         _preloaded = OfflineCatalogLoadResult(
           version: version,
@@ -68,12 +78,14 @@ class OfflineCatalog {
     _lastLoad = _preloaded;
   }
 
-  final StorageRoot storageRoot;
+  /// Optional disk root for [FileEntityCache] / current-version.json.
+  final StorageRoot? storageRoot;
 
-  /// Optional fixed version (tests). When null, reads `current-version.json`.
+  /// Optional fixed version (tests / bundles). When null, reads
+  /// `current-version.json` under [storageRoot] when present.
   final String? version;
 
-  final FileEntityCache? _injectedCache;
+  final EntityCacheReader? _injectedCache;
   final OfflineCatalogLoadResult? _preloaded;
 
   List<CatalogItem> _base = const [];
@@ -95,7 +107,9 @@ class OfflineCatalog {
     }
 
     try {
-      final ver = version ?? await _readCurrentVersion();
+      final ver = version ??
+          _injectedCache?.version ??
+          await _readCurrentVersion();
       if (ver == null || ver.isEmpty) {
         _base = const [];
         _loadedVersion = null;
@@ -108,7 +122,7 @@ class OfflineCatalog {
       }
 
       final cache = _injectedCache ??
-          FileEntityCache(storageRoot: storageRoot, version: ver);
+          FileEntityCache(storageRoot: storageRoot!, version: ver);
 
       final weapons = await _tryStore<WeaponRecord>(cache, MvpStoreName.weapons);
       final exoticArmor =
@@ -128,8 +142,6 @@ class OfflineCatalog {
           abilities.isNotEmpty ||
           mods.isNotEmpty;
 
-      // If every store threw/missing and none loaded, treat as no_stores when
-      // meta is also absent — still return partials when some stores exist.
       final items = projectMvpStores(
         weapons: weapons,
         exoticArmor: exoticArmor,
@@ -162,15 +174,19 @@ class OfflineCatalog {
   }
 
   /// Filter the last loaded base list (call [loadBase] first).
-  List<CatalogItem> browse([CatalogClientFilters filters = const CatalogClientFilters()]) {
+  List<CatalogItem> browse([
+    CatalogClientFilters filters = const CatalogClientFilters(),
+  ]) {
     return filterCatalogClient(_base, filters);
   }
 
   Future<String?> _readCurrentVersion() async {
-    final file = File(storageRoot.currentVersionPath);
-    if (!await file.exists()) return null;
+    final root = storageRoot;
+    if (root == null) return null;
+    final text = await text_file.readTextFile(root.currentVersionPath);
+    if (text == null) return null;
     try {
-      final json = jsonDecode(await file.readAsString());
+      final json = jsonDecode(text);
       if (json is Map && json['version'] is String) {
         return json['version'] as String;
       }
@@ -180,7 +196,10 @@ class OfflineCatalog {
     return null;
   }
 
-  Future<List<T>> _tryStore<T>(FileEntityCache cache, MvpStoreName store) async {
+  Future<List<T>> _tryStore<T>(
+    EntityCacheReader cache,
+    MvpStoreName store,
+  ) async {
     try {
       return await cache.getStore<T>(store);
     } on EntityCacheException {

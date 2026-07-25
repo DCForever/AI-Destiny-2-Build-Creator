@@ -76,7 +76,7 @@ Pin versions to the resolved `drift` / `sqlite3` packages when upgrading.
 | **Safari** | Historically weaker OPFS; may be “good” rather than “full” without headers. |
 | **Chrome Android** | Shared workers limited; multi-tab without headers can be unsafe at storage layer — **use single-writer policy**; prefer headers when possible. |
 | **Multiple devices** | No cloud multi-writer; each origin/device has its own OPFS/IDB. |
-| **Full raw manifest rebuild** | Desktop (Windows) first; web prefers **prebuilt entity bundles** (DART-044). |
+| **Full raw manifest rebuild** | Desktop (Windows) first; web uses **prebuilt entity bundles** (DART-044 done): `web/entities/prebuilt/bundle.json` → Catalog facets offline; no isolate raw rebuild in browser. |
 
 ## Explicit non-goals
 

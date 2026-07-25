@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:destiny2_storage/destiny2_storage.dart';
 
 import 'http_client.dart';
+import 'io/text_file.dart' as text_file;
 import 'types/services.dart';
 import 'types/stores.dart';
 
@@ -17,6 +17,7 @@ const kMissingApiKeyMessage =
 ///
 /// Port of product `BungieManifestService` for Windows / pure Dart hosts
 /// (DART-018). Paths use [StorageRoot], not repo `.cache`.
+/// File IO is conditional — web uses prebuilt entity bundles (DART-044).
 class BungieManifestService {
   BungieManifestService({
     required this.storageRoot,
@@ -59,11 +60,6 @@ class BungieManifestService {
   }
 
   /// Downloads tables for the latest remote version.
-  ///
-  /// **Partial** (default): skip tables already on disk.
-  /// **Full** (`forceFullDownload: true`): re-download and overwrite all tables.
-  ///
-  /// Returns the version string written to `current-version.json`.
   Future<String> ensureCurrent({bool forceFullDownload = false}) async {
     final key = apiKey;
     if (key == null || key.isEmpty) {
@@ -91,7 +87,6 @@ class BungieManifestService {
     final loadPromise = _readAndParseRawTable(version, table);
     if (cacheRawTables) {
       _rawTableCache[cacheKey] = loadPromise;
-      // Drop failed promises so the next call retries disk.
       loadPromise.then<void>(
         (_) {},
         onError: (Object _, StackTrace __) {
@@ -106,14 +101,13 @@ class BungieManifestService {
 
   Future<RawTable> _readAndParseRawTable(String version, String table) async {
     final filePath = storageRoot.rawTablePath(version, table);
-    final file = File(filePath);
-    if (!await file.exists()) {
+    final content = await text_file.readTextFile(filePath);
+    if (content == null) {
       throw ManifestServiceException(
         'Raw table "$table" for version "$version" is not on disk. '
         'Call ensureCurrent() to download manifest tables.',
       );
     }
-    final content = await file.readAsString();
     final parsed = jsonDecode(content);
     if (parsed is! Map) {
       throw ManifestServiceException(
@@ -124,10 +118,10 @@ class BungieManifestService {
   }
 
   Future<String?> readCurrentVersion() async {
-    final file = File(storageRoot.currentVersionPath);
-    if (!await file.exists()) return null;
+    final text = await text_file.readTextFile(storageRoot.currentVersionPath);
+    if (text == null) return null;
     try {
-      final json = jsonDecode(await file.readAsString());
+      final json = jsonDecode(text);
       if (json is Map && json['version'] is String) {
         return json['version'] as String;
       }
@@ -138,16 +132,17 @@ class BungieManifestService {
   }
 
   Future<void> writeCurrentVersion(String version) async {
-    final file = File(storageRoot.currentVersionPath);
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode({'version': version}));
+    await text_file.writeTextFile(
+      storageRoot.currentVersionPath,
+      jsonEncode({'version': version}),
+    );
   }
 
   Future<EntityCacheMeta?> readEntityCacheMeta(String version) async {
-    final file = File(storageRoot.entityCacheMetaPath(version));
-    if (!await file.exists()) return null;
+    final text =
+        await text_file.readTextFile(storageRoot.entityCacheMetaPath(version));
+    if (text == null) return null;
     try {
-      final text = await file.readAsString();
       return EntityCacheMeta.fromJson(
         Map<String, dynamic>.from(jsonDecode(text) as Map),
       );
@@ -191,8 +186,7 @@ class BungieManifestService {
 
     for (final table in tablesToDownload) {
       final destination = storageRoot.rawTablePath(metadata.version, table);
-      final file = File(destination);
-      if (!forceFullDownload && await file.exists()) {
+      if (!forceFullDownload && await text_file.textFileExists(destination)) {
         continue;
       }
       await downloadTable(key, metadata, table, destination);
@@ -230,9 +224,7 @@ class BungieManifestService {
       );
     }
 
-    final file = File(destination);
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(parsed));
+    await text_file.writeTextFile(destination, jsonEncode(parsed));
   }
 }
 

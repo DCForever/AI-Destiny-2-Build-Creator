@@ -1,33 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
+import 'http_client_impl.dart' as impl;
 
 import 'types/services.dart';
 
-/// Default [ManifestHttpGet] using [HttpClient] with UTF-8 body decode.
+/// Default [ManifestHttpGet] using platform HTTP (dart:io on native).
 ///
-/// Hosts may inject a mock for tests. Prefer reusing a single [HttpClient]
-/// across calls when constructing for a long-lived host process.
-ManifestHttpGet createUtf8ManifestHttpGet({HttpClient? client}) {
-  final http = client ?? HttpClient();
-  return (Uri uri, {Map<String, String>? headers}) async {
-    final request = await http.getUrl(uri);
-    if (headers != null) {
-      headers.forEach(request.headers.set);
-    }
-    final response = await request.close();
-    final builder = BytesBuilder(copy: false);
-    await for (final chunk in response) {
-      builder.add(chunk);
-    }
-    final bytes = Uint8List.fromList(builder.takeBytes());
-    return ManifestHttpResponse(
-      statusCode: response.statusCode,
-      body: utf8.decode(bytes),
-    );
-  };
-}
+/// Hosts may inject a mock for tests. On web this throws — inject [httpGet]
+/// into [BungieManifestService] or use prebuilt entity bundles (DART-044).
+ManifestHttpGet createUtf8ManifestHttpGet({Object? client}) =>
+    impl.createUtf8ManifestHttpGet(client: client);
 
 /// Alias kept for readability at call sites.
-ManifestHttpGet createDefaultManifestHttpGet({HttpClient? client}) =>
+ManifestHttpGet createDefaultManifestHttpGet({Object? client}) =>
     createUtf8ManifestHttpGet(client: client);

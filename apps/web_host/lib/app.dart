@@ -1,4 +1,4 @@
-/// Root shell + client router for the Jaspr web host (DART-042/043).
+/// Root shell + client router for the Jaspr web host (DART-042–044).
 library;
 
 import 'dart:async';
@@ -7,25 +7,31 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
+import 'catalog/entity_bundle_loader.dart';
 import 'components/shell_header.dart';
 import 'db/web_database_bootstrap.dart';
 import 'db/web_db_status.dart';
+import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
 import 'theme/theme.dart' as theme;
 
-/// Main application: shell chrome + routed pages + optional DB bootstrap.
+/// Main application: shell chrome + routed pages + optional DB / entity bootstrap.
 ///
 /// When [bootstrap] is null (tests), Settings shows loading DB status unless
-/// [initialDbStatus] is provided.
+/// [initialDbStatus] is provided. Catalog uses [entityLoader] or injected page.
 class App extends StatefulComponent {
   const App({
     this.bootstrap,
     this.initialDbStatus,
+    this.entityLoader,
     super.key,
   });
 
   final WebDatabaseBootstrap? bootstrap;
   final WebDbSessionStatus? initialDbStatus;
+
+  /// Prebuilt entity bundle loader for Catalog (DART-044).
+  final WebEntityBundleLoader? entityLoader;
 
   @override
   State<App> createState() => _AppState();
@@ -85,6 +91,13 @@ class _AppState extends State<App> {
                 path: '/settings',
                 title: 'Settings',
                 builder: (context, state) => SettingsPage(dbStatus: _dbStatus),
+              ),
+              Route(
+                path: '/catalog',
+                title: 'Catalog',
+                builder: (context, state) => CatalogPage(
+                  loader: component.entityLoader,
+                ),
               ),
             ],
           ),

@@ -184,6 +184,27 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  destiny2_domain:
+    dependency: transitive
+    description:
+      path: "../../packages/domain"
+      relative: true
+    source: path
+    version: "0.0.1"
+  destiny2_manifest:
+    dependency: "direct main"
+    description:
+      path: "../../packages/manifest"
+      relative: true
+    source: path
+    version: "0.0.1"
+  destiny2_storage:
+    dependency: transitive
+    description:
+      path: "../../packages/storage"
+      relative: true
+    source: path
+    version: "0.0.1"
   destiny2_ui_tokens:
     dependency: "direct main"
     description:

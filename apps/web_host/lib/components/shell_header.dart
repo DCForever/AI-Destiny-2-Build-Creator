@@ -11,6 +11,7 @@ class ShellHeader extends StatelessComponent {
   const ShellHeader({super.key});
 
   static const routes = [
+    (label: 'Catalog', path: '/catalog'),
     (label: 'Settings', path: '/'),
   ];
 

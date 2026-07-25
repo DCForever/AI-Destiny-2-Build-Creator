@@ -1,17 +1,20 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:destiny2_storage/destiny2_storage.dart';
 
+import 'entity_cache_reader.dart';
 import 'extractors/registry.dart';
-import 'types/records.dart';
+import 'io/text_file.dart' as text_file;
+import 'memory_entity_cache.dart';
 import 'types/services.dart';
 import 'types/stores.dart';
 
 /// File-backed entity cache under [StorageRoot] (read + MVP rebuild).
 ///
 /// Port of product `FileEntityCache` for MVP stores only (DART-017).
-class FileEntityCache {
+/// Uses conditional text-file helpers so the package can compile on web
+/// (web catalog uses [MemoryEntityCache] / prebuilt bundles — DART-044).
+class FileEntityCache implements EntityCacheReader {
   FileEntityCache({
     required this.storageRoot,
     String? version,
@@ -21,19 +24,21 @@ class FileEntityCache {
   String? _version;
   final Map<MvpStoreName, List<Object>> _storeCache = {};
 
+  @override
   String? get version => _version;
 
+  @override
   Future<EntityCacheMeta?> getMeta() async {
     final v = _version;
     if (v == null) return null;
-    final file = File(storageRoot.entityCacheMetaPath(v));
-    if (!await file.exists()) return null;
-    final text = await file.readAsString();
+    final text = await text_file.readTextFile(storageRoot.entityCacheMetaPath(v));
+    if (text == null) return null;
     return EntityCacheMeta.fromJson(
       Map<String, dynamic>.from(jsonDecode(text) as Map),
     );
   }
 
+  @override
   Future<List<T>> getStore<T>(MvpStoreName name) async {
     final cached = _storeCache[name];
     if (cached != null) return cached.cast<T>();
@@ -46,21 +51,22 @@ class FileEntityCache {
     }
 
     final filePath = storageRoot.entityStorePath(v, name.fileStem);
-    final file = File(filePath);
-    if (!await file.exists()) {
+    final text = await text_file.readTextFile(filePath);
+    if (text == null) {
       throw EntityCacheException(
         'store "${name.fileStem}" not found at $filePath — run rebuild() first',
       );
     }
 
-    final text = await file.readAsString();
     final list = jsonDecode(text) as List<dynamic>;
-    final records = _decodeRecords(name, list);
+    final records = decodeMvpStoreRecords(name, list);
     _storeCache[name] = records;
     return records.cast<T>();
   }
 
   /// Run MVP extractors and write store JSON + meta under [StorageRoot].
+  ///
+  /// Desktop / native only — throws on web (no file write).
   Future<EntityCacheMeta> rebuild({
     required String version,
     required LoadRawTable loadRawTable,
@@ -83,9 +89,8 @@ class FileEntityCache {
       final data = await extractor.extract(memoizedLoad);
       final filePath =
           storageRoot.entityStorePath(version, extractor.store.fileStem);
-      await File(filePath).parent.create(recursive: true);
       final encoded = encodeStoreRecords(extractor.store, data);
-      await File(filePath).writeAsString(jsonEncode(encoded));
+      await text_file.writeTextFile(filePath, jsonEncode(encoded));
       counts[extractor.store.fileStem] = data.length;
       _storeCache[extractor.store] = data;
     }
@@ -96,52 +101,9 @@ class FileEntityCache {
       counts: counts,
     );
     final metaPath = storageRoot.entityCacheMetaPath(version);
-    await File(metaPath).parent.create(recursive: true);
-    await File(metaPath).writeAsString(jsonEncode(meta.toJson()));
+    await text_file.writeTextFile(metaPath, jsonEncode(meta.toJson()));
 
     _version = version;
     return meta;
-  }
-
-  List<Object> _decodeRecords(MvpStoreName store, List<dynamic> list) {
-    switch (store) {
-      case MvpStoreName.weapons:
-        return list
-            .map(
-              (e) => WeaponRecord.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
-      case MvpStoreName.exoticArmor:
-        return list
-            .map(
-              (e) => ExoticArmorRecord.fromJson(
-                Map<String, dynamic>.from(e as Map),
-              ),
-            )
-            .toList();
-      case MvpStoreName.aspects:
-        return list
-            .map(
-              (e) => AspectRecord.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
-      case MvpStoreName.fragments:
-        return list
-            .map(
-              (e) =>
-                  FragmentRecord.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
-      case MvpStoreName.abilities:
-        return list
-            .map(
-              (e) => AbilityRecord.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
-      case MvpStoreName.mods:
-        return list
-            .map((e) => ModRecord.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList();
-    }
   }
 }

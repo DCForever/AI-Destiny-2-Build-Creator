@@ -24,7 +24,8 @@ class SettingsPage extends StatelessComponent {
   static const String titleText = 'Settings';
   static const String helloText = 'Hello';
   static const String subtitleText =
-      'Jaspr web host — Matte Flap tokens, client routing, Drift WASM/OPFS. '
+      'Jaspr web host — Matte Flap tokens, client routing, Drift WASM/OPFS, '
+      'prebuilt entity bundles for Catalog. '
       'No Next.js dependency. Single-tab writer for local SQLite.';
 
   static const String blockedBannerText =
@@ -84,6 +85,7 @@ class SettingsPage extends StatelessComponent {
                 attributes: {'data-testid': 'db-storage'},
                 [.text('Storage: ${status.storageImplementation}')],
               ),
+            li([.text('Entities: prebuilt bundles (DART-044) — see Catalog')]),
             li([.text('Sign-in: not configured (DART-045)')]),
           ]),
         ]),
@@ -93,6 +95,15 @@ class SettingsPage extends StatelessComponent {
             .text(
               'Single-tab writer (D-WEB-DB): only one browser tab may write. '
               'Additional tabs are blocked. See docs/multiplatform-dart-web-opfs-limits.md.',
+            ),
+          ]),
+        ]),
+        div(classes: 'settings-panel', [
+          h2([.text('Entity bundles')]),
+          p(classes: 'settings-policy', [
+            .text(
+              'Catalog uses prebuilt MVP entity JSON (no full raw manifest rebuild '
+              'in the browser). Fixture: /entities/prebuilt/bundle.json.',
             ),
           ]),
         ]),

@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:path/path.dart' as p;
 
+import 'io/layout.dart' as layout;
 import 'version_dir.dart';
 
 /// Canonical on-disk layout root for multiplatform Dart shells.
@@ -111,10 +110,12 @@ class StorageRoot {
   /// Creates top-level layout directories under [basePath] if missing.
   ///
   /// Does not create versioned subfolders (writers create those as needed).
+  /// On web (no dart:io) this is a no-op — entity data uses prebuilt bundles.
   Future<void> ensureLayout() async {
-    await Directory(basePath).create(recursive: true);
-    await Directory(manifestDir).create(recursive: true);
-    await Directory(entitiesDir).create(recursive: true);
-    await Directory(usersDir).create(recursive: true);
+    await layout.ensureStorageLayout(basePath, [
+      manifestDir,
+      entitiesDir,
+      usersDir,
+    ]);
   }
 }
