@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-049 done; P6–P8 DART-050–061; DART-057 owns GAP-FEAT-06 finish-gaps host UX)  
+**Updated:** 2026-07-25 (DART-050 done — vault lookup wiring; next DART-051 roll tags)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -145,7 +145,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-047** | **done** | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
 | **DART-048** | **done** | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
 | **DART-049** | **done** | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
-| **DART-050** | **planned** | `inventory-vault-resolution` | `dart-050-inventory-vault-resolution` | P6 | DART-024, DART-017/018 | Wire equipmentBucketLookup so vault/postmaster copies are stored | **GAP-INV-01**, GAP-INV-06 docs, GAP-INV-07 opt, **PROC-01/02/06**. Build itemHash→bucket lookup from DestinyInventoryItemDefinition/entity stores; wire non-empty lookup into **every** production sync path (Windows Settings syncNow, Windows equip syncIfStale, Jaspr equip, future web Settings). Vault/postmaster weapon/armor in Drift with Kinetic/Energy/Power/armor buckets; unit+host fixtures assert resolvedFromTransfer>0; host tests fail if vault fixtures omit lookup; package docs stop treating empty lookup as production-OK; finish-spec rejects “user can sync” alone and opens GAP+RB for intentional thinning; document Owned still needs entity stores → DART-053 UX. Optional: parseWeaponStatValues parity (GAP-INV-07). Soft never auto-applies; no CLIENT_SECRET |
+| **DART-050** | **done** | `inventory-vault-resolution` | `dart-050-inventory-vault-resolution` | P6 | DART-024, DART-017/018 | Wire equipmentBucketLookup so vault/postmaster copies are stored | **GAP-INV-01**, GAP-INV-06 docs, GAP-INV-07 opt, **PROC-01/02/06**. Build itemHash→bucket lookup from DestinyInventoryItemDefinition/entity stores; wire non-empty lookup into **every** production sync path (Windows Settings syncNow, Windows equip syncIfStale, Jaspr equip, future web Settings). Vault/postmaster weapon/armor in Drift with Kinetic/Energy/Power/armor buckets; unit+host fixtures assert resolvedFromTransfer>0; host tests fail if vault fixtures omit lookup; package docs stop treating empty lookup as production-OK; finish-spec rejects “user can sync” alone and opens GAP+RB for intentional thinning; document Owned still needs entity stores → DART-053 UX. Optional: parseWeaponStatValues parity (GAP-INV-07). Soft never auto-applies; no CLIENT_SECRET |
 | **DART-051** | **planned** | `inventory-roll-tags` | `dart-051-inventory-roll-tags` | P6 | DART-050 | Port computeRollTags parity for weapon inventory rows | **GAP-INV-02**; roll tags match Next computeRollTags golden fixtures for crafted/champion/build samples; soft never auto-applies; PROC-06 if thinning |
 | **DART-052** | **planned** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | **GAP-INV-03**; stored plugs include columnKind/columnLabel (or equiv) for instance perk grids; parity tests vs Next buildStoredSocketPlugs; PROC-06 if thinning |
 | **DART-053** | **planned** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | **GAP-INV-04**, **GAP-INV-06** UX. Controller retains last SyncInventoryResult diagnostics; Settings (Windows + web parity path) surfaces raw/parsed/dropped + resolution.resolvedFromTransfer/droppedNonEquipment/storedTotal; entity-cache empty warning so empty Owned is not blamed solely on inventory sync |
@@ -218,12 +218,16 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-050** `inventory-vault-resolution` (**planned** — first P6 inventory/fidelity slice; start Spec Kit next) |
+| **Next / active slice** | **DART-051** `inventory-roll-tags` (**planned** — next after DART-050 vault resolution) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB-01…06 / RC-* + inventory fidelity (GAP-INV-01, GAP-INV-05 → DART-050–054) pass |
-| **Phase plan** | P6 DART-050–054 → P7 DART-055–057 → P8 DART-058–061 |
+| **Blocked on** | Production cutover **NO-GO** until residual RB-01…06 / RC-* + inventory fidelity (GAP-INV-02…05 → DART-051–054; GAP-INV-01 closed by DART-050) pass |
+| **Phase plan** | P6 DART-050 **done** → 051–054 → P7 DART-055–057 → P8 DART-058–061 |
+
+### DART-050 note (completed) — vault / postmaster resolution
+
+`buildEquipmentBucketLookup` + slot fallback; production wiring on Windows Settings `syncNow`, Windows equip + Jaspr equip `syncIfStale`. Unit+host fixtures assert `resolvedFromTransfer > 0` and Kinetic/Helmet vault rows. Package docs: empty lookup not production-OK. GAP-INV-06 residual → DART-053 UX. Optional GAP-INV-07 `parseWeaponStatValues` shipped. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-050-inventory-vault-resolution/`. Next: **DART-051** roll tags.
 
 ### DART-049 note (completed) — **P5 / program gate**
 

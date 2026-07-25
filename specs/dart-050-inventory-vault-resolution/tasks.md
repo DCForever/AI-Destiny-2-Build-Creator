@@ -58,7 +58,7 @@
 
 - [x] T018 Mark checklist items complete; ensure success criteria vault-specific
 - [x] T019 Run tests (`dart test packages/bungie`; windows inventory tests)
-- [ ] T020 Commit; merge `--no-edit` into `feature/multiplatform-dart`; set roadmap DART-050 **done**; Current pointer → DART-051; commit base
+- [x] T020 Commit; merge `--no-edit` into `feature/multiplatform-dart`; set roadmap DART-050 **done**; Current pointer → DART-051; commit base
 
 ---
 

@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-25
 
-**Status**: Implemented (merge pending)
+**Status**: Done (merged to `feature/multiplatform-dart`)
 
 **Input**: User description: "Wire equipmentBucketLookup so vault/postmaster copies are stored. GAP-INV-01, GAP-INV-06 docs, GAP-INV-07 opt, PROC-01/02/06."
 

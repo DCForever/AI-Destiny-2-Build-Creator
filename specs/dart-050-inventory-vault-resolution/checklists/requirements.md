@@ -30,8 +30,8 @@
 ## Finish-spec gate
 
 - [x] CHK018 Finish-spec rejects “user can sync” alone
-- [ ] CHK019 Roadmap row DART-050 → done; Current pointer advances
-- [ ] CHK020 Merged to `feature/multiplatform-dart` only
+- [x] CHK019 Roadmap row DART-050 → done; Current pointer advances
+- [x] CHK020 Merged to `feature/multiplatform-dart` only
 
 ## Notes
 
