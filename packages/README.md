@@ -13,7 +13,7 @@ pubspec.yaml              # workspace root + Melos 7+ `melos:` scripts
 melos.yaml                # pointer only (config lives in pubspec.yaml)
 analysis_options.yaml     # shared analyzer defaults
 apps/
-  windows_host/           # Flutter Windows shell (DART-019…031) — destiny2_windows_host
+  windows_host/           # Flutter Windows shell (DART-019…039) — destiny2_windows_host
     lib/
       main.dart           # BUNGIE_API_KEY / BUNGIE_CLIENT_ID / BUNGIE_REDIRECT_URI defines
       host_bootstrap.dart # StorageRoot + single AppDatabase + ManifestRefreshApi + OfflineCatalog + OAuth session
@@ -23,6 +23,14 @@ apps/
       synergies/          # DART-031: Synergy library dual-pane + evidence links (designation immutable)
       settings/           # Manifest status + OAuth account card (sign-in/out)
       theme/              # DART-029: Flap theme stub
+  mobile_host/            # Flutter Android+iOS shell (DART-040) — destiny2_mobile_host
+    lib/
+      main.dart           # optional BUNGIE_API_KEY; never CLIENT_SECRET
+      host_bootstrap.dart # StorageRoot + single AppDatabase + ManifestRefreshApi
+      app.dart            # bottom nav Builds|Settings + Focus Swap nested navigator
+      builds/             # list via destiny2_app + read-only detail
+      settings/           # path + manifest status
+      theme/              # Matte Flap theme
 
 packages/
   README.md               # this file

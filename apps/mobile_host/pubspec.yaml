@@ -1,0 +1,39 @@
+name: destiny2_mobile_host
+description: >
+  Destiny 2 Build Creator — Flutter mobile host (DART-040).
+  Android+iOS shell: bottom nav, Focus Swap routes, shared destiny2_app use
+  cases. Settings + Builds list at minimum. Soft never auto-applies.
+  No CLIENT_SECRET.
+publish_to: none
+version: 0.0.1+1
+resolution: workspace
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  destiny2_app:
+    path: ../../packages/app
+  destiny2_db:
+    path: ../../packages/db
+  destiny2_domain:
+    path: ../../packages/domain
+  destiny2_manifest:
+    path: ../../packages/manifest
+  destiny2_storage:
+    path: ../../packages/storage
+  destiny2_ui_tokens:
+    path: ../../packages/ui_tokens
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  sqlite3_flutter_libs: ^0.5.28
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
