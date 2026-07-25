@@ -1,4 +1,4 @@
-# destiny2_windows_host (DART-019…034)
+# destiny2_windows_host (DART-019…036)
 
 **Flutter Windows** host for Destiny 2 Build Creator multiplatform port.
 
@@ -8,6 +8,7 @@
 - Opens a **single** Drift `AppDatabase` at `app.db`
 - **Catalog** offline browse from entity stores + **All | Owned** scope after inventory sync (DART-026); instance projections on row select for pickers
 - **Sets library** dual-pane (DART-030): create/edit sets via `destiny2_app` use cases; fill slots from catalog/owned picker
+- **Armor optimizer workspace** on Sets detail for armor sets (DART-036): goals → **Find kits** (isolate/local optimize, never writes) → suggestions → **explicit confirm** apply-in-place or materialize; soft never auto-applies; never silent apply
 - **Synergy library** dual-pane (DART-031): create synergies via `destiny2_app`; designation immutable after create; evidence links add/remove
 - **Builds library** dual-pane (DART-032): create builds with class + synergy types + optional exotic/super identity pins via `destiny2_app` `createUserBuild`
 - **Variant compose** on Builds detail (DART-033): list/create/select variants; attach/detach library sets; slot pins wishlist vs instance; hard conflicts (e.g. slot overlap) surfaced
@@ -44,6 +45,8 @@ flutter test test/synergy_designation_test.dart test/synergies_library_page_test
 flutter test test/build_identity_format_test.dart test/builds_library_page_test.dart
 flutter test test/variant_compose_format_test.dart test/variant_compose_page_test.dart
 flutter test test/soft_guidance_format_test.dart test/soft_guidance_page_test.dart
+# Armor optimizer workspace (DART-036):
+flutter test test/optimizer_format_test.dart test/optimizer_workspace_test.dart
 ```
 
 ## Specs
@@ -59,3 +62,4 @@ flutter test test/soft_guidance_format_test.dart test/soft_guidance_page_test.da
 - `specs/dart-032-flutter-build-identity-ui/`
 - `specs/dart-033-flutter-variant-compose-ui/`
 - `specs/dart-034-flutter-soft-guidance-ui/`
+- `specs/dart-036-flutter-optimizer-ui/`

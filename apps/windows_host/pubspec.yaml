@@ -1,11 +1,13 @@
 name: destiny2_windows_host
 description: >
-  Destiny 2 Build Creator — Flutter Windows host (DART-019…034).
+  Destiny 2 Build Creator — Flutter Windows host (DART-019…036).
   Opens StorageRoot + single Drift DB; Catalog offline + all/owned; Sets library dual-pane
-  (DART-030); Synergy library dual-pane + evidence links (DART-031); Builds library dual-pane
-  + identity (DART-032) + variant compose / set attachments / slot pins (DART-033) + soft
-  coverage chips / soft stat targets display-only (DART-034); Settings + Public+PKCE OAuth +
-  inventory sync; Matte Flap Ledger theme. Soft never auto-applies. No CLIENT_SECRET.
+  (DART-030); Armor optimizer workspace on armor sets — Find kits suggest then explicit confirm
+  apply/materialize (DART-036); Synergy library dual-pane + evidence links (DART-031); Builds
+  library dual-pane + identity (DART-032) + variant compose / set attachments / slot pins
+  (DART-033) + soft coverage chips / soft stat targets display-only (DART-034); Settings +
+  Public+PKCE OAuth + inventory sync; Matte Flap Ledger theme. Soft never auto-applies; never
+  silent apply. No CLIENT_SECRET.
 publish_to: none
 version: 0.0.1+1
 resolution: workspace

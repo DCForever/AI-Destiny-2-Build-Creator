@@ -4,16 +4,19 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
+import '../optimizer/optimizer_controller.dart';
+import '../optimizer/optimizer_workspace.dart';
 import 'set_catalog_picker.dart';
 import 'set_slot_mapping.dart';
 import 'sets_library_controller.dart';
 
-/// Sets library dual-pane (list + detail/slots) — DART-030.
+/// Sets library dual-pane (list + detail/slots) — DART-030 + armor optimizer (DART-036).
 class SetsLibraryPage extends StatefulWidget {
   const SetsLibraryPage({
     super.key,
     required this.services,
     this.controller,
+    this.optimizerController,
   });
 
   final AppServices services;
@@ -21,17 +24,23 @@ class SetsLibraryPage extends StatefulWidget {
   /// Optional injectable controller (tests).
   final SetsLibraryController? controller;
 
+  /// Optional injectable optimizer controller (tests inject candidates / local runner).
+  final OptimizerController? optimizerController;
+
   @override
   State<SetsLibraryPage> createState() => _SetsLibraryPageState();
 }
 
 class _SetsLibraryPageState extends State<SetsLibraryPage> {
   late final SetsLibraryController _controller;
+  late final OptimizerController _optimizer;
   final _nameController = TextEditingController();
   final _editNameController = TextEditingController();
   SetType _createType = SetType.weapon;
   String? _statusMessage;
   bool _ownController = false;
+  bool _ownOptimizer = false;
+  String? _boundOptimizerSetId;
 
   @override
   void initState() {
@@ -46,6 +55,16 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
         inventorySync: widget.services.inventorySync,
       );
     }
+    if (widget.optimizerController != null) {
+      _optimizer = widget.optimizerController!;
+    } else {
+      _ownOptimizer = true;
+      // Default: optimizeArmorInIsolate (UI-thread safe). Tests inject local runner.
+      _optimizer = OptimizerController(
+        db: widget.services.db,
+        resolveUserId: () => _controller.resolveLibraryUserId(),
+      );
+    }
     _controller.addListener(_onController);
     _controller.refresh();
   }
@@ -55,6 +74,9 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     _controller.removeListener(_onController);
     if (_ownController) {
       _controller.dispose();
+    }
+    if (_ownOptimizer) {
+      _optimizer.dispose();
     }
     _nameController.dispose();
     _editNameController.dispose();
@@ -66,7 +88,21 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     if (sel != null && _editNameController.text != sel.set.name) {
       _editNameController.text = sel.set.name;
     }
+    _syncOptimizerTarget(sel);
     if (mounted) setState(() {});
+  }
+
+  void _syncOptimizerTarget(SetDetail? sel) {
+    if (sel == null || sel.set.type != SetType.armor.wireName) {
+      if (_boundOptimizerSetId != null) {
+        _boundOptimizerSetId = null;
+        _optimizer.clearTargetSet();
+      }
+      return;
+    }
+    if (_boundOptimizerSetId == sel.set.id) return;
+    _boundOptimizerSetId = sel.set.id;
+    _optimizer.bindTargetSet(setId: sel.set.id, setName: sel.set.name);
   }
 
   Future<void> _create() async {
@@ -377,6 +413,18 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           ),
           const SizedBox(height: 8),
           for (final slot in slots) _buildSlotRow(sel, slot),
+          if (setType == SetType.armor)
+            OptimizerWorkspace(
+              key: const Key('sets_optimizer_workspace'),
+              controller: _optimizer,
+              onApplied: () async {
+                await _controller.refresh(keepSelection: true);
+                if (!mounted) return;
+                setState(() {
+                  _statusMessage = _optimizer.status ?? 'Optimizer applied';
+                });
+              },
+            ),
         ],
       ),
     );
