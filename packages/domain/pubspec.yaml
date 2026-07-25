@@ -3,8 +3,8 @@ description: >
   Pure domain library for Destiny 2 Build Creator multiplatform port.
   Zero IO/UI dependencies. Models (DART-002), hard evaluators (DART-003),
   soft coverage (DART-004), resolveVariant claims merge (DART-005),
-  equip-ready wishlist/pin gates (DART-006), finishGaps/next-slot (DART-007);
-  later slices land next.
+  equip-ready wishlist/pin gates (DART-006), finishGaps/next-slot (DART-007),
+  optimizer enumerate/prune/score core (DART-008); later slices land next.
 version: 0.0.1
 publish_to: none
 resolution: workspace

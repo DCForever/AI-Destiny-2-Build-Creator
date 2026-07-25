@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-007 done)  
+**Updated:** 2026-07-24 (DART-008 done)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -99,7 +99,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-005** | **done** | `resolve-variant` | `dart-005-resolve-variant` | P0 | DART-002 | Port pure resolveVariant merge/conflict/completeness (claims only; no DB load) | Default vs non-default completeness rules tested; conflict detection parity |
 | **DART-006** | **done** | `equip-ready` | `dart-006-equip-ready` | P0 | DART-002, DART-005 | Port equipReady / wishlist vs owned-pin gates (pure) | Wishlist cannot be equip-ready; stale pin rules covered by tests |
 | **DART-007** | **done** | `finish-gaps` | `dart-007-finish-gaps` | P0 | DART-005, DART-006 | Port finishGaps / next-slot pure helpers | Gap list stable for default vs non-default fixtures |
-| **DART-008** | pending | `optimizer-core` | `dart-008-optimizer-core` | P0 | DART-002 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
+| **DART-008** | **done** | `optimizer-core` | `dart-008-optimizer-core` | P0 | DART-002 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
 | **DART-009** | pending | `static-sandbox-data` | `dart-009-static-sandbox-data` | P0 | DART-001 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
 | **DART-010** | pending | `dim-builders` | `dart-010-dim-builders` | P0 | DART-006 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
 | **DART-011** | pending | `domain-parity-gate` | `dart-011-domain-parity-gate` | P0 | DART-003–010 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-008** `optimizer-core` (pure enumerate/prune/score + maxCombinations — depends on DART-002 done) |
-| **Active branch** | (create) `dart-008-optimizer-core` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-008-optimizer-core/` (created at specify) |
+| **Next / active slice** | **DART-009** `static-sandbox-data` (static tables — depends on DART-001 done) |
+| **Active branch** | (create) `dart-009-static-sandbox-data` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-009-static-sandbox-data/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-008 note (completed)
+
+Pure optimizer core merged: `enumerateKits` / `prunePiecesForSlot` / score helpers + kit constraints in `packages/domain`; truncation flags; golden tests; no Flutter isolate.
 
 ### DART-007 note (completed)
 
