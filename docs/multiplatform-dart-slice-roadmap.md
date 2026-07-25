@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-003 done)  
+**Updated:** 2026-07-24 (DART-004 done)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -95,7 +95,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-001** | **done** | `domain-foundation` | `dart-001-domain-foundation` | P0 | — | Melos (or equivalent) monorepo skeleton: package graph, CI-friendly `dart test` entry, no UI apps yet | Packages resolve; empty/smoke domain package; documented layout; no IO/UI deps allowed in domain pubspec |
 | **DART-002** | **done** | `models` | `dart-002-models` | P0 | DART-001 | Pure DTOs / freezed (or equivalent) models for pins, claims, kits, coverage results, failure codes | Models package has zero IO; maps core build/variant/set/synergy shapes used by evaluators |
 | **DART-003** | **done** | `hard-constraints` | `dart-003-hard-constraints` | P0 | DART-002 | Port pure hard evaluators: exotic limits, mod energy, subclass kit, exotic ability match | Golden tests vs TS fixtures; hard-block codes stable; capacityResolved semantics documented |
-| **DART-004** | pending | `soft-coverage` | `dart-004-soft-coverage` | P0 | DART-002 | Port soft coverage + soft stat estimate inputs (no save path imports) | Soft results never imply hard block; tests forbid hard/soft confusion; DBR-GUID soft path parity |
+| **DART-004** | **done** | `soft-coverage` | `dart-004-soft-coverage` | P0 | DART-002 | Port soft coverage + soft stat estimate inputs (no save path imports) | Soft results never imply hard block; tests forbid hard/soft confusion; DBR-GUID soft path parity |
 | **DART-005** | pending | `resolve-variant` | `dart-005-resolve-variant` | P0 | DART-002 | Port pure resolveVariant merge/conflict/completeness (claims only; no DB load) | Default vs non-default completeness rules tested; conflict detection parity |
 | **DART-006** | pending | `equip-ready` | `dart-006-equip-ready` | P0 | DART-002, DART-005 | Port equipReady / wishlist vs owned-pin gates (pure) | Wishlist cannot be equip-ready; stale pin rules covered by tests |
 | **DART-007** | pending | `finish-gaps` | `dart-007-finish-gaps` | P0 | DART-005, DART-006 | Port finishGaps / next-slot pure helpers | Gap list stable for default vs non-default fixtures |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-004** `soft-coverage` (soft coverage + soft stat estimate inputs — depends on DART-002 done) |
-| **Active branch** | (create) `dart-004-soft-coverage` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-004-soft-coverage/` (created at specify) |
+| **Next / active slice** | **DART-005** `resolve-variant` (pure resolveVariant merge/conflict/completeness — depends on DART-002 done) |
+| **Active branch** | (create) `dart-005-resolve-variant` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-005-resolve-variant/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-004 note (completed)
+
+Soft coverage + soft-stat estimate/targets/nudges pure port in `packages/domain` (`evaluateCoverage`, `estimateLoadoutStats`, `softStatWarnings`, `normalizeSoftStatTargets`, `suggestStatNudges`). Golden + hard/soft separation tests green. Soft results are `CoverageResult` only — never hard blocks. Merged to `feature/multiplatform-dart`.
 
 ### DART-003 note (completed)
 
