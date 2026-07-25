@@ -5,15 +5,17 @@
 /// (DART-003), soft coverage / soft-stat helpers (DART-004), pure
 /// resolveVariant merge/conflict/completeness (DART-005), equip-ready /
 /// wishlist vs owned-pin gates (DART-006), finishGaps / next-slot helpers
-/// (DART-007), and optimizer enumerate/prune/score core (DART-008) live here;
+/// (DART-007), optimizer enumerate/prune/score core (DART-008), and pure
+/// DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010) live here;
 /// later slices land next.
 library;
 
 export 'src/smoke.dart';
 
-// Models (DART-002 + soft input DTOs + optimizer candidates)
+// Models (DART-002 + soft input DTOs + optimizer candidates + DIM shapes)
 export 'src/models/constraints.dart';
 export 'src/models/coverage.dart';
+export 'src/models/dim_loadout.dart';
 export 'src/models/equipment.dart';
 export 'src/models/failure_codes.dart';
 export 'src/models/kit.dart';
@@ -50,3 +52,6 @@ export 'src/evaluators/optimizer_constraints.dart';
 export 'src/evaluators/optimizer_enumerate.dart';
 export 'src/evaluators/optimizer_prune.dart';
 export 'src/evaluators/optimizer_score.dart';
+
+// Pure DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010)
+export 'src/evaluators/dim_builders.dart';

@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-009 done)  
+**Updated:** 2026-07-24 (DART-010 done)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -101,7 +101,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-007** | **done** | `finish-gaps` | `dart-007-finish-gaps` | P0 | DART-005, DART-006 | Port finishGaps / next-slot pure helpers | Gap list stable for default vs non-default fixtures |
 | **DART-008** | **done** | `optimizer-core` | `dart-008-optimizer-core` | P0 | DART-002 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
 | **DART-009** | **done** | `static-sandbox-data` | `dart-009-static-sandbox-data` | P0 | DART-001 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
-| **DART-010** | pending | `dim-builders` | `dart-010-dim-builders` | P0 | DART-006 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
+| **DART-010** | **done** | `dim-builders` | `dart-010-dim-builders` | P0 | DART-006 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
 | **DART-011** | pending | `domain-parity-gate` | `dart-011-domain-parity-gate` | P0 | DART-003–010 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
 | **DART-012** | pending | `storage-root` | `dart-012-storage-root` | P1 | DART-011 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
 | **DART-013** | pending | `drift-schema` | `dart-013-drift-schema` | P1 | DART-012 | Drift schema mirroring core tables (users, builds, variants, sets, synergies, inventory) | Schema creates clean DB; PRAGMA/index notes for critical uniques |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-010** `dim-builders` (pure DIM loadout JSON — depends on DART-006 done) |
-| **Active branch** | (create) `dart-010-dim-builders` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-010-dim-builders/` (created at specify) |
+| **Next / active slice** | **DART-011** `domain-parity-gate` (P0 phase gate — aggregate pure suite + dep lint) |
+| **Active branch** | (create) `dart-011-domain-parity-gate` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-011-domain-parity-gate/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-010 note (completed)
+
+Pure `buildVariantDimLoadout` + Dim loadout DTOs/constants in `packages/domain`; `buildJsonOnlyDimExport` calls `assertEquipReady` then returns `{ loadout }` with fixed-id golden parity vs TS variant fixture. No network / dim.gg / collectVariantMods.
 
 ### DART-009 note (completed)
 

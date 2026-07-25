@@ -59,7 +59,14 @@ Pure functions in `src/evaluators/destiny_build_constraints.dart`:
 - `evaluateExoticLimits`, `evaluateModEnergy`, `evaluateSubclassKit`
 - `evaluateExoticAbilityMatch`, `evaluateSynergyRequirement`, `mergeConstraintEvaluations`
 - Golden tests: `test/hard_constraints_test.dart` (parity with TS vitest)
-- Soft coverage / resolve / equip-ready algorithms remain later slices
+
+## DIM builders (DART-010)
+
+Pure variant → DIM Sync loadout document builders (no network):
+
+- Models: `src/models/dim_loadout.dart` (`DimLoadout*`, class/stat hash constants)
+- Builders: `src/evaluators/dim_builders.dart` — `buildVariantDimLoadout`, `buildJsonOnlyDimExport` (equipReady gate)
+- Golden tests: `test/dim_builders_test.dart` (jsonOnly fixture parity with TS)
 
 ## Domain purity rule (hard)
 
