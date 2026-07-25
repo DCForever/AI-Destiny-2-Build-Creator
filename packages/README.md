@@ -14,22 +14,33 @@ melos.yaml                # pointer only (config lives in pubspec.yaml)
 analysis_options.yaml     # shared analyzer defaults
 packages/
   README.md               # this file
-  domain/                 # pure domain (models + hard evaluators; soft later)
+  domain/                 # pure domain (models + evaluators)
     pubspec.yaml          # package name: destiny2_domain
     lib/
       destiny2_domain.dart
       src/
         smoke.dart
         models/           # DART-002 pure DTOs
-        evaluators/       # DART-003 hard constraints
+        evaluators/       # DART-003+ pure evaluators
+    test/
+  sandbox_data/           # pure static sandbox tables (DART-009)
+    pubspec.yaml          # package name: destiny2_sandbox_data
+    lib/
+      destiny2_sandbox_data.dart
+      src/                # stat benefits, verbs, champions, …
     test/
 ```
 
 | Package path | Pub name | Role | Allowed deps |
 | ------------ | -------- | ---- | ------------ |
 | `packages/domain` | `destiny2_domain` | Pure domain library (models DART-002; evaluators DART-003+) | **SDK only** at runtime; `test` / pure lints as dev_dependencies. **No** Flutter, Jaspr, Drift, http, path_provider, or other IO/UI packages. |
+| `packages/sandbox_data` | `destiny2_sandbox_data` | Pure static sandbox constants (stat benefits, synergy verbs, exotic ability requirements, archetypes, champion counters, vocabularies) | **SDK only** at runtime. Soft display tables only — never auto-apply / hard-block. |
 
 Future packages (not in early P0) will appear here or under `apps/` when Flutter/Jaspr shells are introduced (DART-019+, DART-042+).
+
+## Sandbox constants (DART-009)
+
+`destiny2_sandbox_data` mirrors product `src/data/**` curated tables. After Destiny sandbox patches, follow [docs/sandbox-data-update-process.md](../docs/sandbox-data-update-process.md).
 
 ## Domain models (DART-002)
 
@@ -82,6 +93,7 @@ melos run test
 
 # Without global Melos
 dart test packages/domain
+dart test packages/sandbox_data
 ```
 
 ## Coexistence with Next.js
