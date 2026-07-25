@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-038 done — Flutter equip UI: character pick + equip-ready gate + gaps confirm + step report)  
+**Updated:** 2026-07-25 (DART-039 done — Flutter DIM jsonOnly clipboard export gated on equip-ready)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -130,7 +130,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-036** | **done** | `flutter-optimizer-ui` | `dart-036-flutter-optimizer-ui` | P4 | DART-035, DART-030 | Finish/optimizer workspace on Windows | Suggest → user confirm; never silent apply |
 | **DART-037** | **done** | `equip-orchestrator` | `dart-037-equip-orchestrator` | P4 | DART-006, DART-024 | planEquipSteps + execute + partial status (write client) | Best-effort partial; no full rollback; tests with mocked write API |
 | **DART-038** | **done** | `flutter-equip-ui` | `dart-038-flutter-equip-ui` | P4 | DART-037, DART-033 | Character pick + equip CTA + step report | Equip-ready gate enforced; gaps confirm UX |
-| **DART-039** | pending | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
+| **DART-039** | **done** | `flutter-dim-export-ui` | `dart-039-flutter-dim-export-ui` | P4 | DART-010, DART-038 | DIM jsonOnly / clipboard export | Blocked when not equip-ready |
 | **DART-040** | pending | `flutter-mobile-shell-nav` | `dart-040-flutter-mobile-shell-nav` | P4 | DART-034 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
 | **DART-041** | pending | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
 | **DART-042** | pending | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-039** `flutter-dim-export-ui` (P4 — DIM jsonOnly / clipboard export) |
-| **Active branch** | (create) `dart-039-flutter-dim-export-ui` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-039-flutter-dim-export-ui/` (created at specify) |
+| **Next / active slice** | **DART-040** `flutter-mobile-shell-nav` (P4 — Android+iOS app shell) |
+| **Active branch** | (create) `dart-040-flutter-mobile-shell-nav` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-040-flutter-mobile-shell-nav/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-039 note (completed)
+
+Windows Builds detail **DIM export** panel: equip-ready gate (wishlist/stale block Copy); **Copy DIM JSON** builds jsonOnly `{ loadout }` via pure `buildJsonOnlyDimExport` (DART-010) and writes clipboard; injectable clipboard for tests; soft never auto-applies; no dim.gg network. Tests: `dim_export_format_test` + `dim_export_panel_test` (8).
 
 ### DART-038 note (completed)
 

@@ -3,6 +3,8 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../dim_export/dim_export_controller.dart';
+import '../dim_export/dim_export_panel.dart';
 import '../equip/equip_controller.dart';
 import '../equip/equip_panel.dart';
 import '../host_bootstrap.dart';
@@ -10,13 +12,14 @@ import 'builds_library_controller.dart';
 import 'soft_guidance_format.dart';
 
 /// Builds library dual-pane (list + identity + variant compose + soft guidance
-/// + equip — DART-032/033/034/038).
+/// + equip + DIM export — DART-032/033/034/038/039).
 class BuildsLibraryPage extends StatefulWidget {
   const BuildsLibraryPage({
     super.key,
     required this.services,
     this.controller,
     this.equipController,
+    this.dimExportController,
   });
 
   final AppServices services;
@@ -27,6 +30,9 @@ class BuildsLibraryPage extends StatefulWidget {
   /// Optional injectable equip controller (tests).
   final EquipController? equipController;
 
+  /// Optional injectable DIM export controller (tests).
+  final DimExportController? dimExportController;
+
   @override
   State<BuildsLibraryPage> createState() => _BuildsLibraryPageState();
 }
@@ -34,8 +40,11 @@ class BuildsLibraryPage extends StatefulWidget {
 class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   late final BuildsLibraryController _controller;
   late final EquipController _equipController;
+  late final DimExportController _dimExportController;
   bool _ownEquipController = false;
+  bool _ownDimExportController = false;
   String? _boundEquipKey;
+  String? _boundDimExportKey;
   final _createNameController = TextEditingController();
   final _createSubTypeController = TextEditingController();
   final _createArmorHashController = TextEditingController();
@@ -92,8 +101,17 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         inventorySync: widget.services.inventorySync,
       );
     }
+    if (widget.dimExportController != null) {
+      _dimExportController = widget.dimExportController!;
+    } else {
+      _ownDimExportController = true;
+      _dimExportController = DimExportController(
+        db: widget.services.db,
+      );
+    }
     _controller.addListener(_onController);
     _equipController.addListener(_onEquipController);
+    _dimExportController.addListener(_onDimExportController);
     _controller.refresh();
   }
 
@@ -101,15 +119,23 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     if (mounted) setState(() {});
   }
 
+  void _onDimExportController() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _controller.removeListener(_onController);
     _equipController.removeListener(_onEquipController);
+    _dimExportController.removeListener(_onDimExportController);
     if (_ownController) {
       _controller.dispose();
     }
     if (_ownEquipController) {
       _equipController.dispose();
+    }
+    if (_ownDimExportController) {
+      _dimExportController.dispose();
     }
     _createNameController.dispose();
     _createSubTypeController.dispose();
@@ -167,6 +193,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     }
     _syncSoftStatFieldsFromController();
     _syncEquipBinding();
+    _syncDimExportBinding();
     if (mounted) setState(() {});
   }
 
@@ -196,6 +223,31 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       buildId: sel.build.id,
       variantId: variant.id,
       buildClass: sel.build.className,
+    );
+  }
+
+  void _syncDimExportBinding() {
+    final sel = _controller.selected;
+    final variant = _controller.selectedVariant;
+    final uid = _controller.userId;
+    if (sel == null || variant == null || uid == null) {
+      if (_boundDimExportKey != null) {
+        _boundDimExportKey = null;
+        _dimExportController.clearBinding();
+      }
+      return;
+    }
+    final pinFp = [
+      for (final p in _controller.slotPins)
+        '${p.slot}:${p.itemHash}:${p.instanceId ?? ''}',
+    ].join(',');
+    final key = '${sel.build.id}|${variant.id}|$pinFp';
+    if (key == _boundDimExportKey) return;
+    _boundDimExportKey = key;
+    _dimExportController.bind(
+      userId: uid,
+      buildId: sel.build.id,
+      variantId: variant.id,
     );
   }
 
@@ -1108,6 +1160,13 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           EquipPanel(
             key: const Key('builds_equip_panel'),
             controller: _equipController,
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          DimExportPanel(
+            key: const Key('builds_dim_export_panel'),
+            controller: _dimExportController,
           ),
           const SizedBox(height: 16),
           const Divider(),

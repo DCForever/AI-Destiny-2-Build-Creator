@@ -1,4 +1,4 @@
-# destiny2_windows_host (DART-019…038)
+# destiny2_windows_host (DART-019…039)
 
 **Flutter Windows** host for Destiny 2 Build Creator multiplatform port.
 
@@ -14,6 +14,7 @@
 - **Variant compose** on Builds detail (DART-033): list/create/select variants; attach/detach library sets; slot pins wishlist vs instance; hard conflicts (e.g. slot overlap) surfaced
 - **Soft guidance** on Builds detail (DART-034): coverage chips (supported/weak/missing), soft stat targets with explicit save; **never auto-applies**; display-only soft path (**P3 phase gate**)
 - **Equip / Apply** on Builds detail (DART-038): class-filtered character pick; equip-ready gate (wishlist/stale block Apply); empty combat **gaps confirm**; plan + best-effort execute (DART-037); **step report** (completed/failed). Soft never auto-applies. No CLIENT_SECRET.
+- **DIM export** on Builds detail (DART-039): **Copy DIM JSON** (jsonOnly `{ loadout }` via pure `buildJsonOnlyDimExport`); clipboard write; **blocked when not equip-ready**. No dim.gg network; soft never auto-applies.
 - **Settings**:
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
   - **Inventory sync** card (DART-025): Sync now → full-replace into Drift; busy/error UX; 60s freshness label
@@ -50,6 +51,8 @@ flutter test test/soft_guidance_format_test.dart test/soft_guidance_page_test.da
 flutter test test/optimizer_format_test.dart test/optimizer_workspace_test.dart
 # Equip UI (DART-038):
 flutter test test/equip_format_test.dart test/equip_panel_test.dart
+# DIM export UI (DART-039):
+flutter test test/dim_export_format_test.dart test/dim_export_panel_test.dart
 ```
 
 ## Specs
@@ -67,3 +70,4 @@ flutter test test/equip_format_test.dart test/equip_panel_test.dart
 - `specs/dart-034-flutter-soft-guidance-ui/`
 - `specs/dart-036-flutter-optimizer-ui/`
 - `specs/dart-038-flutter-equip-ui/`
+- `specs/dart-039-flutter-dim-export-ui/`
