@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-026 done — Catalog all-vs-owned + instance projections)  
+**Updated:** 2026-07-24 (DART-027 done — App use cases: set/synergy CRUD + attach)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -118,7 +118,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-024** | **done** | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
 | **DART-025** | **done** | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
 | **DART-026** | **done** | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
-| **DART-027** | pending | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
+| **DART-027** | **done** | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
 | **DART-028** | pending | `app-use-cases-build` | `dart-028-app-use-cases-build` | P3 | DART-027, DART-003–007 | Build/variant save pipeline order parity (hard gates + soft coverage query) | Illegal kits hard-block; soft misses do not block non-default |
 | **DART-029** | pending | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
 | **DART-030** | pending | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
@@ -190,11 +190,17 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-027** `app-use-cases-library` (P3 — Application use cases: set/synergy CRUD + attach) |
-| **Active branch** | (create) `dart-027-app-use-cases-library` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-027-app-use-cases-library/` (created at specify) |
+| **Next / active slice** | **DART-028** `app-use-cases-build` (P3 — Build/variant save pipeline hard gates + soft coverage) |
+| **Active branch** | (create) `dart-028-app-use-cases-build` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-028-app-use-cases-build/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-027 note (completed)
+
+- Package `packages/app` (`destiny2_app`): set/synergy library CRUD + `prepareAttachments` / `replaceAttachmentByType`
+- In-process only; pure domain type/link validation; designation immutability; fashion max-one
+- Tests: `dart test packages/app` (in-memory Drift)
 
 ### DART-026 note (completed)
 
