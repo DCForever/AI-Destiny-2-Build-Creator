@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-005 done)  
+**Updated:** 2026-07-24 (DART-006 done)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -97,7 +97,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-003** | **done** | `hard-constraints` | `dart-003-hard-constraints` | P0 | DART-002 | Port pure hard evaluators: exotic limits, mod energy, subclass kit, exotic ability match | Golden tests vs TS fixtures; hard-block codes stable; capacityResolved semantics documented |
 | **DART-004** | **done** | `soft-coverage` | `dart-004-soft-coverage` | P0 | DART-002 | Port soft coverage + soft stat estimate inputs (no save path imports) | Soft results never imply hard block; tests forbid hard/soft confusion; DBR-GUID soft path parity |
 | **DART-005** | **done** | `resolve-variant` | `dart-005-resolve-variant` | P0 | DART-002 | Port pure resolveVariant merge/conflict/completeness (claims only; no DB load) | Default vs non-default completeness rules tested; conflict detection parity |
-| **DART-006** | pending | `equip-ready` | `dart-006-equip-ready` | P0 | DART-002, DART-005 | Port equipReady / wishlist vs owned-pin gates (pure) | Wishlist cannot be equip-ready; stale pin rules covered by tests |
+| **DART-006** | **done** | `equip-ready` | `dart-006-equip-ready` | P0 | DART-002, DART-005 | Port equipReady / wishlist vs owned-pin gates (pure) | Wishlist cannot be equip-ready; stale pin rules covered by tests |
 | **DART-007** | pending | `finish-gaps` | `dart-007-finish-gaps` | P0 | DART-005, DART-006 | Port finishGaps / next-slot pure helpers | Gap list stable for default vs non-default fixtures |
 | **DART-008** | pending | `optimizer-core` | `dart-008-optimizer-core` | P0 | DART-002 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
 | **DART-009** | pending | `static-sandbox-data` | `dart-009-static-sandbox-data` | P0 | DART-001 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-006** `equip-ready` (pure equipReady / wishlist vs owned-pin gates — depends on DART-002, DART-005 done) |
-| **Active branch** | (create) `dart-006-equip-ready` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-006-equip-ready/` (created at specify) |
+| **Next / active slice** | **DART-007** `finish-gaps` (pure finishGaps / next-slot helpers — depends on DART-005, DART-006 done) |
+| **Active branch** | (create) `dart-007-finish-gaps` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-007-finish-gaps/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-006 note (completed)
+
+Merged pure `computeEquipReady` / wishlist vs owned-pin / stale pin gates into `packages/domain` with golden tests vs TS `equipReady.test.ts` (plus hash_mismatch). Wishlist never equip-ready; post-sync stale covered.
 
 ### DART-005 note (completed)
 
