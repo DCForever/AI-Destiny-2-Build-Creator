@@ -60,7 +60,7 @@
 
 - [x] T016 Mark tasks complete; run full `dart test` in apps/web_host
 - [x] T017 Commit on `dart-046-jaspr-compose-spine`
-- [ ] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-046 done; pointer → DART-047; commit base
+- [x] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-046 done; pointer → DART-047; commit base
 
 ---
 
