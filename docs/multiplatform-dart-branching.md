@@ -32,7 +32,8 @@ Product line (separate):
 5. When finishing a slice, **base branch = `feature/multiplatform-dart`** (not `main`, not `feature/overhall`). Override finish-spec base if `git-config.yml` still says `main`.
 6. Spec directories live under `specs/NNN-short-name/` as usual; keep short names clearly multiplatform-scoped (e.g. `dart-domain-foundation`, `dart-data-manifest`, `flutter-windows-shell`).
 7. Architecture freezes: [`multiplatform-dart-port-decisions.md`](./multiplatform-dart-port-decisions.md).
-8. Exploration Grok workflow (read-only): `.grok/workflows/explore-flutter-port.rhai` — maintain on this line; optional, not a product runtime dependency.
+8. **Slice backlog (canonical):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — all phases broken into ordered Spec Kit slices; update status after every finish-spec.
+9. Exploration Grok workflow (read-only): `.grok/workflows/explore-flutter-port.rhai` — maintain on this line; optional, not a product runtime dependency.
 
 ## Creating a new Spec Kit slice (agents)
 
@@ -65,16 +66,11 @@ $env:GIT_BRANCH_NAME = "044-dart-domain-foundation"
 
 **Finish-spec override:** merge into `feature/multiplatform-dart`, not `main`.
 
-## Suggested first slices (from exploration)
+## Slice backlog
 
-| Order | Short name (example) | Goal |
-| ----- | -------------------- | ---- |
-| 1 | `dart-domain-foundation` | Melos monorepo skeleton + pure domain parity harness (Phase 0) |
-| 2 | `dart-data-manifest` | Drift + storage root + entity stores (Phase 1) |
-| 3 | `dart-bungie-auth-sync` | Public+PKCE + inventory sync (Phase 2) |
-| 4 | `flutter-windows-compose` | Build/Sets/Synergy spine on Windows Flutter (Phase 3) |
-| 5 | `flutter-equip-mobile` | Optimizer/equip + mobile shell (Phase 4) |
-| 6 | `jaspr-web-shell` | Jaspr OPFS single-writer + cutover gates (Phase 5) |
+Do **not** invent ad-hoc mega-features. Use the master table in  
+[`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md)  
+(S01–S49 across phases P0–P5). One Spec Kit feature per row.
 
 ## Worktree hygiene
 
