@@ -1,4 +1,5 @@
-/// Shared Bungie Platform HTTP client + Public+PKCE OAuth (DART-021/022).
+/// Shared Bungie Platform HTTP client + Public+PKCE OAuth + profile sync
+/// (DART-021/022/024).
 ///
 /// Public API key and public client id only — hosts inject credentials.
 /// No `CLIENT_SECRET` / `client_secret` fields.
@@ -16,3 +17,10 @@ export 'src/oauth/oauth_pending.dart';
 export 'src/oauth/oauth_state.dart';
 export 'src/oauth/pkce.dart';
 export 'src/oauth/redirect_uri_config.dart';
+export 'src/profile/bungie_profile_client.dart';
+export 'src/profile/inventory_buckets.dart';
+export 'src/profile/inventory_parse.dart';
+export 'src/profile/profile_types.dart';
+export 'src/sync/sync_freshness.dart';
+export 'src/sync/sync_inventory.dart';
+

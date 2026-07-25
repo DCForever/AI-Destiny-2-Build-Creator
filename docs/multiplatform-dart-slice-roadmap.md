@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-023 done — Windows loopback OAuth + secure storage)  
+**Updated:** 2026-07-24 (DART-024 done — profile fetch + inventory full-replace + 60s freshness)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -115,7 +115,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-021** | **done** | `bungie-http` | `dart-021-bungie-http` | P2 | DART-011 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
 | **DART-022** | **done** | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
 | **DART-023** | **done** | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
-| **DART-024** | pending | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
+| **DART-024** | **done** | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
 | **DART-025** | pending | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
 | **DART-026** | pending | `flutter-catalog-owned` | `dart-026-flutter-catalog-owned` | P2 | DART-020, DART-025 | Catalog all-vs-owned + instance projections for pickers | Owned filter works after sync |
 | **DART-027** | pending | `app-use-cases-library` | `dart-027-app-use-cases-library` | P3 | DART-015, DART-011 | Application use cases: set/synergy CRUD + attach (in-process, no HTTP) | Use cases call repos + pure domain; tests with in-memory/Drift |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-024** `bungie-profile-sync` (P2 — Profile fetch + inventory sync into Drift) |
-| **Active branch** | (create) `dart-024-bungie-profile-sync` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-024-bungie-profile-sync/` (created at specify) |
+| **Next / active slice** | **DART-025** `flutter-inventory-sync-ui` (P2 — Settings inventory sync card + busy/error UX) |
+| **Active branch** | (create) `dart-025-flutter-inventory-sync-ui` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-025-flutter-inventory-sync-ui/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-024 note (completed)
+
+Profile client + inventory parse in `destiny2_bungie`; `syncUserInventory` full-replace into Drift (sync_version); `isInventoryFresh` / `syncIfStale` at 60s (DBR-EQP-007). No Settings UI (DART-025).
 
 ### DART-023 note (completed)
 

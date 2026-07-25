@@ -71,7 +71,7 @@ packages/
         item_resolver.dart
         perk_validator.dart
     test/
-  bungie/                 # Shared Bungie Platform HTTP + Public+PKCE OAuth (DART-021/022)
+  bungie/                 # Shared Bungie Platform HTTP + Public+PKCE OAuth + profile sync (DART-021/022/024)
     pubspec.yaml          # package name: destiny2_bungie
     lib/
       destiny2_bungie.dart
@@ -87,6 +87,8 @@ packages/
           pkce.dart
           oauth_state.dart
           redirect_uri_config.dart
+        profile/                  # DART-024 memberships + GetProfile inventory parse
+        sync/                     # DART-024 full-replace into Drift + 60s freshness
     test/
 ```
 
@@ -97,7 +99,7 @@ packages/
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
 | `packages/db` | `destiny2_db` | Drift SQLite **schema + migrations + library/inventory repos** (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013); ensure* upgrades on open (DART-014); builds/sets/synergies/variants CRUD (DART-015); inventory full-replace + sync meta + busy lock (DART-016). | `drift`, `sqlite3`, `path`. **Not** pure. |
 | `packages/manifest` | `destiny2_manifest` | **Entity store reader + MVP extractors** (DART-017) + **Windows manifest refresh** (DART-018) + **offline catalog facets/browse** (`filterCatalogClient`, `OfflineCatalog`) (DART-020). Offline JSON under StorageRoot; no inventory. | `destiny2_storage`, `destiny2_domain`, `path`. **Not** pure (`dart:io`, `dart:isolate`). Public API key host-injected only; no CLIENT_SECRET. |
-| `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP** (DART-021) + **Public+PKCE OAuth** (DART-022): `X-API-Key`, optional Bearer, envelope unwrap, rate-limit hooks; authorize/token/refresh with S256 PKCE, CSRF state, `BungieTokens`, platform redirect URI config. | `crypto` + SDK (`dart:io` default transport). **Not** pure. Host-injected public API key + public client id; **no** CLIENT_SECRET / `client_secret` fields. |
+| `packages/bungie` | `destiny2_bungie` | **Shared Bungie Platform HTTP** (DART-021) + **Public+PKCE OAuth** (DART-022) + **profile inventory sync** (DART-024): `X-API-Key`, optional Bearer, envelope unwrap, rate-limit hooks; authorize/token/refresh with S256 PKCE; `HttpBungieProfileClient` + `syncUserInventory` full-replace into Drift + `isInventoryFresh` / `syncIfStale` (60s). | `crypto`, `destiny2_db` + SDK (`dart:io` default transport). **Not** pure. Host-injected public API key + public client id; **no** CLIENT_SECRET / `client_secret` fields. |
 | `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023): open StorageRoot + single Drift DB; Catalog offline browse; Settings manifest + **Public+PKCE OAuth** (loopback `127.0.0.1`, `flutter_secure_storage` tokens — not SQLite). | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie. **No** CLIENT_SECRET. |
 
 Mobile Flutter / Jaspr web shells land under `apps/` in later slices (DART-040+, DART-042+).
@@ -151,6 +153,36 @@ final response = await client.getJson(
 - Rate-limit hooks on HTTP 429, `ThrottleSeconds > 0`, and throttle platform codes
 - Injectable `BungieHttpTransport` for unit tests (no live network)
 - **No** `CLIENT_SECRET`, session secrets, or hard-coded production keys
+
+```powershell
+dart test packages/bungie
+```
+
+## Profile + inventory sync (DART-024)
+
+```dart
+import 'package:destiny2_bungie/destiny2_bungie.dart';
+import 'package:destiny2_db/destiny2_db.dart';
+
+final profile = HttpBungieProfileClient(http: BungieHttpClient(apiKey: publicApiKey));
+
+final result = await syncUserInventory(
+  db: db,
+  userId: userId,
+  accessToken: accessToken,
+  profileClient: profile,
+  // optional: equipmentBucketLookup: { itemHash: equipmentBucketHash },
+);
+
+if (!isInventoryFresh(result.lastFullSyncAt)) {
+  // or: await syncIfStale(...)
+}
+```
+
+- Full-replace uses DART-016 exclusive busy lock; concurrent sync → `SyncInProgressError`
+- Bumps `inventory_sync_meta.sync_version` / `last_full_sync_at` / `item_count`
+- Fresh window: `kEquipSyncFreshMs` = **60_000** (DBR-EQP-007)
+- Settings sync UI is **DART-025** (not this package)
 
 ```powershell
 dart test packages/bungie

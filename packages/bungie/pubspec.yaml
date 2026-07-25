@@ -1,8 +1,9 @@
 name: destiny2_bungie
 description: >
-  Shared Bungie Platform HTTP client for the multiplatform port (DART-021).
-  Public API key header, envelope parse, typed errors, rate-limit hooks.
-  Host-injected API key only — no CLIENT_SECRET.
+  Shared Bungie Platform HTTP client + Public+PKCE OAuth + profile inventory
+  sync for the multiplatform port (DART-021/022/024). Public API key header,
+  envelope parse, typed errors, rate-limit hooks; GetProfile parse; full-replace
+  into Drift + 60s freshness. Host-injected API key only — no CLIENT_SECRET.
 version: 0.0.1
 publish_to: none
 resolution: workspace
@@ -11,8 +12,11 @@ environment:
   sdk: ^3.5.0
 
 # Not a pure-domain package: dart:io default transport + crypto for PKCE S256.
+# DART-024: inventory sync writes Drift via destiny2_db (full-replace).
 dependencies:
   crypto: ^3.0.6
+  destiny2_db:
+    path: ../db
 
 dev_dependencies:
   lints: ^5.0.0
