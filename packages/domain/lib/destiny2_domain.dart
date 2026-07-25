@@ -2,8 +2,9 @@
 ///
 /// This package must remain free of IO and UI dependencies (Flutter, Jaspr,
 /// Drift, network clients, path providers). Models (DART-002), hard evaluators
-/// (DART-003), and soft coverage / soft-stat helpers (DART-004) live here;
-/// resolve/equip land in later slices.
+/// (DART-003), soft coverage / soft-stat helpers (DART-004), and pure
+/// resolveVariant merge/conflict/completeness (DART-005) live here; equip-ready
+/// and later slices land next.
 library;
 
 export 'src/smoke.dart';
@@ -30,3 +31,6 @@ export 'src/evaluators/soft_coverage.dart';
 export 'src/evaluators/soft_stat_targets.dart';
 export 'src/evaluators/stat_estimate.dart';
 export 'src/evaluators/stat_nudges.dart';
+
+// Resolve variant pure merge/conflict/completeness (DART-005)
+export 'src/evaluators/resolve_variant.dart';
