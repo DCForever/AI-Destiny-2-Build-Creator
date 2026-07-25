@@ -53,6 +53,59 @@ String? encodeSnapshotConfigsJson(List<Map<String, Object?>>? configs) {
   return jsonEncode(configs);
 }
 
+/// Parse a JSON array of strings; invalid/missing → empty list.
+List<String> parseStringJsonArray(String? raw) {
+  if (raw == null || raw.isEmpty) return const [];
+  try {
+    final parsed = jsonDecode(raw);
+    if (parsed is! List) return const [];
+    return parsed.map((e) => e.toString()).toList();
+  } catch (_) {
+    return const [];
+  }
+}
+
+String encodeStringJsonArray(List<String> values) => jsonEncode(values);
+
+/// Parse a JSON object map; invalid/missing → null.
+Map<String, Object?>? parseJsonObjectMap(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  try {
+    final parsed = jsonDecode(raw);
+    if (parsed is Map) {
+      return parsed.map((k, v) => MapEntry(k.toString(), v as Object?));
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+String? encodeJsonObjectMap(Map<String, Object?>? values) {
+  if (values == null) return null;
+  return jsonEncode(values);
+}
+
+/// Parse a JSON array of objects (e.g. socket_plugs); invalid/missing → null.
+List<Map<String, Object?>>? parseJsonObjectList(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  try {
+    final parsed = jsonDecode(raw);
+    if (parsed is! List) return null;
+    return parsed
+        .whereType<Map>()
+        .map((m) => m.map((k, v) => MapEntry(k.toString(), v as Object?)))
+        .toList();
+  } catch (_) {
+    return null;
+  }
+}
+
+String? encodeJsonObjectList(List<Map<String, Object?>>? values) {
+  if (values == null) return null;
+  return jsonEncode(values);
+}
+
 /// Subclass / free-form JSON column: keep as string; normalize object→string.
 String encodeJsonValue(Object? value) {
   if (value == null) return '{}';
