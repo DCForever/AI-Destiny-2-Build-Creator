@@ -29,14 +29,49 @@ packages/
       destiny2_sandbox_data.dart
       src/                # stat benefits, verbs, champions, …
     test/
+  storage/                # StorageRoot paths (DART-012) — not pure
+    pubspec.yaml          # package name: destiny2_storage
+    lib/
+      destiny2_storage.dart
+      src/
+        storage_root.dart
+        version_dir.dart
+    test/
 ```
 
 | Package path | Pub name | Role | Allowed deps |
 | ------------ | -------- | ---- | ------------ |
 | `packages/domain` | `destiny2_domain` | Pure domain library (models DART-002; evaluators DART-003+) | **SDK only** at runtime; `test` / pure lints as dev_dependencies. **No** Flutter, Jaspr, Drift, http, path_provider, or other IO/UI packages. |
 | `packages/sandbox_data` | `destiny2_sandbox_data` | Pure static sandbox constants (stat benefits, synergy verbs, exotic ability requirements, archetypes, champion counters, vocabularies) | **SDK only** at runtime. Soft display tables only — never auto-apply / hard-block. |
+| `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
 
-Future packages (not in early P0) will appear here or under `apps/` when Flutter/Jaspr shells are introduced (DART-019+, DART-042+).
+UI shells (Flutter Windows/mobile, Jaspr web) land under `apps/` in later slices (DART-019+, DART-042+).
+
+## StorageRoot (DART-012)
+
+Canonical multiplatform on-disk layout. **Windows Flutter hosts** resolve the base with path_provider, then build `StorageRoot`:
+
+```dart
+// Host (Flutter Windows) — path_provider not imported by destiny2_storage
+final support = await getApplicationSupportDirectory();
+final root = StorageRoot.windowsAppSupport(support.path);
+await root.ensureLayout();
+// root.appDbPath → <app support>/app.db
+```
+
+**Do not** use process CWD or repo `.cache` (Next.js legacy: `src/lib/manifest/cachePaths.ts`).
+
+| Relative path | Purpose |
+| ------------- | ------- |
+| `app.db` | Primary SQLite (Drift opens later) |
+| `current-version.json` | Active manifest version pointer |
+| `manifest/<versionDir>/<table>.json` | Raw Bungie tables |
+| `entities/<versionDir>/<store>.json` | Derived entity stores |
+| `entities/<versionDir>/meta.json` | Entity cache meta |
+| `entities/<versionDir>/perk-weapon-index.json` | Perk–weapon index |
+| `users/<membershipId>/preferences.json` | Per-user preferences |
+
+`versionDir` = `versionToDirName` (unsafe chars → `_`). Unit tests inject a fake base path (no real AppData required).
 
 ## Sandbox constants (DART-009)
 
