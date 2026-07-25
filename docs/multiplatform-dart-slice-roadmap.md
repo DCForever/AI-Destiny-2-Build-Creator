@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-055 done — in-game loadouts surface; next DART-056 jaspr inventory sync depth)  
+**Updated:** 2026-07-25 (DART-056 done — Jaspr inventory sync depth; next DART-057 mobile compose/equip polish)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -151,7 +151,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-053** | **done** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | **GAP-INV-04**, **GAP-INV-06** UX. Controller retains last SyncInventoryResult diagnostics; Settings (Windows + web parity path) surfaces raw/parsed/dropped + resolution.resolvedFromTransfer/droppedNonEquipment/storedTotal; entity-cache empty warning so empty Owned is not blamed solely on inventory sync |
 | **DART-054** | **done** | `inventory-live-parity-harness` | `dart-054-inventory-live-parity-harness` | P6 | DART-050–053 | Live/manual+tool Next-vs-Dart inventory count harness | **GAP-INV-05**, **PROC-03/04/05** closed. Dual-run procedure + compare tool + offline fidelity gate; RC-SYNC fidelity metrics; RB-06 cleared with DART-050–053 evidence |
 | **DART-055** | **done** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | **GAP-NAV-01** closed; RB-01 cleared; RC-NAV PASS for loadouts. Windows NavigationRail + page; Jaspr `/loadouts`; pure component 206 parse |
-| **DART-056** | **planned** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | **GAP-WEB-01**; RB-02. Same vault/transfer resolution as Windows post-DART-050; Owned usable to pin instances for equip/DIM on Jaspr; RC-SYNC no longer fails solely for web owned depth |
+| **DART-056** | **done** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | **GAP-WEB-01** closed; RB-02 cleared; RC-SYNC PASS for web depth. Settings Sync now + vault lookup + diagnostics; Catalog All\|Owned + instanceId pins |
 | **DART-057** | **planned** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires; Jaspr soft-stat editor; finish-gaps host UX | **GAP-MOB-01**, **GAP-UI-01**, **GAP-FEAT-06**, GAP-FEAT-01 deferred. Published mobile matrix PASS/PARTIAL/MISS/N/A for each AppShell key (build/synergy/sets/catalog/settings/loadouts) plus equip/DIM/optimizer; ship equip+DIM jsonOnly with equip-ready gate **or** product-mark N/A; shell_nav tests match matrix. Jaspr soft-stat editor exposes all ArmorStatName with save parity. At least one production host (Windows and/or Jaspr) surfaces `evaluateFinishGaps` readiness comparable to Next FinishTab (category complete reasons; equip/export CTA policy = finish-complete AND equip-ready, or intentional thinning with product note); host tests assert finish-gap display; pure domain remains shared. Optimizer mobile/web remains deferred unless elevated. Soft never auto-applies |
 | **DART-058** | **planned** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01**; RB-03 / RC-AUTH. Published redirect matrix (Windows HTTPS loopback, Jaspr prod origin /auth/callback, mobile schemes); live sign-in smoke; zero BUNGIE_CLIENT_SECRET/SESSION_SECRET in client artifacts |
 | **DART-059** | **planned** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | **GAP-WEB-02**; RB-05 / RC-WEB-DATA. Channel (ship-in-app/CDN/hybrid) + versioning; prod web Catalog loads non-fixture entity data offline; offline compose without Next manifest API |
@@ -218,16 +218,20 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-056** `jaspr-inventory-sync-depth` (**planned** — next after DART-055 in-game loadouts) |
+| **Next / active slice** | **DART-057** `mobile-compose-equip-polish` (**planned** — next after DART-056 Jaspr inventory sync depth) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB-02…05 / RC-* pass (RB-01 cleared by DART-055; RB-06 cleared by DART-050–054) |
-| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055 **done**, DART-056–057 → P8 DART-058–061 |
+| **Blocked on** | Production cutover **NO-GO** until residual RB-03…05 / RC-* pass (RB-01/02/06 cleared) |
+| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–056 **done**, DART-057 → P8 DART-058–061 |
+
+### DART-056 note (completed) — Jaspr inventory sync depth
+
+Jaspr `InventorySyncController` + Settings **Sync now** card call `syncUserInventory` with lazy catalog-slot `equipmentBucketLookupBuilder` (same vault/postmaster resolution rules as Windows post-DART-050 equip path). Diagnostics retained (raw/parsed/dropped/`resolvedFromTransfer`). Catalog **All \| Owned** + instance projections with **instanceId** for compose equip/DIM pins. Host vault fixtures assert Kinetic/Helmet stored + `resolvedFromTransfer > 0`. GAP-WEB-01 closed; GAP-INV-06 closed; RB-02 cleared; RC-SYNC no longer fails for web owned depth. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-056-jaspr-inventory-sync-depth/`. Tests: `apps/web_host/test/inventory_sync_*`, `catalog_owned_page_test`. Next: **DART-057** mobile compose/equip polish.
 
 ### DART-055 note (completed) — in-game loadouts surface
 
-Pure `parseCharacterLoadoutsResponse` + presentation tables (component 206 / DIM source) in `packages/bungie`. Profile client `getCharacterLoadoutsProfile` (`components=200,206`). Windows NavigationRail **Loadouts** + list page (class / hide-empty filters, refresh, signed-out gate). Jaspr ShellHeader + `/loadouts` route + page. Cutover loadouts row PASS (Windows+web); RB-01 cleared; RC-NAV PASS for loadouts; GAP-NAV-01 closed. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-055-in-game-loadouts-surface/`. Tests: `character_loadouts_test`, windows_host loadouts/nav, web_host shell/loadouts. Next: **DART-056** jaspr inventory sync depth.
+Pure `parseCharacterLoadoutsResponse` + presentation tables (component 206 / DIM source) in `packages/bungie`. Profile client `getCharacterLoadoutsProfile` (`components=200,206`). Windows NavigationRail **Loadouts** + list page (class / hide-empty filters, refresh, signed-out gate). Jaspr ShellHeader + `/loadouts` route + page. Cutover loadouts row PASS (Windows+web); RB-01 cleared; RC-NAV PASS for loadouts; GAP-NAV-01 closed. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-055-in-game-loadouts-surface/`. Tests: `character_loadouts_test`, windows_host loadouts/nav, web_host shell/loadouts.
 
 ### DART-054 note (completed) — inventory live parity harness
 
@@ -235,7 +239,7 @@ Dual-run procedure doc `docs/multiplatform-dart-inventory-live-parity-harness.md
 
 ### DART-053 note (completed) — inventory sync diagnostics UI
 
-`formatSyncDiagnostics` pure helper (Next ManifestCard parity) in `destiny2_bungie`. `InventorySyncController` retains full `lastDiagnostics` after successful `syncNow` (raw/parsed/dropped + resolution). Windows `InventorySyncCard` surfaces keys for raw/parsed/dropped/resolvedFromTransfer/droppedNonEquipment/storedTotal + monospace format block. Settings entity-cache empty warning + Catalog Owned empty prefers entity-cache message (GAP-INV-06 UX). Web Settings Owned/entity dependency warning (full web sync depth remains DART-056). Soft never auto-applies; no CLIENT_SECRET. GAP-INV-04 closed. Specs: `specs/dart-053-inventory-sync-diagnostics-ui/`. Tests: format_sync_diagnostics + windows_host inventory/settings/catalog + web settings.
+`formatSyncDiagnostics` pure helper (Next ManifestCard parity) in `destiny2_bungie`. `InventorySyncController` retains full `lastDiagnostics` after successful `syncNow` (raw/parsed/dropped + resolution). Windows `InventorySyncCard` surfaces keys for raw/parsed/dropped/resolvedFromTransfer/droppedNonEquipment/storedTotal + monospace format block. Settings entity-cache empty warning + Catalog Owned empty prefers entity-cache message (GAP-INV-06 UX). Web Settings Owned/entity dependency warning (full web sync depth delivered by DART-056). Soft never auto-applies; no CLIENT_SECRET. GAP-INV-04 closed. Specs: `specs/dart-053-inventory-sync-diagnostics-ui/`. Tests: format_sync_diagnostics + windows_host inventory/settings/catalog + web settings.
 
 ### DART-052 note (completed) — inventory socket enrichment
 

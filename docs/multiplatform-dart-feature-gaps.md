@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (DART-054 GAP-INV-05 inventory live parity harness closed; RB-06 cleared)  
+**Updated:** 2026-07-25 (DART-056 GAP-WEB-01 Jaspr inventory sync + Owned depth; RB-02 cleared)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -81,7 +81,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | PASS | N/A\* | PASS | **shipped** | DART-031, 046; \*mobile in-flow only (acceptable density) |
 | **FEAT-NAV-SETS** | Sets library | `/sets` | PASS | N/A\* | PASS | **shipped** | DART-030, 046; \*same mobile note |
 | **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | PASS | MISS | PASS | **shipped** + mobile decision | DART-020/026/044; mobile **DART-057** matrix (ship or N/A) |
-| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | PASS | PARTIAL | PASS | **shipped** + fidelity residual | DART-023/025/045/048; inventory fidelity **DART-050–054**; web sync depth **DART-056** |
+| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | PASS | PARTIAL | PASS | **shipped** | DART-023/025/045/048; inventory fidelity **DART-050–054**; web sync depth **DART-056** done |
 | **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | PASS | MISS\* | PASS | **shipped** | **DART-055** / GAP-NAV-01 closed / RB-01 cleared; \*mobile reduced nav OK for RC-NAV |
 
 ### B. Compose → equip spine (PRODUCT primary job)
@@ -103,13 +103,13 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | ID | Feature | Product evidence | Dart today | Plan | Slices / GAP |
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
-| **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts; vault lookup wired (DART-050); fidelity program 050–054 | **shipped** (Windows path) | **DART-050–054** done; RB-06 cleared; web depth **DART-056** |
+| **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts; vault lookup wired (DART-050); web Settings sync (DART-056); fidelity program 050–054 | **shipped** (Windows + Jaspr) | **DART-050–054** done; **DART-056** web Settings; RB-06 + RB-02 cleared |
 | **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Lookup + host wiring (DART-050); harness DART-054 | **shipped** (fixture + harness) | **DART-050** + **DART-054** |
 | **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Pure + sync + host builders (DART-051) | **shipped** (golden + Windows raw; web frame-meta) | **DART-051** closed GAP-INV-02; residual: web perk names without raw defs |
 | **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Pure + sync + Windows raw context (DART-052); web raw-less residual | **shipped** (fixture + Windows) | **DART-052** closed GAP-INV-03; residual: web without raw defs |
 | **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | Windows retains + surfaces last diagnostics | **shipped** (P1) | **DART-053** / GAP-INV-04 closed |
 | **FEAT-INV-HARNESS** | Next-vs-Dart live count harness | Manual dual sync | Dual-run doc + compare tool + offline gate | **shipped** (P0 process) | **DART-054** / GAP-INV-05 closed |
-| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + entity-cache empty UX | **partial** | Docs **DART-050**; UX **DART-053** done; web depth **DART-056** / GAP-INV-06 |
+| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + entity-cache empty UX + web All\|Owned | **shipped** | Docs **DART-050**; UX **DART-053**; web Owned + instances **DART-056** / GAP-INV-06 closed |
 | **FEAT-INV-WEAPON-STATS** | Combat `statValues` on weapon rows | `parseWeaponStatValues` | Armor-hash parser reused | **planned** (P2) | Optional in **DART-050** / GAP-INV-07 |
 
 ### D. Auth, data, and ops
@@ -165,10 +165,10 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `closed` (DART-052; web residual) | `buildStoredSocketPlugs` + weapon socket context | `classifyWeaponSocket` + `buildStoredSocketPlugs`; sync wires context builder; Windows raw defs | **DART-052** done | Instance perk grids; web raw-less → unenriched maps (PROC-06 residual, not pure thinning) |
 | **GAP-INV-04** | Sync diagnostics UI | **P1** | `closed` (DART-053) | `formatSyncDiagnostics` + `[inventory-sync]` logs | Controller retains last diagnostics; Settings surfaces raw/parsed/dropped/resolution | **DART-053** done | Makes drops visible |
 | **GAP-INV-05** | Live Next-vs-Dart inventory harness | **P0** | **`closed`** (DART-054) | Manual dual sync | Dual-run doc + compare tool + offline gate | **DART-054** | Prevents silent drift; equip pin fidelity |
-| **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `partial` (UX closed DART-053) | Manifest refresh always online | Docs + Settings/Catalog entity empty warning; web Owned equip depth residual | **DART-050** docs + **DART-053** UX done; **DART-056** web depth | UX after sync |
+| **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `closed` (DART-053 UX + DART-056 web Owned) | Manifest refresh always online | Docs + Settings/Catalog entity empty warning; Jaspr All\|Owned + instance ids for pins | **DART-050** docs + **DART-053** UX + **DART-056** web Owned | UX after sync |
 | **GAP-INV-07** | Weapon combat `statValues` on inventory rows | **P2** | `closed` (DART-050 opt) | `parseWeaponStatValues` for weapons + transfer containers | `parseWeaponStatValues` + transfer merge in `inventory_parse.dart` | **DART-050** optional delivered | Combat stats on vault weapons |
 | **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `closed` | `/loadouts` AppShell + page | Windows+Jaspr PASS (DART-055); mobile MISS density OK | **DART-055** | RB-01 cleared / RC-NAV PASS |
-| **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `open` | Full Settings sync + owned catalog | Thinner web path; equip optional when write clients missing | **DART-056** | RB-02 / RC-SYNC |
+| **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `closed` (DART-056) | Full Settings sync + owned catalog | Settings Sync now + vault lookup + diagnostics; Catalog All\|Owned + instance pins; equip still optional without write clients | **DART-056** done | RB-02 cleared / RC-SYNC web depth |
 | **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `partial` | Full desktop-class AppShell | Bottom nav Builds\|Settings only; catalog MISS; equip/DIM MISS; settings minimum | **DART-057** | Phone surface matrix |
 | **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `partial` | Confidential Next HTTPS | Windows loopback + Jaspr origin OK locally; prod matrix not ops-signed; mobile OAuth deferred | **DART-058** | RB-03 / RC-AUTH |
 | **GAP-WEB-02** | Entity bundle prod distribution | **P1** | `open` | Full raw manifest pipeline | Prebuilt MVP `bundle.json` only; channel TBD | **DART-059** | RB-05 / RC-WEB-DATA |
@@ -301,13 +301,14 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 **Ownership (dual):**
 - **DART-050 (done):** Documented entity-store dependency remains after vault resolution; packages/README states empty entity cache ≠ empty vault / Owned needs entities.
-- **DART-053 (done):** Settings entity-cache empty warning + Catalog Owned empty prefers entity message; web Settings Owned/entity dependency warning. Full web inventory sync depth remains **DART-056**.
+- **DART-053 (done):** Settings entity-cache empty warning + Catalog Owned empty prefers entity message; web Settings Owned/entity dependency warning.
+- **DART-056 (done):** Jaspr Catalog All\|Owned + instanceId projections for equip/DIM pins; Settings Sync now with vault resolution.
 
 | Field | Value |
 | ----- | ----- |
 | Exit criteria | After inventory sync, Owned scope is usable when entity cache is populated; Settings/Catalog UX clearly warns when entity cache missing/empty; documented dependency remains after DART-050 vault fix |
-| Status | `partial` (docs + UX done; web Owned equip depth → DART-056) |
-| Planned slices | **DART-050** (docs **done**) + **DART-053** (UX **done**) + residual web depth **DART-056** |
+| Status | **`closed`** (docs + UX + web Owned depth) |
+| Planned slices | **DART-050** (docs **done**) + **DART-053** (UX **done**) + **DART-056** (web Owned **done**) |
 
 ---
 
@@ -347,15 +348,16 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 **Problem:** Web equip is optional when write clients missing; Settings sync thinner than Next; owned depth insufficient for equip/DIM pins until vault resolution + web path share rules.
 
-**Planned slice: DART-056 `jaspr-inventory-sync-depth`**
+**Planned slice: DART-056 `jaspr-inventory-sync-depth`** — **closed 2026-07-25**
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-056-jaspr-inventory-sync-depth` |
 | Depends | DART-050, DART-045 |
 | Exit criteria | Web sync applies same vault/transfer resolution as Windows post-DART-050; Owned catalog usable to pin instances for equip/DIM on Jaspr build compose; RC-SYNC no longer fails solely for web owned depth; clears RB-02 |
-| Status | `planned` |
-| Cutover | RB-02 |
+| Status | **`closed`** |
+| Cutover | RB-02 **cleared** |
+| Evidence | Jaspr `InventorySyncController` + Settings card call `syncUserInventory` with lazy `createWebEquipmentBucketLookupBuilder` (catalog slots); vault fixtures assert `resolvedFromTransfer > 0` + Kinetic/Helmet stored; Catalog All\|Owned + instanceId projections for compose pin; diagnostics retained (DART-053 parity). Specs: `specs/dart-056-jaspr-inventory-sync-depth/`. Tests: `apps/web_host/test/inventory_sync_*`, `catalog_owned_page_test`. Residual: equip still optional when write clients missing (product OK); legendary armor without prebuilt slot labels may drop (PROC-06 / entity coverage, not pure thinning). |
 
 ---
 
@@ -517,8 +519,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-056** `jaspr-inventory-sync-depth` |
-| **Next phase** | P7 DART-055 **done** → DART-056–057 → P8 DART-058–061 |
-| **Blocker for cutover** | Residual RB-02…05 (RB-01 + RB-06 cleared); web inventory depth GAP-WEB-01 / DART-056; other residuals per cutover checklist |
+| **Next planned slice** | **DART-057** `mobile-compose-equip-polish` |
+| **Next phase** | P7 DART-055–056 **done** → DART-057 → P8 DART-058–061 |
+| **Blocker for cutover** | Residual RB-03…05 (RB-01, RB-02, RB-06 cleared); other residuals per cutover checklist |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |

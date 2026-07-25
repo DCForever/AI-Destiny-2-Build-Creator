@@ -215,7 +215,7 @@ Domain-only changes still use `p0_parity_gate` only.
 ## Cutover / residuals
 
 - **RC-SYNC** requires vault/postmaster fidelity within agreed Next tolerance (default exact) **or** a documented residual GAP/RB — not only “Settings sync card exists” (PROC-04).  
-- **RB-06** (inventory fidelity program) is cleared by DART-050–054 shipped evidence; remaining RC-SYNC web depth is **RB-02** / DART-056.  
+- **RB-06** (inventory fidelity program) is cleared by DART-050–054 shipped evidence; **RB-02** / web owned depth cleared by **DART-056** (Jaspr Settings sync + Owned catalog).  
 - Soft never auto-applies; no CLIENT_SECRET in clients.
 
 ---

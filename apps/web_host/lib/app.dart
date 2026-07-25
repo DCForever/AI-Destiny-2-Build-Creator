@@ -1,4 +1,4 @@
-/// Root shell + client router for the Jaspr web host (DART-042–047).
+/// Root shell + client router for the Jaspr web host (DART-042–056).
 library;
 
 import 'dart:async';
@@ -8,11 +8,13 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
+import 'package:destiny2_db/destiny2_db.dart';
 
 import 'auth/web_oauth_session.dart';
 import 'builds/build_compose_page.dart';
 import 'builds/builds_page.dart';
 import 'catalog/entity_bundle_loader.dart';
+import 'catalog/owned_catalog_bridge.dart';
 import 'components/shell_header.dart';
 import 'compose/compose_services.dart';
 import 'db/web_database_bootstrap.dart';
@@ -26,6 +28,7 @@ import 'pages/auth_callback_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
 import 'sets/sets_page.dart';
+import 'settings/inventory_sync_controller.dart';
 import 'synergies/synergies_page.dart';
 import 'theme/theme.dart' as theme;
 
@@ -34,6 +37,7 @@ import 'theme/theme.dart' as theme;
 /// When [bootstrap] is null (tests), Settings shows loading DB status unless
 /// [initialDbStatus] is provided. Catalog uses [entityLoader] or injected page.
 /// Compose spine uses [compose] (writer DB) when available.
+/// Inventory sync (DART-056) uses writer DB + profile + session.
 class App extends StatefulComponent {
   const App({
     this.bootstrap,
@@ -45,6 +49,7 @@ class App extends StatefulComponent {
     this.writeClient,
     this.clipboardWriter,
     this.loadoutsController,
+    this.inventorySync,
     super.key,
   });
 
@@ -68,6 +73,9 @@ class App extends StatefulComponent {
   /// Optional prebuilt loadouts controller (tests inject fixtures).
   final LoadoutsController? loadoutsController;
 
+  /// Optional prebuilt inventory sync (tests inject).
+  final InventorySyncController? inventorySync;
+
   @override
   State<App> createState() => _AppState();
 }
@@ -77,12 +85,15 @@ class _AppState extends State<App> {
   StreamSubscription<WebDbSessionStatus>? _sub;
   ComposeServices? _compose;
   LoadoutsController? _loadouts;
+  InventorySyncController? _inventorySync;
+  OwnedCatalogBridge? _ownedBridge;
 
   @override
   void initState() {
     super.initState();
     _compose = component.compose;
     _loadouts = component.loadoutsController;
+    _inventorySync = component.inventorySync;
     _ensureLoadoutsController();
     _dbStatus = component.initialDbStatus ??
         component.bootstrap?.status ??
@@ -95,6 +106,7 @@ class _AppState extends State<App> {
           setState(() {
             _dbStatus = status;
             _syncComposeFromBootstrap(boot);
+            _syncInventoryFromBootstrap(boot);
           });
         }
       });
@@ -104,6 +116,7 @@ class _AppState extends State<App> {
             setState(() {
               _dbStatus = status;
               _syncComposeFromBootstrap(boot);
+              _syncInventoryFromBootstrap(boot);
             });
           }
         }),
@@ -116,19 +129,63 @@ class _AppState extends State<App> {
     }
   }
 
+  /// Lazy lookup: entity bundle may load after writer DB opens (DART-056).
+  EquipmentBucketLookupBuilder? _lookupBuilder() {
+    final loader = component.entityLoader;
+    if (loader == null) return null;
+    return (List<int> transferItemHashes) async {
+      if (transferItemHashes.isEmpty) return const {};
+      var catalog = loader.catalog;
+      if (catalog == null || catalog.baseItems.isEmpty) {
+        await loader.load();
+        catalog = loader.catalog;
+      }
+      if (catalog == null) return const {};
+      return createWebEquipmentBucketLookupBuilder(
+        offlineCatalog: catalog,
+      )(transferItemHashes);
+    };
+  }
+
+  /// Lazy roll-tag enrichment from entity loader catalog when ready.
+  ({
+    PerkNameMapBuilder perkNameMapBuilder,
+    WeaponRollMetaLookupBuilder weaponRollMetaLookupBuilder,
+  })? _rollTags() {
+    final loader = component.entityLoader;
+    if (loader == null) return null;
+    Future<Map<int, String>> perkBuilder(List<int> plugHashes) async {
+      return const {};
+    }
+
+    Future<Map<int, RollTagWeaponMeta>> weaponBuilder(
+      List<int> itemHashes,
+    ) async {
+      if (itemHashes.isEmpty) return const {};
+      var catalog = loader.catalog;
+      if (catalog == null || catalog.baseItems.isEmpty) {
+        await loader.load();
+        catalog = loader.catalog;
+      }
+      if (catalog == null) return const {};
+      final tags = createWebRollTagEnrichment(offlineCatalog: catalog);
+      return tags.weaponRollMetaLookupBuilder(itemHashes);
+    }
+
+    return (
+      perkNameMapBuilder: perkBuilder,
+      weaponRollMetaLookupBuilder: weaponBuilder,
+    );
+  }
+
   void _syncComposeFromBootstrap(WebDatabaseBootstrap boot) {
     if (component.compose != null) return;
     final db = boot.database;
     if (db != null && _compose == null) {
-      // DART-050: equip syncIfStale uses entity catalog slots for vault resolve.
+      // DART-050/056: equip syncIfStale uses entity catalog slots for vault resolve.
       // DART-051: catalog frame meta for roll tags (perk names need raw/injected).
-      final catalog = component.entityLoader?.catalog;
-      final lookupBuilder = catalog == null
-          ? null
-          : createWebEquipmentBucketLookupBuilder(offlineCatalog: catalog);
-      final rollTags = catalog == null
-          ? null
-          : createWebRollTagEnrichment(offlineCatalog: catalog);
+      final lookupBuilder = _lookupBuilder();
+      final rollTags = _rollTags();
       _compose = ComposeServices(
         db: db,
         session: component.oauthSession,
@@ -143,6 +200,46 @@ class _AppState extends State<App> {
     }
   }
 
+  void _syncInventoryFromBootstrap(WebDatabaseBootstrap boot) {
+    if (component.inventorySync != null) {
+      _inventorySync = component.inventorySync;
+      _ensureOwnedBridge(boot.database);
+      return;
+    }
+    final db = boot.database;
+    final session = component.oauthSession;
+    final profile = component.profileClient;
+    if (db != null &&
+        session != null &&
+        profile != null &&
+        _inventorySync == null) {
+      final lookupBuilder = _lookupBuilder();
+      final rollTags = _rollTags();
+      _inventorySync = InventorySyncController(
+        db: db,
+        session: session,
+        profileClient: profile,
+        equipmentBucketLookupBuilder: lookupBuilder,
+        perkNameMapBuilder: rollTags?.perkNameMapBuilder,
+        weaponRollMetaLookupBuilder: rollTags?.weaponRollMetaLookupBuilder,
+      );
+    }
+    _ensureOwnedBridge(db);
+  }
+
+  void _ensureOwnedBridge(AppDatabase? db) {
+    if (_ownedBridge != null || db == null) return;
+    final session = component.oauthSession;
+    if (session == null) return;
+    _ownedBridge = OwnedCatalogBridge(
+      db: db,
+      session: session,
+      inventorySync: _inventorySync,
+      entityLoader: component.entityLoader,
+      offlineCatalog: component.entityLoader?.catalog,
+    );
+  }
+
   @override
   void dispose() {
     unawaited(_sub?.cancel() ?? Future<void>.value());
@@ -153,6 +250,9 @@ class _AppState extends State<App> {
 
   LoadoutsController? get _effectiveLoadouts =>
       component.loadoutsController ?? _loadouts;
+
+  InventorySyncController? get _effectiveInventorySync =>
+      component.inventorySync ?? _inventorySync;
 
   void _ensureLoadoutsController() {
     if (_loadouts != null) return;
@@ -170,6 +270,7 @@ class _AppState extends State<App> {
   Component build(BuildContext context) {
     final compose = _effectiveCompose;
     final loadouts = _effectiveLoadouts;
+    final inventorySync = _effectiveInventorySync;
     return div(classes: 'app-shell', [
       Router(
         routes: [
@@ -188,6 +289,7 @@ class _AppState extends State<App> {
                 builder: (context, state) => SettingsPage(
                   dbStatus: _dbStatus,
                   oauthSession: component.oauthSession,
+                  inventorySync: inventorySync,
                 ),
               ),
               Route(
@@ -196,6 +298,7 @@ class _AppState extends State<App> {
                 builder: (context, state) => SettingsPage(
                   dbStatus: _dbStatus,
                   oauthSession: component.oauthSession,
+                  inventorySync: inventorySync,
                 ),
               ),
               Route(
@@ -203,6 +306,7 @@ class _AppState extends State<App> {
                 title: 'Catalog',
                 builder: (context, state) => CatalogPage(
                   loader: component.entityLoader,
+                  bridge: _ownedBridge,
                 ),
               ),
               Route(

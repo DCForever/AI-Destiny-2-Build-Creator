@@ -48,7 +48,9 @@ void main() {
       expect(find.text('Synthoceps'), findsOneComponent);
       expect(find.textContaining('3 result'), findsOneComponent);
       expect(find.textContaining('CLIENT_SECRET'), findsNothing);
-      expect(find.textContaining('raw rebuild'), findsOneComponent);
+      expect(find.textContaining('raw manifest rebuild'), findsOneComponent);
+      expect(find.text('Owned'), findsOneComponent);
+      expect(find.text('All'), findsOneComponent);
     });
 
     testComponents('empty injection shows empty state', (tester) async {

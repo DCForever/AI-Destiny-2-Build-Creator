@@ -1,19 +1,22 @@
-/// Offline catalog browse from prebuilt entity bundles (DART-044).
+/// Offline catalog browse + Owned scope from inventory (DART-044 / DART-056).
 library;
 
 import 'dart:async';
 
+import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../catalog/entity_bundle_loader.dart';
+import '../catalog/owned_catalog_bridge.dart';
 import '../theme/theme.dart';
 
-/// Catalog surface: load prebuilt bundle, facet/query filter offline.
+/// Catalog surface: load prebuilt bundle, facet/query filter, All|Owned.
 class CatalogPage extends StatefulComponent {
   const CatalogPage({
     this.loader,
+    this.bridge,
     this.initialItems,
     this.initialVersion,
     super.key,
@@ -22,6 +25,9 @@ class CatalogPage extends StatefulComponent {
   /// When null (tests with [initialItems]), no network load.
   final WebEntityBundleLoader? loader;
 
+  /// When set, enables Owned join + instance projections (DART-056).
+  final OwnedCatalogBridge? bridge;
+
   /// Injected items for component tests (skip loader).
   final List<CatalogItem>? initialItems;
   final String? initialVersion;
@@ -29,10 +35,18 @@ class CatalogPage extends StatefulComponent {
   static const String titleText = 'Catalog';
   static const String emptyText =
       'No catalog items. Prebuilt entity bundle is empty or missing.';
+  static const String emptyOwnedText =
+      'No owned items in local inventory. Sign in and use Settings → Sync now, '
+      'then reload Catalog.';
+  static const String emptyOwnedEntitiesText =
+      'Owned catalog needs entity definitions. Load prebuilt entity bundles '
+      '(empty Owned is not solely an inventory sync problem).';
   static const String loadingText = 'Loading prebuilt entity bundle…';
   static const String subtitleText =
       'Offline facets from prebuilt entity bundles. '
-      'No raw manifest rebuild in the browser. No inventory owned filter yet.';
+      'All | Owned joins local inventory after Settings sync. '
+      'Select a row to see instance ids for equip/DIM pins. '
+      'No raw manifest rebuild in the browser.';
 
   @override
   State<CatalogPage> createState() => _CatalogPageState();
@@ -46,6 +60,10 @@ class _CatalogPageState extends State<CatalogPage> {
   FacetFilter _elements = emptyFacet();
   FacetFilter _ammos = emptyFacet();
   bool? _exotic; // null off, true only exotic, false exclude exotic
+  CatalogScope _scope = CatalogScope.all;
+  CatalogItem? _selected;
+  List<CatalogInstanceProjection> _instances = const [];
+  bool _bridgeReady = false;
 
   @override
   void initState() {
@@ -63,7 +81,7 @@ class _CatalogPageState extends State<CatalogPage> {
             ? CatalogEmptyReason.noStores
             : CatalogEmptyReason.none,
       );
-      _results = _apply();
+      unawaited(_initWithBase());
       return;
     }
     final loader = component.loader;
@@ -73,12 +91,46 @@ class _CatalogPageState extends State<CatalogPage> {
     }
   }
 
+  Future<void> _initWithBase() async {
+    final bridge = component.bridge;
+    if (bridge != null) {
+      await bridge.refresh(reloadEntities: false);
+      if (!mounted) return;
+      setState(() {
+        _base = bridge.annotatedBase.isNotEmpty
+            ? bridge.annotatedBase
+            : _base;
+        _bridgeReady = true;
+        _results = _apply();
+        _syncSelection();
+      });
+      return;
+    }
+    setState(() {
+      _results = _apply();
+    });
+  }
+
   Future<void> _load(WebEntityBundleLoader loader) async {
     final status = await loader.load();
     if (!mounted) return;
+    _status = status;
+    _base = loader.catalog?.baseItems ?? const [];
+    final bridge = component.bridge;
+    if (bridge != null) {
+      await bridge.refresh(reloadEntities: false);
+      if (!mounted) return;
+      setState(() {
+        _base = bridge.annotatedBase.isNotEmpty
+            ? bridge.annotatedBase
+            : _base;
+        _bridgeReady = true;
+        _results = _apply();
+        _syncSelection();
+      });
+      return;
+    }
     setState(() {
-      _status = status;
-      _base = loader.catalog?.baseItems ?? const [];
       _results = _apply();
     });
   }
@@ -89,21 +141,65 @@ class _CatalogPageState extends State<CatalogPage> {
       elements: _elements,
       ammos: _ammos,
       exotic: _exotic,
+      scope: _scope,
     );
   }
 
   List<CatalogItem> _apply() {
-    return filterCatalogClient(_base, _filters());
+    final bridge = component.bridge;
+    if (bridge != null && _bridgeReady) {
+      return bridge.browse(_filters());
+    }
+    // Without bridge, Owned is empty (no inventory join).
+    final filters = _filters();
+    if (filters.scope == CatalogScope.owned) {
+      return filterCatalogClient(
+        annotateCatalogWithOwned(_base, const {}),
+        filters,
+      );
+    }
+    return filterCatalogClient(_base, filters);
   }
 
   void _refilter() {
     setState(() {
       _results = _apply();
+      _syncSelection();
+    });
+  }
+
+  void _syncSelection() {
+    final sel = _selected;
+    if (sel == null) {
+      _instances = const [];
+      return;
+    }
+    final stillVisible = _results.any((i) => i.hash == sel.hash);
+    if (!stillVisible) {
+      _selected = null;
+      _instances = const [];
+      return;
+    }
+    final bridge = component.bridge;
+    _instances = bridge?.instancesFor(sel.hash) ?? const [];
+  }
+
+  void _selectItem(CatalogItem item) {
+    setState(() {
+      _selected = item;
+      final bridge = component.bridge;
+      _instances = bridge?.instancesFor(item.hash) ?? const [];
     });
   }
 
   void _onQuery(String value) {
     _query = value;
+    _refilter();
+  }
+
+  void _setScope(CatalogScope scope) {
+    if (_scope == scope) return;
+    _scope = scope;
     _refilter();
   }
 
@@ -147,8 +243,21 @@ class _CatalogPageState extends State<CatalogPage> {
     return 'Exotic';
   }
 
+  String _scopeChipClass(CatalogScope scope) {
+    return _scope == scope ? 'facet-chip facet-include' : 'facet-chip';
+  }
+
+  String _emptyMessage() {
+    if (_scope == CatalogScope.owned) {
+      if (_base.isEmpty) return CatalogPage.emptyOwnedEntitiesText;
+      return CatalogPage.emptyOwnedText;
+    }
+    return CatalogPage.emptyText;
+  }
+
   @override
   Component build(BuildContext context) {
+    final scopeLabel = _scope == CatalogScope.owned ? 'owned' : 'all';
     return section(
       classes: 'catalog-page',
       attributes: {'data-page': 'catalog'},
@@ -185,6 +294,37 @@ class _CatalogPageState extends State<CatalogPage> {
                 onInput: (value) => _onQuery('$value'),
               ),
             ]),
+            div(
+              classes: 'facet-row',
+              attributes: {'data-testid': 'catalog-scope'},
+              [
+                span(classes: 'facet-label', [.text('Scope')]),
+                button(
+                  key: const ValueKey('scope-chip-all'),
+                  classes: _scopeChipClass(CatalogScope.all),
+                  attributes: {
+                    'type': 'button',
+                    'data-testid': 'scope-chip-all',
+                  },
+                  events: {
+                    'click': (_) => _setScope(CatalogScope.all),
+                  },
+                  [.text('All')],
+                ),
+                button(
+                  key: const ValueKey('scope-chip-owned'),
+                  classes: _scopeChipClass(CatalogScope.owned),
+                  attributes: {
+                    'type': 'button',
+                    'data-testid': 'scope-chip-owned',
+                  },
+                  events: {
+                    'click': (_) => _setScope(CatalogScope.owned),
+                  },
+                  [.text('Owned')],
+                ),
+              ],
+            ),
             div(
               classes: 'facet-row',
               attributes: {'data-testid': 'facet-elements'},
@@ -244,27 +384,45 @@ class _CatalogPageState extends State<CatalogPage> {
           p(
             classes: 'catalog-count',
             attributes: {'data-testid': 'catalog-count'},
-            [.text('${_results.length} result(s)')],
+            [.text('${_results.length} result(s) · scope=$scopeLabel')],
           ),
           if (_results.isEmpty)
             p(
               attributes: {'data-testid': 'catalog-empty'},
-              [.text(CatalogPage.emptyText)],
+              [.text(_emptyMessage())],
             )
           else
-            ul(
+            div(
               classes: 'catalog-list',
               attributes: {'data-testid': 'catalog-list'},
               [
                 for (final item in _results)
-                  li(
-                    classes: 'catalog-row',
+                  button(
+                    key: ValueKey('catalog-row-${item.hash}'),
+                    classes: _selected?.hash == item.hash
+                        ? 'catalog-row catalog-row-selected'
+                        : 'catalog-row',
                     attributes: {
+                      'type': 'button',
                       'data-hash': '${item.hash}',
                       'data-testid': 'catalog-row',
+                      if (item.owned) 'data-owned': '${item.ownedCount}',
+                    },
+                    events: {
+                      'click': (_) => _selectItem(item),
                     },
                     [
-                      span(classes: 'catalog-name', [.text(item.name)]),
+                      span(classes: 'catalog-name', [
+                        .text(item.name),
+                        if (item.owned)
+                          span(
+                            classes: 'catalog-owned-badge',
+                            attributes: {
+                              'data-testid': 'owned-badge-${item.hash}',
+                            },
+                            [.text(' ×${item.ownedCount}')],
+                          ),
+                      ]),
                       span(classes: 'catalog-meta', [
                         .text(
                           [
@@ -272,6 +430,7 @@ class _CatalogPageState extends State<CatalogPage> {
                             if (item.element != null) item.element!,
                             if (item.ammo != null) item.ammo!,
                             if (item.isExotic) 'Exotic',
+                            if (item.owned) 'owned×${item.ownedCount}',
                           ].join(' · '),
                         ),
                       ]),
@@ -279,6 +438,68 @@ class _CatalogPageState extends State<CatalogPage> {
                   ),
               ],
             ),
+          if (_selected != null) ...[
+            h2(
+              attributes: {'data-testid': 'catalog-instances-title'},
+              [.text('Owned instances — ${_selected!.name}')],
+            ),
+            p(classes: 'catalog-sub', [
+              .text(
+                'Copy an instance id into Build compose pin for equip/DIM. '
+                'Soft suggestions never auto-apply.',
+              ),
+            ]),
+            if (_instances.isEmpty)
+              p(
+                attributes: {'data-testid': 'catalog-instances-empty'},
+                [
+                  .text(
+                    _selected!.owned
+                        ? 'No instance rows for this definition in local inventory.'
+                        : 'No owned instances — wishlist/definition only until you sync inventory.',
+                  ),
+                ],
+              )
+            else
+              ul(
+                classes: 'catalog-instances',
+                attributes: {'data-testid': 'catalog-instances'},
+                [
+                  for (final inst in _instances)
+                    li(
+                      classes: 'catalog-instance-row',
+                      attributes: {
+                        'data-testid': 'catalog-instance',
+                        'data-instance-id': inst.instanceId,
+                      },
+                      [
+                        span(
+                          classes: 'catalog-instance-id',
+                          attributes: {
+                            'data-testid': 'instance-id-${inst.instanceId}',
+                          },
+                          [.text(inst.instanceId)],
+                        ),
+                        span(classes: 'catalog-meta', [
+                          .text(
+                            [
+                              'power ${inst.power}',
+                              inst.bucket,
+                              inst.location,
+                              if (inst.characterId != null)
+                                'char ${inst.characterId}',
+                              if (inst.isMasterwork) 'MW',
+                              if (inst.isCrafted) 'Crafted',
+                              if (inst.rollTags.isNotEmpty)
+                                inst.rollTags.join(','),
+                            ].join(' · '),
+                          ),
+                        ]),
+                      ],
+                    ),
+                ],
+              ),
+          ],
         ],
       ],
     );
@@ -347,10 +568,11 @@ class _CatalogPageState extends State<CatalogPage> {
             textDecoration: TextDecoration(line: .lineThrough),
           ),
           css('.catalog-list').styles(
+            display: .flex,
             width: 100.percent,
             margin: .only(top: 0.5.rem),
             padding: .all(0.px),
-            listStyle: .none,
+            flexDirection: .column,
           ),
           css('.catalog-row').styles(
             display: .flex,
@@ -358,16 +580,54 @@ class _CatalogPageState extends State<CatalogPage> {
             padding: .symmetric(horizontal: 0.75.rem, vertical: 0.55.rem),
             border: .only(bottom: .solid(color: flapLineColor, width: 1.px)),
             flexDirection: .column,
+            alignItems: .start,
             gap: Gap(row: 0.15.rem),
+            color: flapForegroundColor,
             backgroundColor: flapSurfaceColor,
+            cursor: .pointer,
+            textAlign: TextAlign.left,
+          ),
+          css('.catalog-row-selected').styles(
+            border: .only(
+              left: .solid(color: flapAccentColor, width: 3.px),
+              bottom: .solid(color: flapLineColor, width: 1.px),
+            ),
           ),
           css('.catalog-name').styles(
             fontWeight: .w600,
             fontSize: 0.95.rem,
           ),
+          css('.catalog-owned-badge').styles(
+            color: flapAccentColor,
+            fontWeight: .w600,
+          ),
           css('.catalog-meta').styles(
             color: flapMutedColor,
             fontSize: 0.8.rem,
+          ),
+          css('.catalog-instances').styles(
+            width: 100.percent,
+            margin: .zero,
+            padding: .all(0.px),
+            listStyle: .none,
+          ),
+          css('.catalog-instance-row').styles(
+            display: .flex,
+            width: 100.percent,
+            padding: .symmetric(horizontal: 0.75.rem, vertical: 0.45.rem),
+            border: .only(bottom: .solid(color: flapLineColor, width: 1.px)),
+            flexDirection: .column,
+            gap: Gap(row: 0.1.rem),
+            backgroundColor: flapBackgroundColor,
+          ),
+          css('.catalog-instance-id').styles(
+            fontFamily: .list([
+              FontFamily('ui-monospace'),
+              FontFamilies.monospace,
+            ]),
+            fontWeight: .w600,
+            fontSize: 0.9.rem,
+            color: flapAccentColor,
           ),
           css('input').styles(
             display: .block,

@@ -1,13 +1,12 @@
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 
-/// Catalog/entity slot builder for Jaspr equip sync (DART-050).
+/// Catalog/entity slot builder for Jaspr inventory sync + equip (DART-050/056).
 ///
 /// Web does not download full raw DestinyInventoryItemDefinition (DART-044
 /// prebuilt bundles). Slot labels cover weapons + exotic armor; legendary armor
-/// may remain unresolved until entity coverage expands. Full web Settings sync
-/// depth is DART-056 — this wires the same resolution rules into equip
-/// `syncIfStale`.
+/// may remain unresolved until entity coverage expands. Settings `syncNow` and
+/// equip `syncIfStale` share this builder so vault/postmaster resolve the same.
 EquipmentBucketLookupBuilder createWebEquipmentBucketLookupBuilder({
   required OfflineCatalog offlineCatalog,
 }) {

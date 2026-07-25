@@ -27,6 +27,18 @@ void main() {
       );
       expect(find.textContaining('GAP-INV-06'), findsOneComponent);
       expect(find.textContaining('GAP-INV-04'), findsOneComponent);
+      expect(find.textContaining('DART-056'), findsComponents);
+    });
+
+    testComponents('subtitle mentions inventory vault resolution (DART-056)',
+        (tester) async {
+      tester.pumpComponent(const SettingsPage());
+
+      expect(
+        find.textContaining('vault/postmaster resolution'),
+        findsOneComponent,
+      );
+      expect(find.textContaining('Inventory:'), findsOneComponent);
     });
 
     testComponents('does not expose confidential secret identifiers as config',

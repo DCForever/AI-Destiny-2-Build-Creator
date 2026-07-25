@@ -1,4 +1,4 @@
-/// Settings surface with Hello + web DB status + OAuth account (DART-042–045).
+/// Settings surface with Hello + web DB status + OAuth + inventory sync (DART-042–056).
 library;
 
 import 'package:jaspr/dom.dart';
@@ -7,16 +7,20 @@ import 'package:jaspr/jaspr.dart';
 import '../auth/web_oauth_session.dart';
 import '../components/oauth_account_card.dart';
 import '../db/web_db_status.dart';
+import '../settings/inventory_sync_card.dart';
+import '../settings/inventory_sync_controller.dart';
 import '../theme/theme.dart';
 
 /// Primary landing surface for the Jaspr web host.
 ///
 /// Shows Settings identity, Hello greeting, local database / OPFS session
-/// status (writer vs blocked), and Public+PKCE Bungie account (DART-045).
+/// status (writer vs blocked), Public+PKCE Bungie account (DART-045), and
+/// inventory sync with vault/transfer resolution (DART-056).
 class SettingsPage extends StatelessComponent {
   const SettingsPage({
     this.dbStatus,
     this.oauthSession,
+    this.inventorySync,
     super.key,
   });
 
@@ -26,12 +30,16 @@ class SettingsPage extends StatelessComponent {
   /// When null, account card is omitted (tests that only cover DB/Hello).
   final WebOAuthSession? oauthSession;
 
+  /// When non-null and [oauthSession] is set, shows inventory Sync now card.
+  final InventorySyncController? inventorySync;
+
   /// Stable copy for tests and a11y.
   static const String titleText = 'Settings';
   static const String helloText = 'Hello';
   static const String subtitleText =
       'Jaspr web host — Matte Flap tokens, client routing, Drift WASM/OPFS, '
-      'prebuilt entity bundles for Catalog, Public+PKCE Bungie sign-in. '
+      'prebuilt entity bundles for Catalog, Public+PKCE Bungie sign-in, '
+      'inventory sync with vault/postmaster resolution (DART-056). '
       'No Next.js dependency. Single-tab writer for local SQLite. '
       'No confidential client secret.';
 
@@ -75,6 +83,25 @@ class SettingsPage extends StatelessComponent {
             [.text(writerReadyHint)],
           ),
         if (oauthSession != null) OAuthAccountCard(session: oauthSession!),
+        if (inventorySync != null && oauthSession != null)
+          InventorySyncCard(
+            controller: inventorySync!,
+            session: oauthSession!,
+          )
+        else if (oauthSession != null && !status.isWriter)
+          div(classes: 'settings-panel', [
+            h2([.text('Inventory sync')]),
+            p(
+              classes: 'settings-policy',
+              attributes: {'data-testid': 'inventory-sync-writer-required'},
+              [
+                .text(
+                  'Inventory sync requires the database writer tab. '
+                  'Close other tabs of this app, then reload.',
+                ),
+              ],
+            ),
+          ]),
         div(classes: 'settings-panel', [
           h2([.text('Host status')]),
           ul([
@@ -103,6 +130,16 @@ class SettingsPage extends StatelessComponent {
                       : (oauthSession!.isConfigured
                           ? 'Sign-in: Public+PKCE (DART-045)'
                           : 'Sign-in: configure BUNGIE_CLIENT_ID'),
+                ),
+              ],
+            ),
+            li(
+              attributes: {'data-testid': 'inventory-host-line'},
+              [
+                .text(
+                  inventorySync == null
+                      ? 'Inventory: controller not available (writer DB + profile)'
+                      : 'Inventory: full-replace sync + vault resolution (DART-056)',
                 ),
               ],
             ),
@@ -136,9 +173,9 @@ class SettingsPage extends StatelessComponent {
                 'Owned catalog joins inventory counts onto entity definitions. '
                 'If entity bundles are empty or missing, empty Owned is not solely '
                 'an inventory sync problem — load entity bundles and sync inventory '
-                '(DART-053 / GAP-INV-06). Full web inventory sync depth is DART-056. '
-                'Windows Settings surfaces last-sync raw/parsed/dropped/resolution '
-                'diagnostics after Sync now (GAP-INV-04).',
+                '(DART-053 / GAP-INV-06). Web Settings Sync now uses the same '
+                'vault/postmaster equipment-bucket resolution as Windows (DART-056). '
+                'Diagnostics show raw/parsed/dropped/resolution after Sync now (GAP-INV-04).',
               ),
             ],
           ),
