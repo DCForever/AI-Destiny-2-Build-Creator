@@ -5,7 +5,8 @@
 **Source:** workflow `explore-flutter-port` + product follow-up answers  
 **Related report:** session scratch `flutter-port-exploration.md` (run `explore-flutter-port`)  
 **Branching / worktrees:** [`multiplatform-dart-branching.md`](./multiplatform-dart-branching.md) — **all** Spec Kit work for this port lives on `feature/multiplatform-dart` (+ child feature branches), in the dedicated worktree — not on product slices (e.g. `043-*`).  
-**Slice roadmap (all phases, small Spec Kit slices):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — IDs **`DART-001`…** (parallel workstream; not product `0NN`)
+**Slice roadmap (all phases, small Spec Kit slices):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — IDs **`DART-001`…** (parallel workstream; not product `0NN`)  
+**Feature gaps vs Next (planned work):** [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) — GAP-* → DART-050+
 
 This note freezes port *architecture* choices. It does **not** change live product domain rules (DBR/DAC/BR). Next.js remains production until explicit cutover gates pass.
 

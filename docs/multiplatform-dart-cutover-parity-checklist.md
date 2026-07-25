@@ -40,14 +40,16 @@ PRODUCTION_CUTOVER: NO-GO
 
 ### Residual blockers
 
-| ID | Blocker | Blocks |
-| -- | ------- | ------ |
-| RB-01 | Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface | RC-NAV |
-| RB-02 | Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode | RC-SYNC, RC-NAV |
-| RB-03 | Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed | RC-AUTH |
-| RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS |
-| RB-05 | Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened | RC-WEB-DATA |
+| ID | Blocker | Blocks | Planned work |
+| -- | ------- | ------ | ------------ |
+| RB-01 | Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface | RC-NAV | **DART-055** / GAP-NAV-01 |
+| RB-02 | Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode | RC-SYNC, RC-NAV | **DART-056** / GAP-WEB-01 (+ **DART-050** shared resolution) |
+| RB-03 | Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed | RC-AUTH | **DART-058** / GAP-AUTH-01 |
+| RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS | **DART-060** / GAP-OPS-01 |
+| RB-05 | Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened | RC-WEB-DATA | **DART-059** / GAP-WEB-02 |
+| **RB-06** | **Inventory fidelity:** vault/postmaster resolution + enrichment thinner than Next (live dual-use confirmed) | RC-SYNC fidelity | **DART-050–054** / GAP-INV-01…05 |
 
+Canonical feature list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md).  
 When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
 
 ---
@@ -100,7 +102,7 @@ Domain packages are shared; UI shells differ.
 | Finish gaps helpers | Yes | **PASS** | **PARTIAL** | **PARTIAL** | DART-007 pure; host UX varies |
 | Armor optimizer (confirm-only) | Yes | **PASS** | **MISS** | **MISS** | DART-035/036 Windows; not required on mobile/web for program gate; product cutover may accept Windows-only optimizer |
 | Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 — **no CLIENT_SECRET** |
-| Inventory sync full-replace | Yes | **PASS** | **PARTIAL** | **PARTIAL** | DART-024/025 Windows primary; web thinner (**RB-02**) |
+| Inventory sync full-replace | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | DART-024/025 present but vault resolution + enrichment lag Next (**RB-06**, GAP-INV-01…03); web thinner (**RB-02**) |
 | Bungie equip (partial OK) | Yes | **PASS** | **MISS** | **PASS** | DART-037/038/047 |
 | DIM jsonOnly export | Yes | **PASS** | **MISS** | **PASS** | DART-010/039/047; blocked when not equip-ready |
 | Legacy `app.db` import | N/A (source) | **PASS** | **N/A** | **N/A** | DART-048 dry-run + apply → StorageRoot |

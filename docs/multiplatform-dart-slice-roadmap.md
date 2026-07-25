@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-049 done — cutover parity checklist; P5 / program gate)  
+**Updated:** 2026-07-25 (DART-049 done; **P6–P8 planned DART-050–061** for Next gaps)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -9,7 +9,8 @@
 
 **Architecture freezes:** [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md)  
 **Branch / worktree rules:** [multiplatform-dart-branching.md](./multiplatform-dart-branching.md)  
-**Exploration source:** workflow `explore-flutter-port` + decisions Q1–Q4  
+**Feature gaps (canonical):** [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) — every open P0–P1 gap maps to a DART-NNN below  
+**Exploration / gaps workflows:** `explore-flutter-port`, **`dart-gaps-analysis`**  
 
 This is the **canonical list of Spec Kit slices** for the full port. Implement **in order** (do not skip phase gates). Each row is one feature branch / one `specs/dart-NNN-short-name/` directory — sized so a single Spec Kit cycle is realistic (roughly days to ~1–2 weeks of focused work, not a whole phase).
 
@@ -24,7 +25,7 @@ This is the **canonical list of Spec Kit slices** for the full port. Implement *
 
 - **Do not** continue product numbers (`044`, `045`, …) for this port.
 - **Do not** reuse product feature numbers for Dart slices.
-- Program IDs in this table are always **`DART-001` … `DART-049`** (zero-padded to three digits).
+- Program IDs in this table are **`DART-001` …** (zero-padded); post-049 planning continues at **DART-050+**.
 - Git branch and `specs/` folder use **lowercase** `dart-NNN-short-name` (filesystem-friendly); the table’s **ID** column is the canonical label (`DART-001`).
 - When running Spec Kit on this line, **force** names so auto-numbering never steals product `044+`:
 
@@ -48,7 +49,7 @@ $env:GIT_BRANCH_NAME = "dart-001-domain-foundation"
 
 | Status | Meaning |
 | ------ | ------- |
-| `pending` | Not started |
+| `pending` / `planned` | Not started (reserved on roadmap) |
 | `active` | Spec Kit branch in progress |
 | `blocked` | Waiting on decision, dependency, or external config |
 | `done` | Merged to `feature/multiplatform-dart` |
@@ -80,6 +81,9 @@ Do **not** schedule slices for: `/debug/*` as primary nav, multi-pass LLM genera
 | **P3** | Compose spine on Flutter Windows | Create build → attach sets → hard save gates → soft coverage chips |
 | **P4** | Optimizer, equip/DIM, mobile shells | Equip-ready + partial equip; optimizer confirm-only; Android/iOS reduced compose path |
 | **P5** | Jaspr web + cutover | OPFS single-writer; prebuilt entities; compose→equip-ready path; Next retirement gates documented |
+| **P6** | Inventory fidelity | Vault resolution, roll tags, socket enrichment, diagnostics, live parity harness |
+| **P7** | Nav & shell residuals | Loadouts; Jaspr sync depth; mobile polish |
+| **P8** | Production readiness | Public OAuth matrix, entity channel, dual-run ops, cutover re-gate |
 
 **Shell order (locked):** pure packages → **Flutter Windows** → Flutter mobile → **Jaspr web**.  
 **I/O (locked):** pure Dart only — no Node sidecar.
@@ -141,6 +145,18 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-047** | **done** | `jaspr-equip-export` | `dart-047-jaspr-equip-export` | P5 | DART-046, DART-037, DART-010 | Equip-ready + DIM json + optional equip on web | Same domain packages as Flutter |
 | **DART-048** | **done** | `legacy-db-import` | `dart-048-legacy-db-import` | P5 | DART-014, DART-043 | Import tool/UX from Next `.cache/app.db` → platform StorageRoot | One documented migration path; dry-run + apply |
 | **DART-049** | **done** | `cutover-parity-checklist` | `dart-049-cutover-parity-checklist` | P5 | DART-047, DART-041, DART-038 | Written parity checklist vs PRODUCT production nav; Next retirement criteria | Checklist in repo; explicit go/no-go; **P5 / program gate** |
+| **DART-050** | **planned** | `inventory-vault-resolution` | `dart-050-inventory-vault-resolution` | P6 | DART-024, DART-017/018 | Wire equipmentBucketLookup so vault/postmaster copies are stored | GAP-INV-01; vault instances in Drift; diagnostics resolvedFromTransfer |
+| **DART-051** | **planned** | `inventory-roll-tags` | `dart-051-inventory-roll-tags` | P6 | DART-050 | Port computeRollTags parity for weapon inventory rows | GAP-INV-02; golden vs Next fixtures |
+| **DART-052** | **planned** | `inventory-socket-enrichment` | `dart-052-inventory-socket-enrichment` | P6 | DART-050 | Enrich socket plugs for perk grids (weapon socket context) | GAP-INV-03 |
+| **DART-053** | **planned** | `inventory-sync-diagnostics-ui` | `dart-053-inventory-sync-diagnostics-ui` | P6 | DART-025, DART-050 | Settings UI: raw/parsed/dropped/vault resolved counts + entity-cache empty warning | GAP-INV-04, GAP-INV-06 |
+| **DART-054** | **planned** | `inventory-live-parity-harness` | `dart-054-inventory-live-parity-harness` | P6 | DART-050–053 | Live/manual+tool Next-vs-Dart inventory count harness | GAP-INV-05; process gate |
+| **DART-055** | **planned** | `in-game-loadouts-surface` | `dart-055-in-game-loadouts-surface` | P7 | DART-024 | First-class Loadouts UI (Windows first) or product demote | GAP-NAV-01; RB-01 |
+| **DART-056** | **planned** | `jaspr-inventory-sync-depth` | `dart-056-jaspr-inventory-sync-depth` | P7 | DART-050, DART-045 | Web sync/owned depth match Windows resolution rules | GAP-WEB-01; RB-02 |
+| **DART-057** | **planned** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires | GAP-MOB-01, GAP-UI-01 |
+| **DART-058** | **planned** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | GAP-AUTH-01; RB-03 |
+| **DART-059** | **planned** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | GAP-WEB-02; RB-05 |
+| **DART-060** | **planned** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | GAP-OPS-01; RB-04 |
+| **DART-061** | **planned** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | GAP-CUT-01 |
 
 ---
 
@@ -190,11 +206,11 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **(none)** — planned DART-001…049 complete; **P5 / program gate closed** |
+| **Next / active slice** | **DART-050** `inventory-vault-resolution` (**planned** — start Spec Kit next) |
 | **Active branch** | `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-049-cutover-parity-checklist/` (done) |
+| **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until `docs/multiplatform-dart-cutover-parity-checklist.md` residual blockers / `RC-*` pass (not a new DART slice by default) |
+| **Blocked on** | Production cutover **NO-GO** until residual RB/RC + inventory fidelity (GAP-INV-01…) pass |
 
 ### DART-049 note (completed) — **P5 / program gate**
 

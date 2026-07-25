@@ -34,7 +34,8 @@ Product line (separate):
 7. Architecture freezes: [`multiplatform-dart-port-decisions.md`](./multiplatform-dart-port-decisions.md).
 8. **Slice backlog (canonical):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — **DART-001–DART-049**; update status after every finish-spec.
 9. Exploration Grok workflow (read-only): `.grok/workflows/explore-flutter-port.rhai` — maintain on this line; optional, not a product runtime dependency.
-10. **Auto Spec Kit loop:** `.grok/workflows/dart-speckit-loop.rhai` — advances DART-001… in order (specify→plan→tasks→implement→finish). Operator notes: [`multiplatform-dart-speckit-loop.md`](./multiplatform-dart-speckit-loop.md).
+10. **Auto Spec Kit loop:** `.grok/workflows/dart-speckit-loop.rhai` — advances DART slices in order (specify→plan→tasks→implement→finish). Operator notes: [`multiplatform-dart-speckit-loop.md`](./multiplatform-dart-speckit-loop.md).
+11. **Gaps analysis:** `.grok/workflows/dart-gaps-analysis.rhai` — Next vs Dart parity scan; updates [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) so every P0–P1 gap has a planned DART-NNN.
 
 ## Creating a new Spec Kit slice (agents)
 
