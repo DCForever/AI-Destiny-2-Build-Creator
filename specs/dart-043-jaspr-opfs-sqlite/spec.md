@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-25
 
-**Status**: Active
+**Status**: Done (merged to `feature/multiplatform-dart`)
 
 **Input**: User description: "Drift WASM + OPFS + single-tab writer lock UX. Second tab read-only or blocked; documented limits."
 

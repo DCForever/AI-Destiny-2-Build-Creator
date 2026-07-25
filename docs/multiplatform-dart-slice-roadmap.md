@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-042 done — Jaspr app skeleton: shell + routing + tokens CSS; Hello Settings)  
+**Updated:** 2026-07-25 (DART-043 done — Drift WASM + OPFS + single-tab writer lock; second tab blocked)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -134,7 +134,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-040** | **done** | `flutter-mobile-shell-nav` | `dart-040-flutter-mobile-shell-nav` | P4 | DART-034 | Android+iOS app shell: bottom nav, Focus Swap routes, shared use cases | Installable debug builds; Settings+Build list at minimum |
 | **DART-041** | **done** | `flutter-mobile-compose` | `dart-041-flutter-mobile-compose` | P4 | DART-040, DART-033–034 | Reduced-density compose on phone (sheets, linear finish) | Create build → attach → soft guidance on device; **P4 phase gate** |
 | **DART-042** | **done** | `jaspr-app-skeleton` | `dart-042-jaspr-app-skeleton` | P5 | DART-011, DART-013 | Jaspr app shell + routing + design tokens (CSS) | Hello Settings page; no Next dependency |
-| **DART-043** | pending | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
+| **DART-043** | **done** | `jaspr-opfs-sqlite` | `dart-043-jaspr-opfs-sqlite` | P5 | DART-042, DART-014 | Drift WASM + OPFS + single-tab writer lock UX | Second tab read-only or blocked; documented limits |
 | **DART-044** | pending | `jaspr-entity-bundles` | `dart-044-jaspr-entity-bundles` | P5 | DART-017, DART-042 | Load prebuilt entity bundles (no full raw rebuild in browser) | Offline catalog facets on web |
 | **DART-045** | pending | `jaspr-oauth-pkce` | `dart-045-jaspr-oauth-pkce` | P5 | DART-022, DART-042 | Browser Public+PKCE + token storage strategy | No confidential secret; sign-in works on HTTPS loopback/prod origin |
 | **DART-046** | pending | `jaspr-compose-spine` | `dart-046-jaspr-compose-spine` | P5 | DART-043–045, DART-027–028 | Port compose spine UI to Jaspr (build/sets/synergy/catalog) | Intent→compose with hard/soft parity |

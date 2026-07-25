@@ -63,7 +63,7 @@
 ## Phase 6: Finish
 
 - [x] T017 Commit remaining work on `dart-043-jaspr-opfs-sqlite`
-- [ ] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-043 done; pointer → DART-044; commit base
+- [x] T018 Merge into `feature/multiplatform-dart` (--no-edit); roadmap DART-043 done; pointer → DART-044; commit base
 
 ---
 
