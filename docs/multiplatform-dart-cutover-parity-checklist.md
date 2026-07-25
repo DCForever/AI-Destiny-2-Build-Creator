@@ -1,7 +1,7 @@
 # Multiplatform Dart — Cutover Parity Checklist (DART-049)
 
 **Status:** active program gate artifact  
-**Updated:** 2026-07-25 (DART-059 entity bundle prod channel; RB-05 cleared / RC-WEB-DATA PASS)  
+**Updated:** 2026-07-25 (DART-060 dual-run + rollback ops; RB-04 cleared / RC-OPS PASS)  
 **Program ID:** DART-049  
 **Phase:** P5 / **program gate**  
 **Integration base:** `feature/multiplatform-dart`  
@@ -36,7 +36,7 @@ PRODUCTION_CUTOVER: NO-GO
 
 **PROGRAM_GATE rationale:** All planned multiplatform slices through DART-049 are specified/implemented on `feature/multiplatform-dart` (domain → Drift → Flutter Windows → mobile → Jaspr → import → this checklist). Validator for this document is green. P5 exit (“Next retirement gates **documented**”) is satisfied.
 
-**PRODUCTION_CUTOVER rationale:** Residual blockers remain (see [Residual blockers](#residual-blockers)). Do **not** delete Next, merge this line to `main` as sole production, or drop Confidential OAuth until every `RC-*` criterion is **pass**.
+**PRODUCTION_CUTOVER rationale:** Residual blockers remain (see [Residual blockers](#residual-blockers)) — primarily **RC-BRANCH** / formal cutover re-gate (**DART-061** / GAP-CUT-01). Dual-run ops (**RB-04** / **RC-OPS**) cleared by DART-060. Do **not** delete Next, merge this line to `main` as sole production, or drop Confidential OAuth until every `RC-*` criterion is **pass** and a human sets GO.
 
 ### Residual blockers
 
@@ -45,14 +45,14 @@ PRODUCTION_CUTOVER: NO-GO
 | ~~**RB-01**~~ | ~~Product **In-Game Loadouts** (`/loadouts`) has no first-class Dart shell surface~~ | ~~RC-NAV~~ | **CLEARED (2026-07-25)** by **DART-055** / GAP-NAV-01: Windows NavigationRail **Loadouts** + Jaspr `/loadouts` list Bungie component 206; pure parse in `destiny2_bungie`. Mobile top-level nav remains reduced (MISS/N/A — does not fail RC-NAV). |
 | ~~**RB-02**~~ | ~~Jaspr web inventory sync + owned catalog filter remain thinner than Next Settings/catalog owned mode~~ | ~~RC-SYNC~~ | **CLEARED (2026-07-25)** by **DART-056** / GAP-WEB-01: Jaspr Settings Sync now + vault/transfer lookup (catalog slots, same rules as DART-050 equip path); diagnostics retained; Catalog All\|Owned + instanceId projections for equip/DIM pins. Host vault fixtures assert `resolvedFromTransfer > 0`. Residual: equip optional when write clients missing; legendary armor without prebuilt slots may drop (entity coverage). |
 | ~~**RB-03**~~ | ~~Production Bungie **Public** app redirect matrix + hosting for Jaspr origin not ops-signed~~ | ~~RC-AUTH~~ | **CLEARED (2026-07-25)** by **DART-058** / GAP-AUTH-01: published matrix [multiplatform-dart-prod-public-oauth-matrix.md](./multiplatform-dart-prod-public-oauth-matrix.md) + `ProdPublicOAuthMatrix` (Windows HTTPS loopback, Jaspr `/auth/callback`, mobile schemes); client secret scan `tool/client_secret_scan.dart`; Windows+Jaspr smoke preflight (mocked session tests + operator checklist). |
-| RB-04 | Dual-run / rollback procedure (Next + Dart) not executed in a release window | RC-OPS | **DART-060** / GAP-OPS-01 |
+| ~~**RB-04**~~ | ~~Dual-run / rollback procedure (Next + Dart) not executed in a release window~~ | ~~RC-OPS~~ | **CLEARED (2026-07-25)** by **DART-060** / GAP-OPS-01: written dual-run runbook executed once ([multiplatform-dart-dual-run-rollback-runbook.md](./multiplatform-dart-dual-run-rollback-runbook.md)); Next + Windows + Jaspr available; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next sole production; offline gate `dart run tool/dual_run_ops_gate.dart`. |
 | ~~**RB-05**~~ | ~~Entity bundle distribution channel for web (ship-in-app vs CDN) not production-hardened~~ | ~~RC-WEB-DATA~~ | **CLEARED (2026-07-25)** by **DART-059** / GAP-WEB-02: **hybrid** channel (ship-in-app primary + optional CDN) documented with versioning ([entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md)); prod path `/entities/channel.json` + `/entities/prod/bundle.json`; loader fallback + source report; offline Catalog without Next manifest API. |
 | ~~**RB-06**~~ | ~~**Inventory fidelity:** vault/postmaster unwired + enrichment thinner + no live harness~~ | ~~RC-SYNC fidelity~~ | **CLEARED (2026-07-25)** by **DART-050–054**: vault lookup (050), roll tags (051), sockets (052), diagnostics UI (053), live/fixture harness + fidelity gate (054 / GAP-INV-05 / PROC-03/04/05). Evidence: package+host fixtures; [multiplatform-dart-inventory-live-parity-harness.md](./multiplatform-dart-inventory-live-parity-harness.md); `dart run tool/inventory_fidelity_gate.dart`. Web owned depth cleared separately by **RB-02** / DART-056. |
 
 Canonical **product feature inventory** + gap list + exit criteria: [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (every AppShell/PRODUCT capability has Plan ownership; open P0/P1 map to DART-050–061).  
 When all residual blockers are cleared **and** all `RC-*` are pass, a human may set `PRODUCTION_CUTOVER: GO` and update this section’s date/rationale.
 
-**Cleared residuals:** RB-01 (in-game loadouts surface DART-055); RB-02 (Jaspr inventory sync + Owned depth DART-056); RB-03 (prod Public OAuth matrix DART-058); RB-05 (entity bundle prod channel DART-059); RB-06 (inventory fidelity program DART-050–054).
+**Cleared residuals:** RB-01 (in-game loadouts surface DART-055); RB-02 (Jaspr inventory sync + Owned depth DART-056); RB-03 (prod Public OAuth matrix DART-058); RB-04 (dual-run + rollback ops DART-060); RB-05 (entity bundle prod channel DART-059); RB-06 (inventory fidelity program DART-050–054).
 
 ---
 
@@ -130,7 +130,7 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 | **RC-WEB-DATA** | Web entity/DB limits accepted | OPFS single-writer UX documented; prebuilt bundles load offline; prod distribution chosen | [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md); [entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md); hybrid channel + loader tests; RB-05 cleared | **PASS** (DART-059; re-verify full extract packaging before cutover day) |
 | **RC-SECRETS** | No confidential secrets in clients | Scan clients/packages for `CLIENT_SECRET` / `SESSION_SECRET` embedding — none | Package/app source + build defines | **PASS** (architecture + code review baseline) |
 | **RC-SOFT** | Soft never auto-applies | Optimizer/guidance/improvement paths remain confirm-only | Domain + UI tests across hosts | **PASS** |
-| **RC-OPS** | Dual-run and rollback | Written ops steps executed once: Dart web + Next available; rollback = keep Next live | Ops note / release checklist (attach when run) | **FAIL** (RB-04) |
+| **RC-OPS** | Dual-run and rollback | Written ops steps executed once: Dart web + Next available; rollback = keep Next live | [dual-run + rollback runbook](./multiplatform-dart-dual-run-rollback-runbook.md) (EXECUTION_NOTES EXECUTED_ONCE 2026-07-25); `dart run tool/dual_run_ops_gate.dart` | **PASS** (RB-04 cleared DART-060; re-smoke operator live Bungie equip on cutover day) |
 | **RC-BRANCH** | Integration merge policy | Explicit decision to merge `feature/multiplatform-dart` → production branch/`main` only after PRODUCTION_CUTOVER GO | [multiplatform-dart-branching.md](./multiplatform-dart-branching.md) | **FAIL** (blocked on cutover GO) |
 
 ### RC evaluation rules
@@ -177,8 +177,10 @@ All criteria must be **pass** before `PRODUCTION_CUTOVER: GO`. Soft guidance aut
 | [multiplatform-dart-legacy-db-import.md](./multiplatform-dart-legacy-db-import.md) | RC-DATA path |
 | [multiplatform-dart-web-opfs-limits.md](./multiplatform-dart-web-opfs-limits.md) | RC-WEB-DATA OPFS limits |
 | [multiplatform-dart-entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md) | RC-WEB-DATA prod hybrid channel |
+| [multiplatform-dart-dual-run-rollback-runbook.md](./multiplatform-dart-dual-run-rollback-runbook.md) | RC-OPS dual-run + rollback + EXECUTION_NOTES |
 | `specs/dart-049-cutover-parity-checklist/` | Spec Kit slice |
 | `tool/cutover_parity_checklist_validate.dart` | Structural validator |
+| `tool/dual_run_ops_gate.dart` | RC-OPS offline ops gate (DART-060) |
 
 ---
 

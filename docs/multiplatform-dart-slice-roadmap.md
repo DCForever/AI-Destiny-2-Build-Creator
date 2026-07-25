@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-059 done — entity bundle prod channel; next DART-060)  
+**Updated:** 2026-07-25 (DART-060 done — dual-run + rollback ops; next DART-061)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -155,7 +155,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-057** | **done** | `mobile-compose-equip-polish` | `dart-057-mobile-compose-equip-polish` | P7 | DART-041, DART-050 | Mobile surface matrix; equip/catalog as product requires; Jaspr soft-stat editor; finish-gaps host UX | **GAP-MOB-01**, **GAP-UI-01**, **GAP-FEAT-06** closed; GAP-FEAT-01 deferred. Published mobile matrix; equip/catalog/DIM **N/A**; shell_nav Matches Builds\|Settings. Jaspr all ArmorStatName soft-stats. Windows+Jaspr finish-gaps host + CTA finish-complete ∧ equip-ready. Soft never auto-applies |
 | **DART-058** | **done** | `prod-public-oauth-matrix` | `dart-058-prod-public-oauth-matrix` | P8 | DART-023, DART-045 | Prod Public redirects for all shells; no secrets in clients | **GAP-AUTH-01** closed; RB-03 cleared; RC-AUTH **PASS**. Published matrix (Windows HTTPS loopback, Jaspr `/auth/callback`, mobile schemes); secret scan gate; smoke preflight + operator checklist |
 | **DART-059** | **done** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | **GAP-WEB-02** closed; RB-05 cleared; RC-WEB-DATA **PASS**. Hybrid channel (ship-in-app primary + optional CDN) + versioning; prod `/entities/prod/bundle.json` offline; no Next manifest API |
-| **DART-060** | **planned** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | **GAP-OPS-01**; RB-04 / RC-OPS. Runbook executed with Next + Dart web/Windows; live re-verify compose→equip (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next; notes on cutover checklist |
+| **DART-060** | **done** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | **GAP-OPS-01** closed; RB-04 cleared; RC-OPS **PASS**. Runbook + EXECUTED_ONCE notes; Next + Dart web/Windows available; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next sole production; `tool/dual_run_ops_gate.dart` |
 | **DART-061** | **planned** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01**, GAP-FEAT-02 non-goal. All RC-* pass or product-waived; PRODUCTION_CUTOVER: GO with date/rationale; RC-BRANCH allows merge toward production/main only after GO. dim.gg share remains non-goal unless elevated |
 
 ---
@@ -218,12 +218,16 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-060** `dual-run-rollback-ops` (**planned** — next after DART-059) |
+| **Next / active slice** | **DART-061** `production-cutover-regate` (**planned** — next after DART-060) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | Post-049 planning in [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) (product feature inventory + GAP catalog + DART-050–061) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | Production cutover **NO-GO** until residual RB-04 / RC-OPS + remaining RC-* (RB-01/02/03/05/06 cleared) |
-| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–057 **done** → P8 DART-058–059 **done** → DART-060–061 |
+| **Blocked on** | Production cutover **NO-GO** until DART-061 re-gate (RB-01…06 cleared; RC-OPS PASS; remaining RC-BRANCH / formal GO) |
+| **Phase plan** | P6 DART-050–054 **done** → P7 DART-055–057 **done** → P8 DART-058–060 **done** → DART-061 |
+
+### DART-060 note (completed) — dual-run + rollback ops
+
+Written dual-run runbook with Next sole production + Dart Windows/Jaspr available; **EXECUTED_ONCE** notes 2026-07-25; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly) in dual-run window via host tests; **ROLLBACK_PROCEDURE** = keep Next sole production; offline gate `tool/dual_run_ops_gate.dart`. GAP-OPS-01 closed; RB-04 cleared; RC-OPS PASS. Soft never auto-applies; no CLIENT_SECRET. PRODUCTION_CUTOVER remains NO-GO. Specs: `specs/dart-060-dual-run-rollback-ops/`. Doc: `docs/multiplatform-dart-dual-run-rollback-runbook.md`. Next: **DART-061** production cutover re-gate.
 
 ### DART-059 note (completed) — entity bundle prod channel
 
