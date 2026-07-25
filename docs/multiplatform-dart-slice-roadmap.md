@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-016 done — inventory full-replace + busy lock)  
+**Updated:** 2026-07-24 (DART-017 done — entity store reader + MVP extractors)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -108,7 +108,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-014** | **done** | `drift-migrations` | `dart-014-drift-migrations` | P1 | DART-013 | Migration strategy mirroring historical ensure* / column upgrades needed for import later | Empty→current migrate green; documented version table |
 | **DART-015** | **done** | `repos-library` | `dart-015-repos-library` | P1 | DART-014 | Repositories: builds/sets/synergies/variants CRUD (no Bungie) | Round-trip fixtures; RESTRICT attach semantics on set delete |
 | **DART-016** | **done** | `repos-inventory` | `dart-016-repos-inventory` | P1 | DART-014 | Inventory repository + full-replace transaction shape + sync metadata fields | Composite unique; batch insert in one transaction; busy lock hook |
-| **DART-017** | pending | `manifest-entities` | `dart-017-manifest-entities` | P1 | DART-012 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
+| **DART-017** | **done** | `manifest-entities` | `dart-017-manifest-entities` | P1 | DART-012 | Entity store reader + extractor port for MVP stores (weapons, armor, subclass pieces, mods) | Offline read of fixture entity JSON; perk/item resolve used by hard constraints adapters |
 | **DART-018** | pending | `manifest-windows-refresh` | `dart-018-manifest-windows-refresh` | P1 | DART-017 | Windows-only full/partial manifest refresh pipeline (download→extract→store) | Settings-level API: status/isStale/refresh; rebuild off UI isolate |
 | **DART-019** | pending | `flutter-windows-host-skeleton` | `dart-019-flutter-windows-host-skeleton` | P1 | DART-012, DART-013 | Minimal Flutter Windows app: open DB, show Settings stub (manifest status only) | App launches; single DB connection; no OAuth yet |
 | **DART-020** | pending | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-017** `manifest-entities` (P1 — entity store reader + MVP extractors) |
-| **Active branch** | (create) `dart-017-manifest-entities` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-017-manifest-entities/` (created at specify) |
+| **Next / active slice** | **DART-018** `manifest-windows-refresh` (P1 — Windows manifest refresh pipeline) |
+| **Active branch** | (create) `dart-018-manifest-windows-refresh` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-018-manifest-windows-refresh/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-017 note (completed)
+
+Entity store package `destiny2_manifest`: offline read of fixture entity JSON under StorageRoot; MVP extractors (weapons, exotic-armor, aspects, fragments, abilities, mods); item/perk resolve; hard-constraint adapters for subclass kit + mod energy. Tests: `dart test packages/manifest` (20).
 
 ### DART-016 note (completed)
 
