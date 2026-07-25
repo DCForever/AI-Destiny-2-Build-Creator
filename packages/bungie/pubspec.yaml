@@ -10,8 +10,9 @@ resolution: workspace
 environment:
   sdk: ^3.5.0
 
-# SDK-only runtime (dart:io for default transport). Not a pure-domain package.
-dependencies: {}
+# Not a pure-domain package: dart:io default transport + crypto for PKCE S256.
+dependencies:
+  crypto: ^3.0.6
 
 dev_dependencies:
   lints: ^5.0.0

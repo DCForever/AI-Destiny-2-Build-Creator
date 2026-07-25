@@ -56,3 +56,15 @@ class BungieParseException extends BungieClientException {
 class BungieConfigException extends BungieClientException {
   const BungieConfigException(super.message);
 }
+
+/// OAuth token endpoint failure (HTTP non-success or unexpected body).
+class BungieOAuthException extends BungieClientException {
+  const BungieOAuthException(
+    super.message, {
+    this.statusCode,
+    this.bodySnippet,
+  });
+
+  final int? statusCode;
+  final String? bodySnippet;
+}

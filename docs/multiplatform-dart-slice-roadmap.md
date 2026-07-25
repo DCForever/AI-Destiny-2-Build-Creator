@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-021 done — shared Bungie HTTP client)  
+**Updated:** 2026-07-24 (DART-022 done — Public+PKCE OAuth core)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -113,7 +113,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-019** | **done** | `flutter-windows-host-skeleton` | `dart-019-flutter-windows-host-skeleton` | P1 | DART-012, DART-013 | Minimal Flutter Windows app: open DB, show Settings stub (manifest status only) | App launches; single DB connection; no OAuth yet |
 | **DART-020** | **done** | `flutter-catalog-offline` | `dart-020-flutter-catalog-offline` | P1 | DART-017, DART-019 | Catalog facets + browse offline from entity stores | Browse/filter without inventory; **P1 phase gate** |
 | **DART-021** | **done** | `bungie-http` | `dart-021-bungie-http` | P2 | DART-011 | Shared Bungie HTTP client (API key header, errors, rate-limit hooks) | Unit tests with mocked HTTP; no secrets in package |
-| **DART-022** | pending | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
+| **DART-022** | **done** | `oauth-pkce` | `dart-022-oauth-pkce` | P2 | DART-021 | Public+PKCE authorize/token/refresh pure + platform redirect URI config | No client_secret fields; state/CSRF; token model |
 | **DART-023** | pending | `flutter-windows-oauth` | `dart-023-flutter-windows-oauth` | P2 | DART-022, DART-019 | Windows loopback/deep-link OAuth + secure storage | Sign-in/out E2E on Windows; tokens not in SQLite plaintext |
 | **DART-024** | pending | `bungie-profile-sync` | `dart-024-bungie-profile-sync` | P2 | DART-021, DART-016 | Profile fetch + inventory sync algorithm into Drift | Full replace + sync_version; 60s freshness helper |
 | **DART-025** | pending | `flutter-inventory-sync-ui` | `dart-025-flutter-inventory-sync-ui` | P2 | DART-023, DART-024 | Settings inventory sync card + busy/error UX | User can sync; **P2 phase gate** (owned data local) |
@@ -190,11 +190,17 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-022** `oauth-pkce` (P2 — Public+PKCE authorize/token/refresh) |
-| **Active branch** | (create) `dart-022-oauth-pkce` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-022-oauth-pkce/` (created at specify) |
+| **Next / active slice** | **DART-023** `flutter-windows-oauth` (P2 — Windows loopback/deep-link OAuth + secure storage) |
+| **Active branch** | (create) `dart-023-flutter-windows-oauth` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-023-flutter-windows-oauth/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-022 note (completed)
+
+- **Package:** `packages/bungie` OAuth modules — `BungieOAuthClient`, PKCE S256, CSRF state, `BungieTokens`, `PlatformRedirectUriConfig`
+- **Exit:** No `client_secret` fields; authorize/token/refresh with public client_id + PKCE; unit tests mocked HTTP only
+- **Next:** DART-023 Windows host loopback/deep-link + secure token storage
 
 ### DART-021 note (completed)
 
