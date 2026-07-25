@@ -3,6 +3,7 @@ description: >
   Drift SQLite schema + migrations for Destiny 2 Build Creator multiplatform port.
   Mirrors product core tables (users, inventory, sets, synergies, builds,
   variants, attachments). schemaVersion 1 create-all; ensure* upgrades on open.
+  Native openers are conditional (memory/file); web uses WasmDatabase + AppDatabase(e) (DART-043).
 version: 0.0.1
 publish_to: none
 resolution: workspace

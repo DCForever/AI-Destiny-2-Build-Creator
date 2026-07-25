@@ -152,9 +152,9 @@ packages/
 | `packages/ui_tokens` | `destiny2_ui_tokens` | **Matte Flap Ledger tokens + FlapBoard layout contracts** (DART-029). Colors/spacing/radii/typography metrics; rail 320 / gap 0 / column templates. Documented in package README. **No** Flutter/Jaspr widgets. | **SDK only**. Hosts map ARGB → Color/CSS. |
 | `apps/windows_host` | `destiny2_windows_host` | **Flutter Windows host** (DART-019/020/023/025/026/029): open StorageRoot + single Drift DB; Catalog offline + owned; Settings OAuth + inventory sync; **flap theme stub** (`buildFlapTheme` — square elevation-0 cards, void canvas). Tokens not in SQLite. | Flutter, path_provider, sqlite3_flutter_libs, flutter_secure_storage, url_launcher; path deps on storage/db/manifest/bungie/ui_tokens. **No** CLIENT_SECRET. |
 | `apps/mobile_host` | `destiny2_mobile_host` | **Flutter mobile host** (DART-040/041): bottom nav, Focus Swap, reduced-density compose. Soft never auto-applies. | Flutter; path deps on app/db/domain/manifest/storage/ui_tokens. **No** CLIENT_SECRET. |
-| `apps/web_host` | `destiny2_web_host` | **Jaspr web host** (DART-042): client SPA shell + routing + design tokens CSS; Hello Settings. **Not** a root pub workspace member (Jaspr builder/analyzer vs Flutter `meta` pin). | `jaspr`, `jaspr_router`; path `destiny2_ui_tokens`. **No** Next.js. **No** CLIENT_SECRET. OPFS later (DART-043). |
+| `apps/web_host` | `destiny2_web_host` | **Jaspr web host** (DART-042/043): client SPA shell + routing + design tokens CSS; Drift WASM/OPFS + **single-tab writer** lock (second tab blocked). **Not** a root pub workspace member (Jaspr builder/analyzer vs Flutter `meta` pin). | `jaspr`, `jaspr_router`, `drift`, `web`; path `destiny2_ui_tokens`, `destiny2_db`. **No** Next.js. **No** CLIENT_SECRET. Limits: `docs/multiplatform-dart-web-opfs-limits.md`. |
 
-Flutter mobile compose is DART-041; Jaspr OPFS/auth/compose are DART-043+.
+Flutter mobile compose is DART-041; Jaspr entity bundles/auth/compose are DART-044+.
 
 ## StorageRoot (DART-012)
 

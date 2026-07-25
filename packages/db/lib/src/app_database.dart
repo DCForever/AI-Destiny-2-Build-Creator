@@ -1,9 +1,7 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 
+import 'connection/open.dart';
 import 'ensure_upgrades.dart';
 import 'migration_version_table.dart';
 import 'tables.dart';
@@ -15,6 +13,11 @@ part 'app_database.g.dart';
 /// schemaVersion **[driftSchemaVersionCurrent]** (1) = greenfield create-all
 /// matching product current columns (DART-013). Historical ensure* upgrades
 /// run on open (DART-014) so partial / import-shaped DBs heal to current.
+///
+/// **Opening:**
+/// - Native: [AppDatabase.memory] / [AppDatabase.file] / [AppDatabase.inDirectory]
+/// - Web (DART-043): construct with executor from `WasmDatabase.open` — do not
+///   import `package:drift/native.dart` from web entrypoints.
 @DriftDatabase(
   tables: [
     Users,
@@ -36,26 +39,18 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
-  /// In-memory DB for unit tests.
-  factory AppDatabase.memory() {
-    return AppDatabase(NativeDatabase.memory());
-  }
+  /// In-memory DB for unit tests (native / VM only).
+  factory AppDatabase.memory() => AppDatabase(openMemoryExecutor());
 
   /// File-backed DB at [path] (e.g. [StorageRoot.appDbPath] from destiny2_storage).
   ///
   /// Creates parent directories if missing. Does not depend on path_provider.
-  factory AppDatabase.file(String path) {
-    final file = File(path);
-    final dir = file.parent;
-    if (!dir.existsSync()) {
-      dir.createSync(recursive: true);
-    }
-    return AppDatabase(NativeDatabase(file));
-  }
+  /// Not available on web — use WasmDatabase + [AppDatabase.new].
+  factory AppDatabase.file(String path) => AppDatabase(openFileExecutor(path));
 
   /// Convenience: join [baseDir] with `app.db` (same segment as StorageRoot).
   factory AppDatabase.inDirectory(String baseDir) {
-    return AppDatabase.file(p.join(baseDir, 'app.db'));
+    return AppDatabase(openFileExecutor(p.join(baseDir, 'app.db')));
   }
 
   @override

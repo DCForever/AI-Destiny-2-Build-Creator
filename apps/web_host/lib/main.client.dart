@@ -1,12 +1,32 @@
-/// Client entrypoint for the Jaspr web host (DART-042).
+/// Client entrypoint for the Jaspr web host (DART-042/043).
 ///
 /// Compiled to JavaScript and executed in the browser. No Next.js, no secrets.
+/// Opens Drift WASM + OPFS when this tab wins the single-tab writer lock.
 library;
 
 import 'package:jaspr/client.dart';
 
 import 'app.dart';
+import 'db/tab_lock_backend_web.dart';
+import 'db/tab_writer_lock.dart';
+import 'db/wasm_database_opener.dart';
+import 'db/web_database_bootstrap.dart';
 
 void main() {
-  runApp(const App());
+  final lockBackend = WebLocalStorageTabLockBackend();
+  final bootstrap = WebDatabaseBootstrap(
+    lockBackend: lockBackend,
+    opener: WasmWebDatabaseOpener(),
+  );
+
+  registerWriterLockUnloadHook(
+    backend: lockBackend,
+    lockName: kWebAppDbWriterLockName,
+    ownerId: bootstrap.tabId,
+  );
+
+  // Kick off open as early as possible; App also observes status.
+  bootstrap.start();
+
+  runApp(App(bootstrap: bootstrap));
 }
