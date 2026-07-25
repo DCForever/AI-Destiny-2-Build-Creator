@@ -37,6 +37,15 @@ packages/
         storage_root.dart
         version_dir.dart
     test/
+  db/                     # Drift schema (DART-013) — not pure
+    pubspec.yaml          # package name: destiny2_db
+    lib/
+      destiny2_db.dart
+      src/
+        tables.dart
+        app_database.dart
+        schema_notes.dart
+    test/
 ```
 
 | Package path | Pub name | Role | Allowed deps |
@@ -44,6 +53,7 @@ packages/
 | `packages/domain` | `destiny2_domain` | Pure domain library (models DART-002; evaluators DART-003+) | **SDK only** at runtime; `test` / pure lints as dev_dependencies. **No** Flutter, Jaspr, Drift, http, path_provider, or other IO/UI packages. |
 | `packages/sandbox_data` | `destiny2_sandbox_data` | Pure static sandbox constants (stat benefits, synergy verbs, exotic ability requirements, archetypes, champion counters, vocabularies) | **SDK only** at runtime. Soft display tables only — never auto-apply / hard-block. |
 | `packages/storage` | `destiny2_storage` | **StorageRoot** app-support path layout (DART-012). Not pure — may use `dart:io` for `ensureLayout`. | `path` (+ SDK). Hosts inject path_provider application-support path; package does **not** depend on Flutter/path_provider. **Not** in P0 pure graph guard list. |
+| `packages/db` | `destiny2_db` | Drift SQLite **schema** for core tables (users, inventory, sets, synergies, builds/variants, attachments). schemaVersion 1 create-all (DART-013). | `drift`, `sqlite3`, `path`. Migrations DART-014; repos DART-015+. **Not** pure. |
 
 UI shells (Flutter Windows/mobile, Jaspr web) land under `apps/` in later slices (DART-019+, DART-042+).
 
@@ -72,6 +82,22 @@ await root.ensureLayout();
 | `users/<membershipId>/preferences.json` | Per-user preferences |
 
 `versionDir` = `versionToDirName` (unsafe chars → `_`). Unit tests inject a fake base path (no real AppData required).
+
+## Drift schema (DART-013)
+
+`destiny2_db` mirrors product `src/lib/db` core tables. Open helpers:
+
+```dart
+import 'package:destiny2_db/destiny2_db.dart';
+
+final mem = AppDatabase.memory();
+final file = AppDatabase.file(root.appDbPath); // StorageRoot from destiny2_storage
+```
+
+- **PRAGMA**: `foreign_keys = ON` on open
+- **Critical uniques**: `users.bungie_membership_id`; `inventory_items(user_id, instance_id)`; `sets(user_id, type, name)`; tag/synergy-type pairs — see `schema_notes.dart` and `specs/dart-013-drift-schema/data-model.md`
+- **RESTRICT**: cannot delete a set while `variant_set_attachments` reference it
+- Tests: `dart test packages/db`
 
 ## Sandbox constants (DART-009)
 

@@ -9,6 +9,7 @@ workspace:
   - packages/domain
   - packages/sandbox_data
   - packages/storage
+  - packages/db
 
 dev_dependencies:
   lints: ^5.0.0
@@ -38,4 +39,4 @@ melos:
 
     analyze:
       description: Run dart analyze on workspace Dart packages
-      run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage
+      run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db
