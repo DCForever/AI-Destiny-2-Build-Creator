@@ -4,6 +4,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:flutter/foundation.dart';
 
 import 'build_format.dart';
+import 'finish_gaps_format.dart';
 import 'soft_guidance_format.dart';
 import 'variant_compose_format.dart';
 
@@ -147,6 +148,47 @@ class BuildsController extends ChangeNotifier {
       formatSoftStatTargetsSummary(_softStatTargets);
   bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
   String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
+
+  /// Pure finish-gap readiness for selected variant (DART-057 display).
+  /// Soft never auto-applies; equip CTAs are N/A on mobile.
+  FinishGapsResult? get finishGaps {
+    final v = _selectedVariant;
+    if (v == null) return null;
+    final attIns = <FinishAttachmentInput>[];
+    for (final a in _attachments) {
+      final type = SetType.tryParse(a.setType ?? '');
+      if (type == null) continue;
+      attIns.add(
+        FinishAttachmentInput(
+          setId: a.record.setId,
+          mode: finishAttachmentModeFromWire(a.record.mode),
+          setType: type,
+          setName: a.setName,
+        ),
+      );
+    }
+    final equipment = <String, FinishEquipmentClaim?>{
+      for (final pin in _slotPins)
+        pin.slot: FinishEquipmentClaim(
+          slot: pin.slot,
+          itemHash: pin.itemHash,
+          itemName: pin.itemName,
+          instanceId: pin.instanceId,
+        ),
+    };
+    final hasMod = _attachments.any(
+      (a) => (a.setType ?? '') == SetType.mod.wireName,
+    );
+    return evaluateFinishGaps(
+      buildFinishGapsInput(
+        variantId: v.id,
+        isDefaultVariant: v.isDefault,
+        attachments: attIns,
+        equipment: equipment,
+        hasModCoverage: hasMod,
+      ),
+    );
+  }
 
   String titleOf(BuildRecord b) => formatBuildListTitle(b.name);
 

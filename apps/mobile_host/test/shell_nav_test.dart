@@ -3,6 +3,7 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_mobile_host/app.dart';
 import 'package:destiny2_mobile_host/builds/builds_controller.dart';
 import 'package:destiny2_mobile_host/host_bootstrap.dart';
+import 'package:destiny2_mobile_host/surface_matrix.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,5 +79,41 @@ void main() {
     expect(find.byKey(const Key('builds_list_page')), findsOneWidget);
     expect(find.byKey(const Key('builds_empty')), findsOneWidget);
     expect(find.textContaining('Tap + to create'), findsOneWidget);
+  });
+
+  testWidgets('bottom nav matches published surface matrix destinations',
+      (tester) async {
+    // Matrix single source of truth: only build + settings are bottomNav.
+    expect(kMobileBottomNavKeys, ['build', 'settings']);
+    expect(
+      kMobileSurfaceMatrix.where((e) => e.bottomNav).map((e) => e.key),
+      kMobileBottomNavKeys,
+    );
+
+    await tester.pumpWidget(
+      Destiny2MobileApp(
+        services: services,
+        buildsController: controller,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('nav_builds')), findsOneWidget);
+    expect(find.byKey(const Key('nav_settings')), findsOneWidget);
+    // No catalog / equip / loadouts destinations in shell.
+    expect(find.byKey(const Key('nav_catalog')), findsNothing);
+    expect(find.byKey(const Key('nav_equip')), findsNothing);
+    expect(find.byKey(const Key('nav_loadouts')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('nav_settings')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('surface_matrix_card')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('surface_matrix_card')), findsOneWidget);
+    expect(find.byKey(const Key('surface_matrix_row_equip')), findsOneWidget);
+    expect(find.textContaining('N/A'), findsWidgets);
   });
 }

@@ -8,6 +8,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../compose/build_format.dart';
+import '../compose/finish_gaps_format.dart';
 import '../compose/soft_guidance_format.dart';
 import '../compose/variant_compose_format.dart';
 
@@ -146,6 +147,49 @@ class BuildsController extends ChangeNotifier {
       formatSoftStatTargetsSummary(_softStatTargets);
   bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
   String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
+
+  /// Pure finish-gap readiness (DART-057 / GAP-FEAT-06). Soft never auto-applies.
+  FinishGapsResult? get finishGaps {
+    final v = _selectedVariant;
+    if (v == null) return null;
+    final attIns = <FinishAttachmentInput>[];
+    for (final a in _attachments) {
+      final type = SetType.tryParse(a.setType ?? '');
+      if (type == null) continue;
+      attIns.add(
+        FinishAttachmentInput(
+          setId: a.record.setId,
+          mode: finishAttachmentModeFromWire(a.record.mode),
+          setType: type,
+          setName: a.setName,
+        ),
+      );
+    }
+    final equipment = <String, FinishEquipmentClaim?>{
+      for (final pin in _slotPins)
+        pin.slot: FinishEquipmentClaim(
+          slot: pin.slot,
+          itemHash: pin.itemHash,
+          itemName: pin.itemName,
+          instanceId: pin.instanceId,
+        ),
+    };
+    final hasMod = _attachments.any(
+      (a) => (a.setType ?? '') == SetType.mod.wireName,
+    );
+    return evaluateFinishGaps(
+      EvaluateFinishGapsInput(
+        variantId: v.id,
+        isDefaultVariant: v.isDefault,
+        attachments: attIns,
+        equipment: equipment,
+        hasModCoverage: hasMod,
+      ),
+    );
+  }
+
+  /// Finish complete flag for equip/export CTA policy.
+  bool get finishComplete => finishGaps?.complete ?? false;
 
   String titleOf(BuildRecord b) => formatBuildListTitle(b.name);
 

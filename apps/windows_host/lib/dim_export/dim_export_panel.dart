@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../builds/finish_gaps_format.dart';
 import 'dim_export_controller.dart';
 import 'dim_export_format.dart';
 
-/// Equip-ready-gated DIM jsonOnly clipboard export (DART-039).
+/// Equip-ready-gated DIM jsonOnly clipboard export (DART-039 / DART-057).
 class DimExportPanel extends StatefulWidget {
   const DimExportPanel({
     super.key,
     required this.controller,
+    this.finishComplete = true,
   });
 
   final DimExportController controller;
+
+  /// Finish-gaps complete (DART-057). CTAs require finish-complete AND equip-ready.
+  final bool finishComplete;
 
   @override
   State<DimExportPanel> createState() => _DimExportPanelState();
@@ -104,10 +109,26 @@ class _DimExportPanelState extends State<DimExportPanel> {
             ],
           ),
         ],
+        if (!widget.finishComplete) ...[
+          const SizedBox(height: 8),
+          Text(
+            kFinishIncompleteCtaCaption,
+            key: const Key('dim_export_finish_incomplete_hint'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
         const SizedBox(height: 12),
         FilledButton(
           key: const Key('dim_export_copy_button'),
-          onPressed: _c.canExport && !_c.exporting ? _onExport : null,
+          onPressed: canEnableDimExportCta(
+                    equipReady: _c.equipReady,
+                    exporting: _c.exporting,
+                    loading: _c.loadingReadiness,
+                    hasVariant: true,
+                    finishComplete: widget.finishComplete,
+                  )
+              ? _onExport
+              : null,
           child: Text(_c.exporting ? 'Copying…' : 'Copy DIM JSON'),
         ),
         if (_c.error != null) ...[

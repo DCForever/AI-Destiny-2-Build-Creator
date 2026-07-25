@@ -10,6 +10,7 @@ import '../equip/equip_controller.dart';
 import '../equip/equip_panel.dart';
 import '../host_bootstrap.dart';
 import 'builds_library_controller.dart';
+import 'finish_gaps_format.dart';
 import 'soft_guidance_format.dart';
 
 /// Builds library dual-pane (list + identity + variant compose + soft guidance
@@ -1102,9 +1103,14 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         const Divider(),
         const SizedBox(height: 8),
         if (_controller.selectedVariant != null) ...[
+          _buildFinishGaps(context),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
           EquipPanel(
             key: const Key('builds_equip_panel'),
             controller: _equipController,
+            finishComplete: _controller.finishComplete,
           ),
           const SizedBox(height: 16),
           const Divider(),
@@ -1112,12 +1118,65 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           DimExportPanel(
             key: const Key('builds_dim_export_panel'),
             controller: _dimExportController,
+            finishComplete: _controller.finishComplete,
           ),
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 8),
         ],
         _buildSoftGuidance(context),
+      ],
+    );
+  }
+
+  Widget _buildFinishGaps(BuildContext context) {
+    final gaps = _controller.finishGaps;
+    return Column(
+      key: const Key('builds_finish_gaps_panel'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Finish readiness',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          kFinishGapsPolicyCaption,
+          key: const Key('finish_gaps_policy'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        if (gaps == null)
+          const Text(
+            'Select a variant to evaluate finish gaps.',
+            key: Key('finish_gaps_empty'),
+          )
+        else ...[
+          Text(
+            formatFinishGapsCompleteSummary(gaps),
+            key: const Key('finish_gaps_complete_summary'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: gaps.complete
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.error,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            key: const Key('finish_gaps_list'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final gap in gaps.gaps)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    formatFinishGapRowSummary(gap),
+                    key: Key('finish_gap_${gap.category.wireName}'),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }

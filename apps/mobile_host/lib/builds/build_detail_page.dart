@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'attach_set_sheet.dart';
 import 'builds_controller.dart';
+import 'finish_gaps_format.dart';
 import 'soft_guidance_format.dart';
 import 'variant_compose_format.dart';
 
@@ -410,6 +411,54 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
                   for (final w in c.softStatWarnings)
                     Text(formatSoftStatWarningSummary(w)),
                 ],
+                const SizedBox(height: 20),
+
+                // --- Finish gaps (display; equip/DIM N/A on mobile) ---
+                Text(
+                  'Finish readiness',
+                  key: const Key('compose_section_finish_gaps'),
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  kFinishGapsPolicyCaption,
+                  key: const Key('finish_gaps_policy'),
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                if (c.finishGaps == null)
+                  const Text(
+                    'Select a variant to evaluate finish gaps.',
+                    key: Key('finish_gaps_empty'),
+                  )
+                else ...[
+                  Text(
+                    formatFinishGapsCompleteSummary(c.finishGaps!),
+                    key: const Key('finish_gaps_complete_summary'),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: c.finishGaps!.complete
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Column(
+                    key: const Key('finish_gaps_list'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final gap in c.finishGaps!.gaps)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            formatFinishGapRowSummary(gap),
+                            key: Key(
+                              'finish_gap_${gap.category.wireName}',
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 if (_statusMessage != null) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -428,7 +477,8 @@ class _BuildDetailPageState extends State<BuildDetailPage> {
                 ],
                 const SizedBox(height: 24),
                 Text(
-                  'Linear finish · soft never auto-applies · hard limits still block.',
+                  'Linear finish · soft never auto-applies · hard limits still block. '
+                  'Equip/DIM on phone: N/A (Windows/Jaspr).',
                   key: const Key('detail_compose_note'),
                   style: theme.textTheme.bodySmall,
                 ),

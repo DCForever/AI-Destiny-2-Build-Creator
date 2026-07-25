@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (DART-056 GAP-WEB-01 Jaspr inventory sync + Owned depth; RB-02 cleared)  
+**Updated:** 2026-07-25 (DART-057 mobile matrix + Jaspr soft-stats + finish-gaps host UX)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -77,12 +77,12 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | ID | Feature | Product path | W | M | J | Plan | Slices / notes |
 | -- | ------- | ------------ | - | - | - | ---- | -------------- |
-| **FEAT-NAV-BUILD** | Build library + composer | `/build` | PASS | PARTIAL | PASS | **shipped** + residual polish | DART-028–038, 041, 046–047; mobile polish **DART-057** |
+| **FEAT-NAV-BUILD** | Build library + composer | `/build` | PASS | PASS | PASS | **shipped** | DART-028–038, 041, 046–047; mobile matrix **DART-057** |
 | **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | PASS | N/A\* | PASS | **shipped** | DART-031, 046; \*mobile in-flow only (acceptable density) |
 | **FEAT-NAV-SETS** | Sets library | `/sets` | PASS | N/A\* | PASS | **shipped** | DART-030, 046; \*same mobile note |
-| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | PASS | MISS | PASS | **shipped** + mobile decision | DART-020/026/044; mobile **DART-057** matrix (ship or N/A) |
-| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | PASS | PARTIAL | PASS | **shipped** | DART-023/025/045/048; inventory fidelity **DART-050–054**; web sync depth **DART-056** done |
-| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | PASS | MISS\* | PASS | **shipped** | **DART-055** / GAP-NAV-01 closed / RB-01 cleared; \*mobile reduced nav OK for RC-NAV |
+| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | PASS | N/A\* | PASS | **shipped** | DART-020/026/044; \*mobile **N/A** (DART-057 matrix — phone density) |
+| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | PASS | PARTIAL | PASS | **shipped** | DART-023/025/045/048; inventory fidelity **DART-050–054**; web sync depth **DART-056**; mobile matrix card **DART-057** |
+| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | PASS | N/A\* | PASS | **shipped** | **DART-055** / GAP-NAV-01 closed / RB-01 cleared; \*mobile top-level N/A (DART-057 matrix) |
 
 ### B. Compose → equip spine (PRODUCT primary job)
 
@@ -92,12 +92,12 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-COMPOSE-VARIANTS** | Variants + set attachments + slot pins | Build composer | PASS | PASS | PASS | **shipped** | DART-005/028+ |
 | **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | PASS | PASS | PASS | **shipped** | DART-003/011; RC-DOMAIN |
 | **FEAT-COMPOSE-SOFT** | Soft coverage display (never auto-apply) | Soft guidance UI | PASS | PASS | PASS | **shipped** | DART-004/034/041/046; RC-SOFT |
-| **FEAT-COMPOSE-SOFT-STATS** | Soft stat targets (explicit save) | Soft stat editor | PASS | PASS | PARTIAL | **planned** residual | Full fields on Jaspr → **DART-057** / GAP-UI-01 |
-| **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | PARTIAL | PARTIAL | PARTIAL | **shipped** + residual polish | DART-007 pure only; host UX residual **GAP-FEAT-06** → **DART-057** (Next FinishTab gates equip/export) |
-| **FEAT-EQUIP-READY** | Equip-ready / wishlist vs owned pins | Equip-ready gate | PASS | PARTIAL | PASS | **shipped** + inv residual | DART-006/038/047; pin pool depends on inventory fidelity **DART-050** |
-| **FEAT-EQUIP-BUNGIE** | Bungie equip (partial OK) | Equip flow | PASS | MISS | PASS | **shipped** + mobile decision | DART-037/038/047; mobile equip **DART-057** or N/A |
-| **FEAT-EQUIP-DIM** | DIM jsonOnly export | DIM export | PASS | MISS | PASS | **shipped** + mobile decision | DART-010/039/047; mobile **DART-057** or N/A |
-| **FEAT-OPTIMIZER** | Armor set optimizer (confirm-only) | Optimizer workspace | PASS | MISS | MISS | **deferred** mobile/web | Windows DART-035/036; GAP-FEAT-01 unless elevated |
+| **FEAT-COMPOSE-SOFT-STATS** | Soft stat targets (explicit save) | Soft stat editor | PASS | PASS | PASS | **shipped** | DART-034/041/046; Jaspr all `ArmorStatName` **DART-057** / GAP-UI-01 closed |
+| **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | PASS | PARTIAL | PASS | **shipped** | DART-007 pure + host UX **DART-057** (Windows+Jaspr finish panel; CTA = finish-complete ∧ equip-ready); mobile display-only |
+| **FEAT-EQUIP-READY** | Equip-ready / wishlist vs owned pins | Equip-ready gate | PASS | N/A\* | PASS | **shipped** | DART-006/038/047; \*mobile equip path N/A (DART-057 matrix) |
+| **FEAT-EQUIP-BUNGIE** | Bungie equip (partial OK) | Equip flow | PASS | N/A\* | PASS | **shipped** | DART-037/038/047; \*mobile equip **N/A** (DART-057 — use Windows/Jaspr) |
+| **FEAT-EQUIP-DIM** | DIM jsonOnly export | DIM export | PASS | N/A\* | PASS | **shipped** | DART-010/039/047; \*mobile DIM **N/A** (DART-057 matrix) |
+| **FEAT-OPTIMIZER** | Armor set optimizer (confirm-only) | Optimizer workspace | PASS | deferred | deferred | **deferred** mobile/web | Windows DART-035/036; GAP-FEAT-01 remains deferred |
 
 ### C. Inventory & owned instances
 
@@ -169,18 +169,18 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-INV-07** | Weapon combat `statValues` on inventory rows | **P2** | `closed` (DART-050 opt) | `parseWeaponStatValues` for weapons + transfer containers | `parseWeaponStatValues` + transfer merge in `inventory_parse.dart` | **DART-050** optional delivered | Combat stats on vault weapons |
 | **GAP-NAV-01** | In-Game Loadouts surface | **P1** | `closed` | `/loadouts` AppShell + page | Windows+Jaspr PASS (DART-055); mobile MISS density OK | **DART-055** | RB-01 cleared / RC-NAV PASS |
 | **GAP-WEB-01** | Jaspr inventory sync + owned depth | **P1** | `closed` (DART-056) | Full Settings sync + owned catalog | Settings Sync now + vault lookup + diagnostics; Catalog All\|Owned + instance pins; equip still optional without write clients | **DART-056** done | RB-02 cleared / RC-SYNC web depth |
-| **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `partial` | Full desktop-class AppShell | Bottom nav Builds\|Settings only; catalog MISS; equip/DIM MISS; settings minimum | **DART-057** | Phone surface matrix |
+| **GAP-MOB-01** | Mobile AppShell nav / compose→equip matrix | **P2** | `closed` (DART-057) | Full desktop-class AppShell | Published matrix PASS/PARTIAL/N/A/deferred; Builds\|Settings nav; equip/catalog/DIM N/A | **DART-057** done | Phone surface matrix |
 | **GAP-AUTH-01** | Prod Public redirect matrix (all shells) | **P1** | `partial` | Confidential Next HTTPS | Windows loopback + Jaspr origin OK locally; prod matrix not ops-signed; mobile OAuth deferred | **DART-058** | RB-03 / RC-AUTH |
 | **GAP-WEB-02** | Entity bundle prod distribution | **P1** | `open` | Full raw manifest pipeline | Prebuilt MVP `bundle.json` only; channel TBD | **DART-059** | RB-05 / RC-WEB-DATA |
 | **GAP-OPS-01** | Dual-run + rollback procedure | **P1** | `open` | Next sole prod | Not executed (compose→equip re-verify historical only) | **DART-060** | RB-04 / RC-OPS |
 | **GAP-CUT-01** | Re-gate production cutover | **P1** | `planned` | N/A | Checklist NO-GO | **DART-061** | Flip PRODUCTION_CUTOVER when ready |
-| **GAP-UI-01** | Soft stat targets editor on Jaspr | **P2** | `partial` | Full `ArmorStatName` editor | Health-only soft-stat editor on web | **DART-057** | Soft never auto-apply |
-| **GAP-FEAT-01** | Armor optimizer on mobile/web | **P2** | `deferred` | Full UI | Windows only (by design for program gate) | **DART-057** only if product elevates | Accept Windows-only |
+| **GAP-UI-01** | Soft stat targets editor on Jaspr | **P2** | `closed` (DART-057) | Full `ArmorStatName` editor | All six stats + explicit save on web | **DART-057** done | Soft never auto-apply |
+| **GAP-FEAT-01** | Armor optimizer on mobile/web | **P2** | `deferred` | Full UI | Windows only (by design for program gate) | remains deferred | Accept Windows-only |
 | **GAP-FEAT-02** | dim.gg share | **P3** | `deferred` | Optional dim-export share | jsonOnly only | **DART-061** non-goal unless elevated | Cutover N/A |
 | **GAP-FEAT-03** | LLM propose / multi-pass generator | **P3** | `deferred` | Optional / not primary | Not ported | *Non-goal* | Cutover N/A |
 | **GAP-FEAT-04** | `/debug/*` operator tools | **P3** | `deferred` | Present | Not ported | *Non-goal* | Cutover N/A |
 | **GAP-FEAT-05** | Analyze / legacy generator tab | **P3** | `deferred` | Adjacent | Not primary | *Non-goal* | Cutover N/A |
-| **GAP-FEAT-06** | Finish-gaps host UX unwired | **P2** | `open` | Next FinishTab / FinishBuildWalkthrough evaluates gaps and locks equip/export until complete | Pure `evaluateFinishGaps` package-tested only; `apps/**/*.dart` has zero host wiring | **DART-057** | Residual host wiring (not a product non-goal); FEAT-COMPOSE-FINISH |
+| **GAP-FEAT-06** | Finish-gaps host UX unwired | **P2** | `closed` (DART-057) | Next FinishTab gates equip/export | Windows+Jaspr host panels + finish-complete ∧ equip-ready CTAs; pure shared | **DART-057** done | FEAT-COMPOSE-FINISH |
 
 ---
 
@@ -363,53 +363,44 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ### GAP-MOB-01 — Mobile AppShell nav / compose→equip matrix (**P2**)
 
-**Problem:** Mobile bottom nav is Builds|Settings only (no Catalog, Synergy, Sets, Loadouts). No catalog page under `mobile_host/lib/`. Settings is “storage/DB path + manifest status” minimum; sign-in deferred. Compose has soft guidance but no EquipController / DimExport / OptimizerWorkspace. Synergy/sets N/A for top-level nav is acceptable for phone density if compose still reaches attach/designate.
+**Problem (was):** Mobile bottom nav is Builds|Settings only; catalog/equip/DIM unstated MISS; no published matrix.
 
-**Planned slice: DART-057 `mobile-compose-equip-polish`**
+**Closed by DART-057:** Published `kMobileSurfaceMatrix` in `apps/mobile_host/lib/surface_matrix.dart` (build PASS, settings PARTIAL, synergy/sets/catalog/loadouts/equip/dim **N/A**, optimizer **deferred**). Settings surfaces matrix card. shell_nav tests match Builds|Settings. Compose still designates synergy + attaches sets; equip/DIM path remains Windows/Jaspr (OAuth deferred). Soft never auto-applies.
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-057-mobile-compose-equip-polish` |
-| Depends | DART-041, DART-050 |
-| Exit criteria | Published mobile surface matrix states PASS/PARTIAL/MISS/N/A for each AppShell key including catalog/equip/DIM/settings; if product requires catalog on phone, mobile gains Catalog destination+browse; Settings either reaches OAuth/sync minimum or remains documented N/A for mobile; ship equip + DIM jsonOnly with equip-ready gate **or** product-mark equip/DIM N/A with explicit UX (export path elsewhere); synergy/sets remain explicit N/A for top-level nav only if compose still reaches attach/designate jobs; shell_nav tests updated to match matrix; soft never auto-applies |
-| Status | `planned` |
-| Related | GAP-UI-01, **GAP-FEAT-06** (finish-gaps host UX), GAP-FEAT-01 (deferred unless elevated) |
+| Status | `closed` |
+| Evidence | `surface_matrix.dart` + Settings card; tests `surface_matrix_test`, `shell_nav_test` |
+| Related | GAP-UI-01, GAP-FEAT-06 closed same slice; GAP-FEAT-01 remains deferred |
 
 ---
 
 ### GAP-UI-01 — Soft stat targets editor on Jaspr (**P2**)
 
-**Problem:** Windows soft-stat editor exposes all `ArmorStatName` fields; Jaspr soft guidance is present but soft-stat editor is Health-only.
+**Problem (was):** Jaspr soft-stat editor was Health-only.
 
-**Planned slice: DART-057** (with mobile matrix polish)
+**Closed by DART-057:** Jaspr `build_compose_page` exposes all `ArmorStatName` fields with explicit save via `saveSoftStatTargetsFromFields`. Soft never auto-applies.
 
 | Field | Value |
 | ----- | ----- |
-| Exit criteria | Jaspr soft-stat editor exposes all `ArmorStatName` fields with explicit save parity to Windows/Next; soft never auto-applies; warnings still display-only |
-| Status | `partial` |
+| Status | `closed` |
+| Evidence | `apps/web_host/lib/builds/build_compose_page.dart`; `soft_guidance_format_test` multi-stat |
 
 ---
 
 ### GAP-FEAT-06 — Finish-gaps host UX unwired (**P2**)
 
-**Problem:** Next FinishTab / FinishBuildWalkthrough calls `evaluateFinishGapsFromVariant` (or equivalent) and locks equip/export CTAs until finish categories are complete. Dart has pure `evaluateFinishGaps` in `packages/domain` (DART-007, package-tested) but **no host wiring** — `apps/**/*.dart` grep for `evaluateFinishGaps` is zero. Catalog previously overstated FEAT-COMPOSE-FINISH Windows as PASS (pure shipped ≠ host Finish UX).
+**Problem (was):** Pure `evaluateFinishGaps` had zero host wiring; equip/export not finish-gated.
 
-**This is residual host wiring, not a product non-goal** — do not park in the deferred/non-goals table as N/A.
-
-**Next:** `src/components/build/composer/FinishTab.tsx` + FinishBuildWalkthrough  
-**Dart pure:** `packages/domain/lib/src/evaluators/finish_gaps.dart`  
-**Dart hosts:** none under `apps/windows_host`, `apps/mobile_host`, `apps/web_host`
-
-**Planned slice: DART-057 `mobile-compose-equip-polish`** (finish-gaps host surface bundled with shell polish)
+**Closed by DART-057:** Windows + Jaspr compose evaluate finish gaps from attachments + slot pins; display category complete reasons; equip Apply + DIM Copy require **finish-complete AND equip-ready**. Mobile shows finish display only (equip N/A). Pure domain remains shared. Soft never auto-applies.
 
 | Field | Value |
 | ----- | ----- |
 | Branch | `dart-057-mobile-compose-equip-polish` |
-| Depends | DART-007 (pure), DART-041/046/047 host compose/equip |
-| Exit criteria | At least one production host (Windows and/or Jaspr) surfaces `evaluateFinishGaps` readiness comparable to Next FinishTab (category complete reasons; equip/export CTA policy documented as finish-complete **AND** equip-ready, **or** intentional thinning with product note + GAP residual per PROC-06); host tests assert finish-gap display; pure domain remains shared; soft never auto-applies |
-| Status | `open` |
-| Severity | P2 |
-| Related | FEAT-COMPOSE-FINISH (W/M/J PARTIAL); GAP-MOB-01, GAP-UI-01 on same slice |
+| Status | `closed` |
+| Evidence | `finish_gaps_format.dart` on windows/web/mobile; panels + CTA helpers; host format tests |
+| Residual | Full FinishBuildWalkthrough one-tap create / skip / optimizer workspace not ported (category readiness + CTA policy is the cutover bar) |
 
 ---
 
@@ -499,18 +490,18 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | GAP-FEAT-04 | `/debug/*` | Operator non-goal for port | *Non-goal* |
 | GAP-FEAT-05 | Analyze primary tab | Adjacent legacy | *Non-goal* |
 
-**Not deferred:** **GAP-FEAT-06** (finish-gaps host UX) is residual host wiring for a shipped pure evaluator — planned open on **DART-057**, not a product non-goal.
+**Closed on DART-057:** **GAP-FEAT-06** (finish-gaps host UX), **GAP-MOB-01**, **GAP-UI-01**. **GAP-FEAT-01** remains deferred (optimizer mobile/web).
 
 ---
 
 ## Update checklist (after gaps analysis or finish-spec)
 
-- [x] Touch **Updated** date (2026-07-25 — GAP-FEAT-06 + FEAT-COMPOSE-FINISH PARTIAL + inventory coverage)
+- [x] Touch **Updated** date (2026-07-25 — DART-057 closed GAP-MOB-01 / GAP-UI-01 / GAP-FEAT-06)
 - [x] Refresh **Product feature inventory** (sections A–E) so every PRODUCT/AppShell capability has Plan ownership
-- [x] Set gap **Status** (master table + detailed specs) — includes **GAP-FEAT-06** open → DART-057
+- [x] Set gap **Status** (master table + detailed specs) — GAP-MOB-01 / GAP-UI-01 / GAP-FEAT-06 **closed**
 - [x] Ensure every `open`/`partial` P0–P1 gap has a **planned DART-NNN** (DART-050–061 only; no DART-062+)
 - [x] Sync residual table in cutover checklist if RB/RC change (RB-06 → DART-050–054; DART-050–061 residuals)
-- [x] Append/enrich DART-050–061 rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md) (DART-057 owns GAP-FEAT-06)
+- [x] Append/enrich DART-050–061 rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md) (DART-057 done)
 - [x] Inventory planning coverage check table all **Yes** / empty unplanned
 
 ---
@@ -519,8 +510,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-057** `mobile-compose-equip-polish` |
-| **Next phase** | P7 DART-055–056 **done** → DART-057 → P8 DART-058–061 |
+| **Next planned slice** | **DART-058** `prod-public-oauth-matrix` |
+| **Next phase** | P7 DART-055–057 **done** → P8 DART-058–061 |
 | **Blocker for cutover** | Residual RB-03…05 (RB-01, RB-02, RB-06 cleared); other residuals per cutover checklist |
 | **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
 | **unplanned_p0_p1** | *(empty)* |

@@ -101,7 +101,7 @@ Domain packages are shared; UI shells differ.
 | Soft stat targets (explicit save) | Yes | **PASS** | **PASS** | **PARTIAL** | Soft never auto-applies on all hosts |
 | Resolve variant / conflicts | Yes | **PASS** | **PASS** | **PASS** | DART-005 |
 | Equip-ready / wishlist vs owned pins | Yes | **PASS** | **PARTIAL** | **PASS** | DART-006/038/047 |
-| Finish gaps helpers | Yes | **PARTIAL** | **PARTIAL** | **PARTIAL** | DART-007 pure only; host UX residual **GAP-FEAT-06** → **DART-057** (Next FinishTab gates equip/export); pure never auto-wires |
+| Finish gaps helpers | Yes | **PASS** | **PARTIAL** | **PASS** | DART-007 pure + **DART-057** host panels (Windows+Jaspr); CTA = finish-complete ∧ equip-ready; mobile display-only (equip N/A) |
 | Armor optimizer (confirm-only) | Yes | **PASS** | **MISS** | **MISS** | DART-035/036 Windows; not required on mobile/web for program gate; product cutover may accept Windows-only optimizer |
 | Bungie Public+PKCE auth | Confidential cookies on Next | **PASS** | **PARTIAL** | **PASS** | DART-022/023/045 — **no CLIENT_SECRET** |
 | Inventory sync full-replace | Yes | **PASS** | **PARTIAL** | **PASS** | Vault lookup **DART-050**, roll tags **DART-051**, sockets **DART-052**, diagnostics UI **DART-053**, live/fixture harness **DART-054** (RB-06 **cleared**); Jaspr Settings sync + Owned depth **DART-056** (RB-02 **cleared**). Mobile residual → DART-057. |

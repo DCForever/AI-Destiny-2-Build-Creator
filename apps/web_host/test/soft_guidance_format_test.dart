@@ -21,6 +21,20 @@ void main() {
       expect(t[ArmorStatName.health], 100);
     });
 
+    test('softStatTargetsFromFieldMap all ArmorStatName (GAP-UI-01)', () {
+      final fields = <String, String>{
+        for (final s in ArmorStatName.all) s.wireName: '100',
+      };
+      final t = softStatTargetsFromFieldMap(fields);
+      for (final s in ArmorStatName.all) {
+        expect(t[s], 100, reason: s.wireName);
+      }
+      final summary = formatSoftStatTargetsSummary(t);
+      for (final s in ArmorStatName.all) {
+        expect(summary, contains(s.wireName));
+      }
+    });
+
     test('parse invalid soft target', () {
       final bad = parseSoftStatTargetField('nope');
       expect(bad.error, isNotNull);

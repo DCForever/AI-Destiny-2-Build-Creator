@@ -126,6 +126,28 @@ void main() {
         ),
         isFalse,
       );
+      expect(
+        canEnableEquipCta(
+          signedIn: true,
+          equipReady: true,
+          characterId: 'c1',
+          equipping: false,
+          loading: false,
+          finishComplete: false,
+        ),
+        isFalse,
+      );
+      expect(
+        canEnableEquipCta(
+          signedIn: true,
+          equipReady: true,
+          characterId: 'c1',
+          equipping: false,
+          loading: false,
+          finishComplete: true,
+        ),
+        isTrue,
+      );
     });
   });
 

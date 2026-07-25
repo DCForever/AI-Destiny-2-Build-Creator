@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../auth/windows_oauth_session.dart';
 import '../settings/inventory_sync_controller.dart';
 import 'build_identity_format.dart';
+import 'finish_gaps_format.dart';
 import 'soft_guidance_format.dart';
 import 'variant_compose_format.dart';
 
@@ -162,6 +163,49 @@ class BuildsLibraryController extends ChangeNotifier {
       formatSoftStatTargetsSummary(_softStatTargets);
   bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
   String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
+
+  /// Pure finish-gap readiness (DART-057 / GAP-FEAT-06). Soft never auto-applies.
+  FinishGapsResult? get finishGaps {
+    final v = _selectedVariant;
+    if (v == null) return null;
+    final attIns = <FinishAttachmentInput>[];
+    for (final a in _attachments) {
+      final type = SetType.tryParse(a.setType ?? '');
+      if (type == null) continue;
+      attIns.add(
+        FinishAttachmentInput(
+          setId: a.record.setId,
+          mode: finishAttachmentModeFromWire(a.record.mode),
+          setType: type,
+          setName: a.setName,
+        ),
+      );
+    }
+    final equipment = <String, FinishEquipmentClaim?>{
+      for (final pin in _slotPins)
+        pin.slot: FinishEquipmentClaim(
+          slot: pin.slot,
+          itemHash: pin.itemHash,
+          itemName: pin.itemName,
+          instanceId: pin.instanceId,
+        ),
+    };
+    final hasMod = _attachments.any(
+      (a) => (a.setType ?? '') == SetType.mod.wireName,
+    );
+    return evaluateFinishGaps(
+      EvaluateFinishGapsInput(
+        variantId: v.id,
+        isDefaultVariant: v.isDefault,
+        attachments: attIns,
+        equipment: equipment,
+        hasModCoverage: hasMod,
+      ),
+    );
+  }
+
+  /// Finish complete flag for equip/export CTA policy.
+  bool get finishComplete => finishGaps?.complete ?? false;
 
   String synergySummaryOf(BuildRecord b) => formatSynergyDesignationList([
         for (final d in b.synergyTypes)

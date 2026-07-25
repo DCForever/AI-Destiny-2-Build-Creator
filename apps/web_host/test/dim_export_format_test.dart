@@ -104,6 +104,26 @@ void main() {
         ),
         isFalse,
       );
+      expect(
+        canEnableDimExportCta(
+          equipReady: true,
+          exporting: false,
+          loading: false,
+          hasVariant: true,
+          finishComplete: false,
+        ),
+        isFalse,
+      );
+      expect(
+        canEnableDimExportCta(
+          equipReady: true,
+          exporting: false,
+          loading: false,
+          hasVariant: true,
+          finishComplete: true,
+        ),
+        isTrue,
+      );
     });
   });
 

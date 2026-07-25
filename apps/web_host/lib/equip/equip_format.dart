@@ -54,15 +54,20 @@ String formatEmptyCombatGapsSummary(List<String> emptySlots) {
 }
 
 /// Whether Apply CTA should be enabled (UI gate; controller still re-asserts).
+///
+/// DART-057: when [finishComplete] is provided, requires finish-complete AND
+/// equip-ready (Next FinishTab policy). Omit or pass true for equip-ready-only.
 bool canEnableEquipCta({
   required bool signedIn,
   required bool equipReady,
   required String? characterId,
   required bool equipping,
   required bool loading,
+  bool finishComplete = true,
 }) {
   if (!signedIn) return false;
   if (equipping || loading) return false;
+  if (!finishComplete) return false;
   if (!equipReady) return false;
   if (characterId == null || characterId.isEmpty) return false;
   return true;

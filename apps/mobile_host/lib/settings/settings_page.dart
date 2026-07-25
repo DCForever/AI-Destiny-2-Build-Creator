@@ -3,6 +3,7 @@ import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
+import '../surface_matrix.dart';
 
 /// Settings minimum: storage/DB path + manifest status (DART-040).
 ///
@@ -133,6 +134,37 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: _loading ? null : _loadStatus,
               icon: const Icon(Icons.refresh),
               label: const Text('Reload status'),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Mobile surface matrix',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'DART-057 product matrix. Equip/catalog/DIM are N/A on phone '
+            '(use Windows/Jaspr). Soft never auto-applies. No CLIENT_SECRET.',
+            key: const Key('surface_matrix_caption'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Card(
+            key: const Key('surface_matrix_card'),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  for (final entry in kMobileSurfaceMatrix)
+                    ListTile(
+                      key: Key('surface_matrix_row_${entry.key}'),
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      title: Text('${entry.key} · ${entry.status.label}'),
+                      subtitle: Text(entry.note),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

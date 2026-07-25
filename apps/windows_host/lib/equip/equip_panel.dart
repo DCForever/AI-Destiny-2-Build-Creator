@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../builds/finish_gaps_format.dart';
 import 'equip_controller.dart';
 import 'equip_format.dart';
 
-/// Character pick + equip CTA + gaps confirm + step report (DART-038).
+/// Character pick + equip CTA + gaps confirm + step report (DART-038 / DART-057).
 class EquipPanel extends StatefulWidget {
   const EquipPanel({
     super.key,
     required this.controller,
+    this.finishComplete = true,
   });
 
   final EquipController controller;
+
+  /// Finish-gaps complete (DART-057). CTAs require finish-complete AND equip-ready.
+  final bool finishComplete;
 
   @override
   State<EquipPanel> createState() => _EquipPanelState();
@@ -211,10 +216,27 @@ class _EquipPanelState extends State<EquipPanel> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
+        if (!widget.finishComplete) ...[
+          const SizedBox(height: 8),
+          Text(
+            kFinishIncompleteCtaCaption,
+            key: const Key('equip_finish_incomplete_hint'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
         const SizedBox(height: 12),
         FilledButton(
           key: const Key('equip_apply_button'),
-          onPressed: _c.canApply && !_c.equipping ? _onApply : null,
+          onPressed: canEnableEquipCta(
+                    signedIn: _c.isSignedIn,
+                    equipReady: _c.equipReady,
+                    characterId: _c.selectedCharacterId,
+                    equipping: _c.equipping,
+                    loading: _c.loadingCharacters || _c.loadingReadiness,
+                    finishComplete: widget.finishComplete,
+                  )
+              ? _onApply
+              : null,
           child: Text(_c.equipping ? 'Applying…' : 'Apply to character'),
         ),
         if (_c.error != null) ...[

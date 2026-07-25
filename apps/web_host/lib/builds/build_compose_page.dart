@@ -9,6 +9,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
 import '../compose/compose_styles.dart';
+import '../compose/finish_gaps_format.dart';
 import '../compose/soft_guidance_format.dart';
 import '../dim_export/dim_export_controller.dart';
 import '../dim_export/dim_export_format.dart';
@@ -40,13 +41,17 @@ class _BuildComposePageState extends State<BuildComposePage> {
   String _variantName = '';
   String _attachSetId = '';
   String _pinInstance = '';
-  String _healthTarget = '';
+  final Map<String, String> _softStatFields = {
+    for (final s in ArmorStatName.all) s.wireName: '',
+  };
   String? _status;
   bool _busy = false;
   String? _boundVariantKey;
 
   void _onController() {
     if (mounted) {
+      final c = component.controller;
+      if (c != null) _syncSoftStatFields(c);
       setState(() {});
       unawaited(_syncEquipExportBindings());
     }
@@ -67,11 +72,16 @@ class _BuildComposePageState extends State<BuildComposePage> {
   Future<void> _open(BuildsController c) async {
     await c.openBuild(component.buildId);
     if (!mounted) return;
-    final h = c.softStatTargets[ArmorStatName.health];
-    setState(() {
-      _healthTarget = h?.toString() ?? '';
-    });
+    _syncSoftStatFields(c);
+    setState(() {});
     await _syncEquipExportBindings();
+  }
+
+  void _syncSoftStatFields(BuildsController c) {
+    for (final stat in ArmorStatName.all) {
+      final v = c.softStatTargets[stat];
+      _softStatFields[stat.wireName] = v?.toString() ?? '';
+    }
   }
 
   Future<void> _syncEquipExportBindings() async {
@@ -449,18 +459,31 @@ class _BuildComposePageState extends State<BuildComposePage> {
                     ),
               ],
             ),
-            label([
-              .text('Health soft target'),
-              input(
-                type: InputType.text,
-                value: _healthTarget,
-                attributes: {
-                  'data-testid': 'soft-stat-health',
-                  'placeholder': 'e.g. 100',
-                },
-                onInput: (v) => setState(() => _healthTarget = '$v'),
-              ),
-            ]),
+            p(
+              classes: 'soft-advisory',
+              attributes: {'data-testid': 'soft-stat-editor-caption'},
+              [
+                .text(
+                  'Soft stat targets (all Armor 3.0 stats). Explicit save only — '
+                  'never auto-applied.',
+                ),
+              ],
+            ),
+            for (final stat in ArmorStatName.all)
+              label([
+                .text('${stat.wireName} soft target'),
+                input(
+                  type: InputType.text,
+                  value: _softStatFields[stat.wireName] ?? '',
+                  attributes: {
+                    'data-testid': 'soft-stat-${stat.wireName.toLowerCase()}',
+                    'placeholder': 'e.g. 100',
+                  },
+                  onInput: (v) => setState(
+                    () => _softStatFields[stat.wireName] = '$v',
+                  ),
+                ),
+              ]),
             button(
               classes: 'compose-btn',
               attributes: {
@@ -470,9 +493,9 @@ class _BuildComposePageState extends State<BuildComposePage> {
               events: {
                 'click': (_) => unawaited(
                       _run(
-                        () => c.saveSoftStatTargetsFromFields({
-                          ArmorStatName.health.wireName: _healthTarget,
-                        }),
+                        () => c.saveSoftStatTargetsFromFields(
+                          Map<String, String>.from(_softStatFields),
+                        ),
                       ),
                     ),
               },
@@ -485,13 +508,62 @@ class _BuildComposePageState extends State<BuildComposePage> {
               ),
           ],
         ),
-        _buildEquipSection(equip),
-        _buildDimSection(dim),
+        _buildFinishGapsSection(c),
+        _buildEquipSection(equip, finishComplete: c.finishComplete),
+        _buildDimSection(dim, finishComplete: c.finishComplete),
       ],
     );
   }
 
-  Component _buildEquipSection(EquipController? equip) {
+  Component _buildFinishGapsSection(BuildsController c) {
+    final gaps = c.finishGaps;
+    return div(
+      classes: 'compose-section',
+      attributes: {
+        'data-testid': 'finish_gaps_panel',
+        'id': 'finish_gaps_panel',
+      },
+      [
+        h2([.text('Finish readiness')]),
+        p(
+          classes: 'soft-advisory',
+          attributes: {'data-testid': 'finish_gaps_policy'},
+          [.text(kFinishGapsPolicyCaption)],
+        ),
+        if (gaps == null)
+          p(
+            attributes: {'data-testid': 'finish_gaps_empty'},
+            [.text('Select a variant to evaluate finish gaps.')],
+          )
+        else ...[
+          p(
+            attributes: {
+              'data-testid': 'finish_gaps_complete_summary',
+              'data-finish-complete': gaps.complete ? 'true' : 'false',
+            },
+            [.text(formatFinishGapsCompleteSummary(gaps))],
+          ),
+          ul(
+            [
+              for (final gap in gaps.gaps)
+                li(
+                  attributes: {
+                    'data-testid': 'finish_gap_${gap.category.wireName}',
+                  },
+                  [.text(formatFinishGapRowSummary(gap))],
+                ),
+            ],
+            attributes: {'data-testid': 'finish_gaps_list'},
+          ),
+        ],
+      ],
+    );
+  }
+
+  Component _buildEquipSection(
+    EquipController? equip, {
+    required bool finishComplete,
+  }) {
     if (equip == null) {
       return div(
         classes: 'compose-section',
@@ -506,13 +578,22 @@ class _BuildComposePageState extends State<BuildComposePage> {
             [
               .text(
                 'Optional equip requires sign-in wiring (profile + write clients). '
-                'DIM export still available below when equip-ready.',
+                'DIM export still available below when finish-complete and equip-ready.',
               ),
             ],
           ),
         ],
       );
     }
+
+    final equipCtaEnabled = canEnableEquipCta(
+      signedIn: equip.isSignedIn,
+      equipReady: equip.equipReady,
+      characterId: equip.selectedCharacterId,
+      equipping: equip.equipping,
+      loading: equip.loadingCharacters || equip.loadingReadiness,
+      finishComplete: finishComplete,
+    );
 
     return div(
       classes: 'compose-section',
@@ -527,10 +608,16 @@ class _BuildComposePageState extends State<BuildComposePage> {
           attributes: {'data-testid': 'equip-soft-advisory'},
           [.text(equip.softAdvisory)],
         ),
+        if (!finishComplete)
+          p(
+            attributes: {'data-testid': 'equip_finish_incomplete_hint'},
+            [.text(kFinishIncompleteCtaCaption)],
+          ),
         p(
           attributes: {
             'data-testid': 'equip_ready_summary',
             'data-equip-ready': equip.equipReady ? 'true' : 'false',
+            'data-finish-complete': finishComplete ? 'true' : 'false',
           },
           [.text(equip.readinessSummary)],
         ),
@@ -585,10 +672,11 @@ class _BuildComposePageState extends State<BuildComposePage> {
             attributes: {
               'type': 'button',
               'data-testid': 'equip_apply_button',
-              if (!equip.canApply) 'disabled': 'true',
+              if (!equipCtaEnabled) 'disabled': 'true',
             },
             events: {
               'click': (_) => unawaited(() async {
+                    if (!equipCtaEnabled) return;
                     await equip.requestEquip();
                     if (mounted) setState(() {});
                   }()),
@@ -662,7 +750,10 @@ class _BuildComposePageState extends State<BuildComposePage> {
     );
   }
 
-  Component _buildDimSection(DimExportController? dim) {
+  Component _buildDimSection(
+    DimExportController? dim, {
+    required bool finishComplete,
+  }) {
     if (dim == null) {
       return div(
         classes: 'compose-section',
@@ -673,6 +764,14 @@ class _BuildComposePageState extends State<BuildComposePage> {
         ],
       );
     }
+
+    final dimCtaEnabled = canEnableDimExportCta(
+      equipReady: dim.equipReady,
+      exporting: dim.exporting,
+      loading: dim.loadingReadiness,
+      hasVariant: true,
+      finishComplete: finishComplete,
+    );
 
     return div(
       classes: 'compose-section',
@@ -687,10 +786,16 @@ class _BuildComposePageState extends State<BuildComposePage> {
           attributes: {'data-testid': 'dim_export_soft_advisory'},
           [.text(dim.softAdvisory)],
         ),
+        if (!finishComplete)
+          p(
+            attributes: {'data-testid': 'dim_export_finish_incomplete_hint'},
+            [.text(kFinishIncompleteCtaCaption)],
+          ),
         p(
           attributes: {
             'data-testid': 'dim_export_ready_summary',
             'data-equip-ready': dim.equipReady ? 'true' : 'false',
+            'data-finish-complete': finishComplete ? 'true' : 'false',
           },
           [.text(dim.readinessSummary)],
         ),
@@ -707,10 +812,13 @@ class _BuildComposePageState extends State<BuildComposePage> {
           attributes: {
             'type': 'button',
             'data-testid': 'dim_export_copy_button',
-            if (!dim.canExport) 'disabled': 'true',
+            if (!dimCtaEnabled) 'disabled': 'true',
           },
           events: {
-            'click': (_) => unawaited(dim.requestExport()),
+            'click': (_) => unawaited(() async {
+                  if (!dimCtaEnabled) return;
+                  await dim.requestExport();
+                }()),
           },
           [
             .text(

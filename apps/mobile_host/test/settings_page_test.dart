@@ -75,6 +75,16 @@ void main() {
     expect(find.text('v1'), findsOneWidget);
     expect(find.text('v2'), findsOneWidget);
     expect(find.text('stale'), findsOneWidget);
-    expect(find.textContaining('CLIENT_SECRET'), findsOneWidget);
+    expect(find.textContaining('CLIENT_SECRET'), findsWidgets);
+
+    // Matrix card is below the fold in ListView — scroll into view.
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('surface_matrix_card')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('surface_matrix_card')), findsOneWidget);
+    expect(find.byKey(const Key('surface_matrix_row_equip')), findsOneWidget);
+    expect(find.byKey(const Key('surface_matrix_row_optimizer')), findsOneWidget);
   });
 }

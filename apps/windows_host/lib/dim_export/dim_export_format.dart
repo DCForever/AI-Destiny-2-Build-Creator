@@ -36,14 +36,19 @@ String formatDimExportReadySummary(EquipReadyResult result) {
 }
 
 /// Whether Copy DIM JSON CTA should be enabled (UI gate; controller re-asserts).
+///
+/// DART-057: when [finishComplete] is provided, requires finish-complete AND
+/// equip-ready. Omit or pass true for equip-ready-only (legacy unit tests).
 bool canEnableDimExportCta({
   required bool equipReady,
   required bool exporting,
   required bool loading,
   required bool hasVariant,
+  bool finishComplete = true,
 }) {
   if (!hasVariant) return false;
   if (exporting || loading) return false;
+  if (!finishComplete) return false;
   if (!equipReady) return false;
   return true;
 }

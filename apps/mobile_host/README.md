@@ -1,4 +1,4 @@
-# destiny2_mobile_host (DART-040 / DART-041)
+# destiny2_mobile_host (DART-040 / DART-041 / DART-057)
 
 **Flutter Android + iOS** shell for Destiny 2 Build Creator multiplatform port.
 
@@ -6,15 +6,16 @@
 
 - Resolves **StorageRoot** via path_provider application-support (not repo `.cache`)
 - Opens a **single** Drift `AppDatabase` at `app.db`
-- **Bottom navigation**: Builds | Settings
+- **Bottom navigation**: Builds | Settings (published surface matrix DART-057)
 - **Focus Swap** (DESIGN.md): Builds list XOR detail route (nested navigator — not dual-pane)
 - **Create build** via bottom sheet (FAB); optional name + class + synergy type
-- **Linear compose** on detail: variants → attach set sheet → slot pins → soft guidance
+- **Linear compose** on detail: variants → attach set sheet → slot pins → soft guidance → finish-gap display
 - Shared `destiny2_app` use cases (`createUserBuild`, attach, `queryVariantCoverage`, …)
-- **Settings**: storage/DB path + manifest status
+- **Settings**: storage/DB path + manifest status + **mobile surface matrix**
 - Matte Flap Ledger theme (`destiny2_ui_tokens`)
 - **No CLIENT_SECRET**; soft guidance never auto-applies
-- Mobile OAuth / catalog / equip deferred
+- Mobile OAuth / catalog / equip / DIM: **N/A** (product matrix; use Windows/Jaspr)
+- Optimizer: **deferred** (GAP-FEAT-01)
 
 ## Run
 
@@ -43,3 +44,4 @@ iOS project lives under `ios/` (codesigned install requires macOS/Xcode).
 
 - `specs/dart-040-flutter-mobile-shell-nav/`
 - `specs/dart-041-flutter-mobile-compose/`
+- `specs/dart-057-mobile-compose-equip-polish/`
