@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-031 done — Synergy library dual-pane + evidence links; designation immutable)  
+**Updated:** 2026-07-24 (DART-032 done — Builds library dual-pane + identity; create with synergy types)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -123,7 +123,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-029** | **done** | `flutter-design-tokens` | `dart-029-flutter-design-tokens` | P3 | DART-019 | Shared design tokens + FlapBoard layout contracts (no full brand rewrite) | Documented tokens; Windows theme stub without Material-card default |
 | **DART-030** | **done** | `flutter-sets-library-ui` | `dart-030-flutter-sets-library-ui` | P3 | DART-027, DART-029, DART-026 | Sets library + slot fill → catalog pick (Windows dual-pane) | Create/edit set; fill slot from catalog/owned |
 | **DART-031** | **done** | `flutter-synergy-library-ui` | `dart-031-flutter-synergy-library-ui` | P3 | DART-027, DART-029 | Synergy library CRUD + evidence links UI | Create synergy; designation immutable after create |
-| **DART-032** | pending | `flutter-build-identity-ui` | `dart-032-flutter-build-identity-ui` | P3 | DART-028, DART-029 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
+| **DART-032** | **done** | `flutter-build-identity-ui` | `dart-032-flutter-build-identity-ui` | P3 | DART-028, DART-029 | Build list + identity (class, synergy types, exotic/super pins) | Create build with synergy types |
 | **DART-033** | pending | `flutter-variant-compose-ui` | `dart-033-flutter-variant-compose-ui` | P3 | DART-032, DART-030 | Variants, set attachments, slot pins (wishlist vs instance) | Attach set; pin slot; resolve conflicts surfaced |
 | **DART-034** | pending | `flutter-soft-guidance-ui` | `dart-034-flutter-soft-guidance-ui` | P3 | DART-033, DART-004 | Soft coverage chips + soft stat targets UI (display only) | Soft never auto-applies; **P3 phase gate** (compose without equip) |
 | **DART-035** | pending | `optimizer-isolate` | `dart-035-optimizer-isolate` | P4 | DART-008, DART-028 | Run enumerate in isolate; materialize Armor Set use case | UI thread safe; confirm-only apply path |

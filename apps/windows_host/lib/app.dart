@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'builds/builds_library_page.dart';
 import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
 import 'sets/sets_library_page.dart';
@@ -7,10 +8,11 @@ import 'settings/settings_page.dart';
 import 'synergies/synergies_library_page.dart';
 import 'theme/flap_theme.dart';
 
-/// Root Flutter app for the Windows host (DART-019/020/029/030/031).
+/// Root Flutter app for the Windows host (DART-019/020/029/030/031/032).
 ///
-/// Shell destinations: Catalog + Sets + Synergies library (DART-031) + Settings.
-/// Theme: Matte Flap Ledger stub (DART-029) — square flat cards, void canvas.
+/// Shell destinations: Catalog + Sets + Synergies + Builds library (DART-032)
+/// + Settings. Theme: Matte Flap Ledger stub (DART-029) — square flat cards,
+/// void canvas.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
@@ -56,6 +58,11 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   label: Text('Synergies'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.construction_outlined),
+                  selectedIcon: Icon(Icons.construction),
+                  label: Text('Builds'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.settings_outlined),
                   selectedIcon: Icon(Icons.settings),
                   label: Text('Settings'),
@@ -77,6 +84,10 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   ),
                   SynergiesLibraryPage(
                     key: const Key('synergies_library_page'),
+                    services: widget.services,
+                  ),
+                  BuildsLibraryPage(
+                    key: const Key('builds_library_page'),
                     services: widget.services,
                   ),
                   SettingsPage(
