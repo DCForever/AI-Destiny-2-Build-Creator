@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-24 (DART-010 done)  
+**Updated:** 2026-07-24 (DART-011 done — P0 phase gate)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -102,7 +102,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-008** | **done** | `optimizer-core` | `dart-008-optimizer-core` | P0 | DART-002 | Port enumerate/prune/score pure core + maxCombinations | Unit tests on small fixture boards; truncation flags; no Flutter isolate yet |
 | **DART-009** | **done** | `static-sandbox-data` | `dart-009-static-sandbox-data` | P0 | DART-001 | Port static tables (stat benefits, synergy verbs, exotic ability requirements, etc.) | Constants package; update process documented for sandbox patches |
 | **DART-010** | **done** | `dim-builders` | `dart-010-dim-builders` | P0 | DART-006 | Pure DIM loadout JSON builders + equipReady gate call (no network) | jsonOnly payload matches TS golden for one fixture variant |
-| **DART-011** | pending | `domain-parity-gate` | `dart-011-domain-parity-gate` | P0 | DART-003–010 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
+| **DART-011** | **done** | `domain-parity-gate` | `dart-011-domain-parity-gate` | P0 | DART-003–010 | Aggregate parity suite + package dependency lint (domain has zero IO/UI) | Single command runs full pure suite; melos graph guard; **P0 phase gate** |
 | **DART-012** | pending | `storage-root` | `dart-012-storage-root` | P1 | DART-011 | StorageRoot abstraction + Windows path_provider layout (app support, not repo `.cache`) | Paths documented; unit tests with fake FS |
 | **DART-013** | pending | `drift-schema` | `dart-013-drift-schema` | P1 | DART-012 | Drift schema mirroring core tables (users, builds, variants, sets, synergies, inventory) | Schema creates clean DB; PRAGMA/index notes for critical uniques |
 | **DART-014** | pending | `drift-migrations` | `dart-014-drift-migrations` | P1 | DART-013 | Migration strategy mirroring historical ensure* / column upgrades needed for import later | Empty→current migrate green; documented version table |
@@ -190,11 +190,15 @@ Skeleton → OPFS writer policy → bundles → auth → compose → equip → i
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-011** `domain-parity-gate` (P0 phase gate — aggregate pure suite + dep lint) |
-| **Active branch** | (create) `dart-011-domain-parity-gate` from `feature/multiplatform-dart` |
-| **Specs dir** | `specs/dart-011-domain-parity-gate/` (created at specify) |
+| **Next / active slice** | **DART-012** `storage-root` (P1 — StorageRoot + Windows path_provider layout) |
+| **Active branch** | (create) `dart-012-storage-root` from `feature/multiplatform-dart` |
+| **Specs dir** | `specs/dart-012-storage-root/` (created at specify) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | — |
+
+### DART-011 note (completed)
+
+**P0 phase gate closed.** Single command `dart run tool/p0_parity_gate.dart` (or `dart run melos run p0-gate`) runs pure-package graph guard then full pure suite (`packages/domain` + `packages/sandbox_data`). Graph guard forbids Flutter/Jaspr/Drift/http/path_provider (and related) runtime deps on pure packages; unit tests under `tool/test/`. Melos scripts `test` / `graph-guard` / `p0-gate` are non-interactive root runs (no nested Melos on PATH). P1 may start.
 
 ### DART-010 note (completed)
 
