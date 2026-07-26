@@ -328,7 +328,7 @@ async function prepareForScreen(page, screen, hasAuth) {
     await safeClick(page, ['aside button:text-is("New")', 'main button:has-text("New set")', 'aside button:has-text("New")'], 4000);
     await settle(700);
   }
-  if (screen.actionExtra === "open-improve-kit") {
+if (screen.actionExtra === "open-improve-kit") {
     let opened = await safeClick(page, ['main button:has-text("Improve kit")', 'main button:has-text("Improve")'], 2500);
     if (!opened) {
       await safeClick(page, ['main button:has-text("Attach")'], 2500);
@@ -338,6 +338,102 @@ async function prepareForScreen(page, screen, hasAuth) {
     if (!opened) console.warn("[atlas] Improve kit not available for", screen.id);
     await settle(900);
   }
+
+  // Catalog kind / scope toggles (FilterChips)
+if (screen.catalogKind || screen.catalogScope || String(screen.actionExtra || "").startsWith("catalog")) {
+    // Catalog fetches can take a few seconds after navigation / kind change.
+    await page.locator('text=Loading catalog').first().waitFor({ state: "hidden", timeout: 20000 }).catch(() => {});
+  }
+  if (screen.catalogKind) {
+    const kindLabel =
+      screen.catalogKind === "weapons"
+        ? "Weapons"
+        : screen.catalogKind === "armor"
+          ? "Armor"
+          : screen.catalogKind === "universal"
+            ? "Universal"
+            : screen.catalogKind;
+    await safeClick(page, [
+      `main button:text-is("${kindLabel}")`,
+      `main button:has-text("${kindLabel}")`,
+    ], 4000);
+    await settle(700);
+    await page.locator('text=Loading catalog').first().waitFor({ state: "hidden", timeout: 20000 }).catch(() => {});
+    await waitForApp(page);
+  }
+  if (screen.catalogScope === "owned") {
+    await safeClick(page, ['main button:text-is("Owned")', 'main button:has-text("Owned")'], 3000);
+    await settle(600);
+    await page.locator('text=Loading catalog').first().waitFor({ state: "hidden", timeout: 20000 }).catch(() => {});
+    await waitForApp(page);
+  }
+  if (screen.catalogScope === "all") {
+    await safeClick(page, ['main button:text-is("Manifest")', 'main button:has-text("Manifest")'], 3000);
+    await settle(600);
+    await page.locator('text=Loading catalog').first().waitFor({ state: "hidden", timeout: 20000 }).catch(() => {});
+    await waitForApp(page);
+  }
+  if (screen.actionExtra === "catalog-open-filters") {
+    await safeClick(page, [
+      'main button:has-text("Filters")',
+      'main button:has-text("▸ Filters")',
+      'main button:has-text("▾ Filters")',
+    ], 3000);
+    await settle(500);
+  }
+  if (screen.actionExtra === "catalog-select-first") {
+    await page.locator('text=Results').first().waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
+    await page.locator('text=Loading catalog').first().waitFor({ state: "hidden", timeout: 20000 }).catch(() => {});
+    await settle(1000);
+    // Result cards are full-width buttons with title=item name inside the Results aside.
+    const card = page.locator('aside button[title], aside button.w-full, main aside button').first();
+    try {
+      if ((await card.count()) > 0) {
+        await card.click({ timeout: 5000 });
+      } else {
+        await safeClick(page, ['main button:has(img)'], 4000);
+      }
+    } catch {
+      console.warn("[atlas] catalog select first failed for", screen.id);
+    }
+    await settle(1000);
+    await page.locator('text=← Results').first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+  }
+
+  if (screen.actionExtra === "sets-edit") {
+    await safeClick(page, ['main button:text-is("Edit")', 'main button:has-text("Edit")'], 4000);
+    await settle(700);
+  }
+  if (screen.actionExtra === "sets-fill-slot") {
+    const filled = await safeClick(page, [
+      'main button:has-text("Fill next")',
+      'main button:text-is("Fill")',
+      'main button:has-text("Fill")',
+      'main button:has-text("Add mod")',
+    ], 4000);
+    if (!filled) console.warn("[atlas] sets fill slot control not found for", screen.id);
+    await settle(1000);
+    await page
+      .locator('main button:has-text("Weapons"), main button:has-text("Armor"), main :text("Catalog")')
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 })
+      .catch(() => {});
+  }
+
+  if (screen.actionExtra === "loadouts-expand-first") {
+    // Expand first bungie loadout row if collapsed
+    await safeClick(page, [
+      'main button:has-text("Expand")',
+      'main button:has-text("Show")',
+      'main button[aria-expanded="false"]',
+    ], 3000);
+    // Many rows toggle via the whole header button
+    if (!(await page.locator('main :text("Kinetic"), main :text("Helmet")').count())) {
+      await safeClick(page, ['main .overflow-hidden button', 'main article button', 'main button'], 3000);
+    }
+    await settle(800);
+  }
+
   return { skip: false };
 }
 
