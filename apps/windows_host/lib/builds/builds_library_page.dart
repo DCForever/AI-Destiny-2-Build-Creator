@@ -1810,6 +1810,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               services: widget.services,
               setId: activeGap.coveringSetId!,
               setName: activeGap.coveringSetName ?? activeGap.coveringSetId!,
+              resolveUserId: _controller.resolveLibraryUserId,
               onApplied: () async {
                 await _controller.afterFinishArmorApplied();
               },
@@ -2136,6 +2137,7 @@ class _FinishArmorOptimizeEmbed extends StatefulWidget {
     required this.services,
     required this.setId,
     required this.setName,
+    required this.resolveUserId,
     required this.onApplied,
     required this.onManualFill,
     required this.onBack,
@@ -2144,6 +2146,8 @@ class _FinishArmorOptimizeEmbed extends StatefulWidget {
   final AppServices services;
   final String setId;
   final String setName;
+  /// Same owner resolution as library controllers (BUG-20260726-015).
+  final Future<int> Function() resolveUserId;
   final Future<void> Function() onApplied;
   final Future<void> Function() onManualFill;
   final VoidCallback onBack;
@@ -2161,12 +2165,8 @@ class _FinishArmorOptimizeEmbedState extends State<_FinishArmorOptimizeEmbed> {
     super.initState();
     _optimizer = OptimizerController(
       db: widget.services.db,
-      resolveUserId: () async {
-        final id = widget.services.inventorySync.localUserId;
-        if (id != null) return id;
-        await widget.services.inventorySync.refreshStatus();
-        return widget.services.inventorySync.localUserId ?? 0;
-      },
+      // Never fall back to userId 0 — match Sets optimizer / library owner.
+      resolveUserId: widget.resolveUserId,
     );
     _optimizer.bindTargetSet(setId: widget.setId, setName: widget.setName);
   }

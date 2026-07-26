@@ -1,5 +1,6 @@
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../auth/windows_oauth_session.dart';
 import 'inventory_sync_controller.dart';
@@ -60,7 +61,21 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
   }
 
   void _onControllerChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // Shared InventorySyncController may notify during Catalog rebuild
+    // (IndexedStack keeps Settings mounted). Defer only mid-frame
+    // (BUG-20260725-003); idle updates stay synchronous for tests/UX.
+    switch (SchedulerBinding.instance.schedulerPhase) {
+      case SchedulerPhase.idle:
+      case SchedulerPhase.postFrameCallbacks:
+        setState(() {});
+      case SchedulerPhase.transientCallbacks:
+      case SchedulerPhase.midFrameMicrotasks:
+      case SchedulerPhase.persistentCallbacks:
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() {});
+        });
+    }
   }
 
   @override

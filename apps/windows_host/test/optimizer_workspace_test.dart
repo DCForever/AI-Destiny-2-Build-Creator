@@ -380,6 +380,55 @@ void main() {
       optimizer.dispose();
       sets.dispose();
     });
+
+    test('apply with userId 0 fails; library resolveUserId succeeds', () async {
+      // BUG-20260726-015: Finish embed used localUserId ?? 0 → Armor set not found.
+      final sets = SetsLibraryController(
+        db: services.db,
+        session: services.oauthSession,
+        inventorySync: services.inventorySync,
+      );
+      final uid = await sets.resolveLibraryUserId();
+      await createUserSet(
+        services.db,
+        uid,
+        const CreateSetCommand(
+          id: 'armor-uid',
+          name: 'Uid Armor',
+          type: SetType.armor,
+        ),
+      );
+
+      final bad = OptimizerController(
+        db: services.db,
+        resolveUserId: () async => 0,
+        optimizeRunner: (req) async => optimizeArmorLocal(req),
+        initialCandidates: fixtureBoard(),
+        initialHasInventory: true,
+      );
+      bad.bindTargetSet(setId: 'armor-uid', setName: 'Uid Armor');
+      await bad.findKits();
+      expect(bad.combinations, isNotEmpty);
+      bad.requestApplyInPlace(0);
+      expect(await bad.confirmPending(), 'Armor set not found');
+      bad.dispose();
+
+      final good = OptimizerController(
+        db: services.db,
+        resolveUserId: () => sets.resolveLibraryUserId(),
+        optimizeRunner: (req) async => optimizeArmorLocal(req),
+        initialCandidates: fixtureBoard(),
+        initialHasInventory: true,
+      );
+      good.bindTargetSet(setId: 'armor-uid', setName: 'Uid Armor');
+      await good.findKits();
+      good.requestApplyInPlace(0);
+      expect(await good.confirmPending(), isNull);
+      final detail = await getSetDetail(services.db, uid, 'armor-uid');
+      expect(detail!.activeItems, hasLength(5));
+      good.dispose();
+      sets.dispose();
+    });
   });
 
   group('US3 soft never auto-apply', () {

@@ -156,6 +156,10 @@ Future<List<AttachmentRecord>> listAttachments(
 }
 
 /// Replace all attachments for [variantId] with [attachments].
+///
+/// When [AttachmentWrite.id] is omitted, allocates `$variantId-att-N` that
+/// does not collide with ids already claimed by sibling writes (BUG-20260726-016:
+/// re-attach replace-by-type kept `…-att-0` while the new row also got `…-att-0`).
 Future<List<AttachmentRecord>> replaceAttachments(
   AppDatabase db,
   String variantId,
@@ -166,9 +170,22 @@ Future<List<AttachmentRecord>> replaceAttachments(
         ..where((t) => t.variantId.equals(variantId)))
       .go();
 
-  var i = 0;
+  final usedIds = <String>{
+    for (final a in attachments)
+      if (a.id != null && a.id!.isNotEmpty) a.id!,
+  };
+  var nextIndex = 0;
+  String allocateId() {
+    String candidate;
+    do {
+      candidate = '$variantId-att-${nextIndex++}';
+    } while (usedIds.contains(candidate));
+    usedIds.add(candidate);
+    return candidate;
+  }
+
   for (final a in attachments) {
-    final id = a.id ?? '$variantId-att-${i++}';
+    final id = (a.id != null && a.id!.isNotEmpty) ? a.id! : allocateId();
     await db.into(db.variantSetAttachments).insert(
           VariantSetAttachmentsCompanion.insert(
             id: id,

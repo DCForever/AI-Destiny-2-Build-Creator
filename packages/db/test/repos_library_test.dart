@@ -275,6 +275,21 @@ void main() {
       ], later);
       expect(await listAttachments(db, 'v1'), hasLength(1));
 
+      // BUG-20260726-016: kept id `…-att-0` must not collide with auto id.
+      await replaceAttachments(
+        db,
+        'v1',
+        const [
+          AttachmentWrite(id: 'v1-att-0', setId: 's1', mode: 'live'),
+          AttachmentWrite(setId: 's2', mode: 'live'),
+        ],
+        later,
+      );
+      final mixed = await listAttachments(db, 'v1');
+      expect(mixed, hasLength(2));
+      expect(mixed.map((a) => a.id).toSet(), {'v1-att-0', 'v1-att-1'});
+      expect(mixed.map((a) => a.setId).toSet(), {'s1', 's2'});
+
       final updated = await updateVariantRecord(
         db,
         'b1',

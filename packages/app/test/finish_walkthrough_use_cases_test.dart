@@ -84,6 +84,7 @@ void main() {
           type: SetType.armor,
         ),
         now: clock,
+        newId: nextId,
       );
 
       final result = await createSetAndAttach(
@@ -98,6 +99,60 @@ void main() {
         newId: nextId,
       );
       expect(result.set.set.name, 'Solar Titan Armor (2)');
+    });
+
+    test('second armor create-and-attach replaces without UNIQUE crash',
+        () async {
+      // BUG-20260726-016: replace-by-type kept …-att-0 and auto-allocated
+      // another …-att-0 for the new armor set.
+      final userId = await seedUser();
+      final ids = await seedBuild(userId);
+
+      final first = await createSetAndAttach(
+        db,
+        userId,
+        CreateSetAndAttachCommand(
+          buildId: ids.buildId,
+          variantId: ids.variantId,
+          type: SetType.armor,
+        ),
+        now: clock,
+        newId: nextId,
+      );
+      // Also attach a weapon so replace-by-type must keep one id and add one.
+      final weapon = await createSetAndAttach(
+        db,
+        userId,
+        CreateSetAndAttachCommand(
+          buildId: ids.buildId,
+          variantId: ids.variantId,
+          type: SetType.weapon,
+        ),
+        now: clock,
+        newId: nextId,
+      );
+      expect(weapon.attachmentSetId, isNotNull);
+
+      final second = await createSetAndAttach(
+        db,
+        userId,
+        CreateSetAndAttachCommand(
+          buildId: ids.buildId,
+          variantId: ids.variantId,
+          type: SetType.armor,
+        ),
+        now: clock,
+        newId: nextId,
+      );
+
+      final atts = await listAttachments(db, ids.variantId);
+      expect(atts, hasLength(2));
+      expect(atts.map((a) => a.id).toSet(), hasLength(2));
+      expect(
+        atts.map((a) => a.setId).toSet(),
+        {second.set.set.id, weapon.set.set.id},
+      );
+      expect(atts.any((a) => a.setId == first.set.set.id), isFalse);
     });
   });
 
