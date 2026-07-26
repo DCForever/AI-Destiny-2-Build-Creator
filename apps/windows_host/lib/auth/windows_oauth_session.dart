@@ -61,15 +61,78 @@ class WindowsOAuthSession extends ChangeNotifier {
   String? get membershipId => _tokens?.bungieMembershipId;
 
   /// Loads tokens from secure storage (call once after bootstrap).
+  ///
+  /// Public Bungie clients have no refresh_token. Keep the session while the
+  /// access token is valid; clear when expired and no refresh is available.
   Future<void> restore() async {
     try {
       final existing = await _tokenStore.read();
-      _tokens = existing;
-      _status = existing != null
-          ? OAuthSessionStatus.signedIn
-          : OAuthSessionStatus.signedOut;
+      if (existing == null) {
+        _tokens = null;
+        _status = OAuthSessionStatus.signedOut;
+        _errorMessage = null;
+        // ignore: avoid_print
+        print('OAuth: restore — no stored tokens');
+        return;
+      }
+
+      // ignore: avoid_print
+      print(
+        'OAuth: restore — loaded membership=${existing.bungieMembershipId} '
+        'accessLen=${existing.accessToken.length} '
+        'refreshLen=${existing.refreshToken.length} '
+        'needsRefresh=${needsRefresh(existing)} '
+        'sessionExpired=${isSessionExpired(existing)}',
+      );
+
+      if (!needsRefresh(existing)) {
+        _tokens = existing;
+        _status = OAuthSessionStatus.signedIn;
+        _errorMessage = null;
+        // ignore: avoid_print
+        print('OAuth: restore — signed in (access still valid)');
+        return;
+      }
+
+      if (existing.refreshToken.isEmpty || isSessionExpired(existing)) {
+        // ignore: avoid_print
+        print(
+          'OAuth: restore — cannot refresh '
+          '(refreshLen=${existing.refreshToken.length}, '
+          'sessionExpired=${isSessionExpired(existing)}); clearing',
+        );
+        try {
+          await _tokenStore.clear();
+        } catch (_) {}
+        _tokens = null;
+        _status = OAuthSessionStatus.signedOut;
+        _errorMessage = null;
+        return;
+      }
+
+      // ignore: avoid_print
+      print('OAuth: restore — refreshing access token…');
+      final refreshed = await _oauthClient.refreshTokens(existing).timeout(
+            const Duration(seconds: 45),
+            onTimeout: () => throw const BungieOAuthException(
+              'Token refresh timed out after 45s',
+            ),
+          );
+      await _tokenStore.write(refreshed);
+      _tokens = refreshed;
+      _status = OAuthSessionStatus.signedIn;
       _errorMessage = null;
-    } catch (e) {
+      // ignore: avoid_print
+      print(
+        'OAuth: restore — refresh OK membership=${refreshed.bungieMembershipId} '
+        'refreshLen=${refreshed.refreshToken.length}',
+      );
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('OAuth: restore failed: $e\n$st');
+      try {
+        await _tokenStore.clear();
+      } catch (_) {}
       _tokens = null;
       _status = OAuthSessionStatus.signedOut;
       _errorMessage = 'Could not restore session';
@@ -194,18 +257,40 @@ class WindowsOAuthSession extends ChangeNotifier {
               ),
             );
         // ignore: avoid_print
-        print('OAuth: token exchange OK; writing secure storage…');
+        print(
+          'OAuth: token exchange OK accessLen=${tokens.accessToken.length} '
+          'refreshLen=${tokens.refreshToken.length} '
+          'membership=${tokens.bungieMembershipId}; writing secure storage…',
+        );
+        if (tokens.refreshToken.isEmpty) {
+          // ignore: avoid_print
+          print(
+            'OAuth: WARNING empty refresh_token (expected for Bungie Public) — '
+            'session lasts for access token TTL only (~1h)',
+          );
+        }
         await _tokenStore.write(tokens).timeout(
               const Duration(seconds: 15),
               onTimeout: () => throw const BungieOAuthException(
                 'Secure token storage write timed out',
               ),
             );
+        final verified = await _tokenStore.read();
+        if (verified == null ||
+            verified.accessToken != tokens.accessToken ||
+            verified.bungieMembershipId != tokens.bungieMembershipId) {
+          throw const BungieOAuthException(
+            'Secure token storage write did not persist (read-back failed)',
+          );
+        }
         _tokens = tokens;
         _status = OAuthSessionStatus.signedIn;
         _errorMessage = null;
         // ignore: avoid_print
-        print('OAuth: signed in membership=${tokens.bungieMembershipId}');
+        print(
+          'OAuth: signed in membership=${tokens.bungieMembershipId} '
+          'stored refreshLen=${verified.refreshToken.length}',
+        );
       } finally {
         if (_waitForCallbackOverride == null) {
           await _loopback.stop();

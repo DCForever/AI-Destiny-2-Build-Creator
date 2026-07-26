@@ -29,16 +29,21 @@ BungieTokens? decodeBungieTokens(String? raw) {
     final expiresAtRaw = map['expires_at'];
     final refreshExpiresAtRaw = map['refresh_expires_at'];
 
+    // Bungie Public OAuth does not issue refresh_token. Empty/omitted refresh
+    // is valid; requiring non-empty made every cold start look signed-out while
+    // access was still good (BUG-20260725-002).
     if (access is! String ||
         access.isEmpty ||
-        refresh is! String ||
-        refresh.isEmpty ||
         membershipId is! String ||
         membershipId.isEmpty ||
         expiresAtRaw is! String ||
         refreshExpiresAtRaw is! String) {
       return null;
     }
+    if (refresh != null && refresh is! String) {
+      return null;
+    }
+    final refreshToken = refresh is String ? refresh : '';
 
     final expiresAt = DateTime.tryParse(expiresAtRaw)?.toUtc();
     final refreshExpiresAt = DateTime.tryParse(refreshExpiresAtRaw)?.toUtc();
@@ -46,7 +51,7 @@ BungieTokens? decodeBungieTokens(String? raw) {
 
     return BungieTokens(
       accessToken: access,
-      refreshToken: refresh,
+      refreshToken: refreshToken,
       expiresAt: expiresAt,
       refreshExpiresAt: refreshExpiresAt,
       bungieMembershipId: membershipId,

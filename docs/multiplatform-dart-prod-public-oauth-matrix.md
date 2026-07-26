@@ -117,6 +117,15 @@ SMOKE-MOBILE: N/A (schemes published; session host deferred)
 SECRET-SCAN: PASS (tool/client_secret_scan.dart)
 ```
 
+
+## Session lifetime (Public clients)
+
+Bungie **Public** OAuth clients **do not receive `refresh_token`** (official OAuth wiki). Windows/Jaspr therefore persist **access-only** sessions:
+
+- Cold start restores while `access_token` is still valid (~1 hour minus safety margin).
+- After access expiry the user must sign in again unless ops later moves to a confidential/BFF path that can hold a refresh token server-side.
+- Token codec **must not** reject empty `refresh_token` (BUG-20260725-002).
+
 ## Non-goals
 
 - Confidential cookie parity on pure clients

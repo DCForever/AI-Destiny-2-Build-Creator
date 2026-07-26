@@ -142,7 +142,7 @@ void main() {
 
     test('signOut clears tokens', () async {
       final store = MemoryTokenStore();
-      final now = DateTime.utc(2026, 7, 24);
+      final now = DateTime.now().toUtc();
       await store.write(
         BungieTokens(
           accessToken: 'a',
@@ -173,6 +173,108 @@ void main() {
       expect(session.isSignedIn, isFalse);
       expect(session.status, OAuthSessionStatus.signedOut);
       expect(await store.read(), isNull);
+    });
+
+    test('restore keeps access-only Public session while access valid',
+        () async {
+      final store = MemoryTokenStore();
+      final now = DateTime.now().toUtc();
+      await store.write(
+        BungieTokens(
+          accessToken: 'acc-public-only',
+          refreshToken: '',
+          expiresAt: now.add(const Duration(minutes: 30)),
+          refreshExpiresAt: now.add(const Duration(minutes: 30)),
+          bungieMembershipId: 'mem-public',
+        ),
+      );
+
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: store,
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('must not refresh'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+      );
+
+      await session.restore();
+      expect(session.isSignedIn, isTrue);
+      expect(session.membershipId, 'mem-public');
+      expect((await store.read())!.accessToken, 'acc-public-only');
+    });
+
+    test('restore clears access-only session when access expired', () async {
+      final store = MemoryTokenStore();
+      final now = DateTime.now().toUtc();
+      await store.write(
+        BungieTokens(
+          accessToken: 'acc-expired',
+          refreshToken: '',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.subtract(const Duration(minutes: 1)),
+          bungieMembershipId: 'mem-expired',
+        ),
+      );
+
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: store,
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('must not refresh'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+      );
+
+      await session.restore();
+      expect(session.isSignedIn, isFalse);
+      expect(session.status, OAuthSessionStatus.signedOut);
+      expect(await store.read(), isNull);
+    });
+
+    test('restore refreshes when access expired and refresh present',
+        () async {
+      final store = MemoryTokenStore();
+      final now = DateTime.now().toUtc();
+      await store.write(
+        BungieTokens(
+          accessToken: 'acc-old',
+          refreshToken: 'ref-live',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 1)),
+          bungieMembershipId: 'mem-refresh',
+        ),
+      );
+
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: store,
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => BungieHttpResponse(
+            statusCode: 200,
+            body: jsonEncode(rawTokenResponse(
+              access: 'acc-new',
+              refresh: 'ref-new',
+              membershipId: 'mem-refresh',
+            )),
+          ),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+      );
+
+      await session.restore();
+      expect(session.isSignedIn, isTrue);
+      expect(session.tokens!.accessToken, 'acc-new');
+      expect((await store.read())!.accessToken, 'acc-new');
     });
 
     test('missing client id is not configured', () async {

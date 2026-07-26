@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
@@ -43,6 +44,32 @@ void main() {
       expect(decodeBungieTokens('{"access_token":"x"}'), isNull);
       expect(decodeBungieTokens(null), isNull);
       expect(decodeBungieTokens(''), isNull);
+    });
+
+    test('empty refresh_token still decodes (Bungie Public clients)', () {
+      final tokens = sampleTokens(refresh: '');
+      final encoded = encodeBungieTokens(tokens);
+      final decoded = decodeBungieTokens(encoded);
+      expect(decoded, isNotNull);
+      expect(decoded!.accessToken, tokens.accessToken);
+      expect(decoded.refreshToken, isEmpty);
+      expect(decoded.bungieMembershipId, tokens.bungieMembershipId);
+    });
+
+    test('omitted refresh_token key still decodes', () {
+      final now = DateTime.utc(2026, 7, 24, 12);
+      final raw = jsonEncode({
+        'access_token': 'acc-only',
+        'expires_at': now.add(const Duration(hours: 1)).toIso8601String(),
+        'refresh_expires_at':
+            now.add(const Duration(hours: 1)).toIso8601String(),
+        'membership_id': 'm-only',
+      });
+      final decoded = decodeBungieTokens(raw);
+      expect(decoded, isNotNull);
+      expect(decoded!.accessToken, 'acc-only');
+      expect(decoded.refreshToken, isEmpty);
+      expect(decoded.bungieMembershipId, 'm-only');
     });
   });
 
