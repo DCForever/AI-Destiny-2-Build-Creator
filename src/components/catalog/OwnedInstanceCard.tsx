@@ -1,5 +1,7 @@
 "use client";
 
+import { memo, useEffect, useRef, useState } from "react";
+
 import { ArmorStatsPanel } from "@/components/catalog/ArmorStatsPanel";
 import { InstancePerkGridView } from "@/components/catalog/InstancePerkGridView";
 import {
@@ -36,8 +38,10 @@ export type OwnedInstanceCardData = {
 /**
  * Variant-style card for one owned weapon or armor copy.
  * Shared chrome so side-by-side comparison stays consistent.
+ * Weapon perk grids load only when the card is (nearly) on-screen to avoid
+ * N concurrent perk-grid fetches when opening a multi-copy detail pane.
  */
-export function OwnedInstanceCard({
+export const OwnedInstanceCard = memo(function OwnedInstanceCard({
   kind,
   instance,
   frameHint,
@@ -57,8 +61,35 @@ export function OwnedInstanceCard({
   onUse?: () => void;
 }) {
   const plugs = instance.plugs ?? [];
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [perkGridEnabled, setPerkGridEnabled] = useState(kind !== "weapons");
+
+  useEffect(() => {
+    if (kind !== "weapons") {
+      setPerkGridEnabled(true);
+      return;
+    }
+    setPerkGridEnabled(false);
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setPerkGridEnabled(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setPerkGridEnabled(true);
+          io.disconnect();
+        }
+      },
+      { root: null, rootMargin: "120px 0px", threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [kind, instance.instanceId]);
 
   return (
+    <div ref={rootRef} className="h-full min-w-0">
     <Panel
       tone={selected ? "accent" : "muted"}
       pad="sm"
@@ -97,11 +128,17 @@ export function OwnedInstanceCard({
         </Row>
 
         {kind === "weapons" ? (
-          <InstancePerkGridView
-            instanceId={instance.instanceId}
-            enabled
-            frameHint={frameHint}
-          />
+          perkGridEnabled ? (
+            <InstancePerkGridView
+              instanceId={instance.instanceId}
+              enabled
+              frameHint={frameHint}
+            />
+          ) : (
+            <Text size="xs" tone="muted">
+              Loading instance detail…
+            </Text>
+          )
         ) : (
           <Stack gap={10}>
             <ArmorStatsPanel
@@ -149,5 +186,6 @@ export function OwnedInstanceCard({
         ) : null}
       </Stack>
     </Panel>
+    </div>
   );
-}
+});
