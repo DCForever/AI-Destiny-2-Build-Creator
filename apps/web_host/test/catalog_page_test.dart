@@ -43,14 +43,17 @@ void main() {
 
       expect(find.text(CatalogPage.titleText), findsOneComponent);
       expect(find.textContaining('prebuilt'), findsComponents);
+      // Default mode is Weapons — armor excluded until Armor/Universal.
       expect(find.text('Void GL'), findsOneComponent);
       expect(find.text('Solar Rocket'), findsOneComponent);
-      expect(find.text('Synthoceps'), findsOneComponent);
-      expect(find.textContaining('3 result'), findsOneComponent);
+      expect(find.text('Synthoceps'), findsNothing);
+      expect(find.textContaining('2 result'), findsOneComponent);
       expect(find.textContaining('CLIENT_SECRET'), findsNothing);
       expect(find.textContaining('raw manifest rebuild'), findsOneComponent);
       expect(find.text('Owned'), findsOneComponent);
       expect(find.text('All'), findsOneComponent);
+      expect(find.text('Weapons'), findsOneComponent);
+      expect(find.text('Universal'), findsOneComponent);
     });
 
     testComponents('empty injection shows empty state', (tester) async {
@@ -73,7 +76,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Void GL'), findsOneComponent);
+      // Switch to Armor so exotic Synthoceps is visible
+      await tester.click(find.byKey(const ValueKey('mode-chip-armor')));
+      await tester.pump();
+      expect(find.text('Synthoceps'), findsOneComponent);
 
       // First click → exotic only
       await tester.click(find.byKey(const ValueKey('facet-exotic')));
@@ -105,11 +111,37 @@ void main() {
       await tester.click(find.byKey(const ValueKey('facet-slot-Power')));
       await tester.pump();
 
+      await tester.click(find.byKey(const ValueKey('mode-chip-armor')));
+      await tester.pump();
       await tester.click(find.byKey(const ValueKey('facet-class-Titan')));
       await tester.pump();
       expect(find.text('Synthoceps'), findsOneComponent);
       expect(find.text('Void GL'), findsNothing);
       expect(find.textContaining('1 result'), findsOneComponent);
+    });
+
+    testComponents('Weapons|Armor|Universal modes (DART-063)', (tester) async {
+      tester.pumpComponent(
+        CatalogPage(
+          initialItems: fixtures,
+          initialVersion: 'fixture-1',
+        ),
+      );
+
+      expect(find.text('Void GL'), findsOneComponent);
+      expect(find.text('Synthoceps'), findsNothing);
+
+      await tester.click(find.byKey(const ValueKey('mode-chip-armor')));
+      await tester.pump();
+      expect(find.text('Synthoceps'), findsOneComponent);
+      expect(find.text('Void GL'), findsNothing);
+
+      await tester.click(find.byKey(const ValueKey('mode-chip-universal')));
+      await tester.pump();
+      expect(find.text('Void GL'), findsOneComponent);
+      expect(find.text('Solar Rocket'), findsOneComponent);
+      expect(find.text('Synthoceps'), findsOneComponent);
+      expect(find.textContaining('3 result'), findsOneComponent);
     });
 
     testComponents('group-by element shows headers without dropping rows',
@@ -124,12 +156,13 @@ void main() {
       await tester.click(find.byKey(const ValueKey('group-chip-element')));
       await tester.pump();
 
+      // Weapons mode: 2 weapons only (Synthoceps armor excluded)
       expect(find.textContaining('Solar (1)'), findsOneComponent);
       expect(find.textContaining('Void (1)'), findsOneComponent);
       expect(find.text('Solar Rocket'), findsOneComponent);
       expect(find.text('Void GL'), findsOneComponent);
-      expect(find.text('Synthoceps'), findsOneComponent);
-      expect(find.textContaining('3 result'), findsOneComponent);
+      expect(find.text('Synthoceps'), findsNothing);
+      expect(find.textContaining('2 result'), findsOneComponent);
     });
   });
 }

@@ -256,3 +256,23 @@ Future<bool> deleteUserSynergy(
 ) {
   return deleteSynergyRecord(db, userId, synergyId);
 }
+
+/// Reverse-lookup synergies for a catalog/inventory target (BR-SYN-004).
+Future<List<SynergyWithLinks>> listUserSynergiesByTarget(
+  AppDatabase db,
+  int userId,
+  SynergyTargetQuery query,
+) {
+  return findSynergiesByTarget(db, userId, query);
+}
+
+/// Batch reverse-lookup by item hashes for a link [kind].
+Future<Map<int, List<SynergyWithLinks>>> listUserSynergiesByItemHashes(
+  AppDatabase db,
+  int userId,
+  String kind,
+  List<int> itemHashes,
+) {
+  return findSynergiesByItemHashes(db, userId, kind, itemHashes);
+}
+

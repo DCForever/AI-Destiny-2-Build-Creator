@@ -1,11 +1,13 @@
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart';
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
 import 'owned_catalog_bridge.dart';
 
-/// Catalog browse with offline entities + all/owned + instance projections (DART-026).
+/// Catalog browse with kind modes, synergy tags, owned detail (DART-063).
 class CatalogPage extends StatefulWidget {
   const CatalogPage({
     super.key,
@@ -36,6 +38,7 @@ class _CatalogPageState extends State<CatalogPage> {
   String? _version;
   List<CatalogItem> _results = const [];
   CatalogScope _scope = CatalogScope.all;
+  CatalogBrowseMode _mode = CatalogBrowseMode.weapons;
 
   final _queryController = TextEditingController();
   FacetFilter _elements = emptyFacet();
@@ -43,11 +46,14 @@ class _CatalogPageState extends State<CatalogPage> {
   FacetFilter _slots = emptyFacet();
   FacetFilter _classNames = emptyFacet();
   FacetFilter _archetypes = emptyFacet();
+  FacetFilter _synergies = emptyFacet();
   bool? _exotic; // null = off, true = only, false = exclude
   final List<CatalogGroupDimension> _groupBy = [];
 
   CatalogItem? _selected;
   List<CatalogInstanceProjection> _instances = const [];
+  List<LinkedSynergyBadge> _reverseTags = const [];
+  String? _actionMessage;
 
   OwnedCatalogBridge _createBridge() {
     return widget.bridge ??
@@ -91,7 +97,6 @@ class _CatalogPageState extends State<CatalogPage> {
       _error = null;
     });
     try {
-      // Refresh sync meta user id when signed in (no network).
       if (widget.services.oauthSession.isSignedIn) {
         await widget.services.inventorySync.refreshStatus();
       }
@@ -104,8 +109,8 @@ class _CatalogPageState extends State<CatalogPage> {
         _emptyReason = load?.emptyReason ?? CatalogEmptyReason.none;
         _version = load?.version;
         _results = _applyFilters();
-        _syncSelection();
       });
+      await _syncSelection();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -113,6 +118,7 @@ class _CatalogPageState extends State<CatalogPage> {
         _error = e.toString();
         _results = const [];
         _instances = const [];
+        _reverseTags = const [];
       });
     }
   }
@@ -126,12 +132,13 @@ class _CatalogPageState extends State<CatalogPage> {
       classNames: _classNames,
       archetypes: _archetypes,
       exotic: _exotic,
+      synergies: _synergies,
       scope: _scope,
     );
   }
 
   List<CatalogItem> _applyFilters() {
-    return _bridge.browse(_filters());
+    return _bridge.browse(_filters(), mode: _mode);
   }
 
   List<CatalogGroup> _groupedResults() {
@@ -141,79 +148,99 @@ class _CatalogPageState extends State<CatalogPage> {
   void _refilter() {
     setState(() {
       _results = _applyFilters();
-      _syncSelection();
     });
+    _syncSelection();
   }
 
-  void _syncSelection() {
+  Future<void> _syncSelection() async {
     final sel = _selected;
     if (sel == null) {
-      _instances = const [];
+      if (!mounted) return;
+      setState(() {
+        _instances = const [];
+        _reverseTags = const [];
+      });
       return;
     }
     final stillVisible = _results.any((i) => i.hash == sel.hash);
     if (!stillVisible) {
-      _selected = null;
-      _instances = const [];
+      if (!mounted) return;
+      setState(() {
+        _selected = null;
+        _instances = const [];
+        _reverseTags = const [];
+      });
       return;
     }
-    _instances = _bridge.instancesFor(sel.hash);
+    final treatArmor = _mode == CatalogBrowseMode.armor ||
+        compositionKindFromCatalogItem(sel) == CompositionKind.armor ||
+        compositionKindFromCatalogItem(sel) == CompositionKind.exoticArmor;
+    final instances = _bridge.instancesFor(sel.hash, treatAsArmor: treatArmor);
+    final tags = await _bridge.reverseTagsFor(sel);
+    if (!mounted) return;
+    setState(() {
+      _instances = instances;
+      _reverseTags = tags;
+    });
   }
 
-  void _selectItem(CatalogItem item) {
+  Future<void> _selectItem(CatalogItem item) async {
     setState(() {
       _selected = item;
-      _instances = _bridge.instancesFor(item.hash);
+      _actionMessage = null;
     });
+    await _syncSelection();
   }
 
   void _setScope(CatalogScope scope) {
     if (_scope == scope) return;
+    _scope = scope;
+    _refilter();
+  }
+
+  void _setMode(CatalogBrowseMode mode) {
+    if (_mode == mode) return;
     setState(() {
-      _scope = scope;
+      _mode = mode;
+      // Clear kind-inappropriate facets when switching modes.
+      _slots = emptyFacet();
+      _ammos = emptyFacet();
+      _classNames = emptyFacet();
+      _archetypes = emptyFacet();
+      _groupBy.clear();
       _results = _applyFilters();
-      _syncSelection();
     });
+    _syncSelection();
   }
 
   void _cycleElement(String value) {
-    setState(() {
-      _elements = cycleFacetValue(_elements, value);
-      _results = _applyFilters();
-      _syncSelection();
-    });
+    _elements = cycleFacetValue(_elements, value);
+    _refilter();
   }
 
   void _cycleAmmo(String value) {
-    setState(() {
-      _ammos = cycleFacetValue(_ammos, value);
-      _results = _applyFilters();
-      _syncSelection();
-    });
+    _ammos = cycleFacetValue(_ammos, value);
+    _refilter();
   }
 
   void _cycleSlot(String value) {
-    setState(() {
-      _slots = cycleFacetValue(_slots, value);
-      _results = _applyFilters();
-      _syncSelection();
-    });
+    _slots = cycleFacetValue(_slots, value);
+    _refilter();
   }
 
   void _cycleClass(String value) {
-    setState(() {
-      _classNames = cycleFacetValue(_classNames, value);
-      _results = _applyFilters();
-      _syncSelection();
-    });
+    _classNames = cycleFacetValue(_classNames, value);
+    _refilter();
   }
 
   void _cycleArchetype(String value) {
-    setState(() {
-      _archetypes = cycleFacetValue(_archetypes, value);
-      _results = _applyFilters();
-      _syncSelection();
-    });
+    _archetypes = cycleFacetValue(_archetypes, value);
+    _refilter();
+  }
+
+  void _cycleSynergy(String synergyId) {
+    _synergies = cycleFacetValue(_synergies, synergyId);
+    _refilter();
   }
 
   void _toggleGroupDimension(CatalogGroupDimension dim) {
@@ -228,7 +255,6 @@ class _CatalogPageState extends State<CatalogPage> {
 
   void _cycleExotic() {
     setState(() {
-      // off → only exotic → exclude exotic → off
       if (_exotic == null) {
         _exotic = true;
       } else if (_exotic == true) {
@@ -237,8 +263,8 @@ class _CatalogPageState extends State<CatalogPage> {
         _exotic = null;
       }
       _results = _applyFilters();
-      _syncSelection();
     });
+    _syncSelection();
   }
 
   String _exoticLabel() {
@@ -247,11 +273,123 @@ class _CatalogPageState extends State<CatalogPage> {
     return 'Exotic: any';
   }
 
+  Future<void> _createSetFromHit(CatalogItem item) async {
+    final uid = _bridge.userId;
+    if (uid == null) {
+      setState(() {
+        _actionMessage = 'Sign in to create a Set from catalog.';
+      });
+      return;
+    }
+    final kind = compositionKindFromCatalogItem(item);
+    if (kind == null || !hitActions(kind).set) {
+      setState(() {
+        _actionMessage = 'This entity cannot be added to a Set.';
+      });
+      return;
+    }
+    final typeWire = setTypeWireForKind(kind)!;
+    final setType = SetType.tryParse(typeWire)!;
+    final slot = item.slot ??
+        (typeWire == 'weapon'
+            ? 'Kinetic'
+            : typeWire == 'armor'
+                ? 'Helmet'
+                : 'General');
+    try {
+      final detail = await createUserSet(
+        widget.services.db,
+        uid,
+        CreateSetCommand(
+          name: '${item.name} set',
+          type: setType,
+        ),
+      );
+      final instanceId =
+          _instances.isNotEmpty ? _instances.first.instanceId : null;
+      await upsertUserSetItem(
+        widget.services.db,
+        uid,
+        detail.set.id,
+        UpsertSetItemCommand(
+          slot: slot,
+          itemHash: item.hash,
+          itemName: item.name,
+          instanceId: instanceId,
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _actionMessage =
+            'Created Set "${detail.set.name}" with ${item.name} ($slot).';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionMessage = 'Set create failed: $e';
+      });
+    }
+  }
+
+  Future<void> _createSynergyFromHit(CatalogItem item) async {
+    final uid = _bridge.userId;
+    if (uid == null) {
+      setState(() {
+        _actionMessage = 'Sign in to create a Synergy from catalog.';
+      });
+      return;
+    }
+    final kind = compositionKindFromCatalogItem(item);
+    if (kind == null || !hitActions(kind).synergy) {
+      setState(() {
+        _actionMessage = 'This entity cannot link as Synergy evidence.';
+      });
+      return;
+    }
+    final linkKind = synergyLinkKindWireForKind(kind);
+    if (linkKind == null) {
+      setState(() {
+        _actionMessage = 'No synergy link kind for this entity.';
+      });
+      return;
+    }
+    try {
+      final created = await createUserSynergy(
+        widget.services.db,
+        uid,
+        CreateSynergyCommand(
+          name: '${item.name} synergy',
+          type: 'dps',
+          links: [
+            SynergyLinkWrite(
+              kind: linkKind,
+              displayName: item.name,
+              itemHash: item.hash,
+            ),
+          ],
+        ),
+      );
+      await _bridge.refresh(reloadEntities: false);
+      if (!mounted) return;
+      setState(() {
+        _results = _applyFilters();
+        _actionMessage = 'Created Synergy "${created.name}" linked to ${item.name}.';
+      });
+      await _syncSelection();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionMessage = 'Synergy create failed: $e';
+      });
+    }
+  }
+
   Widget _facetChipRow({
     required String keyPrefix,
     required List<String> values,
     required FacetFilter facet,
     required void Function(String) onCycle,
+    String Function(String)? labelOf,
   }) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -263,7 +401,7 @@ class _CatalogPageState extends State<CatalogPage> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: FilterChip(
                 key: Key('${keyPrefix}_chip_$value'),
-                label: Text(value),
+                label: Text(labelOf?.call(value) ?? value),
                 selected: facetChipState(facet, value) != FacetChipState.off,
                 onSelected: (_) => onCycle(value),
                 avatar: _facetAvatar(facetChipState(facet, value)),
@@ -305,6 +443,26 @@ class _CatalogPageState extends State<CatalogPage> {
               onChanged: (_) => _refilter(),
             ),
           ),
+          // Kind modes: Weapons | Armor | Universal
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              key: const Key('catalog_mode_row'),
+              children: [
+                for (final mode in CatalogBrowseMode.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      key: Key('mode_chip_${mode.name}'),
+                      label: Text(browseModeLabel(mode)),
+                      selected: _mode == mode,
+                      onSelected: (_) => _setMode(mode),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
@@ -325,49 +483,50 @@ class _CatalogPageState extends State<CatalogPage> {
               ],
             ),
           ),
-          // Cap filter chrome height so results remain visible (DAC browse density).
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 168),
+            constraints: const BoxConstraints(maxHeight: 200),
             child: SingleChildScrollView(
               key: const Key('catalog_filters_scroll'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 4),
-                  _facetChipRow(
-                    keyPrefix: 'element',
-                    values: catalogElements,
-                    facet: _elements,
-                    onCycle: _cycleElement,
-                  ),
-                  const SizedBox(height: 4),
-                  _facetChipRow(
-                    keyPrefix: 'ammo',
-                    values: catalogAmmoTypes,
-                    facet: _ammos,
-                    onCycle: _cycleAmmo,
-                  ),
+                  if (catalogShowsElementFacet(_mode))
+                    _facetChipRow(
+                      keyPrefix: 'element',
+                      values: catalogElements,
+                      facet: _elements,
+                      onCycle: _cycleElement,
+                    ),
+                  if (catalogShowsAmmoFacet(_mode)) ...[
+                    const SizedBox(height: 4),
+                    _facetChipRow(
+                      keyPrefix: 'ammo',
+                      values: catalogAmmoTypes,
+                      facet: _ammos,
+                      onCycle: _cycleAmmo,
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   _facetChipRow(
                     keyPrefix: 'slot',
-                    values: [...catalogWeaponSlots, ...catalogArmorSlots],
+                    values: catalogSlotsForMode(_mode),
                     facet: _slots,
                     onCycle: _cycleSlot,
                   ),
-                  const SizedBox(height: 4),
-                  _facetChipRow(
-                    keyPrefix: 'class',
-                    values: catalogClassNames,
-                    facet: _classNames,
-                    onCycle: _cycleClass,
-                  ),
+                  if (catalogShowsClassFacet(_mode)) ...[
+                    const SizedBox(height: 4),
+                    _facetChipRow(
+                      keyPrefix: 'class',
+                      values: catalogClassNames,
+                      facet: _classNames,
+                      onCycle: _cycleClass,
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   _facetChipRow(
                     keyPrefix: 'archetype',
-                    values: [
-                      ...catalogWeaponArchetypes,
-                      ...catalogArmorArchetypes,
-                    ],
+                    values: catalogArchetypesForMode(_mode),
                     facet: _archetypes,
                     onCycle: _cycleArchetype,
                   ),
@@ -389,6 +548,24 @@ class _CatalogPageState extends State<CatalogPage> {
                       ],
                     ),
                   ),
+                  if (_bridge.synergyMembership.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Synergy membership',
+                        key: const Key('synergy_filter_label'),
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                    _facetChipRow(
+                      keyPrefix: 'synergy',
+                      values: _bridge.synergyMembership.map((s) => s.id).toList(),
+                      facet: _synergies,
+                      onCycle: _cycleSynergy,
+                      labelOf: (id) => _bridge.synergyNames[id] ?? id,
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -434,7 +611,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 if (_selected != null)
                   Expanded(
                     flex: 2,
-                    child: _buildInstancePanel(),
+                    child: _buildDetailPanel(),
                   ),
               ],
             ),
@@ -462,8 +639,9 @@ class _CatalogPageState extends State<CatalogPage> {
     final base = _bridge.annotatedBase.length;
     final inv = _bridge.inventory.length;
     final scopeLabel = _scope == CatalogScope.owned ? 'owned' : 'all';
+    final modeLabel = browseModeLabel(_mode);
     return 'Version $v · ${_results.length} shown / $base base · '
-        'scope=$scopeLabel · inventory=$inv copies';
+        'mode=$modeLabel · scope=$scopeLabel · inventory=$inv copies';
   }
 
   Widget _buildBody() {
@@ -521,6 +699,8 @@ class _CatalogPageState extends State<CatalogPage> {
           if (item.classType != null) item.classType!,
           if (item.isExotic) 'Exotic',
           if (item.owned) 'Owned ×${item.ownedCount}',
+          if (item.linkedSynergyIds.isNotEmpty)
+            'syn×${item.linkedSynergyIds.length}',
         ].join(' · ');
         final selected = _selected?.hash == item.hash;
         rows.add(
@@ -550,7 +730,6 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   String _emptyMessage() {
-    // GAP-INV-06 / DART-053: empty entity cache ≠ empty vault / sync-only failure.
     if (_emptyReason == CatalogEmptyReason.noVersion ||
         _emptyReason == CatalogEmptyReason.noStores) {
       if (_scope == CatalogScope.owned) {
@@ -575,8 +754,13 @@ class _CatalogPageState extends State<CatalogPage> {
     return 'No items match the current filters.';
   }
 
-  Widget _buildInstancePanel() {
+  Widget _buildDetailPanel() {
     final item = _selected!;
+    final kind = compositionKindFromCatalogItem(item);
+    final actions = kind == null
+        ? (set: false, synergy: false)
+        : hitActions(kind);
+
     return Material(
       elevation: 1,
       child: Column(
@@ -590,11 +774,79 @@ class _CatalogPageState extends State<CatalogPage> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
+          if (kind != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                compositionKindLabel(kind),
+                key: const Key('detail_kind_label'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          // BR-SYN-004 reverse tags
+          if (_reverseTags.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Wrap(
+                key: const Key('linked_synergy_badges'),
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final badge in _reverseTags)
+                    Chip(
+                      key: Key('synergy_badge_${badge.id}'),
+                      label: Text(badge.name),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+            ),
+          // Universal composition actions (Set / Synergy only — never Build attach)
+          if (_mode == CatalogBrowseMode.universal) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Wrap(
+                key: const Key('universal_actions'),
+                spacing: 8,
+                children: [
+                  if (actions.set)
+                    FilledButton.tonal(
+                      key: const Key('universal_create_set'),
+                      onPressed: () => _createSetFromHit(item),
+                      child: const Text('Create Set'),
+                    ),
+                  if (actions.synergy)
+                    FilledButton.tonal(
+                      key: const Key('universal_create_synergy'),
+                      onPressed: () => _createSynergyFromHit(item),
+                      child: const Text('Create Synergy'),
+                    ),
+                  if (!actions.set && !actions.synergy)
+                    const Text(
+                      'Visible in Universal search but not Set/Synergy attachable.',
+                      key: Key('universal_no_actions'),
+                    ),
+                ],
+              ),
+            ),
+            // Explicitly never show Build kit attach (GAP-UI-CATALOG-03).
+            const SizedBox.shrink(key: Key('no_build_kit_attach')),
+          ],
+          if (_actionMessage != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                _actionMessage!,
+                key: const Key('catalog_action_message'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               _instances.isEmpty
-                  ? 'No local copies (wishlist / definition only).'
+                  ? 'No local copies (wishlist / definition only — unpinned).'
                   : '${_instances.length} owned cop${_instances.length == 1 ? 'y' : 'ies'}',
               key: const Key('instance_panel_count'),
               style: Theme.of(context).textTheme.bodySmall,
@@ -614,32 +866,111 @@ class _CatalogPageState extends State<CatalogPage> {
                     itemCount: _instances.length,
                     itemBuilder: (context, index) {
                       final inst = _instances[index];
-                      final flags = [
-                        if (inst.isMasterwork) 'MW',
-                        if (inst.isCrafted) 'Crafted',
-                      ].join(' · ');
-                      final loc = inst.characterId != null
-                          ? '${inst.location} (${inst.characterId})'
-                          : inst.location;
-                      return ListTile(
-                        key: Key('instance_${inst.instanceId}'),
-                        dense: true,
-                        title: Text('Power ${inst.power}'),
-                        subtitle: Text(
-                          [
-                            inst.instanceId,
-                            loc,
-                            inst.bucket,
-                            if (flags.isNotEmpty) flags,
-                            if (inst.plugHashes.isNotEmpty)
-                              'plugs:${inst.plugHashes.length}',
-                          ].join(' · '),
-                        ),
-                      );
+                      return _buildInstanceCard(inst);
                     },
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInstanceCard(CatalogInstanceProjection inst) {
+    final flags = [
+      if (inst.isMasterwork) 'MW',
+      if (inst.isCrafted) 'Crafted',
+      if (inst.gearTier != null) 'T${inst.gearTier}',
+    ].join(' · ');
+    final loc = inst.characterId != null
+        ? '${inst.location} (${inst.characterId})'
+        : inst.location;
+
+    return Card(
+      key: Key('instance_${inst.instanceId}'),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Power ${inst.power}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            Text(
+              [inst.instanceId, loc, inst.bucket, if (flags.isNotEmpty) flags]
+                  .join(' · '),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (inst.rollTags.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Tags: ${inst.rollTags.join(', ')}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            if (inst.armorStats != null && inst.armorStats!.hasAny) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Base stats',
+                key: Key('armor_stats_label_${inst.instanceId}'),
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              Wrap(
+                key: Key('armor_stats_board_${inst.instanceId}'),
+                spacing: 8,
+                children: [
+                  for (final key in armorBaseStatKeys)
+                    if (inst.armorStats!.stats[key] != null)
+                      Chip(
+                        label: Text('$key ${inst.armorStats!.stats[key]}'),
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                  if (inst.armorStats!.total != null)
+                    Chip(
+                      label: Text('Total ${inst.armorStats!.total}'),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
+            if (inst.plugCards.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Perks / plugs',
+                key: Key('plug_cards_label_${inst.instanceId}'),
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              Wrap(
+                key: Key('plug_cards_${inst.instanceId}'),
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final card in inst.plugCards)
+                    Chip(
+                      key: Key('plug_card_${inst.instanceId}_${card.hash}'),
+                      label: Text(
+                        card.isTrait
+                            ? 'Trait: ${card.displayName}'
+                            : card.displayName,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+            ] else if (inst.plugHashes.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'plugs:${inst.plugHashes.length} (names unresolved)',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

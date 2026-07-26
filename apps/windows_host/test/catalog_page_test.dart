@@ -127,6 +127,8 @@ void main() {
     expect(itemKey(2), findsOneWidget); // Dragon's Breath
     expect(itemKey(3), findsOneWidget); // Arc Logic
     expect(find.byKey(const Key('catalog_status')), findsOneWidget);
+    expect(find.byKey(const Key('mode_chip_weapons')), findsOneWidget);
+    expect(find.byKey(const Key('mode_chip_universal')), findsOneWidget);
   });
 
   testWidgets('element include chip narrows list', (tester) async {
@@ -358,5 +360,93 @@ void main() {
 
     expect(find.text('Reload Rifle'), findsOneWidget);
     expect(find.byKey(const Key('catalog_list')), findsOneWidget);
+  });
+
+  testWidgets('Weapons|Armor|Universal modes filter by kind (DART-063)',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final mixedRoot = StorageRoot(basePath: tempDir.path);
+    final mixedServices = AppServices(
+      storageRoot: mixedRoot,
+      db: services.db,
+      manifestRefresh: _FakeRefresh(),
+      offlineCatalog: OfflineCatalog.preloaded(
+        storageRoot: mixedRoot,
+        items: const [
+          CatalogItem(
+            hash: 10,
+            name: 'Hand Cannon',
+            slot: 'Kinetic',
+            ammo: 'Primary',
+            isExotic: false,
+            sourceStore: 'weapons',
+          ),
+          CatalogItem(
+            hash: 20,
+            name: 'Exotic Chest',
+            slot: 'Chest',
+            classType: 'Titan',
+            isExotic: true,
+            sourceStore: 'exotic-armor',
+          ),
+          CatalogItem(
+            hash: 30,
+            name: 'Aspect Piece',
+            itemTypeName: 'Aspect',
+            isExotic: false,
+            sourceStore: 'aspects',
+          ),
+        ],
+        version: 'modes-1',
+      ),
+      oauthSession: services.oauthSession,
+      profileClient: services.profileClient,
+      inventorySync: services.inventorySync,
+      writeClient: services.writeClient,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: CatalogPage(services: mixedServices)),
+    );
+    await _pumpFrames(tester);
+
+    // Default weapons
+    expect(itemKey(10), findsOneWidget);
+    expect(itemKey(20), findsNothing);
+    expect(itemKey(30), findsNothing);
+
+    await tester.tap(find.byKey(const Key('mode_chip_armor')));
+    await _pumpFrames(tester);
+    expect(itemKey(20), findsOneWidget);
+    expect(itemKey(10), findsNothing);
+
+    await tester.tap(find.byKey(const Key('mode_chip_universal')));
+    await _pumpFrames(tester);
+    expect(itemKey(10), findsOneWidget);
+    expect(itemKey(20), findsOneWidget);
+    expect(itemKey(30), findsOneWidget);
+
+    // Select weapon → Universal Set/Synergy CTAs, no Build attach
+    await tester.tap(itemKey(10));
+    await _pumpFrames(tester);
+    expect(
+      find.byKey(const Key('universal_actions'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('universal_create_set'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('universal_create_synergy'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('no_build_kit_attach'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Build kit'), findsNothing);
   });
 }

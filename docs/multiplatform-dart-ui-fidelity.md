@@ -62,7 +62,7 @@ UI fidelity residual audit after **PRODUCTION_CUTOVER: GO** (DART-061). Windows+
 | **P2** | Alpha sort, instance detail, Finish walkthrough residual, armor improve not on Build Finish, Sets library chrome, Loadouts density, Settings chrome, shell labels/icons |
 | **N/A** | Analyze / debug / LLM (non-goals) |
 | **Bugs** | **BUG-20260725-003** lifecycle only ΓåÆ **GAP-UI-SETTINGS-02** |
-| **Next free slice** | **DART-063** |
+| **Next free slice** | **DART-064** |
 | **Cutover** | **Not reopened** |
 
 ---
@@ -73,10 +73,10 @@ Cutover destination presence remains valid. Fidelity status below is what agents
 
 | FEAT ID | Cutover-era | Fidelity status | Reason |
 | ------- | ----------- | --------------- | ------ |
-| **FEAT-NAV-CATALOG** | PASS | **PARTIAL** | Cutover destination present, but BR-CAT multi-facet/group-by/Universal, exotic weapons + legendary armor defs, synergy membership tags, and alpha sort lag Next atlas (GAP-UI-CATALOG-01..07,10). |
+| **FEAT-NAV-CATALOG** | PASS | **PARTIAL** | DART-062/063 closed multi-facet/group-by/Universal/synergy tags/owned detail; icons/dense meta residual (GAP-UI-CATALOG-09 → DART-068). |
 | **FEAT-NAV-BUILD** | PASS | **PARTIAL** | Compose spine cutover-PASS; fidelity misses DBR-ID-008 identity confirm/fork and full Subclass kit composer (GAP-UI-BUILD-01/02). |
 | **FEAT-NAV-SETS** | PASS | **PARTIAL** | Library/slots functional skeleton; DAC-NME-004/BR-SET-010/011 armor board + dense item rows + embedded Catalog fill missing (GAP-UI-SETS-01..03). |
-| **FEAT-NAV-SYNERGY** | PASS | **PARTIAL** | Windows dual-pane create/edit exists; free-text evidence only; BR-SYN-004 reverse tags absent; Jaspr create+list only (GAP-UI-SYN-01..04). |
+| **FEAT-NAV-SYNERGY** | PASS | **PARTIAL** | Windows dual-pane; catalog BR-SYN-004 reverse tags **done** (DART-063); free-text evidence + Jaspr create+list residual (GAP-UI-SYN-01,02,04 → DART-066). |
 | **FEAT-COMPOSE-IDENTITY** | PASS | **PARTIAL** | Identity fields editable in-place without Confirm/Fork (DBR-ID-008 miss ΓåÆ GAP-UI-BUILD-01); raw hash exotic/super pickers (GAP-UI-BUILD-05). |
 | **FEAT-COMPOSE-FINISH** | PASS | **PARTIAL** | finish-gaps panel + equip gates shipped (GAP-FEAT-06 panel closed); full FinishBuildWalkthrough one-tap create/fill residual GAP-UI-BUILD-03; Finish armor improve not on Build path GAP-UI-BUILD-04. |
 | **FEAT-COMPOSE-HARD** | PASS | **PARTIAL** | Domain hard constraints authoritative; client pre-block UI thinner than Next (GAP-UI-BUILD-08). |
@@ -101,17 +101,17 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | DAC-NME-003 | catalog | partial | GAP-UI-CATALOG-01 |
 | DBR-PUR-002 | catalog | pass | ΓÇö |
 | BR-CAT-001 | catalog | miss | GAP-UI-CATALOG-04 |
-| BR-CAT-002 | catalog | partial | GAP-UI-CATALOG-08 |
+| BR-CAT-002 | catalog | pass | GAP-UI-CATALOG-08 closed (DART-063) |
 | BR-CAT-003 | catalog | miss | GAP-UI-CATALOG-05 |
 | BR-CAT-004 | catalog | partial | (facets partial) |
 | BR-CAT-005 | catalog | pass | ΓÇö |
 | BR-CAT-006 | catalog | partial | GAP-UI-CATALOG-01 |
 | BR-CAT-007 | catalog | miss | GAP-UI-CATALOG-02 |
-| BR-CAT-008 | catalog | miss | GAP-UI-CATALOG-06 |
-| BR-CAT-009 | catalog | miss | GAP-UI-CATALOG-03 |
+| BR-CAT-008 | catalog | pass | GAP-UI-CATALOG-06 closed (DART-063) |
+| BR-CAT-009 | catalog | pass | GAP-UI-CATALOG-03 closed (DART-063) |
 | PRODUCT-CAT-ALPHA-SORT | catalog | miss | GAP-UI-CATALOG-07 |
 | PRODUCT-CAT-GROUP-SORT | catalog | miss | GAP-UI-CATALOG-02 |
-| BR-SYN-004 | catalog | miss | GAP-UI-SYN-03 |
+| BR-SYN-004 | catalog | pass | GAP-UI-SYN-03 closed (DART-063) |
 | DBR-ROLL-001 | catalog | pass | ΓÇö |
 
 ### Build / compose
@@ -647,7 +647,7 @@ No other open bugs are linked to this fidelity residual set as of 2026-07-25.
 
 | Field | Value |
 | ----- | ----- |
-| **Next free slice** | **DART-062** `catalog-browse-semantics` |
+| **Next free slice** | **DART-064** `build-identity-subclass-compose` |
 | **Phase** | ui-fidelity-p1 (post P8 cutover program) |
 | **Cutover** | **PRODUCTION_CUTOVER: GO** (unchanged) |
 | **Open GAP-UI count** | **40** |

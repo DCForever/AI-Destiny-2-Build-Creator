@@ -84,9 +84,9 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | ID | Feature | Product path | W | M | J | Plan | Slices / notes |
 | -- | ------- | ------------ | - | - | - | ---- | -------------- |
 | **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Cutover spine PASS (DART-028–038, 041, 046–047); fidelity: DBR-ID-008 confirm/fork + subclass kit (GAP-UI-BUILD-01/02) → **DART-064** |
-| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Windows dual-pane skeleton; free-text evidence; no BR-SYN-004 reverse tags; Jaspr create+list only (GAP-UI-SYN-01..04) → **DART-063/066** |
+| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Windows dual-pane; catalog reverse tags **done** (DART-063); free-text evidence + Jaspr create+list residual (GAP-UI-SYN-01,02,04) → **DART-066** |
 | **FEAT-NAV-SETS** | Sets library | `/sets` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Library/slots functional; DAC-NME-004/BR-SET-010/011 board + dense rows + embedded Catalog fill missing (GAP-UI-SETS-01..03) → **DART-065** |
-| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Multi-facet/group-by/alpha + exotic/legendary defs **done** (DART-062); Universal/synergy tags residual (GAP-UI-CATALOG-03,06,08,10) → **DART-063** |
+| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Multi-facet/group-by/alpha (DART-062) + Weapons/Armor/Universal + synergy tags + owned detail (DART-063) **done**; icons residual (GAP-UI-CATALOG-09) → **DART-068** |
 | **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | **PASS** | PARTIAL | **PASS** | **shipped** | OAuth Public+PKCE + inventory sync + diagnostics remain PASS; residuals chrome only (GAP-UI-SETTINGS-01/02; post-sync banner GAP-UI-SETTINGS-04) — **no demote** |
 | **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | **PASS** | N/A\* | **PASS** | **shipped** | **DART-055** cutover PASS; residuals P2 density only (GAP-UI-LOADOUTS-01..03) — **no demote** |
 
@@ -198,14 +198,14 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | -- | ---- | -------- | ------ | ---------------- | ---------- | -------------- | ------------ |
 | **GAP-UI-CATALOG-01** | Catalog multi-facet include/exclude UI | **P1** | `closed` | CatalogScreen chips slot/class/archetype/element/ammo/exotic OR/AND | Windows+Jaspr chips wired; pure filter OR/AND/exclude | **DART-062** | Not cutover; fidelity |
 | **GAP-UI-CATALOG-02** | Catalog group-by | **P1** | `closed` | groupCatalogItems multi-dim | Pure `groupCatalogItems` + host group chips | **DART-062** | Not cutover; fidelity |
-| **GAP-UI-CATALOG-03** | Universal mode + Set/Synergy actions | **P1** | `open` | UniversalSearchPanel + Set/Synergy-only actions | No Universal mode chrome | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-03** | Universal mode + Set/Synergy actions | **P1** | `closed` | UniversalSearchPanel + Set/Synergy-only actions | Windows+Jaspr Universal + Create Set/Synergy CTAs (no Build kit attach) | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-CATALOG-04** | Exotic weapons in weapon catalog | **P1** | `closed` | weapons + exoticWeapons merge | `exotic-weapons` store + projector | **DART-062** | Not cutover; fidelity |
 | **GAP-UI-CATALOG-05** | Legendary armor in armor catalog | **P1** | `closed` | exoticArmor + legendaryArmor merge | `legendary-armor` store + projector | **DART-062** | Not cutover; fidelity |
-| **GAP-UI-CATALOG-06** | Synergy membership filter + tags | **P1** | `open` | synergy include/exclude + linked on detail | filter supports; hosts unwired | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-06** | Synergy membership filter + tags | **P1** | `closed` | synergy include/exclude + linked on detail | Hosts wire linkedSynergyIds annotate + facet chips + detail badges | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-CATALOG-07** | Alpha sort by display name | **P2** | `closed` | compareDisplayName finalize | Alpha sort in `filterCatalogClient` | **DART-062** | Not cutover; fidelity |
-| **GAP-UI-CATALOG-08** | Owned instance perk/stat cards | **P2** | `open` | OwnedInstanceCard + perk grid + armor stats | Raw plugs/hashes; GAP-INV residual | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-08** | Owned instance perk/stat cards | **P2** | `closed` | OwnedInstanceCard + perk grid + armor stats | Resolved plug cards + armor base-stat board when data present | **DART-063** | Names need map; residual when unresolved |
 | **GAP-UI-CATALOG-09** | Item icons + dense meta chrome | **P2** | `open` | ItemIcon + MetaChips | Text ListTile / catalog-row | **DART-068** | Polish; see ui-polish-tracker |
-| **GAP-UI-CATALOG-10** | Weapons/Armor kind modes | **P2** | `open` | Weapons \| Armor \| Universal modes | Single mixed MVP list | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-10** | Weapons/Armor kind modes | **P2** | `closed` | Weapons \| Armor \| Universal modes | Mode chips + kind-appropriate facets both hosts | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-BUILD-01** | Identity confirm/fork (DBR-ID-008) | **P1** | `open` | 409 IDENTITY_CONFIRM_REQUIRED Confirm/Fork | In-place identity edit; no identityAction | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-02** | Subclass kit composer host UI | **P1** | `open` | SubclassTab full kit + capacity | Super pin text only | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-03** | Finish slot-first one-tap walkthrough | **P2** | `open` | FinishBuildWalkthrough Create/Capture/fill | finish-gaps panel only (GAP-FEAT-06 residual) | **DART-067** | Not cutover; fidelity |
@@ -224,7 +224,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-SETS-10** | Weapon fill selectedPerks / traits | **P2** | `open` | selectedTraitPerks + store selectedPerks | hash/name/instanceId only | **DART-065** | BR-ROLL-001 |
 | **GAP-UI-SYN-01** | Evidence catalog search picker | **P1** | `open` | Search catalog + filterOutLinked | Free-text + raw hash | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SYN-02** | BR-SYN-012 weapon-perk source labels | **P1** | `open` | weaponPerkSourceLabel exotic/legendary | Free-text names only | **DART-066** | Not cutover; fidelity |
-| **GAP-UI-SYN-03** | BR-SYN-004 reverse tags on catalog | **P1** | `open` | linkedSynergies by-target badges | No by-target wiring | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-SYN-03** | BR-SYN-004 reverse tags on catalog | **P1** | `closed` | linkedSynergies by-target badges | findSynergiesByTarget + detail badges both hosts | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-SYN-04** | Jaspr synergy detail/edit/links | **P1** | `open` | dual-pane detail + edit/delete | create+list only | **DART-066** | Jaspr only |
 | **GAP-UI-SYN-05** | DesignationLabel verb/element icons | **P2** | `open` | DesignationLabel + icons | type::subType wire keys | **DART-068** | Polish |
 | **GAP-UI-SYN-06** | Synergy library search/type filters | **P2** | `open` | SynergyFilters search + chips | setTypeFilter unwired | **DART-066** | Not cutover; fidelity |
@@ -576,8 +576,8 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-063** `catalog-universal-modes-synergy-tags` (UI fidelity P1) |
-| **Next phase** | **P9** host UI fidelity (DART-062–068 planned); P8 cutover program **done** |
+| **Next planned slice** | **DART-064** `build-identity-subclass-compose` (UI fidelity P1) |
+| **Next phase** | **P9** host UI fidelity (DART-062–063 **done**, DART-064–068 planned); P8 cutover program **done** |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
 | **Feature inventory** | Complete; fidelity PARTIAL on nav/compose browse density; loadouts/settings remain PASS |
 | **unplanned_p0_p1** | *(empty for cutover)*; open **P1 GAP-UI-*** all map to DART-062–066 |

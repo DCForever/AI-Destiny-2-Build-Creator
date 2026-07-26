@@ -1,9 +1,11 @@
-/// Offline catalog browse + Owned scope from inventory (DART-044 / DART-056).
+/// Offline catalog browse + Owned scope + kind modes / synergy tags (DART-063).
 library;
 
 import 'dart:async';
 
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart';
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
@@ -12,7 +14,7 @@ import '../catalog/entity_bundle_loader.dart';
 import '../catalog/owned_catalog_bridge.dart';
 import '../theme/theme.dart';
 
-/// Catalog surface: load prebuilt bundle, facet/query filter, All|Owned.
+/// Catalog surface: modes, facets, synergy tags, owned instance detail.
 class CatalogPage extends StatefulComponent {
   const CatalogPage({
     this.loader,
@@ -25,7 +27,7 @@ class CatalogPage extends StatefulComponent {
   /// When null (tests with [initialItems]), no network load.
   final WebEntityBundleLoader? loader;
 
-  /// When set, enables Owned join + instance projections (DART-056).
+  /// When set, enables Owned join + instance projections + synergy tags.
   final OwnedCatalogBridge? bridge;
 
   /// Injected items for component tests (skip loader).
@@ -44,9 +46,12 @@ class CatalogPage extends StatefulComponent {
   static const String loadingText = 'Loading production entity channel…';
   static const String subtitleText =
       'Offline facets from production hybrid entity channel (ship-in-app prebuilt; '
-      'optional CDN). All | Owned joins local inventory after Settings sync. '
-      'Select a row to see instance ids for equip/DIM pins. '
-      'No raw manifest rebuild in the browser; no Next manifest API.';
+      'optional CDN). Weapons | Armor | Universal modes with kind-appropriate facets. '
+      'Synergy membership filter + reverse tags on detail. '
+      'Universal Set/Synergy actions only (no Build kit attach). '
+      'Owned instance perk cards + armor base stats when resolvable. '
+      'No raw manifest rebuild in the browser; no Next manifest API. '
+      'Soft suggestions never auto-apply.';
 
   @override
   State<CatalogPage> createState() => _CatalogPageState();
@@ -62,12 +67,16 @@ class _CatalogPageState extends State<CatalogPage> {
   FacetFilter _slots = emptyFacet();
   FacetFilter _classNames = emptyFacet();
   FacetFilter _archetypes = emptyFacet();
+  FacetFilter _synergies = emptyFacet();
   bool? _exotic; // null off, true only exotic, false exclude exotic
   final List<CatalogGroupDimension> _groupBy = [];
   CatalogScope _scope = CatalogScope.all;
+  CatalogBrowseMode _mode = CatalogBrowseMode.weapons;
   CatalogItem? _selected;
   List<CatalogInstanceProjection> _instances = const [];
+  List<LinkedSynergyBadge> _reverseTags = const [];
   bool _bridgeReady = false;
+  String? _actionMessage;
 
   @override
   void initState() {
@@ -106,8 +115,8 @@ class _CatalogPageState extends State<CatalogPage> {
             : _base;
         _bridgeReady = true;
         _results = _apply();
-        _syncSelection();
       });
+      await _syncSelection();
       return;
     }
     setState(() {
@@ -130,8 +139,8 @@ class _CatalogPageState extends State<CatalogPage> {
             : _base;
         _bridgeReady = true;
         _results = _apply();
-        _syncSelection();
       });
+      await _syncSelection();
       return;
     }
     setState(() {
@@ -148,6 +157,7 @@ class _CatalogPageState extends State<CatalogPage> {
       classNames: _classNames,
       archetypes: _archetypes,
       exotic: _exotic,
+      synergies: _synergies,
       scope: _scope,
     );
   }
@@ -162,48 +172,68 @@ class _CatalogPageState extends State<CatalogPage> {
   List<CatalogItem> _apply() {
     final bridge = component.bridge;
     if (bridge != null && _bridgeReady) {
-      return bridge.browse(_filters());
+      return bridge.browse(_filters(), mode: _mode);
     }
-    // Without bridge, Owned is empty (no inventory join).
+    final scoped = itemsForBrowseMode(_base, _mode);
     final filters = _filters();
     if (filters.scope == CatalogScope.owned) {
       return filterCatalogClient(
-        annotateCatalogWithOwned(_base, const {}),
+        annotateCatalogWithOwned(scoped, const {}),
         filters,
       );
     }
-    return filterCatalogClient(_base, filters);
+    return filterCatalogClient(scoped, filters);
   }
 
   void _refilter() {
     setState(() {
       _results = _apply();
-      _syncSelection();
     });
+    unawaited(_syncSelection());
   }
 
-  void _syncSelection() {
+  Future<void> _syncSelection() async {
     final sel = _selected;
     if (sel == null) {
-      _instances = const [];
+      if (!mounted) return;
+      setState(() {
+        _instances = const [];
+        _reverseTags = const [];
+      });
       return;
     }
     final stillVisible = _results.any((i) => i.hash == sel.hash);
     if (!stillVisible) {
-      _selected = null;
-      _instances = const [];
+      if (!mounted) return;
+      setState(() {
+        _selected = null;
+        _instances = const [];
+        _reverseTags = const [];
+      });
       return;
     }
     final bridge = component.bridge;
-    _instances = bridge?.instancesFor(sel.hash) ?? const [];
+    final treatArmor = _mode == CatalogBrowseMode.armor ||
+        compositionKindFromCatalogItem(sel) == CompositionKind.armor ||
+        compositionKindFromCatalogItem(sel) == CompositionKind.exoticArmor;
+    final instances =
+        bridge?.instancesFor(sel.hash, treatAsArmor: treatArmor) ?? const [];
+    final tags = bridge != null
+        ? await bridge.reverseTagsFor(sel)
+        : linkedSynergyBadgesForItem(sel, const {});
+    if (!mounted) return;
+    setState(() {
+      _instances = instances;
+      _reverseTags = tags;
+    });
   }
 
   void _selectItem(CatalogItem item) {
     setState(() {
       _selected = item;
-      final bridge = component.bridge;
-      _instances = bridge?.instancesFor(item.hash) ?? const [];
+      _actionMessage = null;
     });
+    unawaited(_syncSelection());
   }
 
   void _onQuery(String value) {
@@ -214,6 +244,17 @@ class _CatalogPageState extends State<CatalogPage> {
   void _setScope(CatalogScope scope) {
     if (_scope == scope) return;
     _scope = scope;
+    _refilter();
+  }
+
+  void _setMode(CatalogBrowseMode mode) {
+    if (_mode == mode) return;
+    _mode = mode;
+    _slots = emptyFacet();
+    _ammos = emptyFacet();
+    _classNames = emptyFacet();
+    _archetypes = emptyFacet();
+    _groupBy.clear();
     _refilter();
   }
 
@@ -242,6 +283,11 @@ class _CatalogPageState extends State<CatalogPage> {
     _refilter();
   }
 
+  void _cycleSynergy(String id) {
+    _synergies = cycleFacetValue(_synergies, id);
+    _refilter();
+  }
+
   void _toggleGroupDimension(CatalogGroupDimension dim) {
     if (_groupBy.contains(dim)) {
       _groupBy.remove(dim);
@@ -252,7 +298,6 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   void _cycleExotic() {
-    // null → true → false → null
     if (_exotic == null) {
       _exotic = true;
     } else if (_exotic == true) {
@@ -276,6 +321,7 @@ class _CatalogPageState extends State<CatalogPage> {
     required FacetFilter facet,
     required String dataFacet,
     required void Function(String) onCycle,
+    String Function(String)? labelOf,
   }) {
     return div(
       classes: 'facet-row',
@@ -295,7 +341,7 @@ class _CatalogPageState extends State<CatalogPage> {
             events: {
               'click': (_) => onCycle(value),
             },
-            [.text(value)],
+            [.text(labelOf?.call(value) ?? value)],
           ),
       ],
     );
@@ -317,6 +363,10 @@ class _CatalogPageState extends State<CatalogPage> {
     return _scope == scope ? 'facet-chip facet-include' : 'facet-chip';
   }
 
+  String _modeChipClass(CatalogBrowseMode mode) {
+    return _mode == mode ? 'facet-chip facet-include' : 'facet-chip';
+  }
+
   String _emptyMessage() {
     if (_scope == CatalogScope.owned) {
       if (_base.isEmpty) return CatalogPage.emptyOwnedEntitiesText;
@@ -325,9 +375,130 @@ class _CatalogPageState extends State<CatalogPage> {
     return CatalogPage.emptyText;
   }
 
+  Future<void> _createSetFromHit(CatalogItem item) async {
+    final bridge = component.bridge;
+    final uid = bridge?.userId;
+    if (uid == null || bridge == null) {
+      setState(() {
+        _actionMessage = 'Sign in to create a Set from catalog.';
+      });
+      return;
+    }
+    final kind = compositionKindFromCatalogItem(item);
+    if (kind == null || !hitActions(kind).set) {
+      setState(() {
+        _actionMessage = 'This entity cannot be added to a Set.';
+      });
+      return;
+    }
+    final typeWire = setTypeWireForKind(kind)!;
+    final setType = SetType.tryParse(typeWire)!;
+    final slot = item.slot ??
+        (typeWire == 'weapon'
+            ? 'Kinetic'
+            : typeWire == 'armor'
+                ? 'Helmet'
+                : 'General');
+    try {
+      final detail = await createUserSet(
+        bridge.db,
+        uid,
+        CreateSetCommand(name: '${item.name} set', type: setType),
+      );
+      final instanceId =
+          _instances.isNotEmpty ? _instances.first.instanceId : null;
+      await upsertUserSetItem(
+        bridge.db,
+        uid,
+        detail.set.id,
+        UpsertSetItemCommand(
+          slot: slot,
+          itemHash: item.hash,
+          itemName: item.name,
+          instanceId: instanceId,
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _actionMessage =
+            'Created Set "${detail.set.name}" with ${item.name} ($slot).';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionMessage = 'Set create failed: $e';
+      });
+    }
+  }
+
+  Future<void> _createSynergyFromHit(CatalogItem item) async {
+    final bridge = component.bridge;
+    final uid = bridge?.userId;
+    if (uid == null || bridge == null) {
+      setState(() {
+        _actionMessage = 'Sign in to create a Synergy from catalog.';
+      });
+      return;
+    }
+    final kind = compositionKindFromCatalogItem(item);
+    if (kind == null || !hitActions(kind).synergy) {
+      setState(() {
+        _actionMessage = 'This entity cannot link as Synergy evidence.';
+      });
+      return;
+    }
+    final linkKind = synergyLinkKindWireForKind(kind);
+    if (linkKind == null) {
+      setState(() {
+        _actionMessage = 'No synergy link kind for this entity.';
+      });
+      return;
+    }
+    try {
+      final created = await createUserSynergy(
+        bridge.db,
+        uid,
+        CreateSynergyCommand(
+          name: '${item.name} synergy',
+          type: 'dps',
+          links: [
+            SynergyLinkWrite(
+              kind: linkKind,
+              displayName: item.name,
+              itemHash: item.hash,
+            ),
+          ],
+        ),
+      );
+      await bridge.refresh(reloadEntities: false);
+      if (!mounted) return;
+      setState(() {
+        _base = bridge.annotatedBase;
+        _results = _apply();
+        _actionMessage =
+            'Created Synergy "${created.name}" linked to ${item.name}.';
+      });
+      await _syncSelection();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionMessage = 'Synergy create failed: $e';
+      });
+    }
+  }
+
   @override
   Component build(BuildContext context) {
     final scopeLabel = _scope == CatalogScope.owned ? 'owned' : 'all';
+    final modeLabel = browseModeLabel(_mode);
+    final bridge = component.bridge;
+    final kind = _selected == null
+        ? null
+        : compositionKindFromCatalogItem(_selected!);
+    final actions = kind == null
+        ? (set: false, synergy: false)
+        : hitActions(kind);
+
     return section(
       classes: 'catalog-page',
       attributes: {'data-page': 'catalog'},
@@ -366,6 +537,26 @@ class _CatalogPageState extends State<CatalogPage> {
             ]),
             div(
               classes: 'facet-row',
+              attributes: {'data-testid': 'catalog-mode'},
+              [
+                span(classes: 'facet-label', [.text('Mode')]),
+                for (final mode in CatalogBrowseMode.values)
+                  button(
+                    key: ValueKey('mode-chip-${mode.name}'),
+                    classes: _modeChipClass(mode),
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'mode-chip-${mode.name}',
+                    },
+                    events: {
+                      'click': (_) => _setMode(mode),
+                    },
+                    [.text(browseModeLabel(mode))],
+                  ),
+              ],
+            ),
+            div(
+              classes: 'facet-row',
               attributes: {'data-testid': 'catalog-scope'},
               [
                 span(classes: 'facet-label', [.text('Scope')]),
@@ -395,42 +586,45 @@ class _CatalogPageState extends State<CatalogPage> {
                 ),
               ],
             ),
-            _facetRow(
-              testId: 'facet-elements',
-              label: 'Element',
-              values: catalogElements,
-              facet: _elements,
-              dataFacet: 'element',
-              onCycle: _cycleElement,
-            ),
-            _facetRow(
-              testId: 'facet-ammos',
-              label: 'Ammo',
-              values: catalogAmmoTypes,
-              facet: _ammos,
-              dataFacet: 'ammo',
-              onCycle: _cycleAmmo,
-            ),
+            if (catalogShowsElementFacet(_mode))
+              _facetRow(
+                testId: 'facet-elements',
+                label: 'Element',
+                values: catalogElements,
+                facet: _elements,
+                dataFacet: 'element',
+                onCycle: _cycleElement,
+              ),
+            if (catalogShowsAmmoFacet(_mode))
+              _facetRow(
+                testId: 'facet-ammos',
+                label: 'Ammo',
+                values: catalogAmmoTypes,
+                facet: _ammos,
+                dataFacet: 'ammo',
+                onCycle: _cycleAmmo,
+              ),
             _facetRow(
               testId: 'facet-slots',
               label: 'Slot',
-              values: [...catalogWeaponSlots, ...catalogArmorSlots],
+              values: catalogSlotsForMode(_mode),
               facet: _slots,
               dataFacet: 'slot',
               onCycle: _cycleSlot,
             ),
-            _facetRow(
-              testId: 'facet-classes',
-              label: 'Class',
-              values: catalogClassNames,
-              facet: _classNames,
-              dataFacet: 'class',
-              onCycle: _cycleClass,
-            ),
+            if (catalogShowsClassFacet(_mode))
+              _facetRow(
+                testId: 'facet-classes',
+                label: 'Class',
+                values: catalogClassNames,
+                facet: _classNames,
+                dataFacet: 'class',
+                onCycle: _cycleClass,
+              ),
             _facetRow(
               testId: 'facet-archetypes',
               label: 'Archetype',
-              values: [...catalogWeaponArchetypes, ...catalogArmorArchetypes],
+              values: catalogArchetypesForMode(_mode),
               facet: _archetypes,
               dataFacet: 'archetype',
               onCycle: _cycleArchetype,
@@ -450,6 +644,16 @@ class _CatalogPageState extends State<CatalogPage> {
                 [.text(_exoticLabel())],
               ),
             ]),
+            if (bridge != null && bridge.synergyMembership.isNotEmpty)
+              _facetRow(
+                testId: 'facet-synergies',
+                label: 'Synergy',
+                values: bridge.synergyMembership.map((s) => s.id).toList(),
+                facet: _synergies,
+                dataFacet: 'synergy',
+                onCycle: _cycleSynergy,
+                labelOf: (id) => bridge.synergyNames[id] ?? id,
+              ),
             div(
               classes: 'facet-row',
               attributes: {'data-testid': 'catalog-group-by'},
@@ -477,7 +681,11 @@ class _CatalogPageState extends State<CatalogPage> {
           p(
             classes: 'catalog-count',
             attributes: {'data-testid': 'catalog-count'},
-            [.text('${_results.length} result(s) · scope=$scopeLabel')],
+            [
+              .text(
+                '${_results.length} result(s) · mode=$modeLabel · scope=$scopeLabel',
+              ),
+            ],
           ),
           if (_results.isEmpty)
             p(
@@ -510,6 +718,8 @@ class _CatalogPageState extends State<CatalogPage> {
                         'data-hash': '${item.hash}',
                         'data-testid': 'catalog-row',
                         if (item.owned) 'data-owned': '${item.ownedCount}',
+                        if (item.linkedSynergyIds.isNotEmpty)
+                          'data-synergies': item.linkedSynergyIds.join(','),
                       },
                       events: {
                         'click': (_) => _selectItem(item),
@@ -535,6 +745,8 @@ class _CatalogPageState extends State<CatalogPage> {
                               if (item.classType != null) item.classType!,
                               if (item.isExotic) 'Exotic',
                               if (item.owned) 'owned×${item.ownedCount}',
+                              if (item.linkedSynergyIds.isNotEmpty)
+                                'syn×${item.linkedSynergyIds.length}',
                             ].join(' · '),
                           ),
                         ]),
@@ -548,10 +760,87 @@ class _CatalogPageState extends State<CatalogPage> {
               attributes: {'data-testid': 'catalog-instances-title'},
               [.text('Owned instances — ${_selected!.name}')],
             ),
+            if (kind != null)
+              p(
+                classes: 'catalog-sub',
+                attributes: {'data-testid': 'detail-kind-label'},
+                [.text(compositionKindLabel(kind))],
+              ),
+            if (_reverseTags.isNotEmpty)
+              div(
+                classes: 'facet-row',
+                attributes: {'data-testid': 'linked-synergy-badges'},
+                [
+                  span(classes: 'facet-label', [.text('Linked synergies')]),
+                  for (final badge in _reverseTags)
+                    span(
+                      classes: 'synergy-badge',
+                      attributes: {
+                        'data-testid': 'synergy-badge-${badge.id}',
+                      },
+                      [.text(badge.name)],
+                    ),
+                ],
+              ),
+            if (_mode == CatalogBrowseMode.universal)
+              div(
+                classes: 'facet-row',
+                attributes: {'data-testid': 'universal-actions'},
+                [
+                  if (actions.set)
+                    button(
+                      classes: 'facet-chip facet-include',
+                      attributes: {
+                        'type': 'button',
+                        'data-testid': 'universal-create-set',
+                      },
+                      events: {
+                        'click': (_) => unawaited(_createSetFromHit(_selected!)),
+                      },
+                      [.text('Create Set')],
+                    ),
+                  if (actions.synergy)
+                    button(
+                      classes: 'facet-chip facet-include',
+                      attributes: {
+                        'type': 'button',
+                        'data-testid': 'universal-create-synergy',
+                      },
+                      events: {
+                        'click': (_) =>
+                            unawaited(_createSynergyFromHit(_selected!)),
+                      },
+                      [.text('Create Synergy')],
+                    ),
+                  if (!actions.set && !actions.synergy)
+                    span(
+                      attributes: {'data-testid': 'universal-no-actions'},
+                      [
+                        .text(
+                          'Visible in Universal but not Set/Synergy attachable.',
+                        ),
+                      ],
+                    ),
+                  span(
+                    attributes: {'data-testid': 'no-build-kit-attach'},
+                    [.text('')],
+                  ),
+                ],
+              ),
+            if (_actionMessage != null)
+              p(
+                attributes: {'data-testid': 'catalog-action-message'},
+                [.text(_actionMessage!)],
+              ),
             p(classes: 'catalog-sub', [
               .text(
-                'Copy an instance id into Build compose pin for equip/DIM. '
-                'Soft suggestions never auto-apply.',
+                _instances.isEmpty
+                    ? 'No local copies (wishlist / definition only — unpinned). '
+                        'Copy an instance id into Build compose pin for equip/DIM. '
+                        'Soft suggestions never auto-apply.'
+                    : '${_instances.length} owned cop${_instances.length == 1 ? 'y' : 'ies'}. '
+                        'Copy an instance id into Build compose pin for equip/DIM. '
+                        'Soft suggestions never auto-apply.',
               ),
             ]),
             if (_instances.isEmpty)
@@ -600,6 +889,58 @@ class _CatalogPageState extends State<CatalogPage> {
                             ].join(' · '),
                           ),
                         ]),
+                        if (inst.armorStats != null && inst.armorStats!.hasAny)
+                          div(
+                            attributes: {
+                              'data-testid':
+                                  'armor-stats-board-${inst.instanceId}',
+                            },
+                            [
+                              span(classes: 'facet-label', [.text('Base stats')]),
+                              for (final key in armorBaseStatKeys)
+                                if (inst.armorStats!.stats[key] != null)
+                                  span(
+                                    classes: 'synergy-badge',
+                                    [
+                                      .text(
+                                        '$key ${inst.armorStats!.stats[key]}',
+                                      ),
+                                    ],
+                                  ),
+                              if (inst.armorStats!.total != null)
+                                span(
+                                  classes: 'synergy-badge',
+                                  [.text('Total ${inst.armorStats!.total}')],
+                                ),
+                            ],
+                          ),
+                        if (inst.plugCards.isNotEmpty)
+                          div(
+                            attributes: {
+                              'data-testid': 'plug-cards-${inst.instanceId}',
+                            },
+                            [
+                              span(
+                                classes: 'facet-label',
+                                [.text('Perks / plugs')],
+                              ),
+                              for (final card in inst.plugCards)
+                                span(
+                                  classes: 'synergy-badge',
+                                  attributes: {
+                                    'data-testid':
+                                        'plug-card-${inst.instanceId}-${card.hash}',
+                                  },
+                                  [
+                                    .text(
+                                      card.isTrait
+                                          ? 'Trait: ${card.displayName}'
+                                          : card.displayName,
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
                       ],
                     ),
                 ],
@@ -672,12 +1013,21 @@ class _CatalogPageState extends State<CatalogPage> {
             color: Color('#c45c26'),
             textDecoration: TextDecoration(line: .lineThrough),
           ),
+          css('.catalog-count').styles(
+            color: flapMutedColor,
+            fontSize: 0.85.rem,
+          ),
           css('.catalog-list').styles(
             display: .flex,
             width: 100.percent,
             margin: .only(top: 0.5.rem),
             padding: .all(0.px),
             flexDirection: .column,
+          ),
+          css('.catalog-group-header').styles(
+            margin: .only(top: 0.5.rem),
+            color: flapAccentColor,
+            fontSize: 0.95.rem,
           ),
           css('.catalog-row').styles(
             display: .flex,
@@ -733,6 +1083,12 @@ class _CatalogPageState extends State<CatalogPage> {
             fontWeight: .w600,
             fontSize: 0.9.rem,
             color: flapAccentColor,
+          ),
+          css('.synergy-badge').styles(
+            padding: .symmetric(horizontal: 0.45.rem, vertical: 0.15.rem),
+            border: .all(style: .solid, color: flapAccentColor, width: 1.px),
+            color: flapAccentColor,
+            fontSize: 0.75.rem,
           ),
           css('input').styles(
             display: .block,

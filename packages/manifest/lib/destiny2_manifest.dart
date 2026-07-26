@@ -8,12 +8,15 @@ library;
 
 export 'src/adapters/hard_constraints_adapters.dart';
 export 'src/adapters/mod_energy.dart';
+export 'src/catalog/catalog_browse_mode.dart';
 export 'src/catalog/catalog_item.dart';
 export 'src/catalog/catalog_projector.dart';
+export 'src/catalog/composition_kinds.dart';
 export 'src/catalog/facet_filter.dart';
 export 'src/catalog/filter_catalog.dart';
 export 'src/catalog/filter_options.dart';
 export 'src/catalog/group_catalog.dart';
+export 'src/catalog/linked_synergies.dart';
 export 'src/catalog/offline_catalog.dart';
 export 'src/catalog/owned_catalog.dart';
 export 'src/catalog/sort_by_name.dart';

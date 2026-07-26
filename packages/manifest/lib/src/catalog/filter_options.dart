@@ -1,5 +1,7 @@
 // Shared multi-filter chip options for Catalog browse (product parity).
 
+import 'catalog_browse_mode.dart';
+
 const catalogElements = <String>[
   'Kinetic',
   'Arc',
@@ -59,3 +61,38 @@ List<String> toggleFilterValue(List<String> list, String value) {
   }
   return [...list, value];
 }
+
+/// Slot facet values for [mode] (kind-appropriate chrome).
+List<String> catalogSlotsForMode(CatalogBrowseMode mode) {
+  switch (mode) {
+    case CatalogBrowseMode.weapons:
+      return catalogWeaponSlots;
+    case CatalogBrowseMode.armor:
+      return catalogArmorSlots;
+    case CatalogBrowseMode.universal:
+      return [...catalogWeaponSlots, ...catalogArmorSlots];
+  }
+}
+
+/// Archetype facet values for [mode].
+List<String> catalogArchetypesForMode(CatalogBrowseMode mode) {
+  switch (mode) {
+    case CatalogBrowseMode.weapons:
+      return catalogWeaponArchetypes;
+    case CatalogBrowseMode.armor:
+      return catalogArmorArchetypes;
+    case CatalogBrowseMode.universal:
+      return [...catalogWeaponArchetypes, ...catalogArmorArchetypes];
+  }
+}
+
+/// Whether ammo facet row is primary chrome for [mode].
+bool catalogShowsAmmoFacet(CatalogBrowseMode mode) =>
+    mode == CatalogBrowseMode.weapons || mode == CatalogBrowseMode.universal;
+
+/// Whether class facet row is primary chrome for [mode].
+bool catalogShowsClassFacet(CatalogBrowseMode mode) =>
+    mode == CatalogBrowseMode.armor || mode == CatalogBrowseMode.universal;
+
+/// Whether element facet is primary for [mode].
+bool catalogShowsElementFacet(CatalogBrowseMode mode) => true;
