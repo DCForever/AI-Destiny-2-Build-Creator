@@ -52,8 +52,10 @@ class SetsPage extends StatefulComponent {
 class _SetsPageState extends State<SetsPage> {
   String _name = '';
   String _typeWire = SetType.weapon.wireName;
+  String _searchQuery = '';
   String? _formError;
   bool _busy = false;
+  bool _deleteConfirm = false;
 
   /// Slot currently being filled (null = no fill panel).
   String? _fillSlot;
@@ -123,6 +125,25 @@ class _SetsPageState extends State<SetsPage> {
       name: _name.trim().isEmpty ? 'Untitled set' : _name.trim(),
       type: type,
     );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _formError = err;
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    final c = component.controller;
+    if (c == null || _busy) return;
+    if (!_deleteConfirm) {
+      setState(() => _deleteConfirm = true);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _deleteConfirm = false;
+    });
+    final err = await c.deleteSelected();
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -348,6 +369,69 @@ class _SetsPageState extends State<SetsPage> {
             ),
           ],
         ),
+        div(
+          classes: 'compose-card',
+          attributes: {'data-testid': 'sets-filters'},
+          [
+            label([
+              .text('Search library'),
+              input(
+                type: InputType.text,
+                value: _searchQuery,
+                attributes: {'data-testid': 'sets-search'},
+                onInput: (v) {
+                  final q = '$v';
+                  setState(() => _searchQuery = q);
+                  c.setSearchQuery(q);
+                },
+              ),
+            ]),
+            div(
+              attributes: {'data-testid': 'sets-type-filters'},
+              [
+                for (final t in SetType.values)
+                  button(
+                    classes: c.typeFilter == t
+                        ? 'compose-btn'
+                        : 'compose-btn-outline',
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'sets-type-chip-${t.wireName}',
+                    },
+                    events: {
+                      'click': (_) {
+                        c.setTypeFilter(c.typeFilter == t ? null : t);
+                        setState(() {});
+                      },
+                    },
+                    [.text(t.wireName)],
+                  ),
+              ],
+            ),
+            div(
+              attributes: {'data-testid': 'sets-tag-filters'},
+              [
+                for (final tag in const ['pve', 'pvp', 'solar', 'arc', 'void'])
+                  button(
+                    classes: c.tagFilters.contains(tag)
+                        ? 'compose-btn'
+                        : 'compose-btn-outline',
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'sets-tag-chip-$tag',
+                    },
+                    events: {
+                      'click': (_) {
+                        c.toggleTagFilter(tag);
+                        setState(() {});
+                      },
+                    },
+                    [.text(tag)],
+                  ),
+              ],
+            ),
+          ],
+        ),
         if (c.sets.isEmpty)
           p(
             attributes: {'data-testid': 'sets-empty'},
@@ -369,6 +453,7 @@ class _SetsPageState extends State<SetsPage> {
                     [
                       .text(
                         '${s.name} (${s.type})'
+                        '${s.tagIds.isEmpty ? '' : ' · ${s.tagIds.join(',')}'}'
                         '${c.selected?.set.id == s.id ? ' · selected' : ''}',
                       ),
                     ],
@@ -389,6 +474,61 @@ class _SetsPageState extends State<SetsPage> {
                   'Type: ${sel.set.type} · items: ${sel.activeItems.length}',
                 ),
               ]),
+              if (c.readinessOfSelected() != null) ...[
+                div(
+                  attributes: {'data-testid': 'sets-readiness-strip'},
+                  [
+                    span(
+                      attributes: {'data-testid': 'sets-readiness-badge'},
+                      [.text(c.readinessOfSelected()!.badgeLabel)],
+                    ),
+                    if (c.usedByOfSelected().isEmpty)
+                      span(
+                        attributes: {'data-testid': 'sets-used-by-unused'},
+                        [.text(' Unused')],
+                      )
+                    else
+                      for (final u in c.usedByOfSelected())
+                        span(
+                          attributes: {
+                            'data-testid':
+                                'sets-used-by-${u.buildId}-${u.variantId}',
+                          },
+                          [.text(' ${u.label}')],
+                        ),
+                    if (c.readinessOfSelected()!.nextEmptySlot != null)
+                      button(
+                        classes: 'compose-btn',
+                        attributes: {
+                          'type': 'button',
+                          'data-testid': 'sets-fill-next',
+                        },
+                        events: {
+                          'click': (_) => _openFill(
+                                c.readinessOfSelected()!.nextEmptySlot!,
+                              ),
+                        },
+                        [
+                          .text(
+                            'Fill next · ${c.readinessOfSelected()!.nextEmptySlot}',
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ],
+              button(
+                classes: 'compose-btn-outline',
+                attributes: {
+                  'type': 'button',
+                  'data-testid': 'sets-delete',
+                  if (_busy) 'disabled': 'true',
+                },
+                events: {'click': (_) => unawaited(_deleteSelected())},
+                [
+                  .text(_deleteConfirm ? 'Confirm delete' : 'Delete set'),
+                ],
+              ),
               if (armorTotals != null)
                 div(
                   attributes: {'data-testid': 'sets-armor-stat-board'},

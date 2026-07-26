@@ -46,6 +46,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   late final OwnedCatalogBridge _bridge;
   final _nameController = TextEditingController();
   final _editNameController = TextEditingController();
+  final _searchController = TextEditingController();
   SetType _createType = SetType.weapon;
   String? _statusMessage;
   bool _ownController = false;
@@ -98,7 +99,42 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     }
     _nameController.dispose();
     _editNameController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _deleteSelected() async {
+    final sel = _controller.selected;
+    if (sel == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const Key('sets_delete_confirm_dialog'),
+        title: const Text('Delete set?'),
+        content: Text(
+          'Delete "${sel.set.name}"? This cannot be undone.',
+          key: const Key('sets_delete_confirm_message'),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('sets_delete_cancel'),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('sets_delete_confirm'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final err = await _controller.deleteSelected();
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Set deleted';
+    });
   }
 
   void _onController() {
@@ -335,29 +371,107 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     );
   }
 
+  Widget _buildSetsFilterHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            key: const Key('sets_search'),
+            controller: _searchController,
+            decoration: const InputDecoration(
+              labelText: 'Search',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            onChanged: _controller.setSearchQuery,
+          ),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<SetType?>(
+            key: const Key('sets_type_filters'),
+            // ignore: deprecated_member_use
+            value: _controller.typeFilter,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Filter type',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<SetType?>(
+                value: null,
+                child: Text('All types', key: Key('sets_type_chip_all')),
+              ),
+              for (final t in SetType.values)
+                DropdownMenuItem<SetType?>(
+                  value: t,
+                  child: Text(
+                    t.wireName,
+                    key: Key('sets_type_chip_${t.wireName}'),
+                  ),
+                ),
+            ],
+            onChanged: _controller.setTypeFilter,
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            key: const Key('sets_tag_filters'),
+            spacing: 4,
+            children: [
+              for (final tag in const ['pve', 'pvp', 'solar'])
+                FilterChip(
+                  key: Key('sets_tag_chip_$tag'),
+                  label: Text(tag, style: const TextStyle(fontSize: 11)),
+                  selected: _controller.tagFilters.contains(tag),
+                  onSelected: (_) => _controller.toggleTagFilter(tag),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSetList() {
     if (_controller.loading && _controller.sets.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(key: Key('sets_loading')),
+      return ListView(
+        key: const Key('sets_list'),
+        children: [
+          _buildSetsFilterHeader(),
+          const SizedBox(
+            height: 80,
+            child: Center(
+              child: CircularProgressIndicator(key: Key('sets_loading')),
+            ),
+          ),
+        ],
       );
     }
     if (_controller.sets.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            'No sets yet. Create one above.',
-            key: Key('sets_list_empty'),
-            textAlign: TextAlign.center,
+      return ListView(
+        key: const Key('sets_list'),
+        children: [
+          _buildSetsFilterHeader(),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'No sets yet. Create one above.',
+              key: Key('sets_list_empty'),
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
+        ],
       );
     }
     return ListView.builder(
       key: const Key('sets_list'),
-      itemCount: _controller.sets.length,
+      itemCount: _controller.sets.length + 1,
       itemBuilder: (context, index) {
-        final set = _controller.sets[index];
+        if (index == 0) return _buildSetsFilterHeader();
+        final set = _controller.sets[index - 1];
         final selected = _controller.selected?.set.id == set.id;
         final itemCount = selected
             ? _controller.selected!.activeItems.length
@@ -401,6 +515,8 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     final slots = slotsForSetType(setType);
     final presentation = _presentation;
     final armorTotals = presentation?.armorTotals;
+    final readiness = _controller.readinessOfSelected();
+    final usedBy = _controller.usedByOfSelected();
 
     return SingleChildScrollView(
       key: const Key('sets_detail'),
@@ -422,20 +538,73 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Chip(
                 key: const Key('sets_detail_type'),
                 label: Text(sel.set.type),
               ),
-              const SizedBox(width: 12),
+              if (sel.set.tagIds.isNotEmpty)
+                for (final t in sel.set.tagIds)
+                  Chip(
+                    key: Key('sets_detail_tag_$t'),
+                    label: Text(t),
+                  ),
               FilledButton(
                 key: const Key('sets_save_name'),
                 onPressed: _saveName,
                 child: const Text('Save name'),
               ),
+              OutlinedButton(
+                key: const Key('sets_delete_button'),
+                onPressed: _deleteSelected,
+                child: const Text('Delete'),
+              ),
             ],
           ),
+          if (readiness != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              key: const Key('sets_readiness_strip'),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Chip(
+                    key: const Key('sets_readiness_badge'),
+                    label: Text(readiness.badgeLabel),
+                  ),
+                  if (usedBy.isEmpty)
+                    const Chip(
+                      key: Key('sets_used_by_unused'),
+                      label: Text('Unused'),
+                    )
+                  else
+                    for (final u in usedBy)
+                      Chip(
+                        key: Key('sets_used_by_${u.buildId}_${u.variantId}'),
+                        label: Text(u.label),
+                      ),
+                  if (readiness.nextEmptySlot != null)
+                    FilledButton.tonal(
+                      key: const Key('sets_fill_next'),
+                      onPressed: () => _fillSlot(readiness.nextEmptySlot!),
+                      child: Text(
+                        'Fill next · ${setSlotDisplayLabel(readiness.nextEmptySlot!)}',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
           if (setType == SetType.armor && armorTotals != null) ...[
             const SizedBox(height: 16),
             _buildArmorTotalsBoard(context, armorTotals),

@@ -34,18 +34,49 @@ class SetsController extends ChangeNotifier {
   final AppDatabase db;
 
   int? _userId;
+  List<SetRecord> _allSets = const [];
   List<SetRecord> _sets = const [];
   SetDetail? _selected;
   String? _error;
   bool _loading = false;
   SetType? _typeFilter;
+  String _searchQuery = '';
+  List<String> _tagFilters = const [];
 
   int? get userId => _userId;
   List<SetRecord> get sets => List.unmodifiable(_sets);
+  List<SetRecord> get allSets => List.unmodifiable(_allSets);
   SetDetail? get selected => _selected;
   String? get error => _error;
   bool get loading => _loading;
   SetType? get typeFilter => _typeFilter;
+  String get searchQuery => _searchQuery;
+  List<String> get tagFilters => List.unmodifiable(_tagFilters);
+
+  void _reapplyFilters() {
+    final rows = [
+      for (final s in _allSets)
+        FilterableSet(
+          id: s.id,
+          name: s.name,
+          type: s.type,
+          tagIds: s.tagIds,
+        ),
+    ];
+    final filtered = filterSets(
+      rows,
+      SetListFilters(
+        query: _searchQuery,
+        types: _typeFilter != null ? [_typeFilter!.wireName] : const [],
+        tags: _tagFilters,
+      ),
+    );
+    final byId = {for (final s in _allSets) s.id: s};
+    _sets = [
+      for (final r in filtered)
+        if (byId[r.id] != null) byId[r.id]!,
+    ];
+  }
 
   Future<void> refresh({bool keepSelection = true}) async {
     _loading = true;
@@ -53,7 +84,8 @@ class SetsController extends ChangeNotifier {
     notifyListeners();
     try {
       _userId = await resolveLibraryUserId();
-      _sets = await listUserSets(db, _userId!, type: _typeFilter);
+      _allSets = await listUserSets(db, _userId!);
+      _reapplyFilters();
       if (keepSelection && _selected != null) {
         final id = _selected!.set.id;
         _selected = await getSetDetail(db, _userId!, id);
@@ -70,7 +102,93 @@ class SetsController extends ChangeNotifier {
   void setTypeFilter(SetType? type) {
     if (_typeFilter == type) return;
     _typeFilter = type;
-    refresh(keepSelection: false);
+    _reapplyFilters();
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    if (_searchQuery == query) return;
+    _searchQuery = query;
+    _reapplyFilters();
+    notifyListeners();
+  }
+
+  void setTagFilters(List<String> tags) {
+    _tagFilters = List.unmodifiable(tags);
+    _reapplyFilters();
+    notifyListeners();
+  }
+
+  void toggleTagFilter(String tagId) {
+    final next = List<String>.from(_tagFilters);
+    if (next.contains(tagId)) {
+      next.remove(tagId);
+    } else {
+      next.add(tagId);
+    }
+    setTagFilters(next);
+  }
+
+  SetReadinessSummary? readinessOfSelected() {
+    final sel = _selected;
+    if (sel == null) return null;
+    final setType = SetType.tryParse(sel.set.type) ?? SetType.weapon;
+    return buildSetReadiness(
+      setType: setType,
+      boardSlots: slotsForSetType(setType),
+      activeItemSlots: sel.activeItems.map((i) => i.slot),
+    );
+  }
+
+  List<SetUsedByDisplay> usedByOfSelected() {
+    final sel = _selected;
+    if (sel == null) return const [];
+    return mapUsedByDisplays([
+      for (final a in sel.usedBy)
+        (
+          buildId: a.buildId,
+          variantId: a.variantId,
+          buildName: a.buildName.isEmpty ? null : a.buildName,
+        ),
+    ]);
+  }
+
+  Future<String?> deleteSelected() async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null) return 'No set selected';
+    try {
+      final ok = await deleteUserSet(db, uid, sel.set.id);
+      if (!ok) return 'Set not found';
+      _selected = null;
+      _allSets = await listUserSets(db, uid);
+      _reapplyFilters();
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      if (e.code == UseCaseErrorCode.setInUse) {
+        final builds = (e.details['buildIds'] as List?)?.cast<String>() ??
+            const <String>[];
+        final variants =
+            (e.details['variantIds'] as List?)?.cast<String>() ??
+                const <String>[];
+        final msg = formatSetInUseMessage(
+          buildIds: builds,
+          variantIds: variants,
+        );
+        _error = msg;
+        notifyListeners();
+        return msg;
+      }
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
   }
 
   Future<int> resolveLibraryUserId() async {
@@ -108,7 +226,8 @@ class SetsController extends ChangeNotifier {
         uid,
         CreateSetCommand(id: id, name: name, type: type),
       );
-      _sets = await listUserSets(db, uid, type: _typeFilter);
+      _allSets = await listUserSets(db, uid);
+      _reapplyFilters();
       _selected = detail;
       _error = null;
       notifyListeners();

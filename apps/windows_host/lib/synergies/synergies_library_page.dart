@@ -1,4 +1,5 @@
-import 'package:destiny2_app/destiny2_app.dart' show SynergyLinkWrite;
+import 'package:destiny2_app/destiny2_app.dart'
+    show SynergyLinkWrite, SynergyPickerHit;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -9,7 +10,7 @@ import '../host_bootstrap.dart';
 import 'synergies_library_controller.dart';
 import 'synergy_designation.dart';
 
-/// Synergy library dual-pane (list + detail/links) — DART-031.
+/// Synergy library dual-pane (list + detail/links) — DART-031 / DART-066.
 class SynergiesLibraryPage extends StatefulWidget {
   const SynergiesLibraryPage({
     super.key,
@@ -35,8 +36,11 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
   final _editDescController = TextEditingController();
   final _linkNameController = TextEditingController();
   final _linkHashController = TextEditingController();
+  final _searchController = TextEditingController();
+  final _evidenceSearchController = TextEditingController();
   String _createType = creatableSynergyTypeWires.first;
   String _linkKind = SynergyLinkKind.weapon.wireName;
+  String _evidenceQuery = '';
   String? _statusMessage;
   bool _ownController = false;
 
@@ -51,7 +55,14 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
         db: widget.services.db,
         session: widget.services.oauthSession,
         inventorySync: widget.services.inventorySync,
+        catalogItems: widget.services.offlineCatalog.browse(),
       );
+    }
+    // Ensure catalog is available when controller was injected without items.
+    if (_controller.catalogItems.isEmpty) {
+      try {
+        _controller.catalogItems = widget.services.offlineCatalog.browse();
+      } catch (_) {}
     }
     _controller.addListener(_onController);
     _controller.refresh();
@@ -70,6 +81,8 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
     _editDescController.dispose();
     _linkNameController.dispose();
     _linkHashController.dispose();
+    _searchController.dispose();
+    _evidenceSearchController.dispose();
     super.dispose();
   }
 
@@ -152,6 +165,47 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
     setState(() => _statusMessage = 'Link added (save to persist)');
   }
 
+  void _pickEvidence(SynergyPickerHit hit) {
+    final err = _controller.addPickerHitToDraft(hit);
+    setState(() {
+      _statusMessage = err ?? 'Link added (save to persist)';
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    final sel = _controller.selected;
+    if (sel == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const Key('synergies_delete_confirm_dialog'),
+        title: const Text('Delete synergy?'),
+        content: Text(
+          'Delete "${sel.name}"? This cannot be undone.',
+          key: const Key('synergies_delete_confirm_message'),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('synergies_delete_cancel'),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('synergies_delete_confirm'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final err = await _controller.deleteSelected();
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = err ?? 'Synergy deleted';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,8 +249,7 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
   }
 
   Widget _buildRail(BuildContext context) {
-    // Compact create strip (name/type/subtype only) so list remains Expanded
-    // without nested scroll clipping in short test viewports.
+    // Compact create strip; filters live in the list header (short viewports).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -254,7 +307,6 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
             ),
           ),
         ),
-        // Hidden optional description field for tests / accessibility (dense).
         Offstage(
           offstage: true,
           child: TextField(
@@ -278,29 +330,88 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
     );
   }
 
+  Widget _buildFilterHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            key: const Key('synergies_search'),
+            controller: _searchController,
+            decoration: const InputDecoration(
+              labelText: 'Search',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            onChanged: _controller.setSearchQuery,
+          ),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<String?>(
+            key: const Key('synergies_type_filters'),
+            // ignore: deprecated_member_use
+            value: _controller.typeFilter,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Filter type',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('All types'),
+              ),
+              for (final t in creatableSynergyTypeWires)
+                DropdownMenuItem<String?>(
+                  value: t,
+                  child: Text(t, key: Key('synergies_type_chip_$t')),
+                ),
+            ],
+            onChanged: (v) => _controller.setTypeFilter(v),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSynergyList() {
     if (_controller.loading && _controller.synergies.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(key: Key('synergies_loading')),
+      return ListView(
+        key: const Key('synergies_list'),
+        children: [
+          _buildFilterHeader(),
+          const SizedBox(
+            height: 80,
+            child: Center(
+              child: CircularProgressIndicator(key: Key('synergies_loading')),
+            ),
+          ),
+        ],
       );
     }
     if (_controller.synergies.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            'No synergies yet. Create one above.',
-            key: Key('synergies_list_empty'),
-            textAlign: TextAlign.center,
+      return ListView(
+        key: const Key('synergies_list'),
+        children: [
+          _buildFilterHeader(),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'No synergies yet. Create one above.',
+              key: Key('synergies_list_empty'),
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
+        ],
       );
     }
     return ListView.builder(
       key: const Key('synergies_list'),
-      itemCount: _controller.synergies.length,
+      itemCount: _controller.synergies.length + 1,
       itemBuilder: (context, index) {
-        final s = _controller.synergies[index];
+        if (index == 0) return _buildFilterHeader();
+        final s = _controller.synergies[index - 1];
         final selected = _controller.selected?.id == s.id;
         final designation = _controller.designationOf(s);
         final evidenceCount =
@@ -394,6 +505,11 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
                 onPressed: _saveIdentity,
                 child: const Text('Save'),
               ),
+              OutlinedButton(
+                key: const Key('synergies_delete_button'),
+                onPressed: _deleteSelected,
+                child: const Text('Delete'),
+              ),
             ],
           ),
           // Explicitly no type/subtype editors after create (exit: immutable).
@@ -421,7 +537,7 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
             ),
           const SizedBox(height: 12),
           Text(
-            'Add link',
+            'Add link from catalog',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
@@ -446,6 +562,25 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
               if (v == null) return;
               setState(() => _linkKind = v);
             },
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const Key('synergies_evidence_search'),
+            controller: _evidenceSearchController,
+            decoration: const InputDecoration(
+              labelText: 'Search catalog',
+              isDense: true,
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.search, size: 18),
+            ),
+            onChanged: (v) => setState(() => _evidenceQuery = v),
+          ),
+          const SizedBox(height: 8),
+          _buildEvidenceResults(),
+          const SizedBox(height: 12),
+          Text(
+            'Manual link (fallback)',
+            style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
           TextField(
@@ -488,6 +623,43 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEvidenceResults() {
+    final hits = _controller.searchEvidence(
+      linkKind: _linkKind,
+      query: _evidenceQuery,
+    );
+    if (hits.isEmpty) {
+      return Text(
+        _evidenceQuery.trim().isEmpty
+            ? 'Type to search catalog for evidence.'
+            : 'No catalog hits (already linked omitted).',
+        key: const Key('synergies_evidence_empty'),
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+    return Column(
+      key: const Key('synergies_evidence_results'),
+      children: [
+        for (final hit in hits.take(12))
+          ListTile(
+            key: Key('synergies_evidence_hit_${hit.hash ?? hit.name}'),
+            dense: true,
+            title: Text(hit.name),
+            subtitle: Text(
+              hit.subtitle ??
+                  '${synergyLinkKindLabel(hit.kind)}'
+                  '${hit.sourceLabel != null ? ' · ${hit.sourceLabel}' : ''}',
+            ),
+            trailing: TextButton(
+              key: Key('synergies_evidence_add_${hit.hash ?? hit.name}'),
+              onPressed: () => _pickEvidence(hit),
+              child: const Text('Add'),
+            ),
+          ),
+      ],
     );
   }
 

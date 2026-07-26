@@ -16,6 +16,8 @@ dependencies:
     path: ../db
   destiny2_domain:
     path: ../domain
+  destiny2_manifest:
+    path: ../manifest
   destiny2_sandbox_data:
     path: ../sandbox_data
   drift: any

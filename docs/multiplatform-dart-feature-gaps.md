@@ -84,8 +84,8 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | ID | Feature | Product path | W | M | J | Plan | Slices / notes |
 | -- | ------- | ------------ | - | - | - | ---- | -------------- |
 | **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Cutover spine PASS; identity Confirm/Fork + kit composer (DART-064) done; Finish walkthrough residual → **DART-067**; density → **DART-068** |
-| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Windows dual-pane; catalog reverse tags **done** (DART-063); free-text evidence + Jaspr create+list residual (GAP-UI-SYN-01,02,04) → **DART-066** |
-| **FEAT-NAV-SETS** | Sets library | `/sets` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Board + dense rows + catalog fill **done** (DART-065); library search/tags/readiness/delete residual → **DART-066** |
+| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Catalog picker + filters + delete **done** (DART-066); designation icons residual → DART-068 |
+| **FEAT-NAV-SETS** | Sets library | `/sets` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Board + filters + readiness + delete **done** (DART-065/066); presentation polish residual → DART-068 |
 | **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Multi-facet/group-by/alpha (DART-062) + Weapons/Armor/Universal + synergy tags + owned detail (DART-063) **done**; icons residual (GAP-UI-CATALOG-09) → **DART-068** |
 | **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | **PASS** | PARTIAL | **PASS** | **shipped** | OAuth Public+PKCE + inventory sync + diagnostics remain PASS; residuals chrome only (GAP-UI-SETTINGS-01/02; post-sync banner GAP-UI-SETTINGS-04) — **no demote** |
 | **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | **PASS** | N/A\* | **PASS** | **shipped** | **DART-055** cutover PASS; residuals P2 density only (GAP-UI-LOADOUTS-01..03) — **no demote** |
@@ -217,18 +217,18 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-SETS-01** | Armor base-roll EoF six-stat board | **P1** | `closed` (DART-065) | ArmorPieceStatRow + totals | `sumArmorSetStats` + host boards | **DART-065** | DAC-NME-004 |
 | **GAP-UI-SETS-02** | Set item rows meta/traits/synergies | **P1** | `closed` (DART-065) | icons, traits, LINKED SYNERGIES | Dense meta/traits/Instance\|Wishlist + synergies | **DART-065** | Not cutover; fidelity |
 | **GAP-UI-SETS-03** | Slot-fill embedded Catalog density | **P1** | `closed` (DART-065) | SlotFillPanel Catalog grid | Windows denser picker; Jaspr named catalog fill | **DART-065** | Not cutover; fidelity |
-| **GAP-UI-SETS-04** | Library search + tag AND filters | **P2** | `open` | SetsPage search + TYPE & TAGS | Unfiltered FlapBoard | **DART-066** | Not cutover; fidelity |
-| **GAP-UI-SETS-05** | Readiness / Fill next / Used-by | **P2** | `open` | filled/capacity + FILL NEXT + USED BY | usedBy not rendered | **DART-066** | Not cutover; fidelity |
-| **GAP-UI-SETS-06** | Delete set + SET_IN_USE | **P2** | `open` | Edit/Delete + SET_IN_USE error | deleteUserSet exists; no host control | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SETS-04** | Library search + tag AND filters | **P2** | `closed` (DART-066) | SetsPage search + TYPE & TAGS | filterSets search+type+tag AND both shells | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SETS-05** | Readiness / Fill next / Used-by | **P2** | `closed` (DART-066) | filled/capacity + FILL NEXT + USED BY | readiness strip + Fill next + usedBy both shells | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SETS-06** | Delete set + SET_IN_USE | **P2** | `closed` (DART-066) | Edit/Delete + SET_IN_USE error | delete + SET_IN_USE plain language both shells | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SETS-07** | Occupied-slot replace confirm | **P2** | `closed` (DART-065) | Confirm replace naming item | Host confirm dialog/step both shells | **DART-065** | BR-SLOT-006 |
 | **GAP-UI-SETS-10** | Weapon fill selectedPerks / traits | **P2** | `closed` (DART-065) | selectedTraitPerks + store selectedPerks | selectedPerks persisted + trait chips | **DART-065** | BR-ROLL-001 |
-| **GAP-UI-SYN-01** | Evidence catalog search picker | **P1** | `open` | Search catalog + filterOutLinked | Free-text + raw hash | **DART-066** | Not cutover; fidelity |
-| **GAP-UI-SYN-02** | BR-SYN-012 weapon-perk source labels | **P1** | `open` | weaponPerkSourceLabel exotic/legendary | Free-text names only | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-01** | Evidence catalog search picker | **P1** | `closed` (DART-066) | Search catalog + filterOutLinked | Catalog search + BR-SYN-011 omit-linked | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-02** | BR-SYN-012 weapon-perk source labels | **P1** | `closed` (DART-066) | weaponPerkSourceLabel exotic/legendary | formatWeaponPerkSourceLabel parity | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SYN-03** | BR-SYN-004 reverse tags on catalog | **P1** | `closed` | linkedSynergies by-target badges | findSynergiesByTarget + detail badges both hosts | **DART-063** | Not cutover; fidelity |
-| **GAP-UI-SYN-04** | Jaspr synergy detail/edit/links | **P1** | `open` | dual-pane detail + edit/delete | create+list only | **DART-066** | Jaspr only |
+| **GAP-UI-SYN-04** | Jaspr synergy detail/edit/links | **P1** | `closed` (DART-066) | dual-pane detail + edit/delete | select→detail/edit/links/delete | **DART-066** | Jaspr only |
 | **GAP-UI-SYN-05** | DesignationLabel verb/element icons | **P2** | `open` | DesignationLabel + icons | type::subType wire keys | **DART-068** | Polish |
-| **GAP-UI-SYN-06** | Synergy library search/type filters | **P2** | `open` | SynergyFilters search + chips | setTypeFilter unwired | **DART-066** | Not cutover; fidelity |
-| **GAP-UI-SYN-09** | Delete library synergy host action | **P2** | `open` | SynergyDetail Delete confirm | deleteUserSynergy; no control | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-06** | Synergy library search/type filters | **P2** | `closed` (DART-066) | SynergyFilters search + chips | filterSynergies search+type both shells | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-09** | Delete library synergy host action | **P2** | `closed` (DART-066) | SynergyDetail Delete confirm | delete with confirm both shells | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-LOADOUTS-01** | Color bar / swatch / icon plate | **P2** | `open` | LoadoutColorBar + IconPlate | iconUrl only; colorUrl unused | **DART-068** | Density only |
 | **GAP-UI-LOADOUTS-02** | Exotic names on Bungie rows | **P2** | `open` | enrichLoadoutsWithExotics | exotic* fields unused | **DART-068** | Density only |
 | **GAP-UI-LOADOUTS-03** | Details expand for Bungie slot | **P2** | `open` | expanded detail panel | No expansion state | **DART-068** | Density only |
