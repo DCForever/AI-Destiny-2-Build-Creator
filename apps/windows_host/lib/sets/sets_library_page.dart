@@ -871,21 +871,54 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
             ],
           ),
         ],
-        if (row?.armorStats != null) ...[
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 4,
-            children: [
-              for (final key in armorBaseStatKeys)
-                if (row!.armorStats!.stats[key] != null)
-                  Text(
-                    '$key ${row.armorStats!.stats[key]}',
-                    key: Key('sets_slot_stat_${slot}_$key'),
-                    style: Theme.of(context).textTheme.bodySmall,
+        if (row?.armorStats != null || traits.isNotEmpty)
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              key: Key('sets_slot_richness_$slot'),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 4),
+              title: Text(
+                'Roll details',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              subtitle: Text(
+                [
+                  if (row?.armorStats != null) 'stats',
+                  if (traits.isNotEmpty) '${traits.length} traits',
+                ].join(' · '),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              children: [
+                if (row?.armorStats != null)
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 2,
+                    children: [
+                      for (final key in armorBaseStatKeys)
+                        if (row!.armorStats!.stats[key] != null)
+                          Chip(
+                            key: Key('sets_slot_stat_${slot}_$key'),
+                            visualDensity: VisualDensity.compact,
+                            label: Text(
+                              '$key ${row.armorStats!.stats[key]}',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                          ),
+                      if (row!.armorStats!.total != null)
+                        Chip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text(
+                            'Total ${row.armorStats!.total}',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ),
+                    ],
                   ),
-            ],
-          ),
-        ] else if (row?.statsUnknown == true) ...[
+              ],
+            ),
+          )
+        else if (row?.statsUnknown == true) ...[
           const SizedBox(height: 4),
           Text(
             hasInstance

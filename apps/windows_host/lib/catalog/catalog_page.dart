@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
 import '../widgets/entity_icon.dart';
+import '../widgets/item_richness.dart';
 import 'owned_catalog_bridge.dart';
 
 /// Catalog board columns: NAME · IDENTITY · TYPE · OWNED
@@ -1045,21 +1046,13 @@ class _CatalogPageState extends State<CatalogPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-            child: Text(
-              item.name,
-              key: const Key('instance_panel_title'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
           if (kind != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
               child: Text(
                 compositionKindLabel(kind),
                 key: const Key('detail_kind_label'),
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
           // BR-SYN-004 reverse tags
@@ -1109,7 +1102,6 @@ class _CatalogPageState extends State<CatalogPage> {
                 ],
               ),
             ),
-            // Explicitly never show Build kit attach (GAP-UI-CATALOG-03).
             const SizedBox.shrink(key: Key('no_build_kit_attach')),
           ],
           if (_actionMessage != null)
@@ -1122,7 +1114,7 @@ class _CatalogPageState extends State<CatalogPage> {
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
             child: Text(
               _instances.isEmpty
                   ? 'No local copies (wishlist / definition only — unpinned).'
@@ -1174,49 +1166,57 @@ class _CatalogPageState extends State<CatalogPage> {
               ),
             ),
           ],
-          const Divider(),
+          const Divider(height: 1),
           Expanded(
-            child: _instances.isEmpty
-                ? Center(
+            child: ListView(
+              key: const Key('instance_list'),
+              padding: EdgeInsets.zero,
+              children: [
+                // Definition dossier (always) — scan: definition collapsed.
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: ItemRichnessPanel(
+                    key: Key('item_richness_def_${item.hash}'),
+                    definition: item,
+                    kindLabel: kind != null ? compositionKindLabel(kind) : null,
+                    plugNameByHash: _bridge.plugNameByHash,
+                    initialOpen: const {},
+                    onCopyMessage: (msg) {
+                      setState(() => _actionMessage = msg);
+                    },
+                  ),
+                ),
+                if (_instances.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Text(
                       'No instances',
                       key: const Key('instance_panel_empty'),
+                      textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: palette.muted,
                           ),
                     ),
                   )
-                : ListView.builder(
-                    key: const Key('instance_list'),
-                    itemCount: _instances.length,
-                    itemBuilder: (context, index) {
-                      final inst = _instances[index];
-                      return _buildInstanceCard(inst);
-                    },
-                  ),
+                else
+                  for (final inst in _instances)
+                    _buildInstanceCard(item, inst, kind),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInstanceCard(CatalogInstanceProjection inst) {
-    final flags = [
-      if (inst.isMasterwork) 'MW',
-      if (inst.isCrafted) 'Crafted',
-      if (inst.gearTier != null) 'T${inst.gearTier}',
-    ].join(' · ');
-    // Human location only — hide raw instanceId / characterId from default UI (P1).
-    final loc = inst.location;
-    final meta = [
-      loc,
-      if (inst.bucket.isNotEmpty) inst.bucket,
-      if (flags.isNotEmpty) flags,
-    ].join(' · ');
-
+  Widget _buildInstanceCard(
+    CatalogItem item,
+    CatalogInstanceProjection inst,
+    CompositionKind? kind,
+  ) {
     return Container(
       key: Key('instance_${inst.instanceId}'),
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -1225,106 +1225,22 @@ class _CatalogPageState extends State<CatalogPage> {
           ),
         ),
       ),
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Power ${inst.power}',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontFamily: 'IBM Plex Mono',
-                      ),
-                ),
-              ),
-              IconButton(
-                key: Key('instance_copy_id_${inst.instanceId}'),
-                tooltip: 'Copy instance id',
-                icon: const Icon(Icons.copy, size: 16),
-                visualDensity: VisualDensity.compact,
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: inst.instanceId));
-                  setState(() {
-                    _actionMessage = 'Copied instance id';
-                  });
-                },
-              ),
-            ],
-          ),
-          Text(
-            meta,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (inst.rollTags.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'Tags: ${inst.rollTags.join(', ')}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          if (inst.armorStats != null && inst.armorStats!.hasAny) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Base stats',
-              key: Key('armor_stats_label_${inst.instanceId}'),
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            Wrap(
-              key: Key('armor_stats_board_${inst.instanceId}'),
-              spacing: 8,
-              children: [
-                for (final key in armorBaseStatKeys)
-                  if (inst.armorStats!.stats[key] != null)
-                    Chip(
-                      label: Text('$key ${inst.armorStats!.stats[key]}'),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                if (inst.armorStats!.total != null)
-                  Chip(
-                    label: Text('Total ${inst.armorStats!.total}'),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
-          ],
-          if (inst.plugCards.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Perks / plugs',
-              key: Key('plug_cards_label_${inst.instanceId}'),
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            Wrap(
-              key: Key('plug_cards_${inst.instanceId}'),
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                for (final card in inst.plugCards)
-                  Chip(
-                    key: Key('plug_card_${inst.instanceId}_${card.hash}'),
-                    label: Text(
-                      card.isTrait
-                          ? 'Trait: ${card.displayName}'
-                          : card.displayName,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-              ],
-            ),
-          ] else if (inst.plugHashes.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '${inst.plugHashes.length} plugs (names not resolved yet)',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-        ],
+      child: ItemRichnessPanel(
+        key: Key('item_richness_inst_${inst.instanceId}'),
+        definition: item,
+        instance: inst,
+        kindLabel: kind != null ? compositionKindLabel(kind) : null,
+        plugNameByHash: _bridge.plugNameByHash,
+        initialOpen: {
+          if (inst.armorStats != null && inst.armorStats!.hasAny)
+            ItemRichnessSection.stats,
+          if (inst.plugCards.isNotEmpty ||
+              (inst.socketPlugs != null && inst.socketPlugs!.isNotEmpty))
+            ItemRichnessSection.perks,
+        },
+        onCopyMessage: (msg) {
+          setState(() => _actionMessage = msg);
+        },
       ),
     );
   }
