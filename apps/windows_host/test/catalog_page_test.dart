@@ -211,4 +211,76 @@ void main() {
     );
     expect(find.textContaining('Entity cache'), findsOneWidget);
   });
+
+  testWidgets('reloadToken reloads when OfflineCatalog gains items',
+      (tester) async {
+    // BUG-20260725-001: after Settings sync, shell bumps reloadToken so Catalog
+    // re-reads OfflineCatalog (IndexedStack keeps the page state alive).
+    final emptyServices = AppServices(
+      storageRoot: services.storageRoot,
+      db: services.db,
+      manifestRefresh: _FakeRefresh(),
+      offlineCatalog: OfflineCatalog.preloaded(
+        storageRoot: services.storageRoot,
+        items: const [],
+      ),
+      oauthSession: services.oauthSession,
+      profileClient: services.profileClient,
+      inventorySync: services.inventorySync,
+      writeClient: services.writeClient,
+    );
+    final fullServices = AppServices(
+      storageRoot: services.storageRoot,
+      db: services.db,
+      manifestRefresh: _FakeRefresh(),
+      offlineCatalog: OfflineCatalog.preloaded(
+        storageRoot: services.storageRoot,
+        items: const [
+          CatalogItem(
+            hash: 42,
+            name: 'Reload Rifle',
+            slot: 'Kinetic',
+            element: 'Kinetic',
+            ammo: 'Primary',
+            itemTypeName: 'Auto Rifle',
+            isExotic: false,
+          ),
+        ],
+        version: 'reload-v1',
+      ),
+      oauthSession: services.oauthSession,
+      profileClient: services.profileClient,
+      inventorySync: services.inventorySync,
+      writeClient: services.writeClient,
+    );
+
+    var active = emptyServices;
+    var reloadToken = 0;
+    late StateSetter setParent;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            setParent = setState;
+            return CatalogPage(
+              services: active,
+              reloadToken: reloadToken,
+            );
+          },
+        ),
+      ),
+    );
+    await _pumpFrames(tester);
+
+    expect(find.byKey(const Key('catalog_empty')), findsOneWidget);
+
+    active = fullServices;
+    reloadToken = 1;
+    setParent(() {});
+    await _pumpFrames(tester);
+
+    expect(find.text('Reload Rifle'), findsOneWidget);
+    expect(find.byKey(const Key('catalog_list')), findsOneWidget);
+  });
 }

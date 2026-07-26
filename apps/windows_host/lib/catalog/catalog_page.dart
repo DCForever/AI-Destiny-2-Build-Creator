@@ -11,6 +11,7 @@ class CatalogPage extends StatefulWidget {
     super.key,
     required this.services,
     this.bridge,
+    this.reloadToken = 0,
   });
 
   final AppServices services;
@@ -18,12 +19,16 @@ class CatalogPage extends StatefulWidget {
   /// Optional injectable bridge (tests). When null, constructed from [services].
   final OwnedCatalogBridge? bridge;
 
+  /// When this value changes (e.g. user returns to Catalog after Settings sync),
+  /// reloads entity stores + inventory. IndexedStack keeps this page alive.
+  final int reloadToken;
+
   @override
   State<CatalogPage> createState() => _CatalogPageState();
 }
 
 class _CatalogPageState extends State<CatalogPage> {
-  late final OwnedCatalogBridge _bridge;
+  late OwnedCatalogBridge _bridge;
 
   bool _loading = true;
   String? _error;
@@ -40,17 +45,34 @@ class _CatalogPageState extends State<CatalogPage> {
   CatalogItem? _selected;
   List<CatalogInstanceProjection> _instances = const [];
 
-  @override
-  void initState() {
-    super.initState();
-    _bridge = widget.bridge ??
+  OwnedCatalogBridge _createBridge() {
+    return widget.bridge ??
         OwnedCatalogBridge(
           db: widget.services.db,
           offlineCatalog: widget.services.offlineCatalog,
           session: widget.services.oauthSession,
           inventorySync: widget.services.inventorySync,
         );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _bridge = _createBridge();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant CatalogPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final servicesChanged = oldWidget.services != widget.services ||
+        oldWidget.bridge != widget.bridge;
+    if (servicesChanged) {
+      _bridge = _createBridge();
+    }
+    if (servicesChanged || oldWidget.reloadToken != widget.reloadToken) {
+      _load();
+    }
   }
 
   @override

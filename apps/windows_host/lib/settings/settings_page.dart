@@ -134,11 +134,12 @@ class _SettingsPageState extends State<SettingsPage> {
         _refreshMessage = message;
       });
 
-      // Reload entity-backed catalog after UI settles (Catalog also reloads on visit).
-      widget.services.offlineCatalog.loadBase().then(
-        (_) {},
-        onError: (_, __) {},
-      );
+      // Warm OfflineCatalog for Catalog's next loadBase (tab select reloads too).
+      try {
+        await widget.services.offlineCatalog.loadBase();
+      } catch (_) {
+        // Non-fatal: Catalog retries on next visit / reloadToken.
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {

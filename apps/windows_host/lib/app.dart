@@ -39,6 +39,21 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   int _index = 0;
   ThemeMode _themeMode = ThemeMode.system;
 
+  /// Bumped when Catalog is re-selected so IndexedStack does not keep a stale
+  /// empty load from before Settings manifest/inventory sync (BUG-20260725-001).
+  int _catalogReloadToken = 0;
+
+  void _onDestinationSelected(int i) {
+    setState(() {
+      // Catalog is index 0 and stays mounted under IndexedStack — reload when
+      // returning from another destination so entity stores + inventory join.
+      if (i == 0 && _index != 0) {
+        _catalogReloadToken++;
+      }
+      _index = i;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -53,7 +68,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
             NavigationRail(
               key: const Key('host_nav_rail'),
               selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              onDestinationSelected: _onDestinationSelected,
               labelType: NavigationRailLabelType.all,
               destinations: const [
                 NavigationRailDestination(
@@ -96,6 +111,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   CatalogPage(
                     key: const Key('catalog_page'),
                     services: widget.services,
+                    reloadToken: _catalogReloadToken,
                   ),
                   SetsLibraryPage(
                     key: const Key('sets_library_page'),

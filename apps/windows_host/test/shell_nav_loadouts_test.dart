@@ -122,4 +122,37 @@ void main() {
     expect(find.byKey(const Key('loadouts_title')), findsOneWidget);
     expect(find.text('In-Game Loadouts'), findsOneWidget);
   });
+
+  testWidgets('returning to Catalog from Settings keeps Catalog mounted',
+      (tester) async {
+    // BUG-20260725-001: shell bumps reloadToken when re-selecting Catalog so
+    // IndexedStack does not keep a pre-sync empty list forever.
+    await tester.pumpWidget(Destiny2WindowsApp(services: services));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(
+      find.byKey(const Key('catalog_page'), skipOffstage: false),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Settings').first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('settings_page')), findsOneWidget);
+
+    await tester.tap(find.text('Catalog').first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(
+      find.byKey(const Key('catalog_page'), skipOffstage: false),
+      findsOneWidget,
+    );
+    // Still a single CatalogPage instance in the stack (token updates in place).
+    expect(
+      find.byKey(const Key('catalog_page'), skipOffstage: false),
+      findsOneWidget,
+    );
+  });
 }
