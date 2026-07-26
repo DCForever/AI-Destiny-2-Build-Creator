@@ -17,6 +17,7 @@ export 'src/repos/build_repository.dart';
 export 'src/repos/inventory_busy_lock.dart';
 export 'src/repos/inventory_records.dart';
 export 'src/repos/inventory_repository.dart';
+export 'src/repos/armor_set_stats.dart';
 export 'src/repos/instance_projection.dart';
 export 'src/repos/json_codec.dart';
 export 'src/repos/library_records.dart';

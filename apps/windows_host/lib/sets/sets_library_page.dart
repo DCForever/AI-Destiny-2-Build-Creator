@@ -1,23 +1,28 @@
-import 'package:destiny2_app/destiny2_app.dart' show SetDetail;
+import 'package:destiny2_app/destiny2_app.dart';
+import 'package:destiny2_db/destiny2_db.dart'
+    show ArmorSetStatTotals, SetItemRecord, armorBaseStatKeys;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../catalog/owned_catalog_bridge.dart';
 import '../host_bootstrap.dart';
 import '../optimizer/optimizer_controller.dart';
 import '../optimizer/optimizer_workspace.dart';
 import 'set_catalog_picker.dart';
+import 'set_item_enrichment.dart';
 import 'set_slot_mapping.dart';
 import 'sets_library_controller.dart';
 
-/// Sets library dual-pane (list + detail/slots) — DART-030 + armor optimizer (DART-036).
+/// Sets library dual-pane (list + detail/slots) — DART-030/036 + dense board (DART-065).
 class SetsLibraryPage extends StatefulWidget {
   const SetsLibraryPage({
     super.key,
     required this.services,
     this.controller,
     this.optimizerController,
+    this.bridge,
   });
 
   final AppServices services;
@@ -28,6 +33,9 @@ class SetsLibraryPage extends StatefulWidget {
   /// Optional injectable optimizer controller (tests inject candidates / local runner).
   final OptimizerController? optimizerController;
 
+  /// Optional catalog bridge for enrichment (tests).
+  final OwnedCatalogBridge? bridge;
+
   @override
   State<SetsLibraryPage> createState() => _SetsLibraryPageState();
 }
@@ -35,6 +43,7 @@ class SetsLibraryPage extends StatefulWidget {
 class _SetsLibraryPageState extends State<SetsLibraryPage> {
   late final SetsLibraryController _controller;
   late final OptimizerController _optimizer;
+  late final OwnedCatalogBridge _bridge;
   final _nameController = TextEditingController();
   final _editNameController = TextEditingController();
   SetType _createType = SetType.weapon;
@@ -42,6 +51,8 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   bool _ownController = false;
   bool _ownOptimizer = false;
   String? _boundOptimizerSetId;
+  SetDetailPresentation? _presentation;
+  bool _enriching = false;
 
   @override
   void initState() {
@@ -60,12 +71,18 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       _optimizer = widget.optimizerController!;
     } else {
       _ownOptimizer = true;
-      // Default: optimizeArmorInIsolate (UI-thread safe). Tests inject local runner.
       _optimizer = OptimizerController(
         db: widget.services.db,
         resolveUserId: () => _controller.resolveLibraryUserId(),
       );
     }
+    _bridge = widget.bridge ??
+        OwnedCatalogBridge(
+          db: widget.services.db,
+          offlineCatalog: widget.services.offlineCatalog,
+          session: widget.services.oauthSession,
+          inventorySync: widget.services.inventorySync,
+        );
     _controller.addListener(_onController);
     _controller.refresh();
   }
@@ -90,7 +107,38 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       _editNameController.text = sel.set.name;
     }
     _syncOptimizerTarget(sel);
+    _scheduleEnrichment();
     if (mounted) setState(() {});
+  }
+
+  void _scheduleEnrichment() {
+    final sel = _controller.selected;
+    if (sel == null) {
+      _presentation = null;
+      return;
+    }
+    if (_enriching) return;
+    _enriching = true;
+    final setType = SetType.tryParse(sel.set.type) ?? SetType.weapon;
+    final slots = slotsForSetType(setType);
+    enrichSetDetailPresentation(
+      detail: sel,
+      bridge: _bridge,
+      boardSlots: slots,
+      userId: _controller.userId,
+    ).then((p) {
+      if (!mounted) return;
+      setState(() {
+        _presentation = p;
+        _enriching = false;
+      });
+    }).catchError((_) {
+      if (!mounted) return;
+      setState(() {
+        _presentation = null;
+        _enriching = false;
+      });
+    });
   }
 
   void _syncOptimizerTarget(SetDetail? sel) {
@@ -131,8 +179,42 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       context: context,
       services: widget.services,
       targetSlot: slot,
+      bridge: _bridge,
     );
     if (pick == null || !mounted) return;
+
+    if (_controller.needsReplaceConfirm(slot)) {
+      final occupant = _controller.occupantForSlot(slot);
+      final name = occupant?.itemName ?? 'current item';
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          key: const Key('sets_replace_confirm_dialog'),
+          title: const Text('Replace item?'),
+          content: Text(
+            'Replace "$name" in this slot?',
+            key: const Key('sets_replace_confirm_message'),
+          ),
+          actions: [
+            TextButton(
+              key: const Key('sets_replace_cancel'),
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const Key('sets_replace_confirm'),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Replace'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) {
+        setState(() => _statusMessage = 'Replace cancelled');
+        return;
+      }
+    }
+
     final err = await _controller.fillSlot(slot, pick);
     if (!mounted) return;
     setState(() {
@@ -200,7 +282,6 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
             style: Theme.of(context).textTheme.titleSmall,
           ),
         ),
-        // Create form
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: TextField(
@@ -318,6 +399,8 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
 
     final setType = SetType.tryParse(sel.set.type) ?? SetType.weapon;
     final slots = slotsForSetType(setType);
+    final presentation = _presentation;
+    final armorTotals = presentation?.armorTotals;
 
     return SingleChildScrollView(
       key: const Key('sets_detail'),
@@ -353,13 +436,22 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               ),
             ],
           ),
+          if (setType == SetType.armor && armorTotals != null) ...[
+            const SizedBox(height: 16),
+            _buildArmorTotalsBoard(context, armorTotals),
+          ],
           const SizedBox(height: 20),
           Text(
             'Slots',
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          for (final slot in slots) _buildSlotRow(sel, slot),
+          for (final slot in slots)
+            _buildSlotRow(
+              sel,
+              slot,
+              presentation?.rowsBySlot[slot],
+            ),
           if (setType == SetType.armor)
             OptimizerWorkspace(
               key: const Key('sets_optimizer_workspace'),
@@ -377,12 +469,62 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     );
   }
 
-  Widget _buildSlotRow(SetDetail detail, String slot) {
+  Widget _buildArmorTotalsBoard(BuildContext context, ArmorSetStatTotals totals) {
+    return Container(
+      key: const Key('sets_armor_stat_board'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Armor base-roll totals'
+            '${totals.incomplete ? ' (incomplete)' : ''}',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final key in armorBaseStatKeys)
+                Chip(
+                  key: Key('sets_armor_total_$key'),
+                  label: Text(
+                    '$key ${totals.statValues[key] ?? '—'}',
+                  ),
+                ),
+              Chip(
+                key: const Key('sets_armor_grand_total'),
+                label: Text('Total ${totals.grandTotal}'),
+              ),
+            ],
+          ),
+          if (totals.piecesWithStats == 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'No pinned armor rolls yet — pin owned instances for base stats.',
+                key: const Key('sets_armor_stats_empty_hint'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlotRow(
+    SetDetail detail,
+    String slot,
+    SetItemRowPresentation? row,
+  ) {
     final items = detail.activeItems
         .where(
-          (i) =>
-              i.slot == slot ||
-              i.slot.startsWith('$slot:'),
+          (i) => i.slot == slot || i.slot.startsWith('$slot:'),
         )
         .toList();
     final filled = items.isNotEmpty;
@@ -390,7 +532,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
 
     return Container(
       key: Key('sets_slot_row_$slot'),
-      margin: const EdgeInsets.only(bottom: 4),
+      margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         border: Border(
@@ -400,44 +542,151 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           ),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              setSlotDisplayLabel(slot),
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 100,
+                child: Text(
+                  setSlotDisplayLabel(slot),
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
+              Expanded(
+                child: filled
+                    ? _buildFilledBody(slot, item!, row)
+                    : Text(
+                        'Empty',
+                        key: Key('sets_slot_empty_$slot'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).hintColor,
+                            ),
+                      ),
+              ),
+              TextButton(
+                key: Key('sets_slot_fill_$slot'),
+                onPressed: () => _fillSlot(slot),
+                child: Text(filled ? 'Replace' : 'Fill'),
+              ),
+              if (filled)
+                TextButton(
+                  key: Key('sets_slot_clear_$slot'),
+                  onPressed: () => _clearSlot(slot),
+                  child: const Text('Clear'),
+                ),
+            ],
           ),
-          Expanded(
-            child: filled
-                ? Text(
-                    '${item!.itemName} (${item.itemHash})'
-                    '${item.instanceId != null ? ' · inst ${item.instanceId}' : ' · wishlist'}',
-                    key: Key('sets_slot_filled_$slot'),
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : Text(
-                    'Empty',
-                    key: Key('sets_slot_empty_$slot'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).hintColor,
-                        ),
-                  ),
-          ),
-          TextButton(
-            key: Key('sets_slot_fill_$slot'),
-            onPressed: () => _fillSlot(slot),
-            child: Text(filled ? 'Replace' : 'Fill'),
-          ),
-          if (filled)
-            TextButton(
-              key: Key('sets_slot_clear_$slot'),
-              onPressed: () => _clearSlot(slot),
-              child: const Text('Clear'),
-            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFilledBody(
+    String slot,
+    SetItemRecord item,
+    SetItemRowPresentation? row,
+  ) {
+    final name = row?.itemName ?? item.itemName;
+    final hash = row?.itemHash ?? item.itemHash;
+    final hasInstance =
+        (row?.instanceId ?? item.instanceId) != null &&
+        (row?.instanceId ?? item.instanceId)!.isNotEmpty;
+    final meta = row?.metaChips ??
+        buildSetItemMetaChips(hasInstance: hasInstance);
+    final traits = row?.traitPerks ?? const [];
+    final synergies = row?.linkedSynergies ?? const [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      key: Key('sets_slot_filled_$slot'),
+      children: [
+        Text(
+          '$name ($hash)',
+          key: Key('sets_slot_name_$slot'),
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 4,
+          runSpacing: 2,
+          children: [
+            for (final m in meta)
+              Chip(
+                visualDensity: VisualDensity.compact,
+                label: Text(m, style: const TextStyle(fontSize: 11)),
+                key: m == 'Instance' || m == 'Wishlist'
+                    ? Key('sets_slot_pin_kind_$slot')
+                    : null,
+              ),
+          ],
+        ),
+        if (traits.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 4,
+            runSpacing: 2,
+            children: [
+              for (final t in traits)
+                Chip(
+                  key: Key('sets_slot_trait_${slot}_${t.hash}'),
+                  visualDensity: VisualDensity.compact,
+                  label: Text(
+                    t.name,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ),
+            ],
+          ),
+        ],
+        if (synergies.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'LINKED SYNERGIES',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          Wrap(
+            spacing: 4,
+            children: [
+              for (final s in synergies)
+                Chip(
+                  key: Key('sets_slot_synergy_${slot}_${s.id}'),
+                  visualDensity: VisualDensity.compact,
+                  label: Text(s.label, style: const TextStyle(fontSize: 11)),
+                ),
+            ],
+          ),
+        ],
+        if (row?.armorStats != null) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 4,
+            children: [
+              for (final key in armorBaseStatKeys)
+                if (row!.armorStats!.stats[key] != null)
+                  Text(
+                    '$key ${row.armorStats!.stats[key]}',
+                    key: Key('sets_slot_stat_${slot}_$key'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+            ],
+          ),
+        ] else if (row?.statsUnknown == true) ...[
+          const SizedBox(height: 4),
+          Text(
+            hasInstance
+                ? 'No armor stats on this copy — re-sync inventory.'
+                : 'Wishlist — no instance rolls.',
+            key: Key('sets_slot_stats_unknown_$slot'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).hintColor,
+                ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -16,11 +16,15 @@ class SetSlotPickResult {
     required this.itemHash,
     required this.itemName,
     this.instanceId,
+    this.selectedPerks = const [],
   });
 
   final int itemHash;
   final String itemName;
   final String? instanceId;
+
+  /// Trait / roll perk hashes to persist (BR-ROLL-001 / GAP-UI-SETS-10).
+  final List<int> selectedPerks;
 }
 
 /// In-process Sets library for the web host.
@@ -145,6 +149,7 @@ class SetsController extends ChangeNotifier {
           itemHash: pick.itemHash,
           itemName: pick.itemName,
           instanceId: pick.instanceId,
+          selectedPerks: pick.selectedPerks,
           replaceExisting: true,
         ),
       );
@@ -164,5 +169,26 @@ class SetsController extends ChangeNotifier {
       notifyListeners();
       return e.toString();
     }
+  }
+
+  bool _slotMatches(String itemSlot, String boardSlot) {
+    if (itemSlot == boardSlot) return true;
+    if (itemSlot.startsWith('$boardSlot:')) return true;
+    return false;
+  }
+
+  /// Active item occupying [slot] (first match), if any.
+  SetItemRecord? occupantForSlot(String slot) {
+    final sel = _selected;
+    if (sel == null) return null;
+    for (final i in sel.activeItems) {
+      if (_slotMatches(i.slot, slot) || i.slot == slot) return i;
+    }
+    return null;
+  }
+
+  /// Whether filling [slot] requires BR-SLOT-006 replace confirm.
+  bool needsReplaceConfirm(String slot) {
+    return slotNeedsReplaceConfirm(slotOccupied: occupantForSlot(slot) != null);
   }
 }

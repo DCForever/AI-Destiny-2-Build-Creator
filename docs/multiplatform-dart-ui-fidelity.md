@@ -75,7 +75,7 @@ Cutover destination presence remains valid. Fidelity status below is what agents
 | ------- | ----------- | --------------- | ------ |
 | **FEAT-NAV-CATALOG** | PASS | **PARTIAL** | DART-062/063 closed multi-facet/group-by/Universal/synergy tags/owned detail; icons/dense meta residual (GAP-UI-CATALOG-09 → DART-068). |
 | **FEAT-NAV-BUILD** | PASS | **PARTIAL** | Compose spine cutover-PASS; fidelity misses DBR-ID-008 identity confirm/fork and full Subclass kit composer (GAP-UI-BUILD-01/02). |
-| **FEAT-NAV-SETS** | PASS | **PARTIAL** | Library/slots functional skeleton; DAC-NME-004/BR-SET-010/011 armor board + dense item rows + embedded Catalog fill missing (GAP-UI-SETS-01..03). |
+| **FEAT-NAV-SETS** | PASS | **PARTIAL** | Armor board + dense rows + catalog fill **done** (DART-065); library search/tags/readiness/delete residual (GAP-UI-SETS-04..06 → DART-066). |
 | **FEAT-NAV-SYNERGY** | PASS | **PARTIAL** | Windows dual-pane; catalog BR-SYN-004 reverse tags **done** (DART-063); free-text evidence + Jaspr create+list residual (GAP-UI-SYN-01,02,04 → DART-066). |
 | **FEAT-COMPOSE-IDENTITY** | PASS | **PARTIAL** | Identity fields editable in-place without Confirm/Fork (DBR-ID-008 miss ΓåÆ GAP-UI-BUILD-01); raw hash exotic/super pickers (GAP-UI-BUILD-05). |
 | **FEAT-COMPOSE-FINISH** | PASS | **PARTIAL** | finish-gaps panel + equip gates shipped (GAP-FEAT-06 panel closed); full FinishBuildWalkthrough one-tap create/fill residual GAP-UI-BUILD-03; Finish armor improve not on Build path GAP-UI-BUILD-04. |
@@ -182,14 +182,14 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | **GAP-UI-BUILD-06** | P2 | build | Variant loadout read-only overview missing icon density | polish_only | windows, jaspr | DART-068 | DBR-BLD-001, DBR-CMPL-001 | build-library-selected |
 | **GAP-UI-BUILD-08** | P2 | build | Client hard-constraint UI prevention thinner than Next compose | rule_miss | windows, jaspr | DART-064 **done** | DAC-DST-009, BR-UI-001, DBR-GUID-003, DBR-CMP-007 | build-edit-subclass, build-edit-weapon-create, build-edit-armor-create |
 | **GAP-UI-BUILD-09** | P2 | build | Jaspr compose attach/pin UX is id-text placeholders vs library pickers | data_present_ui_missing | jaspr | DART-064 **done** | DBR-CMP-001, DBR-ROLL-004 | build-edit-armor-reuse, build-edit-weapon-reuse |
-| **GAP-UI-SETS-01** | P1 | sets | Armor set base-roll EoF six-stat board and totals missing | data_missing | windows, jaspr | DART-065 | BR-SET-010, BR-SET-011, DAC-NME-004, DBR-STAT-008 | sets-detail |
-| **GAP-UI-SETS-02** | P1 | sets | Set item rows lack identity meta, traits, synergies, and icons | data_missing | windows, jaspr | DART-065 | BR-SET-010, DAC-NME-004, BR-ROLL-001 | sets-detail |
-| **GAP-UI-SETS-03** | P1 | sets | Slot-fill density far below Next embedded Catalog (Jaspr hash-only) | data_present_ui_missing | windows, jaspr | DART-065 | DBR-CMP-001, BR-SLOT-001, BR-SLOT-002, BR-SLOT-006 | sets-fill-slot |
+| **GAP-UI-SETS-01** | P1 | sets | Armor set base-roll EoF six-stat board and totals missing | data_missing | windows, jaspr | **DART-065 done** | BR-SET-010, BR-SET-011, DAC-NME-004, DBR-STAT-008 | sets-detail |
+| **GAP-UI-SETS-02** | P1 | sets | Set item rows lack identity meta, traits, synergies, and icons | data_missing | windows, jaspr | **DART-065 done** | BR-SET-010, DAC-NME-004, BR-ROLL-001 | sets-detail |
+| **GAP-UI-SETS-03** | P1 | sets | Slot-fill density far below Next embedded Catalog (Jaspr hash-only) | data_present_ui_missing | windows, jaspr | **DART-065 done** | DBR-CMP-001, BR-SLOT-001, BR-SLOT-002, BR-SLOT-006 | sets-fill-slot |
 | **GAP-UI-SETS-04** | P2 | sets | Library missing search and multi-tag AND type filters | rule_miss | windows, jaspr | DART-066 | BR-TAG-007, BR-SET-001 | sets-library |
 | **GAP-UI-SETS-05** | P2 | sets | Detail missing readiness strip, Fill next, and Used-by builds | data_present_ui_missing | windows, jaspr | DART-066 | DBR-CMP-001, BR-SET-001 | sets-detail, sets-library |
 | **GAP-UI-SETS-06** | P2 | sets | Delete set action and SET_IN_USE messaging absent | data_present_ui_missing | windows, jaspr | DART-066 | BR-DEL-001, BR-SET-001 | sets-detail |
-| **GAP-UI-SETS-07** | P2 | sets | Occupied-slot replace has no confirmation | rule_miss | windows, jaspr | DART-065 | BR-SLOT-006 | sets-fill-slot, sets-detail |
-| **GAP-UI-SETS-10** | P2 | sets | Weapon set fill does not capture or show full roll data | data_present_ui_missing | windows, jaspr | DART-065 | BR-ROLL-001, BR-SET-010 | sets-detail, sets-fill-slot |
+| **GAP-UI-SETS-07** | P2 | sets | Occupied-slot replace has no confirmation | rule_miss | windows, jaspr | **DART-065 done** | BR-SLOT-006 | sets-fill-slot, sets-detail |
+| **GAP-UI-SETS-10** | P2 | sets | Weapon set fill does not capture or show full roll data | data_present_ui_missing | windows, jaspr | **DART-065 done** | BR-ROLL-001, BR-SET-010 | sets-detail, sets-fill-slot |
 | **GAP-UI-SYN-01** | P1 | synergy | Evidence links lack catalog search picker (free-text + raw hash) | data_present_ui_missing | windows, jaspr | DART-066 | BR-SYN-002, BR-SYN-005, BR-SYN-011, DBR-SYN-001, DBR-SYN-014 | synergy-create, synergy-detail |
 | **GAP-UI-SYN-02** | P1 | synergy | BR-SYN-012 weapon-perk source labels missing on link search | rule_miss | windows, jaspr | DART-066 | BR-SYN-012, DBR-SYN-014 | synergy-create |
 | **GAP-UI-SYN-03** | P1 | synergy | Catalog/inventory reverse tags for linked library synergies (BR-SYN-004) | rule_miss | windows, jaspr | DART-063 | BR-SYN-004, BR-SYN-008 | catalog-weapon-detail, catalog-armor-detail |
@@ -382,31 +382,31 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 
 ### Sets
 
-#### GAP-UI-SETS-01 ΓÇö Armor set base-roll EoF six-stat board (P1)
+#### GAP-UI-SETS-01 — Armor set base-roll EoF six-stat board (P1) — **closed (DART-065)**
 
 | Field | Value |
 | ----- | ----- |
 | Kind | rule |
 | Next | SetsDetail armor subgrid Totals + per-piece ArmorPieceStatRow from armor_stats plugs (mods/MW/tuning excluded) |
-| Dart | SetDetail has set/items/usedBy onlyΓÇöno armorStatTotals; no packages/* base-roll helper |
+| Dart | `sumArmorSetStats` + host armor boards from inventory `statValues` / `buildArmorBaseStatBoard`; wishlist unknown |
 | Exit | Pinned armor pieces show Health/Melee/Grenade/Super/Class/Weapons + totals (base roll only); unpinned show stats unknown |
 
-#### GAP-UI-SETS-02 ΓÇö Set item rows lack meta/traits/synergies/icons (P1)
+#### GAP-UI-SETS-02 — Set item rows lack meta/traits/synergies/icons (P1) — **closed (DART-065)**
 
 | Field | Value |
 | ----- | ----- |
 | Kind | information |
 | Next | Atlas sets-detail cards: icons, Exotic/Instance badges, selected+available traits, LINKED SYNERGIES |
-| Dart | Windows/Jaspr name(hash)┬╖inst\|wishlist text only; selectedPerks never resolved; no linkedSynergies |
+| Dart | Dense meta chips, trait perks, Instance\|Wishlist, linked synergies; icon URL residual → DART-068 |
 | Exit | Filled slots show icon + element/type/frame/tier/origin when known; trait perks + available traits; linked synergies; Instance vs Wishlist |
 
-#### GAP-UI-SETS-03 ΓÇö Slot-fill density below embedded Catalog (P1)
+#### GAP-UI-SETS-03 — Slot-fill density below embedded Catalog (P1) — **closed (DART-065)**
 
 | Field | Value |
 | ----- | ----- |
 | Kind | action |
 | Next | SlotFillPanel full Catalog grid icons + facets + Owned/Manifest + exotic-set banner + confirm replace |
-| Dart | Windows SetCatalogPicker text ListTiles + All\|Owned + free-text; Jaspr hash-only form |
+| Dart | Windows denser picker meta + traits; Jaspr named search fill (not hash-only primary) |
 | Exit | Both shells: slot-constrained catalog pick with icons + free-text at minimum; Owned vs all; instance pin or wishlist; Jaspr retires hash-only primary path |
 
 #### GAP-UI-SETS-04 ΓÇö Library missing search and multi-tag AND filters (P2)
@@ -436,22 +436,22 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | Dart | deleteUserSet + SetInUseException exist; hosts expose no Delete control |
 | Exit | Delete unused sets; attached sets blocked with plain-language SET_IN_USE on both shells |
 
-#### GAP-UI-SETS-07 ΓÇö Occupied-slot replace confirmation (P2)
+#### GAP-UI-SETS-07 — Occupied-slot replace confirmation (P2) — **closed (DART-065)**
 
 | Field | Value |
 | ----- | ----- |
 | Kind | rule |
 | Next | SlotFillPanel Confirm replace naming current item |
-| Dart | fillSlot replaceExisting:true with no dialog on Windows or Jaspr |
+| Dart | Windows dialog + Jaspr two-step confirm naming current item (BR-SLOT-006) |
 | Exit | Replacing occupied non-mod multi-slot requires explicit confirm naming current item; cancel leaves slot unchanged |
 
-#### GAP-UI-SETS-10 ΓÇö Weapon set fill full roll data (P2)
+#### GAP-UI-SETS-10 — Weapon set fill full roll data (P2) — **closed (DART-065)**
 
 | Field | Value |
 | ----- | ----- |
 | Kind | rule |
 | Next | Weapon cards selectedTraitPerks + availableTraitPerks; set items store selectedPerks from pick |
-| Dart | SetSlotPickResult only hash/name/instanceId; selectedPerks defaults []; no trait UI |
+| Dart | `selectedPerksFromInstance` + UpsertSetItemCommand.selectedPerks; trait chips on detail |
 | Exit | Pinning owned weapon persists selected perk hashes from sockets; detail shows trait names (not barrels/mags/stocks) |
 
 ### Synergy

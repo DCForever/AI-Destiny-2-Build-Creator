@@ -331,6 +331,7 @@ class _AppState extends State<App> {
                 title: 'Sets',
                 builder: (context, state) => SetsPage(
                   controller: compose?.sets,
+                  bridge: _ownedBridge,
                 ),
               ),
               Route(

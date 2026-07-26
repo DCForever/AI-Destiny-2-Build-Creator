@@ -20,6 +20,7 @@ export 'src/identity_change.dart';
 export 'src/mappers.dart';
 export 'src/optimizer_isolate.dart';
 export 'src/optimizer_use_cases.dart';
+export 'src/set_board_presentation.dart';
 export 'src/set_use_cases.dart';
 export 'src/synergy_use_cases.dart';
 export 'src/variant_use_cases.dart';

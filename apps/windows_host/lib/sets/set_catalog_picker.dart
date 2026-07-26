@@ -1,3 +1,4 @@
+import 'package:destiny2_app/destiny2_app.dart' show selectedPerksFromInstance;
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
@@ -126,11 +127,23 @@ class _SetCatalogPickerState extends State<SetCatalogPicker> {
   void _confirm({String? instanceId}) {
     final item = _selected;
     if (item == null) return;
+    List<int> perks = const [];
+    if (instanceId != null) {
+      CatalogInstanceProjection? match;
+      for (final inst in _instances) {
+        if (inst.instanceId == instanceId) {
+          match = inst;
+          break;
+        }
+      }
+      perks = selectedPerksFromInstance(match);
+    }
     Navigator.of(context).pop(
       SetSlotPickResult(
         itemHash: item.hash,
         itemName: item.name,
         instanceId: instanceId,
+        selectedPerks: perks,
       ),
     );
   }
@@ -252,20 +265,26 @@ class _SetCatalogPickerState extends State<SetCatalogPicker> {
             itemBuilder: (context, index) {
               final item = _results[index];
               final selected = _selected?.hash == item.hash;
+              final meta = [
+                if (item.isExotic) 'Exotic',
+                if (item.element != null) item.element!,
+                if (item.slot != null) item.slot!,
+                if (item.itemTypeName != null) item.itemTypeName!,
+                if (item.frame != null) item.frame!,
+                if (item.owned) 'owned×${item.ownedCount}',
+              ].join(' · ');
               return ListTile(
                 key: Key('set_picker_item_${item.hash}'),
                 selected: selected,
+                leading: item.isExotic
+                    ? const Icon(Icons.star, size: 18)
+                    : const Icon(Icons.inventory_2_outlined, size: 18),
                 title: Text(item.name),
                 subtitle: Text(
-                  [
-                    if (item.slot != null) item.slot!,
-                    if (item.itemTypeName != null) item.itemTypeName!,
-                    if (item.owned) 'owned×${item.ownedCount}',
-                  ].join(' · '),
+                  meta.isEmpty ? '#${item.hash}' : meta,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                trailing: item.isExotic
-                    ? const Icon(Icons.star, size: 16)
-                    : null,
                 onTap: () => _selectItem(item),
               );
             },
@@ -317,12 +336,21 @@ class _SetCatalogPickerState extends State<SetCatalogPicker> {
             itemCount: _instances.length,
             itemBuilder: (context, index) {
               final inst = _instances[index];
+              final traits = inst.plugCards
+                  .where((c) => c.isTrait)
+                  .map((c) => c.displayName)
+                  .take(3)
+                  .join(', ');
               return ListTile(
                 key: Key('set_picker_instance_${inst.instanceId}'),
                 title: Text('Power ${inst.power}'),
                 subtitle: Text(
-                  '${inst.location} · ${inst.instanceId}',
-                  maxLines: 1,
+                  [
+                    inst.location,
+                    if (traits.isNotEmpty) traits,
+                    inst.instanceId,
+                  ].join(' · '),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 onTap: () => _confirm(instanceId: inst.instanceId),
