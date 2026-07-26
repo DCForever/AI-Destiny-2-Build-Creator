@@ -74,7 +74,8 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
       key: const Key('inventory_sync_card'),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: SingleChildScrollView(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -201,7 +202,79 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 icon: const Icon(Icons.cloud_download_outlined),
                 label: const Text('Sync now'),
               ),
+              // Soft post-sync better-kit banner (DART-067 / BR-OPT-004).
+              // Confirm applies; Dismiss clears only — never auto-apply.
+              if (c.loadingPostSyncSuggestions) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Checking for better armor kits…',
+                  key: Key('inventory_post_sync_suggestions_loading'),
+                ),
+              ],
+              if (c.postSyncSuggestions.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Card(
+                  key: const Key('inventory_post_sync_better_kits_banner'),
+                  color: Theme.of(context).colorScheme.secondaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Better armor kits found',
+                          key: const Key('inventory_post_sync_banner_title'),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Suggest-then-confirm only — nothing applied yet. Soft never auto-applies.',
+                          key: const Key('inventory_post_sync_banner_policy'),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        for (final s in c.postSyncSuggestions) ...[
+                          Text(
+                            s.armorSetName,
+                            key: Key(
+                              'inventory_post_sync_suggestion_${s.armorSetId}',
+                            ),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              FilledButton(
+                                key: Key(
+                                  'inventory_post_sync_confirm_${s.armorSetId}',
+                                ),
+                                onPressed: () async {
+                                  await c.confirmPostSyncSuggestion(
+                                    s.armorSetId,
+                                  );
+                                },
+                                child: const Text('Confirm'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                key: Key(
+                                  'inventory_post_sync_dismiss_${s.armorSetId}',
+                                ),
+                                onPressed: () =>
+                                    c.dismissPostSyncSuggestion(s.armorSetId),
+                                child: const Text('Dismiss'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
           ],
+        ),
         ),
       ),
     );

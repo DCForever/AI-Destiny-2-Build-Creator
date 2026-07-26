@@ -11,6 +11,10 @@ import '../dim_export/dim_export_panel.dart';
 import '../equip/equip_controller.dart';
 import '../equip/equip_panel.dart';
 import '../host_bootstrap.dart';
+import '../optimizer/optimizer_controller.dart';
+import '../optimizer/optimizer_workspace.dart';
+import '../sets/set_catalog_picker.dart';
+import '../sets/sets_library_controller.dart';
 import 'builds_library_controller.dart';
 import 'finish_gaps_format.dart';
 import 'soft_guidance_format.dart';
@@ -1493,6 +1497,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
 
   Widget _buildFinishGaps(BuildContext context) {
     final gaps = _controller.finishGaps;
+    final activeGap = _controller.finishActiveGap;
+    final step = _controller.finishStep;
     return Column(
       key: const Key('builds_finish_gaps_panel'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1505,6 +1511,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         Text(
           kFinishGapsPolicyCaption,
           key: const Key('finish_gaps_policy'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          kFinishWalkthroughCaption,
+          key: const Key('finish_walkthrough_caption'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
@@ -1523,6 +1535,34 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                       : Theme.of(context).colorScheme.error,
                 ),
           ),
+          if (_controller.finishMessage != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              _controller.finishMessage!,
+              key: const Key('finish_walkthrough_message'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          const SizedBox(height: 8),
+          Wrap(
+            key: const Key('finish_category_chips'),
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final gap in gaps.gaps)
+                ActionChip(
+                  key: Key('finish_category_chip_${gap.category.wireName}'),
+                  label: Text(
+                    '${finishCategoryLabel(gap.category)}'
+                    '${gap.status == FinishGapStatus.satisfied ? ' ✓' : ''}'
+                    '${_controller.finishSkipped.contains(gap.category.wireName) ? ' · skip' : ''}',
+                  ),
+                  onPressed: _controller.finishBusy
+                      ? null
+                      : () => _controller.openFinishCategory(gap.category),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           Column(
             key: const Key('finish_gaps_list'),
@@ -1538,9 +1578,169 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 ),
             ],
           ),
+          if (!gaps.complete &&
+              (step == FinishWalkthroughStep.overview ||
+                  step == FinishWalkthroughStep.category) &&
+              activeGap != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              finishCategoryLabel(activeGap.category),
+              key: const Key('finish_active_category_title'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            if (activeGap.canCapture)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: OutlinedButton(
+                  key: Key(
+                    'finish_capture_${activeGap.category.wireName}',
+                  ),
+                  onPressed: _controller.finishBusy
+                      ? null
+                      : () => _controller.captureCategory(activeGap.category),
+                  child: Text(
+                    'Capture ${finishCategoryLabel(activeGap.category)}',
+                  ),
+                ),
+              ),
+            if (showFinishCreateActions(activeGap.status))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: FilledButton(
+                  key: Key(
+                    'finish_create_${activeGap.category.wireName}',
+                  ),
+                  onPressed: _controller.finishBusy
+                      ? null
+                      : () =>
+                          _controller.oneTapCreateCategory(activeGap.category),
+                  child: Text(
+                    _controller.finishBusy
+                        ? 'Creating…'
+                        : 'Create ${finishCategoryLabel(activeGap.category)} set & fill',
+                  ),
+                ),
+              ),
+            if (activeGap.status == FinishGapStatus.needsFill &&
+                activeGap.coveringSetId != null &&
+                activeGap.coveringMode == AttachmentMode.live) ...[
+              if (activeGap.category == FinishCategory.armor)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: FilledButton.tonal(
+                    key: const Key('finish_armor_improve'),
+                    onPressed: _controller.finishBusy
+                        ? null
+                        : _controller.openFinishArmorOptimize,
+                    child: const Text('Improve armor (Find kits)'),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: OutlinedButton(
+                  key: const Key('finish_fill_first_empty'),
+                  onPressed: _controller.finishBusy ||
+                          activeGap.emptySlots.isEmpty
+                      ? null
+                      : () async {
+                          _controller.openFinishFillFirstEmpty();
+                          await _runFinishFillDialog();
+                        },
+                  child: Text(
+                    activeGap.emptySlots.isEmpty
+                        ? 'No empty slots'
+                        : 'Fill ${activeGap.emptySlots.first}',
+                  ),
+                ),
+              ),
+            ],
+            if (activeGap.status == FinishGapStatus.needsFill &&
+                activeGap.coveringMode == AttachmentMode.snapshot)
+              Text(
+                'Covering Set is snapshot-only. Create a live Set from Finish '
+                'to fill slots.',
+                key: const Key('finish_snapshot_fill_blocked'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+              ),
+            Row(
+              children: [
+                TextButton(
+                  key: Key('finish_skip_${activeGap.category.wireName}'),
+                  onPressed: () =>
+                      _controller.skipFinishCategory(activeGap.category),
+                  child: const Text('Skip for now'),
+                ),
+                TextButton(
+                  key: const Key('finish_back_overview'),
+                  onPressed: _controller.backToFinishOverview,
+                  child: const Text('Back'),
+                ),
+              ],
+            ),
+          ],
+          if (step == FinishWalkthroughStep.armorOptimize &&
+              activeGap?.coveringSetId != null &&
+              activeGap!.category == FinishCategory.armor) ...[
+            const SizedBox(height: 12),
+            _FinishArmorOptimizeEmbed(
+              key: const Key('finish_armor_optimize_workspace'),
+              services: widget.services,
+              setId: activeGap.coveringSetId!,
+              setName: activeGap.coveringSetName ?? activeGap.coveringSetId!,
+              onApplied: () async {
+                await _controller.afterFinishArmorApplied();
+              },
+              onManualFill: () async {
+                _controller.openFinishFillFirstEmpty();
+                await _runFinishFillDialog();
+              },
+              onBack: () {
+                _controller.openFinishCategory(FinishCategory.armor);
+              },
+            ),
+          ],
+          if (step == FinishWalkthroughStep.fill &&
+              activeGap?.coveringSetId != null &&
+              _controller.finishFillSlot != null) ...[
+            const SizedBox(height: 8),
+            OutlinedButton(
+              key: const Key('finish_fill_dialog_reopen'),
+              onPressed: _runFinishFillDialog,
+              child: Text('Pick item for ${_controller.finishFillSlot}'),
+            ),
+          ],
         ],
       ],
     );
+  }
+
+  Future<void> _runFinishFillDialog() async {
+    final gap = _controller.finishActiveGap;
+    if (gap == null || gap.coveringSetId == null) return;
+    final slot = _controller.finishFillSlot ?? firstEmptyRequiredSlot(gap);
+    if (slot == null) return;
+    if (gap.coveringMode != AttachmentMode.live) return;
+
+    final pick = await showSetCatalogPicker(
+      context: context,
+      services: widget.services,
+      targetSlot: slot,
+    );
+    if (pick == null || !mounted) return;
+    final err = await _controller.fillFinishSlot(
+      setId: gap.coveringSetId!,
+      slot: slot,
+      itemHash: pick.itemHash,
+      itemName: pick.itemName,
+      instanceId: pick.instanceId,
+      selectedPerks: pick.selectedPerks,
+    );
+    if (err != null && mounted) {
+      setState(() => _statusMessage = err);
+    }
   }
 
   Widget _buildSoftGuidance(BuildContext context) {
@@ -1804,6 +2004,107 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       _pinTargetKey = null;
       _pinInstanceController.clear();
     });
+  }
+}
+
+/// Embedded Armor improve workspace on Build Finish (DART-067 / GAP-UI-BUILD-04).
+///
+/// Confirm-only: Find kits never writes; apply requires OptimizerWorkspace confirm.
+class _FinishArmorOptimizeEmbed extends StatefulWidget {
+  const _FinishArmorOptimizeEmbed({
+    super.key,
+    required this.services,
+    required this.setId,
+    required this.setName,
+    required this.onApplied,
+    required this.onManualFill,
+    required this.onBack,
+  });
+
+  final AppServices services;
+  final String setId;
+  final String setName;
+  final Future<void> Function() onApplied;
+  final Future<void> Function() onManualFill;
+  final VoidCallback onBack;
+
+  @override
+  State<_FinishArmorOptimizeEmbed> createState() =>
+      _FinishArmorOptimizeEmbedState();
+}
+
+class _FinishArmorOptimizeEmbedState extends State<_FinishArmorOptimizeEmbed> {
+  late final OptimizerController _optimizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _optimizer = OptimizerController(
+      db: widget.services.db,
+      resolveUserId: () async {
+        final id = widget.services.inventorySync.localUserId;
+        if (id != null) return id;
+        await widget.services.inventorySync.refreshStatus();
+        return widget.services.inventorySync.localUserId ?? 0;
+      },
+    );
+    _optimizer.bindTargetSet(setId: widget.setId, setName: widget.setName);
+  }
+
+  @override
+  void didUpdateWidget(covariant _FinishArmorOptimizeEmbed oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.setId != widget.setId || oldWidget.setName != widget.setName) {
+      _optimizer.bindTargetSet(setId: widget.setId, setName: widget.setName);
+    }
+  }
+
+  @override
+  void dispose() {
+    _optimizer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Armor improve · ${widget.setName}',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Find kits never writes. Confirm apply-in-place only. Soft never auto-applies.',
+          key: const Key('finish_armor_improve_policy'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        OptimizerWorkspace(
+          key: const Key('finish_optimizer_workspace'),
+          controller: _optimizer,
+          onApplied: () {
+            widget.onApplied();
+          },
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            TextButton(
+              key: const Key('finish_armor_manual_fill'),
+              onPressed: () => widget.onManualFill(),
+              child: const Text('Manual fill'),
+            ),
+            TextButton(
+              key: const Key('finish_armor_optimize_back'),
+              onPressed: widget.onBack,
+              child: const Text('Back'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 

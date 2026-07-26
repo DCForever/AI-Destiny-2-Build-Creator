@@ -55,6 +55,8 @@ class _BuildComposePageState extends State<BuildComposePage> {
   bool _busy = false;
   String? _boundVariantKey;
   String? _boundIdentityKey;
+  String _finishFillHash = '';
+  String _finishFillName = '';
 
   void _onController() {
     if (mounted) {
@@ -871,6 +873,7 @@ class _BuildComposePageState extends State<BuildComposePage> {
 
   Component _buildFinishGapsSection(BuildsController c) {
     final gaps = c.finishGaps;
+    final active = c.finishActiveGap;
     return div(
       classes: 'compose-section',
       attributes: {
@@ -883,6 +886,11 @@ class _BuildComposePageState extends State<BuildComposePage> {
           classes: 'soft-advisory',
           attributes: {'data-testid': 'finish_gaps_policy'},
           [.text(kFinishGapsPolicyCaption)],
+        ),
+        p(
+          classes: 'soft-advisory',
+          attributes: {'data-testid': 'finish_walkthrough_caption'},
+          [.text(kFinishWalkthroughCaption)],
         ),
         if (gaps == null)
           p(
@@ -897,6 +905,11 @@ class _BuildComposePageState extends State<BuildComposePage> {
             },
             [.text(formatFinishGapsCompleteSummary(gaps))],
           ),
+          if (c.finishMessage != null)
+            p(
+              attributes: {'data-testid': 'finish_walkthrough_message'},
+              [.text(c.finishMessage!)],
+            ),
           ul(
             [
               for (final gap in gaps.gaps)
@@ -904,11 +917,143 @@ class _BuildComposePageState extends State<BuildComposePage> {
                   attributes: {
                     'data-testid': 'finish_gap_${gap.category.wireName}',
                   },
-                  [.text(formatFinishGapRowSummary(gap))],
+                  [
+                    .text(formatFinishGapRowSummary(gap)),
+                    button(
+                      attributes: {
+                        'data-testid':
+                            'finish_category_open_${gap.category.wireName}',
+                        'type': 'button',
+                      },
+                      events: {
+                        'click': (_) => c.openFinishCategory(gap.category),
+                      },
+                      [.text('Continue')],
+                    ),
+                  ],
                 ),
             ],
             attributes: {'data-testid': 'finish_gaps_list'},
           ),
+          if (!gaps.complete && active != null) ...[
+            p(
+              attributes: {'data-testid': 'finish_active_category_title'},
+              [.text(finishCategoryLabel(active.category))],
+            ),
+            if (active.canCapture)
+              button(
+                attributes: {
+                  'data-testid': 'finish_capture_${active.category.wireName}',
+                  'type': 'button',
+                  if (c.finishBusy) 'disabled': 'true',
+                },
+                events: {
+                  'click': (_) {
+                    if (!c.finishBusy) {
+                      c.captureCategory(active.category);
+                    }
+                  },
+                },
+                [.text('Capture ${finishCategoryLabel(active.category)}')],
+              ),
+            if (showFinishCreateActions(active.status))
+              button(
+                attributes: {
+                  'data-testid': 'finish_create_${active.category.wireName}',
+                  'type': 'button',
+                  if (c.finishBusy) 'disabled': 'true',
+                },
+                events: {
+                  'click': (_) {
+                    if (!c.finishBusy) {
+                      c.oneTapCreateCategory(active.category);
+                    }
+                  },
+                },
+                [
+                  .text(
+                    c.finishBusy
+                        ? 'Creating…'
+                        : 'Create ${finishCategoryLabel(active.category)} set & fill',
+                  ),
+                ],
+              ),
+            if (active.status == FinishGapStatus.needsFill &&
+                active.coveringSetId != null &&
+                active.coveringMode == AttachmentMode.live &&
+                active.emptySlots.isNotEmpty) ...[
+              p(
+                attributes: {'data-testid': 'finish_fill_first_empty_label'},
+                [.text('Fill ${active.emptySlots.first}')],
+              ),
+              input(
+                attributes: {
+                  'data-testid': 'finish_fill_item_hash',
+                  'type': 'text',
+                  'placeholder': 'item hash',
+                  'value': _finishFillHash,
+                },
+                events: {
+                  'input': (e) {
+                    _finishFillHash =
+                        (e.target as dynamic).value?.toString() ?? '';
+                  },
+                },
+              ),
+              input(
+                attributes: {
+                  'data-testid': 'finish_fill_item_name',
+                  'type': 'text',
+                  'placeholder': 'item name',
+                  'value': _finishFillName,
+                },
+                events: {
+                  'input': (e) {
+                    _finishFillName =
+                        (e.target as dynamic).value?.toString() ?? '';
+                  },
+                },
+              ),
+              button(
+                attributes: {
+                  'data-testid': 'finish_fill_first_empty',
+                  'type': 'button',
+                  if (c.finishBusy) 'disabled': 'true',
+                },
+                events: {
+                  'click': (_) {
+                    if (c.finishBusy) return;
+                    final slot = active.emptySlots.first;
+                    final hash = int.tryParse(_finishFillHash.trim());
+                    final name = _finishFillName.trim();
+                    if (hash == null || name.isEmpty) {
+                      setState(() {
+                        _status = 'Item hash and name required to fill';
+                      });
+                      return;
+                    }
+                    c.fillFinishSlot(
+                      setId: active.coveringSetId!,
+                      slot: slot,
+                      itemHash: hash,
+                      itemName: name,
+                    );
+                  },
+                },
+                [.text('Fill ${active.emptySlots.first}')],
+              ),
+            ],
+            button(
+              attributes: {
+                'data-testid': 'finish_skip_${active.category.wireName}',
+                'type': 'button',
+              },
+              events: {
+                'click': (_) => c.skipFinishCategory(active.category),
+              },
+              [.text('Skip for now')],
+            ),
+          ],
         ],
       ],
     );

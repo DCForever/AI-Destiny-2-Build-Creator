@@ -70,7 +70,7 @@ Last reviewed: 2026-07-25
 ### Settings
 | Status | Item | Notes |
 |--------|------|--------|
-| `open` | **Dart hosts: Manifest READY chips + Inventory ONLINE/Refresh chrome** | Pure presentation. Spec: **GAP-UI-SETTINGS-01/02** / **DART-068** (**BUG-20260725-003**). Post-sync kit banner is **not** polish — **GAP-UI-SETTINGS-04** / **DART-067** (confirm-only; never auto-apply) |
+| `open` | **Dart hosts: Manifest READY chips + Inventory ONLINE/Refresh chrome** | Pure presentation. Spec: **GAP-UI-SETTINGS-01/02** / **DART-068** (**BUG-20260725-003**). Post-sync kit banner closed in **DART-067** (confirm-only; never auto-apply) |
 
 ### Shell / global
 | Status | Item | Notes |

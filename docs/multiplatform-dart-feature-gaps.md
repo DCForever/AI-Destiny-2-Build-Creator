@@ -208,8 +208,8 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-CATALOG-10** | Weapons/Armor kind modes | **P2** | `closed` | Weapons \| Armor \| Universal modes | Mode chips + kind-appropriate facets both hosts | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-BUILD-01** | Identity confirm/fork (DBR-ID-008) | **P1** | `closed` (DART-064) | 409 IDENTITY_CONFIRM_REQUIRED Confirm/Fork | `identityAction` confirm/fork + host chrome | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-02** | Subclass kit composer host UI | **P1** | `closed` (DART-064) | SubclassTab full kit + capacity | Host kit composer + capacity plain language | **DART-064** | Not cutover; fidelity |
-| **GAP-UI-BUILD-03** | Finish slot-first one-tap walkthrough | **P2** | `open` | FinishBuildWalkthrough Create/Capture/fill | finish-gaps panel only (GAP-FEAT-06 residual) | **DART-067** | Not cutover; fidelity |
-| **GAP-UI-BUILD-04** | Finish Armor improve path | **P2** | `open` | FinishArmorOptimizeWorkspace confirm apply | Optimizer on Sets only; not Build Finish | **DART-067** | Soft never auto-apply |
+| **GAP-UI-BUILD-03** | Finish slot-first one-tap walkthrough | **P2** | `closed` (DART-067) | FinishBuildWalkthrough Create/Capture/fill | Windows+Jaspr Create/Capture/fill walkthrough | **DART-067** done | Not cutover; fidelity |
+| **GAP-UI-BUILD-04** | Finish Armor improve path | **P2** | `closed` (DART-067) | FinishArmorOptimizeWorkspace confirm apply | Windows Build Finish Find kits → confirm; web deferred GAP-FEAT-01 | **DART-067** done | Soft never auto-apply |
 | **GAP-UI-BUILD-05** | Manifest search exotic/super pickers | **P2** | `closed` (DART-064) | ManifestSearchPicker + icons | Named Manifest search pickers (hash secondary) | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-06** | Variant read-only icon overview | **P2** | `open` | VariantCard DETAILS icon strips | Text attachments/pins only | **DART-068** | Polish |
 | **GAP-UI-BUILD-08** | Client hard-block pre-save UX | **P2** | `closed` (DART-064) | hardBlocks + plain-language disabled | Client dual exotic/kit hard-block banners; soft never disables Save | **DART-064** | Not cutover; fidelity |
@@ -234,7 +234,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-LOADOUTS-03** | Details expand for Bungie slot | **P2** | `open` | expanded detail panel | No expansion state | **DART-068** | Density only |
 | **GAP-UI-SETTINGS-01** | Manifest READY + entity count chips | **P2** | `open` | READY/STALE badge + Chip counts | Cached/Remote/Status text only | **DART-068** | Windows chrome |
 | **GAP-UI-SETTINGS-02** | Inventory sync card presentation | **P2** | `open` | ONLINE chip + human last sync + Refresh | Sync now + raw ISO | **DART-068** | **BUG-20260725-003** |
-| **GAP-UI-SETTINGS-04** | Post-sync soft armor kit banner | **P2** | `open` | Confirm/Dismiss better-kit Callout | No afterSync banner | **DART-067** | Soft never auto-apply |
+| **GAP-UI-SETTINGS-04** | Post-sync soft armor kit banner | **P2** | `closed` (DART-067) | Confirm/Dismiss better-kit Callout | Windows afterSync Confirm/Dismiss only | **DART-067** done | Soft never auto-apply |
 | **GAP-UI-SHELL-01** | AppShell nav labels/order | **P2** | `open` | Loadouts, Build, Synergy, Sets, Catalog, Settings | Builds/Synergies labels; order diverge | **DART-068** | Not cutover; fidelity |
 
 ---

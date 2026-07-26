@@ -1188,4 +1188,341 @@ class BuildsLibraryController extends ChangeNotifier {
       for (final r in rows) DraftSynergyType(type: r.type, subType: r.subType),
     ];
   }
+
+  // ---------------------------------------------------------------------------
+  // DART-067: Finish walkthrough Create / Capture / fill (BR-BLD-008)
+  // ---------------------------------------------------------------------------
+
+  bool _finishBusy = false;
+  FinishWalkthroughStep _finishStep = FinishWalkthroughStep.overview;
+  FinishCategory? _finishActiveCategory;
+  String? _finishFillSlot;
+  final Set<String> _finishSkipped = {};
+  String? _finishMessage;
+
+  bool get finishBusy => _finishBusy;
+  FinishWalkthroughStep get finishStep => _finishStep;
+  FinishCategory? get finishActiveCategory => _finishActiveCategory;
+  String? get finishFillSlot => _finishFillSlot;
+  Set<String> get finishSkipped => Set.unmodifiable(_finishSkipped);
+  String? get finishMessage => _finishMessage;
+
+  FinishGap? get finishActiveGap {
+    final gaps = finishGaps;
+    if (gaps == null) return null;
+    if (_finishActiveCategory != null) {
+      for (final g in gaps.gaps) {
+        if (g.category == _finishActiveCategory) return g;
+      }
+    }
+    return gaps.nextActionable;
+  }
+
+  FinishPostMutationTarget? get finishPostMutationTarget {
+    final gap = finishActiveGap;
+    return resolvePostMutationStep(
+      ResolvePostMutationStepInput(gap: gap, preferArmorOptimize: true),
+    );
+  }
+
+  FinishGap? _gapFor(FinishCategory cat) {
+    final gaps = finishGaps;
+    if (gaps == null) return null;
+    for (final g in gaps.gaps) {
+      if (g.category == cat) return g;
+    }
+    return null;
+  }
+
+  void openFinishCategory(FinishCategory cat) {
+    _finishActiveCategory = cat;
+    _finishMessage = null;
+    final target = resolvePostMutationStep(
+      ResolvePostMutationStepInput(
+        gap: _gapFor(cat),
+        preferArmorOptimize: true,
+      ),
+    );
+    _applyFinishTarget(target, fallbackCategory: cat);
+    notifyListeners();
+  }
+
+  void skipFinishCategory(FinishCategory cat) {
+    _finishSkipped.add(cat.wireName);
+    _finishMessage = '${finishCategoryLabel(cat)} skipped for now';
+    _finishStep = FinishWalkthroughStep.overview;
+    _finishActiveCategory = null;
+    _finishFillSlot = null;
+    notifyListeners();
+  }
+
+  void backToFinishOverview() {
+    _finishStep = FinishWalkthroughStep.overview;
+    _finishActiveCategory = null;
+    _finishFillSlot = null;
+    notifyListeners();
+  }
+
+  void openFinishFillFirstEmpty() {
+    final gap = finishActiveGap;
+    if (gap == null || gap.coveringSetId == null) return;
+    if (gap.coveringMode != AttachmentMode.live) return;
+    final slot = firstEmptyRequiredSlot(gap);
+    if (slot == null) return;
+    _finishFillSlot = slot;
+    _finishStep = FinishWalkthroughStep.fill;
+    notifyListeners();
+  }
+
+  void openFinishArmorOptimize() {
+    final gap = finishActiveGap;
+    if (gap == null || gap.category != FinishCategory.armor) return;
+    if (gap.coveringSetId == null || gap.coveringMode != AttachmentMode.live) {
+      return;
+    }
+    _finishStep = FinishWalkthroughStep.armorOptimize;
+    _finishFillSlot = null;
+    notifyListeners();
+  }
+
+  void _applyFinishTarget(
+    FinishPostMutationTarget target, {
+    FinishCategory? fallbackCategory,
+  }) {
+    final gaps = finishGaps;
+    if (gaps != null && gaps.complete) {
+      _finishStep = FinishWalkthroughStep.done;
+      _finishActiveCategory = null;
+      _finishFillSlot = null;
+      return;
+    }
+    _finishFillSlot = target.fillSlot;
+    if (target.step == FinishWalkthroughStep.overview) {
+      _finishStep = FinishWalkthroughStep.overview;
+      _finishActiveCategory = null;
+      return;
+    }
+    _finishStep = target.step;
+    _finishActiveCategory = target.category ?? fallbackCategory;
+  }
+
+  Future<void> _refreshSelectedCompose() async {
+    final sel = _selected;
+    final uid = _userId;
+    final variantId = _selectedVariant?.id;
+    if (sel == null || uid == null || variantId == null) return;
+    final detail = await getBuildDetail(db, uid, sel.build.id);
+    _selected = detail;
+    if (detail != null) {
+      await _syncComposeAfterBuildLoad(detail, preferredVariantId: variantId);
+    }
+  }
+
+  /// One-tap Create empty set + live attach (no name/tag chrome).
+  Future<String?> oneTapCreateCategory(FinishCategory category) async {
+    final sel = _selected;
+    final variant = _selectedVariant;
+    final uid = _userId;
+    if (sel == null || variant == null || uid == null) {
+      return 'No variant selected';
+    }
+    if (_finishBusy) return 'Busy';
+    _finishBusy = true;
+    _finishMessage = null;
+    _error = null;
+    notifyListeners();
+    try {
+      final type = finishCategoryToSetType(category);
+      final result = await createSetAndAttach(
+        db,
+        uid,
+        CreateSetAndAttachCommand(
+          buildId: sel.build.id,
+          variantId: variant.id,
+          type: type,
+          attachNow: true,
+          optimizerConstraints: type == SetType.armor
+              ? serializeOptimizerConstraints(
+                  seedConstraintsFromBuild(
+                    exoticArmorHash: sel.build.exoticArmorHash,
+                    softStatTargets: {
+                      for (final e in sel.build.softStatTargets.entries)
+                        if (e.value is int) e.key: e.value as int,
+                    },
+                  ),
+                )
+              : null,
+        ),
+      );
+      await _refreshSelectedCompose();
+      _finishActiveCategory = category;
+      _finishMessage = 'Created ${result.set.set.name}';
+      final target = resolvePostMutationStep(
+        ResolvePostMutationStepInput(
+          gap: _gapFor(category),
+          preferArmorOptimize: true,
+        ),
+      );
+      _applyFinishTarget(target, fallbackCategory: category);
+      _finishBusy = false;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _finishBusy = false;
+      _error = e.message;
+      _finishMessage = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _finishBusy = false;
+      _error = e.toString();
+      _finishMessage = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// Capture resolved gear claims for [category] into a set + live attach.
+  Future<String?> captureCategory(FinishCategory category) async {
+    final sel = _selected;
+    final variant = _selectedVariant;
+    final uid = _userId;
+    if (sel == null || variant == null || uid == null) {
+      return 'No variant selected';
+    }
+    if (_finishBusy) return 'Busy';
+    _finishBusy = true;
+    _finishMessage = null;
+    notifyListeners();
+    try {
+      final claims = <CaptureClaim>[];
+      final slots = category == FinishCategory.armor
+          ? EquipmentSlot.armorSlots
+          : category == FinishCategory.weapon
+              ? EquipmentSlot.weaponSlots
+              : const <EquipmentSlot>[];
+      final slotSet = {for (final s in slots) s.wireName};
+      for (final pin in _slotPins) {
+        if (!slotSet.contains(pin.slot)) continue;
+        claims.add(
+          CaptureClaim(
+            slot: pin.slot,
+            itemHash: pin.itemHash,
+            itemName: pin.itemName,
+            instanceId: pin.instanceId,
+          ),
+        );
+      }
+      final result = await createSetsFromBuild(
+        db,
+        uid,
+        CreateSetsFromBuildCommand(
+          buildId: sel.build.id,
+          variantId: variant.id,
+          categories: [category],
+          claimsByCategory: {category: claims},
+          attachNow: true,
+        ),
+      );
+      await _refreshSelectedCompose();
+      final names = result.createdSets.map((s) => s.name).join(', ');
+      _finishMessage = names.isEmpty ? 'Capture finished' : 'Captured $names';
+      _finishActiveCategory = category;
+      final target = resolvePostMutationStep(
+        ResolvePostMutationStepInput(
+          gap: _gapFor(category),
+          preferArmorOptimize: true,
+        ),
+      );
+      _applyFinishTarget(target, fallbackCategory: category);
+      _finishBusy = false;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _finishBusy = false;
+      _error = e.message;
+      _finishMessage = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _finishBusy = false;
+      _error = e.toString();
+      _finishMessage = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// Fill one required slot on the live covering set (catalog pick).
+  Future<String?> fillFinishSlot({
+    required String setId,
+    required String slot,
+    required int itemHash,
+    required String itemName,
+    String? instanceId,
+    List<int> selectedPerks = const [],
+  }) async {
+    final uid = _userId;
+    if (uid == null) return 'No user';
+    if (_finishBusy) return 'Busy';
+    _finishBusy = true;
+    _finishMessage = null;
+    notifyListeners();
+    try {
+      final updated = await upsertUserSetItem(
+        db,
+        uid,
+        setId,
+        UpsertSetItemCommand(
+          slot: slot,
+          itemHash: itemHash,
+          itemName: itemName,
+          instanceId: instanceId,
+          selectedPerks: selectedPerks,
+          replaceExisting: true,
+        ),
+      );
+      if (updated == null) {
+        _finishBusy = false;
+        return 'Set not found';
+      }
+      await _refreshSelectedCompose();
+      _finishMessage = 'Filled $slot';
+      final cat = _finishActiveCategory;
+      final target = resolvePostMutationStep(
+        ResolvePostMutationStepInput(
+          gap: cat == null ? null : _gapFor(cat),
+          preferArmorOptimize: true,
+        ),
+      );
+      _applyFinishTarget(target, fallbackCategory: cat);
+      _finishBusy = false;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _finishBusy = false;
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _finishBusy = false;
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// After armor kit apply from Finish optimizer — re-evaluate gaps.
+  Future<void> afterFinishArmorApplied() async {
+    await _refreshSelectedCompose();
+    _finishMessage = 'Armor kit applied';
+    final target = resolvePostMutationStep(
+      ResolvePostMutationStepInput(
+        gap: _gapFor(FinishCategory.armor),
+        preferArmorOptimize: true,
+      ),
+    );
+    _applyFinishTarget(target, fallbackCategory: FinishCategory.armor);
+    notifyListeners();
+  }
 }

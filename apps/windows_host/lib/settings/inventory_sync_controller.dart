@@ -1,8 +1,11 @@
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:flutter/foundation.dart';
 
 import '../auth/windows_oauth_session.dart';
+import '../optimizer/optimizer_candidate_map.dart';
 
 /// High-level phase for Settings inventory sync UI (DART-025).
 enum InventorySyncPhase {
@@ -44,6 +47,8 @@ class InventorySyncController extends ChangeNotifier {
     this.weaponRollMetaLookup,
     this.weaponRollMetaLookupBuilder,
     this.weaponSocketContextBuilder,
+    this.listInventoryForSuggestions,
+    this.improvementSuggestionsRunner,
   })  : _db = db,
         _session = session,
         _profileClient = profileClient,
@@ -77,6 +82,17 @@ class InventorySyncController extends ChangeNotifier {
   /// Production builder: weapon socket context for perk-grid plugs (DART-052).
   final WeaponSocketContextBuilder? weaponSocketContextBuilder;
 
+  /// Optional inventory loader for post-sync suggestions (tests inject).
+  final Future<List<InventoryItemRecord>> Function(int userId)?
+      listInventoryForSuggestions;
+
+  /// Optional suggestion runner (tests inject fixed list / no-op).
+  final Future<List<ImprovementSuggestion>> Function({
+    required AppDatabase db,
+    required int userId,
+    required List<CandidatePiece> candidates,
+  })? improvementSuggestionsRunner;
+
   InventorySyncPhase _phase = InventorySyncPhase.idle;
   int? _itemCount;
   int? _syncVersion;
@@ -84,6 +100,12 @@ class InventorySyncController extends ChangeNotifier {
   String? _errorMessage;
   int? _localUserId;
   InventoryParseDiagnostics? _lastDiagnostics;
+
+  /// Soft post-sync better-kit suggestions (DART-067 / BR-OPT-004).
+  /// Session-ephemeral — never auto-applied.
+  List<ImprovementSuggestion> _postSyncSuggestions = const [];
+  bool _loadingSuggestions = false;
+  String? _suggestionError;
 
   InventorySyncPhase get phase => _phase;
   int? get itemCount => _itemCount;
@@ -96,6 +118,12 @@ class InventorySyncController extends ChangeNotifier {
   ///
   /// Session-ephemeral — not reloaded by [refreshStatus] from Drift.
   InventoryParseDiagnostics? get lastDiagnostics => _lastDiagnostics;
+
+  /// Soft better-kit suggestions after sync (DART-067). Empty until sync success.
+  List<ImprovementSuggestion> get postSyncSuggestions =>
+      List.unmodifiable(_postSyncSuggestions);
+  bool get loadingPostSyncSuggestions => _loadingSuggestions;
+  String? get postSyncSuggestionError => _suggestionError;
 
   /// From last successful sync diagnostics (DART-050 / DART-053 UI).
   int? get lastResolvedFromTransfer =>
@@ -205,6 +233,10 @@ class InventorySyncController extends ChangeNotifier {
       _lastDiagnostics = result.diagnostics;
       _phase = InventorySyncPhase.idle;
       _errorMessage = null;
+      notifyListeners();
+      // Soft best-effort — never auto-applies kits (BR-OPT-004 / GAP-UI-SETTINGS-04).
+      await fetchPostSyncSuggestions();
+      return;
     } on SyncInProgressError catch (e) {
       _phase = InventorySyncPhase.error;
       _errorMessage = e.message;
@@ -213,6 +245,101 @@ class InventorySyncController extends ChangeNotifier {
       _errorMessage = _safeErrorMessage(e);
     }
     notifyListeners();
+  }
+
+  /// Soft after-sync scan. **Never mutates** sets — Confirm applies separately.
+  Future<void> fetchPostSyncSuggestions() async {
+    final userId = _localUserId;
+    if (userId == null) {
+      _postSyncSuggestions = const [];
+      notifyListeners();
+      return;
+    }
+    _loadingSuggestions = true;
+    _suggestionError = null;
+    notifyListeners();
+    try {
+      final runner = improvementSuggestionsRunner;
+      List<ImprovementSuggestion> suggestions;
+      if (runner != null) {
+        suggestions = await runner(
+          db: _db,
+          userId: userId,
+          candidates: const [],
+        );
+      } else {
+        final loader = listInventoryForSuggestions ??
+            ((uid) => listInventoryItems(_db, uid));
+        final items = await loader(userId);
+        final candidates = candidatesFromInventory(items: items);
+        suggestions = await buildImprovementSuggestions(
+          _db,
+          userId,
+          candidates: candidates,
+          afterSync: true,
+          hasInventory: items.isNotEmpty,
+        );
+      }
+      _postSyncSuggestions =
+          suggestions.where((s) => s.hasImprovement).toList();
+      _loadingSuggestions = false;
+      _suggestionError = null;
+    } catch (e) {
+      // Soft suggestions are best-effort; leave banner empty on failure.
+      _postSyncSuggestions = const [];
+      _loadingSuggestions = false;
+      _suggestionError = null;
+    }
+    notifyListeners();
+  }
+
+  /// Dismiss one suggestion without applying (local banner only).
+  void dismissPostSyncSuggestion(String armorSetId) {
+    _postSyncSuggestions = [
+      for (final s in _postSyncSuggestions)
+        if (s.armorSetId != armorSetId) s,
+    ];
+    notifyListeners();
+  }
+
+  /// Confirm apply-in-place for a soft suggestion. Explicit only — never auto.
+  Future<String?> confirmPostSyncSuggestion(String armorSetId) async {
+    final userId = _localUserId;
+    if (userId == null) return 'Not signed in';
+    ImprovementSuggestion? match;
+    for (final s in _postSyncSuggestions) {
+      if (s.armorSetId == armorSetId) {
+        match = s;
+        break;
+      }
+    }
+    if (match == null) return 'Suggestion not found';
+    final combo = match.betterCombination;
+    if (combo == null) return 'No kit to apply';
+    try {
+      await applyArmorCombinationInPlace(
+        _db,
+        userId,
+        ApplyArmorCombinationCommand(
+          setId: armorSetId,
+          pieces: [
+            for (final p in combo.pieces)
+              MaterializePiece(
+                slot: p.slot,
+                itemHash: p.itemHash,
+                instanceId: p.instanceId,
+                itemName: p.itemName,
+              ),
+          ],
+        ),
+      );
+      dismissPostSyncSuggestion(armorSetId);
+      return null;
+    } on UseCaseException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
   }
 
   Future<User> _ensureLocalUser() async {

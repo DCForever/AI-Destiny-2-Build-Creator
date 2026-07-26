@@ -8,8 +8,15 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 
 /// Policy caption shown above finish + equip/export.
 const String kFinishGapsPolicyCaption =
-    'Finish categories (armor / weapons / mods). Equip Apply and DIM export '
-    'require finish-complete AND equip-ready. Soft never auto-applies.';
+    'Finish categories (armor / weapons / mods). One-tap Create or Capture, '
+    'then fill empty slots. Equip Apply and DIM export require finish-complete '
+    'AND equip-ready. Soft never auto-applies.';
+
+/// Finish walkthrough advisory (BR-BLD-008).
+const String kFinishWalkthroughCaption =
+    'Slot-first: Create (inherited name, no tags) or Capture, then fill first '
+    'empty required slot. Skip for now leaves gaps unfinished. Soft never '
+    'auto-applies.';
 
 /// Caption when CTA blocked solely by finish incomplete.
 const String kFinishIncompleteCtaCaption =

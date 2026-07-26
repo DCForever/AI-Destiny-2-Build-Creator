@@ -59,6 +59,19 @@ int compareCombinations(
   return 0;
 }
 
+/// True when [candidate] ranks lexicographically above [current] under the same
+/// ordering used by the optimizer (TS `detectImprovement`).
+///
+/// Soft improvement gate for post-sync / refresh banners — never mutates data.
+bool detectImprovement(
+  RankableCombination current,
+  RankableCombination candidate,
+  List<ArmorStatName>? priorities,
+  bool preferReuse,
+) {
+  return compareCombinations(candidate, current, priorities, preferReuse) < 0;
+}
+
 bool meetsSoftThresholds(
   Map<ArmorStatName, int> stats,
   Map<ArmorStatName, int>? thresholds,

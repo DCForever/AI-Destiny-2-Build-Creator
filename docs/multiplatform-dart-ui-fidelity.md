@@ -137,8 +137,8 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | DAC-DST-009 | build | partial | GAP-UI-BUILD-08 |
 | DBR-EQP-001 | build | pass | ΓÇö |
 | DBR-EQP-002 | build | pass | ΓÇö |
-| BR-BLD-008 | build | miss | GAP-UI-BUILD-03 |
-| BR-BLD-009 | build | partial | GAP-UI-BUILD-04 |
+| BR-BLD-008 | build | pass | GAP-UI-BUILD-03 closed (DART-067) |
+| BR-BLD-009 | build | pass (Windows) | GAP-UI-BUILD-04 closed Windows; web GAP-FEAT-01 |
 | BR-UI-001 | build | partial | GAP-UI-BUILD-08 |
 | DBR-STAT-001 | build | pass | ΓÇö |
 | PRODUCT-SOFT-NEVER-AUTO | build | pass | Soft never auto-applies |
@@ -176,8 +176,8 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | **GAP-UI-CATALOG-10** | P2 | catalog | No Weapons/Armor kind mode separation in host browse | data_present_ui_missing | windows, jaspr | DART-063 | BR-CAT-001, BR-CAT-003, BR-CAT-009 | catalog-weapons-owned, catalog-armor-owned, catalog-universal |
 | **GAP-UI-BUILD-01** | P1 | build | Identity confirm/fork missing on identity change (DBR-ID-008) | rule_miss | windows, jaspr | DART-064 **done** | DBR-ID-008, DBR-ID-001, DBR-BLD-001 | build-edit-general, build-library-selected |
 | **GAP-UI-BUILD-02** | P1 | build | Subclass kit composer absent from host Build UI | data_present_ui_missing | windows, jaspr | DART-064 **done** | DBR-CMPL-001, DBR-BLD-001, BR-UI-001, DAC-DST-009 | build-edit-subclass, build-library-selected |
-| **GAP-UI-BUILD-03** | P2 | build | Finish slot-first walkthrough (one-tap create/fill) not ported | rule_miss | windows, jaspr | DART-067 | BR-BLD-008, DBR-PUR-003, DBR-CMPL-001 | build-edit-finish |
-| **GAP-UI-BUILD-04** | P2 | build | Finish Armor improve (suggest-then-confirm) not in Build Finish path | rule_miss | windows, jaspr | DART-067 | BR-BLD-009, PRODUCT-SOFT-NEVER-AUTO, DBR-GUID-001 | build-edit-armor-improve, build-edit-finish |
+| **GAP-UI-BUILD-03** | P2 | build | Finish slot-first walkthrough (one-tap create/fill) not ported | closed (DART-067) | windows, jaspr | DART-067 | BR-BLD-008, DBR-PUR-003, DBR-CMPL-001 | build-edit-finish |
+| **GAP-UI-BUILD-04** | P2 | build | Finish Armor improve (suggest-then-confirm) not in Build Finish path | closed (DART-067 windows; web GAP-FEAT-01) | windows | DART-067 | BR-BLD-009, PRODUCT-SOFT-NEVER-AUTO, DBR-GUID-001 | build-edit-armor-improve, build-edit-finish |
 | **GAP-UI-BUILD-05** | P2 | build | Identity exotic/super pickers are raw hashes vs Manifest search + icons | data_present_ui_missing | windows, jaspr | DART-064 **done** | DBR-ID-001 | build-edit-general, build-library-selected |
 | **GAP-UI-BUILD-06** | P2 | build | Variant loadout read-only overview missing icon density | polish_only | windows, jaspr | DART-068 | DBR-BLD-001, DBR-CMPL-001 | build-library-selected |
 | **GAP-UI-BUILD-08** | P2 | build | Client hard-constraint UI prevention thinner than Next compose | rule_miss | windows, jaspr | DART-064 **done** | DAC-DST-009, BR-UI-001, DBR-GUID-003, DBR-CMP-007 | build-edit-subclass, build-edit-weapon-create, build-edit-armor-create |
@@ -202,7 +202,7 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | **GAP-UI-LOADOUTS-03** | P2 | loadouts | No Details expand for Bungie slot (hashes, large icon, instance snapshot) | data_present_ui_missing | windows, jaspr | DART-068 | DART-055-BUNGIE-206 | loadouts-slot-expanded |
 | **GAP-UI-SETTINGS-01** | P2 | settings | Manifest status chrome: READY/STALE badge + per-store entity count chips | data_present_ui_missing | windows | DART-068 | PRODUCT-CAP-OAUTH-SYNC | settings-signed-out, settings-signed-in |
 | **GAP-UI-SETTINGS-02** | P2 | settings | Inventory sync card presentation parity (ONLINE chip, labels, Refresh status, last-sync format) | polish_only | windows, jaspr | DART-068 | DART-025-INV-SYNC, DBR-EQP-007, RC-SYNC-FIDELITY | settings-signed-out, settings-signed-in |
-| **GAP-UI-SETTINGS-04** | P2 | settings | Post-sync soft armor kit suggestions missing on Windows Settings | rule_miss | windows | DART-067 | BR-OPT-004, PRODUCT-SOFT-NEVER-AUTO | settings-signed-in |
+| **GAP-UI-SETTINGS-04** | P2 | settings | Post-sync soft armor kit suggestions missing on Windows Settings | closed (DART-067) | windows | DART-067 | BR-OPT-004, PRODUCT-SOFT-NEVER-AUTO | settings-signed-in |
 | **GAP-UI-SHELL-01** | P2 | shell-icons | Primary nav labels and order diverge from AppShell NAV_LINKS | rule_miss | windows, jaspr | DART-068 | PRODUCT-NAV-LINKS, DART-049-RC-NAV | build-library, settings-signed-in, loadouts-signed-in, catalog-weapons-owned |
 
 **Open gap count:** 40  
@@ -603,7 +603,7 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | **DART-064** | `build-identity-subclass-compose` | ui-fidelity-p1 **done** | GAP-UI-BUILD-01, 02, 05, 08, 09 | Identity change Confirm in-place or Fork new Build (DBR-ID-008); full subclass kit composer with capacity plain language; Manifest search pickers for exotic armor/Super; client hard-block UX dual exotic/kit; Jaspr attach uses named set picker + per-slot pins |
 | **DART-065** | `sets-board-rows-fill` | ui-fidelity-p1 | GAP-UI-SETS-01, 02, 03, 07, 10 | Armor set base-roll EoF six-stat per-piece + totals (DAC-NME-004/BR-SET-010/011); item rows icons/traits/origin/synergies/Instance\|Wishlist; slot-fill embedded catalog density on both shells (Jaspr not hash-only); occupied-slot replace confirm; weapon fill persists/shows trait perks |
 | **DART-066** | `synergy-picker-manage-sets-library` | ui-fidelity-p1-p2 | GAP-UI-SYN-01, 02, 04, 06, 09; GAP-UI-SETS-04, 05, 06 | **done** — Synergy evidence catalog search by kind with BR-SYN-011 omit-linked + BR-SYN-012 perk labels; Jaspr detail/edit/links manage; library search/type filters; delete synergy; Sets library search+tag AND filters, readiness/Fill next/used-by, delete with SET_IN_USE |
-| **DART-067** | `finish-walkthrough-armor-optimize` | ui-fidelity-p2 | GAP-UI-BUILD-03, 04; GAP-UI-SETTINGS-04 | Finish slot-first Create/Capture + first-empty fill loop (BR-BLD-008 residual); Windows Build Finish Armor improve suggest-then-confirm (BR-BLD-009); Windows Settings post-sync better-kit banner confirm/dismiss onlyΓÇö**never auto-apply**. Web optimizer remains deferred unless product reopens GAP-FEAT-01 |
+| **DART-067** | `finish-walkthrough-armor-optimize` | ui-fidelity-p2 **done** | GAP-UI-BUILD-03, 04; GAP-UI-SETTINGS-04 | **done** — Finish slot-first Create/Capture + first-empty fill (Windows+Jaspr); Windows Build Finish Armor improve confirm-only; Windows Settings post-sync better-kit Confirm/Dismiss only—**never auto-apply**. Web optimizer remains GAP-FEAT-01 deferred |
 | **DART-068** | `presentation-shell-loadouts-settings` | ui-fidelity-p2-polish | GAP-UI-CATALOG-09; GAP-UI-BUILD-06; GAP-UI-SYN-05; GAP-UI-LOADOUTS-01..03; GAP-UI-SETTINGS-01, 02; GAP-UI-SHELL-01 | AppShell label/order parity; item icons + dense meta on catalog/set-fill; loadout color bar/swatch + exotic names + details expand; Settings READY/entity chips + inventory ONLINE/Refresh chrome; designation icons; variant read-only icon overview. **Not cutover re-gate.** |
 
 ---

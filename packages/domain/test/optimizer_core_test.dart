@@ -428,6 +428,35 @@ void main() {
       );
     });
 
+    test('detectImprovement true when candidate ranks higher', () {
+      const current = RankableCombination(
+        estimatedStats: {
+          ArmorStatName.melee: 20,
+          ArmorStatName.health: 10,
+        },
+        reusePieceCount: 0,
+      );
+      const better = RankableCombination(
+        estimatedStats: {
+          ArmorStatName.melee: 40,
+          ArmorStatName.health: 10,
+        },
+        reusePieceCount: 0,
+      );
+      expect(
+        detectImprovement(current, better, [ArmorStatName.melee], false),
+        isTrue,
+      );
+      expect(
+        detectImprovement(better, current, [ArmorStatName.melee], false),
+        isFalse,
+      );
+      expect(
+        detectImprovement(current, current, [ArmorStatName.melee], false),
+        isFalse,
+      );
+    });
+
     test('evaluates soft thresholds', () {
       expect(
         meetsSoftThresholds(

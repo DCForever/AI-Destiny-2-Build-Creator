@@ -220,4 +220,20 @@ void main() {
   test('no CLIENT_SECRET in controller surface', () {
     expect(controller.softGuidanceAdvisory, isNot(contains('CLIENT_SECRET')));
   });
+
+  test('DART-067 oneTapCreateCategory attaches empty set', () async {
+    final err = await controller.createBuild(
+      name: 'Finish Web',
+      className: GuardianClass.warlock,
+      synergyTypes: const [DraftSynergyType(type: 'grenade')],
+    );
+    expect(err, isNull);
+    final create = await controller.oneTapCreateCategory(FinishCategory.weapon);
+    expect(create, isNull);
+    expect(controller.finishMessage, contains('Created'));
+    final weapon = controller.finishGaps!.gaps
+        .firstWhere((g) => g.category == FinishCategory.weapon);
+    expect(weapon.coveringSetId, isNotNull);
+    expect(weapon.coveringMode, AttachmentMode.live);
+  });
 }
