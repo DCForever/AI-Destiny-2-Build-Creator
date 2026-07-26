@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-067 done — Finish Create/Capture/fill, Windows armor improve + post-sync banner; **DART-068** next; cutover GO unchanged)  
+**Updated:** 2026-07-25 (DART-068 done — shell/loadouts/settings presentation polish; **P9 complete**; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -165,7 +165,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-065** | **done** | `sets-board-rows-fill` | `dart-065-sets-board-rows-fill` | P9 | DART-061 | Armor EoF base-roll board; dense item rows; slot-fill Catalog; replace confirm; weapon perks | **GAP-UI-SETS-01, 02, 03, 07, 10**. DAC-NME-004/BR-SET-010/011 board + totals; icons/traits/synergies/Instance\|Wishlist; both shells embedded catalog density (Jaspr not hash-only); occupied-slot replace confirm; selectedPerks on weapon fill. Soft never auto-applies; no CLIENT_SECRET |
 | **DART-066** | **done** | `synergy-picker-manage-sets-library` | `dart-066-synergy-picker-manage-sets-library` | P9 | DART-063 (syn tags helpful) | Synergy catalog picker + Jaspr manage; Sets library filters/readiness/delete | **GAP-UI-SYN-01, 02, 04, 06, 09; GAP-UI-SETS-04, 05, 06**. BR-SYN-011 omit-linked + BR-SYN-012 labels; Jaspr detail/edit/links; library search/type filters; delete synergy; Sets search+tag AND, Fill next/used-by, SET_IN_USE delete. Soft never auto-applies; no CLIENT_SECRET |
 | **DART-067** | **done** | `finish-walkthrough-armor-optimize` | `dart-067-finish-walkthrough-armor-optimize` | P9 | DART-064, DART-036 | Finish one-tap Create/Capture/fill; Build Finish armor improve; Settings post-sync banner | **GAP-UI-BUILD-03, 04; GAP-UI-SETTINGS-04** closed. BR-BLD-008 walkthrough Create/Capture/fill (Windows+Jaspr); Windows Build Finish Find kits → confirm apply; Windows post-sync better-kit Confirm/Dismiss only — **never auto-apply**. Web optimizer remains GAP-FEAT-01 deferred. Soft never auto-applies; no CLIENT_SECRET |
-| **DART-068** | **planned** | `presentation-shell-loadouts-settings` | `dart-068-presentation-shell-loadouts-settings` | P9 | DART-062+ as needed | Shell labels; icons/meta; loadouts density; Settings chrome; designation icons | **GAP-UI-CATALOG-09; GAP-UI-BUILD-06; GAP-UI-SYN-05; GAP-UI-LOADOUTS-01..03; GAP-UI-SETTINGS-01, 02; GAP-UI-SHELL-01**. AppShell label/order; item icons; loadout color bar/swatch + exotic names + expand; READY/entity chips + ONLINE/Refresh; variant icon overview. **Not cutover re-gate.** Soft never auto-applies; no CLIENT_SECRET |
+| **DART-068** | **done** | `presentation-shell-loadouts-settings` | `dart-068-presentation-shell-loadouts-settings` | P9 | DART-062+ as needed | Shell labels; icons/meta; loadouts density; Settings chrome; designation icons | **GAP-UI-CATALOG-09; GAP-UI-BUILD-06; GAP-UI-SYN-05; GAP-UI-LOADOUTS-01..03; GAP-UI-SETTINGS-01, 02; GAP-UI-SHELL-01** closed. AppShell label/order; item icons; loadout color bar/swatch + exotic names + expand; READY/entity chips + ONLINE/Refresh; variant icon overview. **Not cutover re-gate.** Soft never auto-applies; no CLIENT_SECRET |
 
 ---
 
@@ -227,16 +227,16 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-068** `presentation-shell-loadouts-settings` (**planned**) |
+| **Next / active slice** | **None** — P9 host UI fidelity complete (DART-062–068 **done**) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). UI fidelity P9 residual continues (does not re-open cutover). Human/release may merge toward production/`main` (RC-BRANCH) |
-| **Phase plan** | P6–P8 **done** (DART-050–061); **P9** DART-062–067 **done**, DART-068 **planned** (host UI fidelity) |
+| **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). P9 UI fidelity closed (does not re-open cutover). Human/release may merge toward production/`main` (RC-BRANCH) |
+| **Phase plan** | P6–P9 **done** (DART-050–068); host UI fidelity residual closed |
 
 ### P9 note — host UI fidelity post-cutover
 
-After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS, but presentation trails Next atlas on browse/composition density (BR/DAC/DBR surface rules). Canonical residual ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). **DART-062–067 done** (catalog, build identity, sets board/fill, synergy picker+manage + sets library, finish walkthrough/armor optimize/post-sync). Remaining: **DART-068** presentation/shell/loadouts/settings polish. Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
+After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS. **DART-062–068 done** closed catalog/build/sets/synergy/finish/presentation residuals vs Next atlas. Canonical ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
 
 ### DART-062 note (completed) — catalog browse semantics
 

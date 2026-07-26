@@ -1,12 +1,15 @@
-import 'package:destiny2_app/destiny2_app.dart' show selectedPerksFromInstance;
+import 'package:destiny2_app/destiny2_app.dart'
+    show buildCatalogDenseMetaChips, selectedPerksFromInstance;
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
 
 import '../catalog/owned_catalog_bridge.dart';
 import '../host_bootstrap.dart';
+import '../widgets/entity_icon.dart';
 import 'set_slot_mapping.dart';
 import 'sets_library_controller.dart';
+
 
 /// Modal catalog pick for filling a set slot (All | Owned) — DART-030.
 class SetCatalogPicker extends StatefulWidget {
@@ -265,20 +268,29 @@ class _SetCatalogPickerState extends State<SetCatalogPicker> {
             itemBuilder: (context, index) {
               final item = _results[index];
               final selected = _selected?.hash == item.hash;
+              final chips = buildCatalogDenseMetaChips(
+                isExotic: item.isExotic,
+                slot: item.slot,
+                element: item.element,
+                ammo: item.ammo,
+                itemTypeName: item.itemTypeName,
+                frame: item.frame,
+              );
               final meta = [
-                if (item.isExotic) 'Exotic',
-                if (item.element != null) item.element!,
-                if (item.slot != null) item.slot!,
-                if (item.itemTypeName != null) item.itemTypeName!,
-                if (item.frame != null) item.frame!,
+                ...chips,
                 if (item.owned) 'owned×${item.ownedCount}',
               ].join(' · ');
               return ListTile(
                 key: Key('set_picker_item_${item.hash}'),
                 selected: selected,
-                leading: item.isExotic
-                    ? const Icon(Icons.star, size: 18)
-                    : const Icon(Icons.inventory_2_outlined, size: 18),
+                leading: EntityIcon(
+                  key: Key('set_picker_item_icon_${item.hash}'),
+                  icon: item.icon,
+                  size: 32,
+                  fallback: item.isExotic
+                      ? Icons.star
+                      : Icons.inventory_2_outlined,
+                ),
                 title: Text(item.name),
                 subtitle: Text(
                   meta.isEmpty ? '#${item.hash}' : meta,

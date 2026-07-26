@@ -149,6 +149,11 @@ void main() {
     expect(find.text('v1'), findsWidgets);
     expect(find.text('v2'), findsOneWidget);
     expect(find.text('stale'), findsOneWidget);
+    // DART-068 / GAP-UI-SETTINGS-01 readiness badge + store chips.
+    expect(find.byKey(const Key('manifest_readiness_badge')), findsOneWidget);
+    expect(find.text('STALE'), findsWidgets);
+    expect(find.byKey(const Key('manifest_entity_count_chips')), findsOneWidget);
+    expect(find.byKey(const Key('manifest_entity_chip_weapons')), findsOneWidget);
     expect(find.byKey(const Key('entity_cache')), findsOneWidget);
     expect(find.textContaining('5 entities'), findsOneWidget);
     // Populated entity cache → no empty warning (GAP-INV-06 / DART-053).
@@ -156,6 +161,7 @@ void main() {
     expect(find.byKey(const Key('refresh_manifest')), findsOneWidget);
     expect(find.byKey(const Key('reload_status')), findsOneWidget);
   });
+
 
   testWidgets('missing cached version shows none without crash', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1600));
@@ -184,6 +190,15 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Use Refresh manifest'), findsOneWidget);
+    // DART-068: NOT DOWNLOADED when entityCache missing.
+    expect(find.byKey(const Key('manifest_readiness_badge')), findsOneWidget);
+    expect(find.text('NOT DOWNLOADED'), findsWidgets);
+    // Scroll if needed — tall Settings stack with inventory chrome.
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('refresh_manifest')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.byKey(const Key('refresh_manifest')), findsOneWidget);
   });
 

@@ -5,7 +5,9 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
 
 import '../host_bootstrap.dart';
+import '../widgets/entity_icon.dart';
 import 'owned_catalog_bridge.dart';
+
 
 /// Catalog browse with kind modes, synergy tags, owned detail (DART-063).
 class CatalogPage extends StatefulWidget {
@@ -691,33 +693,58 @@ class _CatalogPageState extends State<CatalogPage> {
         );
       }
       for (final item in group.items) {
-        final subtitle = [
-          if (item.slot != null) item.slot!,
-          if (item.element != null) item.element!,
-          if (item.ammo != null) item.ammo!,
-          if (item.itemTypeName != null) item.itemTypeName!,
-          if (item.classType != null) item.classType!,
-          if (item.isExotic) 'Exotic',
-          if (item.owned) 'Owned ×${item.ownedCount}',
-          if (item.linkedSynergyIds.isNotEmpty)
-            'syn×${item.linkedSynergyIds.length}',
-        ].join(' · ');
+        final dense = buildCatalogDenseMetaChips(
+          isExotic: item.isExotic,
+          slot: item.slot,
+          element: item.element,
+          ammo: item.ammo,
+          itemTypeName: item.itemTypeName,
+          frame: item.frame,
+          classType: item.classType,
+        );
         final selected = _selected?.hash == item.hash;
         rows.add(
           ListTile(
             key: Key('catalog_item_${item.hash}'),
+            leading: EntityIcon(
+              key: Key('catalog_item_icon_${item.hash}'),
+              icon: item.icon,
+              size: 36,
+            ),
             title: Text(item.name),
-            subtitle: Text(subtitle),
+            subtitle: dense.isEmpty && !item.owned
+                ? null
+                : Wrap(
+                    key: Key('catalog_item_meta_${item.hash}'),
+                    spacing: 4,
+                    runSpacing: 2,
+                    children: [
+                      for (final m in dense)
+                        Chip(
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          label: Text(m, style: const TextStyle(fontSize: 11)),
+                        ),
+                      if (item.owned)
+                        Chip(
+                          key: Key('owned_badge_${item.hash}'),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          label: Text('Owned ×${item.ownedCount}'),
+                        ),
+                      if (item.linkedSynergyIds.isNotEmpty)
+                        Chip(
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          label: Text('syn×${item.linkedSynergyIds.length}'),
+                        ),
+                    ],
+                  ),
             dense: true,
             selected: selected,
-            trailing: item.owned
-                ? Chip(
-                    key: Key('owned_badge_${item.hash}'),
-                    label: Text('×${item.ownedCount}'),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  )
-                : null,
             onTap: () => _selectItem(item),
           ),
         );

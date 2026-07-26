@@ -1279,6 +1279,48 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
             ),
           ],
         ),
+        if (selectedVariant != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Loadout overview',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Read-only strip — empty / wishlist / instance without Edit.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          if (_controller.slotPins.isEmpty)
+            const Text(
+              'No filled slots yet.',
+              key: Key('builds_variant_overview_empty'),
+            )
+          else
+            Wrap(
+              key: const Key('builds_variant_overview'),
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final pin in _controller.slotPins)
+                  Chip(
+                    key: Key(
+                      'builds_variant_overview_${pin.slot}_${pin.setId}',
+                    ),
+                    avatar: Icon(
+                      pin.instanceId != null && pin.instanceId!.isNotEmpty
+                          ? Icons.check_circle_outline
+                          : Icons.bookmark_border,
+                      size: 16,
+                    ),
+                    label: Text(
+                      '${pin.slot}: ${pin.itemName} (${pin.pinDetail})',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+        ],
         const SizedBox(height: 16),
         Text(
           'Attachments',

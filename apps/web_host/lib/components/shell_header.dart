@@ -10,12 +10,13 @@ import '../theme/theme.dart';
 class ShellHeader extends StatelessComponent {
   const ShellHeader({super.key});
 
+  /// Product AppShell short labels + order (DART-068 / GAP-UI-SHELL-01).
   static const routes = [
-    (label: 'Catalog', path: '/catalog'),
-    (label: 'Builds', path: '/builds'),
-    (label: 'Sets', path: '/sets'),
-    (label: 'Synergies', path: '/synergies'),
     (label: 'Loadouts', path: '/loadouts'),
+    (label: 'Build', path: '/builds'),
+    (label: 'Synergy', path: '/synergies'),
+    (label: 'Sets', path: '/sets'),
+    (label: 'Catalog', path: '/catalog'),
     (label: 'Settings', path: '/'),
   ];
 

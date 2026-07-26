@@ -123,11 +123,12 @@ void main() {
     expect(find.text('Melee Combo'), findsWidgets);
     expect(find.byKey(const Key('synergies_detail')), findsOneWidget);
     expect(find.byKey(const Key('synergies_detail_designation')), findsOneWidget);
-    expect(find.textContaining('melee::Base'), findsWidgets);
+    expect(find.textContaining('Melee: Base'), findsWidgets);
     expect(find.byKey(const Key('synergies_designation_locked')), findsOneWidget);
   });
 
   testWidgets('US2 rename keeps designation; no type editor on detail',
+
       (tester) async {
     final controller = SynergiesLibraryController(
       db: services.db,
@@ -168,7 +169,7 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.text('New Name'), findsWidgets);
-    expect(find.textContaining('melee::Base'), findsWidgets);
+    expect(find.textContaining('Melee: Base'), findsWidgets);
     expect(controller.selected!.type, 'melee');
     expect(controller.selected!.subType, 'Base');
 
@@ -313,12 +314,18 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    expect(find.byKey(const Key('catalog_page')), findsOneWidget);
+    expect(
+      find.byKey(const Key('loadouts_page'), skipOffstage: false),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('Synergies'));
+    await tester.tap(find.text('Synergy').first);
     await _pumpFrames(tester);
 
-    expect(find.byKey(const Key('synergies_library_page')), findsOneWidget);
+    expect(
+      find.byKey(const Key('synergies_library_page'), skipOffstage: false),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('synergies_create_button')), findsOneWidget);
   });
 

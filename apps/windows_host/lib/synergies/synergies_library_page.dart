@@ -1,5 +1,9 @@
 import 'package:destiny2_app/destiny2_app.dart'
-    show SynergyLinkWrite, SynergyPickerHit;
+    show
+        SynergyLinkWrite,
+        SynergyPickerHit,
+        isElementDesignation,
+        isVerbDesignation;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -493,7 +497,15 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
               Chip(
                 key: const Key('synergies_detail_designation'),
                 label: Text(designation),
-                avatar: const Icon(Icons.lock_outline, size: 16),
+                avatar: Icon(
+                  isElementDesignation(sel.type)
+                      ? Icons.local_fire_department_outlined
+                      : isVerbDesignation(sel.type)
+                          ? Icons.bolt_outlined
+                          : Icons.lock_outline,
+                  size: 16,
+                  key: const Key('synergies_detail_designation_icon'),
+                ),
               ),
               Text(
                 'Designation locked',

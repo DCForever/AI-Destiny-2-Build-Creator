@@ -83,12 +83,12 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 | ID | Feature | Product path | W | M | J | Plan | Slices / notes |
 | -- | ------- | ------------ | - | - | - | ---- | -------------- |
-| **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Cutover spine PASS; identity Confirm/Fork + kit composer (DART-064) done; Finish walkthrough residual → **DART-067**; density → **DART-068** |
-| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Catalog picker + filters + delete **done** (DART-066); designation icons residual → DART-068 |
-| **FEAT-NAV-SETS** | Sets library | `/sets` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Board + filters + readiness + delete **done** (DART-065/066); presentation polish residual → DART-068 |
-| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Multi-facet/group-by/alpha (DART-062) + Weapons/Armor/Universal + synergy tags + owned detail (DART-063) **done**; icons residual (GAP-UI-CATALOG-09) → **DART-068** |
-| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | **PASS** | PARTIAL | **PASS** | **shipped** | OAuth Public+PKCE + inventory sync + diagnostics remain PASS; residuals chrome only (GAP-UI-SETTINGS-01/02; post-sync banner GAP-UI-SETTINGS-04) — **no demote** |
-| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | **PASS** | N/A\* | **PASS** | **shipped** | **DART-055** cutover PASS; residuals P2 density only (GAP-UI-LOADOUTS-01..03) — **no demote** |
+| **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PASS** | PASS | **PASS** | **shipped** | Cutover spine PASS; identity/kit (DART-064); Finish walkthrough (DART-067); density overview (DART-068) |
+| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PASS** | N/A\* | **PASS** | **shipped** | Catalog picker + filters + delete (DART-066); designation chrome (DART-068) |
+| **FEAT-NAV-SETS** | Sets library | `/sets` | **PASS** | N/A\* | **PASS** | **shipped** | Board + filters + readiness + delete (DART-065/066); icons on filled rows (DART-068) |
+| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PASS** | N/A\* | **PASS** | **shipped** | Multi-facet/group-by/alpha (DART-062) + modes/tags/owned (DART-063); icons+dense meta (DART-068) |
+| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | **PASS** | PARTIAL | **PASS** | **shipped** | OAuth + sync + diagnostics PASS; READY chips + ONLINE chrome (DART-068); post-sync banner (DART-067) |
+| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | **PASS** | N/A\* | **PASS** | **shipped** | **DART-055** cutover PASS; density color/exotics/expand (DART-068) |
 
 ### B. Compose → equip spine (PRODUCT primary job)
 
@@ -204,14 +204,14 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-CATALOG-06** | Synergy membership filter + tags | **P1** | `closed` | synergy include/exclude + linked on detail | Hosts wire linkedSynergyIds annotate + facet chips + detail badges | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-CATALOG-07** | Alpha sort by display name | **P2** | `closed` | compareDisplayName finalize | Alpha sort in `filterCatalogClient` | **DART-062** | Not cutover; fidelity |
 | **GAP-UI-CATALOG-08** | Owned instance perk/stat cards | **P2** | `closed` | OwnedInstanceCard + perk grid + armor stats | Resolved plug cards + armor base-stat board when data present | **DART-063** | Names need map; residual when unresolved |
-| **GAP-UI-CATALOG-09** | Item icons + dense meta chrome | **P2** | `open` | ItemIcon + MetaChips | Text ListTile / catalog-row | **DART-068** | Polish; see ui-polish-tracker |
+| **GAP-UI-CATALOG-09** | Item icons + dense meta chrome | **P2** | `closed` (DART-068) | ItemIcon + MetaChips | EntityIcon + dense meta chips | **DART-068** | Polish; see ui-polish-tracker |
 | **GAP-UI-CATALOG-10** | Weapons/Armor kind modes | **P2** | `closed` | Weapons \| Armor \| Universal modes | Mode chips + kind-appropriate facets both hosts | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-BUILD-01** | Identity confirm/fork (DBR-ID-008) | **P1** | `closed` (DART-064) | 409 IDENTITY_CONFIRM_REQUIRED Confirm/Fork | `identityAction` confirm/fork + host chrome | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-02** | Subclass kit composer host UI | **P1** | `closed` (DART-064) | SubclassTab full kit + capacity | Host kit composer + capacity plain language | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-03** | Finish slot-first one-tap walkthrough | **P2** | `closed` (DART-067) | FinishBuildWalkthrough Create/Capture/fill | Windows+Jaspr Create/Capture/fill walkthrough | **DART-067** done | Not cutover; fidelity |
 | **GAP-UI-BUILD-04** | Finish Armor improve path | **P2** | `closed` (DART-067) | FinishArmorOptimizeWorkspace confirm apply | Windows Build Finish Find kits → confirm; web deferred GAP-FEAT-01 | **DART-067** done | Soft never auto-apply |
 | **GAP-UI-BUILD-05** | Manifest search exotic/super pickers | **P2** | `closed` (DART-064) | ManifestSearchPicker + icons | Named Manifest search pickers (hash secondary) | **DART-064** | Not cutover; fidelity |
-| **GAP-UI-BUILD-06** | Variant read-only icon overview | **P2** | `open` | VariantCard DETAILS icon strips | Text attachments/pins only | **DART-068** | Polish |
+| **GAP-UI-BUILD-06** | Variant read-only icon overview | **P2** | `closed` (DART-068) | VariantCard DETAILS icon strips | Loadout overview chip strip | **DART-068** | Polish |
 | **GAP-UI-BUILD-08** | Client hard-block pre-save UX | **P2** | `closed` (DART-064) | hardBlocks + plain-language disabled | Client dual exotic/kit hard-block banners; soft never disables Save | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-09** | Jaspr attach/pin named pickers | **P2** | `closed` (DART-064) | set search/tags + pin context | Named set picker + per-slot pins | **DART-064** | Jaspr only |
 | **GAP-UI-SETS-01** | Armor base-roll EoF six-stat board | **P1** | `closed` (DART-065) | ArmorPieceStatRow + totals | `sumArmorSetStats` + host boards | **DART-065** | DAC-NME-004 |
@@ -226,16 +226,16 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-SYN-02** | BR-SYN-012 weapon-perk source labels | **P1** | `closed` (DART-066) | weaponPerkSourceLabel exotic/legendary | formatWeaponPerkSourceLabel parity | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SYN-03** | BR-SYN-004 reverse tags on catalog | **P1** | `closed` | linkedSynergies by-target badges | findSynergiesByTarget + detail badges both hosts | **DART-063** | Not cutover; fidelity |
 | **GAP-UI-SYN-04** | Jaspr synergy detail/edit/links | **P1** | `closed` (DART-066) | dual-pane detail + edit/delete | select→detail/edit/links/delete | **DART-066** | Jaspr only |
-| **GAP-UI-SYN-05** | DesignationLabel verb/element icons | **P2** | `open` | DesignationLabel + icons | type::subType wire keys | **DART-068** | Polish |
+| **GAP-UI-SYN-05** | DesignationLabel verb/element icons | **P2** | `closed` (DART-068) | DesignationLabel + icons | Verb:/Element: chrome + glyphs | **DART-068** | Polish |
 | **GAP-UI-SYN-06** | Synergy library search/type filters | **P2** | `closed` (DART-066) | SynergyFilters search + chips | filterSynergies search+type both shells | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SYN-09** | Delete library synergy host action | **P2** | `closed` (DART-066) | SynergyDetail Delete confirm | delete with confirm both shells | **DART-066** | Not cutover; fidelity |
-| **GAP-UI-LOADOUTS-01** | Color bar / swatch / icon plate | **P2** | `open` | LoadoutColorBar + IconPlate | iconUrl only; colorUrl unused | **DART-068** | Density only |
-| **GAP-UI-LOADOUTS-02** | Exotic names on Bungie rows | **P2** | `open` | enrichLoadoutsWithExotics | exotic* fields unused | **DART-068** | Density only |
-| **GAP-UI-LOADOUTS-03** | Details expand for Bungie slot | **P2** | `open` | expanded detail panel | No expansion state | **DART-068** | Density only |
-| **GAP-UI-SETTINGS-01** | Manifest READY + entity count chips | **P2** | `open` | READY/STALE badge + Chip counts | Cached/Remote/Status text only | **DART-068** | Windows chrome |
-| **GAP-UI-SETTINGS-02** | Inventory sync card presentation | **P2** | `open` | ONLINE chip + human last sync + Refresh | Sync now + raw ISO | **DART-068** | **BUG-20260725-003** |
+| **GAP-UI-LOADOUTS-01** | Color bar / swatch / icon plate | **P2** | `closed` (DART-068) | LoadoutColorBar + IconPlate | color bar/swatch/icon plate | **DART-068** | Density only |
+| **GAP-UI-LOADOUTS-02** | Exotic names on Bungie rows | **P2** | `closed` (DART-068) | enrichLoadoutsWithExotics | enrichLoadoutsWithExotics wired | **DART-068** | Density only |
+| **GAP-UI-LOADOUTS-03** | Details expand for Bungie slot | **P2** | `closed` (DART-068) | expanded detail panel | Details/Hide expand panel | **DART-068** | Density only |
+| **GAP-UI-SETTINGS-01** | Manifest READY + entity count chips | **P2** | `closed` (DART-068) | READY/STALE badge + Chip counts | READY/STALE/NOT DOWNLOADED + chips | **DART-068** | Windows chrome |
+| **GAP-UI-SETTINGS-02** | Inventory sync card presentation | **P2** | `closed` (DART-068) | ONLINE chip + human last sync + Refresh | ONLINE + human last sync + Refresh | **DART-068** | **BUG-20260725-003** |
 | **GAP-UI-SETTINGS-04** | Post-sync soft armor kit banner | **P2** | `closed` (DART-067) | Confirm/Dismiss better-kit Callout | Windows afterSync Confirm/Dismiss only | **DART-067** done | Soft never auto-apply |
-| **GAP-UI-SHELL-01** | AppShell nav labels/order | **P2** | `open` | Loadouts, Build, Synergy, Sets, Catalog, Settings | Builds/Synergies labels; order diverge | **DART-068** | Not cutover; fidelity |
+| **GAP-UI-SHELL-01** | AppShell nav labels/order | **P2** | `closed` (DART-068) | Loadouts, Build, Synergy, Sets, Catalog, Settings | Product short labels + order | **DART-068** | Not cutover; fidelity |
 
 ---
 

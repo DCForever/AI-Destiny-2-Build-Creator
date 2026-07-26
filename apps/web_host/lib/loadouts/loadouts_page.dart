@@ -163,6 +163,8 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
     );
   }
 
+  String? _expandedId;
+
   Component _loadoutItem(BungieInGameLoadout lo) {
     final subtitle = StringBuffer()
       ..write(lo.className)
@@ -175,19 +177,89 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
     } else {
       subtitle.write(' · ${lo.itemInstanceIds.length} items');
     }
+    final exoticParts = <String>[
+      if (lo.exoticArmorName != null && lo.exoticArmorName!.isNotEmpty)
+        lo.exoticArmorName!,
+      if (lo.exoticWeaponName != null && lo.exoticWeaponName!.isNotEmpty)
+        lo.exoticWeaponName!,
+    ];
+    final expanded = _expandedId == lo.id;
     return li(
       classes: 'loadout-item',
-      attributes: {'data-loadout-id': lo.id},
+      attributes: {
+        'data-loadout-id': lo.id,
+        'data-testid': 'loadout-tile-${lo.id}',
+      },
       [
-        if (lo.iconUrl != null)
-          img(
-            src: lo.iconUrl!,
-            alt: '',
-            attributes: {'width': '28', 'height': '28'},
-          ),
+        div(
+          classes: 'loadout-color-bar',
+          attributes: {
+            'data-testid': 'loadout-color-bar-${lo.id}',
+            if (lo.colorUrl != null)
+              'style':
+                  'background-image:url(${lo.colorUrl});background-size:cover;',
+          },
+          [],
+        ),
+        div(classes: 'loadout-icon-plate', attributes: {
+          'data-testid': 'loadout-icon-plate-${lo.id}',
+        }, [
+          if (lo.iconUrl != null)
+            img(
+              src: lo.iconUrl!,
+              alt: '',
+              attributes: {'width': '28', 'height': '28'},
+            ),
+        ]),
         div([
           strong([.text(lo.name)]),
           p(classes: 'compose-meta', [.text(subtitle.toString())]),
+          if (exoticParts.isNotEmpty)
+            p(
+              classes: 'compose-meta loadout-exotics',
+              attributes: {'data-testid': 'loadout-exotics-${lo.id}'},
+              [.text(exoticParts.join(' · '))],
+            ),
+          if (lo.colorUrl != null)
+            span(
+              classes: 'loadout-color-swatch',
+              attributes: {
+                'data-testid': 'loadout-color-swatch-${lo.id}',
+                'style':
+                    'display:inline-block;width:12px;height:12px;background-image:url(${lo.colorUrl});background-size:cover;',
+              },
+              [],
+            ),
+          button(
+            classes: 'chip',
+            attributes: {'data-testid': 'loadout-details-toggle-${lo.id}'},
+            onClick: () {
+              setState(() {
+                _expandedId = expanded ? null : lo.id;
+              });
+            },
+            [.text(expanded ? 'Hide' : 'Details')],
+          ),
+          if (expanded)
+            div(
+              classes: 'loadout-details',
+              attributes: {'data-testid': 'loadout-details-${lo.id}'},
+              [
+                p([.text('Character: ${lo.characterId}')]),
+                p([
+                  .text(
+                    'Icon hash: ${lo.iconHash} · Color hash: ${lo.colorHash}',
+                  ),
+                ]),
+                p([
+                  .text(
+                    lo.empty
+                        ? 'Empty slot — no equipped instances.'
+                        : 'Instances: ${lo.itemInstanceIds.length}',
+                  ),
+                ]),
+              ],
+            ),
         ]),
       ],
     );
@@ -196,6 +268,18 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
   @css
   static List<StyleRule> get styles => [
         ...composePageStyles,
+        css('.loadout-item', [
+          css('&').styles(
+            display: .flex,
+            alignItems: .flexStart,
+            gap: Gap(column: 0.5.rem),
+          ),
+        ]),
+        css('.loadout-color-bar').styles(
+          width: 6.px,
+          minHeight: 2.5.rem,
+          backgroundColor: flapAccentColor,
+        ),
         css('.loadouts-filters', [
           css('&').styles(
             display: .flex,

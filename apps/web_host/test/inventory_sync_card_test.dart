@@ -45,7 +45,7 @@ void main() {
       expect(find.textContaining('SESSION_SECRET='), findsNothing);
     });
 
-    testComponents('signed-in shows Sync now and meta keys', (tester) async {
+    testComponents('signed-in shows Sync inventory and meta keys', (tester) async {
       final store = MemoryTokenStore();
       await seedSignedIn(store);
       final session = buildSignedInSession(store: store);
@@ -61,7 +61,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Sync now'), findsOneComponent);
+      expect(find.text('Sync inventory'), findsOneComponent);
+      expect(find.text('Refresh status'), findsOneComponent);
       expect(find.textContaining('Items:'), findsOneComponent);
       expect(find.textContaining('equipment-bucket resolution'), findsOneComponent);
       expect(find.textContaining('No CLIENT_SECRET'), findsOneComponent);

@@ -80,20 +80,20 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels include Loadouts', () {
-    expect(Destiny2WindowsApp.navLabels, contains('Loadouts'));
+  test('navLabels match AppShell short labels and order (DART-068)', () {
     expect(
       Destiny2WindowsApp.navLabels,
-      containsAll([
-        'Catalog',
-        'Sets',
-        'Synergies',
-        'Builds',
+      [
         'Loadouts',
+        'Build',
+        'Synergy',
+        'Sets',
+        'Catalog',
         'Settings',
-      ]),
+      ],
     );
   });
+
 
   testWidgets('NavigationRail shows Loadouts destination', (tester) async {
     await tester.pumpWidget(Destiny2WindowsApp(services: services));
@@ -114,7 +114,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // Destination index 4 = Loadouts
+    // Destination index 0 = Loadouts (DART-068 order)
     await tester.tap(find.text('Loadouts').first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

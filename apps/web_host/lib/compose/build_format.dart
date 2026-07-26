@@ -1,24 +1,29 @@
-/// Pure display helpers for web Builds list/detail (DART-046).
+/// Pure display helpers for web Builds list/detail (DART-046/068).
 
-/// Format a single synergy designation key: `type` or `type::subType`.
+import 'package:destiny2_app/destiny2_app.dart';
+
+/// Wire designation key: `type` or `type::subType` (filters/identity).
 String formatSynergyDesignationKey(String type, [String? subType]) {
-  final t = type.trim();
-  final sub = subType?.trim() ?? '';
-  if (sub.isEmpty) return t;
-  return '$t::$sub';
+  return designationWireKey(type, subType);
 }
 
-/// Join designation keys with ", ".
+/// Human chrome for library/detail (GAP-UI-SYN-05): Verb: Scorch, Element: Solar.
+String formatSynergyDesignationDisplay(String type, [String? subType]) {
+  return formatDesignationChrome(type, subType);
+}
+
+/// Join designation keys with ", " (human chrome).
 String formatSynergyDesignationList(
   Iterable<({String type, String? subType})> designations,
 ) {
   final keys = <String>[];
   for (final d in designations) {
-    final key = formatSynergyDesignationKey(d.type, d.subType);
+    final key = formatSynergyDesignationDisplay(d.type, d.subType);
     if (key.isNotEmpty) keys.add(key);
   }
   return keys.join(', ');
 }
+
 
 /// Compact exotics summary for list/detail.
 String formatExoticsSummary({

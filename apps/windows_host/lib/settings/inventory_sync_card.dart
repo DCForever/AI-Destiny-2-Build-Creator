@@ -1,7 +1,9 @@
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:flutter/material.dart';
 
 import '../auth/windows_oauth_session.dart';
 import 'inventory_sync_controller.dart';
+
 
 /// Settings inventory sync card: Sync now + busy/error + meta (DART-025)
 /// + last-sync diagnostics (DART-053 / GAP-INV-04).
@@ -74,10 +76,10 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
       key: const Key('inventory_sync_card'),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             Text(
               'Inventory sync',
               style: Theme.of(context).textTheme.titleMedium,
@@ -90,10 +92,30 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ] else ...[
-              Text(
-                _summaryLine(c),
-                key: const Key('inventory_sync_summary'),
-                style: Theme.of(context).textTheme.bodyMedium,
+              Row(
+                children: [
+                  Chip(
+                    key: const Key('inventory_online_chip'),
+                    label: Text(
+                      inventoryHasSynced(lastFullSyncAt: c.lastFullSyncAt)
+                          ? 'ONLINE'
+                          : 'OFFLINE',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor:
+                        inventoryHasSynced(lastFullSyncAt: c.lastFullSyncAt)
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _summaryLine(c),
+                      key: const Key('inventory_sync_summary'),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -107,7 +129,7 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               Text(
-                'Last full sync: ${c.lastFullSyncAt ?? 'never'}',
+                'Last sync: ${formatLastSyncLabel(lastFullSyncAt: c.lastFullSyncAt)}',
                 key: const Key('inventory_last_sync'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -116,6 +138,7 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 key: const Key('inventory_freshness'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+
               if (c.lastDiagnostics != null) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -196,11 +219,25 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 ],
               )
             else
-              FilledButton.icon(
-                key: const Key('inventory_sync_now'),
-                onPressed: c.canSync ? () => c.syncNow() : null,
-                icon: const Icon(Icons.cloud_download_outlined),
-                label: const Text('Sync now'),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    key: const Key('inventory_sync_now'),
+                    onPressed: c.canSync ? () => c.syncNow() : null,
+                    icon: const Icon(Icons.cloud_download_outlined),
+                    label: const Text('Sync inventory'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('inventory_refresh_status'),
+                    onPressed: signedIn && !syncing
+                        ? () => c.refreshStatus()
+                        : null,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh status'),
+                  ),
+                ],
               ),
               // Soft post-sync better-kit banner (DART-067 / BR-OPT-004).
               // Confirm applies; Dismiss clears only — never auto-apply.
@@ -274,7 +311,6 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 ),
               ],
           ],
-        ),
         ),
       ),
     );

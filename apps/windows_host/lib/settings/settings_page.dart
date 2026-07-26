@@ -1,6 +1,8 @@
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
+
 
 import '../host_bootstrap.dart';
 import 'inventory_sync_card.dart';
@@ -342,8 +344,13 @@ class _ManifestStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cached = status.cachedVersion ?? 'none';
     final remote = status.remoteVersion ?? 'unknown';
-    final staleLabel = status.isStale ? 'stale' : 'up to date';
+    final readiness = manifestReadiness(
+      hasEntityCache: status.entityCache != null,
+      isStale: status.isStale,
+    );
+    final readyLabel = manifestReadinessLabel(readiness);
     final entitySummary = _entitySummary(status);
+    final counts = status.entityCache?.counts ?? const <String, int>{};
 
     return Card(
       key: const Key('manifest_status_card'),
@@ -352,10 +359,44 @@ class _ManifestStatusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Chip(
+                  key: const Key('manifest_readiness_badge'),
+                  label: Text(readyLabel),
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: readiness == ManifestReadiness.ready
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             _row('Cached version', cached, 'cached_version'),
             _row('Remote version', remote, 'remote_version'),
-            _row('Status', staleLabel, 'stale_status'),
+            _row(
+              'Status',
+              status.isStale ? 'stale' : 'up to date',
+              'stale_status',
+            ),
             _row('Entity cache', entitySummary, 'entity_cache'),
+
+            if (counts.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                key: const Key('manifest_entity_count_chips'),
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final e in counts.entries)
+                    Chip(
+                      key: Key('manifest_entity_chip_${e.key}'),
+                      visualDensity: VisualDensity.compact,
+                      label: Text('${e.key}: ${e.value}'),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

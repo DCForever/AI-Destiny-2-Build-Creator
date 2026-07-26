@@ -1,13 +1,27 @@
 import 'package:destiny2_bungie/destiny2_bungie.dart';
+import 'package:destiny2_db/destiny2_db.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/foundation.dart';
 
 import '../auth/windows_oauth_session.dart';
+import '../settings/inventory_sync_controller.dart';
 
 /// Phase for Windows In-Game Loadouts surface (DART-055).
 enum LoadoutsPhase {
   idle,
   loading,
   error,
+}
+
+/// Optional exotic enrichment inputs (inventory + catalog).
+class LoadoutExoticEnrichment {
+  const LoadoutExoticEnrichment({
+    required this.instanceIdToHash,
+    required this.catalog,
+  });
+
+  final Map<String, int> instanceIdToHash;
+  final ExoticCatalogIndex catalog;
 }
 
 /// Loads Bungie in-game loadouts (component 206) for the signed-in user.
@@ -20,16 +34,19 @@ class LoadoutsController extends ChangeNotifier {
     required BungieProfileClient profileClient,
     LoadoutPresentationTables? presentationTables,
     Future<LoadoutPresentationTables> Function()? presentationTablesLoader,
+    Future<LoadoutExoticEnrichment?> Function()? exoticEnrichment,
   })  : _session = session,
         _profileClient = profileClient,
         _presentationTables = presentationTables,
-        _presentationTablesLoader = presentationTablesLoader;
+        _presentationTablesLoader = presentationTablesLoader,
+        _exoticEnrichment = exoticEnrichment;
 
   final WindowsOAuthSession _session;
   final BungieProfileClient _profileClient;
   LoadoutPresentationTables? _presentationTables;
   final Future<LoadoutPresentationTables> Function()?
       _presentationTablesLoader;
+  final Future<LoadoutExoticEnrichment?> Function()? _exoticEnrichment;
 
   LoadoutsPhase _phase = LoadoutsPhase.idle;
   List<BungieInGameLoadout> _all = const [];
@@ -124,11 +141,30 @@ class LoadoutsController extends ChangeNotifier {
           : await _profileClient.getCharacters(accessToken, membership);
 
       final tables = await _resolvePresentationTables();
-      _all = parseCharacterLoadoutsResponse(
+      var list = parseCharacterLoadoutsResponse(
         profile,
         resolvedCharacters,
         tables: tables,
       );
+
+      // Soft best-effort exotic names (GAP-UI-LOADOUTS-02) — never blocks list.
+      try {
+        final enrich = await _exoticEnrichment?.call();
+        if (enrich != null &&
+            (enrich.instanceIdToHash.isNotEmpty ||
+                enrich.catalog.armorHashes.isNotEmpty ||
+                enrich.catalog.weaponHashes.isNotEmpty)) {
+          list = enrichLoadoutsWithExotics(
+            list,
+            instanceIdToHash: enrich.instanceIdToHash,
+            catalog: enrich.catalog,
+          );
+        }
+      } catch (_) {
+        // keep unenriched list
+      }
+
+      _all = list;
       _phase = LoadoutsPhase.idle;
       _errorMessage = null;
       if (_all.isEmpty) {
@@ -167,5 +203,53 @@ class LoadoutsController extends ChangeNotifier {
     final s = e.toString();
     if (s.length > 240) return '${s.substring(0, 240)}…';
     return s;
+  }
+
+  /// Build enrichment from local inventory + offline catalog (production path).
+  static Future<LoadoutExoticEnrichment?> buildExoticEnrichment({
+    required AppDatabase db,
+    required OfflineCatalog offlineCatalog,
+    required InventorySyncController inventorySync,
+  }) async {
+    final userId = inventorySync.localUserId;
+    Map<String, int> instanceMap = const {};
+    if (userId != null) {
+      final items = await listInventoryItems(db, userId);
+      instanceMap = instanceHashMapFromInventory([
+        for (final i in items) (instanceId: i.instanceId, itemHash: i.itemHash),
+      ]);
+    }
+
+    final armor = <({int hash, String name})>[];
+    final weapons = <({int hash, String name})>[];
+    for (final item in offlineCatalog.baseItems) {
+      if (!item.isExotic) continue;
+      final store = item.sourceStore ?? '';
+      if (store.contains('armor')) {
+        armor.add((hash: item.hash, name: item.name));
+      } else if (store.contains('weapon')) {
+        weapons.add((hash: item.hash, name: item.name));
+      } else {
+        // Heuristic: armor slots vs weapon slots when store unknown.
+        final slot = (item.slot ?? '').toLowerCase();
+        if (slot.contains('helmet') ||
+            slot.contains('gauntlet') ||
+            slot.contains('chest') ||
+            slot.contains('leg') ||
+            slot.contains('class')) {
+          armor.add((hash: item.hash, name: item.name));
+        } else {
+          weapons.add((hash: item.hash, name: item.name));
+        }
+      }
+    }
+
+    return LoadoutExoticEnrichment(
+      instanceIdToHash: instanceMap,
+      catalog: buildExoticCatalogIndex(
+        exoticArmor: armor,
+        exoticWeapons: weapons,
+      ),
+    );
   }
 }

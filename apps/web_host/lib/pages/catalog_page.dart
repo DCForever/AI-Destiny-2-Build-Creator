@@ -725,6 +725,19 @@ class _CatalogPageState extends State<CatalogPage> {
                         'click': (_) => _selectItem(item),
                       },
                       [
+                        if (item.icon != null && item.icon!.isNotEmpty)
+                          img(
+                            classes: 'catalog-item-icon',
+                            src: item.icon!.startsWith('http')
+                                ? item.icon!
+                                : 'https://www.bungie.net${item.icon!.startsWith('/') ? item.icon! : '/${item.icon!}'}',
+                            alt: '',
+                            attributes: {
+                              'data-testid': 'catalog-item-icon-${item.hash}',
+                              'width': '36',
+                              'height': '36',
+                            },
+                          ),
                         span(classes: 'catalog-name', [
                           .text(item.name),
                           if (item.owned)
@@ -736,14 +749,23 @@ class _CatalogPageState extends State<CatalogPage> {
                               [.text(' ×${item.ownedCount}')],
                             ),
                         ]),
-                        span(classes: 'catalog-meta', [
+                        span(
+                          classes: 'catalog-meta',
+                          attributes: {
+                            'data-testid': 'catalog-item-meta-${item.hash}',
+                          },
+                          [
                           .text(
                             [
-                              if (item.slot != null) item.slot!,
-                              if (item.element != null) item.element!,
-                              if (item.ammo != null) item.ammo!,
-                              if (item.classType != null) item.classType!,
-                              if (item.isExotic) 'Exotic',
+                              ...buildCatalogDenseMetaChips(
+                                isExotic: item.isExotic,
+                                slot: item.slot,
+                                element: item.element,
+                                ammo: item.ammo,
+                                itemTypeName: item.itemTypeName,
+                                frame: item.frame,
+                                classType: item.classType,
+                              ),
                               if (item.owned) 'owned×${item.ownedCount}',
                               if (item.linkedSynergyIds.isNotEmpty)
                                 'syn×${item.linkedSynergyIds.length}',

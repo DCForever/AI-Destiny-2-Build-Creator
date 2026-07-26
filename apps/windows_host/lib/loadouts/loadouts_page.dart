@@ -5,7 +5,7 @@ import '../host_bootstrap.dart';
 import 'loadout_presentation_loader.dart';
 import 'loadouts_controller.dart';
 
-/// In-Game Loadouts browser (Bungie character loadouts / component 206) — DART-055.
+/// In-Game Loadouts browser (Bungie character loadouts / component 206) — DART-055/068.
 class LoadoutsPage extends StatefulWidget {
   const LoadoutsPage({
     super.key,
@@ -29,6 +29,7 @@ class LoadoutsPage extends StatefulWidget {
 class _LoadoutsPageState extends State<LoadoutsPage> {
   late final LoadoutsController _controller;
   bool _ownController = false;
+  String? _expandedId;
 
   @override
   void initState() {
@@ -43,6 +44,11 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
         presentationTablesLoader: () =>
             loadLoadoutPresentationTablesFromStorage(
           widget.services.storageRoot,
+        ),
+        exoticEnrichment: () => LoadoutsController.buildExoticEnrichment(
+          db: widget.services.db,
+          offlineCatalog: widget.services.offlineCatalog,
+          inventorySync: widget.services.inventorySync,
         ),
       );
     }
@@ -186,7 +192,16 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final lo = display[i];
-                    return _LoadoutTile(loadout: lo);
+                    final expanded = _expandedId == lo.id;
+                    return _LoadoutTile(
+                      loadout: lo,
+                      expanded: expanded,
+                      onToggleExpand: () {
+                        setState(() {
+                          _expandedId = expanded ? null : lo.id;
+                        });
+                      },
+                    );
                   },
                 ),
               ),
@@ -231,9 +246,15 @@ class _FilterBar extends StatelessWidget {
 }
 
 class _LoadoutTile extends StatelessWidget {
-  const _LoadoutTile({required this.loadout});
+  const _LoadoutTile({
+    required this.loadout,
+    required this.expanded,
+    required this.onToggleExpand,
+  });
 
   final BungieInGameLoadout loadout;
+  final bool expanded;
+  final VoidCallback onToggleExpand;
 
   @override
   Widget build(BuildContext context) {
@@ -250,33 +271,177 @@ class _LoadoutTile extends StatelessWidget {
       subtitle.write(' · ${loadout.itemInstanceIds.length} items');
     }
 
-    Widget leading;
-    if (loadout.iconUrl != null) {
-      leading = Image.network(
-        loadout.iconUrl!,
-        width: 32,
-        height: 32,
-        errorBuilder: (_, __, ___) => const Icon(Icons.sports_esports),
-      );
-    } else {
-      leading = const Icon(Icons.sports_esports);
-    }
+    final exoticLine = _exoticLine(loadout);
 
     return Card(
       key: Key('loadout_tile_${loadout.id}'),
-      child: ListTile(
-        leading: leading,
-        title: Text(loadout.name),
-        subtitle: Text(subtitle.toString()),
-        trailing: loadout.empty
-            ? Text(
-                'Empty',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Color bar (GAP-UI-LOADOUTS-01)
+                Container(
+                  key: Key('loadout_color_bar_${loadout.id}'),
+                  width: 6,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    image: loadout.colorUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(loadout.colorUrl!),
+                            fit: BoxFit.cover,
+                            onError: (_, __) {},
+                          )
+                        : null,
+                  ),
                 ),
-              )
-            : null,
+                Expanded(
+                  child: ListTile(
+                    leading: _IconPlate(loadout: loadout),
+                    title: Text(loadout.name),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(subtitle.toString()),
+                        if (exoticLine != null)
+                          Text(
+                            exoticLine,
+                            key: Key('loadout_exotics_${loadout.id}'),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.tertiary,
+                            ),
+                          ),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (loadout.colorUrl != null)
+                          Container(
+                            key: Key('loadout_color_swatch_${loadout.id}'),
+                            width: 16,
+                            height: 16,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: theme.colorScheme.outline,
+                              ),
+                              image: DecorationImage(
+                                image: NetworkImage(loadout.colorUrl!),
+                                fit: BoxFit.cover,
+                                onError: (_, __) {},
+                              ),
+                            ),
+                          ),
+                        if (loadout.empty)
+                          Text(
+                            'Empty',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        TextButton(
+                          key: Key('loadout_details_toggle_${loadout.id}'),
+                          onPressed: onToggleExpand,
+                          child: Text(expanded ? 'Hide' : 'Details'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (expanded)
+            Padding(
+              key: Key('loadout_details_${loadout.id}'),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Character: ${loadout.characterId}',
+                    key: Key('loadout_detail_character_${loadout.id}'),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  Text(
+                    'Icon hash: ${loadout.iconHash} · Color hash: ${loadout.colorHash}',
+                    key: Key('loadout_detail_hashes_${loadout.id}'),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  Text(
+                    loadout.empty
+                        ? 'Empty slot — no equipped instances.'
+                        : 'Instances: ${loadout.itemInstanceIds.length}',
+                    key: Key('loadout_detail_instances_${loadout.id}'),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  if (loadout.iconUrl != null) ...[
+                    const SizedBox(height: 8),
+                    Image.network(
+                      loadout.iconUrl!,
+                      key: Key('loadout_detail_icon_${loadout.id}'),
+                      width: 64,
+                      height: 64,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.sports_esports, size: 48),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
       ),
+    );
+  }
+
+  static String? _exoticLine(BungieInGameLoadout lo) {
+    final parts = <String>[];
+    if (lo.exoticArmorName != null && lo.exoticArmorName!.isNotEmpty) {
+      parts.add(lo.exoticArmorName!);
+    }
+    if (lo.exoticWeaponName != null && lo.exoticWeaponName!.isNotEmpty) {
+      parts.add(lo.exoticWeaponName!);
+    }
+    if (parts.isEmpty) return null;
+    return parts.join(' · ');
+  }
+}
+
+class _IconPlate extends StatelessWidget {
+  const _IconPlate({required this.loadout});
+
+  final BungieInGameLoadout loadout;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Widget glyph;
+    if (loadout.iconUrl != null) {
+      glyph = Image.network(
+        loadout.iconUrl!,
+        width: 28,
+        height: 28,
+        errorBuilder: (_, __, ___) => const Icon(Icons.sports_esports, size: 22),
+      );
+    } else {
+      glyph = const Icon(Icons.sports_esports, size: 22);
+    }
+    return Container(
+      key: Key('loadout_icon_plate_${loadout.id}'),
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: theme.colorScheme.surfaceContainerHighest,
+      ),
+      child: glyph,
     );
   }
 }

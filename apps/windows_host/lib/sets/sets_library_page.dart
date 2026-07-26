@@ -10,6 +10,7 @@ import '../catalog/owned_catalog_bridge.dart';
 import '../host_bootstrap.dart';
 import '../optimizer/optimizer_controller.dart';
 import '../optimizer/optimizer_workspace.dart';
+import '../widgets/entity_icon.dart';
 import 'set_catalog_picker.dart';
 import 'set_item_enrichment.dart';
 import 'set_slot_mapping.dart';
@@ -772,11 +773,23 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       key: Key('sets_slot_filled_$slot'),
       children: [
-        Text(
-          '$name ($hash)',
-          key: Key('sets_slot_name_$slot'),
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium,
+        Row(
+          children: [
+            EntityIcon(
+              key: Key('sets_slot_icon_$slot'),
+              icon: row?.icon,
+              size: 32,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '$name ($hash)',
+                key: Key('sets_slot_name_$slot'),
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
         Wrap(

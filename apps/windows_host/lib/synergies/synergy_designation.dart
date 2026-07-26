@@ -1,14 +1,19 @@
-/// Pure designation display helpers for synergy library UI (DART-031).
+import 'package:destiny2_app/destiny2_app.dart';
+
+/// Pure designation display helpers for synergy library UI (DART-031/068).
 ///
 /// Parity with domain [SynergyTypeDesignation.designationKey]:
 /// `type` or `type::subType` when subtype is non-empty after trim.
+/// Human chrome (GAP-UI-SYN-05): Verb:/Element: preferred for display.
 
-/// Format a synergy designation key for list/detail display.
+/// Format a synergy designation key for list/detail display (human chrome).
 String formatSynergyDesignation(String type, [String? subType]) {
-  final t = type.trim();
-  final sub = subType?.trim() ?? '';
-  if (sub.isEmpty) return t;
-  return '$t::$sub';
+  return formatDesignationChrome(type, subType);
+}
+
+/// Wire key still useful for filters/debug.
+String formatSynergyDesignationWire(String type, [String? subType]) {
+  return designationWireKey(type, subType);
 }
 
 /// Human label for a [SynergyLinkKind] wire name (fallback: wire itself).

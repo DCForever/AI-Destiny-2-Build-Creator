@@ -274,6 +274,6 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('catalog_empty')), findsOneWidget);
-    expect(find.textContaining('Sync now'), findsOneWidget);
+    expect(find.textContaining('Sync inventory'), findsOneWidget);
   });
 }

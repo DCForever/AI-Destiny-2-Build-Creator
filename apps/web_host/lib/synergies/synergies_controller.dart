@@ -45,7 +45,7 @@ class SynergiesController extends ChangeNotifier {
   List<SynergyLinkWrite> get draftLinks => List.unmodifiable(_draftLinks);
 
   String designationOf(SynergyWithLinks s) =>
-      formatSynergyDesignationKey(s.type, s.subType);
+      formatSynergyDesignationDisplay(s.type, s.subType);
 
   void _reapplyFilters() {
     final rows = [

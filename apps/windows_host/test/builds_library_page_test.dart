@@ -378,10 +378,11 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    // Builds is 4th destination (index 3): Catalog, Sets, Synergies, Builds.
-    final buildsDest = find.text('Builds');
-    expect(buildsDest, findsOneWidget);
-    await tester.tap(buildsDest);
+    // Build is 2nd destination (index 1): Loadouts, Build, … (DART-068).
+    final buildsDest = find.text('Build');
+
+    expect(buildsDest, findsWidgets);
+    await tester.tap(buildsDest.first);
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('builds_library_page')), findsOneWidget);
@@ -390,7 +391,7 @@ void main() {
     // Other destinations still present in rail.
     expect(find.text('Catalog'), findsOneWidget);
     expect(find.text('Sets'), findsOneWidget);
-    expect(find.text('Synergies'), findsOneWidget);
+    expect(find.text('Synergy'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
   });
 }

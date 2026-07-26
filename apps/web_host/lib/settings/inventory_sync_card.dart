@@ -1,12 +1,14 @@
-/// Settings inventory sync card for Jaspr (DART-056 / DART-053 diagnostics).
+/// Settings inventory sync card for Jaspr (DART-056 / DART-053 diagnostics + DART-068 chrome).
 library;
 
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../auth/web_oauth_session.dart';
 import '../theme/theme.dart';
 import 'inventory_sync_controller.dart';
+
 
 /// Settings inventory sync: Sync now + busy/error + meta + diagnostics.
 class InventorySyncCard extends StatefulComponent {
@@ -91,6 +93,16 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
           )
         else ...[
           p(
+            attributes: {'data-testid': 'inventory-online-chip'},
+            [
+              .text(
+                inventoryHasSynced(lastFullSyncAt: c.lastFullSyncAt)
+                    ? 'ONLINE'
+                    : 'OFFLINE',
+              ),
+            ],
+          ),
+          p(
             attributes: {'data-testid': 'inventory-sync-summary'},
             [.text(_summaryLine(c))],
           ),
@@ -105,7 +117,11 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
             ),
             li(
               attributes: {'data-testid': 'inventory-last-sync'},
-              [.text('Last full sync: ${c.lastFullSyncAt ?? 'never'}')],
+              [
+                .text(
+                  'Last sync: ${formatLastSyncLabel(lastFullSyncAt: c.lastFullSyncAt)}',
+                ),
+              ],
             ),
             li(
               attributes: {'data-testid': 'inventory-freshness'},
@@ -179,18 +195,33 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
             [.text('Syncing inventory…')],
           )
         else
-          button(
-            classes: 'inventory-sync-now',
-            attributes: {
-              'type': 'button',
-              'data-testid': 'inventory-sync-now',
-              if (!c.canSync) 'disabled': 'true',
-            },
-            events: {
-              if (c.canSync) 'click': (_) => c.syncNow(),
-            },
-            [.text('Sync now')],
-          ),
+          div(classes: 'inventory-sync-actions', [
+            button(
+              classes: 'inventory-sync-now',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'inventory-sync-now',
+                if (!c.canSync) 'disabled': 'true',
+              },
+              events: {
+                if (c.canSync) 'click': (_) => c.syncNow(),
+              },
+              [.text('Sync inventory')],
+            ),
+            button(
+              classes: 'inventory-refresh-status',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'inventory-refresh-status',
+                if (!signedIn || syncing) 'disabled': 'true',
+              },
+              events: {
+                if (signedIn && !syncing)
+                  'click': (_) => c.refreshStatus(),
+              },
+              [.text('Refresh status')],
+            ),
+          ]),
         p(classes: 'settings-policy', [
           .text(
             'Full replace into local Drift (OPFS). Vault/postmaster use the same '
