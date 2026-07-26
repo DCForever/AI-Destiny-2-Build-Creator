@@ -116,6 +116,13 @@ void main() {
   Finder itemKey(int hash) =>
       find.byKey(Key('catalog_item_$hash'), skipOffstage: false);
 
+  Future<void> expandFilters(WidgetTester tester) async {
+    final toggle = find.byKey(const Key('catalog_filters_toggle'));
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await _pumpFrames(tester);
+  }
+
   testWidgets('shows fixture item names offline', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: CatalogPage(services: services)),
@@ -129,6 +136,8 @@ void main() {
     expect(find.byKey(const Key('catalog_status')), findsOneWidget);
     expect(find.byKey(const Key('mode_chip_weapons')), findsOneWidget);
     expect(find.byKey(const Key('mode_chip_universal')), findsOneWidget);
+    expect(find.byKey(const Key('catalog_filters_toggle')), findsOneWidget);
+    expect(find.byKey(const Key('catalog_board_header')), findsOneWidget);
   });
 
   testWidgets('element include chip narrows list', (tester) async {
@@ -136,6 +145,7 @@ void main() {
       MaterialApp(home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
+    await expandFilters(tester);
 
     await tester.ensureVisible(find.byKey(const Key('element_chip_Solar')));
     await tester.tap(find.byKey(const Key('element_chip_Solar')));
@@ -151,6 +161,7 @@ void main() {
       MaterialApp(home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
+    await expandFilters(tester);
 
     // Slot Energy include
     await tester.ensureVisible(find.byKey(const Key('slot_chip_Energy')));
@@ -198,24 +209,12 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    final tiles = tester
-        .widgetList<ListTile>(
-          find.byWidgetPredicate(
-            (w) =>
-                w is ListTile &&
-                w.key is Key &&
-                (w.key as Key).toString().contains('catalog_item_'),
-            skipOffstage: false,
-          ),
-        )
-        .toList();
-    final names = tiles
-        .map((t) => t.title)
-        .whereType<Text>()
-        .map((t) => t.data)
-        .whereType<String>()
-        .toList();
-    expect(names, ['Arc Logic', "Dragon's Breath", 'Edge Transit']);
+    // Arc Logic (3), Dragon's Breath (2), Edge Transit (1) — flap board order
+    final y3 = tester.getTopLeft(itemKey(3)).dy;
+    final y2 = tester.getTopLeft(itemKey(2)).dy;
+    final y1 = tester.getTopLeft(itemKey(1)).dy;
+    expect(y3 < y2, isTrue);
+    expect(y2 < y1, isTrue);
   });
 
   testWidgets('free-text filters by name', (tester) async {

@@ -2,11 +2,28 @@ import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
+import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
 import '../widgets/entity_icon.dart';
 import 'owned_catalog_bridge.dart';
+
+/// Catalog board columns: NAME · IDENTITY · TYPE · OWNED
+const FlapColumnTemplate kFlapColumnsCatalog = FlapColumnTemplate(
+  id: 'catalog',
+  columnsCss:
+      'minmax(0, 1.4fr) minmax(88px, 0.55fr) minmax(0, 0.9fr) minmax(72px, 0.45fr)',
+  cellRoles: [
+    FlapCellRole.name,
+    FlapCellRole.identity,
+    FlapCellRole.type,
+    FlapCellRole.status,
+  ],
+  headerLabels: ['Name', 'Identity', 'Type', 'Owned'],
+);
 
 
 /// Catalog browse with kind modes, synergy tags, owned detail (DART-063).
@@ -56,6 +73,9 @@ class _CatalogPageState extends State<CatalogPage> {
   List<CatalogInstanceProjection> _instances = const [];
   List<LinkedSynergyBadge> _reverseTags = const [];
   String? _actionMessage;
+
+  /// Facet / group chrome collapsed by default (P0 — reduce chrome explosion).
+  bool _filtersExpanded = false;
 
   OwnedCatalogBridge _createBridge() {
     return widget.bridge ??
@@ -275,6 +295,40 @@ class _CatalogPageState extends State<CatalogPage> {
     return 'Exotic: any';
   }
 
+  int _activeFilterCount() {
+    var n = 0;
+    if (!isFacetEmpty(_elements)) n++;
+    if (!isFacetEmpty(_ammos)) n++;
+    if (!isFacetEmpty(_slots)) n++;
+    if (!isFacetEmpty(_classNames)) n++;
+    if (!isFacetEmpty(_archetypes)) n++;
+    if (!isFacetEmpty(_synergies)) n++;
+    if (_exotic != null) n++;
+    if (_groupBy.isNotEmpty) n++;
+    return n;
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      _elements = emptyFacet();
+      _ammos = emptyFacet();
+      _slots = emptyFacet();
+      _classNames = emptyFacet();
+      _archetypes = emptyFacet();
+      _synergies = emptyFacet();
+      _exotic = null;
+      _groupBy.clear();
+      _results = _applyFilters();
+    });
+    _syncSelection();
+  }
+
+  String _filtersSummaryLabel() {
+    final n = _activeFilterCount();
+    if (n == 0) return 'Filters · none active';
+    return 'Filters · $n active';
+  }
+
   Future<void> _createSetFromHit(CatalogItem item) async {
     final uid = _bridge.userId;
     if (uid == null) {
@@ -393,6 +447,7 @@ class _CatalogPageState extends State<CatalogPage> {
     required void Function(String) onCycle,
     String Function(String)? labelOf,
   }) {
+    final palette = FlapPalette.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -401,12 +456,35 @@ class _CatalogPageState extends State<CatalogPage> {
           for (final value in values)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: FilterChip(
-                key: Key('${keyPrefix}_chip_$value'),
-                label: Text(labelOf?.call(value) ?? value),
-                selected: facetChipState(facet, value) != FacetChipState.off,
-                onSelected: (_) => onCycle(value),
-                avatar: _facetAvatar(facetChipState(facet, value)),
+              child: Builder(
+                builder: (context) {
+                  final state = facetChipState(facet, value);
+                  final selected = state != FacetChipState.off;
+                  final exclude = state == FacetChipState.exclude;
+                  final label = labelOf?.call(value) ?? value;
+                  return FilterChip(
+                    key: Key('${keyPrefix}_chip_$value'),
+                    label: Text(
+                      label,
+                      style: TextStyle(
+                        decoration:
+                            exclude ? TextDecoration.lineThrough : null,
+                        color: exclude ? palette.danger : null,
+                      ),
+                    ),
+                    selected: selected,
+                    selectedColor: exclude
+                        ? palette.danger.withValues(alpha: 0.12)
+                        : palette.accentDim,
+                    onSelected: (_) => onCycle(value),
+                    avatar: _facetAvatar(state),
+                    tooltip: exclude
+                        ? 'Exclude $label (tap to cycle)'
+                        : selected
+                            ? 'Include $label (tap to cycle)'
+                            : 'Filter $label (tap include → exclude → off)',
+                  );
+                },
               ),
             ),
         ],
@@ -478,131 +556,172 @@ class _CatalogPageState extends State<CatalogPage> {
                 const SizedBox(width: 8),
                 FilterChip(
                   key: const Key('scope_chip_owned'),
-                  label: const Text('Owned'),
+                  label: Text(
+                    _bridge.inventory.isEmpty
+                        ? 'Owned'
+                        : 'Owned · ${_bridge.ownedDefinitionCount}',
+                  ),
                   selected: _scope == CatalogScope.owned,
                   onSelected: (_) => _setScope(CatalogScope.owned),
                 ),
+                const Spacer(),
+                if (_activeFilterCount() > 0)
+                  TextButton(
+                    key: const Key('catalog_clear_filters'),
+                    onPressed: _clearAllFilters,
+                    child: const Text('Clear filters'),
+                  ),
               ],
             ),
           ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 200),
-            child: SingleChildScrollView(
-              key: const Key('catalog_filters_scroll'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 4),
-                  if (catalogShowsElementFacet(_mode))
-                    _facetChipRow(
-                      keyPrefix: 'element',
-                      values: catalogElements,
-                      facet: _elements,
-                      onCycle: _cycleElement,
-                    ),
-                  if (catalogShowsAmmoFacet(_mode)) ...[
+          // Progressive disclosure: facets/group behind toggle (P0).
+          ListTile(
+            key: const Key('catalog_filters_toggle'),
+            dense: true,
+            title: Text(
+              _filtersSummaryLabel(),
+              key: const Key('catalog_filters_summary'),
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            subtitle: _filtersExpanded
+                ? null
+                : Text(
+                    'Element, slot, archetype, exotic, group…',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+            trailing: Icon(
+              _filtersExpanded ? Icons.expand_less : Icons.expand_more,
+            ),
+            onTap: () {
+              setState(() => _filtersExpanded = !_filtersExpanded);
+            },
+          ),
+          if (_filtersExpanded)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: SingleChildScrollView(
+                key: const Key('catalog_filters_scroll'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (catalogShowsElementFacet(_mode))
+                      _facetChipRow(
+                        keyPrefix: 'element',
+                        values: catalogElements,
+                        facet: _elements,
+                        onCycle: _cycleElement,
+                      ),
+                    if (catalogShowsAmmoFacet(_mode)) ...[
+                      const SizedBox(height: 4),
+                      _facetChipRow(
+                        keyPrefix: 'ammo',
+                        values: catalogAmmoTypes,
+                        facet: _ammos,
+                        onCycle: _cycleAmmo,
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     _facetChipRow(
-                      keyPrefix: 'ammo',
-                      values: catalogAmmoTypes,
-                      facet: _ammos,
-                      onCycle: _cycleAmmo,
+                      keyPrefix: 'slot',
+                      values: catalogSlotsForMode(_mode),
+                      facet: _slots,
+                      onCycle: _cycleSlot,
                     ),
-                  ],
-                  const SizedBox(height: 4),
-                  _facetChipRow(
-                    keyPrefix: 'slot',
-                    values: catalogSlotsForMode(_mode),
-                    facet: _slots,
-                    onCycle: _cycleSlot,
-                  ),
-                  if (catalogShowsClassFacet(_mode)) ...[
+                    if (catalogShowsClassFacet(_mode)) ...[
+                      const SizedBox(height: 4),
+                      _facetChipRow(
+                        keyPrefix: 'class',
+                        values: catalogClassNames,
+                        facet: _classNames,
+                        onCycle: _cycleClass,
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     _facetChipRow(
-                      keyPrefix: 'class',
-                      values: catalogClassNames,
-                      facet: _classNames,
-                      onCycle: _cycleClass,
+                      keyPrefix: 'archetype',
+                      values: catalogArchetypesForMode(_mode),
+                      facet: _archetypes,
+                      onCycle: _cycleArchetype,
                     ),
-                  ],
-                  const SizedBox(height: 4),
-                  _facetChipRow(
-                    keyPrefix: 'archetype',
-                    values: catalogArchetypesForMode(_mode),
-                    facet: _archetypes,
-                    onCycle: _cycleArchetype,
-                  ),
-                  const SizedBox(height: 4),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: FilterChip(
-                            key: const Key('exotic_chip'),
-                            label: Text(_exoticLabel()),
-                            selected: _exotic != null,
-                            onSelected: (_) => _cycleExotic(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_bridge.synergyMembership.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Synergy membership',
-                        key: const Key('synergy_filter_label'),
-                        style: Theme.of(context).textTheme.labelMedium,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilterChip(
+                          key: const Key('exotic_chip'),
+                          label: Text(_exoticLabel()),
+                          selected: _exotic != null,
+                          onSelected: (_) => _cycleExotic(),
+                        ),
                       ),
                     ),
-                    _facetChipRow(
-                      keyPrefix: 'synergy',
-                      values: _bridge.synergyMembership.map((s) => s.id).toList(),
-                      facet: _synergies,
-                      onCycle: _cycleSynergy,
-                      labelOf: (id) => _bridge.synergyNames[id] ?? id,
-                    ),
-                  ],
-                  const SizedBox(height: 4),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      key: const Key('catalog_group_by'),
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: Text('Group:'),
+                    if (_bridge.synergyMembership.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Synergy membership',
+                          key: const Key('synergy_filter_label'),
+                          style: Theme.of(context).textTheme.labelMedium,
                         ),
-                        for (final dim in catalogGroupDimensions)
+                      ),
+                      _facetChipRow(
+                        keyPrefix: 'synergy',
+                        values: _bridge.synergyMembership
+                            .map((s) => s.id)
+                            .toList(),
+                        facet: _synergies,
+                        onCycle: _cycleSynergy,
+                        labelOf: (id) =>
+                            _bridge.synergyNames[id] ?? 'Synergy',
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        key: const Key('catalog_group_by'),
+                        children: [
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: FilterChip(
-                              key: Key('group_chip_${dim.id.name}'),
-                              label: Text(dim.label),
-                              selected: _groupBy.contains(dim.id),
-                              onSelected: (_) =>
-                                  _toggleGroupDimension(dim.id),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              'Group results',
+                              style: Theme.of(context).textTheme.labelMedium,
                             ),
                           ),
-                      ],
+                          for (final dim in catalogGroupDimensions)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: FilterChip(
+                                key: Key('group_chip_${dim.id.name}'),
+                                label: Text(dim.label),
+                                selected: _groupBy.contains(dim.id),
+                                onSelected: (_) =>
+                                    _toggleGroupDimension(dim.id),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
-          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
             child: Text(
               _statusLine(),
               key: const Key('catalog_status'),
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontFamily: 'IBM Plex Mono',
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: FlapPalette.of(context).muted,
+                  ),
             ),
           ),
           Expanded(
@@ -636,14 +755,15 @@ class _CatalogPageState extends State<CatalogPage> {
 
   String _statusLine() {
     if (_loading) return 'Loading entity stores…';
-    if (_error != null) return 'Error: $_error';
-    final v = _version ?? 'none';
+    if (_error != null) return 'Load failed — use Reload or check Settings';
+    final v = _version ?? '—';
     final base = _bridge.annotatedBase.length;
     final inv = _bridge.inventory.length;
-    final scopeLabel = _scope == CatalogScope.owned ? 'owned' : 'all';
-    final modeLabel = browseModeLabel(_mode);
-    return 'Version $v · ${_results.length} shown / $base base · '
-        'mode=$modeLabel · scope=$scopeLabel · inventory=$inv copies';
+    final scopeLabel = _scope == CatalogScope.owned ? 'OWNED' : 'ALL';
+    final modeLabel = browseModeLabel(_mode).toUpperCase();
+    // Human tally (P1) — not mode=/scope= debug dump.
+    return 'V $v  ·  ${_results.length}/$base shown  ·  $modeLabel  ·  '
+        '$scopeLabel  ·  $inv copies';
   }
 
   Widget _buildBody() {
@@ -656,96 +776,107 @@ class _CatalogPageState extends State<CatalogPage> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(
-            'Failed to load catalog:\n$_error',
-            key: const Key('catalog_error'),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Failed to load catalog.',
+                key: const Key('catalog_error'),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                key: const Key('catalog_error_retry'),
+                onPressed: _load,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       );
     }
     if (_results.isEmpty) {
-      final message = _emptyMessage();
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            message,
-            key: const Key('catalog_empty'),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
+      return _buildEmptyState();
     }
     final groups = _groupedResults();
-    final rows = <Widget>[];
+    final rows = <Widget>[
+      const FlapBoardHeader(
+        key: Key('catalog_board_header'),
+        template: kFlapColumnsCatalog,
+      ),
+    ];
     for (final group in groups) {
       if (_groupBy.isNotEmpty || groups.length > 1) {
         rows.add(
-          ListTile(
+          Padding(
             key: Key('catalog_group_${group.key}'),
-            dense: true,
-            title: Text(
-              '${group.label} (${group.items.length})',
-              style: Theme.of(context).textTheme.titleSmall,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: Text(
+              '${group.label} (${group.items.length})'.toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall,
             ),
           ),
         );
       }
       for (final item in group.items) {
-        final dense = buildCatalogDenseMetaChips(
-          isExotic: item.isExotic,
-          slot: item.slot,
-          element: item.element,
-          ammo: item.ammo,
-          itemTypeName: item.itemTypeName,
-          frame: item.frame,
-          classType: item.classType,
-        );
         final selected = _selected?.hash == item.hash;
+        final identityParts = <String>[
+          if (item.element != null) item.element!,
+          if (item.slot != null) item.slot!,
+          if (item.isExotic) 'Exotic',
+        ];
+        final typeParts = <String>[
+          if (item.itemTypeName != null) item.itemTypeName!,
+          if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
+          if (item.classType != null) item.classType!,
+          if (item.linkedSynergyIds.isNotEmpty)
+            '${item.linkedSynergyIds.length} syn',
+        ];
+        final ownedLabel =
+            item.owned ? '×${item.ownedCount}' : '—';
+        final elementInk = flapElementColor(context, item.element);
         rows.add(
-          ListTile(
+          FlapBoardRow(
             key: Key('catalog_item_${item.hash}'),
-            leading: EntityIcon(
-              key: Key('catalog_item_icon_${item.hash}'),
-              icon: item.icon,
-              size: 36,
-            ),
-            title: Text(item.name),
-            subtitle: dense.isEmpty && !item.owned
-                ? null
-                : Wrap(
-                    key: Key('catalog_item_meta_${item.hash}'),
-                    spacing: 4,
-                    runSpacing: 2,
-                    children: [
-                      for (final m in dense)
-                        Chip(
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          label: Text(m, style: const TextStyle(fontSize: 11)),
-                        ),
-                      if (item.owned)
-                        Chip(
-                          key: Key('owned_badge_${item.hash}'),
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          label: Text('Owned ×${item.ownedCount}'),
-                        ),
-                      if (item.linkedSynergyIds.isNotEmpty)
-                        Chip(
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          label: Text('syn×${item.linkedSynergyIds.length}'),
-                        ),
-                    ],
-                  ),
-            dense: true,
+            template: kFlapColumnsCatalog,
             selected: selected,
             onTap: () => _selectItem(item),
+            cells: [
+              Row(
+                children: [
+                  EntityIcon(
+                    key: Key('catalog_item_icon_${item.hash}'),
+                    icon: item.icon,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FlapTextCell(
+                      text: item.name,
+                      primary: true,
+                      textKey: Key('catalog_item_name_${item.hash}'),
+                    ),
+                  ),
+                ],
+              ),
+              FlapTextCell(
+                text: identityParts.isEmpty ? '—' : identityParts.join(' · '),
+                color: elementInk,
+                textKey: Key('catalog_item_meta_${item.hash}'),
+              ),
+              FlapTextCell(
+                text: typeParts.isEmpty ? '—' : typeParts.join(' · '),
+              ),
+              FlapTextCell(
+                text: ownedLabel,
+                color: item.owned ? FlapPalette.of(context).accent : null,
+                textKey: item.owned
+                    ? Key('owned_badge_${item.hash}')
+                    : null,
+              ),
+            ],
           ),
         );
       }
@@ -753,6 +884,69 @@ class _CatalogPageState extends State<CatalogPage> {
     return ListView(
       key: const Key('catalog_list'),
       children: rows,
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final message = _emptyMessage();
+    final filterEmpty = _emptyReason == CatalogEmptyReason.none &&
+        _activeFilterCount() > 0;
+    final entityEmpty = _emptyReason == CatalogEmptyReason.noVersion ||
+        _emptyReason == CatalogEmptyReason.noStores;
+    final invEmpty =
+        _scope == CatalogScope.owned && _bridge.inventory.isEmpty && !entityEmpty;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                key: const Key('catalog_empty'),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  if (filterEmpty)
+                    FilledButton(
+                      key: const Key('catalog_empty_clear_filters'),
+                      onPressed: _clearAllFilters,
+                      child: const Text('Clear filters'),
+                    ),
+                  if (entityEmpty || invEmpty)
+                    FilledButton.tonal(
+                      key: const Key('catalog_empty_reload'),
+                      onPressed: _load,
+                      child: const Text('Reload catalog'),
+                    ),
+                  if (entityEmpty)
+                    Text(
+                      key: const Key('catalog_empty_settings_hint'),
+                      'Then open Settings → Refresh manifest',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  if (invEmpty)
+                    Text(
+                      key: const Key('catalog_empty_sync_hint'),
+                      'Sign in and Settings → Sync inventory if needed',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -788,8 +982,10 @@ class _CatalogPageState extends State<CatalogPage> {
         ? (set: false, synergy: false)
         : hitActions(kind);
 
+    final palette = FlapPalette.of(context);
     return Material(
-      elevation: 1,
+      elevation: 0,
+      color: palette.surfaceRaised,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -908,96 +1104,125 @@ class _CatalogPageState extends State<CatalogPage> {
       if (inst.isCrafted) 'Crafted',
       if (inst.gearTier != null) 'T${inst.gearTier}',
     ].join(' · ');
-    final loc = inst.characterId != null
-        ? '${inst.location} (${inst.characterId})'
-        : inst.location;
+    // Human location only — hide raw instanceId / characterId from default UI (P1).
+    final loc = inst.location;
+    final meta = [
+      loc,
+      if (inst.bucket.isNotEmpty) inst.bucket,
+      if (flags.isNotEmpty) flags,
+    ].join(' · ');
 
-    return Card(
+    return Container(
       key: Key('instance_${inst.instanceId}'),
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Power ${inst.power}',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            Text(
-              [inst.instanceId, loc, inst.bucket, if (flags.isNotEmpty) flags]
-                  .join(' · '),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            if (inst.rollTags.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: kFlapRuleThickness,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
                 child: Text(
-                  'Tags: ${inst.rollTags.join(', ')}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'Power ${inst.power}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontFamily: 'IBM Plex Mono',
+                      ),
                 ),
               ),
-            if (inst.armorStats != null && inst.armorStats!.hasAny) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Base stats',
-                key: Key('armor_stats_label_${inst.instanceId}'),
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-              Wrap(
-                key: Key('armor_stats_board_${inst.instanceId}'),
-                spacing: 8,
-                children: [
-                  for (final key in armorBaseStatKeys)
-                    if (inst.armorStats!.stats[key] != null)
-                      Chip(
-                        label: Text('$key ${inst.armorStats!.stats[key]}'),
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                  if (inst.armorStats!.total != null)
-                    Chip(
-                      label: Text('Total ${inst.armorStats!.total}'),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
+              IconButton(
+                key: Key('instance_copy_id_${inst.instanceId}'),
+                tooltip: 'Copy instance id',
+                icon: const Icon(Icons.copy, size: 16),
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: inst.instanceId));
+                  setState(() {
+                    _actionMessage = 'Copied instance id';
+                  });
+                },
               ),
             ],
-            if (inst.plugCards.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Perks / plugs',
-                key: Key('plug_cards_label_${inst.instanceId}'),
-                style: Theme.of(context).textTheme.labelMedium,
+          ),
+          Text(
+            meta,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          if (inst.rollTags.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Tags: ${inst.rollTags.join(', ')}',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-              Wrap(
-                key: Key('plug_cards_${inst.instanceId}'),
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  for (final card in inst.plugCards)
+            ),
+          if (inst.armorStats != null && inst.armorStats!.hasAny) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Base stats',
+              key: Key('armor_stats_label_${inst.instanceId}'),
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            Wrap(
+              key: Key('armor_stats_board_${inst.instanceId}'),
+              spacing: 8,
+              children: [
+                for (final key in armorBaseStatKeys)
+                  if (inst.armorStats!.stats[key] != null)
                     Chip(
-                      key: Key('plug_card_${inst.instanceId}_${card.hash}'),
-                      label: Text(
-                        card.isTrait
-                            ? 'Trait: ${card.displayName}'
-                            : card.displayName,
-                      ),
+                      label: Text('$key ${inst.armorStats!.stats[key]}'),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                ],
-              ),
-            ] else if (inst.plugHashes.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'plugs:${inst.plugHashes.length} (names unresolved)',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
+                if (inst.armorStats!.total != null)
+                  Chip(
+                    label: Text('Total ${inst.armorStats!.total}'),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
           ],
-        ),
+          if (inst.plugCards.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Perks / plugs',
+              key: Key('plug_cards_label_${inst.instanceId}'),
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            Wrap(
+              key: Key('plug_cards_${inst.instanceId}'),
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final card in inst.plugCards)
+                  Chip(
+                    key: Key('plug_card_${inst.instanceId}_${card.hash}'),
+                    label: Text(
+                      card.isTrait
+                          ? 'Trait: ${card.displayName}'
+                          : card.displayName,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+              ],
+            ),
+          ] else if (inst.plugHashes.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${inst.plugHashes.length} plugs (names not resolved yet)',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+        ],
       ),
     );
   }

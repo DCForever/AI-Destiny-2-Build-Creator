@@ -214,8 +214,8 @@ void main() {
       find.byKey(const Key('catalog_item_300'), skipOffstage: false),
       findsNothing,
     );
-    expect(find.byKey(const Key('catalog_status')), findsOneWidget);
-    expect(find.textContaining('scope=owned'), findsOneWidget);
+    final status = tester.widget<Text>(find.byKey(const Key('catalog_status')));
+    expect(status.data, contains('OWNED'));
   });
 
   testWidgets('select owned row shows instance projections power-desc',
