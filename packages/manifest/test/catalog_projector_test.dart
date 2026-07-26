@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('projectMvpStores', () {
-    test('projects weapons and exotic armor with facet fields', () {
+    test('projects weapons, exotic weapons, exotic + legendary armor', () {
       final items = projectMvpStores(
         weapons: [
           const WeaponRecord(
@@ -15,6 +15,22 @@ void main() {
             ammo: AmmoTypeName.primary,
             frame: 'Adaptive Frame',
             itemTypeName: 'Hand Cannon',
+          ),
+        ],
+        exoticWeapons: [
+          const ExoticWeaponRecord(
+            hash: 15,
+            name: 'Gjallarhorn',
+            searchName: 'gjallarhorn',
+            slot: WeaponSlotName.power,
+            element: ElementName.solar,
+            ammo: AmmoTypeName.heavy,
+            frame: 'Wolfpack Rounds',
+            intrinsic: NamedDescription(
+              name: 'Wolfpack Rounds',
+              description: 'Cluster missiles.',
+            ),
+            itemTypeName: 'Rocket Launcher',
           ),
         ],
         exoticArmor: [
@@ -31,9 +47,19 @@ void main() {
             archetype: 'Specialist',
           ),
         ],
+        legendaryArmor: [
+          const LegendaryArmorRecord(
+            hash: 25,
+            name: 'Arms of Optimacy',
+            searchName: 'arms of optimacy',
+            classType: DestinyClassName.titan,
+            slot: ArmorSlotName.gauntlets,
+            archetype: 'Brawler',
+          ),
+        ],
       );
 
-      expect(items, hasLength(2));
+      expect(items, hasLength(4));
 
       final weapon = items.firstWhere((i) => i.hash == 10);
       expect(weapon.slot, 'Kinetic');
@@ -45,12 +71,23 @@ void main() {
       expect(weapon.ownedCount, 0);
       expect(weapon.sourceStore, 'weapons');
 
+      final exoWeapon = items.firstWhere((i) => i.hash == 15);
+      expect(exoWeapon.isExotic, isTrue);
+      expect(exoWeapon.slot, 'Power');
+      expect(exoWeapon.sourceStore, 'exotic-weapons');
+
       final armor = items.firstWhere((i) => i.hash == 20);
       expect(armor.slot, 'Helmet');
       expect(armor.classType, 'Hunter');
       expect(armor.isExotic, isTrue);
       expect(armor.frame, 'Specialist');
       expect(armor.sourceStore, 'exotic-armor');
+
+      final legendArmor = items.firstWhere((i) => i.hash == 25);
+      expect(legendArmor.isExotic, isFalse);
+      expect(legendArmor.classType, 'Titan');
+      expect(legendArmor.slot, 'Gauntlets');
+      expect(legendArmor.sourceStore, 'legendary-armor');
     });
 
     test('projects subclass pieces and mods', () {

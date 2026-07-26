@@ -125,8 +125,16 @@ class OfflineCatalog {
           FileEntityCache(storageRoot: storageRoot!, version: ver);
 
       final weapons = await _tryStore<WeaponRecord>(cache, MvpStoreName.weapons);
+      final exoticWeapons = await _tryStore<ExoticWeaponRecord>(
+        cache,
+        MvpStoreName.exoticWeapons,
+      );
       final exoticArmor =
           await _tryStore<ExoticArmorRecord>(cache, MvpStoreName.exoticArmor);
+      final legendaryArmor = await _tryStore<LegendaryArmorRecord>(
+        cache,
+        MvpStoreName.legendaryArmor,
+      );
       final aspects =
           await _tryStore<AspectRecord>(cache, MvpStoreName.aspects);
       final fragments =
@@ -136,7 +144,9 @@ class OfflineCatalog {
       final mods = await _tryStore<ModRecord>(cache, MvpStoreName.mods);
 
       final anyLoaded = weapons.isNotEmpty ||
+          exoticWeapons.isNotEmpty ||
           exoticArmor.isNotEmpty ||
+          legendaryArmor.isNotEmpty ||
           aspects.isNotEmpty ||
           fragments.isNotEmpty ||
           abilities.isNotEmpty ||
@@ -144,7 +154,9 @@ class OfflineCatalog {
 
       final items = projectMvpStores(
         weapons: weapons,
+        exoticWeapons: exoticWeapons,
         exoticArmor: exoticArmor,
+        legendaryArmor: legendaryArmor,
         aspects: aspects,
         fragments: fragments,
         abilities: abilities,

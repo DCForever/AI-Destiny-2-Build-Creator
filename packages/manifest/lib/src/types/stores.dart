@@ -3,7 +3,9 @@ import 'records.dart';
 /// MVP entity store names (DART-017). Product has a larger set; later slices expand.
 enum MvpStoreName {
   weapons('weapons'),
+  exoticWeapons('exotic-weapons'),
   exoticArmor('exotic-armor'),
+  legendaryArmor('legendary-armor'),
   aspects('aspects'),
   fragments('fragments'),
   abilities('abilities'),
@@ -70,6 +72,8 @@ List<T> decodeStoreList<T>(
 List<dynamic> encodeStoreRecords(MvpStoreName store, List<Object> records) {
   return records.map((r) {
     if (r is ExoticArmorRecord) return r.toJson();
+    if (r is LegendaryArmorRecord) return r.toJson();
+    if (r is ExoticWeaponRecord) return r.toJson();
     if (r is WeaponRecord) return r.toJson();
     if (r is AspectRecord) return r.toJson();
     if (r is FragmentRecord) return r.toJson();

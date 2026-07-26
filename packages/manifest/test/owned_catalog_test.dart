@@ -64,7 +64,8 @@ void main() {
         annotated,
         const CatalogClientFilters(scope: CatalogScope.owned),
       );
-      expect(owned.map((i) => i.hash), [1, 2]);
+      // Alpha by display name: Dragon's Breath, Edge Transit
+      expect(owned.map((i) => i.hash), [2, 1]);
     });
 
     test('owned + facet AND', () {

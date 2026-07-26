@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-061 done — production cutover re-gate; PRODUCTION_CUTOVER GO; program DART-001–061 complete)  
+**Updated:** 2026-07-25 (DART-062 done — catalog browse semantics; **DART-063** next; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -10,6 +10,7 @@
 **Architecture freezes:** [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md)  
 **Branch / worktree rules:** [multiplatform-dart-branching.md](./multiplatform-dart-branching.md)  
 **Feature gaps (canonical):** [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) — every open P0–P1 gap maps to a DART-NNN below  
+**UI fidelity (post-cutover):** [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) — GAP-UI-* → DART-062–068; **does not re-open cutover**  
 **Exploration / gaps workflows:** `explore-flutter-port`, **`dart-gaps-analysis`**  
 
 This is the **canonical list of Spec Kit slices** for the full port. Implement **in order** (do not skip phase gates). Each row is one feature branch / one `specs/dart-NNN-short-name/` directory — sized so a single Spec Kit cycle is realistic (roughly days to ~1–2 weeks of focused work, not a whole phase).
@@ -83,7 +84,8 @@ Do **not** schedule slices for: `/debug/*` as primary nav, multi-pass LLM genera
 | **P5** | Jaspr web + cutover | OPFS single-writer; prebuilt entities; compose→equip-ready path; Next retirement gates documented |
 | **P6** | Inventory fidelity | Vault resolution, roll tags, socket enrichment, diagnostics, live parity harness |
 | **P7** | Nav & shell residuals | Loadouts; Jaspr sync depth; mobile polish |
-| **P8** | Production readiness | Public OAuth matrix, entity channel, dual-run ops, cutover re-gate |
+| **P8** | Production readiness | Public OAuth matrix, entity channel, dual-run ops, cutover re-gate (**GO**) |
+| **P9** | Host UI fidelity (post-cutover) | Atlas/BR/DAC presentation on Windows+Jaspr; not cutover re-gate |
 
 **Shell order (locked):** pure packages → **Flutter Windows** → Flutter mobile → **Jaspr web**.  
 **I/O (locked):** pure Dart only — no Node sidecar.
@@ -157,6 +159,13 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-059** | **done** | `entity-bundle-prod-channel` | `dart-059-entity-bundle-prod-channel` | P8 | DART-044 | Choose/harden entity bundle distribution for web | **GAP-WEB-02** closed; RB-05 cleared; RC-WEB-DATA **PASS**. Hybrid channel (ship-in-app primary + optional CDN) + versioning; prod `/entities/prod/bundle.json` offline; no Next manifest API |
 | **DART-060** | **done** | `dual-run-rollback-ops` | `dart-060-dual-run-rollback-ops` | P8 | DART-050+ feature-ready dual-run | Execute dual-run + rollback runbook once | **GAP-OPS-01** closed; RB-04 cleared; RC-OPS **PASS**. Runbook + EXECUTED_ONCE notes; Next + Dart web/Windows available; compose→equip re-verify (equip-ready, Bungie equip partial OK, DIM jsonOnly); rollback = keep Next sole production; `tool/dual_run_ops_gate.dart` |
 | **DART-061** | **done** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01** closed; GAP-FEAT-02 remains non-goal (jsonOnly). All RC-* PASS incl. RC-BRANCH; PRODUCTION_CUTOVER: GO 2026-07-25 with rationale; merge toward production/main allowed only after GO; offline `tool/production_cutover_regate.dart` |
+| **DART-062** | **done** | `catalog-browse-semantics` | `dart-062-catalog-browse-semantics` | P9 | DART-061 | Catalog multi-facet, group-by, alpha sort, exotic weapons + legendary armor defs | **GAP-UI-CATALOG-01, 02, 04, 05, 07** closed. Windows+Jaspr multi-value include/exclude (slot/class/archetype/element/ammo/exotic); multi-dim group-by without changing filter semantics; alpha sort by display name; exotic-weapons + legendary-armor MVP stores; DAC-NME-003 + BR-CAT-001/003/006/007. **Cutover GO unchanged.** Soft never auto-applies; no CLIENT_SECRET |
+| **DART-063** | **planned** | `catalog-universal-modes-synergy-tags` | `dart-063-catalog-universal-modes-synergy-tags` | P9 | DART-062 | Weapons/Armor/Universal modes; synergy membership + BR-SYN-004 reverse tags; owned instance detail | **GAP-UI-CATALOG-03, 06, 08, 10; GAP-UI-SYN-03**. Universal Set/Synergy actions only (no Build kit attach); kind-appropriate facets; human-readable owned perks/traits + armor base-stat board when resolvable. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-064** | **planned** | `build-identity-subclass-compose` | `dart-064-build-identity-subclass-compose` | P9 | DART-061 | Identity Confirm/Fork; subclass kit composer; Manifest pickers; hard-block UX; Jaspr attach pickers | **GAP-UI-BUILD-01, 02, 05, 08, 09**. DBR-ID-008 Confirm/Fork; full subclass kit + capacity plain language; Manifest search exotic/Super; client hard-block dual exotic/kit; Jaspr named set picker + per-slot pins. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-065** | **planned** | `sets-board-rows-fill` | `dart-065-sets-board-rows-fill` | P9 | DART-061 | Armor EoF base-roll board; dense item rows; slot-fill Catalog; replace confirm; weapon perks | **GAP-UI-SETS-01, 02, 03, 07, 10**. DAC-NME-004/BR-SET-010/011 board + totals; icons/traits/synergies/Instance\|Wishlist; both shells embedded catalog density (Jaspr not hash-only); occupied-slot replace confirm; selectedPerks on weapon fill. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-066** | **planned** | `synergy-picker-manage-sets-library` | `dart-066-synergy-picker-manage-sets-library` | P9 | DART-063 (syn tags helpful) | Synergy catalog picker + Jaspr manage; Sets library filters/readiness/delete | **GAP-UI-SYN-01, 02, 04, 06, 09; GAP-UI-SETS-04, 05, 06**. BR-SYN-011 omit-linked + BR-SYN-012 labels; Jaspr detail/edit/links; library search/type filters; delete synergy; Sets search+tag AND, Fill next/used-by, SET_IN_USE delete. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-067** | **planned** | `finish-walkthrough-armor-optimize` | `dart-067-finish-walkthrough-armor-optimize` | P9 | DART-064, DART-036 | Finish one-tap Create/Capture/fill; Build Finish armor improve; Settings post-sync banner | **GAP-UI-BUILD-03, 04; GAP-UI-SETTINGS-04**. BR-BLD-008 residual walkthrough; Windows Build Finish Find kits → confirm apply; Windows post-sync better-kit Confirm/Dismiss only — **never auto-apply**. Web optimizer remains GAP-FEAT-01 deferred unless elevated. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-068** | **planned** | `presentation-shell-loadouts-settings` | `dart-068-presentation-shell-loadouts-settings` | P9 | DART-062+ as needed | Shell labels; icons/meta; loadouts density; Settings chrome; designation icons | **GAP-UI-CATALOG-09; GAP-UI-BUILD-06; GAP-UI-SYN-05; GAP-UI-LOADOUTS-01..03; GAP-UI-SETTINGS-01, 02; GAP-UI-SHELL-01**. AppShell label/order; item icons; loadout color bar/swatch + exotic names + expand; READY/entity chips + ONLINE/Refresh; variant icon overview. **Not cutover re-gate.** Soft never auto-applies; no CLIENT_SECRET |
 
 ---
 
@@ -218,12 +227,20 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | *(none — planned DART-001–061 complete)* |
+| **Next / active slice** | **DART-063** `catalog-universal-modes-synergy-tags` (**planned**) |
 | **Active branch** | `feature/multiplatform-dart` |
-| **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
+| **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | **None** for planned program — **PRODUCTION_CUTOVER: GO** (DART-061); human/release may merge toward production/`main` (RC-BRANCH) |
-| **Phase plan** | P6–P8 **done** (DART-050–061); program complete |
+| **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). UI fidelity P9 residual continues (does not re-open cutover). Human/release may merge toward production/`main` (RC-BRANCH) |
+| **Phase plan** | P6–P8 **done** (DART-050–061); **P9** DART-062 **done**, DART-063–068 **planned** (host UI fidelity) |
+
+### P9 note — host UI fidelity post-cutover
+
+After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS, but presentation trails Next atlas on browse/composition density (BR/DAC/DBR surface rules). Canonical residual ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). **DART-062 done** (catalog multi-facet/group-by/alpha + exotic weapons + legendary armor). Order remaining: 063 modes/syn tags → 064 build identity/kit → 065 sets board/fill → 066 synergy manage + sets library → 067 finish/optimize paths → 068 polish chrome. Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
+
+### DART-062 note (completed) — catalog browse semantics
+
+Closed **GAP-UI-CATALOG-01, 02, 04, 05, 07**. Pure `groupCatalogItems` + `compareDisplayName` alpha sort finalize; MVP stores `exotic-weapons` + `legendary-armor`; OfflineCatalog/EntityBundle projection; Windows+Jaspr multi-value include/exclude for slot/class/archetype/element/ammo/exotic + optional multi-dim group-by. DAC-NME-003 + BR-CAT-001/003/006/007. Cutover GO unchanged. Soft never auto-applies; no CLIENT_SECRET. Specs: `specs/dart-062-catalog-browse-semantics/`.
 
 ### DART-061 note (completed) — production cutover re-gate
 

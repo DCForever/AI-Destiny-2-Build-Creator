@@ -117,8 +117,14 @@ class EntityBundleDocument {
   List<CatalogItem> toCatalogItems() {
     return projectMvpStores(
       weapons: stores[MvpStoreName.weapons]?.cast<WeaponRecord>() ?? const [],
+      exoticWeapons:
+          stores[MvpStoreName.exoticWeapons]?.cast<ExoticWeaponRecord>() ??
+              const [],
       exoticArmor:
           stores[MvpStoreName.exoticArmor]?.cast<ExoticArmorRecord>() ??
+              const [],
+      legendaryArmor:
+          stores[MvpStoreName.legendaryArmor]?.cast<LegendaryArmorRecord>() ??
               const [],
       aspects: stores[MvpStoreName.aspects]?.cast<AspectRecord>() ?? const [],
       fragments:

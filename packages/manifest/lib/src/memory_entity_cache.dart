@@ -84,10 +84,26 @@ List<Object> decodeMvpStoreRecords(MvpStoreName store, List<dynamic> list) {
             (e) => WeaponRecord.fromJson(Map<String, dynamic>.from(e as Map)),
           )
           .toList();
+    case MvpStoreName.exoticWeapons:
+      return list
+          .map(
+            (e) => ExoticWeaponRecord.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList();
     case MvpStoreName.exoticArmor:
       return list
           .map(
             (e) => ExoticArmorRecord.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList();
+    case MvpStoreName.legendaryArmor:
+      return list
+          .map(
+            (e) => LegendaryArmorRecord.fromJson(
               Map<String, dynamic>.from(e as Map),
             ),
           )

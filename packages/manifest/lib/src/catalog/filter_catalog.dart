@@ -1,5 +1,6 @@
 import 'catalog_item.dart';
 import 'facet_filter.dart';
+import 'sort_by_name.dart';
 
 /// Catalog browse ownership scope (product `scope: "all" | "owned"`).
 enum CatalogScope {
@@ -129,6 +130,7 @@ bool matchesSynergyIds(FacetFilter? facet, List<String>? linked) {
 
 /// Live client-side narrowing of a base catalog list.
 /// Across facets: AND. Within include: OR. Any exclude match: drop.
+/// Results are alpha-sorted by display name (GAP-UI-CATALOG-07).
 List<CatalogItem> filterCatalogClient(
   List<CatalogItem> items,
   CatalogClientFilters filters,
@@ -164,7 +166,7 @@ List<CatalogItem> filterCatalogClient(
 
   final ownedOnly = filters.scope == CatalogScope.owned;
 
-  return items.where((item) {
+  final filtered = items.where((item) {
     if (ownedOnly && item.ownedCount <= 0) return false;
 
     if (exotic == true && !item.isExotic) return false;
@@ -194,4 +196,6 @@ List<CatalogItem> filterCatalogClient(
     ].whereType<String>().where((s) => s.isNotEmpty).join(' ').toLowerCase();
     return hay.contains(q);
   }).toList();
+
+  return sortByDisplayName(filtered, (i) => i.name);
 }

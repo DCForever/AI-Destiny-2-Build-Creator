@@ -40,7 +40,11 @@ class _CatalogPageState extends State<CatalogPage> {
   final _queryController = TextEditingController();
   FacetFilter _elements = emptyFacet();
   FacetFilter _ammos = emptyFacet();
+  FacetFilter _slots = emptyFacet();
+  FacetFilter _classNames = emptyFacet();
+  FacetFilter _archetypes = emptyFacet();
   bool? _exotic; // null = off, true = only, false = exclude
+  final List<CatalogGroupDimension> _groupBy = [];
 
   CatalogItem? _selected;
   List<CatalogInstanceProjection> _instances = const [];
@@ -118,6 +122,9 @@ class _CatalogPageState extends State<CatalogPage> {
       query: _queryController.text,
       elements: _elements,
       ammos: _ammos,
+      slots: _slots,
+      classNames: _classNames,
+      archetypes: _archetypes,
       exotic: _exotic,
       scope: _scope,
     );
@@ -125,6 +132,10 @@ class _CatalogPageState extends State<CatalogPage> {
 
   List<CatalogItem> _applyFilters() {
     return _bridge.browse(_filters());
+  }
+
+  List<CatalogGroup> _groupedResults() {
+    return groupCatalogItems(_results, List<CatalogGroupDimension>.from(_groupBy));
   }
 
   void _refilter() {
@@ -181,6 +192,40 @@ class _CatalogPageState extends State<CatalogPage> {
     });
   }
 
+  void _cycleSlot(String value) {
+    setState(() {
+      _slots = cycleFacetValue(_slots, value);
+      _results = _applyFilters();
+      _syncSelection();
+    });
+  }
+
+  void _cycleClass(String value) {
+    setState(() {
+      _classNames = cycleFacetValue(_classNames, value);
+      _results = _applyFilters();
+      _syncSelection();
+    });
+  }
+
+  void _cycleArchetype(String value) {
+    setState(() {
+      _archetypes = cycleFacetValue(_archetypes, value);
+      _results = _applyFilters();
+      _syncSelection();
+    });
+  }
+
+  void _toggleGroupDimension(CatalogGroupDimension dim) {
+    setState(() {
+      if (_groupBy.contains(dim)) {
+        _groupBy.remove(dim);
+      } else {
+        _groupBy.add(dim);
+      }
+    });
+  }
+
   void _cycleExotic() {
     setState(() {
       // off → only exotic → exclude exotic → off
@@ -200,6 +245,33 @@ class _CatalogPageState extends State<CatalogPage> {
     if (_exotic == true) return 'Exotic only';
     if (_exotic == false) return 'No exotic';
     return 'Exotic: any';
+  }
+
+  Widget _facetChipRow({
+    required String keyPrefix,
+    required List<String> values,
+    required FacetFilter facet,
+    required void Function(String) onCycle,
+  }) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          for (final value in values)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FilterChip(
+                key: Key('${keyPrefix}_chip_$value'),
+                label: Text(value),
+                selected: facetChipState(facet, value) != FacetChipState.off,
+                onSelected: (_) => onCycle(value),
+                avatar: _facetAvatar(facetChipState(facet, value)),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -253,53 +325,97 @@ class _CatalogPageState extends State<CatalogPage> {
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                for (final el in catalogElements)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: FilterChip(
-                      key: Key('element_chip_$el'),
-                      label: Text(el),
-                      selected: facetChipState(_elements, el) != FacetChipState.off,
-                      onSelected: (_) => _cycleElement(el),
-                      avatar: _facetAvatar(facetChipState(_elements, el)),
+          // Cap filter chrome height so results remain visible (DAC browse density).
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 168),
+            child: SingleChildScrollView(
+              key: const Key('catalog_filters_scroll'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 4),
+                  _facetChipRow(
+                    keyPrefix: 'element',
+                    values: catalogElements,
+                    facet: _elements,
+                    onCycle: _cycleElement,
+                  ),
+                  const SizedBox(height: 4),
+                  _facetChipRow(
+                    keyPrefix: 'ammo',
+                    values: catalogAmmoTypes,
+                    facet: _ammos,
+                    onCycle: _cycleAmmo,
+                  ),
+                  const SizedBox(height: 4),
+                  _facetChipRow(
+                    keyPrefix: 'slot',
+                    values: [...catalogWeaponSlots, ...catalogArmorSlots],
+                    facet: _slots,
+                    onCycle: _cycleSlot,
+                  ),
+                  const SizedBox(height: 4),
+                  _facetChipRow(
+                    keyPrefix: 'class',
+                    values: catalogClassNames,
+                    facet: _classNames,
+                    onCycle: _cycleClass,
+                  ),
+                  const SizedBox(height: 4),
+                  _facetChipRow(
+                    keyPrefix: 'archetype',
+                    values: [
+                      ...catalogWeaponArchetypes,
+                      ...catalogArmorArchetypes,
+                    ],
+                    facet: _archetypes,
+                    onCycle: _cycleArchetype,
+                  ),
+                  const SizedBox(height: 4),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: FilterChip(
+                            key: const Key('exotic_chip'),
+                            label: Text(_exoticLabel()),
+                            selected: _exotic != null,
+                            onSelected: (_) => _cycleExotic(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                for (final ammo in catalogAmmoTypes)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: FilterChip(
-                      key: Key('ammo_chip_$ammo'),
-                      label: Text(ammo),
-                      selected: facetChipState(_ammos, ammo) != FacetChipState.off,
-                      onSelected: (_) => _cycleAmmo(ammo),
-                      avatar: _facetAvatar(facetChipState(_ammos, ammo)),
+                  const SizedBox(height: 4),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      key: const Key('catalog_group_by'),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text('Group:'),
+                        ),
+                        for (final dim in catalogGroupDimensions)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: FilterChip(
+                              key: Key('group_chip_${dim.id.name}'),
+                              label: Text(dim.label),
+                              selected: _groupBy.contains(dim.id),
+                              onSelected: (_) =>
+                                  _toggleGroupDimension(dim.id),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: FilterChip(
-                    key: const Key('exotic_chip'),
-                    label: Text(_exoticLabel()),
-                    selected: _exotic != null,
-                    onSelected: (_) => _cycleExotic(),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Padding(
@@ -381,11 +497,22 @@ class _CatalogPageState extends State<CatalogPage> {
         ),
       );
     }
-    return ListView.builder(
-      key: const Key('catalog_list'),
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        final item = _results[index];
+    final groups = _groupedResults();
+    final rows = <Widget>[];
+    for (final group in groups) {
+      if (_groupBy.isNotEmpty || groups.length > 1) {
+        rows.add(
+          ListTile(
+            key: Key('catalog_group_${group.key}'),
+            dense: true,
+            title: Text(
+              '${group.label} (${group.items.length})',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+        );
+      }
+      for (final item in group.items) {
         final subtitle = [
           if (item.slot != null) item.slot!,
           if (item.element != null) item.element!,
@@ -396,23 +523,29 @@ class _CatalogPageState extends State<CatalogPage> {
           if (item.owned) 'Owned ×${item.ownedCount}',
         ].join(' · ');
         final selected = _selected?.hash == item.hash;
-        return ListTile(
-          key: Key('catalog_item_${item.hash}'),
-          title: Text(item.name),
-          subtitle: Text(subtitle),
-          dense: true,
-          selected: selected,
-          trailing: item.owned
-              ? Chip(
-                  key: Key('owned_badge_${item.hash}'),
-                  label: Text('×${item.ownedCount}'),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                )
-              : null,
-          onTap: () => _selectItem(item),
+        rows.add(
+          ListTile(
+            key: Key('catalog_item_${item.hash}'),
+            title: Text(item.name),
+            subtitle: Text(subtitle),
+            dense: true,
+            selected: selected,
+            trailing: item.owned
+                ? Chip(
+                    key: Key('owned_badge_${item.hash}'),
+                    label: Text('×${item.ownedCount}'),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  )
+                : null,
+            onTap: () => _selectItem(item),
+          ),
         );
-      },
+      }
+    }
+    return ListView(
+      key: const Key('catalog_list'),
+      children: rows,
     );
   }
 

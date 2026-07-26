@@ -170,11 +170,26 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('catalog_list')), findsOneWidget);
-    expect(find.text('Owned Kinetic'), findsOneWidget);
-    expect(find.text('Owned Energy'), findsOneWidget);
-    expect(find.text('Unowned Exotic'), findsOneWidget);
-    expect(find.byKey(const Key('owned_badge_100')), findsOneWidget);
-    expect(find.byKey(const Key('owned_badge_300')), findsNothing);
+    expect(
+      find.byKey(const Key('catalog_item_100'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('catalog_item_200'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('catalog_item_300'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('owned_badge_100'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('owned_badge_300'), skipOffstage: false),
+      findsNothing,
+    );
   });
 
   testWidgets('Owned scope filters to synced inventory hashes only',
@@ -187,9 +202,18 @@ void main() {
     await tester.tap(find.byKey(const Key('scope_chip_owned')));
     await _pumpFrames(tester);
 
-    expect(find.text('Owned Kinetic'), findsOneWidget);
-    expect(find.text('Owned Energy'), findsOneWidget);
-    expect(find.text('Unowned Exotic'), findsNothing);
+    expect(
+      find.byKey(const Key('catalog_item_100'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('catalog_item_200'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('catalog_item_300'), skipOffstage: false),
+      findsNothing,
+    );
     expect(find.byKey(const Key('catalog_status')), findsOneWidget);
     expect(find.textContaining('scope=owned'), findsOneWidget);
   });
@@ -201,7 +225,21 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await tester.tap(find.byKey(const Key('catalog_item_100')));
+    final itemFinder =
+        find.byKey(const Key('catalog_item_100'), skipOffstage: false);
+    expect(itemFinder, findsOneWidget);
+    // Catalog list is the primary vertical scrollable (filters use horizontal).
+    final listScrollable = find.descendant(
+      of: find.byKey(const Key('catalog_list')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      itemFinder,
+      64,
+      scrollable: listScrollable,
+    );
+    await _pumpFrames(tester);
+    await tester.tap(itemFinder);
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('instance_panel_title')), findsOneWidget);

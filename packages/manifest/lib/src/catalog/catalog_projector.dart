@@ -5,9 +5,12 @@ import 'catalog_item.dart';
 /// Project MVP entity store records into unified [CatalogItem] rows.
 ///
 /// Inventory fields are always unowned (DART-020).
+/// DART-062: includes exotic weapons + legendary armor.
 List<CatalogItem> projectMvpStores({
   List<WeaponRecord> weapons = const [],
+  List<ExoticWeaponRecord> exoticWeapons = const [],
   List<ExoticArmorRecord> exoticArmor = const [],
+  List<LegendaryArmorRecord> legendaryArmor = const [],
   List<AspectRecord> aspects = const [],
   List<FragmentRecord> fragments = const [],
   List<AbilityRecord> abilities = const [],
@@ -34,6 +37,28 @@ List<CatalogItem> projectMvpStores({
     );
   }
 
+  for (final w in exoticWeapons) {
+    out.add(
+      CatalogItem(
+        hash: w.hash,
+        name: w.name,
+        icon: w.icon,
+        slot: w.slot.label,
+        element: w.element.label,
+        ammo: w.ammo.label,
+        itemTypeName: w.itemTypeName.isEmpty ? null : w.itemTypeName,
+        frame: w.frame.isEmpty ? null : w.frame,
+        description: w.intrinsic.description.isNotEmpty
+            ? w.intrinsic.description
+            : w.intrinsic.name,
+        isExotic: true,
+        owned: false,
+        ownedCount: 0,
+        sourceStore: MvpStoreName.exoticWeapons.fileStem,
+      ),
+    );
+  }
+
   for (final a in exoticArmor) {
     out.add(
       CatalogItem(
@@ -50,6 +75,23 @@ List<CatalogItem> projectMvpStores({
         owned: false,
         ownedCount: 0,
         sourceStore: MvpStoreName.exoticArmor.fileStem,
+      ),
+    );
+  }
+
+  for (final a in legendaryArmor) {
+    out.add(
+      CatalogItem(
+        hash: a.hash,
+        name: a.name,
+        icon: a.icon,
+        slot: a.slot.label,
+        classType: a.classType.label,
+        frame: a.archetype,
+        isExotic: false,
+        owned: false,
+        ownedCount: 0,
+        sourceStore: MvpStoreName.legendaryArmor.fileStem,
       ),
     );
   }

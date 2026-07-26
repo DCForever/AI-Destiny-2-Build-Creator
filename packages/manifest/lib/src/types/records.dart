@@ -251,6 +251,141 @@ class ExoticArmorRecord implements EntityRecordBase {
   }
 }
 
+/// Exotic weapon entity row (store `exotic-weapons`, DART-062).
+class ExoticWeaponRecord implements EntityRecordBase {
+  const ExoticWeaponRecord({
+    required this.hash,
+    required this.name,
+    required this.searchName,
+    this.icon,
+    required this.slot,
+    required this.element,
+    required this.ammo,
+    required this.frame,
+    required this.intrinsic,
+    this.catalyst,
+    this.flavorText = '',
+    this.perkColumns = const [],
+    this.itemTypeName = '',
+  });
+
+  @override
+  final Hash hash;
+  @override
+  final String name;
+  @override
+  final String searchName;
+  @override
+  final String? icon;
+  final WeaponSlotName slot;
+  final ElementName element;
+  final AmmoTypeName ammo;
+  final String frame;
+  final NamedDescription intrinsic;
+  final NamedDescription? catalyst;
+  final String flavorText;
+  final List<WeaponPerkColumn> perkColumns;
+  final String itemTypeName;
+
+  Map<String, dynamic> toJson() => {
+        'hash': hash,
+        'name': name,
+        'searchName': searchName,
+        'icon': icon,
+        'slot': slot.label,
+        'element': element.label,
+        'ammo': ammo.label,
+        'frame': frame,
+        'intrinsic': intrinsic.toJson(),
+        'catalyst': catalyst?.toJson(),
+        'flavorText': flavorText,
+        'perkColumns': perkColumns.map((c) => c.toJson()).toList(),
+        'itemTypeName': itemTypeName,
+      };
+
+  factory ExoticWeaponRecord.fromJson(Map<String, dynamic> json) {
+    final cols = (json['perkColumns'] as List? ?? const [])
+        .map(
+          (e) => WeaponPerkColumn.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
+    NamedDescription? catalyst;
+    final rawCat = json['catalyst'];
+    if (rawCat is Map) {
+      catalyst = NamedDescription.fromJson(Map<String, dynamic>.from(rawCat));
+    }
+    return ExoticWeaponRecord(
+      hash: (json['hash'] as num).toInt(),
+      name: json['name'] as String? ?? '',
+      searchName: json['searchName'] as String? ?? '',
+      icon: json['icon'] as String?,
+      slot: WeaponSlotName.tryParse(json['slot'] as String?) ??
+          WeaponSlotName.kinetic,
+      element: ElementName.tryParse(json['element'] as String?) ??
+          ElementName.kinetic,
+      ammo: AmmoTypeName.tryParse(json['ammo'] as String?) ??
+          AmmoTypeName.primary,
+      frame: json['frame'] as String? ?? '',
+      intrinsic: NamedDescription.fromJson(
+        Map<String, dynamic>.from(json['intrinsic'] as Map? ?? const {}),
+      ),
+      catalyst: catalyst,
+      flavorText: json['flavorText'] as String? ?? '',
+      perkColumns: cols,
+      itemTypeName: json['itemTypeName'] as String? ?? '',
+    );
+  }
+}
+
+/// Legendary armor entity row (store `legendary-armor`, DART-062).
+class LegendaryArmorRecord implements EntityRecordBase {
+  const LegendaryArmorRecord({
+    required this.hash,
+    required this.name,
+    required this.searchName,
+    this.icon,
+    required this.classType,
+    required this.slot,
+    this.archetype,
+  });
+
+  @override
+  final Hash hash;
+  @override
+  final String name;
+  @override
+  final String searchName;
+  @override
+  final String? icon;
+  final DestinyClassName classType;
+  final ArmorSlotName slot;
+  final String? archetype;
+
+  Map<String, dynamic> toJson() => {
+        'hash': hash,
+        'name': name,
+        'searchName': searchName,
+        'icon': icon,
+        'classType': classType.label,
+        'slot': slot.label,
+        'archetype': archetype,
+      };
+
+  factory LegendaryArmorRecord.fromJson(Map<String, dynamic> json) {
+    return LegendaryArmorRecord(
+      hash: (json['hash'] as num).toInt(),
+      name: json['name'] as String? ?? '',
+      searchName: json['searchName'] as String? ?? '',
+      icon: json['icon'] as String?,
+      classType: DestinyClassName.tryParse(json['classType'] as String?) ??
+          DestinyClassName.hunter,
+      slot: ArmorSlotName.tryParse(json['slot'] as String?) ??
+          ArmorSlotName.helmet,
+      archetype: json['archetype'] as String?,
+    );
+  }
+}
+
 class WeaponRecord implements EntityRecordBase {
   const WeaponRecord({
     required this.hash,

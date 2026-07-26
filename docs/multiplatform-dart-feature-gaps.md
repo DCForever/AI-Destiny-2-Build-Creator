@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (DART-061 production cutover re-gate; GAP-CUT-01 closed; PRODUCTION_CUTOVER GO; GAP-FEAT-02 remains non-goal / jsonOnly)  
+**Updated:** 2026-07-25 (UI fidelity residual audit; FEAT PARTIAL demotions for host density; GAP-UI-* catalog; PRODUCTION_CUTOVER GO **unchanged**)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -10,11 +10,15 @@
 
 | Doc | Role |
 | --- | ---- |
+| [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) | **Host UI fidelity** master (atlas parity, GAP-UI-*, rules matrix, DART-062+) — distinct from cutover |
 | [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md) | Slice backlog + DART-NNN status |
-| [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) | Program vs production cutover gates |
+| [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) | Program vs production cutover gates (**GO** unchanged by fidelity) |
 | [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md) | Architecture freezes |
+| [ui-polish-tracker.md](./ui-polish-tracker.md) | Pure visual density only |
 | Product `PRODUCT.md` | Canonical product purpose + confirmed capabilities |
 | Workflow `dart-gaps-analysis` | Re-scan Next vs Dart; refresh this catalog + inventory |
+
+**Rule:** FEAT cutover **PASS** does **not** override missed BRs/DACs. Fidelity PARTIAL demotions track host presentation residuals; they do **not** re-open PRODUCTION_CUTOVER.
 
 This document is the **canonical product→port planning ledger**:
 
@@ -52,7 +56,7 @@ Nothing here retires Next; it only plans the port. **Rule:** no open P0/P1 witho
 | Plan | Meaning |
 | ---- | ------- |
 | **shipped** | Delivered on DART-001–049 (or earlier); residual only if GAP open |
-| **planned** | Reserved DART-050–061 (or later) on roadmap |
+| **planned** | Reserved DART-050+ on roadmap (cutover 050–061 done; UI fidelity 062–068) |
 | **deferred** | Explicitly out of cutover scope until product elevates |
 | **n/a** | Non-goal for multiplatform port / cutover |
 
@@ -75,29 +79,31 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 
 ### A. Production nav surfaces (AppShell)
 
+Shell columns: **cutover** spine (destination present) vs **fidelity** host density vs Next atlas. Fidelity **PARTIAL** does not re-open PRODUCTION_CUTOVER. Details: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md).
+
 | ID | Feature | Product path | W | M | J | Plan | Slices / notes |
 | -- | ------- | ------------ | - | - | - | ---- | -------------- |
-| **FEAT-NAV-BUILD** | Build library + composer | `/build` | PASS | PASS | PASS | **shipped** | DART-028–038, 041, 046–047; mobile matrix **DART-057** |
-| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | PASS | N/A\* | PASS | **shipped** | DART-031, 046; \*mobile in-flow only (acceptable density) |
-| **FEAT-NAV-SETS** | Sets library | `/sets` | PASS | N/A\* | PASS | **shipped** | DART-030, 046; \*same mobile note |
-| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | PASS | N/A\* | PASS | **shipped** | DART-020/026/044; \*mobile **N/A** (DART-057 matrix — phone density) |
-| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | PASS | PARTIAL | PASS | **shipped** | DART-023/025/045/048; inventory fidelity **DART-050–054**; web sync depth **DART-056**; mobile matrix card **DART-057** |
-| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | PASS | N/A\* | PASS | **shipped** | **DART-055** / GAP-NAV-01 closed / RB-01 cleared; \*mobile top-level N/A (DART-057 matrix) |
+| **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Cutover spine PASS (DART-028–038, 041, 046–047); fidelity: DBR-ID-008 confirm/fork + subclass kit (GAP-UI-BUILD-01/02) → **DART-064** |
+| **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Windows dual-pane skeleton; free-text evidence; no BR-SYN-004 reverse tags; Jaspr create+list only (GAP-UI-SYN-01..04) → **DART-063/066** |
+| **FEAT-NAV-SETS** | Sets library | `/sets` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Library/slots functional; DAC-NME-004/BR-SET-010/011 board + dense rows + embedded Catalog fill missing (GAP-UI-SETS-01..03) → **DART-065** |
+| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Multi-facet/group-by/alpha + exotic/legendary defs **done** (DART-062); Universal/synergy tags residual (GAP-UI-CATALOG-03,06,08,10) → **DART-063** |
+| **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | **PASS** | PARTIAL | **PASS** | **shipped** | OAuth Public+PKCE + inventory sync + diagnostics remain PASS; residuals chrome only (GAP-UI-SETTINGS-01/02; post-sync banner GAP-UI-SETTINGS-04) — **no demote** |
+| **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | **PASS** | N/A\* | **PASS** | **shipped** | **DART-055** cutover PASS; residuals P2 density only (GAP-UI-LOADOUTS-01..03) — **no demote** |
 
 ### B. Compose → equip spine (PRODUCT primary job)
 
 | ID | Feature | Product evidence | W | M | J | Plan | Slices / GAP |
 | -- | ------- | ---------------- | - | - | - | ---- | ------------ |
-| **FEAT-COMPOSE-IDENTITY** | Build identity (synergies, exotic, Super) | Build composer | PASS | PASS | PASS | **shipped** | Domain + hosts DART-003/028/041/046 |
+| **FEAT-COMPOSE-IDENTITY** | Build identity (synergies, exotic, Super) | Build composer | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | In-place edit without Confirm/Fork (DBR-ID-008 → GAP-UI-BUILD-01); raw hash exotic/super pickers (GAP-UI-BUILD-05) → **DART-064** |
 | **FEAT-COMPOSE-VARIANTS** | Variants + set attachments + slot pins | Build composer | PASS | PASS | PASS | **shipped** | DART-005/028+ |
-| **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | PASS | PASS | PASS | **shipped** | DART-003/011; RC-DOMAIN |
-| **FEAT-COMPOSE-SOFT** | Soft coverage display (never auto-apply) | Soft guidance UI | PASS | PASS | PASS | **shipped** | DART-004/034/041/046; RC-SOFT |
+| **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Domain authoritative; client pre-block UI thinner than Next (GAP-UI-BUILD-08) → **DART-064** |
+| **FEAT-COMPOSE-SOFT** | Soft coverage display (never auto-apply) | Soft guidance UI | PASS | PASS | PASS | **shipped** | DART-004/034/041/046; RC-SOFT; soft **never auto-applies** |
 | **FEAT-COMPOSE-SOFT-STATS** | Soft stat targets (explicit save) | Soft stat editor | PASS | PASS | PASS | **shipped** | DART-034/041/046; Jaspr all `ArmorStatName` **DART-057** / GAP-UI-01 closed |
-| **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | PASS | PARTIAL | PASS | **shipped** | DART-007 pure + host UX **DART-057** (Windows+Jaspr finish panel; CTA = finish-complete ∧ equip-ready); mobile display-only |
+| **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | **PARTIAL** | PARTIAL | **PARTIAL** | **shipped** + fidelity | finish-gaps panel + equip gates shipped (GAP-FEAT-06 closed); residual one-tap walkthrough GAP-UI-BUILD-03 + Finish armor improve GAP-UI-BUILD-04 → **DART-067** |
 | **FEAT-EQUIP-READY** | Equip-ready / wishlist vs owned pins | Equip-ready gate | PASS | N/A\* | PASS | **shipped** | DART-006/038/047; \*mobile equip path N/A (DART-057 matrix) |
 | **FEAT-EQUIP-BUNGIE** | Bungie equip (partial OK) | Equip flow | PASS | N/A\* | PASS | **shipped** | DART-037/038/047; \*mobile equip **N/A** (DART-057 — use Windows/Jaspr) |
 | **FEAT-EQUIP-DIM** | DIM jsonOnly export | DIM export | PASS | N/A\* | PASS | **shipped** | DART-010/039/047; \*mobile DIM **N/A** (DART-057 matrix) |
-| **FEAT-OPTIMIZER** | Armor set optimizer (confirm-only) | Optimizer workspace | PASS | deferred | deferred | **deferred** mobile/web | Windows DART-035/036; GAP-FEAT-01 remains deferred |
+| **FEAT-OPTIMIZER** | Armor set optimizer (confirm-only) | Optimizer workspace | **PARTIAL** | deferred | deferred | **deferred** mobile/web + fidelity | Windows Sets optimizer confirm-only; not wired into Build Finish (GAP-UI-BUILD-04) or Settings post-sync (GAP-UI-SETTINGS-04); GAP-FEAT-01 remains deferred web/mobile → **DART-067** |
 
 ### C. Inventory & owned instances
 
@@ -109,7 +115,7 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Pure + sync + Windows raw context (DART-052); web raw-less residual | **shipped** (fixture + Windows) | **DART-052** closed GAP-INV-03; residual: web without raw defs |
 | **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | Windows retains + surfaces last diagnostics | **shipped** (P1) | **DART-053** / GAP-INV-04 closed |
 | **FEAT-INV-HARNESS** | Next-vs-Dart live count harness | Manual dual sync | Dual-run doc + compare tool + offline gate | **shipped** (P0 process) | **DART-054** / GAP-INV-05 closed |
-| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + entity-cache empty UX + web All\|Owned | **shipped** | Docs **DART-050**; UX **DART-053**; web Owned + instances **DART-056** / GAP-INV-06 closed |
+| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + All\|Owned **shipped**; fidelity **PARTIAL** — incomplete defs (legendary-only weapons / exotic-only armor) + raw instance detail (GAP-UI-CATALOG-04/05/08; GAP-INV-02/03 residual) | **shipped** + fidelity | Docs **DART-050**; UX **DART-053**; web Owned **DART-056**; residual browse fidelity → **DART-062/063** |
 | **FEAT-INV-WEAPON-STATS** | Combat `statValues` on weapon rows | `parseWeaponStatValues` | Armor-hash parser reused | **planned** (P2) | Optional in **DART-050** / GAP-INV-07 |
 
 ### D. Auth, data, and ops
@@ -140,9 +146,10 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | ----- | ------ |
 | Every AppShell nav key has a FEAT-NAV row | **Yes** (build, synergy, sets, catalog, settings, loadouts) |
 | Every PRODUCT confirmed capability has a FEAT row | **Yes** (compose spine, inventory, optimizer, equip/export, LLM, legacy) |
-| Every open/partial **P0/P1** maps to DART-050–061 | **Yes** — see master gap table; `unplanned_p0_p1` = empty |
+| Every open/partial **P0/P1** cutover residual maps to DART-050–061 | **Yes** — cutover residuals closed; `unplanned_p0_p1` cutover = empty |
+| Every open **P1 GAP-UI-*** maps to DART-062+ | **Yes** — see [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) + master table below |
 | Every deferred/n/a has reason | **Yes** — section E + deferred gap table |
-| Next Spec Kit start | *(none — DART-050–061 complete; PRODUCTION_CUTOVER GO)* |
+| Next Spec Kit start | **DART-062** (UI fidelity P1; cutover GO unchanged) |
 
 ---
 
@@ -152,7 +159,8 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | ----- | ----- | ------------------- | ---- |
 | **P6** | Inventory fidelity | DART-050–054 | Vault/postmaster parity, enrichment, diagnostics, live harness |
 | **P7** | Nav & residual product surfaces | DART-055–057 | Loadouts; web sync depth; mobile gaps worth shipping |
-| **P8** | Production readiness | DART-058–061 | Public auth matrix, entity CDN, dual-run ops, cutover re-gate |
+| **P8** | Production readiness | DART-058–061 | Public auth matrix, entity CDN, dual-run ops, cutover re-gate (**GO**) |
+| **P9** | Host UI fidelity (post-cutover) | DART-062–068 | Atlas/BR/DAC presentation parity on Windows+Jaspr; **not** cutover re-gate |
 
 ---
 
@@ -180,7 +188,54 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | **GAP-FEAT-03** | LLM propose / multi-pass generator | **P3** | `deferred` | Optional / not primary | Not ported | *Non-goal* | Cutover N/A |
 | **GAP-FEAT-04** | `/debug/*` operator tools | **P3** | `deferred` | Present | Not ported | *Non-goal* | Cutover N/A |
 | **GAP-FEAT-05** | Analyze / legacy generator tab | **P3** | `deferred` | Adjacent | Not primary | *Non-goal* | Cutover N/A |
-| **GAP-FEAT-06** | Finish-gaps host UX unwired | **P2** | `closed` (DART-057) | Next FinishTab gates equip/export | Windows+Jaspr host panels + finish-complete ∧ equip-ready CTAs; pure shared | **DART-057** done | FEAT-COMPOSE-FINISH |
+| **GAP-FEAT-06** | Finish-gaps host UX unwired | **P2** | `closed` (DART-057) | Next FinishTab gates equip/export | Windows+Jaspr host panels + finish-complete ∧ equip-ready CTAs; pure shared | **DART-057** done | FEAT-COMPOSE-FINISH residual → GAP-UI-BUILD-03 |
+
+### Host UI fidelity (post–cutover GO) — detail in [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md)
+
+**Note:** PRODUCTION_CUTOVER **GO** unchanged. These rows track host presentation vs Next atlas + BR/DAC/DBR surface rules. Soft never auto-applies; no CLIENT_SECRET.
+
+| ID | Area | Severity | Status | Next.js evidence | Dart today | Planned slices | Cutover link |
+| -- | ---- | -------- | ------ | ---------------- | ---------- | -------------- | ------------ |
+| **GAP-UI-CATALOG-01** | Catalog multi-facet include/exclude UI | **P1** | `closed` | CatalogScreen chips slot/class/archetype/element/ammo/exotic OR/AND | Windows+Jaspr chips wired; pure filter OR/AND/exclude | **DART-062** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-02** | Catalog group-by | **P1** | `closed` | groupCatalogItems multi-dim | Pure `groupCatalogItems` + host group chips | **DART-062** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-03** | Universal mode + Set/Synergy actions | **P1** | `open` | UniversalSearchPanel + Set/Synergy-only actions | No Universal mode chrome | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-04** | Exotic weapons in weapon catalog | **P1** | `closed` | weapons + exoticWeapons merge | `exotic-weapons` store + projector | **DART-062** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-05** | Legendary armor in armor catalog | **P1** | `closed` | exoticArmor + legendaryArmor merge | `legendary-armor` store + projector | **DART-062** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-06** | Synergy membership filter + tags | **P1** | `open` | synergy include/exclude + linked on detail | filter supports; hosts unwired | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-07** | Alpha sort by display name | **P2** | `closed` | compareDisplayName finalize | Alpha sort in `filterCatalogClient` | **DART-062** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-08** | Owned instance perk/stat cards | **P2** | `open` | OwnedInstanceCard + perk grid + armor stats | Raw plugs/hashes; GAP-INV residual | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-CATALOG-09** | Item icons + dense meta chrome | **P2** | `open` | ItemIcon + MetaChips | Text ListTile / catalog-row | **DART-068** | Polish; see ui-polish-tracker |
+| **GAP-UI-CATALOG-10** | Weapons/Armor kind modes | **P2** | `open` | Weapons \| Armor \| Universal modes | Single mixed MVP list | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-BUILD-01** | Identity confirm/fork (DBR-ID-008) | **P1** | `open` | 409 IDENTITY_CONFIRM_REQUIRED Confirm/Fork | In-place identity edit; no identityAction | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-02** | Subclass kit composer host UI | **P1** | `open` | SubclassTab full kit + capacity | Super pin text only | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-03** | Finish slot-first one-tap walkthrough | **P2** | `open` | FinishBuildWalkthrough Create/Capture/fill | finish-gaps panel only (GAP-FEAT-06 residual) | **DART-067** | Not cutover; fidelity |
+| **GAP-UI-BUILD-04** | Finish Armor improve path | **P2** | `open` | FinishArmorOptimizeWorkspace confirm apply | Optimizer on Sets only; not Build Finish | **DART-067** | Soft never auto-apply |
+| **GAP-UI-BUILD-05** | Manifest search exotic/super pickers | **P2** | `open` | ManifestSearchPicker + icons | Raw hash TextFields | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-06** | Variant read-only icon overview | **P2** | `open` | VariantCard DETAILS icon strips | Text attachments/pins only | **DART-068** | Polish |
+| **GAP-UI-BUILD-08** | Client hard-block pre-save UX | **P2** | `open` | hardBlocks + plain-language disabled | Domain on save; thin host pre-filter | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-09** | Jaspr attach/pin named pickers | **P2** | `open` | set search/tags + pin context | Free-text set id + pin | **DART-064** | Jaspr only |
+| **GAP-UI-SETS-01** | Armor base-roll EoF six-stat board | **P1** | `open` | ArmorPieceStatRow + totals | No armorStatTotals | **DART-065** | DAC-NME-004 |
+| **GAP-UI-SETS-02** | Set item rows meta/traits/synergies | **P1** | `open` | icons, traits, LINKED SYNERGIES | name(hash)·inst\|wishlist text | **DART-065** | Not cutover; fidelity |
+| **GAP-UI-SETS-03** | Slot-fill embedded Catalog density | **P1** | `open` | SlotFillPanel Catalog grid | Text pickers; Jaspr hash-only | **DART-065** | Not cutover; fidelity |
+| **GAP-UI-SETS-04** | Library search + tag AND filters | **P2** | `open` | SetsPage search + TYPE & TAGS | Unfiltered FlapBoard | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SETS-05** | Readiness / Fill next / Used-by | **P2** | `open` | filled/capacity + FILL NEXT + USED BY | usedBy not rendered | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SETS-06** | Delete set + SET_IN_USE | **P2** | `open` | Edit/Delete + SET_IN_USE error | deleteUserSet exists; no host control | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SETS-07** | Occupied-slot replace confirm | **P2** | `open` | Confirm replace naming item | replaceExisting:true no dialog | **DART-065** | BR-SLOT-006 |
+| **GAP-UI-SETS-10** | Weapon fill selectedPerks / traits | **P2** | `open` | selectedTraitPerks + store selectedPerks | hash/name/instanceId only | **DART-065** | BR-ROLL-001 |
+| **GAP-UI-SYN-01** | Evidence catalog search picker | **P1** | `open` | Search catalog + filterOutLinked | Free-text + raw hash | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-02** | BR-SYN-012 weapon-perk source labels | **P1** | `open` | weaponPerkSourceLabel exotic/legendary | Free-text names only | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-03** | BR-SYN-004 reverse tags on catalog | **P1** | `open` | linkedSynergies by-target badges | No by-target wiring | **DART-063** | Not cutover; fidelity |
+| **GAP-UI-SYN-04** | Jaspr synergy detail/edit/links | **P1** | `open` | dual-pane detail + edit/delete | create+list only | **DART-066** | Jaspr only |
+| **GAP-UI-SYN-05** | DesignationLabel verb/element icons | **P2** | `open` | DesignationLabel + icons | type::subType wire keys | **DART-068** | Polish |
+| **GAP-UI-SYN-06** | Synergy library search/type filters | **P2** | `open` | SynergyFilters search + chips | setTypeFilter unwired | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-SYN-09** | Delete library synergy host action | **P2** | `open` | SynergyDetail Delete confirm | deleteUserSynergy; no control | **DART-066** | Not cutover; fidelity |
+| **GAP-UI-LOADOUTS-01** | Color bar / swatch / icon plate | **P2** | `open` | LoadoutColorBar + IconPlate | iconUrl only; colorUrl unused | **DART-068** | Density only |
+| **GAP-UI-LOADOUTS-02** | Exotic names on Bungie rows | **P2** | `open` | enrichLoadoutsWithExotics | exotic* fields unused | **DART-068** | Density only |
+| **GAP-UI-LOADOUTS-03** | Details expand for Bungie slot | **P2** | `open` | expanded detail panel | No expansion state | **DART-068** | Density only |
+| **GAP-UI-SETTINGS-01** | Manifest READY + entity count chips | **P2** | `open` | READY/STALE badge + Chip counts | Cached/Remote/Status text only | **DART-068** | Windows chrome |
+| **GAP-UI-SETTINGS-02** | Inventory sync card presentation | **P2** | `open` | ONLINE chip + human last sync + Refresh | Sync now + raw ISO | **DART-068** | **BUG-20260725-003** |
+| **GAP-UI-SETTINGS-04** | Post-sync soft armor kit banner | **P2** | `open` | Confirm/Dismiss better-kit Callout | No afterSync banner | **DART-067** | Soft never auto-apply |
+| **GAP-UI-SHELL-01** | AppShell nav labels/order | **P2** | `open` | Loadouts, Build, Synergy, Sets, Catalog, Settings | Builds/Synergies labels; order diverge | **DART-068** | Not cutover; fidelity |
 
 ---
 
@@ -499,29 +554,33 @@ Status legend matches cutover checklist: **PASS** / **PARTIAL** / **MISS** / **N
 | GAP-FEAT-04 | `/debug/*` | Operator non-goal for port | *Non-goal* |
 | GAP-FEAT-05 | Analyze primary tab | Adjacent legacy | *Non-goal* |
 
-**Closed on DART-057:** **GAP-FEAT-06** (finish-gaps host UX), **GAP-MOB-01**, **GAP-UI-01**. **GAP-FEAT-01** remains deferred (optimizer mobile/web).
+**Closed on DART-057:** **GAP-FEAT-06** (finish-gaps host UX), **GAP-MOB-01**, **GAP-UI-01**. **GAP-FEAT-01** remains deferred (optimizer mobile/web).  
+**Post-cutover fidelity:** Full GAP-UI-* detail + rules matrix + exit criteria live in [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) (do not duplicate prose here unless a slice closes a gap).
 
 ---
 
 ## Update checklist (after gaps analysis or finish-spec)
 
-- [x] Touch **Updated** date (2026-07-25 — DART-061 closed GAP-CUT-01 / PRODUCTION_CUTOVER GO; GAP-FEAT-02 remains non-goal / jsonOnly)
-- [x] Refresh **Product feature inventory** (sections A–E) so every PRODUCT/AppShell capability has Plan ownership
-- [x] Set gap **Status** (master table + detailed specs) — GAP-CUT-01 **closed** / **done**
-- [x] Ensure every `open`/`partial` P0–P1 gap has a **planned DART-NNN** (DART-050–061 only; no DART-062+)
-- [x] Sync residual table in cutover checklist if RB/RC change (all RB cleared; PRODUCTION_CUTOVER GO)
-- [x] Append/enrich DART-050–061 rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md) (DART-061 done)
-- [x] Inventory planning coverage check table all **Yes** / empty unplanned
+- [x] Touch **Updated** date (2026-07-25 — UI fidelity residual audit; cutover GO unchanged)
+- [x] Refresh **Product feature inventory** (sections A–E) — fidelity PARTIAL demotions for catalog/build/sets/synergy/identity/finish/hard/owned-join/optimizer
+- [x] Set gap **Status** — GAP-UI-* `open` with planned DART-062–068; cutover gaps remain closed
+- [x] Ensure every open **P1 GAP-UI-*** has planned **DART-062+** (see fidelity master)
+- [x] Cutover checklist **not** re-gated (PRODUCTION_CUTOVER GO stands)
+- [x] Append DART-062–068 planned rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md)
+- [x] Cross-link [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); pure visual density only on [ui-polish-tracker.md](./ui-polish-tracker.md)
+- [x] Soft never auto-applies; no CLIENT_SECRET
 
 ---
 
-## Current pointer (post-program planning)
+## Current pointer (post-program + UI fidelity planning)
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | *(none — DART-050–061 complete)* |
-| **Next phase** | P8 complete (DART-058–061 **done**); human/release merge toward production/`main` after GO |
+| **Next planned slice** | **DART-063** `catalog-universal-modes-synergy-tags` (UI fidelity P1) |
+| **Next phase** | **P9** host UI fidelity (DART-062–068 planned); P8 cutover program **done** |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
-| **Feature inventory** | Complete (FEAT-NAV / COMPOSE / INV / AUTH-DATA / non-goals) — every row planned, shipped, deferred, or n/a |
-| **unplanned_p0_p1** | *(empty)* |
+| **Feature inventory** | Complete; fidelity PARTIAL on nav/compose browse density; loadouts/settings remain PASS |
+| **unplanned_p0_p1** | *(empty for cutover)*; open **P1 GAP-UI-*** all map to DART-062–066 |
+| **Open GAP-UI count** | **40** (canonical table in ui-fidelity.md) |
 | **Non-goal residual** | **GAP-FEAT-02** dim.gg remains deferred (jsonOnly sufficient) |
+| **Bug crosswalk** | **BUG-20260725-003** → **GAP-UI-SETTINGS-02** |

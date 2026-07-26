@@ -167,6 +167,55 @@ final Map<String, dynamic> fixtureItemTable = {
     'Exotic armor archetype.',
     {'itemTypeDisplayName': 'Archetype'},
   ),
+  // Exotic weapon: Gjallarhorn (Power, Solar, Heavy) — DART-062
+  '1004': {
+    'hash': 1004,
+    'displayProperties':
+        _dp('Gjallarhorn', 'Exotic rocket launcher.', '/gjallarhorn.png'),
+    'itemType': 3,
+    'itemTypeDisplayName': 'Rocket Launcher',
+    'defaultDamageTypeHash': 4001,
+    'flavorText': 'Light the way.',
+    'inventory': {'tierType': 6},
+    'equippingBlock': {'ammoType': 3, 'equipmentSlotTypeHash': 3003},
+    'sockets': {
+      'socketEntries': [
+        {'singleInitialItemHash': 1005},
+        {'singleInitialItemHash': 1006},
+      ],
+      'socketCategories': <dynamic>[],
+    },
+  },
+  '1005': _mkPlug(
+    1005,
+    'Wolfpack Rounds',
+    'intrinsics',
+    'Rounds fired from this weapon split into tracking cluster missiles.',
+  ),
+  '1006': _mkItem(1006, 'Gjallarhorn Catalyst', 'Upgrade Masterwork.'),
+  // Legendary armor: Arms of Optimacy (Titan gauntlets) — DART-062
+  '1090': {
+    'hash': 1090,
+    'displayProperties':
+        _dp('Arms of Optimacy', 'Legendary Titan gauntlets.', '/optimacy.png'),
+    'itemType': 2,
+    'classType': 0,
+    'inventory': {'tierType': 5},
+    'equippingBlock': {'equipmentSlotTypeHash': 3005},
+    'sockets': {
+      'socketEntries': [
+        {'singleInitialItemHash': 1091},
+      ],
+      'socketCategories': <dynamic>[],
+    },
+  },
+  '1091': _mkPlug(
+    1091,
+    'Brawler',
+    'armor_archetypes',
+    'Melee-focused armor archetype.',
+    {'itemTypeDisplayName': 'Archetype'},
+  ),
   '1007': {
     'hash': 1007,
     'displayProperties':

@@ -82,13 +82,14 @@ void main() {
   });
 
   group('filterCatalogClient', () {
-    test('legacy List still includes (OR within dimension)', () {
+    test('legacy List still includes (OR within dimension), alpha order', () {
       expect(
         filterCatalogClient(
           items,
           const CatalogClientFilters(elements: ['Void', 'Solar']),
         ).map((i) => i.hash).toList(),
-        [1, 2],
+        // Dragon's Breath, Edge Transit
+        [2, 1],
       );
     });
 
@@ -113,7 +114,8 @@ void main() {
           ammos: FacetFilter(exclude: ['Special']),
         ),
       ).map((i) => i.hash).toList();
-      expect(hashes, [2, 4]);
+      // Arc Logic, Dragon's Breath
+      expect(hashes, [4, 2]);
     });
 
     test('AND across dimensions: include Heavy and exclude Solar', () {
@@ -129,13 +131,14 @@ void main() {
       );
     });
 
-    test('exclude exotic keeps legendaries', () {
+    test('exclude exotic keeps legendaries (alpha)', () {
       expect(
         filterCatalogClient(
           items,
           const CatalogClientFilters(exotic: false),
         ).map((i) => i.hash).toList(),
-        [1, 4],
+        // Arc Logic, Edge Transit
+        [4, 1],
       );
     });
 
@@ -184,13 +187,14 @@ void main() {
       );
     });
 
-    test('itemHashesInclude / exclude', () {
+    test('itemHashesInclude / exclude (alpha)', () {
       expect(
         filterCatalogClient(
           items,
           const CatalogClientFilters(itemHashesInclude: {1, 4}),
         ).map((i) => i.hash).toList(),
-        [1, 4],
+        // Arc Logic, Edge Transit
+        [4, 1],
       );
       expect(
         filterCatalogClient(
@@ -220,6 +224,19 @@ void main() {
         ).map((i) => i.hash).toList(),
         [3],
       );
+    });
+
+    test('empty filter alpha-sorts by display name (GAP-UI-CATALOG-07)', () {
+      final names = filterCatalogClient(
+        items,
+        const CatalogClientFilters(),
+      ).map((i) => i.name).toList();
+      expect(names, [
+        'Arc Logic',
+        "Dragon's Breath",
+        'Edge Transit',
+        'Synthoceps',
+      ]);
     });
   });
 }

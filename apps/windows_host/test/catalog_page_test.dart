@@ -113,6 +113,9 @@ void main() {
     }
   });
 
+  Finder itemKey(int hash) =>
+      find.byKey(Key('catalog_item_$hash'), skipOffstage: false);
+
   testWidgets('shows fixture item names offline', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: CatalogPage(services: services)),
@@ -120,9 +123,9 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('catalog_list')), findsOneWidget);
-    expect(find.text('Edge Transit'), findsOneWidget);
-    expect(find.text("Dragon's Breath"), findsOneWidget);
-    expect(find.text('Arc Logic'), findsOneWidget);
+    expect(itemKey(1), findsOneWidget); // Edge Transit
+    expect(itemKey(2), findsOneWidget); // Dragon's Breath
+    expect(itemKey(3), findsOneWidget); // Arc Logic
     expect(find.byKey(const Key('catalog_status')), findsOneWidget);
   });
 
@@ -132,12 +135,85 @@ void main() {
     );
     await _pumpFrames(tester);
 
+    await tester.ensureVisible(find.byKey(const Key('element_chip_Solar')));
     await tester.tap(find.byKey(const Key('element_chip_Solar')));
     await _pumpFrames(tester);
 
-    expect(find.text("Dragon's Breath"), findsOneWidget);
-    expect(find.text('Edge Transit'), findsNothing);
-    expect(find.text('Arc Logic'), findsNothing);
+    expect(itemKey(2), findsOneWidget);
+    expect(itemKey(1), findsNothing);
+    expect(itemKey(3), findsNothing);
+  });
+
+  testWidgets('slot archetype chips and group-by (DART-062)', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: CatalogPage(services: services)),
+    );
+    await _pumpFrames(tester);
+
+    // Slot Energy include
+    await tester.ensureVisible(find.byKey(const Key('slot_chip_Energy')));
+    await tester.tap(find.byKey(const Key('slot_chip_Energy')));
+    await _pumpFrames(tester);
+    expect(itemKey(1), findsOneWidget);
+    expect(itemKey(3), findsOneWidget);
+    expect(itemKey(2), findsNothing);
+
+    // Archetype Auto Rifle include further narrows
+    await tester.ensureVisible(
+      find.byKey(const Key('archetype_chip_Auto Rifle')),
+    );
+    await tester.tap(find.byKey(const Key('archetype_chip_Auto Rifle')));
+    await _pumpFrames(tester);
+    expect(itemKey(3), findsOneWidget);
+    expect(itemKey(1), findsNothing);
+
+    // Clear archetype by cycling off (include → exclude → off): two more taps
+    await tester.tap(find.byKey(const Key('archetype_chip_Auto Rifle')));
+    await _pumpFrames(tester);
+    await tester.tap(find.byKey(const Key('archetype_chip_Auto Rifle')));
+    await _pumpFrames(tester);
+
+    // Group by element shows header
+    await tester.ensureVisible(find.byKey(const Key('group_chip_element')));
+    await tester.tap(find.byKey(const Key('group_chip_element')));
+    await _pumpFrames(tester);
+    expect(
+      find.byKey(const Key('catalog_group_Arc'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('catalog_group_Void'), skipOffstage: false),
+      findsOneWidget,
+    );
+    // Filter membership unchanged (2 Energy weapons)
+    expect(itemKey(1), findsOneWidget);
+    expect(itemKey(3), findsOneWidget);
+  });
+
+  testWidgets('results are alpha-sorted by display name', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: CatalogPage(services: services)),
+    );
+    await _pumpFrames(tester);
+
+    final tiles = tester
+        .widgetList<ListTile>(
+          find.byWidgetPredicate(
+            (w) =>
+                w is ListTile &&
+                w.key is Key &&
+                (w.key as Key).toString().contains('catalog_item_'),
+            skipOffstage: false,
+          ),
+        )
+        .toList();
+    final names = tiles
+        .map((t) => t.title)
+        .whereType<Text>()
+        .map((t) => t.data)
+        .whereType<String>()
+        .toList();
+    expect(names, ['Arc Logic', "Dragon's Breath", 'Edge Transit']);
   });
 
   testWidgets('free-text filters by name', (tester) async {
@@ -149,8 +225,8 @@ void main() {
     await tester.enterText(find.byKey(const Key('catalog_query')), 'arc');
     await _pumpFrames(tester);
 
-    expect(find.text('Arc Logic'), findsOneWidget);
-    expect(find.text('Edge Transit'), findsNothing);
+    expect(itemKey(3), findsOneWidget);
+    expect(itemKey(1), findsNothing);
   });
 
   testWidgets('empty entity cache shows empty state', (tester) async {

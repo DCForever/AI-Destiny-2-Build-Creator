@@ -83,5 +83,53 @@ void main() {
       expect(find.text('Void GL'), findsNothing);
       expect(find.textContaining('1 result'), findsOneComponent);
     });
+
+    testComponents('slot and class facets (DART-062 GAP-UI-CATALOG-01)',
+        (tester) async {
+      tester.pumpComponent(
+        CatalogPage(
+          initialItems: fixtures,
+          initialVersion: 'fixture-1',
+        ),
+      );
+
+      await tester.click(find.byKey(const ValueKey('facet-slot-Power')));
+      await tester.pump();
+      expect(find.text('Solar Rocket'), findsOneComponent);
+      expect(find.text('Void GL'), findsNothing);
+      expect(find.text('Synthoceps'), findsNothing);
+
+      // Cycle Power: include → exclude → off
+      await tester.click(find.byKey(const ValueKey('facet-slot-Power')));
+      await tester.pump();
+      await tester.click(find.byKey(const ValueKey('facet-slot-Power')));
+      await tester.pump();
+
+      await tester.click(find.byKey(const ValueKey('facet-class-Titan')));
+      await tester.pump();
+      expect(find.text('Synthoceps'), findsOneComponent);
+      expect(find.text('Void GL'), findsNothing);
+      expect(find.textContaining('1 result'), findsOneComponent);
+    });
+
+    testComponents('group-by element shows headers without dropping rows',
+        (tester) async {
+      tester.pumpComponent(
+        CatalogPage(
+          initialItems: fixtures,
+          initialVersion: 'fixture-1',
+        ),
+      );
+
+      await tester.click(find.byKey(const ValueKey('group-chip-element')));
+      await tester.pump();
+
+      expect(find.textContaining('Solar (1)'), findsOneComponent);
+      expect(find.textContaining('Void (1)'), findsOneComponent);
+      expect(find.text('Solar Rocket'), findsOneComponent);
+      expect(find.text('Void GL'), findsOneComponent);
+      expect(find.text('Synthoceps'), findsOneComponent);
+      expect(find.textContaining('3 result'), findsOneComponent);
+    });
   });
 }

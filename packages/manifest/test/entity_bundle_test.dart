@@ -9,7 +9,9 @@ void main() {
     'builtAt': '2026-07-25T00:00:00.000Z',
     'counts': {
       'weapons': 2,
+      'exotic-weapons': 1,
       'exotic-armor': 1,
+      'legendary-armor': 1,
       'aspects': 1,
     },
     'stores': {
@@ -41,6 +43,26 @@ void main() {
           'perkColumns': <Map<String, dynamic>>[],
         },
       ],
+      'exotic-weapons': [
+        {
+          'hash': 150,
+          'name': 'Gjallarhorn',
+          'searchName': 'gjallarhorn',
+          'icon': null,
+          'slot': 'Power',
+          'element': 'Solar',
+          'ammo': 'Heavy',
+          'frame': 'Wolfpack Rounds',
+          'intrinsic': {
+            'name': 'Wolfpack Rounds',
+            'description': 'Cluster missiles.',
+          },
+          'catalyst': null,
+          'flavorText': '',
+          'perkColumns': <Map<String, dynamic>>[],
+          'itemTypeName': 'Rocket Launcher',
+        },
+      ],
       'exotic-armor': [
         {
           'hash': 200,
@@ -55,6 +77,17 @@ void main() {
           },
           'archetype': 'Brawler',
           'flavorText': '',
+        },
+      ],
+      'legendary-armor': [
+        {
+          'hash': 210,
+          'name': 'Arms of Optimacy',
+          'searchName': 'arms of optimacy',
+          'icon': null,
+          'classType': 'Titan',
+          'slot': 'Gauntlets',
+          'archetype': 'Brawler',
         },
       ],
       'aspects': [
@@ -80,13 +113,23 @@ void main() {
       expect(doc.version, 'prebuilt-mvp-1');
       expect(doc.meta.counts['weapons'], 2);
       expect(doc.stores[MvpStoreName.weapons], hasLength(2));
+      expect(doc.stores[MvpStoreName.exoticWeapons], hasLength(1));
       expect(doc.stores[MvpStoreName.exoticArmor], hasLength(1));
+      expect(doc.stores[MvpStoreName.legendaryArmor], hasLength(1));
 
       final items = doc.toCatalogItems();
-      expect(items, hasLength(4)); // 2 weapons + 1 armor + 1 aspect
-      expect(items.map((i) => i.name), containsAll(['Void GL', 'Synthoceps']));
+      // 2 weapons + 1 exotic weapon + 1 exotic armor + 1 legendary armor + 1 aspect
+      expect(items, hasLength(6));
+      expect(
+        items.map((i) => i.name),
+        containsAll(['Void GL', 'Synthoceps', 'Gjallarhorn', 'Arms of Optimacy']),
+      );
       expect(items.where((i) => i.element == 'Void'), hasLength(1));
-      expect(items.where((i) => i.isExotic), hasLength(1));
+      expect(items.where((i) => i.isExotic), hasLength(2)); // exo weapon + armor
+      expect(
+        items.where((i) => !i.isExotic && i.classType == 'Titan'),
+        hasLength(1),
+      );
     });
 
     test('parse from JSON string', () {
@@ -135,25 +178,34 @@ void main() {
       final load = await catalog.loadBase();
       expect(load.ok, isTrue);
       expect(load.version, 'prebuilt-mvp-1');
-      expect(load.items, hasLength(4));
+      expect(load.items, hasLength(6));
 
       final solar = catalog.browse(
         CatalogClientFilters(
           elements: FacetFilter(include: const ['Solar']),
         ),
       );
-      expect(solar.map((i) => i.name), ['Solar Rocket']);
+      // Alpha: Gjallarhorn, Solar Rocket
+      expect(solar.map((i) => i.name), ['Gjallarhorn', 'Solar Rocket']);
 
       final exoticOnly = catalog.browse(
         const CatalogClientFilters(exotic: true),
       );
-      expect(exoticOnly.map((i) => i.name), ['Synthoceps']);
+      expect(exoticOnly.map((i) => i.name), ['Gjallarhorn', 'Synthoceps']);
 
       final query = catalog.browse(
         const CatalogClientFilters(query: 'void'),
       );
       expect(query, hasLength(1));
       expect(query.single.name, 'Void GL');
+
+      final legendaryArmor = catalog.browse(
+        const CatalogClientFilters(
+          slots: FacetFilter(include: ['Gauntlets']),
+          exotic: false,
+        ),
+      );
+      expect(legendaryArmor.map((i) => i.name), contains('Arms of Optimacy'));
     });
 
     test('OfflineCatalog with injected MemoryEntityCache', () async {
@@ -165,7 +217,7 @@ void main() {
         cache: doc.toMemoryCache(),
       );
       final load = await catalog.loadBase();
-      expect(load.items, hasLength(4));
+      expect(load.items, hasLength(6));
       expect(load.emptyReason, CatalogEmptyReason.none);
     });
   });

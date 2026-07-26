@@ -5,7 +5,9 @@
   "distribution": "hybrid",
   "counts": {
     "weapons": 3,
+    "exotic-weapons": 1,
     "exotic-armor": 2,
+    "legendary-armor": 1,
     "aspects": 1,
     "fragments": 1,
     "abilities": 1,
@@ -53,6 +55,26 @@
         "perkColumns": []
       }
     ],
+    "exotic-weapons": [
+      {
+        "hash": 1501,
+        "name": "Gjallarhorn",
+        "searchName": "gjallarhorn",
+        "icon": null,
+        "slot": "Power",
+        "element": "Solar",
+        "ammo": "Heavy",
+        "frame": "Wolfpack Rounds",
+        "intrinsic": {
+          "name": "Wolfpack Rounds",
+          "description": "Cluster missiles."
+        },
+        "catalyst": null,
+        "flavorText": "Light the way.",
+        "perkColumns": [],
+        "itemTypeName": "Rocket Launcher"
+      }
+    ],
     "exotic-armor": [
       {
         "hash": 2001,
@@ -81,6 +103,17 @@
         },
         "archetype": "Gunner",
         "flavorText": ""
+      }
+    ],
+    "legendary-armor": [
+      {
+        "hash": 2101,
+        "name": "Arms of Optimacy",
+        "searchName": "arms of optimacy",
+        "icon": null,
+        "classType": "Titan",
+        "slot": "Gauntlets",
+        "archetype": "Brawler"
       }
     ],
     "aspects": [

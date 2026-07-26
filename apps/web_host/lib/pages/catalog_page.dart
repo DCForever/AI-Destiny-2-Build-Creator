@@ -59,7 +59,11 @@ class _CatalogPageState extends State<CatalogPage> {
   String _query = '';
   FacetFilter _elements = emptyFacet();
   FacetFilter _ammos = emptyFacet();
+  FacetFilter _slots = emptyFacet();
+  FacetFilter _classNames = emptyFacet();
+  FacetFilter _archetypes = emptyFacet();
   bool? _exotic; // null off, true only exotic, false exclude exotic
+  final List<CatalogGroupDimension> _groupBy = [];
   CatalogScope _scope = CatalogScope.all;
   CatalogItem? _selected;
   List<CatalogInstanceProjection> _instances = const [];
@@ -140,8 +144,18 @@ class _CatalogPageState extends State<CatalogPage> {
       query: _query.isEmpty ? null : _query,
       elements: _elements,
       ammos: _ammos,
+      slots: _slots,
+      classNames: _classNames,
+      archetypes: _archetypes,
       exotic: _exotic,
       scope: _scope,
+    );
+  }
+
+  List<CatalogGroup> _groupedResults() {
+    return groupCatalogItems(
+      _results,
+      List<CatalogGroupDimension>.from(_groupBy),
     );
   }
 
@@ -213,6 +227,30 @@ class _CatalogPageState extends State<CatalogPage> {
     _refilter();
   }
 
+  void _cycleSlot(String value) {
+    _slots = cycleFacetValue(_slots, value);
+    _refilter();
+  }
+
+  void _cycleClass(String value) {
+    _classNames = cycleFacetValue(_classNames, value);
+    _refilter();
+  }
+
+  void _cycleArchetype(String value) {
+    _archetypes = cycleFacetValue(_archetypes, value);
+    _refilter();
+  }
+
+  void _toggleGroupDimension(CatalogGroupDimension dim) {
+    if (_groupBy.contains(dim)) {
+      _groupBy.remove(dim);
+    } else {
+      _groupBy.add(dim);
+    }
+    setState(() {});
+  }
+
   void _cycleExotic() {
     // null → true → false → null
     if (_exotic == null) {
@@ -229,6 +267,38 @@ class _CatalogPageState extends State<CatalogPage> {
     if (facet.include.contains(value)) return 'facet-chip facet-include';
     if (facet.exclude.contains(value)) return 'facet-chip facet-exclude';
     return 'facet-chip';
+  }
+
+  Component _facetRow({
+    required String testId,
+    required String label,
+    required List<String> values,
+    required FacetFilter facet,
+    required String dataFacet,
+    required void Function(String) onCycle,
+  }) {
+    return div(
+      classes: 'facet-row',
+      attributes: {'data-testid': testId},
+      [
+        span(classes: 'facet-label', [.text(label)]),
+        for (final value in values)
+          button(
+            key: ValueKey('facet-$dataFacet-$value'),
+            classes: _chipClass(facet, value),
+            attributes: {
+              'type': 'button',
+              'data-facet': dataFacet,
+              'data-value': value,
+              'data-testid': 'facet-$dataFacet-$value',
+            },
+            events: {
+              'click': (_) => onCycle(value),
+            },
+            [.text(value)],
+          ),
+      ],
+    );
   }
 
   String _exoticChipClass() {
@@ -325,45 +395,45 @@ class _CatalogPageState extends State<CatalogPage> {
                 ),
               ],
             ),
-            div(
-              classes: 'facet-row',
-              attributes: {'data-testid': 'facet-elements'},
-              [
-                span(classes: 'facet-label', [.text('Element')]),
-                for (final el in catalogElements)
-                  button(
-                    classes: _chipClass(_elements, el),
-                    attributes: {
-                      'type': 'button',
-                      'data-facet': 'element',
-                      'data-value': el,
-                    },
-                    events: {
-                      'click': (_) => _cycleElement(el),
-                    },
-                    [.text(el)],
-                  ),
-              ],
+            _facetRow(
+              testId: 'facet-elements',
+              label: 'Element',
+              values: catalogElements,
+              facet: _elements,
+              dataFacet: 'element',
+              onCycle: _cycleElement,
             ),
-            div(
-              classes: 'facet-row',
-              attributes: {'data-testid': 'facet-ammos'},
-              [
-                span(classes: 'facet-label', [.text('Ammo')]),
-                for (final a in catalogAmmoTypes)
-                  button(
-                    classes: _chipClass(_ammos, a),
-                    attributes: {
-                      'type': 'button',
-                      'data-facet': 'ammo',
-                      'data-value': a,
-                    },
-                    events: {
-                      'click': (_) => _cycleAmmo(a),
-                    },
-                    [.text(a)],
-                  ),
-              ],
+            _facetRow(
+              testId: 'facet-ammos',
+              label: 'Ammo',
+              values: catalogAmmoTypes,
+              facet: _ammos,
+              dataFacet: 'ammo',
+              onCycle: _cycleAmmo,
+            ),
+            _facetRow(
+              testId: 'facet-slots',
+              label: 'Slot',
+              values: [...catalogWeaponSlots, ...catalogArmorSlots],
+              facet: _slots,
+              dataFacet: 'slot',
+              onCycle: _cycleSlot,
+            ),
+            _facetRow(
+              testId: 'facet-classes',
+              label: 'Class',
+              values: catalogClassNames,
+              facet: _classNames,
+              dataFacet: 'class',
+              onCycle: _cycleClass,
+            ),
+            _facetRow(
+              testId: 'facet-archetypes',
+              label: 'Archetype',
+              values: [...catalogWeaponArchetypes, ...catalogArmorArchetypes],
+              facet: _archetypes,
+              dataFacet: 'archetype',
+              onCycle: _cycleArchetype,
             ),
             div(classes: 'facet-row', [
               span(classes: 'facet-label', [.text('Rarity')]),
@@ -380,6 +450,29 @@ class _CatalogPageState extends State<CatalogPage> {
                 [.text(_exoticLabel())],
               ),
             ]),
+            div(
+              classes: 'facet-row',
+              attributes: {'data-testid': 'catalog-group-by'},
+              [
+                span(classes: 'facet-label', [.text('Group')]),
+                for (final dim in catalogGroupDimensions)
+                  button(
+                    key: ValueKey('group-chip-${dim.id.name}'),
+                    classes: _groupBy.contains(dim.id)
+                        ? 'facet-chip facet-include'
+                        : 'facet-chip',
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'group-chip-${dim.id.name}',
+                      'data-group': dim.id.name,
+                    },
+                    events: {
+                      'click': (_) => _toggleGroupDimension(dim.id),
+                    },
+                    [.text(dim.label)],
+                  ),
+              ],
+            ),
           ]),
           p(
             classes: 'catalog-count',
@@ -396,46 +489,58 @@ class _CatalogPageState extends State<CatalogPage> {
               classes: 'catalog-list',
               attributes: {'data-testid': 'catalog-list'},
               [
-                for (final item in _results)
-                  button(
-                    key: ValueKey('catalog-row-${item.hash}'),
-                    classes: _selected?.hash == item.hash
-                        ? 'catalog-row catalog-row-selected'
-                        : 'catalog-row',
-                    attributes: {
-                      'type': 'button',
-                      'data-hash': '${item.hash}',
-                      'data-testid': 'catalog-row',
-                      if (item.owned) 'data-owned': '${item.ownedCount}',
-                    },
-                    events: {
-                      'click': (_) => _selectItem(item),
-                    },
-                    [
-                      span(classes: 'catalog-name', [
-                        .text(item.name),
-                        if (item.owned)
-                          span(
-                            classes: 'catalog-owned-badge',
-                            attributes: {
-                              'data-testid': 'owned-badge-${item.hash}',
-                            },
-                            [.text(' ×${item.ownedCount}')],
+                for (final group in _groupedResults()) ...[
+                  if (_groupBy.isNotEmpty)
+                    h3(
+                      classes: 'catalog-group-header',
+                      attributes: {
+                        'data-testid': 'catalog-group',
+                        'data-group-key': group.key,
+                      },
+                      [.text('${group.label} (${group.items.length})')],
+                    ),
+                  for (final item in group.items)
+                    button(
+                      key: ValueKey('catalog-row-${item.hash}'),
+                      classes: _selected?.hash == item.hash
+                          ? 'catalog-row catalog-row-selected'
+                          : 'catalog-row',
+                      attributes: {
+                        'type': 'button',
+                        'data-hash': '${item.hash}',
+                        'data-testid': 'catalog-row',
+                        if (item.owned) 'data-owned': '${item.ownedCount}',
+                      },
+                      events: {
+                        'click': (_) => _selectItem(item),
+                      },
+                      [
+                        span(classes: 'catalog-name', [
+                          .text(item.name),
+                          if (item.owned)
+                            span(
+                              classes: 'catalog-owned-badge',
+                              attributes: {
+                                'data-testid': 'owned-badge-${item.hash}',
+                              },
+                              [.text(' ×${item.ownedCount}')],
+                            ),
+                        ]),
+                        span(classes: 'catalog-meta', [
+                          .text(
+                            [
+                              if (item.slot != null) item.slot!,
+                              if (item.element != null) item.element!,
+                              if (item.ammo != null) item.ammo!,
+                              if (item.classType != null) item.classType!,
+                              if (item.isExotic) 'Exotic',
+                              if (item.owned) 'owned×${item.ownedCount}',
+                            ].join(' · '),
                           ),
-                      ]),
-                      span(classes: 'catalog-meta', [
-                        .text(
-                          [
-                            if (item.slot != null) item.slot!,
-                            if (item.element != null) item.element!,
-                            if (item.ammo != null) item.ammo!,
-                            if (item.isExotic) 'Exotic',
-                            if (item.owned) 'owned×${item.ownedCount}',
-                          ].join(' · '),
-                        ),
-                      ]),
-                    ],
-                  ),
+                        ]),
+                      ],
+                    ),
+                ],
               ],
             ),
           if (_selected != null) ...[

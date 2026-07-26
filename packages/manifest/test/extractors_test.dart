@@ -42,6 +42,37 @@ void main() {
     });
   });
 
+  group('exoticWeaponsExtractor', () {
+    test('projects Gjallarhorn (GAP-UI-CATALOG-04)', () async {
+      final records = await ExoticWeaponsExtractor().extract(loadFixtureRawTable);
+      expect(records, hasLength(1));
+      final rec = records.single as ExoticWeaponRecord;
+      expect(rec.hash, 1004);
+      expect(rec.name, 'Gjallarhorn');
+      expect(rec.slot, WeaponSlotName.power);
+      expect(rec.element, ElementName.solar);
+      expect(rec.ammo, AmmoTypeName.heavy);
+      expect(rec.frame, 'Wolfpack Rounds');
+      expect(rec.intrinsic.name, 'Wolfpack Rounds');
+      expect(rec.catalyst?.name, 'Gjallarhorn Catalyst');
+      expect(rec.itemTypeName, 'Rocket Launcher');
+    });
+  });
+
+  group('legendaryArmorExtractor', () {
+    test('projects Arms of Optimacy (GAP-UI-CATALOG-05)', () async {
+      final records =
+          await LegendaryArmorExtractor().extract(loadFixtureRawTable);
+      expect(records, hasLength(1));
+      final rec = records.single as LegendaryArmorRecord;
+      expect(rec.hash, 1090);
+      expect(rec.name, 'Arms of Optimacy');
+      expect(rec.classType, DestinyClassName.titan);
+      expect(rec.slot, ArmorSlotName.gauntlets);
+      expect(rec.archetype, 'Brawler');
+    });
+  });
+
   group('aspectsExtractor', () {
     test('extracts fragment capacities', () async {
       final records = await AspectsExtractor().extract(loadFixtureRawTable);
