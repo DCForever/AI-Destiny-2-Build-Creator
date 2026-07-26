@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-066 done — synergy catalog picker + Jaspr manage, sets library filters/readiness/delete; **DART-068** next; cutover GO unchanged)  
+**Updated:** 2026-07-25 (DART-066 done — synergy catalog picker + Jaspr manage, sets library filters/readiness/delete; **DART-067** next; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -227,16 +227,16 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-068** `presentation-shell-loadouts-settings` (**planned**) |
+| **Next / active slice** | **DART-067** `finish-walkthrough-armor-optimize` (**planned**) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). UI fidelity P9 residual continues (does not re-open cutover). Human/release may merge toward production/`main` (RC-BRANCH) |
-| **Phase plan** | P6–P8 **done** (DART-050–061); **P9** DART-062–066 **done**, DART-068 **planned** (host UI fidelity polish) |
+| **Phase plan** | P6–P8 **done** (DART-050–061); **P9** DART-062–066 **done**, DART-067–068 **planned** (host UI fidelity) |
 
 ### P9 note — host UI fidelity post-cutover
 
-After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS, but presentation trails Next atlas on browse/composition density (BR/DAC/DBR surface rules). Canonical residual ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). **DART-062–066 done** (catalog, build identity, sets board/fill, synergy picker+manage + sets library). Remaining: **DART-068** presentation/shell/loadouts/settings polish. Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
+After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS, but presentation trails Next atlas on browse/composition density (BR/DAC/DBR surface rules). Canonical residual ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). **DART-062–066 done** (catalog, build identity, sets board/fill, synergy picker+manage + sets library). Remaining: **DART-067** finish walkthrough/armor optimize → **DART-068** presentation/shell/loadouts/settings polish. Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
 
 ### DART-062 note (completed) — catalog browse semantics
 
