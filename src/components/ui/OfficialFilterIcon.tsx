@@ -15,13 +15,23 @@ export function OfficialFilterIcon({
   size?: number;
 }) {
   return (
-    <Image
-      src={bungieIconUrl(icon)}
-      alt={label}
-      width={size}
-      height={size}
-      className="block"
-      unoptimized
-    />
+    <span
+      className="inline-flex items-center justify-center shrink-0 rounded-sm"
+      style={{
+        width: size,
+        height: size,
+        /* Dark well keeps light Bungie glyphs legible on light theme. */
+        backgroundColor: "#12151c",
+      }}
+    >
+      <Image
+        src={bungieIconUrl(icon)}
+        alt={label}
+        width={size}
+        height={size}
+        className="block"
+        unoptimized
+      />
+    </span>
   );
 }
