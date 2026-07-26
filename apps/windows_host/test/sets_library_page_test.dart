@@ -48,6 +48,14 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+/// Expand collapsible create form (BUG-20260726-008).
+Future<void> _expandSetsCreate(WidgetTester tester) async {
+  if (find.byKey(const Key('sets_create_button')).evaluate().isEmpty) {
+    await tester.tap(find.byKey(const Key('sets_create_toggle')));
+    await _pumpFrames(tester);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -134,6 +142,7 @@ void main() {
 
     expect(find.byKey(const Key('sets_list_empty')), findsOneWidget);
 
+    await _expandSetsCreate(tester);
     await tester.enterText(find.byKey(const Key('sets_create_name')), 'Kinetic Core');
     await tester.tap(find.byKey(const Key('sets_create_button')));
     await _pumpFrames(tester);
@@ -154,6 +163,7 @@ void main() {
     );
     await _pumpFrames(tester);
 
+    await _expandSetsCreate(tester);
     await tester.enterText(find.byKey(const Key('sets_create_name')), 'Old Name');
     await tester.tap(find.byKey(const Key('sets_create_button')));
     await _pumpFrames(tester);
@@ -175,6 +185,7 @@ void main() {
     );
     await _pumpFrames(tester);
 
+    await _expandSetsCreate(tester);
     await tester.enterText(find.byKey(const Key('sets_create_name')), 'Weapons');
     await tester.tap(find.byKey(const Key('sets_create_button')));
     await _pumpFrames(tester);
@@ -209,6 +220,7 @@ void main() {
     );
     await _pumpFrames(tester);
 
+    await _expandSetsCreate(tester);
     await tester.enterText(find.byKey(const Key('sets_create_name')), 'W');
     await tester.tap(find.byKey(const Key('sets_create_button')));
     await _pumpFrames(tester);
@@ -228,18 +240,23 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    expect(find.byKey(const Key('catalog_page')), findsOneWidget);
+    // Shell default is Loadouts (DART-068); Sets is index 3.
+    expect(
+      find.byKey(const Key('loadouts_page'), skipOffstage: false),
+      findsOneWidget,
+    );
 
-    // Destination order: Catalog=0, Sets=1, Settings=2
     final rail = find.byKey(const Key('host_nav_rail'));
     expect(rail, findsOneWidget);
 
-    // Tap Sets label in NavigationRail
     await tester.tap(find.text('Sets'));
     await _pumpFrames(tester);
 
-    expect(find.byKey(const Key('sets_library_page')), findsOneWidget);
-    expect(find.byKey(const Key('sets_create_button')), findsOneWidget);
+    expect(
+      find.byKey(const Key('sets_library_page'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('sets_create_toggle')), findsOneWidget);
   });
 
   testWidgets('dual-pane rail width contract present', (tester) async {
@@ -252,6 +269,7 @@ void main() {
     await _pumpFrames(tester);
 
     // Create a set so detail appears beside rail
+    await _expandSetsCreate(tester);
     await tester.enterText(find.byKey(const Key('sets_create_name')), 'Pane');
     await tester.tap(find.byKey(const Key('sets_create_button')));
     await _pumpFrames(tester);

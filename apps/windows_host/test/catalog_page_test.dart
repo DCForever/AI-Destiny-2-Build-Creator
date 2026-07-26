@@ -118,9 +118,24 @@ void main() {
 
   Future<void> expandFilters(WidgetTester tester) async {
     final toggle = find.byKey(const Key('catalog_filters_toggle'));
-    await tester.ensureVisible(toggle);
-    await tester.tap(toggle);
-    await _pumpFrames(tester);
+    if (toggle.evaluate().isNotEmpty) {
+      // Open if closed: subtitle is only shown when collapsed.
+      final tile = tester.widget<ListTile>(toggle);
+      if (tile.subtitle != null) {
+        await tester.tap(toggle);
+        await _pumpFrames(tester);
+      }
+    }
+  }
+
+  Future<void> expandMoreFilters(WidgetTester tester) async {
+    await expandFilters(tester);
+    final more = find.byKey(const Key('catalog_more_filters_toggle'));
+    if (more.evaluate().isNotEmpty) {
+      await tester.ensureVisible(more);
+      await tester.tap(more);
+      await _pumpFrames(tester);
+    }
   }
 
   testWidgets('shows fixture item names offline', (tester) async {
@@ -161,6 +176,7 @@ void main() {
       MaterialApp(home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
+    // Primary facets (slot) open with Filters; archetype/group behind More.
     await expandFilters(tester);
 
     // Slot Energy include
@@ -170,6 +186,8 @@ void main() {
     expect(itemKey(1), findsOneWidget);
     expect(itemKey(3), findsOneWidget);
     expect(itemKey(2), findsNothing);
+
+    await expandMoreFilters(tester);
 
     // Archetype Auto Rifle include further narrows
     await tester.ensureVisible(

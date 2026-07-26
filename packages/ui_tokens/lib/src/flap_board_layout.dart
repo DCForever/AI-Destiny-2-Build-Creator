@@ -73,7 +73,8 @@ const FlapColumnTemplate kFlapColumnsSets = FlapColumnTemplate(
     FlapCellRole.tags,
     FlapCellRole.status,
   ],
-  headerLabels: ['Name', 'Type', 'Tags', 'Status'],
+  // Short headers fit default library rail (BUG-20260726-009).
+  headerLabels: ['Name', 'Type', 'Tags', 'Stat'],
 );
 
 /// Synergy library: NAME · DESIGNATION · EVIDENCE · STATUS
@@ -86,7 +87,7 @@ const FlapColumnTemplate kFlapColumnsSynergy = FlapColumnTemplate(
     FlapCellRole.synergy,
     FlapCellRole.status,
   ],
-  headerLabels: ['Name', 'Designation', 'Evidence', 'Status'],
+  headerLabels: ['Name', 'Design', 'Links', 'Stat'],
 );
 
 /// Build library: NAME · IDENTITY · EXOTICS · SYNERGY · STATUS
@@ -101,7 +102,7 @@ const FlapColumnTemplate kFlapColumnsBuilds = FlapColumnTemplate(
     FlapCellRole.synergy,
     FlapCellRole.status,
   ],
-  headerLabels: ['Name', 'Identity', 'Exotics', 'Synergy', 'Status'],
+  headerLabels: ['Name', 'Class', 'Exotic', 'Syn', 'Stat'],
 );
 
 /// All first-class library templates (Sets / Synergy / Builds).

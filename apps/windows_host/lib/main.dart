@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_driver/driver_extension.dart';
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import 'app.dart';
@@ -18,7 +19,23 @@ const String _bungieRedirectUriDefine = String.fromEnvironment(
   defaultValue: kDefaultWindowsRedirectUri,
 );
 
+/// Enables Flutter Driver for Dart MCP / agent screenshots and UI automation.
+///
+/// Pass `--dart-define=ENABLE_FLUTTER_DRIVER=true` (see [run-windows.ps1] `-EnableFlutterDriver`).
+/// Never enable in production store builds. Driver mode can disable real keyboard input.
+const bool _enableFlutterDriver =
+    bool.fromEnvironment('ENABLE_FLUTTER_DRIVER', defaultValue: false);
+
 Future<void> main() async {
+  // Must run before [runApp]; gated so release/normal debug keep real keyboard.
+  if (_enableFlutterDriver) {
+    enableFlutterDriverExtension();
+    debugPrint(
+      'Flutter Driver extension enabled (ENABLE_FLUTTER_DRIVER). '
+      'Real keyboard typing may be emulated; use for MCP screenshot/tap only.',
+    );
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // Registers bundled sqlite3 for Drift on Windows (and other Flutter targets).

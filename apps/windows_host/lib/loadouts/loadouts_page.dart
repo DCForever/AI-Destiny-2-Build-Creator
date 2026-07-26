@@ -11,12 +11,16 @@ class LoadoutsPage extends StatefulWidget {
     super.key,
     required this.services,
     this.controller,
+    this.onOpenSettings,
   });
 
   final AppServices services;
 
   /// Optional injectable controller (tests).
   final LoadoutsController? controller;
+
+  /// Opens Settings (e.g. shell nav index) for Sign in CTA.
+  final VoidCallback? onOpenSettings;
 
   static const String titleText = 'In-Game Loadouts';
   static const String signedOutText =
@@ -112,14 +116,6 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
                 ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Bungie character loadouts with real icon and color (same source as DIM). '
-            'Sign in to sync from your profile.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
           if (_controller.membershipDisplayName != null) ...[
             const SizedBox(height: 4),
             Text(
@@ -136,7 +132,8 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ],
-          if (_controller.hintMessage != null &&
+          if (_controller.isSignedIn &&
+              _controller.hintMessage != null &&
               _controller.errorMessage == null) ...[
             const SizedBox(height: 8),
             Text(
@@ -147,10 +144,39 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
           ],
           const SizedBox(height: 12),
           if (!_controller.isSignedIn)
-            Text(
-              LoadoutsPage.signedOutText,
-              key: const Key('loadouts_signed_out'),
-              style: theme.textTheme.bodyMedium,
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        LoadoutsPage.signedOutText,
+                        key: const Key('loadouts_signed_out'),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        key: const Key('loadouts_sign_in_cta'),
+                        onPressed: widget.onOpenSettings ??
+                            () {
+                              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Open Settings → Sign in with Bungie, then return here.',
+                                  ),
+                                ),
+                              );
+                            },
+                        icon: const Icon(Icons.login),
+                        label: const Text('Sign in via Settings'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             )
           else ...[
             _FilterBar(controller: _controller),

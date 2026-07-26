@@ -56,6 +56,27 @@ Or fill gitignored `.env.windows.local` and run `.\run-windows.ps1`.
 
 Then: Settings → confirm **Redirect URI** shows `https://127.0.0.1:8765/callback` → Sign in → accept cert warning if prompted → **Sync now** → Catalog / Sets / Synergies / Builds.
 
+### Flutter Driver / agent screenshots (optional)
+
+For [Dart MCP](https://docs.flutter.dev/ai/mcp-server#interact-with-a-running-app) / `/impeccable-flutter` (screenshot, tap, scroll):
+
+**Preferred (agent):** MCP `launch_app` with `target=lib/main_mcp.dart` (enables Driver + returns DTD automatically). Host OAuth keys still load from `.env.windows.local` when present.
+
+**Manual shell:**
+
+```powershell
+.\run-windows.ps1 -EnableFlutterDriver
+# or:
+flutter run -d windows `
+  --dart-define=ENABLE_FLUTTER_DRIVER=true `
+  --dart-define=BUNGIE_API_KEY=... `
+  --dart-define=BUNGIE_CLIENT_ID=...
+```
+
+- Everyday entrypoint: `lib/main.dart` (driver **off** unless `ENABLE_FLUTTER_DRIVER=true`).
+- Agent entrypoint: `lib/main_mcp.dart` (driver **on**).
+- When driver is on, real keyboard typing may be emulated — automation only, not everyday play.
+
 ## Test
 
 ```powershell

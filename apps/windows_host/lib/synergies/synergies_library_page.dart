@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
+import '../labels/product_labels.dart';
 import 'synergies_library_controller.dart';
 import 'synergy_designation.dart';
 
@@ -46,6 +47,8 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
   String _linkKind = SynergyLinkKind.weapon.wireName;
   String _evidenceQuery = '';
   String? _statusMessage;
+  /// Create form collapsed so board owns the rail (BUG-20260726-008).
+  bool _createExpanded = false;
   bool _ownController = false;
 
   @override
@@ -253,77 +256,95 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
   }
 
   Widget _buildRail(BuildContext context) {
-    // Compact create strip; filters live in the list header (short viewports).
+    // Collapsed create strip frees board height (BUG-20260726-008).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-          child: Text(
-            'Library',
+        ListTile(
+          key: const Key('synergies_create_toggle'),
+          dense: true,
+          title: Text(
+            _createExpanded ? 'Hide create' : 'New synergy',
             style: Theme.of(context).textTheme.titleSmall,
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: TextField(
-            key: const Key('synergies_create_name'),
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'New synergy name',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (_) => _create(),
+          subtitle: _createExpanded
+              ? null
+              : Text(
+                  'Name, type, subtype…',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+          trailing: Icon(
+            _createExpanded ? Icons.expand_less : Icons.expand_more,
           ),
+          onTap: () {
+            setState(() => _createExpanded = !_createExpanded);
+          },
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-          child: DropdownButtonFormField<String>(
-            key: const Key('synergies_create_type'),
-            // ignore: deprecated_member_use
-            value: _createType,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Type',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-            items: [
-              for (final t in creatableSynergyTypeWires)
-                DropdownMenuItem(value: t, child: Text(t)),
-            ],
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _createType = v);
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-          child: TextField(
-            key: const Key('synergies_create_subtype'),
-            controller: _subTypeController,
-            decoration: const InputDecoration(
-              labelText: 'Subtype (optional)',
-              isDense: true,
-              border: OutlineInputBorder(),
+        if (_createExpanded) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextField(
+              key: const Key('synergies_create_name'),
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'New synergy name',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _create(),
             ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            child: DropdownButtonFormField<String>(
+              key: const Key('synergies_create_type'),
+              // ignore: deprecated_member_use
+              value: _createType,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Type',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final t in creatableSynergyTypeWires)
+                  DropdownMenuItem(
+                    value: t,
+                    child: Text(displaySynergyTypeWire(t)),
+                  ),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _createType = v);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            child: TextField(
+              key: const Key('synergies_create_subtype'),
+              controller: _subTypeController,
+              decoration: const InputDecoration(
+                labelText: 'Subtype (optional)',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+            child: FilledButton(
+              key: const Key('synergies_create_button'),
+              onPressed: _controller.loading ? null : _create,
+              child: const Text('Create synergy'),
+            ),
+          ),
+        ],
         Offstage(
           offstage: true,
           child: TextField(
             key: const Key('synergies_create_description'),
             controller: _createDescController,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
-          child: FilledButton(
-            key: const Key('synergies_create_button'),
-            onPressed: _controller.loading ? null : _create,
-            child: const Text('Create synergy'),
           ),
         ),
         const Divider(height: 1),
@@ -369,7 +390,10 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
               for (final t in creatableSynergyTypeWires)
                 DropdownMenuItem<String?>(
                   value: t,
-                  child: Text(t, key: Key('synergies_type_chip_$t')),
+                  child: Text(
+                    displaySynergyTypeWire(t),
+                    key: Key('synergies_type_chip_$t'),
+                  ),
                 ),
             ],
             onChanged: (v) => _controller.setTypeFilter(v),
@@ -449,11 +473,13 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
   Widget _buildDetail(BuildContext context) {
     final sel = _controller.selected;
     if (sel == null) {
-      return const Center(
-        child: Text(
-          'Select a synergy or create one to edit evidence links.',
-          key: Key('synergies_detail_empty'),
-        ),
+      return LibraryDetailEmpty(
+        key: const Key('synergies_detail_empty'),
+        icon: Icons.hub_outlined,
+        title: 'No synergy selected',
+        body: _controller.synergies.isEmpty
+            ? 'Open New synergy on the left to define a type, then attach evidence links here.'
+            : 'Select a synergy on the board to edit designation and evidence links.',
       );
     }
 

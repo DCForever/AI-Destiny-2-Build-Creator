@@ -77,6 +77,9 @@ class _CatalogPageState extends State<CatalogPage> {
   /// Facet / group chrome collapsed by default (P0 — reduce chrome explosion).
   bool _filtersExpanded = false;
 
+  /// Secondary facets (ammo, archetype, class, group) behind "More".
+  bool _moreFiltersExpanded = false;
+
   OwnedCatalogBridge _createBridge() {
     return widget.bridge ??
         OwnedCatalogBridge(
@@ -210,6 +213,9 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _selected = item;
       _actionMessage = null;
+      // BUG-20260726-005: reclaim vertical space for board + detail.
+      _filtersExpanded = false;
+      _moreFiltersExpanded = false;
     });
     await _syncSelection();
   }
@@ -556,11 +562,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 const SizedBox(width: 8),
                 FilterChip(
                   key: const Key('scope_chip_owned'),
-                  label: Text(
-                    _bridge.inventory.isEmpty
-                        ? 'Owned'
-                        : 'Owned · ${_bridge.ownedDefinitionCount}',
-                  ),
+                  label: Text(_ownedChipLabel()),
                   selected: _scope == CatalogScope.owned,
                   onSelected: (_) => _setScope(CatalogScope.owned),
                 ),
@@ -598,12 +600,15 @@ class _CatalogPageState extends State<CatalogPage> {
           ),
           if (_filtersExpanded)
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 220),
+              constraints: BoxConstraints(
+                maxHeight: _moreFiltersExpanded ? 260 : 140,
+              ),
               child: SingleChildScrollView(
                 key: const Key('catalog_filters_scroll'),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Primary strip only (BUG-20260726-001).
                     if (catalogShowsElementFacet(_mode))
                       _facetChipRow(
                         keyPrefix: 'element',
@@ -611,37 +616,12 @@ class _CatalogPageState extends State<CatalogPage> {
                         facet: _elements,
                         onCycle: _cycleElement,
                       ),
-                    if (catalogShowsAmmoFacet(_mode)) ...[
-                      const SizedBox(height: 4),
-                      _facetChipRow(
-                        keyPrefix: 'ammo',
-                        values: catalogAmmoTypes,
-                        facet: _ammos,
-                        onCycle: _cycleAmmo,
-                      ),
-                    ],
                     const SizedBox(height: 4),
                     _facetChipRow(
                       keyPrefix: 'slot',
                       values: catalogSlotsForMode(_mode),
                       facet: _slots,
                       onCycle: _cycleSlot,
-                    ),
-                    if (catalogShowsClassFacet(_mode)) ...[
-                      const SizedBox(height: 4),
-                      _facetChipRow(
-                        keyPrefix: 'class',
-                        values: catalogClassNames,
-                        facet: _classNames,
-                        onCycle: _cycleClass,
-                      ),
-                    ],
-                    const SizedBox(height: 4),
-                    _facetChipRow(
-                      keyPrefix: 'archetype',
-                      values: catalogArchetypesForMode(_mode),
-                      facet: _archetypes,
-                      onCycle: _cycleArchetype,
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -656,57 +636,109 @@ class _CatalogPageState extends State<CatalogPage> {
                         ),
                       ),
                     ),
-                    if (_bridge.synergyMembership.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Synergy membership',
-                          key: const Key('synergy_filter_label'),
-                          style: Theme.of(context).textTheme.labelMedium,
+                    ListTile(
+                      key: const Key('catalog_more_filters_toggle'),
+                      dense: true,
+                      title: Text(
+                        _moreFiltersExpanded
+                            ? 'Less filters'
+                            : 'More filters (ammo, type, group…)',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      trailing: Icon(
+                        _moreFiltersExpanded
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                      ),
+                      onTap: () {
+                        setState(
+                          () => _moreFiltersExpanded = !_moreFiltersExpanded,
+                        );
+                      },
+                    ),
+                    if (_moreFiltersExpanded) ...[
+                      if (catalogShowsAmmoFacet(_mode)) ...[
+                        const SizedBox(height: 4),
+                        _facetChipRow(
+                          keyPrefix: 'ammo',
+                          values: catalogAmmoTypes,
+                          facet: _ammos,
+                          onCycle: _cycleAmmo,
                         ),
-                      ),
+                      ],
+                      if (catalogShowsClassFacet(_mode)) ...[
+                        const SizedBox(height: 4),
+                        _facetChipRow(
+                          keyPrefix: 'class',
+                          values: catalogClassNames,
+                          facet: _classNames,
+                          onCycle: _cycleClass,
+                        ),
+                      ],
+                      const SizedBox(height: 4),
                       _facetChipRow(
-                        keyPrefix: 'synergy',
-                        values: _bridge.synergyMembership
-                            .map((s) => s.id)
-                            .toList(),
-                        facet: _synergies,
-                        onCycle: _cycleSynergy,
-                        labelOf: (id) =>
-                            _bridge.synergyNames[id] ?? 'Synergy',
+                        keyPrefix: 'archetype',
+                        values: catalogArchetypesForMode(_mode),
+                        facet: _archetypes,
+                        onCycle: _cycleArchetype,
                       ),
-                    ],
-                    const SizedBox(height: 4),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        key: const Key('catalog_group_by'),
-                        children: [
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              'Group results',
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
+                      if (_bridge.synergyMembership.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Synergy membership',
+                            key: const Key('synergy_filter_label'),
+                            style: Theme.of(context).textTheme.labelMedium,
                           ),
-                          for (final dim in catalogGroupDimensions)
+                        ),
+                        _facetChipRow(
+                          keyPrefix: 'synergy',
+                          values: _bridge.synergyMembership
+                              .map((s) => s.id)
+                              .toList(),
+                          facet: _synergies,
+                          onCycle: _cycleSynergy,
+                          labelOf: (id) =>
+                              _bridge.synergyNames[id] ?? 'Synergy',
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          key: const Key('catalog_group_by'),
+                          children: [
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              child: FilterChip(
-                                key: Key('group_chip_${dim.id.name}'),
-                                label: Text(dim.label),
-                                selected: _groupBy.contains(dim.id),
-                                onSelected: (_) =>
-                                    _toggleGroupDimension(dim.id),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: Text(
+                                'Group results',
+                                style:
+                                    Theme.of(context).textTheme.labelMedium,
                               ),
                             ),
-                        ],
+                            for (final dim in catalogGroupDimensions)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: FilterChip(
+                                  key: Key('group_chip_${dim.id.name}'),
+                                  label: Text(dim.label),
+                                  selected: _groupBy.contains(dim.id),
+                                  onSelected: (_) =>
+                                      _toggleGroupDimension(dim.id),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -714,14 +746,17 @@ class _CatalogPageState extends State<CatalogPage> {
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: Text(
-              _statusLine(),
-              key: const Key('catalog_status'),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontFamily: 'IBM Plex Mono',
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    color: FlapPalette.of(context).muted,
-                  ),
+            child: Tooltip(
+              message: _version ?? 'No manifest version',
+              child: Text(
+                _statusLine(),
+                key: const Key('catalog_status'),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontFamily: 'IBM Plex Mono',
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: FlapPalette.of(context).muted,
+                    ),
+              ),
             ),
           ),
           Expanded(
@@ -753,17 +788,38 @@ class _CatalogPageState extends State<CatalogPage> {
     }
   }
 
+  /// Short manifest version for status (full string on tooltip).
+  static String _shortVersion(String? version) {
+    if (version == null || version.isEmpty) return '—';
+    // Prefer last path-like segment (e.g. …bnet.65583).
+    final parts = version.split(RegExp(r'[./-]'));
+    if (parts.length >= 2) {
+      final tail = parts.sublist(parts.length - 2).join('.');
+      if (tail.length >= 4) return tail;
+    }
+    if (version.length <= 18) return version;
+    return '…${version.substring(version.length - 14)}';
+  }
+
   String _statusLine() {
     if (_loading) return 'Loading entity stores…';
     if (_error != null) return 'Load failed — use Reload or check Settings';
-    final v = _version ?? '—';
+    final v = _shortVersion(_version);
     final base = _bridge.annotatedBase.length;
     final inv = _bridge.inventory.length;
     final scopeLabel = _scope == CatalogScope.owned ? 'OWNED' : 'ALL';
     final modeLabel = browseModeLabel(_mode).toUpperCase();
-    // Human tally (P1) — not mode=/scope= debug dump.
-    return 'V $v  ·  ${_results.length}/$base shown  ·  $modeLabel  ·  '
+    return '$v  ·  ${_results.length}/$base  ·  $modeLabel  ·  '
         '$scopeLabel  ·  $inv copies';
+  }
+
+  String _ownedChipLabel() {
+    if (!widget.services.oauthSession.isSignedIn) {
+      return 'Owned · sign in';
+    }
+    final n = _bridge.inventory.length;
+    if (n == 0) return 'Owned · 0';
+    return 'Owned · ${_bridge.ownedDefinitionCount}';
   }
 
   Widget _buildBody() {
@@ -1075,13 +1131,59 @@ class _CatalogPageState extends State<CatalogPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+          if (_instances.isEmpty) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Wrap(
+                key: const Key('detail_unpinned_actions'),
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    key: const Key('detail_copy_hash'),
+                    onPressed: () {
+                      Clipboard.setData(
+                        ClipboardData(text: '${item.hash}'),
+                      );
+                      setState(() {
+                        _actionMessage = 'Copied definition hash ${item.hash}';
+                      });
+                    },
+                    icon: const Icon(Icons.tag, size: 16),
+                    label: const Text('Copy hash'),
+                  ),
+                  if (actions.set)
+                    FilledButton.tonal(
+                      key: const Key('detail_create_set'),
+                      onPressed: () => _createSetFromHit(item),
+                      child: const Text('Create Set'),
+                    ),
+                  if (actions.synergy)
+                    FilledButton.tonal(
+                      key: const Key('detail_create_synergy'),
+                      onPressed: () => _createSynergyFromHit(item),
+                      child: const Text('Create Synergy'),
+                    ),
+                  if (!widget.services.oauthSession.isSignedIn)
+                    Text(
+                      'Sign in under Settings to resolve owned copies.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+          ],
           const Divider(),
           Expanded(
             child: _instances.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No instances',
-                      key: Key('instance_panel_empty'),
+                      key: const Key('instance_panel_empty'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: palette.muted,
+                          ),
                     ),
                   )
                 : ListView.builder(

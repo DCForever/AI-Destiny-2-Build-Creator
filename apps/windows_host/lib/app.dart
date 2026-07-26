@@ -116,6 +116,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   LoadoutsPage(
                     key: const Key('loadouts_page'),
                     services: widget.services,
+                    onOpenSettings: () => setState(() => _index = 5),
                   ),
                   BuildsLibraryPage(
                     key: const Key('builds_library_page'),

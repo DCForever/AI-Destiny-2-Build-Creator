@@ -51,6 +51,14 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+/// Expand collapsible create form (BUG-20260726-008).
+Future<void> _expandSynergiesCreate(WidgetTester tester) async {
+  if (find.byKey(const Key('synergies_create_button')).evaluate().isEmpty) {
+    await tester.tap(find.byKey(const Key('synergies_create_toggle')));
+    await _pumpFrames(tester);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -108,6 +116,7 @@ void main() {
 
     expect(find.byKey(const Key('synergies_list_empty')), findsOneWidget);
 
+    await _expandSynergiesCreate(tester);
     await tester.enterText(
       find.byKey(const Key('synergies_create_name')),
       'Melee Combo',
@@ -326,7 +335,7 @@ void main() {
       find.byKey(const Key('synergies_library_page'), skipOffstage: false),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('synergies_create_button')), findsOneWidget);
+    expect(find.byKey(const Key('synergies_create_toggle')), findsOneWidget);
   });
 
   testWidgets('dual-pane list and detail present after create', (tester) async {

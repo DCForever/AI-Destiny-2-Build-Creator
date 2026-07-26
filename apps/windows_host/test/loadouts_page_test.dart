@@ -166,6 +166,7 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('loadouts_signed_out')), findsOneWidget);
+    expect(find.byKey(const Key('loadouts_sign_in_cta')), findsOneWidget);
     expect(find.text(LoadoutsPage.signedOutText), findsOneWidget);
     controller.dispose();
   });

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../auth/windows_oauth_session.dart';
 
 /// Settings account card: Sign in / Sign out + membership status (DART-023).
-class OAuthAccountCard extends StatelessWidget {
+class OAuthAccountCard extends StatefulWidget {
   const OAuthAccountCard({
     super.key,
     required this.session,
@@ -12,10 +12,19 @@ class OAuthAccountCard extends StatelessWidget {
   final WindowsOAuthSession session;
 
   @override
+  State<OAuthAccountCard> createState() => _OAuthAccountCardState();
+}
+
+class _OAuthAccountCardState extends State<OAuthAccountCard> {
+  /// Operator / developer redirect docs stay collapsed (BUG-20260726-012).
+  bool _advancedOpen = false;
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: session,
+      listenable: widget.session,
       builder: (context, _) {
+        final session = widget.session;
         final status = session.status;
         final membership = session.membershipId;
         final error = session.errorMessage;
@@ -75,28 +84,13 @@ class OAuthAccountCard extends StatelessWidget {
                     key: const Key('oauth_config_hint'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                ] else if (!signedIn && !busy) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Sign in with Bungie to sync inventory and loadouts.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
-                // Always show redirect so operators can match Bungie app registration.
-                // Do not reuse Next.js https://127.0.0.1:3000/api/auth/callback here.
-                const SizedBox(height: 8),
-                SelectableText(
-                  'Redirect URI (must match Public Bungie app exactly):\n'
-                  '${session.redirectUri}',
-                  key: const Key('oauth_redirect_uri'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Use a Public + PKCE Bungie application — not the Confidential '
-                  'Next.js client. Register the redirect above exactly '
-                  '(prod matrix: https://127.0.0.1:8765/callback). First browser '
-                  'visit may warn about a self-signed certificate — continue to '
-                  '127.0.0.1. Do not use '
-                  'https://127.0.0.1:3000/api/auth/callback. See '
-                  'docs/multiplatform-dart-prod-public-oauth-matrix.md.',
-                  key: const Key('oauth_public_app_hint'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
                 const SizedBox(height: 12),
                 if (busy) ...[
                   const Row(
@@ -156,6 +150,44 @@ class OAuthAccountCard extends StatelessWidget {
                     icon: const Icon(Icons.login),
                     label: const Text('Sign in'),
                   ),
+                // Operator redirect / Public-app notes — not primary player UI.
+                ListTile(
+                  key: const Key('oauth_advanced_toggle'),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(
+                    _advancedOpen
+                        ? 'Hide developer details'
+                        : 'Developer / redirect details',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  trailing: Icon(
+                    _advancedOpen ? Icons.expand_less : Icons.expand_more,
+                  ),
+                  onTap: () {
+                    setState(() => _advancedOpen = !_advancedOpen);
+                  },
+                ),
+                if (_advancedOpen) ...[
+                  SelectableText(
+                    'Redirect URI (must match Public Bungie app exactly):\n'
+                    '${session.redirectUri}',
+                    key: const Key('oauth_redirect_uri'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Use a Public + PKCE Bungie application — not the Confidential '
+                    'Next.js client. Register the redirect above exactly '
+                    '(prod matrix: https://127.0.0.1:8765/callback). First browser '
+                    'visit may warn about a self-signed certificate — continue to '
+                    '127.0.0.1. Do not use '
+                    'https://127.0.0.1:3000/api/auth/callback. See '
+                    'docs/multiplatform-dart-prod-public-oauth-matrix.md.',
+                    key: const Key('oauth_public_app_hint'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ],
             ),
           ),

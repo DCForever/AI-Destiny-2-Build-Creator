@@ -6,7 +6,10 @@ param(
   [string]$ApiKey,
   [string]$ClientId,
   [string]$RedirectUri = "https://127.0.0.1:8765/callback",
-  [string]$EnvFile = "$PSScriptRoot\.env.windows.local"
+  [string]$EnvFile = "$PSScriptRoot\.env.windows.local",
+  # Enables Flutter Driver for Dart MCP / impeccable-flutter screenshots + taps.
+  # Real keyboard typing may be emulated while this is on.
+  [switch]$EnableFlutterDriver
 )
 
 $ErrorActionPreference = "Stop"
@@ -73,10 +76,17 @@ Write-Host "Launching windows_host"
 Write-Host "  CLIENT_ID set: $([bool]$ClientId) (len $($ClientId.Length))"
 Write-Host "  API_KEY set:   $([bool]$ApiKey) (len $($ApiKey.Length))"
 Write-Host "  REDIRECT:      $RedirectUri"
+Write-Host "  FLUTTER_DRIVER: $EnableFlutterDriver"
+
+$defines = @(
+  "--dart-define=BUNGIE_API_KEY=$ApiKey",
+  "--dart-define=BUNGIE_CLIENT_ID=$ClientId",
+  "--dart-define=BUNGIE_REDIRECT_URI=$RedirectUri"
+)
+if ($EnableFlutterDriver) {
+  $defines += "--dart-define=ENABLE_FLUTTER_DRIVER=true"
+}
 
 Set-Location $PSScriptRoot
 flutter pub get
-flutter run -d windows `
-  --dart-define=BUNGIE_API_KEY=$ApiKey `
-  --dart-define=BUNGIE_CLIENT_ID=$ClientId `
-  --dart-define=BUNGIE_REDIRECT_URI=$RedirectUri
+flutter run -d windows @defines

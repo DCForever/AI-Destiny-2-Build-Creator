@@ -16,10 +16,34 @@ List<CatalogItem> projectMvpStores({
   List<AbilityRecord> abilities = const [],
   List<ModRecord> mods = const [],
 }) {
-  final out = <CatalogItem>[];
+  // Dedupe by hash: weapons + exoticWeapons (and armor stores) can overlap.
+  // Prefer exotic / richer rows (BUG-20260726-002).
+  final byHash = <int, CatalogItem>{};
+
+  void put(CatalogItem item) {
+    final existing = byHash[item.hash];
+    if (existing == null) {
+      byHash[item.hash] = item;
+      return;
+    }
+    if (item.isExotic && !existing.isExotic) {
+      byHash[item.hash] = item;
+      return;
+    }
+    // Prefer longer description / more complete type when flags equal.
+    final itemScore = (item.description?.length ?? 0) +
+        (item.itemTypeName?.length ?? 0) +
+        (item.frame?.length ?? 0);
+    final existingScore = (existing.description?.length ?? 0) +
+        (existing.itemTypeName?.length ?? 0) +
+        (existing.frame?.length ?? 0);
+    if (itemScore > existingScore) {
+      byHash[item.hash] = item;
+    }
+  }
 
   for (final w in weapons) {
-    out.add(
+    put(
       CatalogItem(
         hash: w.hash,
         name: w.name,
@@ -38,7 +62,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final w in exoticWeapons) {
-    out.add(
+    put(
       CatalogItem(
         hash: w.hash,
         name: w.name,
@@ -60,7 +84,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final a in exoticArmor) {
-    out.add(
+    put(
       CatalogItem(
         hash: a.hash,
         name: a.name,
@@ -80,7 +104,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final a in legendaryArmor) {
-    out.add(
+    put(
       CatalogItem(
         hash: a.hash,
         name: a.name,
@@ -97,7 +121,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final a in aspects) {
-    out.add(
+    put(
       CatalogItem(
         hash: a.hash,
         name: a.name,
@@ -115,7 +139,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final f in fragments) {
-    out.add(
+    put(
       CatalogItem(
         hash: f.hash,
         name: f.name,
@@ -132,7 +156,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final ab in abilities) {
-    out.add(
+    put(
       CatalogItem(
         hash: ab.hash,
         name: ab.name,
@@ -150,7 +174,7 @@ List<CatalogItem> projectMvpStores({
   }
 
   for (final m in mods) {
-    out.add(
+    put(
       CatalogItem(
         hash: m.hash,
         name: m.name,
@@ -166,5 +190,7 @@ List<CatalogItem> projectMvpStores({
     );
   }
 
+  final out = byHash.values.toList()
+    ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   return out;
 }

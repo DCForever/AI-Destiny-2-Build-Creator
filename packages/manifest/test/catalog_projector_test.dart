@@ -90,6 +90,45 @@ void main() {
       expect(legendArmor.sourceStore, 'legendary-armor');
     });
 
+    test('dedupes weapons and exoticWeapons by hash preferring exotic', () {
+      // BUG-20260726-002: overlapping store rows must not double the board.
+      final items = projectMvpStores(
+        weapons: [
+          const WeaponRecord(
+            hash: 999,
+            name: '1000 Yard Stare',
+            searchName: '1000 yard stare',
+            slot: WeaponSlotName.energy,
+            element: ElementName.voidElement,
+            ammo: AmmoTypeName.special,
+            frame: 'Adaptive Frame',
+            itemTypeName: 'Sniper Rifle',
+          ),
+        ],
+        exoticWeapons: [
+          const ExoticWeaponRecord(
+            hash: 999,
+            name: '1000 Yard Stare',
+            searchName: '1000 yard stare',
+            slot: WeaponSlotName.energy,
+            element: ElementName.voidElement,
+            ammo: AmmoTypeName.special,
+            frame: 'Adaptive Frame',
+            intrinsic: NamedDescription(
+              name: 'Intrinsic',
+              description: 'Exotic path description.',
+            ),
+            itemTypeName: 'Sniper Rifle',
+          ),
+        ],
+      );
+
+      expect(items.where((i) => i.hash == 999), hasLength(1));
+      final row = items.singleWhere((i) => i.hash == 999);
+      expect(row.isExotic, isTrue);
+      expect(row.sourceStore, 'exotic-weapons');
+    });
+
     test('projects subclass pieces and mods', () {
       final items = projectMvpStores(
         aspects: [
@@ -135,7 +174,7 @@ void main() {
         ],
       );
 
-      expect(items.map((i) => i.hash), [1, 2, 3, 4]);
+      expect(items.map((i) => i.hash), unorderedEquals([1, 2, 3, 4]));
       expect(items.every((i) => i.owned == false), isTrue);
       expect(items.firstWhere((i) => i.hash == 1).itemTypeName, 'Aspect');
       expect(items.firstWhere((i) => i.hash == 3).itemTypeName, 'super');

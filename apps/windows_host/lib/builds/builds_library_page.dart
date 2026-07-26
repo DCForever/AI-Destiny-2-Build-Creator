@@ -11,6 +11,7 @@ import '../dim_export/dim_export_panel.dart';
 import '../equip/equip_controller.dart';
 import '../equip/equip_panel.dart';
 import '../host_bootstrap.dart';
+import '../labels/product_labels.dart';
 import '../optimizer/optimizer_controller.dart';
 import '../optimizer/optimizer_workspace.dart';
 import '../sets/set_catalog_picker.dart';
@@ -78,6 +79,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   String _createTypeWire = creatableSynergyTypeWires.first;
   String _editTypeWire = creatableSynergyTypeWires.first;
   String? _statusMessage;
+  /// Create form collapsed by default so the board owns the rail (BUG-20260726-008).
+  bool _createExpanded = false;
   bool _ownController = false;
   String? _boundSelectionId;
   String? _attachSetId;
@@ -512,184 +515,197 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   }
 
   Widget _buildRail(BuildContext context) {
-    // Create strip scrolls when height is tight (host nav + short test VMs).
-    // Optional exotic/super pins on create are offstage (controller / detail edit).
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final createMax =
-            (constraints.maxHeight * 0.58).clamp(140.0, 360.0);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: createMax),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                      child: Text(
-                        'Library',
-                        style: Theme.of(context).textTheme.titleSmall,
+    // Collapsed create strip frees board height (BUG-20260726-008).
+    // Offstage create keys stay mounted for widget tests / controller wiring.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          key: const Key('builds_create_toggle'),
+          dense: true,
+          title: Text(
+            _createExpanded ? 'Hide create' : 'New build',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          subtitle: _createExpanded
+              ? null
+              : Text(
+                  'Name, class, synergy types…',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+          trailing: Icon(
+            _createExpanded ? Icons.expand_less : Icons.expand_more,
+          ),
+          onTap: () {
+            setState(() => _createExpanded = !_createExpanded);
+          },
+        ),
+        if (_createExpanded)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: TextField(
+                      key: const Key('builds_create_name'),
+                      controller: _createNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'New build name (optional)',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => _create(),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                    child: DropdownButtonFormField<GuardianClass>(
+                      key: const Key('builds_create_class'),
+                      // ignore: deprecated_member_use
+                      value: _createClass,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Class',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (final c in GuardianClass.values)
+                          DropdownMenuItem(
+                            value: c,
+                            child: Text(displayGuardianClass(c)),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _createClass = v);
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                    child: DropdownButtonFormField<String>(
+                      key: const Key('builds_create_synergy_type'),
+                      // ignore: deprecated_member_use
+                      value: _createTypeWire,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Synergy type',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (final t in creatableSynergyTypeWires)
+                          DropdownMenuItem(
+                            value: t,
+                            child: Text(displaySynergyTypeWire(t)),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _createTypeWire = v);
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                    child: TextField(
+                      key: const Key('builds_create_synergy_subtype'),
+                      controller: _createSubTypeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Subtype (optional)',
+                        isDense: true,
+                        border: OutlineInputBorder(),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: TextField(
-                        key: const Key('builds_create_name'),
-                        controller: _createNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'New build name (optional)',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        onSubmitted: (_) => _create(),
-                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                    child: OutlinedButton(
+                      key: const Key('builds_create_add_synergy'),
+                      onPressed: () {
+                        _controller.addCreateDraftType(
+                          _createTypeWire,
+                          _createSubTypeController.text,
+                        );
+                        _createSubTypeController.clear();
+                      },
+                      child: const Text('Add synergy type'),
                     ),
+                  ),
+                  if (_controller.createDraftTypes.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                      child: DropdownButtonFormField<GuardianClass>(
-                        key: const Key('builds_create_class'),
-                        // ignore: deprecated_member_use
-                        value: _createClass,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Class',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          for (final c in GuardianClass.values)
-                            DropdownMenuItem(
-                              value: c,
-                              child: Text(c.wireName),
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                      child: Wrap(
+                        key: const Key('builds_create_synergy_chips'),
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          for (var i = 0;
+                              i < _controller.createDraftTypes.length;
+                              i++)
+                            InputChip(
+                              key: Key('builds_create_synergy_chip_$i'),
+                              label: Text(
+                                _controller
+                                    .createDraftTypes[i].designationKey,
+                              ),
+                              onDeleted: () =>
+                                  _controller.removeCreateDraftTypeAt(i),
+                              visualDensity: VisualDensity.compact,
                             ),
                         ],
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _createClass = v);
-                        },
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                      child: DropdownButtonFormField<String>(
-                        key: const Key('builds_create_synergy_type'),
-                        // ignore: deprecated_member_use
-                        value: _createTypeWire,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Synergy type',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          for (final t in creatableSynergyTypeWires)
-                            DropdownMenuItem(value: t, child: Text(t)),
-                        ],
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _createTypeWire = v);
-                        },
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+                    child: FilledButton(
+                      key: const Key('builds_create_button'),
+                      onPressed: _controller.loading ? null : _create,
+                      child: const Text('Create build'),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                      child: TextField(
-                        key: const Key('builds_create_synergy_subtype'),
-                        controller: _createSubTypeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Subtype (optional)',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                      child: OutlinedButton(
-                        key: const Key('builds_create_add_synergy'),
-                        onPressed: () {
-                          _controller.addCreateDraftType(
-                            _createTypeWire,
-                            _createSubTypeController.text,
-                          );
-                          _createSubTypeController.clear();
-                        },
-                        child: const Text('Add synergy type'),
-                      ),
-                    ),
-                    if (_controller.createDraftTypes.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                        child: Wrap(
-                          key: const Key('builds_create_synergy_chips'),
-                          spacing: 4,
-                          runSpacing: 4,
-                          children: [
-                            for (var i = 0;
-                                i < _controller.createDraftTypes.length;
-                                i++)
-                              InputChip(
-                                key: Key('builds_create_synergy_chip_$i'),
-                                label: Text(
-                                  _controller
-                                      .createDraftTypes[i].designationKey,
-                                ),
-                                onDeleted: () =>
-                                    _controller.removeCreateDraftTypeAt(i),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                          ],
-                        ),
-                      ),
-                    Offstage(
-                      offstage: true,
-                      child: Column(
-                        children: [
-                          TextField(
-                            key: const Key('builds_create_armor_hash'),
-                            controller: _createArmorHashController,
-                          ),
-                          TextField(
-                            key: const Key('builds_create_armor_name'),
-                            controller: _createArmorNameController,
-                          ),
-                          TextField(
-                            key: const Key('builds_create_weapon_hash'),
-                            controller: _createWeaponHashController,
-                          ),
-                          TextField(
-                            key: const Key('builds_create_weapon_name'),
-                            controller: _createWeaponNameController,
-                          ),
-                          TextField(
-                            key: const Key('builds_create_pinned_super'),
-                            controller: _createPinnedSuperController,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
-                      child: FilledButton(
-                        key: const Key('builds_create_button'),
-                        onPressed: _controller.loading ? null : _create,
-                        child: const Text('Create build'),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const Divider(height: 1),
-            const FlapBoardHeader(template: kFlapColumnsBuilds),
-            const Divider(height: 1),
-            Expanded(child: _buildBuildList()),
-          ],
-        );
-      },
+          ),
+        // Keep create pin fields mounted for tests even when form is collapsed.
+        Offstage(
+          offstage: true,
+          child: Column(
+            children: [
+              TextField(
+                key: const Key('builds_create_armor_hash'),
+                controller: _createArmorHashController,
+              ),
+              TextField(
+                key: const Key('builds_create_armor_name'),
+                controller: _createArmorNameController,
+              ),
+              TextField(
+                key: const Key('builds_create_weapon_hash'),
+                controller: _createWeaponHashController,
+              ),
+              TextField(
+                key: const Key('builds_create_weapon_name'),
+                controller: _createWeaponNameController,
+              ),
+              TextField(
+                key: const Key('builds_create_pinned_super'),
+                controller: _createPinnedSuperController,
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        const FlapBoardHeader(template: kFlapColumnsBuilds),
+        const Divider(height: 1),
+        Expanded(child: _buildBuildList()),
+      ],
     );
   }
 
@@ -756,11 +772,13 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   Widget _buildDetail(BuildContext context) {
     final sel = _controller.selected;
     if (sel == null) {
-      return const Center(
-        child: Text(
-          'Select a build or create one to edit identity.',
-          key: Key('builds_detail_empty'),
-        ),
+      return LibraryDetailEmpty(
+        key: const Key('builds_detail_empty'),
+        icon: Icons.construction_outlined,
+        title: 'No build selected',
+        body: _controller.builds.isEmpty
+            ? 'Open New build on the left to create your first library build, then edit identity, variants, and finish gaps here.'
+            : 'Select a build on the board to edit identity, attach sets, and review finish gaps.',
       );
     }
     final b = sel.build;
@@ -862,7 +880,10 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                   ),
                   items: [
                     for (final t in creatableSynergyTypeWires)
-                      DropdownMenuItem(value: t, child: Text(t)),
+                      DropdownMenuItem(
+                        value: t,
+                        child: Text(displaySynergyTypeWire(t)),
+                      ),
                   ],
                   onChanged: (v) {
                     if (v == null) return;

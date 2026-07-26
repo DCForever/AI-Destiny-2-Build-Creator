@@ -136,9 +136,10 @@ void main() {
     expect(controller.builds, hasLength(1));
     expect(controller.selected!.build.synergyTypes, hasLength(1));
 
-    // UI create path: draft chip + button also works.
+    // UI create path: draft chip + button also works (expand create strip).
     controller.clearCreateDraftTypes();
     controller.addCreateDraftType('grenade', 'Threadling');
+    await tester.tap(find.byKey(const Key('builds_create_toggle')));
     await _pumpFrames(tester);
     expect(find.byKey(const Key('builds_create_synergy_chips')), findsOneWidget);
     expect(find.text('grenade::Threadling'), findsWidgets);

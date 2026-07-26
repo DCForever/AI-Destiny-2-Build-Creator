@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../catalog/owned_catalog_bridge.dart';
 import '../host_bootstrap.dart';
+import '../labels/product_labels.dart';
 import '../optimizer/optimizer_controller.dart';
 import '../optimizer/optimizer_workspace.dart';
 import '../widgets/entity_icon.dart';
@@ -50,6 +51,8 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   final _searchController = TextEditingController();
   SetType _createType = SetType.weapon;
   String? _statusMessage;
+  /// Create form collapsed so board owns the rail (BUG-20260726-008).
+  bool _createExpanded = false;
   bool _ownController = false;
   bool _ownOptimizer = false;
   String? _boundOptimizerSetId;
@@ -312,58 +315,73 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: Text(
-            'Library',
+        ListTile(
+          key: const Key('sets_create_toggle'),
+          dense: true,
+          title: Text(
+            _createExpanded ? 'Hide create' : 'New set',
             style: Theme.of(context).textTheme.titleSmall,
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: TextField(
-            key: const Key('sets_create_name'),
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'New set name',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (_) => _create(),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: DropdownButtonFormField<SetType>(
-            key: const Key('sets_create_type'),
-            // ignore: deprecated_member_use
-            value: _createType,
-            decoration: const InputDecoration(
-              labelText: 'Type',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-            items: [
-              for (final t in SetType.values)
-                DropdownMenuItem(
-                  value: t,
-                  child: Text(t.wireName),
+          subtitle: _createExpanded
+              ? null
+              : Text(
+                  'Name and type…',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-            ],
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _createType = v);
-            },
+          trailing: Icon(
+            _createExpanded ? Icons.expand_less : Icons.expand_more,
           ),
+          onTap: () {
+            setState(() => _createExpanded = !_createExpanded);
+          },
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          child: FilledButton(
-            key: const Key('sets_create_button'),
-            onPressed: _controller.loading ? null : _create,
-            child: const Text('Create set'),
+        if (_createExpanded) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextField(
+              key: const Key('sets_create_name'),
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'New set name',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _create(),
+            ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: DropdownButtonFormField<SetType>(
+              key: const Key('sets_create_type'),
+              // ignore: deprecated_member_use
+              value: _createType,
+              decoration: const InputDecoration(
+                labelText: 'Type',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final t in SetType.values)
+                  DropdownMenuItem(
+                    value: t,
+                    child: Text(displaySetType(t)),
+                  ),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _createType = v);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: FilledButton(
+              key: const Key('sets_create_button'),
+              onPressed: _controller.loading ? null : _create,
+              child: const Text('Create set'),
+            ),
+          ),
+        ],
         const Divider(height: 1),
         const FlapBoardHeader(template: kFlapColumnsSets),
         const Divider(height: 1),
@@ -408,12 +426,18 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                 DropdownMenuItem<SetType?>(
                   value: t,
                   child: Text(
-                    t.wireName,
+                    displaySetType(t),
                     key: Key('sets_type_chip_${t.wireName}'),
                   ),
                 ),
             ],
             onChanged: _controller.setTypeFilter,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tags',
+            key: const Key('sets_tag_filters_label'),
+            style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 4),
           Wrap(
@@ -423,7 +447,10 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               for (final tag in const ['pve', 'pvp', 'solar'])
                 FilterChip(
                   key: Key('sets_tag_chip_$tag'),
-                  label: Text(tag, style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                    displaySynergyTypeWire(tag),
+                    style: const TextStyle(fontSize: 11),
+                  ),
                   selected: _controller.tagFilters.contains(tag),
                   onSelected: (_) => _controller.toggleTagFilter(tag),
                   visualDensity: VisualDensity.compact,
@@ -488,7 +515,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               primary: true,
               textKey: Key('sets_list_name_${set.id}'),
             ),
-            FlapTextCell(text: set.type),
+            FlapTextCell(text: displaySetTypeWire(set.type)),
             FlapTextCell(
               text: set.tagIds.isEmpty ? '—' : set.tagIds.join(','),
             ),
@@ -504,11 +531,13 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   Widget _buildDetail(BuildContext context) {
     final sel = _controller.selected;
     if (sel == null) {
-      return const Center(
-        child: Text(
-          'Select a set or create one to edit slots.',
-          key: Key('sets_detail_empty'),
-        ),
+      return LibraryDetailEmpty(
+        key: const Key('sets_detail_empty'),
+        icon: Icons.inventory_2_outlined,
+        title: 'No set selected',
+        body: _controller.sets.isEmpty
+            ? 'Open New set on the left to create a weapon, armor, or mod set, then fill slots here.'
+            : 'Select a set on the board to edit slots, tags, and readiness.',
       );
     }
 
