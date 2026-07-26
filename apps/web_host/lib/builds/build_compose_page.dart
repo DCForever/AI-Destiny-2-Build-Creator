@@ -3,7 +3,9 @@ library;
 
 import 'dart:async';
 
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
@@ -40,13 +42,19 @@ class BuildComposePage extends StatefulComponent {
 class _BuildComposePageState extends State<BuildComposePage> {
   String _variantName = '';
   String _attachSetId = '';
-  String _pinInstance = '';
+  final Map<String, String> _pinBySlot = {};
+  String _armorName = '';
+  int? _armorHash;
+  String _pinnedSuper = '';
+  String _pickQuery = '';
+  ManifestPickKind? _activePickKind;
   final Map<String, String> _softStatFields = {
     for (final s in ArmorStatName.all) s.wireName: '',
   };
   String? _status;
   bool _busy = false;
   String? _boundVariantKey;
+  String? _boundIdentityKey;
 
   void _onController() {
     if (mounted) {
@@ -73,6 +81,7 @@ class _BuildComposePageState extends State<BuildComposePage> {
     await c.openBuild(component.buildId);
     if (!mounted) return;
     _syncSoftStatFields(c);
+    _syncIdentityFields(c);
     setState(() {});
     await _syncEquipExportBindings();
   }
@@ -82,6 +91,31 @@ class _BuildComposePageState extends State<BuildComposePage> {
       final v = c.softStatTargets[stat];
       _softStatFields[stat.wireName] = v?.toString() ?? '';
     }
+  }
+
+  void _syncIdentityFields(BuildsController c) {
+    final b = c.selected?.build;
+    if (b == null) {
+      _boundIdentityKey = null;
+      return;
+    }
+    final key =
+        '${b.id}|${b.exoticArmorHash}|${b.pinnedSuper}|${c.editSubclass.hashCode}';
+    if (key == _boundIdentityKey) return;
+    _boundIdentityKey = key;
+    _armorHash = b.exoticArmorHash;
+    _armorName = b.exoticArmorName ?? '';
+    _pinnedSuper = b.pinnedSuper ?? '';
+  }
+
+  List<ManifestPick> _picksFor(BuildsController c, ManifestPickKind kind) {
+    final items = c.catalogItems ?? const <CatalogItem>[];
+    return searchManifestPicks(
+      items: items,
+      kind: kind,
+      query: _pickQuery,
+      classType: c.selected?.build.className,
+    );
   }
 
   Future<void> _syncEquipExportBindings() async {
@@ -232,6 +266,303 @@ class _BuildComposePageState extends State<BuildComposePage> {
             h2([.text('Identity')]),
             p([.text(c.identitySummaryOf(b))]),
             p([.text('Synergies: ${c.synergySummaryOf(b)}')]),
+            p(
+              attributes: {'data-testid': 'identity-exotic-armor'},
+              [
+                .text(
+                  _armorName.isEmpty
+                      ? 'Exotic armor: (none)'
+                      : 'Exotic armor: $_armorName',
+                ),
+              ],
+            ),
+            button(
+              classes: 'compose-btn-ghost',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'pick-exotic-armor',
+              },
+              events: {
+                'click': (_) => setState(() {
+                      _activePickKind = ManifestPickKind.exoticArmor;
+                      _pickQuery = '';
+                    }),
+              },
+              [.text('Search exotic armor')],
+            ),
+            p(
+              attributes: {'data-testid': 'identity-pinned-super'},
+              [
+                .text(
+                  _pinnedSuper.isEmpty
+                      ? 'Pinned Super: (none)'
+                      : 'Pinned Super: $_pinnedSuper',
+                ),
+              ],
+            ),
+            button(
+              classes: 'compose-btn-ghost',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'pick-super',
+              },
+              events: {
+                'click': (_) => setState(() {
+                      _activePickKind = ManifestPickKind.superAbility;
+                      _pickQuery = '';
+                    }),
+              },
+              [.text('Search Super')],
+            ),
+            if (_activePickKind != null) ...[
+              label([
+                .text('Manifest search'),
+                input(
+                  type: InputType.text,
+                  value: _pickQuery,
+                  attributes: {
+                    'data-testid': 'manifest-pick-query',
+                    'placeholder': 'Name…',
+                  },
+                  onInput: (v) => setState(() => _pickQuery = '$v'),
+                ),
+              ]),
+              ul(
+                attributes: {'data-testid': 'manifest-pick-results'},
+                [
+                  for (final p in _picksFor(c, _activePickKind!))
+                    li([
+                      button(
+                        attributes: {
+                          'type': 'button',
+                          'data-testid': 'manifest-pick-${p.hash}',
+                        },
+                        events: {
+                          'click': (_) {
+                            setState(() {
+                              if (_activePickKind ==
+                                  ManifestPickKind.exoticArmor) {
+                                _armorHash = p.hash;
+                                _armorName = p.name;
+                              } else if (_activePickKind ==
+                                  ManifestPickKind.superAbility) {
+                                _pinnedSuper = p.name;
+                              } else if (_activePickKind ==
+                                  ManifestPickKind.aspect) {
+                                final kit = c.editSubclass;
+                                c.setEditSubclass(
+                                  SubclassKit(
+                                    aspects: [
+                                      ...kit.aspects.where((a) => a != p.name),
+                                      p.name,
+                                    ],
+                                    fragments: kit.fragments,
+                                    superAbility: kit.superAbility,
+                                    melee: kit.melee,
+                                    grenade: kit.grenade,
+                                    classAbility: kit.classAbility,
+                                    name: kit.name,
+                                  ),
+                                );
+                              } else if (_activePickKind ==
+                                  ManifestPickKind.fragment) {
+                                final kit = c.editSubclass;
+                                c.setEditSubclass(
+                                  SubclassKit(
+                                    aspects: kit.aspects,
+                                    fragments: [
+                                      ...kit.fragments
+                                          .where((a) => a != p.name),
+                                      p.name,
+                                    ],
+                                    superAbility: kit.superAbility,
+                                    melee: kit.melee,
+                                    grenade: kit.grenade,
+                                    classAbility: kit.classAbility,
+                                    name: kit.name,
+                                  ),
+                                );
+                              }
+                              _activePickKind = null;
+                              _pickQuery = '';
+                            });
+                          },
+                        },
+                        [.text(p.name)],
+                      ),
+                    ]),
+                ],
+              ),
+            ],
+            h3([.text('Subclass kit')]),
+            p(
+              attributes: {'data-testid': 'subclass-capacity'},
+              [.text(c.subclassCapacityCaption)],
+            ),
+            p(
+              attributes: {'data-testid': 'subclass-aspects'},
+              [
+                .text(
+                  'Aspects: ${c.editSubclass.aspects.isEmpty ? '(none)' : c.editSubclass.aspects.join(', ')}',
+                ),
+              ],
+            ),
+            p(
+              attributes: {'data-testid': 'subclass-fragments'},
+              [
+                .text(
+                  'Fragments: ${c.editSubclass.fragments.isEmpty ? '(none)' : c.editSubclass.fragments.join(', ')}',
+                ),
+              ],
+            ),
+            button(
+              classes: 'compose-btn-ghost',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'pick-aspect',
+              },
+              events: {
+                'click': (_) => setState(() {
+                      _activePickKind = ManifestPickKind.aspect;
+                      _pickQuery = '';
+                    }),
+              },
+              [.text('Add aspect')],
+            ),
+            button(
+              classes: 'compose-btn-ghost',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'pick-fragment',
+              },
+              events: {
+                'click': (_) => setState(() {
+                      _activePickKind = ManifestPickKind.fragment;
+                      _pickQuery = '';
+                    }),
+              },
+              [.text('Add fragment')],
+            ),
+            if (c.composeHardBlocks.isNotEmpty)
+              div(
+                attributes: {'data-testid': 'compose-hard-blocks'},
+                [
+                  for (final block in c.composeHardBlocks)
+                    p(
+                      classes: 'compose-error',
+                      attributes: {
+                        'data-testid': 'hard-block-${block.code}',
+                      },
+                      [.text('${block.code}: ${block.message}')],
+                    ),
+                ],
+              ),
+            if (c.identityConfirmRequired)
+              div(
+                attributes: {'data-testid': 'identity-confirm-panel'},
+                [
+                  p([
+                    .text(
+                      'Identity change requires Confirm or Fork. Fields: '
+                      '${c.pendingIdentityFields?.join(', ')}',
+                    ),
+                  ]),
+                  button(
+                    classes: 'compose-btn',
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'identity-confirm',
+                      if (c.identitySaveHardBlocked) 'disabled': 'true',
+                    },
+                    events: {
+                      'click': (_) => unawaited(
+                            _run(
+                              () => c.updateSelectedIdentity(
+                                setExoticArmor: true,
+                                exoticArmorHash: _armorHash,
+                                exoticArmorName:
+                                    _armorName.isEmpty ? null : _armorName,
+                                setPinnedSuper: true,
+                                pinnedSuper: _pinnedSuper.isEmpty
+                                    ? null
+                                    : _pinnedSuper,
+                                identityAction: IdentityAction.confirm,
+                              ),
+                            ),
+                          ),
+                    },
+                    [.text('Confirm in-place')],
+                  ),
+                  button(
+                    classes: 'compose-btn',
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'identity-fork',
+                    },
+                    events: {
+                      'click': (_) => unawaited(
+                            _run(
+                              () => c.updateSelectedIdentity(
+                                setExoticArmor: true,
+                                exoticArmorHash: _armorHash,
+                                exoticArmorName:
+                                    _armorName.isEmpty ? null : _armorName,
+                                setPinnedSuper: true,
+                                pinnedSuper: _pinnedSuper.isEmpty
+                                    ? null
+                                    : _pinnedSuper,
+                                identityAction: IdentityAction.fork,
+                              ),
+                            ),
+                          ),
+                    },
+                    [.text('Fork as new build')],
+                  ),
+                  button(
+                    classes: 'compose-btn-ghost',
+                    attributes: {
+                      'type': 'button',
+                      'data-testid': 'identity-cancel',
+                    },
+                    events: {
+                      'click': (_) {
+                        c.cancelIdentityConfirm();
+                        _boundIdentityKey = null;
+                        _syncIdentityFields(c);
+                        setState(() => _status = 'Identity change cancelled');
+                      },
+                    },
+                    [.text('Cancel')],
+                  ),
+                ],
+              ),
+            button(
+              classes: 'compose-btn',
+              attributes: {
+                'type': 'button',
+                'data-testid': 'save-identity',
+                if (_busy ||
+                    c.identitySaveHardBlocked ||
+                    c.identityConfirmRequired)
+                  'disabled': 'true',
+              },
+              events: {
+                'click': (_) => unawaited(
+                      _run(
+                        () => c.updateSelectedIdentity(
+                          setExoticArmor: true,
+                          exoticArmorHash: _armorHash,
+                          exoticArmorName:
+                              _armorName.isEmpty ? null : _armorName,
+                          setPinnedSuper: true,
+                          pinnedSuper:
+                              _pinnedSuper.isEmpty ? null : _pinnedSuper,
+                        ),
+                      ),
+                    ),
+              },
+              [.text('Save identity')],
+            ),
           ],
         ),
         div(
@@ -344,6 +675,45 @@ class _BuildComposePageState extends State<BuildComposePage> {
                         .text(
                           '${pin.slot}: ${pin.itemName} · ${pin.pinDetail}',
                         ),
+                        if (pin.canEditPin) ...[
+                          label([
+                            .text(' Pin instance for ${pin.slot}'),
+                            input(
+                              type: InputType.text,
+                              value: _pinBySlot[pin.slot] ?? pin.instanceId ?? '',
+                              attributes: {
+                                'data-testid': 'pin-instance-${pin.slot}',
+                                'placeholder': 'instance id or empty',
+                              },
+                              onInput: (v) => setState(
+                                () => _pinBySlot[pin.slot] = '$v',
+                              ),
+                            ),
+                          ]),
+                          button(
+                            classes: 'compose-btn-ghost',
+                            attributes: {
+                              'type': 'button',
+                              'data-testid': 'pin-save-${pin.slot}',
+                            },
+                            events: {
+                              'click': (_) {
+                                final raw = (_pinBySlot[pin.slot] ?? '').trim();
+                                unawaited(
+                                  _run(
+                                    () => c.pinSlot(
+                                      setId: pin.setId,
+                                      slot: pin.slot,
+                                      instanceId: raw.isEmpty ? null : raw,
+                                      setItemId: pin.setItemId,
+                                    ),
+                                  ),
+                                );
+                              },
+                            },
+                            [.text('Save pin')],
+                          ),
+                        ],
                       ],
                       attributes: {
                         'data-testid': 'slot-pin-${pin.slot}',
@@ -353,33 +723,56 @@ class _BuildComposePageState extends State<BuildComposePage> {
                 ],
                 attributes: {'data-testid': 'slot-pins-list'},
               ),
-            label([
-              .text('Attach set id'),
-              input(
-                type: InputType.text,
-                value: _attachSetId,
-                attributes: {
-                  'data-testid': 'attach-set-id',
-                  'placeholder': 'Library set id',
-                },
-                onInput: (v) => setState(() => _attachSetId = '$v'),
-              ),
-            ]),
-            if (c.attachableSets.isNotEmpty)
+            if (c.attachableSets.isEmpty)
               p(
-                attributes: {'data-testid': 'attachable-sets-hint'},
+                attributes: {'data-testid': 'attach-no-sets'},
                 [
                   .text(
-                    'Available: ${c.attachableSets.map((s) => '${s.name}(${s.id})').join(', ')}',
+                    'No library sets yet. Create sets in the Sets library.',
                   ),
                 ],
-              ),
+              )
+            else ...[
+              label([
+                .text('Library set (named picker)'),
+                select(
+                  attributes: {
+                    'data-testid': 'attach-set-picker',
+                    'name': 'attach-set',
+                  },
+                  events: {
+                    'change': (e) {
+                      final v = (e.target as dynamic).value as String? ?? '';
+                      setState(() => _attachSetId = v);
+                    },
+                  },
+                  [
+                    option(
+                      value: '',
+                      attributes: {
+                        if (_attachSetId.isEmpty) 'selected': 'true',
+                      },
+                      [.text('Select a set…')],
+                    ),
+                    for (final s in c.attachableSets)
+                      option(
+                        value: s.id,
+                        attributes: {
+                          'data-testid': 'attach-set-option-${s.id}',
+                          if (_attachSetId == s.id) 'selected': 'true',
+                        },
+                        [.text('${s.name} (${s.type})')],
+                      ),
+                  ],
+                ),
+              ]),
+            ],
             button(
               classes: 'compose-btn',
               attributes: {
                 'type': 'button',
                 'data-testid': 'attach-set-submit',
-                if (_busy) 'disabled': 'true',
+                if (_busy || _attachSetId.isEmpty) 'disabled': 'true',
               },
               events: {
                 'click': (_) => unawaited(
@@ -388,45 +781,6 @@ class _BuildComposePageState extends State<BuildComposePage> {
               },
               [.text('Attach set')],
             ),
-            if (c.slotPins.any((p) => p.canEditPin)) ...[
-              label([
-                .text('Pin instance id (first live pin)'),
-                input(
-                  type: InputType.text,
-                  value: _pinInstance,
-                  attributes: {
-                    'data-testid': 'pin-instance-id',
-                    'placeholder': 'instance id or empty to clear',
-                  },
-                  onInput: (v) => setState(() => _pinInstance = '$v'),
-                ),
-              ]),
-              button(
-                classes: 'compose-btn',
-                attributes: {
-                  'type': 'button',
-                  'data-testid': 'pin-instance-submit',
-                },
-                events: {
-                  'click': (_) {
-                    final pin = c.slotPins.firstWhere((p) => p.canEditPin);
-                    unawaited(
-                      _run(
-                        () => c.pinSlot(
-                          setId: pin.setId,
-                          slot: pin.slot,
-                          instanceId: _pinInstance.trim().isEmpty
-                              ? null
-                              : _pinInstance.trim(),
-                          setItemId: pin.setItemId,
-                        ),
-                      ),
-                    );
-                  },
-                },
-                [.text('Save pin')],
-              ),
-            ],
           ],
         ),
         div(

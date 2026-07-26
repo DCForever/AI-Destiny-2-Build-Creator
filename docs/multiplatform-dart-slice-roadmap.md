@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-063 done — catalog universal modes/synergy tags; **DART-064** next; cutover GO unchanged)  
+**Updated:** 2026-07-25 (DART-064 done — build identity Confirm/Fork, subclass kit, Manifest pickers; **DART-065** next; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -161,7 +161,7 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-061** | **done** | `production-cutover-regate` | `dart-061-production-cutover-regate` | P8 | DART-050–060 as needed | All RC-* pass; PRODUCTION_CUTOVER GO | **GAP-CUT-01** closed; GAP-FEAT-02 remains non-goal (jsonOnly). All RC-* PASS incl. RC-BRANCH; PRODUCTION_CUTOVER: GO 2026-07-25 with rationale; merge toward production/main allowed only after GO; offline `tool/production_cutover_regate.dart` |
 | **DART-062** | **done** | `catalog-browse-semantics` | `dart-062-catalog-browse-semantics` | P9 | DART-061 | Catalog multi-facet, group-by, alpha sort, exotic weapons + legendary armor defs | **GAP-UI-CATALOG-01, 02, 04, 05, 07** closed. Windows+Jaspr multi-value include/exclude (slot/class/archetype/element/ammo/exotic); multi-dim group-by without changing filter semantics; alpha sort by display name; exotic-weapons + legendary-armor MVP stores; DAC-NME-003 + BR-CAT-001/003/006/007. **Cutover GO unchanged.** Soft never auto-applies; no CLIENT_SECRET |
 | **DART-063** | **done** | `catalog-universal-modes-synergy-tags` | `dart-063-catalog-universal-modes-synergy-tags` | P9 | DART-062 | Weapons/Armor/Universal modes; synergy membership + BR-SYN-004 reverse tags; owned instance detail | **GAP-UI-CATALOG-03, 06, 08, 10; GAP-UI-SYN-03**. Universal Set/Synergy actions only (no Build kit attach); kind-appropriate facets; human-readable owned perks/traits + armor base-stat board when resolvable. Soft never auto-applies; no CLIENT_SECRET |
-| **DART-064** | **planned** | `build-identity-subclass-compose` | `dart-064-build-identity-subclass-compose` | P9 | DART-061 | Identity Confirm/Fork; subclass kit composer; Manifest pickers; hard-block UX; Jaspr attach pickers | **GAP-UI-BUILD-01, 02, 05, 08, 09**. DBR-ID-008 Confirm/Fork; full subclass kit + capacity plain language; Manifest search exotic/Super; client hard-block dual exotic/kit; Jaspr named set picker + per-slot pins. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-064** | **done** | `build-identity-subclass-compose` | `dart-064-build-identity-subclass-compose` | P9 | DART-061 | Identity Confirm/Fork; subclass kit composer; Manifest pickers; hard-block UX; Jaspr attach pickers | **GAP-UI-BUILD-01, 02, 05, 08, 09**. DBR-ID-008 Confirm/Fork; full subclass kit + capacity plain language; Manifest search exotic/Super; client hard-block dual exotic/kit; Jaspr named set picker + per-slot pins. Soft never auto-applies; no CLIENT_SECRET |
 | **DART-065** | **planned** | `sets-board-rows-fill` | `dart-065-sets-board-rows-fill` | P9 | DART-061 | Armor EoF base-roll board; dense item rows; slot-fill Catalog; replace confirm; weapon perks | **GAP-UI-SETS-01, 02, 03, 07, 10**. DAC-NME-004/BR-SET-010/011 board + totals; icons/traits/synergies/Instance\|Wishlist; both shells embedded catalog density (Jaspr not hash-only); occupied-slot replace confirm; selectedPerks on weapon fill. Soft never auto-applies; no CLIENT_SECRET |
 | **DART-066** | **planned** | `synergy-picker-manage-sets-library` | `dart-066-synergy-picker-manage-sets-library` | P9 | DART-063 (syn tags helpful) | Synergy catalog picker + Jaspr manage; Sets library filters/readiness/delete | **GAP-UI-SYN-01, 02, 04, 06, 09; GAP-UI-SETS-04, 05, 06**. BR-SYN-011 omit-linked + BR-SYN-012 labels; Jaspr detail/edit/links; library search/type filters; delete synergy; Sets search+tag AND, Fill next/used-by, SET_IN_USE delete. Soft never auto-applies; no CLIENT_SECRET |
 | **DART-067** | **planned** | `finish-walkthrough-armor-optimize` | `dart-067-finish-walkthrough-armor-optimize` | P9 | DART-064, DART-036 | Finish one-tap Create/Capture/fill; Build Finish armor improve; Settings post-sync banner | **GAP-UI-BUILD-03, 04; GAP-UI-SETTINGS-04**. BR-BLD-008 residual walkthrough; Windows Build Finish Find kits → confirm apply; Windows post-sync better-kit Confirm/Dismiss only — **never auto-apply**. Web optimizer remains GAP-FEAT-01 deferred unless elevated. Soft never auto-applies; no CLIENT_SECRET |
@@ -227,16 +227,16 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **DART-064** `build-identity-subclass-compose` (**planned**) |
+| **Next / active slice** | **DART-065** `sets-board-rows-fill` (**planned**) |
 | **Active branch** | `feature/multiplatform-dart` |
 | **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
 | **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). UI fidelity P9 residual continues (does not re-open cutover). Human/release may merge toward production/`main` (RC-BRANCH) |
-| **Phase plan** | P6–P8 **done** (DART-050–061); **P9** DART-062–063 **done**, DART-064–068 **planned** (host UI fidelity) |
+| **Phase plan** | P6–P8 **done** (DART-050–061); **P9** DART-062–064 **done**, DART-065–068 **planned** (host UI fidelity) |
 
 ### P9 note — host UI fidelity post-cutover
 
-After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS, but presentation trails Next atlas on browse/composition density (BR/DAC/DBR surface rules). Canonical residual ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). **DART-062 done** (catalog multi-facet/group-by/alpha + exotic weapons + legendary armor). Order remaining: 063 modes/syn tags → 064 build identity/kit → 065 sets board/fill → 066 synergy manage + sets library → 067 finish/optimize paths → 068 polish chrome. Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
+After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS, but presentation trails Next atlas on browse/composition density (BR/DAC/DBR surface rules). Canonical residual ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). **DART-062–064 done** (catalog facets/modes; build identity Confirm/Fork + subclass kit + Manifest pickers). Order remaining: 065 sets board/fill → 066 synergy manage + sets library → 067 finish/optimize paths → 068 polish chrome. Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
 
 ### DART-062 note (completed) — catalog browse semantics
 

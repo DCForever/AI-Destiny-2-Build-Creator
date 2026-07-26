@@ -1,6 +1,7 @@
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/foundation.dart';
 
 import '../auth/windows_oauth_session.dart';
@@ -131,6 +132,16 @@ class BuildsLibraryController extends ChangeNotifier {
   /// Optional estimate for soft-stat warnings (tests may inject).
   StatEstimate? softStatEstimateOverride;
 
+  // --- DART-064 identity confirm + subclass kit + hard-block preview ---
+  SubclassKit _editSubclass = const SubclassKit();
+  List<String>? _pendingIdentityFields;
+  Map<String, Object?>? _pendingIdentityPayload;
+  List<ComposeHardBlock> _composeHardBlocks = const [];
+  String? _lastForkedFromId;
+
+  /// Optional catalog base items for Manifest pickers / capacity (tests inject).
+  List<CatalogItem>? catalogItems;
+
   int? get userId => _userId;
   List<BuildRecord> get builds => _builds;
   BuildDetail? get selected => _selected;
@@ -163,6 +174,34 @@ class BuildsLibraryController extends ChangeNotifier {
       formatSoftStatTargetsSummary(_softStatTargets);
   bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
   String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
+
+  SubclassKit get editSubclass => _editSubclass;
+  List<String>? get pendingIdentityFields => _pendingIdentityFields;
+  bool get identityConfirmRequired =>
+      _pendingIdentityFields != null && _pendingIdentityFields!.isNotEmpty;
+  List<ComposeHardBlock> get composeHardBlocks =>
+      List.unmodifiable(_composeHardBlocks);
+  bool get identitySaveHardBlocked =>
+      composeSaveHardBlocked(_composeHardBlocks);
+  String? get lastForkedFromId => _lastForkedFromId;
+
+  String get subclassCapacityCaption {
+    final aspects = _editSubclass.aspects
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    final fragments = _editSubclass.fragments
+        .map((f) => f.trim())
+        .where((f) => f.isNotEmpty)
+        .toList();
+    final cap = _resolveFragmentCapacityLocal(aspects);
+    return formatSubclassCapacityCaption(
+      aspectCount: aspects.length,
+      fragmentCount: fragments.length,
+      fragmentCapacity: cap.capacity,
+      capacityResolved: cap.resolved,
+    );
+  }
 
   /// Pure finish-gap readiness (DART-057 / GAP-FEAT-06). Soft never auto-applies.
   FinishGapsResult? get finishGaps {
@@ -239,9 +278,12 @@ class BuildsLibraryController extends ChangeNotifier {
         _selected = next;
         if (next != null) {
           _editDraftTypes = _recordsToDrafts(next.build.synergyTypes);
+          _editSubclass = subclassKitFromJson(next.build.subclass);
+          _refreshComposeHardBlocks();
           await _syncComposeAfterBuildLoad(next, preferredVariantId: priorVariantId);
         } else {
           _editDraftTypes = const [];
+          _editSubclass = const SubclassKit();
           _clearCompose();
         }
       }
@@ -294,7 +336,13 @@ class BuildsLibraryController extends ChangeNotifier {
     _selected = row;
     _editDraftTypes =
         row != null ? _recordsToDrafts(row.build.synergyTypes) : const [];
+    _editSubclass = row != null
+        ? subclassKitFromJson(row.build.subclass)
+        : const SubclassKit();
+    _pendingIdentityFields = null;
+    _pendingIdentityPayload = null;
     if (row != null) {
+      _refreshComposeHardBlocks();
       await _syncComposeAfterBuildLoad(row);
     } else {
       _clearCompose();
@@ -397,19 +445,38 @@ class BuildsLibraryController extends ChangeNotifier {
     }
   }
 
-  /// Update selected build identity (name, synergy types, pins).
+  void setEditSubclass(SubclassKit kit) {
+    _editSubclass = kit;
+    _refreshComposeHardBlocks();
+    notifyListeners();
+  }
+
+  void cancelIdentityConfirm() {
+    _pendingIdentityFields = null;
+    _pendingIdentityPayload = null;
+    notifyListeners();
+  }
+
+  /// Update selected build identity (name, synergy types, pins, kit).
+  ///
+  /// When identity fields change without [identityAction], stores pending
+  /// confirm payload and returns IDENTITY_CONFIRM_REQUIRED message.
   Future<String?> updateSelectedIdentity({
     String? name,
     GuardianClass? className,
     List<DraftSynergyType>? synergyTypes,
+    SubclassKit? subclass,
     bool setExoticArmor = false,
     int? exoticArmorHash,
     String? exoticArmorName,
+    String? existingExoticArmorSlot,
+    String? nextExoticArmorSlot,
     bool setExoticWeapon = false,
     int? exoticWeaponHash,
     String? exoticWeaponName,
     bool setPinnedSuper = false,
     String? pinnedSuper,
+    IdentityAction? identityAction,
   }) async {
     final sel = _selected;
     final uid = _userId;
@@ -423,6 +490,25 @@ class BuildsLibraryController extends ChangeNotifier {
       notifyListeners();
       return msg;
     }
+
+    final kit = subclass ?? _editSubclass;
+    _refreshComposeHardBlocks(
+      exoticArmorHash: setExoticArmor ? exoticArmorHash : sel.build.exoticArmorHash,
+      exoticWeaponHash:
+          setExoticWeapon ? exoticWeaponHash : sel.build.exoticWeaponHash,
+      subclass: kit,
+      synergyCount: types.length,
+    );
+    if (identitySaveHardBlocked && identityAction != IdentityAction.fork) {
+      // Still allow fork attempt; confirm/in-place blocked by hard preview.
+      if (identityAction == null || identityAction == IdentityAction.confirm) {
+        final msg = _composeHardBlocks.map((b) => b.message).join('; ');
+        _error = msg;
+        notifyListeners();
+        return msg;
+      }
+    }
+
     try {
       final priorVariantId = _selectedVariant?.id;
       final updated = await updateUserBuild(
@@ -432,6 +518,7 @@ class BuildsLibraryController extends ChangeNotifier {
         UpdateBuildCommand(
           name: name,
           className: className,
+          subclass: kit,
           synergyTypes: [for (final d in types) d.toDomain()],
           setExoticArmor: setExoticArmor,
           exoticArmorHash: exoticArmorHash,
@@ -441,19 +528,52 @@ class BuildsLibraryController extends ChangeNotifier {
           exoticWeaponName: exoticWeaponName,
           setPinnedSuper: setPinnedSuper,
           pinnedSuper: pinnedSuper,
+          identityAction: identityAction,
+          existingExoticArmorSlot: existingExoticArmorSlot,
+          nextExoticArmorSlot: nextExoticArmorSlot,
         ),
       );
       if (updated == null) {
         return 'Build not found';
       }
+      _pendingIdentityFields = null;
+      _pendingIdentityPayload = null;
+      _lastForkedFromId = updated.forkedFromId;
       _selected = updated;
       _editDraftTypes = _recordsToDrafts(updated.build.synergyTypes);
+      _editSubclass = subclassKitFromJson(updated.build.subclass);
       _builds = await listUserBuilds(db, uid);
-      await _syncComposeAfterBuildLoad(updated, preferredVariantId: priorVariantId);
+      await _syncComposeAfterBuildLoad(
+        updated,
+        preferredVariantId: priorVariantId,
+      );
       _error = null;
       notifyListeners();
       return null;
     } on UseCaseException catch (e) {
+      if (e.code == UseCaseErrorCode.identityConfirmRequired) {
+        final fields = e.details['identityFields'];
+        _pendingIdentityFields = fields is List
+            ? [for (final f in fields) f.toString()]
+            : const ['identity'];
+        _pendingIdentityPayload = {
+          'name': name,
+          'className': className?.wireName,
+          'setExoticArmor': setExoticArmor,
+          'exoticArmorHash': exoticArmorHash,
+          'exoticArmorName': exoticArmorName,
+          'setExoticWeapon': setExoticWeapon,
+          'exoticWeaponHash': exoticWeaponHash,
+          'exoticWeaponName': exoticWeaponName,
+          'setPinnedSuper': setPinnedSuper,
+          'pinnedSuper': pinnedSuper,
+          'existingExoticArmorSlot': existingExoticArmorSlot,
+          'nextExoticArmorSlot': nextExoticArmorSlot,
+        };
+        _error = e.message;
+        notifyListeners();
+        return e.message;
+      }
       _error = e.message;
       notifyListeners();
       return e.message;
@@ -462,6 +582,111 @@ class BuildsLibraryController extends ChangeNotifier {
       notifyListeners();
       return e.toString();
     }
+  }
+
+  /// Confirm or fork using the last pending identity payload.
+  Future<String?> resolveIdentityAction(IdentityAction action) async {
+    final payload = _pendingIdentityPayload;
+    if (payload == null) {
+      return updateSelectedIdentity(identityAction: action);
+    }
+    return updateSelectedIdentity(
+      name: payload['name'] as String?,
+      setExoticArmor: payload['setExoticArmor'] as bool? ?? false,
+      exoticArmorHash: payload['exoticArmorHash'] as int?,
+      exoticArmorName: payload['exoticArmorName'] as String?,
+      setExoticWeapon: payload['setExoticWeapon'] as bool? ?? false,
+      exoticWeaponHash: payload['exoticWeaponHash'] as int?,
+      exoticWeaponName: payload['exoticWeaponName'] as String?,
+      setPinnedSuper: payload['setPinnedSuper'] as bool? ?? false,
+      pinnedSuper: payload['pinnedSuper'] as String?,
+      existingExoticArmorSlot: payload['existingExoticArmorSlot'] as String?,
+      nextExoticArmorSlot: payload['nextExoticArmorSlot'] as String?,
+      identityAction: action,
+    );
+  }
+
+  void _refreshComposeHardBlocks({
+    int? exoticArmorHash,
+    int? exoticWeaponHash,
+    SubclassKit? subclass,
+    int? synergyCount,
+  }) {
+    final sel = _selected;
+    final kit = subclass ?? _editSubclass;
+    final aspects = kit.aspects
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    final fragments = kit.fragments
+        .map((f) => f.trim())
+        .where((f) => f.isNotEmpty)
+        .toList();
+    final cap = _resolveFragmentCapacityLocal(aspects);
+    final armor = exoticArmorHash ?? sel?.build.exoticArmorHash;
+    final weapon = exoticWeaponHash ?? sel?.build.exoticWeaponHash;
+    _composeHardBlocks = evaluateComposeHardBlocks(
+      ComposeHardBlockInput(
+        exoticWeaponHashes: [
+          if (weapon != null) weapon,
+        ],
+        exoticArmorHashes: [
+          if (armor != null) armor,
+        ],
+        aspectCount: aspects.length,
+        fragmentCount: fragments.length,
+        fragmentCapacity: cap.capacity,
+        capacityResolved: cap.resolved,
+        synergyTypeCount: synergyCount ??
+            (sel?.build.synergyTypes.isEmpty == true
+                ? 0
+                : (_editDraftTypes.isEmpty
+                    ? (sel?.build.synergyTypes.length ?? 0)
+                    : _editDraftTypes.length)),
+      ),
+    );
+  }
+
+  ({int capacity, bool resolved}) _resolveFragmentCapacityLocal(
+    List<String> aspects,
+  ) {
+    if (aspects.isEmpty) {
+      return (capacity: 0, resolved: true);
+    }
+    final items = catalogItems;
+    if (items == null || items.isEmpty) {
+      return (capacity: 0, resolved: false);
+    }
+    var sum = 0;
+    var resolved = 0;
+    for (final name in aspects) {
+      final match = items.where(
+        (i) =>
+            i.name.toLowerCase() == name.toLowerCase() &&
+            (i.sourceStore ?? '') == 'aspects',
+      );
+      if (match.isEmpty) continue;
+      // fragmentCapacity not on CatalogItem — unresolved per aspect unless
+      // description encodes +N. Prefer unknown when no capacity meta.
+      resolved += 1;
+      final desc = match.first.description ?? '';
+      final m = RegExp(r'\+(\d+)\s*frag', caseSensitive: false).firstMatch(desc);
+      if (m != null) {
+        sum += int.tryParse(m.group(1)!) ?? 0;
+      }
+    }
+    if (resolved == 0) {
+      return (capacity: 0, resolved: false);
+    }
+    // If we matched aspects but no capacity tokens, treat unresolved.
+    if (sum == 0 && resolved < aspects.length) {
+      return (capacity: sum, resolved: false);
+    }
+    if (sum == 0 && resolved == aspects.length) {
+      // Matched all by name without capacity tokens → unknown.
+      return (capacity: 0, resolved: false);
+    }
+    return (capacity: sum, resolved: resolved == aspects.length);
   }
 
   // ---------------------------------------------------------------------------

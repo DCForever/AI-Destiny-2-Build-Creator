@@ -5,6 +5,7 @@ import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart'
     hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../compose/build_format.dart';
@@ -117,6 +118,16 @@ class BuildsController extends ChangeNotifier {
   /// Optional estimate for soft-stat warnings (tests may inject).
   StatEstimate? softStatEstimateOverride;
 
+  // DART-064 identity confirm + subclass kit + hard blocks
+  SubclassKit _editSubclass = const SubclassKit();
+  List<DraftSynergyType> _editDraftTypes = const [];
+  List<String>? _pendingIdentityFields;
+  List<ComposeHardBlock> _composeHardBlocks = const [];
+  String? _lastForkedFromId;
+
+  /// Optional catalog base for Manifest pickers (tests / entity loader inject).
+  List<CatalogItem>? catalogItems;
+
   int? get userId => _userId;
   List<BuildRecord> get builds => List.unmodifiable(_builds);
   BuildDetail? get selected => _selected;
@@ -147,6 +158,80 @@ class BuildsController extends ChangeNotifier {
       formatSoftStatTargetsSummary(_softStatTargets);
   bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
   String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
+
+  SubclassKit get editSubclass => _editSubclass;
+  List<DraftSynergyType> get editDraftTypes =>
+      List.unmodifiable(_editDraftTypes);
+  List<String>? get pendingIdentityFields => _pendingIdentityFields;
+  bool get identityConfirmRequired =>
+      _pendingIdentityFields != null && _pendingIdentityFields!.isNotEmpty;
+  List<ComposeHardBlock> get composeHardBlocks =>
+      List.unmodifiable(_composeHardBlocks);
+  bool get identitySaveHardBlocked =>
+      composeSaveHardBlocked(_composeHardBlocks);
+  String? get lastForkedFromId => _lastForkedFromId;
+
+  String get subclassCapacityCaption {
+    final aspects = _editSubclass.aspects
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    final fragments = _editSubclass.fragments
+        .map((f) => f.trim())
+        .where((f) => f.isNotEmpty)
+        .toList();
+    final resolved = aspects.isEmpty;
+    return formatSubclassCapacityCaption(
+      aspectCount: aspects.length,
+      fragmentCount: fragments.length,
+      fragmentCapacity: 0,
+      capacityResolved: resolved,
+    );
+  }
+
+  void setEditSubclass(SubclassKit kit) {
+    _editSubclass = kit;
+    _refreshComposeHardBlocks();
+    notifyListeners();
+  }
+
+  void cancelIdentityConfirm() {
+    _pendingIdentityFields = null;
+    notifyListeners();
+  }
+
+  void _refreshComposeHardBlocks({
+    int? exoticArmorHash,
+    int? exoticWeaponHash,
+    int? synergyCount,
+  }) {
+    final sel = _selected;
+    final kit = _editSubclass;
+    final aspects = kit.aspects
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    final fragments = kit.fragments
+        .map((f) => f.trim())
+        .where((f) => f.isNotEmpty)
+        .toList();
+    final armor = exoticArmorHash ?? sel?.build.exoticArmorHash;
+    final weapon = exoticWeaponHash ?? sel?.build.exoticWeaponHash;
+    _composeHardBlocks = evaluateComposeHardBlocks(
+      ComposeHardBlockInput(
+        exoticWeaponHashes: [if (weapon != null) weapon],
+        exoticArmorHashes: [if (armor != null) armor],
+        aspectCount: aspects.length,
+        fragmentCount: fragments.length,
+        fragmentCapacity: 0,
+        capacityResolved: aspects.isEmpty,
+        synergyTypeCount: synergyCount ??
+            (_editDraftTypes.isNotEmpty
+                ? _editDraftTypes.length
+                : (sel?.build.synergyTypes.length ?? 0)),
+      ),
+    );
+  }
 
   /// Pure finish-gap readiness (DART-057 / GAP-FEAT-06). Soft never auto-applies.
   FinishGapsResult? get finishGaps {
@@ -250,6 +335,13 @@ class BuildsController extends ChangeNotifier {
       final detail = await getBuildDetail(db, uid, buildId);
       _selected = detail;
       if (detail != null) {
+        _editSubclass = subclassKitFromJson(detail.build.subclass);
+        _editDraftTypes = [
+          for (final d in detail.build.synergyTypes)
+            DraftSynergyType(type: d.type, subType: d.subType),
+        ];
+        _pendingIdentityFields = null;
+        _refreshComposeHardBlocks();
         await _syncComposeAfterBuildLoad(detail);
       } else {
         _clearCompose();
@@ -260,6 +352,109 @@ class BuildsController extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return null;
+    }
+  }
+
+  /// Update identity with DBR-ID-008 Confirm/Fork + subclass kit (DART-064).
+  Future<String?> updateSelectedIdentity({
+    String? name,
+    SubclassKit? subclass,
+    bool setExoticArmor = false,
+    int? exoticArmorHash,
+    String? exoticArmorName,
+    bool setExoticWeapon = false,
+    int? exoticWeaponHash,
+    String? exoticWeaponName,
+    bool setPinnedSuper = false,
+    String? pinnedSuper,
+    IdentityAction? identityAction,
+  }) async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null) return 'No build selected';
+
+    final types = _editDraftTypes.isNotEmpty
+        ? _editDraftTypes
+        : [
+            for (final d in sel.build.synergyTypes)
+              DraftSynergyType(type: d.type, subType: d.subType),
+          ];
+    if (types.isEmpty) {
+      const msg = 'At least one synergy type is required';
+      _error = msg;
+      notifyListeners();
+      return msg;
+    }
+    final kit = subclass ?? _editSubclass;
+    _editSubclass = kit;
+    _refreshComposeHardBlocks(
+      exoticArmorHash: setExoticArmor ? exoticArmorHash : null,
+      exoticWeaponHash: setExoticWeapon ? exoticWeaponHash : null,
+      synergyCount: types.length,
+    );
+    if (identitySaveHardBlocked &&
+        (identityAction == null || identityAction == IdentityAction.confirm)) {
+      final msg = _composeHardBlocks.map((b) => b.message).join('; ');
+      _error = msg;
+      notifyListeners();
+      return msg;
+    }
+
+    try {
+      final priorVariantId = _selectedVariant?.id;
+      final updated = await updateUserBuild(
+        db,
+        uid,
+        sel.build.id,
+        UpdateBuildCommand(
+          name: name,
+          subclass: kit,
+          synergyTypes: [for (final d in types) d.toDomain()],
+          setExoticArmor: setExoticArmor,
+          exoticArmorHash: exoticArmorHash,
+          exoticArmorName: exoticArmorName,
+          setExoticWeapon: setExoticWeapon,
+          exoticWeaponHash: exoticWeaponHash,
+          exoticWeaponName: exoticWeaponName,
+          setPinnedSuper: setPinnedSuper,
+          pinnedSuper: pinnedSuper,
+          identityAction: identityAction,
+        ),
+      );
+      if (updated == null) return 'Build not found';
+      _pendingIdentityFields = null;
+      _lastForkedFromId = updated.forkedFromId;
+      _selected = updated;
+      _editSubclass = subclassKitFromJson(updated.build.subclass);
+      _editDraftTypes = [
+        for (final d in updated.build.synergyTypes)
+          DraftSynergyType(type: d.type, subType: d.subType),
+      ];
+      _builds = await listUserBuilds(db, uid);
+      await _syncComposeAfterBuildLoad(
+        updated,
+        preferredVariantId: priorVariantId,
+      );
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      if (e.code == UseCaseErrorCode.identityConfirmRequired) {
+        final fields = e.details['identityFields'];
+        _pendingIdentityFields = fields is List
+            ? [for (final f in fields) f.toString()]
+            : const ['identity'];
+        _error = e.message;
+        notifyListeners();
+        return e.message;
+      }
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
     }
   }
 

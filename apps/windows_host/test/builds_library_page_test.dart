@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
@@ -247,10 +248,22 @@ void main() {
     );
     await _pumpFrames(tester);
 
+    // Identity pin change requires Confirm (DBR-ID-008 / DART-064).
+    final pending = await controller.updateSelectedIdentity(
+      setExoticWeapon: true,
+      exoticWeaponHash: 2002,
+      exoticWeaponName: 'Osteo Striga',
+    );
+    expect(pending, contains('Confirm'));
+    expect(controller.identityConfirmRequired, isTrue);
+    await _pumpFrames(tester);
+    expect(find.byKey(const Key('builds_identity_confirm_panel')), findsOneWidget);
+
     final err = await controller.updateSelectedIdentity(
       setExoticWeapon: true,
       exoticWeaponHash: 2002,
       exoticWeaponName: 'Osteo Striga',
+      identityAction: IdentityAction.confirm,
     );
     expect(err, isNull);
     await _pumpFrames(tester);
@@ -258,6 +271,103 @@ void main() {
     expect(controller.selected!.build.exoticWeaponName, 'Osteo Striga');
     expect(find.byKey(const Key('builds_detail_exotic_weapon')), findsOneWidget);
     expect(find.textContaining('Osteo Striga'), findsWidgets);
+
+    controller.dispose();
+  });
+
+  testWidgets('DART-064 Confirm/Fork + kit hard-block + manifest pick keys',
+      (tester) async {
+    final controller = BuildsLibraryController(
+      db: services.db,
+      session: services.oauthSession,
+      inventorySync: services.inventorySync,
+    );
+    controller.catalogItems = const [
+      CatalogItem(
+        hash: 9001,
+        name: 'Synthoceps',
+        isExotic: true,
+        slot: 'Gauntlets',
+        classType: 'Titan',
+        sourceStore: 'exotic-armor',
+      ),
+      CatalogItem(
+        hash: 9002,
+        name: 'Golden Gun',
+        isExotic: false,
+        slot: 'super',
+        itemTypeName: 'super',
+        classType: 'Hunter',
+        sourceStore: 'abilities',
+      ),
+      CatalogItem(
+        hash: 9003,
+        name: 'Flow State',
+        isExotic: false,
+        sourceStore: 'aspects',
+        classType: 'Hunter',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFlapTheme(),
+        home: BuildsLibraryPage(
+          services: services,
+          controller: controller,
+        ),
+      ),
+    );
+    await _pumpFrames(tester);
+
+    await controller.createBuild(
+      name: 'Fork Me',
+      className: GuardianClass.hunter,
+      synergyTypes: const [DraftSynergyType(type: 'melee')],
+    );
+    await _pumpFrames(tester);
+
+    expect(find.byKey(const Key('builds_subclass_kit_title')), findsOneWidget);
+    expect(find.byKey(const Key('builds_pick_exotic_armor')), findsOneWidget);
+    expect(find.byKey(const Key('builds_pick_super')), findsOneWidget);
+
+    // Illegal kit → hard block disables save path.
+    controller.setEditSubclass(
+      const SubclassKit(aspects: ['A', 'B', 'C']),
+    );
+    await _pumpFrames(tester);
+    expect(controller.identitySaveHardBlocked, isTrue);
+    expect(find.byKey(const Key('builds_hard_blocks')), findsOneWidget);
+
+    controller.setEditSubclass(const SubclassKit());
+    await _pumpFrames(tester);
+
+    final pending = await controller.updateSelectedIdentity(
+      setPinnedSuper: true,
+      pinnedSuper: 'Golden Gun',
+    );
+    expect(pending, contains('Confirm'));
+    expect(controller.identityConfirmRequired, isTrue);
+
+    final srcId = controller.selected!.build.id;
+    final forked = await controller.updateSelectedIdentity(
+      setPinnedSuper: true,
+      pinnedSuper: 'Golden Gun',
+      identityAction: IdentityAction.fork,
+    );
+    expect(forked, isNull);
+    expect(controller.selected!.build.id, isNot(srcId));
+    expect(controller.lastForkedFromId, srcId);
+    expect(controller.selected!.build.pinnedSuper, 'Golden Gun');
+
+    // Soft miss alone does not hard-block.
+    expect(controller.hasSoftMisses || !controller.hasSoftMisses, isTrue);
+    controller.setEditSubclass(const SubclassKit(aspects: ['Flow State']));
+    expect(
+      controller.composeHardBlocks
+          .any((b) => b.code == DomainFailureCodes.illegalSubclassKit),
+      isFalse,
+    );
 
     controller.dispose();
   });

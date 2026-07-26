@@ -1,4 +1,6 @@
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
@@ -304,7 +306,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     });
   }
 
-  Future<void> _saveIdentity() async {
+  Future<void> _saveIdentity({IdentityAction? identityAction}) async {
     final armorHash = _parseOptionalHash(_editArmorHashController.text);
     if (_editArmorHashController.text.trim().isNotEmpty && armorHash == null) {
       setState(() => _statusMessage = 'Exotic armor hash must be an integer');
@@ -317,6 +319,10 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       return;
     }
 
+    final nextArmorSlot = _lookupExoticArmorSlot(armorHash);
+    final existingArmorSlot =
+        _lookupExoticArmorSlot(_controller.selected?.build.exoticArmorHash);
+
     final err = await _controller.updateSelectedIdentity(
       name: _editNameController.text,
       setExoticArmor: true,
@@ -324,6 +330,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       exoticArmorName: _editArmorNameController.text.trim().isEmpty
           ? null
           : _editArmorNameController.text.trim(),
+      existingExoticArmorSlot: existingArmorSlot,
+      nextExoticArmorSlot: nextArmorSlot,
       setExoticWeapon: true,
       exoticWeaponHash: weaponHash,
       exoticWeaponName: _editWeaponNameController.text.trim().isEmpty
@@ -333,15 +341,128 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       pinnedSuper: _editPinnedSuperController.text.trim().isEmpty
           ? null
           : _editPinnedSuperController.text.trim(),
+      identityAction: identityAction,
     );
     if (!mounted) return;
     setState(() {
-      _statusMessage = err ?? 'Saved';
+      if (err != null && _controller.identityConfirmRequired) {
+        _statusMessage =
+            'Identity change requires Confirm or Fork (${_controller.pendingIdentityFields?.join(', ')})';
+      } else {
+        _statusMessage = err ??
+            (_controller.lastForkedFromId != null
+                ? 'Forked from ${_controller.lastForkedFromId}'
+                : 'Saved');
+      }
       if (err == null) {
         _boundSelectionId = null; // re-bind fields from controller
         _onController();
       }
     });
+  }
+
+  String? _lookupExoticArmorSlot(int? hash) {
+    if (hash == null) return null;
+    final items = _controller.catalogItems ??
+        widget.services.offlineCatalog.baseItems;
+    for (final i in items) {
+      if (i.hash == hash &&
+          ((i.sourceStore ?? '') == 'exotic-armor' || i.isExotic)) {
+        return i.slot;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _openManifestPick({
+    required ManifestPickKind kind,
+    required void Function(ManifestPick pick) onPick,
+  }) async {
+    final items = _controller.catalogItems ??
+        widget.services.offlineCatalog.baseItems;
+    final className = _controller.selected?.build.className;
+    final queryController = TextEditingController();
+    List<ManifestPick> results = searchManifestPicks(
+      items: items,
+      kind: kind,
+      classType: className,
+    );
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            return AlertDialog(
+              key: Key('manifest_pick_dialog_${kind.name}'),
+              title: Text('Search ${kind.name}'),
+              content: SizedBox(
+                width: 420,
+                height: 360,
+                child: Column(
+                  children: [
+                    TextField(
+                      key: Key('manifest_pick_query_${kind.name}'),
+                      controller: queryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search by name',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (q) {
+                        setLocal(() {
+                          results = searchManifestPicks(
+                            items: items,
+                            kind: kind,
+                            query: q,
+                            classType: className,
+                          );
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: results.isEmpty
+                          ? const Text(
+                              'No Manifest hits (refresh entity catalog).',
+                              key: Key('manifest_pick_empty'),
+                            )
+                          : ListView.builder(
+                              itemCount: results.length,
+                              itemBuilder: (_, i) {
+                                final p = results[i];
+                                return ListTile(
+                                  key: Key('manifest_pick_${p.hash}'),
+                                  title: Text(p.name),
+                                  subtitle: Text(
+                                    p.subtitle?.isNotEmpty == true
+                                        ? p.subtitle!
+                                        : 'hash ${p.hash}',
+                                  ),
+                                  onTap: () {
+                                    onPick(p);
+                                    Navigator.of(ctx).pop();
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  key: const Key('manifest_pick_cancel'),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    queryController.dispose();
   }
 
   @override
@@ -777,63 +898,304 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('builds_edit_armor_hash'),
-            controller: _editArmorHashController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              labelText: 'Exotic armor hash',
-              isDense: true,
-              border: OutlineInputBorder(),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('builds_edit_armor_name'),
+                  controller: _editArmorNameController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Exotic armor (Manifest pick)',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                key: const Key('builds_pick_exotic_armor'),
+                onPressed: () => _openManifestPick(
+                  kind: ManifestPickKind.exoticArmor,
+                  onPick: (p) {
+                    setState(() {
+                      _editArmorHashController.text = '${p.hash}';
+                      _editArmorNameController.text = p.name;
+                    });
+                  },
+                ),
+                child: const Text('Search'),
+              ),
+              IconButton(
+                key: const Key('builds_clear_exotic_armor'),
+                tooltip: 'Clear exotic armor',
+                onPressed: () {
+                  setState(() {
+                    _editArmorHashController.clear();
+                    _editArmorNameController.clear();
+                  });
+                },
+                icon: const Icon(Icons.clear),
+              ),
+            ],
+          ),
+          Offstage(
+            offstage: true,
+            child: TextField(
+              key: const Key('builds_edit_armor_hash'),
+              controller: _editArmorHashController,
             ),
           ),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('builds_edit_armor_name'),
-            controller: _editArmorNameController,
-            decoration: const InputDecoration(
-              labelText: 'Exotic armor name',
-              isDense: true,
-              border: OutlineInputBorder(),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('builds_edit_weapon_name'),
+                  controller: _editWeaponNameController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Exotic weapon (optional pick)',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                key: const Key('builds_pick_exotic_weapon'),
+                onPressed: () => _openManifestPick(
+                  kind: ManifestPickKind.exoticWeapon,
+                  onPick: (p) {
+                    setState(() {
+                      _editWeaponHashController.text = '${p.hash}';
+                      _editWeaponNameController.text = p.name;
+                    });
+                  },
+                ),
+                child: const Text('Search'),
+              ),
+            ],
+          ),
+          Offstage(
+            offstage: true,
+            child: TextField(
+              key: const Key('builds_edit_weapon_hash'),
+              controller: _editWeaponHashController,
             ),
           ),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('builds_edit_weapon_hash'),
-            controller: _editWeaponHashController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              labelText: 'Exotic weapon hash',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('builds_edit_pinned_super'),
+                  controller: _editPinnedSuperController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Pinned Super (Manifest pick)',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                key: const Key('builds_pick_super'),
+                onPressed: () => _openManifestPick(
+                  kind: ManifestPickKind.superAbility,
+                  onPick: (p) {
+                    setState(() {
+                      _editPinnedSuperController.text = p.name;
+                    });
+                  },
+                ),
+                child: const Text('Search'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Subclass kit',
+            key: const Key('builds_subclass_kit_title'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _controller.subclassCapacityCaption,
+            key: const Key('builds_subclass_capacity'),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('builds_edit_weapon_name'),
-            controller: _editWeaponNameController,
-            decoration: const InputDecoration(
-              labelText: 'Exotic weapon name',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
+          Text(
+            'Aspects: ${_controller.editSubclass.aspects.isEmpty ? '(none)' : _controller.editSubclass.aspects.join(', ')}',
+            key: const Key('builds_subclass_aspects'),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            key: const Key('builds_edit_pinned_super'),
-            controller: _editPinnedSuperController,
-            decoration: const InputDecoration(
-              labelText: 'Pinned Super',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                key: const Key('builds_pick_aspect'),
+                onPressed: () => _openManifestPick(
+                  kind: ManifestPickKind.aspect,
+                  onPick: (p) {
+                    final kit = _controller.editSubclass;
+                    final next = [
+                      ...kit.aspects.where((a) => a != p.name),
+                      p.name,
+                    ];
+                    _controller.setEditSubclass(
+                      SubclassKit(
+                        aspects: next,
+                        fragments: kit.fragments,
+                        superAbility: kit.superAbility,
+                        melee: kit.melee,
+                        grenade: kit.grenade,
+                        classAbility: kit.classAbility,
+                        name: kit.name,
+                      ),
+                    );
+                  },
+                ),
+                child: const Text('Add aspect'),
+              ),
+              OutlinedButton(
+                key: const Key('builds_pick_fragment'),
+                onPressed: () => _openManifestPick(
+                  kind: ManifestPickKind.fragment,
+                  onPick: (p) {
+                    final kit = _controller.editSubclass;
+                    final next = [
+                      ...kit.fragments.where((a) => a != p.name),
+                      p.name,
+                    ];
+                    _controller.setEditSubclass(
+                      SubclassKit(
+                        aspects: kit.aspects,
+                        fragments: next,
+                        superAbility: kit.superAbility,
+                        melee: kit.melee,
+                        grenade: kit.grenade,
+                        classAbility: kit.classAbility,
+                        name: kit.name,
+                      ),
+                    );
+                  },
+                ),
+                child: const Text('Add fragment'),
+              ),
+              TextButton(
+                key: const Key('builds_clear_kit_pieces'),
+                onPressed: () {
+                  _controller.setEditSubclass(
+                    SubclassKit(
+                      superAbility: _controller.editSubclass.superAbility,
+                      melee: _controller.editSubclass.melee,
+                      grenade: _controller.editSubclass.grenade,
+                      classAbility: _controller.editSubclass.classAbility,
+                      name: _controller.editSubclass.name,
+                    ),
+                  );
+                },
+                child: const Text('Clear aspects/fragments'),
+              ),
+            ],
           ),
+          Text(
+            'Fragments: ${_controller.editSubclass.fragments.isEmpty ? '(none)' : _controller.editSubclass.fragments.join(', ')}',
+            key: const Key('builds_subclass_fragments'),
+          ),
+          if (_controller.composeHardBlocks.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              key: const Key('builds_hard_blocks'),
+              padding: const EdgeInsets.all(8),
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final b in _controller.composeHardBlocks)
+                    Text(
+                      '${b.code}: ${b.message}',
+                      key: Key('builds_hard_block_${b.code}'),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          if (_controller.identityConfirmRequired) ...[
+            const SizedBox(height: 12),
+            Container(
+              key: const Key('builds_identity_confirm_panel'),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Identity change requires Confirm (in-place) or Fork (new build). '
+                    'Fields: ${_controller.pendingIdentityFields?.join(', ')}',
+                    key: const Key('builds_identity_confirm_message'),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton(
+                        key: const Key('builds_identity_confirm'),
+                        onPressed: _controller.loading ||
+                                _controller.identitySaveHardBlocked
+                            ? null
+                            : () => _saveIdentity(
+                                  identityAction: IdentityAction.confirm,
+                                ),
+                        child: const Text('Confirm in-place'),
+                      ),
+                      OutlinedButton(
+                        key: const Key('builds_identity_fork'),
+                        onPressed: _controller.loading
+                            ? null
+                            : () => _saveIdentity(
+                                  identityAction: IdentityAction.fork,
+                                ),
+                        child: const Text('Fork as new build'),
+                      ),
+                      TextButton(
+                        key: const Key('builds_identity_cancel'),
+                        onPressed: () {
+                          _controller.cancelIdentityConfirm();
+                          setState(() {
+                            _boundSelectionId = null;
+                            _statusMessage = 'Identity change cancelled';
+                            _onController();
+                          });
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           FilledButton(
             key: const Key('builds_save_identity'),
-            onPressed: _controller.loading ? null : _saveIdentity,
+            // Soft misses never disable Save; hard blocks do.
+            onPressed: _controller.loading ||
+                    _controller.identitySaveHardBlocked ||
+                    _controller.identityConfirmRequired
+                ? null
+                : () => _saveIdentity(),
             child: const Text('Save identity'),
           ),
           const SizedBox(height: 24),

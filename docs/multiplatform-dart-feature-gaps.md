@@ -83,7 +83,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 | ID | Feature | Product path | W | M | J | Plan | Slices / notes |
 | -- | ------- | ------------ | - | - | - | ---- | -------------- |
-| **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Cutover spine PASS (DART-028–038, 041, 046–047); fidelity: DBR-ID-008 confirm/fork + subclass kit (GAP-UI-BUILD-01/02) → **DART-064** |
+| **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Cutover spine PASS; identity Confirm/Fork + kit composer (DART-064) done; Finish walkthrough residual → **DART-067**; density → **DART-068** |
 | **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Windows dual-pane; catalog reverse tags **done** (DART-063); free-text evidence + Jaspr create+list residual (GAP-UI-SYN-01,02,04) → **DART-066** |
 | **FEAT-NAV-SETS** | Sets library | `/sets` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Library/slots functional; DAC-NME-004/BR-SET-010/011 board + dense rows + embedded Catalog fill missing (GAP-UI-SETS-01..03) → **DART-065** |
 | **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PARTIAL** | N/A\* | **PARTIAL** | **shipped** + fidelity | Multi-facet/group-by/alpha (DART-062) + Weapons/Armor/Universal + synergy tags + owned detail (DART-063) **done**; icons residual (GAP-UI-CATALOG-09) → **DART-068** |
@@ -94,9 +94,9 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 | ID | Feature | Product evidence | W | M | J | Plan | Slices / GAP |
 | -- | ------- | ---------------- | - | - | - | ---- | ------------ |
-| **FEAT-COMPOSE-IDENTITY** | Build identity (synergies, exotic, Super) | Build composer | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | In-place edit without Confirm/Fork (DBR-ID-008 → GAP-UI-BUILD-01); raw hash exotic/super pickers (GAP-UI-BUILD-05) → **DART-064** |
+| **FEAT-COMPOSE-IDENTITY** | Build identity (synergies, exotic, Super) | Build composer | **PASS** | PASS | **PASS** | **shipped** | DART-064 Confirm/Fork + Manifest pickers + kit; soft never auto-applies |
 | **FEAT-COMPOSE-VARIANTS** | Variants + set attachments + slot pins | Build composer | PASS | PASS | PASS | **shipped** | DART-005/028+ |
-| **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | **PARTIAL** | PASS | **PARTIAL** | **shipped** + fidelity | Domain authoritative; client pre-block UI thinner than Next (GAP-UI-BUILD-08) → **DART-064** |
+| **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | **PASS** | PASS | **PASS** | **shipped** | Domain authoritative + client hard-block UX (DART-064); soft never disables Save |
 | **FEAT-COMPOSE-SOFT** | Soft coverage display (never auto-apply) | Soft guidance UI | PASS | PASS | PASS | **shipped** | DART-004/034/041/046; RC-SOFT; soft **never auto-applies** |
 | **FEAT-COMPOSE-SOFT-STATS** | Soft stat targets (explicit save) | Soft stat editor | PASS | PASS | PASS | **shipped** | DART-034/041/046; Jaspr all `ArmorStatName` **DART-057** / GAP-UI-01 closed |
 | **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | **PARTIAL** | PARTIAL | **PARTIAL** | **shipped** + fidelity | finish-gaps panel + equip gates shipped (GAP-FEAT-06 closed); residual one-tap walkthrough GAP-UI-BUILD-03 + Finish armor improve GAP-UI-BUILD-04 → **DART-067** |
@@ -206,14 +206,14 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-CATALOG-08** | Owned instance perk/stat cards | **P2** | `closed` | OwnedInstanceCard + perk grid + armor stats | Resolved plug cards + armor base-stat board when data present | **DART-063** | Names need map; residual when unresolved |
 | **GAP-UI-CATALOG-09** | Item icons + dense meta chrome | **P2** | `open` | ItemIcon + MetaChips | Text ListTile / catalog-row | **DART-068** | Polish; see ui-polish-tracker |
 | **GAP-UI-CATALOG-10** | Weapons/Armor kind modes | **P2** | `closed` | Weapons \| Armor \| Universal modes | Mode chips + kind-appropriate facets both hosts | **DART-063** | Not cutover; fidelity |
-| **GAP-UI-BUILD-01** | Identity confirm/fork (DBR-ID-008) | **P1** | `open` | 409 IDENTITY_CONFIRM_REQUIRED Confirm/Fork | In-place identity edit; no identityAction | **DART-064** | Not cutover; fidelity |
-| **GAP-UI-BUILD-02** | Subclass kit composer host UI | **P1** | `open` | SubclassTab full kit + capacity | Super pin text only | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-01** | Identity confirm/fork (DBR-ID-008) | **P1** | `closed` (DART-064) | 409 IDENTITY_CONFIRM_REQUIRED Confirm/Fork | `identityAction` confirm/fork + host chrome | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-02** | Subclass kit composer host UI | **P1** | `closed` (DART-064) | SubclassTab full kit + capacity | Host kit composer + capacity plain language | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-03** | Finish slot-first one-tap walkthrough | **P2** | `open` | FinishBuildWalkthrough Create/Capture/fill | finish-gaps panel only (GAP-FEAT-06 residual) | **DART-067** | Not cutover; fidelity |
 | **GAP-UI-BUILD-04** | Finish Armor improve path | **P2** | `open` | FinishArmorOptimizeWorkspace confirm apply | Optimizer on Sets only; not Build Finish | **DART-067** | Soft never auto-apply |
-| **GAP-UI-BUILD-05** | Manifest search exotic/super pickers | **P2** | `open` | ManifestSearchPicker + icons | Raw hash TextFields | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-05** | Manifest search exotic/super pickers | **P2** | `closed` (DART-064) | ManifestSearchPicker + icons | Named Manifest search pickers (hash secondary) | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-06** | Variant read-only icon overview | **P2** | `open` | VariantCard DETAILS icon strips | Text attachments/pins only | **DART-068** | Polish |
-| **GAP-UI-BUILD-08** | Client hard-block pre-save UX | **P2** | `open` | hardBlocks + plain-language disabled | Domain on save; thin host pre-filter | **DART-064** | Not cutover; fidelity |
-| **GAP-UI-BUILD-09** | Jaspr attach/pin named pickers | **P2** | `open` | set search/tags + pin context | Free-text set id + pin | **DART-064** | Jaspr only |
+| **GAP-UI-BUILD-08** | Client hard-block pre-save UX | **P2** | `closed` (DART-064) | hardBlocks + plain-language disabled | Client dual exotic/kit hard-block banners; soft never disables Save | **DART-064** | Not cutover; fidelity |
+| **GAP-UI-BUILD-09** | Jaspr attach/pin named pickers | **P2** | `closed` (DART-064) | set search/tags + pin context | Named set picker + per-slot pins | **DART-064** | Jaspr only |
 | **GAP-UI-SETS-01** | Armor base-roll EoF six-stat board | **P1** | `open` | ArmorPieceStatRow + totals | No armorStatTotals | **DART-065** | DAC-NME-004 |
 | **GAP-UI-SETS-02** | Set item rows meta/traits/synergies | **P1** | `open` | icons, traits, LINKED SYNERGIES | name(hash)·inst\|wishlist text | **DART-065** | Not cutover; fidelity |
 | **GAP-UI-SETS-03** | Slot-fill embedded Catalog density | **P1** | `open` | SlotFillPanel Catalog grid | Text pickers; Jaspr hash-only | **DART-065** | Not cutover; fidelity |

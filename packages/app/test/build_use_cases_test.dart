@@ -189,12 +189,16 @@ void main() {
         newId: ids,
       );
 
+      // Empty synergy list is an identity change — Confirm first, then hard NO_SYNERGY.
       await expectLater(
         () => updateUserBuild(
           db,
           userId,
           'build-syn',
-          const UpdateBuildCommand(synergyTypes: []),
+          const UpdateBuildCommand(
+            synergyTypes: [],
+            identityAction: IdentityAction.confirm,
+          ),
           now: clock,
         ),
         throwsA(
@@ -227,4 +231,146 @@ void main() {
       expect(await getBuildDetail(db, userId, 'build-del'), isNull);
     });
   });
+
+  group('US1 identity Confirm/Fork (DART-064)', () {
+    const grenadeDesig = SynergyTypeDesignation(
+      type: SynergyType('grenade'),
+    );
+
+    test('IDENTITY_CONFIRM_REQUIRED without identityAction', () async {
+      final userId = await seedUser();
+      await createUserBuild(
+        db,
+        userId,
+        const CreateBuildCommand(
+          id: 'build-id',
+          name: 'Identity',
+          className: GuardianClass.hunter,
+          synergyTypes: [meleeDesig],
+        ),
+        now: clock,
+        newId: ids,
+      );
+
+      await expectLater(
+        () => updateUserBuild(
+          db,
+          userId,
+          'build-id',
+          const UpdateBuildCommand(synergyTypes: [grenadeDesig]),
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>()
+              .having(
+                (e) => e.code,
+                'code',
+                UseCaseErrorCode.identityConfirmRequired,
+              )
+              .having(
+                (e) => e.details['identityFields'],
+                'fields',
+                contains('synergyTypes'),
+              ),
+        ),
+      );
+      final still = await getBuildDetail(db, userId, 'build-id');
+      expect(still!.build.synergyTypes.single.type, 'melee');
+    });
+
+    test('confirm applies identity in place', () async {
+      final userId = await seedUser();
+      await createUserBuild(
+        db,
+        userId,
+        const CreateBuildCommand(
+          id: 'build-confirm',
+          name: 'Confirm Me',
+          className: GuardianClass.hunter,
+          synergyTypes: [meleeDesig],
+        ),
+        now: clock,
+        newId: ids,
+      );
+
+      final updated = await updateUserBuild(
+        db,
+        userId,
+        'build-confirm',
+        const UpdateBuildCommand(
+          synergyTypes: [grenadeDesig],
+          identityAction: IdentityAction.confirm,
+        ),
+        now: clock,
+      );
+      expect(updated!.build.id, 'build-confirm');
+      expect(updated.build.synergyTypes.single.type, 'grenade');
+      expect(updated.forkedFromId, isNull);
+    });
+
+    test('fork creates new build and leaves original', () async {
+      final userId = await seedUser();
+      await createUserBuild(
+        db,
+        userId,
+        const CreateBuildCommand(
+          id: 'build-fork-src',
+          name: 'Fork Source',
+          className: GuardianClass.titan,
+          pinnedSuper: 'Hammer of Sol',
+          synergyTypes: [meleeDesig],
+        ),
+        now: clock,
+        newId: ids,
+      );
+
+      final forked = await updateUserBuild(
+        db,
+        userId,
+        'build-fork-src',
+        const UpdateBuildCommand(
+          setPinnedSuper: true,
+          pinnedSuper: 'Thundercrash',
+          identityAction: IdentityAction.fork,
+        ),
+        now: clock,
+        newId: sequentialIds('fork'),
+      );
+      expect(forked, isNotNull);
+      expect(forked!.build.id, isNot('build-fork-src'));
+      expect(forked.forkedFromId, 'build-fork-src');
+      expect(forked.build.pinnedSuper, 'Thundercrash');
+      expect(forked.build.name, 'Fork Source (fork)');
+
+      final original = await getBuildDetail(db, userId, 'build-fork-src');
+      expect(original!.build.pinnedSuper, 'Hammer of Sol');
+    });
+
+    test('softStatTargets alone does not require identityAction', () async {
+      final userId = await seedUser();
+      await createUserBuild(
+        db,
+        userId,
+        const CreateBuildCommand(
+          id: 'build-soft2',
+          name: 'Soft2',
+          className: GuardianClass.hunter,
+          synergyTypes: [meleeDesig],
+        ),
+        now: clock,
+        newId: ids,
+      );
+      final updated = await updateUserBuild(
+        db,
+        userId,
+        'build-soft2',
+        const UpdateBuildCommand(
+          softStatTargets: SoftStatTargets({ArmorStatName.superStat: 80}),
+        ),
+        now: clock,
+      );
+      expect(updated!.build.softStatTargets['Super'], 80);
+    });
+  });
 }
+

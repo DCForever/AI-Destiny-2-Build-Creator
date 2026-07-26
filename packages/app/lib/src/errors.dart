@@ -26,7 +26,10 @@ enum UseCaseErrorCode {
   /// Optimizer materialize / apply (DART-035).
   invalidCombination('INVALID_COMBINATION'),
   instanceNotOwned('INSTANCE_NOT_OWNED'),
-  exoticLimit('EXOTIC_LIMIT');
+  exoticLimit('EXOTIC_LIMIT'),
+
+  /// DBR-ID-008: identity change requires Confirm in-place or Fork (DART-064).
+  identityConfirmRequired('IDENTITY_CONFIRM_REQUIRED');
 
   const UseCaseErrorCode(this.wireName);
   final String wireName;

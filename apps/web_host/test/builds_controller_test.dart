@@ -89,6 +89,42 @@ void main() {
     expect(controller.titleOf(controller.builds.single), 'Web Hunter');
   });
 
+  test('DART-064 identity confirm/fork + kit hard-block + named attach sets',
+      () async {
+    final uid = await controller.resolveLibraryUserId();
+    await seedWeaponSet(uid, 'named-set', 'Kinetic Named', 'primary', 42);
+
+    await controller.createBuild(
+      name: 'Id Build',
+      className: GuardianClass.hunter,
+      synergyTypes: const [DraftSynergyType(type: 'melee')],
+    );
+    final srcId = controller.selected!.build.id;
+
+    controller.setEditSubclass(
+      const SubclassKit(aspects: ['A', 'B', 'C']),
+    );
+    expect(controller.identitySaveHardBlocked, isTrue);
+
+    controller.setEditSubclass(const SubclassKit());
+    final pending = await controller.updateSelectedIdentity(
+      setPinnedSuper: true,
+      pinnedSuper: 'Golden Gun',
+    );
+    expect(pending, contains('Confirm'));
+    expect(controller.identityConfirmRequired, isTrue);
+
+    final forked = await controller.updateSelectedIdentity(
+      setPinnedSuper: true,
+      pinnedSuper: 'Golden Gun',
+      identityAction: IdentityAction.fork,
+    );
+    expect(forked, isNull);
+    expect(controller.selected!.build.id, isNot(srcId));
+    expect(controller.lastForkedFromId, srcId);
+    expect(controller.attachableSets.map((s) => s.name), contains('Kinetic Named'));
+  });
+
   test('US3 attach on non-default + pin wishlist/instance + hard conflict',
       () async {
     final uid = await controller.resolveLibraryUserId();

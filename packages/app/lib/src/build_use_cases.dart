@@ -7,6 +7,7 @@ import 'clock_ids.dart';
 import 'errors.dart';
 import 'hard_gate_ports.dart';
 import 'hard_gates.dart';
+import 'identity_change.dart';
 import 'mappers.dart';
 import 'variant_use_cases.dart';
 
@@ -15,12 +16,28 @@ class BuildDetail {
   const BuildDetail({
     required this.build,
     this.variants = const [],
+    this.forkedFromId,
   });
 
   final BuildRecord build;
   final List<VariantRecord> variants;
 
+  /// Set when this detail is the result of an identity Fork (DBR-ID-008).
+  final String? forkedFromId;
+
   Build get domain => buildFromRecord(build);
+
+  BuildDetail copyWith({
+    BuildRecord? build,
+    List<VariantRecord>? variants,
+    String? forkedFromId,
+  }) {
+    return BuildDetail(
+      build: build ?? this.build,
+      variants: variants ?? this.variants,
+      forkedFromId: forkedFromId ?? this.forkedFromId,
+    );
+  }
 }
 
 /// Create build input (identity + optional default variant seed).
@@ -98,6 +115,9 @@ class UpdateBuildCommand {
     this.softStatTargets,
     this.tagIds,
     this.synergyTypes,
+    this.identityAction,
+    this.existingExoticArmorSlot,
+    this.nextExoticArmorSlot,
   });
 
   final String? name;
@@ -114,6 +134,13 @@ class UpdateBuildCommand {
   final SoftStatTargets? softStatTargets;
   final List<String>? tagIds;
   final List<SynergyTypeDesignation>? synergyTypes;
+
+  /// Required when identity fields change (DBR-ID-008 / DART-064).
+  final IdentityAction? identityAction;
+
+  /// Optional catalog slots for class-item exotic non-identity swap.
+  final String? existingExoticArmorSlot;
+  final String? nextExoticArmorSlot;
 }
 
 List<SynergyTypeDesignation> normalizeDesignations(
@@ -262,13 +289,14 @@ Future<BuildDetail> createUserBuild(
   return (await getBuildDetail(db, userId, buildId))!;
 }
 
-/// Update build identity fields with hard gates.
+/// Update build identity fields with hard gates + DBR-ID-008 Confirm/Fork.
 Future<BuildDetail?> updateUserBuild(
   AppDatabase db,
   int userId,
   String buildId,
   UpdateBuildCommand input, {
   NowClock now = defaultNow,
+  IdGenerator newId = defaultNewId,
   HardGatePorts ports = HardGatePorts.defaults,
 }) async {
   final existing = await getBuild(db, userId, buildId);
@@ -277,15 +305,69 @@ Future<BuildDetail?> updateUserBuild(
   final nextSynergy = input.synergyTypes != null
       ? normalizeDesignations(input.synergyTypes!)
       : designationsFromRecords(existing.synergyTypes);
-  final nextSubclass = input.subclass ?? subclassKitFromJson(existing.subclass);
+  final existingSubclass = subclassKitFromJson(existing.subclass);
+  final nextSubclass = input.subclass ?? existingSubclass;
   final nextExoticHash = input.setExoticArmor
       ? input.exoticArmorHash
       : existing.exoticArmorHash;
   final nextExoticName = input.setExoticArmor
       ? input.exoticArmorName
       : existing.exoticArmorName;
+  final nextWeaponHash = input.setExoticWeapon
+      ? input.exoticWeaponHash
+      : existing.exoticWeaponHash;
+  final nextWeaponName = input.setExoticWeapon
+      ? input.exoticWeaponName
+      : existing.exoticWeaponName;
   final nextPinned =
       input.setPinnedSuper ? input.pinnedSuper : existing.pinnedSuper;
+
+  final changedIdentity = detectIdentityFieldChanges(
+    existingSynergyTypes: designationsFromRecords(existing.synergyTypes),
+    nextSynergyTypes: input.synergyTypes != null ? nextSynergy : null,
+    existingExoticArmorHash: existing.exoticArmorHash,
+    nextExoticArmorHash: nextExoticHash,
+    setExoticArmor: input.setExoticArmor,
+    existingExoticArmorSlot: input.existingExoticArmorSlot,
+    nextExoticArmorSlot: input.nextExoticArmorSlot,
+    existingExoticWeaponHash: existing.exoticWeaponHash,
+    nextExoticWeaponHash: nextWeaponHash,
+    setExoticWeapon: input.setExoticWeapon,
+    existingPinnedSuper: existing.pinnedSuper,
+    nextPinnedSuper: nextPinned,
+    setPinnedSuper: input.setPinnedSuper,
+    existingSubclass: existingSubclass,
+    nextSubclass: input.subclass,
+  );
+
+  if (changedIdentity.isNotEmpty) {
+    if (input.identityAction == null) {
+      throw UseCaseException(
+        UseCaseErrorCode.identityConfirmRequired,
+        'Confirm in-place or fork to apply identity changes',
+        details: {'identityFields': changedIdentity},
+      );
+    }
+    if (input.identityAction == IdentityAction.fork) {
+      return _forkBuildWithIdentity(
+        db,
+        userId,
+        existing,
+        input,
+        nextSynergy: nextSynergy,
+        nextSubclass: nextSubclass,
+        nextExoticHash: nextExoticHash,
+        nextExoticName: nextExoticName,
+        nextWeaponHash: nextWeaponHash,
+        nextWeaponName: nextWeaponName,
+        nextPinned: nextPinned,
+        now: now,
+        newId: newId,
+        ports: ports,
+      );
+    }
+    // confirm — fall through to in-place update
+  }
 
   // Re-run identity gates when identity-affecting fields change or always for safety.
   await assertBuildIdentityHardGates(
@@ -340,6 +422,126 @@ Future<BuildDetail?> updateUserBuild(
   );
 
   return getBuildDetail(db, userId, buildId);
+}
+
+Future<BuildDetail> _forkBuildWithIdentity(
+  AppDatabase db,
+  int userId,
+  BuildRecord existing,
+  UpdateBuildCommand input, {
+  required List<SynergyTypeDesignation> nextSynergy,
+  required SubclassKit nextSubclass,
+  required int? nextExoticHash,
+  required String? nextExoticName,
+  required int? nextWeaponHash,
+  required String? nextWeaponName,
+  required String? nextPinned,
+  required NowClock now,
+  required IdGenerator newId,
+  required HardGatePorts ports,
+}) async {
+  await assertBuildIdentityHardGates(
+    synergyTypes: nextSynergy,
+    subclass: nextSubclass,
+    exoticArmorHash: nextExoticHash,
+    exoticArmorName: nextExoticName,
+    pinnedSuper: nextPinned,
+    ports: ports,
+  );
+
+  final className = input.className?.wireName ?? existing.className;
+  var name = input.name?.trim();
+  if (name == null || name.isEmpty) name = existing.name;
+  // Product: on name collision append " (fork)" (includes source build name).
+  final library = await listBuilds(db, userId);
+  if (library.any((b) => b.className == className && b.name == name)) {
+    name = '$name (fork)';
+  }
+
+  final tagIds = input.tagIds ?? existing.tagIds;
+  final ts = now();
+  final forkedId = newId();
+
+  await createBuildRecord(
+    db,
+    userId,
+    id: forkedId,
+    name: name,
+    className: className,
+    subclass: subclassKitToJson(nextSubclass),
+    exoticArmorHash: nextExoticHash,
+    exoticArmorName: nextExoticHash == null
+        ? null
+        : (nextExoticName ?? existing.exoticArmorName),
+    exoticWeaponHash: nextWeaponHash,
+    exoticWeaponName: nextWeaponHash == null
+        ? null
+        : (nextWeaponName ?? existing.exoticWeaponName),
+    pinnedSuper: nextPinned,
+    softStatTargets: existing.softStatTargets,
+    tagIds: tagIds,
+    synergyTypes: designationsToRecords(nextSynergy),
+    now: ts,
+  );
+
+  final variants = await listVariants(db, existing.id);
+  for (final variant in variants) {
+    final newVariantId = newId();
+    await createVariantRecord(
+      db,
+      id: newVariantId,
+      buildId: forkedId,
+      name: variant.name,
+      isDefault: variant.isDefault,
+      exoticWeaponHash: variant.exoticWeaponHash,
+      exoticWeaponName: variant.exoticWeaponName,
+      artifactHash: variant.artifactHash,
+      artifactName: variant.artifactName,
+      artifactConfig: variant.artifactConfig,
+      notes: variant.notes,
+      now: ts,
+    );
+
+    final sourceAttachments = await listAttachments(db, variant.id);
+    if (sourceAttachments.isEmpty) continue;
+
+    final prepared = <AttachmentWrite>[];
+    for (final attachment in sourceAttachments) {
+      if (attachment.snapshotConfigs != null &&
+          attachment.snapshotConfigs!.isNotEmpty) {
+        prepared.add(
+          AttachmentWrite(
+            setId: attachment.setId,
+            mode: AttachmentMode.snapshot.wireName,
+            snapshotConfigs: attachment.snapshotConfigs,
+          ),
+        );
+        continue;
+      }
+      final items = await listActiveSetItems(db, attachment.setId);
+      prepared.add(
+        AttachmentWrite(
+          setId: attachment.setId,
+          mode: AttachmentMode.snapshot.wireName,
+          snapshotConfigs: [
+            for (final item in items) setItemRecordToSnapshotMap(item),
+          ],
+        ),
+      );
+    }
+    if (prepared.isNotEmpty) {
+      await replaceAttachments(db, newVariantId, prepared, ts);
+    }
+  }
+
+  final detail = await getBuildDetail(db, userId, forkedId);
+  if (detail == null) {
+    throw UseCaseException(
+      UseCaseErrorCode.notFound,
+      'Forked build not found',
+    );
+  }
+  return detail.copyWith(forkedFromId: existing.id);
 }
 
 /// Delete build owned by [userId].
