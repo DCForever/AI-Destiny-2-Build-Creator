@@ -4,7 +4,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  useTransition,
   type CSSProperties,
   type ReactNode,
 } from "react";
@@ -237,6 +239,8 @@ export function CatalogScreen({
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   /** Debounced free-text for client filter (typing stays live without fetch). */
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const selectGenRef = useRef(0);
+  const [, startDetailTransition] = useTransition();
 
   useEffect(() => {
     let cancelled = false;
@@ -454,48 +458,65 @@ export function CatalogScreen({
 
   const selectItem = useCallback(
     async (item: CatalogItem) => {
-      setSelected(item);
-      setInstances([]);
-      setLinkedSynergies([]);
-      setSelectedInstanceId(null);
+      const gen = ++selectGenRef.current;
+      // Paint header/chrome immediately; defer heavy owned-copy work.
+      startDetailTransition(() => {
+        setSelected(item);
+        setInstances([]);
+        setLinkedSynergies([]);
+        setSelectedInstanceId(null);
+      });
 
-      if (kind === "weapons") {
-        try {
-          const params = new URLSearchParams({
-            kind: "weapon",
-            itemHash: String(item.hash),
-          });
-          const res = await fetch(`/api/user/synergies/by-target?${params}`);
-          const body = (await res.json()) as {
-            synergies?: Array<{ id: string; name: string; type: string }>;
-          };
-          if (res.ok) setLinkedSynergies(sortByName(body.synergies ?? []));
-        } catch {
-          /* optional */
-        }
-      }
+      const loadSynergies =
+        kind === "weapons"
+          ? (async () => {
+              try {
+                const params = new URLSearchParams({
+                  kind: "weapon",
+                  itemHash: String(item.hash),
+                });
+                const res = await fetch(
+                  `/api/user/synergies/by-target?${params}`,
+                );
+                const body = (await res.json()) as {
+                  synergies?: Array<{ id: string; name: string; type: string }>;
+                };
+                if (gen !== selectGenRef.current) return;
+                if (res.ok) setLinkedSynergies(sortByName(body.synergies ?? []));
+              } catch {
+                /* optional */
+              }
+            })()
+          : Promise.resolve();
 
-      if (item.ownedCount <= 0) return;
-      const href =
-        item.instancesHref ??
-        `/api/user/inventory/instances?itemHash=${item.hash}&kind=${kind}`;
-      try {
-        const res = await fetch(href);
-        const body = (await res.json()) as {
-          instances?: InstanceRow[];
-          message?: string;
-        };
-        if (res.ok) {
-          setInstances(
-            (body.instances ?? []).map((row) => ({
-              ...row,
-              plugs: (row.plugs ?? []).filter(isDisplayablePlug),
-            })),
-          );
-        } else if (body.message) setSyncMessage(body.message);
-      } catch {
-        /* optional */
-      }
+      const loadInstances =
+        item.ownedCount > 0
+          ? (async () => {
+              const href =
+                item.instancesHref ??
+                `/api/user/inventory/instances?itemHash=${item.hash}&kind=${kind}`;
+              try {
+                const res = await fetch(href);
+                const body = (await res.json()) as {
+                  instances?: InstanceRow[];
+                  message?: string;
+                };
+                if (gen !== selectGenRef.current) return;
+                if (res.ok) {
+                  setInstances(
+                    (body.instances ?? []).map((row) => ({
+                      ...row,
+                      plugs: (row.plugs ?? []).filter(isDisplayablePlug),
+                    })),
+                  );
+                } else if (body.message) setSyncMessage(body.message);
+              } catch {
+                /* optional */
+              }
+            })()
+          : Promise.resolve();
+
+      await Promise.all([loadSynergies, loadInstances]);
     },
     [kind],
   );
@@ -794,17 +815,26 @@ export function CatalogScreen({
     groupDimOptions,
   ]);
 
-  function confirmPick(instanceId?: string | null) {
-    if (!selection?.enabled || !selected) return;
-    selection.onConfirm({
-      hash: selected.hash,
-      name: selected.name,
-      slot: selected.slot ?? lockedSlot ?? undefined,
-      ownedCount: selected.ownedCount,
-      instanceId: instanceId ?? null,
-      item: selected,
-    });
-  }
+  const confirmPick = useCallback(
+    (instanceId?: string | null) => {
+      if (!selection?.enabled || !selected) return;
+      selection.onConfirm({
+        hash: selected.hash,
+        name: selected.name,
+        slot: selected.slot ?? lockedSlot ?? undefined,
+        ownedCount: selected.ownedCount,
+        instanceId: instanceId ?? null,
+        item: selected,
+      });
+    },
+    [selection, selected, lockedSlot],
+  );
+
+  const toggleSelectedInstance = useCallback((instanceId: string) => {
+    setSelectedInstanceId((prev) =>
+      prev === instanceId ? null : instanceId,
+    );
+  }, []);
 
   const title =
     chrome?.title ?? "Catalog";
@@ -1748,11 +1778,7 @@ export function CatalogScreen({
                                 selectedInstanceId === inst.instanceId
                               }
                               onToggleSelect={() =>
-                                setSelectedInstanceId((prev) =>
-                                  prev === inst.instanceId
-                                    ? null
-                                    : inst.instanceId,
-                                )
+                                toggleSelectedInstance(inst.instanceId)
                               }
                               onUse={() => confirmPick(inst.instanceId)}
                             />

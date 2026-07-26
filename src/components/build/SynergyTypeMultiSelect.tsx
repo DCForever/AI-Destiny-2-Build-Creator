@@ -9,6 +9,7 @@ import {
   Row,
   Stack,
   Text,
+  useDesignationIcons,
 } from "@/components/ui";
 import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
 import {
@@ -84,6 +85,16 @@ export function SynergyTypeMultiSelect({
     () => new Set(selected.map(selectionKey)),
     [selected],
   );
+
+  /** Icons for selected chips — independent of the draft subtype picker options. */
+  const selectedIconRefs = useMemo(
+    () =>
+      selected
+        .filter((s) => Boolean(s.subType?.trim()))
+        .map((s) => ({ type: s.type, subType: s.subType })),
+    [selected],
+  );
+  const { getIcon } = useDesignationIcons(selectedIconRefs);
 
   function addDraft() {
     if (needsSub && !draftSubType.trim()) return;
@@ -168,16 +179,18 @@ export function SynergyTypeMultiSelect({
         <Cluster gap={6}>
           {selected.map((s) => {
             const key = selectionKey(s);
+            // Prefer batch designation-icons map; fall back to draft picker row
+            // only when it still matches this selection's subtype.
+            const draftIcon =
+              subTypeOptions.find((o) => o.name === s.subType)?.icon ?? null;
+            const icon = getIcon(s.type, s.subType) ?? draftIcon;
             return (
               <Row key={key} gap={4} align="center">
                 <DesignationLabel
                   type={s.type}
                   subType={s.subType}
                   size={22}
-                  icon={
-                    subTypeOptions.find((o) => o.name === s.subType)?.icon ??
-                    undefined
-                  }
+                  icon={icon || undefined}
                 />
                 <Button
                   size="sm"

@@ -33,7 +33,8 @@ export function SubclassTab({
   const [busy, setBusy] = useState(false);
 
   function pickName(item: ManifestPick | null, setter: (v: string) => void) {
-    if (item?.name) setter(item.name);
+    // Clear passes null — empty string restores Browse/Search chrome.
+    setter(item?.name ?? "");
   }
 
   async function save() {
@@ -80,6 +81,7 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Class ability"
             category="abilities"
+            kind="classAbility"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
             subclass={sub.name}
@@ -91,6 +93,7 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Melee"
             category="abilities"
+            kind="melee"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
             subclass={sub.name}
@@ -102,6 +105,7 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Grenade"
             category="abilities"
+            kind="grenade"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
             subclass={sub.name}
@@ -113,6 +117,7 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Movement"
             category="abilities"
+            kind="movement"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
             subclass={sub.name}

@@ -46,18 +46,16 @@ export function DesignationLabel({
   const category = getSynergyTypeLabel(type);
   const sub = subType?.trim() || null;
 
+  // Only skip the batch fetch when a concrete path was provided; null/undefined
+  // still resolves via curated + designation-icons API (selected chips, etc.).
+  const hasResolvedProp = typeof iconProp === "string" && iconProp.length > 0;
   const { icons } = useDesignationIcons(
-    iconProp !== undefined
-      ? []
-      : sub
-        ? [{ type, subType: sub }]
-        : [],
+    hasResolvedProp || !sub ? [] : [{ type, subType: sub }],
   );
 
-  const mapped =
-    iconProp !== undefined
-      ? iconProp
-      : iconFromMap(icons, type, sub);
+  const mapped = hasResolvedProp
+    ? iconProp
+    : iconFromMap(icons, type, sub);
 
   const elementVisual =
     type === "element" && sub ? visualForElement(sub) : null;

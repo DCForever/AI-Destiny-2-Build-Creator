@@ -15,7 +15,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gate": "node scripts/gate.mjs",
-    "gate:bash": "bash scripts/gate.sh"
+    "gate:bash": "bash scripts/gate.sh",
+    "atlas:capture": "node scripts/capture-ui-atlas.mjs",
+    "atlas:view": "npx --yes serve docs/atlas -p 4173",
+    "atlas:auth": "node scripts/save-atlas-auth.mjs"
   },
   "dependencies": {
     "@destinyitemmanager/dim-api-types": "^1.40.0",
