@@ -17,4 +17,9 @@ void main() {
     expect(displayGuardianClass(GuardianClass.hunter), 'Hunter');
     expect(displayGuardianClass(GuardianClass.titan), 'Titan');
   });
+
+  test('displaySynergyDraft formats type and subtype', () {
+    expect(displaySynergyDraft('super'), 'Super');
+    expect(displaySynergyDraft('melee', 'Base'), 'Melee · Base');
+  });
 }

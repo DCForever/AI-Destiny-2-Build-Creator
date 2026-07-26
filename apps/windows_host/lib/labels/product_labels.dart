@@ -42,6 +42,14 @@ String displayGuardianClass(GuardianClass value) {
   }
 }
 
+/// Product label for a type + optional subtype chip (e.g. `Super` or `Melee · Base`).
+String displaySynergyDraft(String typeWire, [String? subType]) {
+  final typeLabel = displaySynergyTypeWire(typeWire);
+  final sub = subType?.trim();
+  if (sub == null || sub.isEmpty) return typeLabel;
+  return '$typeLabel · $sub';
+}
+
 /// Shared empty-detail body for dual-pane libraries (BUG-20260726-011).
 class LibraryDetailEmpty extends StatelessWidget {
   const LibraryDetailEmpty({

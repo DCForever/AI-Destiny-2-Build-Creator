@@ -142,7 +142,7 @@ void main() {
     await tester.tap(find.byKey(const Key('builds_create_toggle')));
     await _pumpFrames(tester);
     expect(find.byKey(const Key('builds_create_synergy_chips')), findsOneWidget);
-    expect(find.text('grenade::Threadling'), findsWidgets);
+    expect(find.text('Grenade · Threadling'), findsWidgets);
 
     controller.dispose();
   });

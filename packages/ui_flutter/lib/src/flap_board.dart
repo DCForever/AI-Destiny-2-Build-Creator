@@ -28,10 +28,15 @@ class FlapBoardHeader extends StatelessWidget {
           for (var i = 0; i < labels.length; i++)
             Expanded(
               flex: i < flex.length ? flex[i] : 1,
-              child: Text(
-                labels[i].toUpperCase(),
-                style: Theme.of(context).textTheme.labelSmall,
-                overflow: TextOverflow.ellipsis,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  labels[i].toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
               ),
             ),
         ],

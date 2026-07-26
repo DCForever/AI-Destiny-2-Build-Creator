@@ -90,11 +90,13 @@ const FlapColumnTemplate kFlapColumnsSynergy = FlapColumnTemplate(
   headerLabels: ['Name', 'Design', 'Links', 'Stat'],
 );
 
-/// Build library: NAME · IDENTITY · EXOTICS · SYNERGY · STATUS
+/// Build library: NAME · CLASS · EXOTIC · SYN · STAT
+///
+/// Flex weights tuned for ~320px library rail (no EXOTIC|SYN header merge).
 const FlapColumnTemplate kFlapColumnsBuilds = FlapColumnTemplate(
   id: 'builds',
   columnsCss:
-      'minmax(0, 1.2fr) minmax(100px, 0.7fr) minmax(88px, 0.55fr) minmax(0, 0.9fr) minmax(72px, 0.45fr)',
+      'minmax(0, 1.5fr) minmax(0, 0.55fr) minmax(0, 0.45fr) minmax(0, 0.75fr) minmax(0, 0.35fr)',
   cellRoles: [
     FlapCellRole.name,
     FlapCellRole.identity,
@@ -102,7 +104,8 @@ const FlapColumnTemplate kFlapColumnsBuilds = FlapColumnTemplate(
     FlapCellRole.synergy,
     FlapCellRole.status,
   ],
-  headerLabels: ['Name', 'Class', 'Exotic', 'Syn', 'Stat'],
+  // Ultra-short labels for dense rail (BUG-20260726-009 residual).
+  headerLabels: ['Name', 'Cls', 'Exo', 'Syn', 'Ok'],
 );
 
 /// All first-class library templates (Sets / Synergy / Builds).

@@ -79,8 +79,14 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   String _createTypeWire = creatableSynergyTypeWires.first;
   String _editTypeWire = creatableSynergyTypeWires.first;
   String? _statusMessage;
-  /// Create form collapsed by default so the board owns the rail (BUG-20260726-008).
-  bool _createExpanded = false;
+  /// Create intent plate: null = auto (open when library empty).
+  bool? _createExpandedOverride;
+  /// Finish policy copy behind progressive disclosure (shape P1).
+  bool _finishPolicyExpanded = false;
+
+  bool get _createExpanded =>
+      _createExpandedOverride ??
+      (_controller.builds.isEmpty && !_controller.loading);
   bool _ownController = false;
   String? _boundSelectionId;
   String? _attachSetId;
@@ -281,6 +287,21 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       return;
     }
 
+    // Intent brief: if chips empty, commit the current type dropdown (auto-Add).
+    if (_controller.createDraftTypes.isEmpty) {
+      _controller.addCreateDraftType(
+        _createTypeWire,
+        _createSubTypeController.text,
+      );
+      _createSubTypeController.clear();
+    }
+    if (_controller.createDraftTypes.isEmpty) {
+      setState(
+        () => _statusMessage = 'Add a synergy type (or pick one and Create)',
+      );
+      return;
+    }
+
     final nameText = _createNameController.text.trim();
     final err = await _controller.createBuild(
       name: nameText.isEmpty ? null : nameText,
@@ -300,8 +321,9 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     if (!mounted) return;
     setState(() {
       _statusMessage = err ??
-          'Created ${nameText.isEmpty ? _createClass.wireName : nameText}';
+          'Created ${nameText.isEmpty ? displayGuardianClass(_createClass) : nameText}';
       if (err == null) {
+        _createExpandedOverride = false; // Board-first after success (shape brief).
         _createNameController.clear();
         _createSubTypeController.clear();
         _createArmorHashController.clear();
@@ -515,8 +537,14 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   }
 
   Widget _buildRail(BuildContext context) {
-    // Collapsed create strip frees board height (BUG-20260726-008).
+    // Intent plate: class + synergy types, then Create; board stays primary.
     // Offstage create keys stay mounted for widget tests / controller wiring.
+    final draftTypes = _controller.createDraftTypes;
+    final draftSummary = draftTypes.isEmpty
+        ? 'Class + synergy type → Create'
+        : '${displayGuardianClass(_createClass)} · '
+            '${draftTypes.map((d) => displaySynergyDraft(d.type, d.subType)).join(', ')}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -524,77 +552,71 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           key: const Key('builds_create_toggle'),
           dense: true,
           title: Text(
-            _createExpanded ? 'Hide create' : 'New build',
+            _createExpanded ? 'New build' : 'New build',
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          subtitle: _createExpanded
-              ? null
-              : Text(
-                  'Name, class, synergy types…',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+          subtitle: Text(
+            _createExpanded ? 'Intent: class + synergy types' : draftSummary,
+            style: Theme.of(context).textTheme.bodySmall,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           trailing: Icon(
             _createExpanded ? Icons.expand_less : Icons.expand_more,
           ),
           onTap: () {
-            setState(() => _createExpanded = !_createExpanded);
+            setState(() {
+              _createExpandedOverride = !_createExpanded;
+            });
           },
         ),
         if (_createExpanded)
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
+            constraints: const BoxConstraints(maxHeight: 260),
             child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: TextField(
-                      key: const Key('builds_create_name'),
-                      controller: _createNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'New build name (optional)',
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                      onSubmitted: (_) => _create(),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Class',
+                      style: Theme.of(context).textTheme.labelMedium,
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                    child: DropdownButtonFormField<GuardianClass>(
+                    const SizedBox(height: 4),
+                    Wrap(
                       key: const Key('builds_create_class'),
-                      // ignore: deprecated_member_use
-                      value: _createClass,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Class',
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                      items: [
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
                         for (final c in GuardianClass.values)
-                          DropdownMenuItem(
-                            value: c,
-                            child: Text(displayGuardianClass(c)),
+                          FilterChip(
+                            key: Key('builds_create_class_${c.wireName}'),
+                            label: Text(displayGuardianClass(c)),
+                            selected: _createClass == c,
+                            onSelected: (_) {
+                              setState(() => _createClass = c);
+                            },
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
                       ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() => _createClass = v);
-                      },
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                    child: DropdownButtonFormField<String>(
+                    const SizedBox(height: 8),
+                    Text(
+                      'Synergy types',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
                       key: const Key('builds_create_synergy_type'),
                       // ignore: deprecated_member_use
                       value: _createTypeWire,
                       isExpanded: true,
                       decoration: const InputDecoration(
-                        labelText: 'Synergy type',
+                        labelText: 'Type',
                         isDense: true,
                         border: OutlineInputBorder(),
                       ),
@@ -610,10 +632,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                         setState(() => _createTypeWire = v);
                       },
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                    child: TextField(
+                    const SizedBox(height: 6),
+                    TextField(
                       key: const Key('builds_create_synergy_subtype'),
                       controller: _createSubTypeController,
                       decoration: const InputDecoration(
@@ -622,10 +642,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                    child: OutlinedButton(
+                    const SizedBox(height: 6),
+                    OutlinedButton(
                       key: const Key('builds_create_add_synergy'),
                       onPressed: () {
                         _controller.addCreateDraftType(
@@ -634,25 +652,23 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                         );
                         _createSubTypeController.clear();
                       },
-                      child: const Text('Add synergy type'),
+                      child: const Text('Add type'),
                     ),
-                  ),
-                  if (_controller.createDraftTypes.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                      child: Wrap(
+                    if (draftTypes.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
                         key: const Key('builds_create_synergy_chips'),
                         spacing: 4,
                         runSpacing: 4,
                         children: [
-                          for (var i = 0;
-                              i < _controller.createDraftTypes.length;
-                              i++)
+                          for (var i = 0; i < draftTypes.length; i++)
                             InputChip(
                               key: Key('builds_create_synergy_chip_$i'),
                               label: Text(
-                                _controller
-                                    .createDraftTypes[i].designationKey,
+                                displaySynergyDraft(
+                                  draftTypes[i].type,
+                                  draftTypes[i].subType,
+                                ),
                               ),
                               onDeleted: () =>
                                   _controller.removeCreateDraftTypeAt(i),
@@ -660,16 +676,34 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                             ),
                         ],
                       ),
+                    ] else
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Pick a type and Create (auto-adds), or Add type for several.',
+                          key: const Key('builds_create_types_hint'),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      key: const Key('builds_create_name'),
+                      controller: _createNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Name (optional)',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => _create(),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
-                    child: FilledButton(
+                    const SizedBox(height: 8),
+                    FilledButton(
                       key: const Key('builds_create_button'),
                       onPressed: _controller.loading ? null : _create,
                       child: const Text('Create build'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -859,7 +893,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 for (var i = 0; i < _controller.editDraftTypes.length; i++)
                   InputChip(
                     key: Key('builds_edit_synergy_chip_$i'),
-                    label: Text(_controller.editDraftTypes[i].designationKey),
+                    label: Text(
+                      displaySynergyDraft(
+                        _controller.editDraftTypes[i].type,
+                        _controller.editDraftTypes[i].subType,
+                      ),
+                    ),
                     onDeleted: () => _controller.removeEditDraftTypeAt(i),
                   ),
               ],
@@ -1570,19 +1609,37 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           'Finish readiness',
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(height: 4),
-        Text(
-          kFinishGapsPolicyCaption,
-          key: const Key('finish_gaps_policy'),
-          style: Theme.of(context).textTheme.bodySmall,
+        ListTile(
+          key: const Key('finish_policy_toggle'),
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(
+            _finishPolicyExpanded
+                ? 'Hide how finish works'
+                : 'How finish works',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          trailing: Icon(
+            _finishPolicyExpanded ? Icons.expand_less : Icons.expand_more,
+          ),
+          onTap: () {
+            setState(() => _finishPolicyExpanded = !_finishPolicyExpanded);
+          },
         ),
-        const SizedBox(height: 4),
-        Text(
-          kFinishWalkthroughCaption,
-          key: const Key('finish_walkthrough_caption'),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 8),
+        if (_finishPolicyExpanded) ...[
+          Text(
+            kFinishGapsPolicyCaption,
+            key: const Key('finish_gaps_policy'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            kFinishWalkthroughCaption,
+            key: const Key('finish_walkthrough_caption'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+        ],
         if (gaps == null)
           const Text(
             'Select a variant to evaluate finish gaps.',
