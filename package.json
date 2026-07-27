@@ -18,7 +18,9 @@
     "gate:bash": "bash scripts/gate.sh",
     "atlas:capture": "node scripts/capture-ui-atlas.mjs",
     "atlas:view": "npx --yes serve docs/atlas -p 4173",
-    "atlas:auth": "node scripts/save-atlas-auth.mjs"
+    "atlas:auth": "node scripts/save-atlas-auth.mjs",
+    "ui-rules:generate": "node scripts/ui-rules/generate.mjs",
+    "ui-rules:view": "node scripts/ui-rules/server.mjs"
   },
   "dependencies": {
     "@destinyitemmanager/dim-api-types": "^1.40.0",
@@ -44,6 +46,7 @@
     "eslint-config-next": "16.2.11",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "yaml": "^2.9.0"
   }
 }

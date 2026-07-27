@@ -1,0 +1,1692 @@
+# UI ↔ Rules inventory for Destiny 2 Build Creator
+# Source of structure + rule ID attachments. Rule *text* lives in markdown specs.
+# Regenerate diagram: npm run ui-rules:generate
+# Edit rules:       npm run ui-rules:view  → companion at :4174
+#
+# kinds: page | screen | subscreen | surface | field | flow | gate | auth
+# auth: signed-in | signed-out | any
+# rules: DAC-*, DBR-*, BR-*, or slice ids like 001:SC-001, 015:US1-AS1
+
+version: 1
+title: Destiny 2 Build Creator — UI ↔ Rules Map
+description: >
+  Production UI map (screens, surfaces, data entry) with linked domain ACs (DAC),
+  domain BRs (DBR), feature BRs (BR), and slice acceptance criteria.
+  Complements docs/atlas screenshots. Debug routes are out of scope.
+
+pages:
+  # ─────────────────────────────────────────────
+  - id: overview
+    label: Overview
+    description: App shell, navigation, auth, and primary journeys.
+    nodes:
+      - id: shell
+        kind: screen
+        title: App shell
+        path: "/*"
+        auth: any
+        notes: Header, nav, theme, Bungie auth control
+        rules:
+          - DBR-PUR-001
+          - DBR-PUR-002
+          - DBR-PUR-003
+          - BR-AUTH-001
+        children:
+          - id: shell.nav
+            kind: surface
+            title: Main navigation
+            notes: Loadouts · Build · Synergy · Sets · Catalog · Settings
+            rules:
+              - DBR-PUR-003
+            children:
+              - id: shell.nav.loadouts
+                kind: field
+                title: Nav → In-Game Loadouts
+                path: /loadouts
+              - id: shell.nav.build
+                kind: field
+                title: Nav → Build
+                path: /build
+              - id: shell.nav.synergy
+                kind: field
+                title: Nav → Synergy
+                path: /synergy
+              - id: shell.nav.sets
+                kind: field
+                title: Nav → Sets
+                path: /sets
+              - id: shell.nav.catalog
+                kind: field
+                title: Nav → Catalog
+                path: /catalog
+              - id: shell.nav.settings
+                kind: field
+                title: Nav → Settings
+                path: /settings
+          - id: shell.auth
+            kind: surface
+            title: Bungie auth control
+            rules:
+              - BR-AUTH-001
+            children:
+              - id: shell.auth.login
+                kind: field
+                title: Sign in / Sign out
+              - id: shell.auth.status
+                kind: field
+                title: Session status indicator
+          - id: shell.theme
+            kind: field
+            title: Theme toggle
+          - id: shell.signed-out-gate
+            kind: gate
+            title: SignedOutGate (shared)
+            auth: signed-out
+            rules:
+              - BR-AUTH-001
+              - 003:SC-005
+
+      - id: journey.p1
+        kind: flow
+        title: "P1 Journey — Intent → compose → equip"
+        rules:
+          - DAC-P1-001
+          - DAC-P1-002
+          - DAC-P1-003
+          - DAC-P1-004
+          - DAC-P1-005
+          - DAC-P1-006
+          - DAC-P1-007
+          - DAC-P1-008
+          - DAC-P1-009
+          - DBR-PUR-003
+          - DBR-PUR-005
+        flowsTo:
+          - build.library
+          - build.create
+          - build.finish
+        children:
+          - id: journey.p1.intent
+            kind: surface
+            title: Designate Synergy Types
+            rules:
+              - DAC-P1-001
+              - DBR-SYN-002
+              - DBR-SYN-003
+          - id: journey.p1.compose
+            kind: surface
+            title: Compose default variant (sets + kit)
+            rules:
+              - DAC-P1-003
+              - DAC-P1-004
+              - DBR-CMP-001
+          - id: journey.p1.equip
+            kind: surface
+            title: Equip / DIM when equip-ready
+            rules:
+              - DAC-P1-005
+              - DAC-P1-007
+              - DAC-P1-008
+              - DBR-EQP-001
+              - DBR-EQP-003
+
+      - id: journey.p2
+        kind: flow
+        title: "P2 Journey — Library curation"
+        rules:
+          - DAC-P2-001
+          - DAC-P2-001a
+          - DAC-P2-003
+          - DAC-P2-004
+          - DAC-P2-005
+          - DBR-PUR-004
+        flowsTo:
+          - sets.library
+          - synergy.library
+          - catalog.universal
+
+  # ─────────────────────────────────────────────
+  - id: build
+    label: Build
+    description: Build library, create draft, composer tabs, finish, equip/export.
+    nodes:
+      - id: build.signed-out
+        kind: gate
+        title: Build — signed-out gate
+        path: /build
+        auth: signed-out
+        rules:
+          - BR-AUTH-001
+          - DBR-BLD-005
+
+      - id: build.library
+        kind: screen
+        title: Build library
+        path: /build
+        auth: signed-in
+        rules:
+          - DBR-BLD-001
+          - DBR-BLD-005
+          - BR-BLD-001
+          - BR-TAG-006
+          - BR-TAG-008
+          - BR-VAR-004
+          - DAC-NME-002
+          - 001:SC-002
+        children:
+          - id: build.library.list
+            kind: surface
+            title: Build list
+            children:
+              - id: build.library.filter.tags
+                kind: field
+                title: Concept tag filter (AND)
+                rules:
+                  - BR-TAG-007
+                  - BR-TAG-008
+                  - BR-TAG-009
+                  - DAC-NME-002
+                  - DBR-ID-002
+              - id: build.library.filter.exotic
+                kind: field
+                title: Filter by exotic armor / weapon
+                rules:
+                  - BR-VAR-004
+              - id: build.library.search
+                kind: field
+                title: Search builds by name
+              - id: build.library.row
+                kind: surface
+                title: Build row (name, class, identity hints)
+                rules:
+                  - DAC-NME-001
+                  - DBR-NAME-001
+          - id: build.library.new
+            kind: field
+            title: New Build action
+            flowsTo:
+              - build.create
+          - id: build.library.selected
+            kind: subscreen
+            title: Selected build summary
+            rules:
+              - DBR-BLD-001
+              - DBR-BLD-003
+              - BR-BLD-006
+            children:
+              - id: build.library.variants
+                kind: surface
+                title: Variant cards / switcher
+                rules:
+                  - DBR-BLD-002
+                  - DBR-BLD-003
+                  - BR-VAR-001
+                  - BR-VAR-003
+              - id: build.library.edit
+                kind: field
+                title: Edit build (open composer)
+                flowsTo:
+                  - build.edit.general
+
+      - id: build.create
+        kind: screen
+        title: Create Build (draft composer)
+        path: /build
+        auth: signed-in
+        rules:
+          - DAC-P1-001
+          - DAC-P1-002
+          - DAC-P2-005
+          - DBR-PUR-004
+          - DBR-SYN-002
+          - DBR-SYN-003
+          - DBR-BLD-004
+          - BR-SAVE-003
+          - 042:SC-001
+        children:
+          - id: build.create.tabs
+            kind: surface
+            title: Tab strip (locks before class/subclass)
+            notes: General unlocked; Subclass/Armor/Weapon locked until draft identity
+            children:
+              - id: build.create.tab.general
+                kind: field
+                title: Tab — General
+              - id: build.create.tab.subclass
+                kind: field
+                title: Tab — Subclass (locked)
+              - id: build.create.tab.armor
+                kind: field
+                title: Tab — Armor (locked)
+              - id: build.create.tab.weapon
+                kind: field
+                title: Tab — Weapon (locked)
+              - id: build.create.tab.finish
+                kind: field
+                title: Tab — Finish (locked)
+          - id: build.create.general
+            kind: subscreen
+            title: Draft General tab
+            rules:
+              - DAC-P1-001
+              - DAC-P1-002
+              - DAC-NME-001
+            children:
+              - id: build.create.class
+                kind: field
+                title: Class picker (Titan / Hunter / Warlock)
+                rules:
+                  - DBR-BLD-004
+              - id: build.create.subclass
+                kind: field
+                title: Subclass / element tree
+                rules:
+                  - DBR-SUB-001
+                  - DBR-SUB-002
+              - id: build.create.name
+                kind: field
+                title: Build name (optional; default derived)
+                rules:
+                  - DBR-NAME-001
+                  - DBR-NAME-002
+                  - DBR-NAME-004
+                  - DAC-NME-001
+              - id: build.create.synergy-types
+                kind: field
+                title: Synergy Type multi-select (≥1 required)
+                rules:
+                  - DAC-P1-001
+                  - DBR-SYN-002
+                  - DBR-SYN-003
+                  - DBR-SYN-004
+                  - DBR-SYN-013
+                  - BR-SAVE-003
+              - id: build.create.exotic-armor
+                kind: field
+                title: Exotic armor (optional identity)
+                rules:
+                  - DBR-ID-003
+                  - DBR-ID-004
+                  - DBR-ID-005
+                  - BR-BLD-003
+              - id: build.create.exotic-weapon
+                kind: field
+                title: Exotic weapon (variant or build-shared)
+                rules:
+                  - DBR-ID-006
+                  - BR-BLD-004
+              - id: build.create.pinned-super
+                kind: field
+                title: Build-pinned Super (optional)
+                rules:
+                  - DBR-ID-007
+              - id: build.create.tags
+                kind: field
+                title: Concept tags (filter only)
+                rules:
+                  - DBR-ID-002
+                  - BR-TAG-001
+                  - BR-TAG-005
+                  - BR-TAG-006
+                  - DAC-NME-002
+              - id: build.create.submit
+                kind: field
+                title: Create / save draft
+                rules:
+                  - DAC-P1-002
+                  - DBR-SYN-003
+                  - BR-SAVE-003
+
+      - id: build.edit.general
+        kind: screen
+        title: Edit — General (live identity)
+        path: /build
+        auth: signed-in
+        rules:
+          - DAC-P1-002
+          - DAC-VAR-004
+          - DBR-ID-008
+          - DBR-ID-009
+          - DBR-NAME-004
+        children:
+          - id: build.edit.general.identity
+            kind: surface
+            title: Identity fields
+            rules:
+              - DBR-ID-001
+              - DBR-ID-009
+              - DAC-VAR-004
+            children:
+              - id: build.edit.general.synergies
+                kind: field
+                title: Designated Synergy Types
+                rules:
+                  - DBR-SYN-002
+                  - DBR-SYN-003
+                  - DBR-SYN-004
+                  - DBR-ID-001
+              - id: build.edit.general.exotic-armor
+                kind: field
+                title: Exotic armor item
+                rules:
+                  - DBR-ID-003
+                  - DBR-ID-005
+                  - DAC-VAR-005
+                  - DAC-VAR-006
+              - id: build.edit.general.exotic-weapon-shared
+                kind: field
+                title: Build-shared exotic weapon
+                rules:
+                  - DBR-ID-006
+              - id: build.edit.general.pinned-super
+                kind: field
+                title: Build-pinned Super
+                rules:
+                  - DBR-ID-007
+              - id: build.edit.general.confirm-fork
+                kind: flow
+                title: Identity change confirm / fork dialog
+                rules:
+                  - DAC-VAR-004
+                  - DBR-ID-008
+          - id: build.edit.general.name
+            kind: field
+            title: Rename build (unique per class)
+            rules:
+              - DBR-NAME-004
+              - DAC-NME-001
+          - id: build.edit.general.tags
+            kind: field
+            title: Concept tags
+            rules:
+              - DBR-ID-002
+              - BR-TAG-006
+          - id: build.edit.general.notes
+            kind: field
+            title: Build notes
+            rules:
+              - DBR-BLD-006
+          - id: build.edit.general.soft-stats
+            kind: surface
+            title: Soft stat targets editor
+            rules:
+              - DAC-DST-006
+              - DBR-STAT-001
+              - DBR-STAT-002
+              - DBR-STAT-003
+              - DBR-STAT-004
+              - DBR-STAT-005
+              - DBR-STAT-006
+            children:
+              - id: build.edit.general.soft-stats.class
+                kind: field
+                title: Target — Class
+              - id: build.edit.general.soft-stats.grenade
+                kind: field
+                title: Target — Grenade
+              - id: build.edit.general.soft-stats.melee
+                kind: field
+                title: Target — Melee
+              - id: build.edit.general.soft-stats.super
+                kind: field
+                title: Target — Super
+              - id: build.edit.general.soft-stats.health
+                kind: field
+                title: Target — Health
+              - id: build.edit.general.soft-stats.weapons
+                kind: field
+                title: Target — Weapons
+
+      - id: build.edit.subclass
+        kind: screen
+        title: Edit — Subclass kit
+        path: /build
+        auth: signed-in
+        rules:
+          - DBR-SUB-001
+          - DBR-SUB-003
+          - DBR-SUB-004
+          - DBR-SUB-005
+          - DAC-DST-003
+          - DAC-DST-004
+          - BR-UI-001
+        children:
+          - id: build.edit.subclass.tree
+            kind: field
+            title: Subclass tree / element (shared)
+            rules:
+              - DBR-SUB-001
+              - DBR-SUB-002
+          - id: build.edit.subclass.super
+            kind: field
+            title: Super selection
+            rules:
+              - DBR-ID-007
+              - DBR-SUB-003
+          - id: build.edit.subclass.aspects
+            kind: field
+            title: Aspects (max 2)
+            rules:
+              - DBR-SUB-004
+              - DAC-DST-003
+          - id: build.edit.subclass.fragments
+            kind: field
+            title: Fragments (≤ aspect capacity)
+            rules:
+              - DBR-SUB-004
+              - DAC-DST-003
+          - id: build.edit.subclass.abilities
+            kind: field
+            title: Melee / grenade / class ability
+            rules:
+              - DBR-SUB-003
+              - DBR-SUB-005
+              - DAC-DST-004
+          - id: build.edit.subclass.exotic-ability-pin
+            kind: flow
+            title: Exotic ability auto-pin confirm
+            rules:
+              - DBR-SUB-005
+              - DAC-DST-004
+
+      - id: build.edit.armor
+        kind: screen
+        title: Edit — Armor / Mod sets
+        path: /build
+        auth: signed-in
+        rules:
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-CMP-005
+          - DBR-CMP-007
+          - BR-ATT-001
+          - BR-ATT-002
+          - BR-BLD-007
+        children:
+          - id: build.edit.armor.reuse
+            kind: subscreen
+            title: Armor Reuse (attach existing)
+            rules:
+              - BR-ATT-001
+              - BR-ATT-002
+              - DBR-CMP-003
+            children:
+              - id: build.edit.armor.reuse.picker
+                kind: field
+                title: Set attach picker
+                rules:
+                  - BR-TAG-008
+                  - BR-SUG-001
+              - id: build.edit.armor.reuse.mode
+                kind: field
+                title: Live vs snapshot mode
+                rules:
+                  - DBR-CMP-003
+                  - BR-ATT-002
+                  - BR-ATT-003
+                  - BR-ATT-004
+              - id: build.edit.armor.improve
+                kind: surface
+                title: Improve kit (suggestions)
+                rules:
+                  - BR-SUG-001
+                  - BR-SUG-002
+          - id: build.edit.armor.create
+            kind: subscreen
+            title: Armor Create + attach
+            rules:
+              - DAC-P2-005
+              - DBR-PUR-004
+              - BR-BLD-007
+              - BR-SET-001
+            children:
+              - id: build.edit.armor.create.form
+                kind: field
+                title: Create set + attach form
+                rules:
+                  - BR-SET-002
+                  - BR-TAG-005
+                  - BR-BLD-008
+          - id: build.edit.armor.mods
+            kind: surface
+            title: Mod set coverage
+            rules:
+              - DBR-CMP-005
+              - DBR-MOD-001
+              - DBR-MOD-002
+              - DBR-MOD-003
+              - DAC-DST-002
+            children:
+              - id: build.edit.armor.mod-energy
+                kind: field
+                title: Energy remaining / over-cap block
+                rules:
+                  - DAC-DST-002
+                  - DBR-MOD-001
+                  - BR-UI-001
+          - id: build.edit.armor.exotic-limit
+            kind: gate
+            title: Single exotic armor hard gate
+            rules:
+              - DBR-CMP-007
+              - DAC-DST-001
+              - DAC-DST-009
+
+      - id: build.edit.weapon
+        kind: screen
+        title: Edit — Weapon sets
+        path: /build
+        auth: signed-in
+        rules:
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-CMP-007
+          - DBR-ROLL-001
+          - BR-ATT-001
+        children:
+          - id: build.edit.weapon.reuse
+            kind: subscreen
+            title: Weapon Reuse
+            rules:
+              - BR-ATT-001
+              - DBR-CMP-003
+          - id: build.edit.weapon.create
+            kind: subscreen
+            title: Weapon Create + slot fill
+            rules:
+              - DAC-P2-005
+              - BR-BLD-008
+              - DBR-ROLL-010
+            children:
+              - id: build.edit.weapon.fill
+                kind: surface
+                title: Slot fill (catalog embed)
+                rules:
+                  - DAC-NME-003
+                  - DBR-ROLL-010
+                  - DAC-DST-009
+                  - BR-SLOT-008
+                  - BR-SLOT-009
+          - id: build.edit.weapon.exotic-limit
+            kind: gate
+            title: Single exotic weapon hard gate
+            rules:
+              - DBR-CMP-007
+              - DAC-DST-001
+          - id: build.edit.weapon.wishlist
+            kind: surface
+            title: Desired roll / wishlist pin
+            rules:
+              - DAC-P1-005
+              - DBR-ROLL-001
+              - DBR-ROLL-002
+              - DBR-ROLL-005
+              - BR-ROLL-001
+
+      - id: build.edit.default-composer
+        kind: surface
+        title: Default variant composer (inline)
+        rules:
+          - DAC-P1-003
+          - DBR-CMPL-001
+          - BR-BLD-001
+          - 043:SC-001
+
+      - id: build.edit.coverage
+        kind: surface
+        title: Soft guidance / coverage breakdown
+        rules:
+          - DAC-P1-006
+          - DAC-DST-005
+          - DAC-DST-006
+          - DBR-GUID-001
+          - DBR-GUID-002
+          - DBR-GUID-003
+          - DBR-SYN-011
+          - DBR-STAT-004
+          - DAC-P2-002
+          - DBR-SYN-010
+
+      - id: build.edit.slot-overrides
+        kind: surface
+        title: Per-slot pin / override
+        rules:
+          - DBR-CMP-002
+          - DBR-ROLL-004
+          - DBR-ROLL-006
+          - DAC-DST-007
+        children:
+          - id: build.edit.instance-pin
+            kind: field
+            title: Pin owned instance
+            rules:
+              - DBR-ROLL-004
+              - DBR-ROLL-005
+          - id: build.edit.stale-pin
+            kind: gate
+            title: Stale pin indicator
+            rules:
+              - DAC-DST-007
+              - DBR-ROLL-006
+          - id: build.edit.catalyst
+            kind: field
+            title: Catalyst / deepsight display
+            rules:
+              - DAC-DST-008
+              - DBR-ROLL-007
+              - DBR-ROLL-008
+
+      - id: build.edit.artifact-fashion
+        kind: surface
+        title: Artifact + fashion (variant)
+        rules:
+          - DAC-VAR-002
+          - DAC-VAR-003
+          - DBR-ART-001
+          - DBR-ART-002
+          - DBR-ART-003
+          - DBR-FASH-001
+          - DBR-FASH-002
+          - DBR-FASH-003
+          - DBR-FASH-004
+          - DBR-FASH-005
+        children:
+          - id: build.edit.artifact
+            kind: field
+            title: Seasonal artifact + unlock config
+            rules:
+              - DBR-ART-001
+              - DAC-VAR-002
+          - id: build.edit.fashion
+            kind: field
+            title: Shaders / ornaments / flair
+            rules:
+              - DBR-FASH-001
+              - DAC-VAR-003
+
+      - id: build.finish
+        kind: screen
+        title: Finish tab — readiness + walkthrough
+        path: /build
+        auth: signed-in
+        rules:
+          - DAC-P1-003
+          - DAC-P1-005
+          - DAC-P1-007
+          - DAC-P1-008
+          - BR-BLD-007
+          - BR-BLD-008
+          - BR-BLD-009
+          - DBR-CMPL-001
+          - DBR-EQP-003
+        children:
+          - id: build.finish.gaps
+            kind: surface
+            title: Gap list / missing reasons
+            rules:
+              - DBR-CMPL-001
+              - DBR-CMPL-002
+              - BR-SAVE-001
+              - BR-SAVE-002
+          - id: build.finish.walkthrough
+            kind: flow
+            title: Slot-first walkthrough (Armor → Weapons → Mods)
+            rules:
+              - BR-BLD-007
+              - BR-BLD-008
+              - 029:SC-001
+            children:
+              - id: build.finish.one-tap-create
+                kind: field
+                title: One-tap Create set
+                rules:
+                  - BR-BLD-008
+              - id: build.finish.capture
+                kind: field
+                title: Capture sets from build
+                rules:
+                  - BR-BLD-008
+              - id: build.finish.slot-loop
+                kind: flow
+                title: First empty slot fill loop
+                rules:
+                  - BR-BLD-008
+                  - DAC-DST-009
+          - id: build.finish.armor-optimize
+            kind: subscreen
+            title: Armor optimize workspace
+            rules:
+              - BR-BLD-009
+              - BR-OPT-001
+              - BR-OPT-002
+              - BR-OPT-003
+              - BR-OPT-004
+              - 031:SC-001
+            children:
+              - id: build.finish.armor-optimize.goals
+                kind: field
+                title: Goals (set bonuses + seeded stats)
+              - id: build.finish.armor-optimize.find
+                kind: field
+                title: Find kits
+              - id: build.finish.armor-optimize.compare
+                kind: field
+                title: Top-3 compare
+              - id: build.finish.armor-optimize.apply
+                kind: field
+                title: Apply combination in place
+          - id: build.finish.character
+            kind: field
+            title: Character picker (equip)
+            rules:
+              - DBR-BLD-004
+              - DBR-EQP-005
+              - DAC-P1-007
+          - id: build.finish.equip
+            kind: field
+            title: Equip in-game
+            rules:
+              - DAC-P1-007
+              - DBR-EQP-001
+              - DBR-EQP-003
+              - DBR-EQP-005
+              - DBR-EQP-006
+              - DBR-EQP-007
+              - DBR-EQP-008
+              - DAC-VAR-001
+          - id: build.finish.dim
+            kind: field
+            title: DIM export / share
+            rules:
+              - DAC-P1-008
+              - DBR-EQP-002
+              - DBR-EQP-003
+              - DBR-EQP-004
+          - id: build.finish.equip-gate
+            kind: gate
+            title: Equip/export blocked until pins
+            rules:
+              - DAC-P1-005
+              - DBR-EQP-003
+              - DBR-ROLL-004
+              - DBR-ROLL-005
+
+      - id: build.conflicts
+        kind: gate
+        title: Cross-set slot conflict / save blocks
+        rules:
+          - BR-CONF-001
+          - BR-CONF-002
+          - BR-CONF-003
+          - DBR-CMP-006
+          - DAC-DST-009
+          - BR-UI-001
+
+  # ─────────────────────────────────────────────
+  - id: catalog
+    label: Catalog
+    description: Weapons/armor browse, filters, owned vs manifest, detail, universal search.
+    nodes:
+      - id: catalog.signed-out.weapons
+        kind: screen
+        title: Catalog weapons (signed-out / Manifest)
+        path: /catalog
+        auth: signed-out
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - BR-CAT-001
+          - DBR-PUR-002
+
+      - id: catalog.signed-out.armor
+        kind: screen
+        title: Catalog armor (signed-out / Manifest)
+        path: /catalog
+        auth: signed-out
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - BR-CAT-001
+
+      - id: catalog.weapons.owned
+        kind: screen
+        title: Weapons — Owned
+        path: /catalog
+        auth: signed-in
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - BR-CAT-001
+          - BR-CAT-002
+          - 003:SC-001
+          - 003:SC-002
+        children:
+          - id: catalog.weapons.filters
+            kind: surface
+            title: Multi-facet filters
+            rules:
+              - DAC-NME-003
+              - DBR-ROLL-010
+              - BR-CAT-003
+              - BR-CAT-004
+            children:
+              - id: catalog.weapons.filter.text
+                kind: field
+                title: Free-text search
+                rules:
+                  - BR-CAT-005
+                  - 009:SC-001
+              - id: catalog.weapons.filter.element
+                kind: field
+                title: Element facet (OR within)
+              - id: catalog.weapons.filter.ammo
+                kind: field
+                title: Ammo type facet
+              - id: catalog.weapons.filter.archetype
+                kind: field
+                title: Archetype / frame facet
+              - id: catalog.weapons.filter.slot
+                kind: field
+                title: Slot facet
+              - id: catalog.weapons.filter.exclude
+                kind: field
+                title: Exclude drops
+              - id: catalog.weapons.filter.groupby
+                kind: field
+                title: Group-by dimension
+                rules:
+                  - DBR-ROLL-010
+          - id: catalog.weapons.list
+            kind: surface
+            title: Result list / instance cards
+            rules:
+              - 003:SC-001
+              - 003:SC-004
+              - 010:SC-001
+            children:
+              - id: catalog.weapons.instance-card
+                kind: surface
+                title: Owned instance card
+                rules:
+                  - BR-CAT-006
+                  - 010:SC-001
+                  - 011:SC-001
+                children:
+                  - id: catalog.weapons.perk-grid
+                    kind: field
+                    title: Per-copy perk grid
+                    rules:
+                      - 011:SC-001
+                      - 011:SC-002
+                      - BR-ROLL-002
+
+      - id: catalog.weapons.manifest
+        kind: screen
+        title: Weapons — Manifest (all)
+        path: /catalog
+        auth: signed-in
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-001
+          - DBR-ROLL-010
+          - BR-CAT-001
+
+      - id: catalog.weapon.detail
+        kind: subscreen
+        title: Weapon detail pane
+        path: /catalog
+        auth: signed-in
+        rules:
+          - BR-CAT-006
+          - BR-CAT-007
+          - DAC-DST-008
+          - DBR-ROLL-007
+        children:
+          - id: catalog.weapon.detail.stats
+            kind: field
+            title: Weapon stats panel
+          - id: catalog.weapon.detail.perks
+            kind: field
+            title: Perk options / desired roll
+            rules:
+              - DBR-ROLL-002
+              - BR-ROLL-001
+          - id: catalog.weapon.detail.synergies
+            kind: field
+            title: Linked library synergies
+            rules:
+              - DBR-SYN-001
+              - DBR-SYN-014
+
+      - id: catalog.armor.owned
+        kind: screen
+        title: Armor — Owned
+        path: /catalog
+        auth: signed-in
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - BR-CAT-001
+          - 003:SC-001
+        children:
+          - id: catalog.armor.filters
+            kind: surface
+            title: Armor facets (class, slot, exotic, tier…)
+            rules:
+              - DAC-NME-003
+              - DBR-ROLL-010
+          - id: catalog.armor.stats-panel
+            kind: field
+            title: Armor stats panel
+            rules:
+              - DBR-STAT-001
+              - DBR-STAT-008
+              - BR-SET-011
+
+      - id: catalog.armor.manifest
+        kind: screen
+        title: Armor — Manifest
+        path: /catalog
+        auth: signed-in
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+
+      - id: catalog.armor.detail
+        kind: subscreen
+        title: Armor detail pane
+        path: /catalog
+        auth: signed-in
+        rules:
+          - BR-CAT-006
+          - DAC-NME-004
+          - DBR-STAT-001
+
+      - id: catalog.universal
+        kind: screen
+        title: Universal search
+        path: /catalog
+        auth: signed-in
+        rules:
+          - DBR-ROLL-010
+          - BR-CAT-008
+          - BR-CAT-009
+          - 027:SC-001
+        children:
+          - id: catalog.universal.query
+            kind: field
+            title: Universal query input
+          - id: catalog.universal.hit-detail
+            kind: surface
+            title: Hit detail
+          - id: catalog.universal.set-actions
+            kind: field
+            title: Compose — set actions
+            rules:
+              - DBR-CMP-001
+              - DAC-P2-005
+          - id: catalog.universal.synergy-actions
+            kind: field
+            title: Compose — synergy actions
+            rules:
+              - DBR-SYN-001
+              - DAC-P2-001
+              - DAC-P2-005
+
+      - id: catalog.composition-aid
+        kind: surface
+        title: Catalog as composition aid (not primary job)
+        rules:
+          - DBR-PUR-002
+          - DBR-ROLL-010
+
+  # ─────────────────────────────────────────────
+  - id: sets
+    label: Sets
+    description: Sets library, create/edit, detail stats, slot fill.
+    nodes:
+      - id: sets.signed-out
+        kind: gate
+        title: Sets — signed-out gate
+        path: /sets
+        auth: signed-out
+        rules:
+          - BR-AUTH-001
+          - BR-SET-003
+
+      - id: sets.library
+        kind: screen
+        title: Sets library
+        path: /sets
+        auth: signed-in
+        rules:
+          - BR-SET-001
+          - BR-SET-002
+          - BR-SET-003
+          - BR-TAG-008
+          - DAC-P1-009
+          - DBR-PUR-005
+          - 001:SC-001
+          - 001:SC-002
+        children:
+          - id: sets.library.filter.type
+            kind: field
+            title: Filter by set type
+            rules:
+              - BR-SET-002
+          - id: sets.library.filter.tags
+            kind: field
+            title: Concept tag filter
+            rules:
+              - BR-TAG-007
+              - BR-TAG-008
+          - id: sets.library.search
+            kind: field
+            title: Search by name
+          - id: sets.library.new
+            kind: field
+            title: New Set
+            flowsTo:
+              - sets.create
+
+      - id: sets.create
+        kind: screen
+        title: Create set
+        path: /sets
+        auth: signed-in
+        rules:
+          - BR-SET-001
+          - BR-SET-002
+          - BR-SET-004
+          - BR-TAG-002
+          - BR-TAG-004
+          - BR-TAG-005
+          - 001:SC-001
+        children:
+          - id: sets.create.name
+            kind: field
+            title: Set name (unique per type)
+            rules:
+              - BR-TAG-002
+              - BR-TAG-004
+          - id: sets.create.type
+            kind: field
+            title: Type (Weapon / Armor / Mod / Pair / Fashion)
+            rules:
+              - BR-SET-002
+          - id: sets.create.tags
+            kind: field
+            title: Concept tags multi-select
+            rules:
+              - BR-TAG-001
+              - BR-TAG-005
+
+      - id: sets.detail
+        kind: screen
+        title: Set detail
+        path: /sets
+        auth: signed-in
+        rules:
+          - BR-SET-001
+          - BR-SET-010
+          - BR-SET-011
+          - DAC-NME-004
+          - DBR-STAT-001
+          - DBR-CMP-001
+        children:
+          - id: sets.detail.items
+            kind: surface
+            title: Item rows
+            rules:
+              - BR-SET-010
+              - DAC-NME-004
+            children:
+              - id: sets.detail.item.identity
+                kind: field
+                title: Element / type / tier / origin trait
+              - id: sets.detail.item.perks
+                kind: field
+                title: Selected trait perks + available traits
+              - id: sets.detail.item.synergies
+                kind: field
+                title: Linked library synergies
+              - id: sets.detail.item.stats
+                kind: field
+                title: Per-piece base stats (pinned only)
+                rules:
+                  - BR-SET-011
+                  - DBR-STAT-008
+          - id: sets.detail.totals
+            kind: field
+            title: Armor set stat totals
+            rules:
+              - BR-SET-010
+              - DAC-NME-004
+          - id: sets.detail.edit
+            kind: field
+            title: Edit set
+            flowsTo:
+              - sets.edit
+          - id: sets.detail.fill
+            kind: field
+            title: Fill slot
+            flowsTo:
+              - sets.fill-slot
+          - id: sets.detail.delete
+            kind: field
+            title: Delete set
+            rules:
+              - BR-DEL-001
+              - BR-DEL-002
+              - BR-DEL-003
+              - BR-DEL-004
+
+      - id: sets.edit
+        kind: screen
+        title: Edit set form
+        path: /sets
+        auth: signed-in
+        rules:
+          - BR-SET-001
+          - BR-TAG-005
+          - BR-SLOT-001
+        children:
+          - id: sets.edit.name
+            kind: field
+            title: Name
+          - id: sets.edit.tags
+            kind: field
+            title: Tags
+          - id: sets.edit.slots
+            kind: surface
+            title: Slot cardinality / items
+            rules:
+              - BR-SLOT-001
+              - BR-SLOT-002
+              - BR-SLOT-003
+              - BR-SLOT-004
+              - BR-SLOT-005
+              - BR-SLOT-006
+              - BR-SLOT-007
+              - BR-SLOT-008
+              - BR-SLOT-009
+              - BR-SLOT-010
+              - DAC-DST-009
+
+      - id: sets.fill-slot
+        kind: screen
+        title: Fill slot (embedded Catalog)
+        path: /sets
+        auth: signed-in
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - DAC-DST-009
+          - BR-SLOT-008
+          - BR-SLOT-009
+          - BR-UI-001
+        children:
+          - id: sets.fill-slot.catalog
+            kind: surface
+            title: Constrained catalog pick
+            rules:
+              - DAC-NME-003
+          - id: sets.fill-slot.exotic-block
+            kind: gate
+            title: Second exotic blocked in set
+            rules:
+              - BR-SLOT-008
+              - BR-SLOT-009
+              - DAC-DST-001
+              - DAC-DST-009
+
+      - id: sets.pair
+        kind: surface
+        title: Pair set exotic constraints
+        rules:
+          - BR-PAIR-001
+          - BR-PAIR-002
+          - BR-PAIR-003
+          - DBR-CMP-004
+
+      - id: sets.fashion
+        kind: surface
+        title: Fashion set fields
+        rules:
+          - BR-FASH-001
+          - BR-FASH-002
+          - BR-FASH-003
+          - DBR-FASH-001
+
+      - id: sets.optimize
+        kind: surface
+        title: Armor set optimize (library)
+        rules:
+          - BR-OPT-001
+          - BR-OPT-002
+          - 026:SC-001
+
+  # ─────────────────────────────────────────────
+  - id: synergy
+    label: Synergy
+    description: Synergy library, create/edit, evidence links, filters.
+    nodes:
+      - id: synergy.signed-out
+        kind: gate
+        title: Synergy — signed-out gate
+        path: /synergy
+        auth: signed-out
+        rules:
+          - BR-AUTH-001
+
+      - id: synergy.library
+        kind: screen
+        title: Synergy library
+        path: /synergy
+        auth: signed-in
+        rules:
+          - DAC-P2-001
+          - DAC-P1-009
+          - DBR-PUR-005
+          - DBR-SYN-001
+          - BR-SYN-001
+          - 001:SC-002
+        children:
+          - id: synergy.library.filters
+            kind: surface
+            title: Filters
+            rules:
+              - BR-SYN-002
+            children:
+              - id: synergy.library.filter.type
+                kind: field
+                title: Type / subtype filter
+              - id: synergy.library.filter.search
+                kind: field
+                title: Search
+          - id: synergy.library.new
+            kind: field
+            title: New Synergy
+            flowsTo:
+              - synergy.create
+
+      - id: synergy.create
+        kind: screen
+        title: Create synergy
+        path: /synergy
+        auth: signed-in
+        rules:
+          - DAC-P2-001
+          - DAC-P2-003
+          - DBR-SYN-001
+          - DBR-SYN-005
+          - DBR-SYN-006
+          - DBR-SYN-012
+          - BR-SYN-001
+          - BR-SYN-003
+        children:
+          - id: synergy.create.type
+            kind: field
+            title: Type + optional subtype (immutable after create)
+            rules:
+              - DBR-SYN-012
+              - DAC-P2-001a
+          - id: synergy.create.description
+            kind: field
+            title: Description
+          - id: synergy.create.custom-type
+            kind: field
+            title: Personal custom synergy type / keyword
+            rules:
+              - DAC-P2-003
+              - DBR-SYN-005
+              - DBR-SYN-006
+
+      - id: synergy.detail
+        kind: screen
+        title: Synergy detail / evidence
+        path: /synergy
+        auth: signed-in
+        rules:
+          - DAC-P2-001
+          - DBR-SYN-001
+          - DBR-SYN-007
+          - DBR-SYN-008
+          - DBR-SYN-009
+          - DBR-SYN-014
+          - BR-SYN-011
+          - BR-SYN-012
+        children:
+          - id: synergy.detail.designation
+            kind: field
+            title: Designation (read-only after create)
+            rules:
+              - DAC-P2-001a
+              - DBR-SYN-012
+          - id: synergy.detail.links
+            kind: surface
+            title: Evidence links list
+            rules:
+              - DAC-P2-001
+              - DBR-SYN-007
+              - DBR-SYN-014
+            children:
+              - id: synergy.detail.link.add
+                kind: field
+                title: Add link (manifest search)
+                rules:
+                  - BR-SYN-011
+                  - BR-SYN-012
+                  - DBR-SYN-014
+              - id: synergy.detail.link.required
+                kind: field
+                title: Mark link required (AND)
+                rules:
+                  - DBR-SYN-007
+                  - DBR-SYN-008
+                  - DBR-SYN-009
+                  - DAC-P2-002
+              - id: synergy.detail.link.kinds
+                kind: field
+                title: Link kinds (weapon, perk, origin, set bonus, exotic, artifact…)
+                rules:
+                  - DBR-SYN-001
+                  - DBR-SYN-008
+          - id: synergy.detail.edit
+            kind: field
+            title: Edit description / objects only
+            rules:
+              - DAC-P2-001a
+              - DBR-SYN-012
+          - id: synergy.detail.duplicate
+            kind: field
+            title: Duplicate synergy
+            rules:
+              - BR-SYN-004
+
+      - id: synergy.edit
+        kind: screen
+        title: Edit synergy panel
+        path: /synergy
+        auth: signed-in
+        rules:
+          - DAC-P2-001a
+          - DBR-SYN-012
+          - BR-SYN-005
+
+  # ─────────────────────────────────────────────
+  - id: loadouts
+    label: Loadouts
+    description: In-game loadouts browse, exotic filters, discovery overlay.
+    nodes:
+      - id: loadouts.signed-out
+        kind: gate
+        title: Loadouts — signed-out empty
+        path: /loadouts
+        auth: signed-out
+        rules:
+          - BR-AUTH-001
+          - 003:SC-005
+
+      - id: loadouts.list
+        kind: screen
+        title: In-game loadouts list
+        path: /loadouts
+        auth: signed-in
+        rules:
+          - DBR-PUR-002
+          - BR-EXO-001
+          - BR-EXO-002
+          - 002:SC-001
+          - 002:SC-005
+        children:
+          - id: loadouts.filter.exotic
+            kind: surface
+            title: Exotic filter bar
+            rules:
+              - BR-EXO-001
+              - BR-EXO-002
+              - BR-EXO-003
+              - 002:SC-001
+              - 002:SC-003
+              - 002:SC-004
+            children:
+              - id: loadouts.filter.exact
+                kind: field
+                title: Exact exotic item filter
+                rules:
+                  - BR-EXO-001
+                  - 002:SC-001
+              - id: loadouts.filter.slot-type
+                kind: field
+                title: Same slot-type filter
+                rules:
+                  - BR-EXO-002
+                  - 002:SC-003
+          - id: loadouts.row
+            kind: surface
+            title: Loadout row / sheet
+            rules:
+              - BR-EXO-004
+            children:
+              - id: loadouts.slot-expanded
+                kind: surface
+                title: Slot expanded detail
+              - id: loadouts.discovery
+                kind: flow
+                title: Loadout discovery overlay
+                rules:
+                  - BR-EXO-005
+                  - BR-EXO-006
+                  - 002:SC-002
+
+  # ─────────────────────────────────────────────
+  - id: settings
+    label: Settings
+    description: Auth, inventory sync, manifest status.
+    nodes:
+      - id: settings.signed-out
+        kind: screen
+        title: Settings (signed-out)
+        path: /settings
+        auth: signed-out
+        rules:
+          - BR-AUTH-001
+        children:
+          - id: settings.auth.sign-in
+            kind: field
+            title: Sign in with Bungie
+
+      - id: settings.signed-in
+        kind: screen
+        title: Settings (signed-in)
+        path: /settings
+        auth: signed-in
+        rules:
+          - BR-AUTH-001
+          - DBR-EQP-005
+        children:
+          - id: settings.status
+            kind: surface
+            title: Account / status card
+            children:
+              - id: settings.status.membership
+                kind: field
+                title: Membership display
+              - id: settings.status.sign-out
+                kind: field
+                title: Sign out
+          - id: settings.inventory-sync
+            kind: surface
+            title: Inventory sync card
+            rules:
+              - DBR-EQP-005
+              - DBR-ROLL-006
+              - 003:SC-003
+              - 003:SC-005
+            children:
+              - id: settings.inventory-sync.action
+                kind: field
+                title: Sync inventory now
+                rules:
+                  - DBR-EQP-005
+              - id: settings.inventory-sync.rate
+                kind: field
+                title: Rate limit / last sync status
+                rules:
+                  - DBR-EQP-005
+          - id: settings.manifest
+            kind: surface
+            title: Manifest card
+            rules:
+              - BR-CAT-001
+            children:
+              - id: settings.manifest.refresh
+                kind: field
+                title: Refresh manifest
+              - id: settings.manifest.version
+                kind: field
+                title: Manifest version / status
+
+  # ─────────────────────────────────────────────
+  - id: analyze
+    label: Analyze
+    description: Loadout analyzer — form, Bungie import, report.
+    nodes:
+      - id: analyze.page
+        kind: screen
+        title: Analyzer
+        path: /analyze
+        auth: any
+        rules:
+          - DBR-PUR-002
+          - DBR-LLM-001
+        children:
+          - id: analyze.form
+            kind: surface
+            title: Analyze form
+            children:
+              - id: analyze.form.input
+                kind: field
+                title: Loadout / description input
+              - id: analyze.form.submit
+                kind: field
+                title: Run analysis
+          - id: analyze.bungie-import
+            kind: surface
+            title: Bungie import
+            auth: signed-in
+            rules:
+              - BR-AUTH-001
+            children:
+              - id: analyze.bungie-import.character
+                kind: field
+                title: Character select
+              - id: analyze.bungie-import.pull
+                kind: field
+                title: Import equipped loadout
+          - id: analyze.report
+            kind: surface
+            title: Analysis report
+            rules:
+              - DBR-GUID-001
+              - DBR-SYN-001
+
+  # ─────────────────────────────────────────────
+  - id: cross-cutting
+    label: Cross-cutting
+    description: Shared pickers, validation UI, LLM propose, performance.
+    nodes:
+      - id: shared.manifest-picker
+        kind: surface
+        title: ManifestSearchPicker
+        rules:
+          - DBR-ROLL-010
+          - BR-CAT-005
+          - 025:SC-001
+        children:
+          - id: shared.manifest-picker.query
+            kind: field
+            title: Search query
+          - id: shared.manifest-picker.results
+            kind: field
+            title: Result list / pick
+
+      - id: shared.set-attach-picker
+        kind: surface
+        title: SetAttachPicker
+        rules:
+          - BR-ATT-001
+          - BR-TAG-008
+          - BR-SUG-001
+          - BR-TAG-010
+
+      - id: shared.synergy-type-select
+        kind: surface
+        title: SynergyTypeMultiSelect
+        rules:
+          - DBR-SYN-002
+          - DBR-SYN-003
+          - DBR-SYN-004
+          - DAC-P1-001
+
+      - id: shared.concept-tags
+        kind: surface
+        title: ConceptTagPicker
+        rules:
+          - BR-TAG-001
+          - BR-TAG-003
+          - BR-TAG-005
+          - BR-TAG-006
+
+      - id: shared.ui-prevention
+        kind: gate
+        title: UI prevention of hard constraints
+        rules:
+          - DAC-DST-009
+          - BR-UI-001
+          - DBR-GUID-003
+
+      - id: shared.validation
+        kind: gate
+        title: API / form validation codes
+        rules:
+          - BR-VAL-001
+          - BR-VAL-002
+          - BR-VAL-003
+          - BR-TAG-003
+          - BR-SAVE-003
+          - BR-SAVE-004
+          - BR-CONF-003
+
+      - id: shared.llm-propose
+        kind: flow
+        title: LLM propose-for-confirm (manual)
+        rules:
+          - DAC-P2-004
+          - DBR-LLM-001
+          - DBR-LLM-002
+          - DBR-LLM-003
+          - DBR-LLM-004
+          - DBR-LLM-005
+        children:
+          - id: shared.llm-propose.run
+            kind: field
+            title: Start pass
+          - id: shared.llm-propose.review
+            kind: surface
+            title: Review proposals
+          - id: shared.llm-propose.confirm
+            kind: field
+            title: Confirm / edit before persist
+            rules:
+              - DBR-LLM-002
+
+      - id: shared.perf
+        kind: surface
+        title: Performance expectations
+        rules:
+          - BR-PERF-001
+          - BR-PERF-002
+          - BR-PERF-003
+          - 001:SC-007

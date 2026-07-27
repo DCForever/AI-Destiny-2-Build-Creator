@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2BC UI Rules</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="crumbs">UI RULES / Destiny 2 Build Creator</div>
+      <h1>UI ↔ AC / BR companion</h1>
+      <p class="lede">
+        Browse the curated inventory, edit rule text, write back to markdown.
+        Diagram labels are read-only — regenerate after saves.
+        <strong>Never auto-commits.</strong>
+      </p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnReload" class="btn">Reload</button>
+      <button type="button" id="btnGenerate" class="btn primary">Regenerate draw.io</button>
+      <a class="btn ghost" href="/ui-map.drawio" download="ui-map.drawio">Download .drawio</a>
+      <a class="btn ghost" href="/inventory.yaml" download>Inventory YAML</a>
+    </div>
+  </header>
+
+  <div class="status" id="status" hidden></div>
+
+  <div class="layout">
+    <aside class="pane tree-pane">
+      <div class="pane-head">
+        <h2>UI inventory</h2>
+        <input type="search" id="treeFilter" placeholder="Filter nodes…" />
+      </div>
+      <div id="pageTabs" class="page-tabs"></div>
+      <nav id="tree" class="tree" aria-label="UI tree"></nav>
+    </aside>
+
+    <main class="pane node-pane">
+      <div class="pane-head">
+        <h2 id="nodeTitle">Select a node</h2>
+        <p id="nodeMeta" class="meta"></p>
+      </div>
+      <div id="nodeBody" class="node-body">
+        <p class="empty">Choose a screen, surface, or field from the tree.</p>
+      </div>
+      <div id="linkedRules" class="linked-rules"></div>
+    </main>
+
+    <section class="pane editor-pane">
+      <div class="pane-head">
+        <h2>Rule editor</h2>
+        <p id="editorMeta" class="meta">Select a linked rule to edit full text.</p>
+      </div>
+      <label class="field-label" for="ruleId">Rule ID</label>
+      <input id="ruleId" type="text" readonly />
+
+      <label class="field-label" for="ruleTitle">Title</label>
+      <input id="ruleTitle" type="text" />
+
+      <label class="field-label" for="ruleBody">Body</label>
+      <textarea id="ruleBody" rows="16" spellcheck="true"></textarea>
+
+      <div class="editor-actions">
+        <label class="check">
+          <input type="checkbox" id="regenOnSave" checked />
+          Regenerate draw.io on save
+        </label>
+        <button type="button" id="btnSave" class="btn primary" disabled>Save to markdown</button>
+      </div>
+      <p class="hint">
+        Writes only the matching block/row in the source file under <code>specs/</code>.
+        Review with git; commit yourself.
+      </p>
+      <pre id="editorLog" class="log" hidden></pre>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
