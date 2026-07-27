@@ -1,151 +1,174 @@
-# UI ↔ Rules map (+ Atlas screenshots)
+# UI rules projections + unified companion
 
-Production UI inventory mapped to domain acceptance criteria (`DAC-*`), domain business rules (`DBR-*`), feature business rules (`BR-*`), and slice-level acceptance blocks (`NNN:SC-*`, `NNN:US*-AS*`).
+This folder holds **generated** Draw.io / inventory projections and the **unified product-map companion** (served by `scripts/ui-rules/server.mjs`).
 
-**Structure SSoT** is now [`docs/product-map/`](../product-map/README.md). This folder holds **generated** inventory/drawio projections plus the companion app.
+**Structure source of truth is not here** — edit [`docs/product-map/`](../product-map/README.md) (`surfaces.yaml`, `flows.yaml`, …).  
+**Rule wording** stays in `specs/domain-*.md`, `specs/business-rules.md`, and feature specs.
 
-**Combined with** the screenshot [UI Atlas](../atlas/README.md): the companion links inventory nodes to Atlas screen IDs and shows captures next to rules. The standalone Atlas viewer remains available for journeys/element density.
+| Need | Go to |
+|------|--------|
+| Add/edit screens & flows | [`../product-map/`](../product-map/README.md) + `npm run product-map:sync` |
+| Browse map + edit rules | `npm run product-map:view` (or `ui-rules:view`) → http://127.0.0.1:4174 |
+| Screenshots only | [`../atlas/README.md`](../atlas/README.md) |
 
-## Artifacts
+## Artifacts in this directory
 
 | Path | Role |
 |------|------|
-| [`../product-map/`](../product-map/) | **Structure SSoT** (surfaces, flows, platforms) |
-| [`inventory.yaml`](./inventory.yaml) | **Generated** UI tree projection (do not hand-edit) |
-| [`ui-map.drawio`](./ui-map.drawio) | Generated multi-page Draw.io diagram (full rule text + 📷 Atlas ids, **read-only**) |
-| [`companion/`](./companion/) | Local web app: inventory tree, **screenshots**, edit rule text |
-| [`../atlas/`](../atlas/) | Manifest, journeys, screenshots (PNGs gitignored) |
-| `specs/domain-acceptance-criteria.md` | Canonical **DAC** text |
-| `specs/domain-business-rules.md` | Canonical **DBR** text |
-| `specs/business-rules.md` | Canonical **BR** text |
-| `specs/00N-*/spec.md` | Slice SC / acceptance scenarios |
+| [`ui-map.drawio`](./ui-map.drawio) | **Generated** multi-page Draw.io (structure + full rule labels + flow pages). Read-only; regenerate after hub/doc changes. |
+| [`inventory.yaml`](./inventory.yaml) | **Generated** tree projection for legacy tooling / reverse Atlas links. **Do not hand-edit.** |
+| [`companion/`](./companion/) | Unified viewer UI (Flows · Screens · Map · Rules · Export) |
 
-## Workflow
+Related elsewhere:
+
+| Path | Role |
+|------|------|
+| [`../product-map/`](../product-map/) | Structure SSoT |
+| [`../atlas/`](../atlas/) | Screenshots (gitignored PNGs), Atlas-only app, generated `manifest.json` + `ui-rules-links.json` |
+| `specs/domain-acceptance-criteria.md` | `DAC-*` wording |
+| `specs/domain-business-rules.md` | `DBR-*` wording |
+| `specs/business-rules.md` | `BR-*` wording |
+
+## Architecture
 
 ```text
-inventory.yaml  ──┐
-rule markdown  ───┼── generate ──► ui-map.drawio  (labels + Atlas screen ids)
-Atlas manifest ───┘
+docs/product-map/          (edit: surfaces, flows, platforms, rule IDs)
+        │
+        ▼  npm run product-map:sync  /  product-map:ci
+        │
+        ├──► docs/ui-rules/ui-map.drawio
+        ├──► docs/ui-rules/inventory.yaml
+        ├──► docs/atlas/manifest.json      (screens, paths/phases, transitions)
+        └──► docs/atlas/ui-rules-links.json
 
-companion ── screenshots from docs/atlas/screenshots
-         ── write-back ──► rule markdown  (never auto-commits)
-         ── optional regenerate draw.io
+specs/*.md  ◄── write-back ── companion Rules mode
+                (never auto-commits)
+
+docs/atlas/screenshots/*.png  ──► companion Screens / Flows (view)
 ```
 
-1. **Structure / which rules attach to which UI** → edit `inventory.yaml`, then regenerate.
-2. **Screenshots** → `npm run atlas:capture` (see Atlas README); companion serves them at `/atlas/screenshots/…`.
-3. **Rule wording** → companion (or markdown), then regenerate diagram so labels match.
-4. **Review** with git; commit yourself.
+1. **Structure** → edit product-map hub (or companion structure forms).
+2. **Sync** → `npm run product-map:sync` (commit hub + generated files).
+3. **Rule wording** → companion **Rules** mode or edit markdown; regenerate so Draw.io labels update.
+4. **Screenshots** → `npm run atlas:capture` (Next); Flutter path when shell exists ([FLUTTER.md](../product-map/FLUTTER.md)).
 
-## Atlas linking (bidirectional navigation)
+## Unified viewer
 
-| Direction | How |
-|-----------|-----|
-| **Inventory → Atlas shot** | Companion resolves node → screen id → PNG |
-| **Atlas → diagram** | Atlas UI links to companion `?node=…` + `.drawio` download |
+```powershell
+npm run product-map:view
+# alias: npm run ui-rules:view
+# → http://127.0.0.1:4174
+```
 
-Resolution order for each inventory node:
+| Mode | Purpose |
+|------|---------|
+| **Flows** | Nested phases (`include` / `branch` / `loop` / `gate`); add phase stubs to hub |
+| **Screens** | Surfaces by area; Next vs `flutter-windows` filter; Atlas shots; attach rule IDs |
+| **Map** | Transitions from product-map |
+| **Rules** | Edit DAC/DBR/BR/slice body → write markdown |
+| **Export** | Sync/generate, download `.drawio`, quick-add surface |
 
-1. Explicit `atlas:` field on the node (`string` or list of Atlas screen ids)
-2. Alias table in `scripts/ui-rules/lib/atlas-link.mjs` (name mismatches)
-3. Auto: `node.id` with `.` → `-` if it matches `docs/atlas/manifest.json` screen id
-4. Inherit nearest ancestor’s link (fields show parent screen shots)
-
-Generate also writes reverse map [`docs/atlas/ui-rules-links.json`](../atlas/ui-rules-links.json) (Atlas screen → primary inventory node).
-
-Deep link examples:
+Deep links:
 
 ```text
-http://127.0.0.1:4174/?node=build.finish&page=build
+http://127.0.0.1:4174/?mode=flows&flow=journey.p1.intent-compose-equip
+http://127.0.0.1:4174/?mode=screens&node=build.finish&platform=flutter-windows
+http://127.0.0.1:4174/?mode=rules&rule=DAC-P1-007
 http://127.0.0.1:4174/ui-map.drawio
 ```
 
-Example explicit link:
+Env: `UI_RULES_PORT` (default `4174`), `UI_RULES_HOST` (default `127.0.0.1`).
+
+Standalone Atlas (journeys + lightbox without hub editor): `npm run atlas:view` → :4173, or `/atlas/` when companion is running.
+
+## Atlas ↔ surface linking
+
+| Direction | How |
+|-----------|-----|
+| Surface → screenshot | `platforms.nextjs.captureId` (and aliases / id auto-map) → PNG under `docs/atlas/screenshots/` |
+| Atlas → companion | Header / per-screen **Rules** links → `?node=…` (see [Atlas README](../atlas/README.md)) |
+
+Reverse map: generated [`../atlas/ui-rules-links.json`](../atlas/ui-rules-links.json).
+
+Capture binding on a surface (in **product-map**, not inventory.yaml):
 
 ```yaml
+# docs/product-map/surfaces.yaml
 - id: build.finish
   kind: screen
   title: Finish tab
-  atlas: build-edit-finish   # or [id1, id2]
-  rules: [DAC-P1-007]
+  rules: [DAC-P1-007, DBR-EQP-003]
+  platforms:
+    nextjs:
+      path: /build
+      captureId: build-edit-finish
+    flutter-windows:
+      status: stub
+      route: /build
+      captureId: build-edit-finish
 ```
-
-## Commands
-
-```powershell
-# Preferred: validate hub + regenerate all projections
-npm run product-map:sync
-
-# Unified product map viewer (Flows | Screens | Map | Rules | Export)
-npm run ui-rules:view
-# → http://127.0.0.1:4174
-# Deep links: ?mode=flows&flow=…  ?mode=screens&node=…  ?mode=rules&rule=DAC-P1-007
-```
-
-Optional env:
-
-- `UI_RULES_PORT` (default `4174`)
-- `UI_RULES_HOST` (default `127.0.0.1`)
 
 ## Draw.io
 
-- Format: **uncompressed** multi-page `.drawio` (git-friendly).
-- Open in [diagrams.net](https://app.diagrams.net/) / VS Code Draw.io extension.
-- **Do not treat shape text as editable source** — regenerate after companion or markdown edits.
-- Pages: Overview, Build, Catalog, Sets, Synergy, Loadouts, Settings, Analyze, Cross-cutting.
+- Uncompressed multi-page `.drawio` (git-friendly).
+- Open in [diagrams.net](https://app.diagrams.net/) or a VS Code Draw.io extension.
+- **Shape text is not editable source** — change rules in specs / companion, structure in product-map, then sync.
+- Pages include area structure + hierarchical **flow** pages.
 
-## Inventory schema (YAML)
-
-```yaml
-pages:
-  - id: build
-    label: Build
-    description: optional
-    nodes:
-      - id: build.library          # stable id
-        kind: screen               # screen|subscreen|surface|field|flow|gate|auth
-        title: Build library
-        path: /build               # optional route
-        auth: signed-in            # signed-in|signed-out|any
-        notes: optional
-        rules:                     # rule IDs (see below)
-          - DAC-P1-001
-          - DBR-SYN-003
-          - BR-TAG-008
-          - 001:SC-002
-        children: []               # nested UI
-        flowsTo: [build.create]    # optional edge targets (same page)
-```
-
-### Rule ID forms
+## Rule ID forms
 
 | Form | Example | Source |
 |------|---------|--------|
 | Domain AC | `DAC-P1-007` | `domain-acceptance-criteria.md` |
 | Domain BR | `DBR-EQP-001` | `domain-business-rules.md` |
 | Feature BR | `BR-BLD-008` | `business-rules.md` |
-| Slice SC | `001:SC-001` | `specs/001-…/spec.md` success criteria |
-| Slice acceptance scenario | `002:US1-AS2` | User story acceptance scenario #2 |
+| Slice SC | `001:SC-001` | feature `spec.md` |
+| Slice acceptance scenario | `002:US1-AS2` | user story scenarios |
 
-Ranges like `DBR-EQP-001–008` expand when generating.
+Ranges like `DBR-EQP-001–008` expand when generating labels.
 
-## Companion write-back
+## Companion APIs (local only)
 
-- **PUT** `/api/rules/:id` with `{ "body": "...", "title": "...", "regenerate": true }`.
-- Updates the matching heading block (DAC), table row (DBR/BR), or SC/AS line (slice).
-- Leaves git dirty; **never commits**.
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/hub` | Surfaces, flows, transitions |
+| GET | `/api/hub/flows` | Flows + expanded phase trees |
+| PUT | `/api/hub/attach-rules` | Write `rules:` on a surface |
+| POST | `/api/hub/add-phase` | Append phase stub to a flow |
+| POST | `/api/hub/add-surface` | Append surface stub |
+| PUT | `/api/rules/:id` | Write rule wording to markdown |
+| POST | `/api/sync` | Run `product-map:sync` |
+| POST | `/api/generate` | Regenerate projections |
 
-## Scope
+Never auto-commits.
 
-- **In:** production routes + signed-in/out variants; Analyze; shared pickers; P1/P2 journeys.
-- **Out:** `/debug/*` (add later in inventory if needed).
+## Commands (canonical)
 
-## Scripts
+Prefer **product-map** scripts (see [product-map README](../product-map/README.md)):
+
+```powershell
+npm run product-map:sync      # day-to-day after hub edits
+npm run product-map:ci        # full map gate (also part of npm run gate)
+npm run product-map:view      # companion
+npm run product-map:check-dirty
+npm run product-map:orphan-rules
+```
+
+`npm run ui-rules:generate` is an alias for `product-map:generate`.
+
+## Scripts under `scripts/ui-rules/`
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/ui-rules/generate.mjs` | inventory + docs → `ui-map.drawio` |
-| `scripts/ui-rules/server.mjs` | companion HTTP API + static files |
-| `scripts/ui-rules/lib/parse-rules.mjs` | parse DAC/DBR/BR/slice |
-| `scripts/ui-rules/lib/writeback.mjs` | write rule text into markdown |
-| `scripts/ui-rules/lib/drawio.mjs` | uncompressed mxfile builder |
+| `server.mjs` | Companion HTTP server + hub/rule APIs |
+| `lib/parse-rules.mjs` | Parse DAC/DBR/BR/slice from markdown |
+| `lib/writeback.mjs` | Write rule text into markdown |
+| `lib/drawio.mjs` | Uncompressed mxfile builder |
+| `lib/atlas-link.mjs` | Surface ↔ Atlas screen / screenshot resolution |
+
+Generate/import/CI live under `scripts/product-map/`.
+
+## Scope
+
+- **In:** production routes, signed-in/out variants, hierarchical P1/P2 flows, Analyze, shared pickers, Flutter stubs.
+- **Out of first-class map:** `/debug/*` (may appear in Atlas captures only).
