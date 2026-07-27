@@ -34,6 +34,15 @@ import {
   INVENTORY_PATH,
 } from "./lib/paths.mjs";
 import { writeRuleBack } from "./lib/writeback.mjs";
+import {
+  expandFlowTree,
+  loadHub,
+} from "../product-map/lib/load-hub.mjs";
+import {
+  addPhaseToFlow,
+  attachRulesToSurface,
+  ensureSurface,
+} from "../product-map/lib/write-hub.mjs";
 
 const PORT = Number(process.env.UI_RULES_PORT || 4174);
 const HOST = process.env.UI_RULES_HOST || "127.0.0.1";
@@ -245,6 +254,108 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/api/generate" && req.method === "POST") {
       const out = regenerate();
       return json(res, 200, { ok: true, ...out });
+    }
+
+    if (pathname === "/api/sync" && req.method === "POST") {
+      const r = spawnSync(
+        process.execPath,
+        [path.join(REPO_ROOT, "scripts/product-map/sync.mjs")],
+        { cwd: REPO_ROOT, stdio: "pipe", encoding: "utf8" },
+      );
+      return json(res, r.status === 0 ? 200 : 500, {
+        ok: r.status === 0,
+        stdout: r.stdout,
+        stderr: r.stderr,
+      });
+    }
+
+    if (pathname === "/api/hub" && req.method === "GET") {
+      const hub = loadHub();
+      return json(res, 200, {
+        meta: hub.meta,
+        platforms: hub.platforms,
+        surfaceCount: hub.surfaces.length,
+        flowCount: hub.flows.length,
+        transitionCount: hub.transitions.length,
+        surfaces: hub.surfaces,
+        flows: hub.flows,
+        transitions: hub.transitions,
+      });
+    }
+
+    if (pathname === "/api/hub/flows" && req.method === "GET") {
+      const hub = loadHub();
+      const flows = hub.flows.map((f) => ({
+        ...f,
+        tree: expandFlowTree(f, hub.byId, hub.flows),
+      }));
+      return json(res, 200, { flows });
+    }
+
+    if (pathname === "/api/hub/surfaces" && req.method === "GET") {
+      const hub = loadHub();
+      return json(res, 200, { surfaces: hub.surfaces });
+    }
+
+    if (pathname === "/api/hub/attach-rules" && req.method === "PUT") {
+      const payload = await readBody(req);
+      const surfaceId = payload?.surfaceId;
+      const rules = payload?.rules;
+      if (!surfaceId || !Array.isArray(rules)) {
+        return json(res, 400, {
+          ok: false,
+          message: "surfaceId and rules[] required",
+        });
+      }
+      const result = attachRulesToSurface(surfaceId, rules);
+      if (!result.ok) return json(res, 400, result);
+      if (payload?.regenerate) {
+        try {
+          result.drawio = regenerate();
+        } catch (e) {
+          result.regenerateError = String(e);
+        }
+      }
+      return json(res, 200, result);
+    }
+
+    if (pathname === "/api/hub/add-phase" && req.method === "POST") {
+      const payload = await readBody(req);
+      const result = addPhaseToFlow(payload?.flowId, payload?.phase || {});
+      if (!result.ok) return json(res, 400, result);
+      if (payload?.regenerate) {
+        try {
+          result.drawio = regenerate();
+        } catch (e) {
+          result.regenerateError = String(e);
+        }
+      }
+      return json(res, 200, result);
+    }
+
+    if (pathname === "/api/hub/add-surface" && req.method === "POST") {
+      const payload = await readBody(req);
+      const result = ensureSurface(payload?.surface || payload || {});
+      if (!result.ok) return json(res, 400, result);
+      if (payload?.regenerate) {
+        try {
+          result.drawio = regenerate();
+        } catch (e) {
+          result.regenerateError = String(e);
+        }
+      }
+      return json(res, 200, result);
+    }
+
+    if (pathname === "/api/atlas/manifest" && req.method === "GET") {
+      if (!fs.existsSync(path.join(ATLAS_DIR, "manifest.json"))) {
+        return json(res, 404, { ok: false, message: "manifest missing" });
+      }
+      return json(
+        res,
+        200,
+        JSON.parse(fs.readFileSync(path.join(ATLAS_DIR, "manifest.json"), "utf8")),
+      );
     }
 
     if (pathname === "/api/node-rules" && req.method === "GET") {

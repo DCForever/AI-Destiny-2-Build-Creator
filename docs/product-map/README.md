@@ -42,6 +42,23 @@ npm run product-map:import
 
 Feature checklist: [`CHECKLIST.md`](./CHECKLIST.md).
 
+## Unified viewer
+
+```powershell
+npm run ui-rules:view
+# http://127.0.0.1:4174
+```
+
+| Mode | Purpose |
+|------|---------|
+| **Flows** | Nested phases (include/branch/loop/gate); add phase stubs |
+| **Screens** | Surfaces by area + Atlas shots; attach rule IDs to hub |
+| **Map** | Transitions |
+| **Rules** | Edit DAC/DBR/BR/slice wording → markdown write-back |
+| **Export** | Sync/generate, download draw.io, quick-add surface |
+
+Structure writes go to `surfaces.yaml` / `flows.yaml` (never auto-commit).
+
 ## Edit workflow
 
 1. Change surfaces/flows in this folder (or scaffold).

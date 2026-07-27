@@ -76,9 +76,10 @@ Example explicit link:
 # Preferred: validate hub + regenerate all projections
 npm run product-map:sync
 
-# Companion (browse + edit rule text + write-back + regenerate)
+# Unified product map viewer (Flows | Screens | Map | Rules | Export)
 npm run ui-rules:view
 # → http://127.0.0.1:4174
+# Deep links: ?mode=flows&flow=…  ?mode=screens&node=…  ?mode=rules&rule=DAC-P1-007
 ```
 
 Optional env:
