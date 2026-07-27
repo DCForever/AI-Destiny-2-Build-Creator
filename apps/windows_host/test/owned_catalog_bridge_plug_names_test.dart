@@ -156,6 +156,23 @@ void main() {
     expect(bridge2.plugNameByHash[9], 'Known');
     expect(bridge2.plugNameByHash[11], 'X-11');
 
+    // Builder that completes with null must not red-screen Catalog.
+    final bridge3 = OwnedCatalogBridge(
+      db: db,
+      offlineCatalog: services.offlineCatalog,
+      session: session,
+      inventorySync: sync,
+      plugNameMapBuilder: (hashes) async {
+        // Simulate misbehaving / failed raw-table path.
+        return Future<Map<int, String>>.value(
+          // ignore: unnecessary_cast — force runtime null through dynamic edge
+          null as dynamic,
+        );
+      },
+    );
+    await bridge3.ensurePlugNames([999]);
+    expect(bridge3.plugNameByHash.containsKey(999), isFalse);
+
     sync.dispose();
   });
 }

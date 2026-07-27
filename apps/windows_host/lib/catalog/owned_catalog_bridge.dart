@@ -80,8 +80,8 @@ class OwnedCatalogBridge {
     _inventory = await listInventoryItems(db, _userId!);
     _ownedCounts = ownedHashCountsFromInventory(_inventory);
 
-    // Resolve plug names for inventory (scoped, Next-style fill-in).
-    await ensurePlugNames(collectPlugHashesFromInventory(_inventory));
+    // Plug names resolve on demand in instancesForResolved (selected item only),
+    // matching Next perk-grid — avoid loading full raw defs for entire inventory.
 
     final synergies = await listUserSynergies(db, _userId!);
     _synergyMembership = [
@@ -116,6 +116,7 @@ class OwnedCatalogBridge {
   /// Ensure [hashes] have display names (entity seed + raw def builder).
   ///
   /// Safe to call repeatedly; only fetches missing hashes.
+  /// Never throws — Catalog must not red-screen on name resolution failure.
   Future<void> ensurePlugNames(Iterable<int> hashes) async {
     final missing = <int>[
       for (final h in hashes)
@@ -123,7 +124,6 @@ class OwnedCatalogBridge {
     ];
     if (missing.isEmpty) return;
 
-    final builder = plugNameMapBuilder ?? inventorySync.perkNameMapBuilder;
     final explicit = inventorySync.perkNameMap;
     if (explicit != null && explicit.isNotEmpty) {
       for (final h in missing) {
@@ -132,14 +132,34 @@ class OwnedCatalogBridge {
       }
     }
 
-    final stillMissing = [
+    final stillMissing = <int>[
       for (final h in missing)
         if (!_plugNameByHash.containsKey(h)) h,
     ];
-    if (stillMissing.isEmpty || builder == null) return;
+    if (stillMissing.isEmpty) return;
+
+    final builder = plugNameMapBuilder ?? inventorySync.perkNameMapBuilder;
+    if (builder == null) return;
 
     try {
-      final more = await builder(stillMissing);
+      // Avoid typed await of Map — a null completion throws
+      // "Null is not a subtype of Map<int,String> of function result" and can
+      // surface as a Catalog red screen if not coerced via dynamic.
+      final dynamic fut = builder(List<int>.from(stillMissing));
+      final Object? raw = fut is Future ? await fut : fut;
+      if (raw is! Map) return;
+      final more = <int, String>{};
+      for (final e in raw.entries) {
+        final k = e.key;
+        final v = e.value;
+        final hash = k is int
+            ? k
+            : k is num
+                ? k.toInt()
+                : int.tryParse('$k');
+        if (hash == null || v is! String || v.isEmpty) continue;
+        more[hash] = v;
+      }
       if (more.isEmpty) return;
       _plugNameByHash = {..._plugNameByHash, ...more};
     } catch (_) {

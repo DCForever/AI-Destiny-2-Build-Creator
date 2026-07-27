@@ -22,19 +22,22 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
   BungieManifestService? manifestService,
 }) {
   Future<Map<int, String>> perkBuilder(List<int> plugHashes) async {
-    if (plugHashes.isEmpty) return const {};
+    // Always return a non-null Map (Catalog crashes if Future completes null).
+    final empty = <int, String>{};
+    if (plugHashes.isEmpty) return empty;
     final service = manifestService;
-    if (service == null) return const {};
-    final version = await service.readCurrentVersion();
-    if (version == null || version.isEmpty) return const {};
+    if (service == null) return empty;
     try {
+      final version = await service.readCurrentVersion();
+      if (version == null || version.isEmpty) return empty;
       final table = await service.loadRawTable(
         version,
         'DestinyInventoryItemDefinition',
       );
-      return buildPerkNameMapFromItemDefs(table, plugHashes);
+      final map = buildPerkNameMapFromItemDefs(table, plugHashes);
+      return Map<int, String>.from(map);
     } catch (_) {
-      return const {};
+      return empty;
     }
   }
 
