@@ -110,8 +110,10 @@ function flatten(nodes, depth = 0) {
  * @param {object} page
  * @param {Map<string, import('./parse-rules.mjs').RuleRecord>} ruleById
  * @param {(ids: string[]) => string[]} expandRefs
+ * @param {{ atlasIndex?: Map<string, { ids: string[], inheritedFrom: string|null }> }} [opts]
  */
-export function buildDiagramModel(page, ruleById, expandRefs) {
+export function buildDiagramModel(page, ruleById, expandRefs, opts = {}) {
+  const atlasIndex = opts.atlasIndex || null;
   let cellId = 2;
   const nextId = () => String(cellId++);
 
@@ -153,7 +155,16 @@ export function buildDiagramModel(page, ruleById, expandRefs) {
     const style = KIND_STYLE[kind] || KIND_STYLE.surface;
     const authNote = node.auth ? `\n[${node.auth}]` : "";
     const pathNote = node.path ? `\n${node.path}` : "";
-    const label = `${node.title}${authNote}${pathNote}`;
+    let atlasNote = "";
+    if (atlasIndex) {
+      const link = atlasIndex.get(node.id);
+      if (link?.ids?.length && !link.inheritedFrom) {
+        atlasNote = `\n📷 ${link.ids.join(", ")}`;
+      } else if (link?.ids?.length && link.inheritedFrom) {
+        // omit inherited noise on deep fields; screens already show direct ids
+      }
+    }
+    const label = `${node.title}${authNote}${pathNote}${atlasNote}`;
     const h = textHeight(label, 13, 16);
     const uid = nextId();
     uiCellByInv.set(node.id, uid);
@@ -258,13 +269,15 @@ export function buildDiagramModel(page, ruleById, expandRefs) {
  * @param {object[]} pages - inventory pages
  * @param {Map<string, import('./parse-rules.mjs').RuleRecord>} ruleById
  * @param {(ids: string[]) => string[]} expandRefs
+ * @param {{ atlasIndex?: Map<string, { ids: string[], inheritedFrom: string|null }> }} [opts]
  */
-export function buildMxFile(pages, ruleById, expandRefs) {
+export function buildMxFile(pages, ruleById, expandRefs, opts = {}) {
   const diagrams = pages.map((page, idx) => {
     const { cellsXml, pageHeight, pageWidth } = buildDiagramModel(
       page,
       ruleById,
       expandRefs,
+      opts,
     );
     const name = xmlEscape(page.label || page.id);
     const id = xmlEscape(page.id || `page-${idx}`);

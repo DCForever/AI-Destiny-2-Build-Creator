@@ -1,0 +1,18 @@
+platforms:
+  nextjs:
+    label: Next.js web
+    status: production
+    capture: playwright
+    baseUrlEnv: ATLAS_BASE_URL
+  flutter-windows:
+    label: Flutter Windows
+    status: planned
+    capture: flutter-integration
+  flutter-mobile:
+    label: Flutter mobile
+    status: planned
+    capture: flutter-integration
+  jaspr-web:
+    label: Jaspr web
+    status: planned
+    capture: playwright

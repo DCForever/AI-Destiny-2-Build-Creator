@@ -10,9 +10,9 @@
   <header class="top">
     <div class="brand">
       <div class="crumbs">UI RULES / Destiny 2 Build Creator</div>
-      <h1>UI ↔ AC / BR companion</h1>
+      <h1>UI ↔ rules + Atlas</h1>
       <p class="lede">
-        Browse the curated inventory, edit rule text, write back to markdown.
+        Inventory, Atlas screenshots, and AC/BR edit/write-back in one place.
         Diagram labels are read-only — regenerate after saves.
         <strong>Never auto-commits.</strong>
       </p>
@@ -22,6 +22,7 @@
       <button type="button" id="btnGenerate" class="btn primary">Regenerate draw.io</button>
       <a class="btn ghost" href="/ui-map.drawio" download="ui-map.drawio">Download .drawio</a>
       <a class="btn ghost" href="/inventory.yaml" download>Inventory YAML</a>
+      <a class="btn ghost" href="/atlas/index.html" target="_blank" rel="noopener">Full Atlas UI</a>
     </div>
   </header>
 
@@ -42,6 +43,7 @@
         <h2 id="nodeTitle">Select a node</h2>
         <p id="nodeMeta" class="meta"></p>
       </div>
+      <div id="shots" class="shots" hidden></div>
       <div id="nodeBody" class="node-body">
         <p class="empty">Choose a screen, surface, or field from the tree.</p>
       </div>
@@ -75,6 +77,12 @@
       </p>
       <pre id="editorLog" class="log" hidden></pre>
     </section>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lb-close" id="lbClose" aria-label="Close">×</button>
+    <img id="lbImg" alt="" />
+    <div class="lb-cap" id="lbCap"></div>
   </div>
 
   <script src="./app.js"></script>

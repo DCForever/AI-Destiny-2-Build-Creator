@@ -1,6 +1,8 @@
 const state = {
   manifest: null,
   observations: null,
+  /** @type {null | { byScreen: Record<string, { primary: string, page: string|null, title: string, nodes: string[] }> }} */
+  uiRulesLinks: null,
   mode: "report",
   selected: null,
 };
@@ -13,6 +15,89 @@ async function loadJson(url) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Base URL for the UI rules companion + diagram.
+ * - Served under companion (/atlas/... on :4174) → same origin
+ * - Standalone atlas:view (:4173) → default companion port
+ * Override: window.UI_RULES_BASE or ?uiRulesBase=
+ */
+function uiRulesBase() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("uiRulesBase")) return params.get("uiRulesBase").replace(/\/?$/, "/");
+  if (typeof window !== "undefined" && window.UI_RULES_BASE) {
+    return String(window.UI_RULES_BASE).replace(/\/?$/, "/");
+  }
+  // Companion hosts Atlas at /atlas/
+  if (/\/atlas(\/|$)/.test(location.pathname) || location.port === "4174") {
+    return location.origin + "/";
+  }
+  return "http://127.0.0.1:4174/";
+}
+
+function uiRulesNodeUrl(nodeId, pageId) {
+  const u = new URL(uiRulesBase());
+  if (nodeId) u.searchParams.set("node", nodeId);
+  if (pageId) u.searchParams.set("page", pageId);
+  return u.toString();
+}
+
+function uiRulesDrawioUrl() {
+  return new URL("ui-map.drawio", uiRulesBase()).toString();
+}
+
+function linkForScreen(screenId) {
+  return state.uiRulesLinks?.byScreen?.[screenId] || null;
+}
+
+/** HTML for links into the rules diagram / companion for an Atlas screen id. */
+function diagramLinksHtml(screenId, opts) {
+  const compact = Boolean(opts?.compact);
+  const link = linkForScreen(screenId);
+  if (!link) {
+    if (compact) return "";
+    return (
+      '<p class="diagram-links muted">No UI-rules node for this screen. ' +
+      'Run <code>npm run ui-rules:generate</code> after inventory links exist.</p>'
+    );
+  }
+  const nodeUrl = uiRulesNodeUrl(link.primary, link.page);
+  const drawio = uiRulesDrawioUrl();
+  if (compact) {
+    return (
+      '<a class="btn diagram" href="' +
+      esc(nodeUrl) +
+      '" target="_blank" rel="noopener" title="Open in UI rules map">Rules</a>'
+    );
+  }
+  const more =
+    link.nodes.length > 1
+      ? '<span class="muted"> · ' +
+        (link.nodes.length - 1) +
+        " related node" +
+        (link.nodes.length > 2 ? "s" : "") +
+        "</span>"
+      : "";
+  return (
+    '<div class="diagram-links">' +
+    '<div class="diagram-label">Rules diagram</div>' +
+    '<div class="btn-row">' +
+    '<a class="btn accent" href="' +
+    esc(nodeUrl) +
+    '" target="_blank" rel="noopener">Open node · ' +
+    esc(link.primary) +
+    "</a>" +
+    '<a class="btn" href="' +
+    esc(drawio) +
+    '" target="_blank" rel="noopener" download="ui-map.drawio">Download .drawio</a>' +
+    "</div>" +
+    '<p class="muted diagram-meta">' +
+    esc(link.title) +
+    (link.page ? " · page " + esc(link.page) : "") +
+    more +
+    "</p></div>"
+  );
 }
 
 function obsList() {
@@ -52,14 +137,28 @@ function renderTopStats() {
   const shots = obsList().length;
   const el = state.observations?.elementTotals || {};
   const elTotal = Object.values(el).reduce((a, b) => a + (b || 0), 0);
+  const linked = state.uiRulesLinks
+    ? Object.keys(state.uiRulesLinks.byScreen || {}).length
+    : "—";
   document.getElementById("topStats").innerHTML =
     pill(m.screens.length, "Screens") +
     pill(m.paths.length, "Paths") +
     pill(m.transitions.length, "Transitions") +
     pill(shots, "Shots") +
+    pill(linked, "Rules links") +
     pill(elTotal || "—", "UI elements");
   document.getElementById("appTitle").textContent = m.app || "UI Atlas";
   document.getElementById("lede").textContent = m.description || "";
+  const nav = document.getElementById("topNav");
+  if (nav) {
+    nav.innerHTML =
+      '<a class="btn accent" href="' +
+      esc(uiRulesBase()) +
+      '" target="_blank" rel="noopener">UI rules map</a>' +
+      '<a class="btn" href="' +
+      esc(uiRulesDrawioUrl()) +
+      '" target="_blank" rel="noopener" download="ui-map.drawio">.drawio</a>';
+  }
 }
 function syncTabs() {
   document.querySelectorAll("#primaryTabs button").forEach((b) => {
@@ -125,15 +224,35 @@ function renderPathDetail(pathId) {
     const sc = screenById(st.screenId);
     const o = bestObs(st.screenId);
     html +=
-      '<li><div class="head"><div><div class="stepn">Step ' + String(i + 1).padStart(2, "0") +
-      '</div><div class="stept">' + esc(st.label) + '</div><div class="muted">' +
-      esc(sc?.title || st.screenId) + (o?.elements ? " · " + o.elements.total + " elements" : "") +
-      "</div></div>" +
-      (o ? '<button type="button" class="btn accent" data-full="' + esc(o.file) + '" data-cap="' + esc(st.label) + '">Full size</button>' : "") +
-      "</div>" +
+      '<li><div class="head"><div><div class="stepn">Step ' +
+      String(i + 1).padStart(2, "0") +
+      '</div><div class="stept">' +
+      esc(st.label) +
+      '</div><div class="muted">' +
+      esc(sc?.title || st.screenId) +
+      (o?.elements ? " · " + o.elements.total + " elements" : "") +
+      '</div></div><div class="btn-row">' +
       (o
-        ? '<img src="' + esc(o.file) + '" alt="" data-full="' + esc(o.file) + '" data-cap="' + esc(st.label) + '" />'
-        : '<div class="empty" style="padding:16px">No screenshot for <code>' + esc(st.screenId) + "</code></div>") +
+        ? '<button type="button" class="btn accent" data-full="' +
+          esc(o.file) +
+          '" data-cap="' +
+          esc(st.label) +
+          '">Full size</button>'
+        : "") +
+      diagramLinksHtml(st.screenId, { compact: true }) +
+      "</div></div>" +
+      (o
+        ? '<img src="' +
+          esc(o.file) +
+          '" alt="" data-full="' +
+          esc(o.file) +
+          '" data-cap="' +
+          esc(st.label) +
+          '" />'
+        : '<div class="empty" style="padding:16px">No screenshot for <code>' +
+          esc(st.screenId) +
+          "</code></div>") +
+      diagramLinksHtml(st.screenId) +
       "</li>";
   });
   html += "</ol>";
@@ -147,10 +266,13 @@ function renderScreens() {
   let html = '<div class="kicker">Screens</div><h2 class="section">Screen inventory</h2><p class="sub">Open a card for inventory, transitions, and full-size shot.</p><div class="screen-grid">';
   for (const s of m.screens) {
     const o = bestObs(s.id);
+    const hasRules = Boolean(linkForScreen(s.id));
     html +=
       '<div class="card" data-screen="' + esc(s.id) + '"><div class="thumb">' +
       (o ? '<img src="' + esc(o.file) + '" alt="" loading="lazy" />' : '<span class="muted">No shot</span>') +
-      '</div><div class="cap"><div class="t">' + esc(s.title) + '</div><div class="s">' + esc(s.path) + " · " + esc(s.auth) +
+      '</div><div class="cap"><div class="t">' + esc(s.title) +
+      (hasRules ? ' <span class="rules-badge" title="Linked to rules diagram">rules</span>' : "") +
+      '</div><div class="s">' + esc(s.path) + " · " + esc(s.auth) +
       '</div><div class="e">' + (o?.elements ? o.elements.total + " elements" : "—") + "</div></div></div>";
   }
   html += "</div>";
@@ -183,7 +305,11 @@ function renderScreenDetail(id) {
     esc(sh.variant || "shot") + "</button>"
   ).join("");
   html +=
-    '</div></div><div class="sidebox"><h3>Element inventory</h3><div class="elem-bars">' +
+    '</div>' +
+    diagramLinksHtml(id) +
+    '</div><div class="sidebox"><h3>Rules diagram</h3>' +
+    diagramLinksHtml(id) +
+    '<h3 style="margin-top:16px">Element inventory</h3><div class="elem-bars">' +
     (Object.entries(br).map(([k, v]) => '<div class="bar"><div class="n">' + v + '</div><div class="l">' + esc(k) + "</div></div>").join("") ||
       '<p class="muted">No inventory — re-capture.</p>') +
     '</div><h3 style="margin-top:16px">Sample labels</h3><div class="labels">' +
@@ -254,6 +380,7 @@ document.addEventListener("keydown", (e) => {
 (async () => {
   state.manifest = await loadJson("./manifest.json");
   state.observations = await loadJson("./observations.json");
+  state.uiRulesLinks = await loadJson("./ui-rules-links.json");
   syncTabs();
   render();
 })();

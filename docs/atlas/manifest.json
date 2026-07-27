@@ -1,9 +1,10 @@
 {
   "app": "Destiny 2 Build Creator",
-  "version": 3,
-  "generatedAt": "2026-07-25",
+  "version": 4,
+  "generatedAt": "2026-07-27",
+  "generatedFrom": "docs/product-map",
   "baseUrlDefault": "https://127.0.0.1:3000",
-  "description": "Comprehensive runtime atlas: compose flows, Catalog weapons/armor detail, libraries, loadouts, settings, and debug — signed-out and signed-in variants.",
+  "description": "Structure SSoT for surfaces, flows, and rule attachments across platforms. Rule wording lives in specs/domain-*.md and business-rules.md.\n",
   "uses": [
     "UX teardown of compose, catalog detail, and library surfaces",
     "QA coverage for signed-out gates and signed-in detail paths",
@@ -57,335 +58,304 @@
       "title": "Build — signed-out gate",
       "area": "build",
       "path": "/build",
-      "auth": "signed-out"
+      "auth": "signed-out",
+      "surfaceId": "build.signed-out"
     },
     {
       "id": "build-library",
-      "title": "Build — library (no selection)",
+      "title": "Build library",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "action": "ensure-library"
+      "surfaceId": "build.library"
     },
     {
       "id": "build-library-selected",
-      "title": "Build — library + selected details",
+      "title": "Selected build summary",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build"
-    },
-    {
-      "id": "build-create-draft-general",
-      "title": "Build create — draft General",
-      "area": "build",
-      "path": "/build",
-      "auth": "signed-in",
-      "action": "click-new-build",
-      "tab": "general"
-    },
-    {
-      "id": "build-create-draft-locked-tabs",
-      "title": "Build create — locked Subclass/Armor/Weapon",
-      "area": "build",
-      "path": "/build",
-      "auth": "signed-in",
-      "action": "click-new-build",
-      "notes": "Tab strip with locks before class/subclass"
+      "surfaceId": "build.library.selected"
     },
     {
       "id": "build-edit-general",
-      "title": "Build edit — General (live identity)",
+      "title": "Edit — General (live identity)",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "general"
+      "surfaceId": "build.edit.general"
     },
     {
       "id": "build-edit-subclass",
-      "title": "Build edit — Subclass kit",
+      "title": "Edit — Subclass kit",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "subclass"
+      "surfaceId": "build.edit.subclass"
     },
     {
       "id": "build-edit-armor-reuse",
-      "title": "Build edit — Armor Reuse",
+      "title": "Armor Reuse (attach existing)",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "armor",
-      "subPath": "reuse"
-    },
-    {
-      "id": "build-edit-armor-create",
-      "title": "Build edit — Armor Create",
-      "area": "build",
-      "path": "/build",
-      "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "armor",
-      "subPath": "create"
+      "surfaceId": "build.edit.armor.reuse"
     },
     {
       "id": "build-edit-armor-improve",
-      "title": "Build edit — Armor Improve kit",
+      "title": "Improve kit (suggestions)",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "armor",
-      "subPath": "reuse",
-      "actionExtra": "open-improve-kit"
+      "surfaceId": "build.edit.armor.improve"
+    },
+    {
+      "id": "build-edit-armor-create",
+      "title": "Armor Create + attach",
+      "area": "build",
+      "path": "/build",
+      "auth": "signed-in",
+      "surfaceId": "build.edit.armor.create"
     },
     {
       "id": "build-edit-weapon-reuse",
-      "title": "Build edit — Weapon Reuse",
+      "title": "Weapon Reuse",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "weapon",
-      "subPath": "reuse"
+      "surfaceId": "build.edit.weapon.reuse"
     },
     {
       "id": "build-edit-weapon-create",
-      "title": "Build edit — Weapon Create + fill",
+      "title": "Weapon Create + slot fill",
       "area": "build",
       "path": "/build",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "weapon",
-      "subPath": "create"
+      "surfaceId": "build.edit.weapon.create"
     },
     {
-      "id": "build-edit-finish",
-      "title": "Build edit — Finish readiness",
-      "area": "build",
-      "path": "/build",
+      "id": "catalog-signed-out-weapons",
+      "title": "Catalog weapons (signed-out / Manifest)",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-out",
+      "surfaceId": "catalog.signed-out.weapons"
+    },
+    {
+      "id": "catalog-signed-out-armor",
+      "title": "Catalog armor (signed-out / Manifest)",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-out",
+      "surfaceId": "catalog.signed-out.armor"
+    },
+    {
+      "id": "catalog-weapons-owned",
+      "title": "Weapons — Owned",
+      "area": "catalog",
+      "path": "/catalog",
       "auth": "signed-in",
-      "requires": "selected-build-edit",
-      "tab": "finish"
+      "surfaceId": "catalog.weapons.owned"
+    },
+    {
+      "id": "catalog-weapons-manifest",
+      "title": "Weapons — Manifest (all)",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-in",
+      "surfaceId": "catalog.weapons.manifest"
+    },
+    {
+      "id": "catalog-weapon-detail",
+      "title": "Weapon detail pane",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-in",
+      "surfaceId": "catalog.weapon.detail"
+    },
+    {
+      "id": "catalog-armor-owned",
+      "title": "Armor — Owned",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-in",
+      "surfaceId": "catalog.armor.owned"
+    },
+    {
+      "id": "catalog-armor-manifest",
+      "title": "Armor — Manifest",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-in",
+      "surfaceId": "catalog.armor.manifest"
+    },
+    {
+      "id": "catalog-armor-detail",
+      "title": "Armor detail pane",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-in",
+      "surfaceId": "catalog.armor.detail"
+    },
+    {
+      "id": "catalog-universal",
+      "title": "Universal search",
+      "area": "catalog",
+      "path": "/catalog",
+      "auth": "signed-in",
+      "surfaceId": "catalog.universal"
     },
     {
       "id": "sets-signed-out",
       "title": "Sets — signed-out gate",
       "area": "sets",
       "path": "/sets",
-      "auth": "signed-out"
+      "auth": "signed-out",
+      "surfaceId": "sets.signed-out"
     },
     {
       "id": "sets-library",
-      "title": "Sets — library list",
+      "title": "Sets library",
       "area": "sets",
       "path": "/sets",
       "auth": "signed-in",
-      "action": "ensure-library"
-    },
-    {
-      "id": "sets-detail",
-      "title": "Sets — set detail",
-      "area": "sets",
-      "path": "/sets",
-      "auth": "signed-in",
-      "requires": "selected-set"
-    },
-    {
-      "id": "sets-edit",
-      "title": "Sets — edit set form",
-      "area": "sets",
-      "path": "/sets",
-      "auth": "signed-in",
-      "requires": "selected-set",
-      "actionExtra": "sets-edit"
+      "surfaceId": "sets.library"
     },
     {
       "id": "sets-create",
-      "title": "Sets — create set surface",
+      "title": "Create set",
       "area": "sets",
       "path": "/sets",
       "auth": "signed-in",
-      "action": "click-new-set"
+      "surfaceId": "sets.create"
+    },
+    {
+      "id": "sets-detail",
+      "title": "Set detail",
+      "area": "sets",
+      "path": "/sets",
+      "auth": "signed-in",
+      "surfaceId": "sets.detail"
+    },
+    {
+      "id": "sets-edit",
+      "title": "Edit set form",
+      "area": "sets",
+      "path": "/sets",
+      "auth": "signed-in",
+      "surfaceId": "sets.edit"
     },
     {
       "id": "sets-fill-slot",
-      "title": "Sets — fill slot (embedded Catalog)",
+      "title": "Fill slot (embedded Catalog)",
       "area": "sets",
       "path": "/sets",
       "auth": "signed-in",
-      "requires": "selected-set",
-      "actionExtra": "sets-fill-slot",
-      "notes": "Catalog embed for empty/next slot"
+      "surfaceId": "sets.fill-slot"
     },
     {
       "id": "synergy-signed-out",
       "title": "Synergy — signed-out gate",
       "area": "synergy",
       "path": "/synergy",
-      "auth": "signed-out"
+      "auth": "signed-out",
+      "surfaceId": "synergy.signed-out"
     },
     {
       "id": "synergy-library",
-      "title": "Synergy — library list",
+      "title": "Synergy library",
       "area": "synergy",
       "path": "/synergy",
       "auth": "signed-in",
-      "action": "ensure-library"
-    },
-    {
-      "id": "synergy-detail",
-      "title": "Synergy — detail / evidence",
-      "area": "synergy",
-      "path": "/synergy",
-      "auth": "signed-in",
-      "requires": "selected-synergy"
+      "surfaceId": "synergy.library"
     },
     {
       "id": "synergy-create",
-      "title": "Synergy — create",
+      "title": "Create synergy",
       "area": "synergy",
       "path": "/synergy",
       "auth": "signed-in",
-      "action": "click-new-synergy"
+      "surfaceId": "synergy.create"
     },
     {
-      "id": "catalog-signed-out-weapons",
-      "title": "Catalog — weapons (signed-out / Manifest)",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-out",
-      "catalogKind": "weapons",
-      "catalogScope": "all"
-    },
-    {
-      "id": "catalog-signed-out-armor",
-      "title": "Catalog — armor (signed-out / Manifest)",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-out",
-      "catalogKind": "armor",
-      "catalogScope": "all"
-    },
-    {
-      "id": "catalog-weapons-owned",
-      "title": "Catalog — weapons Owned (signed-in)",
-      "area": "catalog",
-      "path": "/catalog",
+      "id": "synergy-detail",
+      "title": "Synergy detail / evidence",
+      "area": "synergy",
+      "path": "/synergy",
       "auth": "signed-in",
-      "catalogKind": "weapons",
-      "catalogScope": "owned"
-    },
-    {
-      "id": "catalog-weapons-manifest",
-      "title": "Catalog — weapons Manifest (signed-in)",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "weapons",
-      "catalogScope": "all"
-    },
-    {
-      "id": "catalog-weapon-detail",
-      "title": "Catalog — weapon detail pane",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "weapons",
-      "catalogScope": "all",
-      "actionExtra": "catalog-select-first"
-    },
-    {
-      "id": "catalog-armor-owned",
-      "title": "Catalog — armor Owned (signed-in)",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "armor",
-      "catalogScope": "owned"
-    },
-    {
-      "id": "catalog-armor-manifest",
-      "title": "Catalog — armor Manifest (signed-in)",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "armor",
-      "catalogScope": "all"
-    },
-    {
-      "id": "catalog-armor-detail",
-      "title": "Catalog — armor detail pane",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "armor",
-      "catalogScope": "all",
-      "actionExtra": "catalog-select-first"
-    },
-    {
-      "id": "catalog-universal",
-      "title": "Catalog — Universal search",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "universal"
-    },
-    {
-      "id": "catalog-filters-open",
-      "title": "Catalog — weapons filters expanded",
-      "area": "catalog",
-      "path": "/catalog",
-      "auth": "signed-in",
-      "catalogKind": "weapons",
-      "catalogScope": "all",
-      "actionExtra": "catalog-open-filters"
+      "surfaceId": "synergy.detail"
     },
     {
       "id": "loadouts-signed-out",
       "title": "Loadouts — signed-out empty",
       "area": "loadouts",
       "path": "/loadouts",
-      "auth": "signed-out"
-    },
-    {
-      "id": "loadouts-signed-in",
-      "title": "Loadouts — Bungie slots list",
-      "area": "loadouts",
-      "path": "/loadouts",
-      "auth": "signed-in"
+      "auth": "signed-out",
+      "surfaceId": "loadouts.signed-out"
     },
     {
       "id": "loadouts-slot-expanded",
-      "title": "Loadouts — expanded slot detail",
+      "title": "Slot expanded detail",
       "area": "loadouts",
       "path": "/loadouts",
       "auth": "signed-in",
-      "actionExtra": "loadouts-expand-first"
+      "surfaceId": "loadouts.slot-expanded"
     },
     {
       "id": "settings-signed-out",
-      "title": "Settings — signed-out",
+      "title": "Settings (signed-out)",
       "area": "settings",
       "path": "/settings",
-      "auth": "signed-out"
+      "auth": "signed-out",
+      "surfaceId": "settings.signed-out"
     },
     {
       "id": "settings-signed-in",
-      "title": "Settings — signed-in",
+      "title": "Settings (signed-in)",
       "area": "settings",
       "path": "/settings",
-      "auth": "signed-in"
+      "auth": "signed-in",
+      "surfaceId": "settings.signed-in"
     },
     {
-      "id": "analyze",
-      "title": "Analyzer (retired nav, kept route)",
-      "area": "analyze",
-      "path": "/analyze",
-      "auth": "any"
+      "id": "build-create-draft-general",
+      "title": "New build → draft General",
+      "area": "build",
+      "path": "/",
+      "auth": "any",
+      "surfaceId": "build.create.draft.general"
+    },
+    {
+      "id": "build-create-draft-locked-tabs",
+      "title": "Locked compose tabs",
+      "area": "build",
+      "path": "/",
+      "auth": "any",
+      "surfaceId": "build.create.draft.locked.tabs"
+    },
+    {
+      "id": "build-edit-finish",
+      "title": "Finish readiness",
+      "area": "build",
+      "path": "/",
+      "auth": "any",
+      "surfaceId": "build.edit.finish"
+    },
+    {
+      "id": "catalog-filters-open",
+      "title": "Filters expanded",
+      "area": "catalog",
+      "path": "/",
+      "auth": "any",
+      "surfaceId": "catalog.filters.open"
+    },
+    {
+      "id": "loadouts-signed-in",
+      "title": "Slots list",
+      "area": "loadouts",
+      "path": "/",
+      "auth": "any",
+      "surfaceId": "loadouts.signed.in"
     },
     {
       "id": "debug-builds",
@@ -446,6 +416,72 @@
   ],
   "paths": [
     {
+      "id": "journey-p1",
+      "title": "P1 Journey — Intent → compose → equip",
+      "priority": "P1",
+      "type": "journey",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "journey-p1-intent",
+          "label": "Designate Synergy Types"
+        },
+        {
+          "screenId": "journey-p1-compose",
+          "label": "Compose default variant (sets + kit)"
+        },
+        {
+          "screenId": "journey-p1-equip",
+          "label": "Equip / DIM when equip-ready"
+        }
+      ],
+      "surfaceFlowId": "journey.p1"
+    },
+    {
+      "id": "flow-build-finish-walkthrough",
+      "title": "Slot-first walkthrough (Armor → Weapons → Mods)",
+      "priority": "",
+      "type": "flow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "build-finish-one-tap-create",
+          "label": "One-tap Create set"
+        },
+        {
+          "screenId": "build-finish-capture",
+          "label": "Capture sets from build"
+        },
+        {
+          "screenId": "build-finish-slot-loop",
+          "label": "First empty slot fill loop"
+        }
+      ],
+      "surfaceFlowId": "flow.build.finish.walkthrough"
+    },
+    {
+      "id": "flow-shared-llm-propose",
+      "title": "LLM propose-for-confirm (manual)",
+      "priority": "",
+      "type": "flow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "shared-llm-propose-run",
+          "label": "Start pass"
+        },
+        {
+          "screenId": "shared-llm-propose-review",
+          "label": "Review proposals"
+        },
+        {
+          "screenId": "shared-llm-propose-confirm",
+          "label": "Confirm / edit before persist"
+        }
+      ],
+      "surfaceFlowId": "flow.shared.llm-propose"
+    },
+    {
       "id": "flow-signed-out-gates",
       "title": "Signed-out gates",
       "priority": "P0",
@@ -476,7 +512,8 @@
           "screenId": "catalog-signed-out-weapons",
           "label": "Catalog weapons (public)"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.signed-out-gates"
     },
     {
       "id": "flow-build-create",
@@ -509,13 +546,15 @@
           "screenId": "build-edit-finish",
           "label": "Finish readiness"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.build-create"
     },
     {
       "id": "flow-armor-set-compose",
       "title": "Armor set — Reuse, Create, Improve",
       "priority": "P1",
       "type": "compose",
+      "description": "",
       "steps": [
         {
           "screenId": "build-library-selected",
@@ -533,13 +572,15 @@
           "screenId": "build-edit-armor-improve",
           "label": "Improve kit"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.armor-set-compose"
     },
     {
       "id": "flow-weapon-set-compose",
       "title": "Weapon set — Reuse / Create",
       "priority": "P1",
       "type": "compose",
+      "description": "",
       "steps": [
         {
           "screenId": "build-edit-weapon-reuse",
@@ -549,13 +590,15 @@
           "screenId": "build-edit-weapon-create",
           "label": "Weapon → Create"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.weapon-set-compose"
     },
     {
       "id": "flow-intent-compose-equip",
       "title": "P1 spine — Intent → Compose → Equip",
       "priority": "P1",
       "type": "journey",
+      "description": "",
       "steps": [
         {
           "screenId": "build-create-draft-general",
@@ -577,13 +620,15 @@
           "screenId": "build-edit-finish",
           "label": "Finish"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.intent-compose-equip"
     },
     {
       "id": "flow-sets-library-edit",
       "title": "Sets library — browse, detail, edit, fill, create",
       "priority": "P1",
       "type": "library",
+      "description": "",
       "steps": [
         {
           "screenId": "sets-library",
@@ -605,13 +650,15 @@
           "screenId": "sets-create",
           "label": "Create"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.sets-library-edit"
     },
     {
       "id": "flow-synergy-library-edit",
       "title": "Synergy library — browse, detail, create",
       "priority": "P2",
       "type": "library",
+      "description": "",
       "steps": [
         {
           "screenId": "synergy-library",
@@ -625,7 +672,8 @@
           "screenId": "synergy-create",
           "label": "Create"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.synergy-library-edit"
     },
     {
       "id": "flow-catalog-weapons",
@@ -654,13 +702,15 @@
           "screenId": "catalog-weapon-detail",
           "label": "Weapon detail"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.catalog-weapons"
     },
     {
       "id": "flow-catalog-armor",
       "title": "Catalog — armor browse + detail",
       "priority": "P1",
       "type": "catalog",
+      "description": "",
       "steps": [
         {
           "screenId": "catalog-signed-out-armor",
@@ -682,13 +732,15 @@
           "screenId": "catalog-universal",
           "label": "Universal search"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.catalog-armor"
     },
     {
       "id": "flow-loadouts",
       "title": "In-game loadouts",
       "priority": "P2",
       "type": "library",
+      "description": "",
       "steps": [
         {
           "screenId": "loadouts-signed-out",
@@ -702,7 +754,8 @@
           "screenId": "loadouts-slot-expanded",
           "label": "Expanded slot"
         }
-      ]
+      ],
+      "surfaceFlowId": "flow.loadouts"
     }
   ],
   "transitions": [

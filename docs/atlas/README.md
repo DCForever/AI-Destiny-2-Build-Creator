@@ -2,13 +2,24 @@
 
 Local Revyl/Airbnb-style screen + journey map for Destiny 2 Build Creator.
 
-## Browse
+Screenshots are also wired into the **UI ↔ rules companion** ([`docs/ui-rules`](../ui-rules/README.md)): select an inventory node to see the matching capture next to ACs/BRs. Combined view:
+
+```powershell
+npm run ui-rules:view
+# → http://127.0.0.1:4174  (tree + shots + rules)
+```
+
+**Atlas → diagram links:** each linked screen has **Open node** (companion deep link `?node=…`) and **Download .drawio**. Mapping is generated as [`ui-rules-links.json`](./ui-rules-links.json) via `npm run ui-rules:generate`.
+
+## Browse (Atlas-only)
 
 ```powershell
 npm run atlas:view
 ```
 
 Open http://127.0.0.1:4173 — **Report** (journeys), **Screens**, **Map**, full-size lightbox.
+
+With companion running on 4174, header **UI rules map** and per-screen **Rules** buttons open the diagram. Override base: `?uiRulesBase=http://127.0.0.1:4174/`.
 
 ## Capture
 

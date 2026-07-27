@@ -1,0 +1,306 @@
+flows:
+  - id: journey.p1
+    title: P1 Journey — Intent → compose → equip
+    type: journey
+    priority: P1
+    rules:
+      - DAC-P1-001
+      - DAC-P1-002
+      - DAC-P1-003
+      - DAC-P1-004
+      - DAC-P1-005
+      - DAC-P1-006
+      - DAC-P1-007
+      - DAC-P1-008
+      - DAC-P1-009
+      - DBR-PUR-003
+      - DBR-PUR-005
+    phases:
+      - id: intent
+        title: Designate Synergy Types
+        surface: journey.p1.intent
+        rules:
+          - DAC-P1-001
+          - DBR-SYN-002
+          - DBR-SYN-003
+      - id: compose
+        title: Compose default variant (sets + kit)
+        surface: journey.p1.compose
+        rules:
+          - DAC-P1-003
+          - DAC-P1-004
+          - DBR-CMP-001
+      - id: equip
+        title: Equip / DIM when equip-ready
+        surface: journey.p1.equip
+        rules:
+          - DAC-P1-005
+          - DAC-P1-007
+          - DAC-P1-008
+          - DBR-EQP-001
+          - DBR-EQP-003
+  - id: journey.p2
+    title: P2 Journey — Library curation
+    type: journey
+    priority: P2
+    rules:
+      - DAC-P2-001
+      - DAC-P2-001a
+      - DAC-P2-003
+      - DAC-P2-004
+      - DAC-P2-005
+      - DBR-PUR-004
+    phases: []
+  - id: flow.build.edit.general.confirm-fork
+    title: Identity change confirm / fork dialog
+    type: flow
+    rules:
+      - DAC-VAR-004
+      - DBR-ID-008
+    phases: []
+  - id: flow.build.edit.subclass.exotic-ability-pin
+    title: Exotic ability auto-pin confirm
+    type: flow
+    rules:
+      - DBR-SUB-005
+      - DAC-DST-004
+    phases: []
+  - id: flow.build.finish.walkthrough
+    title: Slot-first walkthrough (Armor → Weapons → Mods)
+    type: flow
+    rules:
+      - BR-BLD-007
+      - BR-BLD-008
+      - 029:SC-001
+    phases:
+      - id: one-tap-create
+        title: One-tap Create set
+        surface: build.finish.one-tap-create
+        rules:
+          - BR-BLD-008
+      - id: capture
+        title: Capture sets from build
+        surface: build.finish.capture
+        rules:
+          - BR-BLD-008
+      - id: slot-loop
+        title: First empty slot fill loop
+        surface: build.finish.slot-loop
+        rules:
+          - BR-BLD-008
+          - DAC-DST-009
+  - id: flow.loadouts.discovery
+    title: Loadout discovery overlay
+    type: flow
+    rules:
+      - BR-EXO-005
+      - BR-EXO-006
+      - 002:SC-002
+    phases: []
+  - id: flow.shared.llm-propose
+    title: LLM propose-for-confirm (manual)
+    type: flow
+    rules:
+      - DAC-P2-004
+      - DBR-LLM-001
+      - DBR-LLM-002
+      - DBR-LLM-003
+      - DBR-LLM-004
+      - DBR-LLM-005
+    phases:
+      - id: run
+        title: Start pass
+        surface: shared.llm-propose.run
+      - id: review
+        title: Review proposals
+        surface: shared.llm-propose.review
+      - id: confirm
+        title: Confirm / edit before persist
+        surface: shared.llm-propose.confirm
+        rules:
+          - DBR-LLM-002
+  - id: flow.signed-out-gates
+    title: Signed-out gates
+    type: auth
+    priority: P0
+    description: Unauthenticated landing for each gated product area.
+    phases:
+      - id: step-1
+        title: Build gate
+        surface: build.signed-out
+      - id: step-2
+        title: Sets gate
+        surface: sets.signed-out
+      - id: step-3
+        title: Synergy gate
+        surface: synergy.signed-out
+      - id: step-4
+        title: Loadouts empty
+        surface: loadouts.signed-out
+      - id: step-5
+        title: Settings
+        surface: settings.signed-out
+      - id: step-6
+        title: Catalog weapons (public)
+        surface: catalog.signed-out.weapons
+  - id: flow.build-create
+    title: Create a new build (draft → live)
+    type: compose
+    priority: P1
+    description: From library, open New build, draft General, then live edit tabs.
+    phases:
+      - id: step-1
+        title: Open Build library
+        surface: build.library
+      - id: step-2
+        title: New build → draft General
+        surface: build.create.draft.general
+      - id: step-3
+        title: Locked compose tabs
+        surface: build.create.draft.locked.tabs
+      - id: step-4
+        title: Live General
+        surface: build.edit.general
+      - id: step-5
+        title: Subclass kit
+        surface: build.edit.subclass
+      - id: step-6
+        title: Finish readiness
+        surface: build.edit.finish
+  - id: flow.armor-set-compose
+    title: Armor set — Reuse, Create, Improve
+    type: compose
+    priority: P1
+    phases:
+      - id: step-1
+        title: Select build
+        surface: build.library.selected
+      - id: step-2
+        title: Armor → Reuse
+        surface: build.edit.armor.reuse
+      - id: step-3
+        title: Armor → Create
+        surface: build.edit.armor.create
+      - id: step-4
+        title: Improve kit
+        surface: build.edit.armor.improve
+  - id: flow.weapon-set-compose
+    title: Weapon set — Reuse / Create
+    type: compose
+    priority: P1
+    phases:
+      - id: step-1
+        title: Weapon → Reuse
+        surface: build.edit.weapon.reuse
+      - id: step-2
+        title: Weapon → Create
+        surface: build.edit.weapon.create
+  - id: flow.intent-compose-equip
+    title: P1 spine — Intent → Compose → Equip
+    type: journey
+    priority: P1
+    phases:
+      - id: step-1
+        title: Intent on General
+        surface: build.create.draft.general
+      - id: step-2
+        title: Subclass
+        surface: build.edit.subclass
+      - id: step-3
+        title: Armor
+        surface: build.edit.armor.reuse
+      - id: step-4
+        title: Weapon
+        surface: build.edit.weapon.create
+      - id: step-5
+        title: Finish
+        surface: build.edit.finish
+  - id: flow.sets-library-edit
+    title: Sets library — browse, detail, edit, fill, create
+    type: library
+    priority: P1
+    phases:
+      - id: step-1
+        title: Browse
+        surface: sets.library
+      - id: step-2
+        title: Detail
+        surface: sets.detail
+      - id: step-3
+        title: Edit form
+        surface: sets.edit
+      - id: step-4
+        title: Fill slot → Catalog embed
+        surface: sets.fill-slot
+      - id: step-5
+        title: Create
+        surface: sets.create
+  - id: flow.synergy-library-edit
+    title: Synergy library — browse, detail, create
+    type: library
+    priority: P2
+    phases:
+      - id: step-1
+        title: Browse
+        surface: synergy.library
+      - id: step-2
+        title: Detail
+        surface: synergy.detail
+      - id: step-3
+        title: Create
+        surface: synergy.create
+  - id: flow.catalog-weapons
+    title: Catalog — weapons browse + detail
+    type: catalog
+    priority: P1
+    description: Weapons kind, Owned/Manifest scopes, and item detail pane.
+    phases:
+      - id: step-1
+        title: Signed-out Manifest weapons
+        surface: catalog.signed-out.weapons
+      - id: step-2
+        title: Signed-in Owned
+        surface: catalog.weapons.owned
+      - id: step-3
+        title: Signed-in Manifest
+        surface: catalog.weapons.manifest
+      - id: step-4
+        title: Filters expanded
+        surface: catalog.filters.open
+      - id: step-5
+        title: Weapon detail
+        surface: catalog.weapon.detail
+  - id: flow.catalog-armor
+    title: Catalog — armor browse + detail
+    type: catalog
+    priority: P1
+    phases:
+      - id: step-1
+        title: Signed-out Manifest armor
+        surface: catalog.signed-out.armor
+      - id: step-2
+        title: Owned armor
+        surface: catalog.armor.owned
+      - id: step-3
+        title: Manifest armor
+        surface: catalog.armor.manifest
+      - id: step-4
+        title: Armor detail
+        surface: catalog.armor.detail
+      - id: step-5
+        title: Universal search
+        surface: catalog.universal
+  - id: flow.loadouts
+    title: In-game loadouts
+    type: library
+    priority: P2
+    phases:
+      - id: step-1
+        title: Signed-out
+        surface: loadouts.signed-out
+      - id: step-2
+        title: Slots list
+        surface: loadouts.signed.in
+      - id: step-3
+        title: Expanded slot
+        surface: loadouts.slot-expanded

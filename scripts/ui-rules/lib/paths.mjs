@@ -15,3 +15,11 @@ export const UI_RULES_DIR = path.join(REPO_ROOT, "docs", "ui-rules");
 export const INVENTORY_PATH = path.join(UI_RULES_DIR, "inventory.yaml");
 export const DRAWIO_PATH = path.join(UI_RULES_DIR, "ui-map.drawio");
 export const COMPANION_DIR = path.join(UI_RULES_DIR, "companion");
+/** Reverse map Atlas screen id → inventory node (served with Atlas). */
+export const ATLAS_UI_RULES_LINKS_PATH = path.join(
+  REPO_ROOT,
+  "docs",
+  "atlas",
+  "ui-rules-links.json",
+);
+// REPO_ROOT already exported above

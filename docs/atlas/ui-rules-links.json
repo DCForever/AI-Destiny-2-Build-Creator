@@ -1,0 +1,702 @@
+{
+  "generatedAt": "2026-07-27",
+  "companionHint": "http://127.0.0.1:4174/?node=<inventory-node-id>",
+  "byScreen": {
+    "build-create-draft-general": {
+      "primary": "build.create",
+      "page": "build",
+      "title": "Create Build (draft composer)",
+      "nodes": [
+        "build.create",
+        "build.create.draft.general",
+        "build.create.general",
+        "flow.build-create.step-2",
+        "flow.intent-compose-equip.step-1",
+        "build.create.name",
+        "build.create.tags",
+        "build.create.class",
+        "build.create.submit",
+        "build.create.subclass",
+        "build.create.exotic-armor",
+        "build.create.pinned-super",
+        "build.create.exotic-weapon",
+        "build.create.synergy-types"
+      ]
+    },
+    "build-create-draft-locked-tabs": {
+      "primary": "build.create",
+      "page": "build",
+      "title": "Create Build (draft composer)",
+      "nodes": [
+        "build.create",
+        "build.create.draft.locked.tabs",
+        "flow.build-create.step-3",
+        "build.create.tabs"
+      ]
+    },
+    "build-edit-armor-reuse": {
+      "primary": "build.edit.armor",
+      "page": "build",
+      "title": "Edit — Armor / Mod sets",
+      "nodes": [
+        "build.edit.armor",
+        "build.edit.armor.reuse",
+        "flow.armor-set-compose.step-2",
+        "flow.intent-compose-equip.step-3"
+      ]
+    },
+    "build-edit-armor-create": {
+      "primary": "build.edit.armor",
+      "page": "build",
+      "title": "Edit — Armor / Mod sets",
+      "nodes": [
+        "build.edit.armor",
+        "build.edit.armor.create",
+        "flow.armor-set-compose.step-3"
+      ]
+    },
+    "build-edit-armor-improve": {
+      "primary": "build.edit.armor",
+      "page": "build",
+      "title": "Edit — Armor / Mod sets",
+      "nodes": [
+        "build.edit.armor",
+        "flow.armor-set-compose.step-4",
+        "build.edit.armor.improve"
+      ]
+    },
+    "build-edit-finish": {
+      "primary": "build.finish",
+      "page": "build",
+      "title": "Finish tab — readiness + walkthrough",
+      "nodes": [
+        "build.finish",
+        "build.edit.finish",
+        "build.finish.equip-gate",
+        "flow.build-create.step-6",
+        "flow.intent-compose-equip.step-5",
+        "build.finish.gaps",
+        "build.finish.dim",
+        "build.finish.equip",
+        "build.finish.character"
+      ]
+    },
+    "build-edit-general": {
+      "primary": "build.edit.general",
+      "page": "build",
+      "title": "Edit — General (live identity)",
+      "nodes": [
+        "build.edit.general",
+        "flow.build-create.step-4"
+      ]
+    },
+    "build-edit-subclass": {
+      "primary": "build.edit.subclass",
+      "page": "build",
+      "title": "Edit — Subclass kit",
+      "nodes": [
+        "build.edit.subclass",
+        "flow.build-create.step-5",
+        "flow.intent-compose-equip.step-2"
+      ]
+    },
+    "build-edit-weapon-reuse": {
+      "primary": "build.edit.weapon",
+      "page": "build",
+      "title": "Edit — Weapon sets",
+      "nodes": [
+        "build.edit.weapon",
+        "build.edit.weapon.reuse",
+        "flow.weapon-set-compose.step-1"
+      ]
+    },
+    "build-edit-weapon-create": {
+      "primary": "build.edit.weapon",
+      "page": "build",
+      "title": "Edit — Weapon sets",
+      "nodes": [
+        "build.edit.weapon",
+        "build.edit.weapon.create",
+        "flow.weapon-set-compose.step-2",
+        "flow.intent-compose-equip.step-4"
+      ]
+    },
+    "build-library": {
+      "primary": "build.library",
+      "page": "build",
+      "title": "Build library",
+      "nodes": [
+        "build.library",
+        "flow.build-create.step-1"
+      ]
+    },
+    "build-library-selected": {
+      "primary": "build.library.selected",
+      "page": "build",
+      "title": "Selected build summary",
+      "nodes": [
+        "build.library.selected",
+        "flow.armor-set-compose.step-1"
+      ]
+    },
+    "build-signed-out": {
+      "primary": "build.signed-out",
+      "page": "build",
+      "title": "Build — signed-out gate",
+      "nodes": [
+        "build.signed-out",
+        "flow.signed-out-gates.step-1"
+      ]
+    },
+    "catalog-armor-detail": {
+      "primary": "catalog.armor.detail",
+      "page": "catalog",
+      "title": "Armor detail pane",
+      "nodes": [
+        "catalog.armor.detail",
+        "flow.catalog-armor.step-4"
+      ]
+    },
+    "catalog-armor-manifest": {
+      "primary": "catalog.armor.manifest",
+      "page": "catalog",
+      "title": "Armor — Manifest",
+      "nodes": [
+        "catalog.armor.manifest",
+        "flow.catalog-armor.step-3"
+      ]
+    },
+    "catalog-armor-owned": {
+      "primary": "catalog.armor.owned",
+      "page": "catalog",
+      "title": "Armor — Owned",
+      "nodes": [
+        "catalog.armor.owned",
+        "flow.catalog-armor.step-2"
+      ]
+    },
+    "catalog-filters-open": {
+      "primary": "catalog.filters.open",
+      "page": "catalog",
+      "title": "Filters expanded",
+      "nodes": [
+        "catalog.filters.open",
+        "flow.catalog-weapons.step-4",
+        "catalog.weapons.filters"
+      ]
+    },
+    "catalog-signed-out-armor": {
+      "primary": "catalog.signed-out.armor",
+      "page": "catalog",
+      "title": "Catalog armor (signed-out / Manifest)",
+      "nodes": [
+        "catalog.signed-out.armor",
+        "flow.catalog-armor.step-1"
+      ]
+    },
+    "catalog-signed-out-weapons": {
+      "primary": "catalog.signed-out.weapons",
+      "page": "catalog",
+      "title": "Catalog weapons (signed-out / Manifest)",
+      "nodes": [
+        "catalog.signed-out.weapons",
+        "flow.catalog-weapons.step-1",
+        "flow.signed-out-gates.step-6"
+      ]
+    },
+    "catalog-universal": {
+      "primary": "catalog.universal",
+      "page": "catalog",
+      "title": "Universal search",
+      "nodes": [
+        "catalog.universal",
+        "flow.catalog-armor.step-5"
+      ]
+    },
+    "catalog-weapon-detail": {
+      "primary": "catalog.weapon.detail",
+      "page": "catalog",
+      "title": "Weapon detail pane",
+      "nodes": [
+        "catalog.weapon.detail",
+        "flow.catalog-weapons.step-5"
+      ]
+    },
+    "catalog-weapons-manifest": {
+      "primary": "catalog.weapons.manifest",
+      "page": "catalog",
+      "title": "Weapons — Manifest (all)",
+      "nodes": [
+        "catalog.weapons.manifest",
+        "flow.catalog-weapons.step-3"
+      ]
+    },
+    "catalog-weapons-owned": {
+      "primary": "catalog.weapons.owned",
+      "page": "catalog",
+      "title": "Weapons — Owned",
+      "nodes": [
+        "catalog.weapons.owned",
+        "flow.catalog-weapons.step-2"
+      ]
+    },
+    "sets-create": {
+      "primary": "sets.create",
+      "page": "sets",
+      "title": "Create set",
+      "nodes": [
+        "sets.create",
+        "flow.sets-library-edit.step-5"
+      ]
+    },
+    "sets-detail": {
+      "primary": "sets.detail",
+      "page": "sets",
+      "title": "Set detail",
+      "nodes": [
+        "sets.detail",
+        "flow.sets-library-edit.step-2"
+      ]
+    },
+    "sets-edit": {
+      "primary": "sets.edit",
+      "page": "sets",
+      "title": "Edit set form",
+      "nodes": [
+        "sets.edit",
+        "flow.sets-library-edit.step-3"
+      ]
+    },
+    "sets-fill-slot": {
+      "primary": "sets.fill-slot",
+      "page": "sets",
+      "title": "Fill slot (embedded Catalog)",
+      "nodes": [
+        "sets.fill-slot",
+        "flow.sets-library-edit.step-4"
+      ]
+    },
+    "sets-library": {
+      "primary": "sets.library",
+      "page": "sets",
+      "title": "Sets library",
+      "nodes": [
+        "sets.library",
+        "flow.sets-library-edit.step-1"
+      ]
+    },
+    "sets-signed-out": {
+      "primary": "sets.signed-out",
+      "page": "sets",
+      "title": "Sets — signed-out gate",
+      "nodes": [
+        "sets.signed-out",
+        "flow.signed-out-gates.step-2"
+      ]
+    },
+    "synergy-create": {
+      "primary": "synergy.create",
+      "page": "synergy",
+      "title": "Create synergy",
+      "nodes": [
+        "synergy.create",
+        "flow.synergy-library-edit.step-3"
+      ]
+    },
+    "synergy-detail": {
+      "primary": "synergy.detail",
+      "page": "synergy",
+      "title": "Synergy detail / evidence",
+      "nodes": [
+        "synergy.detail",
+        "flow.synergy-library-edit.step-2"
+      ]
+    },
+    "synergy-library": {
+      "primary": "synergy.library",
+      "page": "synergy",
+      "title": "Synergy library",
+      "nodes": [
+        "synergy.library",
+        "flow.synergy-library-edit.step-1"
+      ]
+    },
+    "synergy-signed-out": {
+      "primary": "synergy.signed-out",
+      "page": "synergy",
+      "title": "Synergy — signed-out gate",
+      "nodes": [
+        "synergy.signed-out",
+        "flow.signed-out-gates.step-3"
+      ]
+    },
+    "loadouts-signed-in": {
+      "primary": "loadouts.list",
+      "page": "loadouts",
+      "title": "In-game loadouts list",
+      "nodes": [
+        "loadouts.list",
+        "loadouts.signed.in",
+        "flow.loadouts.step-2",
+        "loadouts.filter.exotic"
+      ]
+    },
+    "loadouts-slot-expanded": {
+      "primary": "flow.loadouts.step-3",
+      "page": "flow-flow-loadouts",
+      "title": "Expanded slot",
+      "nodes": [
+        "flow.loadouts.step-3",
+        "loadouts.slot-expanded"
+      ]
+    },
+    "loadouts-signed-out": {
+      "primary": "loadouts.signed-out",
+      "page": "loadouts",
+      "title": "Loadouts — signed-out empty",
+      "nodes": [
+        "loadouts.signed-out",
+        "flow.loadouts.step-1",
+        "flow.signed-out-gates.step-4"
+      ]
+    },
+    "settings-signed-in": {
+      "primary": "settings.signed-in",
+      "page": "settings",
+      "title": "Settings (signed-in)",
+      "nodes": [
+        "settings.signed-in"
+      ]
+    },
+    "settings-signed-out": {
+      "primary": "settings.signed-out",
+      "page": "settings",
+      "title": "Settings (signed-out)",
+      "nodes": [
+        "settings.signed-out",
+        "flow.signed-out-gates.step-5"
+      ]
+    }
+  },
+  "byNode": {
+    "build.create": [
+      "build-create-draft-general",
+      "build-create-draft-locked-tabs"
+    ],
+    "build.create.general": [
+      "build-create-draft-general"
+    ],
+    "build.create.class": [
+      "build-create-draft-general"
+    ],
+    "build.create.exotic-armor": [
+      "build-create-draft-general"
+    ],
+    "build.create.exotic-weapon": [
+      "build-create-draft-general"
+    ],
+    "build.create.name": [
+      "build-create-draft-general"
+    ],
+    "build.create.pinned-super": [
+      "build-create-draft-general"
+    ],
+    "build.create.subclass": [
+      "build-create-draft-general"
+    ],
+    "build.create.submit": [
+      "build-create-draft-general"
+    ],
+    "build.create.synergy-types": [
+      "build-create-draft-general"
+    ],
+    "build.create.tags": [
+      "build-create-draft-general"
+    ],
+    "build.create.tabs": [
+      "build-create-draft-locked-tabs"
+    ],
+    "build.create.draft.general": [
+      "build-create-draft-general"
+    ],
+    "build.create.draft.locked.tabs": [
+      "build-create-draft-locked-tabs"
+    ],
+    "build.edit.armor": [
+      "build-edit-armor-reuse",
+      "build-edit-armor-create",
+      "build-edit-armor-improve"
+    ],
+    "build.edit.armor.create": [
+      "build-edit-armor-create"
+    ],
+    "build.edit.armor.reuse": [
+      "build-edit-armor-reuse"
+    ],
+    "build.edit.armor.improve": [
+      "build-edit-armor-improve"
+    ],
+    "build.edit.finish": [
+      "build-edit-finish"
+    ],
+    "build.edit.general": [
+      "build-edit-general"
+    ],
+    "build.edit.subclass": [
+      "build-edit-subclass"
+    ],
+    "build.edit.weapon": [
+      "build-edit-weapon-reuse",
+      "build-edit-weapon-create"
+    ],
+    "build.edit.weapon.create": [
+      "build-edit-weapon-create"
+    ],
+    "build.edit.weapon.reuse": [
+      "build-edit-weapon-reuse"
+    ],
+    "build.finish": [
+      "build-edit-finish"
+    ],
+    "build.finish.character": [
+      "build-edit-finish"
+    ],
+    "build.finish.dim": [
+      "build-edit-finish"
+    ],
+    "build.finish.equip": [
+      "build-edit-finish"
+    ],
+    "build.finish.equip-gate": [
+      "build-edit-finish"
+    ],
+    "build.finish.gaps": [
+      "build-edit-finish"
+    ],
+    "build.library": [
+      "build-library"
+    ],
+    "build.library.selected": [
+      "build-library-selected"
+    ],
+    "build.signed-out": [
+      "build-signed-out"
+    ],
+    "catalog.armor.detail": [
+      "catalog-armor-detail"
+    ],
+    "catalog.armor.manifest": [
+      "catalog-armor-manifest"
+    ],
+    "catalog.armor.owned": [
+      "catalog-armor-owned"
+    ],
+    "catalog.filters.open": [
+      "catalog-filters-open"
+    ],
+    "catalog.signed-out.armor": [
+      "catalog-signed-out-armor"
+    ],
+    "catalog.signed-out.weapons": [
+      "catalog-signed-out-weapons"
+    ],
+    "catalog.universal": [
+      "catalog-universal"
+    ],
+    "catalog.weapon.detail": [
+      "catalog-weapon-detail"
+    ],
+    "catalog.weapons.manifest": [
+      "catalog-weapons-manifest"
+    ],
+    "catalog.weapons.owned": [
+      "catalog-weapons-owned"
+    ],
+    "catalog.weapons.filters": [
+      "catalog-filters-open"
+    ],
+    "sets.create": [
+      "sets-create"
+    ],
+    "sets.detail": [
+      "sets-detail"
+    ],
+    "sets.edit": [
+      "sets-edit"
+    ],
+    "sets.fill-slot": [
+      "sets-fill-slot"
+    ],
+    "sets.library": [
+      "sets-library"
+    ],
+    "sets.signed-out": [
+      "sets-signed-out"
+    ],
+    "synergy.create": [
+      "synergy-create"
+    ],
+    "synergy.detail": [
+      "synergy-detail"
+    ],
+    "synergy.library": [
+      "synergy-library"
+    ],
+    "synergy.signed-out": [
+      "synergy-signed-out"
+    ],
+    "loadouts.list": [
+      "loadouts-signed-in"
+    ],
+    "loadouts.filter.exotic": [
+      "loadouts-signed-in"
+    ],
+    "loadouts.slot-expanded": [
+      "loadouts-slot-expanded"
+    ],
+    "loadouts.signed-out": [
+      "loadouts-signed-out"
+    ],
+    "loadouts.signed.in": [
+      "loadouts-signed-in"
+    ],
+    "settings.signed-in": [
+      "settings-signed-in"
+    ],
+    "settings.signed-out": [
+      "settings-signed-out"
+    ],
+    "flow.signed-out-gates.step-1": [
+      "build-signed-out"
+    ],
+    "flow.signed-out-gates.step-2": [
+      "sets-signed-out"
+    ],
+    "flow.signed-out-gates.step-3": [
+      "synergy-signed-out"
+    ],
+    "flow.signed-out-gates.step-4": [
+      "loadouts-signed-out"
+    ],
+    "flow.signed-out-gates.step-5": [
+      "settings-signed-out"
+    ],
+    "flow.signed-out-gates.step-6": [
+      "catalog-signed-out-weapons"
+    ],
+    "flow.build-create.step-1": [
+      "build-library"
+    ],
+    "flow.build-create.step-2": [
+      "build-create-draft-general"
+    ],
+    "flow.build-create.step-3": [
+      "build-create-draft-locked-tabs"
+    ],
+    "flow.build-create.step-4": [
+      "build-edit-general"
+    ],
+    "flow.build-create.step-5": [
+      "build-edit-subclass"
+    ],
+    "flow.build-create.step-6": [
+      "build-edit-finish"
+    ],
+    "flow.armor-set-compose.step-1": [
+      "build-library-selected"
+    ],
+    "flow.armor-set-compose.step-2": [
+      "build-edit-armor-reuse"
+    ],
+    "flow.armor-set-compose.step-3": [
+      "build-edit-armor-create"
+    ],
+    "flow.armor-set-compose.step-4": [
+      "build-edit-armor-improve"
+    ],
+    "flow.weapon-set-compose.step-1": [
+      "build-edit-weapon-reuse"
+    ],
+    "flow.weapon-set-compose.step-2": [
+      "build-edit-weapon-create"
+    ],
+    "flow.intent-compose-equip.step-1": [
+      "build-create-draft-general"
+    ],
+    "flow.intent-compose-equip.step-2": [
+      "build-edit-subclass"
+    ],
+    "flow.intent-compose-equip.step-3": [
+      "build-edit-armor-reuse"
+    ],
+    "flow.intent-compose-equip.step-4": [
+      "build-edit-weapon-create"
+    ],
+    "flow.intent-compose-equip.step-5": [
+      "build-edit-finish"
+    ],
+    "flow.sets-library-edit.step-1": [
+      "sets-library"
+    ],
+    "flow.sets-library-edit.step-2": [
+      "sets-detail"
+    ],
+    "flow.sets-library-edit.step-3": [
+      "sets-edit"
+    ],
+    "flow.sets-library-edit.step-4": [
+      "sets-fill-slot"
+    ],
+    "flow.sets-library-edit.step-5": [
+      "sets-create"
+    ],
+    "flow.synergy-library-edit.step-1": [
+      "synergy-library"
+    ],
+    "flow.synergy-library-edit.step-2": [
+      "synergy-detail"
+    ],
+    "flow.synergy-library-edit.step-3": [
+      "synergy-create"
+    ],
+    "flow.catalog-weapons.step-1": [
+      "catalog-signed-out-weapons"
+    ],
+    "flow.catalog-weapons.step-2": [
+      "catalog-weapons-owned"
+    ],
+    "flow.catalog-weapons.step-3": [
+      "catalog-weapons-manifest"
+    ],
+    "flow.catalog-weapons.step-4": [
+      "catalog-filters-open"
+    ],
+    "flow.catalog-weapons.step-5": [
+      "catalog-weapon-detail"
+    ],
+    "flow.catalog-armor.step-1": [
+      "catalog-signed-out-armor"
+    ],
+    "flow.catalog-armor.step-2": [
+      "catalog-armor-owned"
+    ],
+    "flow.catalog-armor.step-3": [
+      "catalog-armor-manifest"
+    ],
+    "flow.catalog-armor.step-4": [
+      "catalog-armor-detail"
+    ],
+    "flow.catalog-armor.step-5": [
+      "catalog-universal"
+    ],
+    "flow.loadouts.step-1": [
+      "loadouts-signed-out"
+    ],
+    "flow.loadouts.step-2": [
+      "loadouts-signed-in"
+    ],
+    "flow.loadouts.step-3": [
+      "loadouts-slot-expanded"
+    ]
+  }
+}
