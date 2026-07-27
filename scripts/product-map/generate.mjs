@@ -15,7 +15,12 @@ import {
 } from "../ui-rules/lib/atlas-link.mjs";
 import { buildMxFile } from "../ui-rules/lib/drawio.mjs";
 import { expandRuleRefs, loadAllRules } from "../ui-rules/lib/parse-rules.mjs";
-import { expandFlowSteps, loadHub, surfacesToTree } from "./lib/load-hub.mjs";
+import {
+  expandFlowSteps,
+  expandFlowTree,
+  loadHub,
+  surfacesToTree,
+} from "./lib/load-hub.mjs";
 import {
   ATLAS_LINKS_PATH,
   ATLAS_MANIFEST_PATH,
@@ -57,36 +62,51 @@ function hubToInventory(hub) {
     nodes: byArea.get(area) || [],
   }));
 
-  // Flow pages for drawio
-  for (const flow of hub.flows) {
-    if (!flow.phases?.length) continue;
-    const nodes = (flow.phases || []).map((ph) => {
-      if (ph.include) {
-        return {
-          id: `${flow.id}.${ph.id}`,
-          kind: "flow",
-          title: `${ph.title || ph.id} → ${ph.include}`,
-          rules: ph.rules || flow.rules,
-        };
-      }
-      const s = hub.byId.get(ph.surface);
-      return {
-        id: `${flow.id}.${ph.id}`,
-        kind: "flow",
-        title: ph.title || s?.title || ph.surface || ph.id,
-        rules: [...(ph.rules || []), ...(s?.rules || [])].filter(Boolean),
+  // Flow pages for drawio — hierarchical tree as nested nodes
+  const flowTreeToNodes = (treeNodes, prefix) =>
+    (treeNodes || []).map((n) => {
+      const s = n.surfaceId ? hub.byId.get(n.surfaceId) : null;
+      /** @type {any} */
+      const node = {
+        id: `${prefix}.${n.id}`,
+        kind:
+          n.kind === "gate"
+            ? "gate"
+            : n.kind === "branch" || n.kind === "include"
+              ? "flow"
+              : "surface",
+        title:
+          (n.kind === "branch" ? "⎇ " : n.kind === "include" ? "↳ " : n.kind === "loop" ? "↻ " : "") +
+          (n.title || n.id),
+        rules: [...(n.rules || []), ...(s?.rules || [])].filter(Boolean),
         path: s?.platforms?.nextjs?.path,
         auth: s?.auth,
-        atlas: s?.platforms?.nextjs?.captureId
-          ? [s.platforms.nextjs.captureId]
-          : undefined,
+        atlas: n.screenId ? [n.screenId] : undefined,
+        notes:
+          n.kind === "include"
+            ? `include: ${n.include}`
+            : n.loop
+              ? `loop: ${n.loop}`
+              : n.gate
+                ? `gate: ${n.gate}`
+                : undefined,
       };
+      if (n.children?.length) {
+        node.children = flowTreeToNodes(n.children, `${prefix}.${n.id}`);
+      }
+      return node;
     });
+
+  for (const flow of hub.flows) {
+    if (!flow.phases?.length) continue;
+    // Only emit top-level journeys/subflows that are not only included children
+    // Emit all flows with phases (includes show as nested on journey pages too)
+    const tree = expandFlowTree(flow, hub.byId, hub.flows);
     pages.push({
       id: `flow-${flow.id}`.replace(/\./g, "-"),
       label: flow.title || flow.id,
       description: flow.description || `Flow ${flow.id}`,
-      nodes,
+      nodes: flowTreeToNodes(tree, flow.id),
     });
   }
 
@@ -125,6 +145,7 @@ function hubToAtlasPaths(hub) {
   return hub.flows
     .filter((f) => f.phases?.length)
     .map((f) => {
+      const phases = expandFlowTree(f, hub.byId, hub.flows);
       const steps = expandFlowSteps(f, hub.byId, hub.flows);
       return {
         id: String(f.id).replace(/\./g, "-"),
@@ -132,11 +153,17 @@ function hubToAtlasPaths(hub) {
         priority: f.priority || "",
         type: f.type || "path",
         description: f.description || "",
-        steps: steps.map(({ screenId, label }) => ({ screenId, label })),
+        steps: steps.map(({ screenId, label, kind }) => ({
+          screenId,
+          label,
+          ...(kind ? { kind } : {}),
+        })),
+        phases,
         surfaceFlowId: f.id,
+        rules: f.rules || [],
       };
     })
-    .filter((p) => p.steps.length);
+    .filter((p) => p.steps.length || p.phases?.length);
 }
 
 function hubToAtlasTransitions(hub) {

@@ -28,7 +28,9 @@ When **planning** or **implementing** user-visible UI (screens, tabs, modals, fl
    - `flows.yaml` — journeys / subflows / phases
    - `transitions.yaml` — map edges
 2. Rule **wording** still lives in domain markdown (above); hub holds **IDs** and structure only.
-3. After hub edits: `npm run product-map:sync` (regenerates Draw.io, Atlas manifest paths, inventory projection).
+3. After hub edits: `npm run product-map:sync` (validate → generate → drift check).
 4. Scaffold: `npm run product-map:add-surface` / `product-map:add-flow`.
-5. Do **not** hand-edit generated `docs/ui-rules/ui-map.drawio`, `docs/ui-rules/inventory.yaml`, or generated Atlas path blocks — edit the hub and sync.
-6. Multi-platform: same surface id; add `platforms.flutter-windows` (etc.) when shells exist — do not fork DBR/DAC per platform.
+5. Checklist: [`docs/product-map/CHECKLIST.md`](docs/product-map/CHECKLIST.md).
+6. Do **not** hand-edit generated `docs/ui-rules/ui-map.drawio`, `docs/ui-rules/inventory.yaml`, or generated Atlas path blocks — edit the hub and sync.
+7. Multi-platform: same surface id; add `platforms.flutter-windows` (etc.) when shells exist — do not fork DBR/DAC per platform.
+8. Hierarchical flows: use `include`, `branch`, `loop`, and `gate` on phases so Atlas and Draw.io show nested subflows (create build, armor paths, finish, etc.).

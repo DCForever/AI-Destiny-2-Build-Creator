@@ -186,13 +186,38 @@ function renderReportHome() {
   html += '<div class="kicker">Key journeys</div><h2 class="section">Compose &amp; library detail flows</h2>';
   html += '<p class="sub">Build creation, armor/weapon set create &amp; edit, library detail—not only top-level routes.</p><div class="journey-grid">';
   m.paths.forEach((p, i) => {
-    const chain = p.steps.slice(0, 4).map((st) => '<span class="chip">' + esc(st.label) + "</span>").join("");
-    const more = p.steps.length > 4 ? '<span class="chip accent">+' + (p.steps.length - 4) + "</span>" : "";
+    const stepCount = (p.steps || []).length;
+    const phaseCount = (p.phases || []).length;
+    const nested = phaseCount
+      ? phaseCount + " phases · " + stepCount + " steps"
+      : stepCount + " screens";
+    const chain = (p.steps || [])
+      .slice(0, 4)
+      .map((st) => '<span class="chip">' + esc(st.label) + "</span>")
+      .join("");
+    const more =
+      stepCount > 4
+        ? '<span class="chip accent">+' + (stepCount - 4) + "</span>"
+        : "";
     html +=
-      '<button type="button" class="journey" data-path="' + esc(p.id) + '"><div class="idx">' +
-      String(i + 1).padStart(2, "0") + " · " + esc(p.priority || "") + " · " + esc(p.type || "path") + " · " +
-      p.steps.length + ' screens</div><div class="title">' + esc(p.title) + '</div><div class="meta">' +
-      esc(p.description || "") + '</div><div class="chain">' + chain + more + "</div></button>";
+      '<button type="button" class="journey" data-path="' +
+      esc(p.id) +
+      '"><div class="idx">' +
+      String(i + 1).padStart(2, "0") +
+      " · " +
+      esc(p.priority || "") +
+      " · " +
+      esc(p.type || "path") +
+      " · " +
+      nested +
+      '</div><div class="title">' +
+      esc(p.title) +
+      '</div><div class="meta">' +
+      esc(p.description || "") +
+      '</div><div class="chain">' +
+      chain +
+      more +
+      "</div></button>";
   });
   html += "</div>";
   html += '<div class="kicker">Screen inventory</div><h2 class="section">High-density screens</h2><p class="sub">By captured interactive element counts.</p><div class="density">';
@@ -212,15 +237,124 @@ function renderReportHome() {
     });
   });
 }
+function kindBadge(kind) {
+  if (!kind || kind === "step") return "";
+  const labels = {
+    include: "subflow",
+    branch: "branch",
+    loop: "loop",
+    gate: "gate",
+    cycle: "cycle",
+  };
+  return (
+    '<span class="phase-kind ' +
+    esc(kind) +
+    '">' +
+    esc(labels[kind] || kind) +
+    "</span>"
+  );
+}
+
+/** Nested phase tree (product-map hierarchical flows). */
+function renderPhaseTree(nodes, depth) {
+  if (!nodes?.length) return "";
+  let html = '<ul class="phase-tree depth-' + depth + '">';
+  for (const n of nodes) {
+    const sc = n.screenId ? screenById(n.screenId) : null;
+    const o = n.screenId ? bestObs(n.screenId) : null;
+    const rules = (n.rules || []).slice(0, 6);
+    const moreRules = (n.rules || []).length > 6 ? " +" + ((n.rules || []).length - 6) : "";
+    html += '<li class="phase-node kind-' + esc(n.kind || "step") + '">';
+    html +=
+      '<div class="phase-head">' +
+      kindBadge(n.kind) +
+      '<span class="phase-title">' +
+      esc(n.title || n.id) +
+      "</span>";
+    if (n.loop) html += ' <span class="muted">↻ ' + esc(String(n.loop)) + "</span>";
+    if (n.gate) html += ' <span class="muted">⛔ ' + esc(String(n.gate)) + "</span>";
+    if (n.include) html += ' <span class="muted">→ ' + esc(n.include) + "</span>";
+    html += "</div>";
+    if (n.surfaceId || n.screenId) {
+      html +=
+        '<div class="muted phase-meta">' +
+        esc(n.surfaceId || "") +
+        (n.screenId ? " · " + esc(n.screenId) : "") +
+        (sc?.path ? " · " + esc(sc.path) : "") +
+        "</div>";
+    }
+    if (rules.length) {
+      html +=
+        '<div class="phase-rules">' +
+        rules.map((r) => '<span class="chip">' + esc(r) + "</span>").join("") +
+        (moreRules ? '<span class="chip accent">' + moreRules + "</span>" : "") +
+        "</div>";
+    }
+    if (o) {
+      html +=
+        '<div class="phase-shot"><img src="' +
+        esc(o.file) +
+        '" alt="" loading="lazy" data-full="' +
+        esc(o.file) +
+        '" data-cap="' +
+        esc(n.title || n.screenId) +
+        '" />' +
+        '<div class="btn-row">' +
+        '<button type="button" class="btn accent" data-full="' +
+        esc(o.file) +
+        '" data-cap="' +
+        esc(n.title || "") +
+        '">Full size</button>' +
+        (n.screenId ? diagramLinksHtml(n.screenId, { compact: true }) : "") +
+        "</div></div>";
+    } else if (n.screenId && (n.kind === "step" || n.kind === "loop" || n.kind === "gate")) {
+      html +=
+        '<p class="empty phase-empty">No shot for <code>' +
+        esc(n.screenId) +
+        "</code> " +
+        diagramLinksHtml(n.screenId, { compact: true }) +
+        "</p>";
+    }
+    if (n.children?.length) html += renderPhaseTree(n.children, depth + 1);
+    html += "</li>";
+  }
+  html += "</ul>";
+  return html;
+}
+
 function renderPathDetail(pathId) {
   const m = state.manifest;
   const p = m.paths.find((x) => x.id === pathId);
   if (!p) return renderReportHome();
+  const hasTree = Array.isArray(p.phases) && p.phases.length > 0;
   let html =
     '<button type="button" class="btn back" id="backReport">← All journeys</button><div class="kicker">Flow · ' +
-    esc(p.priority || "") + " · " + esc(p.type || "") + '</div><h2 class="section">' + esc(p.title) +
-    '</h2><p class="sub">' + esc(p.description || "") + '</p><ol class="flow-steps">';
-  p.steps.forEach((st, i) => {
+    esc(p.priority || "") +
+    " · " +
+    esc(p.type || "") +
+    (p.surfaceFlowId ? " · " + esc(p.surfaceFlowId) : "") +
+    '</div><h2 class="section">' +
+    esc(p.title) +
+    '</h2><p class="sub">' +
+    esc(p.description || "") +
+    "</p>";
+
+  if ((p.rules || []).length) {
+    html +=
+      '<div class="phase-rules flow-rules">' +
+      p.rules.map((r) => '<span class="chip accent">' + esc(r) + "</span>").join("") +
+      "</div>";
+  }
+
+  if (hasTree) {
+    html +=
+      '<div class="kicker">Phases</div><p class="sub">Nested subflows, branches, and loops from the product map.</p>' +
+      renderPhaseTree(p.phases, 0);
+  }
+
+  html +=
+    '<div class="kicker">Linear steps</div><p class="sub">Flattened capture order (branches listed as alternatives).</p><ol class="flow-steps">';
+  (p.steps || []).forEach((st, i) => {
     const sc = screenById(st.screenId);
     const o = bestObs(st.screenId);
     html +=
@@ -228,6 +362,9 @@ function renderPathDetail(pathId) {
       String(i + 1).padStart(2, "0") +
       '</div><div class="stept">' +
       esc(st.label) +
+      (st.kind && st.kind !== "step"
+        ? ' <span class="phase-kind">' + esc(st.kind) + "</span>"
+        : "") +
       '</div><div class="muted">' +
       esc(sc?.title || st.screenId) +
       (o?.elements ? " · " + o.elements.total + " elements" : "") +
@@ -257,7 +394,10 @@ function renderPathDetail(pathId) {
   });
   html += "</ol>";
   document.getElementById("body").innerHTML = html;
-  document.getElementById("backReport")?.addEventListener("click", () => { state.selected = null; render(); });
+  document.getElementById("backReport")?.addEventListener("click", () => {
+    state.selected = null;
+    render();
+  });
   bindFull();
 }
 function renderScreens() {

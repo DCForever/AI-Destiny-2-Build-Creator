@@ -25,6 +25,7 @@
     "product-map:validate": "node scripts/product-map/validate.mjs",
     "product-map:generate": "node scripts/product-map/generate.mjs",
     "product-map:sync": "node scripts/product-map/sync.mjs",
+    "product-map:check": "node scripts/product-map/check.mjs",
     "product-map:add-surface": "node scripts/product-map/add-surface.mjs",
     "product-map:add-flow": "node scripts/product-map/add-flow.mjs"
   },

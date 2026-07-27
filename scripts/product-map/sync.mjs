@@ -17,4 +17,5 @@ function run(script) {
 
 run("validate.mjs");
 run("generate.mjs");
+run("check.mjs");
 console.log("product-map:sync OK");

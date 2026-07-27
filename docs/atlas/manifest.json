@@ -416,70 +416,1215 @@
   ],
   "paths": [
     {
-      "id": "journey-p1",
-      "title": "P1 Journey — Intent → compose → equip",
+      "id": "journey-p1-intent-compose-equip",
+      "title": "P1 — Intent → compose → equip",
       "priority": "P1",
       "type": "journey",
-      "description": "",
+      "description": "Primary success journey. Subflows expand for compose and equip.",
       "steps": [
         {
-          "screenId": "journey-p1-intent",
-          "label": "Designate Synergy Types"
+          "screenId": "build-library",
+          "label": "Create build (draft → live) › Open Build library",
+          "kind": "step"
         },
         {
-          "screenId": "journey-p1-compose",
-          "label": "Compose default variant (sets + kit)"
+          "screenId": "build-library-new",
+          "label": "Create build (draft → live) › New Build action",
+          "kind": "step"
         },
         {
-          "screenId": "journey-p1-equip",
-          "label": "Equip / DIM when equip-ready"
-        }
-      ],
-      "surfaceFlowId": "journey.p1"
-    },
-    {
-      "id": "flow-build-finish-walkthrough",
-      "title": "Slot-first walkthrough (Armor → Weapons → Mods)",
-      "priority": "",
-      "type": "flow",
-      "description": "",
-      "steps": [
+          "screenId": "build-create-general",
+          "label": "Create build (draft → live) › Draft General (class, subclass, synergies)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-create-tabs",
+          "label": "Create build (draft → live) › Locked Subclass / Armor / Weapon tabs",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-create-submit",
+          "label": "Create build (draft → live) › Create / save draft",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-general",
+          "label": "Create build (draft → live) › Live General (identity)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-general",
+          "label": "Compose default variant › General / identity",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-subclass",
+          "label": "Compose default variant › Subclass kit",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor",
+          "label": "Compose default variant › Armor sets › Armor tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-reuse",
+          "label": "Compose default variant › Armor sets › Choose composition path › Reuse existing set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-create",
+          "label": "Compose default variant › Armor sets › Choose composition path › Create + attach",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-improve",
+          "label": "Compose default variant › Armor sets › Choose composition path › Improve kit",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-mods",
+          "label": "Compose default variant › Armor sets › Mod set / energy",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-exotic-limit",
+          "label": "Compose default variant › Armor sets › Single exotic armor gate (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-edit-weapon",
+          "label": "Compose default variant › Weapon sets › Weapon tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-reuse",
+          "label": "Compose default variant › Weapon sets › Choose composition path › Reuse existing set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-create",
+          "label": "Compose default variant › Weapon sets › Choose composition path › Create + slot fill",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-wishlist",
+          "label": "Compose default variant › Weapon sets › Desired roll / wishlist",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-exotic-limit",
+          "label": "Compose default variant › Weapon sets › Single exotic weapon gate (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-edit-coverage",
+          "label": "Compose default variant › Soft guidance / coverage",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish",
+          "label": "Compose default variant › Finish readiness › Finish tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-gaps",
+          "label": "Compose default variant › Finish readiness › Gap list / missing reasons",
+          "kind": "step"
+        },
         {
           "screenId": "build-finish-one-tap-create",
-          "label": "One-tap Create set"
+          "label": "Compose default variant › Finish readiness › Slot-first walkthrough › One-tap Create set",
+          "kind": "step"
         },
         {
           "screenId": "build-finish-capture",
-          "label": "Capture sets from build"
+          "label": "Compose default variant › Finish readiness › Slot-first walkthrough › Capture sets from build",
+          "kind": "step"
         },
         {
           "screenId": "build-finish-slot-loop",
-          "label": "First empty slot fill loop"
+          "label": "Compose default variant › Finish readiness › Slot-first walkthrough › First empty slot fill loop (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-goals",
+          "label": "Compose default variant › Finish readiness › Armor optimize workspace › Goals (set bonuses + seeded stats)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-find",
+          "label": "Compose default variant › Finish readiness › Armor optimize workspace › Find kits",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-compare",
+          "label": "Compose default variant › Finish readiness › Armor optimize workspace › Top-3 compare",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-apply",
+          "label": "Compose default variant › Finish readiness › Armor optimize workspace › Apply combination in place",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip-gate",
+          "label": "Compose default variant › Finish readiness › Equip/export blocked until pins (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-finish-character",
+          "label": "Compose default variant › Finish readiness › Character picker",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip",
+          "label": "Compose default variant › Finish readiness › Equip in-game",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-dim",
+          "label": "Compose default variant › Finish readiness › DIM export",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish",
+          "label": "Finish → equip / DIM › Finish tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-gaps",
+          "label": "Finish → equip / DIM › Gap list / missing reasons",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-one-tap-create",
+          "label": "Finish → equip / DIM › Slot-first walkthrough › One-tap Create set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-capture",
+          "label": "Finish → equip / DIM › Slot-first walkthrough › Capture sets from build",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-slot-loop",
+          "label": "Finish → equip / DIM › Slot-first walkthrough › First empty slot fill loop (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-goals",
+          "label": "Finish → equip / DIM › Armor optimize workspace › Goals (set bonuses + seeded stats)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-find",
+          "label": "Finish → equip / DIM › Armor optimize workspace › Find kits",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-compare",
+          "label": "Finish → equip / DIM › Armor optimize workspace › Top-3 compare",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-apply",
+          "label": "Finish → equip / DIM › Armor optimize workspace › Apply combination in place",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip-gate",
+          "label": "Finish → equip / DIM › Equip/export blocked until pins (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-finish-character",
+          "label": "Finish → equip / DIM › Character picker",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip",
+          "label": "Finish → equip / DIM › Equip in-game",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-dim",
+          "label": "Finish → equip / DIM › DIM export",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.build.finish.walkthrough"
+      "phases": [
+        {
+          "id": "create",
+          "title": "Create build (draft → live)",
+          "kind": "include",
+          "include": "flow.build.create",
+          "rules": [
+            "DAC-P1-001",
+            "DAC-P1-002",
+            "DBR-SYN-003",
+            "BR-SAVE-003",
+            "042:SC-001"
+          ],
+          "children": [
+            {
+              "id": "library",
+              "title": "Open Build library",
+              "kind": "step",
+              "surfaceId": "build.library",
+              "screenId": "build-library"
+            },
+            {
+              "id": "new",
+              "title": "New Build action",
+              "kind": "step",
+              "surfaceId": "build.library.new",
+              "screenId": "build-library-new"
+            },
+            {
+              "id": "draft-general",
+              "title": "Draft General (class, subclass, synergies)",
+              "kind": "step",
+              "surfaceId": "build.create.general",
+              "screenId": "build-create-general",
+              "rules": [
+                "DAC-P1-001",
+                "DBR-SYN-002",
+                "DBR-SYN-003",
+                "DBR-BLD-004"
+              ]
+            },
+            {
+              "id": "locked-tabs",
+              "title": "Locked Subclass / Armor / Weapon tabs",
+              "kind": "step",
+              "surfaceId": "build.create.tabs",
+              "screenId": "build-create-tabs"
+            },
+            {
+              "id": "submit",
+              "title": "Create / save draft",
+              "kind": "step",
+              "surfaceId": "build.create.submit",
+              "screenId": "build-create-submit",
+              "rules": [
+                "DAC-P1-002",
+                "BR-SAVE-003"
+              ]
+            },
+            {
+              "id": "live-general",
+              "title": "Live General (identity)",
+              "kind": "step",
+              "surfaceId": "build.edit.general",
+              "screenId": "build-edit-general",
+              "rules": [
+                "DAC-VAR-004",
+                "DBR-ID-008"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "compose",
+          "title": "Compose default variant",
+          "kind": "include",
+          "include": "flow.build.compose-default",
+          "rules": [
+            "DAC-P1-003",
+            "DAC-P1-004",
+            "DBR-CMPL-001"
+          ],
+          "children": [
+            {
+              "id": "general",
+              "title": "General / identity",
+              "kind": "step",
+              "surfaceId": "build.edit.general",
+              "screenId": "build-edit-general",
+              "rules": [
+                "DAC-P1-002",
+                "DBR-ID-001"
+              ]
+            },
+            {
+              "id": "subclass",
+              "title": "Subclass kit",
+              "kind": "step",
+              "surfaceId": "build.edit.subclass",
+              "screenId": "build-edit-subclass",
+              "rules": [
+                "DBR-SUB-004",
+                "DAC-DST-003"
+              ]
+            },
+            {
+              "id": "armor",
+              "title": "Armor sets",
+              "kind": "include",
+              "include": "flow.build.armor-set",
+              "rules": [
+                "DAC-P1-004",
+                "DBR-CMP-001",
+                "DBR-CMP-005",
+                "BR-ATT-001",
+                "BR-BLD-007"
+              ],
+              "children": [
+                {
+                  "id": "enter",
+                  "title": "Armor tab",
+                  "kind": "step",
+                  "surfaceId": "build.edit.armor",
+                  "screenId": "build-edit-armor"
+                },
+                {
+                  "id": "path",
+                  "title": "Choose composition path",
+                  "kind": "branch",
+                  "children": [
+                    {
+                      "id": "reuse",
+                      "title": "Reuse existing set",
+                      "kind": "step",
+                      "surfaceId": "build.edit.armor.reuse",
+                      "screenId": "build-edit-armor-reuse"
+                    },
+                    {
+                      "id": "create",
+                      "title": "Create + attach",
+                      "kind": "step",
+                      "surfaceId": "build.edit.armor.create",
+                      "screenId": "build-edit-armor-create"
+                    },
+                    {
+                      "id": "improve",
+                      "title": "Improve kit",
+                      "kind": "step",
+                      "surfaceId": "build.edit.armor.improve",
+                      "screenId": "build-edit-armor-improve"
+                    }
+                  ]
+                },
+                {
+                  "id": "mods",
+                  "title": "Mod set / energy",
+                  "kind": "step",
+                  "surfaceId": "build.edit.armor.mods",
+                  "screenId": "build-edit-armor-mods",
+                  "rules": [
+                    "DAC-DST-002",
+                    "DBR-MOD-001"
+                  ]
+                },
+                {
+                  "id": "exotic-gate",
+                  "title": "Single exotic armor gate",
+                  "kind": "gate",
+                  "surfaceId": "build.edit.armor.exotic-limit",
+                  "screenId": "build-edit-armor-exotic-limit",
+                  "rules": [
+                    "DAC-DST-001",
+                    "DBR-CMP-007"
+                  ],
+                  "gate": "hard"
+                }
+              ]
+            },
+            {
+              "id": "weapon",
+              "title": "Weapon sets",
+              "kind": "include",
+              "include": "flow.build.weapon-set",
+              "rules": [
+                "DAC-P1-004",
+                "DBR-CMP-001",
+                "DBR-ROLL-001"
+              ],
+              "children": [
+                {
+                  "id": "enter",
+                  "title": "Weapon tab",
+                  "kind": "step",
+                  "surfaceId": "build.edit.weapon",
+                  "screenId": "build-edit-weapon"
+                },
+                {
+                  "id": "path",
+                  "title": "Choose composition path",
+                  "kind": "branch",
+                  "children": [
+                    {
+                      "id": "reuse",
+                      "title": "Reuse existing set",
+                      "kind": "step",
+                      "surfaceId": "build.edit.weapon.reuse",
+                      "screenId": "build-edit-weapon-reuse"
+                    },
+                    {
+                      "id": "create",
+                      "title": "Create + slot fill",
+                      "kind": "step",
+                      "surfaceId": "build.edit.weapon.create",
+                      "screenId": "build-edit-weapon-create"
+                    }
+                  ]
+                },
+                {
+                  "id": "wishlist",
+                  "title": "Desired roll / wishlist",
+                  "kind": "step",
+                  "surfaceId": "build.edit.weapon.wishlist",
+                  "screenId": "build-edit-weapon-wishlist",
+                  "rules": [
+                    "DAC-P1-005",
+                    "DBR-ROLL-002"
+                  ]
+                },
+                {
+                  "id": "exotic-gate",
+                  "title": "Single exotic weapon gate",
+                  "kind": "gate",
+                  "surfaceId": "build.edit.weapon.exotic-limit",
+                  "screenId": "build-edit-weapon-exotic-limit",
+                  "rules": [
+                    "DAC-DST-001",
+                    "DBR-CMP-007"
+                  ],
+                  "gate": "hard"
+                }
+              ]
+            },
+            {
+              "id": "coverage",
+              "title": "Soft guidance / coverage",
+              "kind": "step",
+              "surfaceId": "build.edit.coverage",
+              "screenId": "build-edit-coverage",
+              "rules": [
+                "DAC-P1-006",
+                "DBR-GUID-001"
+              ]
+            },
+            {
+              "id": "finish",
+              "title": "Finish readiness",
+              "kind": "include",
+              "include": "flow.build.finish-equip",
+              "rules": [
+                "DAC-P1-003",
+                "DAC-P1-005",
+                "DAC-P1-007",
+                "DAC-P1-008",
+                "BR-BLD-007",
+                "BR-BLD-008",
+                "BR-BLD-009",
+                "DBR-EQP-003"
+              ],
+              "children": [
+                {
+                  "id": "finish-tab",
+                  "title": "Finish tab",
+                  "kind": "step",
+                  "surfaceId": "build.finish",
+                  "screenId": "build-finish"
+                },
+                {
+                  "id": "gaps",
+                  "title": "Gap list / missing reasons",
+                  "kind": "step",
+                  "surfaceId": "build.finish.gaps",
+                  "screenId": "build-finish-gaps",
+                  "rules": [
+                    "DBR-CMPL-001"
+                  ]
+                },
+                {
+                  "id": "walkthrough",
+                  "title": "Slot-first walkthrough",
+                  "kind": "include",
+                  "include": "flow.build.finish.walkthrough",
+                  "rules": [
+                    "BR-BLD-007",
+                    "BR-BLD-008",
+                    "029:SC-001"
+                  ],
+                  "children": [
+                    {
+                      "id": "one-tap",
+                      "title": "One-tap Create set",
+                      "kind": "step",
+                      "surfaceId": "build.finish.one-tap-create",
+                      "screenId": "build-finish-one-tap-create"
+                    },
+                    {
+                      "id": "capture",
+                      "title": "Capture sets from build",
+                      "kind": "step",
+                      "surfaceId": "build.finish.capture",
+                      "screenId": "build-finish-capture"
+                    },
+                    {
+                      "id": "slot-loop",
+                      "title": "First empty slot fill loop",
+                      "kind": "loop",
+                      "surfaceId": "build.finish.slot-loop",
+                      "screenId": "build-finish-slot-loop",
+                      "rules": [
+                        "BR-BLD-008",
+                        "DAC-DST-009"
+                      ],
+                      "loop": "until-required-slots"
+                    }
+                  ]
+                },
+                {
+                  "id": "armor-optimize",
+                  "title": "Armor optimize workspace",
+                  "kind": "include",
+                  "include": "flow.build.finish.armor-optimize",
+                  "rules": [
+                    "BR-BLD-009",
+                    "BR-OPT-001",
+                    "031:SC-001"
+                  ],
+                  "children": [
+                    {
+                      "id": "goals",
+                      "title": "Goals (set bonuses + seeded stats)",
+                      "kind": "step",
+                      "surfaceId": "build.finish.armor-optimize.goals",
+                      "screenId": "build-finish-armor-optimize-goals"
+                    },
+                    {
+                      "id": "find",
+                      "title": "Find kits",
+                      "kind": "step",
+                      "surfaceId": "build.finish.armor-optimize.find",
+                      "screenId": "build-finish-armor-optimize-find"
+                    },
+                    {
+                      "id": "compare",
+                      "title": "Top-3 compare",
+                      "kind": "step",
+                      "surfaceId": "build.finish.armor-optimize.compare",
+                      "screenId": "build-finish-armor-optimize-compare"
+                    },
+                    {
+                      "id": "apply",
+                      "title": "Apply combination in place",
+                      "kind": "step",
+                      "surfaceId": "build.finish.armor-optimize.apply",
+                      "screenId": "build-finish-armor-optimize-apply"
+                    }
+                  ]
+                },
+                {
+                  "id": "equip-gate",
+                  "title": "Equip/export blocked until pins",
+                  "kind": "gate",
+                  "surfaceId": "build.finish.equip-gate",
+                  "screenId": "build-finish-equip-gate",
+                  "rules": [
+                    "DAC-P1-005",
+                    "DBR-EQP-003",
+                    "DBR-ROLL-004"
+                  ],
+                  "gate": "hard"
+                },
+                {
+                  "id": "character",
+                  "title": "Character picker",
+                  "kind": "step",
+                  "surfaceId": "build.finish.character",
+                  "screenId": "build-finish-character",
+                  "rules": [
+                    "DBR-BLD-004",
+                    "DBR-EQP-005"
+                  ]
+                },
+                {
+                  "id": "equip",
+                  "title": "Equip in-game",
+                  "kind": "step",
+                  "surfaceId": "build.finish.equip",
+                  "screenId": "build-finish-equip",
+                  "rules": [
+                    "DAC-P1-007",
+                    "DBR-EQP-001"
+                  ]
+                },
+                {
+                  "id": "dim",
+                  "title": "DIM export",
+                  "kind": "step",
+                  "surfaceId": "build.finish.dim",
+                  "screenId": "build-finish-dim",
+                  "rules": [
+                    "DAC-P1-008",
+                    "DBR-EQP-002"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "equip",
+          "title": "Finish → equip / DIM",
+          "kind": "include",
+          "include": "flow.build.finish-equip",
+          "rules": [
+            "DAC-P1-003",
+            "DAC-P1-005",
+            "DAC-P1-007",
+            "DAC-P1-008",
+            "BR-BLD-007",
+            "BR-BLD-008",
+            "BR-BLD-009",
+            "DBR-EQP-003"
+          ],
+          "children": [
+            {
+              "id": "finish-tab",
+              "title": "Finish tab",
+              "kind": "step",
+              "surfaceId": "build.finish",
+              "screenId": "build-finish"
+            },
+            {
+              "id": "gaps",
+              "title": "Gap list / missing reasons",
+              "kind": "step",
+              "surfaceId": "build.finish.gaps",
+              "screenId": "build-finish-gaps",
+              "rules": [
+                "DBR-CMPL-001"
+              ]
+            },
+            {
+              "id": "walkthrough",
+              "title": "Slot-first walkthrough",
+              "kind": "include",
+              "include": "flow.build.finish.walkthrough",
+              "rules": [
+                "BR-BLD-007",
+                "BR-BLD-008",
+                "029:SC-001"
+              ],
+              "children": [
+                {
+                  "id": "one-tap",
+                  "title": "One-tap Create set",
+                  "kind": "step",
+                  "surfaceId": "build.finish.one-tap-create",
+                  "screenId": "build-finish-one-tap-create"
+                },
+                {
+                  "id": "capture",
+                  "title": "Capture sets from build",
+                  "kind": "step",
+                  "surfaceId": "build.finish.capture",
+                  "screenId": "build-finish-capture"
+                },
+                {
+                  "id": "slot-loop",
+                  "title": "First empty slot fill loop",
+                  "kind": "loop",
+                  "surfaceId": "build.finish.slot-loop",
+                  "screenId": "build-finish-slot-loop",
+                  "rules": [
+                    "BR-BLD-008",
+                    "DAC-DST-009"
+                  ],
+                  "loop": "until-required-slots"
+                }
+              ]
+            },
+            {
+              "id": "armor-optimize",
+              "title": "Armor optimize workspace",
+              "kind": "include",
+              "include": "flow.build.finish.armor-optimize",
+              "rules": [
+                "BR-BLD-009",
+                "BR-OPT-001",
+                "031:SC-001"
+              ],
+              "children": [
+                {
+                  "id": "goals",
+                  "title": "Goals (set bonuses + seeded stats)",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.goals",
+                  "screenId": "build-finish-armor-optimize-goals"
+                },
+                {
+                  "id": "find",
+                  "title": "Find kits",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.find",
+                  "screenId": "build-finish-armor-optimize-find"
+                },
+                {
+                  "id": "compare",
+                  "title": "Top-3 compare",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.compare",
+                  "screenId": "build-finish-armor-optimize-compare"
+                },
+                {
+                  "id": "apply",
+                  "title": "Apply combination in place",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.apply",
+                  "screenId": "build-finish-armor-optimize-apply"
+                }
+              ]
+            },
+            {
+              "id": "equip-gate",
+              "title": "Equip/export blocked until pins",
+              "kind": "gate",
+              "surfaceId": "build.finish.equip-gate",
+              "screenId": "build-finish-equip-gate",
+              "rules": [
+                "DAC-P1-005",
+                "DBR-EQP-003",
+                "DBR-ROLL-004"
+              ],
+              "gate": "hard"
+            },
+            {
+              "id": "character",
+              "title": "Character picker",
+              "kind": "step",
+              "surfaceId": "build.finish.character",
+              "screenId": "build-finish-character",
+              "rules": [
+                "DBR-BLD-004",
+                "DBR-EQP-005"
+              ]
+            },
+            {
+              "id": "equip",
+              "title": "Equip in-game",
+              "kind": "step",
+              "surfaceId": "build.finish.equip",
+              "screenId": "build-finish-equip",
+              "rules": [
+                "DAC-P1-007",
+                "DBR-EQP-001"
+              ]
+            },
+            {
+              "id": "dim",
+              "title": "DIM export",
+              "kind": "step",
+              "surfaceId": "build.finish.dim",
+              "screenId": "build-finish-dim",
+              "rules": [
+                "DAC-P1-008",
+                "DBR-EQP-002"
+              ]
+            }
+          ]
+        }
+      ],
+      "surfaceFlowId": "journey.p1.intent-compose-equip",
+      "rules": [
+        "DAC-P1-001",
+        "DAC-P1-002",
+        "DAC-P1-003",
+        "DAC-P1-004",
+        "DAC-P1-005",
+        "DAC-P1-006",
+        "DAC-P1-007",
+        "DAC-P1-008",
+        "DAC-P1-009",
+        "DBR-PUR-003",
+        "DBR-PUR-005"
+      ]
     },
     {
-      "id": "flow-shared-llm-propose",
-      "title": "LLM propose-for-confirm (manual)",
-      "priority": "",
-      "type": "flow",
-      "description": "",
+      "id": "journey-p2-library",
+      "title": "P2 — Library curation",
+      "priority": "P2",
+      "type": "journey",
+      "description": "Curate synergies and sets; in-flow create still allowed on P1.",
       "steps": [
         {
-          "screenId": "shared-llm-propose-run",
-          "label": "Start pass"
+          "screenId": "synergy-library",
+          "label": "Synergy library › Browse",
+          "kind": "step"
         },
         {
-          "screenId": "shared-llm-propose-review",
-          "label": "Review proposals"
+          "screenId": "synergy-create-type",
+          "label": "Synergy library › Create synergy › Type + optional subtype",
+          "kind": "step"
         },
         {
-          "screenId": "shared-llm-propose-confirm",
-          "label": "Confirm / edit before persist"
+          "screenId": "synergy-create-description",
+          "label": "Synergy library › Create synergy › Description",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-create-custom-type",
+          "label": "Synergy library › Create synergy › Personal custom type / keyword",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-links",
+          "label": "Synergy library › Create synergy › Evidence links",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-link-required",
+          "label": "Synergy library › Create synergy › Mark links required (AND)",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail",
+          "label": "Synergy library › Detail / evidence",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-designation",
+          "label": "Synergy library › Edit (objects only) › Designation read-only",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-edit",
+          "label": "Synergy library › Edit (objects only) › Edit description / objects",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-link-add",
+          "label": "Synergy library › Edit (objects only) › Add / update evidence",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-library",
+          "label": "Sets library › Browse library",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-library-new",
+          "label": "Sets library › Create set › New Set",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-create",
+          "label": "Sets library › Create set › Name / type / tags",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot",
+          "label": "Sets library › Create set › Fill required slots (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Sets library › Create set › Review detail",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Sets library › Set detail",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-edit",
+          "label": "Sets library › Edit / fill slots › Edit form",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot",
+          "label": "Sets library › Edit / fill slots › Fill slot (catalog embed)",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot-exotic-block",
+          "label": "Sets library › Edit / fill slots › Second exotic blocked (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-edit-armor-create",
+          "label": "In-flow create still works",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.shared.llm-propose"
+      "phases": [
+        {
+          "id": "synergies",
+          "title": "Synergy library",
+          "kind": "include",
+          "include": "flow.synergy.library",
+          "rules": [
+            "DAC-P2-001",
+            "DBR-SYN-001"
+          ],
+          "children": [
+            {
+              "id": "browse",
+              "title": "Browse",
+              "kind": "step",
+              "surfaceId": "synergy.library",
+              "screenId": "synergy-library"
+            },
+            {
+              "id": "create",
+              "title": "Create synergy",
+              "kind": "include",
+              "include": "flow.synergy.create",
+              "rules": [
+                "DAC-P2-001",
+                "DAC-P2-003",
+                "DBR-SYN-001",
+                "DBR-SYN-012"
+              ],
+              "children": [
+                {
+                  "id": "designation",
+                  "title": "Type + optional subtype",
+                  "kind": "step",
+                  "surfaceId": "synergy.create.type",
+                  "screenId": "synergy-create-type",
+                  "rules": [
+                    "DBR-SYN-012",
+                    "DAC-P2-001a"
+                  ]
+                },
+                {
+                  "id": "description",
+                  "title": "Description",
+                  "kind": "step",
+                  "surfaceId": "synergy.create.description",
+                  "screenId": "synergy-create-description"
+                },
+                {
+                  "id": "custom-type",
+                  "title": "Personal custom type / keyword",
+                  "kind": "step",
+                  "surfaceId": "synergy.create.custom-type",
+                  "screenId": "synergy-create-custom-type",
+                  "rules": [
+                    "DAC-P2-003",
+                    "DBR-SYN-005"
+                  ]
+                },
+                {
+                  "id": "evidence",
+                  "title": "Evidence links",
+                  "kind": "step",
+                  "surfaceId": "synergy.detail.links",
+                  "screenId": "synergy-detail-links",
+                  "rules": [
+                    "DBR-SYN-007",
+                    "DBR-SYN-014"
+                  ]
+                },
+                {
+                  "id": "required",
+                  "title": "Mark links required (AND)",
+                  "kind": "step",
+                  "surfaceId": "synergy.detail.link.required",
+                  "screenId": "synergy-detail-link-required",
+                  "rules": [
+                    "DBR-SYN-008",
+                    "DBR-SYN-009",
+                    "DAC-P2-002"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "detail",
+              "title": "Detail / evidence",
+              "kind": "step",
+              "surfaceId": "synergy.detail",
+              "screenId": "synergy-detail"
+            },
+            {
+              "id": "edit",
+              "title": "Edit (objects only)",
+              "kind": "include",
+              "include": "flow.synergy.edit",
+              "rules": [
+                "DAC-P2-001a",
+                "DBR-SYN-012"
+              ],
+              "children": [
+                {
+                  "id": "designation-ro",
+                  "title": "Designation read-only",
+                  "kind": "step",
+                  "surfaceId": "synergy.detail.designation",
+                  "screenId": "synergy-detail-designation",
+                  "rules": [
+                    "DAC-P2-001a"
+                  ]
+                },
+                {
+                  "id": "objects",
+                  "title": "Edit description / objects",
+                  "kind": "step",
+                  "surfaceId": "synergy.detail.edit",
+                  "screenId": "synergy-detail-edit"
+                },
+                {
+                  "id": "links",
+                  "title": "Add / update evidence",
+                  "kind": "step",
+                  "surfaceId": "synergy.detail.link.add",
+                  "screenId": "synergy-detail-link-add"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sets",
+          "title": "Sets library",
+          "kind": "include",
+          "include": "flow.sets.library",
+          "rules": [
+            "BR-SET-001",
+            "BR-SET-002",
+            "DAC-P1-009"
+          ],
+          "children": [
+            {
+              "id": "browse",
+              "title": "Browse library",
+              "kind": "step",
+              "surfaceId": "sets.library",
+              "screenId": "sets-library"
+            },
+            {
+              "id": "create",
+              "title": "Create set",
+              "kind": "include",
+              "include": "flow.sets.create",
+              "rules": [
+                "BR-SET-001",
+                "BR-SET-002",
+                "BR-TAG-004",
+                "001:SC-001"
+              ],
+              "children": [
+                {
+                  "id": "open",
+                  "title": "New Set",
+                  "kind": "step",
+                  "surfaceId": "sets.library.new",
+                  "screenId": "sets-library-new"
+                },
+                {
+                  "id": "form",
+                  "title": "Name / type / tags",
+                  "kind": "step",
+                  "surfaceId": "sets.create",
+                  "screenId": "sets-create",
+                  "rules": [
+                    "BR-TAG-002",
+                    "BR-TAG-005"
+                  ]
+                },
+                {
+                  "id": "fill",
+                  "title": "Fill required slots",
+                  "kind": "loop",
+                  "surfaceId": "sets.fill-slot",
+                  "screenId": "sets-fill-slot",
+                  "rules": [
+                    "DAC-NME-003",
+                    "DAC-DST-009"
+                  ],
+                  "loop": "until-required-slots"
+                },
+                {
+                  "id": "detail",
+                  "title": "Review detail",
+                  "kind": "step",
+                  "surfaceId": "sets.detail",
+                  "screenId": "sets-detail"
+                }
+              ]
+            },
+            {
+              "id": "detail",
+              "title": "Set detail",
+              "kind": "step",
+              "surfaceId": "sets.detail",
+              "screenId": "sets-detail",
+              "rules": [
+                "DAC-NME-004",
+                "BR-SET-010"
+              ]
+            },
+            {
+              "id": "edit-fill",
+              "title": "Edit / fill slots",
+              "kind": "include",
+              "include": "flow.sets.edit-fill",
+              "rules": [
+                "BR-SET-001",
+                "BR-SLOT-008",
+                "DAC-DST-009"
+              ],
+              "children": [
+                {
+                  "id": "edit",
+                  "title": "Edit form",
+                  "kind": "step",
+                  "surfaceId": "sets.edit",
+                  "screenId": "sets-edit"
+                },
+                {
+                  "id": "fill",
+                  "title": "Fill slot (catalog embed)",
+                  "kind": "step",
+                  "surfaceId": "sets.fill-slot",
+                  "screenId": "sets-fill-slot"
+                },
+                {
+                  "id": "exotic-block",
+                  "title": "Second exotic blocked",
+                  "kind": "gate",
+                  "surfaceId": "sets.fill-slot.exotic-block",
+                  "screenId": "sets-fill-slot-exotic-block",
+                  "rules": [
+                    "BR-SLOT-008",
+                    "DAC-DST-001"
+                  ],
+                  "gate": "hard"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "in-flow",
+          "title": "In-flow create still works",
+          "kind": "step",
+          "surfaceId": "build.edit.armor.create",
+          "screenId": "build-edit-armor-create",
+          "rules": [
+            "DAC-P2-005",
+            "DBR-PUR-004"
+          ]
+        }
+      ],
+      "surfaceFlowId": "journey.p2.library",
+      "rules": [
+        "DAC-P2-001",
+        "DAC-P2-001a",
+        "DAC-P2-003",
+        "DAC-P2-005",
+        "DBR-PUR-004",
+        "DBR-PUR-005"
+      ]
     },
     {
       "id": "flow-signed-out-gates",
@@ -490,220 +1635,2098 @@
       "steps": [
         {
           "screenId": "build-signed-out",
-          "label": "Build gate"
+          "label": "Build gate",
+          "kind": "step"
         },
         {
           "screenId": "sets-signed-out",
-          "label": "Sets gate"
+          "label": "Sets gate",
+          "kind": "step"
         },
         {
           "screenId": "synergy-signed-out",
-          "label": "Synergy gate"
+          "label": "Synergy gate",
+          "kind": "step"
         },
         {
           "screenId": "loadouts-signed-out",
-          "label": "Loadouts empty"
+          "label": "Loadouts empty",
+          "kind": "step"
         },
         {
           "screenId": "settings-signed-out",
-          "label": "Settings"
+          "label": "Settings",
+          "kind": "step"
         },
         {
           "screenId": "catalog-signed-out-weapons",
-          "label": "Catalog weapons (public)"
+          "label": "Catalog weapons (public)",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.signed-out-gates"
+      "phases": [
+        {
+          "id": "build",
+          "title": "Build gate",
+          "kind": "step",
+          "surfaceId": "build.signed-out",
+          "screenId": "build-signed-out"
+        },
+        {
+          "id": "sets",
+          "title": "Sets gate",
+          "kind": "step",
+          "surfaceId": "sets.signed-out",
+          "screenId": "sets-signed-out"
+        },
+        {
+          "id": "synergy",
+          "title": "Synergy gate",
+          "kind": "step",
+          "surfaceId": "synergy.signed-out",
+          "screenId": "synergy-signed-out"
+        },
+        {
+          "id": "loadouts",
+          "title": "Loadouts empty",
+          "kind": "step",
+          "surfaceId": "loadouts.signed-out",
+          "screenId": "loadouts-signed-out"
+        },
+        {
+          "id": "settings",
+          "title": "Settings",
+          "kind": "step",
+          "surfaceId": "settings.signed-out",
+          "screenId": "settings-signed-out"
+        },
+        {
+          "id": "catalog",
+          "title": "Catalog weapons (public)",
+          "kind": "step",
+          "surfaceId": "catalog.signed-out.weapons",
+          "screenId": "catalog-signed-out-weapons"
+        }
+      ],
+      "surfaceFlowId": "flow.signed-out-gates",
+      "rules": [
+        "BR-AUTH-001"
+      ]
     },
     {
       "id": "flow-build-create",
-      "title": "Create a new build (draft → live)",
+      "title": "Create new build (draft → live)",
       "priority": "P1",
-      "type": "compose",
-      "description": "From library, open New build, draft General, then live edit tabs.",
+      "type": "subflow",
+      "description": "Library → New → draft General → locked tabs → create → live compose.",
       "steps": [
         {
           "screenId": "build-library",
-          "label": "Open Build library"
+          "label": "Open Build library",
+          "kind": "step"
         },
         {
-          "screenId": "build-create-draft-general",
-          "label": "New build → draft General"
+          "screenId": "build-library-new",
+          "label": "New Build action",
+          "kind": "step"
         },
         {
-          "screenId": "build-create-draft-locked-tabs",
-          "label": "Locked compose tabs"
+          "screenId": "build-create-general",
+          "label": "Draft General (class, subclass, synergies)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-create-tabs",
+          "label": "Locked Subclass / Armor / Weapon tabs",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-create-submit",
+          "label": "Create / save draft",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-general",
-          "label": "Live General"
-        },
-        {
-          "screenId": "build-edit-subclass",
-          "label": "Subclass kit"
-        },
-        {
-          "screenId": "build-edit-finish",
-          "label": "Finish readiness"
+          "label": "Live General (identity)",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.build-create"
+      "phases": [
+        {
+          "id": "library",
+          "title": "Open Build library",
+          "kind": "step",
+          "surfaceId": "build.library",
+          "screenId": "build-library"
+        },
+        {
+          "id": "new",
+          "title": "New Build action",
+          "kind": "step",
+          "surfaceId": "build.library.new",
+          "screenId": "build-library-new"
+        },
+        {
+          "id": "draft-general",
+          "title": "Draft General (class, subclass, synergies)",
+          "kind": "step",
+          "surfaceId": "build.create.general",
+          "screenId": "build-create-general",
+          "rules": [
+            "DAC-P1-001",
+            "DBR-SYN-002",
+            "DBR-SYN-003",
+            "DBR-BLD-004"
+          ]
+        },
+        {
+          "id": "locked-tabs",
+          "title": "Locked Subclass / Armor / Weapon tabs",
+          "kind": "step",
+          "surfaceId": "build.create.tabs",
+          "screenId": "build-create-tabs"
+        },
+        {
+          "id": "submit",
+          "title": "Create / save draft",
+          "kind": "step",
+          "surfaceId": "build.create.submit",
+          "screenId": "build-create-submit",
+          "rules": [
+            "DAC-P1-002",
+            "BR-SAVE-003"
+          ]
+        },
+        {
+          "id": "live-general",
+          "title": "Live General (identity)",
+          "kind": "step",
+          "surfaceId": "build.edit.general",
+          "screenId": "build-edit-general",
+          "rules": [
+            "DAC-VAR-004",
+            "DBR-ID-008"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.build.create",
+      "rules": [
+        "DAC-P1-001",
+        "DAC-P1-002",
+        "DBR-SYN-003",
+        "BR-SAVE-003",
+        "042:SC-001"
+      ]
     },
     {
-      "id": "flow-armor-set-compose",
-      "title": "Armor set — Reuse, Create, Improve",
+      "id": "flow-build-compose-default",
+      "title": "Compose default variant (tabs)",
       "priority": "P1",
-      "type": "compose",
+      "type": "subflow",
       "description": "",
       "steps": [
         {
-          "screenId": "build-library-selected",
-          "label": "Select build"
+          "screenId": "build-edit-general",
+          "label": "General / identity",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-subclass",
+          "label": "Subclass kit",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor",
+          "label": "Armor sets › Armor tab",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-armor-reuse",
-          "label": "Armor → Reuse"
+          "label": "Armor sets › Choose composition path › Reuse existing set",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-armor-create",
-          "label": "Armor → Create"
+          "label": "Armor sets › Choose composition path › Create + attach",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-armor-improve",
-          "label": "Improve kit"
-        }
-      ],
-      "surfaceFlowId": "flow.armor-set-compose"
-    },
-    {
-      "id": "flow-weapon-set-compose",
-      "title": "Weapon set — Reuse / Create",
-      "priority": "P1",
-      "type": "compose",
-      "description": "",
-      "steps": [
+          "label": "Armor sets › Choose composition path › Improve kit",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-mods",
+          "label": "Armor sets › Mod set / energy",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-exotic-limit",
+          "label": "Armor sets › Single exotic armor gate (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-edit-weapon",
+          "label": "Weapon sets › Weapon tab",
+          "kind": "step"
+        },
         {
           "screenId": "build-edit-weapon-reuse",
-          "label": "Weapon → Reuse"
+          "label": "Weapon sets › Choose composition path › Reuse existing set",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-weapon-create",
-          "label": "Weapon → Create"
+          "label": "Weapon sets › Choose composition path › Create + slot fill",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-wishlist",
+          "label": "Weapon sets › Desired roll / wishlist",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-exotic-limit",
+          "label": "Weapon sets › Single exotic weapon gate (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-edit-coverage",
+          "label": "Soft guidance / coverage",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish",
+          "label": "Finish readiness › Finish tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-gaps",
+          "label": "Finish readiness › Gap list / missing reasons",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-one-tap-create",
+          "label": "Finish readiness › Slot-first walkthrough › One-tap Create set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-capture",
+          "label": "Finish readiness › Slot-first walkthrough › Capture sets from build",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-slot-loop",
+          "label": "Finish readiness › Slot-first walkthrough › First empty slot fill loop (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-goals",
+          "label": "Finish readiness › Armor optimize workspace › Goals (set bonuses + seeded stats)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-find",
+          "label": "Finish readiness › Armor optimize workspace › Find kits",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-compare",
+          "label": "Finish readiness › Armor optimize workspace › Top-3 compare",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-apply",
+          "label": "Finish readiness › Armor optimize workspace › Apply combination in place",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip-gate",
+          "label": "Finish readiness › Equip/export blocked until pins (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-finish-character",
+          "label": "Finish readiness › Character picker",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip",
+          "label": "Finish readiness › Equip in-game",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-dim",
+          "label": "Finish readiness › DIM export",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.weapon-set-compose"
+      "phases": [
+        {
+          "id": "general",
+          "title": "General / identity",
+          "kind": "step",
+          "surfaceId": "build.edit.general",
+          "screenId": "build-edit-general",
+          "rules": [
+            "DAC-P1-002",
+            "DBR-ID-001"
+          ]
+        },
+        {
+          "id": "subclass",
+          "title": "Subclass kit",
+          "kind": "step",
+          "surfaceId": "build.edit.subclass",
+          "screenId": "build-edit-subclass",
+          "rules": [
+            "DBR-SUB-004",
+            "DAC-DST-003"
+          ]
+        },
+        {
+          "id": "armor",
+          "title": "Armor sets",
+          "kind": "include",
+          "include": "flow.build.armor-set",
+          "rules": [
+            "DAC-P1-004",
+            "DBR-CMP-001",
+            "DBR-CMP-005",
+            "BR-ATT-001",
+            "BR-BLD-007"
+          ],
+          "children": [
+            {
+              "id": "enter",
+              "title": "Armor tab",
+              "kind": "step",
+              "surfaceId": "build.edit.armor",
+              "screenId": "build-edit-armor"
+            },
+            {
+              "id": "path",
+              "title": "Choose composition path",
+              "kind": "branch",
+              "children": [
+                {
+                  "id": "reuse",
+                  "title": "Reuse existing set",
+                  "kind": "step",
+                  "surfaceId": "build.edit.armor.reuse",
+                  "screenId": "build-edit-armor-reuse"
+                },
+                {
+                  "id": "create",
+                  "title": "Create + attach",
+                  "kind": "step",
+                  "surfaceId": "build.edit.armor.create",
+                  "screenId": "build-edit-armor-create"
+                },
+                {
+                  "id": "improve",
+                  "title": "Improve kit",
+                  "kind": "step",
+                  "surfaceId": "build.edit.armor.improve",
+                  "screenId": "build-edit-armor-improve"
+                }
+              ]
+            },
+            {
+              "id": "mods",
+              "title": "Mod set / energy",
+              "kind": "step",
+              "surfaceId": "build.edit.armor.mods",
+              "screenId": "build-edit-armor-mods",
+              "rules": [
+                "DAC-DST-002",
+                "DBR-MOD-001"
+              ]
+            },
+            {
+              "id": "exotic-gate",
+              "title": "Single exotic armor gate",
+              "kind": "gate",
+              "surfaceId": "build.edit.armor.exotic-limit",
+              "screenId": "build-edit-armor-exotic-limit",
+              "rules": [
+                "DAC-DST-001",
+                "DBR-CMP-007"
+              ],
+              "gate": "hard"
+            }
+          ]
+        },
+        {
+          "id": "weapon",
+          "title": "Weapon sets",
+          "kind": "include",
+          "include": "flow.build.weapon-set",
+          "rules": [
+            "DAC-P1-004",
+            "DBR-CMP-001",
+            "DBR-ROLL-001"
+          ],
+          "children": [
+            {
+              "id": "enter",
+              "title": "Weapon tab",
+              "kind": "step",
+              "surfaceId": "build.edit.weapon",
+              "screenId": "build-edit-weapon"
+            },
+            {
+              "id": "path",
+              "title": "Choose composition path",
+              "kind": "branch",
+              "children": [
+                {
+                  "id": "reuse",
+                  "title": "Reuse existing set",
+                  "kind": "step",
+                  "surfaceId": "build.edit.weapon.reuse",
+                  "screenId": "build-edit-weapon-reuse"
+                },
+                {
+                  "id": "create",
+                  "title": "Create + slot fill",
+                  "kind": "step",
+                  "surfaceId": "build.edit.weapon.create",
+                  "screenId": "build-edit-weapon-create"
+                }
+              ]
+            },
+            {
+              "id": "wishlist",
+              "title": "Desired roll / wishlist",
+              "kind": "step",
+              "surfaceId": "build.edit.weapon.wishlist",
+              "screenId": "build-edit-weapon-wishlist",
+              "rules": [
+                "DAC-P1-005",
+                "DBR-ROLL-002"
+              ]
+            },
+            {
+              "id": "exotic-gate",
+              "title": "Single exotic weapon gate",
+              "kind": "gate",
+              "surfaceId": "build.edit.weapon.exotic-limit",
+              "screenId": "build-edit-weapon-exotic-limit",
+              "rules": [
+                "DAC-DST-001",
+                "DBR-CMP-007"
+              ],
+              "gate": "hard"
+            }
+          ]
+        },
+        {
+          "id": "coverage",
+          "title": "Soft guidance / coverage",
+          "kind": "step",
+          "surfaceId": "build.edit.coverage",
+          "screenId": "build-edit-coverage",
+          "rules": [
+            "DAC-P1-006",
+            "DBR-GUID-001"
+          ]
+        },
+        {
+          "id": "finish",
+          "title": "Finish readiness",
+          "kind": "include",
+          "include": "flow.build.finish-equip",
+          "rules": [
+            "DAC-P1-003",
+            "DAC-P1-005",
+            "DAC-P1-007",
+            "DAC-P1-008",
+            "BR-BLD-007",
+            "BR-BLD-008",
+            "BR-BLD-009",
+            "DBR-EQP-003"
+          ],
+          "children": [
+            {
+              "id": "finish-tab",
+              "title": "Finish tab",
+              "kind": "step",
+              "surfaceId": "build.finish",
+              "screenId": "build-finish"
+            },
+            {
+              "id": "gaps",
+              "title": "Gap list / missing reasons",
+              "kind": "step",
+              "surfaceId": "build.finish.gaps",
+              "screenId": "build-finish-gaps",
+              "rules": [
+                "DBR-CMPL-001"
+              ]
+            },
+            {
+              "id": "walkthrough",
+              "title": "Slot-first walkthrough",
+              "kind": "include",
+              "include": "flow.build.finish.walkthrough",
+              "rules": [
+                "BR-BLD-007",
+                "BR-BLD-008",
+                "029:SC-001"
+              ],
+              "children": [
+                {
+                  "id": "one-tap",
+                  "title": "One-tap Create set",
+                  "kind": "step",
+                  "surfaceId": "build.finish.one-tap-create",
+                  "screenId": "build-finish-one-tap-create"
+                },
+                {
+                  "id": "capture",
+                  "title": "Capture sets from build",
+                  "kind": "step",
+                  "surfaceId": "build.finish.capture",
+                  "screenId": "build-finish-capture"
+                },
+                {
+                  "id": "slot-loop",
+                  "title": "First empty slot fill loop",
+                  "kind": "loop",
+                  "surfaceId": "build.finish.slot-loop",
+                  "screenId": "build-finish-slot-loop",
+                  "rules": [
+                    "BR-BLD-008",
+                    "DAC-DST-009"
+                  ],
+                  "loop": "until-required-slots"
+                }
+              ]
+            },
+            {
+              "id": "armor-optimize",
+              "title": "Armor optimize workspace",
+              "kind": "include",
+              "include": "flow.build.finish.armor-optimize",
+              "rules": [
+                "BR-BLD-009",
+                "BR-OPT-001",
+                "031:SC-001"
+              ],
+              "children": [
+                {
+                  "id": "goals",
+                  "title": "Goals (set bonuses + seeded stats)",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.goals",
+                  "screenId": "build-finish-armor-optimize-goals"
+                },
+                {
+                  "id": "find",
+                  "title": "Find kits",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.find",
+                  "screenId": "build-finish-armor-optimize-find"
+                },
+                {
+                  "id": "compare",
+                  "title": "Top-3 compare",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.compare",
+                  "screenId": "build-finish-armor-optimize-compare"
+                },
+                {
+                  "id": "apply",
+                  "title": "Apply combination in place",
+                  "kind": "step",
+                  "surfaceId": "build.finish.armor-optimize.apply",
+                  "screenId": "build-finish-armor-optimize-apply"
+                }
+              ]
+            },
+            {
+              "id": "equip-gate",
+              "title": "Equip/export blocked until pins",
+              "kind": "gate",
+              "surfaceId": "build.finish.equip-gate",
+              "screenId": "build-finish-equip-gate",
+              "rules": [
+                "DAC-P1-005",
+                "DBR-EQP-003",
+                "DBR-ROLL-004"
+              ],
+              "gate": "hard"
+            },
+            {
+              "id": "character",
+              "title": "Character picker",
+              "kind": "step",
+              "surfaceId": "build.finish.character",
+              "screenId": "build-finish-character",
+              "rules": [
+                "DBR-BLD-004",
+                "DBR-EQP-005"
+              ]
+            },
+            {
+              "id": "equip",
+              "title": "Equip in-game",
+              "kind": "step",
+              "surfaceId": "build.finish.equip",
+              "screenId": "build-finish-equip",
+              "rules": [
+                "DAC-P1-007",
+                "DBR-EQP-001"
+              ]
+            },
+            {
+              "id": "dim",
+              "title": "DIM export",
+              "kind": "step",
+              "surfaceId": "build.finish.dim",
+              "screenId": "build-finish-dim",
+              "rules": [
+                "DAC-P1-008",
+                "DBR-EQP-002"
+              ]
+            }
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.build.compose-default",
+      "rules": [
+        "DAC-P1-003",
+        "DAC-P1-004",
+        "DBR-CMPL-001"
+      ]
     },
     {
-      "id": "flow-intent-compose-equip",
-      "title": "P1 spine — Intent → Compose → Equip",
+      "id": "flow-build-armor-set",
+      "title": "Armor set — Reuse / Create / Improve",
       "priority": "P1",
-      "type": "journey",
+      "type": "subflow",
       "description": "",
       "steps": [
         {
-          "screenId": "build-create-draft-general",
-          "label": "Intent on General"
-        },
-        {
-          "screenId": "build-edit-subclass",
-          "label": "Subclass"
+          "screenId": "build-edit-armor",
+          "label": "Armor tab",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-armor-reuse",
-          "label": "Armor"
+          "label": "Choose composition path › Reuse existing set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-create",
+          "label": "Choose composition path › Create + attach",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-improve",
+          "label": "Choose composition path › Improve kit",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-mods",
+          "label": "Mod set / energy",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-armor-exotic-limit",
+          "label": "Single exotic armor gate (gate)",
+          "kind": "gate"
+        }
+      ],
+      "phases": [
+        {
+          "id": "enter",
+          "title": "Armor tab",
+          "kind": "step",
+          "surfaceId": "build.edit.armor",
+          "screenId": "build-edit-armor"
+        },
+        {
+          "id": "path",
+          "title": "Choose composition path",
+          "kind": "branch",
+          "children": [
+            {
+              "id": "reuse",
+              "title": "Reuse existing set",
+              "kind": "step",
+              "surfaceId": "build.edit.armor.reuse",
+              "screenId": "build-edit-armor-reuse"
+            },
+            {
+              "id": "create",
+              "title": "Create + attach",
+              "kind": "step",
+              "surfaceId": "build.edit.armor.create",
+              "screenId": "build-edit-armor-create"
+            },
+            {
+              "id": "improve",
+              "title": "Improve kit",
+              "kind": "step",
+              "surfaceId": "build.edit.armor.improve",
+              "screenId": "build-edit-armor-improve"
+            }
+          ]
+        },
+        {
+          "id": "mods",
+          "title": "Mod set / energy",
+          "kind": "step",
+          "surfaceId": "build.edit.armor.mods",
+          "screenId": "build-edit-armor-mods",
+          "rules": [
+            "DAC-DST-002",
+            "DBR-MOD-001"
+          ]
+        },
+        {
+          "id": "exotic-gate",
+          "title": "Single exotic armor gate",
+          "kind": "gate",
+          "surfaceId": "build.edit.armor.exotic-limit",
+          "screenId": "build-edit-armor-exotic-limit",
+          "rules": [
+            "DAC-DST-001",
+            "DBR-CMP-007"
+          ],
+          "gate": "hard"
+        }
+      ],
+      "surfaceFlowId": "flow.build.armor-set",
+      "rules": [
+        "DAC-P1-004",
+        "DBR-CMP-001",
+        "DBR-CMP-005",
+        "BR-ATT-001",
+        "BR-BLD-007"
+      ]
+    },
+    {
+      "id": "flow-build-weapon-set",
+      "title": "Weapon set — Reuse / Create",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "build-edit-weapon",
+          "label": "Weapon tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-reuse",
+          "label": "Choose composition path › Reuse existing set",
+          "kind": "step"
         },
         {
           "screenId": "build-edit-weapon-create",
-          "label": "Weapon"
+          "label": "Choose composition path › Create + slot fill",
+          "kind": "step"
         },
         {
-          "screenId": "build-edit-finish",
-          "label": "Finish"
+          "screenId": "build-edit-weapon-wishlist",
+          "label": "Desired roll / wishlist",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-exotic-limit",
+          "label": "Single exotic weapon gate (gate)",
+          "kind": "gate"
         }
       ],
-      "surfaceFlowId": "flow.intent-compose-equip"
+      "phases": [
+        {
+          "id": "enter",
+          "title": "Weapon tab",
+          "kind": "step",
+          "surfaceId": "build.edit.weapon",
+          "screenId": "build-edit-weapon"
+        },
+        {
+          "id": "path",
+          "title": "Choose composition path",
+          "kind": "branch",
+          "children": [
+            {
+              "id": "reuse",
+              "title": "Reuse existing set",
+              "kind": "step",
+              "surfaceId": "build.edit.weapon.reuse",
+              "screenId": "build-edit-weapon-reuse"
+            },
+            {
+              "id": "create",
+              "title": "Create + slot fill",
+              "kind": "step",
+              "surfaceId": "build.edit.weapon.create",
+              "screenId": "build-edit-weapon-create"
+            }
+          ]
+        },
+        {
+          "id": "wishlist",
+          "title": "Desired roll / wishlist",
+          "kind": "step",
+          "surfaceId": "build.edit.weapon.wishlist",
+          "screenId": "build-edit-weapon-wishlist",
+          "rules": [
+            "DAC-P1-005",
+            "DBR-ROLL-002"
+          ]
+        },
+        {
+          "id": "exotic-gate",
+          "title": "Single exotic weapon gate",
+          "kind": "gate",
+          "surfaceId": "build.edit.weapon.exotic-limit",
+          "screenId": "build-edit-weapon-exotic-limit",
+          "rules": [
+            "DAC-DST-001",
+            "DBR-CMP-007"
+          ],
+          "gate": "hard"
+        }
+      ],
+      "surfaceFlowId": "flow.build.weapon-set",
+      "rules": [
+        "DAC-P1-004",
+        "DBR-CMP-001",
+        "DBR-ROLL-001"
+      ]
     },
     {
-      "id": "flow-sets-library-edit",
-      "title": "Sets library — browse, detail, edit, fill, create",
+      "id": "flow-build-finish-equip",
+      "title": "Finish → equip / DIM",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "build-finish",
+          "label": "Finish tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-gaps",
+          "label": "Gap list / missing reasons",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-one-tap-create",
+          "label": "Slot-first walkthrough › One-tap Create set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-capture",
+          "label": "Slot-first walkthrough › Capture sets from build",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-slot-loop",
+          "label": "Slot-first walkthrough › First empty slot fill loop (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-goals",
+          "label": "Armor optimize workspace › Goals (set bonuses + seeded stats)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-find",
+          "label": "Armor optimize workspace › Find kits",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-compare",
+          "label": "Armor optimize workspace › Top-3 compare",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-apply",
+          "label": "Armor optimize workspace › Apply combination in place",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip-gate",
+          "label": "Equip/export blocked until pins (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-finish-character",
+          "label": "Character picker",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-equip",
+          "label": "Equip in-game",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-dim",
+          "label": "DIM export",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "finish-tab",
+          "title": "Finish tab",
+          "kind": "step",
+          "surfaceId": "build.finish",
+          "screenId": "build-finish"
+        },
+        {
+          "id": "gaps",
+          "title": "Gap list / missing reasons",
+          "kind": "step",
+          "surfaceId": "build.finish.gaps",
+          "screenId": "build-finish-gaps",
+          "rules": [
+            "DBR-CMPL-001"
+          ]
+        },
+        {
+          "id": "walkthrough",
+          "title": "Slot-first walkthrough",
+          "kind": "include",
+          "include": "flow.build.finish.walkthrough",
+          "rules": [
+            "BR-BLD-007",
+            "BR-BLD-008",
+            "029:SC-001"
+          ],
+          "children": [
+            {
+              "id": "one-tap",
+              "title": "One-tap Create set",
+              "kind": "step",
+              "surfaceId": "build.finish.one-tap-create",
+              "screenId": "build-finish-one-tap-create"
+            },
+            {
+              "id": "capture",
+              "title": "Capture sets from build",
+              "kind": "step",
+              "surfaceId": "build.finish.capture",
+              "screenId": "build-finish-capture"
+            },
+            {
+              "id": "slot-loop",
+              "title": "First empty slot fill loop",
+              "kind": "loop",
+              "surfaceId": "build.finish.slot-loop",
+              "screenId": "build-finish-slot-loop",
+              "rules": [
+                "BR-BLD-008",
+                "DAC-DST-009"
+              ],
+              "loop": "until-required-slots"
+            }
+          ]
+        },
+        {
+          "id": "armor-optimize",
+          "title": "Armor optimize workspace",
+          "kind": "include",
+          "include": "flow.build.finish.armor-optimize",
+          "rules": [
+            "BR-BLD-009",
+            "BR-OPT-001",
+            "031:SC-001"
+          ],
+          "children": [
+            {
+              "id": "goals",
+              "title": "Goals (set bonuses + seeded stats)",
+              "kind": "step",
+              "surfaceId": "build.finish.armor-optimize.goals",
+              "screenId": "build-finish-armor-optimize-goals"
+            },
+            {
+              "id": "find",
+              "title": "Find kits",
+              "kind": "step",
+              "surfaceId": "build.finish.armor-optimize.find",
+              "screenId": "build-finish-armor-optimize-find"
+            },
+            {
+              "id": "compare",
+              "title": "Top-3 compare",
+              "kind": "step",
+              "surfaceId": "build.finish.armor-optimize.compare",
+              "screenId": "build-finish-armor-optimize-compare"
+            },
+            {
+              "id": "apply",
+              "title": "Apply combination in place",
+              "kind": "step",
+              "surfaceId": "build.finish.armor-optimize.apply",
+              "screenId": "build-finish-armor-optimize-apply"
+            }
+          ]
+        },
+        {
+          "id": "equip-gate",
+          "title": "Equip/export blocked until pins",
+          "kind": "gate",
+          "surfaceId": "build.finish.equip-gate",
+          "screenId": "build-finish-equip-gate",
+          "rules": [
+            "DAC-P1-005",
+            "DBR-EQP-003",
+            "DBR-ROLL-004"
+          ],
+          "gate": "hard"
+        },
+        {
+          "id": "character",
+          "title": "Character picker",
+          "kind": "step",
+          "surfaceId": "build.finish.character",
+          "screenId": "build-finish-character",
+          "rules": [
+            "DBR-BLD-004",
+            "DBR-EQP-005"
+          ]
+        },
+        {
+          "id": "equip",
+          "title": "Equip in-game",
+          "kind": "step",
+          "surfaceId": "build.finish.equip",
+          "screenId": "build-finish-equip",
+          "rules": [
+            "DAC-P1-007",
+            "DBR-EQP-001"
+          ]
+        },
+        {
+          "id": "dim",
+          "title": "DIM export",
+          "kind": "step",
+          "surfaceId": "build.finish.dim",
+          "screenId": "build-finish-dim",
+          "rules": [
+            "DAC-P1-008",
+            "DBR-EQP-002"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.build.finish-equip",
+      "rules": [
+        "DAC-P1-003",
+        "DAC-P1-005",
+        "DAC-P1-007",
+        "DAC-P1-008",
+        "BR-BLD-007",
+        "BR-BLD-008",
+        "BR-BLD-009",
+        "DBR-EQP-003"
+      ]
+    },
+    {
+      "id": "flow-build-finish-walkthrough",
+      "title": "Slot-first walkthrough (Armor → Weapons → Mods)",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "build-finish-one-tap-create",
+          "label": "One-tap Create set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-capture",
+          "label": "Capture sets from build",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-slot-loop",
+          "label": "First empty slot fill loop (loop)",
+          "kind": "loop"
+        }
+      ],
+      "phases": [
+        {
+          "id": "one-tap",
+          "title": "One-tap Create set",
+          "kind": "step",
+          "surfaceId": "build.finish.one-tap-create",
+          "screenId": "build-finish-one-tap-create"
+        },
+        {
+          "id": "capture",
+          "title": "Capture sets from build",
+          "kind": "step",
+          "surfaceId": "build.finish.capture",
+          "screenId": "build-finish-capture"
+        },
+        {
+          "id": "slot-loop",
+          "title": "First empty slot fill loop",
+          "kind": "loop",
+          "surfaceId": "build.finish.slot-loop",
+          "screenId": "build-finish-slot-loop",
+          "rules": [
+            "BR-BLD-008",
+            "DAC-DST-009"
+          ],
+          "loop": "until-required-slots"
+        }
+      ],
+      "surfaceFlowId": "flow.build.finish.walkthrough",
+      "rules": [
+        "BR-BLD-007",
+        "BR-BLD-008",
+        "029:SC-001"
+      ]
+    },
+    {
+      "id": "flow-build-finish-armor-optimize",
+      "title": "Finish armor optimize",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "build-finish-armor-optimize-goals",
+          "label": "Goals (set bonuses + seeded stats)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-find",
+          "label": "Find kits",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-compare",
+          "label": "Top-3 compare",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-finish-armor-optimize-apply",
+          "label": "Apply combination in place",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "goals",
+          "title": "Goals (set bonuses + seeded stats)",
+          "kind": "step",
+          "surfaceId": "build.finish.armor-optimize.goals",
+          "screenId": "build-finish-armor-optimize-goals"
+        },
+        {
+          "id": "find",
+          "title": "Find kits",
+          "kind": "step",
+          "surfaceId": "build.finish.armor-optimize.find",
+          "screenId": "build-finish-armor-optimize-find"
+        },
+        {
+          "id": "compare",
+          "title": "Top-3 compare",
+          "kind": "step",
+          "surfaceId": "build.finish.armor-optimize.compare",
+          "screenId": "build-finish-armor-optimize-compare"
+        },
+        {
+          "id": "apply",
+          "title": "Apply combination in place",
+          "kind": "step",
+          "surfaceId": "build.finish.armor-optimize.apply",
+          "screenId": "build-finish-armor-optimize-apply"
+        }
+      ],
+      "surfaceFlowId": "flow.build.finish.armor-optimize",
+      "rules": [
+        "BR-BLD-009",
+        "BR-OPT-001",
+        "031:SC-001"
+      ]
+    },
+    {
+      "id": "flow-variant-update",
+      "title": "Update non-default variant",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "Switch variant, edit gear with soft guidance; gaps allowed.",
+      "steps": [
+        {
+          "screenId": "build-library-variants",
+          "label": "Select variant",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-general",
+          "label": "Variant-level fields",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon",
+          "label": "Armor / weapon edits › Weapon tab",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-reuse",
+          "label": "Armor / weapon edits › Choose composition path › Reuse existing set",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-create",
+          "label": "Armor / weapon edits › Choose composition path › Create + slot fill",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-wishlist",
+          "label": "Armor / weapon edits › Desired roll / wishlist",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-weapon-exotic-limit",
+          "label": "Armor / weapon edits › Single exotic weapon gate (gate)",
+          "kind": "gate"
+        },
+        {
+          "screenId": "build-edit-coverage",
+          "label": "Soft guidance (non-blocking)",
+          "kind": "step"
+        },
+        {
+          "screenId": "build-edit-general",
+          "label": "Identity change confirm / fork",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "select",
+          "title": "Select variant",
+          "kind": "step",
+          "surfaceId": "build.library.variants",
+          "screenId": "build-library-variants"
+        },
+        {
+          "id": "general",
+          "title": "Variant-level fields",
+          "kind": "step",
+          "surfaceId": "build.edit.general",
+          "screenId": "build-edit-general"
+        },
+        {
+          "id": "gear",
+          "title": "Armor / weapon edits",
+          "kind": "include",
+          "include": "flow.build.weapon-set",
+          "rules": [
+            "DAC-P1-004",
+            "DBR-CMP-001",
+            "DBR-ROLL-001"
+          ],
+          "children": [
+            {
+              "id": "enter",
+              "title": "Weapon tab",
+              "kind": "step",
+              "surfaceId": "build.edit.weapon",
+              "screenId": "build-edit-weapon"
+            },
+            {
+              "id": "path",
+              "title": "Choose composition path",
+              "kind": "branch",
+              "children": [
+                {
+                  "id": "reuse",
+                  "title": "Reuse existing set",
+                  "kind": "step",
+                  "surfaceId": "build.edit.weapon.reuse",
+                  "screenId": "build-edit-weapon-reuse"
+                },
+                {
+                  "id": "create",
+                  "title": "Create + slot fill",
+                  "kind": "step",
+                  "surfaceId": "build.edit.weapon.create",
+                  "screenId": "build-edit-weapon-create"
+                }
+              ]
+            },
+            {
+              "id": "wishlist",
+              "title": "Desired roll / wishlist",
+              "kind": "step",
+              "surfaceId": "build.edit.weapon.wishlist",
+              "screenId": "build-edit-weapon-wishlist",
+              "rules": [
+                "DAC-P1-005",
+                "DBR-ROLL-002"
+              ]
+            },
+            {
+              "id": "exotic-gate",
+              "title": "Single exotic weapon gate",
+              "kind": "gate",
+              "surfaceId": "build.edit.weapon.exotic-limit",
+              "screenId": "build-edit-weapon-exotic-limit",
+              "rules": [
+                "DAC-DST-001",
+                "DBR-CMP-007"
+              ],
+              "gate": "hard"
+            }
+          ]
+        },
+        {
+          "id": "coverage",
+          "title": "Soft guidance (non-blocking)",
+          "kind": "step",
+          "surfaceId": "build.edit.coverage",
+          "screenId": "build-edit-coverage",
+          "rules": [
+            "DAC-P1-006",
+            "DBR-SYN-011"
+          ]
+        },
+        {
+          "id": "identity-gate",
+          "title": "Identity change confirm / fork",
+          "kind": "step",
+          "surfaceId": "build.edit.general",
+          "screenId": "build-edit-general",
+          "rules": [
+            "DAC-VAR-004",
+            "DBR-ID-008"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.variant.update",
+      "rules": [
+        "DAC-VAR-001",
+        "DBR-CMPL-002",
+        "DBR-SYN-011",
+        "BR-VAR-001"
+      ]
+    },
+    {
+      "id": "flow-sets-library",
+      "title": "Sets library — browse → detail → edit / fill / create",
       "priority": "P1",
       "type": "library",
       "description": "",
       "steps": [
         {
           "screenId": "sets-library",
-          "label": "Browse"
+          "label": "Browse library",
+          "kind": "step"
         },
         {
-          "screenId": "sets-detail",
-          "label": "Detail"
-        },
-        {
-          "screenId": "sets-edit",
-          "label": "Edit form"
-        },
-        {
-          "screenId": "sets-fill-slot",
-          "label": "Fill slot → Catalog embed"
+          "screenId": "sets-library-new",
+          "label": "Create set › New Set",
+          "kind": "step"
         },
         {
           "screenId": "sets-create",
-          "label": "Create"
+          "label": "Create set › Name / type / tags",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot",
+          "label": "Create set › Fill required slots (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Create set › Review detail",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Set detail",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-edit",
+          "label": "Edit / fill slots › Edit form",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot",
+          "label": "Edit / fill slots › Fill slot (catalog embed)",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot-exotic-block",
+          "label": "Edit / fill slots › Second exotic blocked (gate)",
+          "kind": "gate"
         }
       ],
-      "surfaceFlowId": "flow.sets-library-edit"
+      "phases": [
+        {
+          "id": "browse",
+          "title": "Browse library",
+          "kind": "step",
+          "surfaceId": "sets.library",
+          "screenId": "sets-library"
+        },
+        {
+          "id": "create",
+          "title": "Create set",
+          "kind": "include",
+          "include": "flow.sets.create",
+          "rules": [
+            "BR-SET-001",
+            "BR-SET-002",
+            "BR-TAG-004",
+            "001:SC-001"
+          ],
+          "children": [
+            {
+              "id": "open",
+              "title": "New Set",
+              "kind": "step",
+              "surfaceId": "sets.library.new",
+              "screenId": "sets-library-new"
+            },
+            {
+              "id": "form",
+              "title": "Name / type / tags",
+              "kind": "step",
+              "surfaceId": "sets.create",
+              "screenId": "sets-create",
+              "rules": [
+                "BR-TAG-002",
+                "BR-TAG-005"
+              ]
+            },
+            {
+              "id": "fill",
+              "title": "Fill required slots",
+              "kind": "loop",
+              "surfaceId": "sets.fill-slot",
+              "screenId": "sets-fill-slot",
+              "rules": [
+                "DAC-NME-003",
+                "DAC-DST-009"
+              ],
+              "loop": "until-required-slots"
+            },
+            {
+              "id": "detail",
+              "title": "Review detail",
+              "kind": "step",
+              "surfaceId": "sets.detail",
+              "screenId": "sets-detail"
+            }
+          ]
+        },
+        {
+          "id": "detail",
+          "title": "Set detail",
+          "kind": "step",
+          "surfaceId": "sets.detail",
+          "screenId": "sets-detail",
+          "rules": [
+            "DAC-NME-004",
+            "BR-SET-010"
+          ]
+        },
+        {
+          "id": "edit-fill",
+          "title": "Edit / fill slots",
+          "kind": "include",
+          "include": "flow.sets.edit-fill",
+          "rules": [
+            "BR-SET-001",
+            "BR-SLOT-008",
+            "DAC-DST-009"
+          ],
+          "children": [
+            {
+              "id": "edit",
+              "title": "Edit form",
+              "kind": "step",
+              "surfaceId": "sets.edit",
+              "screenId": "sets-edit"
+            },
+            {
+              "id": "fill",
+              "title": "Fill slot (catalog embed)",
+              "kind": "step",
+              "surfaceId": "sets.fill-slot",
+              "screenId": "sets-fill-slot"
+            },
+            {
+              "id": "exotic-block",
+              "title": "Second exotic blocked",
+              "kind": "gate",
+              "surfaceId": "sets.fill-slot.exotic-block",
+              "screenId": "sets-fill-slot-exotic-block",
+              "rules": [
+                "BR-SLOT-008",
+                "DAC-DST-001"
+              ],
+              "gate": "hard"
+            }
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.sets.library",
+      "rules": [
+        "BR-SET-001",
+        "BR-SET-002",
+        "DAC-P1-009"
+      ]
     },
     {
-      "id": "flow-synergy-library-edit",
-      "title": "Synergy library — browse, detail, create",
+      "id": "flow-sets-create",
+      "title": "Create set (all phases)",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "sets-library-new",
+          "label": "New Set",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-create",
+          "label": "Name / type / tags",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot",
+          "label": "Fill required slots (loop)",
+          "kind": "loop"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Review detail",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "open",
+          "title": "New Set",
+          "kind": "step",
+          "surfaceId": "sets.library.new",
+          "screenId": "sets-library-new"
+        },
+        {
+          "id": "form",
+          "title": "Name / type / tags",
+          "kind": "step",
+          "surfaceId": "sets.create",
+          "screenId": "sets-create",
+          "rules": [
+            "BR-TAG-002",
+            "BR-TAG-005"
+          ]
+        },
+        {
+          "id": "fill",
+          "title": "Fill required slots",
+          "kind": "loop",
+          "surfaceId": "sets.fill-slot",
+          "screenId": "sets-fill-slot",
+          "rules": [
+            "DAC-NME-003",
+            "DAC-DST-009"
+          ],
+          "loop": "until-required-slots"
+        },
+        {
+          "id": "detail",
+          "title": "Review detail",
+          "kind": "step",
+          "surfaceId": "sets.detail",
+          "screenId": "sets-detail"
+        }
+      ],
+      "surfaceFlowId": "flow.sets.create",
+      "rules": [
+        "BR-SET-001",
+        "BR-SET-002",
+        "BR-TAG-004",
+        "001:SC-001"
+      ]
+    },
+    {
+      "id": "flow-sets-edit-fill",
+      "title": "Edit set + fill slot",
+      "priority": "P1",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "sets-edit",
+          "label": "Edit form",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot",
+          "label": "Fill slot (catalog embed)",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-fill-slot-exotic-block",
+          "label": "Second exotic blocked (gate)",
+          "kind": "gate"
+        }
+      ],
+      "phases": [
+        {
+          "id": "edit",
+          "title": "Edit form",
+          "kind": "step",
+          "surfaceId": "sets.edit",
+          "screenId": "sets-edit"
+        },
+        {
+          "id": "fill",
+          "title": "Fill slot (catalog embed)",
+          "kind": "step",
+          "surfaceId": "sets.fill-slot",
+          "screenId": "sets-fill-slot"
+        },
+        {
+          "id": "exotic-block",
+          "title": "Second exotic blocked",
+          "kind": "gate",
+          "surfaceId": "sets.fill-slot.exotic-block",
+          "screenId": "sets-fill-slot-exotic-block",
+          "rules": [
+            "BR-SLOT-008",
+            "DAC-DST-001"
+          ],
+          "gate": "hard"
+        }
+      ],
+      "surfaceFlowId": "flow.sets.edit-fill",
+      "rules": [
+        "BR-SET-001",
+        "BR-SLOT-008",
+        "DAC-DST-009"
+      ]
+    },
+    {
+      "id": "flow-synergy-library",
+      "title": "Synergy library — browse → detail / create",
       "priority": "P2",
       "type": "library",
       "description": "",
       "steps": [
         {
           "screenId": "synergy-library",
-          "label": "Browse"
+          "label": "Browse",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-create-type",
+          "label": "Create synergy › Type + optional subtype",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-create-description",
+          "label": "Create synergy › Description",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-create-custom-type",
+          "label": "Create synergy › Personal custom type / keyword",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-links",
+          "label": "Create synergy › Evidence links",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-link-required",
+          "label": "Create synergy › Mark links required (AND)",
+          "kind": "step"
         },
         {
           "screenId": "synergy-detail",
-          "label": "Detail"
+          "label": "Detail / evidence",
+          "kind": "step"
         },
         {
-          "screenId": "synergy-create",
-          "label": "Create"
+          "screenId": "synergy-detail-designation",
+          "label": "Edit (objects only) › Designation read-only",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-edit",
+          "label": "Edit (objects only) › Edit description / objects",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-link-add",
+          "label": "Edit (objects only) › Add / update evidence",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.synergy-library-edit"
+      "phases": [
+        {
+          "id": "browse",
+          "title": "Browse",
+          "kind": "step",
+          "surfaceId": "synergy.library",
+          "screenId": "synergy-library"
+        },
+        {
+          "id": "create",
+          "title": "Create synergy",
+          "kind": "include",
+          "include": "flow.synergy.create",
+          "rules": [
+            "DAC-P2-001",
+            "DAC-P2-003",
+            "DBR-SYN-001",
+            "DBR-SYN-012"
+          ],
+          "children": [
+            {
+              "id": "designation",
+              "title": "Type + optional subtype",
+              "kind": "step",
+              "surfaceId": "synergy.create.type",
+              "screenId": "synergy-create-type",
+              "rules": [
+                "DBR-SYN-012",
+                "DAC-P2-001a"
+              ]
+            },
+            {
+              "id": "description",
+              "title": "Description",
+              "kind": "step",
+              "surfaceId": "synergy.create.description",
+              "screenId": "synergy-create-description"
+            },
+            {
+              "id": "custom-type",
+              "title": "Personal custom type / keyword",
+              "kind": "step",
+              "surfaceId": "synergy.create.custom-type",
+              "screenId": "synergy-create-custom-type",
+              "rules": [
+                "DAC-P2-003",
+                "DBR-SYN-005"
+              ]
+            },
+            {
+              "id": "evidence",
+              "title": "Evidence links",
+              "kind": "step",
+              "surfaceId": "synergy.detail.links",
+              "screenId": "synergy-detail-links",
+              "rules": [
+                "DBR-SYN-007",
+                "DBR-SYN-014"
+              ]
+            },
+            {
+              "id": "required",
+              "title": "Mark links required (AND)",
+              "kind": "step",
+              "surfaceId": "synergy.detail.link.required",
+              "screenId": "synergy-detail-link-required",
+              "rules": [
+                "DBR-SYN-008",
+                "DBR-SYN-009",
+                "DAC-P2-002"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "detail",
+          "title": "Detail / evidence",
+          "kind": "step",
+          "surfaceId": "synergy.detail",
+          "screenId": "synergy-detail"
+        },
+        {
+          "id": "edit",
+          "title": "Edit (objects only)",
+          "kind": "include",
+          "include": "flow.synergy.edit",
+          "rules": [
+            "DAC-P2-001a",
+            "DBR-SYN-012"
+          ],
+          "children": [
+            {
+              "id": "designation-ro",
+              "title": "Designation read-only",
+              "kind": "step",
+              "surfaceId": "synergy.detail.designation",
+              "screenId": "synergy-detail-designation",
+              "rules": [
+                "DAC-P2-001a"
+              ]
+            },
+            {
+              "id": "objects",
+              "title": "Edit description / objects",
+              "kind": "step",
+              "surfaceId": "synergy.detail.edit",
+              "screenId": "synergy-detail-edit"
+            },
+            {
+              "id": "links",
+              "title": "Add / update evidence",
+              "kind": "step",
+              "surfaceId": "synergy.detail.link.add",
+              "screenId": "synergy-detail-link-add"
+            }
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.synergy.library",
+      "rules": [
+        "DAC-P2-001",
+        "DBR-SYN-001"
+      ]
+    },
+    {
+      "id": "flow-synergy-create",
+      "title": "Create synergy",
+      "priority": "P2",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "synergy-create-type",
+          "label": "Type + optional subtype",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-create-description",
+          "label": "Description",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-create-custom-type",
+          "label": "Personal custom type / keyword",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-links",
+          "label": "Evidence links",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-link-required",
+          "label": "Mark links required (AND)",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "designation",
+          "title": "Type + optional subtype",
+          "kind": "step",
+          "surfaceId": "synergy.create.type",
+          "screenId": "synergy-create-type",
+          "rules": [
+            "DBR-SYN-012",
+            "DAC-P2-001a"
+          ]
+        },
+        {
+          "id": "description",
+          "title": "Description",
+          "kind": "step",
+          "surfaceId": "synergy.create.description",
+          "screenId": "synergy-create-description"
+        },
+        {
+          "id": "custom-type",
+          "title": "Personal custom type / keyword",
+          "kind": "step",
+          "surfaceId": "synergy.create.custom-type",
+          "screenId": "synergy-create-custom-type",
+          "rules": [
+            "DAC-P2-003",
+            "DBR-SYN-005"
+          ]
+        },
+        {
+          "id": "evidence",
+          "title": "Evidence links",
+          "kind": "step",
+          "surfaceId": "synergy.detail.links",
+          "screenId": "synergy-detail-links",
+          "rules": [
+            "DBR-SYN-007",
+            "DBR-SYN-014"
+          ]
+        },
+        {
+          "id": "required",
+          "title": "Mark links required (AND)",
+          "kind": "step",
+          "surfaceId": "synergy.detail.link.required",
+          "screenId": "synergy-detail-link-required",
+          "rules": [
+            "DBR-SYN-008",
+            "DBR-SYN-009",
+            "DAC-P2-002"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.synergy.create",
+      "rules": [
+        "DAC-P2-001",
+        "DAC-P2-003",
+        "DBR-SYN-001",
+        "DBR-SYN-012"
+      ]
+    },
+    {
+      "id": "flow-synergy-edit",
+      "title": "Edit synergy (designation immutable)",
+      "priority": "P2",
+      "type": "subflow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "synergy-detail-designation",
+          "label": "Designation read-only",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-edit",
+          "label": "Edit description / objects",
+          "kind": "step"
+        },
+        {
+          "screenId": "synergy-detail-link-add",
+          "label": "Add / update evidence",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "designation-ro",
+          "title": "Designation read-only",
+          "kind": "step",
+          "surfaceId": "synergy.detail.designation",
+          "screenId": "synergy-detail-designation",
+          "rules": [
+            "DAC-P2-001a"
+          ]
+        },
+        {
+          "id": "objects",
+          "title": "Edit description / objects",
+          "kind": "step",
+          "surfaceId": "synergy.detail.edit",
+          "screenId": "synergy-detail-edit"
+        },
+        {
+          "id": "links",
+          "title": "Add / update evidence",
+          "kind": "step",
+          "surfaceId": "synergy.detail.link.add",
+          "screenId": "synergy-detail-link-add"
+        }
+      ],
+      "surfaceFlowId": "flow.synergy.edit",
+      "rules": [
+        "DAC-P2-001a",
+        "DBR-SYN-012"
+      ]
     },
     {
       "id": "flow-catalog-weapons",
       "title": "Catalog — weapons browse + detail",
       "priority": "P1",
       "type": "catalog",
-      "description": "Weapons kind, Owned/Manifest scopes, and item detail pane.",
+      "description": "",
       "steps": [
         {
           "screenId": "catalog-signed-out-weapons",
-          "label": "Signed-out Manifest weapons"
+          "label": "Signed-out Manifest",
+          "kind": "step"
         },
         {
           "screenId": "catalog-weapons-owned",
-          "label": "Signed-in Owned"
+          "label": "Owned",
+          "kind": "step"
         },
         {
           "screenId": "catalog-weapons-manifest",
-          "label": "Signed-in Manifest"
+          "label": "Manifest",
+          "kind": "step"
         },
         {
           "screenId": "catalog-filters-open",
-          "label": "Filters expanded"
+          "label": "Filters expanded",
+          "kind": "step"
         },
         {
           "screenId": "catalog-weapon-detail",
-          "label": "Weapon detail"
+          "label": "Weapon detail",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.catalog-weapons"
+      "phases": [
+        {
+          "id": "signed-out",
+          "title": "Signed-out Manifest",
+          "kind": "step",
+          "surfaceId": "catalog.signed-out.weapons",
+          "screenId": "catalog-signed-out-weapons"
+        },
+        {
+          "id": "owned",
+          "title": "Owned",
+          "kind": "step",
+          "surfaceId": "catalog.weapons.owned",
+          "screenId": "catalog-weapons-owned"
+        },
+        {
+          "id": "manifest",
+          "title": "Manifest",
+          "kind": "step",
+          "surfaceId": "catalog.weapons.manifest",
+          "screenId": "catalog-weapons-manifest"
+        },
+        {
+          "id": "filters",
+          "title": "Filters expanded",
+          "kind": "step",
+          "surfaceId": "catalog.filters.open",
+          "screenId": "catalog-filters-open"
+        },
+        {
+          "id": "detail",
+          "title": "Weapon detail",
+          "kind": "step",
+          "surfaceId": "catalog.weapon.detail",
+          "screenId": "catalog-weapon-detail"
+        }
+      ],
+      "surfaceFlowId": "flow.catalog.weapons",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010"
+      ]
     },
     {
       "id": "flow-catalog-armor",
@@ -714,26 +3737,75 @@
       "steps": [
         {
           "screenId": "catalog-signed-out-armor",
-          "label": "Signed-out Manifest armor"
+          "label": "Signed-out Manifest",
+          "kind": "step"
         },
         {
           "screenId": "catalog-armor-owned",
-          "label": "Owned armor"
+          "label": "Owned",
+          "kind": "step"
         },
         {
           "screenId": "catalog-armor-manifest",
-          "label": "Manifest armor"
+          "label": "Manifest",
+          "kind": "step"
         },
         {
           "screenId": "catalog-armor-detail",
-          "label": "Armor detail"
+          "label": "Armor detail",
+          "kind": "step"
         },
         {
           "screenId": "catalog-universal",
-          "label": "Universal search"
+          "label": "Universal search",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.catalog-armor"
+      "phases": [
+        {
+          "id": "signed-out",
+          "title": "Signed-out Manifest",
+          "kind": "step",
+          "surfaceId": "catalog.signed-out.armor",
+          "screenId": "catalog-signed-out-armor"
+        },
+        {
+          "id": "owned",
+          "title": "Owned",
+          "kind": "step",
+          "surfaceId": "catalog.armor.owned",
+          "screenId": "catalog-armor-owned"
+        },
+        {
+          "id": "manifest",
+          "title": "Manifest",
+          "kind": "step",
+          "surfaceId": "catalog.armor.manifest",
+          "screenId": "catalog-armor-manifest"
+        },
+        {
+          "id": "detail",
+          "title": "Armor detail",
+          "kind": "step",
+          "surfaceId": "catalog.armor.detail",
+          "screenId": "catalog-armor-detail"
+        },
+        {
+          "id": "universal",
+          "title": "Universal search",
+          "kind": "step",
+          "surfaceId": "catalog.universal",
+          "screenId": "catalog-universal",
+          "rules": [
+            "027:SC-001"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.catalog.armor",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010"
+      ]
     },
     {
       "id": "flow-loadouts",
@@ -744,18 +3816,248 @@
       "steps": [
         {
           "screenId": "loadouts-signed-out",
-          "label": "Signed-out"
+          "label": "Signed-out",
+          "kind": "step"
         },
         {
-          "screenId": "loadouts-signed-in",
-          "label": "Slots list"
+          "screenId": "loadouts-list",
+          "label": "Slots list",
+          "kind": "step"
+        },
+        {
+          "screenId": "loadouts-filter-exotic",
+          "label": "Exotic filter bar",
+          "kind": "step"
         },
         {
           "screenId": "loadouts-slot-expanded",
-          "label": "Expanded slot"
+          "label": "Expanded slot",
+          "kind": "step"
+        },
+        {
+          "screenId": "loadouts-row",
+          "label": "Discovery overlay",
+          "kind": "step"
         }
       ],
-      "surfaceFlowId": "flow.loadouts"
+      "phases": [
+        {
+          "id": "signed-out",
+          "title": "Signed-out",
+          "kind": "step",
+          "surfaceId": "loadouts.signed-out",
+          "screenId": "loadouts-signed-out"
+        },
+        {
+          "id": "list",
+          "title": "Slots list",
+          "kind": "step",
+          "surfaceId": "loadouts.list",
+          "screenId": "loadouts-list"
+        },
+        {
+          "id": "filter",
+          "title": "Exotic filter bar",
+          "kind": "step",
+          "surfaceId": "loadouts.filter.exotic",
+          "screenId": "loadouts-filter-exotic"
+        },
+        {
+          "id": "expanded",
+          "title": "Expanded slot",
+          "kind": "step",
+          "surfaceId": "loadouts.slot-expanded",
+          "screenId": "loadouts-slot-expanded"
+        },
+        {
+          "id": "discovery",
+          "title": "Discovery overlay",
+          "kind": "step",
+          "surfaceId": "loadouts.row",
+          "screenId": "loadouts-row",
+          "rules": [
+            "002:SC-002",
+            "BR-EXO-005"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.loadouts",
+      "rules": [
+        "BR-EXO-001",
+        "BR-EXO-002",
+        "002:SC-001"
+      ]
+    },
+    {
+      "id": "flow-settings",
+      "title": "Settings — auth, sync, manifest",
+      "priority": "P2",
+      "type": "library",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "settings-signed-out",
+          "label": "Settings signed-out",
+          "kind": "step"
+        },
+        {
+          "screenId": "settings-signed-in",
+          "label": "Settings signed-in",
+          "kind": "step"
+        },
+        {
+          "screenId": "settings-inventory-sync",
+          "label": "Inventory sync",
+          "kind": "step"
+        },
+        {
+          "screenId": "settings-manifest",
+          "label": "Manifest card",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "signed-out",
+          "title": "Settings signed-out",
+          "kind": "step",
+          "surfaceId": "settings.signed-out",
+          "screenId": "settings-signed-out"
+        },
+        {
+          "id": "signed-in",
+          "title": "Settings signed-in",
+          "kind": "step",
+          "surfaceId": "settings.signed-in",
+          "screenId": "settings-signed-in"
+        },
+        {
+          "id": "sync",
+          "title": "Inventory sync",
+          "kind": "step",
+          "surfaceId": "settings.inventory-sync",
+          "screenId": "settings-inventory-sync"
+        },
+        {
+          "id": "manifest",
+          "title": "Manifest card",
+          "kind": "step",
+          "surfaceId": "settings.manifest",
+          "screenId": "settings-manifest"
+        }
+      ],
+      "surfaceFlowId": "flow.settings",
+      "rules": [
+        "BR-AUTH-001",
+        "DBR-EQP-005"
+      ]
+    },
+    {
+      "id": "flow-analyze",
+      "title": "Analyzer",
+      "priority": "P2",
+      "type": "path",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "analyze-page",
+          "label": "Analyzer page",
+          "kind": "step"
+        },
+        {
+          "screenId": "analyze-form",
+          "label": "Analyze form",
+          "kind": "step"
+        },
+        {
+          "screenId": "analyze-report",
+          "label": "Report",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "page",
+          "title": "Analyzer page",
+          "kind": "step",
+          "surfaceId": "analyze.page",
+          "screenId": "analyze-page"
+        },
+        {
+          "id": "form",
+          "title": "Analyze form",
+          "kind": "step",
+          "surfaceId": "analyze.form",
+          "screenId": "analyze-form"
+        },
+        {
+          "id": "report",
+          "title": "Report",
+          "kind": "step",
+          "surfaceId": "analyze.report",
+          "screenId": "analyze-report"
+        }
+      ],
+      "surfaceFlowId": "flow.analyze",
+      "rules": [
+        "DBR-PUR-002"
+      ]
+    },
+    {
+      "id": "flow-shared-llm-propose",
+      "title": "LLM propose-for-confirm",
+      "priority": "P2",
+      "type": "flow",
+      "description": "",
+      "steps": [
+        {
+          "screenId": "shared-llm-propose-run",
+          "label": "Start pass",
+          "kind": "step"
+        },
+        {
+          "screenId": "shared-llm-propose-review",
+          "label": "Review proposals",
+          "kind": "step"
+        },
+        {
+          "screenId": "shared-llm-propose-confirm",
+          "label": "Confirm / edit before persist",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "run",
+          "title": "Start pass",
+          "kind": "step",
+          "surfaceId": "shared.llm-propose.run",
+          "screenId": "shared-llm-propose-run"
+        },
+        {
+          "id": "review",
+          "title": "Review proposals",
+          "kind": "step",
+          "surfaceId": "shared.llm-propose.review",
+          "screenId": "shared-llm-propose-review"
+        },
+        {
+          "id": "confirm",
+          "title": "Confirm / edit before persist",
+          "kind": "step",
+          "surfaceId": "shared.llm-propose.confirm",
+          "screenId": "shared-llm-propose-confirm",
+          "rules": [
+            "DBR-LLM-002"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.shared.llm-propose",
+      "rules": [
+        "DAC-P2-004",
+        "DBR-LLM-001",
+        "DBR-LLM-002"
+      ]
     }
   ],
   "transitions": [

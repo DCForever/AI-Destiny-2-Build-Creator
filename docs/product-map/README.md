@@ -26,8 +26,11 @@ Rule **wording** stays in `specs/domain-*.md`, `specs/business-rules.md`, and fe
 # Validate hub + resolve rule IDs
 npm run product-map:validate
 
-# Validate → generate drawio, inventory projection, atlas links, atlas paths
+# Validate → generate → route/orphan drift check
 npm run product-map:sync
+
+# Drift only
+npm run product-map:check
 
 # Scaffold
 npm run product-map:add-surface -- --id area.name --title "Title" --area build
@@ -36,6 +39,8 @@ npm run product-map:add-flow -- --id flow.example --title "Example flow"
 # One-time / re-import from legacy inventory + atlas (overwrites hub surfaces/flows)
 npm run product-map:import
 ```
+
+Feature checklist: [`CHECKLIST.md`](./CHECKLIST.md).
 
 ## Edit workflow
 

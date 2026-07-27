@@ -1727,76 +1727,933 @@ pages:
         kind: screen
         title: Start pass
         rules: []
-  - id: flow-journey-p1
-    label: P1 Journey — Intent → compose → equip
-    description: Flow journey.p1
+  - id: flow-journey-p1-intent-compose-equip
+    label: P1 — Intent → compose → equip
+    description: Primary success journey. Subflows expand for compose and equip.
     nodes:
-      - id: journey.p1.intent
+      - id: journey.p1.intent-compose-equip.create
         kind: flow
-        title: Designate Synergy Types
+        title: ↳ Create build (draft → live)
         rules:
           - DAC-P1-001
-          - DBR-SYN-002
+          - DAC-P1-002
           - DBR-SYN-003
-      - id: journey.p1.compose
+          - BR-SAVE-003
+          - 042:SC-001
+        notes: "include: flow.build.create"
+        children:
+          - id: journey.p1.intent-compose-equip.create.library
+            kind: surface
+            title: Open Build library
+            rules:
+              - DBR-BLD-001
+              - DBR-BLD-005
+              - BR-BLD-001
+              - BR-TAG-006
+              - BR-TAG-008
+              - BR-VAR-004
+              - DAC-NME-002
+              - 001:SC-002
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-library
+          - id: journey.p1.intent-compose-equip.create.new
+            kind: surface
+            title: New Build action
+            rules: []
+            atlas:
+              - build-library-new
+          - id: journey.p1.intent-compose-equip.create.draft-general
+            kind: surface
+            title: Draft General (class, subclass, synergies)
+            rules:
+              - DAC-P1-001
+              - DBR-SYN-002
+              - DBR-SYN-003
+              - DBR-BLD-004
+              - DAC-P1-001
+              - DAC-P1-002
+              - DAC-NME-001
+            atlas:
+              - build-create-general
+          - id: journey.p1.intent-compose-equip.create.locked-tabs
+            kind: surface
+            title: Locked Subclass / Armor / Weapon tabs
+            rules: []
+            atlas:
+              - build-create-tabs
+          - id: journey.p1.intent-compose-equip.create.submit
+            kind: surface
+            title: Create / save draft
+            rules:
+              - DAC-P1-002
+              - BR-SAVE-003
+              - DAC-P1-002
+              - DBR-SYN-003
+              - BR-SAVE-003
+            atlas:
+              - build-create-submit
+          - id: journey.p1.intent-compose-equip.create.live-general
+            kind: surface
+            title: Live General (identity)
+            rules:
+              - DAC-VAR-004
+              - DBR-ID-008
+              - DAC-P1-002
+              - DAC-VAR-004
+              - DBR-ID-008
+              - DBR-ID-009
+              - DBR-NAME-004
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-general
+      - id: journey.p1.intent-compose-equip.compose
         kind: flow
-        title: Compose default variant (sets + kit)
+        title: ↳ Compose default variant
         rules:
           - DAC-P1-003
           - DAC-P1-004
-          - DBR-CMP-001
-      - id: journey.p1.equip
+          - DBR-CMPL-001
+        notes: "include: flow.build.compose-default"
+        children:
+          - id: journey.p1.intent-compose-equip.compose.general
+            kind: surface
+            title: General / identity
+            rules:
+              - DAC-P1-002
+              - DBR-ID-001
+              - DAC-P1-002
+              - DAC-VAR-004
+              - DBR-ID-008
+              - DBR-ID-009
+              - DBR-NAME-004
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-general
+          - id: journey.p1.intent-compose-equip.compose.subclass
+            kind: surface
+            title: Subclass kit
+            rules:
+              - DBR-SUB-004
+              - DAC-DST-003
+              - DBR-SUB-001
+              - DBR-SUB-003
+              - DBR-SUB-004
+              - DBR-SUB-005
+              - DAC-DST-003
+              - DAC-DST-004
+              - BR-UI-001
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-subclass
+          - id: journey.p1.intent-compose-equip.compose.armor
+            kind: flow
+            title: ↳ Armor sets
+            rules:
+              - DAC-P1-004
+              - DBR-CMP-001
+              - DBR-CMP-005
+              - BR-ATT-001
+              - BR-BLD-007
+            notes: "include: flow.build.armor-set"
+            children:
+              - id: journey.p1.intent-compose-equip.compose.armor.enter
+                kind: surface
+                title: Armor tab
+                rules:
+                  - DAC-P1-004
+                  - DBR-CMP-001
+                  - DBR-CMP-005
+                  - DBR-CMP-007
+                  - BR-ATT-001
+                  - BR-ATT-002
+                  - BR-BLD-007
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-armor
+              - id: journey.p1.intent-compose-equip.compose.armor.path
+                kind: flow
+                title: ⎇ Choose composition path
+                rules: []
+                children:
+                  - id: journey.p1.intent-compose-equip.compose.armor.path.reuse
+                    kind: surface
+                    title: Reuse existing set
+                    rules:
+                      - BR-ATT-001
+                      - BR-ATT-002
+                      - DBR-CMP-003
+                    path: /build
+                    auth: signed-in
+                    atlas:
+                      - build-edit-armor-reuse
+                  - id: journey.p1.intent-compose-equip.compose.armor.path.create
+                    kind: surface
+                    title: Create + attach
+                    rules:
+                      - DAC-P2-005
+                      - DBR-PUR-004
+                      - BR-BLD-007
+                      - BR-SET-001
+                    path: /build
+                    auth: signed-in
+                    atlas:
+                      - build-edit-armor-create
+                  - id: journey.p1.intent-compose-equip.compose.armor.path.improve
+                    kind: surface
+                    title: Improve kit
+                    rules:
+                      - BR-SUG-001
+                      - BR-SUG-002
+                    path: /build
+                    auth: signed-in
+                    atlas:
+                      - build-edit-armor-improve
+              - id: journey.p1.intent-compose-equip.compose.armor.mods
+                kind: surface
+                title: Mod set / energy
+                rules:
+                  - DAC-DST-002
+                  - DBR-MOD-001
+                  - DBR-CMP-005
+                  - DBR-MOD-001
+                  - DBR-MOD-002
+                  - DBR-MOD-003
+                  - DAC-DST-002
+                atlas:
+                  - build-edit-armor-mods
+              - id: journey.p1.intent-compose-equip.compose.armor.exotic-gate
+                kind: gate
+                title: Single exotic armor gate
+                rules:
+                  - DAC-DST-001
+                  - DBR-CMP-007
+                  - DBR-CMP-007
+                  - DAC-DST-001
+                  - DAC-DST-009
+                atlas:
+                  - build-edit-armor-exotic-limit
+                notes: "gate: hard"
+          - id: journey.p1.intent-compose-equip.compose.weapon
+            kind: flow
+            title: ↳ Weapon sets
+            rules:
+              - DAC-P1-004
+              - DBR-CMP-001
+              - DBR-ROLL-001
+            notes: "include: flow.build.weapon-set"
+            children:
+              - id: journey.p1.intent-compose-equip.compose.weapon.enter
+                kind: surface
+                title: Weapon tab
+                rules:
+                  - DAC-P1-004
+                  - DBR-CMP-001
+                  - DBR-CMP-007
+                  - DBR-ROLL-001
+                  - BR-ATT-001
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-weapon
+              - id: journey.p1.intent-compose-equip.compose.weapon.path
+                kind: flow
+                title: ⎇ Choose composition path
+                rules: []
+                children:
+                  - id: journey.p1.intent-compose-equip.compose.weapon.path.reuse
+                    kind: surface
+                    title: Reuse existing set
+                    rules:
+                      - BR-ATT-001
+                      - DBR-CMP-003
+                    path: /build
+                    auth: signed-in
+                    atlas:
+                      - build-edit-weapon-reuse
+                  - id: journey.p1.intent-compose-equip.compose.weapon.path.create
+                    kind: surface
+                    title: Create + slot fill
+                    rules:
+                      - DAC-P2-005
+                      - BR-BLD-008
+                      - DBR-ROLL-010
+                    path: /build
+                    auth: signed-in
+                    atlas:
+                      - build-edit-weapon-create
+              - id: journey.p1.intent-compose-equip.compose.weapon.wishlist
+                kind: surface
+                title: Desired roll / wishlist
+                rules:
+                  - DAC-P1-005
+                  - DBR-ROLL-002
+                  - DAC-P1-005
+                  - DBR-ROLL-001
+                  - DBR-ROLL-002
+                  - DBR-ROLL-005
+                  - BR-ROLL-001
+                atlas:
+                  - build-edit-weapon-wishlist
+              - id: journey.p1.intent-compose-equip.compose.weapon.exotic-gate
+                kind: gate
+                title: Single exotic weapon gate
+                rules:
+                  - DAC-DST-001
+                  - DBR-CMP-007
+                  - DBR-CMP-007
+                  - DAC-DST-001
+                atlas:
+                  - build-edit-weapon-exotic-limit
+                notes: "gate: hard"
+          - id: journey.p1.intent-compose-equip.compose.coverage
+            kind: surface
+            title: Soft guidance / coverage
+            rules:
+              - DAC-P1-006
+              - DBR-GUID-001
+              - DAC-P1-006
+              - DAC-DST-005
+              - DAC-DST-006
+              - DBR-GUID-001
+              - DBR-GUID-002
+              - DBR-GUID-003
+              - DBR-SYN-011
+              - DBR-STAT-004
+              - DAC-P2-002
+              - DBR-SYN-010
+            atlas:
+              - build-edit-coverage
+          - id: journey.p1.intent-compose-equip.compose.finish
+            kind: flow
+            title: ↳ Finish readiness
+            rules:
+              - DAC-P1-003
+              - DAC-P1-005
+              - DAC-P1-007
+              - DAC-P1-008
+              - BR-BLD-007
+              - BR-BLD-008
+              - BR-BLD-009
+              - DBR-EQP-003
+            notes: "include: flow.build.finish-equip"
+            children:
+              - id: journey.p1.intent-compose-equip.compose.finish.finish-tab
+                kind: surface
+                title: Finish tab
+                rules:
+                  - DAC-P1-003
+                  - DAC-P1-005
+                  - DAC-P1-007
+                  - DAC-P1-008
+                  - BR-BLD-007
+                  - BR-BLD-008
+                  - BR-BLD-009
+                  - DBR-CMPL-001
+                  - DBR-EQP-003
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-finish
+              - id: journey.p1.intent-compose-equip.compose.finish.gaps
+                kind: surface
+                title: Gap list / missing reasons
+                rules:
+                  - DBR-CMPL-001
+                  - DBR-CMPL-001
+                  - DBR-CMPL-002
+                  - BR-SAVE-001
+                  - BR-SAVE-002
+                atlas:
+                  - build-finish-gaps
+              - id: journey.p1.intent-compose-equip.compose.finish.walkthrough
+                kind: flow
+                title: ↳ Slot-first walkthrough
+                rules:
+                  - BR-BLD-007
+                  - BR-BLD-008
+                  - 029:SC-001
+                notes: "include: flow.build.finish.walkthrough"
+                children:
+                  - id: journey.p1.intent-compose-equip.compose.finish.walkthrough.one-tap
+                    kind: surface
+                    title: One-tap Create set
+                    rules: []
+                    atlas:
+                      - build-finish-one-tap-create
+                  - id: journey.p1.intent-compose-equip.compose.finish.walkthrough.capture
+                    kind: surface
+                    title: Capture sets from build
+                    rules: []
+                    atlas:
+                      - build-finish-capture
+                  - id: journey.p1.intent-compose-equip.compose.finish.walkthrough.slot-loop
+                    kind: surface
+                    title: ↻ First empty slot fill loop
+                    rules:
+                      - BR-BLD-008
+                      - DAC-DST-009
+                    atlas:
+                      - build-finish-slot-loop
+                    notes: "loop: until-required-slots"
+              - id: journey.p1.intent-compose-equip.compose.finish.armor-optimize
+                kind: flow
+                title: ↳ Armor optimize workspace
+                rules:
+                  - BR-BLD-009
+                  - BR-OPT-001
+                  - 031:SC-001
+                notes: "include: flow.build.finish.armor-optimize"
+                children:
+                  - id: journey.p1.intent-compose-equip.compose.finish.armor-optimize.goals
+                    kind: surface
+                    title: Goals (set bonuses + seeded stats)
+                    rules: []
+                    atlas:
+                      - build-finish-armor-optimize-goals
+                  - id: journey.p1.intent-compose-equip.compose.finish.armor-optimize.find
+                    kind: surface
+                    title: Find kits
+                    rules: []
+                    atlas:
+                      - build-finish-armor-optimize-find
+                  - id: journey.p1.intent-compose-equip.compose.finish.armor-optimize.compare
+                    kind: surface
+                    title: Top-3 compare
+                    rules: []
+                    atlas:
+                      - build-finish-armor-optimize-compare
+                  - id: journey.p1.intent-compose-equip.compose.finish.armor-optimize.apply
+                    kind: surface
+                    title: Apply combination in place
+                    rules: []
+                    atlas:
+                      - build-finish-armor-optimize-apply
+              - id: journey.p1.intent-compose-equip.compose.finish.equip-gate
+                kind: gate
+                title: Equip/export blocked until pins
+                rules:
+                  - DAC-P1-005
+                  - DBR-EQP-003
+                  - DBR-ROLL-004
+                  - DAC-P1-005
+                  - DBR-EQP-003
+                  - DBR-ROLL-004
+                  - DBR-ROLL-005
+                atlas:
+                  - build-finish-equip-gate
+                notes: "gate: hard"
+              - id: journey.p1.intent-compose-equip.compose.finish.character
+                kind: surface
+                title: Character picker
+                rules:
+                  - DBR-BLD-004
+                  - DBR-EQP-005
+                  - DBR-BLD-004
+                  - DBR-EQP-005
+                  - DAC-P1-007
+                atlas:
+                  - build-finish-character
+              - id: journey.p1.intent-compose-equip.compose.finish.equip
+                kind: surface
+                title: Equip in-game
+                rules:
+                  - DAC-P1-007
+                  - DBR-EQP-001
+                  - DAC-P1-007
+                  - DBR-EQP-001
+                  - DBR-EQP-003
+                  - DBR-EQP-005
+                  - DBR-EQP-006
+                  - DBR-EQP-007
+                  - DBR-EQP-008
+                  - DAC-VAR-001
+                atlas:
+                  - build-finish-equip
+              - id: journey.p1.intent-compose-equip.compose.finish.dim
+                kind: surface
+                title: DIM export
+                rules:
+                  - DAC-P1-008
+                  - DBR-EQP-002
+                  - DAC-P1-008
+                  - DBR-EQP-002
+                  - DBR-EQP-003
+                  - DBR-EQP-004
+                atlas:
+                  - build-finish-dim
+      - id: journey.p1.intent-compose-equip.equip
         kind: flow
-        title: Equip / DIM when equip-ready
+        title: ↳ Finish → equip / DIM
         rules:
+          - DAC-P1-003
           - DAC-P1-005
           - DAC-P1-007
           - DAC-P1-008
-          - DBR-EQP-001
+          - BR-BLD-007
+          - BR-BLD-008
+          - BR-BLD-009
           - DBR-EQP-003
-  - id: flow-flow-build-finish-walkthrough
-    label: Slot-first walkthrough (Armor → Weapons → Mods)
-    description: Flow flow.build.finish.walkthrough
+        notes: "include: flow.build.finish-equip"
+        children:
+          - id: journey.p1.intent-compose-equip.equip.finish-tab
+            kind: surface
+            title: Finish tab
+            rules:
+              - DAC-P1-003
+              - DAC-P1-005
+              - DAC-P1-007
+              - DAC-P1-008
+              - BR-BLD-007
+              - BR-BLD-008
+              - BR-BLD-009
+              - DBR-CMPL-001
+              - DBR-EQP-003
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-finish
+          - id: journey.p1.intent-compose-equip.equip.gaps
+            kind: surface
+            title: Gap list / missing reasons
+            rules:
+              - DBR-CMPL-001
+              - DBR-CMPL-001
+              - DBR-CMPL-002
+              - BR-SAVE-001
+              - BR-SAVE-002
+            atlas:
+              - build-finish-gaps
+          - id: journey.p1.intent-compose-equip.equip.walkthrough
+            kind: flow
+            title: ↳ Slot-first walkthrough
+            rules:
+              - BR-BLD-007
+              - BR-BLD-008
+              - 029:SC-001
+            notes: "include: flow.build.finish.walkthrough"
+            children:
+              - id: journey.p1.intent-compose-equip.equip.walkthrough.one-tap
+                kind: surface
+                title: One-tap Create set
+                rules: []
+                atlas:
+                  - build-finish-one-tap-create
+              - id: journey.p1.intent-compose-equip.equip.walkthrough.capture
+                kind: surface
+                title: Capture sets from build
+                rules: []
+                atlas:
+                  - build-finish-capture
+              - id: journey.p1.intent-compose-equip.equip.walkthrough.slot-loop
+                kind: surface
+                title: ↻ First empty slot fill loop
+                rules:
+                  - BR-BLD-008
+                  - DAC-DST-009
+                atlas:
+                  - build-finish-slot-loop
+                notes: "loop: until-required-slots"
+          - id: journey.p1.intent-compose-equip.equip.armor-optimize
+            kind: flow
+            title: ↳ Armor optimize workspace
+            rules:
+              - BR-BLD-009
+              - BR-OPT-001
+              - 031:SC-001
+            notes: "include: flow.build.finish.armor-optimize"
+            children:
+              - id: journey.p1.intent-compose-equip.equip.armor-optimize.goals
+                kind: surface
+                title: Goals (set bonuses + seeded stats)
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-goals
+              - id: journey.p1.intent-compose-equip.equip.armor-optimize.find
+                kind: surface
+                title: Find kits
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-find
+              - id: journey.p1.intent-compose-equip.equip.armor-optimize.compare
+                kind: surface
+                title: Top-3 compare
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-compare
+              - id: journey.p1.intent-compose-equip.equip.armor-optimize.apply
+                kind: surface
+                title: Apply combination in place
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-apply
+          - id: journey.p1.intent-compose-equip.equip.equip-gate
+            kind: gate
+            title: Equip/export blocked until pins
+            rules:
+              - DAC-P1-005
+              - DBR-EQP-003
+              - DBR-ROLL-004
+              - DAC-P1-005
+              - DBR-EQP-003
+              - DBR-ROLL-004
+              - DBR-ROLL-005
+            atlas:
+              - build-finish-equip-gate
+            notes: "gate: hard"
+          - id: journey.p1.intent-compose-equip.equip.character
+            kind: surface
+            title: Character picker
+            rules:
+              - DBR-BLD-004
+              - DBR-EQP-005
+              - DBR-BLD-004
+              - DBR-EQP-005
+              - DAC-P1-007
+            atlas:
+              - build-finish-character
+          - id: journey.p1.intent-compose-equip.equip.equip
+            kind: surface
+            title: Equip in-game
+            rules:
+              - DAC-P1-007
+              - DBR-EQP-001
+              - DAC-P1-007
+              - DBR-EQP-001
+              - DBR-EQP-003
+              - DBR-EQP-005
+              - DBR-EQP-006
+              - DBR-EQP-007
+              - DBR-EQP-008
+              - DAC-VAR-001
+            atlas:
+              - build-finish-equip
+          - id: journey.p1.intent-compose-equip.equip.dim
+            kind: surface
+            title: DIM export
+            rules:
+              - DAC-P1-008
+              - DBR-EQP-002
+              - DAC-P1-008
+              - DBR-EQP-002
+              - DBR-EQP-003
+              - DBR-EQP-004
+            atlas:
+              - build-finish-dim
+  - id: flow-journey-p2-library
+    label: P2 — Library curation
+    description: Curate synergies and sets; in-flow create still allowed on P1.
     nodes:
-      - id: flow.build.finish.walkthrough.one-tap-create
+      - id: journey.p2.library.synergies
         kind: flow
-        title: One-tap Create set
+        title: ↳ Synergy library
         rules:
-          - BR-BLD-008
-      - id: flow.build.finish.walkthrough.capture
+          - DAC-P2-001
+          - DBR-SYN-001
+        notes: "include: flow.synergy.library"
+        children:
+          - id: journey.p2.library.synergies.browse
+            kind: surface
+            title: Browse
+            rules:
+              - DAC-P2-001
+              - DAC-P1-009
+              - DBR-PUR-005
+              - DBR-SYN-001
+              - BR-SYN-001
+              - 001:SC-002
+            path: /synergy
+            auth: signed-in
+            atlas:
+              - synergy-library
+          - id: journey.p2.library.synergies.create
+            kind: flow
+            title: ↳ Create synergy
+            rules:
+              - DAC-P2-001
+              - DAC-P2-003
+              - DBR-SYN-001
+              - DBR-SYN-012
+            notes: "include: flow.synergy.create"
+            children:
+              - id: journey.p2.library.synergies.create.designation
+                kind: surface
+                title: Type + optional subtype
+                rules:
+                  - DBR-SYN-012
+                  - DAC-P2-001a
+                  - DBR-SYN-012
+                  - DAC-P2-001a
+                atlas:
+                  - synergy-create-type
+              - id: journey.p2.library.synergies.create.description
+                kind: surface
+                title: Description
+                rules: []
+                atlas:
+                  - synergy-create-description
+              - id: journey.p2.library.synergies.create.custom-type
+                kind: surface
+                title: Personal custom type / keyword
+                rules:
+                  - DAC-P2-003
+                  - DBR-SYN-005
+                  - DAC-P2-003
+                  - DBR-SYN-005
+                  - DBR-SYN-006
+                atlas:
+                  - synergy-create-custom-type
+              - id: journey.p2.library.synergies.create.evidence
+                kind: surface
+                title: Evidence links
+                rules:
+                  - DBR-SYN-007
+                  - DBR-SYN-014
+                  - DAC-P2-001
+                  - DBR-SYN-007
+                  - DBR-SYN-014
+                atlas:
+                  - synergy-detail-links
+              - id: journey.p2.library.synergies.create.required
+                kind: surface
+                title: Mark links required (AND)
+                rules:
+                  - DBR-SYN-008
+                  - DBR-SYN-009
+                  - DAC-P2-002
+                  - DBR-SYN-007
+                  - DBR-SYN-008
+                  - DBR-SYN-009
+                  - DAC-P2-002
+                atlas:
+                  - synergy-detail-link-required
+          - id: journey.p2.library.synergies.detail
+            kind: surface
+            title: Detail / evidence
+            rules:
+              - DAC-P2-001
+              - DBR-SYN-001
+              - DBR-SYN-007
+              - DBR-SYN-008
+              - DBR-SYN-009
+              - DBR-SYN-014
+              - BR-SYN-011
+              - BR-SYN-012
+            path: /synergy
+            auth: signed-in
+            atlas:
+              - synergy-detail
+          - id: journey.p2.library.synergies.edit
+            kind: flow
+            title: ↳ Edit (objects only)
+            rules:
+              - DAC-P2-001a
+              - DBR-SYN-012
+            notes: "include: flow.synergy.edit"
+            children:
+              - id: journey.p2.library.synergies.edit.designation-ro
+                kind: surface
+                title: Designation read-only
+                rules:
+                  - DAC-P2-001a
+                  - DAC-P2-001a
+                  - DBR-SYN-012
+                atlas:
+                  - synergy-detail-designation
+              - id: journey.p2.library.synergies.edit.objects
+                kind: surface
+                title: Edit description / objects
+                rules:
+                  - DAC-P2-001a
+                  - DBR-SYN-012
+                atlas:
+                  - synergy-detail-edit
+              - id: journey.p2.library.synergies.edit.links
+                kind: surface
+                title: Add / update evidence
+                rules:
+                  - BR-SYN-011
+                  - BR-SYN-012
+                  - DBR-SYN-014
+                atlas:
+                  - synergy-detail-link-add
+      - id: journey.p2.library.sets
         kind: flow
-        title: Capture sets from build
+        title: ↳ Sets library
         rules:
-          - BR-BLD-008
-      - id: flow.build.finish.walkthrough.slot-loop
-        kind: flow
-        title: First empty slot fill loop
+          - BR-SET-001
+          - BR-SET-002
+          - DAC-P1-009
+        notes: "include: flow.sets.library"
+        children:
+          - id: journey.p2.library.sets.browse
+            kind: surface
+            title: Browse library
+            rules:
+              - BR-SET-001
+              - BR-SET-002
+              - BR-SET-003
+              - BR-TAG-008
+              - DAC-P1-009
+              - DBR-PUR-005
+              - 001:SC-001
+              - 001:SC-002
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-library
+          - id: journey.p2.library.sets.create
+            kind: flow
+            title: ↳ Create set
+            rules:
+              - BR-SET-001
+              - BR-SET-002
+              - BR-TAG-004
+              - 001:SC-001
+            notes: "include: flow.sets.create"
+            children:
+              - id: journey.p2.library.sets.create.open
+                kind: surface
+                title: New Set
+                rules: []
+                atlas:
+                  - sets-library-new
+              - id: journey.p2.library.sets.create.form
+                kind: surface
+                title: Name / type / tags
+                rules:
+                  - BR-TAG-002
+                  - BR-TAG-005
+                  - BR-SET-001
+                  - BR-SET-002
+                  - BR-SET-004
+                  - BR-TAG-002
+                  - BR-TAG-004
+                  - BR-TAG-005
+                  - 001:SC-001
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-create
+              - id: journey.p2.library.sets.create.fill
+                kind: surface
+                title: ↻ Fill required slots
+                rules:
+                  - DAC-NME-003
+                  - DAC-DST-009
+                  - DAC-NME-003
+                  - DBR-ROLL-010
+                  - DAC-DST-009
+                  - BR-SLOT-008
+                  - BR-SLOT-009
+                  - BR-UI-001
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-fill-slot
+                notes: "loop: until-required-slots"
+              - id: journey.p2.library.sets.create.detail
+                kind: surface
+                title: Review detail
+                rules:
+                  - BR-SET-001
+                  - BR-SET-010
+                  - BR-SET-011
+                  - DAC-NME-004
+                  - DBR-STAT-001
+                  - DBR-CMP-001
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-detail
+          - id: journey.p2.library.sets.detail
+            kind: surface
+            title: Set detail
+            rules:
+              - DAC-NME-004
+              - BR-SET-010
+              - BR-SET-001
+              - BR-SET-010
+              - BR-SET-011
+              - DAC-NME-004
+              - DBR-STAT-001
+              - DBR-CMP-001
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-detail
+          - id: journey.p2.library.sets.edit-fill
+            kind: flow
+            title: ↳ Edit / fill slots
+            rules:
+              - BR-SET-001
+              - BR-SLOT-008
+              - DAC-DST-009
+            notes: "include: flow.sets.edit-fill"
+            children:
+              - id: journey.p2.library.sets.edit-fill.edit
+                kind: surface
+                title: Edit form
+                rules:
+                  - BR-SET-001
+                  - BR-TAG-005
+                  - BR-SLOT-001
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-edit
+              - id: journey.p2.library.sets.edit-fill.fill
+                kind: surface
+                title: Fill slot (catalog embed)
+                rules:
+                  - DAC-NME-003
+                  - DBR-ROLL-010
+                  - DAC-DST-009
+                  - BR-SLOT-008
+                  - BR-SLOT-009
+                  - BR-UI-001
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-fill-slot
+              - id: journey.p2.library.sets.edit-fill.exotic-block
+                kind: gate
+                title: Second exotic blocked
+                rules:
+                  - BR-SLOT-008
+                  - DAC-DST-001
+                  - BR-SLOT-008
+                  - BR-SLOT-009
+                  - DAC-DST-001
+                  - DAC-DST-009
+                atlas:
+                  - sets-fill-slot-exotic-block
+                notes: "gate: hard"
+      - id: journey.p2.library.in-flow
+        kind: surface
+        title: In-flow create still works
         rules:
-          - BR-BLD-008
-          - DAC-DST-009
-  - id: flow-flow-shared-llm-propose
-    label: LLM propose-for-confirm (manual)
-    description: Flow flow.shared.llm-propose
-    nodes:
-      - id: flow.shared.llm-propose.run
-        kind: flow
-        title: Start pass
-        rules: []
-      - id: flow.shared.llm-propose.review
-        kind: flow
-        title: Review proposals
-        rules: []
-      - id: flow.shared.llm-propose.confirm
-        kind: flow
-        title: Confirm / edit before persist
-        rules:
-          - DBR-LLM-002
+          - DAC-P2-005
+          - DBR-PUR-004
+          - DAC-P2-005
+          - DBR-PUR-004
+          - BR-BLD-007
+          - BR-SET-001
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-edit-armor-create
   - id: flow-flow-signed-out-gates
     label: Signed-out gates
     description: Unauthenticated landing for each gated product area.
     nodes:
-      - id: flow.signed-out-gates.step-1
-        kind: flow
+      - id: flow.signed-out-gates.build
+        kind: surface
         title: Build gate
         rules:
           - BR-AUTH-001
@@ -1805,8 +2662,8 @@ pages:
         auth: signed-out
         atlas:
           - build-signed-out
-      - id: flow.signed-out-gates.step-2
-        kind: flow
+      - id: flow.signed-out-gates.sets
+        kind: surface
         title: Sets gate
         rules:
           - BR-AUTH-001
@@ -1815,8 +2672,8 @@ pages:
         auth: signed-out
         atlas:
           - sets-signed-out
-      - id: flow.signed-out-gates.step-3
-        kind: flow
+      - id: flow.signed-out-gates.synergy
+        kind: surface
         title: Synergy gate
         rules:
           - BR-AUTH-001
@@ -1824,8 +2681,8 @@ pages:
         auth: signed-out
         atlas:
           - synergy-signed-out
-      - id: flow.signed-out-gates.step-4
-        kind: flow
+      - id: flow.signed-out-gates.loadouts
+        kind: surface
         title: Loadouts empty
         rules:
           - BR-AUTH-001
@@ -1834,8 +2691,8 @@ pages:
         auth: signed-out
         atlas:
           - loadouts-signed-out
-      - id: flow.signed-out-gates.step-5
-        kind: flow
+      - id: flow.signed-out-gates.settings
+        kind: surface
         title: Settings
         rules:
           - BR-AUTH-001
@@ -1843,8 +2700,8 @@ pages:
         auth: signed-out
         atlas:
           - settings-signed-out
-      - id: flow.signed-out-gates.step-6
-        kind: flow
+      - id: flow.signed-out-gates.catalog
+        kind: surface
         title: Catalog weapons (public)
         rules:
           - DAC-NME-003
@@ -1856,11 +2713,11 @@ pages:
         atlas:
           - catalog-signed-out-weapons
   - id: flow-flow-build-create
-    label: Create a new build (draft → live)
-    description: From library, open New build, draft General, then live edit tabs.
+    label: Create new build (draft → live)
+    description: Library → New → draft General → locked tabs → create → live compose.
     nodes:
-      - id: flow.build-create.step-1
-        kind: flow
+      - id: flow.build.create.library
+        kind: surface
         title: Open Build library
         rules:
           - DBR-BLD-001
@@ -1875,21 +2732,797 @@ pages:
         auth: signed-in
         atlas:
           - build-library
-      - id: flow.build-create.step-2
-        kind: flow
-        title: New build → draft General
+      - id: flow.build.create.new
+        kind: surface
+        title: New Build action
         rules: []
         atlas:
-          - build-create-draft-general
-      - id: flow.build-create.step-3
-        kind: flow
-        title: Locked compose tabs
+          - build-library-new
+      - id: flow.build.create.draft-general
+        kind: surface
+        title: Draft General (class, subclass, synergies)
+        rules:
+          - DAC-P1-001
+          - DBR-SYN-002
+          - DBR-SYN-003
+          - DBR-BLD-004
+          - DAC-P1-001
+          - DAC-P1-002
+          - DAC-NME-001
+        atlas:
+          - build-create-general
+      - id: flow.build.create.locked-tabs
+        kind: surface
+        title: Locked Subclass / Armor / Weapon tabs
         rules: []
         atlas:
-          - build-create-draft-locked-tabs
-      - id: flow.build-create.step-4
+          - build-create-tabs
+      - id: flow.build.create.submit
+        kind: surface
+        title: Create / save draft
+        rules:
+          - DAC-P1-002
+          - BR-SAVE-003
+          - DAC-P1-002
+          - DBR-SYN-003
+          - BR-SAVE-003
+        atlas:
+          - build-create-submit
+      - id: flow.build.create.live-general
+        kind: surface
+        title: Live General (identity)
+        rules:
+          - DAC-VAR-004
+          - DBR-ID-008
+          - DAC-P1-002
+          - DAC-VAR-004
+          - DBR-ID-008
+          - DBR-ID-009
+          - DBR-NAME-004
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-edit-general
+  - id: flow-flow-build-compose-default
+    label: Compose default variant (tabs)
+    description: Flow flow.build.compose-default
+    nodes:
+      - id: flow.build.compose-default.general
+        kind: surface
+        title: General / identity
+        rules:
+          - DAC-P1-002
+          - DBR-ID-001
+          - DAC-P1-002
+          - DAC-VAR-004
+          - DBR-ID-008
+          - DBR-ID-009
+          - DBR-NAME-004
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-edit-general
+      - id: flow.build.compose-default.subclass
+        kind: surface
+        title: Subclass kit
+        rules:
+          - DBR-SUB-004
+          - DAC-DST-003
+          - DBR-SUB-001
+          - DBR-SUB-003
+          - DBR-SUB-004
+          - DBR-SUB-005
+          - DAC-DST-003
+          - DAC-DST-004
+          - BR-UI-001
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-edit-subclass
+      - id: flow.build.compose-default.armor
         kind: flow
-        title: Live General
+        title: ↳ Armor sets
+        rules:
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-CMP-005
+          - BR-ATT-001
+          - BR-BLD-007
+        notes: "include: flow.build.armor-set"
+        children:
+          - id: flow.build.compose-default.armor.enter
+            kind: surface
+            title: Armor tab
+            rules:
+              - DAC-P1-004
+              - DBR-CMP-001
+              - DBR-CMP-005
+              - DBR-CMP-007
+              - BR-ATT-001
+              - BR-ATT-002
+              - BR-BLD-007
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-armor
+          - id: flow.build.compose-default.armor.path
+            kind: flow
+            title: ⎇ Choose composition path
+            rules: []
+            children:
+              - id: flow.build.compose-default.armor.path.reuse
+                kind: surface
+                title: Reuse existing set
+                rules:
+                  - BR-ATT-001
+                  - BR-ATT-002
+                  - DBR-CMP-003
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-armor-reuse
+              - id: flow.build.compose-default.armor.path.create
+                kind: surface
+                title: Create + attach
+                rules:
+                  - DAC-P2-005
+                  - DBR-PUR-004
+                  - BR-BLD-007
+                  - BR-SET-001
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-armor-create
+              - id: flow.build.compose-default.armor.path.improve
+                kind: surface
+                title: Improve kit
+                rules:
+                  - BR-SUG-001
+                  - BR-SUG-002
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-armor-improve
+          - id: flow.build.compose-default.armor.mods
+            kind: surface
+            title: Mod set / energy
+            rules:
+              - DAC-DST-002
+              - DBR-MOD-001
+              - DBR-CMP-005
+              - DBR-MOD-001
+              - DBR-MOD-002
+              - DBR-MOD-003
+              - DAC-DST-002
+            atlas:
+              - build-edit-armor-mods
+          - id: flow.build.compose-default.armor.exotic-gate
+            kind: gate
+            title: Single exotic armor gate
+            rules:
+              - DAC-DST-001
+              - DBR-CMP-007
+              - DBR-CMP-007
+              - DAC-DST-001
+              - DAC-DST-009
+            atlas:
+              - build-edit-armor-exotic-limit
+            notes: "gate: hard"
+      - id: flow.build.compose-default.weapon
+        kind: flow
+        title: ↳ Weapon sets
+        rules:
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-ROLL-001
+        notes: "include: flow.build.weapon-set"
+        children:
+          - id: flow.build.compose-default.weapon.enter
+            kind: surface
+            title: Weapon tab
+            rules:
+              - DAC-P1-004
+              - DBR-CMP-001
+              - DBR-CMP-007
+              - DBR-ROLL-001
+              - BR-ATT-001
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-weapon
+          - id: flow.build.compose-default.weapon.path
+            kind: flow
+            title: ⎇ Choose composition path
+            rules: []
+            children:
+              - id: flow.build.compose-default.weapon.path.reuse
+                kind: surface
+                title: Reuse existing set
+                rules:
+                  - BR-ATT-001
+                  - DBR-CMP-003
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-weapon-reuse
+              - id: flow.build.compose-default.weapon.path.create
+                kind: surface
+                title: Create + slot fill
+                rules:
+                  - DAC-P2-005
+                  - BR-BLD-008
+                  - DBR-ROLL-010
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-weapon-create
+          - id: flow.build.compose-default.weapon.wishlist
+            kind: surface
+            title: Desired roll / wishlist
+            rules:
+              - DAC-P1-005
+              - DBR-ROLL-002
+              - DAC-P1-005
+              - DBR-ROLL-001
+              - DBR-ROLL-002
+              - DBR-ROLL-005
+              - BR-ROLL-001
+            atlas:
+              - build-edit-weapon-wishlist
+          - id: flow.build.compose-default.weapon.exotic-gate
+            kind: gate
+            title: Single exotic weapon gate
+            rules:
+              - DAC-DST-001
+              - DBR-CMP-007
+              - DBR-CMP-007
+              - DAC-DST-001
+            atlas:
+              - build-edit-weapon-exotic-limit
+            notes: "gate: hard"
+      - id: flow.build.compose-default.coverage
+        kind: surface
+        title: Soft guidance / coverage
+        rules:
+          - DAC-P1-006
+          - DBR-GUID-001
+          - DAC-P1-006
+          - DAC-DST-005
+          - DAC-DST-006
+          - DBR-GUID-001
+          - DBR-GUID-002
+          - DBR-GUID-003
+          - DBR-SYN-011
+          - DBR-STAT-004
+          - DAC-P2-002
+          - DBR-SYN-010
+        atlas:
+          - build-edit-coverage
+      - id: flow.build.compose-default.finish
+        kind: flow
+        title: ↳ Finish readiness
+        rules:
+          - DAC-P1-003
+          - DAC-P1-005
+          - DAC-P1-007
+          - DAC-P1-008
+          - BR-BLD-007
+          - BR-BLD-008
+          - BR-BLD-009
+          - DBR-EQP-003
+        notes: "include: flow.build.finish-equip"
+        children:
+          - id: flow.build.compose-default.finish.finish-tab
+            kind: surface
+            title: Finish tab
+            rules:
+              - DAC-P1-003
+              - DAC-P1-005
+              - DAC-P1-007
+              - DAC-P1-008
+              - BR-BLD-007
+              - BR-BLD-008
+              - BR-BLD-009
+              - DBR-CMPL-001
+              - DBR-EQP-003
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-finish
+          - id: flow.build.compose-default.finish.gaps
+            kind: surface
+            title: Gap list / missing reasons
+            rules:
+              - DBR-CMPL-001
+              - DBR-CMPL-001
+              - DBR-CMPL-002
+              - BR-SAVE-001
+              - BR-SAVE-002
+            atlas:
+              - build-finish-gaps
+          - id: flow.build.compose-default.finish.walkthrough
+            kind: flow
+            title: ↳ Slot-first walkthrough
+            rules:
+              - BR-BLD-007
+              - BR-BLD-008
+              - 029:SC-001
+            notes: "include: flow.build.finish.walkthrough"
+            children:
+              - id: flow.build.compose-default.finish.walkthrough.one-tap
+                kind: surface
+                title: One-tap Create set
+                rules: []
+                atlas:
+                  - build-finish-one-tap-create
+              - id: flow.build.compose-default.finish.walkthrough.capture
+                kind: surface
+                title: Capture sets from build
+                rules: []
+                atlas:
+                  - build-finish-capture
+              - id: flow.build.compose-default.finish.walkthrough.slot-loop
+                kind: surface
+                title: ↻ First empty slot fill loop
+                rules:
+                  - BR-BLD-008
+                  - DAC-DST-009
+                atlas:
+                  - build-finish-slot-loop
+                notes: "loop: until-required-slots"
+          - id: flow.build.compose-default.finish.armor-optimize
+            kind: flow
+            title: ↳ Armor optimize workspace
+            rules:
+              - BR-BLD-009
+              - BR-OPT-001
+              - 031:SC-001
+            notes: "include: flow.build.finish.armor-optimize"
+            children:
+              - id: flow.build.compose-default.finish.armor-optimize.goals
+                kind: surface
+                title: Goals (set bonuses + seeded stats)
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-goals
+              - id: flow.build.compose-default.finish.armor-optimize.find
+                kind: surface
+                title: Find kits
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-find
+              - id: flow.build.compose-default.finish.armor-optimize.compare
+                kind: surface
+                title: Top-3 compare
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-compare
+              - id: flow.build.compose-default.finish.armor-optimize.apply
+                kind: surface
+                title: Apply combination in place
+                rules: []
+                atlas:
+                  - build-finish-armor-optimize-apply
+          - id: flow.build.compose-default.finish.equip-gate
+            kind: gate
+            title: Equip/export blocked until pins
+            rules:
+              - DAC-P1-005
+              - DBR-EQP-003
+              - DBR-ROLL-004
+              - DAC-P1-005
+              - DBR-EQP-003
+              - DBR-ROLL-004
+              - DBR-ROLL-005
+            atlas:
+              - build-finish-equip-gate
+            notes: "gate: hard"
+          - id: flow.build.compose-default.finish.character
+            kind: surface
+            title: Character picker
+            rules:
+              - DBR-BLD-004
+              - DBR-EQP-005
+              - DBR-BLD-004
+              - DBR-EQP-005
+              - DAC-P1-007
+            atlas:
+              - build-finish-character
+          - id: flow.build.compose-default.finish.equip
+            kind: surface
+            title: Equip in-game
+            rules:
+              - DAC-P1-007
+              - DBR-EQP-001
+              - DAC-P1-007
+              - DBR-EQP-001
+              - DBR-EQP-003
+              - DBR-EQP-005
+              - DBR-EQP-006
+              - DBR-EQP-007
+              - DBR-EQP-008
+              - DAC-VAR-001
+            atlas:
+              - build-finish-equip
+          - id: flow.build.compose-default.finish.dim
+            kind: surface
+            title: DIM export
+            rules:
+              - DAC-P1-008
+              - DBR-EQP-002
+              - DAC-P1-008
+              - DBR-EQP-002
+              - DBR-EQP-003
+              - DBR-EQP-004
+            atlas:
+              - build-finish-dim
+  - id: flow-flow-build-armor-set
+    label: Armor set — Reuse / Create / Improve
+    description: Flow flow.build.armor-set
+    nodes:
+      - id: flow.build.armor-set.enter
+        kind: surface
+        title: Armor tab
+        rules:
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-CMP-005
+          - DBR-CMP-007
+          - BR-ATT-001
+          - BR-ATT-002
+          - BR-BLD-007
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-edit-armor
+      - id: flow.build.armor-set.path
+        kind: flow
+        title: ⎇ Choose composition path
+        rules: []
+        children:
+          - id: flow.build.armor-set.path.reuse
+            kind: surface
+            title: Reuse existing set
+            rules:
+              - BR-ATT-001
+              - BR-ATT-002
+              - DBR-CMP-003
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-armor-reuse
+          - id: flow.build.armor-set.path.create
+            kind: surface
+            title: Create + attach
+            rules:
+              - DAC-P2-005
+              - DBR-PUR-004
+              - BR-BLD-007
+              - BR-SET-001
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-armor-create
+          - id: flow.build.armor-set.path.improve
+            kind: surface
+            title: Improve kit
+            rules:
+              - BR-SUG-001
+              - BR-SUG-002
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-armor-improve
+      - id: flow.build.armor-set.mods
+        kind: surface
+        title: Mod set / energy
+        rules:
+          - DAC-DST-002
+          - DBR-MOD-001
+          - DBR-CMP-005
+          - DBR-MOD-001
+          - DBR-MOD-002
+          - DBR-MOD-003
+          - DAC-DST-002
+        atlas:
+          - build-edit-armor-mods
+      - id: flow.build.armor-set.exotic-gate
+        kind: gate
+        title: Single exotic armor gate
+        rules:
+          - DAC-DST-001
+          - DBR-CMP-007
+          - DBR-CMP-007
+          - DAC-DST-001
+          - DAC-DST-009
+        atlas:
+          - build-edit-armor-exotic-limit
+        notes: "gate: hard"
+  - id: flow-flow-build-weapon-set
+    label: Weapon set — Reuse / Create
+    description: Flow flow.build.weapon-set
+    nodes:
+      - id: flow.build.weapon-set.enter
+        kind: surface
+        title: Weapon tab
+        rules:
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-CMP-007
+          - DBR-ROLL-001
+          - BR-ATT-001
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-edit-weapon
+      - id: flow.build.weapon-set.path
+        kind: flow
+        title: ⎇ Choose composition path
+        rules: []
+        children:
+          - id: flow.build.weapon-set.path.reuse
+            kind: surface
+            title: Reuse existing set
+            rules:
+              - BR-ATT-001
+              - DBR-CMP-003
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-weapon-reuse
+          - id: flow.build.weapon-set.path.create
+            kind: surface
+            title: Create + slot fill
+            rules:
+              - DAC-P2-005
+              - BR-BLD-008
+              - DBR-ROLL-010
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-weapon-create
+      - id: flow.build.weapon-set.wishlist
+        kind: surface
+        title: Desired roll / wishlist
+        rules:
+          - DAC-P1-005
+          - DBR-ROLL-002
+          - DAC-P1-005
+          - DBR-ROLL-001
+          - DBR-ROLL-002
+          - DBR-ROLL-005
+          - BR-ROLL-001
+        atlas:
+          - build-edit-weapon-wishlist
+      - id: flow.build.weapon-set.exotic-gate
+        kind: gate
+        title: Single exotic weapon gate
+        rules:
+          - DAC-DST-001
+          - DBR-CMP-007
+          - DBR-CMP-007
+          - DAC-DST-001
+        atlas:
+          - build-edit-weapon-exotic-limit
+        notes: "gate: hard"
+  - id: flow-flow-build-finish-equip
+    label: Finish → equip / DIM
+    description: Flow flow.build.finish-equip
+    nodes:
+      - id: flow.build.finish-equip.finish-tab
+        kind: surface
+        title: Finish tab
+        rules:
+          - DAC-P1-003
+          - DAC-P1-005
+          - DAC-P1-007
+          - DAC-P1-008
+          - BR-BLD-007
+          - BR-BLD-008
+          - BR-BLD-009
+          - DBR-CMPL-001
+          - DBR-EQP-003
+        path: /build
+        auth: signed-in
+        atlas:
+          - build-finish
+      - id: flow.build.finish-equip.gaps
+        kind: surface
+        title: Gap list / missing reasons
+        rules:
+          - DBR-CMPL-001
+          - DBR-CMPL-001
+          - DBR-CMPL-002
+          - BR-SAVE-001
+          - BR-SAVE-002
+        atlas:
+          - build-finish-gaps
+      - id: flow.build.finish-equip.walkthrough
+        kind: flow
+        title: ↳ Slot-first walkthrough
+        rules:
+          - BR-BLD-007
+          - BR-BLD-008
+          - 029:SC-001
+        notes: "include: flow.build.finish.walkthrough"
+        children:
+          - id: flow.build.finish-equip.walkthrough.one-tap
+            kind: surface
+            title: One-tap Create set
+            rules: []
+            atlas:
+              - build-finish-one-tap-create
+          - id: flow.build.finish-equip.walkthrough.capture
+            kind: surface
+            title: Capture sets from build
+            rules: []
+            atlas:
+              - build-finish-capture
+          - id: flow.build.finish-equip.walkthrough.slot-loop
+            kind: surface
+            title: ↻ First empty slot fill loop
+            rules:
+              - BR-BLD-008
+              - DAC-DST-009
+            atlas:
+              - build-finish-slot-loop
+            notes: "loop: until-required-slots"
+      - id: flow.build.finish-equip.armor-optimize
+        kind: flow
+        title: ↳ Armor optimize workspace
+        rules:
+          - BR-BLD-009
+          - BR-OPT-001
+          - 031:SC-001
+        notes: "include: flow.build.finish.armor-optimize"
+        children:
+          - id: flow.build.finish-equip.armor-optimize.goals
+            kind: surface
+            title: Goals (set bonuses + seeded stats)
+            rules: []
+            atlas:
+              - build-finish-armor-optimize-goals
+          - id: flow.build.finish-equip.armor-optimize.find
+            kind: surface
+            title: Find kits
+            rules: []
+            atlas:
+              - build-finish-armor-optimize-find
+          - id: flow.build.finish-equip.armor-optimize.compare
+            kind: surface
+            title: Top-3 compare
+            rules: []
+            atlas:
+              - build-finish-armor-optimize-compare
+          - id: flow.build.finish-equip.armor-optimize.apply
+            kind: surface
+            title: Apply combination in place
+            rules: []
+            atlas:
+              - build-finish-armor-optimize-apply
+      - id: flow.build.finish-equip.equip-gate
+        kind: gate
+        title: Equip/export blocked until pins
+        rules:
+          - DAC-P1-005
+          - DBR-EQP-003
+          - DBR-ROLL-004
+          - DAC-P1-005
+          - DBR-EQP-003
+          - DBR-ROLL-004
+          - DBR-ROLL-005
+        atlas:
+          - build-finish-equip-gate
+        notes: "gate: hard"
+      - id: flow.build.finish-equip.character
+        kind: surface
+        title: Character picker
+        rules:
+          - DBR-BLD-004
+          - DBR-EQP-005
+          - DBR-BLD-004
+          - DBR-EQP-005
+          - DAC-P1-007
+        atlas:
+          - build-finish-character
+      - id: flow.build.finish-equip.equip
+        kind: surface
+        title: Equip in-game
+        rules:
+          - DAC-P1-007
+          - DBR-EQP-001
+          - DAC-P1-007
+          - DBR-EQP-001
+          - DBR-EQP-003
+          - DBR-EQP-005
+          - DBR-EQP-006
+          - DBR-EQP-007
+          - DBR-EQP-008
+          - DAC-VAR-001
+        atlas:
+          - build-finish-equip
+      - id: flow.build.finish-equip.dim
+        kind: surface
+        title: DIM export
+        rules:
+          - DAC-P1-008
+          - DBR-EQP-002
+          - DAC-P1-008
+          - DBR-EQP-002
+          - DBR-EQP-003
+          - DBR-EQP-004
+        atlas:
+          - build-finish-dim
+  - id: flow-flow-build-finish-walkthrough
+    label: Slot-first walkthrough (Armor → Weapons → Mods)
+    description: Flow flow.build.finish.walkthrough
+    nodes:
+      - id: flow.build.finish.walkthrough.one-tap
+        kind: surface
+        title: One-tap Create set
+        rules: []
+        atlas:
+          - build-finish-one-tap-create
+      - id: flow.build.finish.walkthrough.capture
+        kind: surface
+        title: Capture sets from build
+        rules: []
+        atlas:
+          - build-finish-capture
+      - id: flow.build.finish.walkthrough.slot-loop
+        kind: surface
+        title: ↻ First empty slot fill loop
+        rules:
+          - BR-BLD-008
+          - DAC-DST-009
+        atlas:
+          - build-finish-slot-loop
+        notes: "loop: until-required-slots"
+  - id: flow-flow-build-finish-armor-optimize
+    label: Finish armor optimize
+    description: Flow flow.build.finish.armor-optimize
+    nodes:
+      - id: flow.build.finish.armor-optimize.goals
+        kind: surface
+        title: Goals (set bonuses + seeded stats)
+        rules: []
+        atlas:
+          - build-finish-armor-optimize-goals
+      - id: flow.build.finish.armor-optimize.find
+        kind: surface
+        title: Find kits
+        rules: []
+        atlas:
+          - build-finish-armor-optimize-find
+      - id: flow.build.finish.armor-optimize.compare
+        kind: surface
+        title: Top-3 compare
+        rules: []
+        atlas:
+          - build-finish-armor-optimize-compare
+      - id: flow.build.finish.armor-optimize.apply
+        kind: surface
+        title: Apply combination in place
+        rules: []
+        atlas:
+          - build-finish-armor-optimize-apply
+  - id: flow-flow-variant-update
+    label: Update non-default variant
+    description: Switch variant, edit gear with soft guidance; gaps allowed.
+    nodes:
+      - id: flow.variant.update.select
+        kind: surface
+        title: Select variant
+        rules:
+          - DBR-BLD-002
+          - DBR-BLD-003
+          - BR-VAR-001
+          - BR-VAR-003
+        atlas:
+          - build-library-variants
+      - id: flow.variant.update.general
+        kind: surface
+        title: Variant-level fields
         rules:
           - DAC-P1-002
           - DAC-VAR-004
@@ -1900,160 +3533,118 @@ pages:
         auth: signed-in
         atlas:
           - build-edit-general
-      - id: flow.build-create.step-5
+      - id: flow.variant.update.gear
         kind: flow
-        title: Subclass kit
+        title: ↳ Armor / weapon edits
         rules:
-          - DBR-SUB-001
-          - DBR-SUB-003
-          - DBR-SUB-004
-          - DBR-SUB-005
-          - DAC-DST-003
-          - DAC-DST-004
-          - BR-UI-001
+          - DAC-P1-004
+          - DBR-CMP-001
+          - DBR-ROLL-001
+        notes: "include: flow.build.weapon-set"
+        children:
+          - id: flow.variant.update.gear.enter
+            kind: surface
+            title: Weapon tab
+            rules:
+              - DAC-P1-004
+              - DBR-CMP-001
+              - DBR-CMP-007
+              - DBR-ROLL-001
+              - BR-ATT-001
+            path: /build
+            auth: signed-in
+            atlas:
+              - build-edit-weapon
+          - id: flow.variant.update.gear.path
+            kind: flow
+            title: ⎇ Choose composition path
+            rules: []
+            children:
+              - id: flow.variant.update.gear.path.reuse
+                kind: surface
+                title: Reuse existing set
+                rules:
+                  - BR-ATT-001
+                  - DBR-CMP-003
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-weapon-reuse
+              - id: flow.variant.update.gear.path.create
+                kind: surface
+                title: Create + slot fill
+                rules:
+                  - DAC-P2-005
+                  - BR-BLD-008
+                  - DBR-ROLL-010
+                path: /build
+                auth: signed-in
+                atlas:
+                  - build-edit-weapon-create
+          - id: flow.variant.update.gear.wishlist
+            kind: surface
+            title: Desired roll / wishlist
+            rules:
+              - DAC-P1-005
+              - DBR-ROLL-002
+              - DAC-P1-005
+              - DBR-ROLL-001
+              - DBR-ROLL-002
+              - DBR-ROLL-005
+              - BR-ROLL-001
+            atlas:
+              - build-edit-weapon-wishlist
+          - id: flow.variant.update.gear.exotic-gate
+            kind: gate
+            title: Single exotic weapon gate
+            rules:
+              - DAC-DST-001
+              - DBR-CMP-007
+              - DBR-CMP-007
+              - DAC-DST-001
+            atlas:
+              - build-edit-weapon-exotic-limit
+            notes: "gate: hard"
+      - id: flow.variant.update.coverage
+        kind: surface
+        title: Soft guidance (non-blocking)
+        rules:
+          - DAC-P1-006
+          - DBR-SYN-011
+          - DAC-P1-006
+          - DAC-DST-005
+          - DAC-DST-006
+          - DBR-GUID-001
+          - DBR-GUID-002
+          - DBR-GUID-003
+          - DBR-SYN-011
+          - DBR-STAT-004
+          - DAC-P2-002
+          - DBR-SYN-010
+        atlas:
+          - build-edit-coverage
+      - id: flow.variant.update.identity-gate
+        kind: surface
+        title: Identity change confirm / fork
+        rules:
+          - DAC-VAR-004
+          - DBR-ID-008
+          - DAC-P1-002
+          - DAC-VAR-004
+          - DBR-ID-008
+          - DBR-ID-009
+          - DBR-NAME-004
         path: /build
         auth: signed-in
         atlas:
-          - build-edit-subclass
-      - id: flow.build-create.step-6
-        kind: flow
-        title: Finish readiness
-        rules: []
-        atlas:
-          - build-edit-finish
-  - id: flow-flow-armor-set-compose
-    label: Armor set — Reuse, Create, Improve
-    description: Flow flow.armor-set-compose
+          - build-edit-general
+  - id: flow-flow-sets-library
+    label: Sets library — browse → detail → edit / fill / create
+    description: Flow flow.sets.library
     nodes:
-      - id: flow.armor-set-compose.step-1
-        kind: flow
-        title: Select build
-        rules:
-          - DBR-BLD-001
-          - DBR-BLD-003
-          - BR-BLD-006
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-library-selected
-      - id: flow.armor-set-compose.step-2
-        kind: flow
-        title: Armor → Reuse
-        rules:
-          - BR-ATT-001
-          - BR-ATT-002
-          - DBR-CMP-003
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-armor-reuse
-      - id: flow.armor-set-compose.step-3
-        kind: flow
-        title: Armor → Create
-        rules:
-          - DAC-P2-005
-          - DBR-PUR-004
-          - BR-BLD-007
-          - BR-SET-001
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-armor-create
-      - id: flow.armor-set-compose.step-4
-        kind: flow
-        title: Improve kit
-        rules:
-          - BR-SUG-001
-          - BR-SUG-002
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-armor-improve
-  - id: flow-flow-weapon-set-compose
-    label: Weapon set — Reuse / Create
-    description: Flow flow.weapon-set-compose
-    nodes:
-      - id: flow.weapon-set-compose.step-1
-        kind: flow
-        title: Weapon → Reuse
-        rules:
-          - BR-ATT-001
-          - DBR-CMP-003
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-weapon-reuse
-      - id: flow.weapon-set-compose.step-2
-        kind: flow
-        title: Weapon → Create
-        rules:
-          - DAC-P2-005
-          - BR-BLD-008
-          - DBR-ROLL-010
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-weapon-create
-  - id: flow-flow-intent-compose-equip
-    label: P1 spine — Intent → Compose → Equip
-    description: Flow flow.intent-compose-equip
-    nodes:
-      - id: flow.intent-compose-equip.step-1
-        kind: flow
-        title: Intent on General
-        rules: []
-        atlas:
-          - build-create-draft-general
-      - id: flow.intent-compose-equip.step-2
-        kind: flow
-        title: Subclass
-        rules:
-          - DBR-SUB-001
-          - DBR-SUB-003
-          - DBR-SUB-004
-          - DBR-SUB-005
-          - DAC-DST-003
-          - DAC-DST-004
-          - BR-UI-001
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-subclass
-      - id: flow.intent-compose-equip.step-3
-        kind: flow
-        title: Armor
-        rules:
-          - BR-ATT-001
-          - BR-ATT-002
-          - DBR-CMP-003
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-armor-reuse
-      - id: flow.intent-compose-equip.step-4
-        kind: flow
-        title: Weapon
-        rules:
-          - DAC-P2-005
-          - BR-BLD-008
-          - DBR-ROLL-010
-        path: /build
-        auth: signed-in
-        atlas:
-          - build-edit-weapon-create
-      - id: flow.intent-compose-equip.step-5
-        kind: flow
-        title: Finish
-        rules: []
-        atlas:
-          - build-edit-finish
-  - id: flow-flow-sets-library-edit
-    label: Sets library — browse, detail, edit, fill, create
-    description: Flow flow.sets-library-edit
-    nodes:
-      - id: flow.sets-library-edit.step-1
-        kind: flow
-        title: Browse
+      - id: flow.sets.library.browse
+        kind: surface
+        title: Browse library
         rules:
           - BR-SET-001
           - BR-SET-002
@@ -2067,10 +3658,76 @@ pages:
         auth: signed-in
         atlas:
           - sets-library
-      - id: flow.sets-library-edit.step-2
+      - id: flow.sets.library.create
         kind: flow
-        title: Detail
+        title: ↳ Create set
         rules:
+          - BR-SET-001
+          - BR-SET-002
+          - BR-TAG-004
+          - 001:SC-001
+        notes: "include: flow.sets.create"
+        children:
+          - id: flow.sets.library.create.open
+            kind: surface
+            title: New Set
+            rules: []
+            atlas:
+              - sets-library-new
+          - id: flow.sets.library.create.form
+            kind: surface
+            title: Name / type / tags
+            rules:
+              - BR-TAG-002
+              - BR-TAG-005
+              - BR-SET-001
+              - BR-SET-002
+              - BR-SET-004
+              - BR-TAG-002
+              - BR-TAG-004
+              - BR-TAG-005
+              - 001:SC-001
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-create
+          - id: flow.sets.library.create.fill
+            kind: surface
+            title: ↻ Fill required slots
+            rules:
+              - DAC-NME-003
+              - DAC-DST-009
+              - DAC-NME-003
+              - DBR-ROLL-010
+              - DAC-DST-009
+              - BR-SLOT-008
+              - BR-SLOT-009
+              - BR-UI-001
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-fill-slot
+            notes: "loop: until-required-slots"
+          - id: flow.sets.library.create.detail
+            kind: surface
+            title: Review detail
+            rules:
+              - BR-SET-001
+              - BR-SET-010
+              - BR-SET-011
+              - DAC-NME-004
+              - DBR-STAT-001
+              - DBR-CMP-001
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-detail
+      - id: flow.sets.library.detail
+        kind: surface
+        title: Set detail
+        rules:
+          - DAC-NME-004
+          - BR-SET-010
           - BR-SET-001
           - BR-SET-010
           - BR-SET-011
@@ -2081,35 +3738,69 @@ pages:
         auth: signed-in
         atlas:
           - sets-detail
-      - id: flow.sets-library-edit.step-3
+      - id: flow.sets.library.edit-fill
         kind: flow
-        title: Edit form
+        title: ↳ Edit / fill slots
         rules:
           - BR-SET-001
-          - BR-TAG-005
-          - BR-SLOT-001
-        path: /sets
-        auth: signed-in
-        atlas:
-          - sets-edit
-      - id: flow.sets-library-edit.step-4
-        kind: flow
-        title: Fill slot → Catalog embed
-        rules:
-          - DAC-NME-003
-          - DBR-ROLL-010
-          - DAC-DST-009
           - BR-SLOT-008
-          - BR-SLOT-009
-          - BR-UI-001
-        path: /sets
-        auth: signed-in
+          - DAC-DST-009
+        notes: "include: flow.sets.edit-fill"
+        children:
+          - id: flow.sets.library.edit-fill.edit
+            kind: surface
+            title: Edit form
+            rules:
+              - BR-SET-001
+              - BR-TAG-005
+              - BR-SLOT-001
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-edit
+          - id: flow.sets.library.edit-fill.fill
+            kind: surface
+            title: Fill slot (catalog embed)
+            rules:
+              - DAC-NME-003
+              - DBR-ROLL-010
+              - DAC-DST-009
+              - BR-SLOT-008
+              - BR-SLOT-009
+              - BR-UI-001
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-fill-slot
+          - id: flow.sets.library.edit-fill.exotic-block
+            kind: gate
+            title: Second exotic blocked
+            rules:
+              - BR-SLOT-008
+              - DAC-DST-001
+              - BR-SLOT-008
+              - BR-SLOT-009
+              - DAC-DST-001
+              - DAC-DST-009
+            atlas:
+              - sets-fill-slot-exotic-block
+            notes: "gate: hard"
+  - id: flow-flow-sets-create
+    label: Create set (all phases)
+    description: Flow flow.sets.create
+    nodes:
+      - id: flow.sets.create.open
+        kind: surface
+        title: New Set
+        rules: []
         atlas:
-          - sets-fill-slot
-      - id: flow.sets-library-edit.step-5
-        kind: flow
-        title: Create
+          - sets-library-new
+      - id: flow.sets.create.form
+        kind: surface
+        title: Name / type / tags
         rules:
+          - BR-TAG-002
+          - BR-TAG-005
           - BR-SET-001
           - BR-SET-002
           - BR-SET-004
@@ -2121,12 +3812,85 @@ pages:
         auth: signed-in
         atlas:
           - sets-create
-  - id: flow-flow-synergy-library-edit
-    label: Synergy library — browse, detail, create
-    description: Flow flow.synergy-library-edit
+      - id: flow.sets.create.fill
+        kind: surface
+        title: ↻ Fill required slots
+        rules:
+          - DAC-NME-003
+          - DAC-DST-009
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - DAC-DST-009
+          - BR-SLOT-008
+          - BR-SLOT-009
+          - BR-UI-001
+        path: /sets
+        auth: signed-in
+        atlas:
+          - sets-fill-slot
+        notes: "loop: until-required-slots"
+      - id: flow.sets.create.detail
+        kind: surface
+        title: Review detail
+        rules:
+          - BR-SET-001
+          - BR-SET-010
+          - BR-SET-011
+          - DAC-NME-004
+          - DBR-STAT-001
+          - DBR-CMP-001
+        path: /sets
+        auth: signed-in
+        atlas:
+          - sets-detail
+  - id: flow-flow-sets-edit-fill
+    label: Edit set + fill slot
+    description: Flow flow.sets.edit-fill
     nodes:
-      - id: flow.synergy-library-edit.step-1
-        kind: flow
+      - id: flow.sets.edit-fill.edit
+        kind: surface
+        title: Edit form
+        rules:
+          - BR-SET-001
+          - BR-TAG-005
+          - BR-SLOT-001
+        path: /sets
+        auth: signed-in
+        atlas:
+          - sets-edit
+      - id: flow.sets.edit-fill.fill
+        kind: surface
+        title: Fill slot (catalog embed)
+        rules:
+          - DAC-NME-003
+          - DBR-ROLL-010
+          - DAC-DST-009
+          - BR-SLOT-008
+          - BR-SLOT-009
+          - BR-UI-001
+        path: /sets
+        auth: signed-in
+        atlas:
+          - sets-fill-slot
+      - id: flow.sets.edit-fill.exotic-block
+        kind: gate
+        title: Second exotic blocked
+        rules:
+          - BR-SLOT-008
+          - DAC-DST-001
+          - BR-SLOT-008
+          - BR-SLOT-009
+          - DAC-DST-001
+          - DAC-DST-009
+        atlas:
+          - sets-fill-slot-exotic-block
+        notes: "gate: hard"
+  - id: flow-flow-synergy-library
+    label: Synergy library — browse → detail / create
+    description: Flow flow.synergy.library
+    nodes:
+      - id: flow.synergy.library.browse
+        kind: surface
         title: Browse
         rules:
           - DAC-P2-001
@@ -2139,9 +3903,70 @@ pages:
         auth: signed-in
         atlas:
           - synergy-library
-      - id: flow.synergy-library-edit.step-2
+      - id: flow.synergy.library.create
         kind: flow
-        title: Detail
+        title: ↳ Create synergy
+        rules:
+          - DAC-P2-001
+          - DAC-P2-003
+          - DBR-SYN-001
+          - DBR-SYN-012
+        notes: "include: flow.synergy.create"
+        children:
+          - id: flow.synergy.library.create.designation
+            kind: surface
+            title: Type + optional subtype
+            rules:
+              - DBR-SYN-012
+              - DAC-P2-001a
+              - DBR-SYN-012
+              - DAC-P2-001a
+            atlas:
+              - synergy-create-type
+          - id: flow.synergy.library.create.description
+            kind: surface
+            title: Description
+            rules: []
+            atlas:
+              - synergy-create-description
+          - id: flow.synergy.library.create.custom-type
+            kind: surface
+            title: Personal custom type / keyword
+            rules:
+              - DAC-P2-003
+              - DBR-SYN-005
+              - DAC-P2-003
+              - DBR-SYN-005
+              - DBR-SYN-006
+            atlas:
+              - synergy-create-custom-type
+          - id: flow.synergy.library.create.evidence
+            kind: surface
+            title: Evidence links
+            rules:
+              - DBR-SYN-007
+              - DBR-SYN-014
+              - DAC-P2-001
+              - DBR-SYN-007
+              - DBR-SYN-014
+            atlas:
+              - synergy-detail-links
+          - id: flow.synergy.library.create.required
+            kind: surface
+            title: Mark links required (AND)
+            rules:
+              - DBR-SYN-008
+              - DBR-SYN-009
+              - DAC-P2-002
+              - DBR-SYN-007
+              - DBR-SYN-008
+              - DBR-SYN-009
+              - DAC-P2-002
+            atlas:
+              - synergy-detail-link-required
+      - id: flow.synergy.library.detail
+        kind: surface
+        title: Detail / evidence
         rules:
           - DAC-P2-001
           - DBR-SYN-001
@@ -2155,29 +3980,132 @@ pages:
         auth: signed-in
         atlas:
           - synergy-detail
-      - id: flow.synergy-library-edit.step-3
+      - id: flow.synergy.library.edit
         kind: flow
-        title: Create
+        title: ↳ Edit (objects only)
         rules:
-          - DAC-P2-001
+          - DAC-P2-001a
+          - DBR-SYN-012
+        notes: "include: flow.synergy.edit"
+        children:
+          - id: flow.synergy.library.edit.designation-ro
+            kind: surface
+            title: Designation read-only
+            rules:
+              - DAC-P2-001a
+              - DAC-P2-001a
+              - DBR-SYN-012
+            atlas:
+              - synergy-detail-designation
+          - id: flow.synergy.library.edit.objects
+            kind: surface
+            title: Edit description / objects
+            rules:
+              - DAC-P2-001a
+              - DBR-SYN-012
+            atlas:
+              - synergy-detail-edit
+          - id: flow.synergy.library.edit.links
+            kind: surface
+            title: Add / update evidence
+            rules:
+              - BR-SYN-011
+              - BR-SYN-012
+              - DBR-SYN-014
+            atlas:
+              - synergy-detail-link-add
+  - id: flow-flow-synergy-create
+    label: Create synergy
+    description: Flow flow.synergy.create
+    nodes:
+      - id: flow.synergy.create.designation
+        kind: surface
+        title: Type + optional subtype
+        rules:
+          - DBR-SYN-012
+          - DAC-P2-001a
+          - DBR-SYN-012
+          - DAC-P2-001a
+        atlas:
+          - synergy-create-type
+      - id: flow.synergy.create.description
+        kind: surface
+        title: Description
+        rules: []
+        atlas:
+          - synergy-create-description
+      - id: flow.synergy.create.custom-type
+        kind: surface
+        title: Personal custom type / keyword
+        rules:
           - DAC-P2-003
-          - DBR-SYN-001
+          - DBR-SYN-005
+          - DAC-P2-003
           - DBR-SYN-005
           - DBR-SYN-006
-          - DBR-SYN-012
-          - BR-SYN-001
-          - BR-SYN-003
-        path: /synergy
-        auth: signed-in
         atlas:
-          - synergy-create
+          - synergy-create-custom-type
+      - id: flow.synergy.create.evidence
+        kind: surface
+        title: Evidence links
+        rules:
+          - DBR-SYN-007
+          - DBR-SYN-014
+          - DAC-P2-001
+          - DBR-SYN-007
+          - DBR-SYN-014
+        atlas:
+          - synergy-detail-links
+      - id: flow.synergy.create.required
+        kind: surface
+        title: Mark links required (AND)
+        rules:
+          - DBR-SYN-008
+          - DBR-SYN-009
+          - DAC-P2-002
+          - DBR-SYN-007
+          - DBR-SYN-008
+          - DBR-SYN-009
+          - DAC-P2-002
+        atlas:
+          - synergy-detail-link-required
+  - id: flow-flow-synergy-edit
+    label: Edit synergy (designation immutable)
+    description: Flow flow.synergy.edit
+    nodes:
+      - id: flow.synergy.edit.designation-ro
+        kind: surface
+        title: Designation read-only
+        rules:
+          - DAC-P2-001a
+          - DAC-P2-001a
+          - DBR-SYN-012
+        atlas:
+          - synergy-detail-designation
+      - id: flow.synergy.edit.objects
+        kind: surface
+        title: Edit description / objects
+        rules:
+          - DAC-P2-001a
+          - DBR-SYN-012
+        atlas:
+          - synergy-detail-edit
+      - id: flow.synergy.edit.links
+        kind: surface
+        title: Add / update evidence
+        rules:
+          - BR-SYN-011
+          - BR-SYN-012
+          - DBR-SYN-014
+        atlas:
+          - synergy-detail-link-add
   - id: flow-flow-catalog-weapons
     label: Catalog — weapons browse + detail
-    description: Weapons kind, Owned/Manifest scopes, and item detail pane.
+    description: Flow flow.catalog.weapons
     nodes:
-      - id: flow.catalog-weapons.step-1
-        kind: flow
-        title: Signed-out Manifest weapons
+      - id: flow.catalog.weapons.signed-out
+        kind: surface
+        title: Signed-out Manifest
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -2187,9 +4115,9 @@ pages:
         auth: signed-out
         atlas:
           - catalog-signed-out-weapons
-      - id: flow.catalog-weapons.step-2
-        kind: flow
-        title: Signed-in Owned
+      - id: flow.catalog.weapons.owned
+        kind: surface
+        title: Owned
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -2201,9 +4129,9 @@ pages:
         auth: signed-in
         atlas:
           - catalog-weapons-owned
-      - id: flow.catalog-weapons.step-3
-        kind: flow
-        title: Signed-in Manifest
+      - id: flow.catalog.weapons.manifest
+        kind: surface
+        title: Manifest
         rules:
           - DAC-NME-003
           - DBR-ROLL-001
@@ -2213,14 +4141,14 @@ pages:
         auth: signed-in
         atlas:
           - catalog-weapons-manifest
-      - id: flow.catalog-weapons.step-4
-        kind: flow
+      - id: flow.catalog.weapons.filters
+        kind: surface
         title: Filters expanded
         rules: []
         atlas:
           - catalog-filters-open
-      - id: flow.catalog-weapons.step-5
-        kind: flow
+      - id: flow.catalog.weapons.detail
+        kind: surface
         title: Weapon detail
         rules:
           - BR-CAT-006
@@ -2233,11 +4161,11 @@ pages:
           - catalog-weapon-detail
   - id: flow-flow-catalog-armor
     label: Catalog — armor browse + detail
-    description: Flow flow.catalog-armor
+    description: Flow flow.catalog.armor
     nodes:
-      - id: flow.catalog-armor.step-1
-        kind: flow
-        title: Signed-out Manifest armor
+      - id: flow.catalog.armor.signed-out
+        kind: surface
+        title: Signed-out Manifest
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -2246,9 +4174,9 @@ pages:
         auth: signed-out
         atlas:
           - catalog-signed-out-armor
-      - id: flow.catalog-armor.step-2
-        kind: flow
-        title: Owned armor
+      - id: flow.catalog.armor.owned
+        kind: surface
+        title: Owned
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -2258,9 +4186,9 @@ pages:
         auth: signed-in
         atlas:
           - catalog-armor-owned
-      - id: flow.catalog-armor.step-3
-        kind: flow
-        title: Manifest armor
+      - id: flow.catalog.armor.manifest
+        kind: surface
+        title: Manifest
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -2268,8 +4196,8 @@ pages:
         auth: signed-in
         atlas:
           - catalog-armor-manifest
-      - id: flow.catalog-armor.step-4
-        kind: flow
+      - id: flow.catalog.armor.detail
+        kind: surface
         title: Armor detail
         rules:
           - BR-CAT-006
@@ -2279,10 +4207,11 @@ pages:
         auth: signed-in
         atlas:
           - catalog-armor-detail
-      - id: flow.catalog-armor.step-5
-        kind: flow
+      - id: flow.catalog.armor.universal
+        kind: surface
         title: Universal search
         rules:
+          - 027:SC-001
           - DBR-ROLL-010
           - BR-CAT-008
           - BR-CAT-009
@@ -2295,8 +4224,8 @@ pages:
     label: In-game loadouts
     description: Flow flow.loadouts
     nodes:
-      - id: flow.loadouts.step-1
-        kind: flow
+      - id: flow.loadouts.signed-out
+        kind: surface
         title: Signed-out
         rules:
           - BR-AUTH-001
@@ -2305,17 +4234,136 @@ pages:
         auth: signed-out
         atlas:
           - loadouts-signed-out
-      - id: flow.loadouts.step-2
-        kind: flow
+      - id: flow.loadouts.list
+        kind: surface
         title: Slots list
-        rules: []
+        rules:
+          - DBR-PUR-002
+          - BR-EXO-001
+          - BR-EXO-002
+          - 002:SC-001
+          - 002:SC-005
+        path: /loadouts
+        auth: signed-in
         atlas:
-          - loadouts-signed-in
-      - id: flow.loadouts.step-3
-        kind: flow
+          - loadouts-list
+      - id: flow.loadouts.filter
+        kind: surface
+        title: Exotic filter bar
+        rules:
+          - BR-EXO-001
+          - BR-EXO-002
+          - BR-EXO-003
+          - 002:SC-001
+          - 002:SC-003
+          - 002:SC-004
+        atlas:
+          - loadouts-filter-exotic
+      - id: flow.loadouts.expanded
+        kind: surface
         title: Expanded slot
         rules: []
         path: /loadouts
         auth: signed-in
         atlas:
           - loadouts-slot-expanded
+      - id: flow.loadouts.discovery
+        kind: surface
+        title: Discovery overlay
+        rules:
+          - 002:SC-002
+          - BR-EXO-005
+          - BR-EXO-004
+        atlas:
+          - loadouts-row
+  - id: flow-flow-settings
+    label: Settings — auth, sync, manifest
+    description: Flow flow.settings
+    nodes:
+      - id: flow.settings.signed-out
+        kind: surface
+        title: Settings signed-out
+        rules:
+          - BR-AUTH-001
+        path: /settings
+        auth: signed-out
+        atlas:
+          - settings-signed-out
+      - id: flow.settings.signed-in
+        kind: surface
+        title: Settings signed-in
+        rules:
+          - BR-AUTH-001
+          - DBR-EQP-005
+        path: /settings
+        auth: signed-in
+        atlas:
+          - settings-signed-in
+      - id: flow.settings.sync
+        kind: surface
+        title: Inventory sync
+        rules:
+          - DBR-EQP-005
+          - DBR-ROLL-006
+          - 003:SC-003
+          - 003:SC-005
+        atlas:
+          - settings-inventory-sync
+      - id: flow.settings.manifest
+        kind: surface
+        title: Manifest card
+        rules:
+          - BR-CAT-001
+        atlas:
+          - settings-manifest
+  - id: flow-flow-analyze
+    label: Analyzer
+    description: Flow flow.analyze
+    nodes:
+      - id: flow.analyze.page
+        kind: surface
+        title: Analyzer page
+        rules:
+          - DBR-PUR-002
+          - DBR-LLM-001
+        path: /analyze
+        auth: any
+        atlas:
+          - analyze-page
+      - id: flow.analyze.form
+        kind: surface
+        title: Analyze form
+        rules: []
+        atlas:
+          - analyze-form
+      - id: flow.analyze.report
+        kind: surface
+        title: Report
+        rules:
+          - DBR-GUID-001
+          - DBR-SYN-001
+        atlas:
+          - analyze-report
+  - id: flow-flow-shared-llm-propose
+    label: LLM propose-for-confirm
+    description: Flow flow.shared.llm-propose
+    nodes:
+      - id: flow.shared.llm-propose.run
+        kind: surface
+        title: Start pass
+        rules: []
+        atlas:
+          - shared-llm-propose-run
+      - id: flow.shared.llm-propose.review
+        kind: surface
+        title: Review proposals
+        rules: []
+        atlas:
+          - shared-llm-propose-review
+      - id: flow.shared.llm-propose.confirm
+        kind: surface
+        title: Confirm / edit before persist
+        rules:
+          - DBR-LLM-002
+        atlas:
+          - shared-llm-propose-confirm

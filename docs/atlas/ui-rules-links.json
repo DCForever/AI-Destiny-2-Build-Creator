@@ -10,8 +10,6 @@
         "build.create",
         "build.create.draft.general",
         "build.create.general",
-        "flow.build-create.step-2",
-        "flow.intent-compose-equip.step-1",
         "build.create.name",
         "build.create.tags",
         "build.create.class",
@@ -30,7 +28,6 @@
       "nodes": [
         "build.create",
         "build.create.draft.locked.tabs",
-        "flow.build-create.step-3",
         "build.create.tabs"
       ]
     },
@@ -41,8 +38,9 @@
       "nodes": [
         "build.edit.armor",
         "build.edit.armor.reuse",
-        "flow.armor-set-compose.step-2",
-        "flow.intent-compose-equip.step-3"
+        "flow.build.armor-set.path.reuse",
+        "flow.build.compose-default.armor.path.reuse",
+        "journey.p1.intent-compose-equip.compose.armor.path.reuse"
       ]
     },
     "build-edit-armor-create": {
@@ -52,7 +50,10 @@
       "nodes": [
         "build.edit.armor",
         "build.edit.armor.create",
-        "flow.armor-set-compose.step-3"
+        "journey.p2.library.in-flow",
+        "flow.build.armor-set.path.create",
+        "flow.build.compose-default.armor.path.create",
+        "journey.p1.intent-compose-equip.compose.armor.path.create"
       ]
     },
     "build-edit-armor-improve": {
@@ -61,8 +62,10 @@
       "title": "Edit — Armor / Mod sets",
       "nodes": [
         "build.edit.armor",
-        "flow.armor-set-compose.step-4",
-        "build.edit.armor.improve"
+        "build.edit.armor.improve",
+        "flow.build.armor-set.path.improve",
+        "flow.build.compose-default.armor.path.improve",
+        "journey.p1.intent-compose-equip.compose.armor.path.improve"
       ]
     },
     "build-edit-finish": {
@@ -73,8 +76,6 @@
         "build.finish",
         "build.edit.finish",
         "build.finish.equip-gate",
-        "flow.build-create.step-6",
-        "flow.intent-compose-equip.step-5",
         "build.finish.gaps",
         "build.finish.dim",
         "build.finish.equip",
@@ -87,7 +88,12 @@
       "title": "Edit — General (live identity)",
       "nodes": [
         "build.edit.general",
-        "flow.build-create.step-4"
+        "flow.variant.update.general",
+        "flow.build.create.live-general",
+        "flow.variant.update.identity-gate",
+        "flow.build.compose-default.general",
+        "journey.p1.intent-compose-equip.compose.general",
+        "journey.p1.intent-compose-equip.create.live-general"
       ]
     },
     "build-edit-subclass": {
@@ -96,8 +102,8 @@
       "title": "Edit — Subclass kit",
       "nodes": [
         "build.edit.subclass",
-        "flow.build-create.step-5",
-        "flow.intent-compose-equip.step-2"
+        "flow.build.compose-default.subclass",
+        "journey.p1.intent-compose-equip.compose.subclass"
       ]
     },
     "build-edit-weapon-reuse": {
@@ -107,7 +113,10 @@
       "nodes": [
         "build.edit.weapon",
         "build.edit.weapon.reuse",
-        "flow.weapon-set-compose.step-1"
+        "flow.build.weapon-set.path.reuse",
+        "flow.variant.update.gear.path.reuse",
+        "flow.build.compose-default.weapon.path.reuse",
+        "journey.p1.intent-compose-equip.compose.weapon.path.reuse"
       ]
     },
     "build-edit-weapon-create": {
@@ -117,8 +126,10 @@
       "nodes": [
         "build.edit.weapon",
         "build.edit.weapon.create",
-        "flow.weapon-set-compose.step-2",
-        "flow.intent-compose-equip.step-4"
+        "flow.build.weapon-set.path.create",
+        "flow.variant.update.gear.path.create",
+        "flow.build.compose-default.weapon.path.create",
+        "journey.p1.intent-compose-equip.compose.weapon.path.create"
       ]
     },
     "build-library": {
@@ -127,7 +138,8 @@
       "title": "Build library",
       "nodes": [
         "build.library",
-        "flow.build-create.step-1"
+        "flow.build.create.library",
+        "journey.p1.intent-compose-equip.create.library"
       ]
     },
     "build-library-selected": {
@@ -135,8 +147,7 @@
       "page": "build",
       "title": "Selected build summary",
       "nodes": [
-        "build.library.selected",
-        "flow.armor-set-compose.step-1"
+        "build.library.selected"
       ]
     },
     "build-signed-out": {
@@ -145,7 +156,7 @@
       "title": "Build — signed-out gate",
       "nodes": [
         "build.signed-out",
-        "flow.signed-out-gates.step-1"
+        "flow.signed-out-gates.build"
       ]
     },
     "catalog-armor-detail": {
@@ -154,7 +165,7 @@
       "title": "Armor detail pane",
       "nodes": [
         "catalog.armor.detail",
-        "flow.catalog-armor.step-4"
+        "flow.catalog.armor.detail"
       ]
     },
     "catalog-armor-manifest": {
@@ -163,7 +174,7 @@
       "title": "Armor — Manifest",
       "nodes": [
         "catalog.armor.manifest",
-        "flow.catalog-armor.step-3"
+        "flow.catalog.armor.manifest"
       ]
     },
     "catalog-armor-owned": {
@@ -172,7 +183,7 @@
       "title": "Armor — Owned",
       "nodes": [
         "catalog.armor.owned",
-        "flow.catalog-armor.step-2"
+        "flow.catalog.armor.owned"
       ]
     },
     "catalog-filters-open": {
@@ -181,8 +192,8 @@
       "title": "Filters expanded",
       "nodes": [
         "catalog.filters.open",
-        "flow.catalog-weapons.step-4",
-        "catalog.weapons.filters"
+        "catalog.weapons.filters",
+        "flow.catalog.weapons.filters"
       ]
     },
     "catalog-signed-out-armor": {
@@ -191,7 +202,7 @@
       "title": "Catalog armor (signed-out / Manifest)",
       "nodes": [
         "catalog.signed-out.armor",
-        "flow.catalog-armor.step-1"
+        "flow.catalog.armor.signed-out"
       ]
     },
     "catalog-signed-out-weapons": {
@@ -200,8 +211,8 @@
       "title": "Catalog weapons (signed-out / Manifest)",
       "nodes": [
         "catalog.signed-out.weapons",
-        "flow.catalog-weapons.step-1",
-        "flow.signed-out-gates.step-6"
+        "flow.signed-out-gates.catalog",
+        "flow.catalog.weapons.signed-out"
       ]
     },
     "catalog-universal": {
@@ -210,7 +221,7 @@
       "title": "Universal search",
       "nodes": [
         "catalog.universal",
-        "flow.catalog-armor.step-5"
+        "flow.catalog.armor.universal"
       ]
     },
     "catalog-weapon-detail": {
@@ -219,7 +230,7 @@
       "title": "Weapon detail pane",
       "nodes": [
         "catalog.weapon.detail",
-        "flow.catalog-weapons.step-5"
+        "flow.catalog.weapons.detail"
       ]
     },
     "catalog-weapons-manifest": {
@@ -228,7 +239,7 @@
       "title": "Weapons — Manifest (all)",
       "nodes": [
         "catalog.weapons.manifest",
-        "flow.catalog-weapons.step-3"
+        "flow.catalog.weapons.manifest"
       ]
     },
     "catalog-weapons-owned": {
@@ -237,7 +248,7 @@
       "title": "Weapons — Owned",
       "nodes": [
         "catalog.weapons.owned",
-        "flow.catalog-weapons.step-2"
+        "flow.catalog.weapons.owned"
       ]
     },
     "sets-create": {
@@ -246,7 +257,9 @@
       "title": "Create set",
       "nodes": [
         "sets.create",
-        "flow.sets-library-edit.step-5"
+        "flow.sets.create.form",
+        "flow.sets.library.create.form",
+        "journey.p2.library.sets.create.form"
       ]
     },
     "sets-detail": {
@@ -255,7 +268,11 @@
       "title": "Set detail",
       "nodes": [
         "sets.detail",
-        "flow.sets-library-edit.step-2"
+        "flow.sets.create.detail",
+        "flow.sets.library.detail",
+        "journey.p2.library.sets.detail",
+        "flow.sets.library.create.detail",
+        "journey.p2.library.sets.create.detail"
       ]
     },
     "sets-edit": {
@@ -264,7 +281,9 @@
       "title": "Edit set form",
       "nodes": [
         "sets.edit",
-        "flow.sets-library-edit.step-3"
+        "flow.sets.edit-fill.edit",
+        "flow.sets.library.edit-fill.edit",
+        "journey.p2.library.sets.edit-fill.edit"
       ]
     },
     "sets-fill-slot": {
@@ -273,7 +292,12 @@
       "title": "Fill slot (embedded Catalog)",
       "nodes": [
         "sets.fill-slot",
-        "flow.sets-library-edit.step-4"
+        "flow.sets.create.fill",
+        "flow.sets.edit-fill.fill",
+        "flow.sets.library.create.fill",
+        "flow.sets.library.edit-fill.fill",
+        "journey.p2.library.sets.create.fill",
+        "journey.p2.library.sets.edit-fill.fill"
       ]
     },
     "sets-library": {
@@ -282,7 +306,8 @@
       "title": "Sets library",
       "nodes": [
         "sets.library",
-        "flow.sets-library-edit.step-1"
+        "flow.sets.library.browse",
+        "journey.p2.library.sets.browse"
       ]
     },
     "sets-signed-out": {
@@ -291,7 +316,7 @@
       "title": "Sets — signed-out gate",
       "nodes": [
         "sets.signed-out",
-        "flow.signed-out-gates.step-2"
+        "flow.signed-out-gates.sets"
       ]
     },
     "synergy-create": {
@@ -299,8 +324,7 @@
       "page": "synergy",
       "title": "Create synergy",
       "nodes": [
-        "synergy.create",
-        "flow.synergy-library-edit.step-3"
+        "synergy.create"
       ]
     },
     "synergy-detail": {
@@ -309,7 +333,8 @@
       "title": "Synergy detail / evidence",
       "nodes": [
         "synergy.detail",
-        "flow.synergy-library-edit.step-2"
+        "flow.synergy.library.detail",
+        "journey.p2.library.synergies.detail"
       ]
     },
     "synergy-library": {
@@ -318,7 +343,8 @@
       "title": "Synergy library",
       "nodes": [
         "synergy.library",
-        "flow.synergy-library-edit.step-1"
+        "flow.synergy.library.browse",
+        "journey.p2.library.synergies.browse"
       ]
     },
     "synergy-signed-out": {
@@ -327,7 +353,7 @@
       "title": "Synergy — signed-out gate",
       "nodes": [
         "synergy.signed-out",
-        "flow.signed-out-gates.step-3"
+        "flow.signed-out-gates.synergy"
       ]
     },
     "loadouts-signed-in": {
@@ -337,16 +363,15 @@
       "nodes": [
         "loadouts.list",
         "loadouts.signed.in",
-        "flow.loadouts.step-2",
         "loadouts.filter.exotic"
       ]
     },
     "loadouts-slot-expanded": {
-      "primary": "flow.loadouts.step-3",
+      "primary": "flow.loadouts.expanded",
       "page": "flow-flow-loadouts",
       "title": "Expanded slot",
       "nodes": [
-        "flow.loadouts.step-3",
+        "flow.loadouts.expanded",
         "loadouts.slot-expanded"
       ]
     },
@@ -356,8 +381,8 @@
       "title": "Loadouts — signed-out empty",
       "nodes": [
         "loadouts.signed-out",
-        "flow.loadouts.step-1",
-        "flow.signed-out-gates.step-4"
+        "flow.loadouts.signed-out",
+        "flow.signed-out-gates.loadouts"
       ]
     },
     "settings-signed-in": {
@@ -365,7 +390,8 @@
       "page": "settings",
       "title": "Settings (signed-in)",
       "nodes": [
-        "settings.signed-in"
+        "settings.signed-in",
+        "flow.settings.signed-in"
       ]
     },
     "settings-signed-out": {
@@ -374,7 +400,8 @@
       "title": "Settings (signed-out)",
       "nodes": [
         "settings.signed-out",
-        "flow.signed-out-gates.step-5"
+        "flow.settings.signed-out",
+        "flow.signed-out-gates.settings"
       ]
     }
   },
@@ -566,137 +593,218 @@
     "settings.signed-out": [
       "settings-signed-out"
     ],
-    "flow.signed-out-gates.step-1": [
-      "build-signed-out"
-    ],
-    "flow.signed-out-gates.step-2": [
-      "sets-signed-out"
-    ],
-    "flow.signed-out-gates.step-3": [
-      "synergy-signed-out"
-    ],
-    "flow.signed-out-gates.step-4": [
-      "loadouts-signed-out"
-    ],
-    "flow.signed-out-gates.step-5": [
-      "settings-signed-out"
-    ],
-    "flow.signed-out-gates.step-6": [
-      "catalog-signed-out-weapons"
-    ],
-    "flow.build-create.step-1": [
+    "journey.p1.intent-compose-equip.create.library": [
       "build-library"
     ],
-    "flow.build-create.step-2": [
-      "build-create-draft-general"
-    ],
-    "flow.build-create.step-3": [
-      "build-create-draft-locked-tabs"
-    ],
-    "flow.build-create.step-4": [
+    "journey.p1.intent-compose-equip.create.live-general": [
       "build-edit-general"
     ],
-    "flow.build-create.step-5": [
+    "journey.p1.intent-compose-equip.compose.general": [
+      "build-edit-general"
+    ],
+    "journey.p1.intent-compose-equip.compose.subclass": [
       "build-edit-subclass"
     ],
-    "flow.build-create.step-6": [
-      "build-edit-finish"
-    ],
-    "flow.armor-set-compose.step-1": [
-      "build-library-selected"
-    ],
-    "flow.armor-set-compose.step-2": [
+    "journey.p1.intent-compose-equip.compose.armor.path.reuse": [
       "build-edit-armor-reuse"
     ],
-    "flow.armor-set-compose.step-3": [
+    "journey.p1.intent-compose-equip.compose.armor.path.create": [
       "build-edit-armor-create"
     ],
-    "flow.armor-set-compose.step-4": [
+    "journey.p1.intent-compose-equip.compose.armor.path.improve": [
       "build-edit-armor-improve"
     ],
-    "flow.weapon-set-compose.step-1": [
+    "journey.p1.intent-compose-equip.compose.weapon.path.reuse": [
       "build-edit-weapon-reuse"
     ],
-    "flow.weapon-set-compose.step-2": [
+    "journey.p1.intent-compose-equip.compose.weapon.path.create": [
       "build-edit-weapon-create"
     ],
-    "flow.intent-compose-equip.step-1": [
-      "build-create-draft-general"
-    ],
-    "flow.intent-compose-equip.step-2": [
-      "build-edit-subclass"
-    ],
-    "flow.intent-compose-equip.step-3": [
-      "build-edit-armor-reuse"
-    ],
-    "flow.intent-compose-equip.step-4": [
-      "build-edit-weapon-create"
-    ],
-    "flow.intent-compose-equip.step-5": [
-      "build-edit-finish"
-    ],
-    "flow.sets-library-edit.step-1": [
-      "sets-library"
-    ],
-    "flow.sets-library-edit.step-2": [
-      "sets-detail"
-    ],
-    "flow.sets-library-edit.step-3": [
-      "sets-edit"
-    ],
-    "flow.sets-library-edit.step-4": [
-      "sets-fill-slot"
-    ],
-    "flow.sets-library-edit.step-5": [
-      "sets-create"
-    ],
-    "flow.synergy-library-edit.step-1": [
+    "journey.p2.library.synergies.browse": [
       "synergy-library"
     ],
-    "flow.synergy-library-edit.step-2": [
+    "journey.p2.library.synergies.detail": [
       "synergy-detail"
     ],
-    "flow.synergy-library-edit.step-3": [
-      "synergy-create"
+    "journey.p2.library.sets.browse": [
+      "sets-library"
     ],
-    "flow.catalog-weapons.step-1": [
-      "catalog-signed-out-weapons"
+    "journey.p2.library.sets.create.form": [
+      "sets-create"
     ],
-    "flow.catalog-weapons.step-2": [
-      "catalog-weapons-owned"
+    "journey.p2.library.sets.create.fill": [
+      "sets-fill-slot"
     ],
-    "flow.catalog-weapons.step-3": [
-      "catalog-weapons-manifest"
+    "journey.p2.library.sets.create.detail": [
+      "sets-detail"
     ],
-    "flow.catalog-weapons.step-4": [
-      "catalog-filters-open"
+    "journey.p2.library.sets.detail": [
+      "sets-detail"
     ],
-    "flow.catalog-weapons.step-5": [
-      "catalog-weapon-detail"
+    "journey.p2.library.sets.edit-fill.edit": [
+      "sets-edit"
     ],
-    "flow.catalog-armor.step-1": [
-      "catalog-signed-out-armor"
+    "journey.p2.library.sets.edit-fill.fill": [
+      "sets-fill-slot"
     ],
-    "flow.catalog-armor.step-2": [
-      "catalog-armor-owned"
+    "journey.p2.library.in-flow": [
+      "build-edit-armor-create"
     ],
-    "flow.catalog-armor.step-3": [
-      "catalog-armor-manifest"
+    "flow.signed-out-gates.build": [
+      "build-signed-out"
     ],
-    "flow.catalog-armor.step-4": [
-      "catalog-armor-detail"
+    "flow.signed-out-gates.sets": [
+      "sets-signed-out"
     ],
-    "flow.catalog-armor.step-5": [
-      "catalog-universal"
+    "flow.signed-out-gates.synergy": [
+      "synergy-signed-out"
     ],
-    "flow.loadouts.step-1": [
+    "flow.signed-out-gates.loadouts": [
       "loadouts-signed-out"
     ],
-    "flow.loadouts.step-2": [
-      "loadouts-signed-in"
+    "flow.signed-out-gates.settings": [
+      "settings-signed-out"
     ],
-    "flow.loadouts.step-3": [
+    "flow.signed-out-gates.catalog": [
+      "catalog-signed-out-weapons"
+    ],
+    "flow.build.create.library": [
+      "build-library"
+    ],
+    "flow.build.create.live-general": [
+      "build-edit-general"
+    ],
+    "flow.build.compose-default.general": [
+      "build-edit-general"
+    ],
+    "flow.build.compose-default.subclass": [
+      "build-edit-subclass"
+    ],
+    "flow.build.compose-default.armor.path.reuse": [
+      "build-edit-armor-reuse"
+    ],
+    "flow.build.compose-default.armor.path.create": [
+      "build-edit-armor-create"
+    ],
+    "flow.build.compose-default.armor.path.improve": [
+      "build-edit-armor-improve"
+    ],
+    "flow.build.compose-default.weapon.path.reuse": [
+      "build-edit-weapon-reuse"
+    ],
+    "flow.build.compose-default.weapon.path.create": [
+      "build-edit-weapon-create"
+    ],
+    "flow.build.armor-set.path.reuse": [
+      "build-edit-armor-reuse"
+    ],
+    "flow.build.armor-set.path.create": [
+      "build-edit-armor-create"
+    ],
+    "flow.build.armor-set.path.improve": [
+      "build-edit-armor-improve"
+    ],
+    "flow.build.weapon-set.path.reuse": [
+      "build-edit-weapon-reuse"
+    ],
+    "flow.build.weapon-set.path.create": [
+      "build-edit-weapon-create"
+    ],
+    "flow.variant.update.general": [
+      "build-edit-general"
+    ],
+    "flow.variant.update.gear.path.reuse": [
+      "build-edit-weapon-reuse"
+    ],
+    "flow.variant.update.gear.path.create": [
+      "build-edit-weapon-create"
+    ],
+    "flow.variant.update.identity-gate": [
+      "build-edit-general"
+    ],
+    "flow.sets.library.browse": [
+      "sets-library"
+    ],
+    "flow.sets.library.create.form": [
+      "sets-create"
+    ],
+    "flow.sets.library.create.fill": [
+      "sets-fill-slot"
+    ],
+    "flow.sets.library.create.detail": [
+      "sets-detail"
+    ],
+    "flow.sets.library.detail": [
+      "sets-detail"
+    ],
+    "flow.sets.library.edit-fill.edit": [
+      "sets-edit"
+    ],
+    "flow.sets.library.edit-fill.fill": [
+      "sets-fill-slot"
+    ],
+    "flow.sets.create.form": [
+      "sets-create"
+    ],
+    "flow.sets.create.fill": [
+      "sets-fill-slot"
+    ],
+    "flow.sets.create.detail": [
+      "sets-detail"
+    ],
+    "flow.sets.edit-fill.edit": [
+      "sets-edit"
+    ],
+    "flow.sets.edit-fill.fill": [
+      "sets-fill-slot"
+    ],
+    "flow.synergy.library.browse": [
+      "synergy-library"
+    ],
+    "flow.synergy.library.detail": [
+      "synergy-detail"
+    ],
+    "flow.catalog.weapons.signed-out": [
+      "catalog-signed-out-weapons"
+    ],
+    "flow.catalog.weapons.owned": [
+      "catalog-weapons-owned"
+    ],
+    "flow.catalog.weapons.manifest": [
+      "catalog-weapons-manifest"
+    ],
+    "flow.catalog.weapons.filters": [
+      "catalog-filters-open"
+    ],
+    "flow.catalog.weapons.detail": [
+      "catalog-weapon-detail"
+    ],
+    "flow.catalog.armor.signed-out": [
+      "catalog-signed-out-armor"
+    ],
+    "flow.catalog.armor.owned": [
+      "catalog-armor-owned"
+    ],
+    "flow.catalog.armor.manifest": [
+      "catalog-armor-manifest"
+    ],
+    "flow.catalog.armor.detail": [
+      "catalog-armor-detail"
+    ],
+    "flow.catalog.armor.universal": [
+      "catalog-universal"
+    ],
+    "flow.loadouts.signed-out": [
+      "loadouts-signed-out"
+    ],
+    "flow.loadouts.expanded": [
       "loadouts-slot-expanded"
+    ],
+    "flow.settings.signed-out": [
+      "settings-signed-out"
+    ],
+    "flow.settings.signed-in": [
+      "settings-signed-in"
     ]
   }
 }
