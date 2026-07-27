@@ -1,4 +1,5 @@
 import 'package:destiny2_app/destiny2_app.dart';
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 
@@ -9,22 +10,30 @@ import '../settings/inventory_sync_controller.dart';
 ///
 /// DART-063: also annotates library synergy membership for membership filters
 /// and reverse tags (BR-SYN-004). Soft guidance never auto-applies.
+///
+/// Plug display names (Next parity with `buildPlugMapForInventory`):
+/// - seed from OfflineCatalog base rows (mods / weapons / armor names)
+/// - fill gaps via [plugNameMapBuilder] (raw DestinyInventoryItemDefinition)
+/// so Catalog / Item Dossier show "Fluted Barrel" not `#hash`.
 class OwnedCatalogBridge {
   OwnedCatalogBridge({
     required this.db,
     required this.offlineCatalog,
     required this.session,
     required this.inventorySync,
-    this.plugNameByHash = const {},
-  });
+    Map<int, String> plugNameByHash = const {},
+    this.plugNameMapBuilder,
+  }) : _plugNameByHash = Map<int, String>.from(plugNameByHash);
 
   final AppDatabase db;
   final OfflineCatalog offlineCatalog;
   final WindowsOAuthSession session;
   final InventorySyncController inventorySync;
 
-  /// Optional plug hash → display name for owned instance cards.
-  final Map<int, String> plugNameByHash;
+  /// Production builder: plug hashes → names from raw item defs (DART-051 / Next).
+  final PerkNameMapBuilder? plugNameMapBuilder;
+
+  Map<int, String> _plugNameByHash;
 
   List<CatalogItem> _annotatedBase = const [];
   List<InventoryItemRecord> _inventory = const [];
@@ -42,11 +51,18 @@ class OwnedCatalogBridge {
   int get ownedDefinitionCount =>
       _ownedCounts.values.where((c) => c > 0).length;
 
+  /// Resolved plug hash → display name (grows as [ensurePlugNames] runs).
+  Map<int, String> get plugNameByHash =>
+      Map<int, String>.unmodifiable(_plugNameByHash);
+
   /// Load entity base (if needed) + inventory annotate + synergy membership.
   Future<void> refresh({bool reloadEntities = true}) async {
     if (reloadEntities) {
       await offlineCatalog.loadBase();
     }
+
+    // Seed names from MVP entity projection (mods, weapons, armor, etc.).
+    _seedNamesFromCatalogBase();
 
     _userId = await _resolveUserId();
     if (_userId == null) {
@@ -63,6 +79,9 @@ class OwnedCatalogBridge {
 
     _inventory = await listInventoryItems(db, _userId!);
     _ownedCounts = ownedHashCountsFromInventory(_inventory);
+
+    // Resolve plug names for inventory (scoped, Next-style fill-in).
+    await ensurePlugNames(collectPlugHashesFromInventory(_inventory));
 
     final synergies = await listUserSynergies(db, _userId!);
     _synergyMembership = [
@@ -94,6 +113,47 @@ class OwnedCatalogBridge {
     _annotatedBase = annotateCatalogWithLinkedSynergies(owned, linkedByHash);
   }
 
+  /// Ensure [hashes] have display names (entity seed + raw def builder).
+  ///
+  /// Safe to call repeatedly; only fetches missing hashes.
+  Future<void> ensurePlugNames(Iterable<int> hashes) async {
+    final missing = <int>[
+      for (final h in hashes)
+        if (h != 0 && !_plugNameByHash.containsKey(h)) h,
+    ];
+    if (missing.isEmpty) return;
+
+    final builder = plugNameMapBuilder ?? inventorySync.perkNameMapBuilder;
+    final explicit = inventorySync.perkNameMap;
+    if (explicit != null && explicit.isNotEmpty) {
+      for (final h in missing) {
+        final n = explicit[h];
+        if (n != null && n.isNotEmpty) _plugNameByHash[h] = n;
+      }
+    }
+
+    final stillMissing = [
+      for (final h in missing)
+        if (!_plugNameByHash.containsKey(h)) h,
+    ];
+    if (stillMissing.isEmpty || builder == null) return;
+
+    try {
+      final more = await builder(stillMissing);
+      if (more.isEmpty) return;
+      _plugNameByHash = {..._plugNameByHash, ...more};
+    } catch (_) {
+      // Degrade to #hash display; do not fail catalog load.
+    }
+  }
+
+  void _seedNamesFromCatalogBase() {
+    for (final item in offlineCatalog.baseItems) {
+      if (item.name.isEmpty) continue;
+      _plugNameByHash.putIfAbsent(item.hash, () => item.name);
+    }
+  }
+
   /// Filter annotated base for [mode] with client facets + [scope].
   List<CatalogItem> browse(
     CatalogClientFilters filters, {
@@ -111,9 +171,19 @@ class OwnedCatalogBridge {
     return projectInstancesForHash(
       _inventory,
       itemHash,
-      plugNameByHash: plugNameByHash,
+      plugNameByHash: _plugNameByHash,
       treatAsArmor: treatAsArmor,
     );
+  }
+
+  /// Resolve names for plugs on [itemHash] copies, then return projections.
+  Future<List<CatalogInstanceProjection>> instancesForResolved(
+    int itemHash, {
+    bool treatAsArmor = false,
+  }) async {
+    final rows = _inventory.where((i) => i.itemHash == itemHash);
+    await ensurePlugNames(collectPlugHashesFromInventory(rows));
+    return instancesFor(itemHash, treatAsArmor: treatAsArmor);
   }
 
   /// Linked synergy badges for an annotated catalog item.
@@ -159,4 +229,39 @@ class OwnedCatalogBridge {
     );
     return user.id;
   }
+}
+
+/// Collect equipped + reusable plug hashes from inventory rows.
+Set<int> collectPlugHashesFromInventory(
+  Iterable<InventoryItemRecord> items,
+) {
+  final out = <int>{};
+  for (final item in items) {
+    for (final h in item.plugHashes) {
+      if (h != 0) out.add(h);
+    }
+    final sockets = item.socketPlugs;
+    if (sockets == null) continue;
+    for (final raw in sockets) {
+      final equipped = raw['equippedPlugHash'];
+      final eh = equipped is int
+          ? equipped
+          : equipped is num
+              ? equipped.toInt()
+              : null;
+      if (eh != null && eh != 0) out.add(eh);
+      final reusable = raw['reusablePlugHashes'];
+      if (reusable is List) {
+        for (final e in reusable) {
+          final h = e is int
+              ? e
+              : e is num
+                  ? e.toInt()
+                  : int.tryParse('$e');
+          if (h != null && h != 0) out.add(h);
+        }
+      }
+    }
+  }
+  return out;
 }

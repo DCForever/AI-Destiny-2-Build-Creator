@@ -40,11 +40,23 @@ Future<SetDetailPresentation> enrichSetDetailPresentation({
     catalogByHash.putIfAbsent(i.hash, () => i);
   }
 
+  // Next-style: resolve perk names for plugs on items in this set.
+  final invForNames = inventoryFallback.isNotEmpty
+      ? inventoryFallback
+      : bridge.inventory;
+  final setHashes = detail.activeItems.map((i) => i.itemHash).toSet();
+  final relevantInv = invForNames.where((r) => setHashes.contains(r.itemHash));
+  await bridge.ensurePlugNames(collectPlugHashesFromInventory(relevantInv));
+  for (final item in detail.activeItems) {
+    await bridge.ensurePlugNames(item.selectedPerks);
+  }
+
   final rowsBySlot = <String, SetItemRowPresentation>{};
   final armorPieces = <ArmorStatPieceInput>[];
-  final names = plugNameByHash.isNotEmpty
-      ? plugNameByHash
-      : bridge.plugNameByHash;
+  final names = {
+    ...bridge.plugNameByHash,
+    if (plugNameByHash.isNotEmpty) ...plugNameByHash,
+  };
 
   for (final slot in boardSlots) {
     final items = detail.activeItems

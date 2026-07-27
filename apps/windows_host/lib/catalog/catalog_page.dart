@@ -201,7 +201,11 @@ class _CatalogPageState extends State<CatalogPage> {
     final treatArmor = _mode == CatalogBrowseMode.armor ||
         compositionKindFromCatalogItem(sel) == CompositionKind.armor ||
         compositionKindFromCatalogItem(sel) == CompositionKind.exoticArmor;
-    final instances = _bridge.instancesFor(sel.hash, treatAsArmor: treatArmor);
+    // Next parity: resolve plug names before projecting instance cards.
+    final instances = await _bridge.instancesForResolved(
+      sel.hash,
+      treatAsArmor: treatArmor,
+    );
     final tags = await _bridge.reverseTagsFor(sel);
     if (!mounted) return;
     setState(() {
