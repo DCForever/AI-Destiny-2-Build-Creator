@@ -32,6 +32,11 @@ npm run product-map:sync
 # Drift only
 npm run product-map:check
 
+# Flutter Windows stubs + parity
+npm run product-map:seed-flutter
+npm run product-map:parity
+npm run product-map:capture-stub -- --platform=flutter-windows --write-plan
+
 # Scaffold
 npm run product-map:add-surface -- --id area.name --title "Title" --area build
 npm run product-map:add-flow -- --id flow.example --title "Example flow"

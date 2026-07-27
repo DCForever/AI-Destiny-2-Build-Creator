@@ -32,5 +32,6 @@ When **planning** or **implementing** user-visible UI (screens, tabs, modals, fl
 4. Scaffold: `npm run product-map:add-surface` / `product-map:add-flow`.
 5. Checklist: [`docs/product-map/CHECKLIST.md`](docs/product-map/CHECKLIST.md).
 6. Do **not** hand-edit generated `docs/ui-rules/ui-map.drawio`, `docs/ui-rules/inventory.yaml`, or generated Atlas path blocks — edit the hub and sync.
-7. Multi-platform: same surface id; add `platforms.flutter-windows` (etc.) when shells exist — do not fork DBR/DAC per platform.
+7. Multi-platform: same surface id; seed/update `platforms.flutter-windows` via `npm run product-map:seed-flutter` — do not fork DBR/DAC per platform. See [`docs/product-map/FLUTTER.md`](docs/product-map/FLUTTER.md).
 8. Hierarchical flows: use `include`, `branch`, `loop`, and `gate` on phases so Atlas and Draw.io show nested subflows (create build, armor paths, finish, etc.).
+9. Flutter parity: `npm run product-map:parity` (report under `docs/product-map/parity-flutter-windows.md`).

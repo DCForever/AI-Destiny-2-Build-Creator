@@ -226,15 +226,37 @@
   }
 
   // ─── Screens ───────────────────────────────────────────
+  function platformBadge(s) {
+    const nx = s.platforms?.nextjs;
+    const fw = s.platforms?.["flutter-windows"];
+    let bits = [];
+    if (nx) bits.push("next");
+    if (fw?.status === "stub") bits.push("fw:stub");
+    else if (fw?.status === "deferred") bits.push("fw:defer");
+    else if (fw?.status === "done") bits.push("fw:done");
+    else if (fw) bits.push("fw");
+    return bits.join(" · ");
+  }
+
   function renderScreens() {
     const surfaces = state.hub?.surfaces || [];
     const areas = [...new Set(surfaces.map((s) => s.area || "other"))].sort();
     const area = state.screenArea || areas[0];
-    const filtered = surfaces.filter((s) => (s.area || "other") === area);
+    const plat = state.platform || "nextjs";
+    let filtered = surfaces.filter((s) => (s.area || "other") === area);
+    if (plat === "flutter-windows") {
+      filtered = filtered.filter((s) => s.platforms?.["flutter-windows"]);
+    }
     const tabs = areas
       .map(
         (a) =>
           `<button type="button" class="page-tab${a === area ? " on" : ""}" data-area="${esc(a)}">${esc(a)}</button>`,
+      )
+      .join("");
+    const platTabs = ["nextjs", "flutter-windows"]
+      .map(
+        (p) =>
+          `<button type="button" class="page-tab${p === plat ? " on" : ""}" data-platform="${esc(p)}">${esc(p)}</button>`,
       )
       .join("");
     const list = filtered
@@ -244,7 +266,7 @@
         return `<button type="button" class="list-item${on}" data-node="${esc(s.id)}">
           <span class="idx">${esc(s.kind || "")}</span>
           <span class="t">${esc(s.title || s.id)} ${cam}</span>
-          <span class="meta">${esc(s.id)}</span>
+          <span class="meta">${esc(s.id)} · ${esc(platformBadge(s))}</span>
         </button>`;
       })
       .join("");
@@ -265,13 +287,24 @@
               ),
             )
             .join("")}</div>`
-        : `<p class="empty">No screenshot — captureId: ${esc(s.platforms?.nextjs?.captureId || "—")}</p>`;
+        : `<p class="empty">No Next screenshot — captureId: ${esc(s.platforms?.nextjs?.captureId || "—")}</p>`;
 
+      const nx = s.platforms?.nextjs || {};
+      const fw = s.platforms?.["flutter-windows"] || {};
       detail = `
         <div class="detail-head">
           <h2>${esc(s.title || s.id)}</h2>
-          <p class="meta">${esc(s.kind)} · ${esc(s.id)} · ${esc(s.auth || "—")} · ${esc(s.platforms?.nextjs?.path || "—")}</p>
+          <p class="meta">${esc(s.kind)} · ${esc(s.id)} · ${esc(s.auth || "—")}</p>
           ${s.notes ? `<p class="lede-inline">${esc(s.notes)}</p>` : ""}
+        </div>
+        <div class="struct-box">
+          <h3>Platforms</h3>
+          <table class="map-table">
+            <tr><th>Platform</th><th>Status</th><th>Route / path</th><th>Capture id</th></tr>
+            <tr><td>nextjs</td><td>production</td><td>${esc(nx.path || "—")}</td><td>${esc(nx.captureId || "—")}</td></tr>
+            <tr><td>flutter-windows</td><td>${esc(fw.status || "—")}</td><td>${esc(fw.route || "—")}</td><td>${esc(fw.captureId || "—")}</td></tr>
+          </table>
+          <p class="meta">Same surface id and rule IDs across shells — no Flutter-only DBR/DAC.</p>
         </div>
         <div class="shots">${shotHtml}</div>
         <div class="struct-box">
@@ -289,6 +322,7 @@
     return `<div class="split">
       <aside class="list-pane">
         <div class="pane-head"><h2>Screens / surfaces</h2>
+          <div class="page-tabs">${platTabs}</div>
           <div class="page-tabs">${tabs}</div>
           <input type="search" id="screenFilter" placeholder="Filter…" /></div>
         <div id="screenList" class="list">${list}</div>
@@ -377,9 +411,11 @@
       <pre id="exportLog" class="log" hidden></pre>
       <h3>Deep links</h3>
       <pre class="log">?mode=flows&amp;flow=journey.p1.intent-compose-equip
-?mode=screens&amp;node=build.finish
+?mode=screens&amp;node=build.finish&amp;platform=flutter-windows
 ?mode=rules&amp;rule=DAC-P1-007
 ?platform=nextjs</pre>
+      <h3>Flutter Windows</h3>
+      <p class="meta">Stubs + parity: <code>npm run product-map:parity</code> · docs: <code>docs/product-map/FLUTTER.md</code></p>
       <h3>Structure edits</h3>
       <p class="meta">Screens mode: attach rule IDs. Flows mode: add phase stubs. Or use CLI scaffold.</p>
       <div class="struct-box">
@@ -414,6 +450,15 @@
     document.querySelectorAll("[data-area]").forEach((b) =>
       b.addEventListener("click", () => {
         state.screenArea = b.getAttribute("data-area");
+        render();
+      }),
+    );
+    document.querySelectorAll("[data-platform]").forEach((b) =>
+      b.addEventListener("click", () => {
+        state.platform = b.getAttribute("data-platform");
+        const u = new URL(location.href);
+        u.searchParams.set("platform", state.platform);
+        history.replaceState(null, "", u);
         render();
       }),
     );
