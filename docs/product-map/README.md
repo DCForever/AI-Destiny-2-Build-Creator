@@ -26,11 +26,14 @@ Rule **wording** stays in `specs/domain-*.md`, `specs/business-rules.md`, and fe
 # Validate hub + resolve rule IDs
 npm run product-map:validate
 
-# Validate → generate → route/orphan drift check
+# Validate → generate → route drift check
 npm run product-map:sync
 
-# Drift only
+# Drift only / dirty generate / orphan domain rules / CI bundle
 npm run product-map:check
+npm run product-map:check-dirty
+npm run product-map:orphan-rules
+npm run product-map:ci
 
 # Flutter Windows stubs + parity
 npm run product-map:seed-flutter

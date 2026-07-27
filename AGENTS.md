@@ -35,3 +35,4 @@ When **planning** or **implementing** user-visible UI (screens, tabs, modals, fl
 7. Multi-platform: same surface id; seed/update `platforms.flutter-windows` via `npm run product-map:seed-flutter` — do not fork DBR/DAC per platform. See [`docs/product-map/FLUTTER.md`](docs/product-map/FLUTTER.md).
 8. Hierarchical flows: use `include`, `branch`, `loop`, and `gate` on phases so Atlas and Draw.io show nested subflows (create build, armor paths, finish, etc.).
 9. Flutter parity: `npm run product-map:parity` (report under `docs/product-map/parity-flutter-windows.md`).
+10. **Gate / CI**: `npm run product-map:ci` runs on `npm run gate` and GitHub Actions — after hub edits always `product-map:sync` and commit generated `inventory.yaml`, `ui-map.drawio`, `manifest.json`, `ui-rules-links.json`. Skip with `GATE_SKIP_PRODUCT_MAP=1` only when necessary.

@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality:
-    name: typecheck · lint · test · build
+    name: product-map · typecheck · lint · test · build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,6 +25,9 @@ jobs:
 
       # better-sqlite3 compiles against the image toolchain on ubuntu-latest.
       # Unit tests/typecheck/lint/build stay offline — no Bungie secrets required.
+      - name: Product map (validate · generate · dirty · check)
+        run: npm run product-map:ci
+
       - name: Typecheck
         run: npm run typecheck
 

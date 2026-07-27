@@ -228,10 +228,12 @@ function main() {
   fs.writeFileSync(DRAWIO_PATH, xml, "utf8");
 
   // Merge atlas manifest
+  // Stable stamp for CI dirty checks (avoid daily churn)
+  const stamp = hub.meta.updated || hub.meta.version || "1";
   let base = {
     app: "Destiny 2 Build Creator",
     version: 4,
-    generatedAt: new Date().toISOString().slice(0, 10),
+    generatedAt: String(stamp),
     generatedFrom: "docs/product-map",
     baseUrlDefault: "https://127.0.0.1:3000",
     description:

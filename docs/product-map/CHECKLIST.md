@@ -9,7 +9,7 @@ Use when shipping **user-visible UI** (screens, tabs, modals, flows, gates) or *
 - [ ] **Transitions** — map edges in `transitions.yaml` if navigation changed
 - [ ] **Rules** — attach `DAC-*` / `DBR-*` / `BR-*` / slice ids; edit **wording** in domain markdown if needed
 - [ ] **Sync** — `npm run product-map:sync`
-- [ ] **Check** — `npm run product-map:check`
+- [ ] **Check** — `npm run product-map:check` (and `product-map:ci` / full `npm run gate` before PR)
 - [ ] **Capture** (optional) — partial atlas capture for touched `captureId`s
 - [ ] **Flutter** (if shell work) — update `platforms.flutter-windows` status/route; `npm run product-map:parity`; no new Flutter-only DBR/DAC
 - [ ] **PR note** — list surface/flow ids under a “Product map” subsection
