@@ -235,8 +235,10 @@ class _ItemRichnessPanelState extends State<ItemRichnessPanel> {
       plugNameByHash: widget.plugNameByHash,
     );
 
+    // mainAxisSize.min: safe as ListView child (no nested vertical viewport).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
         _IdentityStrip(
           definition: def,
@@ -244,10 +246,12 @@ class _ItemRichnessPanelState extends State<ItemRichnessPanel> {
           kindLabel: widget.kindLabel,
         ),
         const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Wrap(
             key: const Key('item_richness_presets'),
+            spacing: 6,
+            runSpacing: 4,
             children: [
               for (final p in const [
                 ('scan', 'Scan'),
@@ -255,17 +259,14 @@ class _ItemRichnessPanelState extends State<ItemRichnessPanel> {
                 ('all', 'Expand all'),
                 ('none', 'Collapse'),
               ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: OutlinedButton(
-                    key: Key('item_richness_preset_${p.$1}'),
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                    ),
-                    onPressed: () => _applyPreset(p.$1),
-                    child: Text(p.$2),
+                OutlinedButton(
+                  key: Key('item_richness_preset_${p.$1}'),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
+                  onPressed: () => _applyPreset(p.$1),
+                  child: Text(p.$2),
                 ),
             ],
           ),
@@ -674,45 +675,45 @@ class _ArmorStatsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      key: const Key('item_richness_armor_stats'),
-      children: [
-        GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 1,
-          crossAxisSpacing: 1,
-          childAspectRatio: 1.6,
-          children: [
-            for (final key in armorBaseStatKeys)
-              Container(
-                color: theme.colorScheme.surface,
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      key.toUpperCase(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 9,
-                        letterSpacing: 1.0,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${board.stats[key] ?? '—'}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontFamily: 'IBM Plex Mono',
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
+    // Avoid GridView inside outer ListView (unbounded height / paint glitches).
+    final keys = armorBaseStatKeys;
+    Widget cell(String key) {
+      return Expanded(
+        child: Container(
+          margin: const EdgeInsets.all(0.5),
+          color: theme.colorScheme.surface,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                key.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 9,
+                  letterSpacing: 1.0,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                '${board.stats[key] ?? '—'}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontFamily: 'IBM Plex Mono',
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
         ),
+      );
+    }
+
+    return Column(
+      key: const Key('item_richness_armor_stats'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(children: [for (var i = 0; i < 3; i++) cell(keys[i])]),
+        Row(children: [for (var i = 3; i < 6; i++) cell(keys[i])]),
         if (board.total != null)
           Container(
             width: double.infinity,
@@ -765,94 +766,103 @@ class _PerkGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Wrap(
-      key: const Key('item_richness_perk_grid'),
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final col in columns)
-          SizedBox(
-            width: 148,
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    child: Text(
-                      col.label.toUpperCase(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 9,
-                        letterSpacing: 1.2,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+    // LayoutBuilder: column width tracks detail pane (avoids fixed 148 overflow).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxW = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 320.0;
+        final colW = (maxW / 2).clamp(120.0, 160.0);
+        return Wrap(
+          key: const Key('item_richness_perk_grid'),
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final col in columns)
+              SizedBox(
+                width: colW,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.dividerColor),
                   ),
-                  Divider(height: 1, color: theme.dividerColor),
-                  for (final opt in col.options)
-                    Container(
-                      key: Key(
-                        'item_richness_perk_${col.label}_${opt.hash}',
-                      ),
-                      decoration: BoxDecoration(
-                        color: opt.equipped
-                            ? const Color(0x244EC4BC)
-                            : null,
-                        border: Border(
-                          left: BorderSide(
-                            color: opt.equipped
-                                ? const Color(0xFF4EC4BC)
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                          bottom: BorderSide(
-                            color: theme.dividerColor,
-                            width: kFlapRuleThickness,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          col.label.toUpperCase(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontSize: 9,
+                            letterSpacing: 1.2,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 7,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              opt.displayName,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: opt.equipped
-                                    ? FontWeight.w500
-                                    : FontWeight.w400,
+                      Divider(height: 1, color: theme.dividerColor),
+                      for (final opt in col.options)
+                        Container(
+                          key: Key(
+                            'item_richness_perk_${col.label}_${opt.hash}',
+                          ),
+                          decoration: BoxDecoration(
+                            color: opt.equipped
+                                ? const Color(0x244EC4BC)
+                                : null,
+                            border: Border(
+                              left: BorderSide(
                                 color: opt.equipped
-                                    ? null
-                                    : theme.colorScheme.onSurfaceVariant,
+                                    ? const Color(0xFF4EC4BC)
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                              bottom: BorderSide(
+                                color: theme.dividerColor,
+                                width: kFlapRuleThickness,
                               ),
                             ),
                           ),
-                          if (opt.equipped)
-                            Text(
-                              'EQ',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontSize: 9,
-                                color: const Color(0xFF4EC4BC),
-                                letterSpacing: 0.8,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 7,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  opt.displayName,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: opt.equipped
+                                        ? FontWeight.w500
+                                        : FontWeight.w400,
+                                    color: opt.equipped
+                                        ? null
+                                        : theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                ],
+                              if (opt.equipped)
+                                Text(
+                                  'EQ',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontSize: 9,
+                                    color: const Color(0xFF4EC4BC),
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

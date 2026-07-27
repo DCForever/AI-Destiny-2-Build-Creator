@@ -1176,21 +1176,20 @@ class _CatalogPageState extends State<CatalogPage> {
               key: const Key('instance_list'),
               padding: EdgeInsets.zero,
               children: [
-                // Definition dossier (always) — scan: definition collapsed.
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: ItemRichnessPanel(
+                // Single dossier: definition-only when unpinned; one card per
+                // owned copy otherwise (avoid stacking N full definition clones).
+                if (_instances.isEmpty) ...[
+                  ItemRichnessPanel(
                     key: Key('item_richness_def_${item.hash}'),
                     definition: item,
-                    kindLabel: kind != null ? compositionKindLabel(kind) : null,
+                    kindLabel:
+                        kind != null ? compositionKindLabel(kind) : null,
                     plugNameByHash: _bridge.plugNameByHash,
-                    initialOpen: const {},
+                    initialOpen: const {ItemRichnessSection.definition},
                     onCopyMessage: (msg) {
                       setState(() => _actionMessage = msg);
                     },
                   ),
-                ),
-                if (_instances.isEmpty)
                   Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
@@ -1201,10 +1200,16 @@ class _CatalogPageState extends State<CatalogPage> {
                             color: palette.muted,
                           ),
                     ),
-                  )
-                else
-                  for (final inst in _instances)
-                    _buildInstanceCard(item, inst, kind),
+                  ),
+                ] else
+                  for (var i = 0; i < _instances.length; i++)
+                    _buildInstanceCard(
+                      item,
+                      _instances[i],
+                      kind,
+                      // First copy expanded (scan); rest collapsed for density.
+                      expandRoll: i == 0,
+                    ),
               ],
             ),
           ),
@@ -1216,8 +1221,9 @@ class _CatalogPageState extends State<CatalogPage> {
   Widget _buildInstanceCard(
     CatalogItem item,
     CatalogInstanceProjection inst,
-    CompositionKind? kind,
-  ) {
+    CompositionKind? kind, {
+    required bool expandRoll,
+  }) {
     return Container(
       key: Key('instance_${inst.instanceId}'),
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
@@ -1235,13 +1241,16 @@ class _CatalogPageState extends State<CatalogPage> {
         instance: inst,
         kindLabel: kind != null ? compositionKindLabel(kind) : null,
         plugNameByHash: _bridge.plugNameByHash,
-        initialOpen: {
-          if (inst.armorStats != null && inst.armorStats!.hasAny)
-            ItemRichnessSection.stats,
-          if (inst.plugCards.isNotEmpty ||
-              (inst.socketPlugs != null && inst.socketPlugs!.isNotEmpty))
-            ItemRichnessSection.perks,
-        },
+        initialOpen: expandRoll
+            ? {
+                if (inst.armorStats != null && inst.armorStats!.hasAny)
+                  ItemRichnessSection.stats,
+                if (inst.plugCards.isNotEmpty ||
+                    (inst.socketPlugs != null &&
+                        inst.socketPlugs!.isNotEmpty))
+                  ItemRichnessSection.perks,
+              }
+            : const <ItemRichnessSection>{},
         onCopyMessage: (msg) {
           setState(() => _actionMessage = msg);
         },
