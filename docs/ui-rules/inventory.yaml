@@ -16,11 +16,15 @@ pages:
         title: App shell
         path: /*
         auth: any
-        notes: Header, nav, theme, Bungie auth control
+        notes: Header, nav, theme, Bungie auth control. Global presentation North Star (DIM for Destiny data; compose workflow may diverge).
         rules:
           - DBR-PUR-001
           - DBR-PUR-002
           - DBR-PUR-003
+          - DBR-UI-001
+          - DBR-UI-002
+          - DBR-UI-003
+          - DBR-UI-004
           - BR-AUTH-001
         children:
           - id: shell.auth

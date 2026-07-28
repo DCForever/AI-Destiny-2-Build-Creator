@@ -37,6 +37,8 @@ The distinctive mechanism is **synergy-type intent + set-based composition with 
 
 Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spit names; they do not center **designated play-pattern identity + reusable set library + variant-aware composition** the same way.
 
+**Presentation North Star:** [DIM](https://destinyitemmanager.com/) is how we **show** Destiny data in general (item detail, perk grids, stats, mods, loadout readouts). Prefer DIM-familiar density and labeling. The main intentional divergence is **build creation / composition workflow** (intent → sets/synergies/variants → soft guidance). Domain: `DBR-UI-001`–`004` in [`specs/domain-business-rules.md`](./specs/domain-business-rules.md). Visual refs: [`docs/dim-reference-screenshots/`](./docs/dim-reference-screenshots/).
+
 ## Operating Context
 
 - **Desktop-first browser** app (Next.js), typically `npm run dev` / local HTTPS for Bungie OAuth (`https://127.0.0.1:3000`).
@@ -71,7 +73,7 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 
 ### Explicit non-goals (unless product direction changes)
 
-- Full **DIM parity** (notes, ornaments, full transfer UI, etc.).
+- Full **DIM product parity** (notes, tags, ornaments, full vault transfer UI, cloning DIM LO as compose, etc.). Presentation of Destiny data still follows DIM as North Star (`DBR-UI-*`); product workflows and feature set do not need to match DIM.
 - Restoring **Generator / multi-pass LLM** as the primary nav tab.
 - Deleting `/debug/*` power-user tools.
 - Fabricating testimonials, competitive benchmarks, or cloud multi-user claims.
@@ -88,6 +90,7 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 - **UI system name in-repo:** “Matte Flap Ledger” (`src/components/ui`) — shared primitives (Panel, FlapRow, Workspace, chips, hotspots, etc.); production screens should compose these rather than one-off chrome.
 - **Voice:** Operator / arsenal clarity—precise Destiny terminology (class, subclass, synergy type, set, variant, pin, equip-ready). Prefer plain status and coverage language over hype.
 - **Visual world is not decided here.** Incumbent implementation exists (dark matte flap-board shell, Barlow Condensed + IBM Plex, Destiny iconography). Document or redesign via Impeccable `document` / design commands; do not invent a new brand system in this file.
+- **Destiny data presentation** follows **DIM as North Star** (`DBR-UI-001`); shell chrome and brand system remain Matte Flap Ledger. Main UX divergence: build creation workflow (`DBR-UI-002`).
 - Binding external brand: Destiny 2 / Bungie game terminology and official-ish icon paths where the app already vendors or maps them; do not invent official Bungie marketing claims.
 
 ## Evidence on Hand
@@ -95,6 +98,7 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 - Canonical domain: `specs/domain-business-rules.md`, `specs/domain-acceptance-criteria.md`, `specs/business-rules.md`.
 - Feature slices: `specs/00N-*/` (through armor set optimizer and prior compose/equip work).
 - Operator docs: `README.md`, `DEBUG.md`, `PLAN.md`, `docs/ui-polish-tracker.md`.
+- DIM presentation refs: `docs/dim-reference-screenshots/`.
 - UI primitives notes: `src/components/ui/README.md`.
 - Runnable app with production routes under `src/app/` (build, sets, catalog, synergy, loadouts, analyze, settings) and debug under `src/app/debug/`.
 - **Do not fabricate:** user testimonials, press, usage metrics, App Store listings, or multiplayer/social proof.

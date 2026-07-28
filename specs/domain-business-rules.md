@@ -1,9 +1,9 @@
 # Domain Business Rules — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-07-14  
+**Updated**: 2026-07-27  
 **Status**: Canonical domain layer  
-**Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14  
+**Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; presentation North Star 2026-07-27  
 
 High-level rules for how Destiny 2 builds work in this system and how the product should use them. Feature-level BRs remain in [`business-rules.md`](./business-rules.md); where they conflict, **this document wins** (see Supersessions).
 
@@ -245,7 +245,20 @@ Identity is what makes two loadouts the “same build” vs a different build.
 
 ---
 
-## 17. Clarifications log
+## 17. Destiny data presentation (DIM North Star)
+
+How the product **shows** Destiny entities and loadouts — not which product workflows we own.
+
+| ID | Rule |
+|----|------|
+| DBR-UI-001 | **Destiny Item Manager (DIM)** is the **North Star** for presenting Destiny data in general: item/armor/weapon detail, perk grids, stat bars, mod placement chrome, loadout readouts, and similar inventory-like surfaces. Prefer DIM-familiar density, labeling, and affordances unless a product rule explicitly diverges. |
+| DBR-UI-002 | The main intentional divergence from DIM is **build creation / composition workflow** (intent-first synergy types, sets library, variants, soft guidance, finish/optimizer composer paths). Those journeys are product-owned; do not force DIM’s create-loadout / LO flows as the compose path. |
+| DBR-UI-003 | **DIM product parity is not required.** Notes, tags, ornaments, full vault transfer UI, and other DIM product features remain optional/non-goals unless separately specified. North Star means **presentation of Destiny data**, not cloning DIM as a product. |
+| DBR-UI-004 | Visual reference captures for DIM-aligned surfaces live under [`docs/dim-reference-screenshots/`](../docs/dim-reference-screenshots/). Use them when designing or reviewing Catalog, Sets item detail, loadout/readout chrome, perk/mod UI, and similar. |
+
+---
+
+## 18. Clarifications log
 
 ### Session 2026-07-09 / 2026-07-10
 
@@ -254,6 +267,10 @@ Summarized decisions from the domain Q&A (Q1–Q101). Corrections applied in-pla
 ### Product reconciliation 2026-07-14
 
 Landed product rules from `feature/overhall` commits + in-progress work: library designation immutability (type+subtype); verb→element implied bridging; catalog multi-facet browse; exotic trait plugs as `weapon_perk` evidence.
+
+### Presentation North Star 2026-07-27
+
+DIM is the North Star for **showing** Destiny data (item detail, perks, stats, mods, loadout chrome). Main deviations are around **build creation workflow**. Full DIM product parity remains a non-goal. Reference screenshots: `docs/dim-reference-screenshots/`.
 
 ---
 
