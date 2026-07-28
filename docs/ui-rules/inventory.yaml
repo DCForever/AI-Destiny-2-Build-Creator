@@ -25,6 +25,7 @@ pages:
           - DBR-UI-002
           - DBR-UI-003
           - DBR-UI-004
+          - DBR-UI-005
           - BR-AUTH-001
         children:
           - id: shell.auth

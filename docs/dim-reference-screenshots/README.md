@@ -10,6 +10,7 @@ Visual **North Star** captures from [Destiny Item Manager (DIM)](https://destiny
 | [`DBR-UI-002`](../../specs/domain-business-rules.md) | Main intentional divergence: **build creation / composition** workflow |
 | [`DBR-UI-003`](../../specs/domain-business-rules.md) | Full DIM **product** parity is not required |
 | [`DBR-UI-004`](../../specs/domain-business-rules.md) | This folder is the visual reference set |
+| [`DBR-UI-005`](../../specs/domain-business-rules.md) | **Icon-first** — icons/assets over text for Destiny entities |
 
 Product framing: [`PRODUCT.md`](../../PRODUCT.md) (Positioning + Brand).
 
@@ -31,6 +32,7 @@ Product framing: [`PRODUCT.md`](../../PRODUCT.md) (Positioning + Brand).
 
 ## How to use
 
-- **Do** match DIM-familiar density, labeling, perk columns, stat bars, and mod placement when showing Destiny entities on Catalog, Sets, Loadouts, and build **readouts**.
+- **Do** match DIM-familiar density, perk columns, stat bars, and mod placement when showing Destiny entities on Catalog, Sets, Loadouts, and build **readouts**.
+- **Do** prefer **icons and assets** (item/perk/mod/element glyphs) over text labels; put names in hotspots/tooltips (`DBR-UI-005`).
 - **Do not** treat DIM create-loadout / LO as the required **compose** UX — intent → sets/synergies/variants remains product-owned (`DBR-UI-002`).
 - Prefer adding new captures here (clear names) when a Destiny-data surface has no reference yet.

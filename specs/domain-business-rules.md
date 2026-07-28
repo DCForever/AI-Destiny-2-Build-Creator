@@ -255,6 +255,7 @@ How the product **shows** Destiny entities and loadouts — not which product wo
 | DBR-UI-002 | The main intentional divergence from DIM is **build creation / composition workflow** (intent-first synergy types, sets library, variants, soft guidance, finish/optimizer composer paths). Those journeys are product-owned; do not force DIM’s create-loadout / LO flows as the compose path. |
 | DBR-UI-003 | **DIM product parity is not required.** Notes, tags, ornaments, full vault transfer UI, and other DIM product features remain optional/non-goals unless separately specified. North Star means **presentation of Destiny data**, not cloning DIM as a product. |
 | DBR-UI-004 | Visual reference captures for DIM-aligned surfaces live under [`docs/dim-reference-screenshots/`](../docs/dim-reference-screenshots/). Use them when designing or reviewing Catalog, Sets item detail, loadout/readout chrome, perk/mod UI, and similar. |
+| DBR-UI-005 | **Icon-first presentation.** Destiny entities should surface primarily via **icons and assets** (item/perk/mod icons, element/ammo/class/weapon-type glyphs, rarity frames, loadout icon strips)—not long text labels. Text is secondary: tooltips/hotspots, accessible names, search results, and fallback when art is missing. Prefer dense icon grids/strips over text-heavy tables for inventory-like readouts. |
 
 ---
 
@@ -270,7 +271,7 @@ Landed product rules from `feature/overhall` commits + in-progress work: library
 
 ### Presentation North Star 2026-07-27
 
-DIM is the North Star for **showing** Destiny data (item detail, perks, stats, mods, loadout chrome). Main deviations are around **build creation workflow**. Full DIM product parity remains a non-goal. Reference screenshots: `docs/dim-reference-screenshots/`.
+DIM is the North Star for **showing** Destiny data (item detail, perks, stats, mods, loadout chrome). Prefer **icons and assets over text** (DIM-style). Main deviations are around **build creation workflow**. Full DIM product parity remains a non-goal. Reference screenshots: `docs/dim-reference-screenshots/`.
 
 ---
 

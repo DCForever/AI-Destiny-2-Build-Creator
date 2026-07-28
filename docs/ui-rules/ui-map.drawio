@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" agent="d2bc-ui-rules" version="22.1.0" type="device" compressed="false">
   <diagram id="overview" name="Overview">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1486" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1526" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -58,50 +58,62 @@ Use them when designing or reviewing Catalog,
 Sets item detail, loadout/readout chrome,
 perk/mod UI, and similar." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="100" width="300" height="80" as="geometry"/></mxCell>
         <mxCell id="18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="4" target="17"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="19" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
-Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="188" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="19" value="DBR-UI-005 — DBR-UI-005 **Icon-first
+presentation.** Destiny entities should
+surface primarily via **icons and assets**
+(item/perk/mod icons,
+element/ammo/class/weapon-type glyphs, rarity
+frames, loadout icon strips)—not long text
+labels. Text is secondary: tooltips/hotspots,
+accessible names, search results, and fallback
+when art is missing. Prefer dense icon
+grids/strips over text-heavy tables for
+inventory-like readouts." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="188" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="4" target="19"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="21" value="Bungie auth control" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="448" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="22" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
-Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="448" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="21" target="22"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="24" value="Sign in / Sign out" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="520" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="25" value="Session status indicator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="584" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="26" value="Main navigation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="648" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="27" value="DBR-PUR-003 — DBR-PUR-003 Primary success
+        <mxCell id="21" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
+Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="331" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="4" target="21"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="23" value="Bungie auth control" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="488" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="24" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
+Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="488" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="23" target="24"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="26" value="Sign in / Sign out" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="560" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="27" value="Session status indicator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="624" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="28" value="Main navigation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="688" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="29" value="DBR-PUR-003 — DBR-PUR-003 Primary success
 journey: **intent → compose → equip**.
 Secondary: **curate a reusable library** of
-sets and synergies." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="648" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="26" target="27"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="29" value="Nav → Build
-/build" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="742" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="30" value="Nav → Catalog
-/catalog" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="812" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="31" value="Nav → In-Game Loadouts
-/loadouts" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="882" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="32" value="Nav → Sets
-/sets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="952" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="33" value="Nav → Settings
-/settings" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1022" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="34" value="Nav → Synergy
-/synergy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1092" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="35" value="SignedOutGate (shared)
-[signed-out]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3d0000;fontColor=#ffcccc;strokeColor=#ff6b6b;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="1162" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="36" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
-Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1162" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="35" target="36"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="38" value="003:SC-005 — 003-owned-inventory-instances
+sets and synergies." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="688" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="28" target="29"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="31" value="Nav → Build
+/build" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="782" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="32" value="Nav → Catalog
+/catalog" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="852" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="33" value="Nav → In-Game Loadouts
+/loadouts" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="922" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="34" value="Nav → Sets
+/sets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="992" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="35" value="Nav → Settings
+/settings" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1062" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="36" value="Nav → Synergy
+/synergy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1132" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="37" value="SignedOutGate (shared)
+[signed-out]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3d0000;fontColor=#ffcccc;strokeColor=#ff6b6b;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="1202" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="38" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
+Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1202" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="38"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="40" value="003:SC-005 — 003-owned-inventory-instances
 SC-005 Unauthenticated or never-synced users
 receive a clear, actionable response (auth
 error or sync prompt) with zero instance data
 leaked in 100% of unauthorized or empty-state
-test cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1206" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="35" target="38"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="40" value="Theme toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="1322" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="41" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1406" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="42" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1406" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="43" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1406" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="44" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1406" width="140" height="32" as="geometry"/></mxCell>
+test cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1246" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="40"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="42" value="Theme toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="1362" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="43" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1446" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="44" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1446" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="45" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1446" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="46" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1446" width="140" height="32" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>

@@ -120,7 +120,7 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 ## Related
 
-- Presentation North Star: `DBR-UI-001`–`004` in [`specs/domain-business-rules.md`](../specs/domain-business-rules.md); framing in [`PRODUCT.md`](../PRODUCT.md)  
+- Presentation North Star: `DBR-UI-001`–`005` in [`specs/domain-business-rules.md`](../specs/domain-business-rules.md) (icon-first); framing in [`PRODUCT.md`](../PRODUCT.md)  
 - DIM reference captures: [`docs/dim-reference-screenshots/`](./dim-reference-screenshots/)  
 - Canvas: Cursor `prod-ui-refactor` (wireframes / IA)  
 - Operator APIs: `DEBUG.md`  
