@@ -9,6 +9,8 @@ Platform-agnostic **surfaces**, **flows**, **transitions**, and **rule attachmen
 | **Projections** | generated | Draw.io, Atlas manifest/paths, inventory.yaml — **do not hand-edit** |
 
 Root project overview: [../../README.md](../../README.md).  
+Whole-product framing: [../../PRODUCT.md](../../PRODUCT.md).  
+**Product descriptions** (domain concepts + UI areas): [`../products/`](../products/).  
 Agent rules: [../../AGENTS.md](../../AGENTS.md).
 
 ## Files

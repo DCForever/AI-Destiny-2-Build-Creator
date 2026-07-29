@@ -8,7 +8,7 @@ You designate play-pattern intent (synergy types), compose a class-bound **Build
 
 Optional LLM tooling exists for propose-for-confirm discovery and legacy generation paths. It is **not required** for core compose, and is not the primary product surface.
 
-Product framing: [`PRODUCT.md`](./PRODUCT.md). Domain rules: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md).
+Product framing: [`PRODUCT.md`](./PRODUCT.md). Product descriptions (domains + areas): [`docs/products/`](./docs/products/). Domain rules: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md).
 
 **Product map / App Atlas** (UI structure, flows, Draw.io, screenshots, multi-platform stubs): [`docs/product-map/README.md`](./docs/product-map/README.md). Open the unified viewer with `npm run product-map:view`.
 

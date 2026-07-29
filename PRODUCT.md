@@ -48,6 +48,7 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 - Optional **DIM** export / dim.gg when configured.
 - Production surfaces include Build, Sets, Catalog, Synergy, Loadouts, Analyze, Settings; **`/debug/*`** remains operator/service tooling, not primary nav.
 - Domain truth lives in `specs/domain-business-rules.md` (`DBR-*`), `specs/domain-acceptance-criteria.md` (`DAC-*`), and feature BRs in `specs/business-rules.md`.
+- **Product descriptions** (domain concepts + UI areas, reviewable peers): [`docs/products/README.md`](./docs/products/README.md).
 
 ## Capabilities and Constraints
 
@@ -98,6 +99,8 @@ Neighboring tools (DIM loadouts, LO, generic AI generators) can move gear or spi
 - Canonical domain: `specs/domain-business-rules.md`, `specs/domain-acceptance-criteria.md`, `specs/business-rules.md`.
 - Feature slices: `specs/00N-*/` (through armor set optimizer and prior compose/equip work).
 - Operator docs: `README.md`, `DEBUG.md`, `PLAN.md`, `docs/ui-polish-tracker.md`.
+- Product descriptions: `docs/products/` — domains (Set, Synergy, Build, Variant) and areas (Shell, Build UI, …).
+- Product map / App Atlas: `docs/product-map/README.md` (`npm run product-map:view`).
 - DIM presentation refs: `docs/dim-reference-screenshots/`.
 - UI primitives notes: `src/components/ui/README.md`.
 - Runnable app with production routes under `src/app/` (build, sets, catalog, synergy, loadouts, analyze, settings) and debug under `src/app/debug/`.
