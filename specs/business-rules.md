@@ -1,8 +1,10 @@
 # Business Rules
 
-**Updated**: 2026-07-23 (BR-BLD-009 Finish armor optimize UI on 031)
+**Updated**: 2026-07-29 (set minimum occupancy; **Obsidian product packs re-sync** — subclass kit, synergy links, set bonus constraint, presentation)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
+
+**Product working copy**: Obsidian ProjectTracker `Projects/Destiny 2 Build Creator/`. Domain layer wins on conflict ([`domain-business-rules.md`](./domain-business-rules.md)).
 
 **Domain layer (canonical when conflicting)**:
 - [`domain-business-rules.md`](./domain-business-rules.md) (`DBR-*`)
@@ -54,6 +56,11 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-SET-004 | Sets store **manifest item references**, not full copies. | [001 assumptions](001-build-sets-synergies/spec.md#assumptions) |
 | BR-SET-010 | **Armor** set detail shows EoF six-stat **totals** and **per-piece** stats when owned instances are pinned (wishlist has no rolls). Item rows show catalog identity (element, type/frame, **tier**, **origin trait**), **selected trait perks** (not barrel/magazine/stock), **available trait names**, and **linked library synergies**. | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md) |
 | BR-SET-011 | **Armor** set per-piece stats and set totals use the piece’s **base roll** only: sum of equipped `armor_stats` plug investments (DIM white base). Equipped armor mods, masterwork, and tuning are excluded. Catalog instance cards and inventory sort continue to use live ItemStats. Distinct from full-loadout soft-target coverage ([DBR-STAT-005](./domain-business-rules.md)). | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md), [DBR-STAT-008](./domain-business-rules.md) |
+| BR-SET-030 | Weapon, Armor, Mod, and Pair Sets may designate zero or more **Synergy Types** (same vocabulary as Builds). Fashion Sets must not. Optional on save (soft nudge). | Vault Domain Set; [DBR-SYN-002](./domain-business-rules.md) |
+| BR-SET-050 | An Armor Set may declare **zero or one** armor set bonus constraint (family + target tier 2 or 4). Only Armor Sets. | [DBR-SETB-003](./domain-business-rules.md) |
+| BR-SET-054 | When constrained, each **non-exotic** filled piece must be a member of the bonus family. | [DBR-SETB-004](./domain-business-rules.md) |
+| BR-SET-055 | When constrained, contributing member count must meet target tier on **save and attach**. Codes: `ARMOR_SET_BONUS_MISMATCH`, `ARMOR_SET_BONUS_INCOMPLETE`. | [DBR-SETB-004](./domain-business-rules.md) |
+| BR-SET-056 | Exotic armor does **not** count toward the set-bonus tier; soft-warn if exotic blocks target. | [DBR-SETB-005](./domain-business-rules.md) |
 
 ---
 
@@ -66,11 +73,14 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-SLOT-003 | **Pair Sets**: at most 0 or 1 exotic weapon and 0 or 1 exotic armor. | [FR-020](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-SLOT-008 | **Weapon Sets**: at most **one exotic weapon** across all slots (kit must stay attachable without dual-exotic). Replacing the slot that holds the exotic is allowed. | [DBR-CMP-007](./domain-business-rules.md), [DAC-DST-009](./domain-acceptance-criteria.md) |
 | BR-SLOT-009 | **Armor Sets**: at most **one exotic armor** (including exotic class item) across all slots. Replacing the exotic piece’s slot is allowed. | [DBR-CMP-007](./domain-business-rules.md), [DAC-DST-009](./domain-acceptance-criteria.md) |
-| BR-SLOT-004 | **Mod Sets**: mods optional but encouraged; not required for valid set. | [FR-021](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SLOT-004 | **Mod Sets**: individual pieces may have no mods; **set save** still requires multi-piece occupancy per [DBR-CMP-009](./domain-business-rules.md) / BR-SLOT-012. **Supersedes** “mods optional for a valid Mod Set.” | [FR-021](001-build-sets-synergies/spec.md#functional-requirements), [DBR-CMP-009](./domain-business-rules.md) |
 | BR-SLOT-010 | **Mod Sets** are organized **per armor piece** (helmet, arms, chest, legs, class item). Multiple plugs per piece are allowed within **energy capacity** (10 default; 11 when tier 5 known). Slot-scoped mods must match the piece; **general** / **tuning** mods may sit on any piece. Storage key: `{armorSlot}:{itemHash}`. | [DBR-MOD-001](./domain-business-rules.md)–002, [FR-021](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SLOT-005 | Any slot within a set's domain **may be left empty**. | [FR-020](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SLOT-005 | Any **individual** slot within a set's domain **may be left empty** while composing. Does **not** waive set-level minimums on save (BR-SLOT-011–012). | [FR-020](001-build-sets-synergies/spec.md#functional-requirements), [DBR-CMP-008](./domain-business-rules.md)–009 |
 | BR-SLOT-006 | Adding to an **occupied slot** requires confirmation, then replaces the item. | [FR-027](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SLOT-007 | Mod Sets and armor sets with empty mod slots MUST show UI encouragement to add mods; mods remain optional for save. | [FR-021](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SLOT-007 | Mod Sets and armor sets with empty mod-related capacity MUST show UI encouragement to add mods. Encouragement is soft; **Mod Set save validity** is governed by BR-SLOT-012 / [DBR-CMP-009](./domain-business-rules.md), not by “any non-empty single piece is enough.” | [FR-021](001-build-sets-synergies/spec.md#functional-requirements), [DBR-CMP-009](./domain-business-rules.md) |
+| BR-SLOT-011 | **Weapon Sets** and **Armor Sets**: on **save**, require **≥2 items** filled (count of occupied domain slots with an item). Fewer → reject with `SET_MIN_ITEMS`. Create/in-progress fill may be sparser until save. | [DBR-CMP-008](./domain-business-rules.md) |
+| BR-SLOT-012 | **Mod Sets**: on **save**, require mods present on **more than one armor piece** (≥2 of helmet/arms/chest/legs/class item with ≥1 mod each). Zero or one piece only → reject with `MOD_SET_MIN_SLOTS`. | [DBR-CMP-009](./domain-business-rules.md) |
+| BR-SLOT-013 | **Pair** and **Fashion** sets are not subject to BR-SLOT-011–012; Pair remains 0–1 exotic weapon + 0–1 exotic armor; Fashion keeps cosmetic slot rules. | [DBR-CMP-010](./domain-business-rules.md) |
 
 ---
 
@@ -120,6 +130,23 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-BLD-007 | Production Builds provides a **guided finish walkthrough** (Armor → Weapons → Mods): create empty Set + live attach (replace-by-type), link existing, capture-from-build when resolved gear exists, fill slots from Builds; Skip for now does not satisfy. **v1 shipped in 028.** | [028](028-build-inline-sets/spec.md) |
 | BR-BLD-008 | Finish primary path is **slot-first**: one-tap Create (inherited name, category type, no tags) or preferred Capture, then first empty required slot fill loop. Finish does not require link/name/type/tag chrome; variant Sets tab retains advanced create/link. | [029](029-finish-slot-first/spec.md) |
 | BR-BLD-009 | Finish **Armor** after a live covering Set: goals (synergy-linked set bonuses first, seeded stats) → Find kits (optimize with build class) → top-3 compare → apply-combination in place; manual fill fallback; weapons/mods remain slot-first. | [031](031-finish-armor-optimize-ui/spec.md) |
+| BR-BLD-020 | Class is set at create and **cannot change** after create. | [DBR-BLD-007](./domain-business-rules.md) |
+| BR-BLD-040 | Changing subclass tree after create requires **confirm in-place** or **fork**. | [DBR-BLD-008](./domain-business-rules.md) |
+| BR-BLD-040a | After tree change, each variant Subclass area is wiped to an **empty legal baseline** for the new tree. | [DBR-BLD-009](./domain-business-rules.md) |
+| BR-BLD-040b | User must re-fill Subclass kit; default must meet full loadout again before default save. | [DBR-BLD-009](./domain-business-rules.md) |
+| BR-BLD-041 | Build library / identity chrome shows subclass as a **full mini kit strip** (element + aspects + fragments + five ability icons). | [DBR-BLD-010](./domain-business-rules.md) |
+
+---
+
+## 7a. Variants — Areas & default gates
+
+| ID | Rule | FR |
+|----|------|-----|
+| BR-VAR-030 | A variant always has exactly four areas: **General**, **Subclass**, **Armor + Mods Sets**, **Weapons Set**. | [DBR-CMPL-005](./domain-business-rules.md) |
+| BR-VAR-037 | Fashion Set attach (if any) lives under **General**. | [DBR-FASH-002](./domain-business-rules.md) |
+| BR-VAR-050 | Default save requires compose complete **and** required-link pins (gates 1–2). | [DBR-CMPL-001d](./domain-business-rules.md), [DBR-SYN-010a](./domain-business-rules.md) |
+| BR-VAR-051 | Equip/export require equip-ready pins (gate 3). | [DBR-EQP-003](./domain-business-rules.md) |
+| BR-VAR-052 | Non-default save does not require full checklist or required links; soft guidance only. | [DBR-CMPL-002](./domain-business-rules.md) |
 
 ---
 
@@ -182,17 +209,23 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | ID | Rule | FR |
 |----|------|-----|
 | BR-SYN-001 | Users create and manage library Synergies of defined types (Melee, Verb, Grenade, etc.). **Create** sets type + optional subtype; **edit** may change description and links only — **type and subtype are immutable after create**. **Superseded in part by** [DBR-SYN-012](./domain-business-rules.md). | [FR-011](001-build-sets-synergies/spec.md#functional-requirements), [DBR-SYN-012](./domain-business-rules.md) |
-| BR-SYN-002 | Synergies are associable with **weapons**, **weapon perks** (including exotic trait plugs), **origin traits**, **armor set bonuses** (2-piece and 4-piece), **exotic armor**, and **artifact perks**. Example: *Cast No Shadows* origin trait → Melee synergy; Lodestar *Arc Alignment* → Verb: Jolt. Affirmed by [DBR-SYN-014](./domain-business-rules.md). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements), [DBR-SYN-014](./domain-business-rules.md) |
+| BR-SYN-002 | Synergies are associable with v1 linkable kinds: **weapon**, **weapon_perk** (incl. exotic traits), **origin_trait**, **armor_set_bonus** (family + tier), **exotic_armor**, **aspect**, **fragment**, **armor_mod**, **melee**, **grenade**, **super**, **artifact_perk**. Affirmed by [DBR-SYN-015](./domain-business-rules.md). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements), [DBR-SYN-014](./domain-business-rules.md)–015 |
 | BR-SYN-003 | Multiple designated synergies on a build contribute **equally** to suggestions. Affirmed by [DBR-SYN-004](./domain-business-rules.md). | [FR-024](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SYN-004 | **All** linked synergies surface as tags/notes when viewing a matching weapon, perk, origin trait, or armor set bonus in catalog/inventory. | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SYN-004 | **All** linked synergies surface as tags/notes when viewing a matching linkable entity in catalog/inventory (production surfaces). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-SYN-005 | Each synergy link is validated against manifest data for its kind; invalid targets rejected (`INVALID_SYNERGY_LINK`). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SYN-006 | A single synergy MAY link to **multiple** targets (e.g. both Eutechnology 2pc and 4pc bonuses on one Void synergy). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SYN-007 | Synergy link kinds are fixed enumerations (`weapon`, `weapon_perk`, `origin_trait`, `armor_set_bonus`, `exotic_armor`, `artifact_perk`, …) — not free-form text. | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-SYN-008 | A single target (weapon, perk, origin trait, or armor set bonus) MAY be linked to **multiple synergies** — many-to-many; no exclusivity. | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SYN-006 | A single synergy MAY link to **multiple** targets (e.g. both 2pc and 4pc links for a family on one Void synergy). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-SYN-007 | Synergy link kinds are the fixed enumeration in [DBR-SYN-015](./domain-business-rules.md) — not free-form text. No class_ability / movement / fashion in v1. | [FR-012](001-build-sets-synergies/spec.md#functional-requirements), [DBR-SYN-015](./domain-business-rules.md) |
+| BR-SYN-008 | A single target MAY be linked to **multiple synergies** — many-to-many; no exclusivity. | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-SYN-009 | Build intent may designate verbs that **imply element** designations for bridging/coverage. Affirmed by [DBR-SYN-013](./domain-business-rules.md). | [DBR-SYN-013](./domain-business-rules.md), [024](024-build-synergy-types/spec.md) |
 | BR-SYN-010 | Update of library synergy with a different type or subtype is rejected (`INVALID_SYNERGY_TYPE` / `INVALID_SYNERGY_SUBTYPE`). | [DBR-SYN-012](./domain-business-rules.md) |
 | BR-SYN-011 | Within **one** library synergy, each evidence target appears **at most once**. Link search/picker results omit objects already on the draft link list; save paths dedupe by coverage key. Does not limit the same target linking to **other** synergies (BR-SYN-008). | [FR-012](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-SYN-012 | Weapon-perk link search labels each hit as **exotic intrinsic/trait**, **legendary perk**, or **legendary & exotic** based on host weapon tier and plug role, so curators can distinguish exotic evidence from legendary rolls. | [FR-012](001-build-sets-synergies/spec.md#functional-requirements), [DBR-SYN-014](./domain-business-rules.md) |
+| BR-SYN-014a | **Perk family match:** base and enhanced (family variants) of the same trait count as a match for `weapon_perk` coverage and required-link satisfaction when family is known. Saved rolls still store specific plug hash. | [DBR-SYN-014a](./domain-business-rules.md) |
+| BR-SYN-014b | **`armor_set_bonus` links** store family + target tier (2 or 4). Required when contributing member count ≥ tier. Independent of Armor Set constraint. | [DBR-SYN-014b](./domain-business-rules.md) |
+| BR-SYN-017 | Designation types that require subType include verb, melee, grenade, super, element, weapon_archetype, **ammo**, **weapon_slot**, enemy, enemy_type. Ammo subTypes: Primary/Special/Heavy. Weapon_slot subTypes: Kinetic/Energy/Power. | [DBR-SYN-017](./domain-business-rules.md) |
+| BR-SYN-019 | Ability link kinds resolve to ability definitions, not designation type rows. | [DBR-SYN-016](./domain-business-rules.md) |
+| BR-SYN-019a | **v1:** No link kinds for class ability or movement. | [DBR-SYN-015](./domain-business-rules.md) |
+| BR-SYN-027 | Promote personal keywords or types to global is **out of v1**. Personal custom type keys are not allowed ([DBR-SYN-005](./domain-business-rules.md)). | [DBR-SYN-005](./domain-business-rules.md)–006 |
 
 ---
 
@@ -249,7 +282,10 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | BR-VAL-001 | API inputs validated with zod at route boundary. | Constitution V |
 | BR-VAL-002 | Manifest item hashes validated before persistence. | [FR-019](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-VAL-003 | Concept tag ids validated against `conceptTags.ts` enum. | [FR-029](001-build-sets-synergies/spec.md#functional-requirements) |
-| BR-UI-001 | **UI prevents Destiny hard constraints** for Sets and Builds: illegal set slot items are not completable via normal fill; **set-wide exotic exclusivity** (≤1 exotic weapon per weapon set, ≤1 exotic armor per armor set); dual exotic on builds; occupied set slots require replace confirm; **aspect/fragment capacity**, **armor mod energy**, and **exotic ability requirements** when known. Soft guidance remains non-blocking. **API remains authoritative**. | [DBR-GUID-003](./domain-business-rules.md), BR-SLOT-008–009, [DAC-DST-009](./domain-acceptance-criteria.md) |
+| BR-UI-001 | **UI prevents Destiny hard constraints** for Sets and Builds: illegal set slot items are not completable via normal fill; **set-wide exotic exclusivity** (≤1 exotic weapon per weapon set, ≤1 exotic armor per armor set); dual exotic on builds; occupied set slots require replace confirm; **aspect/fragment capacity**, **armor mod energy**, **armor set bonus constraint**, and **exotic ability requirements** when known. Soft guidance remains non-blocking. **API remains authoritative**. | [DBR-GUID-003](./domain-business-rules.md), BR-SLOT-008–009, [DAC-DST-009](./domain-acceptance-criteria.md) |
+| BR-UI-002 | **No bare hashes** as primary UI labels (name + icon first; hash footer addendum only). | [DBR-UI-006](./domain-business-rules.md) |
+| BR-UI-003 | Weapon detail shows selected + can-roll + craft options when data exists; Set weapon slot rows are icon-only. | [DBR-UI-007](./domain-business-rules.md) |
+| BR-UI-005 | Icon-first presentation for Destiny entities (DIM North Star). | [DBR-UI-005](./domain-business-rules.md) |
 
 ---
 
@@ -338,6 +374,8 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | `DUPLICATE_SET_NAME` | BR-TAG-004 | [FR-005](001-build-sets-synergies/spec.md#functional-requirements) |
 | `SET_IN_USE` | BR-DEL-001–004 | [FR-017](001-build-sets-synergies/spec.md#functional-requirements) |
 | `SLOT_OCCUPIED` | BR-SLOT-006 | [FR-027](001-build-sets-synergies/spec.md#functional-requirements) |
+| `SET_MIN_ITEMS` | BR-SLOT-011, [DBR-CMP-008](./domain-business-rules.md) | Weapon/Armor set save needs ≥2 items |
+| `MOD_SET_MIN_SLOTS` | BR-SLOT-012, [DBR-CMP-009](./domain-business-rules.md) | Mod set save needs mods on ≥2 armor pieces |
 | `SLOT_CONFLICT` | BR-CONF-001–003 | [FR-026](001-build-sets-synergies/spec.md#functional-requirements) |
 | `TOO_MANY_EXOTICS` | BR-UI-001, [DBR-CMP-007](./domain-business-rules.md) | [DAC-DST-001](./domain-acceptance-criteria.md) |
 | `ILLEGAL_SUBCLASS_KIT` | BR-UI-001, [DBR-SUB-004](./domain-business-rules.md) | [DAC-DST-003](./domain-acceptance-criteria.md) |
@@ -353,6 +391,9 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | `IDENTITY_CONFIRM_REQUIRED` | [DBR-ID-010](./domain-business-rules.md), [015 confirm/fork contract](015-build-identity/contracts/identity-confirm-fork-contract.md) | [015 FR-010+](015-build-identity/spec.md) |
 | `DUPLICATE_BUILD_NAME` | [015 naming contract](015-build-identity/contracts/default-loadout-naming-contract.md) | [015 FR-012+](015-build-identity/spec.md) |
 | `NOT_EQUIP_READY` | [DBR-EQP-003](./domain-business-rules.md), [016 gate contract](016-wishlist-equip-ready/contracts/equip-dim-gate-contract.md) | [016 FR-006/013](016-wishlist-equip-ready/spec.md) |
+| `ARMOR_SET_BONUS_MISMATCH` | BR-SET-054–055, [DBR-SETB-004](./domain-business-rules.md) | [DAC-DST-012](./domain-acceptance-criteria.md) |
+| `ARMOR_SET_BONUS_INCOMPLETE` | BR-SET-055, [DBR-SETB-004](./domain-business-rules.md) | [DAC-DST-012](./domain-acceptance-criteria.md) |
+| `REQUIRED_LINK_UNSATISFIED` | [DBR-SYN-010a](./domain-business-rules.md), BR-VAR-050 | [DAC-VAR-004c](./domain-acceptance-criteria.md) |
 
 ---
 
@@ -361,13 +402,16 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | Topic | Status |
 |-------|--------|
 | Large sets (50+ items) | Not resolved |
-| Multiple synergies on same items | **Resolved in domain**: many-to-many links; required links AND on default variant — see [DBR-SYN-007–010](./domain-business-rules.md) |
+| Multiple synergies on same items | **Resolved in domain**: many-to-many links; required links AND on default variant — see [DBR-SYN-007–010a](./domain-business-rules.md) |
 | Manifest deprecation of set items | Soft stale retained; instance stale pins — see [DBR-ROLL-006](./domain-business-rules.md) |
-| User-defined custom tags | Out of scope v1 (personal synergy **keywords** allowed — [DBR-SYN-005](./domain-business-rules.md)) |
+| User-defined custom tags | Out of scope v1 |
+| Personal custom synergy **types** | **Out of v1** — [DBR-SYN-005](./domain-business-rules.md) (supersedes earlier “personal keywords allowed”) |
 | Auto-infer tags from set contents | Future enhancement |
 | Shareable read-only build links | Planned — [DBR-BLD-005](./domain-business-rules.md) |
+| Exact artifact unlock-tree “filled” shape per season | Implement with game data — [DBR-ART-003a](./domain-business-rules.md) |
+| Code sync of expanded link kinds + ammo/weapon_slot types | Product ahead of code until implement |
 
-## Domain supersession index (2026-07-10; extended 2026-07-14)
+## Domain supersession index (2026-07-10; extended 2026-07-14; re-sync 2026-07-29)
 
 When implementing build/equip behavior, prefer [`domain-business-rules.md`](./domain-business-rules.md) over older BR text where marked superseded above. Full mapping: domain doc § Supersessions.
 
@@ -375,4 +419,7 @@ When implementing build/equip behavior, prefer [`domain-business-rules.md`](./do
 |----------------------|------------------------------|
 | BR-SYN-001 “full CRUD type after create” | DBR-SYN-012, BR-SYN-001 (updated), BR-SYN-010 |
 | BR-CAT-001–003 only free-text/generic filter | DBR-ROLL-010, BR-CAT-006–008 |
+| Personal custom synergy types / keywords as free types | DBR-SYN-005–006, BR-SYN-027 |
+| Narrow link-kind list only | DBR-SYN-015, BR-SYN-002/007 (updated) |
+| Vague set-bonus required “present” | DBR-SYN-014b, BR-SYN-014b |
 

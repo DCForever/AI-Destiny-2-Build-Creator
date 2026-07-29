@@ -1,9 +1,9 @@
 # Domain Acceptance Criteria — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-07-14  
+**Updated**: 2026-07-29  
 **Status**: Canonical domain layer  
-**Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14  
+**Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29**
 
 High-level, testable acceptance criteria for the Build Composer. Trace to [`domain-business-rules.md`](./domain-business-rules.md) (`DBR-*`).
 
@@ -44,9 +44,11 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 
 **Given** the default variant  
 **When** the user marks it complete / saves as the build’s default  
-**Then** it includes class, subclass tree, a legal subclass kit, all weapon slots, all armor slots, and mods (via Mod Sets / overrides)  
+**Then** it includes class, shared subclass tree, a legal subclass kit (aspects filled, fragments at capacity, Super + melee + grenade; class ability/movement only if required), all three weapon slots, all five armor slots, mods path, and artifact selected with **filled config**  
+**And** fashion is optional  
 **And** illegal kits, over-capacity mods, or >1 exotic weapon/armor cannot save  
-**Refs**: DBR-CMPL-001, DBR-SUB-004, DBR-MOD-001, DBR-CMP-007
+**And** default save also requires required-link gate (equip-ready satisfaction) before success  
+**Refs**: DBR-CMPL-001–001d, DBR-SUB-004–007, DBR-ART-003a, DBR-MOD-001, DBR-CMP-007, DBR-SYN-010a
 
 ### DAC-P1-004 — Compose via sets with overrides
 
@@ -125,13 +127,21 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **And** other variants only soft-warn  
 **Refs**: DBR-SYN-010, DBR-SETB-002
 
-### DAC-P2-003 — Personal keywords / custom synergy types
+### DAC-P2-003 — No personal custom synergy types (v1)
 
-**Given** a keyword/synergy type missing from global vocabulary  
-**When** the user creates a personal custom type grounded in a keyword (e.g. Poison)  
-**Then** it can be used for intent and synergies  
-**And** it may later be promoted to global  
+**Given** a user creating a library Synergy or designating Build Types  
+**When** they open the type picker  
+**Then** only product enum types and curated subTypes are available  
+**And** inventing a personal type key is rejected  
 **Refs**: DBR-SYN-005–006
+
+### DAC-P2-003a — Expanded link kinds
+
+**Given** a user editing library Synergy links  
+**When** they add evidence  
+**Then** they may choose any v1 linkable kind (weapon, weapon_perk, origin_trait, armor_set_bonus, exotic_armor, aspect, fragment, armor_mod, melee, grenade, super, artifact_perk)  
+**And** class ability / movement / fashion are not offered as link kinds  
+**Refs**: DBR-SYN-015–016
 
 ### DAC-P2-004 — LLM propose-for-confirm pass
 
@@ -165,7 +175,8 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **When** they select different artifacts and unlock configs  
 **Then** each stores exactly one of the six artifacts with full config  
 **And** equip applies that variant’s artifact config  
-**Refs**: DBR-ART-001–003
+**And** default save fails if artifact config is empty/unfilled  
+**Refs**: DBR-ART-001–003a, DBR-CMPL-001a
 
 ### DAC-VAR-003 — Fashion per variant
 
@@ -177,9 +188,32 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 ### DAC-VAR-004 — Identity edit confirm/fork
 
 **Given** an existing build with variants  
-**When** the user changes designated synergies, set exotic armor item, build-shared exotic weapon, or build-pinned Super  
+**When** the user changes designated synergies, set exotic armor item, build-shared exotic weapon, build-pinned Super, or subclass tree  
 **Then** the system warns and offers confirm in-place or fork  
-**Refs**: DBR-ID-008–009
+**Refs**: DBR-ID-008–008a, DBR-BLD-008
+
+### DAC-VAR-004a — Tree change wipes kit
+
+**Given** a build with filled subclass kits on variants  
+**When** the user confirms a subclass tree change  
+**Then** each variant’s Subclass area is wiped to an empty legal baseline for the new tree  
+**And** default must be re-filled before default save succeeds  
+**Refs**: DBR-BLD-009, DBR-SUB-001
+
+### DAC-VAR-004b — Four variant areas
+
+**Given** any variant  
+**When** the user opens the Build composer  
+**Then** exactly four areas are present: General, Subclass, Armor + Mods Sets, Weapons Set  
+**Refs**: DBR-CMPL-005
+
+### DAC-VAR-004c — Required links need pins
+
+**Given** a default variant whose designated Synergies have required links  
+**When** the user saves default with only wishlist (no equip-ready pin) matching a required target  
+**Then** save is rejected for required-link failure  
+**And** save succeeds once equip-ready pins (or applied kit pieces) satisfy all required links  
+**Refs**: DBR-SYN-010a, DBR-CMPL-001d
 
 ### DAC-VAR-005 — Exotic class item within intent
 
@@ -223,13 +257,22 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **When** the user saves  
 **Then** save is rejected  
 **And** the Aspects/Fragments UI caps picks (max 2 aspects; fragments ≤ aspect capacity) when capacity is known  
-**Refs**: DBR-SUB-004
+**And** reducing aspect capacity trims excess fragments  
+**Refs**: DBR-SUB-004, DBR-SUB-008–009
+
+### DAC-DST-003a — Default subclass kit bar
+
+**Given** the default variant Subclass area  
+**When** the user saves as default  
+**Then** aspects are filled (when max known), fragments are at capacity, and Super + melee + grenade are selected  
+**And** empty class ability or movement does not block default unless an exotic forces them  
+**Refs**: DBR-SUB-006–007, DBR-CMPL-001
 
 ### DAC-DST-004 — Exotic ability requirements
 
 **Given** an exotic that requires a specific ability (curated `exoticAbilityRequirements`)  
 **When** it is set on the build  
-**Then** the system proposes pinning that ability at build level  
+**Then** the system proposes pinning that ability  
 **And** after confirm, mismatched kits cannot save  
 **Refs**: DBR-SUB-005
 
@@ -257,11 +300,13 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 
 ### DAC-DST-008 — Catalyst / deepsight display
 
-**Given** items with catalyst or pattern state  
-**When** viewed on a build  
-**Then** statuses display (catalyst: equipped / unequipped-warn / unfinished-warn / unacquired; deepsight display-only)  
-**And** neither gates save/equip  
-**Refs**: DBR-ROLL-007–008
+**Given** an exotic weapon with a catalyst in data (and/or an instance with catalyst socket)  
+**When** viewed on Catalog/Set **detail** or a build loadout expand  
+**Then** catalyst name/effect and status display when known (equipped/inserted; complete-unequipped warn; unfinished warn; unacquired warn)  
+**And** the instance socket grid includes a catalyst column when the socket exists  
+**And** incomplete/missing catalyst does **not** block Set save, variant save, or equip  
+**And** deepsight/pattern remain display-only and do not gate save/equip  
+**Refs**: DBR-ROLL-007–008, DO-WPN-040–051 (vault Destiny Weapon)
 
 ### DAC-DST-009 — UI prevention of hard composition constraints
 
@@ -270,6 +315,53 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **Then** the normal UI filters or blocks the action with plain-language reasons  
 **And** the API still rejects the same invalid payload if submitted  
 **Refs**: DBR-GUID-003, DBR-CMP-006, DBR-CMP-007, DBR-SUB-004, DBR-SUB-005, DBR-MOD-001–002, BR-SLOT-008–009, BR-UI-001
+
+### DAC-DST-010 — Weapon/Armor set minimum items
+
+**Given** a Weapon Set or Armor Set with **fewer than 2** filled items  
+**When** the user saves the set  
+**Then** save is rejected with a clear reason (`SET_MIN_ITEMS`)  
+**And** the user can continue filling slots until ≥2 items are present  
+**Refs**: DBR-CMP-008, BR-SLOT-011
+
+### DAC-DST-011 — Mod set multi-piece minimum
+
+**Given** a Mod Set with mods on **zero or one** armor piece only  
+**When** the user saves the set  
+**Then** save is rejected with a clear reason (`MOD_SET_MIN_SLOTS`)  
+**And** save succeeds once at least **two** distinct armor pieces each have ≥1 mod  
+**Refs**: DBR-CMP-009, BR-SLOT-012
+
+### DAC-DST-012 — Armor set bonus constraint
+
+**Given** an Armor Set with a set-bonus constraint (family + 2pc or 4pc)  
+**When** the user fills a non-exotic piece outside the family or saves below the target member count  
+**Then** fill/save/attach is rejected (`ARMOR_SET_BONUS_MISMATCH` or `ARMOR_SET_BONUS_INCOMPLETE`)  
+**And** exotic pieces do not count toward the tier  
+**Refs**: DBR-SETB-003–006
+
+### DAC-DST-013 — Required armor_set_bonus link tier
+
+**Given** a library Synergy with a required `armor_set_bonus` link at target tier 4  
+**When** the default variant has only 2 contributing members of that family  
+**Then** default save fails the required-link gate  
+**And** with 4 contributing members (and equip-ready path) the link is satisfied  
+**Refs**: DBR-SYN-014b, DBR-SETB-002
+
+### DAC-DST-014 — Weapon perk family match
+
+**Given** a required `weapon_perk` link to a trait family  
+**When** the resolved loadout has the enhanced variant of that trait pinned  
+**Then** the required link is satisfied when family mapping is known  
+**Refs**: DBR-SYN-014a
+
+### DAC-DST-015 — No bare hashes in primary UI
+
+**Given** a perk, mod, or item on a row or detail headline  
+**When** the user views primary UI  
+**Then** they see readable name + icon, not a bare hash as the label  
+**And** hashes may appear only in a detail footer addendum  
+**Refs**: DBR-UI-006
 
 ---
 
@@ -328,7 +420,7 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 | AC pack | Primary DBRs |
 |---------|----------------|
 | DAC-P1-* | DBR-PUR-*, DBR-SYN-*, DBR-CMPL-*, DBR-EQP-*, DBR-ROLL-*, DBR-GUID-* |
-| DAC-P2-* | DBR-SYN-*, DBR-LLM-*, DBR-PUR-004–005 (incl. DBR-SYN-012–014) |
-| DAC-VAR-* | DBR-ID-*, DBR-ART-*, DBR-FASH-*, DBR-CMPL-* |
-| DAC-DST-* | DBR-CMP-007, DBR-MOD-*, DBR-SUB-*, DBR-STAT-*, DBR-ROLL-*, DBR-GUID-003 (UI prevention via DAC-DST-009) |
+| DAC-P2-* | DBR-SYN-*, DBR-LLM-*, DBR-PUR-004–005 (incl. DBR-SYN-012–017) |
+| DAC-VAR-* | DBR-ID-*, DBR-ART-*, DBR-FASH-*, DBR-CMPL-*, DBR-BLD-008–009 |
+| DAC-DST-* | DBR-CMP-007–010, DBR-MOD-*, DBR-SUB-*, DBR-SETB-*, DBR-STAT-*, DBR-ROLL-*, DBR-GUID-003, DBR-UI-006 |
 | DAC-NME-* | DBR-NAME-*, DBR-ID-002, DBR-ROLL-010, DBR-STAT-001, DBR-CMP-001 |

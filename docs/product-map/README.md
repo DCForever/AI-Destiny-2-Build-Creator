@@ -10,7 +10,7 @@ Platform-agnostic **surfaces**, **flows**, **transitions**, and **rule attachmen
 
 Root project overview: [../../README.md](../../README.md).  
 Whole-product framing: [../../PRODUCT.md](../../PRODUCT.md).  
-**Product descriptions** (domain concepts + UI areas): [`../products/`](../products/).  
+**Product descriptions** (domain concepts + UI areas): **Obsidian** `Projects/Destiny 2 Build Creator/Products.md` — git pointer [`../products/`](../products/).  
 Agent rules: [../../AGENTS.md](../../AGENTS.md).
 
 ## Files

@@ -1,10 +1,7 @@
-# Product areas (moved)
+# Product areas (legacy path)
 
-Area product descriptions now live in the unified catalog:
+**Product descriptions live in Obsidian.**
 
-**→ [`docs/products/`](../products/README.md)**  
-**→ Area files:** [`docs/products/areas/`](../products/areas/)
+See [`docs/products/README.md`](../products/README.md) for the vault path (`Projects/Destiny 2 Build Creator/Products.md` in ProjectTracker).
 
-Domain concepts (Set, Synergy, Build, Variant) are peer **domain products** under [`docs/products/domains/`](../products/domains/).
-
-Do not add new briefs here.
+Do not add area briefs under this folder.
