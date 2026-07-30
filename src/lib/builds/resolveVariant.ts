@@ -7,6 +7,10 @@ import type { SetType } from "@/lib/sets/schemas";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
 import { getSet } from "@/lib/db/repositories/setRepository";
 import type { AppDatabase } from "@/lib/db/client";
+import {
+  collectArtifactCompleteGaps,
+  collectSubclassKitCompleteGaps,
+} from "@/lib/builds/defaultLoadoutCompleteness";
 import { listActiveSetItems, type SetItemRecord } from "@/lib/sets/setItemService";
 
 export type SlotClaim = {
@@ -212,10 +216,27 @@ export function assertVariantNotEmpty(resolved: ResolvedVariantEquipment): void 
 const REQUIRED_WEAPON_SLOTS: EquipmentSlot[] = ["primary", "special", "heavy"];
 const REQUIRED_ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_item"];
 
+export type FullCombatLoadoutOptions = {
+  hasMods?: boolean;
+  /** Fragment capacity sum from selected aspects (when resolved). */
+  fragmentCapacity?: number;
+  /** False when aspect capacities could not be resolved from game data. */
+  capacityResolved?: boolean;
+  maxAspects?: number;
+  /** Default variant artifact selection (DBR-ART-003a). */
+  artifactHash?: number | null;
+  artifactConfig?: number[] | null;
+  /**
+   * When true (default), enforce subclass kit bar + artifact fill.
+   * Set false only for pure equipment-gap unit tests.
+   */
+  requireKitAndArtifact?: boolean;
+};
+
 export function assertFullCombatLoadout(
   resolved: ResolvedVariantEquipment,
   build: BuildRecord,
-  opts?: { hasMods?: boolean },
+  opts?: FullCombatLoadoutOptions,
 ): void {
   const missing: string[] = [];
   for (const slot of REQUIRED_WEAPON_SLOTS) {
@@ -225,11 +246,35 @@ export function assertFullCombatLoadout(
     if (!resolved.equipment[slot]) missing.push(slot);
   }
   if (!build.className) missing.push("className");
-  const subclass = build.subclass as { name?: string; super?: string } | null;
+  const subclass = build.subclass as {
+    name?: string;
+    super?: string;
+    melee?: string;
+    grenade?: string;
+    aspects?: string[];
+    fragments?: string[];
+  } | null;
   if (!subclass || typeof subclass !== "object" || !subclass.name) {
     missing.push("subclass");
   }
   if (!opts?.hasMods) missing.push("mods");
+
+  const requireKitAndArtifact = opts?.requireKitAndArtifact !== false;
+  if (requireKitAndArtifact) {
+    for (const gap of collectSubclassKitCompleteGaps(subclass, {
+      maxAspects: opts?.maxAspects,
+      fragmentCapacity: opts?.fragmentCapacity,
+      capacityResolved: opts?.capacityResolved,
+    })) {
+      if (!missing.includes(gap)) missing.push(gap);
+    }
+    for (const gap of collectArtifactCompleteGaps({
+      artifactHash: opts?.artifactHash,
+      artifactConfig: opts?.artifactConfig,
+    })) {
+      if (!missing.includes(gap)) missing.push(gap);
+    }
+  }
 
   if (missing.length > 0) {
     throw new ApiError(

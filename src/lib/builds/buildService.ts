@@ -37,7 +37,10 @@ import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
 import { assertExoticAbilityPins } from "@/lib/builds/assertExoticAbilityPins";
 import { assertExoticLimits } from "@/lib/builds/assertExoticLimits";
 import { assertModEnergyForAttachments } from "@/lib/builds/assertModEnergy";
-import { assertSubclassKitLegal } from "@/lib/builds/assertSubclassKit";
+import {
+  assertSubclassKitLegal,
+  resolveFragmentCapacity,
+} from "@/lib/builds/assertSubclassKit";
 import {
   assertFullCombatLoadout,
   assertNoSlotConflicts,
@@ -708,7 +711,23 @@ export async function validateVariantSave(
 
   if (variant.isDefault) {
     const hasMods = await variantHasMods(db, userId, attachments);
-    assertFullCombatLoadout(resolved, build, { hasMods });
+    const subclass = build.subclass as {
+      aspects?: string[] | null;
+    } | null;
+    const aspectNames = (subclass?.aspects ?? []).filter(
+      (a): a is string => typeof a === "string" && a.trim().length > 0,
+    );
+    const { capacity, resolvedCount } = await resolveFragmentCapacity(aspectNames);
+    const capacityResolved =
+      aspectNames.length === 0 || resolvedCount === aspectNames.length;
+
+    assertFullCombatLoadout(resolved, build, {
+      hasMods,
+      fragmentCapacity: capacity,
+      capacityResolved,
+      artifactHash: variant.artifactHash,
+      artifactConfig: variant.artifactConfig,
+    });
   }
 }
 

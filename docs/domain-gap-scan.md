@@ -21,7 +21,8 @@
 | --- | --- | --- | --- |
 | P0 | Set save minimums (Weapon/Armor ≥2, Mod multi-piece) | **Done (Phase A)** | Attach + attached soft-remove; empty scaffold OK for finish |
 | P0 | Per-variant subclass kit (aspects/fragments/abilities) | **Gap** | Subclass JSON lives on **Build** row, not per variant |
-| P0 | Default kit bar (aspects + fragments at capacity + Super/melee/grenade) | **Gap** | `assertFullCombatLoadout` checks equipment + tree name + mods only |
+| P0 | Default kit bar (aspects + fragments at capacity + Super/melee/grenade) | **Done (Phase B)** | `defaultLoadoutCompleteness` + `assertFullCombatLoadout` |
+| P0 | Artifact filled on default | **Done (Phase B)** | Hash + non-empty config required on default save |
 | P0 | Required-link hard gate on default (pins only) | **Gap** | No `required` on `synergy_links`; no save gate |
 | P1 | Expanded synergy link kinds | **Partial** | Schema: 6 kinds; product: 12 kinds |
 | P1 | Ammo / weapon_slot designation types | **Gap** | Creatable types still use primary/special/heavy_weapon |
@@ -87,7 +88,7 @@
 | DBR-SUB-003 kit per variant | **Gap** | Kit fields on **build.subclass**, not variant | Data model: variant subclass kit columns/JSON |
 | DBR-SUB-004 capacity hard | **OK** | `assertSubclassKitLegal`, max 2 aspects, fragment capacity sum | — |
 | DBR-SUB-005 exotic ability pins | **OK** | `assertExoticAbilityPins`, evaluators | — |
-| DBR-SUB-006 default complete kit bar | **Gap** | `assertFullCombatLoadout` does **not** require aspects/fragments/Super/melee/grenade filled | Extend default gate |
+| DBR-SUB-006 default complete kit bar | **Done Phase B** | `collectSubclassKitCompleteGaps` | Class/movement still optional |
 | DBR-SUB-007 class/movement optional | **OK** (default) | Not required in loadout assert | Keep optional |
 | DBR-SUB-008–009 capacity trim | **Partial** | UI shows capacity; no auto-trim on aspect shrink | Auto-trim on save/edit |
 | Scope clear on class/tree change | **Partial** | Debug `clearIncompatible` helpers | Wire into production tree change |
@@ -101,7 +102,7 @@
 | Rule | Status | Evidence | Gap action |
 | --- | --- | --- | --- |
 | DBR-CMPL-001 weapons + armor + mods | **Partial** | Default: 3 weapon + 5 armor + mods attachment flag | Kit + artifact fill missing |
-| DBR-CMPL-001a artifact config filled | **Gap** | Artifact stored; not in `assertFullCombatLoadout` | Require artifactHash + non-empty valid config |
+| DBR-CMPL-001a artifact config filled | **Done Phase B** | Default save requires hash + non-empty config | Tree shape still data-driven later |
 | DBR-CMPL-001b fashion optional | **OK** | Not required | — |
 | DBR-CMPL-001d three gates | **Partial** | Gate 1 partial; gate 2 missing; gate 3 equip-ready for equip/export | Implement gate 2 |
 | DBR-CMPL-002 non-default may gap | **OK** | Full loadout only if `isDefault` | — |
@@ -168,7 +169,7 @@
 | Phase | Work | Rules |
 | --- | --- | --- |
 | **A** | Set save mins (Weapon/Armor ≥2, Mod multi-piece) + error codes | **Shipped 2026-07-29** — attach/remove gates; see `setMinimumOccupancy.ts` |
-| **B** | Default complete: kit bar + artifact filled (even before per-variant kit split) | DBR-SUB-006, DBR-CMPL-001a, DAC-P1-003 |
+| **B** | Default complete: kit bar + artifact filled (even before per-variant kit split) | **Shipped 2026-07-29** — `defaultLoadoutCompleteness.ts` |
 | **C** | Synergy: `required` flag + default save gate using equip-ready / kit claims | DBR-SYN-007–010a |
 | **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | DBR-SYN-015, 017 |
 | **E** | Data model: variant-owned kit; tree change confirm + wipe | DBR-SUB-003, DBR-BLD-008–009 |
