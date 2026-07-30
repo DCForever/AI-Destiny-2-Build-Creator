@@ -20,14 +20,14 @@
 | Priority | Theme | Status | Notes |
 | --- | --- | --- | --- |
 | P0 | Set save minimums (Weapon/Armor ≥2, Mod multi-piece) | **Done (Phase A)** | Attach + attached soft-remove; empty scaffold OK for finish |
-| P0 | Per-variant subclass kit (aspects/fragments/abilities) | **Gap** | Subclass JSON lives on **Build** row, not per variant |
+| P0 | Per-variant subclass kit (aspects/fragments/abilities) | **Done (Phase E)** | `build_variants.subclass_kit`; effective kit per variant |
 | P0 | Default kit bar (aspects + fragments at capacity + Super/melee/grenade) | **Done (Phase B)** | `defaultLoadoutCompleteness` + `assertFullCombatLoadout` |
 | P0 | Artifact filled on default | **Done (Phase B)** | Hash + non-empty config required on default save |
 | P0 | Required-link hard gate on default (pins only) | **Done (Phase C)** | `required` column + `assertRequiredLinksSatisfied` on default save |
 | P1 | Expanded synergy link kinds | **Done (Phase D)** | 12 kinds in schema + pickers + coverage |
 | P1 | Ammo / weapon_slot designation types | **Done (Phase D)** | Creatable `ammo` + `weapon_slot`; legacy weapon types readable |
 | P1 | Armor Set bonus package constraint | **Gap** | No constraint field / codes in set save |
-| P1 | Tree change wipe + identity confirm | **Partial** | Identity confirm for some fields; no tree-wipe path as identity |
+| P1 | Tree change wipe + identity confirm | **Done (Phase E)** | `subclassTree` identity + wipe all variant kits |
 | P1 | Class immutable after create | **Gap** | `updateBuild` accepts `className` change |
 | P2 | armor_set_bonus link tier match | **OK** | `bonusPieces` + coverage count ≥ tier |
 | P2 | weapon_perk family (base/enhanced) match | **Gap** | Exact `perkHash` only |
@@ -84,14 +84,14 @@
 
 | Rule | Status | Evidence | Gap action |
 | --- | --- | --- | --- |
-| DBR-SUB-001 tree shared | **OK** (structural) | Single subclass on build | Revisit when kit becomes per-variant |
-| DBR-SUB-003 kit per variant | **Gap** | Kit fields on **build.subclass**, not variant | Data model: variant subclass kit columns/JSON |
+| DBR-SUB-001 tree shared | **OK** | Tree name on build.subclass | — |
+| DBR-SUB-003 kit per variant | **Done Phase E** | `subclass_kit` column + effective merge | Legacy fall back to build kit fields |
 | DBR-SUB-004 capacity hard | **OK** | `assertSubclassKitLegal`, max 2 aspects, fragment capacity sum | — |
 | DBR-SUB-005 exotic ability pins | **OK** | `assertExoticAbilityPins`, evaluators | — |
 | DBR-SUB-006 default complete kit bar | **Done Phase B** | `collectSubclassKitCompleteGaps` | Class/movement still optional |
 | DBR-SUB-007 class/movement optional | **OK** (default) | Not required in loadout assert | Keep optional |
 | DBR-SUB-008–009 capacity trim | **Partial** | UI shows capacity; no auto-trim on aspect shrink | Auto-trim on save/edit |
-| Scope clear on class/tree change | **Partial** | Debug `clearIncompatible` helpers | Wire into production tree change |
+| Scope clear on class/tree change | **Done Phase E** (tree wipe) | Tree change wipes kits to empty baseline | Class-change still open |
 
 **Key files**: `assertSubclassKit.ts`, `destinyBuildConstraints.ts`, `resolveVariant.ts` (`assertFullCombatLoadout`), `VariantEditPanel` / `SubclassTab`.
 
@@ -172,7 +172,7 @@
 | **B** | Default complete: kit bar + artifact filled (even before per-variant kit split) | **Shipped 2026-07-29** — `defaultLoadoutCompleteness.ts` |
 | **C** | Synergy: `required` flag + default save gate using equip-ready / kit claims | **Shipped 2026-07-29** — `assertRequiredLinks.ts` |
 | **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | **Shipped 2026-07-30** |
-| **E** | Data model: variant-owned kit; tree change confirm + wipe | DBR-SUB-003, DBR-BLD-008–009 |
+| **E** | Data model: variant-owned kit; tree change confirm + wipe | **Shipped 2026-07-30** — `subclassKit.ts` |
 | **F** | Armor Set bonus constraint | DBR-SETB-003–006 |
 | **G** | Perk family match; class-item exotic_armor config links | DBR-SYN-014a, DBR-ID-011 |
 | **H** | Presentation: can-roll/craft detail; hash footer discipline | DBR-UI-006–007 |

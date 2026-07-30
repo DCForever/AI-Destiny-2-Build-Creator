@@ -233,6 +233,18 @@ export type FullCombatLoadoutOptions = {
   artifactHash?: number | null;
   artifactConfig?: number[] | null;
   /**
+   * Effective kit for this variant (tree name + abilities/aspects/fragments).
+   * Prefer over build.subclass when provided (per-variant kit).
+   */
+  subclassKit?: {
+    name?: string;
+    super?: string;
+    melee?: string;
+    grenade?: string;
+    aspects?: string[];
+    fragments?: string[];
+  } | null;
+  /**
    * When true (default), enforce subclass kit bar + artifact fill.
    * Set false only for pure equipment-gap unit tests.
    */
@@ -252,14 +264,16 @@ export function assertFullCombatLoadout(
     if (!resolved.equipment[slot]) missing.push(slot);
   }
   if (!build.className) missing.push("className");
-  const subclass = build.subclass as {
-    name?: string;
-    super?: string;
-    melee?: string;
-    grenade?: string;
-    aspects?: string[];
-    fragments?: string[];
-  } | null;
+  const subclass =
+    opts?.subclassKit ??
+    (build.subclass as {
+      name?: string;
+      super?: string;
+      melee?: string;
+      grenade?: string;
+      aspects?: string[];
+      fragments?: string[];
+    } | null);
   if (!subclass || typeof subclass !== "object" || !subclass.name) {
     missing.push("subclass");
   }

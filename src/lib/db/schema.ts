@@ -173,6 +173,8 @@ export const buildVariants = sqliteTable("build_variants", {
   artifactHash: integer("artifact_hash"),
   artifactName: text("artifact_name"),
   artifactConfig: text("artifact_config").notNull().default("[]"),
+  /** Per-variant kit JSON (aspects/fragments/abilities). Null = legacy fall back to build.subclass kit fields. */
+  subclassKit: text("subclass_kit"),
   notes: text("notes"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),

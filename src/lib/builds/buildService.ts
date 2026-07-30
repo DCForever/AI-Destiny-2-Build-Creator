@@ -19,9 +19,20 @@ import {
   listVariants,
   replaceAttachments,
   updateVariantRecord,
+  wipeAllVariantKits,
   type AttachmentRecord,
   type VariantRecord,
 } from "@/lib/db/repositories/variantRepository";
+import {
+  buildSubclassAfterTreeChange,
+  effectiveSubclass,
+  emptyLegalBaselineForTree,
+  isSubclassTreeChange,
+  kitFromLegacySubclass,
+  kitPayloadFromSubclassInput,
+  resolveVariantKit,
+  treeNameFromSubclass,
+} from "@/lib/builds/subclassKit";
 import { getSet } from "@/lib/db/repositories/setRepository";
 import { prepareAttachments } from "@/lib/builds/attachmentService";
 import { deriveDefaultBuildName } from "@/lib/builds/defaultBuildName";
@@ -160,6 +171,9 @@ async function identityFieldsChanged(
   if (input.pinnedSuper !== undefined && input.pinnedSuper !== existing.pinnedSuper) {
     fields.push("pinnedSuper");
   }
+  if (input.subclass !== undefined && isSubclassTreeChange(existing.subclass, input.subclass)) {
+    fields.push("subclassTree");
+  }
   return fields;
 }
 
@@ -241,15 +255,35 @@ export async function getBuildDetail(db: AppDatabase, userId: number, buildId: s
           exoticArmorSlot: exoticSlots.armorSlot,
         },
       );
-      return { ...variant, attachments, resolved };
+      const kit = resolveVariantKit(build.subclass, variant.subclassKit);
+      const effectiveSub = effectiveSubclass(
+        build.subclass,
+        variant.subclassKit,
+        build.pinnedSuper,
+      );
+      return {
+        ...variant,
+        subclassKit: kit,
+        /** Effective tree + kit for this variant (preferred UI source). */
+        subclass: effectiveSub,
+        attachments,
+        resolved,
+      };
     }),
   );
 
   const { enrichBuildPresentation } = await import(
     "@/lib/builds/enrichBuildPresentation"
   );
+  // Build-level subclass remains tree identity; also surface default variant kit for legacy clients.
+  const defaultVariant = variantsWithAttachments.find((v) => v.isDefault);
+  const buildSubclass = defaultVariant?.subclass
+    ? defaultVariant.subclass
+    : effectiveSubclass(build.subclass, null, build.pinnedSuper);
+
   return enrichBuildPresentation({
     ...build,
+    subclass: buildSubclass,
     synergyTypes,
     synergies,
     variants: variantsWithAttachments,
@@ -367,6 +401,8 @@ export async function createUserBuild(db: AppDatabase, userId: number, input: Cr
     artifactHash: defaultVariant.artifactHash ?? null,
     artifactName: defaultVariant.artifactName ?? null,
     artifactConfig: defaultVariant.artifactConfig ?? [],
+    subclassKit:
+      defaultVariant.subclassKit ?? kitFromLegacySubclass(input.subclass),
     notes: defaultVariant.notes ?? null,
     now,
   });
@@ -398,7 +434,12 @@ async function forkBuildWithIdentity(
   assertTypesPresent(synergyTypes);
 
   const className = input.className ?? existing.className;
-  const subclass = input.subclass ?? existing.subclass;
+  const treeChanged =
+    input.subclass !== undefined &&
+    isSubclassTreeChange(existing.subclass, input.subclass);
+  const subclass = treeChanged
+    ? buildSubclassAfterTreeChange(input.subclass)
+    : (input.subclass ?? existing.subclass);
   const exoticArmorHash =
     input.exoticArmorHash !== undefined ? input.exoticArmorHash : existing.exoticArmorHash;
   const exoticArmorName =
@@ -433,6 +474,9 @@ async function forkBuildWithIdentity(
   });
 
   const variants = listVariants(db, existing.id);
+  const wipedKit = treeChanged
+    ? emptyLegalBaselineForTree(treeNameFromSubclass(subclass))
+    : null;
   for (const variant of variants) {
     const newVariantId = crypto.randomUUID();
     createVariantRecord(db, {
@@ -445,6 +489,7 @@ async function forkBuildWithIdentity(
       artifactHash: variant.artifactHash,
       artifactName: variant.artifactName,
       artifactConfig: variant.artifactConfig,
+      subclassKit: wipedKit ?? variant.subclassKit,
       notes: variant.notes,
       now,
     });
@@ -536,15 +581,27 @@ export async function updateUserBuild(
       input.softStatTargets === null ? {} : normalizeSoftStatTargets(input.softStatTargets);
   }
 
-  const nextSubclass = (input.subclass ?? existing.subclass) as {
-    aspects?: string[] | null;
-    fragments?: string[] | null;
-    super?: string | null;
-    melee?: string | null;
-    grenade?: string | null;
-    classAbility?: string | null;
-    name?: string | null;
-  };
+  const treeChanged =
+    input.subclass !== undefined &&
+    isSubclassTreeChange(existing.subclass, input.subclass);
+
+  let nextSubclassStored = existing.subclass;
+  if (input.subclass !== undefined) {
+    if (treeChanged) {
+      // Tree identity change: store cleared kit on build; wipe all variant kits.
+      nextSubclassStored = buildSubclassAfterTreeChange(input.subclass);
+    } else {
+      // Same tree: keep tree name; kit fields go to default variant (legacy path).
+      nextSubclassStored = {
+        ...(typeof existing.subclass === "object" && existing.subclass
+          ? (existing.subclass as object)
+          : {}),
+        name: treeNameFromSubclass(input.subclass) || treeNameFromSubclass(existing.subclass),
+        ...kitPayloadFromSubclassInput(input.subclass),
+      };
+    }
+  }
+
   const nextExoticHash =
     input.exoticArmorHash !== undefined
       ? input.exoticArmorHash
@@ -556,20 +613,32 @@ export async function updateUserBuild(
   const nextPinnedSuper =
     input.pinnedSuper !== undefined ? input.pinnedSuper : existing.pinnedSuper;
 
-  if (input.subclass) {
-    await assertSubclassKitLegal(input.subclass);
+  const defaultVariant = listVariants(db, buildId).find((v) => v.isDefault);
+  const kitForPins =
+    input.subclass && !treeChanged
+      ? kitPayloadFromSubclassInput(input.subclass)
+      : resolveVariantKit(nextSubclassStored, defaultVariant?.subclassKit);
+
+  if (input.subclass && !treeChanged) {
+    await assertSubclassKitLegal({
+      name: treeNameFromSubclass(nextSubclassStored),
+      ...kitForPins,
+    });
   }
   assertExoticAbilityPins({
     exoticArmorHash: nextExoticHash,
     exoticArmorName: nextExoticName,
     pinnedSuper: nextPinnedSuper,
-    subclass: nextSubclass,
+    subclass: {
+      name: treeNameFromSubclass(nextSubclassStored),
+      ...kitForPins,
+    },
   });
 
   updateBuildRecord(db, userId, buildId, {
     name: input.name?.trim() || undefined,
     className: input.className,
-    subclass: input.subclass,
+    subclass: input.subclass !== undefined ? nextSubclassStored : undefined,
     exoticArmorHash: input.exoticArmorHash,
     exoticArmorName: input.exoticArmorName,
     exoticWeaponHash: input.exoticWeaponHash,
@@ -583,6 +652,26 @@ export async function updateUserBuild(
       : undefined,
     now,
   });
+
+  if (treeChanged && input.subclass) {
+    const treeName = treeNameFromSubclass(input.subclass);
+    wipeAllVariantKits(
+      db,
+      buildId,
+      emptyLegalBaselineForTree(treeName),
+      now,
+    );
+  } else if (input.subclass && !treeChanged) {
+    // Legacy: kit-only build PATCH writes to default variant kit.
+    const def = listVariants(db, buildId).find((v) => v.isDefault);
+    if (def) {
+      updateVariantRecord(db, buildId, def.id, {
+        subclassKit: kitPayloadFromSubclassInput(input.subclass),
+        now,
+      });
+    }
+  }
+
   return getBuildDetail(db, userId, buildId);
 }
 
@@ -612,11 +701,21 @@ export async function updateUserVariant(
     },
   });
 
-  // Equipment-affecting fields must re-run hard Destiny constraints (CMP-006/007).
+  if (input.subclassKit) {
+    await assertSubclassKitLegal({
+      name: treeNameFromSubclass(build.subclass),
+      ...input.subclassKit,
+    });
+  }
+
+  // Equipment/kit fields must re-run hard Destiny constraints (CMP-006/007, SUB-*).
   const equipmentAffecting =
     input.attachments != null ||
     input.exoticWeaponHash !== undefined ||
-    input.exoticWeaponName !== undefined;
+    input.exoticWeaponName !== undefined ||
+    input.subclassKit !== undefined ||
+    input.artifactHash !== undefined ||
+    input.artifactConfig !== undefined;
 
   const previousAttachments = equipmentAffecting ? listAttachments(db, variantId) : null;
   const previousVariantSnapshot = equipmentAffecting
@@ -627,6 +726,7 @@ export async function updateUserVariant(
         artifactHash: existing.artifactHash,
         artifactName: existing.artifactName,
         artifactConfig: existing.artifactConfig,
+        subclassKit: existing.subclassKit,
         notes: existing.notes,
         updatedAt: existing.updatedAt,
       }
@@ -637,6 +737,7 @@ export async function updateUserVariant(
     exoticWeaponHash: input.exoticWeaponHash,
     exoticWeaponName: input.exoticWeaponName,
     notes: input.notes,
+    ...(input.subclassKit !== undefined ? { subclassKit: input.subclassKit } : {}),
     ...(artifactPatch ?? {}),
     now,
   });
@@ -657,6 +758,7 @@ export async function updateUserVariant(
         artifactHash: previousVariantSnapshot.artifactHash,
         artifactName: previousVariantSnapshot.artifactName,
         artifactConfig: previousVariantSnapshot.artifactConfig,
+        subclassKit: previousVariantSnapshot.subclassKit,
         notes: previousVariantSnapshot.notes,
         now: previousVariantSnapshot.updatedAt,
       });
@@ -712,10 +814,12 @@ export async function validateVariantSave(
 
   if (variant.isDefault) {
     const hasMods = await variantHasMods(db, userId, attachments);
-    const subclass = build.subclass as {
-      aspects?: string[] | null;
-    } | null;
-    const aspectNames = (subclass?.aspects ?? []).filter(
+    const effective = effectiveSubclass(
+      build.subclass,
+      variant.subclassKit,
+      build.pinnedSuper,
+    );
+    const aspectNames = (effective.aspects ?? []).filter(
       (a): a is string => typeof a === "string" && a.trim().length > 0,
     );
     const { capacity, resolvedCount } = await resolveFragmentCapacity(aspectNames);
@@ -728,27 +832,18 @@ export async function validateVariantSave(
       capacityResolved,
       artifactHash: variant.artifactHash,
       artifactConfig: variant.artifactConfig,
+      subclassKit: effective,
     });
 
     // Gate 2: required synergy links → equip-ready pins / applied kit (DBR-SYN-010a).
     const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
     const inventory = buildInventoryPinIndex(listInventoryItems(db, userId));
-    const kit =
-      build.subclass && typeof build.subclass === "object"
-        ? (build.subclass as {
-            aspects?: string[];
-            fragments?: string[];
-            super?: string;
-            melee?: string;
-            grenade?: string;
-          })
-        : null;
     assertRequiredLinksSatisfied({
       synergies: bridge.matchedSynergies,
       resolved,
       inventory,
       artifactConfig: variant.artifactConfig,
-      kit,
+      kit: effective,
     });
   }
 }

@@ -130,6 +130,14 @@ function ensureSynergyLinkRequiredColumn(db: Database.Database): void {
   }
 }
 
+function ensureVariantSubclassKitColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(build_variants)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "subclass_kit")) {
+    db.exec("ALTER TABLE build_variants ADD COLUMN subclass_kit TEXT");
+  }
+}
+
 function ensureBuildSynergyTypesTable(db: Database.Database): void {
   const typeTable = db
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='build_synergy_types'")
@@ -354,6 +362,7 @@ export function runMigrations(db: Database.Database): void {
       artifact_hash INTEGER,
       artifact_name TEXT,
       artifact_config TEXT NOT NULL DEFAULT '[]',
+      subclass_kit TEXT,
       notes TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -386,6 +395,7 @@ export function runMigrations(db: Database.Database): void {
   ensureSetItemInstanceIdColumn(db);
   ensureBuildsIdentityColumns(db);
   ensureVariantArtifactColumns(db);
+  ensureVariantSubclassKitColumn(db);
   ensureSynergyLinkRequiredColumn(db);
   ensureSoftStatTargetsColumn(db);
   ensureSetOptimizerColumns(db);
