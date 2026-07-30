@@ -7,7 +7,9 @@ import {
   type SnapshotConfig,
 } from "@/lib/db/repositories/variantRepository";
 import { getSet } from "@/lib/db/repositories/setRepository";
+import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
+import type { SetType } from "@/lib/sets/schemas";
 
 export type SetAttachmentInput = {
   setId: string;
@@ -55,6 +57,12 @@ export async function prepareAttachments(
         );
       }
     }
+
+    // DBR-CMP-008–010: empty scaffold OK (finish create+attach); partial packages blocked.
+    const activeItems = await listActiveSetItems(db, input.setId);
+    assertSetMinimumOccupancy(set.type as SetType, activeItems, {
+      context: "attach",
+    });
 
     let snapshotConfigs: SnapshotConfig[] | null = null;
     if (input.mode === "snapshot") {

@@ -27,6 +27,7 @@ import {
 } from "@/lib/sets/setItemService";
 import type { SetItemInput } from "@/lib/sets/schemas";
 import { enrichSetItems } from "@/lib/sets/enrichSetItems";
+import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
 
 function parseTagIds(tagIds: unknown): ConceptTagId[] {
   const result = conceptTagIdsSchema.safeParse(tagIds ?? []);
@@ -211,6 +212,16 @@ export async function addSetItem(
 export async function removeSetItem(db: AppDatabase, userId: number, setId: string, itemId: string) {
   const set = getSet(db, userId, setId);
   if (!set) return null;
+
+  const active = await listActiveSetItems(db, setId);
+  const remaining = active.filter((i) => i.id !== itemId);
+
+  // Attached packages may not become partial (non-empty below min). Empty OK.
+  const attachments = findAttachmentsBySetId(db, setId);
+  if (attachments.length > 0) {
+    assertSetMinimumOccupancy(set.type, remaining, { context: "remove_while_attached" });
+  }
+
   softRemoveSetItem(db, setId, itemId);
   return getSetDetail(db, userId, setId);
 }

@@ -5,6 +5,8 @@ import {
   replaceAttachments,
   type AttachmentRecord,
 } from "@/lib/db/repositories/variantRepository";
+import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
+import { listActiveSetItems } from "@/lib/sets/setItemService";
 import type { SetType } from "@/lib/sets/schemas";
 
 /**
@@ -23,6 +25,9 @@ export async function replaceAttachmentByType(
   if (!newSet || newSet.type !== type) {
     throw new Error(`Set ${newSetId} is not a ${type} set for this user`);
   }
+
+  const activeItems = await listActiveSetItems(db, newSetId);
+  assertSetMinimumOccupancy(type, activeItems, { context: "attach" });
 
   const existing = listAttachments(db, variantId);
   const kept: Array<Omit<AttachmentRecord, "id" | "variantId" | "attachedAt">> = [];
