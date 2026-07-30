@@ -59,7 +59,20 @@ export type CoverageEvalInput = {
   weaponElementByHash?: Map<number, string>;
   softStatTargets?: SoftStatTargets;
   statEstimate?: StatEstimate | null;
+  artifactConfig?: number[] | null;
 };
+
+function kitFromSubclass(subclass: unknown): SubclassKitMatchFields | null {
+  if (!subclass || typeof subclass !== "object") return null;
+  const s = subclass as Record<string, unknown>;
+  return {
+    aspects: Array.isArray(s.aspects) ? (s.aspects as string[]) : null,
+    fragments: Array.isArray(s.fragments) ? (s.fragments as string[]) : null,
+    super: typeof s.super === "string" ? s.super : null,
+    melee: typeof s.melee === "string" ? s.melee : null,
+    grenade: typeof s.grenade === "string" ? s.grenade : null,
+  };
+}
 
 const ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_item"];
 const WEAPON_SLOTS: EquipmentSlot[] = ["primary", "special", "heavy"];
@@ -68,11 +81,39 @@ function linkSummary(link: SynergyLinkRecord): LinkMatchSummary {
   return { kind: link.kind, displayName: link.displayName, id: link.id };
 }
 
+export type SubclassKitMatchFields = {
+  aspects?: string[] | null;
+  fragments?: string[] | null;
+  super?: string | null;
+  melee?: string | null;
+  grenade?: string | null;
+};
+
 export type MatchEvidenceContext = {
   setBonusByItemHash?: Map<number, SetBonusRecord>;
   /** Selected artifact perk hashes on the variant (artifact_perk links). */
   artifactConfig?: number[] | null;
+  /** Build/variant subclass kit for aspect/fragment/ability links. */
+  kit?: SubclassKitMatchFields | null;
 };
+
+function namesEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a?.trim() || !b?.trim()) return false;
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+function listIncludesName(list: string[] | null | undefined, name: string): boolean {
+  return (list ?? []).some((entry) => namesEqual(entry, name));
+}
+
+function matchKitName(
+  link: SynergyLinkRecord,
+  kitValue: string | null | undefined,
+  list?: string[] | null,
+): boolean {
+  if (list) return listIncludesName(list, link.displayName);
+  return namesEqual(kitValue, link.displayName);
+}
 
 export function matchEvidenceLink(
   link: SynergyLinkRecord,
@@ -84,6 +125,7 @@ export function matchEvidenceLink(
       ? { setBonusByItemHash: setBonusByItemHashOrCtx }
       : (setBonusByItemHashOrCtx ?? {});
   const setBonusByItemHash = ctx.setBonusByItemHash;
+  const kit = ctx.kit;
 
   switch (link.kind) {
     case "weapon":
@@ -105,11 +147,30 @@ export function matchEvidenceLink(
           (c) => ARMOR_SLOTS.includes(c.slot) && c.itemHash === link.itemHash,
         )
       );
+    case "armor_mod": {
+      const hash = link.perkHash ?? link.itemHash;
+      if (hash == null) return false;
+      return claims.some(
+        (c) =>
+          (c.modHashes ?? []).includes(hash) ||
+          (c.selectedPerks ?? []).includes(hash),
+      );
+    }
     case "artifact_perk": {
       const hash = link.perkHash ?? link.itemHash;
       if (hash == null) return false;
       return (ctx.artifactConfig ?? []).includes(hash);
     }
+    case "aspect":
+      return matchKitName(link, null, kit?.aspects);
+    case "fragment":
+      return matchKitName(link, null, kit?.fragments);
+    case "super":
+      return matchKitName(link, kit?.super ?? null);
+    case "melee":
+      return matchKitName(link, kit?.melee ?? null);
+    case "grenade":
+      return matchKitName(link, kit?.grenade ?? null);
     case "armor_set_bonus": {
       const needed = link.bonusPieces ?? 2;
       if (link.armorSetHash != null && setBonusByItemHash) {
@@ -168,12 +229,17 @@ export function evaluateCoverage(input: CoverageEvalInput): CoverageResult {
   const { claims, synergies, subclass, setBonusByItemHash, weaponElementByHash } = input;
   const softStatTargets = input.softStatTargets ?? {};
   const statEstimate = input.statEstimate ?? null;
+  const matchCtx: MatchEvidenceContext = {
+    setBonusByItemHash,
+    artifactConfig: input.artifactConfig,
+    kit: kitFromSubclass(subclass),
+  };
 
   const synergyRows: SynergyCoverageRow[] = synergies.map((synergy) => {
     const matchedLinks: LinkMatchSummary[] = [];
     const unmatchedLinks: LinkMatchSummary[] = [];
     for (const link of synergy.links) {
-      if (matchEvidenceLink(link, claims, setBonusByItemHash)) {
+      if (matchEvidenceLink(link, claims, matchCtx)) {
         matchedLinks.push(linkSummary(link));
       } else {
         unmatchedLinks.push(linkSummary(link));

@@ -59,6 +59,10 @@ const SYNERGY_ELIGIBLE = new Set<CompositionKind>([
   "armor_set_bonus",
   "exotic_armor",
   "artifact_perk",
+  "aspect",
+  "fragment",
+  "ability",
+  "mod",
 ]);
 
 const SET_TYPES_BY_KIND: Record<CompositionKind, readonly CompositionSetType[]> = {

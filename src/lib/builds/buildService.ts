@@ -730,14 +730,25 @@ export async function validateVariantSave(
       artifactConfig: variant.artifactConfig,
     });
 
-    // Gate 2: required synergy links → equip-ready pins only (DBR-SYN-010a).
+    // Gate 2: required synergy links → equip-ready pins / applied kit (DBR-SYN-010a).
     const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
     const inventory = buildInventoryPinIndex(listInventoryItems(db, userId));
+    const kit =
+      build.subclass && typeof build.subclass === "object"
+        ? (build.subclass as {
+            aspects?: string[];
+            fragments?: string[];
+            super?: string;
+            melee?: string;
+            grenade?: string;
+          })
+        : null;
     assertRequiredLinksSatisfied({
       synergies: bridge.matchedSynergies,
       resolved,
       inventory,
       artifactConfig: variant.artifactConfig,
+      kit,
     });
   }
 }

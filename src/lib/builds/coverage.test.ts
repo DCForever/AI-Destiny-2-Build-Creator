@@ -49,6 +49,8 @@ function claim(partial: Partial<SlotClaim> & Pick<SlotClaim, "slot" | "itemHash"
     itemName: partial.itemName ?? "Item",
     source: partial.source ?? "set",
     selectedPerks: partial.selectedPerks,
+    modHashes: partial.modHashes,
+    instanceId: partial.instanceId,
   };
 }
 
@@ -76,6 +78,53 @@ describe("matchEvidenceLink", () => {
       [claim({ slot: "primary", itemHash: 1, selectedPerks: [99] })],
     );
     expect(ok).toBe(true);
+  });
+
+  it("matches aspect/fragment/ability via kit context", () => {
+    const kit = {
+      aspects: ["Roaring Flames", "Consecration"],
+      fragments: ["Ember of Ashes"],
+      super: "Hammer of Sol",
+      melee: "Hammer Strike",
+      grenade: "Thermite Grenade",
+    };
+    expect(
+      matchEvidenceLink(
+        link({ kind: "aspect", displayName: "Roaring Flames" }),
+        [],
+        { kit },
+      ),
+    ).toBe(true);
+    expect(
+      matchEvidenceLink(
+        link({ kind: "fragment", displayName: "Ember of Ashes" }),
+        [],
+        { kit },
+      ),
+    ).toBe(true);
+    expect(
+      matchEvidenceLink(
+        link({ kind: "super", displayName: "Hammer of Sol" }),
+        [],
+        { kit },
+      ),
+    ).toBe(true);
+    expect(
+      matchEvidenceLink(
+        link({ kind: "aspect", displayName: "Knockout" }),
+        [],
+        { kit },
+      ),
+    ).toBe(false);
+  });
+
+  it("matches armor_mod via modHashes on claims", () => {
+    expect(
+      matchEvidenceLink(
+        link({ kind: "armor_mod", displayName: "Mod", itemHash: 501 }),
+        [claim({ slot: "helmet", itemHash: 1, modHashes: [501, 502] })],
+      ),
+    ).toBe(true);
   });
 });
 

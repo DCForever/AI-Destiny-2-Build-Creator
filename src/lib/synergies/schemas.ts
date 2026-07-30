@@ -1,7 +1,16 @@
 import { z } from "zod";
 
-/** Legacy types remain readable from DB; not creatable via API. */
-export const LEGACY_SYNERGY_TYPES = ["kinetic_weapon", "damage"] as const;
+/**
+ * Legacy types remain readable from DB / build designations; not creatable via API.
+ * primary/special/heavy_weapon superseded by ammo + weapon_slot (DBR-SYN-017).
+ */
+export const LEGACY_SYNERGY_TYPES = [
+  "kinetic_weapon",
+  "damage",
+  "primary_weapon",
+  "special_weapon",
+  "heavy_weapon",
+] as const;
 
 export const CREATABLE_SYNERGY_TYPES = [
   "melee",
@@ -9,9 +18,10 @@ export const CREATABLE_SYNERGY_TYPES = [
   "grenade",
   "super",
   "element",
-  "primary_weapon",
-  "special_weapon",
-  "heavy_weapon",
+  /** Ammo economy: Primary / Special / Heavy (DBR-SYN-017). */
+  "ammo",
+  /** Inventory bucket: Kinetic / Energy / Power (DBR-SYN-017). */
+  "weapon_slot",
   "dps",
   "healing",
   "solo",
@@ -27,14 +37,36 @@ export const SYNERGY_TYPES = [...CREATABLE_SYNERGY_TYPES, ...LEGACY_SYNERGY_TYPE
 
 export type SynergyType = (typeof SYNERGY_TYPES)[number];
 
-export const synergyLinkKindSchema = z.enum([
+/** Fixed ammo subTypes (product enum). */
+export const AMMO_SUBTYPES = ["Primary", "Special", "Heavy"] as const;
+export type AmmoSubType = (typeof AMMO_SUBTYPES)[number];
+
+/** Fixed weapon_slot subTypes (product enum). */
+export const WEAPON_SLOT_SUBTYPES = ["Kinetic", "Energy", "Power"] as const;
+export type WeaponSlotSubType = (typeof WEAPON_SLOT_SUBTYPES)[number];
+
+/**
+ * v1 linkable kinds (DBR-SYN-015).
+ * Ability kinds resolve to ability definitions, not designation type rows.
+ */
+export const SYNERGY_LINK_KINDS = [
   "weapon",
   "weapon_perk",
   "origin_trait",
   "armor_set_bonus",
   "exotic_armor",
+  "aspect",
+  "fragment",
+  "armor_mod",
+  "melee",
+  "grenade",
+  "super",
   "artifact_perk",
-]);
+] as const;
+
+export type SynergyLinkKind = (typeof SYNERGY_LINK_KINDS)[number];
+
+export const synergyLinkKindSchema = z.enum(SYNERGY_LINK_KINDS);
 
 export const synergyLinkSchema = z.object({
   kind: synergyLinkKindSchema,

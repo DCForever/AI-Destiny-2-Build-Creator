@@ -24,8 +24,8 @@
 | P0 | Default kit bar (aspects + fragments at capacity + Super/melee/grenade) | **Done (Phase B)** | `defaultLoadoutCompleteness` + `assertFullCombatLoadout` |
 | P0 | Artifact filled on default | **Done (Phase B)** | Hash + non-empty config required on default save |
 | P0 | Required-link hard gate on default (pins only) | **Done (Phase C)** | `required` column + `assertRequiredLinksSatisfied` on default save |
-| P1 | Expanded synergy link kinds | **Partial** | Schema: 6 kinds; product: 12 kinds |
-| P1 | Ammo / weapon_slot designation types | **Gap** | Creatable types still use primary/special/heavy_weapon |
+| P1 | Expanded synergy link kinds | **Done (Phase D)** | 12 kinds in schema + pickers + coverage |
+| P1 | Ammo / weapon_slot designation types | **Done (Phase D)** | Creatable `ammo` + `weapon_slot`; legacy weapon types readable |
 | P1 | Armor Set bonus package constraint | **Gap** | No constraint field / codes in set save |
 | P1 | Tree change wipe + identity confirm | **Partial** | Identity confirm for some fields; no tree-wipe path as identity |
 | P1 | Class immutable after create | **Gap** | `updateBuild` accepts `className` change |
@@ -49,11 +49,11 @@
 | DBR-SYN-005 no personal types v1 | **OK** | `CREATABLE_SYNERGY_TYPES` fixed enum | Align product vocabulary (ammo/slot) |
 | DBR-SYN-012 immutable type/subtype | **OK** | Service rejects type/subtype change | — |
 | DBR-SYN-004a one library row per designation | **Partial** | Merge API exists; create may still allow dups depending on service | Enforce unique (type, subType) per user on create |
-| DBR-SYN-015 link kinds (12) | **Partial** | `synergyLinkKindSchema`: weapon, weapon_perk, origin_trait, armor_set_bonus, exotic_armor, artifact_perk only | Add aspect, fragment, armor_mod, melee, grenade, super + matchers |
+| DBR-SYN-015 link kinds (12) | **Done Phase D** | Full enum + pickers + kit/mod matchers | — |
 | DBR-SYN-014 exotic trait as weapon_perk | **OK** | Kind + labeling (BR-SYN-012 path) | — |
 | DBR-SYN-014a perk family match | **Gap** | `coverage.ts` exact `perkHash` | Family map enhanced↔base for match |
 | DBR-SYN-014b armor_set_bonus tier on link | **OK** | `bonusPieces` 2\|4; coverage `count >= needed` | Ensure UI always sets tier on create |
-| DBR-SYN-017 ammo vs weapon_slot | **Gap** | Still `primary_weapon` / `special_weapon` / `heavy_weapon` in creatable types | Migrate to `ammo` + `weapon_slot` (+ legacy map) |
+| DBR-SYN-017 ammo vs weapon_slot | **Done Phase D** | Creatable `ammo`/`weapon_slot`; old types legacy | — |
 | DBR-SYN-007–010 required links | **Done Phase C** | `synergy_links.required` + zod `required?: boolean` | Soft evidence unchanged |
 | DBR-SYN-010a pins satisfy required | **Done Phase C** | Wishlist match → fail; pin match → pass | Artifact_perk uses applied config |
 | BR-SYN-019a no class/movement links | **OK** | Not in schema | Keep excluded |
@@ -171,7 +171,7 @@
 | **A** | Set save mins (Weapon/Armor ≥2, Mod multi-piece) + error codes | **Shipped 2026-07-29** — attach/remove gates; see `setMinimumOccupancy.ts` |
 | **B** | Default complete: kit bar + artifact filled (even before per-variant kit split) | **Shipped 2026-07-29** — `defaultLoadoutCompleteness.ts` |
 | **C** | Synergy: `required` flag + default save gate using equip-ready / kit claims | **Shipped 2026-07-29** — `assertRequiredLinks.ts` |
-| **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | DBR-SYN-015, 017 |
+| **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | **Shipped 2026-07-30** |
 | **E** | Data model: variant-owned kit; tree change confirm + wipe | DBR-SUB-003, DBR-BLD-008–009 |
 | **F** | Armor Set bonus constraint | DBR-SETB-003–006 |
 | **G** | Perk family match; class-item exotic_armor config links | DBR-SYN-014a, DBR-ID-011 |

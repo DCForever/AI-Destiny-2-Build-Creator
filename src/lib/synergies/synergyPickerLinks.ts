@@ -76,7 +76,13 @@ export type SynergyPickerLinkKind =
   | "weapon_perk"
   | "armor_set_bonus"
   | "exotic_armor"
-  | "artifact_perk";
+  | "artifact_perk"
+  | "aspect"
+  | "fragment"
+  | "armor_mod"
+  | "melee"
+  | "grenade"
+  | "super";
 
 export async function searchSynergyLinkPickerItems(
   kind: SynergyPickerLinkKind,
@@ -182,6 +188,76 @@ export async function searchSynergyLinkPickerItems(
         name: a.name,
         description: a.intrinsic?.description ?? "",
         icon: a.icon,
+      }));
+    return finalizePickerItems(items, limit, query);
+  }
+
+  if (kind === "aspect" || kind === "fragment") {
+    const store = kind === "aspect" ? "aspects" : "fragments";
+    const rows = await entityCache.getStore(store);
+    const items = rows
+      .filter(
+        (r) =>
+          !q ||
+          matchDescriptionQuery(q, {
+            name: r.name,
+            searchName: r.searchName,
+            description: r.description,
+          }).matched,
+      )
+      .map((r) => ({
+        kind,
+        hash: r.hash,
+        name: r.name,
+        description: r.description ?? "",
+        icon: r.icon,
+      }));
+    return finalizePickerItems(items, limit, query);
+  }
+
+  if (kind === "armor_mod") {
+    const mods = await entityCache.getStore("mods");
+    const items = mods
+      .filter(
+        (m) =>
+          !q ||
+          matchDescriptionQuery(q, {
+            name: m.name,
+            searchName: m.searchName,
+            description: m.description,
+          }).matched,
+      )
+      .map((m) => ({
+        kind: "armor_mod" as const,
+        hash: m.hash,
+        name: m.name,
+        description: m.description ?? "",
+        icon: m.icon,
+        perkHash: m.hash,
+      }));
+    return finalizePickerItems(items, limit, query);
+  }
+
+  if (kind === "melee" || kind === "grenade" || kind === "super") {
+    const abilities = await entityCache.getStore("abilities");
+    const items = abilities
+      .filter((a) => a.kind === kind)
+      .filter(
+        (a) =>
+          !q ||
+          matchDescriptionQuery(q, {
+            name: a.name,
+            searchName: a.searchName,
+            description: a.description,
+          }).matched,
+      )
+      .map((a) => ({
+        kind,
+        hash: a.hash,
+        name: a.name,
+        description: a.description ?? "",
+        icon: a.icon,
+        perkHash: a.hash,
       }));
     return finalizePickerItems(items, limit, query);
   }

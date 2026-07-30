@@ -1,4 +1,8 @@
-import type { CreatableSynergyType, SynergyType } from "@/lib/synergies/schemas";
+import {
+  CREATABLE_SYNERGY_TYPES,
+  type CreatableSynergyType,
+  type SynergyType,
+} from "@/lib/synergies/schemas";
 
 export const SUB_TYPE_REQUIRED_TYPES = [
   "verb",
@@ -7,6 +11,8 @@ export const SUB_TYPE_REQUIRED_TYPES = [
   "super",
   "element",
   "weapon_archetype",
+  "ammo",
+  "weapon_slot",
 ] as const;
 
 export type SubTypeRequiredType = (typeof SUB_TYPE_REQUIRED_TYPES)[number];
@@ -20,5 +26,5 @@ export function allowsBaseSubType(type: SynergyType): boolean {
 }
 
 export function isCreatableSynergyType(type: string): type is CreatableSynergyType {
-  return !["kinetic_weapon", "damage"].includes(type);
+  return (CREATABLE_SYNERGY_TYPES as readonly string[]).includes(type);
 }

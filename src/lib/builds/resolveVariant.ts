@@ -20,6 +20,8 @@ export type SlotClaim = {
   source: "set" | "build_exotic_armor" | "variant_exotic_weapon" | "pair_set";
   setId?: string;
   selectedPerks?: number[];
+  /** Armor combat mods on the piece (armor_mod link matching). */
+  modHashes?: number[] | null;
   instanceId?: string | null;
 };
 
@@ -55,6 +57,7 @@ export type ExpandedSetItem = {
   itemHash: number;
   itemName: string;
   selectedPerks?: number[];
+  modHashes?: number[] | null;
   setId: string;
   setType: SetType;
   instanceId?: string | null;
@@ -123,6 +126,7 @@ export async function loadExpandedAttachmentItems(
       itemHash: cfg.itemHash,
       itemName: cfg.itemName,
       selectedPerks: cfg.selectedPerks,
+      modHashes: cfg.modHashes ?? null,
       setId: attachment.setId,
       setType: set.type,
       instanceId: cfg.instanceId ?? null,
@@ -135,6 +139,7 @@ export async function loadExpandedAttachmentItems(
     itemHash: item.itemHash,
     itemName: item.itemName,
     selectedPerks: item.selectedPerks,
+    modHashes: item.modHashes,
     setId: attachment.setId,
     setType: set.type,
     instanceId: item.instanceId,
@@ -149,6 +154,7 @@ export function itemsToSlotClaims(items: ExpandedSetItem[]): SlotClaim[] {
     source: item.setType === "pair" ? "pair_set" : "set",
     setId: item.setId,
     selectedPerks: item.selectedPerks,
+    modHashes: item.modHashes,
     instanceId: item.instanceId ?? null,
   }));
 }

@@ -38,6 +38,8 @@ function synergyChannel(type: string, subType: string | null | undefined): strin
     case "solo":
       return "var(--success)";
     case "dps":
+    case "ammo":
+    case "weapon_slot":
     case "primary_weapon":
     case "special_weapon":
     case "heavy_weapon":

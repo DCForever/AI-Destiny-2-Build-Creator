@@ -140,19 +140,51 @@ describe("synergyLinkFromHit", () => {
     });
   });
 
+  it("maps kit kinds to synergy links", () => {
+    expect(
+      synergyLinkFromHit(
+        hit({ kind: "aspect", id: "aspect:1", name: "Knockout", hash: 11 }),
+      ),
+    ).toEqual({ kind: "aspect", displayName: "Knockout", itemHash: 11 });
+    expect(
+      synergyLinkFromHit(
+        hit({ kind: "mod", id: "mod:1", name: "Font of Wisdom", hash: 22 }),
+      ),
+    ).toEqual({
+      kind: "armor_mod",
+      displayName: "Font of Wisdom",
+      itemHash: 22,
+      perkHash: 22,
+    });
+    expect(
+      synergyLinkFromHit(
+        hit({
+          kind: "ability",
+          id: "ability:1",
+          name: "Hammer Strike",
+          hash: 33,
+          meta: { abilityKind: "melee" },
+        }),
+      ),
+    ).toEqual({
+      kind: "melee",
+      displayName: "Hammer Strike",
+      itemHash: 33,
+      perkHash: 33,
+    });
+  });
+
   it("returns null when actions.synergy is false or identity missing", () => {
-    const nonSynergy: CompositionKind[] = [
-      "armor",
-      "mod",
-      "aspect",
-      "fragment",
-      "ability",
-    ];
-    for (const kind of nonSynergy) {
-      expect(
-        synergyLinkFromHit(hit({ kind, id: `${kind}:1`, name: "X", hash: 1 })),
-      ).toBeNull();
-    }
+    // Legendary armor is still set-only (not a synergy object kind).
+    expect(
+      synergyLinkFromHit(hit({ kind: "armor", id: "armor:1", name: "X", hash: 1 })),
+    ).toBeNull();
+    // Ability without melee/grenade/super meta cannot map to a link kind.
+    expect(
+      synergyLinkFromHit(
+        hit({ kind: "ability", id: "ability:x", name: "Dodge", hash: 1 }),
+      ),
+    ).toBeNull();
 
     expect(
       synergyLinkFromHit(

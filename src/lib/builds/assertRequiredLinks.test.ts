@@ -127,6 +127,21 @@ describe("isRequiredLinkSatisfied", () => {
       }),
     ).toEqual({ ok: false, reason: "unmatched" });
   });
+
+  it("matches required aspect from applied kit without pins", () => {
+    const l = link({
+      kind: "aspect",
+      displayName: "Roaring Flames",
+      required: true,
+    });
+    expect(
+      isRequiredLinkSatisfied(l, {
+        readyClaims: [],
+        allClaims: [],
+        ctx: { kit: { aspects: ["Roaring Flames"] } },
+      }),
+    ).toEqual({ ok: true });
+  });
 });
 
 describe("collectRequiredLinkFailures / assert", () => {

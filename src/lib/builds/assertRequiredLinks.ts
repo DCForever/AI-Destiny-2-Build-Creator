@@ -8,6 +8,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
   matchEvidenceLink,
   type MatchEvidenceContext,
+  type SubclassKitMatchFields,
 } from "@/lib/builds/coverage";
 import {
   buildInventoryPinIndex,
@@ -28,6 +29,16 @@ const COMBAT_SLOTS: EquipmentSlot[] = [
   "legs",
   "class_item",
 ];
+
+/** Link kinds satisfied by applied kit/config, not gear pins. */
+const APPLIED_KIT_KINDS = new Set([
+  "aspect",
+  "fragment",
+  "super",
+  "melee",
+  "grenade",
+  "artifact_perk",
+]);
 
 export type RequiredLinkFailure = {
   synergyId: string;
@@ -73,8 +84,8 @@ export function isRequiredLinkSatisfied(
 ): { ok: true } | { ok: false; reason: RequiredLinkFailure["reason"] } {
   const ctx = input.ctx ?? {};
 
-  if (link.kind === "artifact_perk") {
-    const ok = matchEvidenceLink(link, [], ctx);
+  if (APPLIED_KIT_KINDS.has(link.kind)) {
+    const ok = matchEvidenceLink(link, input.allClaims, ctx);
     return ok ? { ok: true } : { ok: false, reason: "unmatched" };
   }
 
@@ -96,6 +107,7 @@ export function collectRequiredLinkFailures(input: {
   inventory: InventoryPinIndex;
   setBonusByItemHash?: Map<number, SetBonusRecord>;
   artifactConfig?: number[] | null;
+  kit?: SubclassKitMatchFields | null;
 }): RequiredLinkFailure[] {
   const allClaims = Object.values(input.resolved.equipment).filter(
     (c): c is SlotClaim => c != null,
@@ -104,6 +116,7 @@ export function collectRequiredLinkFailures(input: {
   const ctx: MatchEvidenceContext = {
     setBonusByItemHash: input.setBonusByItemHash,
     artifactConfig: input.artifactConfig,
+    kit: input.kit,
   };
 
   const failures: RequiredLinkFailure[] = [];
@@ -135,6 +148,7 @@ export function assertRequiredLinksSatisfied(input: {
   inventory: InventoryPinIndex;
   setBonusByItemHash?: Map<number, SetBonusRecord>;
   artifactConfig?: number[] | null;
+  kit?: SubclassKitMatchFields | null;
 }): void {
   const unsatisfied = collectRequiredLinkFailures(input);
   if (unsatisfied.length === 0) return;
