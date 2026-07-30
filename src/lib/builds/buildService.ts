@@ -31,6 +31,7 @@ import {
   resolveDesignatedSynergies,
   type SynergyTypeDesignation,
 } from "@/lib/builds/resolveDesignatedSynergies";
+import { assertRequiredLinksSatisfied } from "@/lib/builds/assertRequiredLinks";
 import { buildInventoryPinIndex, computeEquipReady } from "@/lib/builds/equipReady";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
 import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
@@ -726,6 +727,16 @@ export async function validateVariantSave(
       fragmentCapacity: capacity,
       capacityResolved,
       artifactHash: variant.artifactHash,
+      artifactConfig: variant.artifactConfig,
+    });
+
+    // Gate 2: required synergy links → equip-ready pins only (DBR-SYN-010a).
+    const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
+    const inventory = buildInventoryPinIndex(listInventoryItems(db, userId));
+    assertRequiredLinksSatisfied({
+      synergies: bridge.matchedSynergies,
+      resolved,
+      inventory,
       artifactConfig: variant.artifactConfig,
     });
   }

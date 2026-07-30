@@ -48,6 +48,8 @@ export const synergyLinkSchema = z.object({
   bonusPieces: z.union([z.literal(2), z.literal(4)]).optional(),
   bonusName: z.string().optional(),
   armorSetHash: z.number().int().optional(),
+  /** Required evidence (default hard gate when designated). Omitted → false. */
+  required: z.boolean().optional(),
 });
 
 export const createSynergySchema = z.object({

@@ -68,11 +68,23 @@ function linkSummary(link: SynergyLinkRecord): LinkMatchSummary {
   return { kind: link.kind, displayName: link.displayName, id: link.id };
 }
 
+export type MatchEvidenceContext = {
+  setBonusByItemHash?: Map<number, SetBonusRecord>;
+  /** Selected artifact perk hashes on the variant (artifact_perk links). */
+  artifactConfig?: number[] | null;
+};
+
 export function matchEvidenceLink(
   link: SynergyLinkRecord,
   claims: SlotClaim[],
-  setBonusByItemHash?: Map<number, SetBonusRecord>,
+  setBonusByItemHashOrCtx?: Map<number, SetBonusRecord> | MatchEvidenceContext,
 ): boolean {
+  const ctx: MatchEvidenceContext =
+    setBonusByItemHashOrCtx instanceof Map
+      ? { setBonusByItemHash: setBonusByItemHashOrCtx }
+      : (setBonusByItemHashOrCtx ?? {});
+  const setBonusByItemHash = ctx.setBonusByItemHash;
+
   switch (link.kind) {
     case "weapon":
       return link.itemHash != null && claims.some((c) => c.itemHash === link.itemHash);
@@ -86,6 +98,18 @@ export function matchEvidenceLink(
         return claims.some((c) => (c.selectedPerks ?? []).includes(link.originTraitHash!));
       }
       return false;
+    case "exotic_armor":
+      return (
+        link.itemHash != null &&
+        claims.some(
+          (c) => ARMOR_SLOTS.includes(c.slot) && c.itemHash === link.itemHash,
+        )
+      );
+    case "artifact_perk": {
+      const hash = link.perkHash ?? link.itemHash;
+      if (hash == null) return false;
+      return (ctx.artifactConfig ?? []).includes(hash);
+    }
     case "armor_set_bonus": {
       const needed = link.bonusPieces ?? 2;
       if (link.armorSetHash != null && setBonusByItemHash) {

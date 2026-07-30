@@ -126,6 +126,8 @@ export const synergyLinks = sqliteTable("synergy_links", {
   bonusPieces: integer("bonus_pieces"),
   bonusName: text("bonus_name"),
   armorSetHash: integer("armor_set_hash"),
+  /** 1 = required evidence link (default hard gate); 0 = soft evidence only. */
+  required: integer("required").notNull().default(0),
 });
 
 export const builds = sqliteTable("builds", {

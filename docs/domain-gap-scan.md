@@ -23,7 +23,7 @@
 | P0 | Per-variant subclass kit (aspects/fragments/abilities) | **Gap** | Subclass JSON lives on **Build** row, not per variant |
 | P0 | Default kit bar (aspects + fragments at capacity + Super/melee/grenade) | **Done (Phase B)** | `defaultLoadoutCompleteness` + `assertFullCombatLoadout` |
 | P0 | Artifact filled on default | **Done (Phase B)** | Hash + non-empty config required on default save |
-| P0 | Required-link hard gate on default (pins only) | **Gap** | No `required` on `synergy_links`; no save gate |
+| P0 | Required-link hard gate on default (pins only) | **Done (Phase C)** | `required` column + `assertRequiredLinksSatisfied` on default save |
 | P1 | Expanded synergy link kinds | **Partial** | Schema: 6 kinds; product: 12 kinds |
 | P1 | Ammo / weapon_slot designation types | **Gap** | Creatable types still use primary/special/heavy_weapon |
 | P1 | Armor Set bonus package constraint | **Gap** | No constraint field / codes in set save |
@@ -54,8 +54,8 @@
 | DBR-SYN-014a perk family match | **Gap** | `coverage.ts` exact `perkHash` | Family map enhanced↔base for match |
 | DBR-SYN-014b armor_set_bonus tier on link | **OK** | `bonusPieces` 2\|4; coverage `count >= needed` | Ensure UI always sets tier on create |
 | DBR-SYN-017 ammo vs weapon_slot | **Gap** | Still `primary_weapon` / `special_weapon` / `heavy_weapon` in creatable types | Migrate to `ammo` + `weapon_slot` (+ legacy map) |
-| DBR-SYN-007–010 required links | **Gap** | **No `required` column** on `synergy_links` schema | Schema + API + default save gate |
-| DBR-SYN-010a pins satisfy required | **Gap** | Equip-ready exists for equip/export only | Wire required links to equip-ready claims on default save |
+| DBR-SYN-007–010 required links | **Done Phase C** | `synergy_links.required` + zod `required?: boolean` | Soft evidence unchanged |
+| DBR-SYN-010a pins satisfy required | **Done Phase C** | Wishlist match → fail; pin match → pass | Artifact_perk uses applied config |
 | BR-SYN-019a no class/movement links | **OK** | Not in schema | Keep excluded |
 
 **Key files**: `src/lib/synergies/schemas.ts`, `src/lib/builds/coverage.ts`, `src/lib/db/schema.ts` (`synergy_links`), debug Synergies UI.
@@ -170,7 +170,7 @@
 | --- | --- | --- |
 | **A** | Set save mins (Weapon/Armor ≥2, Mod multi-piece) + error codes | **Shipped 2026-07-29** — attach/remove gates; see `setMinimumOccupancy.ts` |
 | **B** | Default complete: kit bar + artifact filled (even before per-variant kit split) | **Shipped 2026-07-29** — `defaultLoadoutCompleteness.ts` |
-| **C** | Synergy: `required` flag + default save gate using equip-ready / kit claims | DBR-SYN-007–010a |
+| **C** | Synergy: `required` flag + default save gate using equip-ready / kit claims | **Shipped 2026-07-29** — `assertRequiredLinks.ts` |
 | **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | DBR-SYN-015, 017 |
 | **E** | Data model: variant-owned kit; tree change confirm + wipe | DBR-SUB-003, DBR-BLD-008–009 |
 | **F** | Armor Set bonus constraint | DBR-SETB-003–006 |

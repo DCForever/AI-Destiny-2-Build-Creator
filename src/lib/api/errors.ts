@@ -34,6 +34,8 @@ export const API_ERROR_CODES = {
   MOD_SET_MIN_SLOTS: "MOD_SET_MIN_SLOTS",
   /** Pair set missing exotic weapon or exotic armor (BR-SLOT-014). */
   PAIR_INCOMPLETE: "PAIR_INCOMPLETE",
+  /** Default save: required synergy link not satisfied by equip-ready pins (DBR-SYN-010a). */
+  REQUIRED_LINK_UNSATISFIED: "REQUIRED_LINK_UNSATISFIED",
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];

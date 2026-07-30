@@ -11,7 +11,17 @@ const ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_
  * Subclass kit that satisfies DBR-SUB-006 when fragment capacity is unknown
  * (non-empty fragments) or known capacity ≤ fragment count.
  */
-export const COMPLETE_DEFAULT_SUBCLASS_KIT = {
+export const COMPLETE_DEFAULT_SUBCLASS_KIT: {
+  name: string;
+  super: string;
+  classAbility: string;
+  movement: string;
+  melee: string;
+  grenade: string;
+  aspects: string[];
+  fragments: string[];
+  rationale: string;
+} = {
   name: "Sunbreaker",
   super: "Hammer of Sol",
   classAbility: "Rally Barricade",
@@ -26,14 +36,18 @@ export const COMPLETE_DEFAULT_SUBCLASS_KIT = {
     "Ember of Combustion",
   ],
   rationale: "",
-} as const;
+};
 
 /** Artifact selection that satisfies DBR-ART-003a on default. */
-export const COMPLETE_DEFAULT_ARTIFACT = {
+export const COMPLETE_DEFAULT_ARTIFACT: {
+  artifactHash: number;
+  artifactName: string;
+  artifactConfig: number[];
+} = {
   artifactHash: 9_001,
   artifactName: "Test Artifact",
   artifactConfig: [11, 22],
-} as const;
+};
 
 /** Seeds weapon + armor + mod sets that satisfy default full-combat-loadout validation. */
 export async function seedFullCombatAttachments(

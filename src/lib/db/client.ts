@@ -120,6 +120,16 @@ function ensureVariantArtifactColumns(db: Database.Database): void {
   }
 }
 
+function ensureSynergyLinkRequiredColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(synergy_links)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "required")) {
+    db.exec(
+      "ALTER TABLE synergy_links ADD COLUMN required INTEGER NOT NULL DEFAULT 0",
+    );
+  }
+}
+
 function ensureBuildSynergyTypesTable(db: Database.Database): void {
   const typeTable = db
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='build_synergy_types'")
@@ -307,7 +317,8 @@ export function runMigrations(db: Database.Database): void {
       armor_set_name TEXT,
       bonus_pieces INTEGER,
       bonus_name TEXT,
-      armor_set_hash INTEGER
+      armor_set_hash INTEGER,
+      required INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_synergy_links_synergy ON synergy_links(synergy_id);
 
@@ -375,6 +386,7 @@ export function runMigrations(db: Database.Database): void {
   ensureSetItemInstanceIdColumn(db);
   ensureBuildsIdentityColumns(db);
   ensureVariantArtifactColumns(db);
+  ensureSynergyLinkRequiredColumn(db);
   ensureSoftStatTargetsColumn(db);
   ensureSetOptimizerColumns(db);
   ensureBuildSynergyTypesTable(db);

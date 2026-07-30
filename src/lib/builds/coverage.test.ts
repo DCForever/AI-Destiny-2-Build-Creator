@@ -24,6 +24,7 @@ function link(partial: Partial<SynergyLinkRecord> & Pick<SynergyLinkRecord, "kin
     bonusPieces: partial.bonusPieces ?? null,
     bonusName: partial.bonusName ?? null,
     armorSetHash: partial.armorSetHash ?? null,
+    required: partial.required ?? false,
   };
 }
 
