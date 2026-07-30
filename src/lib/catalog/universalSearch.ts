@@ -7,6 +7,11 @@ import type { EntityStores, StoreName } from "@/lib/manifest/types/stores";
 import { formatWeaponPerkSourceLabel } from "@/lib/synergies/weaponPerkSourceLabel";
 
 import {
+  buildWeaponRollDetail,
+  type WeaponRollDetail,
+} from "@/lib/presentation/weaponRollDetail";
+
+import {
   COMPOSITION_KINDS,
   hitActions,
   type CompositionKind,
@@ -581,6 +586,9 @@ export async function searchCompositionCatalog(
   const truncated = pooled.length > limit;
   const hits = pooled.slice(0, limit).map(stripRank);
 
+  // DBR-UI-007: attach can-roll detail on weapon hits (final page only).
+  await attachWeaponRollDetails(getStore, hits);
+
   let code: SearchCompositionCatalogResult["code"];
   if (hits.length === 0 && input.kinds?.length) {
     code = "FILTERED_EMPTY";
@@ -593,4 +601,40 @@ export async function searchCompositionCatalog(
     truncated,
     ...(code ? { code } : {}),
   };
+}
+
+/** Populate meta.rollDetail for weapon / exotic weapon hits when perk data exists. */
+async function attachWeaponRollDetails(
+  getStore: EntityStoreGetter,
+  hits: CompositionSearchHit[],
+): Promise<void> {
+  const weaponHits = hits.filter(
+    (h) =>
+      (h.kind === "weapon" || h.kind === "exotic_weapon") && h.hash != null,
+  );
+  if (weaponHits.length === 0) return;
+
+  const [perks, weapons, exoticWeapons] = await Promise.all([
+    getStore("weapon-perks"),
+    getStore("weapons"),
+    getStore("exotic-weapons"),
+  ]);
+  const perkNames = new Map(perks.map((p) => [p.hash, p.name] as const));
+  const byHash = new Map<
+    number,
+    { perkColumns?: { column: number; curated: number[]; randomized: number[] }[] }
+  >();
+  for (const w of weapons) byHash.set(w.hash, w);
+  for (const w of exoticWeapons) byHash.set(w.hash, w);
+
+  for (const hit of weaponHits) {
+    const def = byHash.get(hit.hash!);
+    if (!def) continue;
+    const rollDetail: WeaponRollDetail = buildWeaponRollDetail({
+      perkColumns: def.perkColumns ?? [],
+      perkNames,
+    });
+    if (rollDetail.canRollColumns.length === 0) continue;
+    hit.meta = { ...(hit.meta ?? {}), rollDetail };
+  }
 }

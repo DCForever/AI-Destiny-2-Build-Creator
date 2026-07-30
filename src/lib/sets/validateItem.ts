@@ -111,7 +111,11 @@ export async function resolveItemDisplayName(
   const fromManifest = await resolveFromManifestInventory(itemHash);
   if (fromManifest?.valid) {
     return {
-      name: fromManifest.name ?? fallbackName ?? `Unknown (${itemHash})`,
+      name:
+        fromManifest.name ??
+        (fallbackName?.trim() && !/^\d+$/.test(fallbackName.trim())
+          ? fallbackName.trim()
+          : "Unknown item"),
       icon: fromManifest.icon ?? null,
       description: fromManifest.description ?? "",
       element: fromManifest.element ?? null,
@@ -119,7 +123,10 @@ export async function resolveItemDisplayName(
     };
   }
   return {
-    name: fallbackName ?? `Unknown (${itemHash})`,
+    name:
+      fallbackName?.trim() && !/^\d+$/.test(fallbackName.trim())
+        ? fallbackName.trim()
+        : "Unknown item",
     icon: null,
     description: "",
     element: null,

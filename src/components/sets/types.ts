@@ -47,6 +47,8 @@ export type SetItem = {
   originTraitName?: string | null;
   selectedTraitPerks?: SetItemPerkName[];
   availableTraitPerks?: SetItemPerkName[];
+  /** Weapon can-roll / selected / craft detail when enriched (DBR-UI-007). */
+  rollDetail?: import("@/lib/presentation/weaponRollDetail").WeaponRollDetail | null;
   linkedSynergies?: SetItemLinkedSynergy[];
   statValues?: Partial<Record<string, number>> | null;
   totalStats?: number | null;

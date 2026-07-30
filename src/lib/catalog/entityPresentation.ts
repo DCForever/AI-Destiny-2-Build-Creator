@@ -5,6 +5,7 @@
 
 import { normalizeName } from "@/lib/manifest/normalize";
 import type { EntityStores, StoreName } from "@/lib/manifest/types/stores";
+import { primaryEntityLabel } from "@/lib/presentation/displayName";
 import { getServices } from "@/lib/services";
 
 /** Stores that can yield a usable UI presentation. */
@@ -311,13 +312,16 @@ export async function resolveEntityPresentations(
   return refs.map((ref) => {
     if (ref.by === "hash") {
       const stores = ref.stores ?? DEFAULT_HASH_STORES;
-      return (
-        lookupHash(loaded, ref.hash, stores) ??
-        emptyPresentation(`Unknown (${ref.hash})`)
-      );
+      const found = lookupHash(loaded, ref.hash, stores);
+      if (found) return found;
+      // DBR-UI-006: primary name never bare hash; hash is data on presentation.hash.
+      return {
+        ...emptyPresentation(primaryEntityLabel(null, ref.hash, "item")),
+        hash: ref.hash,
+      };
     }
     const hit = lookupName(loaded, ref.name, ref.stores);
-    return hit ?? emptyPresentation(ref.name);
+    return hit ?? emptyPresentation(primaryEntityLabel(ref.name, null, "entity"));
   });
 }
 

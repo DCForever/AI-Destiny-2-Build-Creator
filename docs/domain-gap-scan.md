@@ -35,8 +35,8 @@
 | P2 | Artifact filled on default | **Partial** | Store/apply config; not asserted on default complete |
 | P2 | Four areas UI | **Partial** | Composer tabs General / Subclass / Armor / Weapon (+ Finish) |
 | P2 | Mini kit strip | **Partial** | `subclassPresentation` icons exist; not full five-ability strip guarantee |
-| P2 | Can-roll / craft on weapon detail | **Gap** | Index exists; no product detail UI requirement met |
-| P2 | No bare hashes primary UI | **Partial** | Generally names; no systematic footer rule |
+| P2 | Can-roll / craft on weapon detail | **Done (Phase H)** | `weaponRollDetail` + Catalog/Set detail panels |
+| P2 | No bare hashes primary UI | **Done (Phase H)** | `displayName` primary + hash footer discipline |
 | P3 | Soft coverage / exotic limits / mod energy / kit capacity hard caps | **OK** | Core evaluators present |
 
 ---
@@ -149,8 +149,8 @@
 | Rule | Status | Evidence | Gap action |
 | --- | --- | --- | --- |
 | DBR-UI-001–005 icon-first | **Partial** | Catalog/build use icons widely | Audit dense text tables |
-| DBR-UI-006 no bare hash labels | **Partial** | Names preferred; fallbacks like ``Exotic (${hash})`` in resolve | Ban hash-as-title; footer only |
-| DBR-UI-007 can-roll + craft on detail | **Gap** | `perkWeaponIndex` / LLM tools; not product weapon detail stack | Catalog/Set weapon detail panels |
+| DBR-UI-006 no bare hash labels | **Done Phase H** | `entityLabelParts` / primary never bare hash; hash footer on detail | — |
+| DBR-UI-007 can-roll + craft on detail | **Done Phase H** | `buildWeaponRollDetail` + UniversalHit / Sets / InstancePerkGrid | Craft only when known |
 | DBR-UI-008 acquire when data exists | **Partial** | Some source fields elsewhere | Detail surfaces when data loaded |
 
 ---
@@ -175,7 +175,7 @@
 | **E** | Data model: variant-owned kit; tree change confirm + wipe | **Shipped 2026-07-30** — `subclassKit.ts` |
 | **F** | Armor Set bonus constraint | **Shipped 2026-07-30** — `armorSetBonusConstraint.ts` |
 | **G** | Perk family match; class-item exotic_armor config links | **Shipped 2026-07-30** — `perkFamily.ts`, DBR-ID-011 match |
-| **H** | Presentation: can-roll/craft detail; hash footer discipline | DBR-UI-006–007 |
+| **H** | Presentation: can-roll/craft detail; hash footer discipline | **Shipped 2026-07-30** — `presentation/*`, Catalog/Set detail |
 
 ---
 

@@ -202,7 +202,9 @@ describe("entityPresentation", () => {
 
   it("returns empty miss without throwing", async () => {
     const p = await resolveEntityPresentation({ by: "hash", hash: 99999 });
-    expect(p.name).toContain("99999");
+    // DBR-UI-006: primary is not a bare hash; hash retained on presentation.
+    expect(p.name).toBe("Unknown item");
+    expect(p.hash).toBe(99999);
     expect(p.icon).toBeNull();
     expect(p.description).toBe("");
   });

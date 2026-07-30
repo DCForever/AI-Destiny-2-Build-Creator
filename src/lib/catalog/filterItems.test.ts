@@ -232,7 +232,9 @@ describe("filterArmorCatalog", () => {
     );
     expect(results).toHaveLength(2);
     const unknown = results.find((r) => r.hash === 9999);
-    expect(unknown?.name).toContain("9999");
+    // DBR-UI-006: primary label is not a bare hash; hash remains on the row.
+    expect(unknown?.name).toBe("Unknown item");
+    expect(unknown?.hash).toBe(9999);
     expect(unknown?.owned).toBe(true);
   });
 
