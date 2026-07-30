@@ -250,6 +250,42 @@ describe("buildService", () => {
     expect((forked as { forkedFromId?: string })?.forkedFromId).toBe(build!.id);
   });
 
+  it("rejects class change after create (DBR-BLD-007)", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b-class-lock", 3, "Player");
+    seedDefaultSynergies(db, user.id);
+
+    const build = await createUserBuild(db, user.id, {
+      name: "Titan Build",
+      className: "Titan",
+      subclass: {
+        name: "Sunbreaker",
+        super: "",
+        classAbility: "",
+        movement: "",
+        melee: "",
+        grenade: "",
+        aspects: [],
+        fragments: [],
+        rationale: "",
+      },
+      synergyTypes: [{ type: "melee", subType: "Base" }],
+    });
+
+    const { updateUserBuild } = await import("@/lib/builds/buildService");
+    await expect(
+      updateUserBuild(db, user.id, build!.id, { className: "Hunter" }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.CLASS_IMMUTABLE });
+
+    // Same class is a no-op, not an error.
+    const same = await updateUserBuild(db, user.id, build!.id, {
+      className: "Titan",
+      name: "Titan Build Renamed",
+    });
+    expect(same?.className).toBe("Titan");
+    expect(same?.name).toBe("Titan Build Renamed");
+  });
+
   it("creates build with unmatched synergy type (no library record)", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b-unmatched", 3, "Player");

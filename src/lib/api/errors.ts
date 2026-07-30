@@ -40,6 +40,8 @@ export const API_ERROR_CODES = {
   ARMOR_SET_BONUS_MISMATCH: "ARMOR_SET_BONUS_MISMATCH",
   /** Armor set constraint: member count below target tier (DBR-SETB-004). */
   ARMOR_SET_BONUS_INCOMPLETE: "ARMOR_SET_BONUS_INCOMPLETE",
+  /** Class cannot change after create (DBR-BLD-007). */
+  CLASS_IMMUTABLE: "CLASS_IMMUTABLE",
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];

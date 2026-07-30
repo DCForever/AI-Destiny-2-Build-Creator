@@ -394,6 +394,7 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | `ARMOR_SET_BONUS_MISMATCH` | BR-SET-054–055, [DBR-SETB-004](./domain-business-rules.md) | [DAC-DST-012](./domain-acceptance-criteria.md) |
 | `ARMOR_SET_BONUS_INCOMPLETE` | BR-SET-055, [DBR-SETB-004](./domain-business-rules.md) | [DAC-DST-012](./domain-acceptance-criteria.md) |
 | `REQUIRED_LINK_UNSATISFIED` | [DBR-SYN-010a](./domain-business-rules.md), BR-VAR-050 | [DAC-VAR-004c](./domain-acceptance-criteria.md) |
+| `CLASS_IMMUTABLE` | BR-BLD-020, [DBR-BLD-007](./domain-business-rules.md) | Class fixed after create |
 
 ---
 

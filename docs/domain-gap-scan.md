@@ -28,13 +28,13 @@
 | P1 | Ammo / weapon_slot designation types | **Done (Phase D)** | Creatable `ammo` + `weapon_slot`; legacy weapon types readable |
 | P1 | Armor Set bonus package constraint | **Done (Phase F)** | `set_bonus_constraint` + attach/fill/update gates |
 | P1 | Tree change wipe + identity confirm | **Done (Phase E)** | `subclassTree` identity + wipe all variant kits |
-| P1 | Class immutable after create | **Gap** | `updateBuild` accepts `className` change |
+| P1 | Class immutable after create | **Done (Phase 2)** | `CLASS_IMMUTABLE` on update; General tab locked live |
 | P2 | armor_set_bonus link tier match | **OK** | `bonusPieces` + coverage count ≥ tier |
 | P2 | weapon_perk family (base/enhanced) match | **Done (Phase G)** | `perkFamily.ts` name-based base↔enhanced |
 | P2 | Exotic class-item Synergy = perk config | **Done (Phase G)** | ClassItem shell ignored; `perkHash` on class_item |
-| P2 | Artifact filled on default | **Partial** | Store/apply config; not asserted on default complete |
-| P2 | Four areas UI | **Partial** | Composer tabs General / Subclass / Armor / Weapon (+ Finish) |
-| P2 | Mini kit strip | **Partial** | `subclassPresentation` icons exist; not full five-ability strip guarantee |
+| P2 | Artifact filled on default | **Done (Phase B)** | Hash + non-empty config on default save |
+| P2 | Four areas UI | **Done (Phase 2)** | Four area tabs + Finish as chrome (`isArea`) |
+| P2 | Mini kit strip | **Done (Phase 2)** | `MiniKitStrip` — five abilities always + aspects/fragments |
 | P2 | Can-roll / craft on weapon detail | **Done (Phase H)** | `weaponRollDetail` + Catalog/Set detail panels |
 | P2 | No bare hashes primary UI | **Done (Phase H)** | `displayName` primary + hash footer discipline |
 | P3 | Soft coverage / exotic limits / mod energy / kit capacity hard caps | **OK** | Core evaluators present |
@@ -71,10 +71,10 @@
 | DBR-ID-006–006b exotic weapon promote/demote | **Partial** | Build vs variant exotic weapon fields | Explicit promote/demote UX + identity flags |
 | DBR-ID-007 Super pin | **OK** | `pinnedSuper` identity | — |
 | DBR-ID-008 confirm/fork | **OK** | `IDENTITY_CONFIRM_REQUIRED` | — |
-| DBR-ID-008a tree change as identity | **Gap** | Tree not in `identityFieldsChanged` | Add subclass tree/name to identity set + confirm/fork |
-| DBR-BLD-007 class fixed after create | **Gap** | `updateBuild` uses `input.className ?? existing` | Reject class change after create |
-| DBR-BLD-008–009 tree change wipe kit | **Gap** | Kit is build-level; no wipe-to-baseline | Per-variant kit + wipe on tree change |
-| DBR-BLD-010 mini kit strip | **Partial** | `subclassPresentation` on cards/identity | Ensure aspects+fragments+5 abilities always in strip |
+| DBR-ID-008a tree change as identity | **Done Phase E** | Tree in identityFieldsChanged + wipe path | — |
+| DBR-BLD-007 class fixed after create | **Done Phase 2** | `CLASS_IMMUTABLE`; class never written on update | UI lock in General tab |
+| DBR-BLD-008–009 tree change wipe kit | **Done Phase E** | `wipeAllVariantKits` on tree change | — |
+| DBR-BLD-010 mini kit strip | **Done Phase 2** | `MiniKitStrip` on BuildIdentity + VariantCard | Empty ability placeholders |
 
 **Key files**: `src/lib/builds/buildService.ts`, `src/lib/db/schema.ts` (`builds.subclass`), `VariantCard` / `BuildIdentity`.
 
@@ -106,7 +106,7 @@
 | DBR-CMPL-001b fashion optional | **OK** | Not required | — |
 | DBR-CMPL-001d three gates | **Partial** | Gate 1 partial; gate 2 missing; gate 3 equip-ready for equip/export | Implement gate 2 |
 | DBR-CMPL-002 non-default may gap | **OK** | Full loadout only if `isDefault` | — |
-| DBR-CMPL-005 four areas | **Partial** | Tabs: General, Subclass, Armor & Mod Set, Weapon Set, **Finish** | Finish is extra chrome (OK if not a fifth “area”); product wording is four areas |
+| DBR-CMPL-005 four areas | **Done Phase 2** | Four `isArea` tabs; Finish dashed chrome | Labels match product |
 
 **Key files**: `buildService` validate path ~709–711, `DefaultVariantComposer`, `equipReady.ts`.
 
@@ -176,6 +176,7 @@
 | **F** | Armor Set bonus constraint | **Shipped 2026-07-30** — `armorSetBonusConstraint.ts` |
 | **G** | Perk family match; class-item exotic_armor config links | **Shipped 2026-07-30** — `perkFamily.ts`, DBR-ID-011 match |
 | **H** | Presentation: can-roll/craft detail; hash footer discipline | **Shipped 2026-07-30** — `presentation/*`, Catalog/Set detail |
+| **2** | Class lock + mini kit strip + four areas chrome | **Shipped 2026-07-30** — `CLASS_IMMUTABLE`, `MiniKitStrip` |
 
 ---
 

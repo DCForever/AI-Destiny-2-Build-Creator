@@ -434,7 +434,8 @@ async function forkBuildWithIdentity(
   const synergyTypes = normalizeDesignations(input.synergyTypes ?? existing.synergyTypes);
   assertTypesPresent(synergyTypes);
 
-  const className = input.className ?? existing.className;
+  // Fork inherits class; class change is rejected above before fork.
+  const className = existing.className;
   const treeChanged =
     input.subclass !== undefined &&
     isSubclassTreeChange(existing.subclass, input.subclass);
@@ -541,6 +542,19 @@ export async function updateUserBuild(
   const existing = getBuild(db, userId, buildId);
   if (!existing) return null;
 
+  // DBR-BLD-007 / BR-BLD-020: class is fixed at create (including fork identity path).
+  if (
+    input.className !== undefined &&
+    input.className !== existing.className
+  ) {
+    throw new ApiError(
+      API_ERROR_CODES.CLASS_IMMUTABLE,
+      "Class cannot change after create",
+      { className: existing.className, attempted: input.className },
+      400,
+    );
+  }
+
   if (input.synergyTypes) {
     assertTypesPresent(normalizeDesignations(input.synergyTypes));
   }
@@ -561,7 +575,7 @@ export async function updateUserBuild(
     }
   }
 
-  const nextClass = input.className ?? existing.className;
+  const nextClass = existing.className;
   if (input.name !== undefined) {
     const trimmed = input.name.trim();
     if (trimmed) assertUniqueBuildName(db, userId, nextClass, trimmed, buildId);
@@ -638,7 +652,7 @@ export async function updateUserBuild(
 
   updateBuildRecord(db, userId, buildId, {
     name: input.name?.trim() || undefined,
-    className: input.className,
+    // Class never updates after create (DBR-BLD-007).
     subclass: input.subclass !== undefined ? nextSubclassStored : undefined,
     exoticArmorHash: input.exoticArmorHash,
     exoticArmorName: input.exoticArmorName,
