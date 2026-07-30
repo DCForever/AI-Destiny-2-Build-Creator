@@ -36,6 +36,10 @@ export const API_ERROR_CODES = {
   PAIR_INCOMPLETE: "PAIR_INCOMPLETE",
   /** Default save: required synergy link not satisfied by equip-ready pins (DBR-SYN-010a). */
   REQUIRED_LINK_UNSATISFIED: "REQUIRED_LINK_UNSATISFIED",
+  /** Armor set constraint: non-exotic piece not in bonus family (DBR-SETB-004). */
+  ARMOR_SET_BONUS_MISMATCH: "ARMOR_SET_BONUS_MISMATCH",
+  /** Armor set constraint: member count below target tier (DBR-SETB-004). */
+  ARMOR_SET_BONUS_INCOMPLETE: "ARMOR_SET_BONUS_INCOMPLETE",
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];

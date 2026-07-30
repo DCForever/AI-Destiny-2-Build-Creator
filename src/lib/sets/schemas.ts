@@ -7,6 +7,10 @@ import {
   serializeOptimizerConstraints,
   type ArmorSetOptimizerConstraints,
 } from "@/lib/optimizer/types";
+import {
+  armorSetBonusConstraintSchema,
+  type ArmorSetBonusConstraint,
+} from "@/lib/sets/armorSetBonusConstraint";
 
 export const SET_TYPES = ["weapon", "armor", "mod", "pair", "fashion"] as const;
 export type SetType = (typeof SET_TYPES)[number];
@@ -117,6 +121,8 @@ export const createSetSchema = z.object({
   type: setTypeSchema,
   tagIds: conceptTagIdsSchema.default([]),
   optimizerConstraints: armorSetOptimizerConstraintsSchema.nullable().optional(),
+  /** Armor Sets only: zero or one family + 2|4 tier package constraint (DBR-SETB-003). */
+  setBonusConstraint: armorSetBonusConstraintSchema.nullable().optional(),
   linkedModSetId: z.string().min(1).nullable().optional(),
 });
 
@@ -136,5 +142,10 @@ export const setItemInputSchema = z.object({
 export type CreateSetInput = z.infer<typeof createSetSchema>;
 export type UpdateSetInput = z.infer<typeof updateSetSchema>;
 export type SetItemInput = z.infer<typeof setItemInputSchema>;
-export type { ArmorSetOptimizerConstraints };
+export type { ArmorSetOptimizerConstraints, ArmorSetBonusConstraint };
 export { parseOptimizerConstraints, serializeOptimizerConstraints };
+export {
+  armorSetBonusConstraintSchema,
+  parseArmorSetBonusConstraint,
+  serializeArmorSetBonusConstraint,
+} from "@/lib/sets/armorSetBonusConstraint";

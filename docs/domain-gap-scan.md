@@ -26,7 +26,7 @@
 | P0 | Required-link hard gate on default (pins only) | **Done (Phase C)** | `required` column + `assertRequiredLinksSatisfied` on default save |
 | P1 | Expanded synergy link kinds | **Done (Phase D)** | 12 kinds in schema + pickers + coverage |
 | P1 | Ammo / weapon_slot designation types | **Done (Phase D)** | Creatable `ammo` + `weapon_slot`; legacy weapon types readable |
-| P1 | Armor Set bonus package constraint | **Gap** | No constraint field / codes in set save |
+| P1 | Armor Set bonus package constraint | **Done (Phase F)** | `set_bonus_constraint` + attach/fill/update gates |
 | P1 | Tree change wipe + identity confirm | **Done (Phase E)** | `subclassTree` identity + wipe all variant kits |
 | P1 | Class immutable after create | **Gap** | `updateBuild` accepts `className` change |
 | P2 | armor_set_bonus link tier match | **OK** | `bonusPieces` + coverage count ≥ tier |
@@ -122,7 +122,7 @@
 | DBR-CMP-010 Pair/Fashion exempt | **OK** | Fashion always ok; Pair both slots (`PAIR_INCOMPLETE`) | — |
 | Set exotic exclusivity | **OK** | `assertSetExoticExclusivity` | — |
 | Slot legality | **OK** | `assertSetItemAllowed` | — |
-| DBR-SETB-003–006 Armor Set bonus **constraint** | **Gap** | Soft coverage only (`coverage.ts` set bonuses) | Persist constraint on Armor Set; hard save/attach |
+| DBR-SETB-003–006 Armor Set bonus **constraint** | **Done Phase F** | `armorSetBonusConstraint.ts`; `sets.set_bonus_constraint`; fill mismatch + attach/update tier | Soft EXOTIC_BLOCKS_SET_BONUS on incomplete |
 | BR-SET-030 Synergy Types on Sets | **Gap** | No set-level designation storage found | Optional later; product-locked |
 | DBR-MOD energy 10/11 | **OK** | `evaluateModEnergy` path | — |
 | DBR-STAT-008 base roll board | **Partial** | Armor set detail / BR-SET-011 paths | Verify board never uses live modded totals |
@@ -173,7 +173,7 @@
 | **C** | Synergy: `required` flag + default save gate using equip-ready / kit claims | **Shipped 2026-07-29** — `assertRequiredLinks.ts` |
 | **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | **Shipped 2026-07-30** |
 | **E** | Data model: variant-owned kit; tree change confirm + wipe | **Shipped 2026-07-30** — `subclassKit.ts` |
-| **F** | Armor Set bonus constraint | DBR-SETB-003–006 |
+| **F** | Armor Set bonus constraint | **Shipped 2026-07-30** — `armorSetBonusConstraint.ts` |
 | **G** | Perk family match; class-item exotic_armor config links | DBR-SYN-014a, DBR-ID-011 |
 | **H** | Presentation: can-roll/craft detail; hash footer discipline | DBR-UI-006–007 |
 

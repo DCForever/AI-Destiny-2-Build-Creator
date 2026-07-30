@@ -7,6 +7,12 @@ import {
   type SnapshotConfig,
 } from "@/lib/db/repositories/variantRepository";
 import { getSet } from "@/lib/db/repositories/setRepository";
+import {
+  assertArmorSetBonusConstraint,
+  loadSetBonusMembershipIndex,
+  parseArmorSetBonusConstraint,
+  toConstrainedArmorPieces,
+} from "@/lib/sets/armorSetBonusConstraint";
 import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
 import type { SetType } from "@/lib/sets/schemas";
@@ -63,6 +69,20 @@ export async function prepareAttachments(
     assertSetMinimumOccupancy(set.type as SetType, activeItems, {
       context: "attach",
     });
+
+    // DBR-SETB-004: constrained Armor Sets must meet family + tier on attach.
+    if (set.type === "armor") {
+      const constraint = parseArmorSetBonusConstraint(set.setBonusConstraint);
+      if (constraint) {
+        const pieces = await toConstrainedArmorPieces(activeItems);
+        const membership = await loadSetBonusMembershipIndex();
+        assertArmorSetBonusConstraint(constraint, pieces, membership, {
+          setType: "armor",
+          requireTier: true,
+          context: "attach",
+        });
+      }
+    }
 
     let snapshotConfigs: SnapshotConfig[] | null = null;
     if (input.mode === "snapshot") {

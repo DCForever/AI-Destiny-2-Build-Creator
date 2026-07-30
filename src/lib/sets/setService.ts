@@ -28,6 +28,14 @@ import {
 import type { SetItemInput } from "@/lib/sets/schemas";
 import { enrichSetItems } from "@/lib/sets/enrichSetItems";
 import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
+import {
+  assertArmorSetBonusConstraint,
+  loadSetBonusMembershipIndex,
+  parseArmorSetBonusConstraint,
+  serializeArmorSetBonusConstraint,
+  toConstrainedArmorPieces,
+  type ArmorSetBonusConstraint,
+} from "@/lib/sets/armorSetBonusConstraint";
 
 function parseTagIds(tagIds: unknown): ConceptTagId[] {
   const result = conceptTagIdsSchema.safeParse(tagIds ?? []);
@@ -76,12 +84,46 @@ export async function getSetDetail(db: AppDatabase, userId: number, setId: strin
   return {
     ...set,
     optimizerConstraints: parseOptimizerConstraints(set.optimizerConstraints),
+    setBonusConstraint: parseArmorSetBonusConstraint(set.setBonusConstraint),
     items,
     armorStatTotals:
       set.type === "armor" ? armorStatTotals : null,
     modEncourage: hasEmptyModSlots(set.type, activeItems),
     usedByBuilds,
   };
+}
+
+async function enforceArmorSetBonusConstraint(
+  setType: SetType,
+  constraint: ArmorSetBonusConstraint | null,
+  items: Array<{ itemHash: number; slot?: string; itemName?: string }>,
+  opts: { requireTier: boolean; context: string },
+): Promise<void> {
+  if (setType !== "armor" && !constraint) return;
+  const pieces = await toConstrainedArmorPieces(items);
+  const membership = constraint ? await loadSetBonusMembershipIndex() : new Map<number, number>();
+  assertArmorSetBonusConstraint(constraint, pieces, membership, {
+    setType,
+    requireTier: opts.requireTier,
+    context: opts.context,
+  });
+}
+
+function normalizeSetBonusConstraintInput(
+  setType: SetType,
+  raw: CreateSetInput["setBonusConstraint"] | UpdateSetInput["setBonusConstraint"],
+): string | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  if (setType !== "armor") {
+    throw new ApiError(
+      API_ERROR_CODES.INVALID_ITEM,
+      "Armor set bonus constraint is only allowed on Armor Sets",
+      { setType },
+      400,
+    );
+  }
+  return serializeArmorSetBonusConstraint(raw);
 }
 
 export function listUserSets(
@@ -112,6 +154,10 @@ export async function createUserSet(db: AppDatabase, userId: number, input: Crea
       : input.optimizerConstraints === null
         ? null
         : serializeOptimizerConstraints(input.optimizerConstraints);
+  const setBonusJson =
+    input.setBonusConstraint === undefined
+      ? null
+      : normalizeSetBonusConstraintInput(input.type, input.setBonusConstraint) ?? null;
   createSetRecord(db, userId, {
     id,
     name: input.name,
@@ -119,6 +165,7 @@ export async function createUserSet(db: AppDatabase, userId: number, input: Crea
     tagIds: tags,
     now,
     optimizerConstraints: constraintsJson,
+    setBonusConstraint: setBonusJson,
     linkedModSetId: input.linkedModSetId ?? null,
   });
   return getSetDetail(db, userId, id);
@@ -144,6 +191,18 @@ export async function updateUserSet(
     parseTagIds(input.tagIds);
   }
 
+  const nextType = input.type ?? existing.type;
+  if (input.setBonusConstraint !== undefined) {
+    const constraintJson = normalizeSetBonusConstraintInput(nextType, input.setBonusConstraint);
+    const constraint =
+      constraintJson == null ? null : parseArmorSetBonusConstraint(constraintJson);
+    const active = await listActiveSetItems(db, setId);
+    await enforceArmorSetBonusConstraint(nextType, constraint, active, {
+      requireTier: true,
+      context: "update_constraint",
+    });
+  }
+
   const now = new Date().toISOString();
   const constraintsJson =
     input.optimizerConstraints === undefined
@@ -151,12 +210,17 @@ export async function updateUserSet(
       : input.optimizerConstraints === null
         ? null
         : serializeOptimizerConstraints(input.optimizerConstraints);
+  const setBonusJson =
+    input.setBonusConstraint === undefined
+      ? undefined
+      : normalizeSetBonusConstraintInput(nextType, input.setBonusConstraint);
   updateSetRecord(db, userId, setId, {
     name: input.name,
     type: input.type,
     tagIds: input.tagIds,
     now,
     ...(constraintsJson !== undefined ? { optimizerConstraints: constraintsJson } : {}),
+    ...(setBonusJson !== undefined ? { setBonusConstraint: setBonusJson } : {}),
     ...(input.linkedModSetId !== undefined ? { linkedModSetId: input.linkedModSetId } : {}),
   });
   return getSetDetail(db, userId, setId);
@@ -205,6 +269,26 @@ export async function addSetItem(
     }
   }
 
+  // DBR-SETB-004: reject non-family non-exotic on fill; tier checked on attach/save.
+  if (set.type === "armor") {
+    const constraint = parseArmorSetBonusConstraint(set.setBonusConstraint);
+    if (constraint) {
+      const active = await listActiveSetItems(db, setId);
+      const projected = [
+        ...active.filter((i) => i.slot !== input.slot),
+        {
+          itemHash: input.itemHash,
+          slot: input.slot,
+          itemName: input.itemName,
+        },
+      ];
+      await enforceArmorSetBonusConstraint(set.type, constraint, projected, {
+        requireTier: false,
+        context: "fill",
+      });
+    }
+  }
+
   await upsertSetItem(db, setId, set.type, input);
   return getSetDetail(db, userId, setId);
 }
@@ -220,6 +304,15 @@ export async function removeSetItem(db: AppDatabase, userId: number, setId: stri
   const attachments = findAttachmentsBySetId(db, setId);
   if (attachments.length > 0) {
     assertSetMinimumOccupancy(set.type, remaining, { context: "remove_while_attached" });
+    if (set.type === "armor") {
+      const constraint = parseArmorSetBonusConstraint(set.setBonusConstraint);
+      if (constraint) {
+        await enforceArmorSetBonusConstraint(set.type, constraint, remaining, {
+          requireTier: true,
+          context: "remove_while_attached",
+        });
+      }
+    }
   }
 
   softRemoveSetItem(db, setId, itemId);

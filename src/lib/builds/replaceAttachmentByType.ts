@@ -5,6 +5,12 @@ import {
   replaceAttachments,
   type AttachmentRecord,
 } from "@/lib/db/repositories/variantRepository";
+import {
+  assertArmorSetBonusConstraint,
+  loadSetBonusMembershipIndex,
+  parseArmorSetBonusConstraint,
+  toConstrainedArmorPieces,
+} from "@/lib/sets/armorSetBonusConstraint";
 import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
 import type { SetType } from "@/lib/sets/schemas";
@@ -28,6 +34,19 @@ export async function replaceAttachmentByType(
 
   const activeItems = await listActiveSetItems(db, newSetId);
   assertSetMinimumOccupancy(type, activeItems, { context: "attach" });
+
+  if (type === "armor") {
+    const constraint = parseArmorSetBonusConstraint(newSet.setBonusConstraint);
+    if (constraint) {
+      const pieces = await toConstrainedArmorPieces(activeItems);
+      const membership = await loadSetBonusMembershipIndex();
+      assertArmorSetBonusConstraint(constraint, pieces, membership, {
+        setType: "armor",
+        requireTier: true,
+        context: "attach",
+      });
+    }
+  }
 
   const existing = listAttachments(db, variantId);
   const kept: Array<Omit<AttachmentRecord, "id" | "variantId" | "attachedAt">> = [];

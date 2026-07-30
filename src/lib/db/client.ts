@@ -106,6 +106,9 @@ function ensureSetOptimizerColumns(db: Database.Database): void {
   if (!cols.some((c) => c.name === "linked_mod_set_id")) {
     db.exec("ALTER TABLE sets ADD COLUMN linked_mod_set_id TEXT");
   }
+  if (!cols.some((c) => c.name === "set_bonus_constraint")) {
+    db.exec("ALTER TABLE sets ADD COLUMN set_bonus_constraint TEXT");
+  }
 }
 
 function ensureVariantArtifactColumns(db: Database.Database): void {
@@ -275,6 +278,7 @@ export function runMigrations(db: Database.Database): void {
       name TEXT NOT NULL,
       type TEXT NOT NULL,
       optimizer_constraints TEXT,
+      set_bonus_constraint TEXT,
       linked_mod_set_id TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL

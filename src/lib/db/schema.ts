@@ -58,6 +58,8 @@ export const sets = sqliteTable(
     type: text("type").notNull(),
     /** JSON: ArmorSetOptimizerConstraints (nullable). */
     optimizerConstraints: text("optimizer_constraints"),
+    /** JSON: ArmorSetBonusConstraint — package family + 2|4 tier (nullable; Armor Sets only). */
+    setBonusConstraint: text("set_bonus_constraint"),
     /** Optional companion Mod Set id for armor optimizer materialize. */
     linkedModSetId: text("linked_mod_set_id"),
     createdAt: text("created_at").notNull(),

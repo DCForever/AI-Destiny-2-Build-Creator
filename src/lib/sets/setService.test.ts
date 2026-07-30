@@ -188,4 +188,31 @@ describe("setService", () => {
     const afterRemove = await removeSetItem(db, user.id, set!.id, itemId);
     expect(afterRemove!.items.find((i) => i.id === itemId)?.removedAt).toBeTruthy();
   });
+
+  it("stores armor set bonus constraint on armor sets only", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "svc8", 3, "Player");
+    const constraint = {
+      armorSetHash: 9001,
+      armorSetName: "Family A",
+      targetTier: 2 as const,
+    };
+
+    const armor = await createUserSet(db, user.id, {
+      name: "Constrained Armor",
+      type: "armor",
+      tagIds: [],
+      setBonusConstraint: constraint,
+    });
+    expect(armor?.setBonusConstraint).toEqual(constraint);
+
+    await expect(
+      createUserSet(db, user.id, {
+        name: "Weapon With Constraint",
+        type: "weapon",
+        tagIds: [],
+        setBonusConstraint: constraint,
+      }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.INVALID_ITEM });
+  });
 });
