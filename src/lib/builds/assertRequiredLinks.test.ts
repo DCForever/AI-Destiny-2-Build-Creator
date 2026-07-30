@@ -204,4 +204,62 @@ describe("collectRequiredLinkFailures / assert", () => {
       }),
     ).not.toThrow();
   });
+
+  it("satisfies required weapon_perk via enhanced family sibling (DBR-SYN-014a)", () => {
+    const family = new Map<number, ReadonlySet<number>>([
+      [100, new Set([100, 101])],
+      [101, new Set([100, 101])],
+    ]);
+    const syn = synergy([
+      link({
+        kind: "weapon_perk",
+        displayName: "Zen Moment",
+        perkHash: 100,
+        required: true,
+      }),
+    ]);
+    expect(() =>
+      assertRequiredLinksSatisfied({
+        synergies: [syn],
+        resolved: resolved([
+          claim({
+            slot: "primary",
+            itemHash: 10,
+            instanceId: "i1",
+            selectedPerks: [101],
+          }),
+        ]),
+        inventory: buildInventoryPinIndex([{ instanceId: "i1", itemHash: 10 }]),
+        perkFamilyByHash: family,
+      }),
+    ).not.toThrow();
+  });
+
+  it("satisfies required class-item exotic_armor via perk config (DBR-ID-011)", () => {
+    const classItems = new Set([77]);
+    const syn = synergy([
+      link({
+        kind: "exotic_armor",
+        displayName: "Spirit",
+        itemHash: 77,
+        perkHash: 900,
+        required: true,
+      }),
+    ]);
+    expect(() =>
+      assertRequiredLinksSatisfied({
+        synergies: [syn],
+        resolved: resolved([
+          claim({
+            slot: "class_item",
+            itemHash: 77,
+            instanceId: "ci1",
+            selectedPerks: [900, 901],
+          }),
+        ]),
+        inventory: buildInventoryPinIndex([{ instanceId: "ci1", itemHash: 77 }]),
+        exoticClassItemHashes: classItems,
+      }),
+    ).not.toThrow();
+  });
 });

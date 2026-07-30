@@ -4,6 +4,7 @@ import type { EquipmentSlot } from "@/lib/sets/schemas";
 import type { SoftStatTargets } from "@/lib/builds/softStatTargets";
 import { softStatWarnings, type SoftStatWarningRow, type StatEstimate } from "@/lib/builds/statEstimate";
 import type { SetBonusRecord } from "@/lib/manifest/types/records";
+import { selectedPerksIncludeFamily } from "@/lib/synergies/perkFamily";
 
 export type CoverageTier = "supported" | "weak" | "missing";
 
@@ -60,6 +61,10 @@ export type CoverageEvalInput = {
   softStatTargets?: SoftStatTargets;
   statEstimate?: StatEstimate | null;
   artifactConfig?: number[] | null;
+  /** weapon_perk base/enhanced family (DBR-SYN-014a) */
+  perkFamilyByHash?: Map<number, ReadonlySet<number>>;
+  /** Exotic armor hashes with slot ClassItem (DBR-ID-011) */
+  exoticClassItemHashes?: Set<number>;
 };
 
 function kitFromSubclass(subclass: unknown): SubclassKitMatchFields | null {
@@ -95,6 +100,10 @@ export type MatchEvidenceContext = {
   artifactConfig?: number[] | null;
   /** Build/variant subclass kit for aspect/fragment/ability links. */
   kit?: SubclassKitMatchFields | null;
+  /** Plug hash → family set (base + enhanced). When missing, exact hash only. */
+  perkFamilyByHash?: Map<number, ReadonlySet<number>>;
+  /** Exotic armor item hashes that are class items (perk-config target). */
+  exoticClassItemHashes?: Set<number>;
 };
 
 function namesEqual(a: string | null | undefined, b: string | null | undefined): boolean {
@@ -131,22 +140,65 @@ export function matchEvidenceLink(
     case "weapon":
       return link.itemHash != null && claims.some((c) => c.itemHash === link.itemHash);
     case "weapon_perk":
+      // DBR-SYN-014a: base and enhanced of the same trait count as a match.
       return (
         link.perkHash != null &&
-        claims.some((c) => (c.selectedPerks ?? []).includes(link.perkHash!))
+        claims.some((c) =>
+          selectedPerksIncludeFamily(c.selectedPerks, link.perkHash!, ctx.perkFamilyByHash),
+        )
       );
     case "origin_trait":
       if (link.originTraitHash != null) {
-        return claims.some((c) => (c.selectedPerks ?? []).includes(link.originTraitHash!));
+        return claims.some((c) =>
+          selectedPerksIncludeFamily(
+            c.selectedPerks,
+            link.originTraitHash!,
+            ctx.perkFamilyByHash,
+          ),
+        );
       }
       return false;
-    case "exotic_armor":
-      return (
+    case "exotic_armor": {
+      // DBR-ID-011: classic = item hash; exotic class items = perk config only.
+      const knownClassItem =
         link.itemHash != null &&
-        claims.some(
+        ctx.exoticClassItemHashes != null &&
+        ctx.exoticClassItemHashes.has(link.itemHash);
+
+      if (knownClassItem) {
+        if (link.perkHash == null) return false;
+        return claims.some(
+          (c) =>
+            c.slot === "class_item" &&
+            selectedPerksIncludeFamily(
+              c.selectedPerks,
+              link.perkHash!,
+              ctx.perkFamilyByHash,
+            ),
+        );
+      }
+
+      if (link.itemHash != null) {
+        const byItem = claims.some(
           (c) => ARMOR_SLOTS.includes(c.slot) && c.itemHash === link.itemHash,
-        )
-      );
+        );
+        if (byItem) return true;
+      }
+
+      // Perk-only exotic_armor link (class-item config without shell, or unknown shell).
+      if (link.perkHash != null) {
+        return claims.some(
+          (c) =>
+            c.slot === "class_item" &&
+            selectedPerksIncludeFamily(
+              c.selectedPerks,
+              link.perkHash!,
+              ctx.perkFamilyByHash,
+            ),
+        );
+      }
+      return false;
+    }
     case "armor_mod": {
       const hash = link.perkHash ?? link.itemHash;
       if (hash == null) return false;
@@ -233,6 +285,8 @@ export function evaluateCoverage(input: CoverageEvalInput): CoverageResult {
     setBonusByItemHash,
     artifactConfig: input.artifactConfig,
     kit: kitFromSubclass(subclass),
+    perkFamilyByHash: input.perkFamilyByHash,
+    exoticClassItemHashes: input.exoticClassItemHashes,
   };
 
   const synergyRows: SynergyCoverageRow[] = synergies.map((synergy) => {

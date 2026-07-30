@@ -108,6 +108,8 @@ export function collectRequiredLinkFailures(input: {
   setBonusByItemHash?: Map<number, SetBonusRecord>;
   artifactConfig?: number[] | null;
   kit?: SubclassKitMatchFields | null;
+  perkFamilyByHash?: Map<number, ReadonlySet<number>>;
+  exoticClassItemHashes?: Set<number>;
 }): RequiredLinkFailure[] {
   const allClaims = Object.values(input.resolved.equipment).filter(
     (c): c is SlotClaim => c != null,
@@ -117,6 +119,8 @@ export function collectRequiredLinkFailures(input: {
     setBonusByItemHash: input.setBonusByItemHash,
     artifactConfig: input.artifactConfig,
     kit: input.kit,
+    perkFamilyByHash: input.perkFamilyByHash,
+    exoticClassItemHashes: input.exoticClassItemHashes,
   };
 
   const failures: RequiredLinkFailure[] = [];
@@ -149,6 +153,8 @@ export function assertRequiredLinksSatisfied(input: {
   setBonusByItemHash?: Map<number, SetBonusRecord>;
   artifactConfig?: number[] | null;
   kit?: SubclassKitMatchFields | null;
+  perkFamilyByHash?: Map<number, ReadonlySet<number>>;
+  exoticClassItemHashes?: Set<number>;
 }): void {
   const unsatisfied = collectRequiredLinkFailures(input);
   if (unsatisfied.length === 0) return;

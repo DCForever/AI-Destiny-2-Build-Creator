@@ -43,6 +43,7 @@ import {
   type SynergyTypeDesignation,
 } from "@/lib/builds/resolveDesignatedSynergies";
 import { assertRequiredLinksSatisfied } from "@/lib/builds/assertRequiredLinks";
+import { loadMatchEvidenceIndexes } from "@/lib/builds/matchEvidenceIndexes";
 import { buildInventoryPinIndex, computeEquipReady } from "@/lib/builds/equipReady";
 import type { CreateBuildInput, UpdateBuildInput, UpdateVariantInput } from "@/lib/builds/schemas";
 import { normalizeSoftStatTargets } from "@/lib/builds/softStatTargets";
@@ -836,14 +837,19 @@ export async function validateVariantSave(
     });
 
     // Gate 2: required synergy links → equip-ready pins / applied kit (DBR-SYN-010a).
+    // Perk family + class-item indexes for DBR-SYN-014a / DBR-ID-011.
     const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
     const inventory = buildInventoryPinIndex(listInventoryItems(db, userId));
+    const matchIndexes = await loadMatchEvidenceIndexes();
     assertRequiredLinksSatisfied({
       synergies: bridge.matchedSynergies,
       resolved,
       inventory,
       artifactConfig: variant.artifactConfig,
       kit: effective,
+      perkFamilyByHash: matchIndexes.perkFamilyByHash,
+      exoticClassItemHashes: matchIndexes.exoticClassItemHashes,
+      setBonusByItemHash: matchIndexes.setBonusByItemHash,
     });
   }
 }

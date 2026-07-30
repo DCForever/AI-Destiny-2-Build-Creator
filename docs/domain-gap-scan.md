@@ -30,8 +30,8 @@
 | P1 | Tree change wipe + identity confirm | **Done (Phase E)** | `subclassTree` identity + wipe all variant kits |
 | P1 | Class immutable after create | **Gap** | `updateBuild` accepts `className` change |
 | P2 | armor_set_bonus link tier match | **OK** | `bonusPieces` + coverage count ≥ tier |
-| P2 | weapon_perk family (base/enhanced) match | **Gap** | Exact `perkHash` only |
-| P2 | Exotic class-item Synergy = perk config | **Gap** | `exotic_armor` kind exists; no class-item config target model |
+| P2 | weapon_perk family (base/enhanced) match | **Done (Phase G)** | `perkFamily.ts` name-based base↔enhanced |
+| P2 | Exotic class-item Synergy = perk config | **Done (Phase G)** | ClassItem shell ignored; `perkHash` on class_item |
 | P2 | Artifact filled on default | **Partial** | Store/apply config; not asserted on default complete |
 | P2 | Four areas UI | **Partial** | Composer tabs General / Subclass / Armor / Weapon (+ Finish) |
 | P2 | Mini kit strip | **Partial** | `subclassPresentation` icons exist; not full five-ability strip guarantee |
@@ -51,7 +51,7 @@
 | DBR-SYN-004a one library row per designation | **Partial** | Merge API exists; create may still allow dups depending on service | Enforce unique (type, subType) per user on create |
 | DBR-SYN-015 link kinds (12) | **Done Phase D** | Full enum + pickers + kit/mod matchers | — |
 | DBR-SYN-014 exotic trait as weapon_perk | **OK** | Kind + labeling (BR-SYN-012 path) | — |
-| DBR-SYN-014a perk family match | **Gap** | `coverage.ts` exact `perkHash` | Family map enhanced↔base for match |
+| DBR-SYN-014a perk family match | **Done Phase G** | `perkFamily.ts` + `matchEvidenceLink` / required gate | Name-normalize when family known |
 | DBR-SYN-014b armor_set_bonus tier on link | **OK** | `bonusPieces` 2\|4; coverage `count >= needed` | Ensure UI always sets tier on create |
 | DBR-SYN-017 ammo vs weapon_slot | **Done Phase D** | Creatable `ammo`/`weapon_slot`; old types legacy | — |
 | DBR-SYN-007–010 required links | **Done Phase C** | `synergy_links.required` + zod `required?: boolean` | Soft evidence unchanged |
@@ -174,7 +174,7 @@
 | **D** | Expand link kinds + coverage matchers; ammo/weapon_slot types | **Shipped 2026-07-30** |
 | **E** | Data model: variant-owned kit; tree change confirm + wipe | **Shipped 2026-07-30** — `subclassKit.ts` |
 | **F** | Armor Set bonus constraint | **Shipped 2026-07-30** — `armorSetBonusConstraint.ts` |
-| **G** | Perk family match; class-item exotic_armor config links | DBR-SYN-014a, DBR-ID-011 |
+| **G** | Perk family match; class-item exotic_armor config links | **Shipped 2026-07-30** — `perkFamily.ts`, DBR-ID-011 match |
 | **H** | Presentation: can-roll/craft detail; hash footer discipline | DBR-UI-006–007 |
 
 ---

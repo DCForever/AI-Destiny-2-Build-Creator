@@ -182,13 +182,21 @@ export async function searchSynergyLinkPickerItems(
             description: a.intrinsic?.description ?? "",
           }).matched,
       )
-      .map((a) => ({
-        kind: "exotic_armor" as const,
-        hash: a.hash,
-        name: a.name,
-        description: a.intrinsic?.description ?? "",
-        icon: a.icon,
-      }));
+      .map((a) => {
+        const isClassItem = a.slot === "ClassItem";
+        // DBR-ID-011: class items are perk-config targets; classic use item hash.
+        // Picker still returns the shell hash for classic; class items note
+        // that evidence should store spirit/perk hashes via perkHash.
+        return {
+          kind: "exotic_armor" as const,
+          hash: a.hash,
+          name: isClassItem ? `${a.name} (class item — link perks)` : a.name,
+          description: isClassItem
+            ? `${a.intrinsic?.description ?? ""} Class-item synergies target perk configuration, not the item shell.`
+            : (a.intrinsic?.description ?? ""),
+          icon: a.icon,
+        };
+      });
     return finalizePickerItems(items, limit, query);
   }
 
