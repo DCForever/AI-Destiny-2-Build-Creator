@@ -166,6 +166,18 @@ void main() {
       find.textContaining('Soft coverage never blocks Save'),
       findsOneWidget,
     );
+    // Progressive disclosure: next-step copy; optional pins/kit collapsed when empty.
+    expect(find.byKey(const Key('builds_identity_next_step')), findsOneWidget);
+    expect(find.textContaining('1 Basics'), findsOneWidget);
+    expect(find.byKey(const Key('builds_optional_pins_summary')), findsOneWidget);
+    expect(find.byKey(const Key('builds_subclass_kit_summary')), findsOneWidget);
+    expect(find.textContaining('None yet'), findsWidgets);
+    expect(find.byKey(const Key('builds_subclass_kit_title')), findsOneWidget);
+    // Collapsed: empty pin Search rows hidden until user expands.
+    expect(find.byKey(const Key('builds_pick_exotic_armor')), findsNothing);
+    await tester.tap(find.byKey(const Key('builds_optional_pins_toggle')));
+    await _pumpFrames(tester);
+    expect(find.byKey(const Key('builds_pick_exotic_armor')), findsOneWidget);
 
     controller.dispose();
   });
@@ -416,6 +428,9 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('builds_subclass_kit_title')), findsOneWidget);
+    // Expand optional pins to surface manifest pick keys (collapsed when empty).
+    await tester.tap(find.byKey(const Key('builds_optional_pins_toggle')));
+    await _pumpFrames(tester);
     expect(find.byKey(const Key('builds_pick_exotic_armor')), findsOneWidget);
     expect(find.byKey(const Key('builds_pick_super')), findsOneWidget);
 

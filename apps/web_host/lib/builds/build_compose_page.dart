@@ -269,7 +269,11 @@ class _BuildComposePageState extends State<BuildComposePage> {
             p(
               classes: 'compose-step-hint',
               attributes: {'data-testid': 'identity-summary-hint'},
-              [.text('Summary → edit pins → Save identity (primary)')],
+              [
+                .text(
+                  '1 Review summary · 2 Optional pins · 3 Save identity · 4 Finish below',
+                ),
+              ],
             ),
             p([.text(c.identitySummaryOf(b))]),
             p([.text('Synergies: ${c.synergySummaryOf(b)}')]),
