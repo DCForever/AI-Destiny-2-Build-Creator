@@ -2,6 +2,43 @@ import 'package:destiny2_db/destiny2_db.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('preferArmorBaseRollBoard', () {
+    test('prefers plug base roll over live ItemStats', () {
+      final board = preferArmorBaseRollBoard(
+        plugBaseStats: const {
+          'Health': 20,
+          'Melee': 0,
+          'Grenade': 30,
+          'Super': 25,
+          'Class': 0,
+          'Weapons': 0,
+        },
+        liveStatValues: const {
+          'Health': 99,
+          'Melee': 99,
+          'Grenade': 99,
+          'Super': 99,
+          'Class': 99,
+          'Weapons': 99,
+        },
+      );
+      expect(board, isNotNull);
+      expect(board!.stats['Grenade'], 30);
+      expect(board.stats['Health'], 20);
+      expect(board.total, 75);
+      expect(board.incomplete, isFalse);
+    });
+
+    test('falls back to live stats when no plug roll', () {
+      final board = preferArmorBaseRollBoard(
+        plugBaseStats: null,
+        liveStatValues: const {'Health': 15, 'Melee': 10},
+      );
+      expect(board, isNotNull);
+      expect(board!.stats['Health'], 15);
+    });
+  });
+
   group('sumArmorSetStats', () {
     test('sums EoF six-stat pieces and grandTotal', () {
       final totals = sumArmorSetStats([

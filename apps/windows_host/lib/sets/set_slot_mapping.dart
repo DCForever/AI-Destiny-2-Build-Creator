@@ -4,54 +4,9 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 ///
 /// Parity with product `slotsForSetType` / catalog bucket maps in
 /// `src/lib/catalog/setPlacementFromHit.ts` and `src/lib/sets/schemas.ts`.
-
-/// Concrete fill targets offered for a set type.
 ///
-/// Mod sets use armor piece slots as pick targets (product `mods_only` → ARMOR_SLOTS).
-List<String> slotsForSetType(SetType type) {
-  switch (type) {
-    case SetType.weapon:
-      return EquipmentSlot.weaponSlots.map((s) => s.wireName).toList();
-    case SetType.armor:
-      return EquipmentSlot.armorSlots.map((s) => s.wireName).toList();
-    case SetType.pair:
-      return EquipmentSlot.pairSlots.map((s) => s.wireName).toList();
-    case SetType.fashion:
-      return FashionSlot.values.map((s) => s.wireName).toList();
-    case SetType.mod:
-      return EquipmentSlot.armorSlots.map((s) => s.wireName).toList();
-  }
-}
-
-/// Whether [slot] is a valid write key for [type].
-///
-/// Mod sets accept armor piece names, `mod`, `mod:<hash>`, and `helmet:<hash>` style keys.
-bool isSlotValidForSetType(SetType type, String slot) {
-  final s = slot.trim();
-  if (s.isEmpty) return false;
-  switch (type) {
-    case SetType.weapon:
-    case SetType.armor:
-    case SetType.pair:
-    case SetType.fashion:
-      return slotsForSetType(type).contains(s);
-    case SetType.mod:
-      if (s == 'mod' || s.startsWith('mod:')) return true;
-      if (EquipmentSlot.armorSlots.any((a) => a.wireName == s)) return true;
-      final colon = s.indexOf(':');
-      if (colon > 0) {
-        final piece = s.substring(0, colon);
-        final hashPart = s.substring(colon + 1);
-        final hash = int.tryParse(hashPart);
-        if (hash != null &&
-            hash > 0 &&
-            EquipmentSlot.armorSlots.any((a) => a.wireName == piece)) {
-          return true;
-        }
-      }
-      return false;
-  }
-}
+/// [slotsForSetType] / [isSlotValidForSetType] come from `destiny2_domain`
+/// (set composition constraints).
 
 String _normalizeBucketKey(String raw) {
   return raw.trim().toLowerCase().replaceAllMapped(

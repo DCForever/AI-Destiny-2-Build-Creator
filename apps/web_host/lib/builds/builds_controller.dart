@@ -118,6 +118,9 @@ class BuildsController extends ChangeNotifier {
   /// Optional estimate for soft-stat warnings (tests may inject).
   StatEstimate? softStatEstimateOverride;
 
+  /// Optional set-bonus index for soft coverage (tests / entity inject).
+  Map<int, SetBonusRecord>? coverageSetBonusByItemHash;
+
   // DART-064 identity confirm + subclass kit + hard blocks
   SubclassKit _editSubclass = const SubclassKit();
   List<DraftSynergyType> _editDraftTypes = const [];
@@ -986,11 +989,19 @@ class BuildsController extends ChangeNotifier {
     String variantId,
   ) async {
     try {
+      final indexes = loadCoverageIndexes(
+        weapons: [
+          for (final item in catalogItems ?? const <CatalogItem>[])
+            (hash: item.hash, element: item.element),
+        ],
+        setBonusByItemHash: coverageSetBonusByItemHash,
+      );
       _coverage = await queryVariantCoverage(
         db,
         userId,
         buildId,
         variantId,
+        indexes: indexes,
         statEstimate: softStatEstimateOverride,
       );
     } catch (_) {

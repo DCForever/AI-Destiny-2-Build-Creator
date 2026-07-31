@@ -239,4 +239,258 @@ void main() {
       );
     });
   });
+
+  group('BR-SLOT-008/009 set exotic exclusivity', () {
+    test('rejects second exotic weapon on a weapon set', () async {
+      final userId = await seedUser();
+      await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'w1',
+          name: 'Weapons',
+          type: SetType.weapon,
+        ),
+        now: clock,
+      );
+
+      final firstMeta = setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Kinetic',
+        isExotic: true,
+        name: 'Witherhoard',
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w1',
+        UpsertSetItemCommand(
+          id: 'si-w',
+          slot: 'primary',
+          itemHash: 1001,
+          itemName: 'Witherhoard',
+          itemMeta: firstMeta,
+          knownItemMeta: {1001: firstMeta},
+        ),
+        now: clock,
+      );
+
+      final secondMeta = setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Power',
+        isExotic: true,
+        name: 'Gjallarhorn',
+      );
+      await expectLater(
+        upsertUserSetItem(
+          db,
+          userId,
+          'w1',
+          UpsertSetItemCommand(
+            id: 'si-g',
+            slot: 'heavy',
+            itemHash: 1002,
+            itemName: 'Gjallarhorn',
+            itemMeta: secondMeta,
+            knownItemMeta: {
+              1001: firstMeta,
+              1002: secondMeta,
+            },
+          ),
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>()
+              .having((e) => e.code, 'code', UseCaseErrorCode.invalidItem)
+              .having(
+                (e) => e.message,
+                'message',
+                matches(RegExp('exotic|Witherhoard', caseSensitive: false)),
+              ),
+        ),
+      );
+    });
+
+    test('allows replacing the exotic-holding weapon slot', () async {
+      final userId = await seedUser();
+      await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'w2',
+          name: 'Weapons',
+          type: SetType.weapon,
+        ),
+        now: clock,
+      );
+
+      final firstMeta = setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Kinetic',
+        isExotic: true,
+        name: 'Witherhoard',
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w2',
+        UpsertSetItemCommand(
+          id: 'si-w',
+          slot: 'primary',
+          itemHash: 1001,
+          itemName: 'Witherhoard',
+          itemMeta: firstMeta,
+          knownItemMeta: {1001: firstMeta},
+        ),
+        now: clock,
+      );
+
+      final replaceMeta = setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Kinetic',
+        isExotic: true,
+        name: 'Outbreak Perfected',
+      );
+      final replaced = await upsertUserSetItem(
+        db,
+        userId,
+        'w2',
+        UpsertSetItemCommand(
+          id: 'si-o',
+          slot: 'primary',
+          itemHash: 1003,
+          itemName: 'Outbreak Perfected',
+          itemMeta: replaceMeta,
+          knownItemMeta: {1003: replaceMeta},
+          replaceExisting: true,
+        ),
+        now: clock,
+      );
+      expect(replaced!.activeItems, hasLength(1));
+      expect(replaced.activeItems.single.itemHash, 1003);
+    });
+
+    test('rejects second exotic armor (incl. class item) on armor set', () async {
+      final userId = await seedUser();
+      await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'a1',
+          name: 'Armor',
+          type: SetType.armor,
+        ),
+        now: clock,
+      );
+
+      final helmMeta = setItemMetaFromCatalog(
+        kind: 'armor',
+        slot: 'Helmet',
+        isExotic: true,
+        name: 'Synthoceps',
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'a1',
+        UpsertSetItemCommand(
+          id: 'si-h',
+          slot: 'helmet',
+          itemHash: 2001,
+          itemName: 'Synthoceps',
+          itemMeta: helmMeta,
+          knownItemMeta: {2001: helmMeta},
+        ),
+        now: clock,
+      );
+
+      final classMeta = setItemMetaFromCatalog(
+        kind: 'armor',
+        slot: 'ClassItem',
+        isExotic: true,
+        name: 'Hoarfrost-Z',
+      );
+      await expectLater(
+        upsertUserSetItem(
+          db,
+          userId,
+          'a1',
+          UpsertSetItemCommand(
+            id: 'si-c',
+            slot: 'class_item',
+            itemHash: 2002,
+            itemName: 'Hoarfrost-Z',
+            itemMeta: classMeta,
+            knownItemMeta: {
+              2001: helmMeta,
+              2002: classMeta,
+            },
+          ),
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.invalidItem,
+          ),
+        ),
+      );
+    });
+
+    test('allows legendary after one exotic weapon', () async {
+      final userId = await seedUser();
+      await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'w3',
+          name: 'Weapons',
+          type: SetType.weapon,
+        ),
+        now: clock,
+      );
+
+      final exo = setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Kinetic',
+        isExotic: true,
+        name: 'X',
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w3',
+        UpsertSetItemCommand(
+          slot: 'primary',
+          itemHash: 1,
+          itemName: 'X',
+          itemMeta: exo,
+          knownItemMeta: {1: exo},
+        ),
+        now: clock,
+      );
+
+      final leg = setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Energy',
+        isExotic: false,
+        name: 'Leg',
+      );
+      final ok = await upsertUserSetItem(
+        db,
+        userId,
+        'w3',
+        UpsertSetItemCommand(
+          slot: 'special',
+          itemHash: 2,
+          itemName: 'Leg',
+          itemMeta: leg,
+          knownItemMeta: {1: exo, 2: leg},
+        ),
+        now: clock,
+      );
+      expect(ok!.activeItems, hasLength(2));
+    });
+  });
 }

@@ -24,6 +24,37 @@ Map<int, String> buildPerkNameMapFromItemDefs(
   return map;
 }
 
+/// Seed plugHash → display name from catalog/entity rows (hash + name).
+///
+/// Web residual path (GAP-INV-02): MVP entity stores project mods/weapons/armor
+/// as named rows; when a plug hash collides with a projected entity, resolve the
+/// display name without raw DestinyInventoryItemDefinition. Missing hashes are
+/// omitted (never invent names). Soft metadata only.
+Map<int, String> buildPerkNameMapFromNamedHashes(
+  Iterable<({int hash, String name})> named, {
+  Iterable<int>? onlyHashes,
+}) {
+  final filter = onlyHashes?.toSet();
+  final map = <int, String>{};
+  for (final row in named) {
+    if (row.hash == 0) continue;
+    if (filter != null && !filter.contains(row.hash)) continue;
+    final n = row.name.trim();
+    if (n.isEmpty) continue;
+    map.putIfAbsent(row.hash, () => n);
+  }
+  return map;
+}
+
+/// Merge name maps (later maps win on conflict).
+Map<int, String> mergePerkNameMaps(Iterable<Map<int, String>> maps) {
+  final out = <int, String>{};
+  for (final m in maps) {
+    out.addAll(m);
+  }
+  return out;
+}
+
 /// Minimal catalog-like row for weapon roll meta (OfflineCatalog / entity weapons).
 class WeaponRollMetaSource {
   const WeaponRollMetaSource({

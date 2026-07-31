@@ -1,7 +1,7 @@
 # Multiplatform Dart ΓÇö UI Fidelity Master (host presentation vs Next atlas)
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (postΓÇôPRODUCTION_CUTOVER GO residual audit; DART-062+ reserved)  
+**Updated:** 2026-07-30 (ledger hygiene: FEAT fidelity PASS after DART-062–068; PROC-06 thinning gate)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -73,17 +73,17 @@ Cutover destination presence remains valid. Fidelity status below is what agents
 
 | FEAT ID | Cutover-era | Fidelity status | Reason |
 | ------- | ----------- | --------------- | ------ |
-| **FEAT-NAV-CATALOG** | PASS | **PARTIAL** | DART-062/063 closed multi-facet/group-by/Universal/synergy tags/owned detail; icons/dense meta residual (GAP-UI-CATALOG-09 → DART-068). |
-| **FEAT-NAV-BUILD** | PASS | **PARTIAL** | Compose spine cutover-PASS; fidelity misses DBR-ID-008 identity confirm/fork and full Subclass kit composer (GAP-UI-BUILD-01/02). |
-| **FEAT-NAV-SETS** | PASS | **PARTIAL** | Board + dense rows + catalog fill + library filters/readiness/delete **done** (DART-065/066); shell polish residual → DART-068. |
-| **FEAT-NAV-SYNERGY** | PASS | **PARTIAL** | Catalog picker + filters + delete + Jaspr manage **done** (DART-063/066); designation icons residual → DART-068. |
-| **FEAT-COMPOSE-IDENTITY** | PASS | **PARTIAL** | Identity fields editable in-place without Confirm/Fork (DBR-ID-008 miss ΓåÆ GAP-UI-BUILD-01); raw hash exotic/super pickers (GAP-UI-BUILD-05). |
-| **FEAT-COMPOSE-FINISH** | PASS | **PARTIAL** | finish-gaps panel + equip gates shipped (GAP-FEAT-06 panel closed); full FinishBuildWalkthrough one-tap create/fill residual GAP-UI-BUILD-03; Finish armor improve not on Build path GAP-UI-BUILD-04. |
-| **FEAT-COMPOSE-HARD** | PASS | **PARTIAL** | Domain hard constraints authoritative; client pre-block UI thinner than Next (GAP-UI-BUILD-08). |
-| **FEAT-INV-OWNED-JOIN** | PASS | **PARTIAL** | Owned scope exists but incomplete defs (legendary-only weapons / exotic-only armor) and raw instance detail reduce owned-join browse fidelity (GAP-UI-CATALOG-04/05/08; GAP-INV-02/03 residual). |
-| **FEAT-OPTIMIZER** | PASS (Windows Sets) | **PARTIAL** | Windows Sets optimizer confirm-only PASS; not wired into Build Finish (GAP-UI-BUILD-04) or Settings post-sync (GAP-UI-SETTINGS-04); web/mobile remain GAP-FEAT-01 deferred. |
-| **FEAT-NAV-LOADOUTS** | PASS | **PASS** | DART-055 nav/list/filters/signed-out remain cutover PASS; residuals are P2 density only (color bar, exotic names, expand)ΓÇö**no status demote**. |
-| **FEAT-NAV-SETTINGS** | PASS | **PASS** | OAuth Public+PKCE + inventory sync + diagnostics depth remain PASS; residuals are chrome (READY chips, ONLINE labels, post-sync soft banner Windows-only)ΓÇö**no status demote**. |
+| **FEAT-NAV-CATALOG** | PASS | **PASS** | DART-062/063/068 closed multi-facet/group-by/Universal/synergy tags/owned detail/icons/dense meta. Residual: plug names only when map present (GAP-UI-CATALOG-08 note). |
+| **FEAT-NAV-BUILD** | PASS | **PASS** | Compose spine + identity Confirm/Fork + kit (DART-064) + Finish walkthrough (DART-067) + density (DART-068). Soft never auto-applies. |
+| **FEAT-NAV-SETS** | PASS | **PASS** | Board + dense rows + catalog fill + filters/readiness/delete + icons (DART-065/066/068); armor base-roll prefers armor_stats plugs when defs present. |
+| **FEAT-NAV-SYNERGY** | PASS | **PASS** | Catalog picker + filters + delete + designation chrome (DART-063/066/068). |
+| **FEAT-COMPOSE-IDENTITY** | PASS | **PASS** | Confirm/Fork (DBR-ID-008) + Manifest pickers + kit (DART-064). Soft never auto-applies. |
+| **FEAT-COMPOSE-FINISH** | PASS | **PASS** | Windows+Jaspr Finish walkthrough (DART-067); Windows Finish armor improve confirm-only. Residual: web/mobile optimizer **GAP-FEAT-01** deferred (not unfinished walkthrough). Soft never auto-applies. |
+| **FEAT-COMPOSE-HARD** | PASS | **PASS** | Domain hard constraints + client hard-block UX (DART-064); set exotic exclusivity hard gates; soft never disables Save. DAC-DST-009 residual only where product keeps display-only kinds. |
+| **FEAT-INV-OWNED-JOIN** | PASS | **PASS** (+ residual note) | All\|Owned + plug name seed + `instancesForResolved` when maps present. Residual: incomplete entity defs / unresolved names only — not cutover re-open. |
+| **FEAT-OPTIMIZER** | PASS (Windows) | **PASS** (Windows) | Windows Sets + Finish/Settings post-sync confirm-only (DART-067). Web/mobile **GAP-FEAT-01** deferred. Soft never auto-applies. |
+| **FEAT-NAV-LOADOUTS** | PASS | **PASS** | DART-055 + density (DART-068). |
+| **FEAT-NAV-SETTINGS** | PASS | **PASS** | OAuth + sync + diagnostics + READY/ONLINE chrome (DART-068); post-sync confirm-only (DART-067). Soft never auto-applies. |
 
 Unlisted FEAT rows keep their feature-gaps inventory status (compose variants/soft, equip, auth, data, ops).
 
@@ -128,18 +128,18 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | DBR-SYN-003 | build | pass | ΓÇö |
 | DBR-CMP-001 | build | pass | ΓÇö |
 | DBR-CMP-003 | build | partial | ΓÇö |
-| DBR-CMP-007 | build | partial | GAP-UI-BUILD-08 |
-| DBR-CMPL-001 | build | partial | GAP-UI-BUILD-02 |
+| DBR-CMP-007 | build | pass | GAP-UI-BUILD-08 closed (DART-064); set exotic gates shipped |
+| DBR-CMPL-001 | build | pass | GAP-UI-BUILD-02 closed (DART-064) |
 | DBR-CMPL-002 | build | pass | ΓÇö |
 | DBR-ROLL-004 | build | pass | ΓÇö |
 | DBR-GUID-001 | build | pass | ΓÇö |
 | DBR-GUID-003 | build | pass | ΓÇö |
-| DAC-DST-009 | build | partial | GAP-UI-BUILD-08 |
+| DAC-DST-009 | build | pass | GAP-UI-BUILD-08 closed; set exotic exclusivity + hard-block UX |
 | DBR-EQP-001 | build | pass | ΓÇö |
 | DBR-EQP-002 | build | pass | ΓÇö |
 | BR-BLD-008 | build | pass | GAP-UI-BUILD-03 closed (DART-067) |
 | BR-BLD-009 | build | pass (Windows) | GAP-UI-BUILD-04 closed Windows; web GAP-FEAT-01 |
-| BR-UI-001 | build | partial | GAP-UI-BUILD-08 |
+| BR-UI-001 | build | pass | GAP-UI-BUILD-08 closed; hard prevention + set exotic UI filters |
 | DBR-STAT-001 | build | pass | ΓÇö |
 | PRODUCT-SOFT-NEVER-AUTO | build | pass | Soft never auto-applies |
 
@@ -388,7 +388,7 @@ Verdicts are **host presentation** vs Next atlas + domain specs. Domain packages
 | ----- | ----- |
 | Kind | rule |
 | Next | SetsDetail armor subgrid Totals + per-piece ArmorPieceStatRow from armor_stats plugs (mods/MW/tuning excluded) |
-| Dart | `sumArmorSetStats` + host armor boards from inventory `statValues` / `buildArmorBaseStatBoard`; wishlist unknown |
+| Dart | `computeArmorBaseStatsFromPlugs` + `preferArmorBaseRollBoard` on Windows set enrichment (raw defs); web prefers plug roll when resolver injected, else live `statValues`; wishlist unknown |
 | Exit | Pinned armor pieces show Health/Melee/Grenade/Super/Class/Weapons + totals (base roll only); unpinned show stats unknown |
 
 #### GAP-UI-SETS-02 — Set item rows lack meta/traits/synergies/icons (P1) — **closed (DART-065)**

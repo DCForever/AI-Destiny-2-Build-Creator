@@ -1858,6 +1858,9 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       itemName: pick.itemName,
       instanceId: pick.instanceId,
       selectedPerks: pick.selectedPerks,
+      isExotic: pick.isExotic,
+      equipmentSlot: pick.equipmentSlot,
+      catalogKind: pick.catalogKind,
     );
     if (err != null && mounted) {
       setState(() => _statusMessage = err);

@@ -1,11 +1,15 @@
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 
-/// Catalog-only roll-tag enrichment for Jaspr equip sync (DART-051).
+/// Catalog/entity roll-tag enrichment for Jaspr inventory sync (DART-051 / GAP-INV-02).
 ///
-/// Web prebuilt bundles lack full raw DestinyInventoryItemDefinition, so perk
-/// **name** map is empty unless a host injects one. Frame champion tags still
-/// apply from OfflineCatalog weapon rows with frame + itemTypeName.
+/// - **Perk names:** seed from OfflineCatalog / entity hash→name rows so plug
+///   hashes that exist in the prebuilt bundle resolve (mods, projected items).
+///   Optional [extraPerkNames] / [perkNameMapBuilder] fill residual gaps
+///   (true weapon-perks without entity rows still need injection or raw defs).
+/// - **Weapon meta:** OfflineCatalog frame + itemTypeName for frame champion tags.
+///
+/// Soft metadata only — never auto-applies.
 class WebRollTagEnrichment {
   const WebRollTagEnrichment({
     required this.perkNameMapBuilder,
@@ -18,11 +22,36 @@ class WebRollTagEnrichment {
 
 WebRollTagEnrichment createWebRollTagEnrichment({
   required OfflineCatalog offlineCatalog,
+  Map<int, String> extraPerkNames = const {},
+  PerkNameMapBuilder? perkNameMapBuilder,
+  Iterable<({int hash, String name})>? extraNamedHashes,
 }) {
   Future<Map<int, String>> perkBuilder(List<int> plugHashes) async {
-    // No raw weapon-perks / item defs on web MVP — perk-name rules need residual
-    // channel (entity weapon-perks or injected map). Frame tags still work.
-    return const {};
+    if (plugHashes.isEmpty) return const {};
+    if (offlineCatalog.baseItems.isEmpty) {
+      await offlineCatalog.loadBase();
+    }
+    final fromCatalog = buildPerkNameMapFromNamedHashes(
+      [
+        for (final item in offlineCatalog.baseItems)
+          (hash: item.hash, name: item.name),
+        ...?extraNamedHashes,
+      ],
+      onlyHashes: plugHashes,
+    );
+    final merged = mergePerkNameMaps([
+      fromCatalog,
+      {
+        for (final h in plugHashes)
+          if (extraPerkNames[h] != null && extraPerkNames[h]!.isNotEmpty)
+            h: extraPerkNames[h]!,
+      },
+    ]);
+    if (perkNameMapBuilder != null) {
+      final more = await perkNameMapBuilder(plugHashes);
+      return mergePerkNameMaps([merged, more]);
+    }
+    return merged;
   }
 
   Future<Map<int, RollTagWeaponMeta>> weaponBuilder(List<int> itemHashes) async {

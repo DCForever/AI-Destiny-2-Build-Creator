@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-25 (DART-068 done — shell/loadouts/settings presentation polish; **P9 complete**; cutover GO unchanged)  
+**Updated:** 2026-07-30 (PROC-06 finish-spec thinning checklist + gate; DART-001–068 complete; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -548,6 +548,8 @@ Pure hard evaluators live in `packages/domain/lib/src/evaluators/destiny_build_c
 - [ ] Phase gate row marked done when that phase completes  
 - [ ] Decisions doc still accurate (link only; don’t fork architecture here)  
 - [ ] No product-branch merges; no product `0NN` IDs used for this line  
+- [ ] **PROC-06:** if intentional thinning, complete [finish-spec-thinning-checklist.md](./finish-spec-thinning-checklist.md) + GAP residual in same change (`dart run tool/proc06_thinning_gate.dart`)  
+- [ ] Soft never auto-applies; no CLIENT_SECRET
 
 ---
 

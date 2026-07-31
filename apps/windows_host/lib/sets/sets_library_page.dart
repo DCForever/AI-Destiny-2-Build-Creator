@@ -2,6 +2,8 @@ import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart'
     show ArmorSetStatTotals, SetItemRecord, armorBaseStatKeys;
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart'
+    show CatalogItem, WindowsManifestRefresh;
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
@@ -161,11 +163,15 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     _enriching = true;
     final setType = SetType.tryParse(sel.set.type) ?? SetType.weapon;
     final slots = slotsForSetType(setType);
+    final manifestService = widget.services.manifestRefresh is WindowsManifestRefresh
+        ? (widget.services.manifestRefresh as WindowsManifestRefresh).service
+        : null;
     enrichSetDetailPresentation(
       detail: sel,
       bridge: _bridge,
       boardSlots: slots,
       userId: _controller.userId,
+      manifestService: manifestService,
     ).then((p) {
       if (!mounted) return;
       setState(() {
@@ -214,12 +220,42 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     });
   }
 
+  SetItemMeta _metaForHash(int itemHash, String itemName) {
+    CatalogItem? hit;
+    for (final c in _bridge.annotatedBase) {
+      if (c.hash == itemHash) {
+        hit = c;
+        break;
+      }
+    }
+    if (hit == null) {
+      return SetItemMeta(kind: SetItemKind.unknown, name: itemName);
+    }
+    final armor = isArmorBoardSlot(hit.slot ?? '') ||
+        (hit.sourceStore?.contains('armor') ?? false);
+    return setItemMetaFromCatalog(
+      isExotic: hit.isExotic,
+      slot: hit.slot,
+      kind: armor ? 'armor' : 'weapons',
+      name: hit.name,
+    );
+  }
+
   Future<void> _fillSlot(String slot) async {
+    final setType = SetType.tryParse(_controller.selected?.set.type ?? '');
+    final catalogKind = setType == SetType.armor || setType == SetType.mod
+        ? 'armor'
+        : 'weapons';
+    final excludeExotic =
+        _controller.excludeExoticForSlot(slot, _metaForHash);
+
     final pick = await showSetCatalogPicker(
       context: context,
       services: widget.services,
       targetSlot: slot,
       bridge: _bridge,
+      excludeExotic: excludeExotic,
+      catalogKind: catalogKind,
     );
     if (pick == null || !mounted) return;
 
@@ -255,7 +291,15 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       }
     }
 
-    final err = await _controller.fillSlot(slot, pick);
+    final known = <int, SetItemMeta>{
+      for (final row in _controller.selected?.activeItems ?? const [])
+        row.itemHash: _metaForHash(row.itemHash, row.itemName),
+    };
+    final err = await _controller.fillSlot(
+      slot,
+      pick,
+      knownItemMeta: known,
+    );
     if (!mounted) return;
     setState(() {
       _statusMessage = err ?? 'Filled ${setSlotDisplayLabel(slot)}';

@@ -7,10 +7,14 @@ enum UseCaseErrorCode {
   invalidSetType('INVALID_SET_TYPE'),
   invalidSynergyType('INVALID_SYNERGY_TYPE'),
   invalidSynergyLinkKind('INVALID_SYNERGY_LINK_KIND'),
+  invalidSynergyLink('INVALID_SYNERGY_LINK'),
   designationImmutable('DESIGNATION_IMMUTABLE'),
   invalidAttachmentMode('INVALID_ATTACHMENT_MODE'),
   fashionLimit('FASHION_LIMIT'),
   setTypeMismatch('SET_TYPE_MISMATCH'),
+
+  /// Set composition / catalog fitness (BR-SLOT-008/009, BR-UI-001).
+  invalidItem('INVALID_ITEM'),
 
   /// Hard-gate codes (wire names match [DomainFailureCodes] / product API).
   noSynergy('NO_SYNERGY'),

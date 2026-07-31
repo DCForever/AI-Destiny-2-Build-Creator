@@ -132,6 +132,9 @@ class BuildsLibraryController extends ChangeNotifier {
   /// Optional estimate for soft-stat warnings (tests may inject).
   StatEstimate? softStatEstimateOverride;
 
+  /// Optional set-bonus index for soft coverage (tests / entity store inject).
+  Map<int, SetBonusRecord>? coverageSetBonusByItemHash;
+
   // --- DART-064 identity confirm + subclass kit + hard-block preview ---
   SubclassKit _editSubclass = const SubclassKit();
   List<String>? _pendingIdentityFields;
@@ -1168,11 +1171,19 @@ class BuildsLibraryController extends ChangeNotifier {
     String variantId,
   ) async {
     try {
+      final indexes = loadCoverageIndexes(
+        weapons: [
+          for (final item in catalogItems ?? const <CatalogItem>[])
+            (hash: item.hash, element: item.element),
+        ],
+        setBonusByItemHash: coverageSetBonusByItemHash,
+      );
       _coverage = await queryVariantCoverage(
         db,
         userId,
         buildId,
         variantId,
+        indexes: indexes,
         statEstimate: softStatEstimateOverride,
       );
     } catch (_) {
@@ -1461,6 +1472,9 @@ class BuildsLibraryController extends ChangeNotifier {
     required String itemName,
     String? instanceId,
     List<int> selectedPerks = const [],
+    bool isExotic = false,
+    String? equipmentSlot,
+    String? catalogKind,
   }) async {
     final uid = _userId;
     if (uid == null) return 'No user';
@@ -1469,6 +1483,26 @@ class BuildsLibraryController extends ChangeNotifier {
     _finishMessage = null;
     notifyListeners();
     try {
+      final detail = await getSetDetail(db, uid, setId);
+      final setType = SetType.tryParse(detail?.set.type ?? '');
+      final kind = catalogKind ??
+          (setType == SetType.armor || setType == SetType.mod
+              ? 'armor'
+              : 'weapons');
+      final candidateMeta = setItemMetaFromCatalog(
+        isExotic: isExotic,
+        slot: equipmentSlot,
+        kind: kind,
+        name: itemName,
+      );
+      final known = <int, SetItemMeta>{
+        for (final row in detail?.activeItems ?? const [])
+          row.itemHash: SetItemMeta(
+            kind: SetItemKind.unknown,
+            name: row.itemName,
+          ),
+        itemHash: candidateMeta,
+      };
       final updated = await upsertUserSetItem(
         db,
         uid,
@@ -1480,6 +1514,8 @@ class BuildsLibraryController extends ChangeNotifier {
           instanceId: instanceId,
           selectedPerks: selectedPerks,
           replaceExisting: true,
+          itemMeta: candidateMeta,
+          knownItemMeta: known,
         ),
       );
       if (updated == null) {

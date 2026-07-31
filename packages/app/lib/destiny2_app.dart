@@ -32,4 +32,5 @@ export 'src/set_library_presentation.dart';
 export 'src/set_use_cases.dart';
 export 'src/synergy_picker_presentation.dart';
 export 'src/synergy_use_cases.dart';
+export 'src/validate_synergy_link.dart';
 export 'src/variant_use_cases.dart';

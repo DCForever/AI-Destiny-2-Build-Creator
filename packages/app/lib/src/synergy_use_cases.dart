@@ -4,6 +4,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'clock_ids.dart';
 import 'errors.dart';
 import 'mappers.dart';
+import 'validate_synergy_link.dart';
 
 /// Create input for a library synergy.
 class CreateSynergyCommand {
@@ -108,6 +109,9 @@ void _assertCreatableType(String typeWire) {
 }
 
 List<SynergyLinkInput> _validateLinks(List<SynergyLinkWrite> links) {
+  // Kind enum + displayName + BR-SYN-005 required fields / optional hash checks.
+  assertSynergyLinksValid(links);
+
   final out = <SynergyLinkInput>[];
   for (final link in links) {
     final kind = SynergyLinkKind.tryParse(link.kind);

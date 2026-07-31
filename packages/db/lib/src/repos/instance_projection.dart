@@ -164,9 +164,51 @@ const _armorStatAliases = <String, String>{
   'weapon': 'Weapons',
 };
 
+/// Build armor board from plug-derived base roll (BR-SET-011 / DBR-STAT-008).
+///
+/// [stats] should be the full EoF six-key map from
+/// `computeArmorBaseStatsFromPlugs` (zeros for missing stats).
+ArmorBaseStatBoard? buildArmorBaseStatBoardFromPlugRoll(
+  Map<String, int>? stats,
+) {
+  if (stats == null || stats.isEmpty) return null;
+  final canonical = <String, int>{};
+  var total = 0;
+  var incomplete = false;
+  for (final key in armorBaseStatKeys) {
+    final v = stats[key];
+    if (v == null) {
+      incomplete = true;
+      continue;
+    }
+    canonical[key] = v;
+    total += v;
+  }
+  if (canonical.isEmpty) return null;
+  return ArmorBaseStatBoard(
+    stats: Map.unmodifiable(canonical),
+    total: total,
+    incomplete: incomplete || canonical.length < armorBaseStatKeys.length,
+  );
+}
+
+/// Prefer plug-derived base roll over live ItemStats when available.
+///
+/// Product Armor Set board: base roll only (mods/MW/tuning excluded).
+ArmorBaseStatBoard? preferArmorBaseRollBoard({
+  Map<String, int>? plugBaseStats,
+  Map<String, Object?>? liveStatValues,
+}) {
+  final fromPlugs = buildArmorBaseStatBoardFromPlugRoll(plugBaseStats);
+  if (fromPlugs != null) return fromPlugs;
+  return buildArmorBaseStatBoard(liveStatValues);
+}
+
 /// Build armor base-stat board from raw [statValues] map.
 ///
 /// Returns null when nothing resolvable (do not fabricate zeros).
+/// Catalog/inventory live ItemStats may include mods — prefer
+/// [preferArmorBaseRollBoard] for Armor Set boards.
 ArmorBaseStatBoard? buildArmorBaseStatBoard(Map<String, Object?>? statValues) {
   if (statValues == null || statValues.isEmpty) return null;
 

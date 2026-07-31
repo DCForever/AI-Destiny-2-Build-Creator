@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-25 (UI fidelity residual audit; FEAT PARTIAL demotions for host density; GAP-UI-* catalog; PRODUCTION_CUTOVER GO **unchanged**)  
+**Updated:** 2026-07-30 (pkg-ledger-process-hygiene: FEAT rescoring + PROC-06 closed via `proc06_thinning_gate`; PRODUCTION_CUTOVER GO **unchanged**)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -17,6 +17,8 @@
 | [ui-polish-tracker.md](./ui-polish-tracker.md) | Pure visual density only |
 | Product `PRODUCT.md` | Canonical product purpose + confirmed capabilities |
 | Workflow `dart-gaps-analysis` | Re-scan Next vs Dart; refresh this catalog + inventory |
+| Workflow `align-product-implement` | Domain DBR/DAC/BR + GAP packages → optional implement ([docs](./workflows/align-product-implement.md)) |
+| [finish-spec-thinning-checklist.md](./finish-spec-thinning-checklist.md) | **PROC-06** intentional thinning same-change residual gate (`proc06_thinning_gate`) |
 
 **Rule:** FEAT cutover **PASS** does **not** override missed BRs/DACs. Fidelity PARTIAL demotions track host presentation residuals; they do **not** re-open PRODUCTION_CUTOVER.
 
@@ -99,11 +101,11 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | **PASS** | PASS | **PASS** | **shipped** | Domain authoritative + client hard-block UX (DART-064); soft never disables Save |
 | **FEAT-COMPOSE-SOFT** | Soft coverage display (never auto-apply) | Soft guidance UI | PASS | PASS | PASS | **shipped** | DART-004/034/041/046; RC-SOFT; soft **never auto-applies** |
 | **FEAT-COMPOSE-SOFT-STATS** | Soft stat targets (explicit save) | Soft stat editor | PASS | PASS | PASS | **shipped** | DART-034/041/046; Jaspr all `ArmorStatName` **DART-057** / GAP-UI-01 closed |
-| **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | **PARTIAL** | PARTIAL | **PARTIAL** | **shipped** + fidelity | finish-gaps panel + equip gates shipped (GAP-FEAT-06 closed); residual one-tap walkthrough GAP-UI-BUILD-03 + Finish armor improve GAP-UI-BUILD-04 → **DART-067** |
+| **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | **PASS** | PARTIAL | **PASS** | **shipped** | Windows+Jaspr Finish walkthrough **DART-067** / GAP-UI-BUILD-03 closed; Windows Finish Armor improve confirm-only; soft never auto-applies. Residual: web/mobile optimizer path **GAP-FEAT-01** deferred (not unfinished walkthrough) |
 | **FEAT-EQUIP-READY** | Equip-ready / wishlist vs owned pins | Equip-ready gate | PASS | N/A\* | PASS | **shipped** | DART-006/038/047; \*mobile equip path N/A (DART-057 matrix) |
 | **FEAT-EQUIP-BUNGIE** | Bungie equip (partial OK) | Equip flow | PASS | N/A\* | PASS | **shipped** | DART-037/038/047; \*mobile equip **N/A** (DART-057 — use Windows/Jaspr) |
 | **FEAT-EQUIP-DIM** | DIM jsonOnly export | DIM export | PASS | N/A\* | PASS | **shipped** | DART-010/039/047; \*mobile DIM **N/A** (DART-057 matrix) |
-| **FEAT-OPTIMIZER** | Armor set optimizer (confirm-only) | Optimizer workspace | **PARTIAL** | deferred | deferred | **deferred** mobile/web + fidelity | Windows Sets optimizer confirm-only; not wired into Build Finish (GAP-UI-BUILD-04) or Settings post-sync (GAP-UI-SETTINGS-04); GAP-FEAT-01 remains deferred web/mobile → **DART-067** |
+| **FEAT-OPTIMIZER** | Armor set optimizer (confirm-only) | Optimizer workspace | **PASS** | deferred | deferred | **shipped** Windows; **deferred** mobile/web | Windows Sets optimizer + DART-067 Finish/Settings post-sync confirm-only; soft never auto-applies. Mobile/web remain **GAP-FEAT-01** deferred |
 
 ### C. Inventory & owned instances
 
@@ -111,12 +113,12 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
 | **FEAT-INV-SYNC** | Full-replace inventory sync | Settings + `syncInventory` | Package + hosts; vault lookup wired (DART-050); web Settings sync (DART-056); fidelity program 050–054 | **shipped** (Windows + Jaspr) | **DART-050–054** done; **DART-056** web Settings; RB-06 + RB-02 cleared |
 | **FEAT-INV-VAULT** | Vault + postmaster instances stored | Transfer bucket resolution | Lookup + host wiring (DART-050); harness DART-054 | **shipped** (fixture + harness) | **DART-050** + **DART-054** |
-| **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Pure + sync + host builders (DART-051) | **shipped** (golden + Windows raw; web frame-meta) | **DART-051** closed GAP-INV-02; residual: web perk names without raw defs |
-| **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Pure + sync + Windows raw context (DART-052); web raw-less residual | **shipped** (fixture + Windows) | **DART-052** closed GAP-INV-03; residual: web without raw defs |
+| **FEAT-INV-ROLL-TAGS** | God-roll / champion / build roll tags | `computeRollTags` | Pure + sync + host builders (DART-051) | **shipped** (golden + Windows raw; web catalog-seed + inject) | **DART-051** + web channel (`createWebRollTagEnrichment`); residual only when plug hash not in entity/catalog map |
+| **FEAT-INV-SOCKETS** | Socket plugs for perk grids | `buildStoredSocketPlugs` | Pure + sync + Windows raw + web context channel (DART-052) | **shipped** (fixture + Windows + web when maps supplied) | **DART-052** + web `createWebWeaponSocketEnrichment`; residual when no plug category maps |
 | **FEAT-INV-DIAG** | Sync diagnostics UI + logs | ManifestCard diagnostics | Windows retains + surfaces last diagnostics | **shipped** (P1) | **DART-053** / GAP-INV-04 closed |
 | **FEAT-INV-HARNESS** | Next-vs-Dart live count harness | Manual dual sync | Dual-run doc + compare tool + offline gate | **shipped** (P0 process) | **DART-054** / GAP-INV-05 closed |
-| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + All\|Owned **shipped**; fidelity **PARTIAL** — incomplete defs (legendary-only weapons / exotic-only armor) + raw instance detail (GAP-UI-CATALOG-04/05/08; GAP-INV-02/03 residual) | **shipped** + fidelity | Docs **DART-050**; UX **DART-053**; web Owned **DART-056**; residual browse fidelity → **DART-062/063** |
-| **FEAT-INV-WEAPON-STATS** | Combat `statValues` on weapon rows | `parseWeaponStatValues` | Armor-hash parser reused | **planned** (P2) | Optional in **DART-050** / GAP-INV-07 |
+| **FEAT-INV-OWNED-JOIN** | Owned catalog = entities × inventory | Catalog owned mode | Bridge + All\|Owned **shipped**; web plug name seed + `instancesForResolved` | **shipped** + fidelity | Names when plug map present (GAP-UI-CATALOG-08); incomplete defs residual unchanged |
+| **FEAT-INV-WEAPON-STATS** | Combat `statValues` on weapon rows | `parseWeaponStatValues` | `parseWeaponStatValues` + transfer merge shipped | **shipped** | **GAP-INV-07** closed (DART-050 optional) |
 
 ### D. Auth, data, and ops
 
@@ -169,8 +171,8 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | ID | Area | Severity | Status | Next.js evidence | Dart today | Planned slices | Cutover link |
 | -- | ---- | -------- | ------ | ---------------- | ---------- | -------------- | ------------ |
 | **GAP-INV-01** | Vault/postmaster bucket resolution | **P0** | `closed` (DART-050) | `buildEquipmentBucketLookup` + `resolveTransferContainerBuckets` in `src/lib/bungie/syncInventory.ts` | `buildEquipmentBucketLookup` + host wiring on Windows Settings/equip + Jaspr equip; package+host fixtures assert `resolvedFromTransfer > 0` | **DART-050** done | RB-06 partial (enrichment/harness remain 051–054) |
-| **GAP-INV-02** | Roll tags enrichment | **P1** | `open` | `computeRollTags` + weapon-perks / WeaponRecord | `_normalizeItems` only emits `Crafted` when `isCrafted` | **DART-051** | Owned pickers / quality UX |
-| **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `closed` (DART-052; web residual) | `buildStoredSocketPlugs` + weapon socket context | `classifyWeaponSocket` + `buildStoredSocketPlugs`; sync wires context builder; Windows raw defs | **DART-052** done | Instance perk grids; web raw-less → unenriched maps (PROC-06 residual, not pure thinning) |
+| **GAP-INV-02** | Roll tags enrichment | **P1** | `closed` (DART-051; web channel) | `computeRollTags` + weapon-perks / WeaponRecord | Pure + Windows raw + web catalog-seed/inject builders | **DART-051** done | Residual: plug hash not in entity map |
+| **GAP-INV-03** | Socket plugs / perk grid enrichment | **P1** | `closed` (DART-052; web channel) | `buildStoredSocketPlugs` + weapon socket context | Pure + Windows raw + web map/raw channel builders | **DART-052** done | Residual: no category maps → raw capture only |
 | **GAP-INV-04** | Sync diagnostics UI | **P1** | `closed` (DART-053) | `formatSyncDiagnostics` + `[inventory-sync]` logs | Controller retains last diagnostics; Settings surfaces raw/parsed/dropped/resolution | **DART-053** done | Makes drops visible |
 | **GAP-INV-05** | Live Next-vs-Dart inventory harness | **P0** | **`closed`** (DART-054) | Manual dual sync | Dual-run doc + compare tool + offline gate | **DART-054** | Prevents silent drift; equip pin fidelity |
 | **GAP-INV-06** | Owned catalog needs entity stores | **P1** | `closed` (DART-053 UX + DART-056 web Owned) | Manifest refresh always online | Docs + Settings/Catalog entity empty warning; Jaspr All\|Owned + instance ids for pins | **DART-050** docs + **DART-053** UX + **DART-056** web Owned | UX after sync |
@@ -214,7 +216,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-BUILD-06** | Variant read-only icon overview | **P2** | `closed` (DART-068) | VariantCard DETAILS icon strips | Loadout overview chip strip | **DART-068** | Polish |
 | **GAP-UI-BUILD-08** | Client hard-block pre-save UX | **P2** | `closed` (DART-064) | hardBlocks + plain-language disabled | Client dual exotic/kit hard-block banners; soft never disables Save | **DART-064** | Not cutover; fidelity |
 | **GAP-UI-BUILD-09** | Jaspr attach/pin named pickers | **P2** | `closed` (DART-064) | set search/tags + pin context | Named set picker + per-slot pins | **DART-064** | Jaspr only |
-| **GAP-UI-SETS-01** | Armor base-roll EoF six-stat board | **P1** | `closed` (DART-065) | ArmorPieceStatRow + totals | `sumArmorSetStats` + host boards | **DART-065** | DAC-NME-004 |
+| **GAP-UI-SETS-01** | Armor base-roll EoF six-stat board | **P1** | `closed` (DART-065 + plug roll) | ArmorPieceStatRow + totals from armor_stats plugs | `computeArmorBaseStatsFromPlugs` + `preferArmorBaseRollBoard` + host boards | **DART-065** | BR-SET-011 / DBR-STAT-008; web residual without plug defs |
 | **GAP-UI-SETS-02** | Set item rows meta/traits/synergies | **P1** | `closed` (DART-065) | icons, traits, LINKED SYNERGIES | Dense meta/traits/Instance\|Wishlist + synergies | **DART-065** | Not cutover; fidelity |
 | **GAP-UI-SETS-03** | Slot-fill embedded Catalog density | **P1** | `closed` (DART-065) | SlotFillPanel Catalog grid | Windows denser picker; Jaspr named catalog fill | **DART-065** | Not cutover; fidelity |
 | **GAP-UI-SETS-04** | Library search + tag AND filters | **P2** | `closed` (DART-066) | SetsPage search + TYPE & TAGS | filterSets search+type+tag AND both shells | **DART-066** | Not cutover; fidelity |
@@ -282,7 +284,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | Depends | DART-050 (stable inventory set) |
 | Exit criteria | Dart inventory normalize emits roll tags matching Next `computeRollTags` golden fixtures for sample crafted/champion/build weapons; soft never auto-applies; intentional thinning opens GAP residual at merge (PROC-06) |
 | Status | **`done`** (2026-07-25) |
-| Residual | Web/Jaspr without raw `DestinyInventoryItemDefinition` cannot resolve perk **names** (MeleeBuildCandidate / OrbitBuild / perk-champion) until weapon-perks entity store or injected map — **not** intentional pure-function thinning (golden parity holds). Frame champion + Crafted work from catalog. Track under RB-06 / DART-056 depth if web Settings needs full perk-name parity. Soft never auto-applies. |
+| Residual | Web/Jaspr Settings/equip now seed perk **names** from OfflineCatalog + entity-bundle hash→name (`createWebRollTagEnrichment`); OrbitBuild / perk-champion fire when plug hashes hit the map (fixtures / entity rows). True weapon-perk hashes absent from MVP entity stores still need inject or raw defs — soft never auto-applies. Frame champion + Crafted work from catalog. |
 
 ---
 
@@ -294,7 +296,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 - Pure `classifyWeaponSocket` + `buildStoredSocketPlugs` mirror Next fixtures (barrel/mag/trait, cosmetics excluded, intrinsic/origin/mw/catalyst, enhanced trait frames).
 - `syncUserInventory` accepts `weaponSocketContextBuilder`; weapons store plugs with `columnKind`/`columnLabel` when context provided; non-weapons null; no-context raw fallback.
 - Windows Settings/equip wire raw DestinyInventoryItemDefinition context builder.
-- **Residual (PROC-06, not pure thinning):** web/Jaspr MVP without raw item defs cannot classify columns until entity/raw channel (DART-056 depth / entity expansion) — raw capture maps only.
+- **Residual (PROC-06, not pure thinning):** web/Jaspr wires `createWebWeaponSocketEnrichment` (plug category / item-type maps + optional raw table). Without maps, raw capture maps only (no columnKind). When maps supplied (tests / future entity channel), stored plugs include `columnKind`/`columnLabel`.
 
 **Next:** `buildStoredSocketPlugs` + `loadWeaponSocketContext`  
 **Dart:** `packages/bungie/lib/src/inventory/classify_weapon_socket.dart`, `build_stored_socket_plugs.dart`, `weapon_socket_context.dart`; sync + Windows host wiring
@@ -540,7 +542,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **PROC-03** | P0 | **`closed`** (DART-054) | No live dual-account Next-vs-Dart inventory harness | **DART-054** | Documented operator procedure + optional script compares counts by location/bucket (and raw/stored/`resolvedFromTransfer`); CI or pre-merge operator gate; closes GAP-INV-05 |
 | **PROC-04** | P1 | **`closed`** (DART-054) | RC-SYNC pass = “documented sync path works”; evaluation coarse vs RB-06 fidelity | **DART-054** checklist update | Cutover RC-SYNC pass condition requires vault/postmaster present within agreed Next tolerance (or documented residual), referencing DART-050–054 evidence; RB-06 clearance tied to fidelity metrics |
 | **PROC-05** | P1 | **`closed`** (DART-054) | Spec Kit / pure `p0_parity_gate` green ≠ product inventory sameness; unit tests pass with empty lookup | **DART-054** + gaps workflow | `dart-gaps-analysis` (or successor) required after inventory slices; DART-054 harness or fixture-compare gate blocks claiming inventory parity; `p0_parity_gate` remains domain-only but inventory fidelity has an explicit separate gate (`tool/inventory_fidelity_gate.dart`) |
-| **PROC-06** | P1 | `open` | DART-024 documented intentional transfer drop (A2/R2) and closed without opening GAP-INV-01 / RB residual at merge time | **DART-050** finish-spec checklist; enforce for **051/052** enrichments | Finish-spec for any DART slice that documents intentional product thinning: create/update GAP-* row + cutover residual RB in the same change; no silent “MVP ok” without residual tracker. Retro: GAP-INV-01/RB-06 already opened — enforce for roll tags/sockets so they never close phase gates as full parity |
+| **PROC-06** | P1 | `closed` (pkg-ledger-process-hygiene / `proc06_thinning_gate`) | DART-024 closed intentional transfer drop without residual tracker at merge | [finish-spec-thinning-checklist.md](./finish-spec-thinning-checklist.md) + finish-spec skill step + offline `dart run tool/proc06_thinning_gate.dart` | Finish-spec for any intentional thinning: create/update GAP-* (+ RB only if cutover trust) **in the same change**; no silent “MVP ok”. Soft never auto-applies. Gate verifies checklist markers + skill + this closed row |
 
 ---
 
@@ -561,26 +563,27 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 ## Update checklist (after gaps analysis or finish-spec)
 
-- [x] Touch **Updated** date (2026-07-25 — UI fidelity residual audit; cutover GO unchanged)
-- [x] Refresh **Product feature inventory** (sections A–E) — fidelity PARTIAL demotions for catalog/build/sets/synergy/identity/finish/hard/owned-join/optimizer
-- [x] Set gap **Status** — GAP-UI-* `open` with planned DART-062–068; cutover gaps remain closed
-- [x] Ensure every open **P1 GAP-UI-*** has planned **DART-062+** (see fidelity master)
+- [x] Touch **Updated** date (2026-07-30 — ledger hygiene + PROC-06 closed; cutover GO unchanged)
+- [x] Refresh **Product feature inventory** — FEAT-COMPOSE-FINISH / FEAT-OPTIMIZER / FEAT-INV-WEAPON-STATS / OWNED-JOIN aligned with closed GAPs
+- [x] Set gap **Status** — GAP-UI-* closed (DART-062–068); cutover gaps remain closed
+- [x] **PROC-06** closed via [finish-spec-thinning-checklist.md](./finish-spec-thinning-checklist.md) + `dart run tool/proc06_thinning_gate.dart`
 - [x] Cutover checklist **not** re-gated (PRODUCTION_CUTOVER GO stands)
-- [x] Append DART-062–068 planned rows on [slice roadmap](./multiplatform-dart-slice-roadmap.md)
 - [x] Cross-link [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); pure visual density only on [ui-polish-tracker.md](./ui-polish-tracker.md)
 - [x] Soft never auto-applies; no CLIENT_SECRET
 
 ---
 
-## Current pointer (post-program + UI fidelity planning)
+## Current pointer (post-program + ledger hygiene)
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **DART-064** `build-identity-subclass-compose` (UI fidelity P1) |
-| **Next phase** | **P9** host UI fidelity (DART-062–063 **done**, DART-064–068 planned); P8 cutover program **done** |
+| **Next planned slice** | **None** — DART-001–068 program complete; residual packages via align-product scan (not new DART-NNN unless product elevates) |
+| **Next phase** | **Post-P9 residual hygiene** (domain/hard gates + inventory enrichment packages); P8 cutover + P9 UI fidelity **done** |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
-| **Feature inventory** | Complete; fidelity PARTIAL on nav/compose browse density; loadouts/settings remain PASS |
-| **unplanned_p0_p1** | *(empty for cutover)*; open **P1 GAP-UI-*** all map to DART-062–066 |
-| **Open GAP-UI count** | **40** (canonical table in ui-fidelity.md) |
-| **Non-goal residual** | **GAP-FEAT-02** dim.gg remains deferred (jsonOnly sufficient) |
-| **Bug crosswalk** | **BUG-20260725-003** → **GAP-UI-SETTINGS-02** |
+| **Feature inventory** | Aligned with master GAP closed evidence (finish/optimizer/weapon-stats/owned-join) |
+| **unplanned_p0_p1** | *(empty for cutover)* |
+| **Open GAP-UI count** | **0** open P1/P2 program gaps (closed in DART-062–068; residual notes only) |
+| **Process** | **PROC-01–06 closed**; PROC-06 enforced by thinning checklist + gate |
+| **Non-goal residual** | **GAP-FEAT-01** web/mobile optimizer deferred; **GAP-FEAT-02** dim.gg deferred (jsonOnly sufficient) |
+| **Bug crosswalk** | **BUG-20260725-003** → **GAP-UI-SETTINGS-02** (closed DART-068) |
+| **Policy** | Soft guidance **never auto-applies**; no CLIENT_SECRET in clients |

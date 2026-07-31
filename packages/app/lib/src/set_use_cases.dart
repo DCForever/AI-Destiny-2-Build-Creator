@@ -66,7 +66,11 @@ class UpdateSetCommand {
   final String? linkedModSetId;
 }
 
-/// Input for persistence-level set item upsert (no hard domain kit gates).
+/// Input for persistence-level set item upsert with optional composition meta.
+///
+/// When [itemMeta] / [knownItemMeta] are omitted, exotic exclusivity treats
+/// unresolved items as non-exotic (`unknown` kind) — hosts should pass catalog
+/// meta so BR-SLOT-008/009 hard gates apply (DAC-DST-009).
 class UpsertSetItemCommand {
   const UpsertSetItemCommand({
     this.id,
@@ -79,6 +83,8 @@ class UpsertSetItemCommand {
     this.modHashes,
     this.sortOrder = 0,
     this.replaceExisting = true,
+    this.itemMeta,
+    this.knownItemMeta = const {},
   });
 
   final String? id;
@@ -91,6 +97,12 @@ class UpsertSetItemCommand {
   final List<int>? modHashes;
   final int sortOrder;
   final bool replaceExisting;
+
+  /// Resolved meta for the candidate item (catalog / entity).
+  final SetItemMeta? itemMeta;
+
+  /// Resolved meta for existing active items keyed by [itemHash].
+  final Map<int, SetItemMeta> knownItemMeta;
 }
 
 String _requireNonEmptyName(String name) {
@@ -256,6 +268,9 @@ Future<bool> deleteUserSet(
 }
 
 /// Upsert set item if set owned by user; null if set missing.
+///
+/// Enforces slot fitness + set-wide exotic exclusivity (BR-SLOT-008/009) when
+/// meta is supplied. Replace of the slot holding the existing exotic is allowed.
 Future<SetDetail?> upsertUserSetItem(
   AppDatabase db,
   int userId,
@@ -280,6 +295,54 @@ Future<SetDetail?> upsertUserSetItem(
       'Set item name must not be empty',
     );
   }
+
+  final setType = SetType.tryParse(set.type);
+  if (setType != null) {
+    final candidateMeta = command.itemMeta ??
+        SetItemMeta(
+          kind: SetItemKind.unknown,
+          name: itemName,
+        );
+    final withName = SetItemMeta(
+      kind: candidateMeta.kind,
+      equipmentSlot: candidateMeta.equipmentSlot,
+      isExotic: candidateMeta.isExotic,
+      name: candidateMeta.name ?? itemName,
+      slotCategory: candidateMeta.slotCategory,
+      energyCost: candidateMeta.energyCost,
+    );
+
+    final active = await listActiveSetItems(db, setId);
+    final otherItems = <SetOccupant>[
+      for (final row in active)
+        if (row.slot != slot)
+          SetOccupant(
+            slot: row.slot,
+            meta: command.knownItemMeta[row.itemHash] ??
+                SetItemMeta(
+                  kind: SetItemKind.unknown,
+                  name: row.itemName,
+                ),
+          ),
+    ];
+
+    final fit = assertSetCompositionAllowed(
+      setType,
+      slot,
+      withName,
+      otherItems,
+    );
+    if (!fit.ok) {
+      throw UseCaseException(
+        UseCaseErrorCode.invalidItem,
+        fit.reasons.isNotEmpty
+            ? fit.reasons.first
+            : 'Item does not fit this set',
+        details: {'reasons': fit.reasons},
+      );
+    }
+  }
+
   final ts = now();
   await upsertSetItemRecord(
     db,

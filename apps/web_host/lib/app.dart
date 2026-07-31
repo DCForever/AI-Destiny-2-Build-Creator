@@ -9,6 +9,7 @@ import 'package:jaspr_router/jaspr_router.dart';
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 
 import 'auth/web_oauth_session.dart';
 import 'builds/build_compose_page.dart';
@@ -22,6 +23,7 @@ import 'db/web_db_status.dart';
 import 'dim_export/dim_export_controller.dart';
 import 'equip/equipment_bucket_lookup_provider.dart';
 import 'equip/roll_tag_lookup_provider.dart';
+import 'equip/weapon_socket_context_provider.dart';
 import 'loadouts/loadouts_controller.dart';
 import 'loadouts/loadouts_page.dart';
 import 'pages/auth_callback_page.dart';
@@ -147,34 +149,62 @@ class _AppState extends State<App> {
     };
   }
 
-  /// Lazy roll-tag enrichment from entity loader catalog when ready.
+  /// Lazy roll-tag + socket enrichment from entity loader catalog when ready.
   ({
     PerkNameMapBuilder perkNameMapBuilder,
     WeaponRollMetaLookupBuilder weaponRollMetaLookupBuilder,
-  })? _rollTags() {
+    WeaponSocketContextBuilder weaponSocketContextBuilder,
+  })? _inventoryEnrichment() {
     final loader = component.entityLoader;
     if (loader == null) return null;
-    Future<Map<int, String>> perkBuilder(List<int> plugHashes) async {
-      return const {};
-    }
 
-    Future<Map<int, RollTagWeaponMeta>> weaponBuilder(
-      List<int> itemHashes,
-    ) async {
-      if (itemHashes.isEmpty) return const {};
+    Future<OfflineCatalog?> resolveCatalog() async {
       var catalog = loader.catalog;
       if (catalog == null || catalog.baseItems.isEmpty) {
         await loader.load();
         catalog = loader.catalog;
       }
+      return catalog;
+    }
+
+    Future<Map<int, String>> perkBuilder(List<int> plugHashes) async {
+      final catalog = await resolveCatalog();
+      if (catalog == null) return const {};
+      final extraNamed = <({int hash, String name})>[];
+      final doc = loader.document;
+      if (doc != null) {
+        for (final store in doc.stores.values) {
+          for (final row in store) {
+            if (row is EntityRecordBase && row.name.isNotEmpty) {
+              extraNamed.add((hash: row.hash, name: row.name));
+            }
+          }
+        }
+      }
+      final tags = createWebRollTagEnrichment(
+        offlineCatalog: catalog,
+        extraNamedHashes: extraNamed,
+      );
+      return tags.perkNameMapBuilder(plugHashes);
+    }
+
+    Future<Map<int, RollTagWeaponMeta>> weaponBuilder(
+      List<int> itemHashes,
+    ) async {
+      final catalog = await resolveCatalog();
       if (catalog == null) return const {};
       final tags = createWebRollTagEnrichment(offlineCatalog: catalog);
       return tags.weaponRollMetaLookupBuilder(itemHashes);
     }
 
+    // Entity channel: empty context unless raw/defs maps are injected later.
+    // Tests inject via InventorySyncController.weaponSocketContextBuilder.
+    final socket = createWebWeaponSocketEnrichment();
+
     return (
       perkNameMapBuilder: perkBuilder,
       weaponRollMetaLookupBuilder: weaponBuilder,
+      weaponSocketContextBuilder: socket.weaponSocketContextBuilder,
     );
   }
 
@@ -183,9 +213,9 @@ class _AppState extends State<App> {
     final db = boot.database;
     if (db != null && _compose == null) {
       // DART-050/056: equip syncIfStale uses entity catalog slots for vault resolve.
-      // DART-051: catalog frame meta for roll tags (perk names need raw/injected).
+      // DART-051/052 / GAP-INV-02/03: catalog-seeded perk names + socket channel.
       final lookupBuilder = _lookupBuilder();
-      final rollTags = _rollTags();
+      final enrich = _inventoryEnrichment();
       _compose = ComposeServices(
         db: db,
         session: component.oauthSession,
@@ -194,8 +224,9 @@ class _AppState extends State<App> {
         clipboardWriter: component.clipboardWriter,
         skipSyncIfStale: false,
         equipmentBucketLookupBuilder: lookupBuilder,
-        perkNameMapBuilder: rollTags?.perkNameMapBuilder,
-        weaponRollMetaLookupBuilder: rollTags?.weaponRollMetaLookupBuilder,
+        perkNameMapBuilder: enrich?.perkNameMapBuilder,
+        weaponRollMetaLookupBuilder: enrich?.weaponRollMetaLookupBuilder,
+        weaponSocketContextBuilder: enrich?.weaponSocketContextBuilder,
       );
     }
   }
@@ -214,14 +245,15 @@ class _AppState extends State<App> {
         profile != null &&
         _inventorySync == null) {
       final lookupBuilder = _lookupBuilder();
-      final rollTags = _rollTags();
+      final enrich = _inventoryEnrichment();
       _inventorySync = InventorySyncController(
         db: db,
         session: session,
         profileClient: profile,
         equipmentBucketLookupBuilder: lookupBuilder,
-        perkNameMapBuilder: rollTags?.perkNameMapBuilder,
-        weaponRollMetaLookupBuilder: rollTags?.weaponRollMetaLookupBuilder,
+        perkNameMapBuilder: enrich?.perkNameMapBuilder,
+        weaponRollMetaLookupBuilder: enrich?.weaponRollMetaLookupBuilder,
+        weaponSocketContextBuilder: enrich?.weaponSocketContextBuilder,
       );
     }
     _ensureOwnedBridge(db);
@@ -237,6 +269,7 @@ class _AppState extends State<App> {
       inventorySync: _inventorySync,
       entityLoader: component.entityLoader,
       offlineCatalog: component.entityLoader?.catalog,
+      plugNameMapBuilder: _inventoryEnrichment()?.perkNameMapBuilder,
     );
   }
 

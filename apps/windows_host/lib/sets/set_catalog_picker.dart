@@ -1,5 +1,8 @@
 import 'package:destiny2_app/destiny2_app.dart'
-    show buildCatalogDenseMetaChips, selectedPerksFromInstance;
+    show
+        buildCatalogDenseMetaChips,
+        isArmorBoardSlot,
+        selectedPerksFromInstance;
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/material.dart';
@@ -19,12 +22,20 @@ class SetCatalogPicker extends StatefulWidget {
     required this.targetSlot,
     this.bridge,
     this.title,
+    this.excludeExotic = false,
+    this.catalogKind,
   });
 
   final AppServices services;
   final String targetSlot;
   final OwnedCatalogBridge? bridge;
   final String? title;
+
+  /// When true, hide exotic catalog hits (BR-SLOT-008/009 / DAC-DST-009).
+  final bool excludeExotic;
+
+  /// `'weapons'` or `'armor'` for pick meta (defaults by set slot family).
+  final String? catalogKind;
 
   @override
   State<SetCatalogPicker> createState() => _SetCatalogPickerState();
@@ -91,9 +102,13 @@ class _SetCatalogPickerState extends State<SetCatalogPicker> {
         scope: _scope,
       ),
     );
-    return filtered
-        .where((i) => catalogItemMatchesSetSlot(i.slot, widget.targetSlot))
-        .toList();
+    return filtered.where((i) {
+      if (!catalogItemMatchesSetSlot(i.slot, widget.targetSlot)) {
+        return false;
+      }
+      if (widget.excludeExotic && i.isExotic) return false;
+      return true;
+    }).toList();
   }
 
   void _refilter() {
@@ -141,12 +156,17 @@ class _SetCatalogPickerState extends State<SetCatalogPicker> {
       }
       perks = selectedPerksFromInstance(match);
     }
+    final kind = widget.catalogKind ??
+        (isArmorBoardSlot(item.slot ?? '') ? 'armor' : 'weapons');
     Navigator.of(context).pop(
       SetSlotPickResult(
         itemHash: item.hash,
         itemName: item.name,
         instanceId: instanceId,
         selectedPerks: perks,
+        isExotic: item.isExotic,
+        equipmentSlot: item.slot,
+        catalogKind: kind,
       ),
     );
   }
@@ -418,6 +438,8 @@ Future<SetSlotPickResult?> showSetCatalogPicker({
   required AppServices services,
   required String targetSlot,
   OwnedCatalogBridge? bridge,
+  bool excludeExotic = false,
+  String? catalogKind,
 }) {
   return showDialog<SetSlotPickResult>(
     context: context,
@@ -425,6 +447,8 @@ Future<SetSlotPickResult?> showSetCatalogPicker({
       services: services,
       targetSlot: targetSlot,
       bridge: bridge,
+      excludeExotic: excludeExotic,
+      catalogKind: catalogKind,
     ),
   );
 }

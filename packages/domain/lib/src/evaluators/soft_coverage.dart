@@ -98,9 +98,16 @@ bool matchEvidenceLink(
       }
       return false;
     case SynergyLinkKind.exoticArmor:
+      // Soft match: claim itemHash equals linked exotic armor hash
+      // (build/pair exotic armor claim or armor set piece).
+      return link.itemHash != null &&
+          claims.any((c) => c.itemHash == link.itemHash);
     case SynergyLinkKind.artifactPerk:
-      // TS default branch returns false for unmatched kinds in matchEvidenceLink.
-      return false;
+      // Soft match: selected perks / artifact config includes perkHash.
+      return link.perkHash != null &&
+          claims.any(
+            (c) => (c.selectedPerks ?? const []).contains(link.perkHash),
+          );
   }
 }
 

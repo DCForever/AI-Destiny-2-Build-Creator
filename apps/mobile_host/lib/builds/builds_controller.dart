@@ -118,6 +118,12 @@ class BuildsController extends ChangeNotifier {
   /// Optional estimate for soft-stat warnings (tests may inject).
   StatEstimate? softStatEstimateOverride;
 
+  /// Optional weapon element map for soft coverage (tests inject).
+  Map<int, String>? coverageWeaponElementByHash;
+
+  /// Optional set-bonus index for soft coverage (tests inject).
+  Map<int, SetBonusRecord>? coverageSetBonusByItemHash;
+
   int? get userId => _userId;
   List<BuildRecord> get builds => List.unmodifiable(_builds);
   BuildDetail? get selected => _selected;
@@ -820,11 +826,16 @@ class BuildsController extends ChangeNotifier {
     String variantId,
   ) async {
     try {
+      final indexes = loadCoverageIndexes(
+        weaponElementByHash: coverageWeaponElementByHash,
+        setBonusByItemHash: coverageSetBonusByItemHash,
+      );
       _coverage = await queryVariantCoverage(
         db,
         userId,
         buildId,
         variantId,
+        indexes: indexes,
         statEstimate: softStatEstimateOverride,
       );
     } catch (_) {

@@ -4,11 +4,14 @@ library;
 import 'dart:async';
 
 import 'package:destiny2_app/destiny2_app.dart';
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart'
     show
+        ArmorBaseStatBoard,
         ArmorSetStatTotals,
         CatalogInstanceProjection,
         armorBaseStatKeys,
+        preferArmorBaseRollBoard,
         sumArmorSetStats,
         ArmorStatPieceInput;
 import 'package:destiny2_domain/destiny2_domain.dart';
@@ -22,12 +25,16 @@ import '../compose/compose_styles.dart';
 import '../compose/set_slot_mapping.dart';
 import 'sets_controller.dart';
 
+/// Optional plug → stats resolver (raw item defs when available on host).
+typedef ArmorPlugStatResolver = PlugStatSource? Function(int hash);
+
 /// Sets list, create, dense detail, and catalog slot fill.
 class SetsPage extends StatefulComponent {
   const SetsPage({
     this.controller,
     this.bridge,
     this.catalogItems,
+    this.armorPlugStatResolver,
     super.key,
   });
 
@@ -38,6 +45,10 @@ class SetsPage extends StatefulComponent {
 
   /// Injected catalog rows for tests when [bridge] is null.
   final List<CatalogItem>? catalogItems;
+
+  /// When set, Armor Set boards prefer base-roll from armor_stats plugs
+  /// (BR-SET-011). Residual null when web has no plug defs.
+  final ArmorPlugStatResolver? armorPlugStatResolver;
 
   static const String titleText = 'Sets';
   static const String subtitleText =
@@ -159,10 +170,53 @@ class _SetsPageState extends State<SetsPage> {
     return component.catalogItems ?? const [];
   }
 
+  SetItemMeta _metaForHash(int itemHash, String itemName) {
+    CatalogItem? hit;
+    for (final c in _catalogBase()) {
+      if (c.hash == itemHash) {
+        hit = c;
+        break;
+      }
+    }
+    if (hit == null) {
+      return SetItemMeta(kind: SetItemKind.unknown, name: itemName);
+    }
+    final armor = isArmorBoardSlot(hit.slot ?? '') ||
+        (hit.sourceStore?.contains('armor') ?? false);
+    return setItemMetaFromCatalog(
+      isExotic: hit.isExotic,
+      slot: hit.slot,
+      kind: armor ? 'armor' : 'weapons',
+      name: hit.name,
+    );
+  }
+
+  SetSlotPickResult _pickFromCatalog(
+    CatalogItem item, {
+    String? instanceId,
+    List<int> selectedPerks = const [],
+  }) {
+    final armor = isArmorBoardSlot(item.slot ?? '') ||
+        (item.sourceStore?.contains('armor') ?? false);
+    return SetSlotPickResult(
+      itemHash: item.hash,
+      itemName: item.name,
+      instanceId: instanceId,
+      selectedPerks: selectedPerks,
+      isExotic: item.isExotic,
+      equipmentSlot: item.slot,
+      catalogKind: armor ? 'armor' : 'weapons',
+    );
+  }
+
   List<CatalogItem> _fillResults(String slot) {
     final q = _fillQuery.trim().toLowerCase();
+    final c = component.controller;
+    final excludeExotic =
+        c?.excludeExoticForSlot(slot, _metaForHash) ?? false;
     var items = _catalogBase()
         .where((i) => catalogItemMatchesSetSlot(i.slot, slot))
+        .where((i) => !(excludeExotic && i.isExotic))
         .toList();
     if (_fillScope == CatalogScope.owned) {
       items = items.where((i) => i.owned).toList();
@@ -225,7 +279,11 @@ class _SetsPageState extends State<SetsPage> {
       _pendingPick = null;
       _pendingReplaceName = null;
     });
-    final err = await c.fillSlot(slot, pick);
+    final known = <int, SetItemMeta>{
+      for (final row in c.selected?.activeItems ?? const [])
+        row.itemHash: _metaForHash(row.itemHash, row.itemName),
+    };
+    final err = await c.fillSlot(slot, pick, knownItemMeta: known);
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -257,9 +315,8 @@ class _SetsPageState extends State<SetsPage> {
     if (item == null) return;
     unawaited(
       _tryCommit(
-        SetSlotPickResult(
-          itemHash: item.hash,
-          itemName: item.name,
+        _pickFromCatalog(
+          item,
           instanceId: inst.instanceId,
           selectedPerks: selectedPerksFromInstance(inst),
         ),
@@ -272,11 +329,24 @@ class _SetsPageState extends State<SetsPage> {
     if (item == null) return;
     unawaited(
       _tryCommit(
-        SetSlotPickResult(
-          itemHash: item.hash,
-          itemName: item.name,
-        ),
+        _pickFromCatalog(item),
       ),
+    );
+  }
+
+  ArmorPlugStatResolver? get _armorPlugResolver =>
+      component.armorPlugStatResolver;
+
+  ArmorBaseStatBoard? _armorBoardForInstance(CatalogInstanceProjection? inst) {
+    if (inst == null) return null;
+    Map<String, int>? plugBase;
+    final resolver = _armorPlugResolver;
+    if (resolver != null && inst.plugHashes.isNotEmpty) {
+      plugBase = computeArmorBaseStatsFromPlugs(inst.plugHashes, resolver);
+    }
+    return preferArmorBaseRollBoard(
+      plugBaseStats: plugBase,
+      liveStatValues: inst.statValues,
     );
   }
 
@@ -300,7 +370,7 @@ class _SetsPageState extends State<SetsPage> {
       }
       pieces.add(
         ArmorStatPieceInput.fromBoard(
-          inst?.armorStats,
+          _armorBoardForInstance(inst),
           instanceId: item.instanceId,
         ),
       );
@@ -716,15 +786,18 @@ class _SetsPageState extends State<SetsPage> {
               attributes: {'data-testid': 'sets-slot-stats-$slot'},
               [
                 .text(
-                  inst?.armorStats != null
-                      ? [
-                          for (final k in armorBaseStatKeys)
-                            if (inst!.armorStats!.stats[k] != null)
-                              '$k ${inst.armorStats!.stats[k]}',
-                        ].join(' · ')
-                      : hasInstance
-                          ? 'No armor stats on this copy — re-sync inventory.'
-                          : 'Wishlist — no instance rolls.',
+                  () {
+                    final board = _armorBoardForInstance(inst);
+                    if (board != null) {
+                      return [
+                        for (final k in armorBaseStatKeys)
+                          if (board.stats[k] != null) '$k ${board.stats[k]}',
+                      ].join(' · ');
+                    }
+                    return hasInstance
+                        ? 'No armor stats on this copy — re-sync inventory.'
+                        : 'Wishlist — no instance rolls.';
+                  }(),
                 ),
               ],
             ),

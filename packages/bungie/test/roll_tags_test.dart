@@ -81,6 +81,20 @@ void main() {
     });
   });
 
+  group('buildPerkNameMapFromNamedHashes', () {
+    test('maps catalog entity names for requested plugs only', () {
+      final map = buildPerkNameMapFromNamedHashes(
+        [
+          (hash: 3, name: 'Demolitionist'),
+          (hash: 4, name: 'Adrenaline Junkie'),
+          (hash: 9, name: 'Other'),
+        ],
+        onlyHashes: [3, 4],
+      );
+      expect(map, {3: 'Demolitionist', 4: 'Adrenaline Junkie'});
+    });
+  });
+
   group('buildWeaponRollMetaLookup', () {
     test('keeps legendary weapons with frame + type; skips exotic', () {
       final lookup = buildWeaponRollMetaLookup([

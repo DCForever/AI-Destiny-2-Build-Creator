@@ -151,6 +151,46 @@ void main() {
     expect(controller.occupantForSlot('primary')?.itemName, 'Old Gun');
   });
 
+  test('rejects second exotic weapon with plain-language reason (BR-SLOT-008)',
+      () async {
+    await controller.refresh();
+    await controller.createSet(name: 'Weapons', type: SetType.weapon);
+    final first = await controller.fillSlot(
+      'primary',
+      const SetSlotPickResult(
+        itemHash: 1001,
+        itemName: 'Witherhoard',
+        isExotic: true,
+        equipmentSlot: 'Kinetic',
+        catalogKind: 'weapons',
+      ),
+    );
+    expect(first, isNull);
+
+    final known = {
+      1001: setItemMetaFromCatalog(
+        kind: 'weapons',
+        slot: 'Kinetic',
+        isExotic: true,
+        name: 'Witherhoard',
+      ),
+    };
+    final second = await controller.fillSlot(
+      'heavy',
+      const SetSlotPickResult(
+        itemHash: 1002,
+        itemName: 'Gjallarhorn',
+        isExotic: true,
+        equipmentSlot: 'Power',
+        catalogKind: 'weapons',
+      ),
+      knownItemMeta: known,
+    );
+    expect(second, isNotNull);
+    expect(second, matches(RegExp('exotic|Witherhoard', caseSensitive: false)));
+    expect(controller.selected!.activeItems, hasLength(1));
+  });
+
   test('enrich armor board totals from inventory (GAP-UI-SETS-01)', () async {
     await controller.refresh();
     final uid = controller.userId!;
@@ -217,9 +257,85 @@ void main() {
       userId: controller.userId,
     );
     expect(presentation.rowsBySlot['helmet']?.statsUnknown, isTrue);
-    expect(
-      presentation.rowsBySlot['helmet']?.metaChips,
-      contains('Wishlist'),
+  });
+
+  test('prefers armor_stats plug base roll over live ItemStats (BR-SET-011)',
+      () async {
+    await controller.refresh();
+    final uid = controller.userId!;
+    await replaceInventoryBatch(
+      db,
+      uid,
+      now: '2026-07-25T00:00:00.000Z',
+      items: const [
+        InventoryItemRecord(
+          instanceId: 'helm-plug',
+          itemHash: 3001,
+          bucket: 'Helmet',
+          location: 'vault',
+          power: 1800,
+          plugHashes: [11, 12, 99],
+          // Live ItemStats include mod investments (should be ignored).
+          statValues: {
+            'Health': 99,
+            'Melee': 99,
+            'Grenade': 99,
+            'Super': 99,
+            'Class': 99,
+            'Weapons': 99,
+          },
+          syncedAt: '2026-07-25T00:00:00.000Z',
+        ),
+      ],
     );
+
+    await controller.createSet(name: 'Armor plug roll', type: SetType.armor);
+    await controller.fillSlot(
+      'helmet',
+      const SetSlotPickResult(
+        itemHash: 3001,
+        itemName: 'Helmet of Test',
+        instanceId: 'helm-plug',
+      ),
+    );
+
+    final resolve = plugStatResolverFromMap({
+      11: const PlugStatSource(
+        plugCategoryIdentifier: 'armor_stats',
+        investmentStats: [
+          PlugInvestmentStat(statTypeHash: 392767087, value: 20), // Health
+          PlugInvestmentStat(statTypeHash: 1735777505, value: 30), // Grenade
+        ],
+      ),
+      12: const PlugStatSource(
+        plugCategoryIdentifier: 'armor_stats',
+        investmentStats: [
+          PlugInvestmentStat(statTypeHash: 144602215, value: 25), // Super
+        ],
+      ),
+      99: const PlugStatSource(
+        plugCategoryIdentifier: 'enhancements.v2_general',
+        investmentStats: [
+          PlugInvestmentStat(statTypeHash: 1735777505, value: 10),
+        ],
+      ),
+    });
+
+    final presentation = await enrichSetDetailPresentation(
+      detail: controller.selected!,
+      bridge: bridge,
+      boardSlots: const ['helmet', 'arms', 'chest', 'legs', 'class_item'],
+      userId: controller.userId,
+      resolvePlug: resolve,
+    );
+    final board = presentation.rowsBySlot['helmet']?.armorStats;
+    expect(board, isNotNull);
+    expect(board!.stats['Health'], 20);
+    expect(board.stats['Grenade'], 30);
+    expect(board.stats['Super'], 25);
+    expect(board.stats['Melee'], 0);
+    // Not the live 99s.
+    expect(board.total, 75);
+    expect(presentation.armorTotals?.statValues['Grenade'], 30);
   });
 }

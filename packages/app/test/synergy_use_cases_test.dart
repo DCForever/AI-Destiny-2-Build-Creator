@@ -25,6 +25,35 @@ void main() {
       );
 
   group('US2 synergy CRUD + designation immutability', () {
+    test('rejects weapon link without itemHash (BR-SYN-005)', () async {
+      final userId = await seedUser();
+      expect(
+        () => createUserSynergy(
+          db,
+          userId,
+          const CreateSynergyCommand(
+            id: 'bad',
+            name: 'Bad',
+            type: 'melee',
+            links: [
+              SynergyLinkWrite(
+                kind: 'weapon',
+                displayName: 'No Hash',
+              ),
+            ],
+          ),
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.invalidSynergyLink,
+          ),
+        ),
+      );
+    });
+
     test('create → get → domain map', () async {
       final userId = await seedUser();
       final created = await createUserSynergy(

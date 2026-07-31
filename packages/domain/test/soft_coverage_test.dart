@@ -60,6 +60,106 @@ void main() {
       );
       expect(ok, isTrue);
     });
+
+    test('matches exotic_armor by claim itemHash', () {
+      final ok = matchEvidenceLink(
+        _link(
+          kind: SynergyLinkKind.exoticArmor,
+          displayName: "Nezarec's Sin",
+          itemHash: 9001,
+        ),
+        [
+          _claim(
+            slot: EquipmentSlot.helmet,
+            itemHash: 9001,
+            source: ClaimSource.buildExoticArmor,
+          ),
+        ],
+      );
+      expect(ok, isTrue);
+      expect(
+        matchEvidenceLink(
+          _link(
+            kind: SynergyLinkKind.exoticArmor,
+            displayName: 'Other',
+            itemHash: 9001,
+          ),
+          [_claim(slot: EquipmentSlot.helmet, itemHash: 1)],
+        ),
+        isFalse,
+      );
+    });
+
+    test('matches artifact_perk via selectedPerks', () {
+      final ok = matchEvidenceLink(
+        _link(
+          kind: SynergyLinkKind.artifactPerk,
+          displayName: 'Anti-Barrier',
+          perkHash: 4242,
+        ),
+        [
+          _claim(
+            slot: EquipmentSlot.primary,
+            itemHash: 1,
+            selectedPerks: [11, 4242],
+          ),
+        ],
+      );
+      expect(ok, isTrue);
+      expect(
+        matchEvidenceLink(
+          _link(
+            kind: SynergyLinkKind.artifactPerk,
+            displayName: 'Anti-Barrier',
+            perkHash: 4242,
+          ),
+          [
+            _claim(
+              slot: EquipmentSlot.primary,
+              itemHash: 1,
+              selectedPerks: [11],
+            ),
+          ],
+        ),
+        isFalse,
+      );
+    });
+
+    test('matches armor_set_bonus with setBonusByItemHash index', () {
+      const record = SetBonusRecord(
+        hash: 500,
+        name: 'Field-Tested',
+        perks: [SetBonusPerk(requiredCount: 2, name: '2pc')],
+      );
+      final byHash = <int, SetBonusRecord>{101: record, 102: record};
+      final ok = matchEvidenceLink(
+        _link(
+          kind: SynergyLinkKind.armorSetBonus,
+          displayName: 'Field-Tested 2pc',
+          armorSetHash: 500,
+          bonusPieces: 2,
+        ),
+        [
+          _claim(slot: EquipmentSlot.helmet, itemHash: 101),
+          _claim(slot: EquipmentSlot.arms, itemHash: 102),
+        ],
+        byHash,
+      );
+      expect(ok, isTrue);
+      expect(
+        matchEvidenceLink(
+          _link(
+            kind: SynergyLinkKind.armorSetBonus,
+            displayName: 'Field-Tested 2pc',
+            armorSetHash: 500,
+            bonusPieces: 2,
+          ),
+          [_claim(slot: EquipmentSlot.helmet, itemHash: 101)],
+          byHash,
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('evaluateCoverage synergies', () {
@@ -486,12 +586,13 @@ SlotClaim _claim({
   String itemName = 'Item',
   List<int>? selectedPerks,
   String? instanceId,
+  ClaimSource source = ClaimSource.set,
 }) {
   return SlotClaim(
     slot: slot,
     itemHash: itemHash,
     itemName: itemName,
-    source: ClaimSource.set,
+    source: source,
     selectedPerks: selectedPerks,
     instanceId: instanceId,
   );

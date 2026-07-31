@@ -1,8 +1,10 @@
 import 'package:destiny2_app/destiny2_app.dart';
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 
 import '../catalog/owned_catalog_bridge.dart';
+import 'armor_base_roll_provider.dart';
 
 /// Build dense row presentations + armor totals for a set detail (DART-065).
 class SetDetailPresentation {
@@ -17,13 +19,23 @@ class SetDetailPresentation {
 }
 
 /// Enrich active set items with catalog meta, traits, synergies, armor board.
+///
+/// Armor boards prefer base-roll from `armor_stats` plugs when [resolvePlug]
+/// is provided (BR-SET-011 / DBR-STAT-008); else inventory ItemStats board.
 Future<SetDetailPresentation> enrichSetDetailPresentation({
   required SetDetail detail,
   required OwnedCatalogBridge bridge,
   required List<String> boardSlots,
   int? userId,
   Map<int, String> plugNameByHash = const {},
+  ArmorPlugStatResolver? resolvePlug,
+  BungieManifestService? manifestService,
 }) async {
+  final plugResolver = resolvePlug ??
+      (await createWindowsArmorBaseRollEnrichment(
+        manifestService: manifestService,
+      ))
+          .resolvePlug;
   await bridge.refresh(reloadEntities: false);
 
   // Prefer library owner inventory when signed-out bridge has no membership.
@@ -112,7 +124,24 @@ Future<SetDetailPresentation> enrichSetDetailPresentation({
       }
     }
 
-    final armorBoard = treatArmor ? instance?.armorStats : null;
+    ArmorBaseStatBoard? armorBoard;
+    if (treatArmor) {
+      Map<String, int>? plugBase;
+      if (plugResolver != null) {
+        // Inventory plugHashes carry equipped armor_stats roll plugs (BR-SET-011).
+        final effectivePlugs = instance?.plugHashes ?? const <int>[];
+        if (effectivePlugs.isNotEmpty) {
+          plugBase = computeArmorBaseStatsFromPlugs(
+            effectivePlugs,
+            plugResolver,
+          );
+        }
+      }
+      armorBoard = preferArmorBaseRollBoard(
+        plugBaseStats: plugBase,
+        liveStatValues: instance?.statValues,
+      );
+    }
     final statsUnknown = treatArmor &&
         armorBoard == null &&
         (item.instanceId == null || item.instanceId!.isEmpty

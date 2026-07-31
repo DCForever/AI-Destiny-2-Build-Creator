@@ -216,8 +216,12 @@ class _CatalogPageState extends State<CatalogPage> {
     final treatArmor = _mode == CatalogBrowseMode.armor ||
         compositionKindFromCatalogItem(sel) == CompositionKind.armor ||
         compositionKindFromCatalogItem(sel) == CompositionKind.exoticArmor;
-    final instances =
-        bridge?.instancesFor(sel.hash, treatAsArmor: treatArmor) ?? const [];
+    final instances = bridge != null
+        ? await bridge.instancesForResolved(
+            sel.hash,
+            treatAsArmor: treatArmor,
+          )
+        : const <CatalogInstanceProjection>[];
     final tags = bridge != null
         ? await bridge.reverseTagsFor(sel)
         : linkedSynergyBadgesForItem(sel, const {});

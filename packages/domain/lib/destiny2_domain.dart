@@ -2,12 +2,12 @@
 ///
 /// This package must remain free of IO and UI dependencies (Flutter, Jaspr,
 /// Drift, network clients, path providers). Models (DART-002), hard evaluators
-/// (DART-003), soft coverage / soft-stat helpers (DART-004), pure
-/// resolveVariant merge/conflict/completeness (DART-005), equip-ready /
-/// wishlist vs owned-pin gates (DART-006), pure equip step planner (DART-037),
-/// finishGaps / next-slot helpers (DART-007), optimizer enumerate/prune/score
-/// core (DART-008), and pure DIM loadout JSON builders + equipReady-gated
-/// jsonOnly (DART-010) live here; later slices land next.
+/// (DART-003), set composition constraints (BR-SLOT-008/009), soft coverage /
+/// soft-stat helpers (DART-004), pure resolveVariant merge/conflict/completeness
+/// (DART-005), equip-ready / wishlist vs owned-pin gates (DART-006), pure equip
+/// step planner (DART-037), finishGaps / next-slot helpers (DART-007), optimizer
+/// enumerate/prune/score core (DART-008), and pure DIM loadout JSON builders +
+/// equipReady-gated jsonOnly (DART-010) live here; later slices land next.
 library;
 
 export 'src/smoke.dart';
@@ -30,6 +30,9 @@ export 'src/models/synergy.dart';
 
 // Hard evaluators (DART-003)
 export 'src/evaluators/destiny_build_constraints.dart';
+
+// Set composition hard constraints (BR-SLOT-008/009 / DBR-CMP-007 kit hygiene)
+export 'src/evaluators/destiny_set_constraints.dart';
 
 // Soft coverage + soft-stat helpers (DART-004)
 export 'src/evaluators/soft_coverage.dart';

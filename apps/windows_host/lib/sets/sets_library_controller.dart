@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 
 import '../auth/windows_oauth_session.dart';
 import '../settings/inventory_sync_controller.dart';
-import 'set_slot_mapping.dart';
 
 /// Stable offline library owner when the user is signed out (DART-030 A1).
 const String kLocalLibraryMembershipId = 'local-library';
@@ -17,6 +16,9 @@ class SetSlotPickResult {
     required this.itemName,
     this.instanceId,
     this.selectedPerks = const [],
+    this.isExotic = false,
+    this.equipmentSlot,
+    this.catalogKind,
   });
 
   final int itemHash;
@@ -25,6 +27,15 @@ class SetSlotPickResult {
 
   /// Trait / roll perk hashes to persist (BR-ROLL-001 / GAP-UI-SETS-10).
   final List<int> selectedPerks;
+
+  /// Catalog exotic flag for BR-SLOT-008/009 gates.
+  final bool isExotic;
+
+  /// Catalog equipment bucket (Kinetic, Helmet, …) when known.
+  final String? equipmentSlot;
+
+  /// `'weapons'` or `'armor'` for [setItemMetaFromCatalog]; null defaults to weapons.
+  final String? catalogKind;
 }
 
 /// In-process orchestration for Sets library UI (DART-030).
@@ -313,7 +324,14 @@ class SetsLibraryController extends ChangeNotifier {
   }
 
   /// Fill [slot] from a catalog pick.
-  Future<String?> fillSlot(String slot, SetSlotPickResult pick) async {
+  ///
+  /// Pass [knownItemMeta] (hash → meta) for active items so set-wide exotic
+  /// exclusivity can see existing exotics (BR-SLOT-008/009).
+  Future<String?> fillSlot(
+    String slot,
+    SetSlotPickResult pick, {
+    Map<int, SetItemMeta> knownItemMeta = const {},
+  }) async {
     final sel = _selected;
     final uid = _userId;
     if (sel == null || uid == null) {
@@ -329,6 +347,21 @@ class SetsLibraryController extends ChangeNotifier {
           ? '$slot:${pick.itemHash}'
           : slot;
 
+      final catalogKind = pick.catalogKind ??
+          (setType == SetType.armor || setType == SetType.mod
+              ? 'armor'
+              : 'weapons');
+      final candidateMeta = setItemMetaFromCatalog(
+        isExotic: pick.isExotic,
+        slot: pick.equipmentSlot,
+        kind: catalogKind,
+        name: pick.itemName,
+      );
+      final metaByHash = <int, SetItemMeta>{
+        ...knownItemMeta,
+        pick.itemHash: candidateMeta,
+      };
+
       final updated = await upsertUserSetItem(
         db,
         uid,
@@ -340,6 +373,8 @@ class SetsLibraryController extends ChangeNotifier {
           instanceId: pick.instanceId,
           selectedPerks: pick.selectedPerks,
           replaceExisting: true,
+          itemMeta: candidateMeta,
+          knownItemMeta: metaByHash,
         ),
       );
       if (updated == null) {
@@ -358,6 +393,34 @@ class SetsLibraryController extends ChangeNotifier {
       notifyListeners();
       return e.toString();
     }
+  }
+
+  /// Build [SetOccupant] list for active items using [lookup] catalog meta.
+  List<SetOccupant> activeOccupants(
+    SetItemMeta Function(int itemHash, String itemName) lookup,
+  ) {
+    final sel = _selected;
+    if (sel == null) return const [];
+    return [
+      for (final row in sel.activeItems)
+        SetOccupant(slot: row.slot, meta: lookup(row.itemHash, row.itemName)),
+    ];
+  }
+
+  /// Whether the catalog should hide additional exotics for [targetSlot].
+  bool excludeExoticForSlot(
+    String targetSlot,
+    SetItemMeta Function(int itemHash, String itemName) lookup,
+  ) {
+    final sel = _selected;
+    if (sel == null) return false;
+    final setType = SetType.tryParse(sel.set.type);
+    if (setType == null) return false;
+    return shouldExcludeExoticFromSetCatalog(
+      setType: setType,
+      targetSlot: targetSlot,
+      otherItemsIncludingTarget: activeOccupants(lookup),
+    );
   }
 
   /// Soft-remove the active item occupying [slot] (or exact item id when provided).
