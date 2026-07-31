@@ -197,13 +197,22 @@ void main() {
 
     await pumpAt(const Size(900, 800));
     expect(tester.takeException(), isNull);
-    await tester.tap(find.byKey(const Key('builds_create_toggle')));
-    await _pumpFrames(tester);
+    // Empty library auto-expands create plate; only open if collapsed.
+    if (find.byKey(const Key('builds_create_button')).evaluate().isEmpty) {
+      await tester.tap(find.byKey(const Key('builds_create_toggle')));
+      await _pumpFrames(tester);
+    }
     expect(find.byKey(const Key('builds_create_button')), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(
+        find.byKey(const Key('builds_create_button')),
+      ),
+      isA<FilledButton>(),
+    );
 
     await pumpAt(const Size(1280, 900));
     expect(tester.takeException(), isNull);
-    // Expanded state may reset with rebuild; re-open create plate if needed.
+    // Rebuild may reset state; empty library still auto-expands create.
     if (find.byKey(const Key('builds_create_button')).evaluate().isEmpty) {
       await tester.tap(find.byKey(const Key('builds_create_toggle')));
       await _pumpFrames(tester);
