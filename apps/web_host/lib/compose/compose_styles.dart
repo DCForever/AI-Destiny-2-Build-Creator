@@ -65,6 +65,20 @@ List<StyleRule> get composePageStyles => [
           cursor: .pointer,
           backgroundColor: flapAccentColor,
         ),
+        // Primary progression CTA (create / save / finish create).
+        css('.compose-btn-primary').styles(
+          alignSelf: .stretch,
+          padding: .symmetric(horizontal: 1.rem, vertical: 0.55.rem),
+          fontSize: 0.95.rem,
+        ),
+        css('.compose-step-hint').styles(
+          margin: .zero,
+          color: flapMutedColor,
+          fontSize: 0.8.rem,
+        ),
+        css('.compose-create-card').styles(
+          gap: Gap(row: 0.75.rem),
+        ),
         css('.compose-btn-ghost').styles(
           padding: .symmetric(horizontal: 0.6.rem, vertical: 0.3.rem),
           border: .all(style: .solid, color: flapLineColor, width: 1.px),

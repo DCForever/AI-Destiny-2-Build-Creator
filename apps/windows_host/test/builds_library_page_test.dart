@@ -144,6 +144,84 @@ void main() {
     expect(find.byKey(const Key('builds_create_synergy_chips')), findsOneWidget);
     expect(find.text('Grenade · Threadling'), findsWidgets);
 
+    // Hierarchy: primary Create / Save are Filled; step labels present.
+    expect(find.byKey(const Key('builds_create_button')), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byKey(const Key('builds_create_button'))),
+      isA<FilledButton>(),
+    );
+    expect(find.byKey(const Key('builds_create_step_class')), findsOneWidget);
+    expect(find.byKey(const Key('builds_create_step_synergy')), findsOneWidget);
+    expect(find.byKey(const Key('builds_create_step_name')), findsOneWidget);
+    expect(find.byKey(const Key('builds_detail_title')), findsOneWidget);
+    expect(find.byKey(const Key('builds_save_identity')), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(
+        find.byKey(const Key('builds_save_identity')),
+      ),
+      isA<FilledButton>(),
+    );
+    expect(find.byKey(const Key('builds_save_identity_hint')), findsOneWidget);
+    expect(
+      find.textContaining('Soft coverage never blocks Save'),
+      findsOneWidget,
+    );
+
+    controller.dispose();
+  });
+
+  testWidgets('create strip primary CTA visible at narrow and wide widths',
+      (tester) async {
+    final controller = BuildsLibraryController(
+      db: services.db,
+      session: services.oauthSession,
+      inventorySync: services.inventorySync,
+    );
+
+    Future<void> pumpAt(Size size) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapTheme(),
+          home: MediaQuery(
+            data: MediaQueryData(size: size),
+            child: BuildsLibraryPage(
+              key: const Key('builds_library_page'),
+              services: services,
+              controller: controller,
+            ),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+    }
+
+    await pumpAt(const Size(900, 800));
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const Key('builds_create_toggle')));
+    await _pumpFrames(tester);
+    expect(find.byKey(const Key('builds_create_button')), findsOneWidget);
+
+    await pumpAt(const Size(1280, 900));
+    expect(tester.takeException(), isNull);
+    // Expanded state may reset with rebuild; re-open create plate if needed.
+    if (find.byKey(const Key('builds_create_button')).evaluate().isEmpty) {
+      await tester.tap(find.byKey(const Key('builds_create_toggle')));
+      await _pumpFrames(tester);
+    }
+    expect(find.byKey(const Key('builds_create_button')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // Progression still works: controller create selects detail.
+    final err = await controller.createBuild(
+      name: 'Wide Hunter',
+      className: GuardianClass.hunter,
+      synergyTypes: const [DraftSynergyType(type: 'melee')],
+    );
+    expect(err, isNull);
+    await _pumpFrames(tester);
+    expect(find.byKey(const Key('builds_detail')), findsOneWidget);
+    expect(find.byKey(const Key('builds_save_identity')), findsOneWidget);
+
     controller.dispose();
   });
 

@@ -494,6 +494,18 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
     queryController.dispose();
   }
 
+  /// Section chrome: condensed title role from Flap tokens via theme.
+  TextStyle? _sectionTitleStyle(BuildContext context) =>
+      Theme.of(context).textTheme.titleMedium;
+
+  TextStyle? _sectionLabelStyle(BuildContext context) =>
+      Theme.of(context).textTheme.labelMedium?.copyWith(
+            letterSpacing: 0.6,
+          );
+
+  TextStyle? _bodyMutedStyle(BuildContext context) =>
+      Theme.of(context).textTheme.bodySmall;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -514,7 +526,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         children: [
           if (_statusMessage != null || _controller.error != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(
+                kPanelPadLg,
+                kSpace8,
+                kPanelPadLg,
+                0,
+              ),
               child: Text(
                 _controller.error ?? _statusMessage!,
                 key: const Key('builds_status'),
@@ -537,58 +554,73 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   }
 
   Widget _buildRail(BuildContext context) {
-    // Intent plate: class + synergy types, then Create; board stays primary.
+    // Intent plate: class + synergy → primary Create; secondary Add type.
     // Offstage create keys stay mounted for widget tests / controller wiring.
     final draftTypes = _controller.createDraftTypes;
     final draftSummary = draftTypes.isEmpty
-        ? 'Class + synergy type → Create'
+        ? 'Next: class + synergy type → Create'
         : '${displayGuardianClass(_createClass)} · '
             '${draftTypes.map((d) => displaySynergyDraft(d.type, d.subType)).join(', ')}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ListTile(
-          key: const Key('builds_create_toggle'),
-          dense: true,
-          title: Text(
-            _createExpanded ? 'New build' : 'New build',
-            style: Theme.of(context).textTheme.titleSmall,
+        Material(
+          color: Theme.of(context).colorScheme.surface,
+          child: ListTile(
+            key: const Key('builds_create_toggle'),
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: kPanelPadMd,
+              vertical: kSpace2,
+            ),
+            title: Text(
+              'New build',
+              style: _sectionTitleStyle(context),
+            ),
+            subtitle: Text(
+              _createExpanded
+                  ? '1 Class · 2 Synergy · 3 Create'
+                  : draftSummary,
+              style: _bodyMutedStyle(context),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Icon(
+              _createExpanded ? Icons.expand_less : Icons.expand_more,
+            ),
+            onTap: () {
+              setState(() {
+                _createExpandedOverride = !_createExpanded;
+              });
+            },
           ),
-          subtitle: Text(
-            _createExpanded ? 'Intent: class + synergy types' : draftSummary,
-            style: Theme.of(context).textTheme.bodySmall,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Icon(
-            _createExpanded ? Icons.expand_less : Icons.expand_more,
-          ),
-          onTap: () {
-            setState(() {
-              _createExpandedOverride = !_createExpanded;
-            });
-          },
         ),
         if (_createExpanded)
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 260),
+            constraints: const BoxConstraints(maxHeight: 280),
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                padding: const EdgeInsets.fromLTRB(
+                  kPanelPadMd,
+                  0,
+                  kPanelPadMd,
+                  kSpace8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Class',
-                      style: Theme.of(context).textTheme.labelMedium,
+                      '1 · Class',
+                      key: const Key('builds_create_step_class'),
+                      style: _sectionLabelStyle(context),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: kSpace4),
                     Wrap(
                       key: const Key('builds_create_class'),
-                      spacing: 6,
-                      runSpacing: 4,
+                      spacing: kSpace6,
+                      runSpacing: kSpace4,
                       children: [
                         for (final c in GuardianClass.values)
                           FilterChip(
@@ -604,12 +636,13 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: kSpace12),
                     Text(
-                      'Synergy types',
-                      style: Theme.of(context).textTheme.labelMedium,
+                      '2 · Synergy types',
+                      key: const Key('builds_create_step_synergy'),
+                      style: _sectionLabelStyle(context),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: kSpace4),
                     DropdownButtonFormField<String>(
                       key: const Key('builds_create_synergy_type'),
                       // ignore: deprecated_member_use
@@ -632,7 +665,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                         setState(() => _createTypeWire = v);
                       },
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: kSpace6),
                     TextField(
                       key: const Key('builds_create_synergy_subtype'),
                       controller: _createSubTypeController,
@@ -642,24 +675,27 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    OutlinedButton(
-                      key: const Key('builds_create_add_synergy'),
-                      onPressed: () {
-                        _controller.addCreateDraftType(
-                          _createTypeWire,
-                          _createSubTypeController.text,
-                        );
-                        _createSubTypeController.clear();
-                      },
-                      child: const Text('Add type'),
+                    const SizedBox(height: kSpace6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        key: const Key('builds_create_add_synergy'),
+                        onPressed: () {
+                          _controller.addCreateDraftType(
+                            _createTypeWire,
+                            _createSubTypeController.text,
+                          );
+                          _createSubTypeController.clear();
+                        },
+                        child: const Text('Add another type'),
+                      ),
                     ),
                     if (draftTypes.isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: kSpace6),
                       Wrap(
                         key: const Key('builds_create_synergy_chips'),
-                        spacing: 4,
-                        runSpacing: 4,
+                        spacing: kSpace4,
+                        runSpacing: kSpace4,
                         children: [
                           for (var i = 0; i < draftTypes.length; i++)
                             InputChip(
@@ -678,14 +714,20 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                       ),
                     ] else
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: kSpace4),
                         child: Text(
-                          'Pick a type and Create (auto-adds), or Add type for several.',
+                          'Pick a type and Create (auto-adds), or Add another type for several.',
                           key: const Key('builds_create_types_hint'),
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: _bodyMutedStyle(context),
                         ),
                       ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: kSpace12),
+                    Text(
+                      '3 · Name & create',
+                      key: const Key('builds_create_step_name'),
+                      style: _sectionLabelStyle(context),
+                    ),
+                    const SizedBox(height: kSpace4),
                     TextField(
                       key: const Key('builds_create_name'),
                       controller: _createNameController,
@@ -696,11 +738,16 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                       ),
                       onSubmitted: (_) => _create(),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: kSpace12),
                     FilledButton(
                       key: const Key('builds_create_button'),
                       onPressed: _controller.loading ? null : _create,
                       child: const Text('Create build'),
+                    ),
+                    const SizedBox(height: kSpace4),
+                    Text(
+                      'Opens identity & variants in the detail pane.',
+                      style: _bodyMutedStyle(context),
                     ),
                   ],
                 ),
@@ -811,27 +858,36 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         icon: Icons.construction_outlined,
         title: 'No build selected',
         body: _controller.builds.isEmpty
-            ? 'Open New build on the left to create your first library build, then edit identity, variants, and finish gaps here.'
-            : 'Select a build on the board to edit identity, attach sets, and review finish gaps.',
+            ? 'Expand New build on the left, pick class + synergy, then Create build. Identity, variants, and finish gaps open here next.'
+            : 'Select a build on the board to edit identity, attach sets, and advance finish gaps.',
       );
     }
     final b = sel.build;
     final synergyText = _controller.synergySummaryOf(b);
+    final displayName = _editNameController.text.trim().isNotEmpty
+        ? _editNameController.text.trim()
+        : (b.name.trim().isNotEmpty ? b.name.trim() : 'Untitled build');
 
     return SingleChildScrollView(
       key: const Key('builds_detail'),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(kPanelPadLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Identity',
-            style: Theme.of(context).textTheme.titleMedium,
+            displayName,
+            key: const Key('builds_detail_title'),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: kSpace4),
+          Text(
+            'Identity summary',
+            style: _sectionLabelStyle(context),
+          ),
+          const SizedBox(height: kSpace8),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: kSpace8,
+            runSpacing: kSpace8,
             children: [
               Chip(
                 key: const Key('builds_detail_class'),
@@ -864,7 +920,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: kSpace16),
+          Text(
+            'Edit identity',
+            style: _sectionTitleStyle(context),
+          ),
+          const SizedBox(height: kSpace8),
           TextField(
             key: const Key('builds_edit_name'),
             controller: _editNameController,
@@ -872,13 +933,14 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               labelText: 'Name',
               border: OutlineInputBorder(),
             ),
+            onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: kSpace12),
           Text(
             'Synergy types',
-            style: Theme.of(context).textTheme.titleSmall,
+            style: _sectionLabelStyle(context),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: kSpace6),
           if (_controller.editDraftTypes.isEmpty)
             const Text(
               'No synergy types (required before save).',
@@ -956,12 +1018,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: kSpace16),
           Text(
             'Exotic / Super pins',
-            style: Theme.of(context).textTheme.titleSmall,
+            style: _sectionLabelStyle(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: kSpace8),
           Row(
             children: [
               Expanded(
@@ -1078,19 +1140,19 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: kSpace16),
           Text(
             'Subclass kit',
             key: const Key('builds_subclass_kit_title'),
-            style: Theme.of(context).textTheme.titleSmall,
+            style: _sectionLabelStyle(context),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: kSpace4),
           Text(
             _controller.subclassCapacityCaption,
             key: const Key('builds_subclass_capacity'),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: _bodyMutedStyle(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: kSpace8),
           Text(
             'Aspects: ${_controller.editSubclass.aspects.isEmpty ? '(none)' : _controller.editSubclass.aspects.join(', ')}',
             key: const Key('builds_subclass_aspects'),
@@ -1251,10 +1313,10 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: kSpace16),
+          // Primary identity CTA — soft misses never disable; hard blocks do.
           FilledButton(
             key: const Key('builds_save_identity'),
-            // Soft misses never disable Save; hard blocks do.
             onPressed: _controller.loading ||
                     _controller.identitySaveHardBlocked ||
                     _controller.identityConfirmRequired
@@ -1262,9 +1324,14 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 : () => _saveIdentity(),
             child: const Text('Save identity'),
           ),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 8),
+          Text(
+            'Soft coverage never blocks Save. Hard Destiny limits still do.',
+            key: const Key('builds_save_identity_hint'),
+            style: _bodyMutedStyle(context),
+          ),
+          const SizedBox(height: kSpace24),
+          const Divider(height: 1),
+          const SizedBox(height: kSpace12),
           _buildVariantCompose(context),
         ],
       ),
@@ -1291,9 +1358,14 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       children: [
         Text(
           'Variants',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: _sectionTitleStyle(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: kSpace4),
+        Text(
+          'Select a variant, then attach sets and pin slots.',
+          style: _bodyMutedStyle(context),
+        ),
+        const SizedBox(height: kSpace8),
         if (variants.isEmpty)
           const Text(
             'No variants on this build.',
@@ -1302,8 +1374,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
         else
           Wrap(
             key: const Key('builds_variants_list'),
-            spacing: 8,
-            runSpacing: 8,
+            spacing: kSpace8,
+            runSpacing: kSpace8,
             children: [
               for (final v in variants)
                 ChoiceChip(
@@ -1316,7 +1388,7 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 ),
             ],
           ),
-        const SizedBox(height: 8),
+        const SizedBox(height: kSpace8),
         Row(
           children: [
             Expanded(
@@ -1331,8 +1403,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
                 onSubmitted: (_) => _createVariant(),
               ),
             ),
-            const SizedBox(width: 8),
-            FilledButton(
+            const SizedBox(width: kSpace8),
+            OutlinedButton(
               key: const Key('builds_create_variant_button'),
               onPressed: _controller.loading ? null : _createVariant,
               child: const Text('Create variant'),
@@ -1340,17 +1412,17 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           ],
         ),
         if (selectedVariant != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: kSpace16),
           Text(
             'Loadout overview',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: _sectionLabelStyle(context),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: kSpace4),
           Text(
             'Read-only strip — empty / wishlist / instance without Edit.',
-            style: Theme.of(context).textTheme.bodySmall,
+            style: _bodyMutedStyle(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: kSpace8),
           if (_controller.slotPins.isEmpty)
             const Text(
               'No filled slots yet.',
@@ -1459,17 +1531,17 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
               ],
             ),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: kSpace16),
         Text(
           'Slot pins',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: _sectionLabelStyle(context),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: kSpace4),
         Text(
           'Wishlist = definition only; instance = owned copy pin.',
-          style: Theme.of(context).textTheme.bodySmall,
+          style: _bodyMutedStyle(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: kSpace8),
         if (_controller.slotPins.isEmpty)
           const Text(
             'No filled slots from attachments.',
@@ -1607,7 +1679,12 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
       children: [
         Text(
           'Finish readiness',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: _sectionTitleStyle(context),
+        ),
+        const SizedBox(height: kSpace4),
+        Text(
+          'Close gaps to equip. Soft suggestions stay confirm-only.',
+          style: _bodyMutedStyle(context),
         ),
         ListTile(
           key: const Key('finish_policy_toggle'),
@@ -1630,15 +1707,15 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           Text(
             kFinishGapsPolicyCaption,
             key: const Key('finish_gaps_policy'),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: _bodyMutedStyle(context),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: kSpace4),
           Text(
             kFinishWalkthroughCaption,
             key: const Key('finish_walkthrough_caption'),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: _bodyMutedStyle(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: kSpace8),
         ],
         if (gaps == null)
           const Text(
@@ -1649,10 +1726,11 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
           Text(
             formatFinishGapsCompleteSummary(gaps),
             key: const Key('finish_gaps_complete_summary'),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: gaps.complete
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
           if (_controller.finishMessage != null) ...[

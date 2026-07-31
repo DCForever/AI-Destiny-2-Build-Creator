@@ -125,24 +125,17 @@ class _BuildsPageState extends State<BuildsPage> {
         h1([.text(BuildsPage.titleText)]),
         p(classes: 'compose-sub', [.text(BuildsPage.subtitleText)]),
         div(
-          classes: 'compose-card',
+          classes: 'compose-card compose-create-card',
           attributes: {'data-testid': 'create-build-form'},
           [
             h2([.text('Create build')]),
+            p(
+              classes: 'compose-step-hint',
+              attributes: {'data-testid': 'create-build-steps'},
+              [.text('1 Class · 2 Synergy · 3 Create → opens compose')],
+            ),
             label([
-              .text('Name'),
-              input(
-                type: InputType.text,
-                value: _name,
-                attributes: {
-                  'data-testid': 'create-build-name',
-                  'placeholder': 'Optional name',
-                },
-                onInput: (v) => setState(() => _name = '$v'),
-              ),
-            ]),
-            label([
-              .text('Class (Titan, Hunter, Warlock)'),
+              .text('1 · Class (Titan, Hunter, Warlock)'),
               input(
                 type: InputType.text,
                 value: _classWire,
@@ -154,7 +147,7 @@ class _BuildsPageState extends State<BuildsPage> {
               ),
             ]),
             label([
-              .text('Synergy type'),
+              .text('2 · Synergy type'),
               input(
                 type: InputType.text,
                 value: _synergyType,
@@ -165,6 +158,18 @@ class _BuildsPageState extends State<BuildsPage> {
                 onInput: (v) => setState(() => _synergyType = '$v'),
               ),
             ]),
+            label([
+              .text('3 · Name (optional)'),
+              input(
+                type: InputType.text,
+                value: _name,
+                attributes: {
+                  'data-testid': 'create-build-name',
+                  'placeholder': 'Optional name',
+                },
+                onInput: (v) => setState(() => _name = '$v'),
+              ),
+            ]),
             if (_formError != null)
               p(
                 classes: 'compose-error',
@@ -172,7 +177,7 @@ class _BuildsPageState extends State<BuildsPage> {
                 [.text(_formError!)],
               ),
             button(
-              classes: 'compose-btn',
+              classes: 'compose-btn compose-btn-primary',
               attributes: {
                 'type': 'button',
                 'data-testid': 'create-build-submit',
@@ -201,7 +206,11 @@ class _BuildsPageState extends State<BuildsPage> {
             attributes: {'data-testid': 'builds-empty'},
             [.text(BuildsPage.emptyText)],
           ),
-        if (c.builds.isNotEmpty)
+        if (c.builds.isNotEmpty) ...[
+          h2(
+            attributes: {'data-testid': 'builds-list-heading'},
+            [.text('Your builds')],
+          ),
           ul(
             [
               for (final b in c.builds)
@@ -222,6 +231,7 @@ class _BuildsPageState extends State<BuildsPage> {
             classes: 'compose-list',
             attributes: {'data-testid': 'builds-list'},
           ),
+        ],
       ],
     );
   }

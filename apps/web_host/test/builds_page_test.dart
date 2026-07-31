@@ -21,6 +21,9 @@ void main() {
       expect(find.text(BuildsPage.titleText), findsOneComponent);
       expect(find.textContaining('Create build'), findsComponents);
       expect(find.textContaining('never auto-applies'), findsComponents);
+      // Hierarchy: step progression + primary create CTA.
+      expect(find.textContaining('1 Class'), findsComponents);
+      expect(find.textContaining('Create build'), findsComponents);
     });
   });
 

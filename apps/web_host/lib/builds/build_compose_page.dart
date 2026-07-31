@@ -266,6 +266,11 @@ class _BuildComposePageState extends State<BuildComposePage> {
           },
           [
             h2([.text('Identity')]),
+            p(
+              classes: 'compose-step-hint',
+              attributes: {'data-testid': 'identity-summary-hint'},
+              [.text('Summary → edit pins → Save identity (primary)')],
+            ),
             p([.text(c.identitySummaryOf(b))]),
             p([.text('Synergies: ${c.synergySummaryOf(b)}')]),
             p(
@@ -539,7 +544,7 @@ class _BuildComposePageState extends State<BuildComposePage> {
                 ],
               ),
             button(
-              classes: 'compose-btn',
+              classes: 'compose-btn compose-btn-primary',
               attributes: {
                 'type': 'button',
                 'data-testid': 'save-identity',
@@ -564,6 +569,15 @@ class _BuildComposePageState extends State<BuildComposePage> {
                     ),
               },
               [.text('Save identity')],
+            ),
+            p(
+              classes: 'compose-step-hint',
+              attributes: {'data-testid': 'save-identity-hint'},
+              [
+                .text(
+                  'Soft coverage never blocks Save. Hard Destiny limits still do.',
+                ),
+              ],
             ),
           ],
         ),
@@ -883,6 +897,10 @@ class _BuildComposePageState extends State<BuildComposePage> {
       [
         h2([.text('Finish readiness')]),
         p(
+          classes: 'compose-step-hint',
+          [.text('Close gaps to equip. Soft suggestions stay confirm-only.')],
+        ),
+        p(
           classes: 'soft-advisory',
           attributes: {'data-testid': 'finish_gaps_policy'},
           [.text(kFinishGapsPolicyCaption)],
@@ -942,6 +960,7 @@ class _BuildComposePageState extends State<BuildComposePage> {
             ),
             if (active.canCapture)
               button(
+                classes: 'compose-btn-ghost',
                 attributes: {
                   'data-testid': 'finish_capture_${active.category.wireName}',
                   'type': 'button',
@@ -958,6 +977,7 @@ class _BuildComposePageState extends State<BuildComposePage> {
               ),
             if (showFinishCreateActions(active.status))
               button(
+                classes: 'compose-btn compose-btn-primary',
                 attributes: {
                   'data-testid': 'finish_create_${active.category.wireName}',
                   'type': 'button',
