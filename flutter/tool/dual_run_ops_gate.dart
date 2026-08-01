@@ -20,8 +20,8 @@ Directory findWorkspaceRoot([Directory? start]) {
     if (candidate.existsSync()) {
       return dir;
     }
-    // Fallback: packages/bungie exists at monorepo root even before runbook.
-    final bungie = Directory('${dir.path}/packages/bungie');
+    // Fallback: Dart packages under flutter/ (DART-069) imply monorepo root.
+    final bungie = Directory('${dir.path}/flutter/packages/bungie');
     if (bungie.existsSync()) {
       return dir;
     }

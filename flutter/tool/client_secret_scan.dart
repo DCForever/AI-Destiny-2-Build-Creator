@@ -67,13 +67,18 @@ class ClientSecretScanFinding {
   String toString() => '$path:$line [$pattern] $snippet';
 }
 
-/// Finds workspace root by walking up until packages/bungie exists.
+/// Finds Dart workspace root (dir with packages/bungie), including nested
+/// `flutter/` under the monorepo root (DART-069).
 Directory findWorkspaceRoot([Directory? start]) {
   var dir = start ?? Directory.current;
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < 12; i++) {
     final candidate = Directory('${dir.path}/packages/bungie');
     if (candidate.existsSync()) {
       return dir;
+    }
+    final nested = Directory('${dir.path}/flutter/packages/bungie');
+    if (nested.existsSync()) {
+      return Directory('${dir.path}/flutter');
     }
     final parent = dir.parent;
     if (parent.path == dir.path) break;

@@ -125,13 +125,35 @@ dependencies:
     });
   });
 
+  group('findWorkspaceRoot', () {
+    test('resolves flutter/ workspace from dart workspace cwd', () {
+      final workspace = findWorkspaceRoot(Directory.current);
+      expect(isDartWorkspaceRoot(workspace), isTrue);
+      expect(
+        File('${workspace.path}/packages/domain/pubspec.yaml').existsSync(),
+        isTrue,
+        reason: 'workspace root was ${workspace.path}',
+      );
+    });
+
+    test('resolves flutter/ workspace from monorepo root parent', () {
+      final dartRoot = findWorkspaceRoot(Directory.current);
+      final monorepo = dartRoot.parent;
+      // Monorepo root has package.json + nested flutter/ after DART-069.
+      expect(File('${monorepo.path}/package.json').existsSync(), isTrue);
+      final fromMono = findWorkspaceRoot(monorepo);
+      expect(
+        fromMono.resolveSymbolicLinksSync(),
+        dartRoot.resolveSymbolicLinksSync(),
+      );
+    });
+  });
+
   group('live pure packages', () {
     test('workspace pure packages pass the graph guard', () {
-      // tool/test → tool → repo root
-      final root = Directory.current;
-      // When run via `dart test tool/test`, CWD is usually repo root.
-      // Also try parent walk via findWorkspaceRoot.
-      final workspace = findWorkspaceRoot(root);
+      // When run via `dart test` from flutter/, CWD is Dart workspace root.
+      // findWorkspaceRoot also accepts monorepo root (parent with flutter/).
+      final workspace = findWorkspaceRoot(Directory.current);
       final result = scanPurePackages(workspace);
       expect(
         result.packagesScanned,

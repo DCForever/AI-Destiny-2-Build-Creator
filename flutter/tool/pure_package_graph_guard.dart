@@ -180,17 +180,29 @@ GraphGuardResult scanPurePackages(Directory workspaceRoot) {
   return GraphGuardResult(violations: violations, packagesScanned: scanned);
 }
 
-/// Resolve workspace root: directory containing root pubspec with workspace:.
+/// True when [dir] is the Melos/pub workspace root for this monorepo.
+bool isDartWorkspaceRoot(Directory dir) {
+  final pubspec = File.fromUri(dir.uri.resolve('pubspec.yaml'));
+  if (!pubspec.existsSync()) return false;
+  final text = pubspec.readAsStringSync();
+  return text.contains(RegExp(r'^workspace\s*:', multiLine: true)) ||
+      text.contains('destiny2_build_creator_workspace');
+}
+
+/// Resolve Dart workspace root (`flutter/` after DART-069).
+///
+/// Walks parents looking for the workspace pubspec. Also accepts monorepo
+/// root (or any ancestor) that contains a nested `flutter/` workspace so
+/// gates work when cwd is the git repository root.
 Directory findWorkspaceRoot([Directory? start]) {
   var dir = start ?? Directory.current;
   while (true) {
-    final pubspec = File.fromUri(dir.uri.resolve('pubspec.yaml'));
-    if (pubspec.existsSync()) {
-      final text = pubspec.readAsStringSync();
-      if (text.contains(RegExp(r'^workspace\s*:', multiLine: true)) ||
-          text.contains('destiny2_build_creator_workspace')) {
-        return dir;
-      }
+    if (isDartWorkspaceRoot(dir)) {
+      return dir;
+    }
+    final nestedFlutter = Directory.fromUri(dir.uri.resolve('flutter/'));
+    if (isDartWorkspaceRoot(nestedFlutter)) {
+      return nestedFlutter;
     }
     final parent = dir.parent;
     if (parent.path == dir.path) {

@@ -1,5 +1,7 @@
 # Multiplatform Dart — Dual-Run + Rollback Runbook (DART-060 / GAP-OPS-01)
 
+> **DART-069:** Dart workspace root is `flutter/`. Prefer `cd flutter` then `dart run tool/...`. Host paths are `flutter/apps/...`.
+
 **Status:** shipped (runbook + first execution notes + offline ops gate)  
 **Updated:** 2026-07-25  
 **Program ID:** DART-060  

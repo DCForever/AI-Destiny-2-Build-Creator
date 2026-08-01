@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-01
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Move all the flutter code down into a flutter subfolder"
 

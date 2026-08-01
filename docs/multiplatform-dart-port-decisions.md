@@ -85,3 +85,7 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 - Equip/DIM require owned instance pins where domain says so.
 
 Domain truth remains `specs/domain-business-rules.md`, `specs/domain-acceptance-criteria.md`, and `specs/business-rules.md`.
+
+## DART-069 — Nested Dart workspace root (lutter/)
+
+**Decision (2026-08-01):** The Melos/pub workspace root is `flutter/` under the monorepo. Next.js remains repository root. Packages, apps (Windows/mobile/Jaspr web), and Dart `tool/` live under `flutter/`. Specs and multiplatform docs stay at monorepo root. Contributor convention: run Dart workspace commands with cwd `flutter/`. See `specs/dart-069-nest-flutter-workspace/` and ProjectTracker `DEC-2026-08-01-001`. 

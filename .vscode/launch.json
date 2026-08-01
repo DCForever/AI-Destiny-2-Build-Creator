@@ -11,115 +11,115 @@
         },
         {
             "name": "mobile_host",
-            "cwd": "apps\\mobile_host",
+            "cwd": "flutter\\apps\\mobile_host",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "mobile_host (profile mode)",
-            "cwd": "apps\\mobile_host",
+            "cwd": "flutter\\apps\\mobile_host",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
             "name": "mobile_host (release mode)",
-            "cwd": "apps\\mobile_host",
+            "cwd": "flutter\\apps\\mobile_host",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
             "name": "web_host",
-            "cwd": "apps\\web_host",
+            "cwd": "flutter\\apps\\web_host",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "windows_host",
-            "cwd": "apps\\windows_host",
+            "cwd": "flutter\\apps\\windows_host",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "windows_host (profile mode)",
-            "cwd": "apps\\windows_host",
+            "cwd": "flutter\\apps\\windows_host",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
             "name": "windows_host (release mode)",
-            "cwd": "apps\\windows_host",
+            "cwd": "flutter\\apps\\windows_host",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
             "name": "app",
-            "cwd": "packages\\app",
+            "cwd": "flutter\\packages\\app",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "bungie",
-            "cwd": "packages\\bungie",
+            "cwd": "flutter\\packages\\bungie",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "db",
-            "cwd": "packages\\db",
+            "cwd": "flutter\\packages\\db",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "domain",
-            "cwd": "packages\\domain",
+            "cwd": "flutter\\packages\\domain",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "manifest",
-            "cwd": "packages\\manifest",
+            "cwd": "flutter\\packages\\manifest",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "sandbox_data",
-            "cwd": "packages\\sandbox_data",
+            "cwd": "flutter\\packages\\sandbox_data",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "storage",
-            "cwd": "packages\\storage",
+            "cwd": "flutter\\packages\\storage",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "ui_flutter",
-            "cwd": "packages\\ui_flutter",
+            "cwd": "flutter\\packages\\ui_flutter",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "ui_flutter (profile mode)",
-            "cwd": "packages\\ui_flutter",
+            "cwd": "flutter\\packages\\ui_flutter",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
             "name": "ui_flutter (release mode)",
-            "cwd": "packages\\ui_flutter",
+            "cwd": "flutter\\packages\\ui_flutter",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
             "name": "ui_tokens",
-            "cwd": "packages\\ui_tokens",
+            "cwd": "flutter\\packages\\ui_tokens",
             "request": "launch",
             "type": "dart"
         }

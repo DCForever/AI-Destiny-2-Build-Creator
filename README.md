@@ -21,7 +21,7 @@ Product framing: [`PRODUCT.md`](./PRODUCT.md). Domain rules: [`specs/domain-busi
 
 ### Multiplatform Dart port (in progress)
 
-Parallel workstream on `feature/multiplatform-dart` (this worktree). Pure Dart packages live under [`packages/`](./packages/README.md) (Melos 7+ / pub workspace). Domain package has **no** Flutter/Jaspr/IO deps. Slice roadmap: [`docs/multiplatform-dart-slice-roadmap.md`](./docs/multiplatform-dart-slice-roadmap.md).
+Parallel workstream on `feature/multiplatform-dart` (this worktree). Pure Dart packages and Flutter/Jaspr hosts live under [`flutter/`](./flutter/) (Melos 7+ / pub workspace; see [`flutter/packages/README.md`](./flutter/packages/README.md)). Run Dart commands from `flutter/` (`cd flutter` then `dart pub get`). Domain package has **no** Flutter/Jaspr/IO deps. Slice roadmap: [`docs/multiplatform-dart-slice-roadmap.md`](./docs/multiplatform-dart-slice-roadmap.md).
 
 ## Getting started
 

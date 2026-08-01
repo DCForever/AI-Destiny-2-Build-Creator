@@ -1,5 +1,7 @@
 # Multiplatform Dart — Cutover Parity Checklist (DART-049)
 
+> **DART-069:** Dart workspace root is `flutter/`. Prefer `cd flutter` then `dart run tool/...`. Host paths are `flutter/apps/...`.
+
 **Status:** active program gate artifact  
 **Updated:** 2026-07-25 (DART-061 production cutover re-gate; **PRODUCTION_CUTOVER_GO**; RC-BRANCH PASS; GAP-CUT-01 closed)  
 **Program ID:** DART-049 (checklist) + **DART-061** (production cutover re-gate)  

@@ -4,7 +4,9 @@
 **Integration base:** `feature/multiplatform-dart`  
 **Architecture:** [docs/multiplatform-dart-port-decisions.md](../docs/multiplatform-dart-port-decisions.md)
 
-This directory holds **pure and host-shared Dart packages** for the multiplatform Destiny 2 Build Creator port. Host shells live under **`apps/`** (Flutter Windows/mobile + Jaspr web).
+**Workspace root:** repository `flutter/` (DART-069). Run `cd flutter` then `dart pub get` / `dart run tool/...`.
+
+This directory holds **pure and host-shared Dart packages** for the multiplatform Destiny 2 Build Creator port. Host shells live under **`flutter/apps/`** (repo-relative) / **`apps/`** (workspace-relative) (Flutter Windows/mobile + Jaspr web).
 
 ## Layout
 
