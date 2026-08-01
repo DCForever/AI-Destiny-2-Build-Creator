@@ -1,10 +1,8 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { findRepoRoot } from "./repoRoot.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-/** Repo root (Destiny2BuildCreator). */
-export const REPO_ROOT = path.resolve(__dirname, "../../..");
+/** Repo root (Destiny2BuildCreator monorepo). */
+export const REPO_ROOT = findRepoRoot();
 
 export const SPECS_DIR = path.join(REPO_ROOT, "specs");
 export const DOMAIN_AC_PATH = path.join(SPECS_DIR, "domain-acceptance-criteria.md");
@@ -22,4 +20,3 @@ export const ATLAS_UI_RULES_LINKS_PATH = path.join(
   "atlas",
   "ui-rules-links.json",
 );
-// REPO_ROOT already exported above

@@ -1,6 +1,6 @@
 # Parity: flutter-windows
 
-Generated: 2026-07-27
+Generated: 2026-08-01
 
 | Metric | Value |
 |--------|-------|
@@ -18,7 +18,7 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 
 | Surface | Status | Flutter route | Capture id | Shot | Rules |
 |---------|--------|---------------|------------|------|-------|
-| `shell` | stub | / | — | no | 4 |
+| `shell` | stub | / | — | no | 9 |
 | `shell.nav.loadouts` | stub | /loadouts | — | no | 0 |
 | `shell.nav.build` | stub | /build | — | no | 0 |
 | `shell.nav.synergy` | stub | /synergy | — | no | 0 |

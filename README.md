@@ -25,10 +25,18 @@ Product framing: [`PRODUCT.md`](./PRODUCT.md). Product descriptions (domains + a
 
 Parallel workstream on `feature/multiplatform-dart` (this worktree). Pure Dart packages and Flutter/Jaspr hosts live under [`flutter/`](./flutter/) (Melos 7+ / pub workspace; see [`flutter/packages/README.md`](./flutter/packages/README.md)). Run Dart commands from `flutter/` (`cd flutter` then `dart pub get`). Domain package has **no** Flutter/Jaspr/IO deps. Slice roadmap: [`docs/multiplatform-dart-slice-roadmap.md`](./docs/multiplatform-dart-slice-roadmap.md).
 
+## Monorepo layout
+
+- `web/NextJS/` — Next.js app (run `cd web/NextJS` or use root `npm run dev` proxy)
+- `flutter/` — Dart/Flutter/Jaspr multiplatform workspace
+- `docs/`, `specs/` — shared product docs and Spec Kit
+
 ## Getting started
 
 ```bash
+cd web/NextJS
 npm install
+# or from monorepo root: npm run dev (after npm install in web/NextJS)
 cp .env.local.example .env.local   # fill in values — see Environment
 npm run dev                        # http://localhost:3000 → redirects to /build
 ```

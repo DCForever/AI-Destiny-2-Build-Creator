@@ -32,8 +32,8 @@ const List<String> kDualRunRunbookRequiredMarkers = [
 /// Relative to monorepo root (not nested Dart workspace root).
 const List<String> kDualRunShellRelativePaths = [
   // Next sole production tree
-  'package.json',
-  'src/app',
+  'web/NextJS/package.json',
+  'web/NextJS/src/app',
   // Dart cutover-primary hosts (DART-069: under flutter/)
   'flutter/apps/windows_host',
   'flutter/apps/web_host',

@@ -88,4 +88,8 @@ Domain truth remains `specs/domain-business-rules.md`, `specs/domain-acceptance-
 
 ## DART-069 — Nested Dart workspace root (`flutter/`)
 
-**Decision (2026-08-01):** The Melos/pub workspace root is `flutter/` under the monorepo. Next.js remains repository root. Packages, apps (Windows/mobile/Jaspr web), and Dart `tool/` live under `flutter/`. Specs and multiplatform docs stay at monorepo root. Contributor convention: run Dart workspace commands with cwd `flutter/`. See `specs/dart-069-nest-flutter-workspace/` and ProjectTracker `DEC-2026-08-01-001`. 
+**Decision (2026-08-01):** The Melos/pub workspace root is `flutter/` under the monorepo. Next.js remains repository root. Packages, apps (Windows/mobile/Jaspr web), and Dart `tool/` live under `flutter/`. Specs and multiplatform docs stay at monorepo root. Contributor convention: run Dart workspace commands with cwd `flutter/`. See `specs/dart-069-nest-flutter-workspace/` and ProjectTracker `DEC-2026-08-01-001`.
+
+## Next.js nested under web/NextJS
+
+**Decision (2026-08-01):** Next.js app root is `web/NextJS/`. Monorepo root hosts shared docs/specs and `flutter/`. Root `package.json` proxies npm scripts into `web/NextJS`. See `specs/045-nest-nextjs-web/`. 

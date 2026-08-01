@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(__dirname, "../../.."); // monorepo root (web/NextJS/scripts -> repo)
 const outDir = path.join(root, ".atlas");
 const out = path.join(outDir, "auth.json");
 const base = (process.env.ATLAS_BASE_URL || "https://127.0.0.1:3000").replace(/\/$/, "");

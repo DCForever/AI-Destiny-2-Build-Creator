@@ -1,9 +1,7 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { findRepoRoot } from "./repoRoot.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export const REPO_ROOT = path.resolve(__dirname, "../../..");
+export const REPO_ROOT = findRepoRoot();
 export const PRODUCT_MAP_DIR = path.join(REPO_ROOT, "docs", "product-map");
 export const META_PATH = path.join(PRODUCT_MAP_DIR, "meta.yaml");
 export const PLATFORMS_PATH = path.join(PRODUCT_MAP_DIR, "platforms.yaml");
