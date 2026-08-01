@@ -1,12 +1,4 @@
-/// Structural baseline for the modularization / shared-UI audit.
-///
-/// Locks path evidence: triple-hosted pure formatters, equip orchestration
-/// twins, ItemRichness placement, and LibraryWorkspace adoption. Fails if
-/// files move without updating the audit assumptions.
-///
-/// This is intentionally filesystem + symbol based (not a reimplementation of
-/// product formatters). Behavior of formatters is covered by host
-/// `*_format_test.dart` suites.
+/// Structural baseline for modularization work (post audit implementation).
 library;
 
 import 'dart:io';
@@ -14,7 +6,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-/// Resolve Melos workspace root (`flutter/`) by walking from CWD / script.
 Directory get _workspaceRoot {
   Directory dir = Directory.current;
   for (var i = 0; i < 8; i++) {
@@ -32,7 +23,6 @@ Directory get _workspaceRoot {
     if (parent.path == dir.path) break;
     dir = parent;
   }
-  // Fallback: this file lives at flutter/tool/test/*.dart
   final scriptDir = File.fromUri(Platform.script).parent;
   return scriptDir.parent.parent;
 }
@@ -62,86 +52,58 @@ void main() {
     );
   });
 
-  group('M1: triple soft_guidance_format copies', () {
-    const paths = [
-      'apps/windows_host/lib/builds/soft_guidance_format.dart',
-      'apps/web_host/lib/compose/soft_guidance_format.dart',
-      'apps/mobile_host/lib/builds/soft_guidance_format.dart',
-    ];
-
-    test('each host defines caption + tone key + chip label', () {
-      for (final path in paths) {
-        final src = _read(path);
-        expect(src, contains('kSoftGuidanceAdvisoryCaption'));
-        expect(src, contains('coverageTierToneKey'));
-        expect(src, contains('formatSynergyCoverageChipLabel'));
-        expect(src, contains('formatSoftStatTargetsSummary'));
-      }
+  group('M1: shared formatters live in destiny2_app', () {
+    test('package owns soft guidance + equip + dim formatters', () {
+      final soft = _read(
+        'packages/app/lib/src/presentation/soft_guidance_format.dart',
+      );
+      expect(soft, contains('kSoftGuidanceAdvisoryCaption'));
+      expect(soft, contains('coverageTierToneKey'));
+      final equip =
+          _read('packages/app/lib/src/presentation/equip_format.dart');
+      expect(equip, contains('canEnableEquipCta'));
+      final dim =
+          _read('packages/app/lib/src/presentation/dim_export_format.dart');
+      expect(dim, contains('canEnableDimExportCta'));
     });
 
-    test('caption string is identical across hosts', () {
-      final captions = paths.map((path) {
+    test('host soft_guidance files re-export package (not independent impl)',
+        () {
+      for (final path in [
+        'apps/windows_host/lib/builds/soft_guidance_format.dart',
+        'apps/web_host/lib/compose/soft_guidance_format.dart',
+        'apps/mobile_host/lib/builds/soft_guidance_format.dart',
+      ]) {
         final src = _read(path);
-        final match = RegExp(
-          r"const String kSoftGuidanceAdvisoryCaption\s*=\s*'([^']*(?:'\\''[^']*)*)'\s*"
-          r"(?:'([^']*)')?",
-          multiLine: true,
-        ).firstMatch(src);
-        // Multi-line string concatenation: collect adjacent string literals
-        // after the const name.
-        final block = RegExp(
-          r"kSoftGuidanceAdvisoryCaption\s*=\s*((?:'[^']*'\s*)+);",
-          multiLine: true,
-        ).firstMatch(src);
-        expect(block, isNotNull, reason: 'caption block in $path');
-        final parts = RegExp(r"'([^']*)'")
-            .allMatches(block!.group(1)!)
-            .map((m) => m.group(1)!)
-            .join();
-        // Silence unused if regex alternate path
-        expect(match == null || match.groupCount >= 0, isTrue);
-        return parts;
-      }).toList();
-
-      expect(captions[0], isNotEmpty);
-      expect(captions[1], captions[0]);
-      expect(captions[2], captions[0]);
-      expect(captions[0], contains('never auto-applies'));
+        expect(src, contains("export 'package:destiny2_app/destiny2_app.dart'"));
+        expect(src.contains('coverageTierToneKey('), isFalse,
+            reason: 'no local function body in $path');
+      }
     });
   });
 
-  group('M2: equip_controller win/web twin API', () {
-    test('shared orchestration methods present on both hosts', () {
-      for (final path in [
-        'apps/windows_host/lib/equip/equip_controller.dart',
-        'apps/web_host/lib/equip/equip_controller.dart',
-      ]) {
-        final src = _read(path);
-        expect(src, contains('class EquipController'));
-        for (final symbol in [
-          'confirmGapsAndEquip',
-          'requestEquip',
-          'refreshReadiness',
-          'canEnableEquipCta',
-          'PendingEquipAction',
-        ]) {
-          expect(src, contains(symbol), reason: '$symbol in $path');
-        }
-      }
+  group('M2: equip session shared core', () {
+    test('EquipSession exists and host controllers wrap it', () {
+      final session = _read('packages/app/lib/src/equip/equip_session.dart');
+      expect(session, contains('class EquipSession'));
+      expect(session, contains('confirmGapsAndEquip'));
+      final win = _read('apps/windows_host/lib/equip/equip_controller.dart');
+      expect(win, contains('EquipSession'));
+      final web = _read('apps/web_host/lib/equip/equip_controller.dart');
+      expect(web, contains('EquipSession'));
     });
   });
 
   group('U1/U2: UI kit placement', () {
-    test('ItemRichnessPanel lives under windows_host widgets and is used by catalog',
-        () {
-      final panel = _read('apps/windows_host/lib/widgets/item_richness.dart');
+    test('ItemRichnessPanel lives in ui_flutter', () {
+      final panel =
+          _read('packages/ui_flutter/lib/src/item_richness.dart');
       expect(panel, contains('class ItemRichnessPanel'));
       final catalog = _read('apps/windows_host/lib/catalog/catalog_page.dart');
       expect(catalog, contains('ItemRichnessPanel'));
     });
 
-    test('LibraryWorkspace is defined in ui_flutter and used by three libraries',
-        () {
+    test('LibraryWorkspace used by three library pages', () {
       final kit =
           _read('packages/ui_flutter/lib/src/library_workspace.dart');
       expect(kit, contains('class LibraryWorkspace'));
@@ -153,17 +115,74 @@ void main() {
         expect(_read(path), contains('LibraryWorkspace'), reason: path);
       }
     });
+
+    test('builds library page is split into part files', () {
+      expect(
+        File(p.join(root.path, 'apps/windows_host/lib/builds/builds_library_page_rail.dart'))
+            .existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(root.path, 'apps/windows_host/lib/builds/builds_library_page_compose.dart'))
+            .existsSync(),
+        isTrue,
+      );
+      final main = _read('apps/windows_host/lib/builds/builds_library_page.dart');
+      expect(main, contains("part 'builds_library_page_rail.dart'"));
+    });
   });
 
-  group('M5: designation chrome SSoT', () {
-    test('app package owns formatDesignationChrome; windows synergy wraps it',
-        () {
-      final app = _read('packages/app/lib/src/designation_chrome.dart');
-      expect(app, contains('formatDesignationChrome'));
-      expect(app, contains('designationWireKey'));
-      final wrap =
-          _read('apps/windows_host/lib/synergies/synergy_designation.dart');
-      expect(wrap, contains('formatDesignationChrome'));
+  group('compose session', () {
+    test('BuildsComposeSession exported from package', () {
+      final src =
+          _read('packages/app/lib/src/builds/builds_compose_session.dart');
+      expect(src, contains('class BuildsComposeSession'));
+      expect(src, contains('attachSet'));
+      expect(src, contains('pinSlot'));
+      expect(src, contains('refreshSoftCoverage'));
+      expect(src, contains('saveSoftStatTargets'));
+      expect(src, contains('selectVariant'));
+    });
+
+    test('mobile/windows/web thin-wrap BuildsComposeSession for compose', () {
+      final mobile =
+          _read('apps/mobile_host/lib/builds/builds_controller.dart');
+      final windows =
+          _read('apps/windows_host/lib/builds/builds_library_controller.dart');
+      final web = _read('apps/web_host/lib/builds/builds_controller.dart');
+
+      for (final entry in {
+        'mobile': mobile,
+        'windows': windows,
+        'web': web,
+      }.entries) {
+        final src = entry.value;
+        final host = entry.key;
+        expect(src, contains('BuildsComposeSession'), reason: host);
+        expect(src, contains('core.attachSet'), reason: host);
+        expect(src, contains('core.pinSlot'), reason: host);
+        expect(src, contains('core.refreshSoftCoverage'), reason: host);
+        expect(src, contains('core.saveSoftStatTargets'), reason: host);
+        expect(src, contains('core.selectVariant'), reason: host);
+        // Compose state machine must not be reimplemented with private fields.
+        expect(src, isNot(contains('List<AttachmentView> _attachments')),
+            reason: host);
+        expect(src, isNot(contains('List<SlotPinView> _slotPins')),
+            reason: host);
+        expect(src, isNot(contains('CoverageQueryResult? _coverage')),
+            reason: host);
+      }
+
+      // View models live in package code; hosts re-export, not redefine.
+      expect(mobile, isNot(contains('class DraftSynergyType')));
+      expect(windows, isNot(contains('class DraftSynergyType')));
+      expect(web, isNot(contains('class DraftSynergyType')));
+      expect(mobile, isNot(contains('class SlotPinView')));
+      expect(windows, isNot(contains('class SlotPinView')));
+      expect(web, isNot(contains('class SlotPinView')));
+      expect(mobile, isNot(contains('class AttachmentView {')));
+      expect(windows, isNot(contains('class AttachmentView {')));
+      expect(web, isNot(contains('class AttachmentView {')));
     });
   });
 }

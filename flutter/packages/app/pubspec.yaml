@@ -12,6 +12,8 @@ environment:
   sdk: ^3.5.0
 
 dependencies:
+  destiny2_bungie:
+    path: ../bungie
   destiny2_db:
     path: ../db
   destiny2_domain:

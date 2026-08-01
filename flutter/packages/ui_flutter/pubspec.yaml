@@ -13,6 +13,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  destiny2_db:
+    path: ../db
+  destiny2_manifest:
+    path: ../manifest
   destiny2_ui_tokens:
     path: ../ui_tokens
 
