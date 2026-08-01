@@ -8,7 +8,7 @@
  * Set slot rows stay icon-only; this model is for detail surfaces.
  */
 
-import { columnIndexToLabel } from "@/lib/manifest/perkWeaponIndex";
+import { columnIndexToLabel } from "@/lib/manifest/perkColumnLabels";
 import type { WeaponPerkColumn } from "@/lib/manifest/types/records";
 import {
   entityLabelParts,
