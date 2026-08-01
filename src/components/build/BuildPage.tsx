@@ -36,6 +36,7 @@ import {
   WorkspaceMain,
 } from "@/components/ui";
 import type { BungieInGameLoadout } from "@/lib/bungie/characterLoadouts";
+import { evaluateFinishGapsFromVariant } from "@/lib/builds/finishGapsFromDetail";
 import { indexBuildLoadoutMatches } from "@/lib/loadouts/matchLoadoutToBuilds";
 import {
   BUILD_QUERY_BUILD,
@@ -83,6 +84,15 @@ export function BuildPage() {
   const [bungieLoadouts, setBungieLoadouts] = useState<BungieInGameLoadout[]>(
     [],
   );
+  /** Resolved equipment for page-level shareability (FR-017). */
+  const [pageEquipment, setPageEquipment] = useState<
+    Partial<
+      Record<
+        string,
+        { slot?: string; itemHash?: number; itemName?: string; instanceId?: string | null } | null
+      >
+    >
+  >({});
 
   const loadoutMatchesByBuildId = useMemo(() => {
     if (builds.length === 0 || bungieLoadouts.length === 0) {
@@ -468,6 +478,65 @@ export function BuildPage() {
     }
   }
 
+  const selectedVariant =
+    detail?.variants.find((v) => v.id === variantId) ??
+    detail?.variants[0] ??
+    null;
+
+  useEffect(() => {
+    if (!detail || !selectedVariant) {
+      setPageEquipment({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/user/builds/${detail.id}/variants/${selectedVariant.id}/resolved`,
+        );
+        if (!res.ok || cancelled) return;
+        const body = (await res.json()) as {
+          equipment?: Partial<
+            Record<
+              string,
+              { slot?: string; itemHash?: number; itemName?: string; instanceId?: string | null }
+            >
+          >;
+        };
+        if (!cancelled) setPageEquipment(body.equipment ?? {});
+      } catch {
+        if (!cancelled) setPageEquipment({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [detail, selectedVariant]);
+
+  const pageFinishComplete = useMemo(() => {
+    if (!selectedVariant) return false;
+    const hasModCoverage = selectedVariant.attachments.some(
+      (a) => a.set?.type === "mod",
+    );
+    return evaluateFinishGapsFromVariant({
+      variantId: selectedVariant.id,
+      isDefaultVariant: Boolean(selectedVariant.isDefault),
+      attachments: selectedVariant.attachments.map((a) => ({
+        setId: a.setId,
+        mode: a.mode,
+        set: a.set,
+      })),
+      equipment: pageEquipment,
+      hasModCoverage,
+    }).complete;
+  }, [selectedVariant, pageEquipment]);
+
+  /** Page-level Apply/Export: details only, complete variants; edit owns Finish export. */
+  const showPageBuildActions =
+    Boolean(selectedVariant) &&
+    variantMode === "details" &&
+    pageFinishComplete;
+
   if (signedIn === false) {
     return (
       <SignedOutGate
@@ -477,11 +546,6 @@ export function BuildPage() {
       />
     );
   }
-
-  const selectedVariant =
-    detail?.variants.find((v) => v.id === variantId) ??
-    detail?.variants[0] ??
-    null;
 
   function selectVariant(id: string, name: string, mode?: VariantViewMode) {
     setVariantId(id);
@@ -668,7 +732,7 @@ export function BuildPage() {
           <EmptyState description="Select a variant to view details or edit." />
         )}
 
-        {selectedVariant ? (
+        {showPageBuildActions && selectedVariant ? (
           <BuildActions
             className={detail.className}
             characters={characters}

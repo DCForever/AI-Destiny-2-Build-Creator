@@ -14,13 +14,32 @@ import type { Proposal } from "@/lib/llm/propose/proposalSchemas";
 /** Default library type for a gap when LLM has not assigned one. */
 export function defaultTypeForCandidate(candidate: GapCandidate): CreatableSynergyType {
   if (candidate.kind === "weapon") {
-    if (candidate.ammo === "Primary") return "primary_weapon";
-    if (candidate.ammo === "Special") return "special_weapon";
-    if (candidate.ammo === "Heavy") return "heavy_weapon";
+    // Ammo economy designation (DBR-SYN-017); subtype set separately.
+    if (
+      candidate.ammo === "Primary" ||
+      candidate.ammo === "Special" ||
+      candidate.ammo === "Heavy"
+    ) {
+      return "ammo";
+    }
     return "general_weapon";
   }
   // Perks / origin / set bonuses: keep creatable without subtype requirements.
   return "general_weapon";
+}
+
+/** Suggested subType for gap proposals (ammo Primary/Special/Heavy). */
+export function defaultSubTypeForCandidate(candidate: GapCandidate): string | null {
+  if (candidate.kind === "weapon" && candidate.ammo) {
+    if (
+      candidate.ammo === "Primary" ||
+      candidate.ammo === "Special" ||
+      candidate.ammo === "Heavy"
+    ) {
+      return candidate.ammo;
+    }
+  }
+  return null;
 }
 
 export function filterCandidatesByScope(
@@ -49,7 +68,7 @@ export function findMissingGaps(
       ...candidate,
       gapKind: "link",
       suggestedType,
-      suggestedSubType: null,
+      suggestedSubType: defaultSubTypeForCandidate(candidate),
       rationale: `No library synergy links to this ${candidate.kind.replace(/_/g, " ")} yet.`,
     });
     if (missing.length >= limit) break;

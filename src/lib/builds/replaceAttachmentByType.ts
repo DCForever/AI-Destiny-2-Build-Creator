@@ -5,6 +5,14 @@ import {
   replaceAttachments,
   type AttachmentRecord,
 } from "@/lib/db/repositories/variantRepository";
+import {
+  assertArmorSetBonusConstraint,
+  loadSetBonusMembershipIndex,
+  parseArmorSetBonusConstraint,
+  toConstrainedArmorPieces,
+} from "@/lib/sets/armorSetBonusConstraint";
+import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
+import { listActiveSetItems } from "@/lib/sets/setItemService";
 import type { SetType } from "@/lib/sets/schemas";
 
 /**
@@ -22,6 +30,22 @@ export async function replaceAttachmentByType(
   const newSet = getSet(db, userId, newSetId);
   if (!newSet || newSet.type !== type) {
     throw new Error(`Set ${newSetId} is not a ${type} set for this user`);
+  }
+
+  const activeItems = await listActiveSetItems(db, newSetId);
+  assertSetMinimumOccupancy(type, activeItems, { context: "attach" });
+
+  if (type === "armor") {
+    const constraint = parseArmorSetBonusConstraint(newSet.setBonusConstraint);
+    if (constraint) {
+      const pieces = await toConstrainedArmorPieces(activeItems);
+      const membership = await loadSetBonusMembershipIndex();
+      assertArmorSetBonusConstraint(constraint, pieces, membership, {
+        setType: "armor",
+        requireTier: true,
+        context: "attach",
+      });
+    }
   }
 
   const existing = listAttachments(db, variantId);

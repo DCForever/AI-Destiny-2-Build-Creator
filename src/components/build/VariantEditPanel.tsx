@@ -167,7 +167,9 @@ export function VariantEditPanel({
   const [selectedPerkHashes, setSelectedPerkHashes] = useState<number[]>(
     () => variant.artifactConfig ?? [],
   );
-  const [subclass, setSubclass] = useState<BuildSubclass>(() => build.subclass);
+  const [subclass, setSubclass] = useState<BuildSubclass>(
+    () => variant.subclass ?? build.subclass,
+  );
   /** Aspect name → fragmentCapacity when known from picker. */
   const [aspectCapacityByName, setAspectCapacityByName] = useState<
     Record<string, number>
@@ -335,22 +337,30 @@ export function VariantEditPanel({
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch(`/api/user/builds/${build.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subclass }),
-      });
+      // Kit picks are variant-owned; do not PATCH build.subclass (tree identity).
+      const res = await fetch(
+        `/api/user/builds/${build.id}/variants/${variant.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subclassKit: {
+              super: subclass.super,
+              classAbility: subclass.classAbility,
+              movement: subclass.movement,
+              melee: subclass.melee,
+              grenade: subclass.grenade,
+              aspects: subclass.aspects,
+              fragments: subclass.fragments,
+            },
+          }),
+        },
+      );
       const body = (await res.json()) as {
         error?: string;
         code?: string;
         build?: BuildDetail;
       };
-      if (res.status === 409 && body.code === "IDENTITY_CONFIRM_REQUIRED") {
-        setError(
-          "Subclass change needs identity confirm/fork — keep ability names within the same subclass, or edit identity from debug Builds.",
-        );
-        return;
-      }
       if (!res.ok || !body.build) {
         setError(body.error ?? "Failed to save abilities");
         return;

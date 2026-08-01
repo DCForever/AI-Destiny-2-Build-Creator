@@ -58,6 +58,8 @@ export const sets = sqliteTable(
     type: text("type").notNull(),
     /** JSON: ArmorSetOptimizerConstraints (nullable). */
     optimizerConstraints: text("optimizer_constraints"),
+    /** JSON: ArmorSetBonusConstraint — package family + 2|4 tier (nullable; Armor Sets only). */
+    setBonusConstraint: text("set_bonus_constraint"),
     /** Optional companion Mod Set id for armor optimizer materialize. */
     linkedModSetId: text("linked_mod_set_id"),
     createdAt: text("created_at").notNull(),
@@ -126,6 +128,8 @@ export const synergyLinks = sqliteTable("synergy_links", {
   bonusPieces: integer("bonus_pieces"),
   bonusName: text("bonus_name"),
   armorSetHash: integer("armor_set_hash"),
+  /** 1 = required evidence link (default hard gate); 0 = soft evidence only. */
+  required: integer("required").notNull().default(0),
 });
 
 export const builds = sqliteTable("builds", {
@@ -171,6 +175,8 @@ export const buildVariants = sqliteTable("build_variants", {
   artifactHash: integer("artifact_hash"),
   artifactName: text("artifact_name"),
   artifactConfig: text("artifact_config").notNull().default("[]"),
+  /** Per-variant kit JSON (aspects/fragments/abilities). Null = legacy fall back to build.subclass kit fields. */
+  subclassKit: text("subclass_kit"),
   notes: text("notes"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),

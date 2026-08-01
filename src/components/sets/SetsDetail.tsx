@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { ArmorStatsPanel } from "@/components/catalog/ArmorStatsPanel";
+import { WeaponRollDetailPanel } from "@/components/catalog/WeaponRollDetailPanel";
 import { SLOT_LABEL, type SetDetail, type SetItem } from "@/components/sets/types";
 import {
   Badge,
@@ -77,6 +78,10 @@ const ARMOR_STAT_ROW =
   "h-5 flex items-center gap-x-1.5 min-w-0";
 
 function ItemTraitChips({ item }: { item: SetItem }) {
+  // Prefer full roll detail panel when present (DBR-UI-007).
+  if (item.rollDetail) {
+    return <WeaponRollDetailPanel detail={item.rollDetail} compact />;
+  }
   const traits = item.selectedTraitPerks ?? [];
   const available = item.availableTraitPerks ?? [];
   if (traits.length === 0 && available.length === 0) return null;
@@ -85,18 +90,25 @@ function ItemTraitChips({ item }: { item: SetItem }) {
       {traits.length > 0 ? (
         <Cluster gap={4}>
           {traits.map((p) => (
-            <Chip key={p.hash} accent>
+            <Chip key={p.hash} accent title={`#${p.hash}`}>
               {p.name}
             </Chip>
           ))}
         </Cluster>
       ) : null}
       {available.length > 0 ? (
-        <Cluster gap={4}>
-          {available.slice(0, 6).map((p) => (
-            <Chip key={p.hash}>{p.name}</Chip>
-          ))}
-        </Cluster>
+        <Stack gap={2}>
+          <Text size="xs" tone="muted" className="uppercase tracking-wide">
+            Can-roll traits
+          </Text>
+          <Cluster gap={4}>
+            {available.slice(0, 6).map((p) => (
+              <Chip key={p.hash} title={`#${p.hash}`}>
+                {p.name}
+              </Chip>
+            ))}
+          </Cluster>
+        </Stack>
       ) : null}
     </Stack>
   );

@@ -59,6 +59,12 @@ export const LINK_KINDS = [
   "origin_trait",
   "armor_set_bonus",
   "exotic_armor",
+  "aspect",
+  "fragment",
+  "armor_mod",
+  "melee",
+  "grenade",
+  "super",
   "artifact_perk",
 ] as const;
 
@@ -70,5 +76,11 @@ export const LINK_KIND_LABEL: Record<string, string> = {
   origin_trait: "Origin trait",
   armor_set_bonus: "Armor set bonus",
   exotic_armor: "Exotic Armor",
+  aspect: "Aspect",
+  fragment: "Fragment",
+  armor_mod: "Armor mod",
+  melee: "Melee ability",
+  grenade: "Grenade ability",
+  super: "Super ability",
   artifact_perk: "Artifact perk",
 };

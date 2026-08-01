@@ -102,7 +102,7 @@ export function DefaultVariantComposer({
         </Row>
 
         <Cluster gap={4}>
-          {COMPOSER_TABS.map((t) => {
+          {COMPOSER_TABS.filter((t) => t.isArea).map((t) => {
             const a = composerTabAccess({
               tab: t.id,
               className,
@@ -116,6 +116,25 @@ export function DefaultVariantComposer({
                 active={tab === t.id}
                 disabled={!a.allowed}
                 onClick={() => trySelectTab(t.id)}
+              />
+            );
+          })}
+          {/* Finish is equip/export chrome (DBR-CMPL-005 — not a fifth product area). */}
+          {COMPOSER_TABS.filter((t) => !t.isArea).map((t) => {
+            const a = composerTabAccess({
+              tab: t.id,
+              className,
+              subclassName,
+              buildId,
+            });
+            return (
+              <FilterChip
+                key={t.id}
+                label={t.label}
+                active={tab === t.id}
+                disabled={!a.allowed}
+                onClick={() => trySelectTab(t.id)}
+                className="ml-1 border-dashed opacity-95"
               />
             );
           })}

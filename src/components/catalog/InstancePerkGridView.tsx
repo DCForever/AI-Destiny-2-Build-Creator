@@ -172,6 +172,12 @@ export const InstancePerkGridView = memo(function InstancePerkGridView({
         frameSub={frameSub}
       />
 
+      {grid.isCrafted === true ? (
+        <Text size="xs" tone="muted">
+          Crafted copy
+        </Text>
+      ) : null}
+
       <Stack gap={8}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <Text size="xs" tone="muted" className="uppercase tracking-widest">

@@ -18,7 +18,23 @@
     "gate:bash": "bash scripts/gate.sh",
     "atlas:capture": "node scripts/capture-ui-atlas.mjs",
     "atlas:view": "npx --yes serve docs/atlas -p 4173",
-    "atlas:auth": "node scripts/save-atlas-auth.mjs"
+    "product-map:view": "node scripts/ui-rules/server.mjs",
+    "atlas:auth": "node scripts/save-atlas-auth.mjs",
+    "ui-rules:generate": "node scripts/product-map/generate.mjs",
+    "ui-rules:view": "node scripts/ui-rules/server.mjs",
+    "product-map:import": "node scripts/product-map/import.mjs",
+    "product-map:validate": "node scripts/product-map/validate.mjs",
+    "product-map:generate": "node scripts/product-map/generate.mjs",
+    "product-map:sync": "node scripts/product-map/sync.mjs",
+    "product-map:check": "node scripts/product-map/check.mjs",
+    "product-map:check-dirty": "node scripts/product-map/check-dirty.mjs",
+    "product-map:orphan-rules": "node scripts/product-map/orphan-rules.mjs",
+    "product-map:ci": "node scripts/product-map/ci.mjs",
+    "product-map:parity": "node scripts/product-map/parity.mjs",
+    "product-map:seed-flutter": "node scripts/product-map/seed-flutter-windows.mjs",
+    "product-map:capture-stub": "node scripts/product-map/capture-stub.mjs",
+    "product-map:add-surface": "node scripts/product-map/add-surface.mjs",
+    "product-map:add-flow": "node scripts/product-map/add-flow.mjs"
   },
   "dependencies": {
     "@destinyitemmanager/dim-api-types": "^1.40.0",
@@ -44,6 +60,7 @@
     "eslint-config-next": "16.2.11",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "yaml": "^2.9.0"
   }
 }

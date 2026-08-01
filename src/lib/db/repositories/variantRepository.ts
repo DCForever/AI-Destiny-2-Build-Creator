@@ -2,6 +2,11 @@ import { and, eq } from "drizzle-orm";
 
 import type { AppDatabase } from "@/lib/db/client";
 import { buildVariants, variantSetAttachments } from "@/lib/db/schema";
+import {
+  parseSubclassKitJson,
+  serializeSubclassKit,
+  type SubclassKitFields,
+} from "@/lib/builds/subclassKit";
 
 export type VariantRecord = {
   id: string;
@@ -13,6 +18,8 @@ export type VariantRecord = {
   artifactHash: number | null;
   artifactName: string | null;
   artifactConfig: number[];
+  /** Null = legacy: fall back to kit fields on build.subclass. */
+  subclassKit: SubclassKitFields | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -58,6 +65,7 @@ function rowToVariant(row: typeof buildVariants.$inferSelect): VariantRecord {
     artifactHash: row.artifactHash ?? null,
     artifactName: row.artifactName ?? null,
     artifactConfig: parseArtifactConfig(row.artifactConfig),
+    subclassKit: parseSubclassKitJson(row.subclassKit),
     notes: row.notes,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -105,6 +113,7 @@ export function createVariantRecord(
     artifactHash?: number | null;
     artifactName?: string | null;
     artifactConfig?: number[];
+    subclassKit?: SubclassKitFields | null;
     notes?: string | null;
     now: string;
   },
@@ -120,6 +129,8 @@ export function createVariantRecord(
       artifactHash: input.artifactHash ?? null,
       artifactName: input.artifactName ?? null,
       artifactConfig: JSON.stringify(input.artifactConfig ?? []),
+      subclassKit:
+        input.subclassKit != null ? serializeSubclassKit(input.subclassKit) : null,
       notes: input.notes ?? null,
       createdAt: input.now,
       updatedAt: input.now,
@@ -139,6 +150,7 @@ export function updateVariantRecord(
     artifactHash?: number | null;
     artifactName?: string | null;
     artifactConfig?: number[];
+    subclassKit?: SubclassKitFields | null;
     notes?: string | null;
     now: string;
   },
@@ -158,6 +170,14 @@ export function updateVariantRecord(
         patch.artifactConfig !== undefined
           ? JSON.stringify(patch.artifactConfig)
           : JSON.stringify(existing.artifactConfig),
+      subclassKit:
+        patch.subclassKit !== undefined
+          ? patch.subclassKit == null
+            ? null
+            : serializeSubclassKit(patch.subclassKit)
+          : existing.subclassKit != null
+            ? serializeSubclassKit(existing.subclassKit)
+            : null,
       notes: patch.notes !== undefined ? patch.notes : existing.notes,
       updatedAt: patch.now,
     })
@@ -165,6 +185,19 @@ export function updateVariantRecord(
     .run();
 
   return getVariant(db, buildId, variantId);
+}
+
+/** Wipe kit on every variant of a build (tree change baseline). */
+export function wipeAllVariantKits(
+  db: AppDatabase,
+  buildId: string,
+  kit: SubclassKitFields,
+  now: string,
+): void {
+  const variants = listVariants(db, buildId);
+  for (const v of variants) {
+    updateVariantRecord(db, buildId, v.id, { subclassKit: kit, now });
+  }
 }
 
 export function deleteVariantRecord(db: AppDatabase, buildId: string, variantId: string): boolean {

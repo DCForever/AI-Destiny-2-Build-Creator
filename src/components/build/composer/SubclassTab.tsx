@@ -21,8 +21,11 @@ export function SubclassTab({
   onMessage: (m: string | null) => void;
   onError: (e: string | null) => void;
 }) {
-  const sub = build.subclass;
-  const scope = resolveSubclassScope(sub.name);
+  // Prefer per-variant effective subclass (Phase E); fall back to build tree.
+  const sub =
+    (variant as { subclass?: typeof build.subclass }).subclass ?? build.subclass;
+  const treeName = build.subclass.name;
+  const scope = resolveSubclassScope(treeName);
   const [superName, setSuper] = useState(sub.super);
   const [classAbility, setClassAbility] = useState(sub.classAbility);
   const [melee, setMelee] = useState(sub.melee);
@@ -33,29 +36,33 @@ export function SubclassTab({
   const [busy, setBusy] = useState(false);
 
   function pickName(item: ManifestPick | null, setter: (v: string) => void) {
-    if (item?.name) setter(item.name);
+    // Clear passes null — empty string restores Browse/Search chrome.
+    setter(item?.name ?? "");
   }
 
   async function save() {
     setBusy(true);
     onError(null);
     try {
-      const res = await fetch(`/api/user/builds/${build.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subclass: {
-            ...sub,
-            super: superName,
-            classAbility,
-            melee,
-            grenade,
-            movement,
-            aspects,
-            fragments,
-          },
-        }),
-      });
+      // Kit is variant-owned (DBR-SUB-003); tree stays on build.
+      const res = await fetch(
+        `/api/user/builds/${build.id}/variants/${variant.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subclassKit: {
+              super: superName,
+              classAbility,
+              melee,
+              grenade,
+              movement,
+              aspects,
+              fragments,
+            },
+          }),
+        },
+      );
       const body = (await res.json()) as { build?: BuildDetail; error?: string };
       if (!res.ok || !body.build) {
         onError(body.error ?? "Failed to save subclass kit");
@@ -80,9 +87,10 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Class ability"
             category="abilities"
+            kind="classAbility"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
-            subclass={sub.name}
+            subclass={treeName}
             selected={classAbility ? { hash: 0, name: classAbility } : null}
             onSelect={(i) => pickName(i, setClassAbility)}
           />
@@ -91,9 +99,10 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Melee"
             category="abilities"
+            kind="melee"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
-            subclass={sub.name}
+            subclass={treeName}
             selected={melee ? { hash: 0, name: melee } : null}
             onSelect={(i) => pickName(i, setMelee)}
           />
@@ -102,9 +111,10 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Grenade"
             category="abilities"
+            kind="grenade"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
-            subclass={sub.name}
+            subclass={treeName}
             selected={grenade ? { hash: 0, name: grenade } : null}
             onSelect={(i) => pickName(i, setGrenade)}
           />
@@ -113,9 +123,10 @@ export function SubclassTab({
           <ManifestSearchPicker
             label="Movement"
             category="abilities"
+            kind="movement"
             classType={scope?.classType ?? build.className}
             element={scope?.element}
-            subclass={sub.name}
+            subclass={treeName}
             selected={movement ? { hash: 0, name: movement } : null}
             onSelect={(i) => pickName(i, setMovement)}
           />

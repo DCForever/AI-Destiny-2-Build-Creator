@@ -5,11 +5,23 @@ export type ComposerMode = "draft" | "live";
 export type ArmorSubPath = "reuse" | "create";
 export type WeaponSubPath = "reuse" | "create";
 
-/** Same tab strip for default and non-default variants (FR-018). */
-export const COMPOSER_TABS: { id: ComposerTab; label: string }[] = [
-  { id: "general", label: "General" },
-  { id: "subclass", label: "Subclass" },
-  { id: "armor", label: "Armor & Mod Set" },
-  { id: "weapon", label: "Weapon Set" },
-  { id: "finish", label: "Finish" },
+/**
+ * Product areas (DBR-CMPL-005): exactly four — General, Subclass,
+ * Armor + Mods Sets, Weapons Set. Finish is equip/export chrome, not a fifth area.
+ */
+export const COMPOSER_TABS: {
+  id: ComposerTab;
+  label: string;
+  /** True for the four product areas; false for Finish chrome. */
+  isArea: boolean;
+}[] = [
+  { id: "general", label: "General", isArea: true },
+  { id: "subclass", label: "Subclass", isArea: true },
+  { id: "armor", label: "Armor + Mods Sets", isArea: true },
+  { id: "weapon", label: "Weapons Set", isArea: true },
+  { id: "finish", label: "Finish", isArea: false },
 ];
+
+export const COMPOSER_AREA_TAB_IDS = COMPOSER_TABS.filter((t) => t.isArea).map(
+  (t) => t.id,
+) as ComposerTab[];

@@ -106,6 +106,9 @@ function ensureSetOptimizerColumns(db: Database.Database): void {
   if (!cols.some((c) => c.name === "linked_mod_set_id")) {
     db.exec("ALTER TABLE sets ADD COLUMN linked_mod_set_id TEXT");
   }
+  if (!cols.some((c) => c.name === "set_bonus_constraint")) {
+    db.exec("ALTER TABLE sets ADD COLUMN set_bonus_constraint TEXT");
+  }
 }
 
 function ensureVariantArtifactColumns(db: Database.Database): void {
@@ -117,6 +120,24 @@ function ensureVariantArtifactColumns(db: Database.Database): void {
   }
   if (!cols.some((c) => c.name === "artifact_config")) {
     db.exec("ALTER TABLE build_variants ADD COLUMN artifact_config TEXT NOT NULL DEFAULT '[]'");
+  }
+}
+
+function ensureSynergyLinkRequiredColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(synergy_links)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "required")) {
+    db.exec(
+      "ALTER TABLE synergy_links ADD COLUMN required INTEGER NOT NULL DEFAULT 0",
+    );
+  }
+}
+
+function ensureVariantSubclassKitColumn(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(build_variants)").all() as { name: string }[];
+  if (cols.length === 0) return;
+  if (!cols.some((c) => c.name === "subclass_kit")) {
+    db.exec("ALTER TABLE build_variants ADD COLUMN subclass_kit TEXT");
   }
 }
 
@@ -257,6 +278,7 @@ export function runMigrations(db: Database.Database): void {
       name TEXT NOT NULL,
       type TEXT NOT NULL,
       optimizer_constraints TEXT,
+      set_bonus_constraint TEXT,
       linked_mod_set_id TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -307,7 +329,8 @@ export function runMigrations(db: Database.Database): void {
       armor_set_name TEXT,
       bonus_pieces INTEGER,
       bonus_name TEXT,
-      armor_set_hash INTEGER
+      armor_set_hash INTEGER,
+      required INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_synergy_links_synergy ON synergy_links(synergy_id);
 
@@ -343,6 +366,7 @@ export function runMigrations(db: Database.Database): void {
       artifact_hash INTEGER,
       artifact_name TEXT,
       artifact_config TEXT NOT NULL DEFAULT '[]',
+      subclass_kit TEXT,
       notes TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -375,6 +399,8 @@ export function runMigrations(db: Database.Database): void {
   ensureSetItemInstanceIdColumn(db);
   ensureBuildsIdentityColumns(db);
   ensureVariantArtifactColumns(db);
+  ensureVariantSubclassKitColumn(db);
+  ensureSynergyLinkRequiredColumn(db);
   ensureSoftStatTargetsColumn(db);
   ensureSetOptimizerColumns(db);
   ensureBuildSynergyTypesTable(db);

@@ -32,7 +32,49 @@ body {
   text-transform: uppercase; font-size: 1.75rem; font-weight: 600;
 }
 .lede { margin: 8px 0 0; color: var(--muted); max-width: 52ch; font-size: .92rem; line-height: 1.45; }
+.top-right { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.top-nav { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .top-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.diagram-links {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  border-radius: 4px;
+}
+.diagram-links .diagram-label {
+  font-family: var(--font-d);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: .68rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.diagram-links .diagram-meta { margin: 8px 0 0; font-size: .8rem; }
+.diagram-links.muted { margin-top: 8px; font-size: .82rem; }
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+a.btn.diagram {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+.rules-badge {
+  display: inline-block;
+  font-family: var(--font-d);
+  font-size: .62rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: var(--accent-dim);
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
 .pill {
   border: 1px solid var(--line); background: var(--surface);
   padding: 10px 14px; min-width: 88px;
@@ -93,6 +135,71 @@ h2.section {
   text-transform: uppercase;
 }
 .chip.accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+
+/* Hierarchical flow phases (product-map) */
+.phase-tree {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  border-left: 2px solid var(--line);
+}
+.phase-tree.depth-0 { border-left: none; }
+.phase-node {
+  margin: 0 0 10px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 4px;
+}
+.phase-node.kind-include { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.phase-node.kind-branch { border-style: dashed; }
+.phase-node.kind-gate { border-color: #c45c5c; }
+.phase-node.kind-loop { border-color: color-mix(in srgb, #6fc28b 50%, var(--line)); }
+.phase-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.phase-title {
+  font-family: var(--font-d);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: .88rem;
+}
+.phase-kind {
+  font-family: var(--font-d);
+  font-size: .62rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: var(--accent-dim);
+  padding: 1px 6px;
+}
+.phase-kind.gate { color: #f0a0a0; border-color: #c45c5c; background: rgba(196,92,92,.15); }
+.phase-kind.loop { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, var(--line)); }
+.phase-kind.branch { color: #9ab; }
+.phase-meta { font-size: .75rem; margin: 2px 0 6px; }
+.phase-rules { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.flow-rules { margin-bottom: 14px; }
+.phase-shot { margin-top: 8px; }
+.phase-shot img {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: zoom-in;
+}
+.phase-empty { font-size: .8rem; margin: 6px 0; }
+.phase-tree .phase-tree {
+  margin: 10px 0 0 8px;
+  padding-left: 10px;
+}
 .screen-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
 }

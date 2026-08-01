@@ -8,6 +8,9 @@ export const SYNERGY_CATEGORY_LABELS: Record<string, string> = {
   grenade: "Grenade",
   super: "Super",
   element: "Element",
+  ammo: "Ammo",
+  weapon_slot: "Weapon Slot",
+  /** Legacy designation labels (still readable). */
   primary_weapon: "Primary Weapon",
   special_weapon: "Special Weapon",
   heavy_weapon: "Heavy Weapon",

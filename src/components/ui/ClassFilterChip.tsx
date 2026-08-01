@@ -14,6 +14,7 @@ export function ClassFilterChip({
   onClick,
   size = "xs",
   mode,
+  disabled,
 }: {
   className: GuardianClassName;
   active: boolean;
@@ -21,6 +22,8 @@ export function ClassFilterChip({
   size?: "xs" | "md";
   /** off | include | exclude — when set, overrides binary `active` styling. */
   mode?: FilterChipMode;
+  /** Lock other classes after create (DBR-BLD-007). */
+  disabled?: boolean;
 }) {
   const color = CLASS_CSS_COLOR[guardianClass];
   const resolved: FilterChipMode = mode ?? (active ? "include" : "off");
@@ -31,6 +34,7 @@ export function ClassFilterChip({
       mode={resolved}
       onClick={onClick}
       size={size}
+      disabled={disabled}
       iconOnly
       icon={
         <ClassIcon

@@ -17,30 +17,13 @@ import {
 import { estimateLoadoutStats } from "@/lib/builds/statEstimate";
 import { effectiveExoticWeapon, resolveVariantEquipment } from "@/lib/builds/resolveVariant";
 import { lookupExoticSlots } from "@/lib/builds/exoticArmorIntent";
-import { buildSetBonusByItemHash } from "@/lib/inventory/instances/armorSetBonus";
-import { getServices } from "@/lib/services";
+import {
+  loadMatchEvidenceIndexes,
+  type MatchEvidenceIndexes,
+} from "@/lib/builds/matchEvidenceIndexes";
 
-async function loadCoverageIndexes(): Promise<{
-  setBonusByItemHash: Map<number, import("@/lib/manifest/types/records").SetBonusRecord>;
-  weaponElementByHash: Map<number, string>;
-}> {
-  try {
-    const { entityCache } = await getServices();
-    const [bonuses, weapons, exoticWeapons] = await Promise.all([
-      entityCache.getStore("set-bonuses"),
-      entityCache.getStore("weapons"),
-      entityCache.getStore("exotic-weapons"),
-    ]);
-    const setBonusByItemHash = buildSetBonusByItemHash(bonuses);
-    const weaponElementByHash = new Map<number, string>();
-    for (const w of [...weapons, ...exoticWeapons] as Array<{ hash: number; element?: string }>) {
-      if (w.element) weaponElementByHash.set(w.hash, w.element);
-    }
-    return { setBonusByItemHash, weaponElementByHash };
-  } catch {
-    return { setBonusByItemHash: new Map(), weaponElementByHash: new Map() };
-  }
-}
+export type { MatchEvidenceIndexes };
+export { loadMatchEvidenceIndexes };
 
 function designationCoverageSynergies(
   bridge: ReturnType<typeof resolveDesignatedSynergies>,
@@ -84,7 +67,7 @@ export async function getVariantCoverage(
   const claims = Object.values(resolved.equipment);
   const bridge = resolveDesignatedSynergies(db, userId, build.synergyTypes);
   const synergies = designationCoverageSynergies(bridge);
-  const indexes = await loadCoverageIndexes();
+  const indexes = await loadMatchEvidenceIndexes();
   const inventory = listInventoryItems(db, userId);
   const byInstance = new Map(inventory.map((i) => [i.instanceId, i]));
   const statEstimate = estimateLoadoutStats(claims, byInstance);
@@ -95,6 +78,8 @@ export async function getVariantCoverage(
     subclass: build.subclass,
     setBonusByItemHash: indexes.setBonusByItemHash,
     weaponElementByHash: indexes.weaponElementByHash,
+    perkFamilyByHash: indexes.perkFamilyByHash,
+    exoticClassItemHashes: indexes.exoticClassItemHashes,
     softStatTargets: build.softStatTargets,
     statEstimate,
   });
