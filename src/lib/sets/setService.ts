@@ -28,14 +28,8 @@ import {
 import type { SetItemInput } from "@/lib/sets/schemas";
 import { enrichSetItems } from "@/lib/sets/enrichSetItems";
 import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
-import {
-  assertArmorSetBonusConstraint,
-  loadSetBonusMembershipIndex,
-  parseArmorSetBonusConstraint,
-  serializeArmorSetBonusConstraint,
-  toConstrainedArmorPieces,
-  type ArmorSetBonusConstraint,
-} from "@/lib/sets/armorSetBonusConstraint";
+import { assertArmorSetBonusConstraint, parseArmorSetBonusConstraint, serializeArmorSetBonusConstraint, type ArmorSetBonusConstraint } from "@/lib/sets/armorSetBonusConstraint";
+import { loadSetBonusMembershipIndex, toConstrainedArmorPieces } from "@/lib/sets/armorSetBonusConstraint.server";
 
 function parseTagIds(tagIds: unknown): ConceptTagId[] {
   const result = conceptTagIdsSchema.safeParse(tagIds ?? []);

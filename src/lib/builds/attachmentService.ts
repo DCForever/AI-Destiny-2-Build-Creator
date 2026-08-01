@@ -7,12 +7,8 @@ import {
   type SnapshotConfig,
 } from "@/lib/db/repositories/variantRepository";
 import { getSet } from "@/lib/db/repositories/setRepository";
-import {
-  assertArmorSetBonusConstraint,
-  loadSetBonusMembershipIndex,
-  parseArmorSetBonusConstraint,
-  toConstrainedArmorPieces,
-} from "@/lib/sets/armorSetBonusConstraint";
+import { assertArmorSetBonusConstraint, parseArmorSetBonusConstraint } from "@/lib/sets/armorSetBonusConstraint";
+import { loadSetBonusMembershipIndex, toConstrainedArmorPieces } from "@/lib/sets/armorSetBonusConstraint.server";
 import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
 import type { SetType } from "@/lib/sets/schemas";
