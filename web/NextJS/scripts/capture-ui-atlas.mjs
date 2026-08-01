@@ -11,7 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(__dirname, "../../.."); // monorepo root (web/NextJS/scripts -> repo)
 const atlasDir = path.join(root, "docs", "atlas");
 const shotDir = path.join(atlasDir, "screenshots");
 const manifestPath = path.join(atlasDir, "manifest.json");
