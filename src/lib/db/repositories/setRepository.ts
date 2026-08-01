@@ -19,6 +19,7 @@ export type SetRecord = {
   type: SetType;
   tagIds: ConceptTagId[];
   optimizerConstraints: string | null;
+  setBonusConstraint: string | null;
   linkedModSetId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +40,7 @@ function rowToSet(row: typeof sets.$inferSelect, tagIds: ConceptTagId[]): SetRec
     type: row.type as SetType,
     tagIds,
     optimizerConstraints: row.optimizerConstraints ?? null,
+    setBonusConstraint: row.setBonusConstraint ?? null,
     linkedModSetId: row.linkedModSetId ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -157,6 +159,7 @@ export function createSetRecord(
     tagIds: ConceptTagId[];
     now: string;
     optimizerConstraints?: string | null;
+    setBonusConstraint?: string | null;
     linkedModSetId?: string | null;
   },
 ): SetRecord {
@@ -167,6 +170,7 @@ export function createSetRecord(
       name: input.name,
       type: input.type,
       optimizerConstraints: input.optimizerConstraints ?? null,
+      setBonusConstraint: input.setBonusConstraint ?? null,
       linkedModSetId: input.linkedModSetId ?? null,
       createdAt: input.now,
       updatedAt: input.now,
@@ -184,6 +188,7 @@ export function createSetRecord(
     type: input.type,
     tagIds: input.tagIds,
     optimizerConstraints: input.optimizerConstraints ?? null,
+    setBonusConstraint: input.setBonusConstraint ?? null,
     linkedModSetId: input.linkedModSetId ?? null,
     createdAt: input.now,
     updatedAt: input.now,
@@ -199,6 +204,7 @@ export function updateSetRecord(
     type?: SetType;
     tagIds?: ConceptTagId[];
     optimizerConstraints?: string | null;
+    setBonusConstraint?: string | null;
     linkedModSetId?: string | null;
     now: string;
   },
@@ -214,6 +220,10 @@ export function updateSetRecord(
         patch.optimizerConstraints !== undefined
           ? patch.optimizerConstraints
           : existing.optimizerConstraints,
+      setBonusConstraint:
+        patch.setBonusConstraint !== undefined
+          ? patch.setBonusConstraint
+          : existing.setBonusConstraint,
       linkedModSetId:
         patch.linkedModSetId !== undefined ? patch.linkedModSetId : existing.linkedModSetId,
       updatedAt: patch.now,

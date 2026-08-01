@@ -18,6 +18,10 @@ import { compositionKindLabel } from "@/lib/catalog/compositionKinds";
 import type { CompositionSearchHit } from "@/lib/catalog/universalSearch";
 import { CATALOG_BACK_TO_RESULTS_CLASSES } from "@/lib/ui/viewportLayout";
 
+import {
+  rollDetailFromMeta,
+  WeaponRollDetailPanel,
+} from "./WeaponRollDetailPanel";
 import { UniversalSetActions } from "./UniversalSetActions";
 import { UniversalSynergyActions } from "./UniversalSynergyActions";
 
@@ -44,7 +48,9 @@ export function UniversalHitDetail({
   onBack: () => void;
   onSuccess: (message: string) => void;
 }) {
-  const meta = metaEntries(hit.meta);
+  // Exclude rollDetail from generic meta chips (rendered in its own panel).
+  const meta = metaEntries(hit.meta).filter(([k]) => k !== "rollDetail");
+  const rollDetail = rollDetailFromMeta(hit.meta);
 
   return (
     <WorkspaceMain>
@@ -66,11 +72,6 @@ export function UniversalHitDetail({
                     Owned ×{hit.owned.count}
                   </Badge>
                 ) : null}
-                {hit.hash != null ? (
-                  <Text size="xs" tone="muted" as="span">
-                    #{hit.hash}
-                  </Text>
-                ) : null}
               </Cluster>
             </Stack>
           </Row>
@@ -82,6 +83,8 @@ export function UniversalHitDetail({
               </Text>
             </Section>
           ) : null}
+
+          {rollDetail ? <WeaponRollDetailPanel detail={rollDetail} /> : null}
 
           {meta.length > 0 ? (
             <Section label="Meta">
@@ -111,6 +114,13 @@ export function UniversalHitDetail({
             <Text size="sm" tone="muted">
               This entity is visible in Universal search but cannot be attached to a Set or
               Synergy from Catalog in this release.
+            </Text>
+          ) : null}
+
+          {/* DBR-UI-006: hash only as footer addendum, never primary label. */}
+          {hit.hash != null ? (
+            <Text size="xs" tone="muted" className="font-mono border-t border-line pt-2">
+              Hash {hit.hash}
             </Text>
           ) : null}
         </Stack>

@@ -20,7 +20,20 @@ type SubTypeOption = { id: string; name: string; description?: string };
 
 type WeaponOption = { hash: number; name: string; description?: string };
 
-const LINK_KINDS = ["weapon", "weapon_perk", "origin_trait", "armor_set_bonus"] as const;
+const LINK_KINDS = [
+  "weapon",
+  "weapon_perk",
+  "origin_trait",
+  "armor_set_bonus",
+  "exotic_armor",
+  "aspect",
+  "fragment",
+  "armor_mod",
+  "melee",
+  "grenade",
+  "super",
+  "artifact_perk",
+] as const;
 
 const SORTED_SYNERGY_TYPES = [...CREATABLE_SYNERGY_TYPES].sort((a, b) =>
   compareDisplayName(getSynergyTypeLabel(a), getSynergyTypeLabel(b)),

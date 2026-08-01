@@ -121,8 +121,8 @@ function unknownOwnedRow(
 ): SearchableCatalogRow {
   return {
     hash,
-    name: projection?.name ?? `Unknown (${hash})`,
-    searchName: projection?.searchName ?? String(hash),
+    name: projection?.name ?? "Unknown item",
+    searchName: projection?.searchName ?? `unknown-${hash}`,
     icon: projection?.icon ?? null,
     slot: projection?.slot,
     classType: projection?.classType,

@@ -1,7 +1,7 @@
 # Multiplatform Dart port — architecture decisions
 
 **Status:** decided (exploration follow-up)  
-**Updated:** 2026-07-25  
+**Updated:** 2026-08-01  
 **Source:** workflow `explore-flutter-port` + product follow-up answers  
 **Related report:** session scratch `flutter-port-exploration.md` (run `explore-flutter-port`)  
 **Branching / worktrees:** [`multiplatform-dart-branching.md`](./multiplatform-dart-branching.md) — **all** Spec Kit work for this port lives on `feature/multiplatform-dart` (+ child feature branches), in the dedicated worktree — not on product slices (e.g. `043-*`).  
@@ -86,6 +86,6 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 
 Domain truth remains `specs/domain-business-rules.md`, `specs/domain-acceptance-criteria.md`, and `specs/business-rules.md`.
 
-## DART-069 — Nested Dart workspace root (lutter/)
+## DART-069 — Nested Dart workspace root (`flutter/`)
 
 **Decision (2026-08-01):** The Melos/pub workspace root is `flutter/` under the monorepo. Next.js remains repository root. Packages, apps (Windows/mobile/Jaspr web), and Dart `tool/` live under `flutter/`. Specs and multiplatform docs stay at monorepo root. Contributor convention: run Dart workspace commands with cwd `flutter/`. See `specs/dart-069-nest-flutter-workspace/` and ProjectTracker `DEC-2026-08-01-001`. 

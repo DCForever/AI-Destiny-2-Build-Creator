@@ -166,7 +166,9 @@ export function isEnhancedPlug(name: string | null, category: string): boolean {
 }
 
 export function formatPerkDisplayName(name: string | null, hash: number, isEnhanced: boolean): string {
-  const base = name ?? String(hash);
+  // DBR-UI-006: never use bare hash as primary plug title.
+  const base =
+    name?.trim() && !/^\d+$/.test(name.trim()) ? name.trim() : "Unknown plug";
   if (isEnhanced && !/enhanced/i.test(base)) {
     return `${base} (Enhanced)`;
   }

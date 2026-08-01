@@ -31,13 +31,7 @@ const TYPE_FAMILIES: { label: string; types: CreatableType[] }[] = [
   },
   {
     label: "Weapons",
-    types: [
-      "primary_weapon",
-      "special_weapon",
-      "heavy_weapon",
-      "general_weapon",
-      "weapon_archetype",
-    ],
+    types: ["ammo", "weapon_slot", "general_weapon", "weapon_archetype"],
   },
   {
     label: "Play",

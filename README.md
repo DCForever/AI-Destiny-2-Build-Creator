@@ -8,7 +8,9 @@ You designate play-pattern intent (synergy types), compose a class-bound **Build
 
 Optional LLM tooling exists for propose-for-confirm discovery and legacy generation paths. It is **not required** for core compose, and is not the primary product surface.
 
-Product framing: [`PRODUCT.md`](./PRODUCT.md). Domain rules: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md).
+Product framing: [`PRODUCT.md`](./PRODUCT.md). Product descriptions (domains + areas): **Obsidian** ProjectTracker under `Projects/Destiny 2 Build Creator/` — git pointer [`docs/products/`](./docs/products/). Domain rules: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md).
+
+**Product map / App Atlas** (UI structure, flows, Draw.io, screenshots, multi-platform stubs): [`docs/product-map/README.md`](./docs/product-map/README.md). Open the unified viewer with `npm run product-map:view`.
 
 ## Stack
 
@@ -17,7 +19,7 @@ Product framing: [`PRODUCT.md`](./PRODUCT.md). Domain rules: [`specs/domain-busi
 - **SQLite** (Drizzle + better-sqlite3) — builds, sets, synergies, inventory (`.cache/app.db`)
 - **DIM** export / optional dim.gg share when configured
 - Optional **OpenAI-compatible / Ollama / Grok** LLM and **SearXNG** for advanced/debug flows only
-- **vitest** unit tests; `npm run gate` for typecheck + lint + test + build
+- **vitest** unit tests; `npm run gate` for product-map CI + typecheck + lint + test + build
 
 ### Multiplatform Dart port (in progress)
 
@@ -110,10 +112,30 @@ Operator / API verification UI lives under **`/debug/*`** (non-production, signe
 | `npm run lint` | ESLint |
 | `npm run build` | Production build |
 | `npm run start` | Production server |
-| `npm run gate` | Cross-platform quality gate: typecheck → lint → test → build (`scripts/gate.mjs`; works on Windows without bash) |
+| `npm run gate` | Quality gate: **product-map:ci** → typecheck → lint → test → build (`scripts/gate.mjs`) |
 | `npm run gate:bash` | Same sequence via `scripts/gate.sh` (Unix / Git Bash) |
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the same four checks on pull requests and pushes to `main`/`master` (Node 22, `npm ci`). Requires Node `>=20 <25` (`package.json` `engines`).
+### Product map / Atlas / Draw.io
+
+Structure lives under [`docs/product-map/`](./docs/product-map/) (surfaces, flows, platforms). Rule **wording** stays in `specs/`. Full guide: [product-map README](./docs/product-map/README.md).
+
+| Script | Purpose |
+| --- | --- |
+| `npm run product-map:view` | Unified viewer (Flows · Screens · Map · Rules · Export) at http://127.0.0.1:4174 |
+| `npm run ui-rules:view` | Same as `product-map:view` |
+| `npm run product-map:sync` | Validate hub → generate Draw.io / Atlas paths / inventory projection → drift check |
+| `npm run product-map:ci` | CI bundle: generate, dirty-check committed outputs, orphan-rules report, Flutter parity |
+| `npm run product-map:check` | Route coverage / missing surface refs (warnings; errors fail) |
+| `npm run product-map:check-dirty` | Fail if hub generate would change committed projections |
+| `npm run product-map:orphan-rules` | List DBR/DAC/BR not attached on any surface/flow |
+| `npm run product-map:add-surface` / `add-flow` | Scaffold hub entries |
+| `npm run product-map:seed-flutter` / `parity` | Flutter Windows stubs + parity report |
+| `npm run atlas:view` | Atlas-only screenshot/journey UI at http://127.0.0.1:4173 |
+| `npm run atlas:capture` | Playwright captures into `docs/atlas/screenshots/` (see [Atlas README](./docs/atlas/README.md)) |
+
+After hub edits, run `product-map:sync` and **commit hub + generated files** together (`ui-map.drawio`, `inventory.yaml`, Atlas manifest/links). Escape hatch: `GATE_SKIP_PRODUCT_MAP=1 npm run gate`.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs **product-map:ci** then typecheck, lint, test, build on PRs and pushes to `main`/`master` (Node 22, `npm ci`). Requires Node `>=20 <25` (`package.json` `engines`).
 
 ## Project layout
 
@@ -127,6 +149,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs the same four checks on pull re
 - `src/lib/llm/` — optional generation / propose pipelines (not the primary path)
 - `src/data/` — meta pack, sandbox rule tables, synergy vocabulary
 - `specs/` — domain rules (`DBR-*` / `DAC-*` / `BR-*`) and feature slices `00N-*`
+- `docs/product-map/` — **UI structure SSoT** (surfaces, flows, platforms); checklist + Flutter parity
+- `docs/ui-rules/` — generated Draw.io + inventory projection; unified companion server
+- `docs/atlas/` — screenshot captures, Atlas viewer, generated manifest/links
+- `scripts/product-map/`, `scripts/ui-rules/` — map generate, hub write, rule parse/write-back
 - `PRODUCT.md`, `DEBUG.md`, `DESIGN.md`, `docs/` — product and operator docs
 
 ## Optional LLM
@@ -147,7 +173,12 @@ Generator-style multi-pass LLM is **not** restored as a primary nav tab. Prefer 
 | Doc | Contents |
 | --- | --- |
 | [`PRODUCT.md`](./PRODUCT.md) | Purpose, positioning, capabilities, constraints |
+| [`docs/product-map/README.md`](./docs/product-map/README.md) | Product map hub, viewer, sync, CI |
+| [`docs/product-map/CHECKLIST.md`](./docs/product-map/CHECKLIST.md) | Same-change checklist for UI work |
+| [`docs/product-map/FLUTTER.md`](./docs/product-map/FLUTTER.md) | Flutter Windows platform stubs / parity |
+| [`docs/ui-rules/README.md`](./docs/ui-rules/README.md) | Draw.io + companion (projections of the hub) |
+| [`docs/atlas/README.md`](./docs/atlas/README.md) | Screenshot capture and Atlas-only browse |
 | [`DEBUG.md`](./DEBUG.md) | `/debug/*` setup and API verification flows |
 | [`DESIGN.md`](./DESIGN.md) | Design notes |
-| [`AGENTS.md`](./AGENTS.md) | Agent / Spec Kit domain doc rules |
+| [`AGENTS.md`](./AGENTS.md) | Agent rules (domain docs + product-map updates) |
 | [`specs/`](./specs/) | Domain and feature specifications |

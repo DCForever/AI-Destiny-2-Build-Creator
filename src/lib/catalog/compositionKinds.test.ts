@@ -46,14 +46,14 @@ describe("hitActions", () => {
     { kind: "exotic_weapon", set: true, synergy: true },
     { kind: "armor", set: true, synergy: false },
     { kind: "exotic_armor", set: true, synergy: true },
-    { kind: "mod", set: true, synergy: false },
+    { kind: "mod", set: true, synergy: true },
     { kind: "weapon_perk", set: false, synergy: true },
     { kind: "origin_trait", set: false, synergy: true },
     { kind: "armor_set_bonus", set: false, synergy: true },
     { kind: "artifact_perk", set: false, synergy: true },
-    { kind: "aspect", set: false, synergy: false },
-    { kind: "fragment", set: false, synergy: false },
-    { kind: "ability", set: false, synergy: false },
+    { kind: "aspect", set: false, synergy: true },
+    { kind: "fragment", set: false, synergy: true },
+    { kind: "ability", set: false, synergy: true },
   ];
 
   it.each(cases)("$kind → set=$set synergy=$synergy", ({ kind, set, synergy }) => {

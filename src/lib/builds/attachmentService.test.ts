@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it , vi} from "vitest";
+
+vi.mock("@/lib/services", () => ({
+  getServices: vi.fn(async () => ({
+    entityCache: {
+      getStore: vi.fn(async () => []),
+    },
+  })),
+}));
+
 
 import { createTestDb } from "@/lib/db/client";
 import { createBuildRecord } from "@/lib/db/repositories/buildRepository";
@@ -38,6 +47,11 @@ describe("attachmentService", () => {
       itemHash: 100,
       itemName: "Helm",
     });
+    await upsertSetItem(db, "set-a", "armor", {
+      slot: "arms",
+      itemHash: 101,
+      itemName: "Arms",
+    });
 
     createVariantRecord(db, {
       id: "var-1",
@@ -50,7 +64,7 @@ describe("attachmentService", () => {
     await prepareAttachments(db, user.id, "var-1", [{ setId: "set-a", mode: "snapshot" }], now);
     const attachments = listAttachments(db, "var-1");
     expect(attachments[0]?.mode).toBe("snapshot");
-    expect(attachments[0]?.snapshotConfigs).toHaveLength(1);
+    expect(attachments[0]?.snapshotConfigs).toHaveLength(2);
 
     await upsertSetItem(db, "set-a", "armor", {
       slot: "helmet",
@@ -91,6 +105,11 @@ describe("attachmentService", () => {
       itemName: "Helm",
       modHashes: [1],
     });
+    await upsertSetItem(db, "set-arm", "armor", {
+      slot: "arms",
+      itemHash: 101,
+      itemName: "Arms",
+    });
 
     createVariantRecord(db, {
       id: "var-mods",
@@ -114,6 +133,11 @@ describe("attachmentService", () => {
               itemHash: 100,
               itemName: "Helm",
               modHashes: [501, 502],
+            },
+            {
+              slot: "arms",
+              itemHash: 101,
+              itemName: "Arms",
             },
           ],
         },
@@ -149,6 +173,7 @@ describe("attachmentService", () => {
 
     createSetRecord(db, user.id, { id: "set-l", name: "Live", type: "weapon", tagIds: [], now });
     await upsertSetItem(db, "set-l", "weapon", { slot: "primary", itemHash: 300, itemName: "Old" });
+    await upsertSetItem(db, "set-l", "weapon", { slot: "special", itemHash: 301, itemName: "Side" });
 
     createVariantRecord(db, { id: "var-2", buildId: "build-2", name: "Default", now });
     await prepareAttachments(db, user.id, "var-2", [{ setId: "set-l", mode: "live" }], now);
@@ -162,6 +187,7 @@ describe("attachmentService", () => {
 
     const attachments = listAttachments(db, "var-2");
     const items = await loadExpandedAttachmentItems(db, user.id, attachments[0]!);
-    expect(items[0]?.itemHash).toBe(400);
+    const primary = items.find((i) => i.slot === "primary");
+    expect(primary?.itemHash).toBe(400);
   });
 });

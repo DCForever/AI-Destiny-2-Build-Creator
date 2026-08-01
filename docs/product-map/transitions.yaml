@@ -1,0 +1,111 @@
+transitions:
+  - from: build.library
+    to: build.create.draft.general
+    action: New build
+    fromCaptureId: build-library
+    toCaptureId: build-create-draft-general
+  - from: build.create.draft.general
+    to: build.edit.general
+    action: Save General · create build
+    fromCaptureId: build-create-draft-general
+    toCaptureId: build-edit-general
+  - from: build.edit.general
+    to: build.edit.subclass
+    action: Tab → Subclass
+    fromCaptureId: build-edit-general
+    toCaptureId: build-edit-subclass
+  - from: build.edit.subclass
+    to: build.edit.armor.reuse
+    action: Tab → Armor
+    fromCaptureId: build-edit-subclass
+    toCaptureId: build-edit-armor-reuse
+  - from: build.edit.armor.reuse
+    to: build.edit.armor.create
+    action: Subpath → Create
+    fromCaptureId: build-edit-armor-reuse
+    toCaptureId: build-edit-armor-create
+  - from: build.edit.armor.reuse
+    to: build.edit.armor.improve
+    action: Improve kit
+    fromCaptureId: build-edit-armor-reuse
+    toCaptureId: build-edit-armor-improve
+  - from: build.edit.armor.create
+    to: build.edit.weapon.reuse
+    action: Tab → Weapon
+    fromCaptureId: build-edit-armor-create
+    toCaptureId: build-edit-weapon-reuse
+  - from: build.edit.weapon.reuse
+    to: build.edit.weapon.create
+    action: Subpath → Create
+    fromCaptureId: build-edit-weapon-reuse
+    toCaptureId: build-edit-weapon-create
+  - from: build.edit.weapon.create
+    to: build.edit.finish
+    action: Tab → Finish
+    fromCaptureId: build-edit-weapon-create
+    toCaptureId: build-edit-finish
+  - from: build.library
+    to: build.library.selected
+    action: Select build
+    fromCaptureId: build-library
+    toCaptureId: build-library-selected
+  - from: build.library.selected
+    to: build.edit.general
+    action: Edit variant
+    fromCaptureId: build-library-selected
+    toCaptureId: build-edit-general
+  - from: sets.library
+    to: sets.detail
+    action: Open set
+    fromCaptureId: sets-library
+    toCaptureId: sets-detail
+  - from: sets.detail
+    to: sets.edit
+    action: Edit
+    fromCaptureId: sets-detail
+    toCaptureId: sets-edit
+  - from: sets.detail
+    to: sets.fill-slot
+    action: Fill next / Fill
+    fromCaptureId: sets-detail
+    toCaptureId: sets-fill-slot
+  - from: sets.library
+    to: sets.create
+    action: New set
+    fromCaptureId: sets-library
+    toCaptureId: sets-create
+  - from: synergy.library
+    to: synergy.detail
+    action: Open synergy
+    fromCaptureId: synergy-library
+    toCaptureId: synergy-detail
+  - from: synergy.library
+    to: synergy.create
+    action: New synergy
+    fromCaptureId: synergy-library
+    toCaptureId: synergy-create
+  - from: catalog.weapons.manifest
+    to: catalog.weapon.detail
+    action: Select weapon card
+    fromCaptureId: catalog-weapons-manifest
+    toCaptureId: catalog-weapon-detail
+  - from: catalog.armor.manifest
+    to: catalog.armor.detail
+    action: Select armor card
+    fromCaptureId: catalog-armor-manifest
+    toCaptureId: catalog-armor-detail
+  - from: catalog.weapons.manifest
+    to: catalog.armor.manifest
+    action: Kind → Armor
+    fromCaptureId: catalog-weapons-manifest
+    toCaptureId: catalog-armor-manifest
+  - from: catalog.armor.manifest
+    to: catalog.universal
+    action: Kind → Universal
+    fromCaptureId: catalog-armor-manifest
+    toCaptureId: catalog-universal
+  - from: loadouts.signed.in
+    to: loadouts.slot-expanded
+    action: Expand slot
+    fromCaptureId: loadouts-signed-in
+    toCaptureId: loadouts-slot-expanded

@@ -7,10 +7,8 @@ import { BuildActions } from "@/components/build/BuildActions";
 import { BuildEditPanel } from "@/components/build/BuildEditPanel";
 import { BuildIdentity } from "@/components/build/BuildIdentity";
 import { BuildLibrary } from "@/components/build/BuildLibrary";
-import { CreateBuildPanel } from "@/components/build/CreateBuildPanel";
+import { DefaultVariantComposer } from "@/components/build/DefaultVariantComposer";
 import { VariantCard } from "@/components/build/VariantCard";
-import { FinishBuildWalkthrough } from "@/components/build/FinishBuildWalkthrough";
-import { VariantEditPanel } from "@/components/build/VariantEditPanel";
 import type {
   BuildDetail,
   BuildSubclass,
@@ -20,7 +18,6 @@ import type {
 } from "@/components/build/types";
 import type { SynergyTypeSelection } from "@/components/build/SynergyTypeMultiSelect";
 import {
-  Button,
   Callout,
   Cluster,
   EmptyState,
@@ -39,6 +36,7 @@ import {
   WorkspaceMain,
 } from "@/components/ui";
 import type { BungieInGameLoadout } from "@/lib/bungie/characterLoadouts";
+import { evaluateFinishGapsFromVariant } from "@/lib/builds/finishGapsFromDetail";
 import { indexBuildLoadoutMatches } from "@/lib/loadouts/matchLoadoutToBuilds";
 import {
   BUILD_QUERY_BUILD,
@@ -74,7 +72,6 @@ export function BuildPage() {
   const [classFilter, setClassFilter] = useState<GuardianClass | null>(null);
   const [creating, setCreating] = useState(false);
   const [editingBuild, setEditingBuild] = useState(false);
-  const [finishOpen, setFinishOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -87,6 +84,15 @@ export function BuildPage() {
   const [bungieLoadouts, setBungieLoadouts] = useState<BungieInGameLoadout[]>(
     [],
   );
+  /** Resolved equipment for page-level shareability (FR-017). */
+  const [pageEquipment, setPageEquipment] = useState<
+    Partial<
+      Record<
+        string,
+        { slot?: string; itemHash?: number; itemName?: string; instanceId?: string | null } | null
+      >
+    >
+  >({});
 
   const loadoutMatchesByBuildId = useMemo(() => {
     if (builds.length === 0 || bungieLoadouts.length === 0) {
@@ -323,6 +329,7 @@ export function BuildPage() {
         await loadDetail(body.build.id);
         writeBuildQuery(body.build.id);
         setCreating(false);
+        setVariantMode("edit");
       }
     } catch {
       setCreateError("Failed to create build");
@@ -471,6 +478,65 @@ export function BuildPage() {
     }
   }
 
+  const selectedVariant =
+    detail?.variants.find((v) => v.id === variantId) ??
+    detail?.variants[0] ??
+    null;
+
+  useEffect(() => {
+    if (!detail || !selectedVariant) {
+      setPageEquipment({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/user/builds/${detail.id}/variants/${selectedVariant.id}/resolved`,
+        );
+        if (!res.ok || cancelled) return;
+        const body = (await res.json()) as {
+          equipment?: Partial<
+            Record<
+              string,
+              { slot?: string; itemHash?: number; itemName?: string; instanceId?: string | null }
+            >
+          >;
+        };
+        if (!cancelled) setPageEquipment(body.equipment ?? {});
+      } catch {
+        if (!cancelled) setPageEquipment({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [detail, selectedVariant]);
+
+  const pageFinishComplete = useMemo(() => {
+    if (!selectedVariant) return false;
+    const hasModCoverage = selectedVariant.attachments.some(
+      (a) => a.set?.type === "mod",
+    );
+    return evaluateFinishGapsFromVariant({
+      variantId: selectedVariant.id,
+      isDefaultVariant: Boolean(selectedVariant.isDefault),
+      attachments: selectedVariant.attachments.map((a) => ({
+        setId: a.setId,
+        mode: a.mode,
+        set: a.set,
+      })),
+      equipment: pageEquipment,
+      hasModCoverage,
+    }).complete;
+  }, [selectedVariant, pageEquipment]);
+
+  /** Page-level Apply/Export: details only, complete variants; edit owns Finish export. */
+  const showPageBuildActions =
+    Boolean(selectedVariant) &&
+    variantMode === "details" &&
+    pageFinishComplete;
+
   if (signedIn === false) {
     return (
       <SignedOutGate
@@ -481,11 +547,6 @@ export function BuildPage() {
     );
   }
 
-  const selectedVariant =
-    detail?.variants.find((v) => v.id === variantId) ??
-    detail?.variants[0] ??
-    null;
-
   function selectVariant(id: string, name: string, mode?: VariantViewMode) {
     setVariantId(id);
     if (mode) setVariantMode(mode);
@@ -494,14 +555,41 @@ export function BuildPage() {
   }
 
   let main: ReactNode;
-  if (creating) {
+    if (creating) {
     main = (
       <WorkspaceMain>
-        <CreateBuildPanel
-          busy={createBusy}
-          error={createError}
-          onCancel={() => setCreating(false)}
-          onCreate={(input) => void handleCreate(input)}
+        <DefaultVariantComposer
+          mode="draft"
+          build={null}
+          variant={null}
+          createBusy={createBusy}
+          createError={createError}
+          onClose={() => setCreating(false)}
+          onCreated={(input) => void handleCreate(input)}
+          onSaved={(next, preferredVariantId) => {
+            applySavedBuild(next);
+            setCreating(false);
+            setSelectedId(next.id);
+            setDetail(next);
+            const pref =
+              (preferredVariantId
+                ? next.variants.find((v) => v.id === preferredVariantId)
+                : null) ??
+              next.variants.find((v) => v.isDefault) ??
+              next.variants[0] ??
+              null;
+            setVariantId(pref?.id ?? null);
+            setVariantMode("edit");
+            writeBuildQuery(next.id, pref?.name);
+          }}
+          characters={characters}
+          characterId={characterId}
+          onCharacterId={setCharacterId}
+          actionBusy={actionBusy}
+          actionMessage={actionMessage}
+          onEquip={() => void runEquip()}
+          onDimExport={() => void runDim(false)}
+          onDimJson={() => void runDim(true)}
         />
       </WorkspaceMain>
     );
@@ -597,41 +685,31 @@ export function BuildPage() {
         </Panel>
 
         {selectedVariant && variantMode === "edit" ? (
-          <>
-            {finishOpen && detail ? (
-              <FinishBuildWalkthrough
-                build={detail}
-                variant={selectedVariant}
-                onClose={() => setFinishOpen(false)}
-                onBuildMutated={async () => {
-                  await loadDetail(detail.id);
-                }}
-              />
-            ) : null}
-            <div className="mb-2">
-              <Button
-                size="sm"
-                variant={finishOpen ? "accent" : "ghost"}
-                onClick={() => setFinishOpen((v) => !v)}
-              >
-                {finishOpen ? "Hide finish walkthrough" : "Finish build"}
-              </Button>
-            </div>
-            <VariantEditPanel
-              key={selectedVariant.id}
-              build={detail}
-              variant={selectedVariant}
-              closeLabel="Back to details"
-              onClose={() => setVariantMode("details")}
-              onSaved={(next, preferredVariantId) => {
-                applySavedBuild(next);
-                if (preferredVariantId) {
-                  setVariantId(preferredVariantId);
-                  setVariantMode("edit");
-                }
-              }}
-            />
-          </>
+          <DefaultVariantComposer
+            key={selectedVariant.id}
+            mode="live"
+            build={detail}
+            variant={selectedVariant}
+            onClose={() => setVariantMode("details")}
+            onCreated={() => undefined}
+            onSaved={(next, preferredVariantId) => {
+              applySavedBuild(next);
+              if (preferredVariantId) {
+                setVariantId(preferredVariantId);
+                setVariantMode("edit");
+              } else {
+                void loadDetail(next.id);
+              }
+            }}
+            characters={characters}
+            characterId={characterId}
+            onCharacterId={setCharacterId}
+            actionBusy={actionBusy}
+            actionMessage={actionMessage}
+            onEquip={() => void runEquip()}
+            onDimExport={() => void runDim(false)}
+            onDimJson={() => void runDim(true)}
+          />
         ) : selectedVariant ? (
           <VariantCard
             key={selectedVariant.id}
@@ -654,7 +732,7 @@ export function BuildPage() {
           <EmptyState description="Select a variant to view details or edit." />
         )}
 
-        {selectedVariant ? (
+        {showPageBuildActions && selectedVariant ? (
           <BuildActions
             className={detail.className}
             characters={characters}
@@ -678,7 +756,7 @@ export function BuildPage() {
         <Stack gap={12}>
           <PageHeader
             title="Build"
-            description="Curated library — create builds, edit variants (General · Sets · Artifact · Mods · Abilities · Aspects · Fragments), apply to a character or export to DIM."
+            description="Curated library — intent → compose → equip. New build opens the tabbed composer (General · Subclass · Armor · Weapons · Finish)."
           />
           {error ? <Callout tone="danger">{error}</Callout> : null}
         </Stack>

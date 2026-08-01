@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 
+import { classIconPath } from "@/lib/destiny/classIcons";
 import {
   CLASS_CSS_COLOR,
   ELEMENT_CSS_COLOR,
@@ -16,64 +17,48 @@ type IconProps = {
   style?: CSSProperties;
 };
 
+/**
+ * Monochrome guardian-class glyph from destiny-icons (general/class_*.svg).
+ * Painted with currentColor via CSS mask so it inherits chip/text color.
+ */
 export function ClassIcon({
   className: guardianClass,
   size = 14,
   title,
   color,
-}: IconProps & { className: GuardianClassName; color?: string }) {
-  const stroke = color ?? CLASS_CSS_COLOR[guardianClass];
-  const common = {
-    width: size,
-    height: size,
-    viewBox: "0 0 16 16",
-    fill: "none" as const,
-    "aria-label": title ?? guardianClass,
-    role: "img" as const,
-  };
+}: {
+  /** Guardian class (prop name matches historical API). */
+  className: GuardianClassName;
+  size?: number;
+  title?: string;
+  color?: string;
+}) {
+  const src = classIconPath(guardianClass);
+  const label = title ?? guardianClass;
+  const paint = color ?? CLASS_CSS_COLOR[guardianClass];
 
-  if (guardianClass === "Titan") {
-    return (
-      <svg {...common}>
-        <title>{title ?? guardianClass}</title>
-        <path
-          d="M8 1.5 L13 4.5 V9.5 L8 14.5 L3 9.5 V4.5 Z"
-          stroke={stroke}
-          strokeWidth="1.4"
-          fill={stroke}
-          fillOpacity="0.2"
-        />
-      </svg>
-    );
-  }
-  if (guardianClass === "Hunter") {
-    return (
-      <svg {...common}>
-        <title>{title ?? guardianClass}</title>
-        <path
-          d="M8 2 L12 7 L8 14 L4 7 Z"
-          stroke={stroke}
-          strokeWidth="1.4"
-          fill={stroke}
-          fillOpacity="0.2"
-        />
-      </svg>
-    );
-  }
+  if (!src) return null;
+
   return (
-    <svg {...common}>
-      <title>{title ?? guardianClass}</title>
-      <circle
-        cx="8"
-        cy="8"
-        r="5.5"
-        stroke={stroke}
-        strokeWidth="1.4"
-        fill={stroke}
-        fillOpacity="0.2"
-      />
-      <circle cx="8" cy="8" r="2" fill={stroke} />
-    </svg>
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      className="inline-block shrink-0 bg-current"
+      style={{
+        width: size,
+        height: size,
+        color: paint,
+        WebkitMaskImage: `url(${src})`,
+        maskImage: `url(${src})`,
+        WebkitMaskSize: "contain",
+        maskSize: "contain",
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskPosition: "center",
+        maskPosition: "center",
+      }}
+    />
   );
 }
 

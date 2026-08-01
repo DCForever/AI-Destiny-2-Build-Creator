@@ -30,7 +30,7 @@ Do **not** duplicate full GAP-UI rule tables here.
 **Do not** track domain bugs or missing APIs here — use specs/issues / ui-fidelity for those.  
 **Agents:** after polish feedback or a polish PR, update this file in the same change set when practical.
 
-Last reviewed: 2026-07-25
+Last reviewed: 2026-07-27
 
 ---
 
@@ -131,15 +131,16 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 
 - Restoring **Generator** / multi-pass LLM as a primary nav tab  
 - Deleting `/debug/*` power-user tools  
-- Full DIM parity (notes, tags, ornaments, full transfer UI)  
+- Full **DIM product** parity (notes, tags, ornaments, full transfer UI, cloning DIM LO as compose) — presentation of Destiny data still follows DIM as North Star (`DBR-UI-*`)  
 - Spec Kit feature work (use `specs/` + Spec Kit commands)
 
 ---
 
 ## Related
 
+- Presentation North Star: `DBR-UI-001`–`005` in [`specs/domain-business-rules.md`](../specs/domain-business-rules.md) (icon-first); framing in [`PRODUCT.md`](../PRODUCT.md)  
+- DIM reference captures: [`docs/dim-reference-screenshots/`](./dim-reference-screenshots/)  
 - Canvas: Cursor `prod-ui-refactor` (wireframes / IA)  
 - Operator APIs: `DEBUG.md`  
 - Domain slices: `specs/domain-slice-roadmap.md`  
 - Design system notes: `src/components/ui/README.md` (if present)
-

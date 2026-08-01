@@ -28,6 +28,20 @@ export const API_ERROR_CODES = {
   BUILD_NOT_FOUND: "BUILD_NOT_FOUND",
   SET_NOT_FOUND: "SET_NOT_FOUND",
   NO_CONSTRAINTS: "NO_CONSTRAINTS",
+  /** Weapon/Armor set save/attach below ≥2 filled items (DBR-CMP-008). */
+  SET_MIN_ITEMS: "SET_MIN_ITEMS",
+  /** Mod set save/attach with mods on fewer than two armor pieces (DBR-CMP-009). */
+  MOD_SET_MIN_SLOTS: "MOD_SET_MIN_SLOTS",
+  /** Pair set missing exotic weapon or exotic armor (BR-SLOT-014). */
+  PAIR_INCOMPLETE: "PAIR_INCOMPLETE",
+  /** Default save: required synergy link not satisfied by equip-ready pins (DBR-SYN-010a). */
+  REQUIRED_LINK_UNSATISFIED: "REQUIRED_LINK_UNSATISFIED",
+  /** Armor set constraint: non-exotic piece not in bonus family (DBR-SETB-004). */
+  ARMOR_SET_BONUS_MISMATCH: "ARMOR_SET_BONUS_MISMATCH",
+  /** Armor set constraint: member count below target tier (DBR-SETB-004). */
+  ARMOR_SET_BONUS_INCOMPLETE: "ARMOR_SET_BONUS_INCOMPLETE",
+  /** Class cannot change after create (DBR-BLD-007). */
+  CLASS_IMMUTABLE: "CLASS_IMMUTABLE",
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];

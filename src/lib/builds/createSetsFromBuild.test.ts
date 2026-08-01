@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it , vi} from "vitest";
+
+vi.mock("@/lib/services", () => ({
+  getServices: vi.fn(async () => ({
+    entityCache: {
+      getStore: vi.fn(async () => []),
+    },
+  })),
+}));
+
 
 import { createSetsFromBuild } from "@/lib/builds/createSetsFromBuild";
 import { createTestDb } from "@/lib/db/client";
@@ -110,6 +119,12 @@ describe("createSetsFromBuild", () => {
       slot: "chest",
       itemHash: 11,
       itemName: "Chest",
+      confirmReplace: true,
+    });
+    await upsertSetItem(db, "a2", "armor", {
+      slot: "legs",
+      itemHash: 12,
+      itemName: "Legs",
       confirmReplace: true,
     });
     await prepareAttachments(db, user.id, "v2", [{ setId: "a2", mode: "live" }], now);

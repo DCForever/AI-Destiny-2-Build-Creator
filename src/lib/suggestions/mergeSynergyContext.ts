@@ -19,6 +19,8 @@ const SYNERGY_TYPE_TAGS: Partial<Record<string, ConceptTagId[]>> = {
   special_weapon: ["ability"],
   heavy_weapon: ["ability"],
   kinetic_weapon: ["kinetic"],
+  ammo: ["ability"],
+  weapon_slot: ["kinetic"],
 };
 
 function addElementConceptTag(

@@ -82,6 +82,10 @@ export async function createUserVariant(
     artifactHash: input.artifactHash ?? sourceVariant?.artifactHash ?? null,
     artifactName: input.artifactName ?? sourceVariant?.artifactName ?? null,
     artifactConfig: input.artifactConfig ?? sourceVariant?.artifactConfig ?? [],
+    subclassKit:
+      input.subclassKit ??
+      sourceVariant?.subclassKit ??
+      null,
     notes,
     now,
   });

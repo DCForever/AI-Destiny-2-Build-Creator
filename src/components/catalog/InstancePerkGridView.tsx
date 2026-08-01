@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import { WeaponStatsPanel } from "@/components/catalog/WeaponStatsPanel";
 import {
@@ -10,6 +10,11 @@ import {
   Stack,
   Text,
 } from "@/components/ui";
+import {
+  fetchPerkGridDeduped,
+  getCachedPerkGrid,
+  runSharedInventorySync,
+} from "@/lib/inventory/instances/perkGridClientCache";
 import {
   createPerkGridRefreshState,
   markSyncAttempted,
@@ -36,7 +41,7 @@ type PerkGridResponse = InstancePerkGrid & {
 /**
  * Read-only DIM-style per-copy weapon detail: combat stats + multi-option perk columns.
  */
-export function InstancePerkGridView({
+export const InstancePerkGridView = memo(function InstancePerkGridView({
   instanceId,
   enabled = true,
   frameHint,
@@ -45,31 +50,26 @@ export function InstancePerkGridView({
   enabled?: boolean;
   frameHint?: string | null;
 }) {
-  const [grid, setGrid] = useState<PerkGridResponse | null>(null);
+  const [grid, setGrid] = useState<PerkGridResponse | null>(() =>
+    instanceId ? getCachedPerkGrid<PerkGridResponse>(instanceId) : null,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
   const refreshRef = useRef(createPerkGridRefreshState());
-  const cancelledRef = useRef(false);
+  const loadGenRef = useRef(0);
 
-  async function fetchGrid(): Promise<PerkGridResponse | null> {
-    const res = await fetch(
-      `/api/user/inventory/instances/${encodeURIComponent(instanceId)}/perk-grid`,
-    );
-    const body = (await res.json()) as PerkGridResponse;
-    if (!res.ok) {
-      throw new Error(body.error ?? "Failed to load perk grid");
-    }
-    return body;
-  }
-
-  async function load(opts?: { forceSync?: boolean }) {
+  async function load(opts?: { forceSync?: boolean; forceFetch?: boolean }) {
     if (!enabled || !instanceId) return;
-    setLoading(true);
+    const gen = ++loadGenRef.current;
+    const hasWarm = Boolean(getCachedPerkGrid(instanceId) || grid);
+    if (!hasWarm) setLoading(true);
     setError(null);
     try {
-      let next = await fetchGrid();
-      if (cancelledRef.current) return;
+      let next = await fetchPerkGridDeduped<PerkGridResponse>(instanceId, {
+        force: opts?.forceFetch || opts?.forceSync,
+      });
+      if (gen !== loadGenRef.current) return;
 
       const needSync =
         opts?.forceSync ||
@@ -80,35 +80,39 @@ export function InstancePerkGridView({
         setSyncBusy(true);
         refreshRef.current = markSyncAttempted(refreshRef.current, instanceId);
         try {
-          await fetch("/api/bungie/sync", { method: "POST" });
+          await runSharedInventorySync({ force: Boolean(opts?.forceSync) });
         } finally {
           refreshRef.current = markSyncFinished(refreshRef.current);
-          setSyncBusy(false);
+          if (gen === loadGenRef.current) setSyncBusy(false);
         }
-        if (cancelledRef.current) return;
-        next = await fetchGrid();
+        if (gen !== loadGenRef.current) return;
+        next = await fetchPerkGridDeduped<PerkGridResponse>(instanceId, {
+          force: true,
+        });
       }
-      if (!cancelledRef.current) setGrid(next);
+      if (gen === loadGenRef.current) setGrid(next);
     } catch (e) {
-      if (!cancelledRef.current) {
+      if (gen === loadGenRef.current) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
         setError(e instanceof Error ? e.message : "Failed to load perk grid");
-        setGrid(null);
+        if (!grid) setGrid(null);
       }
     } finally {
-      if (!cancelledRef.current) setLoading(false);
+      if (gen === loadGenRef.current) setLoading(false);
     }
   }
 
   useEffect(() => {
-    cancelledRef.current = false;
     if (!enabled || !instanceId) {
       setGrid(null);
       setError(null);
       return;
     }
+    const warm = getCachedPerkGrid<PerkGridResponse>(instanceId);
+    if (warm) setGrid(warm);
     void load();
     return () => {
-      cancelledRef.current = true;
+      loadGenRef.current += 1;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instanceId, enabled]);
@@ -167,6 +171,12 @@ export function InstancePerkGridView({
         frameLabel={frameLabel}
         frameSub={frameSub}
       />
+
+      {grid.isCrafted === true ? (
+        <Text size="xs" tone="muted">
+          Crafted copy
+        </Text>
+      ) : null}
 
       <Stack gap={8}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -281,4 +291,4 @@ export function InstancePerkGridView({
       </Stack>
     </Stack>
   );
-}
+});

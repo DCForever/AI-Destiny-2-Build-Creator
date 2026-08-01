@@ -1,5 +1,6 @@
 "use client";
 
+import { MiniKitStrip } from "@/components/build/MiniKitStrip";
 import type {
   BuildDetail,
   BuildVariantDetail,
@@ -24,7 +25,6 @@ import {
 } from "@/components/ui";
 import {
   ELEMENT_CSS_COLOR,
-  elementFromSubclass,
   isDestinyElement,
 } from "@/lib/destiny/identityVisuals";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
@@ -49,33 +49,6 @@ function claimSourceLabel(source: string | undefined): string | null {
     default:
       return source?.trim() ? source : null;
   }
-}
-
-function AbilityHotspot({
-  entity,
-  kind,
-  fallbackName,
-  elementColor,
-}: {
-  entity?: PresentedEntity | null;
-  kind: string;
-  fallbackName?: string | null;
-  elementColor?: string;
-}) {
-  const name = entity?.name || fallbackName;
-  if (!name) return null;
-  return (
-    <EntityHotspot
-      kind={entity?.kindLabel ?? kind}
-      name={name}
-      description={entity?.description}
-      icon={entity?.icon}
-      accentColor={accentFor(entity?.element) ?? elementColor}
-      size={24}
-      showLabel="auto"
-      meta={entity?.element ? [entity.element] : undefined}
-    />
-  );
 }
 
 /** Compact loadout strip: one icon per filled slot (at-a-glance density). */
@@ -243,7 +216,6 @@ export function VariantCard({
     .filter((name): name is string => Boolean(name));
   const subclass = build.subclass;
   const sp = build.subclassPresentation;
-  const elementColor = ELEMENT_CSS_COLOR[elementFromSubclass(subclass.name)];
 
   const exoticWeapon =
     variant.exoticWeapon ??
@@ -373,90 +345,13 @@ export function VariantCard({
           </Section>
         ) : null}
 
-        <Section label="Abilities">
-          <Cluster gap={8}>
-            <AbilityHotspot
-              entity={sp?.classAbility}
-              kind="Class ability"
-              fallbackName={subclass.classAbility}
-              elementColor={elementColor}
-            />
-            <AbilityHotspot
-              entity={sp?.movement}
-              kind="Movement"
-              fallbackName={subclass.movement}
-              elementColor={elementColor}
-            />
-            <AbilityHotspot
-              entity={sp?.melee}
-              kind="Melee"
-              fallbackName={subclass.melee}
-              elementColor={elementColor}
-            />
-            <AbilityHotspot
-              entity={sp?.grenade}
-              kind="Grenade"
-              fallbackName={subclass.grenade}
-              elementColor={elementColor}
-            />
-          </Cluster>
-        </Section>
-
-        {(sp?.aspects?.length ?? subclass.aspects?.length ?? 0) > 0 ? (
-          <Section label="Aspects">
-            <Cluster gap={8}>
-              {(sp?.aspects?.length
-                ? sp.aspects
-                : subclass.aspects.map((name) => ({
-                    hash: null,
-                    name,
-                    icon: null,
-                    description: "",
-                    element: null,
-                    kindLabel: "Aspect" as const,
-                  }))
-              ).map((a) => (
-                <EntityHotspot
-                  key={a.name}
-                  kind="Aspect"
-                  name={a.name}
-                  description={a.description}
-                  icon={a.icon}
-                  accentColor={accentFor(a.element) ?? elementColor}
-                  size={24}
-                />
-              ))}
-            </Cluster>
-          </Section>
-        ) : null}
-
-        {(sp?.fragments?.length ?? subclass.fragments?.length ?? 0) > 0 ? (
-          <Section label="Fragments">
-            <Cluster gap={8}>
-              {(sp?.fragments?.length
-                ? sp.fragments
-                : subclass.fragments.map((name) => ({
-                    hash: null,
-                    name,
-                    icon: null,
-                    description: "",
-                    element: null,
-                    kindLabel: "Fragment" as const,
-                  }))
-              ).map((f) => (
-                <EntityHotspot
-                  key={f.name}
-                  kind="Fragment"
-                  name={f.name}
-                  description={f.description}
-                  icon={f.icon}
-                  accentColor={accentFor(f.element) ?? elementColor}
-                  size={24}
-                />
-              ))}
-            </Cluster>
-          </Section>
-        ) : null}
+        {/* DBR-BLD-010: full mini kit (five abilities + aspects + fragments). */}
+        <MiniKitStrip
+          presentation={sp}
+          subclass={variant.subclass ?? subclass}
+          pinnedSuper={build.pinnedSuper}
+          compact={!focused}
+        />
 
         <Section label="Exotic weapon">
           {exoticWeapon ? (
@@ -501,7 +396,9 @@ export function VariantCard({
               ))}
               {!artifactPerks.length &&
                 (variant.artifactConfig ?? []).map((hash) => (
-                  <Chip key={hash}>Perk {hash}</Chip>
+                  <Chip key={hash} title={`#${hash}`}>
+                    Artifact perk
+                  </Chip>
                 ))}
             </Cluster>
           </Section>

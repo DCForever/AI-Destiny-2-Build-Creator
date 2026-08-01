@@ -4,12 +4,30 @@ import { createTestDb } from "@/lib/db/client";
 import { seedDefaultSynergies } from "@/lib/db/repositories/synergyRepository";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
 import { createUserBuild, updateUserVariant } from "@/lib/builds/buildService";
-import { seedFullCombatAttachments } from "@/lib/builds/testFixtures";
+import {
+  COMPLETE_DEFAULT_ARTIFACT,
+  COMPLETE_DEFAULT_SUBCLASS_KIT,
+  seedFullCombatAttachments,
+} from "@/lib/builds/testFixtures";
 
 vi.mock("@/lib/services", () => ({
   getServices: vi.fn(async () => ({
     entityCache: {
-      getStore: vi.fn(async () => []),
+      getStore: vi.fn(async (name: string) => {
+        if (name === "artifacts") {
+          return [
+            {
+              hash: COMPLETE_DEFAULT_ARTIFACT.artifactHash,
+              name: COMPLETE_DEFAULT_ARTIFACT.artifactName,
+              perks: COMPLETE_DEFAULT_ARTIFACT.artifactConfig.map((hash) => ({
+                hash,
+                name: `Perk ${hash}`,
+              })),
+            },
+          ];
+        }
+        return [];
+      }),
       getMeta: vi.fn(async () => null),
     },
   })),
@@ -25,16 +43,24 @@ describe("buildFlow integration", () => {
     const build = await createUserBuild(db, user.id, {
       name: "Solar Flow",
       className: "Hunter",
-      subclass: { name: "Gunslinger", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
+      subclass: {
+        ...COMPLETE_DEFAULT_SUBCLASS_KIT,
+        name: "Gunslinger",
+      },
       exoticArmorHash: 700,
       exoticArmorName: "Celestial Nighthawk",
       synergyTypes: [{ type: "melee", subType: "Base" }],
       tagIds: ["solar", "pve"],
+      defaultVariant: {
+        name: "Default",
+        ...COMPLETE_DEFAULT_ARTIFACT,
+      },
     });
 
     const variantId = build!.variants[0]!.id;
     const attached = await updateUserVariant(db, user.id, build!.id, variantId, {
       attachments: attachments.map((a) => ({ ...a, mode: "snapshot" as const })),
+      ...COMPLETE_DEFAULT_ARTIFACT,
     });
 
     const variant = attached!.variants.find((v) => v.id === variantId);

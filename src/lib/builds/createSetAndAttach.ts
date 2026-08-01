@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/repositories/variantRepository";
 import type { SetType } from "@/lib/sets/schemas";
 import { allocateUniqueSetName } from "@/lib/sets/uniqueSetName";
+import { conceptTagIdsFromSynergyDesignations } from "@/lib/builds/synergyConceptTags";
 
 export const createSetAndAttachBodySchema = z.object({
   variantId: z.string().min(1),
@@ -61,11 +62,20 @@ export async function createSetAndAttach(
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
+  let tagIds = body.tagIds ?? [];
+  if (tagIds.length === 0 && type === "armor") {
+    const raw = (build as { synergyTypes?: unknown }).synergyTypes;
+    const designations = Array.isArray(raw)
+      ? (raw as Array<{ type: string; subType?: string | null }>)
+      : [];
+    tagIds = conceptTagIdsFromSynergyDesignations(designations);
+  }
+
   createSetRecord(db, userId, {
     id,
     name,
     type,
-    tagIds: (body.tagIds ?? []) as never,
+    tagIds: tagIds as never,
     now,
   });
 

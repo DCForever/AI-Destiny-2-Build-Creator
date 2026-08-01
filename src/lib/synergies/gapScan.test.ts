@@ -38,9 +38,9 @@ const CANDIDATES: GapCandidate[] = [
 ];
 
 describe("defaultTypeForCandidate", () => {
-  it("maps weapon ammo to weapon synergy types", () => {
-    expect(defaultTypeForCandidate(CANDIDATES[0]!)).toBe("primary_weapon");
-    expect(defaultTypeForCandidate(CANDIDATES[1]!)).toBe("special_weapon");
+  it("maps weapon ammo to ammo designation type (DBR-SYN-017)", () => {
+    expect(defaultTypeForCandidate(CANDIDATES[0]!)).toBe("ammo");
+    expect(defaultTypeForCandidate(CANDIDATES[1]!)).toBe("ammo");
   });
 });
 
@@ -70,7 +70,10 @@ describe("findMissingGaps / gapsFromSynergiesAndCandidates", () => {
       "weapon:2",
     ]);
     expect(gaps.find((g) => g.coverageKey === "weapon:2")?.suggestedType).toBe(
-      "special_weapon",
+      "ammo",
+    );
+    expect(gaps.find((g) => g.coverageKey === "weapon:2")?.suggestedSubType).toBe(
+      "Special",
     );
     expect(gaps.every((g) => g.gapKind === "link")).toBe(true);
   });
@@ -87,7 +90,8 @@ describe("proposalsFromGaps", () => {
     const proposals = proposalsFromGaps(gaps);
     expect(proposals).toHaveLength(1);
     expect(proposals[0]?.kind).toBe("synergy");
-    expect(proposals[0]?.synergy?.type).toBe("primary_weapon");
+    expect(proposals[0]?.synergy?.type).toBe("ammo");
+    expect(proposals[0]?.synergy?.subType).toBe("Primary");
     expect(proposals[0]?.synergy?.links?.[0]).toMatchObject({
       kind: "weapon",
       itemHash: 1,

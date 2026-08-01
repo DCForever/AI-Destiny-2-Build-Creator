@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2BC Atlas</title>
+  <link rel="stylesheet" href="./atlas.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="crumbs">ATLAS / Destiny 2 Build Creator</div>
+      <h1 id="appTitle">UI Atlas</h1>
+      <p class="lede" id="lede">Runtime screen map, journeys, and UI inventory from local captures.</p>
+    </div>
+    <div class="top-right">
+      <div class="top-nav" id="topNav"></div>
+      <div class="top-stats" id="topStats"></div>
+    </div>
+  </header>
+  <nav class="primary-tabs" id="primaryTabs">
+    <button type="button" data-mode="report" class="on">Report</button>
+    <button type="button" data-mode="screens">Screens</button>
+    <button type="button" data-mode="map">Map</button>
+  </nav>
+  <div class="body" id="body"></div>
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lb-close" id="lbClose" aria-label="Close">×</button>
+    <img id="lbImg" alt="" />
+    <div class="lb-cap" id="lbCap"></div>
+  </div>
+  <script src="./atlas-app.js"></script>
+</body>
+</html>

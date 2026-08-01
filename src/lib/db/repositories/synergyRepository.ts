@@ -30,6 +30,8 @@ export type SynergyLinkRecord = {
   bonusPieces: number | null;
   bonusName: string | null;
   armorSetHash: number | null;
+  /** Required evidence link (DBR-SYN-007–010a). Omitted/false = soft evidence. */
+  required?: boolean;
 };
 
 export type SynergyWithLinks = SynergyRecord & { links: SynergyLinkRecord[] };
@@ -58,8 +60,32 @@ function rowToSynergy(row: typeof synergies.$inferSelect): SynergyRecord {
   };
 }
 
+function mapLinkRow(row: typeof synergyLinks.$inferSelect): SynergyLinkRecord {
+  return {
+    id: row.id,
+    synergyId: row.synergyId,
+    kind: row.kind,
+    displayName: row.displayName,
+    itemHash: row.itemHash ?? null,
+    perkHash: row.perkHash ?? null,
+    parentItemHash: row.parentItemHash ?? null,
+    originTraitName: row.originTraitName ?? null,
+    originTraitHash: row.originTraitHash ?? null,
+    armorSetName: row.armorSetName ?? null,
+    bonusPieces: row.bonusPieces ?? null,
+    bonusName: row.bonusName ?? null,
+    armorSetHash: row.armorSetHash ?? null,
+    required: Boolean(row.required),
+  };
+}
+
 function listSynergyLinks(db: AppDatabase, synergyId: string): SynergyLinkRecord[] {
-  return db.select().from(synergyLinks).where(eq(synergyLinks.synergyId, synergyId)).all();
+  return db
+    .select()
+    .from(synergyLinks)
+    .where(eq(synergyLinks.synergyId, synergyId))
+    .all()
+    .map(mapLinkRow);
 }
 
 /** Batch-load links for many synergies (one query). */
@@ -78,9 +104,10 @@ function listSynergyLinksForIds(
     .all();
 
   for (const row of rows) {
+    const mapped = mapLinkRow(row);
     const list = map.get(row.synergyId);
-    if (list) list.push(row);
-    else map.set(row.synergyId, [row]);
+    if (list) list.push(mapped);
+    else map.set(row.synergyId, [mapped]);
   }
   return map;
 }
@@ -117,6 +144,7 @@ function insertLinks(db: AppDatabase, synergyId: string, links: SynergyLinkInput
         bonusPieces: link.bonusPieces ?? null,
         bonusName: link.bonusName ?? null,
         armorSetHash: link.armorSetHash ?? null,
+        required: link.required === true ? 1 : 0,
       })
       .run();
   }

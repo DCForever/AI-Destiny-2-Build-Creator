@@ -98,6 +98,39 @@ export function synergyLinkFromHit(hit: CompositionSearchHit): SynergyLinkInput 
       };
     }
 
+    case "aspect":
+    case "fragment": {
+      return {
+        kind: hit.kind,
+        displayName: hit.name,
+        ...(hit.hash != null ? { itemHash: hit.hash } : {}),
+      };
+    }
+
+    case "mod": {
+      if (hit.hash == null) return null;
+      return {
+        kind: "armor_mod",
+        displayName: hit.name,
+        itemHash: hit.hash,
+        perkHash: hit.hash,
+      };
+    }
+
+    case "ability": {
+      const abilityKind = metaString(hit.meta, "abilityKind") ?? metaString(hit.meta, "kind");
+      const linkKind =
+        abilityKind === "melee" || abilityKind === "grenade" || abilityKind === "super"
+          ? abilityKind
+          : null;
+      if (!linkKind) return null;
+      return {
+        kind: linkKind,
+        displayName: hit.name,
+        ...(hit.hash != null ? { itemHash: hit.hash, perkHash: hit.hash } : {}),
+      };
+    }
+
     default:
       return null;
   }

@@ -6,13 +6,31 @@ import { seedDefaultSynergies } from "@/lib/db/repositories/synergyRepository";
 import { ensureUser } from "@/lib/db/repositories/userRepository";
 import { createUserBuild, updateUserVariant } from "@/lib/builds/buildService";
 import { compareBuildVariants } from "@/lib/builds/compareVariants";
-import { seedFullCombatAttachments } from "@/lib/builds/testFixtures";
+import {
+  COMPLETE_DEFAULT_ARTIFACT,
+  COMPLETE_DEFAULT_SUBCLASS_KIT,
+  seedFullCombatAttachments,
+} from "@/lib/builds/testFixtures";
 import { createUserVariant, deleteUserVariant } from "@/lib/builds/variantService";
 
 vi.mock("@/lib/services", () => ({
   getServices: vi.fn(async () => ({
     entityCache: {
-      getStore: vi.fn(async () => []),
+      getStore: vi.fn(async (name: string) => {
+        if (name === "artifacts") {
+          return [
+            {
+              hash: COMPLETE_DEFAULT_ARTIFACT.artifactHash,
+              name: COMPLETE_DEFAULT_ARTIFACT.artifactName,
+              perks: COMPLETE_DEFAULT_ARTIFACT.artifactConfig.map((hash) => ({
+                hash,
+                name: `Perk ${hash}`,
+              })),
+            },
+          ];
+        }
+        return [];
+      }),
     },
   })),
 }));
@@ -27,14 +45,21 @@ describe("variantService", () => {
     const build = await createUserBuild(db, user.id, {
       name: "Test",
       className: "Titan",
-      subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
+      subclass: { ...COMPLETE_DEFAULT_SUBCLASS_KIT },
       exoticArmorHash: 100,
       synergyTypes: [{ type: "melee", subType: "Base" }],
-      defaultVariant: { name: "Default", notes: "Survivability" },
+      defaultVariant: {
+        name: "Default",
+        notes: "Survivability",
+        ...COMPLETE_DEFAULT_ARTIFACT,
+      },
     });
 
     const sourceId = build!.variants[0]!.id;
-    await updateUserVariant(db, user.id, build!.id, sourceId, { attachments });
+    await updateUserVariant(db, user.id, build!.id, sourceId, {
+      attachments,
+      ...COMPLETE_DEFAULT_ARTIFACT,
+    });
 
     const updated = await createUserVariant(db, user.id, build!.id, {
       duplicateFromVariantId: sourceId,

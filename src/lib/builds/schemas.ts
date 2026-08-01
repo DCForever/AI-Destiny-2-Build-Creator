@@ -4,6 +4,16 @@ import { conceptTagIdsSchema } from "@/data/conceptTags";
 import { generatedBuildSchema } from "@/lib/llm/buildSchema";
 import { CREATABLE_SYNERGY_TYPES } from "@/lib/synergies/schemas";
 
+const subclassKitSchema = z.object({
+  super: z.string(),
+  classAbility: z.string(),
+  movement: z.string(),
+  melee: z.string(),
+  grenade: z.string(),
+  aspects: z.array(z.string()),
+  fragments: z.array(z.string()),
+});
+
 export const buildVariantSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   notes: z.string().trim().max(500).nullable().optional(),
@@ -12,6 +22,8 @@ export const buildVariantSchema = z.object({
   artifactHash: z.number().int().positive().nullable().optional(),
   artifactName: z.string().trim().min(1).nullable().optional(),
   artifactConfig: z.array(z.number().int().positive()).optional(),
+  /** Per-variant kit (DBR-SUB-003). */
+  subclassKit: subclassKitSchema.optional(),
 });
 
 export const synergyTypeDesignationSchema = z.object({

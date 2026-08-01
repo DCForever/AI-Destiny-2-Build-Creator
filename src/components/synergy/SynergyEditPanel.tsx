@@ -60,13 +60,7 @@ const TYPE_FAMILIES: { label: string; types: CreatableType[] }[] = [
   },
   {
     label: "Weapons",
-    types: [
-      "primary_weapon",
-      "special_weapon",
-      "heavy_weapon",
-      "general_weapon",
-      "weapon_archetype",
-    ],
+    types: ["ammo", "weapon_slot", "general_weapon", "weapon_archetype"],
   },
   {
     label: "Play",
@@ -379,6 +373,22 @@ export function SynergyEditPanel({
           ...base,
           perkHash: picker.perkHash ?? picker.hash,
           parentItemHash: picker.parentItemHash,
+        };
+      case "aspect":
+      case "fragment":
+      case "melee":
+      case "grenade":
+      case "super":
+        return {
+          ...base,
+          itemHash: picker.hash,
+          perkHash: picker.perkHash ?? picker.hash,
+        };
+      case "armor_mod":
+        return {
+          ...base,
+          itemHash: picker.hash,
+          perkHash: picker.perkHash ?? picker.hash,
         };
       default:
         return null;

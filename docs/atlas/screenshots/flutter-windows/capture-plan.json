@@ -1,0 +1,804 @@
+{
+  "platform": "flutter-windows",
+  "generatedAt": "2026-07-27T18:20:37.807Z",
+  "note": "Stub plan — not a real capture run",
+  "targets": [
+    {
+      "surfaceId": "shell",
+      "title": "App shell",
+      "route": "/",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DBR-PUR-001",
+        "DBR-PUR-002",
+        "DBR-PUR-003",
+        "BR-AUTH-001"
+      ]
+    },
+    {
+      "surfaceId": "shell.nav.loadouts",
+      "title": "Nav → In-Game Loadouts",
+      "route": "/loadouts",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "shell.nav.build",
+      "title": "Nav → Build",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "shell.nav.synergy",
+      "title": "Nav → Synergy",
+      "route": "/synergy",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "shell.nav.sets",
+      "title": "Nav → Sets",
+      "route": "/sets",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "shell.nav.catalog",
+      "title": "Nav → Catalog",
+      "route": "/catalog",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "shell.nav.settings",
+      "title": "Nav → Settings",
+      "route": "/settings",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "shell.signed-out-gate",
+      "title": "SignedOutGate (shared)",
+      "route": "/",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "BR-AUTH-001",
+        "003:SC-005"
+      ]
+    },
+    {
+      "surfaceId": "build.signed-out",
+      "title": "Build — signed-out gate",
+      "route": "/build",
+      "captureId": "build-signed-out",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-signed-out__signed-in.png",
+      "rules": [
+        "BR-AUTH-001",
+        "DBR-BLD-005"
+      ]
+    },
+    {
+      "surfaceId": "build.library",
+      "title": "Build library",
+      "route": "/build",
+      "captureId": "build-library",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-library__signed-in.png",
+      "rules": [
+        "DBR-BLD-001",
+        "DBR-BLD-005",
+        "BR-BLD-001",
+        "BR-TAG-006",
+        "BR-TAG-008",
+        "BR-VAR-004",
+        "DAC-NME-002",
+        "001:SC-002"
+      ]
+    },
+    {
+      "surfaceId": "build.library.selected",
+      "title": "Selected build summary",
+      "route": "/build",
+      "captureId": "build-library-selected",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-library-selected__signed-in.png",
+      "rules": [
+        "DBR-BLD-001",
+        "DBR-BLD-003",
+        "BR-BLD-006"
+      ]
+    },
+    {
+      "surfaceId": "build.create",
+      "title": "Create Build (draft composer)",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P1-001",
+        "DAC-P1-002",
+        "DAC-P2-005",
+        "DBR-PUR-004",
+        "DBR-SYN-002",
+        "DBR-SYN-003",
+        "DBR-BLD-004",
+        "BR-SAVE-003",
+        "042:SC-001"
+      ]
+    },
+    {
+      "surfaceId": "build.create.general",
+      "title": "Draft General tab",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P1-001",
+        "DAC-P1-002",
+        "DAC-NME-001"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.general",
+      "title": "Edit — General (live identity)",
+      "route": "/build",
+      "captureId": "build-edit-general",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-general__signed-in.png",
+      "rules": [
+        "DAC-P1-002",
+        "DAC-VAR-004",
+        "DBR-ID-008",
+        "DBR-ID-009",
+        "DBR-NAME-004"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.subclass",
+      "title": "Edit — Subclass kit",
+      "route": "/build",
+      "captureId": "build-edit-subclass",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-subclass__signed-in.png",
+      "rules": [
+        "DBR-SUB-001",
+        "DBR-SUB-003",
+        "DBR-SUB-004",
+        "DBR-SUB-005",
+        "DAC-DST-003",
+        "DAC-DST-004",
+        "BR-UI-001"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.armor",
+      "title": "Edit — Armor / Mod sets",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P1-004",
+        "DBR-CMP-001",
+        "DBR-CMP-005",
+        "DBR-CMP-007",
+        "BR-ATT-001",
+        "BR-ATT-002",
+        "BR-BLD-007"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.armor.reuse",
+      "title": "Armor Reuse (attach existing)",
+      "route": "/build",
+      "captureId": "build-edit-armor-reuse",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-armor-reuse__signed-in.png",
+      "rules": [
+        "BR-ATT-001",
+        "BR-ATT-002",
+        "DBR-CMP-003"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.armor.improve",
+      "title": "Improve kit (suggestions)",
+      "route": "/build",
+      "captureId": "build-edit-armor-improve",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-armor-improve__signed-in.png",
+      "rules": [
+        "BR-SUG-001",
+        "BR-SUG-002"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.armor.create",
+      "title": "Armor Create + attach",
+      "route": "/build",
+      "captureId": "build-edit-armor-create",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-armor-create__signed-in.png",
+      "rules": [
+        "DAC-P2-005",
+        "DBR-PUR-004",
+        "BR-BLD-007",
+        "BR-SET-001"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.armor.exotic-limit",
+      "title": "Single exotic armor hard gate",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DBR-CMP-007",
+        "DAC-DST-001",
+        "DAC-DST-009"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.weapon",
+      "title": "Edit — Weapon sets",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P1-004",
+        "DBR-CMP-001",
+        "DBR-CMP-007",
+        "DBR-ROLL-001",
+        "BR-ATT-001"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.weapon.reuse",
+      "title": "Weapon Reuse",
+      "route": "/build",
+      "captureId": "build-edit-weapon-reuse",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-weapon-reuse__signed-in.png",
+      "rules": [
+        "BR-ATT-001",
+        "DBR-CMP-003"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.weapon.create",
+      "title": "Weapon Create + slot fill",
+      "route": "/build",
+      "captureId": "build-edit-weapon-create",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-weapon-create__signed-in.png",
+      "rules": [
+        "DAC-P2-005",
+        "BR-BLD-008",
+        "DBR-ROLL-010"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.weapon.exotic-limit",
+      "title": "Single exotic weapon hard gate",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DBR-CMP-007",
+        "DAC-DST-001"
+      ]
+    },
+    {
+      "surfaceId": "build.edit.stale-pin",
+      "title": "Stale pin indicator",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-DST-007",
+        "DBR-ROLL-006"
+      ]
+    },
+    {
+      "surfaceId": "build.finish",
+      "title": "Finish tab — readiness + walkthrough",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P1-003",
+        "DAC-P1-005",
+        "DAC-P1-007",
+        "DAC-P1-008",
+        "BR-BLD-007",
+        "BR-BLD-008",
+        "BR-BLD-009",
+        "DBR-CMPL-001",
+        "DBR-EQP-003"
+      ]
+    },
+    {
+      "surfaceId": "build.finish.armor-optimize",
+      "title": "Armor optimize workspace",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "BR-BLD-009",
+        "BR-OPT-001",
+        "BR-OPT-002",
+        "BR-OPT-003",
+        "BR-OPT-004",
+        "031:SC-001"
+      ]
+    },
+    {
+      "surfaceId": "build.finish.equip-gate",
+      "title": "Equip/export blocked until pins",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P1-005",
+        "DBR-EQP-003",
+        "DBR-ROLL-004",
+        "DBR-ROLL-005"
+      ]
+    },
+    {
+      "surfaceId": "build.conflicts",
+      "title": "Cross-set slot conflict / save blocks",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "BR-CONF-001",
+        "BR-CONF-002",
+        "BR-CONF-003",
+        "DBR-CMP-006",
+        "DAC-DST-009",
+        "BR-UI-001"
+      ]
+    },
+    {
+      "surfaceId": "catalog.signed-out.weapons",
+      "title": "Catalog weapons (signed-out / Manifest)",
+      "route": "/catalog",
+      "captureId": "catalog-signed-out-weapons",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-signed-out-weapons__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010",
+        "BR-CAT-001",
+        "DBR-PUR-002"
+      ]
+    },
+    {
+      "surfaceId": "catalog.signed-out.armor",
+      "title": "Catalog armor (signed-out / Manifest)",
+      "route": "/catalog",
+      "captureId": "catalog-signed-out-armor",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-signed-out-armor__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010",
+        "BR-CAT-001"
+      ]
+    },
+    {
+      "surfaceId": "catalog.weapons.owned",
+      "title": "Weapons — Owned",
+      "route": "/catalog",
+      "captureId": "catalog-weapons-owned",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-weapons-owned__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010",
+        "BR-CAT-001",
+        "BR-CAT-002",
+        "003:SC-001",
+        "003:SC-002"
+      ]
+    },
+    {
+      "surfaceId": "catalog.weapons.manifest",
+      "title": "Weapons — Manifest (all)",
+      "route": "/catalog",
+      "captureId": "catalog-weapons-manifest",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-weapons-manifest__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-001",
+        "DBR-ROLL-010",
+        "BR-CAT-001"
+      ]
+    },
+    {
+      "surfaceId": "catalog.weapon.detail",
+      "title": "Weapon detail pane",
+      "route": "/catalog",
+      "captureId": "catalog-weapon-detail",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-weapon-detail__signed-in.png",
+      "rules": [
+        "BR-CAT-006",
+        "BR-CAT-007",
+        "DAC-DST-008",
+        "DBR-ROLL-007"
+      ]
+    },
+    {
+      "surfaceId": "catalog.armor.owned",
+      "title": "Armor — Owned",
+      "route": "/catalog",
+      "captureId": "catalog-armor-owned",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-armor-owned__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010",
+        "BR-CAT-001",
+        "003:SC-001"
+      ]
+    },
+    {
+      "surfaceId": "catalog.armor.manifest",
+      "title": "Armor — Manifest",
+      "route": "/catalog",
+      "captureId": "catalog-armor-manifest",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-armor-manifest__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010"
+      ]
+    },
+    {
+      "surfaceId": "catalog.armor.detail",
+      "title": "Armor detail pane",
+      "route": "/catalog",
+      "captureId": "catalog-armor-detail",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-armor-detail__signed-in.png",
+      "rules": [
+        "BR-CAT-006",
+        "DAC-NME-004",
+        "DBR-STAT-001"
+      ]
+    },
+    {
+      "surfaceId": "catalog.universal",
+      "title": "Universal search",
+      "route": "/catalog",
+      "captureId": "catalog-universal",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-universal__signed-in.png",
+      "rules": [
+        "DBR-ROLL-010",
+        "BR-CAT-008",
+        "BR-CAT-009",
+        "027:SC-001"
+      ]
+    },
+    {
+      "surfaceId": "sets.signed-out",
+      "title": "Sets — signed-out gate",
+      "route": "/sets",
+      "captureId": "sets-signed-out",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/sets-signed-out__signed-in.png",
+      "rules": [
+        "BR-AUTH-001",
+        "BR-SET-003"
+      ]
+    },
+    {
+      "surfaceId": "sets.library",
+      "title": "Sets library",
+      "route": "/sets",
+      "captureId": "sets-library",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/sets-library__signed-in.png",
+      "rules": [
+        "BR-SET-001",
+        "BR-SET-002",
+        "BR-SET-003",
+        "BR-TAG-008",
+        "DAC-P1-009",
+        "DBR-PUR-005",
+        "001:SC-001",
+        "001:SC-002"
+      ]
+    },
+    {
+      "surfaceId": "sets.create",
+      "title": "Create set",
+      "route": "/sets",
+      "captureId": "sets-create",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/sets-create__signed-in.png",
+      "rules": [
+        "BR-SET-001",
+        "BR-SET-002",
+        "BR-SET-004",
+        "BR-TAG-002",
+        "BR-TAG-004",
+        "BR-TAG-005",
+        "001:SC-001"
+      ]
+    },
+    {
+      "surfaceId": "sets.detail",
+      "title": "Set detail",
+      "route": "/sets",
+      "captureId": "sets-detail",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/sets-detail__signed-in.png",
+      "rules": [
+        "BR-SET-001",
+        "BR-SET-010",
+        "BR-SET-011",
+        "DAC-NME-004",
+        "DBR-STAT-001",
+        "DBR-CMP-001"
+      ]
+    },
+    {
+      "surfaceId": "sets.edit",
+      "title": "Edit set form",
+      "route": "/sets",
+      "captureId": "sets-edit",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/sets-edit__signed-in.png",
+      "rules": [
+        "BR-SET-001",
+        "BR-TAG-005",
+        "BR-SLOT-001"
+      ]
+    },
+    {
+      "surfaceId": "sets.fill-slot",
+      "title": "Fill slot (embedded Catalog)",
+      "route": "/sets",
+      "captureId": "sets-fill-slot",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/sets-fill-slot__signed-in.png",
+      "rules": [
+        "DAC-NME-003",
+        "DBR-ROLL-010",
+        "DAC-DST-009",
+        "BR-SLOT-008",
+        "BR-SLOT-009",
+        "BR-UI-001"
+      ]
+    },
+    {
+      "surfaceId": "sets.fill-slot.exotic-block",
+      "title": "Second exotic blocked in set",
+      "route": "/sets",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "BR-SLOT-008",
+        "BR-SLOT-009",
+        "DAC-DST-001",
+        "DAC-DST-009"
+      ]
+    },
+    {
+      "surfaceId": "synergy.signed-out",
+      "title": "Synergy — signed-out gate",
+      "route": "/synergy",
+      "captureId": "synergy-signed-out",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/synergy-signed-out__signed-in.png",
+      "rules": [
+        "BR-AUTH-001"
+      ]
+    },
+    {
+      "surfaceId": "synergy.library",
+      "title": "Synergy library",
+      "route": "/synergy",
+      "captureId": "synergy-library",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/synergy-library__signed-in.png",
+      "rules": [
+        "DAC-P2-001",
+        "DAC-P1-009",
+        "DBR-PUR-005",
+        "DBR-SYN-001",
+        "BR-SYN-001",
+        "001:SC-002"
+      ]
+    },
+    {
+      "surfaceId": "synergy.create",
+      "title": "Create synergy",
+      "route": "/synergy",
+      "captureId": "synergy-create",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/synergy-create__signed-in.png",
+      "rules": [
+        "DAC-P2-001",
+        "DAC-P2-003",
+        "DBR-SYN-001",
+        "DBR-SYN-005",
+        "DBR-SYN-006",
+        "DBR-SYN-012",
+        "BR-SYN-001",
+        "BR-SYN-003"
+      ]
+    },
+    {
+      "surfaceId": "synergy.detail",
+      "title": "Synergy detail / evidence",
+      "route": "/synergy",
+      "captureId": "synergy-detail",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/synergy-detail__signed-in.png",
+      "rules": [
+        "DAC-P2-001",
+        "DBR-SYN-001",
+        "DBR-SYN-007",
+        "DBR-SYN-008",
+        "DBR-SYN-009",
+        "DBR-SYN-014",
+        "BR-SYN-011",
+        "BR-SYN-012"
+      ]
+    },
+    {
+      "surfaceId": "synergy.edit",
+      "title": "Edit synergy panel",
+      "route": "/synergy",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DAC-P2-001a",
+        "DBR-SYN-012",
+        "BR-SYN-005"
+      ]
+    },
+    {
+      "surfaceId": "loadouts.signed-out",
+      "title": "Loadouts — signed-out empty",
+      "route": "/loadouts",
+      "captureId": "loadouts-signed-out",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/loadouts-signed-out__signed-in.png",
+      "rules": [
+        "BR-AUTH-001",
+        "003:SC-005"
+      ]
+    },
+    {
+      "surfaceId": "loadouts.list",
+      "title": "In-game loadouts list",
+      "route": "/loadouts",
+      "status": "stub",
+      "output": null,
+      "rules": [
+        "DBR-PUR-002",
+        "BR-EXO-001",
+        "BR-EXO-002",
+        "002:SC-001",
+        "002:SC-005"
+      ]
+    },
+    {
+      "surfaceId": "loadouts.slot-expanded",
+      "title": "Slot expanded detail",
+      "route": "/loadouts",
+      "captureId": "loadouts-slot-expanded",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/loadouts-slot-expanded__signed-in.png",
+      "rules": []
+    },
+    {
+      "surfaceId": "settings.signed-out",
+      "title": "Settings (signed-out)",
+      "route": "/settings",
+      "captureId": "settings-signed-out",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/settings-signed-out__signed-in.png",
+      "rules": [
+        "BR-AUTH-001"
+      ]
+    },
+    {
+      "surfaceId": "settings.signed-in",
+      "title": "Settings (signed-in)",
+      "route": "/settings",
+      "captureId": "settings-signed-in",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/settings-signed-in__signed-in.png",
+      "rules": [
+        "BR-AUTH-001",
+        "DBR-EQP-005"
+      ]
+    },
+    {
+      "surfaceId": "build.finish.one-tap-create",
+      "title": "One-tap Create set",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "build.finish.capture",
+      "title": "Capture sets from build",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "build.finish.slot-loop",
+      "title": "First empty slot fill loop",
+      "route": "/build",
+      "status": "stub",
+      "output": null,
+      "rules": []
+    },
+    {
+      "surfaceId": "build.create.draft.general",
+      "title": "New build → draft General",
+      "route": "/build",
+      "captureId": "build-create-draft-general",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-create-draft-general__signed-in.png",
+      "rules": []
+    },
+    {
+      "surfaceId": "build.create.draft.locked.tabs",
+      "title": "Locked compose tabs",
+      "route": "/build",
+      "captureId": "build-create-draft-locked-tabs",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-create-draft-locked-tabs__signed-in.png",
+      "rules": []
+    },
+    {
+      "surfaceId": "build.edit.finish",
+      "title": "Finish readiness",
+      "route": "/build",
+      "captureId": "build-edit-finish",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/build-edit-finish__signed-in.png",
+      "rules": []
+    },
+    {
+      "surfaceId": "catalog.filters.open",
+      "title": "Filters expanded",
+      "route": "/catalog",
+      "captureId": "catalog-filters-open",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/catalog-filters-open__signed-in.png",
+      "rules": []
+    },
+    {
+      "surfaceId": "loadouts.signed.in",
+      "title": "Slots list",
+      "route": "/loadouts",
+      "captureId": "loadouts-signed-in",
+      "status": "stub",
+      "output": "F:/Destiny2BuildCreator/docs/atlas/screenshots/flutter-windows/loadouts-signed-in__signed-in.png",
+      "rules": []
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Default Variant Composer — UI mock</title>
+  <style>
+    :root {
+      --bg: #050608; --surface: #0c0e12; --raised: #12151c;
+      --line: #1c212c; --fg: #e8eaef; --muted: #8a93a6;
+      --accent: #e6b35c; --accent-dim: #e6b35c24; --danger: #e2654f;
+      --font-d: "Barlow Condensed", system-ui, sans-serif;
+      --font-b: "IBM Plex Sans", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+      font-family: var(--font-b); display: flex; flex-direction: column;
+    }
+    header {
+      border-bottom: 1px solid var(--line); padding: 10px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    header h1 {
+      margin: 0; font-family: var(--font-d); font-size: 1.1rem;
+      letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+    }
+    header span { color: var(--muted); font-size: 0.75rem; }
+    .shell { display: grid; grid-template-columns: 280px 1fr; flex: 1; min-height: 0; }
+    .rail { border-right: 1px solid var(--line); background: var(--surface); padding: 12px; }
+    .rail .row {
+      border: 1px solid var(--line); padding: 8px; margin-bottom: 0;
+      border-bottom: none; font-family: var(--font-d); font-size: 0.75rem;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    }
+    .rail .row:last-child { border-bottom: 1px solid var(--line); }
+    .rail .row.active { color: var(--accent); background: var(--accent-dim); box-shadow: inset 2px 0 0 var(--accent); }
+    .main { display: flex; flex-direction: column; min-width: 0; }
+    .tabs {
+      display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .tab {
+      font-family: var(--font-d); font-size: 0.7rem; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 12px 14px; border: 0; border-right: 1px solid var(--line);
+      background: transparent; color: var(--muted); cursor: pointer;
+    }
+    .tab[aria-selected="true"] { color: var(--accent); background: var(--accent-dim); box-shadow: inset 0 -2px 0 var(--accent); }
+    .tab:disabled { opacity: 0.35; cursor: not-allowed; }
+    .body { padding: 16px; overflow: auto; flex: 1; }
+    .kicker {
+      font-family: var(--font-d); font-size: 0.65rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .panel { border: 1px solid var(--line); background: var(--surface); padding: 12px; margin-bottom: 12px; }
+    .subtabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); margin-bottom: 12px; }
+    .subtabs button {
+      font-family: var(--font-d); letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 0.75rem; padding: 12px; border: 0; background: var(--surface); color: var(--muted); cursor: pointer;
+    }
+    .subtabs button + button { border-left: 1px solid var(--line); }
+    .subtabs button.on { color: var(--accent); background: var(--accent-dim); }
+    .btn {
+      font-family: var(--font-d); letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 0.7rem; padding: 8px 12px; border: 1px solid var(--line);
+      background: transparent; color: var(--fg); cursor: pointer;
+    }
+    .btn.accent { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); color: var(--accent); background: var(--accent-dim); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .chip {
+      display: inline-block; border: 1px solid var(--line); padding: 2px 8px;
+      font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 2px;
+    }
+    .chip.match { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); color: var(--accent); }
+    .warn { color: var(--danger); font-size: 0.8rem; }
+    .muted { color: var(--muted); font-size: 0.8rem; }
+    label { display: block; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    input, select {
+      width: 100%; background: var(--raised); border: 1px solid var(--line);
+      color: var(--fg); padding: 8px; margin-bottom: 10px;
+    }
+    .hidden { display: none; }
+    footer { border-top: 1px solid var(--line); padding: 8px 16px; font-size: 0.7rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Default variant composer</h1>
+    <span>Mock · 043 · Matte Flap Ledger</span>
+  </header>
+  <div class="shell">
+    <aside class="rail">
+      <div class="kicker">Builds</div>
+      <div class="row active">New / Arc Warlock · draft</div>
+      <div class="row">Geomag Traces</div>
+      <div class="row">Strand Titan A</div>
+    </aside>
+    <div class="main">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="general" aria-selected="true">General</button>
+        <button class="tab" role="tab" data-tab="subclass" disabled title="Set class + subclass on General">Subclass</button>
+        <button class="tab" role="tab" data-tab="armor" disabled title="Set class on General">Armor &amp; Mod Set</button>
+        <button class="tab" role="tab" data-tab="weapon" disabled title="Set class on General">Weapon Set</button>
+        <button class="tab" role="tab" data-tab="finish">Finish</button>
+      </div>
+      <div class="body">
+        <section id="panel-general">
+          <div class="kicker">General · intent + identity</div>
+          <div class="panel">
+            <label>Name</label>
+            <input placeholder="Optional — derived from synergies" />
+            <label>Class</label>
+            <div>
+              <button class="btn" data-class="Titan">Titan</button>
+              <button class="btn" data-class="Hunter">Hunter</button>
+              <button class="btn accent" data-class="Warlock">Warlock</button>
+            </div>
+            <label style="margin-top:10px">Subclass</label>
+            <select id="subclassSelect">
+              <option value="">— select —</option>
+              <option>Stormcaller</option>
+              <option>Dawnblade</option>
+              <option>Voidwalker</option>
+              <option>Broodweaver</option>
+              <option>Shadebinder</option>
+              <option selected>Chaos Reach</option>
+            </select>
+            <label>Synergy types (required to save)</label>
+            <div>
+              <span class="chip match">Verb · Amplified</span>
+              <span class="chip match">Verb · Ionic Trace</span>
+              <span class="chip">+ add</span>
+            </div>
+            <p class="muted" style="margin-top:10px">Soft guidance: coverage preview (never auto-applies).</p>
+            <button class="btn accent" id="saveGeneral">Save general · create build</button>
+          </div>
+        </section>
+        <section id="panel-subclass" class="hidden">
+          <div class="kicker">Subclass · kit groups</div>
+          <div class="panel grid3">
+            <div><div class="kicker">Class</div><div class="chip">Healing Rift</div></div>
+            <div><div class="kicker">Melee</div><div class="chip">Ball lightning</div></div>
+            <div><div class="kicker">Grenade</div><div class="chip">Pulse grenade</div></div>
+          </div>
+          <div class="panel grid3">
+            <div><div class="kicker">Movement</div><div class="chip">Burst glide</div></div>
+            <div><div class="kicker">Aspects</div><div class="chip">Electrostatic mind</div></div>
+            <div><div class="kicker">Fragments</div><div class="chip">Spark of …</div></div>
+          </div>
+        </section>
+        <section id="panel-armor" class="hidden">
+          <div class="kicker">Armor &amp; Mod Set</div>
+          <div class="subtabs">
+            <button type="button" class="on" data-asub="reuse">Reuse</button>
+            <button type="button" data-asub="create">Create</button>
+          </div>
+          <div id="armor-reuse">
+            <div class="panel">
+              <div class="kicker">Armor sets · class-constrained</div>
+              <div class="row-like muted">Geomag Stabilizers Armor</div>
+              <button class="btn accent">Attach live</button>
+              <button class="btn">Improve kit (optional)</button>
+            </div>
+            <div class="panel">
+              <div class="kicker">Mod sets</div>
+              <div class="muted">List + attach</div>
+            </div>
+          </div>
+          <div id="armor-create" class="hidden">
+            <div class="panel">
+              <div class="kicker">Bonuses · Optimize · results</div>
+              <p class="muted">Confirm → generated name + concept tags from build synergies. Never auto-apply.</p>
+              <button class="btn accent">Run optimize</button>
+            </div>
+          </div>
+        </section>
+        <section id="panel-weapon" class="hidden">
+          <div class="kicker">Weapon Set</div>
+          <div class="subtabs">
+            <button type="button" class="on" data-wsub="reuse">Reuse</button>
+            <button type="button" data-wsub="create">Create</button>
+          </div>
+          <div id="weapon-create">
+            <div class="grid3">
+              <div class="panel"><div class="kicker">Primary</div><span class="chip match">synergy</span> <span class="chip">other</span></div>
+              <div class="panel"><div class="kicker">Secondary</div><span class="chip match">synergy</span></div>
+              <div class="panel"><div class="kicker">Heavy</div><span class="chip">catalog…</span></div>
+            </div>
+          </div>
+        </section>
+        <section id="panel-finish" class="hidden">
+          <div class="kicker">Finish · always visible</div>
+          <div class="panel">
+            <p class="warn">Missing: armor coverage · weapon slots · owned pins</p>
+            <p class="muted">Equip / DIM stay disabled until completeness + equip-ready.</p>
+            <button class="btn accent" disabled>Equip</button>
+            <button class="btn" disabled>Export DIM</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <footer>Canonical board: docs/build-composer-flow - Future direction.excalidraw · Spec 043</footer>
+  <script>
+    const tabs = [...document.querySelectorAll(".tab")];
+    const panels = {
+      general: document.getElementById("panel-general"),
+      subclass: document.getElementById("panel-subclass"),
+      armor: document.getElementById("panel-armor"),
+      weapon: document.getElementById("panel-weapon"),
+      finish: document.getElementById("panel-finish"),
+    };
+    let unlocked = false;
+    function show(id) {
+      tabs.forEach((t) => t.setAttribute("aria-selected", t.dataset.tab === id ? "true" : "false"));
+      Object.entries(panels).forEach(([k, el]) => el.classList.toggle("hidden", k !== id));
+    }
+    tabs.forEach((t) => t.addEventListener("click", () => {
+      if (t.disabled) return;
+      show(t.dataset.tab);
+    }));
+    document.getElementById("saveGeneral").addEventListener("click", () => {
+      unlocked = true;
+      tabs.forEach((t) => {
+        if (["subclass", "armor", "weapon"].includes(t.dataset.tab)) t.disabled = false;
+      });
+      alert("Mock: build persisted — Subclass / Armor / Weapon unlocked");
+    });
+    document.querySelectorAll("[data-asub]").forEach((b) => b.addEventListener("click", () => {
+      document.querySelectorAll("[data-asub]").forEach((x) => x.classList.toggle("on", x === b));
+      document.getElementById("armor-reuse").classList.toggle("hidden", b.dataset.asub !== "reuse");
+      document.getElementById("armor-create").classList.toggle("hidden", b.dataset.asub !== "create");
+    }));
+  </script>
+</body>
+</html>

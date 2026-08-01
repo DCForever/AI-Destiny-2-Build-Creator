@@ -7,6 +7,10 @@ import type { SetType } from "@/lib/sets/schemas";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
 import { getSet } from "@/lib/db/repositories/setRepository";
 import type { AppDatabase } from "@/lib/db/client";
+import {
+  collectArtifactCompleteGaps,
+  collectSubclassKitCompleteGaps,
+} from "@/lib/builds/defaultLoadoutCompleteness";
 import { listActiveSetItems, type SetItemRecord } from "@/lib/sets/setItemService";
 
 export type SlotClaim = {
@@ -16,6 +20,8 @@ export type SlotClaim = {
   source: "set" | "build_exotic_armor" | "variant_exotic_weapon" | "pair_set";
   setId?: string;
   selectedPerks?: number[];
+  /** Armor combat mods on the piece (armor_mod link matching). */
+  modHashes?: number[] | null;
   instanceId?: string | null;
 };
 
@@ -51,6 +57,7 @@ export type ExpandedSetItem = {
   itemHash: number;
   itemName: string;
   selectedPerks?: number[];
+  modHashes?: number[] | null;
   setId: string;
   setType: SetType;
   instanceId?: string | null;
@@ -119,6 +126,7 @@ export async function loadExpandedAttachmentItems(
       itemHash: cfg.itemHash,
       itemName: cfg.itemName,
       selectedPerks: cfg.selectedPerks,
+      modHashes: cfg.modHashes ?? null,
       setId: attachment.setId,
       setType: set.type,
       instanceId: cfg.instanceId ?? null,
@@ -131,6 +139,7 @@ export async function loadExpandedAttachmentItems(
     itemHash: item.itemHash,
     itemName: item.itemName,
     selectedPerks: item.selectedPerks,
+    modHashes: item.modHashes,
     setId: attachment.setId,
     setType: set.type,
     instanceId: item.instanceId,
@@ -145,6 +154,7 @@ export function itemsToSlotClaims(items: ExpandedSetItem[]): SlotClaim[] {
     source: item.setType === "pair" ? "pair_set" : "set",
     setId: item.setId,
     selectedPerks: item.selectedPerks,
+    modHashes: item.modHashes,
     instanceId: item.instanceId ?? null,
   }));
 }
@@ -212,10 +222,39 @@ export function assertVariantNotEmpty(resolved: ResolvedVariantEquipment): void 
 const REQUIRED_WEAPON_SLOTS: EquipmentSlot[] = ["primary", "special", "heavy"];
 const REQUIRED_ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_item"];
 
+export type FullCombatLoadoutOptions = {
+  hasMods?: boolean;
+  /** Fragment capacity sum from selected aspects (when resolved). */
+  fragmentCapacity?: number;
+  /** False when aspect capacities could not be resolved from game data. */
+  capacityResolved?: boolean;
+  maxAspects?: number;
+  /** Default variant artifact selection (DBR-ART-003a). */
+  artifactHash?: number | null;
+  artifactConfig?: number[] | null;
+  /**
+   * Effective kit for this variant (tree name + abilities/aspects/fragments).
+   * Prefer over build.subclass when provided (per-variant kit).
+   */
+  subclassKit?: {
+    name?: string;
+    super?: string;
+    melee?: string;
+    grenade?: string;
+    aspects?: string[];
+    fragments?: string[];
+  } | null;
+  /**
+   * When true (default), enforce subclass kit bar + artifact fill.
+   * Set false only for pure equipment-gap unit tests.
+   */
+  requireKitAndArtifact?: boolean;
+};
+
 export function assertFullCombatLoadout(
   resolved: ResolvedVariantEquipment,
   build: BuildRecord,
-  opts?: { hasMods?: boolean },
+  opts?: FullCombatLoadoutOptions,
 ): void {
   const missing: string[] = [];
   for (const slot of REQUIRED_WEAPON_SLOTS) {
@@ -225,11 +264,37 @@ export function assertFullCombatLoadout(
     if (!resolved.equipment[slot]) missing.push(slot);
   }
   if (!build.className) missing.push("className");
-  const subclass = build.subclass as { name?: string; super?: string } | null;
+  const subclass =
+    opts?.subclassKit ??
+    (build.subclass as {
+      name?: string;
+      super?: string;
+      melee?: string;
+      grenade?: string;
+      aspects?: string[];
+      fragments?: string[];
+    } | null);
   if (!subclass || typeof subclass !== "object" || !subclass.name) {
     missing.push("subclass");
   }
   if (!opts?.hasMods) missing.push("mods");
+
+  const requireKitAndArtifact = opts?.requireKitAndArtifact !== false;
+  if (requireKitAndArtifact) {
+    for (const gap of collectSubclassKitCompleteGaps(subclass, {
+      maxAspects: opts?.maxAspects,
+      fragmentCapacity: opts?.fragmentCapacity,
+      capacityResolved: opts?.capacityResolved,
+    })) {
+      if (!missing.includes(gap)) missing.push(gap);
+    }
+    for (const gap of collectArtifactCompleteGaps({
+      artifactHash: opts?.artifactHash,
+      artifactConfig: opts?.artifactConfig,
+    })) {
+      if (!missing.includes(gap)) missing.push(gap);
+    }
+  }
 
   if (missing.length > 0) {
     throw new ApiError(

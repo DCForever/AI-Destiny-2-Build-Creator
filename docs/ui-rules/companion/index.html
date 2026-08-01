@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2BC Product Map</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="crumbs">PRODUCT MAP / Destiny 2 Build Creator</div>
+      <h1>Unified map</h1>
+      <p class="lede">
+        Flows, screens, Atlas shots, rules, and Draw.io export — structure from
+        <code>docs/product-map</code>, wording from domain specs.
+        <strong>Never auto-commits.</strong>
+      </p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnReload" class="btn">Reload</button>
+      <button type="button" id="btnSync" class="btn primary">Sync hub</button>
+      <a class="btn ghost" href="/ui-map.drawio" download="ui-map.drawio">.drawio</a>
+      <a class="btn ghost" href="/atlas/index.html">Atlas only</a>
+    </div>
+  </header>
+
+  <nav class="mode-tabs" id="modeTabs" aria-label="Modes">
+    <button type="button" data-mode="flows" class="on">Flows</button>
+    <button type="button" data-mode="screens">Screens</button>
+    <button type="button" data-mode="map">Map</button>
+    <button type="button" data-mode="rules">Rules</button>
+    <button type="button" data-mode="export">Export</button>
+  </nav>
+
+  <div class="status" id="status" hidden></div>
+  <div id="app" class="app"></div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lb-close" id="lbClose" aria-label="Close">×</button>
+    <img id="lbImg" alt="" />
+    <div class="lb-cap" id="lbCap"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

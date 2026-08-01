@@ -31,7 +31,7 @@ describe("resolveWeaponPerkOptions", () => {
     const result = resolveWeaponPerkOptions(1234, { perkColumns: COLUMNS }, PERK_NAMES);
     expect(result.columns[0]?.options[0]).toEqual({ hash: 10, name: "Arrowhead Brake" });
     const unknown = result.columns[2]?.options.find((o) => o.hash === 999);
-    expect(unknown?.name).toBe("999");
+    expect(unknown?.name).toBe("Unknown plug");
   });
 
   it("returns empty columns for a missing/non-weapon item", () => {

@@ -1,0 +1,44 @@
+# Platform registry — product map multi-shell slots
+# Rule wording (DBR/DAC/BR) is platform-agnostic; only realizations differ.
+
+platforms:
+  nextjs:
+    label: Next.js web
+    status: production
+    shell: next
+    capture: playwright
+    baseUrlEnv: ATLAS_BASE_URL
+    screenshotsDir: docs/atlas/screenshots
+    # legacy flat filenames: {captureId}__{variant}.png
+    screenshotsLayout: flat
+    notes: Current production product binary until Dart cutover.
+
+  flutter-windows:
+    label: Flutter Windows
+    status: planned
+    shell: flutter
+    capture: flutter-integration
+    screenshotsDir: docs/atlas/screenshots/flutter-windows
+    screenshotsLayout: nested
+    # first user-visible Dart shell (D-SHELL-1)
+    notes: >
+      Public+PKCE Bungie auth; pure Dart I/O; same surface ids and rule IDs as Next.
+      Capture not required until shell exists — stubs track parity intent.
+
+  flutter-mobile:
+    label: Flutter mobile
+    status: planned
+    shell: flutter
+    capture: flutter-integration
+    screenshotsDir: docs/atlas/screenshots/flutter-mobile
+    screenshotsLayout: nested
+    notes: Reduced density vs Windows; same rules, fewer secondary surfaces.
+
+  jaspr-web:
+    label: Jaspr web
+    status: planned
+    shell: jaspr
+    capture: playwright
+    screenshotsDir: docs/atlas/screenshots/jaspr-web
+    screenshotsLayout: nested
+    notes: Prefer Jaspr over Flutter Web for product web (D-NOT-FLUTTER-WEB).
