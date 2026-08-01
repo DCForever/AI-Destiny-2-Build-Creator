@@ -79,3 +79,17 @@ Dual-run Next paths are monorepo-relative, e.g. `web/NextJS/package.json`, `web/
 ## When touching Next.js
 
 Stop and open [`../web/NextJS/AGENTS.md`](../web/NextJS/AGENTS.md). Shared product rules stay in monorepo `specs/` — implement in the correct stack, do not duplicate rule text only in Dart.
+
+## Specialized Grok Build Agents
+
+Local multi-agent roles live under [`.grok/agents/`](.grok/agents/). When using Grok Build multi-agent workflows inside this workspace:
+
+- **Always** honor the purity rules, Melos root (`flutter/`), and package boundaries defined above.
+- **product-manager** owns scope and acceptance criteria against the product-map / DBR/DAC.
+- **flutter-architect** owns structural and layering decisions.
+- **flutter-implementor** writes code within existing package boundaries; pair with a simplicity mindset.
+- Desktop UI and Web UI work must respect the existing token → Flutter / Jaspr mapping.
+- Never introduce Flutter/Jaspr/IO dependencies into pure packages (`domain`, `sandbox_data`).
+- Never embed secrets; Public + PKCE only.
+
+Prefer spawning focused subagents rather than asking a single session to hold the entire context.
