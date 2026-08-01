@@ -112,6 +112,12 @@ describe("createSetsFromBuild", () => {
       itemName: "Chest",
       confirmReplace: true,
     });
+    await upsertSetItem(db, "a2", "armor", {
+      slot: "legs",
+      itemHash: 12,
+      itemName: "Legs",
+      confirmReplace: true,
+    });
     await prepareAttachments(db, user.id, "v2", [{ setId: "a2", mode: "live" }], now);
 
     const result = await createSetsFromBuild(db, user.id, "b2", {

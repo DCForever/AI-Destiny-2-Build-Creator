@@ -7,6 +7,48 @@ import type { EquipmentSlot } from "@/lib/sets/schemas";
 const WEAPON_SLOTS: EquipmentSlot[] = ["primary", "special", "heavy"];
 const ARMOR_SLOTS: EquipmentSlot[] = ["helmet", "arms", "chest", "legs", "class_item"];
 
+/**
+ * Subclass kit that satisfies DBR-SUB-006 when fragment capacity is unknown
+ * (non-empty fragments) or known capacity ≤ fragment count.
+ */
+export const COMPLETE_DEFAULT_SUBCLASS_KIT: {
+  name: string;
+  super: string;
+  classAbility: string;
+  movement: string;
+  melee: string;
+  grenade: string;
+  aspects: string[];
+  fragments: string[];
+  rationale: string;
+} = {
+  name: "Sunbreaker",
+  super: "Hammer of Sol",
+  classAbility: "Rally Barricade",
+  movement: "Strafe Lift",
+  melee: "Hammer Strike",
+  grenade: "Thermite Grenade",
+  aspects: ["Roaring Flames", "Consecration"],
+  fragments: [
+    "Ember of Ashes",
+    "Ember of Beams",
+    "Ember of Char",
+    "Ember of Combustion",
+  ],
+  rationale: "",
+};
+
+/** Artifact selection that satisfies DBR-ART-003a on default. */
+export const COMPLETE_DEFAULT_ARTIFACT: {
+  artifactHash: number;
+  artifactName: string;
+  artifactConfig: number[];
+} = {
+  artifactHash: 9_001,
+  artifactName: "Test Artifact",
+  artifactConfig: [11, 22],
+};
+
 /** Seeds weapon + armor + mod sets that satisfy default full-combat-loadout validation. */
 export async function seedFullCombatAttachments(
   db: AppDatabase,
@@ -37,6 +79,17 @@ export async function seedFullCombatAttachments(
   }
 
   createSetRecord(db, userId, { id: modId, name: `${prefix} Mods`, type: "mod", tagIds: [], now });
+  // Two pieces so Mod set meets DBR-CMP-009 if occupancy is checked while attached.
+  await upsertSetItem(db, modId, "mod", {
+    slot: "helmet",
+    itemHash: 3001,
+    itemName: "Helmet mod",
+  });
+  await upsertSetItem(db, modId, "mod", {
+    slot: "arms",
+    itemHash: 3002,
+    itemName: "Arms mod",
+  });
 
   return [
     { setId: weaponId, mode: "live" },

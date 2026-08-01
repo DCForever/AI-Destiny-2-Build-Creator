@@ -9,6 +9,7 @@ import {
   type EntityPresentation,
   SUBCLASS_STORES,
 } from "@/lib/catalog/entityPresentation";
+import { primaryEntityLabel } from "@/lib/presentation/displayName";
 import type { EquipmentSlot } from "@/lib/sets/schemas";
 import type { ResolvedVariantEquipment, SlotClaim } from "@/lib/builds/resolveVariant";
 
@@ -187,7 +188,11 @@ function assembleVariantPresentation(
         ? toPresented(
             byHash.get(input.exoticWeaponHash) ??
               emptyPresented(
-                input.exoticWeaponName ?? `Unknown (${input.exoticWeaponHash})`,
+                primaryEntityLabel(
+                  input.exoticWeaponName,
+                  input.exoticWeaponHash,
+                  "item",
+                ),
               ),
           )
         : input.exoticWeaponName
@@ -198,14 +203,16 @@ function assembleVariantPresentation(
         ? toPresented(
             byHash.get(input.artifactHash) ??
               emptyPresented(
-                input.artifactName ?? `Unknown (${input.artifactHash})`,
+                primaryEntityLabel(input.artifactName, input.artifactHash, "item"),
               ),
           )
         : input.artifactName
           ? emptyPresented(input.artifactName)
           : null,
     artifactPerks: (input.artifactConfig ?? []).map((h) =>
-      toPresented(byHash.get(h) ?? emptyPresented(`Perk ${h}`)),
+      toPresented(
+        byHash.get(h) ?? emptyPresented(primaryEntityLabel(null, h, "plug")),
+      ),
     ),
   };
 }
@@ -223,7 +230,9 @@ function presentClaimsFromMap(
     const item = byHash.get(claim.itemHash);
     const perkList = (claim.selectedPerks ?? []).map((h) => {
       const p = byHash.get(h);
-      return p ? toPresented(p) : emptyPresented(`Perk ${h}`);
+      return p
+        ? toPresented(p)
+        : emptyPresented(primaryEntityLabel(null, h, "plug"));
     });
     out[slot] = {
       ...claim,
@@ -297,8 +306,11 @@ export async function enrichBuildPresentation<T extends {
       ? toPresented(
           byHash.get(detail.exoticArmorHash) ??
             emptyPresented(
-              detail.exoticArmorName ??
-                `Unknown (${detail.exoticArmorHash})`,
+              primaryEntityLabel(
+                detail.exoticArmorName,
+                detail.exoticArmorHash,
+                "item",
+              ),
             ),
         )
       : detail.exoticArmorName

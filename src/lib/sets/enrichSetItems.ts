@@ -14,6 +14,10 @@ import { getServices } from "@/lib/services";
 import {
   formatSynergyTypeDesignation,
 } from "@/lib/synergies/generateSynergyName";
+import {
+  buildWeaponRollDetail,
+  type WeaponRollDetail,
+} from "@/lib/presentation/weaponRollDetail";
 import type { SetItemRecord } from "@/lib/sets/setItemService";
 import { sumArmorSetStats } from "@/lib/sets/sumArmorSetStats";
 
@@ -54,6 +58,8 @@ export type EnrichedSetItem = SetItemRecord & {
   originTraitName?: string | null;
   selectedTraitPerks?: SetItemPerkName[];
   availableTraitPerks?: SetItemPerkName[];
+  /** Full can-roll + selected plug model for weapon detail (DBR-UI-007). */
+  rollDetail?: WeaponRollDetail | null;
   linkedSynergies?: SetItemLinkedSynergy[];
   statValues?: Partial<Record<string, number>> | null;
   totalStats?: number | null;
@@ -202,21 +208,45 @@ const instanceIds = items
         weapon.originTraitHashes
           .map((h) => originByHash.get(h)?.name)
           .find(Boolean) ?? null;
+      const selectedHashes = inv?.plugHashes ?? item.selectedPerks;
       next.availableTraitPerks = collectAvailableTraits(
         weapon.perkColumns,
         perkByHash,
-        inv?.plugHashes ?? item.selectedPerks,
+        selectedHashes,
       );
+      next.rollDetail = buildWeaponRollDetail({
+        perkColumns: weapon.perkColumns,
+        perkNames: new Map(
+          [...perkByHash.entries()].map(([h, p]) => [h, p.name]),
+        ),
+        selectedPerkHashes: selectedHashes,
+        craft:
+          inv && typeof inv.isCrafted === "boolean"
+            ? { isCrafted: inv.isCrafted }
+            : null,
+      });
     } else if (exoW) {
       next.itemTypeName = "Exotic weapon";
       next.frame = exoW.frame;
       next.ammo = exoW.ammo;
       next.isExotic = true;
+      const selectedHashes = inv?.plugHashes ?? item.selectedPerks;
       next.availableTraitPerks = collectAvailableTraits(
         exoW.perkColumns ?? [],
         perkByHash,
-        inv?.plugHashes ?? item.selectedPerks,
+        selectedHashes,
       );
+      next.rollDetail = buildWeaponRollDetail({
+        perkColumns: exoW.perkColumns ?? [],
+        perkNames: new Map(
+          [...perkByHash.entries()].map(([h, p]) => [h, p.name]),
+        ),
+        selectedPerkHashes: selectedHashes,
+        craft:
+          inv && typeof inv.isCrafted === "boolean"
+            ? { isCrafted: inv.isCrafted }
+            : null,
+      });
     } else if (exoA) {
       next.itemTypeName = "Exotic armor";
       next.classType = exoA.classType;

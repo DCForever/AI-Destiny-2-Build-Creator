@@ -61,6 +61,23 @@ vi.mock("@/lib/services", () => ({
             },
           ];
         }
+        if (name === "exotic-weapons") {
+          return [
+            {
+              hash: 888,
+              name: "Exotic Gun",
+              searchName: "exotic gun",
+              icon: null,
+              slot: "Energy",
+              element: "Arc",
+              ammo: "Special",
+              frame: "Adaptive",
+              itemTypeName: "Sidearm",
+              originTraitHashes: [],
+              perkColumns: [],
+            },
+          ];
+        }
         return [];
       }),
     },
@@ -130,27 +147,31 @@ describe("buildService", () => {
       name: "Empty",
       className: "Titan",
       subclass: { name: "Sunbreaker", super: "", classAbility: "", movement: "", melee: "", grenade: "", aspects: [], fragments: [], rationale: "" },
-      exoticArmorHash: 100,
+      // No build exotic armor — full armor set fills all slots without conflict.
+      exoticArmorHash: null,
       synergyTypes: [{ type: "melee", subType: "Base" }],
     });
 
+    // Partial weapon package blocked before default loadout (Phase A occupancy).
     await expect(
       updateUserVariant(db, user.id, build!.id, build!.variants[0]!.id, {
         attachments: [{ setId: "set-w", mode: "live" }],
       }),
-    ).rejects.toMatchObject({ code: API_ERROR_CODES.DEFAULT_VARIANT_INCOMPLETE });
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.SET_MIN_ITEMS });
 
     // Illegal save must not leave attachments committed (transactional rollback).
     expect(listAttachments(db, build!.variants[0]!.id)).toHaveLength(0);
 
-    const emptySet = crypto.randomUUID();
-    createSetRecord(db, user.id, { id: emptySet, name: "Empty Set", type: "mod", tagIds: [], now });
-
+    // Full gear attachments with empty kit/artifact → default incomplete (Phase B).
+    const { seedFullCombatAttachments } = await import("@/lib/builds/testFixtures");
+    const full = await seedFullCombatAttachments(db, user.id, "b2full");
     await expect(
       updateUserVariant(db, user.id, build!.id, build!.variants[0]!.id, {
-        attachments: [{ setId: emptySet, mode: "live" }],
+        attachments: full,
       }),
     ).rejects.toMatchObject({ code: API_ERROR_CODES.DEFAULT_VARIANT_INCOMPLETE });
+
+    expect(listAttachments(db, build!.variants[0]!.id)).toHaveLength(0);
   });
 
   it("allows create without exotic armor and with pinned super / shared weapon", async () => {
@@ -229,6 +250,42 @@ describe("buildService", () => {
     expect((forked as { forkedFromId?: string })?.forkedFromId).toBe(build!.id);
   });
 
+  it("rejects class change after create (DBR-BLD-007)", async () => {
+    const db = createTestDb();
+    const user = ensureUser(db, "b-class-lock", 3, "Player");
+    seedDefaultSynergies(db, user.id);
+
+    const build = await createUserBuild(db, user.id, {
+      name: "Titan Build",
+      className: "Titan",
+      subclass: {
+        name: "Sunbreaker",
+        super: "",
+        classAbility: "",
+        movement: "",
+        melee: "",
+        grenade: "",
+        aspects: [],
+        fragments: [],
+        rationale: "",
+      },
+      synergyTypes: [{ type: "melee", subType: "Base" }],
+    });
+
+    const { updateUserBuild } = await import("@/lib/builds/buildService");
+    await expect(
+      updateUserBuild(db, user.id, build!.id, { className: "Hunter" }),
+    ).rejects.toMatchObject({ code: API_ERROR_CODES.CLASS_IMMUTABLE });
+
+    // Same class is a no-op, not an error.
+    const same = await updateUserBuild(db, user.id, build!.id, {
+      className: "Titan",
+      name: "Titan Build Renamed",
+    });
+    expect(same?.className).toBe("Titan");
+    expect(same?.name).toBe("Titan Build Renamed");
+  });
+
   it("creates build with unmatched synergy type (no library record)", async () => {
     const db = createTestDb();
     const user = ensureUser(db, "b-unmatched", 3, "Player");
@@ -291,6 +348,11 @@ describe("buildService", () => {
     const now = new Date().toISOString();
 
     createSetRecord(db, user.id, { id: "pair-bad", name: "Pair", type: "pair", tagIds: [], now });
+    await upsertSetItem(db, "pair-bad", "pair", {
+      slot: "exotic_weapon",
+      itemHash: 888,
+      itemName: "Exotic Gun",
+    });
     await upsertSetItem(db, "pair-bad", "pair", {
       slot: "exotic_armor",
       itemHash: 999,

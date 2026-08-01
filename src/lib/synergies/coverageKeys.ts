@@ -41,6 +41,13 @@ export function coverageKeyFromLink(link: {
       return `armor_set_bonus:${set}:${link.bonusPieces}:${bonus}`;
     }
     case "exotic_armor":
+      // Classic shell key; class-item perk-config uses perkHash (DBR-ID-011).
+      if (link.perkHash != null && link.itemHash == null) {
+        return `exotic_armor:perk:${link.perkHash}`;
+      }
+      if (link.perkHash != null && link.itemHash != null) {
+        return `exotic_armor:${link.itemHash}:perk:${link.perkHash}`;
+      }
       if (link.itemHash == null) return null;
       return `exotic_armor:${link.itemHash}`;
     case "artifact_perk":
@@ -111,6 +118,7 @@ export function linkInputFromCoverageCandidate(candidate: {
         kind: "exotic_armor",
         displayName: candidate.displayName,
         itemHash: candidate.itemHash,
+        perkHash: candidate.perkHash,
       };
     case "artifact_perk":
       return {

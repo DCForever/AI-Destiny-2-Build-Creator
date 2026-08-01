@@ -1,4 +1,5 @@
 import type { WeaponPerkColumn } from "@/lib/manifest/types/records";
+import { primaryEntityLabel } from "@/lib/presentation/displayName";
 
 export interface WeaponPerkOption {
   hash: number;
@@ -33,7 +34,10 @@ export function resolveWeaponPerkOptions(
     for (const hash of [...perkColumn.curated, ...perkColumn.randomized]) {
       if (seen.has(hash)) continue;
       seen.add(hash);
-      options.push({ hash, name: perkNames.get(hash) ?? String(hash) });
+      options.push({
+        hash,
+        name: primaryEntityLabel(perkNames.get(hash) ?? null, hash, "plug"),
+      });
     }
     return { column: perkColumn.column, options };
   });

@@ -1,0 +1,680 @@
+# Hierarchical product flows (structure SSoT)
+# Phase fields: surface | include | branch[] | loop | gate | rules
+# Expand via product-map:sync → Atlas paths + Draw.io flow pages
+
+flows:
+  # ─── Top-level journeys ───────────────────────────────────
+  - id: journey.p1.intent-compose-equip
+    title: P1 — Intent → compose → equip
+    type: journey
+    priority: P1
+    description: Primary success journey. Subflows expand for compose and equip.
+    rules:
+      - DAC-P1-001
+      - DAC-P1-002
+      - DAC-P1-003
+      - DAC-P1-004
+      - DAC-P1-005
+      - DAC-P1-006
+      - DAC-P1-007
+      - DAC-P1-008
+      - DAC-P1-009
+      - DBR-PUR-003
+      - DBR-PUR-005
+    phases:
+      - id: create
+        title: Create build (draft → live)
+        include: flow.build.create
+      - id: compose
+        title: Compose default variant
+        include: flow.build.compose-default
+      - id: equip
+        title: Finish → equip / DIM
+        include: flow.build.finish-equip
+
+  - id: journey.p2.library
+    title: P2 — Library curation
+    type: journey
+    priority: P2
+    description: Curate synergies and sets; in-flow create still allowed on P1.
+    rules:
+      - DAC-P2-001
+      - DAC-P2-001a
+      - DAC-P2-003
+      - DAC-P2-005
+      - DBR-PUR-004
+      - DBR-PUR-005
+    phases:
+      - id: synergies
+        title: Synergy library
+        include: flow.synergy.library
+      - id: sets
+        title: Sets library
+        include: flow.sets.library
+      - id: in-flow
+        title: In-flow create still works
+        surface: build.edit.armor.create
+        rules:
+          - DAC-P2-005
+          - DBR-PUR-004
+
+  - id: flow.signed-out-gates
+    title: Signed-out gates
+    type: auth
+    priority: P0
+    description: Unauthenticated landing for each gated product area.
+    rules:
+      - BR-AUTH-001
+    phases:
+      - id: build
+        title: Build gate
+        surface: build.signed-out
+      - id: sets
+        title: Sets gate
+        surface: sets.signed-out
+      - id: synergy
+        title: Synergy gate
+        surface: synergy.signed-out
+      - id: loadouts
+        title: Loadouts empty
+        surface: loadouts.signed-out
+      - id: settings
+        title: Settings
+        surface: settings.signed-out
+      - id: catalog
+        title: Catalog weapons (public)
+        surface: catalog.signed-out.weapons
+
+  # ─── Build create ─────────────────────────────────────────
+  - id: flow.build.create
+    title: Create new build (draft → live)
+    type: subflow
+    priority: P1
+    description: Library → New → draft General → locked tabs → create → live compose.
+    rules:
+      - DAC-P1-001
+      - DAC-P1-002
+      - DBR-SYN-003
+      - BR-SAVE-003
+      - 042:SC-001
+    phases:
+      - id: library
+        title: Open Build library
+        surface: build.library
+      - id: new
+        title: New Build action
+        surface: build.library.new
+      - id: draft-general
+        title: Draft General (class, subclass, synergies)
+        surface: build.create.general
+        rules:
+          - DAC-P1-001
+          - DBR-SYN-002
+          - DBR-SYN-003
+          - DBR-BLD-004
+      - id: locked-tabs
+        title: Locked Subclass / Armor / Weapon tabs
+        surface: build.create.tabs
+      - id: submit
+        title: Create / save draft
+        surface: build.create.submit
+        rules:
+          - DAC-P1-002
+          - BR-SAVE-003
+      - id: live-general
+        title: Live General (identity)
+        surface: build.edit.general
+        rules:
+          - DAC-VAR-004
+          - DBR-ID-008
+
+  # ─── Compose default variant ──────────────────────────────
+  - id: flow.build.compose-default
+    title: Compose default variant (tabs)
+    type: subflow
+    priority: P1
+    rules:
+      - DAC-P1-003
+      - DAC-P1-004
+      - DBR-CMPL-001
+    phases:
+      - id: general
+        title: General / identity
+        surface: build.edit.general
+        rules:
+          - DAC-P1-002
+          - DBR-ID-001
+      - id: subclass
+        title: Subclass kit
+        surface: build.edit.subclass
+        rules:
+          - DBR-SUB-004
+          - DAC-DST-003
+      - id: armor
+        title: Armor sets
+        include: flow.build.armor-set
+      - id: weapon
+        title: Weapon sets
+        include: flow.build.weapon-set
+      - id: coverage
+        title: Soft guidance / coverage
+        surface: build.edit.coverage
+        rules:
+          - DAC-P1-006
+          - DBR-GUID-001
+      - id: finish
+        title: Finish readiness
+        include: flow.build.finish-equip
+
+  # ─── Armor set (branch) ───────────────────────────────────
+  - id: flow.build.armor-set
+    title: Armor set — Reuse / Create / Improve
+    type: subflow
+    priority: P1
+    rules:
+      - DAC-P1-004
+      - DBR-CMP-001
+      - DBR-CMP-005
+      - BR-ATT-001
+      - BR-BLD-007
+    phases:
+      - id: enter
+        title: Armor tab
+        surface: build.edit.armor
+      - id: path
+        title: Choose composition path
+        branch:
+          - id: reuse
+            title: Reuse existing set
+            surface: build.edit.armor.reuse
+          - id: create
+            title: Create + attach
+            surface: build.edit.armor.create
+          - id: improve
+            title: Improve kit
+            surface: build.edit.armor.improve
+      - id: mods
+        title: Mod set / energy
+        surface: build.edit.armor.mods
+        rules:
+          - DAC-DST-002
+          - DBR-MOD-001
+      - id: exotic-gate
+        title: Single exotic armor gate
+        surface: build.edit.armor.exotic-limit
+        gate: hard
+        rules:
+          - DAC-DST-001
+          - DBR-CMP-007
+
+  # ─── Weapon set (branch) ──────────────────────────────────
+  - id: flow.build.weapon-set
+    title: Weapon set — Reuse / Create
+    type: subflow
+    priority: P1
+    rules:
+      - DAC-P1-004
+      - DBR-CMP-001
+      - DBR-ROLL-001
+    phases:
+      - id: enter
+        title: Weapon tab
+        surface: build.edit.weapon
+      - id: path
+        title: Choose composition path
+        branch:
+          - id: reuse
+            title: Reuse existing set
+            surface: build.edit.weapon.reuse
+          - id: create
+            title: Create + slot fill
+            surface: build.edit.weapon.create
+      - id: wishlist
+        title: Desired roll / wishlist
+        surface: build.edit.weapon.wishlist
+        rules:
+          - DAC-P1-005
+          - DBR-ROLL-002
+      - id: exotic-gate
+        title: Single exotic weapon gate
+        surface: build.edit.weapon.exotic-limit
+        gate: hard
+        rules:
+          - DAC-DST-001
+          - DBR-CMP-007
+
+  # ─── Finish / equip ───────────────────────────────────────
+  - id: flow.build.finish-equip
+    title: Finish → equip / DIM
+    type: subflow
+    priority: P1
+    rules:
+      - DAC-P1-003
+      - DAC-P1-005
+      - DAC-P1-007
+      - DAC-P1-008
+      - BR-BLD-007
+      - BR-BLD-008
+      - BR-BLD-009
+      - DBR-EQP-003
+    phases:
+      - id: finish-tab
+        title: Finish tab
+        surface: build.finish
+      - id: gaps
+        title: Gap list / missing reasons
+        surface: build.finish.gaps
+        rules:
+          - DBR-CMPL-001
+      - id: walkthrough
+        title: Slot-first walkthrough
+        include: flow.build.finish.walkthrough
+      - id: armor-optimize
+        title: Armor optimize workspace
+        include: flow.build.finish.armor-optimize
+      - id: equip-gate
+        title: Equip/export blocked until pins
+        surface: build.finish.equip-gate
+        gate: hard
+        rules:
+          - DAC-P1-005
+          - DBR-EQP-003
+          - DBR-ROLL-004
+      - id: character
+        title: Character picker
+        surface: build.finish.character
+        rules:
+          - DBR-BLD-004
+          - DBR-EQP-005
+      - id: equip
+        title: Equip in-game
+        surface: build.finish.equip
+        rules:
+          - DAC-P1-007
+          - DBR-EQP-001
+      - id: dim
+        title: DIM export
+        surface: build.finish.dim
+        rules:
+          - DAC-P1-008
+          - DBR-EQP-002
+
+  - id: flow.build.finish.walkthrough
+    title: Slot-first walkthrough (Armor → Weapons → Mods)
+    type: subflow
+    priority: P1
+    rules:
+      - BR-BLD-007
+      - BR-BLD-008
+      - 029:SC-001
+    phases:
+      - id: one-tap
+        title: One-tap Create set
+        surface: build.finish.one-tap-create
+      - id: capture
+        title: Capture sets from build
+        surface: build.finish.capture
+      - id: slot-loop
+        title: First empty slot fill loop
+        surface: build.finish.slot-loop
+        loop: until-required-slots
+        rules:
+          - BR-BLD-008
+          - DAC-DST-009
+
+  - id: flow.build.finish.armor-optimize
+    title: Finish armor optimize
+    type: subflow
+    priority: P1
+    rules:
+      - BR-BLD-009
+      - BR-OPT-001
+      - 031:SC-001
+    phases:
+      - id: goals
+        title: Goals (set bonuses + seeded stats)
+        surface: build.finish.armor-optimize.goals
+      - id: find
+        title: Find kits
+        surface: build.finish.armor-optimize.find
+      - id: compare
+        title: Top-3 compare
+        surface: build.finish.armor-optimize.compare
+      - id: apply
+        title: Apply combination in place
+        surface: build.finish.armor-optimize.apply
+
+  # ─── Variant update ───────────────────────────────────────
+  - id: flow.variant.update
+    title: Update non-default variant
+    type: subflow
+    priority: P1
+    description: Switch variant, edit gear with soft guidance; gaps allowed.
+    rules:
+      - DAC-VAR-001
+      - DBR-CMPL-002
+      - DBR-SYN-011
+      - BR-VAR-001
+    phases:
+      - id: select
+        title: Select variant
+        surface: build.library.variants
+      - id: general
+        title: Variant-level fields
+        surface: build.edit.general
+      - id: gear
+        title: Armor / weapon edits
+        include: flow.build.weapon-set
+      - id: coverage
+        title: Soft guidance (non-blocking)
+        surface: build.edit.coverage
+        rules:
+          - DAC-P1-006
+          - DBR-SYN-011
+      - id: identity-gate
+        title: Identity change confirm / fork
+        surface: build.edit.general
+        rules:
+          - DAC-VAR-004
+          - DBR-ID-008
+
+  # ─── Sets library ─────────────────────────────────────────
+  - id: flow.sets.library
+    title: Sets library — browse → detail → edit / fill / create
+    type: library
+    priority: P1
+    rules:
+      - BR-SET-001
+      - BR-SET-002
+      - DAC-P1-009
+    phases:
+      - id: browse
+        title: Browse library
+        surface: sets.library
+      - id: create
+        title: Create set
+        include: flow.sets.create
+      - id: detail
+        title: Set detail
+        surface: sets.detail
+        rules:
+          - DAC-NME-004
+          - BR-SET-010
+      - id: edit-fill
+        title: Edit / fill slots
+        include: flow.sets.edit-fill
+
+  - id: flow.sets.create
+    title: Create set (all phases)
+    type: subflow
+    priority: P1
+    rules:
+      - BR-SET-001
+      - BR-SET-002
+      - BR-TAG-004
+      - 001:SC-001
+    phases:
+      - id: open
+        title: New Set
+        surface: sets.library.new
+      - id: form
+        title: Name / type / tags
+        surface: sets.create
+        rules:
+          - BR-TAG-002
+          - BR-TAG-005
+      - id: fill
+        title: Fill required slots
+        surface: sets.fill-slot
+        loop: until-required-slots
+        rules:
+          - DAC-NME-003
+          - DAC-DST-009
+      - id: detail
+        title: Review detail
+        surface: sets.detail
+
+  - id: flow.sets.edit-fill
+    title: Edit set + fill slot
+    type: subflow
+    priority: P1
+    rules:
+      - BR-SET-001
+      - BR-SLOT-008
+      - DAC-DST-009
+    phases:
+      - id: edit
+        title: Edit form
+        surface: sets.edit
+      - id: fill
+        title: Fill slot (catalog embed)
+        surface: sets.fill-slot
+      - id: exotic-block
+        title: Second exotic blocked
+        surface: sets.fill-slot.exotic-block
+        gate: hard
+        rules:
+          - BR-SLOT-008
+          - DAC-DST-001
+
+  # ─── Synergy library ──────────────────────────────────────
+  - id: flow.synergy.library
+    title: Synergy library — browse → detail / create
+    type: library
+    priority: P2
+    rules:
+      - DAC-P2-001
+      - DBR-SYN-001
+    phases:
+      - id: browse
+        title: Browse
+        surface: synergy.library
+      - id: create
+        title: Create synergy
+        include: flow.synergy.create
+      - id: detail
+        title: Detail / evidence
+        surface: synergy.detail
+      - id: edit
+        title: Edit (objects only)
+        include: flow.synergy.edit
+
+  - id: flow.synergy.create
+    title: Create synergy
+    type: subflow
+    priority: P2
+    rules:
+      - DAC-P2-001
+      - DAC-P2-003
+      - DBR-SYN-001
+      - DBR-SYN-012
+    phases:
+      - id: designation
+        title: Type + optional subtype
+        surface: synergy.create.type
+        rules:
+          - DBR-SYN-012
+          - DAC-P2-001a
+      - id: description
+        title: Description
+        surface: synergy.create.description
+      - id: custom-type
+        title: Personal custom type / keyword
+        surface: synergy.create.custom-type
+        rules:
+          - DAC-P2-003
+          - DBR-SYN-005
+      - id: evidence
+        title: Evidence links
+        surface: synergy.detail.links
+        rules:
+          - DBR-SYN-007
+          - DBR-SYN-014
+      - id: required
+        title: Mark links required (AND)
+        surface: synergy.detail.link.required
+        rules:
+          - DBR-SYN-008
+          - DBR-SYN-009
+          - DAC-P2-002
+
+  - id: flow.synergy.edit
+    title: Edit synergy (designation immutable)
+    type: subflow
+    priority: P2
+    rules:
+      - DAC-P2-001a
+      - DBR-SYN-012
+    phases:
+      - id: designation-ro
+        title: Designation read-only
+        surface: synergy.detail.designation
+        rules:
+          - DAC-P2-001a
+      - id: objects
+        title: Edit description / objects
+        surface: synergy.detail.edit
+      - id: links
+        title: Add / update evidence
+        surface: synergy.detail.link.add
+
+  # ─── Catalog ──────────────────────────────────────────────
+  - id: flow.catalog.weapons
+    title: Catalog — weapons browse + detail
+    type: catalog
+    priority: P1
+    rules:
+      - DAC-NME-003
+      - DBR-ROLL-010
+    phases:
+      - id: signed-out
+        title: Signed-out Manifest
+        surface: catalog.signed-out.weapons
+      - id: owned
+        title: Owned
+        surface: catalog.weapons.owned
+      - id: manifest
+        title: Manifest
+        surface: catalog.weapons.manifest
+      - id: filters
+        title: Filters expanded
+        surface: catalog.filters.open
+      - id: detail
+        title: Weapon detail
+        surface: catalog.weapon.detail
+
+  - id: flow.catalog.armor
+    title: Catalog — armor browse + detail
+    type: catalog
+    priority: P1
+    rules:
+      - DAC-NME-003
+      - DBR-ROLL-010
+    phases:
+      - id: signed-out
+        title: Signed-out Manifest
+        surface: catalog.signed-out.armor
+      - id: owned
+        title: Owned
+        surface: catalog.armor.owned
+      - id: manifest
+        title: Manifest
+        surface: catalog.armor.manifest
+      - id: detail
+        title: Armor detail
+        surface: catalog.armor.detail
+      - id: universal
+        title: Universal search
+        surface: catalog.universal
+        rules:
+          - 027:SC-001
+
+  # ─── Loadouts ─────────────────────────────────────────────
+  - id: flow.loadouts
+    title: In-game loadouts
+    type: library
+    priority: P2
+    rules:
+      - BR-EXO-001
+      - BR-EXO-002
+      - 002:SC-001
+    phases:
+      - id: signed-out
+        title: Signed-out
+        surface: loadouts.signed-out
+      - id: list
+        title: Slots list
+        surface: loadouts.list
+      - id: filter
+        title: Exotic filter bar
+        surface: loadouts.filter.exotic
+      - id: expanded
+        title: Expanded slot
+        surface: loadouts.slot-expanded
+      - id: discovery
+        title: Discovery overlay
+        surface: loadouts.row
+        rules:
+          - 002:SC-002
+          - BR-EXO-005
+
+  # ─── Settings / analyze ───────────────────────────────────
+  - id: flow.settings
+    title: Settings — auth, sync, manifest
+    type: library
+    priority: P2
+    rules:
+      - BR-AUTH-001
+      - DBR-EQP-005
+    phases:
+      - id: signed-out
+        title: Settings signed-out
+        surface: settings.signed-out
+      - id: signed-in
+        title: Settings signed-in
+        surface: settings.signed-in
+      - id: sync
+        title: Inventory sync
+        surface: settings.inventory-sync
+      - id: manifest
+        title: Manifest card
+        surface: settings.manifest
+
+  - id: flow.analyze
+    title: Analyzer
+    type: path
+    priority: P2
+    rules:
+      - DBR-PUR-002
+    phases:
+      - id: page
+        title: Analyzer page
+        surface: analyze.page
+      - id: form
+        title: Analyze form
+        surface: analyze.form
+      - id: report
+        title: Report
+        surface: analyze.report
+
+  # ─── Shared / misc ────────────────────────────────────────
+  - id: flow.shared.llm-propose
+    title: LLM propose-for-confirm
+    type: flow
+    priority: P2
+    rules:
+      - DAC-P2-004
+      - DBR-LLM-001
+      - DBR-LLM-002
+    phases:
+      - id: run
+        title: Start pass
+        surface: shared.llm-propose.run
+      - id: review
+        title: Review proposals
+        surface: shared.llm-propose.review
+      - id: confirm
+        title: Confirm / edit before persist
+        surface: shared.llm-propose.confirm
+        rules:
+          - DBR-LLM-002

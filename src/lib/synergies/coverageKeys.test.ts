@@ -40,6 +40,15 @@ describe("coverageKeyFromLink", () => {
     );
   });
 
+  it("keys class-item exotic_armor perk config", () => {
+    expect(
+      coverageKeyFromLink({ kind: "exotic_armor", perkHash: 900 }),
+    ).toBe("exotic_armor:perk:900");
+    expect(
+      coverageKeyFromLink({ kind: "exotic_armor", itemHash: 77, perkHash: 900 }),
+    ).toBe("exotic_armor:77:perk:900");
+  });
+
   it("keys artifact perks by perk hash", () => {
     expect(coverageKeyFromLink({ kind: "artifact_perk", perkHash: 77 })).toBe(
       "artifact_perk:77",

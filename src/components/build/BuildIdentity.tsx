@@ -1,5 +1,6 @@
 "use client";
 
+import { MiniKitStrip } from "@/components/build/MiniKitStrip";
 import type { BuildDetail } from "@/components/build/types";
 import {
   Button,
@@ -167,6 +168,14 @@ export function BuildIdentity({
                 </Text>
               )}
             </Row>
+
+            {/* DBR-BLD-010: full mini kit strip (five abilities always). */}
+            <MiniKitStrip
+              presentation={sp}
+              subclass={subclass}
+              pinnedSuper={build.pinnedSuper}
+              label="Mini kit"
+            />
           </Stack>
           <Row gap={4} wrap>
             {onEdit ? (

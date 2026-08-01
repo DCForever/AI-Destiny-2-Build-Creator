@@ -86,8 +86,11 @@ export function GeneralTab({
 
   const subclassScope = resolveSubclassScope(subclassName);
   const canCreate = synergyTypes.length > 0 && !busy && !sourcingKit;
+  /** DBR-BLD-007: class locked after create (live mode). */
+  const classLocked = mode === "live" && build != null;
 
   function handleClassChange(next: GuardianClass) {
+    if (classLocked) return;
     setClassName(next);
     onDraftClass(next);
     setSubclassName((prev) => {
@@ -199,9 +202,15 @@ export function GeneralTab({
                 active={className === cls}
                 onClick={() => handleClassChange(cls)}
                 size="md"
+                disabled={classLocked && className !== cls}
               />
             ))}
           </Cluster>
+          {classLocked ? (
+            <Text size="xs" tone="muted">
+              Class is fixed after create and cannot be changed.
+            </Text>
+          ) : null}
         </Section>
         <Section label="Subclass">
           <select

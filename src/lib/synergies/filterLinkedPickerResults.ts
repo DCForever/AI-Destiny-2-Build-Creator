@@ -28,18 +28,30 @@ export function weaponOptionToMergeable(opt: WeaponPickerOption): MergeableLink 
 }
 
 export function pickerItemToMergeable(item: SynergyPickerItem): MergeableLink {
+  // hash is the primary entity for the kind: item for weapons/exotics, plug for perks.
+  const hashIsPerk =
+    item.kind === "weapon_perk" ||
+    item.kind === "artifact_perk" ||
+    item.kind === "origin_trait" ||
+    item.kind === "aspect" ||
+    item.kind === "fragment" ||
+    item.kind === "armor_mod" ||
+    item.kind === "melee" ||
+    item.kind === "grenade" ||
+    item.kind === "super";
+
   return {
     kind: item.kind,
     displayName: item.name,
-    itemHash: item.hash ?? null,
-    perkHash: item.perkHash ?? item.hash ?? null,
+    itemHash: hashIsPerk ? (item.parentItemHash ?? null) : (item.hash ?? null),
+    perkHash: item.perkHash ?? (hashIsPerk ? item.hash ?? null : null),
     parentItemHash: item.parentItemHash ?? null,
     originTraitName: item.originTraitName ?? null,
-    originTraitHash: item.originTraitHash ?? null,
+    originTraitHash: item.originTraitHash ?? (item.kind === "origin_trait" ? item.hash ?? null : null),
     armorSetName: item.armorSetName ?? null,
     bonusPieces: item.bonusPieces ?? null,
     bonusName: item.bonusName ?? null,
-    armorSetHash: item.armorSetHash ?? null,
+    armorSetHash: item.armorSetHash ?? (item.kind === "armor_set_bonus" ? item.hash ?? null : null),
   };
 }
 

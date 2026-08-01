@@ -24,6 +24,7 @@ function link(partial: Partial<SynergyLinkRecord> & Pick<SynergyLinkRecord, "kin
     bonusPieces: partial.bonusPieces ?? null,
     bonusName: partial.bonusName ?? null,
     armorSetHash: partial.armorSetHash ?? null,
+    required: partial.required ?? false,
   };
 }
 
@@ -48,6 +49,8 @@ function claim(partial: Partial<SlotClaim> & Pick<SlotClaim, "slot" | "itemHash"
     itemName: partial.itemName ?? "Item",
     source: partial.source ?? "set",
     selectedPerks: partial.selectedPerks,
+    modHashes: partial.modHashes,
+    instanceId: partial.instanceId,
   };
 }
 
@@ -75,6 +78,119 @@ describe("matchEvidenceLink", () => {
       [claim({ slot: "primary", itemHash: 1, selectedPerks: [99] })],
     );
     expect(ok).toBe(true);
+  });
+
+  it("matches weapon_perk base when loadout has enhanced family sibling", () => {
+    const family = new Map<number, ReadonlySet<number>>([
+      [100, new Set([100, 101])],
+      [101, new Set([100, 101])],
+    ]);
+    const ok = matchEvidenceLink(
+      link({ kind: "weapon_perk", displayName: "Zen Moment", perkHash: 100 }),
+      [claim({ slot: "primary", itemHash: 1, selectedPerks: [101] })],
+      { perkFamilyByHash: family },
+    );
+    expect(ok).toBe(true);
+  });
+
+  it("does not match weapon_perk family without index", () => {
+    const ok = matchEvidenceLink(
+      link({ kind: "weapon_perk", displayName: "Zen Moment", perkHash: 100 }),
+      [claim({ slot: "primary", itemHash: 1, selectedPerks: [101] })],
+    );
+    expect(ok).toBe(false);
+  });
+
+  it("matches classic exotic_armor by item hash", () => {
+    const ok = matchEvidenceLink(
+      link({ kind: "exotic_armor", displayName: "Synthos", itemHash: 55 }),
+      [claim({ slot: "arms", itemHash: 55 })],
+    );
+    expect(ok).toBe(true);
+  });
+
+  it("does not match class-item exotic_armor by shell alone", () => {
+    const classItems = new Set([77]);
+    const ok = matchEvidenceLink(
+      link({ kind: "exotic_armor", displayName: "Stoicism", itemHash: 77 }),
+      [claim({ slot: "class_item", itemHash: 77, selectedPerks: [900] })],
+      { exoticClassItemHashes: classItems },
+    );
+    expect(ok).toBe(false);
+  });
+
+  it("matches class-item exotic_armor by perk config (DBR-ID-011)", () => {
+    const classItems = new Set([77]);
+    const ok = matchEvidenceLink(
+      link({
+        kind: "exotic_armor",
+        displayName: "Spirit of the Assassin",
+        itemHash: 77,
+        perkHash: 900,
+      }),
+      [claim({ slot: "class_item", itemHash: 77, selectedPerks: [900, 901] })],
+      { exoticClassItemHashes: classItems },
+    );
+    expect(ok).toBe(true);
+  });
+
+  it("matches perk-only exotic_armor on class_item", () => {
+    const ok = matchEvidenceLink(
+      link({
+        kind: "exotic_armor",
+        displayName: "Spirit of the Assassin",
+        perkHash: 900,
+      }),
+      [claim({ slot: "class_item", itemHash: 77, selectedPerks: [900] })],
+    );
+    expect(ok).toBe(true);
+  });
+
+  it("matches aspect/fragment/ability via kit context", () => {
+    const kit = {
+      aspects: ["Roaring Flames", "Consecration"],
+      fragments: ["Ember of Ashes"],
+      super: "Hammer of Sol",
+      melee: "Hammer Strike",
+      grenade: "Thermite Grenade",
+    };
+    expect(
+      matchEvidenceLink(
+        link({ kind: "aspect", displayName: "Roaring Flames" }),
+        [],
+        { kit },
+      ),
+    ).toBe(true);
+    expect(
+      matchEvidenceLink(
+        link({ kind: "fragment", displayName: "Ember of Ashes" }),
+        [],
+        { kit },
+      ),
+    ).toBe(true);
+    expect(
+      matchEvidenceLink(
+        link({ kind: "super", displayName: "Hammer of Sol" }),
+        [],
+        { kit },
+      ),
+    ).toBe(true);
+    expect(
+      matchEvidenceLink(
+        link({ kind: "aspect", displayName: "Knockout" }),
+        [],
+        { kit },
+      ),
+    ).toBe(false);
+  });
+
+  it("matches armor_mod via modHashes on claims", () => {
+    expect(
+      matchEvidenceLink(
+        link({ kind: "armor_mod", displayName: "Mod", itemHash: 501 }),
+        [claim({ slot: "helmet", itemHash: 1, modHashes: [501, 502] })],
+      ),
+    ).toBe(true);
   });
 });
 

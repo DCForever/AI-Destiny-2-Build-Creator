@@ -136,6 +136,22 @@ async function listWeaponArchetypeOptions(): Promise<SynergySubTypeOption[]> {
   );
 }
 
+function listAmmoOptions(): SynergySubTypeOption[] {
+  return [
+    { id: "primary", name: "Primary", description: "Primary ammo weapons" },
+    { id: "special", name: "Special", description: "Special ammo weapons" },
+    { id: "heavy", name: "Heavy", description: "Heavy ammo weapons" },
+  ];
+}
+
+function listWeaponSlotOptions(): SynergySubTypeOption[] {
+  return [
+    { id: "kinetic", name: "Kinetic", description: "Kinetic inventory slot" },
+    { id: "energy", name: "Energy", description: "Energy inventory slot" },
+    { id: "power", name: "Power", description: "Power inventory slot" },
+  ];
+}
+
 export function filterSubTypeOptions(
   options: SynergySubTypeOption[],
   query: string,
@@ -169,6 +185,10 @@ export async function listSubTypeOptions(
       return listAbilityOptions("super");
     case "weapon_archetype":
       return listWeaponArchetypeOptions();
+    case "ammo":
+      return listAmmoOptions();
+    case "weapon_slot":
+      return listWeaponSlotOptions();
   }
 }
 

@@ -93,6 +93,18 @@ export type BuildVariantDetail = {
   artifactHash?: number | null;
   artifactName?: string | null;
   artifactConfig?: number[];
+  /** Per-variant kit fields (may mirror effective subclass kit). */
+  subclassKit?: {
+    super: string;
+    classAbility: string;
+    movement: string;
+    melee: string;
+    grenade: string;
+    aspects: string[];
+    fragments: string[];
+  } | null;
+  /** Effective tree + kit for this variant (preferred over build.subclass for kit UI). */
+  subclass?: BuildSubclass;
   notes: string | null;
   attachments: VariantAttachment[];
   resolved?: {

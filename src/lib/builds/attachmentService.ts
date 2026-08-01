@@ -7,7 +7,15 @@ import {
   type SnapshotConfig,
 } from "@/lib/db/repositories/variantRepository";
 import { getSet } from "@/lib/db/repositories/setRepository";
+import {
+  assertArmorSetBonusConstraint,
+  loadSetBonusMembershipIndex,
+  parseArmorSetBonusConstraint,
+  toConstrainedArmorPieces,
+} from "@/lib/sets/armorSetBonusConstraint";
+import { assertSetMinimumOccupancy } from "@/lib/sets/setMinimumOccupancy";
 import { listActiveSetItems } from "@/lib/sets/setItemService";
+import type { SetType } from "@/lib/sets/schemas";
 
 export type SetAttachmentInput = {
   setId: string;
@@ -53,6 +61,26 @@ export async function prepareAttachments(
           API_ERROR_CODES.INVALID_ITEM,
           "Variant may attach at most one fashion set",
         );
+      }
+    }
+
+    // DBR-CMP-008–010: empty scaffold OK (finish create+attach); partial packages blocked.
+    const activeItems = await listActiveSetItems(db, input.setId);
+    assertSetMinimumOccupancy(set.type as SetType, activeItems, {
+      context: "attach",
+    });
+
+    // DBR-SETB-004: constrained Armor Sets must meet family + tier on attach.
+    if (set.type === "armor") {
+      const constraint = parseArmorSetBonusConstraint(set.setBonusConstraint);
+      if (constraint) {
+        const pieces = await toConstrainedArmorPieces(activeItems);
+        const membership = await loadSetBonusMembershipIndex();
+        assertArmorSetBonusConstraint(constraint, pieces, membership, {
+          setType: "armor",
+          requireTier: true,
+          context: "attach",
+        });
       }
     }
 

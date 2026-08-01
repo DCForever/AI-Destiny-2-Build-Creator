@@ -1,0 +1,6 @@
+version: 1
+title: Destiny 2 Build Creator — Product Map
+description: >
+  Structure SSoT for surfaces, flows, and rule attachments across platforms.
+  Rule wording lives in specs/domain-*.md and business-rules.md.
+updated: 2026-07-27
