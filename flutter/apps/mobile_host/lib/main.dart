@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import 'app.dart';
 import 'host_bootstrap.dart';
@@ -11,8 +10,7 @@ const String _bungieApiKeyDefine = String.fromEnvironment('BUNGIE_API_KEY');
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Registers bundled sqlite3 for Drift on Android (and other Flutter targets).
-  await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+  // sqlite3 3.x registers native SQLite via Dart build hooks (no flutter_libs).
 
   final apiKey = _bungieApiKeyDefine.isEmpty ? null : _bungieApiKeyDefine;
 

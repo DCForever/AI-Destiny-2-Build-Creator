@@ -14,10 +14,10 @@ environment:
 dependencies:
   drift: ^2.26.0
   path: ^1.9.0
-  sqlite3: ^2.7.0
+  sqlite3: ^3.5.0
 
 dev_dependencies:
   build_runner: ^2.4.15
   drift_dev: ^2.26.0
-  lints: ^5.0.0
+  lints: ^6.1.0
   test: ^1.25.0

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_driver/driver_extension.dart';
-import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import 'app.dart';
 import 'config/local_env.dart';
@@ -38,8 +37,7 @@ Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Registers bundled sqlite3 for Drift on Windows (and other Flutter targets).
-  await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+  // sqlite3 3.x registers native SQLite via Dart build hooks (no flutter_libs).
 
   // Runtime file (gitignored) so MCP / IDE launches work without dart-define.
   // Non-empty --dart-define still wins.

@@ -66,7 +66,8 @@ void main() {
 
   testWidgets('signed-in shows membership and Sign out', (tester) async {
     final store = MemoryTokenStore();
-    final now = DateTime.utc(2026, 7, 24);
+    // Relative to wall clock: restore() uses DateTime.now for expiry checks.
+    final now = DateTime.now().toUtc();
     await store.write(
       BungieTokens(
         accessToken: 'a',

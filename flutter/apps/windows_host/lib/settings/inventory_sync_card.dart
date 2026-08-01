@@ -91,10 +91,12 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
       key: const Key('inventory_sync_card'),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
+        // Diagnostics + post-sync banners can exceed a tight Settings pane.
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
             Text(
               'Inventory sync',
               style: Theme.of(context).textTheme.titleMedium,
@@ -325,7 +327,8 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                   ),
                 ),
               ],
-          ],
+            ],
+          ),
         ),
       ),
     );

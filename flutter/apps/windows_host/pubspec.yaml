@@ -35,10 +35,10 @@ dependencies:
     path: ../../packages/ui_tokens
   destiny2_ui_flutter:
     path: ../../packages/ui_flutter
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.3.1
   path: ^1.9.0
   path_provider: ^2.1.5
-  sqlite3_flutter_libs: ^0.5.28
+  # sqlite3 3.x bundles native SQLite via build hooks — no sqlite3_flutter_libs.
   url_launcher: ^6.3.1
   # Runtime import gated in main.dart via ENABLE_FLUTTER_DRIVER (MCP screenshots).
   # Keep as a normal dependency so lib/main.dart can import driver_extension.
@@ -48,7 +48,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

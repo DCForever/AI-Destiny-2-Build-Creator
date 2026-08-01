@@ -56,7 +56,7 @@ void _seedLegacyProductDb(String path) {
       "VALUES ('s1', 1, 'Weapons A', 'weapons', '2026-01-01', '2026-01-01')",
     );
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 
@@ -109,7 +109,7 @@ void main() {
       final source = p.join(temp.path, 'empty.db');
       final raw = sqlite3.open(source);
       raw.execute('CREATE TABLE foo (id INTEGER PRIMARY KEY)');
-      raw.dispose();
+      raw.close();
 
       final plan = await importer.dryRun(
         sourcePath: source,

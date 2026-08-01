@@ -177,14 +177,16 @@ WindowsOAuthSession buildSignedInSession({
 Future<void> seedSignedIn(
   TokenStore store, {
   String membershipId = 'bungie-net-99',
+  DateTime? now,
 }) async {
-  final now = DateTime.utc(2026, 7, 24, 12);
+  // Relative to wall clock so session.restore() (uses DateTime.now) stays valid.
+  final clock = now ?? DateTime.now().toUtc();
   await store.write(
     BungieTokens(
       accessToken: 'access-token-xyz',
       refreshToken: 'refresh-token-xyz',
-      expiresAt: now.add(const Duration(hours: 1)),
-      refreshExpiresAt: now.add(const Duration(days: 1)),
+      expiresAt: clock.add(const Duration(hours: 1)),
+      refreshExpiresAt: clock.add(const Duration(days: 1)),
       bungieMembershipId: membershipId,
     ),
   );

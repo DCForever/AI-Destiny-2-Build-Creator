@@ -38,7 +38,7 @@ void _seedLegacy(String path) {
       "VALUES ('b1', 1, 'B', 'Titan', 'Solar', 't', 't')",
     );
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 

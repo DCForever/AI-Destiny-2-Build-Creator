@@ -220,6 +220,11 @@ void main() {
 
   testWidgets('select owned row shows instance projections power-desc',
       (tester) async {
+    // Tall surface so both dense ItemRichness instance cards stay built
+    // (ListView is lazy and disposes off-viewport children).
+    await tester.binding.setSurfaceSize(const Size(1400, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       MaterialApp(home: CatalogPage(services: services)),
     );
@@ -242,14 +247,17 @@ void main() {
     await tester.tap(itemFinder);
     await _pumpFrames(tester);
 
-    expect(find.byKey(const Key('instance_panel_title')), findsOneWidget);
     expect(find.byKey(const Key('instance_list')), findsOneWidget);
-    expect(find.byKey(const Key('instance_inst-hi')), findsOneWidget);
-    expect(find.byKey(const Key('instance_inst-lo')), findsOneWidget);
+    // Title key is per instance card (ItemRichness), not once per panel.
+    expect(find.byKey(const Key('instance_panel_title')), findsNWidgets(2));
+    final hiFinder = find.byKey(const Key('instance_inst-hi'));
+    final loFinder = find.byKey(const Key('instance_inst-lo'));
+    expect(hiFinder, findsOneWidget);
+    expect(loFinder, findsOneWidget);
 
     // Power-desc: higher power tile appears first in list.
-    final hi = tester.getTopLeft(find.byKey(const Key('instance_inst-hi')));
-    final lo = tester.getTopLeft(find.byKey(const Key('instance_inst-lo')));
+    final hi = tester.getTopLeft(hiFinder);
+    final lo = tester.getTopLeft(loFinder);
     expect(hi.dy, lessThan(lo.dy));
   });
 

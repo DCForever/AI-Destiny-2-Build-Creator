@@ -95,7 +95,7 @@ void main() {
     });
 
     tearDown(() {
-      raw.dispose();
+      raw.close();
     });
 
     test('adds inventory late columns to minimal inventory_items', () async {

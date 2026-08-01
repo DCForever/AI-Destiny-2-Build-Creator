@@ -331,7 +331,7 @@ class LegacyDbImporter {
       }
       return _Inspected(tables: tables, counts: counts);
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 
