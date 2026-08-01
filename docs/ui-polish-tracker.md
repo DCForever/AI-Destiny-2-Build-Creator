@@ -1,9 +1,17 @@
 # UI polish tracker
 
-Living list of **perceived polish, fidelity, and nice-to-have** UI work.  
+Living list of **perceived polish and pure visual density** UI work.  
 Not a product roadmap and not Spec Kit acceptance criteria — those stay under `specs/`.
 
 **Source seeds:** prod-ui-refactor canvas, residual-gaps notes from overhaul work, ongoing UX feedback.
+
+**Scope rule (2026-07-25):** Track **pure visual density** here only (icons, chrome, spacing, board-first layout).  
+Domain/rule misses, incomplete catalog defs, confirm/fork, stat boards, synergy pickers, etc. live in:
+
+- [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) — GAP-UI-* master + DART-062–068  
+- [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) — FEAT inventory + GAP ledger  
+
+Do **not** duplicate full GAP-UI rule tables here.
 
 ---
 
@@ -19,7 +27,7 @@ Not a product roadmap and not Spec Kit acceptance criteria — those stay under 
 
 **When adding an item:** one concrete outcome, surface (Build / Sets / …), optional owner note.  
 **When closing:** set status to `done`, add date + commit or PR if handy, move under **Recently closed**.  
-**Do not** track domain bugs or missing APIs here — use specs/issues for those.  
+**Do not** track domain bugs or missing APIs here — use specs/issues / ui-fidelity for those.  
 **Agents:** after polish feedback or a polish PR, update this file in the same change set when practical.
 
 Last reviewed: 2026-07-27
@@ -31,36 +39,46 @@ Last reviewed: 2026-07-27
 ### Catalog
 | Status | Item | Notes |
 |--------|------|--------|
-| `done` | Icon+color density pass | Element/ammo/class/armor archetype/frame + DesignationLabel; weapon types via vendored destiny-icons (DIM set) |
-| `done` | Catalog as set-fill sub-screen | `CatalogScreen` constraints + pick mode; SlotFill embeds Catalog (locked slot); retired `CatalogItemPicker` |
+| `done` | Icon+color density pass (Next product line) | Element/ammo/class/armor archetype/frame + DesignationLabel; weapon types via vendored destiny-icons (DIM set) |
+| `done` | Catalog as set-fill sub-screen (Next product line) | `CatalogScreen` constraints + pick mode; SlotFill embeds Catalog (locked slot); retired `CatalogItemPicker` |
+| `closed` (DART-068) | **Dart hosts: item icons + dense meta on catalog/set-fill rows** | Pure visual; multiplatform residual. Spec exit: **GAP-UI-CATALOG-09** / **DART-068**. EntityIcon + dense meta chips |
 
 ### Sets
 | Status | Item | Notes |
 |--------|------|--------|
 | `open` | **Synergized items for set tags** (future) | On Set detail: show library synergies / catalog items that align with the set’s concept tags (and optionally linked build designations). Not just “used by builds” — reverse discoverability of *what this set is good with*. Likely needs tag↔synergy/item matching rules; keep FR/BR for tags vs identity in mind (tags are filter metadata, not build identity). |
-
+| `open` | **Dart hosts: denser set item rows (icons only)** | Visual layer of board density; rule/trait/stat board → **GAP-UI-SETS-01/02** / **DART-065** (not polish-only) |
 
 ### Build
 | Status | Item | Notes |
 |--------|------|--------|
+| `closed` (DART-068) | **Dart hosts: variant read-only icon strip overview** | Pure visual density. Spec: **GAP-UI-BUILD-06** / **DART-068** |
 
 ### Synergy
 | Status | Item | Notes |
 |--------|------|--------|
 | `open` | Promote **gap-scan** into product nav (optional) | Lives at `/debug/synergy-gaps` |
 | `deferred` | Designation icons for all curated names | Mapping + API landed; residual alias/hunt art gaps — improve opportunistically, not a polish gate |
+| `closed` (DART-068) | **Dart hosts: DesignationLabel verb/element icons** | Visual chrome. Spec: **GAP-UI-SYN-05** / **DART-068**. Verb:/Element: chrome + glyphs |
 
 ### Loadouts
 | Status | Item | Notes |
 |--------|------|--------|
 | `deferred` | Full equip / sheet from Bungie slot instances | List + real icon/color landed; equip/sheet import still thin — needs deeper Bungie parity beyond polish |
+| `closed` (DART-068) | **Dart hosts: color bar / swatch / icon-plate chrome** | Pure visual. Spec: **GAP-UI-LOADOUTS-01** / **DART-068**. Exotic names + expand closed same slice |
+
+### Settings
+| Status | Item | Notes |
+|--------|------|--------|
+| `closed` (DART-068) | **Dart hosts: Manifest READY chips + Inventory ONLINE/Refresh chrome** | Pure presentation. Spec: **GAP-UI-SETTINGS-01/02** / **DART-068** (**BUG-20260725-003**). Post-sync kit banner closed in **DART-067** |
 
 ### Shell / global
 | Status | Item | Notes |
 |--------|------|--------|
 | `partial` | **Matte Flap Ledger redesign** | Square matte plates; FlapRow boards on Sets/Synergy/Build; denser variants; gather feedback on columns/colors |
-| `partial` | **Synergy board-first restructure** | Thin chrome + instrument search; denser detail (usedByBuilds + evidence-first); hygiene remains mode |
-| `partial` | **Sets board-first restructure** | Instrument filters; readiness + slot board + fill-next CTA; used-by pills; detail-only fill tallies |
+| `partial` | **Synergy board-first restructure** | Thin chrome + instrument search; denser detail (usedByBuilds + evidence-first); hygiene remains mode — *product Next*; Dart residual filters under GAP-UI-SYN-06 |
+| `partial` | **Sets board-first restructure** | Instrument filters; readiness + slot board + fill-next CTA; used-by pills — *product Next*; Dart residual under GAP-UI-SETS-04/05 |
+| `closed` (DART-068) | **Dart hosts: AppShell label/order parity** | Product labels Build/Synergy + AppShell order. Spec: **GAP-UI-SHELL-01** / **DART-068** (not cutover re-gate) |
 | `deferred` | Further mobile density / touch targets | Responsive padding + nav improved; remaining density tweaks optional |
 | `deferred` | **Entity InfoHotspots** across all entity chips | `EntityHotspot` + presentation enrich; icon-first when art exists; remaining gaps where APIs still omit description |
 | `deferred` | Pixel-perfect canvas hi-fi parity | Icons/hotspots/loadout chrome largely done; absolute visual gate unbounded — not a polish finish requirement |
@@ -126,4 +144,3 @@ Move items here when done (newest first). Keep ~20 entries; archive older ones i
 - Operator APIs: `DEBUG.md`  
 - Domain slices: `specs/domain-slice-roadmap.md`  
 - Design system notes: `src/components/ui/README.md` (if present)
-

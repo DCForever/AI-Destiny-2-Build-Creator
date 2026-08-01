@@ -1,0 +1,25 @@
+name: destiny2_ui_flutter
+description: >
+  Flutter-only Matte Flap Ledger composition kit (ThemeExtension, board
+  primitives, tone/element helpers). Depends on destiny2_ui_tokens; never
+  imported by Jaspr web_host.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  destiny2_ui_tokens:
+    path: ../ui_tokens
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

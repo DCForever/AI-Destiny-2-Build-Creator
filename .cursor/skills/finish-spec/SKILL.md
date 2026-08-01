@@ -49,6 +49,7 @@ Check:
 - On a valid feature branch (not `main`, not base branch unless user explicitly requested)
 - No unintended secrets in changes (`.env`, credentials)
 - If the user changed application code, `npm run gate` MUST pass before merge
+- **PROC-06 intentional thinning** (multiplatform-dart / DART slices): if this change documents intentional product thinning vs Next/domain, complete [docs/finish-spec-thinning-checklist.md](../../../docs/finish-spec-thinning-checklist.md) **in the same change** (open/update GAP-* residual; no silent “MVP ok”). Offline gate: `dart run tool/proc06_thinning_gate.dart`. Soft never auto-applies.
 
 **Do not merge** if gate fails — fix or report blockers first.
 

@@ -1,9 +1,12 @@
 # Multiplatform Dart port — architecture decisions
 
 **Status:** decided (exploration follow-up)  
-**Updated:** 2026-07-24  
+**Updated:** 2026-08-01  
 **Source:** workflow `explore-flutter-port` + product follow-up answers  
-**Related report:** session scratch `flutter-port-exploration.md` (run `explore-flutter-port`)
+**Related report:** session scratch `flutter-port-exploration.md` (run `explore-flutter-port`)  
+**Branching / worktrees:** [`multiplatform-dart-branching.md`](./multiplatform-dart-branching.md) — **all** Spec Kit work for this port lives on `feature/multiplatform-dart` (+ child feature branches), in the dedicated worktree — not on product slices (e.g. `043-*`).  
+**Slice roadmap (all phases, small Spec Kit slices):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — IDs **`DART-001`…** (parallel workstream; not product `0NN`)  
+**Feature gaps vs Next (planned work):** [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) — GAP-* → DART-050+
 
 This note freezes port *architecture* choices. It does **not** change live product domain rules (DBR/DAC/BR). Next.js remains production until explicit cutover gates pass.
 
@@ -56,13 +59,13 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 | 1 Data | Drift schema mirrors `src/lib/db`; Flutter Windows uses native SQLite; app-support path (not repo `.cache` CWD). |
 | 2 Auth | New Public+PKCE Bungie app; Windows loopback/deep-link first; no client secret in binary. |
 | 3–4 Compose/equip | In-process use cases on Flutter hosts; optimizer off UI isolate on mobile. |
-| 5 Jaspr | Same Drift schema package via WASM/OPFS; single-writer UX; Public+PKCE; prebuilt entities; import path from legacy `app.db` still an open product detail. |
+| 5 Jaspr | Same Drift schema package via WASM/OPFS; single-writer UX; Public+PKCE; prebuilt entities; legacy `app.db` import path: DART-048 (desktop dry-run/apply → StorageRoot; see `docs/multiplatform-dart-legacy-db-import.md`). |
 
 ## Still open (not decided here)
 
-- When Next.js stops being production host (feature-parity gate vs parallel beta).
-- Import UX for existing `.cache/app.db` and entity caches into platform app-support paths.
-- Prebuilt entity bundle distribution channel (ship-in-app vs CDN vs desktop-only full rebuild).
+- ~~When Next.js stops being production host~~ — **criteria documented** in [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) (DART-049). **Re-gate (DART-061):** `PRODUCTION_CUTOVER: GO` (2026-07-25) with all `RC-*` PASS including RC-BRANCH; merge of `feature/multiplatform-dart` toward production/`main` allowed only after GO ([branching.md](./multiplatform-dart-branching.md)); offline `dart run tool/production_cutover_regate.dart`. Actual main merge + Next route retirement remain human/release follow-on.
+- Entity-cache / raw-manifest tree copy from Next `.cache` (DART-048 covers `app.db` only; re-refresh on Windows).
+- ~~Prebuilt entity bundle distribution channel~~ — **decided (DART-059):** **hybrid** (ship-in-app primary + optional CDN); see [multiplatform-dart-entity-bundle-channel.md](./multiplatform-dart-entity-bundle-channel.md). RB-05 cleared / RC-WEB-DATA PASS.
 - Accessibility WCAG target (still open in PRODUCT.md) and whether mobile raises the bar before web cutover.
 
 ## Explicit non-goals for early port slices
@@ -82,3 +85,7 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 - Equip/DIM require owned instance pins where domain says so.
 
 Domain truth remains `specs/domain-business-rules.md`, `specs/domain-acceptance-criteria.md`, and `specs/business-rules.md`.
+
+## DART-069 — Nested Dart workspace root (`flutter/`)
+
+**Decision (2026-08-01):** The Melos/pub workspace root is `flutter/` under the monorepo. Next.js remains repository root. Packages, apps (Windows/mobile/Jaspr web), and Dart `tool/` live under `flutter/`. Specs and multiplatform docs stay at monorepo root. Contributor convention: run Dart workspace commands with cwd `flutter/`. See `specs/dart-069-nest-flutter-workspace/` and ProjectTracker `DEC-2026-08-01-001`. 

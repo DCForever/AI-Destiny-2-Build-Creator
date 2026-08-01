@@ -1,0 +1,23 @@
+name: destiny2_db
+description: >
+  Drift SQLite schema + migrations for Destiny 2 Build Creator multiplatform port.
+  Mirrors product core tables (users, inventory, sets, synergies, builds,
+  variants, attachments). schemaVersion 1 create-all; ensure* upgrades on open.
+  Native openers are conditional (memory/file); web uses WasmDatabase + AppDatabase(e) (DART-043).
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  drift: ^2.26.0
+  path: ^1.9.0
+  sqlite3: ^2.7.0
+
+dev_dependencies:
+  build_runner: ^2.4.15
+  drift_dev: ^2.26.0
+  lints: ^5.0.0
+  test: ^1.25.0

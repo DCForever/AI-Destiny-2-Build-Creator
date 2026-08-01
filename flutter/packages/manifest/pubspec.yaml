@@ -1,0 +1,22 @@
+name: destiny2_manifest
+description: >
+  Entity store reader + MVP extractors (DART-017) and Windows manifest refresh
+  pipeline status/isStale/refresh with isolate rebuild (DART-018). Offline JSON
+  under StorageRoot; hard-constraint adapters. Public API key host-injected only.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  destiny2_domain:
+    path: ../domain
+  destiny2_storage:
+    path: ../storage
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

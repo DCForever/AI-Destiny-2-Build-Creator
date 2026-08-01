@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flutter palette preview — Matte Flap treatments</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050608;
+      --surface: #0c0e12;
+      --raised: #12151c;
+      --line: #1c212c;
+      --line-strong: #2a3140;
+      --fg: #e8eaef;
+      --muted: #8a93a6;
+      --accent: #e6b35c;
+      --accent-strong: #f0c878;
+      --accent-dim: #e6b35c24;
+      --danger: #e2654f;
+      --success: #6fc28b;
+      --warning: #d9a93f;
+      --el-kinetic: #ffffff;
+      --el-arc: #85c5ec;
+      --el-solar: #f2721b;
+      --el-void: #b184c5;
+      --el-stasis: #4d88ff;
+      --el-strand: #35e366;
+      --el-prismatic: #d67ee2;
+      --font-d: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+      --font-b: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      --font-m: "IBM Plex Mono", ui-monospace, monospace;
+      --badge-wash: 0.12;
+      --channel-wash: 0.10;
+      --seal: 20px;
+      --row-y: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 0.9375rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    /* ---- chrome ---- */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 16px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .topbar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .topbar .meta {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+    }
+    .topbar .spacer { flex: 1; min-width: 8px; }
+
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .seg button {
+      font-family: var(--font-d);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 7px 10px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .seg button:last-child { border-right: 0; }
+    .seg button[aria-pressed="true"] {
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .seg button:hover { color: var(--fg); }
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 0;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .picker { border-right: 0; border-bottom: 1px solid var(--line); max-height: 220px; }
+    }
+
+    /* ---- palette picker ---- */
+    .picker {
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      overflow: auto;
+      padding: 10px;
+    }
+    .picker h2 {
+      margin: 0 0 8px;
+      font-family: var(--font-d);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .palette-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: inherit;
+      padding: 0;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .palette-card:hover { border-color: var(--line-strong); }
+    .palette-card[aria-selected="true"] {
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+    .palette-card .head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px 4px;
+    }
+    .palette-card .name {
+      font-family: var(--font-d);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .palette-card .fit {
+      font-family: var(--font-m);
+      font-size: 0.62rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .palette-card .mood {
+      padding: 0 10px 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .swatch-row {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      height: 18px;
+      border-top: 1px solid var(--line);
+    }
+    .swatch-row span { display: block; min-width: 0; }
+
+    /* ---- stage ---- */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+    }
+    .stage-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      align-items: center;
+      background: color-mix(in srgb, var(--surface) 80%, var(--bg));
+    }
+    .stage-header .title {
+      font-family: var(--font-d);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .stage-header .blurb {
+      flex: 1 1 220px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .panels {
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+    .panels.compare {
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 1100px) {
+      .panels.compare { grid-template-columns: 1fr; }
+    }
+
+    .mock-frame {
+      border: 1px solid var(--line);
+      background: var(--bg);
+      max-width: 1600px;
+    }
+    .mock-frame .frame-label {
+      font-family: var(--font-d);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* dual-pane workspace */
+    .workspace {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 340px;
+    }
+    .rail {
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .rail-tools {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .rail-tools .kicker {
+      font-family: var(--font-d);
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .fake-input {
+      border: 1px solid var(--line);
+      background: var(--raised);
+      color: var(--muted);
+      font-size: 0.75rem;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+    }
+    .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn {
+      font-family: var(--font-d);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--fg);
+      cursor: default;
+    }
+    .btn.accent {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    }
+    .btn.ghost { color: var(--muted); }
+
+    .board-header,
+    .board-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(72px, 0.7fr) minmax(72px, 0.55fr) minmax(0, 0.9fr) minmax(56px, 0.45fr);
+      gap: 0;
+      padding: var(--row-y) 12px;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+    .board-header {
+      font-family: var(--font-d);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+    .board-row {
+      font-family: var(--font-d);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: default;
+    }
+    .board-row.selected {
+      background: color-mix(in srgb, var(--accent) calc(var(--badge-wash) * 100%), transparent);
+      box-shadow: inset 0 -1px 0 var(--line);
+    }
+    .board-row .name { color: var(--fg); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .board-row .cell { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.72rem; }
+    .board-row .status {
+      font-family: var(--font-m);
+      font-size: 0.65rem;
+      letter-spacing: 0.04em;
+    }
+    .board-row .status.ok { color: var(--success); }
+    .board-row .status.hold { color: var(--warning); }
+    .board-row .status.bad { color: var(--danger); }
+
+    .seal {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: var(--seal);
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      font-size: 0.65rem;
+    }
+    .seal.arc {
+      color: var(--el-arc);
+      border-color: color-mix(in srgb, var(--el-arc) 50%, var(--line));
+      background: color-mix(in srgb, var(--el-arc) calc(var(--channel-wash) * 100%), transparent);
+    }
+    .seal.solar {
+      color: var(--el-solar);
+      border-color: color-mix(in srgb, var(--el-solar) 50%, var(--line));
+      background: color-mix(in srgb, var(--el-solar) calc(var(--channel-wash) * 100%), transparent);
+    }
+    .seal.void {
+      color: var(--el-void);
+      border-color: color-mix(in srgb, var(--el-void) 50%, var(--line));
+      background: color-mix(in srgb, var(--el-void) calc(var(--channel-wash) * 100%), transparent);
+    }
+    .seal.strand {
+      color: var(--el-strand);
+      border-color: color-mix(in srgb, var(--el-strand) 50%, var(--line));
+      background: color-mix(in srgb, var(--el-strand) calc(var(--channel-wash) * 100%), transparent);
+    }
+
+    .detail {
+      background: var(--bg);
+      padding: 14px;
+      min-width: 0;
+    }
+    .detail h3 {
+      margin: 0 0 4px;
+      font-family: var(--font-d);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .detail .sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+    }
+    .plate {
+      background: var(--raised);
+      border: 1px solid var(--line);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .plate .kicker {
+      font-family: var(--font-d);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      font-family: var(--font-d);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: transparent;
+    }
+    .chip.include {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+    }
+    .chip.success {
+      color: var(--success);
+      background: color-mix(in srgb, var(--success) 12%, transparent);
+      border-color: color-mix(in srgb, var(--success) 45%, var(--line));
+    }
+    .chip.warning {
+      color: var(--warning);
+      background: color-mix(in srgb, var(--warning) 12%, transparent);
+      border-color: color-mix(in srgb, var(--warning) 45%, var(--line));
+    }
+    .chip.danger {
+      color: var(--danger);
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+      border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+    }
+
+    /* token table */
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+      padding: 12px;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+    }
+    .token {
+      border: 1px solid var(--line);
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .token .chip-color { height: 36px; border-bottom: 1px solid var(--line); }
+    .token .meta {
+      padding: 6px 8px;
+      font-size: 0.65rem;
+    }
+    .token .meta strong {
+      display: block;
+      font-family: var(--font-d);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .token .meta code {
+      font-family: var(--font-m);
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+
+    .footnote {
+      padding: 8px 14px 14px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      max-width: 960px;
+    }
+    .footnote code {
+      font-family: var(--font-m);
+      font-size: 0.68rem;
+      color: var(--fg);
+    }
+
+    /* mobile strip preview */
+    .mobile-strip {
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .mobile-tile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .mobile-tile.selected { background: var(--accent-dim); }
+    .mobile-tile .lead {
+      width: var(--seal);
+      height: var(--seal);
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .mobile-tile .lead.arc { background: color-mix(in srgb, var(--el-arc) 20%, transparent); border-color: var(--el-arc); }
+    .mobile-tile .t { flex: 1; min-width: 0; }
+    .mobile-tile .t .n {
+      font-family: var(--font-d);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .mobile-tile .t .s { color: var(--muted); font-size: 0.72rem; }
+    .mobile-tile .st {
+      font-family: var(--font-m);
+      font-size: 0.65rem;
+      color: var(--success);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Palette preview</h1>
+    <span class="meta">Flutter Matte Flap · Cold Graphite + Paper Ledger adopted · static mock</span>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="View mode">
+      <button type="button" id="mode-single" aria-pressed="true">Single</button>
+      <button type="button" id="mode-compare" aria-pressed="false">Compare</button>
+    </div>
+    <div class="seg" role="group" aria-label="Density">
+      <button type="button" id="den-base" aria-pressed="true">Board pad 10</button>
+      <button type="button" id="den-dense" aria-pressed="false">Dense pad 8</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="picker" id="picker" aria-label="Treatments"></aside>
+    <main class="stage">
+      <div class="stage-header">
+        <div class="title" id="active-title">Baseline</div>
+        <div class="blurb" id="active-blurb"></div>
+      </div>
+      <div class="panels" id="panels"></div>
+      <p class="footnote">
+        Open this file in a browser (double-click or
+        <code>start docs/ui-mocks/flutter-palette-preview.html</code>).
+        Palettes come from workflow <code>explore-flutter-ui-themes</code>.
+        Not a live Flutter run — use token branches for pixel-true hosts.
+        Element ink hexes stay sandbox-true across treatments.
+      </p>
+    </main>
+  </div>
+
+  <script>
+    const PALETTES = [
+      {
+        id: "baseline",
+        name: "Baseline Matte Flap",
+        fit: "live",
+        mood: "Void split-flap, warm one lamp — current production SSOT.",
+        rank: "—",
+        tokens: {
+          bg: "#050608", surface: "#0c0e12", raised: "#12151c",
+          line: "#1c212c", lineStrong: "#2a3140",
+          fg: "#e8eaef", muted: "#8a93a6",
+          accent: "#e6b35c", accentStrong: "#f0c878", accentDim: "#e6b35c24",
+          danger: "#e2654f", success: "#6fc28b", warning: "#d9a93f",
+        },
+      },
+      {
+        id: "refined-flap",
+        name: "Refined Matte Flap",
+        fit: "excellent · S",
+        mood: "Production polish: quieter chrome, denser seals, light as second face.",
+        rank: "1",
+        tokens: {
+          bg: "#040506", surface: "#0e1117", raised: "#161a22",
+          line: "#232833", lineStrong: "#2a3140",
+          fg: "#eef0f4", muted: "#949cab",
+          accent: "#e8b45e", accentStrong: "#f0c878", accentDim: "#e8b45e24",
+          danger: "#e56a54", success: "#6fc28b", warning: "#d9a93f",
+        },
+      },
+      {
+        id: "dense-radar",
+        name: "Dense Radar Console",
+        fit: "good · M",
+        mood: "Cool radar density + mono tallies. Prefer density under amber in hybrid.",
+        rank: "2",
+        tokens: {
+          bg: "#030508", surface: "#090c11", raised: "#0f131a",
+          line: "#18202c", lineStrong: "#243040",
+          fg: "#d7dee8", muted: "#748092",
+          accent: "#5fb8a0", accentStrong: "#7fd4bc", accentDim: "#5fb8a024",
+          danger: "#d85a4a", success: "#5faf84", warning: "#c9a04a",
+        },
+      },
+      {
+        id: "cold-graphite",
+        name: "Cold Graphite Board",
+        fit: "ADOPTED · dark",
+        mood: "Product dark default — blue-gray void, cyan-teal readiness lamp.",
+        rank: "★",
+        tokens: {
+          bg: "#070b10", surface: "#0e1319", raised: "#141a22",
+          line: "#1f2733", lineStrong: "#2a3342",
+          fg: "#e4eaf2", muted: "#8492a6",
+          accent: "#4ec4bc", accentStrong: "#6fd4cd", accentDim: "#4ec4bc24",
+          danger: "#e05a52", success: "#5cbc8e", warning: "#c9a84a",
+        },
+      },
+      {
+        id: "soft-atelier",
+        name: "Soft Atelier",
+        fit: "good · S",
+        mood: "Warm craft studio, honey lamp, airier compose plates.",
+        rank: "4",
+        tokens: {
+          bg: "#0a0908", surface: "#141210", raised: "#1c1916",
+          line: "#2e2924", lineStrong: "#3a342e",
+          fg: "#ebe6df", muted: "#968e82",
+          accent: "#d4a86a", accentStrong: "#e0bc88", accentDim: "#d4a86a1a",
+          danger: "#d86a54", success: "#6fad84", warning: "#c9a048",
+        },
+      },
+      {
+        id: "paper-ledger",
+        name: "Paper Ledger",
+        fit: "ADOPTED · light",
+        mood: "Product light face — cream stock, rubber-stamp amber (ThemeMode.light).",
+        rank: "★",
+        tokens: {
+          bg: "#ebe6db", surface: "#f7f3ea", raised: "#fffdf7",
+          line: "#c4bba8", lineStrong: "#9a9488",
+          fg: "#1a1b1f", muted: "#5a5f6a",
+          accent: "#9a6418", accentStrong: "#7a4e12", accentDim: "#9a64181f",
+          danger: "#b53a2a", success: "#1a6e3f", warning: "#8f6510",
+        },
+      },
+    ];
+
+    const ELEMENTS = {
+      kinetic: "#ffffff",
+      arc: "#85c5ec",
+      solar: "#f2721b",
+      void: "#b184c5",
+      stasis: "#4d88ff",
+      strand: "#35e366",
+      prismatic: "#d67ee2",
+    };
+
+    let activeId = "cold-graphite";
+    let compareId = "paper-ledger";
+    let compareMode = false;
+    let dense = false;
+
+    function byId(id) {
+      return PALETTES.find((p) => p.id === id) || PALETTES[0];
+    }
+
+    function applyTokens(el, t) {
+      el.style.setProperty("--bg", t.bg);
+      el.style.setProperty("--surface", t.surface);
+      el.style.setProperty("--raised", t.raised);
+      el.style.setProperty("--line", t.line);
+      el.style.setProperty("--line-strong", t.lineStrong);
+      el.style.setProperty("--fg", t.fg);
+      el.style.setProperty("--muted", t.muted);
+      el.style.setProperty("--accent", t.accent);
+      el.style.setProperty("--accent-strong", t.accentStrong);
+      el.style.setProperty("--accent-dim", t.accentDim);
+      el.style.setProperty("--danger", t.danger);
+      el.style.setProperty("--success", t.success);
+      el.style.setProperty("--warning", t.warning);
+      el.style.setProperty("--el-kinetic", ELEMENTS.kinetic);
+      el.style.setProperty("--el-arc", ELEMENTS.arc);
+      el.style.setProperty("--el-solar", ELEMENTS.solar);
+      el.style.setProperty("--el-void", ELEMENTS.void);
+      el.style.setProperty("--el-stasis", ELEMENTS.stasis);
+      el.style.setProperty("--el-strand", ELEMENTS.strand);
+      el.style.setProperty("--el-prismatic", ELEMENTS.prismatic);
+      el.style.setProperty("--row-y", dense ? "6px" : "10px");
+      el.style.setProperty("--seal", dense ? "20px" : "22px");
+    }
+
+    function applyDocumentPalette(t) {
+      applyTokens(document.documentElement, t);
+    }
+
+    function tokenStrip(t) {
+      const keys = ["bg", "surface", "raised", "line", "fg", "muted", "accent", "success"];
+      return keys.map((k) => `<span style="background:${t[k]}"></span>`).join("");
+    }
+
+    function renderPicker() {
+      const root = document.getElementById("picker");
+      root.innerHTML =
+        `<h2>Treatments</h2>
+         <p style="margin:0 0 10px;font-size:0.68rem;color:var(--muted);line-height:1.35">
+           Click to select.
+           Compare: <strong style="color:var(--fg)">click</strong> = B,
+           <strong style="color:var(--fg)">Shift+click</strong> = A.
+         </p>` +
+        PALETTES.map((p) => {
+          const selected = compareMode
+            ? p.id === activeId || p.id === compareId
+            : p.id === activeId;
+          const role = compareMode
+            ? p.id === activeId
+              ? "A"
+              : p.id === compareId
+                ? "B"
+                : ""
+            : "";
+          return `
+          <button type="button" class="palette-card" data-id="${p.id}"
+            aria-selected="${selected ? "true" : "false"}">
+            <div class="head">
+              <span class="name">${role ? role + " · " : ""}${p.name}</span>
+              <span class="fit">${p.fit}</span>
+            </div>
+            <div class="mood">${p.mood}</div>
+            <div class="swatch-row">${tokenStrip(p.tokens)}</div>
+          </button>`;
+        }).join("");
+
+      root.querySelectorAll(".palette-card").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const id = btn.getAttribute("data-id");
+          if (compareMode) {
+            if (e.shiftKey) activeId = id;
+            else if (id === activeId) return;
+            else compareId = id;
+          } else {
+            activeId = id;
+          }
+          sync();
+        });
+      });
+    }
+
+    function mockBoardHtml(p, label) {
+      return `
+        <section class="mock-frame" data-palette="${p.id}">
+          <div class="frame-label">
+            <span>${label} · ${p.name}</span>
+            <span>${p.tokens.bg} / accent ${p.tokens.accent}</span>
+          </div>
+          <div class="workspace">
+            <div class="rail">
+              <div class="rail-tools">
+                <div class="kicker">Library</div>
+                <div class="fake-input">New build name (optional)</div>
+                <div class="btn-row">
+                  <span class="btn accent">Create build</span>
+                  <span class="btn ghost">Reload</span>
+                </div>
+              </div>
+              <div class="board-header">
+                <span>Name</span><span>Identity</span><span>Exotics</span><span>Synergy</span><span>Status</span>
+              </div>
+              <div class="board-row selected">
+                <span class="name">Voidlock Gyrfalcon</span>
+                <span class="cell"><span class="seal void">Warlock</span></span>
+                <span class="cell"><span class="seal void">Gyrfalcon</span></span>
+                <span class="cell"><span class="seal void">Void</span></span>
+                <span class="status ok">READY</span>
+              </div>
+              <div class="board-row">
+                <span class="name">Arcstrider PvE</span>
+                <span class="cell"><span class="seal arc">Hunter</span></span>
+                <span class="cell"><span class="seal arc">Star-Eater</span></span>
+                <span class="cell"><span class="seal arc">Arc</span></span>
+                <span class="status hold">HOLD</span>
+              </div>
+              <div class="board-row">
+                <span class="name">Solar Titan Wall</span>
+                <span class="cell"><span class="seal solar">Titan</span></span>
+                <span class="cell"><span class="seal solar">Synthos</span></span>
+                <span class="cell"><span class="seal solar">Solar</span></span>
+                <span class="status ok">ok</span>
+              </div>
+              <div class="board-row">
+                <span class="name">Strand Threadling</span>
+                <span class="cell"><span class="seal strand">Warlock</span></span>
+                <span class="cell"><span class="seal strand">Osmiomancy</span></span>
+                <span class="cell"><span class="seal strand">Strand</span></span>
+                <span class="status bad">MISS</span>
+              </div>
+              <div class="mobile-strip">
+                <div class="frame-label" style="border:0;border-bottom:1px solid var(--line)">
+                  <span>Mobile Focus Swap list</span>
+                </div>
+                <div class="mobile-tile selected">
+                  <div class="lead arc"></div>
+                  <div class="t">
+                    <div class="n">Voidlock Gyrfalcon</div>
+                    <div class="s">Warlock · void · 2 variants</div>
+                  </div>
+                  <div class="st">READY</div>
+                </div>
+                <div class="mobile-tile">
+                  <div class="lead" style="border-color:var(--el-solar);background:color-mix(in srgb,var(--el-solar) 20%,transparent)"></div>
+                  <div class="t">
+                    <div class="n">Solar Titan Wall</div>
+                    <div class="s">Titan · solar</div>
+                  </div>
+                  <div class="st" style="color:var(--warning)">HOLD</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail">
+              <h3>Voidlock Gyrfalcon</h3>
+              <div class="sub">Compose floor · soft never auto-applies · one lamp selection</div>
+              <div class="plate">
+                <div class="kicker">Identity</div>
+                <div class="chips">
+                  <span class="seal void">Void</span>
+                  <span class="seal void">Warlock</span>
+                  <span class="chip">Pinned Super</span>
+                </div>
+              </div>
+              <div class="plate">
+                <div class="kicker">Soft coverage chips</div>
+                <div class="chips">
+                  <span class="chip success">Gyrfalcon loop · supported</span>
+                  <span class="chip warning">Div residual · weak</span>
+                  <span class="chip danger">Champion stun · missing</span>
+                  <span class="chip include">Include filter</span>
+                  <span class="chip">Neutral chip</span>
+                </div>
+              </div>
+              <div class="btn-row">
+                <span class="btn accent">Save / Ready CTA</span>
+                <span class="btn">Outline</span>
+                <span class="btn ghost">Ghost</span>
+              </div>
+            </div>
+          </div>
+          <div class="token-grid">
+            ${[
+              ["background", p.tokens.bg],
+              ["surface", p.tokens.surface],
+              ["raised", p.tokens.raised],
+              ["line", p.tokens.line],
+              ["foreground", p.tokens.fg],
+              ["muted", p.tokens.muted],
+              ["accent", p.tokens.accent],
+              ["success", p.tokens.success],
+              ["warning", p.tokens.warning],
+              ["danger", p.tokens.danger],
+            ].map(([name, hex]) => `
+              <div class="token">
+                <div class="chip-color" style="background:${hex}"></div>
+                <div class="meta"><strong>${name}</strong><code>${hex}</code></div>
+              </div>`).join("")}
+          </div>
+        </section>`;
+    }
+
+    function wireScopedPalettes() {
+      document.querySelectorAll(".mock-frame").forEach((frame) => {
+        const id = frame.getAttribute("data-palette");
+        applyTokens(frame, byId(id).tokens);
+      });
+    }
+
+    function renderPanels() {
+      const panels = document.getElementById("panels");
+      const a = byId(activeId);
+      document.getElementById("active-title").textContent =
+        (compareMode ? "A · " : "") + a.name + (a.rank !== "—" ? `  (rank ${a.rank})` : "");
+      document.getElementById("active-blurb").textContent = a.mood;
+
+      if (compareMode) {
+        panels.classList.add("compare");
+        const b = byId(compareId);
+        panels.innerHTML =
+          mockBoardHtml(a, "A") + mockBoardHtml(b, "B");
+      } else {
+        panels.classList.remove("compare");
+        panels.innerHTML = mockBoardHtml(a, "Preview");
+      }
+      wireScopedPalettes();
+    }
+
+    function sync() {
+      const a = byId(activeId);
+      applyDocumentPalette(a.tokens);
+      renderPicker();
+      renderPanels();
+      document.getElementById("mode-single").setAttribute("aria-pressed", compareMode ? "false" : "true");
+      document.getElementById("mode-compare").setAttribute("aria-pressed", compareMode ? "true" : "false");
+      document.getElementById("den-base").setAttribute("aria-pressed", dense ? "false" : "true");
+      document.getElementById("den-dense").setAttribute("aria-pressed", dense ? "true" : "false");
+    }
+
+    document.getElementById("mode-single").addEventListener("click", () => {
+      compareMode = false;
+      sync();
+    });
+    document.getElementById("mode-compare").addEventListener("click", () => {
+      compareMode = true;
+      if (compareId === activeId) compareId = "baseline";
+      sync();
+    });
+    document.getElementById("den-base").addEventListener("click", () => {
+      dense = false;
+      sync();
+    });
+    document.getElementById("den-dense").addEventListener("click", () => {
+      dense = true;
+      sync();
+    });
+
+    sync();
+  </script>
+</body>
+</html>

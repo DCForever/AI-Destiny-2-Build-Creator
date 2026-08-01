@@ -1,0 +1,169 @@
+{
+  "manifestVersion": "entity-bundle-prod-1",
+  "builtAt": "2026-07-25T12:00:00.000Z",
+  "channelId": "prod",
+  "distribution": "hybrid",
+  "counts": {
+    "weapons": 3,
+    "exotic-weapons": 1,
+    "exotic-armor": 2,
+    "legendary-armor": 1,
+    "aspects": 1,
+    "fragments": 1,
+    "abilities": 1,
+    "mods": 1
+  },
+  "stores": {
+    "weapons": [
+      {
+        "hash": 1001,
+        "name": "Chattering Bone",
+        "searchName": "chattering bone",
+        "icon": null,
+        "slot": "Kinetic",
+        "element": "Kinetic",
+        "ammo": "Primary",
+        "frame": "Rapid-Fire Frame",
+        "itemTypeName": "Pulse Rifle",
+        "originTraitHashes": [],
+        "perkColumns": []
+      },
+      {
+        "hash": 1002,
+        "name": "Void GL",
+        "searchName": "void gl",
+        "icon": null,
+        "slot": "Energy",
+        "element": "Void",
+        "ammo": "Special",
+        "frame": "Adaptive Frame",
+        "itemTypeName": "Grenade Launcher",
+        "originTraitHashes": [],
+        "perkColumns": []
+      },
+      {
+        "hash": 1003,
+        "name": "Solar Rocket",
+        "searchName": "solar rocket",
+        "icon": null,
+        "slot": "Power",
+        "element": "Solar",
+        "ammo": "Heavy",
+        "frame": "Adaptive Frame",
+        "itemTypeName": "Rocket Launcher",
+        "originTraitHashes": [],
+        "perkColumns": []
+      }
+    ],
+    "exotic-weapons": [
+      {
+        "hash": 1501,
+        "name": "Gjallarhorn",
+        "searchName": "gjallarhorn",
+        "icon": null,
+        "slot": "Power",
+        "element": "Solar",
+        "ammo": "Heavy",
+        "frame": "Wolfpack Rounds",
+        "intrinsic": {
+          "name": "Wolfpack Rounds",
+          "description": "Cluster missiles."
+        },
+        "catalyst": null,
+        "flavorText": "Light the way.",
+        "perkColumns": [],
+        "itemTypeName": "Rocket Launcher"
+      }
+    ],
+    "exotic-armor": [
+      {
+        "hash": 2001,
+        "name": "Synthoceps",
+        "searchName": "synthoceps",
+        "icon": null,
+        "classType": "Titan",
+        "slot": "Gauntlets",
+        "intrinsic": {
+          "name": "Biotic Enhancements",
+          "description": "Improved melee."
+        },
+        "archetype": "Brawler",
+        "flavorText": ""
+      },
+      {
+        "hash": 2002,
+        "name": "Lucky Pants",
+        "searchName": "lucky pants",
+        "icon": null,
+        "classType": "Hunter",
+        "slot": "Legs",
+        "intrinsic": {
+          "name": "Absolute",
+          "description": "Hand cannon damage ramp."
+        },
+        "archetype": "Gunner",
+        "flavorText": ""
+      }
+    ],
+    "legendary-armor": [
+      {
+        "hash": 2101,
+        "name": "Arms of Optimacy",
+        "searchName": "arms of optimacy",
+        "icon": null,
+        "classType": "Titan",
+        "slot": "Gauntlets",
+        "archetype": "Brawler"
+      }
+    ],
+    "aspects": [
+      {
+        "hash": 3001,
+        "name": "Touch of Thunder",
+        "searchName": "touch of thunder",
+        "icon": null,
+        "description": "Improves Arc grenades.",
+        "classType": "Hunter",
+        "element": "Arc",
+        "fragmentCapacity": 4
+      }
+    ],
+    "fragments": [
+      {
+        "hash": 4001,
+        "name": "Spark of Beacons",
+        "searchName": "spark of beacons",
+        "icon": null,
+        "description": "Blind on jolt.",
+        "element": "Arc",
+        "statModifiers": {}
+      }
+    ],
+    "abilities": [
+      {
+        "hash": 5001,
+        "name": "Golden Gun",
+        "searchName": "golden gun",
+        "icon": null,
+        "description": "Solar super.",
+        "classType": "Hunter",
+        "element": "Solar",
+        "kind": "super",
+        "subclassAffinities": [],
+        "verbs": []
+      }
+    ],
+    "mods": [
+      {
+        "hash": 6001,
+        "name": "Minor Resilience Mod",
+        "searchName": "minor resilience mod",
+        "icon": null,
+        "description": "+5 Resilience",
+        "slotCategory": "general",
+        "energyCost": 1,
+        "statModifiers": { "Resilience": 5 }
+      }
+    ]
+  }
+}

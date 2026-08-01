@@ -1,20 +1,20 @@
 ---
 name: Destiny 2 Build Creator — Matte Flap Ledger
-description: Void-black matte split-flap board for intent→compose→equip; fixed-column dense libraries, Destiny element ink, amber readiness lamps—no brushed steel.
+description: Matte split-flap board for intent→compose→equip; dual-face Flutter palettes (Cold Graphite dark / Paper Ledger light); fixed-column dense libraries; Destiny element ink; one readiness lamp—no brushed steel.
 colors:
-  background: "#050608"
-  surface: "#0c0e12"
-  surface-raised: "#12151c"
-  line: "#1c212c"
-  line-strong: "#2a3140"
-  foreground: "#e8eaef"
-  muted: "#8a93a6"
-  accent: "#e6b35c"
-  accent-strong: "#f0c878"
-  accent-dim: "#e6b35c24"
-  danger: "#e2654f"
-  success: "#6fc28b"
-  warning: "#d9a93f"
+  background: "#070b10"
+  surface: "#0e1319"
+  surface-raised: "#141a22"
+  line: "#1f2733"
+  line-strong: "#2a3342"
+  foreground: "#e4eaf2"
+  muted: "#8492a6"
+  accent: "#4ec4bc"
+  accent-strong: "#6fd4cd"
+  accent-dim: "#4ec4bc24"
+  danger: "#e05a52"
+  success: "#5cbc8e"
+  warning: "#c9a84a"
   element-kinetic: "#ffffff"
   element-arc: "#85c5ec"
   element-solar: "#f2721b"
@@ -164,37 +164,45 @@ Hard anti-references: Vault Terminal notches and dual radial glows; brushed meta
 
 ## Colors
 
-Palette character: colder and blacker than the prior vault—pure matte void with white flap lettering and rare lamps.
+Flutter product dual-face (adopted from palette exploration): **Cold Graphite** dark default + **Paper Ledger** light. Board language (square, gap-0, element ink) is unchanged—only thermal and lamp hue differ by face.
 
-### Primary
-- **Readiness Amber** (`#e6b35c` / `--accent`): Selected row, primary CTA wash, include filters, READY stamp. Stronger face `--accent-strong`; wash `--accent-dim`.
+### Dark face — Cold Graphite (default)
+Palette character: cooler blue-gray void, steel-less matte graphite plates, cyan-teal readiness lamp.
 
-### Secondary (status lamps)
-- **Signal Green** (`#6fc28b`): verified / healthy
-- **Caution Gold** (`#d9a93f`): soft miss / fuzzy
-- **Breach Coral** (`#e2654f`): illegal / exclude / hard block
+#### Primary (One Lamp)
+- **Cyan-teal readiness** (`#4ec4bc` / `--accent`): Selected row wash, primary CTA, include filters. Stronger face `#6fd4cd`; wash `#4ec4bc24`. Never hairlines or status health stamps.
 
-### Tertiary (sandbox elements — data authoritative)
-- Kinetic `#ffffff` · Arc `#85c5ec` · Solar `#f2721b` · Void `#b184c5` · Stasis `#4d88ff` · Strand `#35e366` · Prismatic `#d67ee2`
-- Full strength on icons and identity cells. Never recolor neutral chrome.
+#### Secondary (status lamps — not primary)
+- **Signal Green** (`#5cbc8e`): verified / healthy / supported soft coverage  
+- **Caution Gold** (`#c9a84a`): soft miss / fuzzy  
+- **Breach Coral** (`#e05a52`): illegal / exclude / hard block  
 
-### Neutral (dark default)
-- **Void** `#050608` canvas
-- **Flap** `#0c0e12` surface
-- **Raised flap** `#12151c`
-- **Rule** `#1c212c` / **Rule strong** `#2a3140`
-- **Lettering** `#e8eaef` / **Dim** `#8a93a6`
+#### Neutral (dark)
+- **Void** `#070b10` · **Flap** `#0e1319` · **Raised** `#141a22`  
+- **Rule** `#1f2733` / **Rule strong** `#2a3342`  
+- **Lettering** `#e4eaf2` / **Dim** `#8492a6`
+
+### Light face — Paper Ledger
+Cream quartermaster stock; rubber-stamp amber lamp (deepened for paper contrast). Not a SaaS card stack—still board-not-cards.
+
+- **Field** `#ebe6db` · **Plate** `#f7f3ea` · **Raised sheet** `#fffdf7`  
+- **Rule** `#c4bba8` / strong `#9a9488` · **Ink** `#1a1b1f` / muted `#5a5f6a`  
+- **Stamp amber** `#9a6418` (strong `#7a4e12`, wash `#9a64181f`)  
+- **Status:** success `#1a6e3f` · warning `#8f6510` · danger `#b53a2a`
+
+### Tertiary (sandbox elements — data authoritative, both faces)
+- Dark board: Kinetic `#ffffff` · Arc `#85c5ec` · Solar `#f2721b` · Void `#b184c5` · Stasis `#4d88ff` · Strand `#35e366` · Prismatic `#d67ee2`
+- Light board uses higher-contrast element set in `FlapColorTokens.light` (identity/seals only). Never recolor neutral chrome.
 
 ### Theme switching
-- Preferences: **dark** | **light** | **system** (`localStorage` key `d2bc-theme`).
-- Resolved theme on `html[data-theme="dark"|"light"]`; preference on `data-theme-pref`.
-- Light ledger remaps neutrals to paper board (`#e8e6e1` field / `#f4f2ec` plates) and deepens accent/status for AA on light surfaces; Destiny element hexes stay sandbox-true at higher contrast on paper.
-- Shell **ThemeToggle** cycles Dark → Light → System. Default preference is system (resolved dark when OS is dark).
+- Flutter: `ThemeMode` **system** | **dark** (Cold Graphite) | **light** (Paper Ledger). Settings **Appearance** cycles System → Cold Graphite → Paper Ledger.
+- MaterialApp maps `theme` → light tokens, `darkTheme` → dark tokens; OS dark when preference is system.
+- Next.js web may lag until CSS vars are re-exported from the same token ints.
 
 ### Named Rules
 **The No Steel Rule.** No brushed metal, chrome bezels, or metallic gradients. Matte only.
 
-**The One Lamp Rule.** Amber marks readiness and selection—not every border. Channel lamps may show element/class ink on idle rows; amber always wins when selected.
+**The One Lamp Rule.** The readiness lamp (teal on dark, amber on paper) marks selection and CTA—not every border. Channel lamps may show element/class ink on idle rows; the readiness lamp always wins when selected. Status success never uses `ColorScheme.primary`.
 
 **The Element Ink Rule.** Element hexes stay correct for damage-type truth; they tint identity cells, channel washes, and seals—not neutral chrome.
 

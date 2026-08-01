@@ -27,7 +27,6 @@
 # debug
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
@@ -51,10 +50,27 @@ next-env.d.ts
 .cursor/*.log
 .cursor/debug*
 
+# Dart / Melos (multiplatform port)
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+.pub-cache/
+.pub/
+**/doc/api/
+# Package-level locks are generated; workspace root lock is committed when present.
+packages/**/pubspec.lock
+flutter/packages/**/pubspec.lock
+.melos/
+melos_destiny2_build_creator.iml
+
+# Nested Dart workspace (DART-069)
+flutter/.dart_tool/
+flutter/**/build/
+
 # Playwright atlas auth / local capture state
 .atlas/
 
-
 # Generated atlas captures (recreate via npm run atlas:capture)
 docs/atlas/screenshots/*.png
-

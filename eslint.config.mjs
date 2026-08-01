@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Dart/Flutter/Jaspr workspace (not Next ESLint scope)
+    "flutter/**",
+    // Generated / vendored assets
+    "public/destiny-icons/**",
+    "docs/atlas/**",
   ]),
   {
     rules: {

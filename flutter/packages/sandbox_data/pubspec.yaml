@@ -1,0 +1,19 @@
+name: destiny2_sandbox_data
+description: >
+  Pure static sandbox tables for Destiny 2 Build Creator multiplatform port
+  (stat benefits, synergy verbs, exotic ability requirements, archetypes,
+  champion counters, vocabularies). Zero IO/UI dependencies. DART-009.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.5.0
+
+# Runtime dependencies: Dart SDK only.
+# Do NOT add Flutter, Jaspr, Drift, http, path_provider, or other IO/UI packages.
+dependencies: {}
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

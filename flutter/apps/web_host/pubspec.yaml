@@ -1,0 +1,50 @@
+name: destiny2_web_host
+description: >
+  Destiny 2 Build Creator — Jaspr web host (DART-042–047).
+  Client-mode SPA shell + routing + Matte Flap design tokens (CSS).
+  Drift WASM + OPFS + single-tab writer lock (DART-043).
+  Prebuilt entity bundles + offline catalog facets (DART-044).
+  Browser Public+PKCE OAuth + origin-scoped token storage (DART-045).
+  Compose spine: builds / sets / synergies + hard/soft parity (DART-046).
+  Equip-ready + DIM jsonOnly + optional equip (DART-047).
+  No Next.js runtime dependency; no confidential secrets.
+publish_to: none
+version: 0.0.1+1
+
+# Intentionally NOT using `resolution: workspace` — Jaspr builder/analyzer
+# conflict with Flutter host meta pins in the root workspace. Path packages
+# still resolve; run `dart pub get` in this directory.
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  destiny2_app:
+    path: ../../packages/app
+  destiny2_bungie:
+    path: ../../packages/bungie
+  destiny2_db:
+    path: ../../packages/db
+  destiny2_domain:
+    path: ../../packages/domain
+  destiny2_manifest:
+    path: ../../packages/manifest
+  destiny2_ui_tokens:
+    path: ../../packages/ui_tokens
+  drift: ^2.26.0
+  jaspr: ^0.23.2
+  jaspr_router: ^0.8.3
+  sqlite3: ^2.7.0
+  web: ^1.1.0
+
+dev_dependencies:
+  build_runner: ^2.10.0
+  build_web_compilers: ^4.8.0
+  jaspr_builder: ^0.23.2
+  jaspr_test: ^0.23.2
+  lints: ^5.0.0
+  path: ^1.9.0
+  test: ^1.25.0
+
+jaspr:
+  mode: client

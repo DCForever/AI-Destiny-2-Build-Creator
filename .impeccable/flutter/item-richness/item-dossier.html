@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item Dossier — Matte Flap Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void: #070b10;
+      --flap: #0e1319;
+      --raised: #141a22;
+      --line: #1f2733;
+      --line-strong: #2a3342;
+      --ink: #e4eaf2;
+      --muted: #8492a6;
+      --accent: #4ec4bc;
+      --accent-strong: #6fd4cd;
+      --accent-wash: #4ec4bc24;
+      --danger: #e05a52;
+      --success: #5cbc8e;
+      --warning: #c9a84a;
+      --solar: #f2721b;
+      --arc: #85c5ec;
+      --void-el: #b184c5;
+      --display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+      --body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      background: var(--void);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 15px;
+    }
+
+    /* Subtle vertical board rules — atmosphere without chrome */
+    body {
+      background-image:
+        linear-gradient(90deg, transparent 0, transparent calc(50% - 320px), var(--line) calc(50% - 320px), transparent calc(50% - 319px)),
+        radial-gradient(ellipse 80% 50% at 70% 0%, #4ec4bc0a, transparent 55%);
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      min-height: 100vh;
+    }
+
+    .rail {
+      border-right: 1px solid var(--line);
+      padding-right: 20px;
+    }
+
+    .page-title {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 1.125rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .page-sub {
+      color: var(--muted);
+      font-size: 0.8125rem;
+      margin-bottom: 20px;
+      max-width: 36rem;
+      line-height: 1.45;
+    }
+
+    .board-mock {
+      border: 1px solid var(--line);
+      background: var(--flap);
+    }
+    .board-head, .board-row {
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr 0.5fr 0.7fr;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 12px;
+      font-family: var(--display);
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .board-head { color: var(--muted); }
+    .board-row {
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .board-row:hover { background: #4ec4bc0a; }
+    .board-row.is-selected {
+      background: var(--accent-wash);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .board-row .name { font-weight: 600; letter-spacing: 0.02em; }
+    .seal {
+      display: inline-block;
+      border: 1px solid var(--warning);
+      color: var(--warning);
+      padding: 0 6px;
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* —— Item Dossier (detail) —— */
+    .dossier {
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-left: none;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 48px);
+      position: sticky;
+      top: 24px;
+    }
+
+    .dossier-identity {
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+    .dossier-identity::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--solar);
+    }
+    .id-kicker {
+      font-family: var(--display);
+      font-size: 0.625rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .id-name {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+    .id-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .power {
+      font-family: var(--mono);
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+    .power span { color: var(--muted); font-size: 0.75rem; margin-right: 4px; }
+    .chip {
+      font-family: var(--display);
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid var(--line-strong);
+      background: var(--flap);
+      color: var(--ink);
+    }
+    .chip.element { border-color: var(--solar); color: var(--solar); }
+    .chip.lamp {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-wash);
+    }
+    .chip.warn { border-color: var(--warning); color: var(--warning); }
+    .chip.ok { border-color: var(--success); color: var(--success); }
+
+    .dossier-scroll {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line-strong) transparent;
+    }
+
+    /* Collapsible flap sections */
+    .section {
+      border-bottom: 1px solid var(--line);
+    }
+    .section-toggle {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--display);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background 0.12s ease;
+    }
+    .section-toggle:hover { background: #ffffff04; }
+    .section-toggle:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: -1px;
+    }
+    .section-toggle .tally {
+      font-family: var(--mono);
+      font-size: 0.625rem;
+      letter-spacing: 0;
+      color: var(--muted);
+      text-transform: none;
+    }
+    .section-toggle .chev {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+    }
+    .section.is-open .chev { transform: rotate(180deg); color: var(--accent); }
+    .section-body {
+      display: none;
+      padding: 0 14px 14px;
+      animation: flapIn 0.22s ease;
+    }
+    .section.is-open .section-body { display: block; }
+
+    @keyframes flapIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .desc {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 4px 10px;
+      font-size: 0.75rem;
+    }
+    .kv dt {
+      font-family: var(--display);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-size: 0.625rem;
+    }
+    .kv dd { color: var(--ink); }
+
+    /* Armor 6-stat board */
+    .stat-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .stat-cell {
+      background: var(--flap);
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .stat-cell .lbl {
+      font-family: var(--display);
+      font-size: 0.5625rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .stat-cell .val {
+      font-family: var(--mono);
+      font-size: 1.125rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-total {
+      grid-column: 1 / -1;
+      background: var(--raised);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+    }
+    .stat-total .lbl {
+      font-family: var(--display);
+      font-size: 0.625rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .stat-total .val {
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      color: var(--accent-strong);
+    }
+
+    /* DIM+ perk columns */
+    .perk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 10px;
+    }
+    .perk-col {
+      border: 1px solid var(--line);
+      background: var(--flap);
+      min-height: 120px;
+    }
+    .perk-col-head {
+      font-family: var(--display);
+      font-size: 0.5625rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .perk-opt {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 7px 8px;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--body);
+      font-size: 0.75rem;
+      cursor: default;
+      line-height: 1.3;
+    }
+    .perk-opt:last-child { border-bottom: none; }
+    .perk-opt.is-equipped {
+      color: var(--ink);
+      background: var(--accent-wash);
+      box-shadow: inset 2px 0 0 var(--accent);
+      font-weight: 500;
+    }
+    .perk-opt .tag {
+      display: inline-block;
+      margin-left: 4px;
+      font-family: var(--display);
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0 4px;
+      vertical-align: middle;
+    }
+    .perk-opt.is-alt { opacity: 0.85; }
+    .perk-opt.is-alt:not(.is-equipped) { color: var(--muted); }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .advanced {
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      color: var(--muted);
+      line-height: 1.6;
+      word-break: break-all;
+    }
+    .advanced button {
+      margin-top: 8px;
+      font-family: var(--display);
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border: 1px solid var(--line-strong);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .advanced button:hover { border-color: var(--accent); color: var(--accent); }
+
+    .dossier-actions {
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      font-family: var(--display);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border: 1px solid var(--line-strong);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      border-radius: 0;
+    }
+    .btn-primary {
+      background: var(--accent-wash);
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+    .btn:hover { filter: brightness(1.08); }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .toolbar .btn { padding: 5px 10px; }
+    .toolbar .btn.is-on {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-wash);
+    }
+
+    .note {
+      margin-top: 20px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: var(--flap);
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .note strong { color: var(--ink); font-weight: 500; }
+
+    @media (max-width: 880px) {
+      .shell { grid-template-columns: 1fr; }
+      .rail { border-right: none; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 16px; margin-bottom: 0; }
+      .dossier { border-left: 1px solid var(--line); max-height: none; position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="rail">
+      <h1 class="page-title">Item Dossier</h1>
+      <p class="page-sub">
+        Design study for armor &amp; weapon richness — denser than DIM’s roll card,
+        still Matte Flap Ledger: square plates, one cyan lamp, element ink on identity only.
+        Sections fold so the board stays primary.
+      </p>
+
+      <div class="toolbar" role="toolbar" aria-label="Preset collapse">
+        <button type="button" class="btn is-on" id="preset-scan" data-preset="scan">Scan</button>
+        <button type="button" class="btn" id="preset-roll" data-preset="roll">Full roll</button>
+        <button type="button" class="btn" id="preset-all" data-preset="all">Expand all</button>
+        <button type="button" class="btn" id="preset-none" data-preset="none">Collapse all</button>
+      </div>
+
+      <div class="board-mock" aria-label="Catalog board mock">
+        <div class="board-head">
+          <span>Name</span><span>Type</span><span>Own</span><span>Element</span>
+        </div>
+        <div class="board-row is-selected">
+          <span class="name">Midnight Coup</span>
+          <span>HC</span>
+          <span>3</span>
+          <span style="color:var(--solar)">Solar</span>
+        </div>
+        <div class="board-row">
+          <span class="name">Synthoceps</span>
+          <span>Arms</span>
+          <span>1</span>
+          <span>Exotic</span>
+        </div>
+        <div class="board-row">
+          <span class="name">The Swarm</span>
+          <span>MG</span>
+          <span>2</span>
+          <span style="color:var(--arc)">Arc</span>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Design contract</strong><br />
+        Identity strip always visible (name · power · element lamp · MW/crafted seals).<br />
+        Foldable plates: Definition · Stats · Perks · Tags · Advanced.<br />
+        Perks: column grid with equipped (cyan rule) + alternates from <code>reusablePlugHashes</code>.<br />
+        Scan preset = Definition closed, Stats open for armor / Perks open for weapons, Advanced closed.
+      </div>
+    </div>
+
+    <aside class="dossier" id="dossier" aria-label="Item dossier detail">
+      <header class="dossier-identity">
+        <div class="id-kicker">Weapon · Kinetic slot</div>
+        <div class="id-name">Midnight Coup</div>
+        <div class="id-meta">
+          <div class="power"><span>PWR</span>1810</div>
+          <span class="chip element">Solar</span>
+          <span class="chip">Hand Cannon</span>
+          <span class="chip">Adaptive</span>
+          <span class="chip lamp">Owned ×3</span>
+          <span class="chip warn">MW</span>
+          <span class="chip ok">Crafted</span>
+        </div>
+      </header>
+
+      <div class="dossier-scroll">
+        <!-- Definition -->
+        <section class="section" data-section="definition">
+          <button type="button" class="section-toggle" aria-expanded="false">
+            <span>Definition</span>
+            <span class="tally">frame · intrinsic</span>
+            <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+          </button>
+          <div class="section-body">
+            <p class="desc">
+              “A single shot can change the course of a battle.” Precision frame kinetic
+              with an intrinsic that rewards consecutive precision hits — definition text
+              always available even when unpinned.
+            </p>
+            <dl class="kv">
+              <dt>Slot</dt><dd>Kinetic</dd>
+              <dt>Frame</dt><dd>Adaptive Frame</dd>
+              <dt>Ammo</dt><dd>Primary</dd>
+              <dt>Hash</dt><dd style="font-family:var(--mono)">1744115122</dd>
+            </dl>
+          </div>
+        </section>
+
+        <!-- Stats (armor example hidden for weapon; show for demo as "weapon stats" placeholder or skip) -->
+        <section class="section" data-section="stats" data-kind="armor-only" hidden>
+          <button type="button" class="section-toggle" aria-expanded="true">
+            <span>Base stats</span>
+            <span class="tally">EoF six · total</span>
+            <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+          </button>
+          <div class="section-body">
+            <div class="stat-board">
+              <div class="stat-cell"><div class="lbl">Health</div><div class="val">28</div></div>
+              <div class="stat-cell"><div class="lbl">Melee</div><div class="val">12</div></div>
+              <div class="stat-cell"><div class="lbl">Grenade</div><div class="val">18</div></div>
+              <div class="stat-cell"><div class="lbl">Super</div><div class="val">22</div></div>
+              <div class="stat-cell"><div class="lbl">Class</div><div class="val">10</div></div>
+              <div class="stat-cell"><div class="lbl">Weapons</div><div class="val">24</div></div>
+              <div class="stat-total"><span class="lbl">Grand total</span><span class="val">114</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Perks -->
+        <section class="section is-open" data-section="perks">
+          <button type="button" class="section-toggle" aria-expanded="true">
+            <span>Perks</span>
+            <span class="tally">6 columns · copy roll</span>
+            <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+          </button>
+          <div class="section-body">
+            <div class="perk-grid">
+              <div class="perk-col">
+                <div class="perk-col-head">Barrel</div>
+                <div class="perk-opt is-equipped">Fluted Barrel <span class="tag">Eq</span></div>
+                <div class="perk-opt is-alt">Hammer-Forged</div>
+                <div class="perk-opt is-alt">Smallbore</div>
+              </div>
+              <div class="perk-col">
+                <div class="perk-col-head">Magazine</div>
+                <div class="perk-opt is-equipped">Accurized Rounds <span class="tag">Eq</span></div>
+                <div class="perk-opt is-alt">Appended Mag</div>
+                <div class="perk-opt is-alt">Flared Magwell</div>
+              </div>
+              <div class="perk-col">
+                <div class="perk-col-head">Trait 1</div>
+                <div class="perk-opt is-equipped">Firefly <span class="tag">Eq</span></div>
+                <div class="perk-opt is-alt">Explosive Payload</div>
+                <div class="perk-opt is-alt">Outlaw</div>
+              </div>
+              <div class="perk-col">
+                <div class="perk-col-head">Trait 2</div>
+                <div class="perk-opt is-equipped">Kill Clip <span class="tag">Eq</span></div>
+                <div class="perk-opt is-alt">Frenzy</div>
+                <div class="perk-opt is-alt">Rampage</div>
+              </div>
+              <div class="perk-col">
+                <div class="perk-col-head">Origin</div>
+                <div class="perk-opt is-equipped">Wild Card <span class="tag">Eq</span></div>
+              </div>
+              <div class="perk-col">
+                <div class="perk-col-head">Masterwork</div>
+                <div class="perk-opt is-equipped">Range <span class="tag">Eq</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tags -->
+        <section class="section" data-section="tags">
+          <button type="button" class="section-toggle" aria-expanded="false">
+            <span>Tags &amp; location</span>
+            <span class="tally">roll tags · vault</span>
+            <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+          </button>
+          <div class="section-body">
+            <div class="tag-row" style="margin-bottom:10px">
+              <span class="chip">pve</span>
+              <span class="chip">godroll</span>
+              <span class="chip">crafted</span>
+            </div>
+            <dl class="kv">
+              <dt>Location</dt><dd>Vault</dd>
+              <dt>Bucket</dt><dd>Kinetic Weapons</dd>
+              <dt>Synced</dt><dd style="font-family:var(--mono)">2026-07-26T16:04Z</dd>
+            </dl>
+          </div>
+        </section>
+
+        <!-- Advanced -->
+        <section class="section" data-section="advanced">
+          <button type="button" class="section-toggle" aria-expanded="false">
+            <span>Advanced</span>
+            <span class="tally">ids · hashes</span>
+            <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+          </button>
+          <div class="section-body">
+            <div class="advanced">
+              instanceId: 6917529183456789012<br />
+              itemHash: 1744115122<br />
+              characterId: — (vault)
+              <div>
+                <button type="button">Copy instance id</button>
+                <button type="button">Copy definition hash</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="dossier-actions">
+        <button type="button" class="btn btn-primary">Create set</button>
+        <button type="button" class="btn">Create synergy</button>
+        <button type="button" class="btn">Copy hash</button>
+      </footer>
+    </aside>
+  </div>
+
+  <script>
+    const sections = [...document.querySelectorAll(".section")];
+    const presets = {
+      scan: { definition: false, stats: true, perks: true, tags: false, advanced: false },
+      roll: { definition: true, stats: true, perks: true, tags: true, advanced: false },
+      all: { definition: true, stats: true, perks: true, tags: true, advanced: true },
+      none: { definition: false, stats: false, perks: false, tags: false, advanced: false },
+    };
+
+    function setOpen(section, open) {
+      section.classList.toggle("is-open", open);
+      const btn = section.querySelector(".section-toggle");
+      if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    sections.forEach((section) => {
+      const btn = section.querySelector(".section-toggle");
+      btn?.addEventListener("click", () => {
+        setOpen(section, !section.classList.contains("is-open"));
+      });
+    });
+
+    document.querySelectorAll("[data-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-preset]").forEach((b) => b.classList.remove("is-on"));
+        btn.classList.add("is-on");
+        const map = presets[btn.dataset.preset];
+        sections.forEach((s) => {
+          const key = s.dataset.section;
+          if (key && map[key] !== undefined) setOpen(s, map[key]);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
