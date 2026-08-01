@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>New Build · Intent Commission Stage (proposal)</title>
+  <style>
+    :root {
+      --void: #070b10;
+      --flap: #0e1319;
+      --raised: #141a22;
+      --rule: #1f2733;
+      --rule-strong: #2a3342;
+      --letter: #e4eaf2;
+      --dim: #8492a6;
+      --lamp: #4ec4bc;
+      --lamp-wash: #4ec4bc24;
+      --warlock: #b184c5;
+      --display: "Barlow Condensed", "Segoe UI Condensed", system-ui, sans-serif;
+      --body: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: var(--void); color: var(--letter);
+      font-family: var(--body); font-size: 14px;
+      display: grid;
+      grid-template-columns: 56px 320px 1fr;
+      grid-template-rows: 48px 1fr;
+      height: 100vh;
+    }
+    .nav {
+      grid-row: 1 / -1;
+      background: var(--flap);
+      border-right: 1px solid var(--rule);
+      display: flex; flex-direction: column; align-items: center;
+      padding-top: 12px; gap: 8px;
+    }
+    .nav .dot {
+      width: 36px; height: 36px; border: 1px solid var(--rule);
+      display: grid; place-items: center; color: var(--dim); font-size: 11px;
+      font-family: var(--display); letter-spacing: 0.04em;
+    }
+    .nav .dot.on { border-color: var(--lamp); color: var(--lamp); background: var(--lamp-wash); }
+    .top {
+      grid-column: 2 / -1;
+      border-bottom: 1px solid var(--rule);
+      display: flex; align-items: center; padding: 0 16px;
+      font-family: var(--display); font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; font-size: 15px;
+    }
+    .rail {
+      background: var(--flap);
+      border-right: 1px solid var(--rule);
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    .cue {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px;
+      align-items: center; padding: 10px 12px;
+      border-bottom: 1px solid var(--rule);
+      cursor: default;
+    }
+    .cue .t {
+      font-family: var(--display); letter-spacing: 0.06em;
+      text-transform: uppercase; font-size: 12px; color: var(--lamp);
+    }
+    .cue .s { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    .cue .lamp {
+      width: 8px; height: 8px; background: var(--lamp);
+      box-shadow: 0 0 0 3px var(--lamp-wash);
+    }
+    .board-h {
+      display: grid;
+      grid-template-columns: 1.4fr 0.7fr 0.7fr 1fr 0.5fr;
+      gap: 0; padding: 6px 10px;
+      font-family: var(--display); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--dim);
+      border-bottom: 1px solid var(--rule);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1.4fr 0.7fr 0.7fr 1fr 0.5fr;
+      padding: 8px 10px; border-bottom: 1px solid var(--rule);
+      font-family: var(--display); font-size: 12px; letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .row:hover { background: #4ec4bc0a; }
+    .stamp {
+      display: inline-block; padding: 1px 5px;
+      border: 1px solid var(--lamp); color: var(--lamp);
+      font-size: 10px; letter-spacing: 0.04em;
+    }
+    .stage {
+      background: var(--void);
+      display: flex; flex-direction: column; min-height: 0;
+      overflow: auto;
+    }
+    .plate {
+      margin: 16px; border: 1px solid var(--rule-strong);
+      background: var(--flap);
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      min-height: calc(100% - 32px);
+    }
+    .plate-main { padding: 20px 22px; border-right: 1px solid var(--rule); }
+    .plate-side {
+      padding: 20px 18px; background: var(--raised);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .step {
+      font-family: var(--display); font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--dim); margin-bottom: 8px;
+    }
+    .step b { color: var(--lamp); margin-right: 6px; }
+    .block { margin-bottom: 22px; }
+    .class-flaps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+    .class-flaps button {
+      appearance: none; background: var(--void); color: var(--letter);
+      border: 1px solid var(--rule); padding: 14px 8px;
+      font-family: var(--display); letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 13px; cursor: pointer;
+    }
+    .class-flaps button.sel {
+      border-color: var(--warlock); color: var(--warlock);
+      background: #b184c514; box-shadow: inset 3px 0 0 var(--warlock);
+    }
+    .types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .types button {
+      appearance: none; background: transparent; color: var(--dim);
+      border: 1px solid var(--rule); padding: 6px 10px;
+      font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase;
+      font-size: 11px; cursor: pointer;
+    }
+    .types button.sel { border-color: var(--lamp); color: var(--lamp); background: var(--lamp-wash); }
+    .row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    input, select {
+      background: var(--void); border: 1px solid var(--rule); color: var(--letter);
+      padding: 8px 10px; font-family: var(--body); font-size: 13px; width: 100%;
+    }
+    .add {
+      appearance: none; background: transparent; border: 1px solid var(--rule-strong);
+      color: var(--letter); padding: 0 14px;
+      font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+    .chip {
+      border: 1px solid var(--lamp); color: var(--lamp); background: var(--lamp-wash);
+      padding: 3px 8px; font-family: var(--display); font-size: 11px; letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .dossier-label {
+      font-family: var(--display); font-size: 10px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--dim);
+    }
+    .dossier-title {
+      font-family: var(--display); font-size: 22px; letter-spacing: 0.06em;
+      text-transform: uppercase; font-weight: 600; line-height: 1.15;
+    }
+    .dossier-meta { color: var(--dim); font-size: 12px; line-height: 1.45; }
+    .dossier-meta span { color: var(--warlock); }
+    .rule { height: 1px; background: var(--rule); margin: 4px 0; }
+    .cta {
+      margin-top: auto; appearance: none; width: 100%;
+      background: var(--lamp-wash); border: 1px solid var(--lamp); color: var(--lamp);
+      padding: 14px; font-family: var(--display); letter-spacing: 0.12em;
+      text-transform: uppercase; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .cta:hover { background: #4ec4bc33; }
+    .hint {
+      font-family: var(--mono); font-size: 10px; color: var(--dim); line-height: 1.4;
+    }
+    .badge {
+      position: fixed; bottom: 12px; right: 12px;
+      background: var(--raised); border: 1px solid var(--rule-strong);
+      padding: 8px 12px; font-size: 11px; color: var(--dim); max-width: 280px;
+    }
+    .badge strong { color: var(--lamp); display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <aside class="nav" aria-label="App nav">
+    <div class="dot">LD</div>
+    <div class="dot on">BD</div>
+    <div class="dot">SY</div>
+    <div class="dot">ST</div>
+    <div class="dot">CT</div>
+    <div class="dot">⚙</div>
+  </aside>
+  <header class="top">Builds</header>
+  <aside class="rail" aria-label="Library board">
+    <div class="cue">
+      <div>
+        <div class="t">Commission · open</div>
+        <div class="s">Warlock · Verb::Jolt · Melee</div>
+      </div>
+      <div class="lamp" title="Active draft"></div>
+    </div>
+    <div class="board-h">
+      <div>Name</div><div>Class</div><div>Exotic</div><div>Syn</div><div>Stat</div>
+    </div>
+    <div class="row">
+      <div>Warlock Build</div>
+      <div>Warlock</div>
+      <div>—</div>
+      <div><span class="stamp">Verb::Jolt</span></div>
+      <div>ok</div>
+    </div>
+    <div class="row" style="opacity:0.45">
+      <div>Trace Kit</div>
+      <div>Hunter</div>
+      <div>—</div>
+      <div><span class="stamp">Trace</span></div>
+      <div>hold</div>
+    </div>
+  </aside>
+  <main class="stage" aria-label="Commission stage">
+    <div class="plate">
+      <div class="plate-main">
+        <div class="block">
+          <div class="step"><b>01</b> Guardian</div>
+          <div class="class-flaps">
+            <button type="button">Hunter</button>
+            <button type="button">Titan</button>
+            <button type="button" class="sel">Warlock</button>
+          </div>
+        </div>
+        <div class="block">
+          <div class="step"><b>02</b> Play verbs · synergy types</div>
+          <div class="types">
+            <button type="button" class="sel">Melee</button>
+            <button type="button">Grenade</button>
+            <button type="button" class="sel">Verb</button>
+            <button type="button">Super</button>
+            <button type="button">Primary</button>
+            <button type="button">Special</button>
+            <button type="button">Heavy</button>
+            <button type="button">Ability</button>
+          </div>
+          <div class="row2">
+            <input placeholder="Subtype optional — e.g. Jolt, Devour" value="Jolt" />
+            <button class="add" type="button">Add</button>
+          </div>
+          <div style="height:10px"></div>
+          <div class="chips">
+            <span class="chip">Verb · Jolt ×</span>
+            <span class="chip">Melee ×</span>
+          </div>
+        </div>
+        <div class="block">
+          <div class="step"><b>03</b> Callsign <span style="color:var(--dim);letter-spacing:0.08em">(optional)</span></div>
+          <input placeholder="Leave blank to auto-name from intent" />
+        </div>
+      </div>
+      <aside class="plate-side">
+        <div class="dossier-label">Live dossier · draft identity</div>
+        <div class="dossier-title">Warlock<br/>Verb · Jolt<br/>Melee</div>
+        <div class="rule"></div>
+        <div class="dossier-meta">
+          Identity starts as <span>designated synergy types</span>, not inventory.
+          Exotic armor / shared weapon / pinned Super attach after create on the compose floor.
+        </div>
+        <div class="rule"></div>
+        <div class="hint">
+          DBR-SYN-002 intent-first<br/>
+          Class bound · multi-type OK<br/>
+          Soft bridge → curated synergies later
+        </div>
+        <button class="cta" type="button">Create build</button>
+      </aside>
+    </div>
+  </main>
+  <div class="badge">
+    <strong>Proposal mock · not shipped</strong>
+    Intent Commission Stage — board full height; create lives in detail pane as Flap plate.
+  </div>
+</body>
+</html>
