@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it , vi} from "vitest";
+
+vi.mock("@/lib/services", () => ({
+  getServices: vi.fn(async () => ({
+    entityCache: {
+      getStore: vi.fn(async () => []),
+    },
+  })),
+}));
+
 
 import { API_ERROR_CODES } from "@/lib/api/errors";
 import { createTestDb } from "@/lib/db/client";
