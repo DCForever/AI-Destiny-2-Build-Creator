@@ -188,5 +188,7 @@ Generator-style multi-pass LLM is **not** restored as a primary nav tab. Prefer 
 | [`docs/atlas/README.md`](./docs/atlas/README.md) | Screenshot capture and Atlas-only browse |
 | [`DEBUG.md`](./DEBUG.md) | `/debug/*` setup and API verification flows |
 | [`DESIGN.md`](./DESIGN.md) | Design notes |
-| [`AGENTS.md`](./AGENTS.md) | Agent rules (domain docs + product-map updates) |
+| [`AGENTS.md`](./AGENTS.md) | Monorepo agent rules (domain + product-map); points at stack guides |
+| [`web/NextJS/AGENTS.md`](./web/NextJS/AGENTS.md) | Next.js app agent rules |
+| [`flutter/AGENTS.md`](./flutter/AGENTS.md) | Dart / Flutter / Jaspr agent rules |
 | [`specs/`](./specs/) | Domain and feature specifications |
