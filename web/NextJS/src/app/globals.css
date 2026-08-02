@@ -1,31 +1,45 @@
 @import "tailwindcss";
 
 /*
- * Matte Flap Ledger — void-black split-flap board.
- * Square plates, fixed-column libraries, Destiny element ink, amber lamps.
- * No brushed steel. No notched vault plates.
+ * Neon Network / Vex Network Interface — product design language.
+ * Open Design: user:neon-network-design-system
+ * SSoT: repo DESIGN.md + flutter/packages/ui_tokens
+ *
+ * Soft spatial zoning (gap → tone → fade). Cyan signal only.
+ * White/grey structural hairlines — not cyan cages. No brushed steel.
  */
 
 /*
- * Dark is the default on :root (no data-theme yet).
- * Light only via html[data-theme="light"] so it always overrides :root.
+ * Dark (Neon void) is default on :root.
+ * Light (cool technical) only via html[data-theme="light"].
  */
 :root {
-  --background: #050608;
-  --surface: #0c0e12;
-  --surface-raised: #12151c;
-  --line: #1c212c;
-  --line-strong: #2a3140;
-  --foreground: #e8eaef;
-  --muted: #8a93a6;
-  --accent: #e6b35c;
-  --accent-strong: #f0c878;
-  --accent-dim: #e6b35c24;
-  --danger: #e2654f;
-  --success: #6fc28b;
-  --warning: #d9a93f;
-  --field-glow-a: color-mix(in srgb, var(--element-stasis) 7%, transparent);
-  --field-glow-b: color-mix(in srgb, var(--accent) 5%, transparent);
+  --background: #05050f;
+  --surface: #0a0a18;
+  --surface-raised: #101028;
+  --line: rgba(232, 238, 242, 0.22);
+  --line-strong: rgba(232, 238, 242, 0.38);
+  --foreground: #f0fdff;
+  --muted: #7dd3e0;
+  --accent: #00e5ff;
+  --accent-strong: #00b8d4;
+  --accent-dim: #00e5ff26;
+  --accent-secondary: #ff1a8c;
+  --danger: #ff003c;
+  --success: #2ee6a6;
+  --warning: #f5c542;
+  --rarity-exotic: #ceae33;
+  --rarity-legendary: #522f65;
+  --rarity-legendary-edge: #a178c4;
+  --field-glow-a: color-mix(in srgb, var(--accent-secondary) 10%, transparent);
+  --field-glow-b: color-mix(in srgb, var(--accent) 8%, transparent);
+  --field-glow-c: color-mix(in srgb, #3d7eff 10%, transparent);
+  --grad-zone: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface) 96%, var(--accent) 3%) 0%,
+    color-mix(in srgb, var(--surface) 72%, var(--background)) 100%
+  );
+  --grid-line: color-mix(in srgb, var(--accent) 14%, transparent);
 
   /* Official damage-type colors (DestinyDamageTypeDefinition.color) */
   --element-kinetic: #ffffff;
@@ -35,28 +49,38 @@
   --element-stasis: #4d88ff;
   --element-strand: #35e366;
   --element-prismatic: #d67ee2;
+
+  color-scheme: dark;
 }
 
 /*
- * Light ledger: paper board under desk light — same grammar, inverted field.
- * Element hues stay sandbox-true; accent readiness stays warm amber.
+ * Cool technical stage — same Neon grammar, inverted field.
+ * Element hues stay sandbox-true; accent is signal chrome only (not body text).
  */
 html[data-theme="light"] {
-  --background: #e8e6e1;
-  --surface: #f4f2ec;
-  --surface-raised: #ffffff;
-  --line: #c9c4b8;
-  --line-strong: #9a9488;
-  --foreground: #1a1c22;
-  --muted: #5c6170;
-  --accent: #9a6b1f;
-  --accent-strong: #7a5214;
-  --accent-dim: #9a6b1f1f;
-  --danger: #b53a2a;
-  --success: #1f7a45;
-  --warning: #9a6f12;
-  --field-glow-a: color-mix(in srgb, var(--element-stasis) 8%, transparent);
-  --field-glow-b: color-mix(in srgb, var(--accent) 7%, transparent);
+  --background: #f4f7fb;
+  --surface: #ffffff;
+  --surface-raised: #eef2f7;
+  --line: rgba(10, 10, 24, 0.14);
+  --line-strong: rgba(10, 10, 24, 0.22);
+  --foreground: #0a0a18;
+  --muted: #4a5a68;
+  --accent: #00c4db;
+  --accent-strong: #00a8bc;
+  --accent-dim: #00c4db1f;
+  --accent-secondary: #ff1a8c;
+  --danger: #ff003c;
+  --success: #2ee6a6;
+  --warning: #f5c542;
+  --field-glow-a: color-mix(in srgb, var(--accent) 8%, transparent);
+  --field-glow-b: color-mix(in srgb, var(--accent-secondary) 5%, transparent);
+  --field-glow-c: color-mix(in srgb, #3d7eff 6%, transparent);
+  --grad-zone: linear-gradient(
+    165deg,
+    #ffffff 0%,
+    color-mix(in srgb, #e8eef5 88%, transparent) 100%
+  );
+  --grid-line: color-mix(in srgb, var(--accent) 10%, transparent);
 
   --element-kinetic: #2a2d36;
   --element-arc: #1a6f9c;
@@ -71,22 +95,24 @@ html[data-theme="light"] {
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  /* Re-assert dark tokens when preference is explicit dark (same as :root). */
-  --background: #050608;
-  --surface: #0c0e12;
-  --surface-raised: #12151c;
-  --line: #1c212c;
-  --line-strong: #2a3140;
-  --foreground: #e8eaef;
-  --muted: #8a93a6;
-  --accent: #e6b35c;
-  --accent-strong: #f0c878;
-  --accent-dim: #e6b35c24;
-  --danger: #e2654f;
-  --success: #6fc28b;
-  --warning: #d9a93f;
-  --field-glow-a: color-mix(in srgb, var(--element-stasis) 7%, transparent);
-  --field-glow-b: color-mix(in srgb, var(--accent) 5%, transparent);
+  /* Re-assert Neon void when preference is explicit dark (same as :root). */
+  --background: #05050f;
+  --surface: #0a0a18;
+  --surface-raised: #101028;
+  --line: rgba(232, 238, 242, 0.22);
+  --line-strong: rgba(232, 238, 242, 0.38);
+  --foreground: #f0fdff;
+  --muted: #7dd3e0;
+  --accent: #00e5ff;
+  --accent-strong: #00b8d4;
+  --accent-dim: #00e5ff26;
+  --accent-secondary: #ff1a8c;
+  --danger: #ff003c;
+  --success: #2ee6a6;
+  --warning: #f5c542;
+  --field-glow-a: color-mix(in srgb, var(--accent-secondary) 10%, transparent);
+  --field-glow-b: color-mix(in srgb, var(--accent) 8%, transparent);
+  --field-glow-c: color-mix(in srgb, #3d7eff 10%, transparent);
   --element-kinetic: #ffffff;
   --element-arc: #85c5ec;
   --element-solar: #f2721b;
@@ -120,13 +146,15 @@ html[data-theme="dark"] {
 }
 
 body {
-  /* Cool board field + faint readiness wash (not dual vault glows). */
+  /* Neon void + shell blooms (magenta / cyan / blue) — not dual vault glows. */
   background:
-    radial-gradient(900px 420px at 70% -8%, var(--field-glow-a) 0%, transparent 58%),
-    radial-gradient(700px 380px at -5% 105%, var(--field-glow-b) 0%, transparent 52%),
+    radial-gradient(ellipse 42% 36% at 18% 72%, var(--field-glow-b) 0%, transparent 70%),
+    radial-gradient(ellipse 36% 32% at 82% 28%, var(--field-glow-a) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 40% at 55% 100%, var(--field-glow-c) 0%, transparent 65%),
     var(--background);
   color: var(--foreground);
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -150,10 +178,19 @@ h4 {
   background: var(--surface-raised);
 }
 
-/* Thin amber keyline used under section headers. */
+/* Thin cyan signal keyline under section headers. */
 .keyline {
   height: 1px;
   background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
+}
+
+/* Soft zone surface (gap / tone / fade — not a cyan cage). */
+.neon-zone,
+.panel-soft {
+  background: var(--grad-zone);
+  border-radius: 0;
+  box-shadow: 0 12px 40px color-mix(in srgb, #000 28%, transparent);
+  position: relative;
 }
 
 /* Hide scrollbars on mobile nav overflow without killing scroll. */
@@ -267,7 +304,7 @@ h4 {
   background: var(--accent);
 }
 
-/* Idle channel lamp (element/class) — amber wins when selected */
+/* Idle channel lamp (element/class) — cyan signal wins when selected */
 .flap-row[data-channel]:not([data-selected="true"]):not([data-lamp])::before {
   content: "";
   position: absolute;

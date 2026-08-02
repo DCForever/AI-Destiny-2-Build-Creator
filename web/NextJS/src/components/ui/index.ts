@@ -1,5 +1,5 @@
 /**
- * Matte Flap Ledger UI primitives.
+ * Neon Network UI primitives (FlapBoard layout contracts).
  *
  * Compose screens from these — avoid ad-hoc flap / badge classes in
  * feature components so layout can be rearranged without restyling.

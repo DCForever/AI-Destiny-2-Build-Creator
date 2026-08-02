@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono, Orbitron } from "next/font/google";
 import Script from "next/script";
 
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
@@ -7,19 +7,22 @@ import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/ui/theme";
 
 import "./globals.css";
 
-const display = Barlow_Condensed({
+/** Neon Network display face (module titles / construct IDs). */
+const display = Orbitron({
   variable: "--font-display",
   weight: ["500", "600", "700"],
   subsets: ["latin"],
 });
 
-const body = IBM_Plex_Sans({
+/** Neon Network body / UI. */
+const body = Inter({
   variable: "--font-body",
   weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 
-const mono = IBM_Plex_Mono({
+/** Neon Network mono (metrics / IDs). */
+const mono = JetBrains_Mono({
   variable: "--font-mono",
   weight: ["400", "500"],
   subsets: ["latin"],

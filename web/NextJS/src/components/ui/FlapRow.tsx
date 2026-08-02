@@ -8,7 +8,7 @@ import type {
 type FlapLamp = "none" | "warning" | "danger";
 
 /**
- * One ruled row on a Matte Flap Ledger board.
+ * One ruled row on a Neon Network FlapBoard.
  * Pass `columns` as a CSS grid-template-columns value matching cell count.
  * Optional `channel` is a Destiny element/class CSS color for row lamp + wash.
  */

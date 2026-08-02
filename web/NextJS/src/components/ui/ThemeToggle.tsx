@@ -10,7 +10,7 @@ import { useTheme } from "./ThemeProvider";
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { preference, resolved, cyclePreference } = useTheme();
   const label = themePreferenceLabel(preference);
-  const title = `Theme: ${label} (showing ${resolved}). Click to cycle Dark / Light / System.`;
+  const title = `Theme: ${label} (showing ${resolved}). Click to cycle Neon void / Cool technical / System.`;
 
 return (
     <button

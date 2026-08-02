@@ -1,4 +1,4 @@
-# Matte Flap Ledger UI (`src/components/ui`)
+# Neon Network UI (`src/components/ui`)
 
 Shared primitives for production screens. Feature pages should **compose** these
 instead of sprinkling raw board / badge classes.

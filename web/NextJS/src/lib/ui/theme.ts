@@ -1,4 +1,4 @@
-/** Theme preference + resolution for Matte Flap Ledger. */
+/** Theme preference + resolution for Neon Network (void / cool technical). */
 
 export const THEME_STORAGE_KEY = "d2bc-theme";
 
@@ -43,9 +43,9 @@ export function nextThemePreference(
 export function themePreferenceLabel(preference: ThemePreference): string {
   switch (preference) {
     case "dark":
-      return "Dark";
+      return "Neon void";
     case "light":
-      return "Light";
+      return "Cool technical";
     case "system":
       return "System";
   }
