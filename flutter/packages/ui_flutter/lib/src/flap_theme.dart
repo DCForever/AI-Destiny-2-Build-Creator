@@ -2,6 +2,7 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
 import 'flap_palette.dart';
+import 'neon_fonts.dart';
 
 /// Optional shell-specific theme slots (NavigationRail vs NavigationBar, etc.).
 typedef FlapThemeCustomize = ThemeData Function(
@@ -14,6 +15,7 @@ typedef FlapThemeCustomize = ThemeData Function(
 ///
 /// - Colors from pure [FlapColorTokens] / Neon Network (not `ColorScheme.fromSeed`).
 /// - Full roles on [FlapPalette] extension (status lamps, element ink).
+/// - Orbitron · Inter · JetBrains Mono via [google_fonts] ([neonTextTheme]).
 /// - Square elevation-0 cards; grey hairline structure; cyan signal for focus/CTA.
 ThemeData buildFlapThemeBase({
   Brightness brightness = Brightness.dark,
@@ -31,6 +33,7 @@ ThemeData buildFlapThemeBase({
   final accent = palette.accent;
   final danger = palette.danger;
   final line = palette.line;
+  final textTheme = neonTextTheme(onSurface: onSurface, muted: muted);
 
   final scheme = ColorScheme(
     brightness: brightness,
@@ -53,6 +56,7 @@ ThemeData buildFlapThemeBase({
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
+    fontFamily: neonBodyFontFamily,
     scaffoldBackgroundColor: background,
     canvasColor: background,
     cardColor: surface,
@@ -73,12 +77,10 @@ ThemeData buildFlapThemeBase({
       backgroundColor: surface,
       foregroundColor: onSurface,
       surfaceTintColor: Colors.transparent,
-      titleTextStyle: TextStyle(
+      titleTextStyle: neonDisplay(
         color: onSurface,
         fontSize: kTypeHeadline.fontSize,
-        fontWeight: FontWeight.w600,
         letterSpacing: kTypeHeadline.letterSpacing,
-        fontFamily: kFontDisplay,
       ),
     ),
     dividerTheme: DividerThemeData(
@@ -162,67 +164,18 @@ ThemeData buildFlapThemeBase({
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: surfaceRaised,
-      contentTextStyle: TextStyle(color: onSurface),
+      contentTextStyle: neonBody(color: onSurface),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(kFlapRadius),
       ),
       behavior: SnackBarBehavior.floating,
     ),
-    textTheme: _flapTextTheme(onSurface, muted),
+    textTheme: textTheme,
+    primaryTextTheme: textTheme,
   );
 
   if (customize != null) {
     theme = customize(theme, tokens, palette);
   }
   return theme;
-}
-
-TextTheme _flapTextTheme(Color onSurface, Color muted) {
-  return TextTheme(
-    titleLarge: TextStyle(
-      color: onSurface,
-      fontSize: kTypeHeadline.fontSize,
-      fontWeight: FontWeight.w600,
-      fontFamily: kFontDisplay,
-    ),
-    titleMedium: TextStyle(
-      color: onSurface,
-      fontSize: kTypeTitle.fontSize,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.5,
-      fontFamily: kFontDisplay,
-    ),
-    bodyLarge: TextStyle(
-      color: onSurface,
-      fontSize: kTypeBody.fontSize,
-      fontWeight: FontWeight.w400,
-      fontFamily: kFontBody,
-    ),
-    bodyMedium: TextStyle(
-      color: onSurface,
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-      fontFamily: kFontBody,
-    ),
-    bodySmall: TextStyle(
-      color: muted,
-      fontSize: 12,
-      fontWeight: FontWeight.w400,
-      fontFamily: kFontBody,
-    ),
-    labelLarge: TextStyle(
-      color: onSurface,
-      fontSize: kTypeLabel.fontSize,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 1.0,
-      fontFamily: kFontDisplay,
-    ),
-    labelSmall: TextStyle(
-      color: muted,
-      fontSize: kTypeLabel.fontSize,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 1.0,
-      fontFamily: kFontDisplay,
-    ),
-  );
 }

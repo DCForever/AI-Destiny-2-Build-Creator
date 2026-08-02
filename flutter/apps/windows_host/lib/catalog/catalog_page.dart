@@ -757,7 +757,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 _statusLine(),
                 key: const Key('catalog_status'),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontFamily: 'IBM Plex Mono',
+                      fontFamily: kFontMono,
                       fontFeatures: const [FontFeature.tabularFigures()],
                       color: FlapPalette.of(context).muted,
                     ),

@@ -1,4 +1,4 @@
-/// Global Jaspr styles for the web host (Matte Flap Ledger).
+/// Global Jaspr styles for the web host (Neon Network).
 library;
 
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -6,23 +6,31 @@ import 'package:jaspr/dom.dart';
 
 import 'flap_tokens_css.dart';
 
-/// Accent / readiness lamp (CSS hex from shared tokens).
+/// Accent / cyan signal (CSS hex from shared tokens).
 final Color flapAccentColor = Color(FlapCssTokens.accent);
 
 /// Void canvas background.
 final Color flapBackgroundColor = Color(FlapCssTokens.background);
 
-/// Flap plate surface.
+/// Elevated surface.
 final Color flapSurfaceColor = Color(FlapCssTokens.surface);
 
 /// Primary lettering.
 final Color flapForegroundColor = Color(FlapCssTokens.foreground);
 
-/// Dim lettering.
+/// Dim / secondary lettering.
 final Color flapMutedColor = Color(FlapCssTokens.muted);
 
 /// Hairline rule.
 final Color flapLineColor = Color(FlapCssTokens.line);
+
+/// Google Fonts stylesheet URL for Orbitron · Inter · JetBrains Mono.
+///
+/// Inject from `main.client.dart` as `<link rel="stylesheet">` (Jaspr CSS
+/// rules cannot host top-level `@import`). Same families as Flutter
+/// `google_fonts`.
+const String kNeonNetworkFontsStylesheetHref =
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;600;700&display=swap';
 
 /// Global CSS for the host.
 @css
@@ -52,6 +60,15 @@ List<StyleRule> get styles => [
         fontWeight: .w600,
         letterSpacing: 0.04.em,
         color: flapForegroundColor,
+      ),
+      css('h2, h3, .display').styles(
+        fontFamily: .list([FontFamily(kFontDisplay), FontFamilies.sansSerif]),
+        fontWeight: .w600,
+        letterSpacing: 0.04.em,
+        color: flapForegroundColor,
+      ),
+      css('code, kbd, pre, .mono, .tabular').styles(
+        fontFamily: .list([FontFamily(kFontMono), FontFamilies.monospace]),
       ),
       css('p').styles(
         margin: .zero,

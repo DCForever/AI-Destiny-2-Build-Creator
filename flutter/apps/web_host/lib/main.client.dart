@@ -26,6 +26,7 @@ import 'db/tab_lock_backend_web.dart';
 import 'db/tab_writer_lock.dart';
 import 'db/wasm_database_opener.dart';
 import 'db/web_database_bootstrap.dart';
+import 'theme/theme.dart' show kNeonNetworkFontsStylesheetHref;
 
 /// Public Bungie API key only (never CLIENT_SECRET).
 const String _bungieApiKeyDefine = String.fromEnvironment('BUNGIE_API_KEY');
@@ -38,7 +39,24 @@ Future<void> _browserClipboardWriter(String text) async {
   }
 }
 
+/// Idempotent Neon Network Google Fonts stylesheet link.
+void _ensureNeonNetworkFontsLinked() {
+  final head = web.document.head;
+  if (head == null) return;
+  final existing = head.querySelector(
+    'link[data-neon-network-fonts="1"]',
+  );
+  if (existing != null) return;
+  final link = web.document.createElement('link') as web.HTMLLinkElement;
+  link.rel = 'stylesheet';
+  link.href = kNeonNetworkFontsStylesheetHref;
+  link.setAttribute('data-neon-network-fonts', '1');
+  head.append(link);
+}
+
 void main() {
+  _ensureNeonNetworkFontsLinked();
+
   final lockBackend = WebLocalStorageTabLockBackend();
   final bootstrap = WebDatabaseBootstrap(
     lockBackend: lockBackend,

@@ -1,5 +1,7 @@
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:destiny2_web_host/theme/flap_tokens_css.dart';
+import 'package:destiny2_web_host/theme/theme.dart'
+    show kNeonNetworkFontsStylesheetHref;
 import 'package:test/test.dart';
 
 void main() {
@@ -51,6 +53,13 @@ void main() {
       expect(vars['--flap-font-display'], contains('Orbitron'));
       expect(vars['--flap-font-body'], contains('Inter'));
       expect(vars['--flap-font-mono'], contains('JetBrains'));
+    });
+
+    test('Neon Google Fonts stylesheet href lists Orbitron Inter JetBrains', () {
+      expect(kNeonNetworkFontsStylesheetHref, contains('Orbitron'));
+      expect(kNeonNetworkFontsStylesheetHref, contains('Inter'));
+      expect(kNeonNetworkFontsStylesheetHref, contains('JetBrains'));
+      expect(kNeonNetworkFontsStylesheetHref, startsWith('https://fonts.googleapis.com/'));
     });
   });
 }

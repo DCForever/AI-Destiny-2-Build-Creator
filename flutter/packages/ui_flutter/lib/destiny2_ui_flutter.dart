@@ -1,7 +1,7 @@
-/// Flutter-only Matte Flap Ledger composition kit.
+/// Flutter-only Neon Network composition kit (FlapBoard layout).
 ///
 /// Tokens remain pure in [destiny2_ui_tokens]. This package maps them into
-/// ThemeData / board widgets for Flutter hosts only — not Jaspr.
+/// ThemeData / board widgets / Google Fonts for Flutter hosts only — not Jaspr.
 library;
 
 export 'src/flap_board.dart';
@@ -13,3 +13,4 @@ export 'src/flap_theme_toggle.dart';
 export 'src/flap_tone.dart';
 export 'src/item_richness.dart';
 export 'src/library_workspace.dart';
+export 'src/neon_fonts.dart';

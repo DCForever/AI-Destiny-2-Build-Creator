@@ -19,6 +19,7 @@ dependencies:
     path: ../manifest
   destiny2_ui_tokens:
     path: ../ui_tokens
+  google_fonts: ^8.2.1
 
 dev_dependencies:
   flutter_test:

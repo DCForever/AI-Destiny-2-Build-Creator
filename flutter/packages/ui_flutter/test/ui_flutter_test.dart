@@ -36,6 +36,16 @@ void main() {
       expect(theme.colorScheme.primary.toARGB32(), kFlapAccentDark);
       // Neon Network cyan-neon primary
       expect(kFlapAccentDark, 0xFF00E5FF);
+      // google_fonts registers Orbitron / Inter faces on the theme.
+      expect(theme.textTheme.titleLarge?.fontFamily, isNotNull);
+      expect(
+        theme.textTheme.titleLarge!.fontFamily!.toLowerCase(),
+        anyOf(contains('orbitron'), contains('Orbitron')),
+      );
+      expect(
+        theme.textTheme.bodyLarge?.fontFamily?.toLowerCase() ?? '',
+        anyOf(contains('inter'), contains('Inter')),
+      );
 
       await tester.pumpWidget(
         MaterialApp(
