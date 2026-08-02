@@ -1,11 +1,17 @@
-/// Square board radii — Matte Flap Ledger.
+/// Radii — Neon Network (angular modular chrome).
 ///
-/// **The Square Board Rule.** Primary containers are square matte plates.
-/// No notches. No large radii. No consumer pills on core chrome.
+/// Default radius **0**. Soft max **2px** (never exceed 4px). No consumer pills
+/// on core chrome.
 library;
 
 /// Flap / panel / chip / control corner radius (always 0).
 const double kFlapRadius = 0;
+
+/// Soft maximum for rare non-core corners (Neon `--radius-max`).
+const double kRadiusMax = 2;
+
+/// Hard ceiling — never exceed (Neon anti-pattern).
+const double kRadiusHardCap = 4;
 
 /// Alias: container radius.
 const double kContainerRadius = kFlapRadius;
@@ -13,7 +19,7 @@ const double kContainerRadius = kFlapRadius;
 /// Alias: control (button/chip/input) radius.
 const double kControlRadius = kFlapRadius;
 
-/// Grouped radii (all zero by design).
+/// Grouped radii.
 class FlapRadii {
   const FlapRadii._();
 
@@ -21,4 +27,6 @@ class FlapRadii {
   static const double flap = kFlapRadius;
   static const double container = kContainerRadius;
   static const double control = kControlRadius;
+  static const double max = kRadiusMax;
+  static const double hardCap = kRadiusHardCap;
 }

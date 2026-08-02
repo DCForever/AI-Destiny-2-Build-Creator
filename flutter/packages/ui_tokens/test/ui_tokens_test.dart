@@ -2,27 +2,28 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('dark Cold Graphite colors', () {
+  group('dark Neon Network colors', () {
     test('void / surface / raised / rules', () {
-      expect(kFlapBackgroundDark, 0xFF070B10);
-      expect(kFlapSurfaceDark, 0xFF0E1319);
-      expect(kFlapSurfaceRaisedDark, 0xFF141A22);
-      expect(kFlapLineDark, 0xFF1F2733);
-      expect(kFlapLineStrongDark, 0xFF2A3342);
+      expect(kFlapBackgroundDark, 0xFF05050F);
+      expect(kFlapSurfaceDark, 0xFF0A0A18);
+      expect(kFlapSurfaceRaisedDark, 0xFF101028);
+      expect(kFlapLineDark, 0x38E8EEF2);
+      expect(kFlapLineStrongDark, 0x61E8EEF2);
       expect(FlapColorTokens.dark.background, kFlapBackgroundDark);
       expect(FlapColorTokens.dark.surface, kFlapSurfaceDark);
     });
 
-    test('lettering + cyan-teal readiness + status lamps', () {
-      expect(kFlapForegroundDark, 0xFFE4EAF2);
-      expect(kFlapMutedDark, 0xFF8492A6);
-      expect(kFlapAccentDark, 0xFF4EC4BC);
-      expect(kFlapAccentStrongDark, 0xFF6FD4CD);
-      expect(kFlapAccentDimDark, 0x244EC4BC);
-      expect(kFlapDangerDark, 0xFFE05A52);
-      expect(kFlapSuccessDark, 0xFF5CBC8E);
-      expect(kFlapWarningDark, 0xFFC9A84A);
-      // One Lamp: success must not equal accent.
+    test('lettering + cyan-neon signal + status lamps', () {
+      expect(kFlapForegroundDark, 0xFFF0FDFF);
+      expect(kFlapMutedDark, 0xFF7DD3E0);
+      expect(kFlapAccentDark, 0xFF00E5FF);
+      expect(kFlapAccentStrongDark, 0xFF00B8D4);
+      expect(kFlapAccentDimDark, 0x2600E5FF);
+      expect(kFlapDangerDark, 0xFFFF003C);
+      expect(kFlapSuccessDark, 0xFF2EE6A6);
+      expect(kFlapWarningDark, 0xFFF5C542);
+      expect(kFlapAccentSecondaryDark, 0xFFFF1A8C);
+      // One lamp: success must not equal accent.
       expect(kFlapSuccessDark, isNot(kFlapAccentDark));
     });
 
@@ -38,26 +39,26 @@ void main() {
     });
 
     test('argbToCssHex formats opaque and dim accent', () {
-      expect(argbToCssHex(kFlapAccentDark), '#4ec4bc');
-      expect(argbToCssHex(kFlapBackgroundDark), '#070b10');
-      expect(argbToCssHex(kFlapAccentDimDark), '#4ec4bc24');
+      expect(argbToCssHex(kFlapAccentDark), '#00e5ff');
+      expect(argbToCssHex(kFlapBackgroundDark), '#05050f');
+      expect(argbToCssHex(kFlapAccentDimDark), '#00e5ff26');
     });
   });
 
-  group('light Paper Ledger colors', () {
-    test('cream neutrals + rubber-stamp amber', () {
-      expect(FlapColorTokens.light.background, 0xFFEBE6DB);
-      expect(FlapColorTokens.light.surface, 0xFFF7F3EA);
-      expect(FlapColorTokens.light.surfaceRaised, 0xFFFFFDF7);
-      expect(FlapColorTokens.light.line, 0xFFC4BBA8);
-      expect(FlapColorTokens.light.foreground, 0xFF1A1B1F);
-      expect(FlapColorTokens.light.muted, 0xFF5A5F6A);
-      expect(FlapColorTokens.light.accent, 0xFF9A6418);
-      expect(FlapColorTokens.light.accentStrong, 0xFF7A4E12);
-      expect(FlapColorTokens.light.accentDim, 0x1F9A6418);
-      expect(FlapColorTokens.light.success, 0xFF1A6E3F);
-      expect(FlapColorTokens.light.danger, 0xFFB53A2A);
-      expect(FlapColorTokens.light.warning, 0xFF8F6510);
+  group('light cool technical stage colors', () {
+    test('cool neutrals + cyan signal chrome', () {
+      expect(FlapColorTokens.light.background, 0xFFF4F7FB);
+      expect(FlapColorTokens.light.surface, 0xFFFFFFFF);
+      expect(FlapColorTokens.light.surfaceRaised, 0xFFEEF2F7);
+      expect(FlapColorTokens.light.line, 0x240A0A18);
+      expect(FlapColorTokens.light.foreground, 0xFF0A0A18);
+      expect(FlapColorTokens.light.muted, 0xFF4A5A68);
+      expect(FlapColorTokens.light.accent, 0xFF00C4DB);
+      expect(FlapColorTokens.light.accentStrong, 0xFF00A8BC);
+      expect(FlapColorTokens.light.accentDim, 0x1F00C4DB);
+      expect(FlapColorTokens.light.success, 0xFF2EE6A6);
+      expect(FlapColorTokens.light.danger, 0xFFFF003C);
+      expect(FlapColorTokens.light.warning, 0xFFF5C542);
       expect(FlapColorTokens.light.background, isNot(kFlapBackgroundDark));
     });
   });
@@ -66,16 +67,21 @@ void main() {
     test('density scale and panel pads', () {
       expect(kSpace2, 2);
       expect(kSpace12, 12);
+      expect(kSpace32, 32);
+      expect(kSpace48, 48);
+      expect(kControlHeight, 40);
       expect(kPanelPadMd, 12);
       expect(kPageY, 12);
       expect(FlapSpacing.flapGap, 0);
       expect(kFlapGap, 0);
     });
 
-    test('all radii are zero (square board rule)', () {
+    test('radii are zero default with soft max 2', () {
       expect(kFlapRadius, 0);
       expect(kContainerRadius, 0);
       expect(kControlRadius, 0);
+      expect(kRadiusMax, 2);
+      expect(kRadiusHardCap, 4);
       expect(FlapRadii.flap, 0);
       expect(FlapRadii.none, 0);
     });
@@ -83,11 +89,11 @@ void main() {
 
   group('typography metrics', () {
     test('family names and board roles', () {
-      expect(kFontDisplay, contains('Barlow'));
-      expect(kFontBody, contains('IBM Plex Sans'));
-      expect(kFontMono, contains('IBM Plex Mono'));
+      expect(kFontDisplay, contains('Orbitron'));
+      expect(kFontBody, contains('Inter'));
+      expect(kFontMono, contains('JetBrains'));
       expect(kTypeLabel.fontWeight, 600);
-      expect(kTypeBody.fontSize, 15);
+      expect(kTypeBody.fontSize, 13);
     });
   });
 
@@ -109,7 +115,7 @@ void main() {
 
       final synergy = flapColumnTemplateById('synergy');
       expect(synergy.cellRoles, contains(FlapCellRole.identity));
-      expect(synergy.headerLabels, contains('Designation'));
+      expect(synergy.headerLabels, contains('Design'));
 
       final builds = flapColumnTemplateById('builds');
       expect(builds.cellRoles, [

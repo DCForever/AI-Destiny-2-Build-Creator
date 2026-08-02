@@ -10,11 +10,11 @@ typedef FlapThemeCustomize = ThemeData Function(
   FlapPalette palette,
 );
 
-/// Shared Matte Flap Ledger [ThemeData] for Flutter hosts.
+/// Shared Neon Network [ThemeData] for Flutter hosts (Flap board structure).
 ///
-/// - Colors from pure [FlapColorTokens] (not `ColorScheme.fromSeed`).
-/// - Full flap roles on [FlapPalette] extension (status lamps, element ink).
-/// - Square elevation-0 cards (Board Not Cards / Square Board).
+/// - Colors from pure [FlapColorTokens] / Neon Network (not `ColorScheme.fromSeed`).
+/// - Full roles on [FlapPalette] extension (status lamps, element ink).
+/// - Square elevation-0 cards; grey hairline structure; cyan signal for focus/CTA.
 ThemeData buildFlapThemeBase({
   Brightness brightness = Brightness.dark,
   FlapThemeCustomize? customize,
@@ -77,7 +77,7 @@ ThemeData buildFlapThemeBase({
         color: onSurface,
         fontSize: kTypeHeadline.fontSize,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
+        letterSpacing: kTypeHeadline.letterSpacing,
         fontFamily: kFontDisplay,
       ),
     ),
@@ -86,11 +86,24 @@ ThemeData buildFlapThemeBase({
       thickness: kFlapRuleThickness,
       space: kFlapRuleThickness,
     ),
+    // Primary CTA: soft cyan wash + solid cyan type (≤2 strong cyan hits / region).
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 0,
         backgroundColor: palette.accentDim,
         foregroundColor: accent,
+        minimumSize: const Size(0, kControlHeight),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(kFlapRadius),
+        ),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        elevation: 0,
+        backgroundColor: accent,
+        foregroundColor: background,
+        minimumSize: const Size(0, kControlHeight),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(kFlapRadius),
         ),
@@ -100,6 +113,7 @@ ThemeData buildFlapThemeBase({
       style: OutlinedButton.styleFrom(
         foregroundColor: onSurface,
         side: BorderSide(color: line),
+        minimumSize: const Size(0, kControlHeight),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(kFlapRadius),
         ),
@@ -126,7 +140,7 @@ ThemeData buildFlapThemeBase({
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(kFlapRadius),
-        borderSide: BorderSide(color: accent),
+        borderSide: BorderSide(color: accent, width: 1.5),
       ),
     ),
     chipTheme: ChipThemeData(

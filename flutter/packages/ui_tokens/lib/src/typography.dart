@@ -1,23 +1,25 @@
-/// Typography metrics + family names — Matte Flap Ledger.
+/// Typography metrics + family names — Neon Network / Vex Network Interface.
 ///
-/// Font **binaries are not shipped** in DART-029. Hosts may load Barlow Condensed /
-/// IBM Plex later; until then system sans/mono fallbacks are acceptable for the
-/// Windows theme stub.
+/// Font **binaries are not shipped** here. Hosts may load Orbitron / Inter /
+/// JetBrains Mono later; until then system sans/mono fallbacks are acceptable.
 library;
 
-/// Board / display face (condensed uppercase chrome).
-const String kFontDisplay = 'Barlow Condensed';
+/// Display face (module titles, section marks, construct IDs).
+const String kFontDisplay = 'Orbitron';
 
-/// Body guidance (sentence case).
-const String kFontBody = 'IBM Plex Sans';
+/// Body / UI (labels, tables, forms, settings).
+const String kFontBody = 'Inter';
 
-/// Tallies / READY/HOLD stamps / counts.
-const String kFontMono = 'IBM Plex Mono';
+/// Mono (IDs, hashes, metrics, endpoints).
+const String kFontMono = 'JetBrains Mono';
 
 /// Fallback stack for Flutter `fontFamily` / CSS.
-const String kFontDisplayFallback = 'Barlow Condensed, ui-sans-serif, system-ui, sans-serif';
-const String kFontBodyFallback = 'IBM Plex Sans, ui-sans-serif, system-ui, sans-serif';
-const String kFontMonoFallback = 'IBM Plex Mono, ui-monospace, monospace';
+const String kFontDisplayFallback =
+    'Orbitron, Electrolize, Rajdhani, Exo 2, Chakra Petch, system-ui, sans-serif';
+const String kFontBodyFallback =
+    'Inter, system-ui, -apple-system, Segoe UI, Helvetica Neue, Arial, sans-serif';
+const String kFontMonoFallback =
+    'JetBrains Mono, Share Tech Mono, Fira Code, ui-monospace, Menlo, monospace';
 
 /// Size / weight / tracking for board roles (logical px / unitless / em-like).
 class FlapTypeRole {
@@ -35,7 +37,7 @@ class FlapTypeRole {
   final double letterSpacing;
 }
 
-/// Display condensed title.
+/// Display title (~0.04em tracking).
 const FlapTypeRole kTypeDisplay = FlapTypeRole(
   fontFamily: kFontDisplay,
   fontSize: 18,
@@ -43,22 +45,23 @@ const FlapTypeRole kTypeDisplay = FlapTypeRole(
   letterSpacing: 0.04 * 18,
 );
 
-/// Page headline ~1.125rem.
+/// Page headline.
 const FlapTypeRole kTypeHeadline = FlapTypeRole(
   fontFamily: kFontDisplay,
   fontSize: 18,
   fontWeight: 600,
+  letterSpacing: 0.04 * 18,
 );
 
-/// Section title ~0.8125rem condensed tracking.
+/// Section title condensed tracking.
 const FlapTypeRole kTypeTitle = FlapTypeRole(
   fontFamily: kFontDisplay,
   fontSize: 13,
   fontWeight: 600,
-  letterSpacing: 0.08 * 13,
+  letterSpacing: 0.06 * 13,
 );
 
-/// Chrome label ~0.6875rem.
+/// Chrome label / mono kickers (~0.1–0.14em).
 const FlapTypeRole kTypeLabel = FlapTypeRole(
   fontFamily: kFontDisplay,
   fontSize: 11,
@@ -66,7 +69,7 @@ const FlapTypeRole kTypeLabel = FlapTypeRole(
   letterSpacing: 0.12 * 11,
 );
 
-/// Extra-small label ~0.625rem.
+/// Extra-small label.
 const FlapTypeRole kTypeLabelXs = FlapTypeRole(
   fontFamily: kFontDisplay,
   fontSize: 10,
@@ -74,14 +77,14 @@ const FlapTypeRole kTypeLabelXs = FlapTypeRole(
   letterSpacing: 0.1 * 10,
 );
 
-/// Body ~0.9375rem.
+/// Dense UI body ~13px (Neon kit default).
 const FlapTypeRole kTypeBody = FlapTypeRole(
   fontFamily: kFontBody,
-  fontSize: 15,
+  fontSize: 13,
   fontWeight: 400,
 );
 
-/// Mono tally ~11px.
+/// Mono tally / metric ~11px.
 const FlapTypeRole kTypeTally = FlapTypeRole(
   fontFamily: kFontMono,
   fontSize: 11,

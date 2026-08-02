@@ -1,102 +1,110 @@
-/// Matte Flap Ledger color tokens as ARGB ints (0xAARRGGBB).
+/// Neon Network / Vex Network Interface color tokens as ARGB ints (0xAARRGGBB).
 ///
 /// **Flutter dual-face (product choice):**
-/// - Dark default = **Cold Graphite** (blue-gray void, cyan-teal readiness lamp)
-/// - Light = **Paper Ledger** (cream stock, rubber-stamp amber lamp)
+/// - Dark default = **Neon void** (deep void canvas, cyan-neon signal accent)
+/// - Light = **Cool technical stage** (cool greys, cyan signal chrome only)
 ///
-/// Values match [DESIGN.md](../../../DESIGN.md). Hosts map with Flutter
+/// Values match Open Design package `user:neon-network-design-system` and
+/// repo root [DESIGN.md](../../../DESIGN.md). Hosts map with Flutter
 /// `Color(value)` or CSS `#RRGGBB` via [argbToCssHex].
 ///
-/// **Rules:** No brushed steel. One readiness lamp only (not every border).
+/// **Rules:** Soft spatial zoning (gap → tone → fade). White/grey structural
+/// hairlines — not cyan cages. Cyan accent ≤ ~2 strong hits per region.
 /// Destiny element hexes stay sandbox-true on identity cells only.
 /// Status success never aliases ColorScheme.primary.
 library;
 
 // ---------------------------------------------------------------------------
-// Dark — Cold Graphite Board (default product / Windows + mobile)
+// Dark — Neon Network void (default product / Windows + mobile + web)
 // ---------------------------------------------------------------------------
 
-/// Cold void canvas `#070b10`.
-const int kFlapBackgroundDark = 0xFF070B10;
+/// Void canvas `#05050f`.
+const int kFlapBackgroundDark = 0xFF05050F;
 
-/// Graphite flap surface `#0e1319`.
-const int kFlapSurfaceDark = 0xFF0E1319;
+/// Elevated content zone `#0a0a18`.
+const int kFlapSurfaceDark = 0xFF0A0A18;
 
-/// Raised graphite `#141a22`.
-const int kFlapSurfaceRaisedDark = 0xFF141A22;
+/// Nested / inset zone `#101028`.
+const int kFlapSurfaceRaisedDark = 0xFF101028;
 
-/// Hairline rule `#1f2733`.
-const int kFlapLineDark = 0xFF1F2733;
+/// Structural hairline — white/grey @ ~22% (`rgba(232,238,242,0.22)`).
+const int kFlapLineDark = 0x38E8EEF2;
 
-/// Strong rule `#2a3342`.
-const int kFlapLineStrongDark = 0xFF2A3342;
+/// Emphasized hairline @ ~38% (`rgba(232,238,242,0.38)`).
+const int kFlapLineStrongDark = 0x61E8EEF2;
 
-/// Lettering `#e4eaf2`.
-const int kFlapForegroundDark = 0xFFE4EAF2;
+/// Signal white text `#f0fdff`.
+const int kFlapForegroundDark = 0xFFF0FDFF;
 
-/// Dim lettering `#8492a6`.
-const int kFlapMutedDark = 0xFF8492A6;
+/// Secondary cyan text `#7dd3e0`.
+const int kFlapMutedDark = 0xFF7DD3E0;
 
-/// Cyan-teal readiness lamp `#4ec4bc` (One Lamp — selection / CTA only).
-const int kFlapAccentDark = 0xFF4EC4BC;
+/// Primary cyan-neon signal `#00e5ff` (CTA / selection / focus only).
+const int kFlapAccentDark = 0xFF00E5FF;
 
-/// Stronger teal face `#6fd4cd`.
-const int kFlapAccentStrongDark = 0xFF6FD4CD;
+/// Deep accent / pressed face `#00b8d4`.
+const int kFlapAccentStrongDark = 0xFF00B8D4;
 
-/// Teal wash `#4ec4bc` @ ~14% alpha (`#4ec4bc24`).
-const int kFlapAccentDimDark = 0x244EC4BC;
+/// Soft accent wash `#00e5ff` @ ~15% (`primary-soft`).
+const int kFlapAccentDimDark = 0x2600E5FF;
 
-/// Breach coral `#e05a52`.
-const int kFlapDangerDark = 0xFFE05A52;
+/// Critical / destructive only `#ff003c`.
+const int kFlapDangerDark = 0xFFFF003C;
 
-/// Signal green `#5cbc8e` (distinct from teal accent).
-const int kFlapSuccessDark = 0xFF5CBC8E;
+/// Status success `#2ee6a6` (distinct from cyan accent).
+const int kFlapSuccessDark = 0xFF2EE6A6;
 
-/// Caution gold `#c9a84a`.
-const int kFlapWarningDark = 0xFFC9A84A;
+/// Status warn `#f5c542`.
+const int kFlapWarningDark = 0xFFF5C542;
+
+/// Sparse magenta energy (secondary accent — charts, rare emphasis only).
+const int kFlapAccentSecondaryDark = 0xFFFF1A8C;
 
 // ---------------------------------------------------------------------------
-// Light — Paper Ledger (ThemeMode.light / ThemeToggle)
+// Light — Cool technical stage (ThemeMode.light / ThemeToggle)
 // ---------------------------------------------------------------------------
 
-/// Cream stock field `#ebe6db`.
-const int kFlapBackgroundLight = 0xFFEBE6DB;
+/// Cool technical stage `#f4f7fb`.
+const int kFlapBackgroundLight = 0xFFF4F7FB;
 
-/// Paper plate `#f7f3ea`.
-const int kFlapSurfaceLight = 0xFFF7F3EA;
+/// Elevated white zone `#ffffff`.
+const int kFlapSurfaceLight = 0xFFFFFFFF;
 
-/// Raised sheet `#fffdf7`.
-const int kFlapSurfaceRaisedLight = 0xFFFFFDF7;
+/// Inset zone `#eef2f7`.
+const int kFlapSurfaceRaisedLight = 0xFFEEF2F7;
 
-/// Paper rule `#c4bba8`.
-const int kFlapLineLight = 0xFFC4BBA8;
+/// Grey structure hairline @ ~14% on near-void ink.
+const int kFlapLineLight = 0x240A0A18;
 
-/// Strong paper rule `#9a9488`.
-const int kFlapLineStrongLight = 0xFF9A9488;
+/// Strong structure hairline @ ~22%.
+const int kFlapLineStrongLight = 0x380A0A18;
 
-/// Carbon ink `#1a1b1f`.
-const int kFlapForegroundLight = 0xFF1A1B1F;
+/// Near-void ink `#0a0a18`.
+const int kFlapForegroundLight = 0xFF0A0A18;
 
-/// Muted on paper `#5a5f6a`.
-const int kFlapMutedLight = 0xFF5A5F6A;
+/// Deepened cool muted for AA small text `#4a5a68`.
+const int kFlapMutedLight = 0xFF4A5A68;
 
-/// Rubber-stamp amber `#9a6418` (One Lamp on paper).
-const int kFlapAccentLight = 0xFF9A6418;
+/// Signal chrome only `#00c4db` — not body text on white.
+const int kFlapAccentLight = 0xFF00C4DB;
 
-/// Strong stamp amber `#7a4e12`.
-const int kFlapAccentStrongLight = 0xFF7A4E12;
+/// Prefer for text-on-white CTA if needed `#00a8bc`.
+const int kFlapAccentStrongLight = 0xFF00A8BC;
 
-/// Amber wash on paper `#9a64181f`.
-const int kFlapAccentDimLight = 0x1F9A6418;
+/// Soft accent wash on light @ ~12%.
+const int kFlapAccentDimLight = 0x1F00C4DB;
 
-/// Danger on paper `#b53a2a`.
-const int kFlapDangerLight = 0xFFB53A2A;
+/// Critical on light (same danger signal).
+const int kFlapDangerLight = 0xFFFF003C;
 
-/// Success on paper `#1a6e3f`.
-const int kFlapSuccessLight = 0xFF1A6E3F;
+/// Success on light (same status green).
+const int kFlapSuccessLight = 0xFF2EE6A6;
 
-/// Warning on paper `#8f6510`.
-const int kFlapWarningLight = 0xFF8F6510;
+/// Warn on light.
+const int kFlapWarningLight = 0xFFF5C542;
+
+/// Sparse magenta (shared).
+const int kFlapAccentSecondaryLight = 0xFFFF1A8C;
 
 // ---------------------------------------------------------------------------
 // Destiny element ink (dark board — full strength on icons / identity)
@@ -124,7 +132,7 @@ const int kElementStrandDark = 0xFF35E366;
 const int kElementPrismaticDark = 0xFFD67EE2;
 
 // ---------------------------------------------------------------------------
-// Destiny element ink (light board — higher contrast on paper)
+// Destiny element ink (light board — higher contrast on technical stage)
 // ---------------------------------------------------------------------------
 
 const int kElementKineticLight = 0xFF2A2D36;
@@ -139,7 +147,10 @@ const int kElementPrismaticLight = 0xFF9A3FB0;
 // Grouped views
 // ---------------------------------------------------------------------------
 
-/// Cold Graphite (dark) / Paper Ledger (light) Matte Flap palettes.
+/// Neon void (dark) / cool technical (light) palettes.
+///
+/// API name [FlapColorTokens] retained for host compatibility; values are
+/// Neon Network.
 class FlapColorTokens {
   const FlapColorTokens._({
     required this.background,
@@ -162,6 +173,7 @@ class FlapColorTokens {
     required this.elementStasis,
     required this.elementStrand,
     required this.elementPrismatic,
+    this.accentSecondary = kFlapAccentSecondaryDark,
   });
 
   final int background;
@@ -177,6 +189,7 @@ class FlapColorTokens {
   final int danger;
   final int success;
   final int warning;
+  final int accentSecondary;
   final int elementKinetic;
   final int elementArc;
   final int elementSolar;
@@ -185,7 +198,7 @@ class FlapColorTokens {
   final int elementStrand;
   final int elementPrismatic;
 
-  /// Cold Graphite — product dark default.
+  /// Neon Network void — product dark default.
   static const dark = FlapColorTokens._(
     background: kFlapBackgroundDark,
     surface: kFlapSurfaceDark,
@@ -200,6 +213,7 @@ class FlapColorTokens {
     danger: kFlapDangerDark,
     success: kFlapSuccessDark,
     warning: kFlapWarningDark,
+    accentSecondary: kFlapAccentSecondaryDark,
     elementKinetic: kElementKineticDark,
     elementArc: kElementArcDark,
     elementSolar: kElementSolarDark,
@@ -209,7 +223,7 @@ class FlapColorTokens {
     elementPrismatic: kElementPrismaticDark,
   );
 
-  /// Paper Ledger — light ThemeMode face.
+  /// Cool technical stage — light ThemeMode face.
   static const light = FlapColorTokens._(
     background: kFlapBackgroundLight,
     surface: kFlapSurfaceLight,
@@ -224,6 +238,7 @@ class FlapColorTokens {
     danger: kFlapDangerLight,
     success: kFlapSuccessLight,
     warning: kFlapWarningLight,
+    accentSecondary: kFlapAccentSecondaryLight,
     elementKinetic: kElementKineticLight,
     elementArc: kElementArcLight,
     elementSolar: kElementSolarLight,

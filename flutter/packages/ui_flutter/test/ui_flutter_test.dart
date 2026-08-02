@@ -34,8 +34,8 @@ void main() {
       expect(palette!.success.toARGB32(), kFlapSuccessDark);
       expect(theme.cardTheme.elevation, 0);
       expect(theme.colorScheme.primary.toARGB32(), kFlapAccentDark);
-      // Cold Graphite teal primary
-      expect(kFlapAccentDark, 0xFF4EC4BC);
+      // Neon Network cyan-neon primary
+      expect(kFlapAccentDark, 0xFF00E5FF);
 
       await tester.pumpWidget(
         MaterialApp(

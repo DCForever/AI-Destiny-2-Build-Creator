@@ -1,20 +1,22 @@
 ---
-name: Destiny 2 Build Creator — Matte Flap Ledger
-description: Matte split-flap board for intent→compose→equip; dual-face Flutter palettes (Cold Graphite dark / Paper Ledger light); fixed-column dense libraries; Destiny element ink; one readiness lamp—no brushed steel.
+name: Destiny 2 Build Creator — Neon Network
+description: Neon Network / Vex Network Interface language on dense FlapBoard libraries for intent→compose→equip; dual-face Flutter palettes (Neon void dark / cool technical light); cyan signal accent; Destiny element ink; soft spatial zoning—no cyan cages, no brushed steel.
+design_system_id: "user:neon-network-design-system"
 colors:
-  background: "#070b10"
-  surface: "#0e1319"
-  surface-raised: "#141a22"
-  line: "#1f2733"
-  line-strong: "#2a3342"
-  foreground: "#e4eaf2"
-  muted: "#8492a6"
-  accent: "#4ec4bc"
-  accent-strong: "#6fd4cd"
-  accent-dim: "#4ec4bc24"
-  danger: "#e05a52"
-  success: "#5cbc8e"
-  warning: "#c9a84a"
+  background: "#05050f"
+  surface: "#0a0a18"
+  surface-raised: "#101028"
+  line: "#e8eef238"
+  line-strong: "#e8eef261"
+  foreground: "#f0fdff"
+  muted: "#7dd3e0"
+  accent: "#00e5ff"
+  accent-strong: "#00b8d4"
+  accent-dim: "#00e5ff26"
+  accent-secondary: "#ff1a8c"
+  danger: "#ff003c"
+  success: "#2ee6a6"
+  warning: "#f5c542"
   element-kinetic: "#ffffff"
   element-arc: "#85c5ec"
   element-solar: "#f2721b"
@@ -24,38 +26,39 @@ colors:
   element-prismatic: "#d67ee2"
 typography:
   display:
-    fontFamily: "Barlow Condensed, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Orbitron, Electrolize, Rajdhani, system-ui, sans-serif"
     fontWeight: 600
     letterSpacing: "0.04em"
   body:
-    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, sans-serif"
     fontWeight: 400
-    fontSize: "0.9375rem"
+    fontSize: "0.8125rem"
   mono:
-    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
+    fontFamily: "JetBrains Mono, Share Tech Mono, ui-monospace, monospace"
     fontWeight: 400
   headline:
-    fontFamily: "Barlow Condensed, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Orbitron, Electrolize, system-ui, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 600
   title:
-    fontFamily: "Barlow Condensed, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Orbitron, Electrolize, system-ui, sans-serif"
     fontSize: "0.8125rem"
     fontWeight: 600
-    letterSpacing: "0.08em"
+    letterSpacing: "0.06em"
   label:
-    fontFamily: "Barlow Condensed, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Orbitron, Electrolize, system-ui, sans-serif"
     fontSize: "0.6875rem"
     fontWeight: 600
     letterSpacing: "0.12em"
   label-xs:
-    fontFamily: "Barlow Condensed, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Orbitron, Electrolize, system-ui, sans-serif"
     fontSize: "0.625rem"
     fontWeight: 600
     letterSpacing: "0.1em"
 rounded:
   none: "0px"
   flap: "0px"
+  max: "2px"
 spacing:
   2: "2px"
   4: "4px"
@@ -65,6 +68,9 @@ spacing:
   12: "12px"
   16: "16px"
   24: "24px"
+  32: "32px"
+  48: "48px"
+  control-h: "40px"
   panel-sm: "8px"
   panel-md: "12px"
   panel-lg: "16px"
@@ -141,68 +147,76 @@ components:
     padding: "6px 8px"
 ---
 
-# Design System: Matte Flap Ledger
+# Design System: Neon Network
+
+> **Supersedes** Matte Flap Ledger thermal/palette language (Cold Graphite / Paper Ledger).  
+> **Keeps** FlapBoard layout contracts (rail width, row gap 0, fixed library columns).  
+> **Source package:** Open Design `user:neon-network-design-system` (Neon Network / Vex Network Interface).
 
 ## Overview
 
-**Creative North Star: "Matte Flap Ledger"**
+**Creative North Star: "Neon Network"**
 
-The product UI is a void-black split-flap departure board with the metal chassis torn off: only matte flap faces, ruled columns, and ink. Libraries are not card stacks—they are continuous boards of fixed cells you skim like a concourse board at rush hour. Compose is the selected row expanded into the work floor; tools hang on a quiet perimeter rail.
+The product UI is a high-signal construct console over infinite void: modular floating zones, white/grey structural hairlines, and cyan-neon as interaction signal—not decoration. Libraries remain continuous **FlapBoard** rows you skim densely; compose is the selected construct expanded into the work floor.
 
-Mood is dense, chromatic where Destiny truth lives (class, element, exotic seals), and restrained everywhere else. Amber is a readiness lamp, not a brand flood. No brushed steel, no chrome bezels, no notched vault plates, no warm amber-on-charcoal "ops terminal" nostalgia from the prior world.
+Mood is cold digital logic made visible—precise, mechanical, weightless. Magenta is sparse secondary energy. Soft spatial zoning (gap → tonal step → gradient fade) beats outlined cyan cages. No brushed steel, no warm beige canvases, no purple SaaS gradients, no cozy consumer chrome.
 
-Hard anti-references: Vault Terminal notches and dual radial glows; brushed metal instrument bezels; light SaaS dashboards; DIM pixel-clone chrome; purple AI gradients; sports-score neon yellow floods.
+Hard anti-references: cyan wireframe cages on every module; permanent dim-neon rest states; flat orthographic grid wallpapers; purple AI gradients; soft bounce motion; radius > 4px; light SaaS dashboards; DIM pixel-clone chrome.
 
 **Key Characteristics:**
-- Void-black matte field; hairline rules; square everything
+- Void canvas `#05050f`; elevated zones `#0a0a18` / `#101028`
+- White/grey hairline structure; cyan signal ≤ ~2 strong hits per region
 - Fixed-column **FlapRow** libraries (NAME · IDENTITY · EXOTICS · SYNERGY · STATUS)
 - Destiny element + class color as cell ink only
-- Amber readiness / selection lamps; status coral/green/gold
-- Barlow Condensed for board type; IBM Plex Sans body; IBM Plex Mono tallies
+- Status: danger `#ff003c` · success `#2ee6a6` · warn `#f5c542`
+- Orbitron display · Inter body · JetBrains Mono metrics
+- Radius 0 default (soft max 2px); control height 40
 - Viewport-locked shell; dual-pane Workspace; independent scroll
-- Icon seals for exotics; designation glyphs for synergy verbs
 
 ## Colors
 
-Flutter product dual-face (adopted from palette exploration): **Cold Graphite** dark default + **Paper Ledger** light. Board language (square, gap-0, element ink) is unchanged—only thermal and lamp hue differ by face.
+Flutter product dual-face: **Neon void** dark default + **cool technical** light. Board language (square, gap-0, element ink) is unchanged—atmosphere and signal lamp follow Neon Network.
 
-### Dark face — Cold Graphite (default)
-Palette character: cooler blue-gray void, steel-less matte graphite plates, cyan-teal readiness lamp.
+### Dark face — Neon void (default)
+Palette character: deep void, elevated modular zones, cyan-neon signal accent.
 
-#### Primary (One Lamp)
-- **Cyan-teal readiness** (`#4ec4bc` / `--accent`): Selected row wash, primary CTA, include filters. Stronger face `#6fd4cd`; wash `#4ec4bc24`. Never hairlines or status health stamps.
+#### Primary (signal)
+- **Cyan-neon** (`#00e5ff` / `--accent`): Selected wash, primary CTA, focus ring. Deep `#00b8d4`; soft wash `#00e5ff26`. Never body text floods or every hairline.
 
-#### Secondary (status lamps — not primary)
-- **Signal Green** (`#5cbc8e`): verified / healthy / supported soft coverage  
-- **Caution Gold** (`#c9a84a`): soft miss / fuzzy  
-- **Breach Coral** (`#e05a52`): illegal / exclude / hard block  
+#### Secondary (status + sparse energy)
+- **Success** (`#2ee6a6`): verified / healthy soft coverage  
+- **Warn** (`#f5c542`): soft miss / fuzzy  
+- **Danger** (`#ff003c`): illegal / exclude / hard block  
+- **Magenta** (`#ff1a8c`): sparse secondary energy only  
 
 #### Neutral (dark)
-- **Void** `#070b10` · **Flap** `#0e1319` · **Raised** `#141a22`  
-- **Rule** `#1f2733` / **Rule strong** `#2a3342`  
-- **Lettering** `#e4eaf2` / **Dim** `#8492a6`
+- **Void** `#05050f` · **Surface** `#0a0a18` · **Raised** `#101028`  
+- **Rule** white/grey @ ~22% / strong @ ~38%  
+- **Lettering** `#f0fdff` / **Muted** `#7dd3e0`
 
-### Light face — Paper Ledger
-Cream quartermaster stock; rubber-stamp amber lamp (deepened for paper contrast). Not a SaaS card stack—still board-not-cards.
+### Light face — Cool technical stage
+Cool greys; cyan is signal chrome only (not body text on white). Still board-not-cards.
 
-- **Field** `#ebe6db` · **Plate** `#f7f3ea` · **Raised sheet** `#fffdf7`  
-- **Rule** `#c4bba8` / strong `#9a9488` · **Ink** `#1a1b1f` / muted `#5a5f6a`  
-- **Stamp amber** `#9a6418` (strong `#7a4e12`, wash `#9a64181f`)  
-- **Status:** success `#1a6e3f` · warning `#8f6510` · danger `#b53a2a`
+- **Stage** `#f4f7fb` · **Surface** `#ffffff` · **Inset** `#eef2f7`  
+- **Rule** near-void ink hairlines · **Ink** `#0a0a18` / muted `#4a5a68`  
+- **Accent** `#00c4db` (deep `#00a8bc`, soft wash)  
+- **Status:** same success / warn / danger signals  
 
 ### Tertiary (sandbox elements — data authoritative, both faces)
 - Dark board: Kinetic `#ffffff` · Arc `#85c5ec` · Solar `#f2721b` · Void `#b184c5` · Stasis `#4d88ff` · Strand `#35e366` · Prismatic `#d67ee2`
 - Light board uses higher-contrast element set in `FlapColorTokens.light` (identity/seals only). Never recolor neutral chrome.
 
 ### Theme switching
-- Flutter: `ThemeMode` **system** | **dark** (Cold Graphite) | **light** (Paper Ledger). Settings **Appearance** cycles System → Cold Graphite → Paper Ledger.
+- Flutter: `ThemeMode` **system** | **dark** (Neon void) | **light** (cool technical). Settings **Appearance** cycles System → Neon void → Cool technical.
 - MaterialApp maps `theme` → light tokens, `darkTheme` → dark tokens; OS dark when preference is system.
-- Next.js web may lag until CSS vars are re-exported from the same token ints.
+- Tokens: `flutter/packages/ui_tokens` → Flutter `buildFlapThemeBase` + Jaspr `flapDarkCssVariables()`.
 
 ### Named Rules
-**The No Steel Rule.** No brushed metal, chrome bezels, or metallic gradients. Matte only.
+**The No Steel Rule.** No brushed metal, chrome bezels, or metallic gradients.
 
-**The One Lamp Rule.** The readiness lamp (teal on dark, amber on paper) marks selection and CTA—not every border. Channel lamps may show element/class ink on idle rows; the readiness lamp always wins when selected. Status success never uses `ColorScheme.primary`.
+**The No Cyan Cage Rule.** Structure is white/grey hairline (or tonal/gap zoning). Cyan is signal for selection, focus, and CTA—not module outlines by default.
+
+**The One Signal Rule.** Strong cyan ≤ ~2 applications per view region. Status success never uses `ColorScheme.primary`. Magenta stays sparse.
 
 **The Element Ink Rule.** Element hexes stay correct for damage-type truth; they tint identity cells, channel washes, and seals—not neutral chrome.
 
@@ -212,9 +226,9 @@ Cream quartermaster stock; rubber-stamp amber lamp (deepened for paper contrast)
 
 ## Typography
 
-**Display / Board:** Barlow Condensed (500/600/700) via `--font-display`  
-**Body:** IBM Plex Sans via `--font-body`  
-**Mono / tallies:** IBM Plex Mono via `--font-mono`
+**Display / Board:** Orbitron (Electrolize / Rajdhani fallbacks) via `--font-display`  
+**Body:** Inter via `--font-body`  
+**Mono / metrics:** JetBrains Mono via `--font-mono`
 
 ### Hierarchy
 - Page titles: condensed ~`text-lg`, uppercase tracking

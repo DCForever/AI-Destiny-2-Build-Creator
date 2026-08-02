@@ -4,14 +4,15 @@ import 'package:test/test.dart';
 
 void main() {
   group('flapDarkCssVariables', () {
-    test('maps dark Matte Flap hexes from destiny2_ui_tokens', () {
+    test('maps dark Neon Network hexes from destiny2_ui_tokens', () {
       final vars = flapDarkCssVariables();
-      expect(vars['--flap-background'], '#050608');
-      expect(vars['--flap-surface'], '#0c0e12');
-      expect(vars['--flap-accent'], '#e6b35c');
-      expect(vars['--flap-foreground'], '#e8eaef');
-      expect(vars['--flap-muted'], '#8a93a6');
-      expect(vars['--flap-danger'], '#e2654f');
+      expect(vars['--flap-background'], '#05050f');
+      expect(vars['--flap-surface'], '#0a0a18');
+      expect(vars['--flap-accent'], '#00e5ff');
+      expect(vars['--flap-foreground'], '#f0fdff');
+      expect(vars['--flap-muted'], '#7dd3e0');
+      expect(vars['--flap-danger'], '#ff003c');
+      expect(vars['--flap-success'], '#2ee6a6');
     });
 
     test('square board radius is 0px', () {
@@ -25,9 +26,9 @@ void main() {
     });
 
     test('FlapCssTokens convenience matches map', () {
-      expect(FlapCssTokens.background, '#050608');
-      expect(FlapCssTokens.surface, '#0c0e12');
-      expect(FlapCssTokens.accent, '#e6b35c');
+      expect(FlapCssTokens.background, '#05050f');
+      expect(FlapCssTokens.surface, '#0a0a18');
+      expect(FlapCssTokens.accent, '#00e5ff');
       expect(FlapCssTokens.radius, '0px');
     });
 
@@ -40,9 +41,16 @@ void main() {
     test('root block serializes custom properties', () {
       final block = flapDarkCssRootBlock();
       expect(block, startsWith(':root {'));
-      expect(block, contains('--flap-background: #050608;'));
-      expect(block, contains('--flap-accent: #e6b35c;'));
+      expect(block, contains('--flap-background: #05050f;'));
+      expect(block, contains('--flap-accent: #00e5ff;'));
       expect(block, contains('--flap-radius: 0px;'));
+    });
+
+    test('font stacks use Neon Network families', () {
+      final vars = flapDarkCssVariables();
+      expect(vars['--flap-font-display'], contains('Orbitron'));
+      expect(vars['--flap-font-body'], contains('Inter'));
+      expect(vars['--flap-font-mono'], contains('JetBrains'));
     });
   });
 }

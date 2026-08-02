@@ -1,7 +1,7 @@
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Full Matte Flap roles that do not fit cleanly on [ColorScheme].
+/// Full Neon Network roles that do not fit cleanly on [ColorScheme].
 ///
 /// Attach via [ThemeData.extensions]. Prefer
 /// `Theme.of(context).extension<FlapPalette>()` for status lamps and element ink.

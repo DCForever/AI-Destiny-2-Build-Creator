@@ -1,7 +1,7 @@
-/// Shared Matte Flap Ledger design tokens + FlapBoard layout contracts (DART-029).
+/// Shared Neon Network design tokens + FlapBoard layout contracts (DART-029).
 ///
 /// Pure Dart — no Flutter/Jaspr. Map ARGB with Flutter `Color(token)` or
-/// [argbToCssHex] for CSS.
+/// [argbToCssHex] for CSS. Open Design id: `user:neon-network-design-system`.
 library;
 
 export 'src/colors.dart';

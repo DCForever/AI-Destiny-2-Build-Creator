@@ -1,6 +1,6 @@
-/// Density spacing scale (logical px) — Matte Flap Ledger.
+/// Density spacing scale (logical px) — Neon Network.
 ///
-/// Matches DESIGN.md frontmatter `spacing.*` (2…24, panel/page paddings).
+/// Scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 (+ density extras 2/6/10 for board rows).
 library;
 
 const double kSpace2 = 2;
@@ -11,6 +11,11 @@ const double kSpace10 = 10;
 const double kSpace12 = 12;
 const double kSpace16 = 16;
 const double kSpace24 = 24;
+const double kSpace32 = 32;
+const double kSpace48 = 48;
+
+/// Control height seed (Neon `--control-h`).
+const double kControlHeight = 40;
 
 const double kPanelPadSm = 8;
 const double kPanelPadMd = 12;
@@ -39,6 +44,9 @@ class FlapSpacing {
   static const double s12 = kSpace12;
   static const double s16 = kSpace16;
   static const double s24 = kSpace24;
+  static const double s32 = kSpace32;
+  static const double s48 = kSpace48;
+  static const double controlH = kControlHeight;
   static const double panelSm = kPanelPadSm;
   static const double panelMd = kPanelPadMd;
   static const double panelLg = kPanelPadLg;

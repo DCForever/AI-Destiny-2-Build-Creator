@@ -1,6 +1,6 @@
 # destiny2_ui_tokens (DART-029)
 
-Shared **Matte Flap Ledger** design tokens and **FlapBoard layout contracts** for the multiplatform Dart port.
+Shared **Neon Network** design tokens and **FlapBoard layout contracts** for the multiplatform Dart port.
 
 | Property | Value |
 | -------- | ----- |
@@ -8,7 +8,7 @@ Shared **Matte Flap Ledger** design tokens and **FlapBoard layout contracts** fo
 | Path | `packages/ui_tokens` |
 | Runtime deps | **SDK only** (no Flutter / Jaspr / IO) |
 | Source of truth (product design) | repo root [`DESIGN.md`](../../DESIGN.md) |
-| Product CSS | [`src/app/globals.css`](../../src/app/globals.css) |
+| Open Design system id | `user:neon-network-design-system` |
 
 ## Why pure Dart?
 
@@ -20,44 +20,47 @@ Port architecture ([docs/multiplatform-dart-port-decisions.md](../../docs/multip
 
 | Face | Mode | Character |
 | ---- | ---- | --------- |
-| **Cold Graphite** | dark (default) | Blue-gray void, cyan-teal One Lamp `#4ec4bc` |
-| **Paper Ledger** | light | Cream stock, rubber-stamp amber `#9a6418` |
+| **Neon void** | dark (default) | Void canvas `#05050f`, cyan-neon signal `#00e5ff` |
+| **Cool technical** | light | Cool greys, cyan signal chrome only (`#00c4db`) |
 
-| Token | Dark (Cold Graphite) | Light (Paper Ledger) | Role |
-| ----- | -------------------- | -------------------- | ---- |
-| `background` | `#070b10` | `#ebe6db` | Canvas / stock field |
-| `surface` | `#0e1319` | `#f7f3ea` | Flap plate |
-| `surfaceRaised` | `#141a22` | `#fffdf7` | Raised plate |
-| `line` / `lineStrong` | `#1f2733` / `#2a3342` | `#c4bba8` / `#9a9488` | Hairline rules |
-| `foreground` / `muted` | `#e4eaf2` / `#8492a6` | `#1a1b1f` / `#5a5f6a` | Lettering |
-| `accent` | `#4ec4bc` teal | `#9a6418` amber | Readiness / selection only |
-| `danger` / `success` / `warning` | coral / green / gold | paper-deep status | Status lamps (≠ primary) |
-| Element ink | kinetic…prismatic | paper contrast set | Identity cells only |
+| Token | Dark (Neon void) | Light (Cool technical) | Role |
+| ----- | ---------------- | ---------------------- | ---- |
+| `background` | `#05050f` | `#f4f7fb` | Void / stage |
+| `surface` | `#0a0a18` | `#ffffff` | Elevated zone |
+| `surfaceRaised` | `#101028` | `#eef2f7` | Nested / inset |
+| `line` / `lineStrong` | white/grey hairline @22%/38% | ink hairline @14%/22% | Structure (not cyan cages) |
+| `foreground` / `muted` | `#f0fdff` / `#7dd3e0` | `#0a0a18` / `#4a5a68` | Lettering |
+| `accent` | `#00e5ff` | `#00c4db` | Signal / selection / focus |
+| `danger` / `success` / `warning` | `#ff003c` / `#2ee6a6` / `#f5c542` | same status set | Status (≠ primary) |
+| Element ink | kinetic…prismatic | contrast set | Identity cells only |
 
 ```dart
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 
-final voidBg = FlapColorTokens.dark.background; // 0xFF050608
-final css = argbToCssHex(kFlapAccentDark);      // #e6b35c
+final voidBg = FlapColorTokens.dark.background; // 0xFF05050F
+final css = argbToCssHex(kFlapAccentDark);      // #00e5ff
 ```
+
+API names (`kFlap*`, `FlapColorTokens`) remain for host compatibility; values are Neon Network.
 
 ## Spacing & radii
 
-- Density scale: 2, 4, 6, 8, 10, 12, 16, 24 (+ panel/page paddings).
+- Density scale: 4, 8, 12, 16, 24, 32, 48 (+ board extras 2/6/10).
+- Control height seed: **40**.
 - **Flap row gap = 0** (board not cards).
-- **All radii = 0** (square board rule).
+- **Radii default = 0**; soft max **2px** (hard cap 4px).
 
 ## Typography
 
-Family names + metrics only — **fonts not bundled** in this slice:
+Family names + metrics only — **fonts not bundled** in this package:
 
-- Display/board: Barlow Condensed  
-- Body: IBM Plex Sans  
-- Tallies: IBM Plex Mono  
+- Display: Orbitron (Electrolize / Rajdhani fallbacks)  
+- Body: Inter  
+- Metrics: JetBrains Mono  
 
 ## FlapBoard layout contracts
 
-Not widgets — constants for DART-030+ libraries:
+Not widgets — constants for library boards (unchanged structure):
 
 | Contract | Value |
 | -------- | ----- |
@@ -67,26 +70,19 @@ Not widgets — constants for DART-030+ libraries:
 | Page frame max | `1600` |
 | Column templates | `sets`, `synergy`, `builds` (see `flap_board_layout.dart`) |
 
-```dart
-assert(kFlapLibraryRailWidth == 320);
-assert(kFlapBoardRowGap == 0);
-final cols = flapColumnTemplateById('builds');
-// cols.columnsCss → CSS grid-template-columns
-// cols.cellRoles → name, identity, exotics, synergy, status
-```
-
 ### Board anti-rules (do not regress)
 
-- **No steel** — no brushed metal, chrome bezels, metallic gradients  
+- **No cyan cages** — structure is white/grey hairline; cyan is signal only  
 - **Board not cards** — no nested elevated panels per library row  
-- **One lamp** — amber for selection/readiness, not every border  
+- **One strong signal** — cyan for selection/focus/CTA, not every border  
 - **Element ink** — Destiny colors on identity/seals only  
+- **No soft consumer chrome** — radius ≤ 2px (cap 4px)  
 
 ## Flutter host themes
 
 Hosts map tokens via `destiny2_ui_flutter` / `buildFlapThemeBase`:
 
-- `theme` = Paper Ledger (light), `darkTheme` = Cold Graphite (dark)
+- `theme` = cool technical (light), `darkTheme` = Neon void (dark)
 - `ThemeMode` system | dark | light; Settings **Appearance** cycles faces
 - Explicit `ColorScheme` from tokens (not `ColorScheme.fromSeed`)
 - `FlapPalette` ThemeExtension carries success/warning/element roles
@@ -102,6 +98,6 @@ dart test packages/ui_tokens
 ## Non-goals (this package)
 
 - FlapRow / FlapBoard Flutter widgets — see **`packages/ui_flutter`** (`destiny2_ui_flutter`)  
-- Full Settings/Catalog brand rewrite  
+- Environment stage photo / signal-fade motion (host chrome later)  
 - Soft guidance auto-apply / domain rules  
 - CLIENT_SECRET / network  
