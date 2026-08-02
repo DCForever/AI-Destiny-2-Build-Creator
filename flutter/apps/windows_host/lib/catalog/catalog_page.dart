@@ -991,82 +991,105 @@ class _CatalogPageState extends State<CatalogPage> {
       return _buildEmptyState();
     }
     final groups = _groupedResults();
-    final rows = <Widget>[
-      // Keep key for board-era tests; chrome is Neon construct kicker.
-      Padding(
-        key: const Key('catalog_board_header'),
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-        child: Text(
-          'CATALOG NODES',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                letterSpacing: 1.2,
-                color: FlapPalette.of(context).muted,
-              ),
-        ),
-      ),
-    ];
-    for (final group in groups) {
-      if (_groupBy.isNotEmpty || groups.length > 1) {
-        rows.add(
-          Padding(
-            key: Key('catalog_group_${group.key}'),
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-            child: Text(
-              '${group.label} (${group.items.length})'.toUpperCase(),
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-          ),
-        );
-      }
-      for (final item in group.items) {
-        final selected = _selected?.hash == item.hash;
-        final typeParts = <String>[
-          if (item.itemTypeName != null) item.itemTypeName!,
-          if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
-          if (item.classType != null) item.classType!,
-          if (item.linkedSynergyIds.isNotEmpty)
-            '${item.linkedSynergyIds.length} syn',
-        ];
-        final ownedLabel = item.owned ? '×${item.ownedCount}' : null;
-        final identityLine = [
-          if (item.element != null) item.element!,
-          if (item.slot != null) item.slot!,
-          if (item.isExotic) 'Exotic',
-        ].join(' · ');
-        final typeLine = [
-          if (identityLine.isNotEmpty) identityLine,
-          ...typeParts,
-        ].join(' · ');
-        rows.add(
-          Padding(
-            key: Key('catalog_item_${item.hash}'),
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
-            child: NeonItemCard(
-              name: item.name,
-              slot: item.slot,
-              element: item.element,
-              typeLine: typeLine.isEmpty ? null : typeLine,
-              rarity: neonItemRarity(isExotic: item.isExotic),
-              ownedLabel: ownedLabel,
-              selected: selected,
-              onTap: () => _selectItem(item),
-              nameKey: Key('catalog_item_name_${item.hash}'),
-              metaKey: Key('catalog_item_meta_${item.hash}'),
-              ownedKey:
-                  item.owned ? Key('owned_badge_${item.hash}') : null,
-              leading: EntityIcon(
-                key: Key('catalog_item_icon_${item.hash}'),
-                icon: item.icon,
-                size: 36,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-    return ListView(
+    final palette = FlapPalette.of(context);
+    // Vex dense module grid: cards fill columns; air between cells = 12.
+    // Max extent keeps ~2–4 columns on desktop library panes.
+    const gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+      maxCrossAxisExtent: 260,
+      mainAxisExtent: 168,
+      mainAxisSpacing: kSpace12,
+      crossAxisSpacing: kSpace12,
+    );
+
+    return CustomScrollView(
       key: const Key('catalog_list'),
-      children: rows,
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            key: const Key('catalog_board_header'),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+            child: Text(
+              'CATALOG NODES · GRID',
+              style: neonMono(
+                color: palette.muted,
+                fontSize: 10,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ),
+        for (final group in groups) ...[
+          if (_groupBy.isNotEmpty || groups.length > 1)
+            SliverToBoxAdapter(
+              child: Padding(
+                key: Key('catalog_group_${group.key}'),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Text(
+                  '${group.label} (${group.items.length})'.toUpperCase(),
+                  style: neonMono(
+                    color: palette.muted,
+                    fontSize: 11,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            sliver: SliverGrid(
+              gridDelegate: gridDelegate,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = group.items[index];
+                  return _catalogGridCard(item);
+                },
+                childCount: group.items.length,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _catalogGridCard(CatalogItem item) {
+    final selected = _selected?.hash == item.hash;
+    final typeParts = <String>[
+      if (item.itemTypeName != null) item.itemTypeName!,
+      if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
+      if (item.classType != null) item.classType!,
+      if (item.linkedSynergyIds.isNotEmpty)
+        '${item.linkedSynergyIds.length} syn',
+    ];
+    final ownedLabel = item.owned ? '×${item.ownedCount}' : null;
+    final identityLine = [
+      if (item.element != null) item.element!,
+      if (item.slot != null) item.slot!,
+      if (item.isExotic) 'Exotic',
+    ].join(' · ');
+    final typeLine = [
+      if (identityLine.isNotEmpty) identityLine,
+      ...typeParts,
+    ].join(' · ');
+    return NeonItemCard(
+      key: Key('catalog_item_${item.hash}'),
+      name: item.name,
+      slot: item.slot,
+      element: item.element,
+      typeLine: typeLine.isEmpty ? null : typeLine,
+      rarity: neonItemRarity(isExotic: item.isExotic),
+      ownedLabel: ownedLabel,
+      selected: selected,
+      minHeight: 152,
+      onTap: () => _selectItem(item),
+      nameKey: Key('catalog_item_name_${item.hash}'),
+      metaKey: Key('catalog_item_meta_${item.hash}'),
+      ownedKey: item.owned ? Key('owned_badge_${item.hash}') : null,
+      leading: EntityIcon(
+        key: Key('catalog_item_icon_${item.hash}'),
+        icon: item.icon,
+        size: 36,
+      ),
     );
   }
 

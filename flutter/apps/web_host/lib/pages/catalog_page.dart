@@ -819,12 +819,21 @@ class _CatalogPageState extends State<CatalogPage> {
                       },
                       [.text('${group.label} (${group.items.length})')],
                     ),
-                  for (final item in group.items)
-                    _neonCatalogItemCard(
-                      item: item,
-                      selected: _selected?.hash == item.hash,
-                      onSelect: () => _selectItem(item),
-                    ),
+                  div(
+                    classes: 'catalog-grid',
+                    attributes: {
+                      'data-testid': 'catalog-grid',
+                      if (_groupBy.isNotEmpty) 'data-group-key': group.key,
+                    },
+                    [
+                      for (final item in group.items)
+                        _neonCatalogItemCard(
+                          item: item,
+                          selected: _selected?.hash == item.hash,
+                          onSelect: () => _selectItem(item),
+                        ),
+                    ],
+                  ),
                 ],
               ],
             ),
@@ -1096,7 +1105,19 @@ class _CatalogPageState extends State<CatalogPage> {
             margin: .only(top: 0.5.rem),
             padding: .all(0.px),
             flexDirection: .column,
-            gap: Gap(row: 0.5.rem),
+            gap: Gap(row: 0.75.rem),
+          ),
+          // Responsive card grid (Vex dense module board).
+          css('.catalog-grid').styles(
+            display: .flex,
+            width: 100.percent,
+            raw: {
+              'display': 'grid',
+              'grid-template-columns':
+                  'repeat(auto-fill, minmax(220px, 1fr))',
+              'gap': '12px',
+              'align-items': 'stretch',
+            },
           ),
           css('.catalog-group-header').styles(
             margin: .only(top: 0.5.rem),
