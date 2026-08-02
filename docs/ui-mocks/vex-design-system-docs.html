@@ -1,0 +1,659 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vex Network Interface — Design System Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root, [data-theme="dark"] {
+  --bg: #05050f;
+  --surface: #0a0a18;
+  --surface-2: #101028;
+  --fg: #f0fdff;
+  --muted: #7dd3e0;
+  --muted-2: #8a96a8;
+  --border: rgba(232, 238, 242, 0.22);
+  --border-subtle: rgba(232, 238, 242, 0.12);
+  --accent: #00e5ff;
+  --accent-secondary: #ff1a8c;
+  --danger: #ff003c;
+  --success: #2ee6a6;
+  --warn: #f5c542;
+  --font-display: "Orbitron", "Electrolize", "Rajdhani", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --glow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --fg: #0a0a18;
+  --muted: #5b6b78;
+  --muted-2: #7a8794;
+  --border: rgba(10, 10, 24, 0.14);
+  --border-subtle: rgba(10, 10, 24, 0.08);
+  --accent: #00c4db;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--bg) 0%, #03030a 100%);
+  -webkit-font-smoothing: antialiased;
+}
+[data-theme="light"] body {
+  background: linear-gradient(180deg, #f4f7fb 0%, #e8eef5 100%);
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+:focus { outline: none; }
+:focus-visible { box-shadow: var(--glow); }
+
+.shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 70%, transparent) 0%, transparent 100%);
+}
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin: 0 0 8px;
+}
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sub {
+  margin: 8px 0 0;
+  color: var(--muted);
+  max-width: 52ch;
+  font-size: 13px;
+}
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 8px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+.theme-switch span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+.switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+}
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch-thumb {
+  position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+  background: var(--muted-2);
+  transition: transform 160ms linear, background 160ms linear;
+}
+.switch input:checked + .switch-thumb {
+  transform: translateX(20px);
+  background: var(--accent);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  min-height: 40px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  transition: color 160ms linear, background 160ms linear;
+}
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.panel[hidden] { display: none; }
+
+.doc {
+  background: linear-gradient(165deg,
+    color-mix(in srgb, var(--surface) 96%, #00e5ff 3%) 0%,
+    color-mix(in srgb, var(--surface) 72%, var(--bg)) 100%);
+  padding: 28px 28px 40px;
+  border-radius: 0;
+}
+[data-theme="light"] .doc {
+  background: linear-gradient(165deg, #ffffff 0%, color-mix(in srgb, #e8eef5 88%, transparent) 100%);
+  border: 1px solid var(--border-subtle);
+}
+
+.doc h2 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 36px 0 14px;
+  padding-bottom: 10px;
+  position: relative;
+}
+.doc h2:first-child { margin-top: 0; }
+.doc h2::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.doc h3 {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 24px 0 10px;
+  color: var(--muted);
+}
+.doc p { margin: 0 0 12px; max-width: 68ch; }
+.doc ul, .doc ol { margin: 0 0 14px; padding-left: 1.2em; max-width: 70ch; }
+.doc li { margin-bottom: 6px; }
+.doc strong { font-weight: 600; }
+.mono, code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+code {
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  padding: 1px 5px;
+}
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+}
+.meta-item {
+  padding: 12px;
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+.meta-item .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin-bottom: 4px;
+}
+.meta-item .value { font-size: 13px; }
+
+.table-wrap { overflow-x: auto; margin: 12px 0 20px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  font-weight: 500;
+  border-bottom-color: var(--border);
+}
+.swatch {
+  display: inline-block;
+  width: 12px; height: 12px;
+  vertical-align: -1px;
+  margin-right: 6px;
+  border: 1px solid var(--border);
+}
+.do-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  margin: 12px 0 20px;
+}
+@media (min-width: 700px) {
+  .do-grid { grid-template-columns: 1fr 1fr; }
+}
+.do-card {
+  padding: 16px;
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+}
+.do-card h4 {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.do-card.yes h4 { color: var(--success); }
+.do-card.no h4 { color: var(--danger); }
+.do-card ul { margin: 0; padding-left: 1.1em; }
+.note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+  letter-spacing: 0.04em;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+.file-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+  <div class="shell" data-od-id="docs-shell">
+    <header class="header" data-od-id="docs-header">
+      <div>
+        <p class="kicker">Lane B · System persistence</p>
+        <h1 data-od-id="docs-title">Vex Network Interface</h1>
+        <p class="sub">Standing design contract extracted from the approved plan and live kit tokens. No visual kit changes this turn.</p>
+      </div>
+      <label class="theme-switch" data-od-id="theme-switch">
+        <span>Dark</span>
+        <span class="switch">
+          <input type="checkbox" id="themeToggle" aria-label="Toggle light theme" />
+          <span class="switch-thumb"></span>
+        </span>
+        <span>Light</span>
+      </label>
+    </header>
+
+    <div class="tabs" role="tablist" aria-label="Document" data-od-id="doc-tabs">
+      <button type="button" class="tab" role="tab" id="tab-design" aria-controls="panel-design" aria-selected="true" data-od-id="tab-design">DESIGN.md</button>
+      <button type="button" class="tab" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="false" data-od-id="tab-plan">design-system-plan.md</button>
+    </div>
+
+    <!-- ===================== DESIGN.md ===================== -->
+    <div class="panel" id="panel-design" role="tabpanel" aria-labelledby="tab-design" data-od-id="panel-design">
+      <article class="doc">
+        <div class="file-tag">Save as · DESIGN.md</div>
+        <h2>1. System identity</h2>
+        <p><strong>Vex Network Interface</strong> is a production design system for dense, high-signal network / ops / construct product UI. Atmosphere is void + cyan-neon energy. Chrome is angular and modular. Layout uses space and gradient dissolves—not outlined card cages. Motion is mechanical and intermittent.</p>
+        <div class="meta">
+          <div class="meta-item"><div class="label">Name</div><div class="value">Vex Network Interface</div></div>
+          <div class="meta-item"><div class="label">Version</div><div class="value">v1.1 (posture + env)</div></div>
+          <div class="meta-item"><div class="label">Themes</div><div class="value">Dark (canonical) + light twin</div></div>
+          <div class="meta-item"><div class="label">Primary signal</div><div class="value">Cyan-neon <code>#00e5ff</code></div></div>
+          <div class="meta-item"><div class="label">Proof surface</div><div class="value">Settings / config panels</div></div>
+          <div class="meta-item"><div class="label">Live kit</div><div class="value"><code>vex-network-kit-2.html</code></div></div>
+        </div>
+
+        <h2>2. Voice &amp; vocabulary</h2>
+        <p><strong>Tone:</strong> Cold digital logic made visible. Short technical labels. Geometric certainty. Zero organic warmth. Operational, not marketing.</p>
+        <p><strong>Adjectives:</strong> modular, emissive, precise, weightless, mechanical, high-contrast, computational.</p>
+        <p><strong>Prefer:</strong> network, node, module, signal, link, sync, stream, grid, void, wireframe, transmit, calibrate, status, channel, config, engage.</p>
+        <p><strong>Avoid:</strong> warm/friendly, delightful, cozy, organic, soft rounded comfort, synergy, seamless journey, empower.</p>
+
+        <h2>3. Color tokens</h2>
+        <h3>3.1 Dark (canonical)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token</th><th>Value</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td><code>--bg</code></td><td><span class="swatch" style="background:#05050f"></span><code>#05050f</code></td><td>App void</td></tr>
+              <tr><td><code>--bg-mid</code></td><td><span class="swatch" style="background:#08081a"></span><code>#08081a</code></td><td>Mid atmospheric band</td></tr>
+              <tr><td><code>--surface</code></td><td><span class="swatch" style="background:#0a0a18"></span><code>#0a0a18</code></td><td>Elevated content zone</td></tr>
+              <tr><td><code>--surface-2</code></td><td><span class="swatch" style="background:#101028"></span><code>#101028</code></td><td>Nested / inset zone</td></tr>
+              <tr><td><code>--fg</code></td><td><span class="swatch" style="background:#f0fdff"></span><code>#f0fdff</code></td><td>Primary text</td></tr>
+              <tr><td><code>--muted</code></td><td><span class="swatch" style="background:#7dd3e0"></span><code>#7dd3e0</code></td><td>Secondary text</td></tr>
+              <tr><td><code>--muted-2</code></td><td><span class="swatch" style="background:#8a96a8"></span><code>#8a96a8</code></td><td>Meta / kicker</td></tr>
+              <tr><td><code>--border</code></td><td><code>rgba(232,238,242,0.22)</code></td><td>Structure when needed</td></tr>
+              <tr><td><code>--border-strong</code></td><td><code>rgba(232,238,242,0.38)</code></td><td>Emphasized hairline</td></tr>
+              <tr><td><code>--border-subtle</code></td><td><code>rgba(232,238,242,0.12)</code></td><td>Dividers / table rules</td></tr>
+              <tr><td><code>--accent</code></td><td><span class="swatch" style="background:#00e5ff"></span><code>#00e5ff</code></td><td>Primary cyan-neon signal</td></tr>
+              <tr><td><code>--accent-deep</code></td><td><span class="swatch" style="background:#00b8d4"></span><code>#00b8d4</code></td><td>Pressed / deep accent</td></tr>
+              <tr><td><code>--accent-secondary</code></td><td><span class="swatch" style="background:#ff1a8c"></span><code>#ff1a8c</code></td><td>Magenta energy (sparse)</td></tr>
+              <tr><td><code>--danger</code></td><td><span class="swatch" style="background:#ff003c"></span><code>#FF003C</code></td><td>Critical only</td></tr>
+              <tr><td><code>--success</code></td><td><span class="swatch" style="background:#2ee6a6"></span><code>#2ee6a6</code></td><td>Status success</td></tr>
+              <tr><td><code>--warn</code></td><td><span class="swatch" style="background:#f5c542"></span><code>#f5c542</code></td><td>Status warn</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>3.2 Light twin</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token</th><th>Value</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>--bg</code></td><td><code>#f4f7fb</code></td><td>Cool technical stage — not beige</td></tr>
+              <tr><td><code>--surface</code></td><td><code>#ffffff</code></td><td>Elevated zone</td></tr>
+              <tr><td><code>--surface-2</code></td><td><code>#eef2f7</code></td><td>Inset</td></tr>
+              <tr><td><code>--fg</code></td><td><code>#0a0a18</code></td><td>Near-void ink</td></tr>
+              <tr><td><code>--muted</code></td><td><code>#5b6b78</code></td><td>Readable cool gray</td></tr>
+              <tr><td><code>--border*</code></td><td><code>rgba(10,10,24,…)</code></td><td>White/grey structure family</td></tr>
+              <tr><td><code>--accent</code></td><td><code>#00c4db</code></td><td>Slightly deeper for AA on white</td></tr>
+              <tr><td><code>--accent-secondary</code></td><td><code>#ff1a8c</code></td><td>Still sparse</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Light keeps the same semantic roles. Glow budget is lower; solid fills + space + hairline grey do more work. Neon remains interaction/live signal only.</p>
+
+        <h3>3.3 Glow, gradient, environment</h3>
+        <ul>
+          <li><code>--glow-accent</code> — focus / active outer neon</li>
+          <li><code>--glow-pulse</code> — peak live-signal glow</li>
+          <li><code>--grad-signal</code> — cyan → blue → magenta (transmission paths, sparse energy)</li>
+          <li><code>--grad-tx</code> — packet sweep gradient for dividers/paths</li>
+          <li><code>--grad-fade</code> / <code>--grad-zone</code> — soft spatial zoning (primary arrangement tools)</li>
+          <li><code>--grid-line</code> — Tron perspective floor only (faint underlay when photo stage owns the grid)</li>
+          <li><code>--env-photo-opacity</code> / <code>--env-bloom-opacity</code> — photographic stage + sparse blooms (Lane A)</li>
+        </ul>
+
+        <h2>4. Typography</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Role</th><th>Stack</th><th>Use</th></tr></thead>
+            <tbody>
+              <tr><td>Display</td><td>Orbitron → Electrolize → Rajdhani → system-ui</td><td>Titles, section marks, module IDs</td></tr>
+              <tr><td>Body / UI</td><td>Inter → system-ui</td><td>Labels, tables, forms, settings</td></tr>
+              <tr><td>Mono</td><td>JetBrains Mono → Share Tech Mono → ui-monospace</td><td>IDs, hashes, metrics, endpoints</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul>
+          <li>Never rely on neon alone for text — solid fill or strong contrast underneath.</li>
+          <li>Tabular nums on all metrics (<code>font-variant-numeric: tabular-nums</code>).</li>
+          <li>Dense UI body ~12–14px; display stays technical, not marketing-hero scale.</li>
+          <li>Kickers/meta: mono uppercase, tight tracking.</li>
+        </ul>
+
+        <h2>5. Shape, space, density</h2>
+        <ul>
+          <li><code>--radius</code>: <strong>0</strong> default; max <strong>2–4px</strong> sparingly.</li>
+          <li>Space scale: 4 / 8 / 12 / 16 / 24 / 32 / 48.</li>
+          <li><strong>Inside modules:</strong> high density (4–12 gaps, tight fields/tables).</li>
+          <li><strong>Between regions:</strong> more air (16–48); separate with gap + tonal step + gradient fade.</li>
+          <li>Control height: 36–40px dense; touch targets ≥44px where practical.</li>
+          <li>Borders: optional hairline white/grey. <strong>Default panel is not a closed outline box.</strong></li>
+        </ul>
+
+        <h2>6. Layout posture (v1.1)</h2>
+        <h3>Arrangement language (prefer in order)</h3>
+        <ol>
+          <li>Whitespace / gap between sections and columns</li>
+          <li>Tonal surface steps (<code>--surface</code> / <code>--surface-2</code> / void)</li>
+          <li>Gradient fades (dissolve edges into bg)</li>
+          <li>Hairline white/grey dividers (lists, tables)</li>
+          <li>Full outlined boxes — <strong>exception</strong> only (modal, critical alert, temporary focus cage)</li>
+        </ol>
+        <h3>Neon as complement</h3>
+        <p><strong>Use cyan/magenta for:</strong> primary CTA + focus (≤ ~2 strong hits per view region); selected nav; live pulse; sparse transmission packets that point at content.</p>
+        <p><strong>Do not use neon for:</strong> default panel outlines; every divider; body text color; full-page gradient washes.</p>
+        <h3>Environment</h3>
+        <ul>
+          <li>Canonical stage: <code>image.png</code> (wire mega-platform + horizon grid) under content with readability scrim/vignette.</li>
+          <li>CSS Tron ground plane is a <strong>faint underlay</strong> only when the still already carries the grid — never a flat full-viewport wallpaper tile.</li>
+          <li>Supporting stills: <code>josh-markham-vex-02.jpg</code> … <code>06.jpg</code> for glow/platform falloff reference.</li>
+        </ul>
+
+        <h2>7. Motion</h2>
+        <p><strong>Signal-fade envelope</strong> (shared by live pulse and divider/path packets):</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Phase</th><th>~Share</th><th>Signal opacity</th></tr></thead>
+            <tbody>
+              <tr><td>Off / rest</td><td>~18%</td><td>0</td></tr>
+              <tr><td>Fade in</td><td>~10–12%</td><td>0 → peak</td></tr>
+              <tr><td>Hold / travel</td><td>~30–45%</td><td>peak</td></tr>
+              <tr><td>Fade out</td><td>~20–25%</td><td>peak → 0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul>
+          <li>Pulse cycle ~2s linear; divider packets ~3.4–4s linear (staggered).</li>
+          <li>Softest keyframe must be <strong>fully extinguished</strong> — no permanent dim cyan rest state.</li>
+          <li>Grey structure hairline stays static; cyan is only the moving packet.</li>
+          <li>Enter/state transitions: linear or ease-out, 150–300ms. No bounce/spring.</li>
+          <li><code>prefers-reduced-motion</code>: freeze pulse/packets at dim/off (~0.28), never full-intensity neon; kill continuous loops.</li>
+        </ul>
+
+        <h2>8. Iconography</h2>
+        <ul>
+          <li>Geometric line icons only — no emoji, no soft illustration.</li>
+          <li>Stroke 1–1.5px; angular caps; 16 / 20 / 24 boxes.</li>
+          <li>Default: white/grey; active: accent cyan; critical: danger.</li>
+          <li>Pair icon + label for density; icon-only only with <code>aria-label</code> (+ tooltip in kit).</li>
+        </ul>
+
+        <h2>9. Components (v1)</h2>
+        <h3>P0 (shipped in kit)</h3>
+        <ul>
+          <li>Button — primary / secondary / ghost / danger + glow focus</li>
+          <li>Content zone / panel — borderless or hairline-optional; fade edge</li>
+          <li>Form controls — text, select, checkbox, switch, radio</li>
+          <li>Field group / section headers — space-separated</li>
+          <li>Tabs / segmented control</li>
+          <li>Data table — dense, hairline grey rules</li>
+          <li>Status pill + live pulse (signal-fade)</li>
+          <li>Icon sample set</li>
+          <li>Tooltip / toast</li>
+          <li>Theme switch (dark ↔ light, localStorage)</li>
+          <li>Environment shell (<code>image.png</code> stage + scrim)</li>
+        </ul>
+        <h3>P1</h3>
+        <ul>
+          <li>Navigation shell, metric tiles, node/link diagram chrome, modal/drawer, empty/loading/error with transmission motif</li>
+        </ul>
+        <h3>Settings proof (acceptance story)</h3>
+        <ul>
+          <li>Categories: Network · Nodes · Channels · Display · Alerts</li>
+          <li>Working: section switch, toggles, select, apply/disabled</li>
+          <li>Theme toggle updates whole surface via tokens</li>
+          <li>One live sync pulse + divider transmission (respect reduced-motion)</li>
+          <li>Density without large empty hero bands inside content modules</li>
+        </ul>
+
+        <h2>10. Usage rules (acceptance)</h2>
+        <ol>
+          <li>Accent cyan ≤ ~2 strong applications per view region (CTA + focus/selected).</li>
+          <li>Multicolor gradient never as a full-page wash.</li>
+          <li>Borders/dividers default white/grey; cyan only for active wire / live packet.</li>
+          <li>Continuous network signals fully fade to near-zero each cycle.</li>
+          <li>Text contrast holds without glow (dark and light).</li>
+          <li>Radius default 0; never exceed 4px.</li>
+          <li>Dense fields inside modules; air between regions.</li>
+          <li>Motion mechanical; reduced-motion freezes signals dim, not full neon.</li>
+          <li>No emoji icons; no purple SaaS wash; no warm beige canvas.</li>
+          <li>Background reads as <code>image.png</code> atmosphere; CSS floor is underlay only.</li>
+          <li>Light theme stays cool technical twin, not Material-pastel consumer.</li>
+        </ol>
+
+        <div class="do-grid">
+          <div class="do-card yes">
+            <h4>Do</h4>
+            <ul>
+              <li>Zone with gap + tonal steps + fade edges</li>
+              <li>Grey structure first; neon as intermittent signal</li>
+              <li>Orbitron display / Inter body / mono metrics</li>
+              <li>Composite reference still under scrim for stage fidelity</li>
+              <li>Honor reduced-motion with frozen dim signals</li>
+            </ul>
+          </div>
+          <div class="do-card no">
+            <h4>Don’t</h4>
+            <ul>
+              <li>Default every module as a strong outlined box</li>
+              <li>Cyan wireframe cages on all panels</li>
+              <li>Permanent dim glow “always online” pulse</li>
+              <li>Flat orthographic grid wallpaper</li>
+              <li>Purple SaaS gradients, emoji icons, soft bounce motion</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>11. Platforms</h2>
+        <ul>
+          <li><strong>Desktop web (dense)</strong> — primary kit density; hover + keyboard focus glow</li>
+          <li><strong>Desktop app</strong> — same chrome; slightly tighter window affordances</li>
+          <li><strong>Responsive web</strong> — redesign small breakpoints (collapsible nav, stacked zones, 44px targets); never squeeze bordered desktop cards</li>
+        </ul>
+
+        <h2>12. Implementation map</h2>
+        <ul>
+          <li>Tokens + components: <code>vex-network-kit-2.html</code> (prefer over older kit without photo stage)</li>
+          <li>Environment still: <code>image.png</code></li>
+          <li>Glow/platform refs: <code>josh-markham-vex-0{2,3,4,6}.jpg</code></li>
+          <li>Theme persistence key: <code>localStorage["vex-theme"]</code></li>
+          <li>Attribute: <code>data-theme="dark|light"</code> on <code>&lt;html&gt;</code></li>
+        </ul>
+
+        <p class="note">DESIGN.md · Vex Network Interface v1.1 · Generated Lane B from locked plan + kit tokens · No product visual delta this document</p>
+      </article>
+    </div>
+
+    <!-- ===================== PLAN ===================== -->
+    <div class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden data-od-id="panel-plan">
+      <article class="doc">
+        <div class="file-tag">Save as · design-system-plan.md</div>
+        <h2>Design System Plan — Vex Network Interface</h2>
+        <p><strong>Intent:</strong> Production design system for dense, high-signal network/ops/construct UI. Atmosphere from void + neon energy; <strong>layout structure from white/grey and soft spatial zoning</strong>; neon used to <strong>highlight and complement</strong>, not frame every module. Prove the kit on <strong>settings / config panels</strong>.</p>
+        <p><strong>Status:</strong> Approved. Locked brief + v1.1 posture (space/gradient zoning, white-grey structure, neon-as-accent) + Lane A environment (<code>image.png</code> stage) + signal-fade motion. This document is the durable plan mirror of chat approvals.</p>
+
+        <h2>Decisions locked</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>Locked value</th></tr></thead>
+            <tbody>
+              <tr><td>System name</td><td><strong>Vex Network Interface</strong></td></tr>
+              <tr><td>Theme scope (v1)</td><td>Dark + light pair (dark is primary reference)</td></tr>
+              <tr><td>Primary blue</td><td>Cyan-neon → <code>#00e5ff</code> (light: <code>#00c4db</code>)</td></tr>
+              <tr><td>Platforms</td><td>Desktop web (dense) + desktop app + responsive web</td></tr>
+              <tr><td>First proof surface</td><td>Settings / config panels</td></tr>
+              <tr><td>Geometry</td><td>Angular; radius 0 default, max 4px sparingly</td></tr>
+              <tr><td>Structure language (v1.1)</td><td>White/grey + spacing + gradient fades</td></tr>
+              <tr><td>Neon budget (v1.1)</td><td>Highlight / live signal only — not default panel outlines</td></tr>
+              <tr><td>Background</td><td>Match <code>image.png</code> (Lane A composite + scrim)</td></tr>
+              <tr><td>Motion</td><td>Mechanical pulse / transmission; full signal fade-out each cycle</td></tr>
+              <tr><td>Magenta secondary</td><td>Sparse atmospheric default</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Source assets</h2>
+        <ul>
+          <li><code>image.png</code> — canonical environment / stage</li>
+          <li><code>josh-markham-vex-02.jpg</code> … <code>06.jpg</code> — platforms, cyan energy, magenta blooms</li>
+          <li>Live kit — <code>vex-network-kit-2.html</code> (tokens, P0, settings proof, motion)</li>
+        </ul>
+
+        <h2>Density vs space (resolved)</h2>
+        <ul>
+          <li><strong>Inside modules:</strong> high scan density (tight fields, tables, short labels).</li>
+          <li><strong>Between modules / regions:</strong> more air; gap, tonal steps, gradient dissolve — not heavy 1px cages.</li>
+          <li>Background void remains theater; product chrome does not rely on strong outlined cards as the default grid language.</li>
+        </ul>
+
+        <h2>Component coverage</h2>
+        <p><strong>P0:</strong> Button, zone/panel, form controls, field groups, tabs, dense table, status + live pulse, icons, tooltip/toast, theme switch, environment shell.</p>
+        <p><strong>P1:</strong> Nav shell polish, KPI tiles, node/link diagram, modal/drawer, empty/loading/error + transmission motif.</p>
+        <p><strong>Out of scope v1:</strong> marketing landing, soft consumer chrome, full illustration system.</p>
+
+        <h2>Deliverables</h2>
+        <ol>
+          <li><code>design-system-plan.md</code> — this document</li>
+          <li><code>DESIGN.md</code> — standing tokens, posture, voice, do/don’t (tab DESIGN.md)</li>
+          <li><code>vex-network-kit-2.html</code> — live kit (environment fidelity)</li>
+          <li>Optional later: node map / ops dashboard using the same tokens</li>
+        </ol>
+
+        <h2>Creative director backlog (remaining lanes)</h2>
+        <ul>
+          <li><strong>Lane A</strong> — Environment fidelity (done in kit-2)</li>
+          <li><strong>Lane B</strong> — Persist system (this document)</li>
+          <li><strong>Lane C</strong> — Second proof surface (node / link map)</li>
+          <li><strong>Lane D</strong> — Motion cadence tuning only</li>
+        </ul>
+
+        <p class="note">design-system-plan.md · Approved plan + post-approval deltas (v1.1 posture, Lane A env, signal-fade) · Lane B persistence</p>
+      </article>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById("themeToggle");
+  var stored = localStorage.getItem("vex-theme");
+  if (stored === "light") {
+    root.setAttribute("data-theme", "light");
+    toggle.checked = true;
+  }
+  toggle.addEventListener("change", function () {
+    var light = toggle.checked;
+    root.setAttribute("data-theme", light ? "light" : "dark");
+    localStorage.setItem("vex-theme", light ? "light" : "dark");
+  });
+
+  var tabs = [
+    { btn: document.getElementById("tab-design"), panel: document.getElementById("panel-design") },
+    { btn: document.getElementById("tab-plan"), panel: document.getElementById("panel-plan") }
+  ];
+  tabs.forEach(function (t) {
+    t.btn.addEventListener("click", function () {
+      tabs.forEach(function (x) {
+        x.btn.setAttribute("aria-selected", "false");
+        x.panel.hidden = true;
+      });
+      t.btn.setAttribute("aria-selected", "true");
+      t.panel.hidden = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
