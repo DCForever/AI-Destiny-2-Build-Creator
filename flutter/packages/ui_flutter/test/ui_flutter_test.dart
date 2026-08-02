@@ -172,6 +172,57 @@ void main() {
     });
   });
 
+  group('Neon segmented + page header', () {
+    testWidgets('NeonSegmentedTabs selects and NeonPageHeader renders',
+        (tester) async {
+      var selected = 'weapons';
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  children: [
+                    const NeonPageHeader(
+                      kicker: 'Module · Build Creator',
+                      title: 'Catalog',
+                      subtitle: 'Browse nodes.',
+                      titleKey: Key('page_title'),
+                    ),
+                    NeonSegmentedTabs(
+                      selectedId: selected,
+                      onSelected: (id) => setState(() => selected = id),
+                      options: const [
+                        NeonSegmentOption(
+                          id: 'weapons',
+                          label: 'Weapons',
+                          key: Key('seg_weapons'),
+                        ),
+                        NeonSegmentOption(
+                          id: 'armor',
+                          label: 'Armor',
+                          key: Key('seg_armor'),
+                        ),
+                      ],
+                    ),
+                    Text('sel=$selected', key: const Key('sel_label')),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('page_title')), findsOneWidget);
+      expect(find.text('BROWSE NODES.'), findsNothing); // body case from subtitle
+      expect(find.textContaining('Browse nodes'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('seg_armor')));
+      await tester.pumpAndSettle();
+      expect(find.text('sel=armor'), findsOneWidget);
+    });
+  });
+
   group('Neon item detail', () {
     test('neonHeroMark classifies weapons and armor', () {
       expect(neonHeroMark(kindLabel: 'Weapon'), 'WPN');

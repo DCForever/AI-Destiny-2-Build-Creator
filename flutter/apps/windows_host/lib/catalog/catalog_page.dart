@@ -505,14 +505,25 @@ class _CatalogPageState extends State<CatalogPage> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    // Vex Network Interface posture (docs/ui-mocks/vex-design-system-docs.html):
+    // soft zones, dense filters inside modules, air between regions, cyan ≤2 hits.
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Catalog'),
+        backgroundColor: Colors.transparent,
+        title: Text(
+          'CATALOG',
+          style: neonDisplay(
+            color: palette.foreground,
+            fontSize: 16,
+            letterSpacing: 1.0,
+          ),
+        ),
         actions: [
           IconButton(
             key: const Key('catalog_reload'),
-            tooltip: 'Reload from entity stores + inventory',
+            tooltip: 'Sync catalog channel',
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -521,261 +532,378 @@ class _CatalogPageState extends State<CatalogPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
-              key: const Key('catalog_query'),
-              controller: _queryController,
-              decoration: const InputDecoration(
-                labelText: 'Search',
-                hintText: 'Name, type, element…',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (_) => _refilter(),
-            ),
-          ),
-          // Kind modes: Weapons | Armor | Universal
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              key: const Key('catalog_mode_row'),
-              children: [
-                for (final mode in CatalogBrowseMode.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      key: Key('mode_chip_${mode.name}'),
-                      label: Text(browseModeLabel(mode)),
-                      selected: _mode == mode,
-                      onSelected: (_) => _setMode(mode),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                FilterChip(
-                  key: const Key('scope_chip_all'),
-                  label: const Text('All'),
-                  selected: _scope == CatalogScope.all,
-                  onSelected: (_) => _setScope(CatalogScope.all),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  key: const Key('scope_chip_owned'),
-                  label: Text(_ownedChipLabel()),
-                  selected: _scope == CatalogScope.owned,
-                  onSelected: (_) => _setScope(CatalogScope.owned),
-                ),
-                const Spacer(),
-                if (_activeFilterCount() > 0)
-                  TextButton(
-                    key: const Key('catalog_clear_filters'),
-                    onPressed: _clearAllFilters,
-                    child: const Text('Clear filters'),
-                  ),
-              ],
-            ),
-          ),
-          // Progressive disclosure: facets/group behind toggle (P0).
-          ListTile(
-            key: const Key('catalog_filters_toggle'),
-            dense: true,
-            title: Text(
-              _filtersSummaryLabel(),
-              key: const Key('catalog_filters_summary'),
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            subtitle: _filtersExpanded
-                ? null
-                : Text(
-                    'Element, slot, archetype, exotic, group…',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-            trailing: Icon(
-              _filtersExpanded ? Icons.expand_less : Icons.expand_more,
-            ),
-            onTap: () {
-              setState(() => _filtersExpanded = !_filtersExpanded);
-            },
-          ),
-          if (_filtersExpanded)
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: _moreFiltersExpanded ? 260 : 140,
-              ),
-              child: SingleChildScrollView(
-                key: const Key('catalog_filters_scroll'),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          NeonPageHeader(
+            kicker: 'Module · Build Creator',
+            title: 'Catalog',
+            subtitle:
+                'Browse weapon and armor nodes. Calibrate filters, then open a construct for perks and stats.',
+            trailing: Tooltip(
+              message: _version ?? 'No entity channel version',
+              child: NeonLivePulse(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Primary strip only (BUG-20260726-001).
-                    if (catalogShowsElementFacet(_mode))
-                      _facetChipRow(
-                        keyPrefix: 'element',
-                        values: catalogElements,
-                        facet: _elements,
-                        onCycle: _cycleElement,
-                      ),
-                    const SizedBox(height: 4),
-                    _facetChipRow(
-                      keyPrefix: 'slot',
-                      values: catalogSlotsForMode(_mode),
-                      facet: _slots,
-                      onCycle: _cycleSlot,
-                    ),
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilterChip(
-                          key: const Key('exotic_chip'),
-                          label: Text(_exoticLabel()),
-                          selected: _exotic != null,
-                          onSelected: (_) => _cycleExotic(),
-                        ),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _loading
+                            ? palette.warning
+                            : (_error != null
+                                ? palette.danger
+                                : palette.success),
                       ),
                     ),
-                    ListTile(
-                      key: const Key('catalog_more_filters_toggle'),
-                      dense: true,
-                      title: Text(
-                        _moreFiltersExpanded
-                            ? 'Less filters'
-                            : 'More filters (ammo, type, group…)',
-                        style: Theme.of(context).textTheme.labelMedium,
+                    const SizedBox(width: 8),
+                    Text(
+                      _loading
+                          ? 'SYNC'
+                          : (_error != null ? 'FAULT' : 'LIVE'),
+                      style: neonMono(
+                        color: palette.muted,
+                        fontSize: 10,
+                        letterSpacing: 1.0,
                       ),
-                      trailing: Icon(
-                        _moreFiltersExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
-                      ),
-                      onTap: () {
-                        setState(
-                          () => _moreFiltersExpanded = !_moreFiltersExpanded,
-                        );
-                      },
                     ),
-                    if (_moreFiltersExpanded) ...[
-                      if (catalogShowsAmmoFacet(_mode)) ...[
-                        const SizedBox(height: 4),
-                        _facetChipRow(
-                          keyPrefix: 'ammo',
-                          values: catalogAmmoTypes,
-                          facet: _ammos,
-                          onCycle: _cycleAmmo,
-                        ),
-                      ],
-                      if (catalogShowsClassFacet(_mode)) ...[
-                        const SizedBox(height: 4),
-                        _facetChipRow(
-                          keyPrefix: 'class',
-                          values: catalogClassNames,
-                          facet: _classNames,
-                          onCycle: _cycleClass,
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                      _facetChipRow(
-                        keyPrefix: 'archetype',
-                        values: catalogArchetypesForMode(_mode),
-                        facet: _archetypes,
-                        onCycle: _cycleArchetype,
-                      ),
-                      if (_bridge.synergyMembership.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'Synergy membership',
-                            key: const Key('synergy_filter_label'),
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
-                        ),
-                        _facetChipRow(
-                          keyPrefix: 'synergy',
-                          values: _bridge.synergyMembership
-                              .map((s) => s.id)
-                              .toList(),
-                          facet: _synergies,
-                          onCycle: _cycleSynergy,
-                          labelOf: (id) =>
-                              _bridge.synergyNames[id] ?? 'Synergy',
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          key: const Key('catalog_group_by'),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: Text(
-                                'Group results',
-                                style:
-                                    Theme.of(context).textTheme.labelMedium,
-                              ),
-                            ),
-                            for (final dim in catalogGroupDimensions)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: FilterChip(
-                                  key: Key('group_chip_${dim.id.name}'),
-                                  label: Text(dim.label),
-                                  selected: _groupBy.contains(dim.id),
-                                  onSelected: (_) =>
-                                      _toggleGroupDimension(dim.id),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
                   ],
                 ),
               ),
             ),
+          ),
+          // --- Filter / channel controls zone (dense inside) ---
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: Tooltip(
-              message: _version ?? 'No manifest version',
-              child: Text(
-                _statusLine(),
-                key: const Key('catalog_status'),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontFamily: kFontMono,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      color: FlapPalette.of(context).muted,
+            padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace8),
+            child: NeonZone(
+              padding: const EdgeInsets.fromLTRB(kSpace12, kSpace12, kSpace12, kSpace8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    key: const Key('catalog_query'),
+                    controller: _queryController,
+                    decoration: InputDecoration(
+                      labelText: 'Search nodes',
+                      hintText: 'Name, type, element…',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      isDense: true,
+                      labelStyle: neonMono(
+                        color: palette.muted,
+                        fontSize: 11,
+                        letterSpacing: 0.8,
+                      ),
                     ),
+                    onChanged: (_) => _refilter(),
+                  ),
+                  const SizedBox(height: kSpace12),
+                  // Channel modes — cyan only on selected segment
+                  Text(
+                    'CHANNEL',
+                    style: neonMono(
+                      color: palette.muted,
+                      fontSize: 10,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: kSpace8),
+                  KeyedSubtree(
+                    key: const Key('catalog_mode_row'),
+                    child: NeonSegmentedTabs(
+                      selectedId: _mode.name,
+                      onSelected: (id) {
+                        final mode = CatalogBrowseMode.values.firstWhere(
+                          (m) => m.name == id,
+                          orElse: () => CatalogBrowseMode.weapons,
+                        );
+                        _setMode(mode);
+                      },
+                      options: [
+                        for (final mode in CatalogBrowseMode.values)
+                          NeonSegmentOption(
+                            id: mode.name,
+                            label: browseModeLabel(mode),
+                            key: Key('mode_chip_${mode.name}'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: kSpace12),
+                  Row(
+                    children: [
+                      NeonSegmentedTabs(
+                        dense: true,
+                        selectedId: _scope.name,
+                        onSelected: (id) {
+                          _setScope(
+                            id == CatalogScope.owned.name
+                                ? CatalogScope.owned
+                                : CatalogScope.all,
+                          );
+                        },
+                        options: [
+                          const NeonSegmentOption(
+                            id: 'all',
+                            label: 'All',
+                            key: Key('scope_chip_all'),
+                          ),
+                          NeonSegmentOption(
+                            id: 'owned',
+                            label: _ownedChipLabel(),
+                            key: const Key('scope_chip_owned'),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      if (_activeFilterCount() > 0)
+                        TextButton(
+                          key: const Key('catalog_clear_filters'),
+                          onPressed: _clearAllFilters,
+                          child: Text(
+                            'RESET FILTERS',
+                            style: neonMono(
+                              color: palette.accent,
+                              fontSize: 10,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Progressive disclosure: facets/group behind toggle (P0).
+                  ListTile(
+                    key: const Key('catalog_filters_toggle'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      _filtersSummaryLabel(),
+                      key: const Key('catalog_filters_summary'),
+                      style: neonMono(
+                        color: palette.foreground,
+                        fontSize: 11,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    subtitle: _filtersExpanded
+                        ? null
+                        : Text(
+                            'Element, slot, archetype, exotic, group…',
+                            style: neonBody(
+                              color: palette.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                    trailing: Icon(
+                      _filtersExpanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      color: palette.muted,
+                    ),
+                    onTap: () {
+                      setState(
+                        () => _filtersExpanded = !_filtersExpanded,
+                      );
+                    },
+                  ),
+                  if (_filtersExpanded)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: _moreFiltersExpanded ? 260 : 140,
+                      ),
+                      child: SingleChildScrollView(
+                        key: const Key('catalog_filters_scroll'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (catalogShowsElementFacet(_mode))
+                              _facetChipRow(
+                                keyPrefix: 'element',
+                                values: catalogElements,
+                                facet: _elements,
+                                onCycle: _cycleElement,
+                              ),
+                            const SizedBox(height: 4),
+                            _facetChipRow(
+                              keyPrefix: 'slot',
+                              values: catalogSlotsForMode(_mode),
+                              facet: _slots,
+                              onCycle: _cycleSlot,
+                            ),
+                            const SizedBox(height: 4),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: FilterChip(
+                                key: const Key('exotic_chip'),
+                                label: Text(_exoticLabel()),
+                                selected: _exotic != null,
+                                onSelected: (_) => _cycleExotic(),
+                              ),
+                            ),
+                            ListTile(
+                              key: const Key('catalog_more_filters_toggle'),
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                _moreFiltersExpanded
+                                    ? 'Less filters'
+                                    : 'More filters (ammo, type, group…)',
+                                style: neonMono(
+                                  color: palette.muted,
+                                  fontSize: 10,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                              trailing: Icon(
+                                _moreFiltersExpanded
+                                    ? Icons.expand_less
+                                    : Icons.expand_more,
+                                color: palette.muted,
+                              ),
+                              onTap: () {
+                                setState(
+                                  () => _moreFiltersExpanded =
+                                      !_moreFiltersExpanded,
+                                );
+                              },
+                            ),
+                            if (_moreFiltersExpanded) ...[
+                              if (catalogShowsAmmoFacet(_mode)) ...[
+                                const SizedBox(height: 4),
+                                _facetChipRow(
+                                  keyPrefix: 'ammo',
+                                  values: catalogAmmoTypes,
+                                  facet: _ammos,
+                                  onCycle: _cycleAmmo,
+                                ),
+                              ],
+                              if (catalogShowsClassFacet(_mode)) ...[
+                                const SizedBox(height: 4),
+                                _facetChipRow(
+                                  keyPrefix: 'class',
+                                  values: catalogClassNames,
+                                  facet: _classNames,
+                                  onCycle: _cycleClass,
+                                ),
+                              ],
+                              const SizedBox(height: 4),
+                              _facetChipRow(
+                                keyPrefix: 'archetype',
+                                values: catalogArchetypesForMode(_mode),
+                                facet: _archetypes,
+                                onCycle: _cycleArchetype,
+                              ),
+                              if (_bridge.synergyMembership.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Synergy membership',
+                                  key: const Key('synergy_filter_label'),
+                                  style: neonMono(
+                                    color: palette.muted,
+                                    fontSize: 10,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                                _facetChipRow(
+                                  keyPrefix: 'synergy',
+                                  values: _bridge.synergyMembership
+                                      .map((s) => s.id)
+                                      .toList(),
+                                  facet: _synergies,
+                                  onCycle: _cycleSynergy,
+                                  labelOf: (id) =>
+                                      _bridge.synergyNames[id] ?? 'Synergy',
+                                ),
+                              ],
+                              const SizedBox(height: 4),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  key: const Key('catalog_group_by'),
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 8,
+                                      ),
+                                      child: Text(
+                                        'GROUP',
+                                        style: neonMono(
+                                          color: palette.muted,
+                                          fontSize: 10,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                    for (final dim
+                                        in catalogGroupDimensions)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 4,
+                                        ),
+                                        child: FilterChip(
+                                          key: Key(
+                                            'group_chip_${dim.id.name}',
+                                          ),
+                                          label: Text(dim.label),
+                                          selected:
+                                              _groupBy.contains(dim.id),
+                                          onSelected: (_) =>
+                                              _toggleGroupDimension(
+                                            dim.id,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
+          // Status channel (air between filter zone and results)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace8),
+            child: Tooltip(
+              message: _version ?? 'No entity channel version',
+              child: Text(
+                _statusLine(),
+                key: const Key('catalog_status'),
+                style: neonMono(
+                  color: palette.muted,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ),
+          // --- Results + detail: air between columns, soft zones ---
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(flex: 3, child: _buildBody()),
-                if (_selected != null)
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   Expanded(
-                    flex: 2,
-                    child: _buildDetailPanel(),
+                    flex: 3,
+                    child: NeonZone(
+                      child: _buildBody(),
+                    ),
                   ),
-              ],
+                  if (_selected != null) ...[
+                    const SizedBox(width: kSpace16),
+                    Expanded(
+                      flex: 2,
+                      child: NeonZone(
+                        child: _buildDetailPanel(),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],
