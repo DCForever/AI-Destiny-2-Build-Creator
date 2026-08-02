@@ -1038,133 +1038,155 @@ class _CatalogPageState extends State<CatalogPage> {
         : hitActions(kind);
 
     final palette = FlapPalette.of(context);
+    final kindLabel = kind != null ? compositionKindLabel(kind) : null;
+    final kickerParts = <String>[
+      if (kindLabel != null) kindLabel,
+      if (item.slot != null) item.slot!,
+      if (item.isExotic) 'Exotic' else 'Common',
+    ];
+    final typeLine = [
+      if (item.itemTypeName != null) item.itemTypeName!,
+      if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
+      if (item.classType != null) item.classType!,
+    ].join(' · ');
+
     return Material(
       elevation: 0,
-      color: palette.surfaceRaised,
+      color: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (kind != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: Text(
-                compositionKindLabel(kind),
-                key: const Key('detail_kind_label'),
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ),
-          // BR-SYN-004 reverse tags
-          if (_reverseTags.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              child: Wrap(
-                key: const Key('linked_synergy_badges'),
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  for (final badge in _reverseTags)
-                    Chip(
-                      key: Key('synergy_badge_${badge.id}'),
-                      label: Text(badge.name),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          NeonDetailHeader(
+            title: item.name,
+            kicker: kickerParts.join(' · '),
+            kickerKey: const Key('detail_kind_label'),
+            subtitle: typeLine.isEmpty ? null : typeLine,
+            pills: [
+              if (item.element != null)
+                NeonMetaPill(item.element!, tone: NeonPillTone.accent),
+              if (item.isExotic)
+                const NeonMetaPill('Exotic', tone: NeonPillTone.exotic)
+              else
+                const NeonMetaPill('Node'),
+              if (item.owned)
+                NeonMetaPill(
+                  'Owned ×${item.ownedCount}',
+                  tone: NeonPillTone.ok,
+                ),
+            ],
+            actions: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // BR-SYN-004 reverse tags
+                if (_reverseTags.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Wrap(
+                      key: const Key('linked_synergy_badges'),
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        for (final badge in _reverseTags)
+                          Chip(
+                            key: Key('synergy_badge_${badge.id}'),
+                            label: Text(badge.name),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                      ],
                     ),
-                ],
-              ),
-            ),
-          // Universal composition actions (Set / Synergy only — never Build attach)
-          if (_mode == CatalogBrowseMode.universal) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              child: Wrap(
-                key: const Key('universal_actions'),
-                spacing: 8,
-                children: [
-                  if (actions.set)
-                    FilledButton.tonal(
-                      key: const Key('universal_create_set'),
-                      onPressed: () => _createSetFromHit(item),
-                      child: const Text('Create Set'),
-                    ),
-                  if (actions.synergy)
-                    FilledButton.tonal(
-                      key: const Key('universal_create_synergy'),
-                      onPressed: () => _createSynergyFromHit(item),
-                      child: const Text('Create Synergy'),
-                    ),
-                  if (!actions.set && !actions.synergy)
-                    const Text(
-                      'Visible in Universal search but not Set/Synergy attachable.',
-                      key: Key('universal_no_actions'),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox.shrink(key: Key('no_build_kit_attach')),
-          ],
-          if (_actionMessage != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                _actionMessage!,
-                key: const Key('catalog_action_message'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-            child: Text(
-              _instances.isEmpty
-                  ? 'No local copies (wishlist / definition only — unpinned).'
-                  : '${_instances.length} owned cop${_instances.length == 1 ? 'y' : 'ies'}',
-              key: const Key('instance_panel_count'),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          if (_instances.isEmpty) ...[
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Wrap(
-                key: const Key('detail_unpinned_actions'),
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    key: const Key('detail_copy_hash'),
-                    onPressed: () {
-                      Clipboard.setData(
-                        ClipboardData(text: '${item.hash}'),
-                      );
-                      setState(() {
-                        _actionMessage = 'Copied definition hash ${item.hash}';
-                      });
-                    },
-                    icon: const Icon(Icons.tag, size: 16),
-                    label: const Text('Copy hash'),
                   ),
-                  if (actions.set)
-                    FilledButton.tonal(
-                      key: const Key('detail_create_set'),
-                      onPressed: () => _createSetFromHit(item),
-                      child: const Text('Create Set'),
-                    ),
-                  if (actions.synergy)
-                    FilledButton.tonal(
-                      key: const Key('detail_create_synergy'),
-                      onPressed: () => _createSynergyFromHit(item),
-                      child: const Text('Create Synergy'),
-                    ),
-                  if (!widget.services.oauthSession.isSignedIn)
-                    Text(
-                      'Sign in under Settings to resolve owned copies.',
+                // Universal composition actions (Set / Synergy only — never Build attach)
+                if (_mode == CatalogBrowseMode.universal) ...[
+                  Wrap(
+                    key: const Key('universal_actions'),
+                    spacing: 8,
+                    children: [
+                      if (actions.set)
+                        FilledButton.tonal(
+                          key: const Key('universal_create_set'),
+                          onPressed: () => _createSetFromHit(item),
+                          child: const Text('Create Set'),
+                        ),
+                      if (actions.synergy)
+                        FilledButton.tonal(
+                          key: const Key('universal_create_synergy'),
+                          onPressed: () => _createSynergyFromHit(item),
+                          child: const Text('Create Synergy'),
+                        ),
+                      if (!actions.set && !actions.synergy)
+                        const Text(
+                          'Visible in Universal search but not Set/Synergy attachable.',
+                          key: Key('universal_no_actions'),
+                        ),
+                    ],
+                  ),
+                  const SizedBox.shrink(key: Key('no_build_kit_attach')),
+                ],
+                if (_actionMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      _actionMessage!,
+                      key: const Key('catalog_action_message'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
+                  ),
+                Text(
+                  _instances.isEmpty
+                      ? 'No local copies (wishlist / definition only — unpinned).'
+                      : '${_instances.length} owned cop${_instances.length == 1 ? 'y' : 'ies'}',
+                  key: const Key('instance_panel_count'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: palette.muted,
+                      ),
+                ),
+                if (_instances.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    key: const Key('detail_unpinned_actions'),
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        key: const Key('detail_copy_hash'),
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: '${item.hash}'),
+                          );
+                          setState(() {
+                            _actionMessage =
+                                'Copied definition hash ${item.hash}';
+                          });
+                        },
+                        icon: const Icon(Icons.tag, size: 16),
+                        label: const Text('Copy hash'),
+                      ),
+                      if (actions.set)
+                        FilledButton.tonal(
+                          key: const Key('detail_create_set'),
+                          onPressed: () => _createSetFromHit(item),
+                          child: const Text('Create Set'),
+                        ),
+                      if (actions.synergy)
+                        FilledButton.tonal(
+                          key: const Key('detail_create_synergy'),
+                          onPressed: () => _createSynergyFromHit(item),
+                          child: const Text('Create Synergy'),
+                        ),
+                      if (!widget.services.oauthSession.isSignedIn)
+                        Text(
+                          'Sign in under Settings to resolve owned copies.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                    ],
+                  ),
                 ],
-              ),
+              ],
             ),
-          ],
-          const Divider(height: 1),
+          ),
+          Divider(height: 1, color: palette.line),
           Expanded(
             child: ListView(
               key: const Key('instance_list'),
@@ -1224,7 +1246,7 @@ class _CatalogPageState extends State<CatalogPage> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context).dividerColor,
+            color: FlapPalette.of(context).line,
             width: kFlapRuleThickness,
           ),
         ),
@@ -1235,6 +1257,8 @@ class _CatalogPageState extends State<CatalogPage> {
         instance: inst,
         kindLabel: kind != null ? compositionKindLabel(kind) : null,
         plugNameByHash: _bridge.plugNameByHash,
+        // Hero only on the expanded lead copy — avoid N diamond stacks.
+        showHero: expandRoll,
         initialOpen: expandRoll
             ? {
                 if (inst.armorStats != null && inst.armorStats!.hasAny)

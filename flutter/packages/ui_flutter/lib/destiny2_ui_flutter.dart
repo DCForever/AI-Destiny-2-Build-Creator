@@ -16,3 +16,4 @@ export 'src/library_workspace.dart';
 export 'src/neon_atmosphere.dart';
 export 'src/neon_fonts.dart';
 export 'src/neon_item_card.dart';
+export 'src/neon_item_detail.dart';

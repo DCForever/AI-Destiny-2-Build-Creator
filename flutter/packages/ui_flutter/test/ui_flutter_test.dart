@@ -171,4 +171,50 @@ void main() {
       expect(find.byKey(const Key('card_owned')), findsOneWidget);
     });
   });
+
+  group('Neon item detail', () {
+    test('neonHeroMark classifies weapons and armor', () {
+      expect(neonHeroMark(kindLabel: 'Weapon'), 'WPN');
+      expect(neonHeroMark(kindLabel: 'Armor'), 'ARM');
+      expect(neonHeroMark(slot: 'Helmet'), 'ARM');
+      expect(neonHeroMark(slot: 'Energy'), 'WPN');
+      expect(neonHeroMark(), 'ITM');
+    });
+
+    testWidgets('NeonDetailHeader + hero render', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: const Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  NeonDetailHero(
+                    key: Key('hero'),
+                    mark: 'WPN',
+                    rarity: NeonItemRarity.exotic,
+                    element: 'Solar',
+                  ),
+                  NeonDetailHeader(
+                    title: 'Sunshot',
+                    kicker: 'Weapon · Energy · Exotic',
+                    kickerKey: Key('kicker'),
+                    subtitle: 'Hand Cannon · Adaptive',
+                    pills: [
+                      NeonMetaPill('Solar', tone: NeonPillTone.accent),
+                      NeonMetaPill('Exotic', tone: NeonPillTone.exotic),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('hero')), findsOneWidget);
+      expect(find.text('Sunshot'), findsOneWidget);
+      expect(find.byKey(const Key('kicker')), findsOneWidget);
+      expect(find.text('WPN'), findsOneWidget);
+    });
+  });
 }

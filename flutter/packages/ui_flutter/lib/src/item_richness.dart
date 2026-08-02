@@ -6,7 +6,10 @@ import 'package:flutter/services.dart';
 
 import 'flap_element.dart';
 import 'flap_palette.dart';
+import 'neon_atmosphere.dart';
 import 'neon_fonts.dart';
+import 'neon_item_card.dart';
+import 'neon_item_detail.dart';
 
 /// One column in a DIM-style perk grid (equipped + alternates).
 class PerkColumnView {
@@ -148,8 +151,7 @@ enum ItemRichnessSection {
 
 /// Collapsible item dossier — denser than a DIM roll card; sections hide.
 ///
-/// Design: Matte Flap Ledger “Item Dossier”
-/// (`.impeccable/flutter/item-richness/item-dossier.html`).
+/// Design: Neon Network item detail (OD Vex weapon/armor construct + soft zones).
 class ItemRichnessPanel extends StatefulWidget {
   const ItemRichnessPanel({
     super.key,
@@ -161,6 +163,7 @@ class ItemRichnessPanel extends StatefulWidget {
       ItemRichnessSection.perks,
       ItemRichnessSection.stats,
     },
+    this.showHero = true,
     this.onCopyMessage,
   });
 
@@ -171,6 +174,9 @@ class ItemRichnessPanel extends StatefulWidget {
 
   /// Sections open on first paint (Scan preset ≈ perks + stats).
   final Set<ItemRichnessSection> initialOpen;
+
+  /// OD-style diamond hero above the identity strip.
+  final bool showHero;
 
   final ValueChanged<String>? onCopyMessage;
 
@@ -239,101 +245,117 @@ class _ItemRichnessPanelState extends State<ItemRichnessPanel> {
       plugNameByHash: widget.plugNameByHash,
     );
 
+    final rarity = neonItemRarity(isExotic: def?.isExotic == true);
+    final mark = neonHeroMark(
+      kindLabel: widget.kindLabel,
+      itemTypeName: def?.itemTypeName,
+      slot: def?.slot,
+    );
+
     // mainAxisSize.min: safe as ListView child (no nested vertical viewport).
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _IdentityStrip(
-          definition: def,
-          instance: inst,
-          kindLabel: widget.kindLabel,
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Wrap(
-            key: const Key('item_richness_presets'),
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              for (final p in const [
-                ('scan', 'Scan'),
-                ('roll', 'Full roll'),
-                ('all', 'Expand all'),
-                ('none', 'Collapse'),
-              ])
-                OutlinedButton(
-                  key: Key('item_richness_preset_${p.$1}'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                  onPressed: () => _applyPreset(p.$1),
-                  child: Text(p.$2),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        if (def != null)
-          _FlapSection(
-            sectionKey: 'definition',
-            title: 'Definition',
-            tally: 'frame · intrinsic',
-            open: _open.contains(ItemRichnessSection.definition),
-            onToggle: () => _toggle(ItemRichnessSection.definition),
-            child: _DefinitionBody(definition: def),
-          ),
-        if (inst?.armorStats != null && inst!.armorStats!.hasAny)
-          _FlapSection(
-            sectionKey: 'stats',
-            title: 'Base stats',
-            tally: 'EoF six · total',
-            open: _open.contains(ItemRichnessSection.stats),
-            onToggle: () => _toggle(ItemRichnessSection.stats),
-            child: _ArmorStatsBody(board: inst.armorStats!),
-          ),
-        if (columns.isNotEmpty || (inst?.plugHashes.isNotEmpty ?? false))
-          _FlapSection(
-            sectionKey: 'perks',
-            title: 'Perks',
-            tally: columns.isNotEmpty
-                ? '${columns.length} col · copy roll'
-                : '${inst!.plugHashes.length} plugs',
-            open: _open.contains(ItemRichnessSection.perks),
-            onToggle: () => _toggle(ItemRichnessSection.perks),
-            child: columns.isNotEmpty
-                ? _PerkGrid(columns: columns)
-                : Text(
-                    '${inst!.plugHashes.length} plugs (names not resolved yet)',
-                    style: theme.textTheme.bodySmall,
-                  ),
-          ),
-        if (inst != null)
-          _FlapSection(
-            sectionKey: 'tags',
-            title: 'Tags & location',
-            tally: inst.rollTags.isEmpty
-                ? inst.location
-                : '${inst.rollTags.length} tags',
-            open: _open.contains(ItemRichnessSection.tags),
-            onToggle: () => _toggle(ItemRichnessSection.tags),
-            child: _TagsBody(instance: inst),
-          ),
-        _FlapSection(
-          sectionKey: 'advanced',
-          title: 'Advanced',
-          tally: 'ids · hashes',
-          open: _open.contains(ItemRichnessSection.advanced),
-          onToggle: () => _toggle(ItemRichnessSection.advanced),
-          child: _AdvancedBody(
+    return NeonZone(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.showHero)
+            NeonDetailHero(
+              key: const Key('item_richness_hero'),
+              mark: mark,
+              rarity: rarity,
+              element: def?.element,
+            ),
+          _IdentityStrip(
             definition: def,
             instance: inst,
-            onCopyMessage: widget.onCopyMessage,
+            kindLabel: widget.kindLabel,
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Wrap(
+              key: const Key('item_richness_presets'),
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final p in const [
+                  ('scan', 'Scan'),
+                  ('roll', 'Full roll'),
+                  ('all', 'Expand all'),
+                  ('none', 'Collapse'),
+                ])
+                  OutlinedButton(
+                    key: Key('item_richness_preset_${p.$1}'),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    onPressed: () => _applyPreset(p.$1),
+                    child: Text(p.$2),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (def != null)
+            _FlapSection(
+              sectionKey: 'definition',
+              title: 'Overview',
+              tally: 'frame · intrinsic',
+              open: _open.contains(ItemRichnessSection.definition),
+              onToggle: () => _toggle(ItemRichnessSection.definition),
+              child: _DefinitionBody(definition: def),
+            ),
+          if (inst?.armorStats != null && inst!.armorStats!.hasAny)
+            _FlapSection(
+              sectionKey: 'stats',
+              title: 'Stats',
+              tally: 'EoF six · total',
+              open: _open.contains(ItemRichnessSection.stats),
+              onToggle: () => _toggle(ItemRichnessSection.stats),
+              child: _ArmorStatsBody(board: inst.armorStats!),
+            ),
+          if (columns.isNotEmpty || (inst?.plugHashes.isNotEmpty ?? false))
+            _FlapSection(
+              sectionKey: 'perks',
+              title: 'Perks',
+              tally: columns.isNotEmpty
+                  ? '${columns.length} col · copy roll'
+                  : '${inst!.plugHashes.length} plugs',
+              open: _open.contains(ItemRichnessSection.perks),
+              onToggle: () => _toggle(ItemRichnessSection.perks),
+              child: columns.isNotEmpty
+                  ? _PerkGrid(columns: columns)
+                  : Text(
+                      '${inst!.plugHashes.length} plugs (names not resolved yet)',
+                      style: theme.textTheme.bodySmall,
+                    ),
+            ),
+          if (inst != null)
+            _FlapSection(
+              sectionKey: 'tags',
+              title: 'Tags',
+              tally: inst.rollTags.isEmpty
+                  ? inst.location
+                  : '${inst.rollTags.length} tags',
+              open: _open.contains(ItemRichnessSection.tags),
+              onToggle: () => _toggle(ItemRichnessSection.tags),
+              child: _TagsBody(instance: inst),
+            ),
+          _FlapSection(
+            sectionKey: 'advanced',
+            title: 'Advanced',
+            tally: 'ids · hashes',
+            open: _open.contains(ItemRichnessSection.advanced),
+            onToggle: () => _toggle(ItemRichnessSection.advanced),
+            child: _AdvancedBody(
+              definition: def,
+              instance: inst,
+              onCopyMessage: widget.onCopyMessage,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -541,13 +563,13 @@ class _FlapSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = FlapPalette.of(context);
     return Container(
       key: Key('item_richness_section_$sectionKey'),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: theme.dividerColor,
+            color: palette.line,
             width: kFlapRuleThickness,
           ),
         ),
@@ -558,34 +580,41 @@ class _FlapSection extends StatelessWidget {
           InkWell(
             key: Key('item_richness_toggle_$sectionKey'),
             onTap: onToggle,
-            child: Padding(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 44),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: open ? palette.accent : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       title.toUpperCase(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        letterSpacing: 1.4,
-                        fontWeight: FontWeight.w600,
+                      style: neonMono(
+                        color: open ? palette.accent : palette.muted,
+                        fontSize: 11,
+                        letterSpacing: 1.0,
                       ),
                     ),
                   ),
                   Text(
                     tally,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'IBM Plex Mono',
+                    style: neonMono(
+                      color: palette.muted,
                       fontSize: 10,
-                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Icon(
                     open ? Icons.expand_less : Icons.expand_more,
                     size: 18,
-                    color: open
-                        ? const Color(0xFF4EC4BC)
-                        : theme.colorScheme.onSurfaceVariant,
+                    color: open ? palette.accent : palette.muted,
                   ),
                 ],
               ),
@@ -593,7 +622,7 @@ class _FlapSection extends StatelessWidget {
           ),
           if (open)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               child: child,
             ),
         ],
