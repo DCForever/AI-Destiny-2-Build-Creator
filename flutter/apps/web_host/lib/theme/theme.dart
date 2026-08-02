@@ -74,4 +74,32 @@ List<StyleRule> get styles => [
         margin: .zero,
         color: flapMutedColor,
       ),
+      // Soft zone panels (gap / tone / fade — not cyan cages).
+      css('.neon-zone, .zone, .panel-soft').styles(
+        raw: {
+          'background': 'var(--flap-grad-zone)',
+          'border-radius': 'var(--flap-radius)',
+          'box-shadow': '0 12px 40px color-mix(in srgb, #000 28%, transparent)',
+          'position': 'relative',
+        },
+      ),
+      // Shell void + blooms under content.
+      css('.neon-shell').styles(
+        raw: {
+          'min-height': '100vh',
+          'background-color': 'var(--flap-background)',
+          'background-image': [
+            'radial-gradient(ellipse 42% 36% at 18% 72%, color-mix(in srgb, var(--flap-accent) 14%, transparent), transparent 70%)',
+            'radial-gradient(ellipse 36% 32% at 82% 28%, color-mix(in srgb, var(--flap-accent-secondary) 10%, transparent), transparent 68%)',
+            'radial-gradient(ellipse 50% 40% at 55% 100%, color-mix(in srgb, #3d7eff 10%, transparent), transparent 65%)',
+          ].join(', '),
+          'background-attachment': 'fixed',
+        },
+      ),
+      css('.neon-shell-content').styles(
+        raw: {
+          'position': 'relative',
+          'z-index': '1',
+        },
+      ),
     ];

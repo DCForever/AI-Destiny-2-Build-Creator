@@ -1,3 +1,4 @@
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
 import 'builds/builds_library_page.dart';
@@ -13,7 +14,7 @@ import 'theme/flap_theme.dart';
 ///
 /// Shell destinations match product AppShell short labels/order:
 /// Loadouts, Build, Synergy, Sets, Catalog, Settings.
-/// Appearance: **Cold Graphite** dark + **Paper Ledger** light ([ThemeMode]).
+/// Appearance: **Neon void** dark + **Cool technical** light ([ThemeMode]).
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
@@ -68,83 +69,87 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
       darkTheme: buildFlapTheme(brightness: Brightness.dark),
       themeMode: _themeMode,
       home: Scaffold(
-        body: Row(
-          children: [
-            NavigationRail(
-              key: const Key('host_nav_rail'),
-              selectedIndex: _index,
-              onDestinationSelected: _onDestinationSelected,
-              labelType: NavigationRailLabelType.all,
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.playlist_add_check_outlined),
-                  selectedIcon: Icon(Icons.playlist_add_check),
-                  label: Text('Loadouts'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.construction_outlined),
-                  selectedIcon: Icon(Icons.construction),
-                  label: Text('Build'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.hub_outlined),
-                  selectedIcon: Icon(Icons.hub),
-                  label: Text('Synergy'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.layers_outlined),
-                  selectedIcon: Icon(Icons.layers),
-                  label: Text('Sets'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.inventory_2_outlined),
-                  selectedIcon: Icon(Icons.inventory_2),
-                  label: Text('Catalog'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: Text('Settings'),
-                ),
-              ],
-            ),
-            const VerticalDivider(thickness: 1, width: 1),
-            Expanded(
-              child: IndexedStack(
-                index: _index,
-                children: [
-                  LoadoutsPage(
-                    key: const Key('loadouts_page'),
-                    services: widget.services,
-                    onOpenSettings: () => setState(() => _index = 5),
+        backgroundColor: Colors.transparent,
+        body: NeonShellBackground(
+          child: Row(
+            children: [
+              NavigationRail(
+                key: const Key('host_nav_rail'),
+                selectedIndex: _index,
+                onDestinationSelected: _onDestinationSelected,
+                labelType: NavigationRailLabelType.all,
+                backgroundColor: Colors.transparent,
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.playlist_add_check_outlined),
+                    selectedIcon: Icon(Icons.playlist_add_check),
+                    label: Text('Loadouts'),
                   ),
-                  BuildsLibraryPage(
-                    key: const Key('builds_library_page'),
-                    services: widget.services,
+                  NavigationRailDestination(
+                    icon: Icon(Icons.construction_outlined),
+                    selectedIcon: Icon(Icons.construction),
+                    label: Text('Build'),
                   ),
-                  SynergiesLibraryPage(
-                    key: const Key('synergies_library_page'),
-                    services: widget.services,
+                  NavigationRailDestination(
+                    icon: Icon(Icons.hub_outlined),
+                    selectedIcon: Icon(Icons.hub),
+                    label: Text('Synergy'),
                   ),
-                  SetsLibraryPage(
-                    key: const Key('sets_library_page'),
-                    services: widget.services,
+                  NavigationRailDestination(
+                    icon: Icon(Icons.layers_outlined),
+                    selectedIcon: Icon(Icons.layers),
+                    label: Text('Sets'),
                   ),
-                  CatalogPage(
-                    key: const Key('catalog_page'),
-                    services: widget.services,
-                    reloadToken: _catalogReloadToken,
+                  NavigationRailDestination(
+                    icon: Icon(Icons.inventory_2_outlined),
+                    selectedIcon: Icon(Icons.inventory_2),
+                    label: Text('Catalog'),
                   ),
-                  SettingsPage(
-                    key: const Key('settings_page'),
-                    services: widget.services,
-                    themeMode: _themeMode,
-                    onThemeModeChanged: (m) => setState(() => _themeMode = m),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.settings_outlined),
+                    selectedIcon: Icon(Icons.settings),
+                    label: Text('Settings'),
                   ),
                 ],
               ),
-            ),
-          ],
+              const VerticalDivider(thickness: 1, width: 1),
+              Expanded(
+                child: IndexedStack(
+                  index: _index,
+                  children: [
+                    LoadoutsPage(
+                      key: const Key('loadouts_page'),
+                      services: widget.services,
+                      onOpenSettings: () => setState(() => _index = 5),
+                    ),
+                    BuildsLibraryPage(
+                      key: const Key('builds_library_page'),
+                      services: widget.services,
+                    ),
+                    SynergiesLibraryPage(
+                      key: const Key('synergies_library_page'),
+                      services: widget.services,
+                    ),
+                    SetsLibraryPage(
+                      key: const Key('sets_library_page'),
+                      services: widget.services,
+                    ),
+                    CatalogPage(
+                      key: const Key('catalog_page'),
+                      services: widget.services,
+                      reloadToken: _catalogReloadToken,
+                    ),
+                    SettingsPage(
+                      key: const Key('settings_page'),
+                      services: widget.services,
+                      themeMode: _themeMode,
+                      onThemeModeChanged: (m) => setState(() => _themeMode = m),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

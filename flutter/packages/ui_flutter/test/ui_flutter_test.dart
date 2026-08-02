@@ -83,4 +83,56 @@ void main() {
       expect(find.text('TYPE'), findsOneWidget);
     });
   });
+
+  group('Neon atmosphere', () {
+    testWidgets('NeonShellBackground + NeonZone paint without error',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: const Scaffold(
+            backgroundColor: Colors.transparent,
+            body: NeonShellBackground(
+              child: Center(
+                child: NeonZone(
+                  padding: EdgeInsets.all(12),
+                  child: Text('zone-content', key: Key('zone_label')),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.byType(NeonShellBackground), findsOneWidget);
+      expect(find.byType(NeonZone), findsOneWidget);
+      expect(find.byKey(const Key('zone_label')), findsOneWidget);
+    });
+
+    testWidgets('NeonLivePulse freezes under disableAnimations', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: const Scaffold(
+              body: NeonLivePulse(
+                child: Text('live', key: Key('pulse_child')),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('pulse_child')), findsOneWidget);
+      // No animation controller ticks required — still mounted.
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byKey(const Key('pulse_child')), findsOneWidget);
+    });
+
+    test('neonZoneDecoration uses surface-based gradient', () {
+      final p = FlapPalette.fromTokens(FlapColorTokens.dark);
+      final d = neonZoneDecoration(p);
+      expect(d.gradient, isNotNull);
+      expect(d.borderRadius, BorderRadius.circular(kFlapRadius));
+    });
+  });
 }

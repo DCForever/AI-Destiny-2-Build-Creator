@@ -317,6 +317,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Sets'),
         actions: [

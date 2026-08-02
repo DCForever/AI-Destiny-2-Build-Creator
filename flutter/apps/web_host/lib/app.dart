@@ -304,7 +304,7 @@ class _AppState extends State<App> {
     final compose = _effectiveCompose;
     final loadouts = _effectiveLoadouts;
     final inventorySync = _effectiveInventorySync;
-    return div(classes: 'app-shell', [
+    return div(classes: 'app-shell neon-shell', [
       Router(
         routes: [
           ShellRoute(
@@ -404,13 +404,16 @@ class _AppState extends State<App> {
             width: 100.percent,
             minHeight: 100.vh,
             flexDirection: .column,
-            backgroundColor: theme.flapBackgroundColor,
+            // Atmosphere lives on .neon-shell (void + blooms); keep shell transparent.
+            backgroundColor: Colors.transparent,
           ),
           css('.app-main').styles(
             display: .flex,
             flex: Flex(grow: 1),
             flexDirection: .column,
             alignItems: .stretch,
+            // Soft stacking over shell blooms.
+            raw: {'position': 'relative', 'z-index': '1'},
           ),
         ]),
       ];

@@ -1,3 +1,4 @@
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
 import 'builds/builds_controller.dart';
@@ -9,7 +10,7 @@ import 'theme/flap_theme.dart';
 /// Root Flutter app for the mobile host (DART-040).
 ///
 /// Bottom nav: Builds | Settings. Builds uses nested [Navigator] for
-/// Focus Swap (list XOR detail). Appearance: Cold Graphite / Paper Ledger.
+/// Focus Swap (list XOR detail). Appearance: Neon void / Cool technical.
 class Destiny2MobileApp extends StatefulWidget {
   const Destiny2MobileApp({
     super.key,
@@ -74,27 +75,31 @@ class _Destiny2MobileAppState extends State<Destiny2MobileApp> {
       themeMode: _themeMode,
       home: Scaffold(
         key: const Key('mobile_shell'),
-        body: IndexedStack(
-          index: _index,
-          children: [
-            // Focus Swap: nested navigator — list root XOR detail route.
-            Navigator(
-              key: _buildsNavKey,
-              onGenerateRoute: (settings) {
-                return MaterialPageRoute<void>(
-                  settings: settings,
-                  builder: (_) => BuildsListPage(
-                    controller: _buildsController,
-                  ),
-                );
-              },
-            ),
-            SettingsPage(
-              services: widget.services,
-              themeMode: _themeMode,
-              onThemeModeChanged: (m) => setState(() => _themeMode = m),
-            ),
-          ],
+        backgroundColor: Colors.transparent,
+        body: NeonShellBackground(
+          showHorizon: false,
+          child: IndexedStack(
+            index: _index,
+            children: [
+              // Focus Swap: nested navigator — list root XOR detail route.
+              Navigator(
+                key: _buildsNavKey,
+                onGenerateRoute: (settings) {
+                  return MaterialPageRoute<void>(
+                    settings: settings,
+                    builder: (_) => BuildsListPage(
+                      controller: _buildsController,
+                    ),
+                  );
+                },
+              ),
+              SettingsPage(
+                services: widget.services,
+                themeMode: _themeMode,
+                onThemeModeChanged: (m) => setState(() => _themeMode = m),
+              ),
+            ],
+          ),
         ),
         bottomNavigationBar: NavigationBar(
           key: const Key('mobile_bottom_nav'),

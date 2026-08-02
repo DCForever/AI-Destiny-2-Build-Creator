@@ -216,6 +216,7 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Synergies'),
         actions: [

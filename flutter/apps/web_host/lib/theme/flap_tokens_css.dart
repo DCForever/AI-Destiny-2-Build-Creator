@@ -10,6 +10,7 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 /// Values are CSS hex/length strings ready for `var(--flap-background)`.
 Map<String, String> flapDarkCssVariables() {
   final c = FlapColorTokens.dark;
+  final accentHex = argbToCssHex(c.accent);
   return {
     '--flap-background': argbToCssHex(c.background),
     '--flap-surface': argbToCssHex(c.surface),
@@ -18,8 +19,9 @@ Map<String, String> flapDarkCssVariables() {
     '--flap-line-strong': argbToCssHex(c.lineStrong),
     '--flap-foreground': argbToCssHex(c.foreground),
     '--flap-muted': argbToCssHex(c.muted),
-    '--flap-accent': argbToCssHex(c.accent),
+    '--flap-accent': accentHex,
     '--flap-accent-strong': argbToCssHex(c.accentStrong),
+    '--flap-accent-secondary': argbToCssHex(c.accentSecondary),
     '--flap-danger': argbToCssHex(c.danger),
     '--flap-success': argbToCssHex(c.success),
     '--flap-warning': argbToCssHex(c.warning),
@@ -37,6 +39,10 @@ Map<String, String> flapDarkCssVariables() {
     '--flap-font-display': kFontDisplayFallback,
     '--flap-font-body': kFontBodyFallback,
     '--flap-font-mono': kFontMonoFallback,
+    // Neon atmosphere helpers (shell blooms / soft zones)
+    '--flap-grad-zone':
+        'linear-gradient(165deg, color-mix(in srgb, ${argbToCssHex(c.surface)} 96%, $accentHex 3%) 0%, color-mix(in srgb, ${argbToCssHex(c.surface)} 72%, ${argbToCssHex(c.background)}) 100%)',
+    '--flap-grid-line': 'color-mix(in srgb, $accentHex 14%, transparent)',
   };
 }
 

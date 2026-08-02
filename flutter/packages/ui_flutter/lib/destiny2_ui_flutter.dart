@@ -13,4 +13,5 @@ export 'src/flap_theme_toggle.dart';
 export 'src/flap_tone.dart';
 export 'src/item_richness.dart';
 export 'src/library_workspace.dart';
+export 'src/neon_atmosphere.dart';
 export 'src/neon_fonts.dart';

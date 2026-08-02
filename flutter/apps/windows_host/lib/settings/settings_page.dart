@@ -156,6 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final busy = _loading || _refreshing;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Settings'),
       ),
