@@ -14,6 +14,114 @@ import '../catalog/entity_bundle_loader.dart';
 import '../catalog/owned_catalog_bridge.dart';
 import '../theme/theme.dart';
 
+/// Neon Network catalog hit card (OD `.item-card` / Flutter [NeonItemCard] twin).
+Component _neonCatalogItemCard({
+  required CatalogItem item,
+  required bool selected,
+  required void Function() onSelect,
+}) {
+  final rarity = item.isExotic ? 'exotic' : 'common';
+  final element = (item.element ?? '').trim();
+  final slot = (item.slot ?? 'Node').trim();
+  final typeParts = buildCatalogDenseMetaChips(
+    isExotic: item.isExotic,
+    slot: item.slot,
+    element: item.element,
+    ammo: item.ammo,
+    itemTypeName: item.itemTypeName,
+    frame: item.frame,
+    classType: item.classType,
+  );
+  final classes = [
+    'neon-item-card',
+    'catalog-row',
+    if (selected) 'is-selected catalog-row-selected',
+    if (item.isExotic) 'rarity-exotic',
+  ].join(' ');
+
+  return button(
+    key: ValueKey('catalog-row-${item.hash}'),
+    classes: classes,
+    attributes: {
+      'type': 'button',
+      'data-hash': '${item.hash}',
+      'data-testid': 'catalog-row',
+      'data-rarity': rarity,
+      if (element.isNotEmpty) 'data-element': element,
+      if (item.owned) 'data-owned': '${item.ownedCount}',
+      if (item.linkedSynergyIds.isNotEmpty)
+        'data-synergies': item.linkedSynergyIds.join(','),
+    },
+    events: {
+      'click': (_) => onSelect(),
+    },
+    [
+      div(classes: 'item-card-body', [
+        div(classes: 'item-top', [
+          if (item.icon != null && item.icon!.isNotEmpty)
+            img(
+              classes: 'catalog-item-icon',
+              src: item.icon!.startsWith('http')
+                  ? item.icon!
+                  : 'https://www.bungie.net${item.icon!.startsWith('/') ? item.icon! : '/${item.icon!}'}',
+              alt: '',
+              attributes: {
+                'data-testid': 'catalog-item-icon-${item.hash}',
+                'width': '36',
+                'height': '36',
+              },
+            ),
+          div(classes: 'item-head', [
+            div(classes: 'item-head-row', [
+              span(classes: 'item-slot', [.text(slot.toUpperCase())]),
+              span(
+                classes: item.isExotic ? 'rarity exotic' : 'rarity',
+                [.text(item.isExotic ? 'EXOTIC' : 'COMMON')],
+              ),
+            ]),
+            span(classes: 'catalog-name item-name', [
+              .text(item.name),
+            ]),
+            span(
+              classes: 'catalog-meta item-type',
+              attributes: {
+                'data-testid': 'catalog-item-meta-${item.hash}',
+              },
+              [
+                .text(
+                  [
+                    ...typeParts,
+                    if (item.owned) 'owned×${item.ownedCount}',
+                    if (item.linkedSynergyIds.isNotEmpty)
+                      'syn×${item.linkedSynergyIds.length}',
+                  ].join(' · '),
+                ),
+              ],
+            ),
+          ]),
+        ]),
+        div(classes: 'item-foot', [
+          if (element.isNotEmpty)
+            span(classes: 'element-tag', [
+              span(classes: 'el-dot', []),
+              .text(element.toUpperCase()),
+            ])
+          else
+            span([.text('')]),
+          if (item.owned)
+            span(
+              classes: 'catalog-owned-badge',
+              attributes: {
+                'data-testid': 'owned-badge-${item.hash}',
+              },
+              [.text('×${item.ownedCount}')],
+            ),
+        ]),
+      ]),
+    ],
+  );
+}
+
 /// Catalog surface: modes, facets, synergy tags, owned instance detail.
 class CatalogPage extends StatefulComponent {
   const CatalogPage({
@@ -712,71 +820,10 @@ class _CatalogPageState extends State<CatalogPage> {
                       [.text('${group.label} (${group.items.length})')],
                     ),
                   for (final item in group.items)
-                    button(
-                      key: ValueKey('catalog-row-${item.hash}'),
-                      classes: _selected?.hash == item.hash
-                          ? 'catalog-row catalog-row-selected'
-                          : 'catalog-row',
-                      attributes: {
-                        'type': 'button',
-                        'data-hash': '${item.hash}',
-                        'data-testid': 'catalog-row',
-                        if (item.owned) 'data-owned': '${item.ownedCount}',
-                        if (item.linkedSynergyIds.isNotEmpty)
-                          'data-synergies': item.linkedSynergyIds.join(','),
-                      },
-                      events: {
-                        'click': (_) => _selectItem(item),
-                      },
-                      [
-                        if (item.icon != null && item.icon!.isNotEmpty)
-                          img(
-                            classes: 'catalog-item-icon',
-                            src: item.icon!.startsWith('http')
-                                ? item.icon!
-                                : 'https://www.bungie.net${item.icon!.startsWith('/') ? item.icon! : '/${item.icon!}'}',
-                            alt: '',
-                            attributes: {
-                              'data-testid': 'catalog-item-icon-${item.hash}',
-                              'width': '36',
-                              'height': '36',
-                            },
-                          ),
-                        span(classes: 'catalog-name', [
-                          .text(item.name),
-                          if (item.owned)
-                            span(
-                              classes: 'catalog-owned-badge',
-                              attributes: {
-                                'data-testid': 'owned-badge-${item.hash}',
-                              },
-                              [.text(' ×${item.ownedCount}')],
-                            ),
-                        ]),
-                        span(
-                          classes: 'catalog-meta',
-                          attributes: {
-                            'data-testid': 'catalog-item-meta-${item.hash}',
-                          },
-                          [
-                          .text(
-                            [
-                              ...buildCatalogDenseMetaChips(
-                                isExotic: item.isExotic,
-                                slot: item.slot,
-                                element: item.element,
-                                ammo: item.ammo,
-                                itemTypeName: item.itemTypeName,
-                                frame: item.frame,
-                                classType: item.classType,
-                              ),
-                              if (item.owned) 'owned×${item.ownedCount}',
-                              if (item.linkedSynergyIds.isNotEmpty)
-                                'syn×${item.linkedSynergyIds.length}',
-                            ].join(' · '),
-                          ),
-                        ]),
-                      ],
+                    _neonCatalogItemCard(
+                      item: item,
+                      selected: _selected?.hash == item.hash,
+                      onSelect: () => _selectItem(item),
                     ),
                 ],
               ],
@@ -983,7 +1030,7 @@ class _CatalogPageState extends State<CatalogPage> {
           css('&').styles(
             display: .flex,
             width: 100.percent,
-            maxWidth: 48.rem,
+            maxWidth: 56.rem,
             padding: .symmetric(horizontal: 1.25.rem, vertical: 1.5.rem),
             flexDirection: .column,
             alignItems: .start,
@@ -1000,7 +1047,7 @@ class _CatalogPageState extends State<CatalogPage> {
             fontWeight: .w600,
           ),
           css('.catalog-error').styles(
-            color: Color('#c45c26'),
+            color: Color('#ff003c'),
           ),
           css('.catalog-filters').styles(
             display: .flex,
@@ -1035,8 +1082,8 @@ class _CatalogPageState extends State<CatalogPage> {
             backgroundColor: flapAccentColor,
           ),
           css('.facet-exclude').styles(
-            border: .all(style: .solid, color: Color('#c45c26'), width: 1.px),
-            color: Color('#c45c26'),
+            border: .all(style: .solid, color: Color('#ff003c'), width: 1.px),
+            color: Color('#ff003c'),
             textDecoration: TextDecoration(line: .lineThrough),
           ),
           css('.catalog-count').styles(
@@ -1049,42 +1096,188 @@ class _CatalogPageState extends State<CatalogPage> {
             margin: .only(top: 0.5.rem),
             padding: .all(0.px),
             flexDirection: .column,
+            gap: Gap(row: 0.5.rem),
           ),
           css('.catalog-group-header').styles(
             margin: .only(top: 0.5.rem),
-            color: flapAccentColor,
-            fontSize: 0.95.rem,
+            color: flapMutedColor,
+            fontSize: 0.75.rem,
+            fontWeight: .w600,
+            raw: {
+              'font-family': 'var(--flap-font-mono)',
+              'letter-spacing': '0.1em',
+              'text-transform': 'uppercase',
+            },
           ),
-          css('.catalog-row').styles(
+          // Neon item-card (OD Vex catalog / Flutter NeonItemCard twin).
+          css('.neon-item-card').styles(
             display: .flex,
             width: 100.percent,
-            padding: .symmetric(horizontal: 0.75.rem, vertical: 0.55.rem),
-            border: .only(bottom: .solid(color: flapLineColor, width: 1.px)),
+            padding: .all(0.px),
+            border: .all(style: .solid, color: flapLineColor, width: 1.px),
+            radius: .all(.circular(2.px)),
             flexDirection: .column,
-            alignItems: .start,
-            gap: Gap(row: 0.15.rem),
+            alignItems: .stretch,
             color: flapForegroundColor,
             backgroundColor: flapSurfaceColor,
             cursor: .pointer,
             textAlign: TextAlign.left,
+            overflow: .hidden,
+            raw: {
+              'position': 'relative',
+              'isolation': 'isolate',
+              'min-height': '8.25rem',
+              'transition':
+                  'background 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out',
+              'background-image':
+                  'radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--el, transparent) 42%, transparent) 0%, color-mix(in srgb, var(--el, transparent) 14%, transparent) 18%, transparent 42%)',
+            },
           ),
-          css('.catalog-row-selected').styles(
-            border: .only(
-              left: .solid(color: flapAccentColor, width: 3.px),
-              bottom: .solid(color: flapLineColor, width: 1.px),
+          css('.neon-item-card[data-element="Kinetic"], .neon-item-card[data-element="kinetic"]')
+              .styles(raw: {'--el': '#c5c9d1'}),
+          css('.neon-item-card[data-element="Arc"], .neon-item-card[data-element="arc"]')
+              .styles(raw: {'--el': '#00e5ff'}),
+          css('.neon-item-card[data-element="Solar"], .neon-item-card[data-element="solar"]')
+              .styles(raw: {'--el': '#ff8a3d'}),
+          css('.neon-item-card[data-element="Void"], .neon-item-card[data-element="void"]')
+              .styles(raw: {'--el': '#8b6bff'}),
+          css('.neon-item-card[data-element="Stasis"], .neon-item-card[data-element="stasis"]')
+              .styles(raw: {'--el': '#4db8ff'}),
+          css('.neon-item-card[data-element="Strand"], .neon-item-card[data-element="strand"]')
+              .styles(raw: {'--el': '#7bd67b'}),
+          css('.neon-item-card.rarity-exotic').styles(
+            raw: {
+              'background-image':
+                  'linear-gradient(to left, color-mix(in srgb, #ceae33 26%, transparent) 0%, color-mix(in srgb, #ceae33 12%, transparent) 30%, transparent 62%), radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--el, transparent) 42%, transparent) 0%, transparent 42%), linear-gradient(var(--flap-surface), var(--flap-surface))',
+            },
+          ),
+          css('.neon-item-card.is-selected, .neon-item-card.catalog-row-selected')
+              .styles(
+            border: .all(
+              style: .solid,
+              color: flapAccentColor,
+              width: 1.px,
+            ),
+            raw: {
+              'box-shadow':
+                  'inset 2px 0 0 var(--flap-accent), 0 0 12px color-mix(in srgb, var(--flap-accent) 18%, transparent)',
+            },
+          ),
+          css('.neon-item-card .item-card-body').styles(
+            display: .flex,
+            width: 100.percent,
+            padding: .all(0.75.rem),
+            flexDirection: .column,
+            gap: Gap(row: 0.5.rem),
+            raw: {'position': 'relative', 'z-index': '1', 'flex': '1'},
+          ),
+          css('.neon-item-card .item-top').styles(
+            display: .flex,
+            width: 100.percent,
+            alignItems: .start,
+            gap: Gap(column: 0.65.rem),
+          ),
+          css('.neon-item-card .item-head').styles(
+            display: .flex,
+            flex: Flex(grow: 1),
+            flexDirection: .column,
+            gap: Gap(row: 0.2.rem),
+            raw: {'min-width': '0'},
+          ),
+          css('.neon-item-card .item-head-row').styles(
+            display: .flex,
+            width: 100.percent,
+            justifyContent: .spaceBetween,
+            alignItems: .center,
+            gap: Gap(column: 0.5.rem),
+          ),
+          css('.neon-item-card .item-slot').styles(
+            color: flapMutedColor,
+            fontSize: 0.65.rem,
+            raw: {
+              'font-family': 'var(--flap-font-mono)',
+              'letter-spacing': '0.1em',
+              'text-transform': 'uppercase',
+            },
+          ),
+          css('.neon-item-card .rarity').styles(
+            padding: .symmetric(horizontal: 0.4.rem, vertical: 0.1.rem),
+            border: .all(style: .solid, color: flapLineColor, width: 1.px),
+            color: flapMutedColor,
+            fontSize: 0.65.rem,
+            raw: {
+              'font-family': 'var(--flap-font-mono)',
+              'letter-spacing': '0.08em',
+              'text-transform': 'uppercase',
+            },
+          ),
+          css('.neon-item-card .rarity.exotic').styles(
+            color: Color('#ceae33'),
+            border: .all(
+              style: .solid,
+              color: Color('#ceae33'),
+              width: 1.px,
             ),
           ),
-          css('.catalog-name').styles(
+          css('.neon-item-card .item-name, .neon-item-card .catalog-name').styles(
             fontWeight: .w600,
-            fontSize: 0.95.rem,
+            fontSize: 0.85.rem,
+            raw: {
+              'font-family': 'var(--flap-font-display)',
+              'letter-spacing': '0.04em',
+              'line-height': '1.3',
+            },
+          ),
+          css('.neon-item-card.rarity-exotic .item-name').styles(
+            color: Color('#ceae33'),
+          ),
+          css('.neon-item-card .item-type, .neon-item-card .catalog-meta').styles(
+            color: flapMutedColor,
+            fontSize: 0.75.rem,
+            raw: {'line-height': '1.4'},
+          ),
+          css('.neon-item-card .item-foot').styles(
+            display: .flex,
+            width: 100.percent,
+            margin: .only(top: .auto),
+            padding: .only(top: 0.5.rem),
+            border: .only(top: .solid(color: flapLineColor, width: 1.px)),
+            justifyContent: .spaceBetween,
+            alignItems: .center,
+            gap: Gap(column: 0.5.rem),
+          ),
+          css('.neon-item-card .element-tag').styles(
+            display: .flex,
+            alignItems: .center,
+            gap: Gap(column: 0.35.rem),
+            color: flapMutedColor,
+            fontSize: 0.65.rem,
+            raw: {
+              'font-family': 'var(--flap-font-mono)',
+              'letter-spacing': '0.08em',
+              'text-transform': 'uppercase',
+            },
+          ),
+          css('.neon-item-card .el-dot').styles(
+            width: 0.5.rem,
+            height: 0.5.rem,
+            radius: .all(.circular(50.percent)),
+            backgroundColor: flapMutedColor,
+            raw: {
+              'flex-shrink': '0',
+              'background': 'var(--el, var(--flap-muted))',
+            },
+          ),
+          css('.catalog-item-icon').styles(
+            width: 2.25.rem,
+            height: 2.25.rem,
+            raw: {'object-fit': 'cover', 'flex-shrink': '0'},
           ),
           css('.catalog-owned-badge').styles(
             color: flapAccentColor,
             fontWeight: .w600,
-          ),
-          css('.catalog-meta').styles(
-            color: flapMutedColor,
-            fontSize: 0.8.rem,
+            fontSize: 0.75.rem,
+            raw: {'font-family': 'var(--flap-font-mono)'},
           ),
           css('.catalog-instances').styles(
             width: 100.percent,

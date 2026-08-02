@@ -74,12 +74,11 @@ class OwnedCatalogBridge {
   /// Load entity base (if needed) + inventory annotate + synergy membership.
   Future<void> refresh({bool reloadEntities = true}) async {
     final catalog = _resolvedCatalog;
+    final loader = entityLoader;
     if (reloadEntities && catalog != null) {
       await catalog.loadBase();
-    } else if (reloadEntities &&
-        entityLoader != null &&
-        entityLoader.catalog == null) {
-      await entityLoader.load();
+    } else if (reloadEntities && loader != null && loader.catalog == null) {
+      await loader.load();
     }
 
     _seedNamesFromCatalogBase();
