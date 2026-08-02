@@ -43,6 +43,12 @@ void main() {
       expect(argbToCssHex(kFlapBackgroundDark), '#05050f');
       expect(argbToCssHex(kFlapAccentDimDark), '#00e5ff26');
     });
+
+    test('rarity wash tokens match Neon catalog kit', () {
+      expect(kRarityExotic, 0xFFCEAE33);
+      expect(kRarityLegendary, 0xFF522F65);
+      expect(kRarityLegendaryEdge, 0xFFA178C4);
+    });
   });
 
   group('light cool technical stage colors', () {

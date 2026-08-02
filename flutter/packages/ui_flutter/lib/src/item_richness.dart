@@ -4,6 +4,10 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'flap_element.dart';
+import 'flap_palette.dart';
+import 'neon_fonts.dart';
+
 /// One column in a DIM-style perk grid (equipped + alternates).
 class PerkColumnView {
   const PerkColumnView({
@@ -347,7 +351,6 @@ class _IdentityStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final name = definition?.name ?? 'Item';
     final element = definition?.element;
     final chips = <Widget>[
@@ -368,17 +371,33 @@ class _IdentityStrip extends StatelessWidget {
       ],
     ];
 
+    final elColor = flapElementColor(context, element);
+    final exotic = definition?.isExotic == true;
+    final palette = FlapPalette.of(context);
+
     return Container(
       key: const Key('item_richness_identity'),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
+        gradient: exotic
+            ? LinearGradient(
+                begin: Alignment.centerRight,
+                end: Alignment.centerLeft,
+                colors: [
+                  Color(kRarityExotic).withValues(alpha: 0.18),
+                  Color(kRarityExotic).withValues(alpha: 0.06),
+                  palette.surface.withValues(alpha: 0),
+                ],
+                stops: const [0.0, 0.35, 0.7],
+              )
+            : null,
         border: Border(
           left: BorderSide(
-            color: _elementColor(element) ?? Theme.of(context).dividerColor,
+            color: elColor ?? palette.line,
             width: 3,
           ),
           bottom: BorderSide(
-            color: Theme.of(context).dividerColor,
+            color: palette.line,
             width: kFlapRuleThickness,
           ),
         ),
@@ -391,10 +410,11 @@ class _IdentityStrip extends StatelessWidget {
               [
                 if (kindLabel != null) kindLabel!,
                 if (definition?.slot != null) definition!.slot!,
-              ].join(' · '),
-              style: theme.textTheme.labelSmall?.copyWith(
-                letterSpacing: 1.2,
-                color: theme.colorScheme.onSurfaceVariant,
+              ].join(' · ').toUpperCase(),
+              style: neonMono(
+                color: palette.muted,
+                fontSize: 10,
+                letterSpacing: 1.0,
               ),
             ),
           Text(
@@ -403,9 +423,10 @@ class _IdentityStrip extends StatelessWidget {
             key: instance != null
                 ? const Key('instance_panel_title')
                 : null,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
+            style: neonDisplay(
+              color: exotic ? Color(kRarityExotic) : palette.foreground,
+              fontSize: 16,
+              letterSpacing: 0.04 * 16,
             ),
           ),
           const SizedBox(height: 8),
@@ -420,15 +441,16 @@ class _IdentityStrip extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: 'PWR ',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontFamily: 'IBM Plex Mono',
+                        style: neonMono(
+                          color: palette.muted,
+                          fontSize: 10,
                         ),
                       ),
                       TextSpan(
                         text: '${instance!.power}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontFamily: 'IBM Plex Mono',
+                        style: neonMono(
+                          color: palette.foreground,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -436,35 +458,13 @@ class _IdentityStrip extends StatelessWidget {
                   ),
                 ),
               if (element != null)
-                _MetaChip(element, elementColor: _elementColor(element)),
+                _MetaChip(element, elementColor: elColor),
               ...chips,
             ],
           ),
         ],
       ),
     );
-  }
-
-  Color? _elementColor(String? element) {
-    if (element == null) return null;
-    switch (element.toLowerCase()) {
-      case 'solar':
-        return const Color(0xFFF2721B);
-      case 'arc':
-        return const Color(0xFF85C5EC);
-      case 'void':
-        return const Color(0xFFB184C5);
-      case 'stasis':
-        return const Color(0xFF4D88FF);
-      case 'strand':
-        return const Color(0xFF35E366);
-      case 'prismatic':
-        return const Color(0xFFD67EE2);
-      case 'kinetic':
-        return const Color(0xFFE4EAF2);
-      default:
-        return null;
-    }
   }
 }
 
@@ -485,37 +485,37 @@ class _MetaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    Color border = theme.dividerColor;
-    Color fg = theme.colorScheme.onSurface;
+    final palette = FlapPalette.of(context);
+    Color border = palette.line;
+    Color fg = palette.foreground;
     Color? bg;
     if (elementColor != null) {
       border = elementColor!;
       fg = elementColor!;
     } else if (lamp) {
-      border = const Color(0xFF4EC4BC);
-      fg = const Color(0xFF6FD4CD);
-      bg = const Color(0x244EC4BC);
+      border = palette.accent;
+      fg = palette.accentStrong;
+      bg = palette.accentDim;
     } else if (warn) {
-      border = const Color(0xFFC9A84A);
-      fg = const Color(0xFFC9A84A);
+      border = palette.warning;
+      fg = palette.warning;
     } else if (ok) {
-      border = const Color(0xFF5CBC8E);
-      fg = const Color(0xFF5CBC8E);
+      border = palette.success;
+      fg = palette.success;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bg,
-        border: Border.all(color: border),
+        border: Border.all(color: border, width: kFlapRuleThickness),
+        borderRadius: BorderRadius.circular(kRadiusMax),
       ),
       child: Text(
         label.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: neonMono(
           color: fg,
-          letterSpacing: 1.0,
           fontSize: 10,
-          fontWeight: FontWeight.w600,
+          letterSpacing: 1.0,
         ),
       ),
     );

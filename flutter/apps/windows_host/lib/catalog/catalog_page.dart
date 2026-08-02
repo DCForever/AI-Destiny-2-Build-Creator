@@ -864,9 +864,17 @@ class _CatalogPageState extends State<CatalogPage> {
     }
     final groups = _groupedResults();
     final rows = <Widget>[
-      const FlapBoardHeader(
-        key: Key('catalog_board_header'),
-        template: kFlapColumnsCatalog,
+      // Keep key for board-era tests; chrome is Neon construct kicker.
+      Padding(
+        key: const Key('catalog_board_header'),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+        child: Text(
+          'CATALOG NODES',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 1.2,
+                color: FlapPalette.of(context).muted,
+              ),
+        ),
       ),
     ];
     for (final group in groups) {
@@ -884,11 +892,6 @@ class _CatalogPageState extends State<CatalogPage> {
       }
       for (final item in group.items) {
         final selected = _selected?.hash == item.hash;
-        final identityParts = <String>[
-          if (item.element != null) item.element!,
-          if (item.slot != null) item.slot!,
-          if (item.isExotic) 'Exotic',
-        ];
         final typeParts = <String>[
           if (item.itemTypeName != null) item.itemTypeName!,
           if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
@@ -896,49 +899,39 @@ class _CatalogPageState extends State<CatalogPage> {
           if (item.linkedSynergyIds.isNotEmpty)
             '${item.linkedSynergyIds.length} syn',
         ];
-        final ownedLabel =
-            item.owned ? '×${item.ownedCount}' : '—';
-        final elementInk = flapElementColor(context, item.element);
+        final ownedLabel = item.owned ? '×${item.ownedCount}' : null;
+        final identityLine = [
+          if (item.element != null) item.element!,
+          if (item.slot != null) item.slot!,
+          if (item.isExotic) 'Exotic',
+        ].join(' · ');
+        final typeLine = [
+          if (identityLine.isNotEmpty) identityLine,
+          ...typeParts,
+        ].join(' · ');
         rows.add(
-          FlapBoardRow(
+          Padding(
             key: Key('catalog_item_${item.hash}'),
-            template: kFlapColumnsCatalog,
-            selected: selected,
-            onTap: () => _selectItem(item),
-            cells: [
-              Row(
-                children: [
-                  EntityIcon(
-                    key: Key('catalog_item_icon_${item.hash}'),
-                    icon: item.icon,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FlapTextCell(
-                      text: item.name,
-                      primary: true,
-                      textKey: Key('catalog_item_name_${item.hash}'),
-                    ),
-                  ),
-                ],
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
+            child: NeonItemCard(
+              name: item.name,
+              slot: item.slot,
+              element: item.element,
+              typeLine: typeLine.isEmpty ? null : typeLine,
+              rarity: neonItemRarity(isExotic: item.isExotic),
+              ownedLabel: ownedLabel,
+              selected: selected,
+              onTap: () => _selectItem(item),
+              nameKey: Key('catalog_item_name_${item.hash}'),
+              metaKey: Key('catalog_item_meta_${item.hash}'),
+              ownedKey:
+                  item.owned ? Key('owned_badge_${item.hash}') : null,
+              leading: EntityIcon(
+                key: Key('catalog_item_icon_${item.hash}'),
+                icon: item.icon,
+                size: 36,
               ),
-              FlapTextCell(
-                text: identityParts.isEmpty ? '—' : identityParts.join(' · '),
-                color: elementInk,
-                textKey: Key('catalog_item_meta_${item.hash}'),
-              ),
-              FlapTextCell(
-                text: typeParts.isEmpty ? '—' : typeParts.join(' · '),
-              ),
-              FlapTextCell(
-                text: ownedLabel,
-                color: item.owned ? FlapPalette.of(context).accent : null,
-                textKey: item.owned
-                    ? Key('owned_badge_${item.hash}')
-                    : null,
-              ),
-            ],
+            ),
           ),
         );
       }

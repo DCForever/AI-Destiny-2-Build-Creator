@@ -107,6 +107,19 @@ const int kFlapWarningLight = 0xFFF5C542;
 const int kFlapAccentSecondaryLight = 0xFFFF1A8C;
 
 // ---------------------------------------------------------------------------
+// Rarity wash (Neon catalog cards — OD Vex Network kit)
+// ---------------------------------------------------------------------------
+
+/// Exotic gold wash `#ceae33`.
+const int kRarityExotic = 0xFFCEAE33;
+
+/// Legendary purple core `#522f65`.
+const int kRarityLegendary = 0xFF522F65;
+
+/// Legendary purple edge `#a178c4`.
+const int kRarityLegendaryEdge = 0xFFA178C4;
+
+// ---------------------------------------------------------------------------
 // Destiny element ink (dark board — full strength on icons / identity)
 // ---------------------------------------------------------------------------
 

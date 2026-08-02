@@ -15,3 +15,4 @@ export 'src/item_richness.dart';
 export 'src/library_workspace.dart';
 export 'src/neon_atmosphere.dart';
 export 'src/neon_fonts.dart';
+export 'src/neon_item_card.dart';

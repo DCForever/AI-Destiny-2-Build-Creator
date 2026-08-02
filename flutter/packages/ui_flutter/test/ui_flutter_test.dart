@@ -135,4 +135,40 @@ void main() {
       expect(d.borderRadius, BorderRadius.circular(kFlapRadius));
     });
   });
+
+  group('NeonItemCard', () {
+    test('neonItemRarity maps exotic and legendary labels', () {
+      expect(neonItemRarity(isExotic: true), NeonItemRarity.exotic);
+      expect(
+        neonItemRarity(rarityLabel: 'Legendary'),
+        NeonItemRarity.legendary,
+      );
+      expect(neonItemRarity(), NeonItemRarity.common);
+    });
+
+    testWidgets('renders name and rarity chrome', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: Scaffold(
+            body: NeonItemCard(
+              name: 'Sunshot',
+              slot: 'Energy',
+              element: 'Solar',
+              typeLine: 'Hand Cannon · Adaptive',
+              rarity: NeonItemRarity.exotic,
+              ownedLabel: '×1',
+              nameKey: const Key('card_name'),
+              ownedKey: const Key('card_owned'),
+              onTap: () {},
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('card_name')), findsOneWidget);
+      expect(find.text('Sunshot'), findsOneWidget);
+      expect(find.text('EXOTIC'), findsOneWidget);
+      expect(find.byKey(const Key('card_owned')), findsOneWidget);
+    });
+  });
 }
