@@ -16,6 +16,7 @@ import '../presentation/finish_gaps_format.dart';
 import '../presentation/soft_guidance_format.dart';
 import '../presentation/three_gate_readiness.dart';
 import '../presentation/variant_compose_format.dart';
+import '../set_library_presentation.dart';
 import '../set_use_cases.dart';
 import '../variant_use_cases.dart';
 
@@ -697,7 +698,9 @@ class BuildsComposeSession {
       try {
         await _loadComposeForVariant(uid, buildId, variantId);
       } catch (_) {}
-      final msg = formatComposeError(e.message);
+      final msg = _isOccupancyCode(e.code)
+          ? formatSetOccupancyUseCaseMessage(e)
+          : formatComposeError(e.message);
       _error = msg;
       notifyListeners();
       return msg;
@@ -709,6 +712,13 @@ class BuildsComposeSession {
       notifyListeners();
       return e.toString();
     }
+  }
+
+  static bool _isOccupancyCode(UseCaseErrorCode code) {
+    return code == UseCaseErrorCode.setMinItems ||
+        code == UseCaseErrorCode.modSetMinSlots ||
+        code == UseCaseErrorCode.pairIncomplete ||
+        code == UseCaseErrorCode.setNotAttachable;
   }
 
   // ---------------------------------------------------------------------------
@@ -804,7 +814,21 @@ class BuildsComposeSession {
       _clearCompose();
       return;
     }
-    _attachableSets = await listUserSets(db, uid);
+    // BR-ATT-006: only packages that pass set-level floors are attachable.
+    final allSets = await listUserSets(db, uid);
+    final attachable = <SetRecord>[];
+    for (final s in allSets) {
+      final type = SetType.tryParse(s.type);
+      if (type == null) continue;
+      final active = await listActiveSetItems(db, s.id);
+      if (setWouldPassSaveRules(
+        type,
+        occupancyItemsFromRecords(active),
+      )) {
+        attachable.add(s);
+      }
+    }
+    _attachableSets = attachable;
 
     VariantRecord? pick;
     if (preferredVariantId != null) {

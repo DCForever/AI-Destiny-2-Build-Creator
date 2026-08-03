@@ -45,6 +45,82 @@ void main() {
     return (userId: userId, variantId: 'v1');
   }
 
+  /// Seed ≥2 domain items so attach passes DBR-CMP-008 / BR-ATT-006.
+  Future<void> seedMinArmorItems(int userId, String setId) async {
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      const UpsertSetItemCommand(
+        slot: 'helmet',
+        itemHash: 101,
+        itemName: 'Helm',
+      ),
+      now: clock,
+    );
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      const UpsertSetItemCommand(
+        slot: 'arms',
+        itemHash: 102,
+        itemName: 'Arms',
+      ),
+      now: clock,
+    );
+  }
+
+  Future<void> seedMinModPieces(int userId, String setId) async {
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      const UpsertSetItemCommand(
+        slot: 'helmet:1',
+        itemHash: 201,
+        itemName: 'Mod H',
+      ),
+      now: clock,
+    );
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      const UpsertSetItemCommand(
+        slot: 'arms:2',
+        itemHash: 202,
+        itemName: 'Mod A',
+      ),
+      now: clock,
+    );
+  }
+
+  Future<void> seedMinWeaponItems(int userId, String setId) async {
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      const UpsertSetItemCommand(
+        slot: 'primary',
+        itemHash: 301,
+        itemName: 'Primary',
+      ),
+      now: clock,
+    );
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      const UpsertSetItemCommand(
+        slot: 'special',
+        itemHash: 302,
+        itemName: 'Special',
+      ),
+      now: clock,
+    );
+  }
+
   group('US3 attach', () {
     test('prepareAttachments live for armor + mod', () async {
       final ctx = await seedBuildVariant();
@@ -54,12 +130,14 @@ void main() {
         const CreateSetCommand(id: 'armor1', name: 'Armor', type: SetType.armor),
         now: clock,
       );
+      await seedMinArmorItems(ctx.userId, 'armor1');
       await createUserSet(
         db,
         ctx.userId,
         const CreateSetCommand(id: 'mod1', name: 'Mods', type: SetType.mod),
         now: clock,
       );
+      await seedMinModPieces(ctx.userId, 'mod1');
 
       final atts = await prepareAttachments(
         db,
@@ -76,6 +154,132 @@ void main() {
       expect(atts.map((a) => a.setId).toSet(), {'armor1', 'mod1'});
       final domain = mapAttachmentsDomain(atts);
       expect(domain.every((a) => a.mode == AttachmentMode.live), isTrue);
+    });
+
+    test('DAC-SET-003 under-min armor blocked on prepareAttachments', () async {
+      final ctx = await seedBuildVariant();
+      await createUserSet(
+        db,
+        ctx.userId,
+        const CreateSetCommand(id: 'armor-sparse', name: 'Sparse', type: SetType.armor),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        ctx.userId,
+        'armor-sparse',
+        const UpsertSetItemCommand(
+          slot: 'helmet',
+          itemHash: 1,
+          itemName: 'Only one',
+        ),
+        now: clock,
+      );
+
+      expect(
+        () => prepareAttachments(
+          db,
+          ctx.userId,
+          ctx.variantId,
+          const [
+            SetAttachmentInput(setId: 'armor-sparse', mode: AttachmentMode.live),
+          ],
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.setMinItems,
+          ),
+        ),
+      );
+      expect(await getVariantAttachments(db, ctx.variantId), isEmpty);
+    });
+
+    test('DAC-DST-011 under-min mod blocked on attach', () async {
+      final ctx = await seedBuildVariant();
+      await createUserSet(
+        db,
+        ctx.userId,
+        const CreateSetCommand(id: 'mod-sparse', name: 'One piece', type: SetType.mod),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        ctx.userId,
+        'mod-sparse',
+        const UpsertSetItemCommand(
+          slot: 'helmet:1',
+          itemHash: 9,
+          itemName: 'Only helmet',
+        ),
+        now: clock,
+      );
+
+      expect(
+        () => prepareAttachments(
+          db,
+          ctx.userId,
+          ctx.variantId,
+          const [
+            SetAttachmentInput(setId: 'mod-sparse', mode: AttachmentMode.live),
+          ],
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.modSetMinSlots,
+          ),
+        ),
+      );
+    });
+
+    test('DAC-SET-002 incomplete pair blocked on replaceAttachmentByType',
+        () async {
+      final ctx = await seedBuildVariant();
+      await createUserSet(
+        db,
+        ctx.userId,
+        const CreateSetCommand(id: 'pair1', name: 'Pair', type: SetType.pair),
+        now: clock,
+      );
+      final exoGun = setItemMetaFromManifestCategory(
+        'exotic-weapons',
+        name: 'Exo gun',
+      );
+      await upsertUserSetItem(
+        db,
+        ctx.userId,
+        'pair1',
+        UpsertSetItemCommand(
+          slot: 'exotic_weapon',
+          itemHash: 50,
+          itemName: 'Exo gun',
+          itemMeta: exoGun,
+        ),
+        now: clock,
+      );
+
+      expect(
+        () => replaceAttachmentByType(
+          db,
+          ctx.userId,
+          ctx.variantId,
+          SetType.pair,
+          'pair1',
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.pairIncomplete,
+          ),
+        ),
+      );
     });
 
     test('snapshot freezes active items when configs omitted', () async {
@@ -99,6 +303,18 @@ void main() {
         ),
         now: clock,
       );
+      await upsertUserSetItem(
+        db,
+        ctx.userId,
+        'armor1',
+        const UpsertSetItemCommand(
+          id: 'si2',
+          slot: 'arms',
+          itemHash: 43,
+          itemName: 'Arms',
+        ),
+        now: clock,
+      );
 
       final atts = await prepareAttachments(
         db,
@@ -113,9 +329,11 @@ void main() {
       expect(atts, hasLength(1));
       expect(atts.single.mode, 'snapshot');
       expect(atts.single.snapshotConfigs, isNotNull);
-      expect(atts.single.snapshotConfigs, hasLength(1));
-      expect(atts.single.snapshotConfigs!.single['itemHash'], 42);
-      expect(atts.single.snapshotConfigs!.single['slot'], 'helmet');
+      expect(atts.single.snapshotConfigs, hasLength(2));
+      expect(
+        atts.single.snapshotConfigs!.map((c) => c['itemHash']).toSet(),
+        {42, 43},
+      );
     });
 
     test('second fashion throws fashion limit', () async {
@@ -165,18 +383,21 @@ void main() {
         const CreateSetCommand(id: 'armor1', name: 'A1', type: SetType.armor),
         now: clock,
       );
+      await seedMinArmorItems(ctx.userId, 'armor1');
       await createUserSet(
         db,
         ctx.userId,
         const CreateSetCommand(id: 'armor2', name: 'A2', type: SetType.armor),
         now: clock,
       );
+      await seedMinArmorItems(ctx.userId, 'armor2');
       await createUserSet(
         db,
         ctx.userId,
         const CreateSetCommand(id: 'w1', name: 'W1', type: SetType.weapon),
         now: clock,
       );
+      await seedMinWeaponItems(ctx.userId, 'w1');
 
       await prepareAttachments(
         db,

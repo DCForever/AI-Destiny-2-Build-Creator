@@ -100,6 +100,18 @@ void main() {
         ),
         now: clock,
       );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w-other',
+        const UpsertSetItemCommand(
+          id: 'wi2',
+          slot: 'special',
+          itemHash: 2,
+          itemName: 'Also not',
+        ),
+        now: clock,
+      );
 
       final saved = await updateUserVariant(
         db,

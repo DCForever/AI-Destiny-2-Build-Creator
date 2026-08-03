@@ -401,6 +401,8 @@ class BuildsController extends ChangeNotifier {
     notifyListeners();
     try {
       final type = finishCategoryToSetType(category);
+      // BR-ATT-006: under-min scaffolds are not attachable — create name-only
+      // scaffold; user fills ≥2 domain items / pieces then attaches.
       final result = await createSetAndAttach(
         db,
         uid,
@@ -408,7 +410,7 @@ class BuildsController extends ChangeNotifier {
           buildId: sel.build.id,
           variantId: variant.id,
           type: type,
-          attachNow: true,
+          attachNow: false,
           optimizerConstraints: type == SetType.armor
               ? serializeOptimizerConstraints(
                   seedConstraintsFromBuild(
@@ -424,7 +426,9 @@ class BuildsController extends ChangeNotifier {
       );
       await core.reloadSelectedCompose();
       _finishActiveCategory = category;
-      _finishMessage = 'Created ${result.set.set.name}';
+      _finishMessage =
+          'Created ${result.set.set.name}. Add enough pieces to meet package '
+          'minimum, then attach.';
       _finishBusy = false;
       notifyListeners();
       return null;

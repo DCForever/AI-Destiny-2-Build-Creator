@@ -44,8 +44,63 @@ void main() {
     return (buildId: detail.build.id, variantId: detail.variants.first.id);
   }
 
+  /// Seed ≥2 items so attach passes package floors (dart-070).
+  Future<void> seedArmorMin(int userId, String setId) async {
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        slot: 'helmet',
+        itemHash: 11,
+        itemName: 'Helm',
+      ),
+      now: clock,
+      newId: nextId,
+    );
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        slot: 'arms',
+        itemHash: 12,
+        itemName: 'Arms',
+      ),
+      now: clock,
+      newId: nextId,
+    );
+  }
+
+  Future<void> seedWeaponMin(int userId, String setId) async {
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        slot: 'primary',
+        itemHash: 21,
+        itemName: 'Primary',
+      ),
+      now: clock,
+      newId: nextId,
+    );
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        slot: 'special',
+        itemHash: 22,
+        itemName: 'Special',
+      ),
+      now: clock,
+      newId: nextId,
+    );
+  }
+
   group('createSetAndAttach', () {
-    test('creates empty set with inherited name and live-attaches', () async {
+    test('creates empty set without attach when attachNow false', () async {
       final userId = await seedUser();
       final ids = await seedBuild(userId);
 
@@ -56,6 +111,7 @@ void main() {
           buildId: ids.buildId,
           variantId: ids.variantId,
           type: SetType.armor,
+          attachNow: false,
         ),
         now: clock,
         newId: nextId,
@@ -64,11 +120,64 @@ void main() {
       expect(result.set.set.name, 'Solar Titan Armor');
       expect(result.set.set.type, 'armor');
       expect(result.set.set.tagIds, isEmpty);
-      expect(result.attachmentSetId, result.set.set.id);
+      expect(result.attachmentSetId, isNull);
+      expect(await listAttachments(db, ids.variantId), isEmpty);
+    });
 
-      final atts = await listAttachments(db, ids.variantId);
+    test('attachNow empty scaffold fails package min (DAC-SET-003)', () async {
+      final userId = await seedUser();
+      final ids = await seedBuild(userId);
+
+      expect(
+        () => createSetAndAttach(
+          db,
+          userId,
+          CreateSetAndAttachCommand(
+            buildId: ids.buildId,
+            variantId: ids.variantId,
+            type: SetType.armor,
+          ),
+          now: clock,
+          newId: nextId,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.setMinItems,
+          ),
+        ),
+      );
+    });
+
+    test('creates set, seeds ≥2 items, then live-attaches', () async {
+      final userId = await seedUser();
+      final ids = await seedBuild(userId);
+
+      final created = await createSetAndAttach(
+        db,
+        userId,
+        CreateSetAndAttachCommand(
+          buildId: ids.buildId,
+          variantId: ids.variantId,
+          type: SetType.armor,
+          attachNow: false,
+        ),
+        now: clock,
+        newId: nextId,
+      );
+      await seedArmorMin(userId, created.set.set.id);
+
+      final atts = await replaceAttachmentByType(
+        db,
+        userId,
+        ids.variantId,
+        SetType.armor,
+        created.set.set.id,
+        now: clock,
+      );
       expect(atts, hasLength(1));
-      expect(atts.single.setId, result.set.set.id);
+      expect(atts.single.setId, created.set.set.id);
       expect(atts.single.mode, AttachmentMode.live.wireName);
     });
 
@@ -94,6 +203,7 @@ void main() {
           buildId: ids.buildId,
           variantId: ids.variantId,
           type: SetType.armor,
+          attachNow: false,
         ),
         now: clock,
         newId: nextId,
@@ -115,11 +225,21 @@ void main() {
           buildId: ids.buildId,
           variantId: ids.variantId,
           type: SetType.armor,
+          attachNow: false,
         ),
         now: clock,
         newId: nextId,
       );
-      // Also attach a weapon so replace-by-type must keep one id and add one.
+      await seedArmorMin(userId, first.set.set.id);
+      await replaceAttachmentByType(
+        db,
+        userId,
+        ids.variantId,
+        SetType.armor,
+        first.set.set.id,
+        now: clock,
+      );
+
       final weapon = await createSetAndAttach(
         db,
         userId,
@@ -127,11 +247,20 @@ void main() {
           buildId: ids.buildId,
           variantId: ids.variantId,
           type: SetType.weapon,
+          attachNow: false,
         ),
         now: clock,
         newId: nextId,
       );
-      expect(weapon.attachmentSetId, isNotNull);
+      await seedWeaponMin(userId, weapon.set.set.id);
+      await replaceAttachmentByType(
+        db,
+        userId,
+        ids.variantId,
+        SetType.weapon,
+        weapon.set.set.id,
+        now: clock,
+      );
 
       final second = await createSetAndAttach(
         db,
@@ -140,9 +269,19 @@ void main() {
           buildId: ids.buildId,
           variantId: ids.variantId,
           type: SetType.armor,
+          attachNow: false,
         ),
         now: clock,
         newId: nextId,
+      );
+      await seedArmorMin(userId, second.set.set.id);
+      await replaceAttachmentByType(
+        db,
+        userId,
+        ids.variantId,
+        SetType.armor,
+        second.set.set.id,
+        now: clock,
       );
 
       final atts = await listAttachments(db, ids.variantId);

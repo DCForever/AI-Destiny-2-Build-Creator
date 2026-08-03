@@ -4,6 +4,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'clock_ids.dart';
 import 'errors.dart';
 import 'mappers.dart';
+import 'set_use_cases.dart';
 
 /// Input for attaching a set to a variant.
 class SetAttachmentInput {
@@ -53,6 +54,7 @@ Future<List<Map<String, Object?>>> _buildSnapshotConfigs(
 ///
 /// Missing/unowned sets are skipped (product prepareAttachments parity).
 /// At most one fashion set; snapshot freezes active items when configs omitted.
+/// Sets that fail package save floors are rejected (BR-ATT-006 / DAC-SET-003).
 Future<List<AttachmentRecord>> prepareAttachments(
   AppDatabase db,
   int userId,
@@ -77,6 +79,14 @@ Future<List<AttachmentRecord>> prepareAttachments(
         );
       }
     }
+
+    // BR-ATT-006: under-min packages are not attachable.
+    await assertUserSetPassesSaveRules(
+      db,
+      userId,
+      input.setId,
+      context: 'prepareAttachments',
+    );
 
     List<Map<String, Object?>>? snapshotConfigs;
     if (input.mode == AttachmentMode.snapshot) {
@@ -118,6 +128,14 @@ Future<List<AttachmentRecord>> replaceAttachmentByType(
       },
     );
   }
+
+  // BR-ATT-006 / DAC-SET-003: under-min packages are not attachable.
+  await assertUserSetPassesSaveRules(
+    db,
+    userId,
+    newSetId,
+    context: 'replaceAttachmentByType',
+  );
 
   final existing = await listAttachments(db, variantId);
   final kept = <AttachmentWrite>[];

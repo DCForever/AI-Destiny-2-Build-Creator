@@ -145,6 +145,19 @@ void main() {
         ),
         now: clock,
       );
+      await upsertUserSetItem(
+        db,
+        userId,
+        set.set.id,
+        const UpsertSetItemCommand(
+          slot: 'arms',
+          itemHash: 2,
+          itemName: 'Arms',
+          instanceId: 'a-1',
+          replaceExisting: true,
+        ),
+        now: clock,
+      );
       await replaceAttachmentByType(
         db,
         userId,
@@ -238,6 +251,28 @@ void main() {
           id: 'armor-free',
           name: 'Free',
           type: SetType.armor,
+        ),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        set.set.id,
+        const UpsertSetItemCommand(
+          slot: 'helmet',
+          itemHash: 10,
+          itemName: 'H',
+        ),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        set.set.id,
+        const UpsertSetItemCommand(
+          slot: 'arms',
+          itemHash: 11,
+          itemName: 'A',
         ),
         now: clock,
       );

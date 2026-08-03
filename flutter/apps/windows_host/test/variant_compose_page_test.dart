@@ -137,6 +137,18 @@ void main() {
         instanceId: instanceId,
       ),
     );
+    final second = slot == 'special' ? 'heavy' : 'special';
+    await upsertUserSetItem(
+      services.db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: second,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
+      ),
+    );
   }
 
   testWidgets('US4 create non-default variant and select it', (tester) async {
@@ -244,32 +256,38 @@ void main() {
     await controller.attachSet('w-pin');
     await _pumpFrames(tester);
 
-    expect(controller.slotPins.single.pinLabel, 'wishlist');
+    final primaryPin =
+        controller.slotPins.firstWhere((p) => p.slot == 'primary');
+    expect(primaryPin.pinLabel, 'wishlist');
 
     final pinErr = await controller.pinSlot(
       setId: 'w-pin',
       slot: 'primary',
-      setItemId: controller.slotPins.single.setItemId,
+      setItemId: primaryPin.setItemId,
       instanceId: 'inst-1',
     );
     expect(pinErr, isNull, reason: controller.error);
     await _pumpFrames(tester);
 
-    expect(controller.slotPins.single.pinLabel, 'instance');
-    expect(controller.slotPins.single.instanceId, 'inst-1');
+    final afterPin =
+        controller.slotPins.firstWhere((p) => p.slot == 'primary');
+    expect(afterPin.pinLabel, 'instance');
+    expect(afterPin.instanceId, 'inst-1');
     expect(find.textContaining('instance · inst-1'), findsWidgets);
 
     final clearErr = await controller.pinSlot(
       setId: 'w-pin',
       slot: 'primary',
-      setItemId: controller.slotPins.single.setItemId,
+      setItemId: afterPin.setItemId,
       instanceId: null,
     );
     expect(clearErr, isNull);
     await _pumpFrames(tester);
 
-    expect(controller.slotPins.single.pinLabel, 'wishlist');
-    expect(controller.slotPins.single.instanceId, isNull);
+    final afterClear =
+        controller.slotPins.firstWhere((p) => p.slot == 'primary');
+    expect(afterClear.pinLabel, 'wishlist');
+    expect(afterClear.instanceId, isNull);
 
     controller.dispose();
   });

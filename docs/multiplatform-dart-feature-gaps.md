@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-07-30 (pkg-ledger-process-hygiene: FEAT rescoring + PROC-06 closed via `proc06_thinning_gate`; PRODUCTION_CUTOVER GO **unchanged**)  
+**Updated:** 2026-08-03 (dart-070-set-occupancy: package save floors + attach gates; PRODUCTION_CUTOVER GO **unchanged**)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -224,6 +224,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-SETS-06** | Delete set + SET_IN_USE | **P2** | `closed` (DART-066) | Edit/Delete + SET_IN_USE error | delete + SET_IN_USE plain language both shells | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SETS-07** | Occupied-slot replace confirm | **P2** | `closed` (DART-065) | Confirm replace naming item | Host confirm dialog/step both shells | **DART-065** | BR-SLOT-006 |
 | **GAP-UI-SETS-10** | Weapon fill selectedPerks / traits | **P2** | `closed` (DART-065) | selectedTraitPerks + store selectedPerks | selectedPerks persisted + trait chips | **DART-065** | BR-ROLL-001 |
+| **GAP-DOM-SET-01** | Set package minimum occupancy + Pair complete on save/attach | **P0** | **`closed`** (dart-070-set-occupancy) | Weapon/Armor ≥2, Mod ≥2 pieces, Pair both slots; attach blocked under-min | Pure `evaluateSetMinimumOccupancy` / `setWouldPassSaveRules`; app assert + prepareAttachments / replaceAttachmentByType; attachableSets filter; readiness package-min; hosts plain-language | **dart-070-set-occupancy** | DBR-CMP-008–010, BR-SLOT-011–014, BR-ATT-006/006a, DAC-DST-010/011, DAC-SET-002/003 |
 | **GAP-UI-SYN-01** | Evidence catalog search picker | **P1** | `closed` (DART-066) | Search catalog + filterOutLinked | Catalog search + BR-SYN-011 omit-linked | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SYN-02** | BR-SYN-012 weapon-perk source labels | **P1** | `closed` (DART-066) | weaponPerkSourceLabel exotic/legendary | formatWeaponPerkSourceLabel parity | **DART-066** | Not cutover; fidelity |
 | **GAP-UI-SYN-03** | BR-SYN-004 reverse tags on catalog | **P1** | `closed` | linkedSynergies by-target badges | findSynergiesByTarget + detail badges both hosts | **DART-063** | Not cutover; fidelity |

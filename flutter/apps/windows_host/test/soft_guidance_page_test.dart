@@ -197,6 +197,17 @@ void main() {
         itemName: 'Not the gun',
       ),
     );
+    await upsertUserSetItem(
+      services.db,
+      uid,
+      'set-other',
+      const UpsertSetItemCommand(
+        id: 'item-other-2',
+        slot: 'special',
+        itemHash: 2,
+        itemName: 'Also not',
+      ),
+    );
     await controller.refresh();
     await _pumpFrames(tester);
 
@@ -305,6 +316,17 @@ void main() {
         slot: 'primary',
         itemHash: 777001,
         itemName: 'Needed Gun',
+      ),
+    );
+    await upsertUserSetItem(
+      services.db,
+      uid,
+      'set-match',
+      const UpsertSetItemCommand(
+        id: 'item-match-2',
+        slot: 'special',
+        itemHash: 777002,
+        itemName: 'Filler',
       ),
     );
     await controller.refresh();

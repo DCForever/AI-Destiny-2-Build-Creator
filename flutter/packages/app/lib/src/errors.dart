@@ -16,6 +16,18 @@ enum UseCaseErrorCode {
   /// Set composition / catalog fitness (BR-SLOT-008/009, BR-UI-001).
   invalidItem('INVALID_ITEM'),
 
+  /// Weapon/Armor set below ≥2 filled items (DBR-CMP-008 / BR-SLOT-011).
+  setMinItems('SET_MIN_ITEMS'),
+
+  /// Mod set mods on fewer than two armor pieces (DBR-CMP-009 / BR-SLOT-012).
+  modSetMinSlots('MOD_SET_MIN_SLOTS'),
+
+  /// Pair missing exotic weapon or exotic armor (BR-SLOT-014).
+  pairIncomplete('PAIR_INCOMPLETE'),
+
+  /// Set fails package floors and cannot be attached (BR-ATT-006 / DAC-SET-003).
+  setNotAttachable('SET_NOT_ATTACHABLE'),
+
   /// Hard-gate codes (wire names match [DomainFailureCodes] / product API).
   noSynergy('NO_SYNERGY'),
   illegalSubclassKit('ILLEGAL_SUBCLASS_KIT'),

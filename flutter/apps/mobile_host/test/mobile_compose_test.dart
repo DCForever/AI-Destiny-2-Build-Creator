@@ -93,6 +93,21 @@ void main() {
         instanceId: instanceId,
       ),
     );
+    final second = slot == 'special' ? 'heavy' : 'special';
+    final secondInstance =
+        instanceId == null ? null : '$instanceId-2';
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: second,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
+        instanceId: secondInstance,
+      ),
+    );
   }
 
   Future<void> seedSynergyWithWeaponLink(int userId) async {

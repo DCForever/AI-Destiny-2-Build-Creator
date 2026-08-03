@@ -151,6 +151,10 @@ void main() {
       );
       expect(DomainFailureCodes.notEquipReady, 'NOT_EQUIP_READY');
       expect(DomainFailureCodes.slotConflict, 'SLOT_CONFLICT');
+      expect(DomainFailureCodes.setMinItems, 'SET_MIN_ITEMS');
+      expect(DomainFailureCodes.modSetMinSlots, 'MOD_SET_MIN_SLOTS');
+      expect(DomainFailureCodes.pairIncomplete, 'PAIR_INCOMPLETE');
+      expect(DomainFailureCodes.setNotAttachable, 'SET_NOT_ATTACHABLE');
     });
 
     test('ConstraintEvaluation holds hard blocks distinct from soft warnings', () {

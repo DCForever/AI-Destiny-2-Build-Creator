@@ -325,6 +325,9 @@ pages:
                 rules:
                   - BR-TAG-008
                   - BR-SUG-001
+                  - BR-ATT-006
+                  - BR-ATT-006a
+                  - DAC-SET-003
       - id: build.edit.artifact-fashion
         kind: surface
         title: Artifact + fashion (variant)
@@ -1093,9 +1096,18 @@ pages:
           - BR-SET-001
           - BR-SET-010
           - BR-SET-011
+          - BR-SLOT-011
+          - BR-SLOT-012
+          - BR-SLOT-014
           - DAC-NME-004
+          - DAC-DST-010
+          - DAC-DST-011
+          - DAC-SET-002
           - DBR-STAT-001
           - DBR-CMP-001
+          - DBR-CMP-008
+          - DBR-CMP-009
+          - DBR-CMP-010
         atlas:
           - sets-detail
         children:
@@ -1677,9 +1689,15 @@ pages:
         title: SetAttachPicker
         rules:
           - BR-ATT-001
+          - BR-ATT-006
+          - BR-ATT-006a
           - BR-TAG-008
           - BR-SUG-001
           - BR-TAG-010
+          - DAC-SET-003
+          - DBR-CMP-008
+          - DBR-CMP-009
+          - DBR-CMP-010
       - id: shared.synergy-type-select
         kind: surface
         title: SynergyTypeMultiSelect
@@ -2582,9 +2600,18 @@ pages:
                   - BR-SET-001
                   - BR-SET-010
                   - BR-SET-011
+                  - BR-SLOT-011
+                  - BR-SLOT-012
+                  - BR-SLOT-014
                   - DAC-NME-004
+                  - DAC-DST-010
+                  - DAC-DST-011
+                  - DAC-SET-002
                   - DBR-STAT-001
                   - DBR-CMP-001
+                  - DBR-CMP-008
+                  - DBR-CMP-009
+                  - DBR-CMP-010
                 path: /sets
                 auth: signed-in
                 atlas:
@@ -2598,9 +2625,18 @@ pages:
               - BR-SET-001
               - BR-SET-010
               - BR-SET-011
+              - BR-SLOT-011
+              - BR-SLOT-012
+              - BR-SLOT-014
               - DAC-NME-004
+              - DAC-DST-010
+              - DAC-DST-011
+              - DAC-SET-002
               - DBR-STAT-001
               - DBR-CMP-001
+              - DBR-CMP-008
+              - DBR-CMP-009
+              - DBR-CMP-010
             path: /sets
             auth: signed-in
             atlas:
@@ -3739,9 +3775,18 @@ pages:
               - BR-SET-001
               - BR-SET-010
               - BR-SET-011
+              - BR-SLOT-011
+              - BR-SLOT-012
+              - BR-SLOT-014
               - DAC-NME-004
+              - DAC-DST-010
+              - DAC-DST-011
+              - DAC-SET-002
               - DBR-STAT-001
               - DBR-CMP-001
+              - DBR-CMP-008
+              - DBR-CMP-009
+              - DBR-CMP-010
             path: /sets
             auth: signed-in
             atlas:
@@ -3755,9 +3800,18 @@ pages:
           - BR-SET-001
           - BR-SET-010
           - BR-SET-011
+          - BR-SLOT-011
+          - BR-SLOT-012
+          - BR-SLOT-014
           - DAC-NME-004
+          - DAC-DST-010
+          - DAC-DST-011
+          - DAC-SET-002
           - DBR-STAT-001
           - DBR-CMP-001
+          - DBR-CMP-008
+          - DBR-CMP-009
+          - DBR-CMP-010
         path: /sets
         auth: signed-in
         atlas:
@@ -3860,9 +3914,18 @@ pages:
           - BR-SET-001
           - BR-SET-010
           - BR-SET-011
+          - BR-SLOT-011
+          - BR-SLOT-012
+          - BR-SLOT-014
           - DAC-NME-004
+          - DAC-DST-010
+          - DAC-DST-011
+          - DAC-SET-002
           - DBR-STAT-001
           - DBR-CMP-001
+          - DBR-CMP-008
+          - DBR-CMP-009
+          - DBR-CMP-010
         path: /sets
         auth: signed-in
         atlas:

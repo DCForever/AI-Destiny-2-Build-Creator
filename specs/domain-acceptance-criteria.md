@@ -1,7 +1,7 @@
 # Domain Acceptance Criteria — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-07-29  
+**Updated**: 2026-08-03 (DAC-SET-002 Pair complete; DAC-SET-003 under-min not attachable — dart-070)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29**
 
@@ -331,6 +331,24 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **Then** save is rejected with a clear reason (`MOD_SET_MIN_SLOTS`)  
 **And** save succeeds once at least **two** distinct armor pieces each have ≥1 mod  
 **Refs**: DBR-CMP-009, BR-SLOT-012
+
+### DAC-SET-002 — Pair package complete on save
+
+**Given** a Pair Set missing exotic weapon or exotic armor (or both)  
+**When** the user saves or finalizes the package  
+**Then** save is rejected with a clear reason (`PAIR_INCOMPLETE`)  
+**And** save succeeds only when **both** exotic weapon and exotic armor slots are filled  
+**And** Fashion Sets remain exempt from combat package floors (DBR-CMP-010)  
+**Refs**: DBR-CMP-010 Pair path, BR-SLOT-014
+
+### DAC-SET-003 — Under-min packages not attachable
+
+**Given** a Set that fails package save floors (Weapon/Armor &lt;2 items, Mod on &lt;2 armor pieces, incomplete Pair)  
+**When** the user tries to attach it to a Build variant  
+**Then** attach is blocked with a clear reason (`SET_MIN_ITEMS`, `MOD_SET_MIN_SLOTS`, `PAIR_INCOMPLETE`, or `SET_NOT_ATTACHABLE`)  
+**And** under-min scaffolds are not listed as attachable packages  
+**And** hosts show plain-language errors (not bare hashes)  
+**Refs**: BR-ATT-006, BR-ATT-006a, DBR-CMP-008–010, DAC-DST-010–011, DAC-SET-002
 
 ### DAC-DST-012 — Armor set bonus constraint
 

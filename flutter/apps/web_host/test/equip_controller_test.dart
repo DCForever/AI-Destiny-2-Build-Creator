@@ -192,6 +192,22 @@ void main() {
         instanceId: instanceId,
       ),
     );
+    // Second domain slot for package min; reuse pin mode of [instanceId].
+    final second = slot == 'special' ? 'heavy' : 'special';
+    final secondInstance =
+        instanceId == null ? null : '$instanceId-2';
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: second,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
+        instanceId: secondInstance,
+      ),
+    );
   }
 
   Future<void> seedInventory(
@@ -290,7 +306,27 @@ void main() {
     final session = await signedOutSession();
     final equip = await makeEquip(session: session);
     final seed = await seedCompose(instanceId: 'inst-1');
-    await seedInventory(seed.userId, instanceId: 'inst-1', itemHash: 100);
+    await replaceInventoryBatch(
+      db,
+      seed.userId,
+      items: [
+        InventoryItemRecord(
+          instanceId: 'inst-1',
+          itemHash: 100,
+          bucket: 'Kinetic',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+        InventoryItemRecord(
+          instanceId: 'inst-1-2',
+          itemHash: 1100,
+          bucket: 'Energy',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+      ],
+      now: '2026-07-25T12:00:00.000Z',
+    );
 
     await equip.bind(
       userId: seed.userId,
@@ -312,11 +348,26 @@ void main() {
     final session = await signedInSession();
     final equip = await makeEquip(session: session);
     final seed = await seedCompose(instanceId: 'inst-1');
-    await seedInventory(
+    await replaceInventoryBatch(
+      db,
       seed.userId,
-      instanceId: 'inst-1',
-      itemHash: 100,
-      location: 'vault',
+      items: [
+        InventoryItemRecord(
+          instanceId: 'inst-1',
+          itemHash: 100,
+          bucket: 'Kinetic',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+        InventoryItemRecord(
+          instanceId: 'inst-1-2',
+          itemHash: 1100,
+          bucket: 'Energy',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+      ],
+      now: '2026-07-25T12:00:00.000Z',
     );
 
     await equip.bind(

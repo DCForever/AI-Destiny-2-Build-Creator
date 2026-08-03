@@ -153,6 +153,21 @@ void main() {
         instanceId: instanceId,
       ),
     );
+    final second = slot == 'special' ? 'heavy' : 'special';
+    final secondInstance =
+        instanceId == null ? null : '$instanceId-2';
+    await upsertUserSetItem(
+      services.db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: second,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
+        instanceId: secondInstance,
+      ),
+    );
   }
 
   Future<void> seedInventory(
@@ -226,7 +241,27 @@ void main() {
     await _pumpFrames(tester);
     final uid = ctx.builds.userId!;
     await seedWeaponSet(uid, 'w1', 'primary', 100, instanceId: 'inst-primary');
-    await seedInventory(uid, instanceId: 'inst-primary', itemHash: 100);
+    await replaceInventoryBatch(
+      services.db,
+      uid,
+      items: [
+        InventoryItemRecord(
+          instanceId: 'inst-primary',
+          itemHash: 100,
+          bucket: 'Kinetic',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+        InventoryItemRecord(
+          instanceId: 'inst-primary-2',
+          itemHash: 1100,
+          bucket: 'Energy',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+      ],
+      now: '2026-07-25T12:00:00.000Z',
+    );
     await ctx.builds.refresh();
     await ctx.builds.createVariant(name: 'Alt');
     await _pumpFrames(tester);

@@ -23,7 +23,7 @@ void main() {
   });
 
   group('buildSetReadiness', () {
-    test('weapon partial readiness', () {
+    test('weapon partial readiness under package min', () {
       final r = buildSetReadiness(
         setType: SetType.weapon,
         boardSlots: const ['primary', 'special', 'heavy'],
@@ -33,8 +33,21 @@ void main() {
       expect(r.capacity, 3);
       expect(r.emptySlots, 2);
       expect(r.nextEmptySlot, 'special');
+      // Under DBR-CMP-008 floor → unresolved until ≥2 items.
+      expect(r.meetsPackageMinimum, isFalse);
+      expect(r.tone, 'unresolved');
+      expect(r.badgeLabel, contains('1/3'));
+    });
+
+    test('weapon partial at package min is fuzzy when slots remain', () {
+      final r = buildSetReadiness(
+        setType: SetType.weapon,
+        boardSlots: const ['primary', 'special', 'heavy'],
+        activeItemSlots: const ['primary', 'special'],
+      );
+      expect(r.meetsPackageMinimum, isTrue);
       expect(r.tone, 'fuzzy');
-      expect(r.badgeLabel, contains('1/3 filled'));
+      expect(r.badgeLabel, contains('2/3 filled'));
     });
 
     test('full board verified', () {
@@ -47,7 +60,7 @@ void main() {
       expect(r.nextEmptySlot, isNull);
     });
 
-    test('mod set shows count without fill next', () {
+    test('mod set shows piece groups from pure helper', () {
       final r = buildSetReadiness(
         setType: SetType.mod,
         boardSlots: const ['helmet', 'arms', 'chest', 'legs', 'class_item'],
@@ -55,8 +68,33 @@ void main() {
       );
       expect(r.isMods, isTrue);
       expect(r.modCount, 2);
+      expect(r.packageMinimumCount, 2);
+      expect(r.meetsPackageMinimum, isTrue);
       expect(r.nextEmptySlot, isNull);
-      expect(r.badgeLabel, '2 mods');
+      expect(r.badgeLabel, contains('piece'));
+    });
+
+    test('meetsPackageMinimum false under SET_MIN_ITEMS', () {
+      final r = buildSetReadiness(
+        setType: SetType.weapon,
+        boardSlots: const ['primary', 'special', 'heavy'],
+        activeItemSlots: const ['primary'],
+      );
+      expect(r.meetsPackageMinimum, isFalse);
+      expect(r.packageMinimumCode, DomainFailureCodes.setMinItems);
+      expect(r.tone, 'unresolved');
+      expect(r.packageMinimumMessage, isNotNull);
+    });
+
+    test('mod under one piece fails package minimum', () {
+      final r = buildSetReadiness(
+        setType: SetType.mod,
+        boardSlots: const ['helmet', 'arms', 'chest', 'legs', 'class_item'],
+        activeItemSlots: const ['helmet:1', 'helmet:2'],
+      );
+      expect(r.meetsPackageMinimum, isFalse);
+      expect(r.packageMinimumCode, DomainFailureCodes.modSetMinSlots);
+      expect(r.packageMinimumCount, 1);
     });
   });
 

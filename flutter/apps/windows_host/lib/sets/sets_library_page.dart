@@ -657,6 +657,15 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                     key: const Key('sets_readiness_badge'),
                     label: Text(readiness.badgeLabel),
                   ),
+                  if (!readiness.meetsPackageMinimum &&
+                      readiness.packageMinimumMessage != null)
+                    Text(
+                      readiness.packageMinimumMessage!,
+                      key: const Key('sets_occupancy_hint'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                    ),
                   if (usedBy.isEmpty)
                     const Chip(
                       key: Key('sets_used_by_unused'),

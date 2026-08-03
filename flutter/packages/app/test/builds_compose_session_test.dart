@@ -56,10 +56,66 @@ void main() {
       uid,
       const CreateSetCommand(id: 'armor-set', name: 'Armor A', type: SetType.armor),
     );
+    await upsertUserSetItem(
+      db,
+      uid,
+      'armor-set',
+      const UpsertSetItemCommand(
+        slot: 'helmet',
+        itemHash: 1,
+        itemName: 'Helm',
+      ),
+    );
+    await upsertUserSetItem(
+      db,
+      uid,
+      'armor-set',
+      const UpsertSetItemCommand(
+        slot: 'arms',
+        itemHash: 2,
+        itemName: 'Arms',
+      ),
+    );
     await createUserSet(
       db,
       uid,
       const CreateSetCommand(id: 'mod-set', name: 'Mods', type: SetType.mod),
+    );
+    await upsertUserSetItem(
+      db,
+      uid,
+      'mod-set',
+      const UpsertSetItemCommand(
+        slot: 'helmet:1',
+        itemHash: 3,
+        itemName: 'Mod H',
+      ),
+    );
+    await upsertUserSetItem(
+      db,
+      uid,
+      'mod-set',
+      const UpsertSetItemCommand(
+        slot: 'arms:2',
+        itemHash: 4,
+        itemName: 'Mod A',
+      ),
+    );
+    // Under-min scaffold must not appear in attachableSets (BR-ATT-006).
+    await createUserSet(
+      db,
+      uid,
+      const CreateSetCommand(id: 'sparse', name: 'Sparse', type: SetType.weapon),
+    );
+    await upsertUserSetItem(
+      db,
+      uid,
+      'sparse',
+      const UpsertSetItemCommand(
+        slot: 'primary',
+        itemHash: 9,
+        itemName: 'Only one',
+      ),
     );
 
     // Reload attachable list while keeping the non-default selection.
@@ -67,6 +123,12 @@ void main() {
     await session.refresh();
     await session.openBuild(session.selected!.build.id);
     await session.selectVariant(altId);
+
+    expect(
+      session.attachableSets.map((s) => s.id),
+      containsAll(['armor-set', 'mod-set']),
+    );
+    expect(session.attachableSets.map((s) => s.id), isNot(contains('sparse')));
 
     final attachErr = await session.attachSet('armor-set');
     expect(attachErr, isNull, reason: attachErr);
@@ -119,6 +181,16 @@ void main() {
         itemName: 'Hand Cannon',
       ),
     );
+    await upsertUserSetItem(
+      db,
+      uid,
+      'w-set',
+      const UpsertSetItemCommand(
+        slot: 'special',
+        itemHash: 9002,
+        itemName: 'Fusion',
+      ),
+    );
 
     await session.refresh();
     await session.openBuild(session.selected!.build.id);
@@ -127,7 +199,7 @@ void main() {
 
     final noItem = await session.pinSlot(
       setId: 'w-set',
-      slot: 'special',
+      slot: 'heavy',
       instanceId: 'inst-x',
     );
     expect(noItem, isNotNull);

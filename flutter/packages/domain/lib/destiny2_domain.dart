@@ -34,6 +34,9 @@ export 'src/evaluators/destiny_build_constraints.dart';
 // Set composition hard constraints (BR-SLOT-008/009 / DBR-CMP-007 kit hygiene)
 export 'src/evaluators/destiny_set_constraints.dart';
 
+// Set package minimum occupancy (DBR-CMP-008–010 / BR-SLOT-011–014)
+export 'src/evaluators/set_minimum_occupancy.dart';
+
 // Soft coverage + soft-stat helpers (DART-004)
 export 'src/evaluators/soft_coverage.dart';
 export 'src/evaluators/soft_stat_targets.dart';

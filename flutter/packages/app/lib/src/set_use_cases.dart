@@ -380,3 +380,100 @@ Future<SetDetail?> removeUserSetItem(
   );
   return getSetDetail(db, userId, setId);
 }
+
+/// Map active set-item rows to occupancy inputs for pure floors.
+List<SetOccupancyItem> occupancyItemsFromRecords(
+  Iterable<SetItemRecord> activeItems,
+) {
+  return [
+    for (final i in activeItems)
+      SetOccupancyItem(slot: i.slot, removedAt: i.removedAt),
+  ];
+}
+
+/// Load active items and evaluate package save floors (DBR-CMP-008–010).
+///
+/// Returns null when the set is missing or has an unknown type.
+Future<SetOccupancyResult?> evaluateUserSetSaveRules(
+  AppDatabase db,
+  int userId,
+  String setId,
+) async {
+  final set = await getSet(db, userId, setId);
+  if (set == null) return null;
+  final setType = SetType.tryParse(set.type);
+  if (setType == null) return null;
+  final active = await listActiveSetItems(db, setId);
+  return evaluateSetMinimumOccupancy(
+    setType,
+    occupancyItemsFromRecords(active),
+  );
+}
+
+/// Throw when the set fails package save floors (attach / finalize-save).
+///
+/// Create empty scaffold and name/tag updates stay ungated. In-progress
+/// upsert/remove stay ungated (BR-SLOT-005). Call this before attach or any
+/// explicit package-commit path.
+Future<void> assertUserSetPassesSaveRules(
+  AppDatabase db,
+  int userId,
+  String setId, {
+  String? context,
+}) async {
+  final set = await getSet(db, userId, setId);
+  if (set == null) {
+    throw UseCaseException(
+      UseCaseErrorCode.notFound,
+      'Set not found',
+      details: {'setId': setId},
+    );
+  }
+  final setType = SetType.tryParse(set.type);
+  if (setType == null) {
+    throw UseCaseException(
+      UseCaseErrorCode.invalidSetType,
+      'Unknown set type: ${set.type}',
+      details: {'type': set.type},
+    );
+  }
+  final active = await listActiveSetItems(db, setId);
+  final result = evaluateSetMinimumOccupancy(
+    setType,
+    occupancyItemsFromRecords(active),
+  );
+  if (result.ok) return;
+
+  final code = UseCaseErrorCode.fromDomainCode(result.code ?? '') ??
+      UseCaseErrorCode.setNotAttachable;
+  final message = formatSetOccupancyMessage(
+    code: result.code ?? DomainFailureCodes.setNotAttachable,
+    setType: setType,
+    count: result.count,
+    required: result.required,
+    fallbackMessage: result.message,
+  );
+  throw UseCaseException(
+    code,
+    message,
+    details: {
+      'setId': setId,
+      'setType': setType.wireName,
+      'count': result.count,
+      'required': result.required,
+      'empty': result.empty,
+      if (context != null) 'context': context,
+      'domainCode': result.code,
+    },
+  );
+}
+
+/// Whether [setId] meets package floors for attach pickers (BR-ATT-006).
+Future<bool> userSetWouldPassSaveRules(
+  AppDatabase db,
+  int userId,
+  String setId,
+) async {
+  final result = await evaluateUserSetSaveRules(db, userId, setId);
+  return result?.ok ?? false;
+}

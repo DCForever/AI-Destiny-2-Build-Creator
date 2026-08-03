@@ -44,6 +44,19 @@ void main() {
         instanceId: instanceId,
       ),
     );
+    // DBR-CMP-008 / BR-ATT-006: attachable packages need ≥2 filled slots.
+    final second = slot == 'special' ? 'heavy' : 'special';
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: second,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
+      ),
+    );
   }
 
   Future<void> seedSynergyWithWeaponLink(int userId) async {
@@ -261,7 +274,8 @@ void main() {
     expect(controller.softGuidanceAdvisory, isNot(contains('CLIENT_SECRET')));
   });
 
-  test('DART-067 oneTapCreateCategory attaches empty set', () async {
+  test('DART-067 oneTapCreateCategory creates scaffold without attach',
+      () async {
     final err = await controller.createBuild(
       name: 'Finish Web',
       className: GuardianClass.warlock,
@@ -271,9 +285,12 @@ void main() {
     final create = await controller.oneTapCreateCategory(FinishCategory.weapon);
     expect(create, isNull);
     expect(controller.finishMessage, contains('Created'));
+    // Under-min scaffolds are not attachable (BR-ATT-006 / dart-070).
     final weapon = controller.finishGaps!.gaps
         .firstWhere((g) => g.category == FinishCategory.weapon);
-    expect(weapon.coveringSetId, isNotNull);
-    expect(weapon.coveringMode, AttachmentMode.live);
+    expect(weapon.coveringSetId, isNull);
+    final uid = controller.userId!;
+    final sets = await listUserSets(db, uid, type: SetType.weapon);
+    expect(sets, isNotEmpty);
   });
 }

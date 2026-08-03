@@ -52,6 +52,7 @@ void main() {
     );
   }
 
+  /// Seeds a weapon set that meets package min (≥2 items) while keeping [slot].
   Future<void> seedWeaponSet(
     int userId,
     String setId,
@@ -73,6 +74,20 @@ void main() {
         slot: slot,
         itemHash: hash,
         itemName: 'Item $hash',
+      ),
+      now: clock,
+    );
+    // DBR-CMP-008 / BR-ATT-006: attach requires ≥2 filled domain slots.
+    final secondSlot = slot == 'special' ? 'heavy' : 'special';
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: secondSlot,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
       ),
       now: clock,
     );

@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-07-29 (set minimum occupancy; **Obsidian product packs re-sync** — subclass kit, synergy links, set bonus constraint, presentation)
+**Updated**: 2026-08-03 (dart-070: BR-SLOT-014 Pair complete; BR-ATT-006/006a attach floors; `PAIR_INCOMPLETE` / `SET_NOT_ATTACHABLE`)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -80,7 +80,8 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-SLOT-007 | Mod Sets and armor sets with empty mod-related capacity MUST show UI encouragement to add mods. Encouragement is soft; **Mod Set save validity** is governed by BR-SLOT-012 / [DBR-CMP-009](./domain-business-rules.md), not by “any non-empty single piece is enough.” | [FR-021](001-build-sets-synergies/spec.md#functional-requirements), [DBR-CMP-009](./domain-business-rules.md) |
 | BR-SLOT-011 | **Weapon Sets** and **Armor Sets**: on **save**, require **≥2 items** filled (count of occupied domain slots with an item). Fewer → reject with `SET_MIN_ITEMS`. Create/in-progress fill may be sparser until save. | [DBR-CMP-008](./domain-business-rules.md) |
 | BR-SLOT-012 | **Mod Sets**: on **save**, require mods present on **more than one armor piece** (≥2 of helmet/arms/chest/legs/class item with ≥1 mod each). Zero or one piece only → reject with `MOD_SET_MIN_SLOTS`. | [DBR-CMP-009](./domain-business-rules.md) |
-| BR-SLOT-013 | **Pair** and **Fashion** sets are not subject to BR-SLOT-011–012; Pair remains 0–1 exotic weapon + 0–1 exotic armor; Fashion keeps cosmetic slot rules. | [DBR-CMP-010](./domain-business-rules.md) |
+| BR-SLOT-013 | **Pair** and **Fashion** sets are not subject to BR-SLOT-011–012; Pair remains 0–1 exotic weapon + 0–1 exotic armor while filling; Fashion keeps cosmetic slot rules and has no combat package floor. | [DBR-CMP-010](./domain-business-rules.md) |
+| BR-SLOT-014 | **Pair** on **save** / attach: require **both** exotic weapon and exotic armor occupied. Missing either → reject with `PAIR_INCOMPLETE`. Empty scaffold may exist while filling; package commit/attach is blocked until complete. | [DBR-CMP-010](./domain-business-rules.md) Pair path, [DAC-SET-002](./domain-acceptance-criteria.md) |
 
 ---
 
@@ -170,6 +171,8 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-ATT-003 | Live: Set edits reflected when viewing build. | [FR-009](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-ATT-004 | Snapshot: frozen state at attachment time. | [FR-009](001-build-sets-synergies/spec.md#functional-requirements) |
 | BR-ATT-005 | Export includes attachments with live/snapshot indication. | [FR-009](001-build-sets-synergies/spec.md#functional-requirements) |
+| BR-ATT-006 | A Set that fails package save floors (BR-SLOT-011–014 / DBR-CMP-008–010) **must not** be attachable. Attach attempts reject with the occupancy code (`SET_MIN_ITEMS`, `MOD_SET_MIN_SLOTS`, `PAIR_INCOMPLETE`) or `SET_NOT_ATTACHABLE` with plain-language reason. Under-min scaffolds are not attachable. | [DAC-SET-003](./domain-acceptance-criteria.md), [DBR-CMP-008](./domain-business-rules.md)–010 |
+| BR-ATT-006a | Attach pickers and `attachableSets` lists **only** include packages that would pass save floors (same pure helper as save assert). Fashion remains attachable without combat min. | BR-ATT-006, [DAC-SET-003](./domain-acceptance-criteria.md) |
 
 ---
 
@@ -376,6 +379,8 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | `SLOT_OCCUPIED` | BR-SLOT-006 | [FR-027](001-build-sets-synergies/spec.md#functional-requirements) |
 | `SET_MIN_ITEMS` | BR-SLOT-011, [DBR-CMP-008](./domain-business-rules.md) | Weapon/Armor set save needs ≥2 items |
 | `MOD_SET_MIN_SLOTS` | BR-SLOT-012, [DBR-CMP-009](./domain-business-rules.md) | Mod set save needs mods on ≥2 armor pieces |
+| `PAIR_INCOMPLETE` | BR-SLOT-014, [DBR-CMP-010](./domain-business-rules.md) Pair path | Pair needs exotic weapon + exotic armor |
+| `SET_NOT_ATTACHABLE` | BR-ATT-006, BR-ATT-006a | Package fails save floors; cannot attach |
 | `SLOT_CONFLICT` | BR-CONF-001–003 | [FR-026](001-build-sets-synergies/spec.md#functional-requirements) |
 | `TOO_MANY_EXOTICS` | BR-UI-001, [DBR-CMP-007](./domain-business-rules.md) | [DAC-DST-001](./domain-acceptance-criteria.md) |
 | `ILLEGAL_SUBCLASS_KIT` | BR-UI-001, [DBR-SUB-004](./domain-business-rules.md) | [DAC-DST-003](./domain-acceptance-criteria.md) |

@@ -438,6 +438,102 @@ void main() {
       );
     });
 
+    test('assertUserSetPassesSaveRules rejects under-min weapon', () async {
+      final userId = await seedUser();
+      await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'w-min',
+          name: 'Sparse',
+          type: SetType.weapon,
+        ),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w-min',
+        const UpsertSetItemCommand(
+          slot: 'primary',
+          itemHash: 1,
+          itemName: 'One',
+        ),
+        now: clock,
+      );
+
+      expect(
+        () => assertUserSetPassesSaveRules(db, userId, 'w-min'),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.setMinItems,
+          ),
+        ),
+      );
+
+      // Create empty scaffold still allowed (BR-SLOT-005 / create ungated).
+      final empty = await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'w-empty',
+          name: 'Empty scaffold',
+          type: SetType.weapon,
+        ),
+        now: clock,
+      );
+      expect(empty.activeItems, isEmpty);
+
+      // Name update stays ungated.
+      final renamed = await updateUserSet(
+        db,
+        userId,
+        'w-empty',
+        const UpdateSetCommand(name: 'Still empty'),
+        now: fixedNow(later),
+      );
+      expect(renamed!.set.name, 'Still empty');
+    });
+
+    test('assertUserSetPassesSaveRules accepts ≥2 weapon items', () async {
+      final userId = await seedUser();
+      await createUserSet(
+        db,
+        userId,
+        const CreateSetCommand(
+          id: 'w-ok',
+          name: 'Ready',
+          type: SetType.weapon,
+        ),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w-ok',
+        const UpsertSetItemCommand(
+          slot: 'primary',
+          itemHash: 1,
+          itemName: 'A',
+        ),
+        now: clock,
+      );
+      await upsertUserSetItem(
+        db,
+        userId,
+        'w-ok',
+        const UpsertSetItemCommand(
+          slot: 'special',
+          itemHash: 2,
+          itemName: 'B',
+        ),
+        now: clock,
+      );
+      await assertUserSetPassesSaveRules(db, userId, 'w-ok');
+    });
+
     test('allows legendary after one exotic weapon', () async {
       final userId = await seedUser();
       await createUserSet(

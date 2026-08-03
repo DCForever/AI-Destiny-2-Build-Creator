@@ -69,7 +69,8 @@ void main() {
     await controller.selectBuild(detail.build.id);
   }
 
-  test('oneTapCreateCategory creates empty armor set and attaches', () async {
+  test('oneTapCreateCategory creates empty armor scaffold without attach',
+      () async {
     await seedBuild();
     expect(controller.finishGaps?.complete, isFalse);
 
@@ -77,11 +78,13 @@ void main() {
     expect(err, isNull);
     expect(controller.finishMessage, contains('Created'));
     expect(controller.finishGaps, isNotNull);
+    // Under-min scaffolds are not attachable (BR-ATT-006 / dart-070).
     final armor = controller.finishGaps!.gaps
         .firstWhere((g) => g.category == FinishCategory.armor);
-    expect(armor.status, isNot(FinishGapStatus.needsSet));
-    expect(armor.coveringSetId, isNotNull);
-    expect(armor.coveringMode, AttachmentMode.live);
+    expect(armor.coveringSetId, isNull);
+    final uid = controller.userId!;
+    final sets = await listUserSets(db, uid, type: SetType.armor);
+    expect(sets, isNotEmpty);
   });
 
   test('captureCategory with no claims returns NOTHING_TO_CREATE', () async {
@@ -91,12 +94,13 @@ void main() {
     expect(err, 'NOTHING_TO_CREATE');
   });
 
-  test('fillFinishSlot upserts covering set item', () async {
+  test('fillFinishSlot upserts library set item after create scaffold',
+      () async {
     await seedBuild();
     await controller.oneTapCreateCategory(FinishCategory.armor);
-    final setId = controller.finishGaps!.gaps
-        .firstWhere((g) => g.category == FinishCategory.armor)
-        .coveringSetId!;
+    final uid = controller.userId!;
+    final sets = await listUserSets(db, uid, type: SetType.armor);
+    final setId = sets.single.id;
 
     final err = await controller.fillFinishSlot(
       setId: setId,
@@ -110,3 +114,4 @@ void main() {
     expect(items.any((i) => i.slot == 'helmet' && i.itemHash == 42), isTrue);
   });
 }
+

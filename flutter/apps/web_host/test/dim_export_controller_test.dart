@@ -53,6 +53,21 @@ void main() {
         instanceId: instanceId,
       ),
     );
+    final second = slot == 'special' ? 'heavy' : 'special';
+    final secondInstance =
+        instanceId == null ? null : '$instanceId-2';
+    await upsertUserSetItem(
+      db,
+      userId,
+      setId,
+      UpsertSetItemCommand(
+        id: '$setId-item-2',
+        slot: second,
+        itemHash: hash + 1000,
+        itemName: 'Item ${hash + 1000}',
+        instanceId: secondInstance,
+      ),
+    );
   }
 
   Future<void> seedInventory(
@@ -121,10 +136,26 @@ void main() {
 
   test('US2 owned pin equip-ready exports jsonOnly to clipboard', () async {
     final seed = await seedCompose(instanceId: 'inst-primary');
-    await seedInventory(
+    await replaceInventoryBatch(
+      db,
       seed.userId,
-      instanceId: 'inst-primary',
-      itemHash: 100,
+      items: [
+        InventoryItemRecord(
+          instanceId: 'inst-primary',
+          itemHash: 100,
+          bucket: 'Kinetic',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+        InventoryItemRecord(
+          instanceId: 'inst-primary-2',
+          itemHash: 1100,
+          bucket: 'Energy',
+          location: 'vault',
+          syncedAt: '2026-07-25T12:00:00.000Z',
+        ),
+      ],
+      now: '2026-07-25T12:00:00.000Z',
     );
 
     await dim.bind(

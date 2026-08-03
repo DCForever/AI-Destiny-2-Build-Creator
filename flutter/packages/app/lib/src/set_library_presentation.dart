@@ -1,5 +1,7 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
 
+import 'errors.dart';
+
 /// Attachment ref display for used-by strip (GAP-UI-SETS-05).
 class SetUsedByDisplay {
   const SetUsedByDisplay({
@@ -21,7 +23,7 @@ class SetUsedByDisplay {
   }
 }
 
-/// Readiness summary for a library set detail (GAP-UI-SETS-05).
+/// Readiness summary for a library set detail (GAP-UI-SETS-05 + dart-070).
 class SetReadinessSummary {
   const SetReadinessSummary({
     required this.filled,
@@ -30,6 +32,11 @@ class SetReadinessSummary {
     this.nextEmptySlot,
     this.isMods = false,
     this.modCount = 0,
+    this.meetsPackageMinimum = true,
+    this.packageMinimumCode,
+    this.packageMinimumMessage,
+    this.packageMinimumCount = 0,
+    this.packageMinimumRequired = 0,
   });
 
   final int filled;
@@ -37,12 +44,30 @@ class SetReadinessSummary {
   final int emptySlots;
   final String? nextEmptySlot;
   final bool isMods;
+
+  /// Raw mod row count (not piece groups). Prefer [packageMinimumCount] for floors.
   final int modCount;
+
+  /// True when pure [setWouldPassSaveRules] passes (DBR-CMP-008–010).
+  final bool meetsPackageMinimum;
+
+  /// Occupancy failure wire code when under min.
+  final String? packageMinimumCode;
+
+  /// Plain-language occupancy reason when under min.
+  final String? packageMinimumMessage;
+
+  /// Occupancy count used by package floors (items / mod pieces / pair slots).
+  final int packageMinimumCount;
+
+  /// Required floor for this set type (0 fashion, 2 otherwise).
+  final int packageMinimumRequired;
 
   /// Product-ish tone: verified | fuzzy | unresolved.
   String get tone {
+    if (!meetsPackageMinimum) return 'unresolved';
     if (isMods) {
-      return modCount > 0 ? 'verified' : 'unresolved';
+      return packageMinimumCount > 0 ? 'verified' : 'unresolved';
     }
     if (emptySlots == 0 && filled > 0) return 'verified';
     if (filled == 0) return 'unresolved';
@@ -50,7 +75,17 @@ class SetReadinessSummary {
   }
 
   String get badgeLabel {
+    if (!meetsPackageMinimum && packageMinimumMessage != null) {
+      if (isMods) {
+        return '${packageMinimumCount}/${packageMinimumRequired} pieces';
+      }
+      return '$filled/$capacity · need ${packageMinimumRequired}+';
+    }
     if (isMods) {
+      final pieces = packageMinimumCount;
+      if (pieces > 0) {
+        return pieces == 1 ? '1 armor piece' : '$pieces armor pieces';
+      }
       return modCount == 1 ? '1 mod' : '$modCount mods';
     }
     final empty = emptySlots > 0 ? ' · $emptySlots empty' : '';
@@ -80,20 +115,43 @@ String? firstEmptyBoardSlot({
 }
 
 /// Build readiness for a set type + active item slots.
+///
+/// Package minimum fields/tone come from the same pure occupancy helper as
+/// save/attach (DBR-CMP-008–010). Mod floors use distinct armor pieces via
+/// [modSetArmorSlotOf], not raw mod row count.
 SetReadinessSummary buildSetReadiness({
   required SetType setType,
   required List<String> boardSlots,
   required Iterable<String> activeItemSlots,
 }) {
+  final occupancyItems = [
+    for (final slot in activeItemSlots) SetOccupancyItem(slot: slot),
+  ];
+  final occupancy = evaluateSetMinimumOccupancy(setType, occupancyItems);
+
   if (setType == SetType.mod) {
     final mods = activeItemSlots.length;
+    final pieces = occupancy.count;
     return SetReadinessSummary(
-      filled: mods,
+      filled: pieces,
       capacity: boardSlots.isEmpty ? 0 : boardSlots.length,
       emptySlots: 0,
       nextEmptySlot: null,
       isMods: true,
       modCount: mods,
+      meetsPackageMinimum: occupancy.ok,
+      packageMinimumCode: occupancy.code,
+      packageMinimumMessage: occupancy.ok
+          ? null
+          : formatSetOccupancyMessage(
+              code: occupancy.code ?? DomainFailureCodes.modSetMinSlots,
+              setType: setType,
+              count: occupancy.count,
+              required: occupancy.required,
+              fallbackMessage: occupancy.message,
+            ),
+      packageMinimumCount: pieces,
+      packageMinimumRequired: occupancy.required,
     );
   }
   final filled = filledSlotCount(
@@ -110,6 +168,37 @@ SetReadinessSummary buildSetReadiness({
       boardSlots: boardSlots,
       activeItemSlots: activeItemSlots,
     ),
+    meetsPackageMinimum: occupancy.ok,
+    packageMinimumCode: occupancy.code,
+    packageMinimumMessage: occupancy.ok
+        ? null
+        : formatSetOccupancyMessage(
+            code: occupancy.code ?? DomainFailureCodes.setMinItems,
+            setType: setType,
+            count: occupancy.count,
+            required: occupancy.required,
+            fallbackMessage: occupancy.message,
+          ),
+    packageMinimumCount: occupancy.count,
+    packageMinimumRequired: occupancy.required,
+  );
+}
+
+/// Plain-language occupancy error for hosts (not bare hashes).
+String formatSetOccupancyUseCaseMessage(UseCaseException e) {
+  final code = e.code.wireName;
+  final setTypeWire = e.details['setType'] as String?;
+  final setType =
+      setTypeWire != null ? SetType.tryParse(setTypeWire) : null;
+  final count = e.details['count'] is int ? e.details['count'] as int : null;
+  final required =
+      e.details['required'] is int ? e.details['required'] as int : null;
+  return formatSetOccupancyMessage(
+    code: code,
+    setType: setType,
+    count: count,
+    required: required,
+    fallbackMessage: e.message,
   );
 }
 

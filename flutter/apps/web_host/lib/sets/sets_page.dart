@@ -552,6 +552,17 @@ class _SetsPageState extends State<SetsPage> {
                       attributes: {'data-testid': 'sets-readiness-badge'},
                       [.text(c.readinessOfSelected()!.badgeLabel)],
                     ),
+                    if (!c.readinessOfSelected()!.meetsPackageMinimum &&
+                        c.readinessOfSelected()!.packageMinimumMessage != null)
+                      p(
+                        classes: 'compose-error',
+                        attributes: {'data-testid': 'sets-occupancy-hint'},
+                        [
+                          .text(
+                            c.readinessOfSelected()!.packageMinimumMessage!,
+                          ),
+                        ],
+                      ),
                     if (c.usedByOfSelected().isEmpty)
                       span(
                         attributes: {'data-testid': 'sets-used-by-unused'},
