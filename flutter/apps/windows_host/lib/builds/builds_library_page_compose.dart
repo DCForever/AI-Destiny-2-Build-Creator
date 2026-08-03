@@ -20,13 +20,20 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '4 · Variants',
-          style: _sectionTitleStyle(context),
+          'VARIANTS',
+          style: neonDisplay(
+            color: FlapPalette.of(context).foreground,
+            fontSize: 11,
+            letterSpacing: 1.0,
+          ),
         ),
         const SizedBox(height: kSpace4),
         Text(
-          'After Save: select a variant, attach sets, pin slots.',
-          style: _bodyMutedStyle(context),
+          'Select a variant, attach sets, pin slots.',
+          style: neonBody(
+            color: FlapPalette.of(context).muted,
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: kSpace8),
         if (variants.isEmpty)
@@ -77,13 +84,20 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
         if (selectedVariant != null) ...[
           const SizedBox(height: kSpace16),
           Text(
-            'Loadout overview',
-            style: _sectionLabelStyle(context),
+            'SLOT STRIP',
+            style: neonMono(
+              color: FlapPalette.of(context).muted,
+              fontSize: 10,
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: kSpace4),
           Text(
-            'Read-only strip — empty / wishlist / instance without Edit.',
-            style: _bodyMutedStyle(context),
+            'Owned instance · Wish definition · Gap empty',
+            style: neonBody(
+              color: FlapPalette.of(context).muted,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: kSpace8),
           if (_controller.slotPins.isEmpty)
@@ -341,13 +355,20 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Finish readiness',
-          style: _sectionTitleStyle(context),
+          'FINISH READINESS',
+          style: neonDisplay(
+            color: FlapPalette.of(context).foreground,
+            fontSize: 11,
+            letterSpacing: 1.0,
+          ),
         ),
         const SizedBox(height: kSpace4),
         Text(
-          'Close gaps to equip. Soft suggestions stay confirm-only.',
-          style: _bodyMutedStyle(context),
+          'One status · equip + export share it · soft never blocks',
+          style: neonBody(
+            color: FlapPalette.of(context).muted,
+            fontSize: 12,
+          ),
         ),
         ListTile(
           key: const Key('finish_policy_toggle'),

@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Warlock Build — Loadout Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --bg-mid: #08081a;
+      --surface: #0a0a18;
+      --surface-2: #101028;
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-2: #8a96a8;
+      --border: rgba(232, 238, 242, 0.22);
+      --border-strong: rgba(232, 238, 242, 0.38);
+      --border-subtle: rgba(232, 238, 242, 0.12);
+      --accent: #00e5ff;
+      --accent-deep: #00b8d4;
+      --accent-secondary: #ff1a8c;
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --glow-accent: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+      --grad-zone: linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, #fff 1%) 0%, var(--surface) 100%);
+      --grad-tx: linear-gradient(90deg, transparent, var(--accent), transparent);
+      --grid-line: color-mix(in srgb, var(--accent) 14%, transparent);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --control-h: 40px;
+      --radius: 0px;
+      --radius-sm: 2px;
+      --font-display: Orbitron, Electrolize, Rajdhani, "Exo 2", "Chakra Petch", system-ui, sans-serif;
+      --font-body: Inter, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "JetBrains Mono", "Share Tech Mono", "Fira Code", ui-monospace, Menlo, monospace;
+      --shell-max: 1440px;
+      --gap-module: 12px;
+      --row-h: 44px;
+      --type-caption: 11px;
+      --type-body: 13px;
+      --type-label: 10px;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f7fb;
+      --bg-mid: #e8eef5;
+      --surface: #ffffff;
+      --surface-2: #eef2f7;
+      --fg: #0a0a18;
+      --muted: #4a5a68;
+      --muted-2: #6b7a88;
+      --border: rgba(10, 10, 24, 0.16);
+      --border-strong: rgba(10, 10, 24, 0.28);
+      --border-subtle: rgba(10, 10, 24, 0.1);
+      --accent: #00c4db;
+      --accent-deep: #00a8bc;
+      --accent-secondary: #ff1a8c;
+      --glow-accent: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent), 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+      --grad-zone: linear-gradient(180deg, #fff 0%, var(--surface) 100%);
+      --grid-line: color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: var(--type-body);
+      line-height: 1.45;
+      letter-spacing: 0;
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    :focus-visible { outline: none; box-shadow: var(--glow-accent); }
+    .skip-link {
+      position: absolute; left: 12px; top: 12px; z-index: 100;
+      padding: 10px 14px; background: var(--accent); color: #031018;
+      font-weight: 600; font-size: 12px; letter-spacing: 0.02em;
+      transform: translateY(-160%); transition: transform 160ms ease-out;
+    }
+    .skip-link:focus { transform: translateY(0); box-shadow: var(--glow-accent); }
+    .app {
+      min-height: 100%;
+      position: relative;
+      isolation: isolate;
+      background:
+        radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 55%),
+        radial-gradient(60% 40% at 90% 100%, color-mix(in srgb, var(--accent-secondary) 7%, transparent), transparent 50%),
+        var(--bg);
+    }
+    .stage {
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 100%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+        radial-gradient(ellipse 40% 30% at 15% 20%, color-mix(in srgb, var(--accent-secondary) 5%, transparent), transparent 50%),
+        var(--bg);
+    }
+    .app::before {
+      content: "";
+      position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.16;
+      background:
+        linear-gradient(to top, var(--bg) 0%, transparent 38%),
+        repeating-linear-gradient(90deg, transparent 0 47px, var(--grid-line) 47px 48px),
+        repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in srgb, var(--accent) 10%, transparent) 47px 48px);
+      transform: perspective(600px) rotateX(58deg) scale(1.4) translateY(18%);
+      transform-origin: 50% 100%;
+      mask-image: linear-gradient(to top, black 0%, transparent 70%);
+    }
+    .shell {
+      max-width: var(--shell-max);
+      margin: 0 auto;
+      padding: var(--space-3) var(--space-4) var(--space-5);
+      display: grid;
+      gap: var(--gap-module);
+      position: relative;
+      z-index: 1;
+    }
+    .topbar {
+      display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+      padding: var(--space-2) var(--space-3) var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+      background: color-mix(in srgb, var(--surface) 94%, var(--bg) 6%);
+    }
+    .topbar-id {
+      display: flex; align-items: center; gap: var(--space-3);
+      min-width: 0; flex: 1 1 220px;
+    }
+    .title {
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: min(42vw, 320px); line-height: 1.2;
+    }
+    .meta-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      min-height: 28px; height: 28px; padding: 0 10px;
+      background: var(--surface-2); color: var(--fg);
+      border: 1px solid var(--border-subtle);
+      font-size: var(--type-caption); font-weight: 500; white-space: nowrap;
+    }
+    .chip .dot {
+      width: 6px; height: 6px; flex-shrink: 0; background: var(--accent);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+    }
+    .chip.muted { color: var(--muted); }
+    .chip.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+    .chip.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+    .chip.crit { color: var(--accent-secondary); border-color: color-mix(in srgb, var(--accent-secondary) 40%, transparent); }
+    .topbar-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: var(--control-h); height: var(--control-h);
+      padding: 0 14px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--fg);
+      transition: background 160ms ease-out, border-color 160ms ease-out, opacity 160ms ease-out, color 160ms ease-out, transform 100ms ease-out;
+      white-space: nowrap; font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+      position: relative;
+    }
+    .btn:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      background: color-mix(in srgb, var(--surface-2) 80%, var(--accent) 8%);
+    }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn.is-loading { color: transparent !important; pointer-events: none; }
+    .btn.is-loading::after {
+      content: ""; position: absolute; width: 14px; height: 14px;
+      border: 1.5px solid color-mix(in srgb, var(--fg) 25%, transparent);
+      border-top-color: var(--fg); border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn-primary.is-loading::after {
+      border-color: color-mix(in srgb, #031018 30%, transparent);
+      border-top-color: #031018;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-primary {
+      background: var(--accent); border-color: var(--accent); color: #031018;
+      font-weight: 600;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--accent) 88%, #fff 12%);
+      border-color: color-mix(in srgb, var(--accent) 88%, #fff 12%);
+    }
+    .btn-primary:active:not(:disabled) {
+      background: var(--accent-deep); border-color: var(--accent-deep);
+    }
+    .btn-ghost {
+      background: transparent; border-color: transparent; color: var(--muted);
+      height: 36px; min-height: 36px; padding: 0 10px;
+    }
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--fg);
+      background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+      border-color: transparent;
+    }
+    .btn-sm { height: 32px; min-height: 32px; padding: 0 10px; font-size: 11px; letter-spacing: 0.02em; }
+    .btn-icon {
+      width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0;
+      display: inline-grid; place-items: center; color: var(--muted);
+      border: 1px solid transparent;
+      transition: color 160ms ease-out, background 160ms ease-out, border-color 160ms ease-out;
+    }
+    .btn-icon:hover { color: var(--fg); background: var(--surface-2); border-color: var(--border-subtle); }
+    .btn-icon:active { background: color-mix(in srgb, var(--surface-2) 70%, var(--accent) 10%); }
+    .btn-icon svg, .btn svg {
+      width: 14px; height: 14px; stroke: currentColor; fill: none;
+      stroke-width: 1.4; stroke-linecap: square; stroke-linejoin: miter; flex-shrink: 0;
+    }
+    .steps {
+      display: flex; flex-wrap: wrap; gap: 4px 0; align-items: center;
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted-2); padding: 0 var(--space-1);
+    }
+    .step {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px;
+      color: var(--muted-2); min-height: 40px; border: 1px solid transparent;
+      transition: color 160ms ease-out, background 160ms ease-out, border-color 160ms ease-out;
+    }
+    .step:hover { color: var(--fg); background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+    .step.is-done { color: var(--muted); }
+    .step.is-active, .step[aria-current="step"] {
+      color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
+    }
+    .step-num {
+      display: inline-grid; place-items: center; width: 16px; height: 16px;
+      border: 1px solid currentColor; font-size: 9px;
+    }
+    .step-sep { width: 16px; height: 1px; background: var(--border-subtle); margin: 0 2px; }
+    .tx-line { position: relative; height: 1px; background: var(--border-subtle); overflow: hidden; margin: 2px 0; }
+    .tx-line::after {
+      content: ""; position: absolute; inset: 0 auto 0 0; width: 28%;
+      background: var(--grad-tx); animation: tx-packet 3.6s linear infinite; opacity: 0;
+    }
+    @keyframes tx-packet {
+      0% { left: -30%; opacity: 0; }
+      12% { opacity: 1; }
+      55% { opacity: 1; }
+      75% { opacity: 0; }
+      100% { left: 110%; opacity: 0; }
+    }
+    .main {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.35fr);
+      gap: var(--gap-module);
+      align-items: start;
+    }
+    .zone {
+      background: var(--surface);
+      background-image: var(--grad-zone);
+      padding: var(--space-3);
+      display: grid;
+      gap: var(--space-3);
+      position: relative;
+      isolation: isolate;
+    }
+    .zone-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: var(--space-2); min-height: 20px;
+    }
+    .zone-title {
+      margin: 0; font-family: var(--font-display); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); line-height: 1.2;
+    }
+    .zone-sub {
+      font-family: var(--font-mono); font-size: var(--type-label); letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted-2); line-height: 1.3;
+    }
+    .field { display: grid; gap: 4px; }
+    .label {
+      font-family: var(--font-mono); font-size: var(--type-label); letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted-2);
+    }
+    .input, .select {
+      height: var(--control-h); min-height: var(--control-h); padding: 0 10px;
+      background: var(--surface-2); border: 1px solid var(--border-subtle);
+      color: var(--fg); width: 100%;
+      transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+    }
+    .input::placeholder { color: color-mix(in srgb, var(--muted-2) 80%, transparent); }
+    .input:hover, .select:hover { border-color: var(--border); }
+    .input:focus, .select:focus {
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      box-shadow: var(--glow-accent); outline: none;
+    }
+    .input:disabled, .select:disabled { opacity: 0.45; cursor: not-allowed; }
+    .select {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 28px;
+    }
+    .synergy-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 32px; height: 32px; padding: 0 8px 0 10px;
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+      border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+      color: var(--fg); font-size: var(--type-caption);
+    }
+    .tag button {
+      color: var(--muted); width: 28px; height: 28px; min-width: 28px;
+      display: grid; place-items: center; padding: 0; font-size: 14px; line-height: 1;
+    }
+    .tag button:hover { color: var(--fg); }
+    .pin-opt-list { display: grid; gap: 6px; }
+    .pin-opt {
+      display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center;
+      min-height: var(--row-h); padding: 4px 6px 4px 4px; background: var(--surface-2);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .pin-opt .ico {
+      width: 36px; height: 36px; display: grid; place-items: center; color: var(--muted);
+      background: color-mix(in srgb, var(--bg) 50%, var(--surface-2) 50%);
+    }
+    .pin-opt .ico svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.35; }
+    .pin-opt .body { min-width: 0; }
+    .pin-opt .slot-k {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted-2);
+    }
+    .pin-opt .name {
+      font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pin-opt .name.empty { color: var(--muted-2); font-weight: 400; }
+    .pin-opt .actions { display: flex; gap: 4px; align-items: center; }
+    .kit-line {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      padding: 8px 0 0; border-top: 1px solid var(--border-subtle); color: var(--muted); font-size: 12px;
+    }
+    .kit-line strong { color: var(--fg); font-weight: 500; }
+    .kit-controls { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    #zone-loadout { padding: 10px; gap: 8px; }
+    #zone-loadout .slot-toolbar { gap: 6px; align-items: center; }
+    #zone-loadout .zone-head { min-height: 0; gap: 4px; }
+    #zone-loadout .zone-title { font-size: 11px; letter-spacing: 0.1em; }
+    #zone-loadout .zone-sub { font-size: 9px; letter-spacing: 0.08em; }
+    #zone-loadout .legend { gap: 8px; font-size: 9px; letter-spacing: 0.08em; }
+    #zone-loadout .lg { width: 6px; height: 6px; }
+    .slot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .slot-card {
+      display: grid; grid-template-columns: 24px 1fr; grid-template-rows: auto auto auto;
+      gap: 0 8px; padding: 8px; background: var(--surface-2); min-height: 0; position: relative;
+      border-left: 2px solid transparent; cursor: pointer;
+      transition: background 160ms ease-out, box-shadow 160ms ease-out;
+      text-align: left; width: 100%; color: inherit; font: inherit;
+    }
+    .slot-card:hover { background: color-mix(in srgb, var(--surface-2) 85%, var(--accent) 8%); }
+    .slot-card:active { background: color-mix(in srgb, var(--surface-2) 75%, var(--accent) 12%); }
+    .slot-card:focus-visible { box-shadow: var(--glow-accent); }
+    .slot-card[data-state="owned"] { border-left-color: var(--success); }
+    .slot-card[data-state="empty"] { border-left-color: color-mix(in srgb, var(--muted-2) 50%, transparent); opacity: 0.92; }
+    .slot-card[data-state="gap"] { border-left-color: var(--accent-secondary); }
+    .slot-card .ico {
+      grid-row: 1 / span 3; width: 24px; height: 24px; align-self: start;
+      display: grid; place-items: center; color: var(--muted);
+      background: color-mix(in srgb, var(--bg) 40%, var(--surface) 60%);
+    }
+    .slot-card .ico svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.35; }
+    .slot-card[data-state="owned"] .ico { color: var(--accent); }
+    .slot-card[data-state="gap"] .ico { color: var(--accent-secondary); }
+    .slot-card .slot-k {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted-2); align-self: end; line-height: 1.2;
+    }
+    .slot-card .slot-name {
+      font-size: 12px; font-weight: 500; line-height: 1.25; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; grid-column: 2;
+    }
+    .slot-card .slot-name.empty { color: var(--muted-2); font-weight: 400; }
+    .slot-foot {
+      grid-column: 2; display: flex; align-items: center; justify-content: space-between;
+      gap: 6px; min-width: 0; margin-top: 2px;
+    }
+    .slot-card .instance {
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted-2);
+      font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    }
+    .seg { display: inline-flex; border: 1px solid var(--border-subtle); flex-shrink: 0; align-self: center; }
+    .seg button {
+      height: 28px; min-height: 28px; min-width: 40px; padding: 0 8px;
+      font-size: 10px; font-family: var(--font-mono);
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-2);
+      border-right: 1px solid var(--border-subtle); line-height: 1;
+      transition: color 140ms ease-out, background 140ms ease-out;
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button.is-on { color: #031018; background: var(--accent); font-weight: 600; }
+    .seg button:hover:not(.is-on) { color: var(--fg); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+    .seg button:active:not(.is-on) { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+    .slot-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px; font-family: var(--font-mono);
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-2);
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .lg { width: 8px; height: 8px; border-left: 2px solid; }
+    .lg-ok { border-color: var(--success); }
+    .lg-gap { border-color: var(--accent-secondary); }
+    .lg-empty { border-color: var(--muted-2); }
+    .attach-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+    .attach-list { display: grid; gap: 2px; }
+    .attach-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      min-height: 32px; padding: 4px 0; color: var(--muted); font-size: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .attach-item span { color: var(--fg); }
+    .attach-item svg { width: 14px; height: 14px; stroke: var(--muted); fill: none; stroke-width: 1.35; }
+    .rail {
+      display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.9fr);
+      gap: var(--gap-module); background: var(--surface); padding: var(--space-3); isolation: isolate;
+    }
+    .rail-block { display: grid; gap: var(--space-2); align-content: start; }
+    .status-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .sp {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 32px; height: 32px; padding: 0 10px;
+      font-size: var(--type-caption); font-weight: 500; background: var(--surface-2);
+      border: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums;
+    }
+    .sp svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.6; flex-shrink: 0; }
+    .sp.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+    .sp.bad { color: var(--accent-secondary); border-color: color-mix(in srgb, var(--accent-secondary) 35%, transparent); }
+    .sp.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+    .sp .live-dot {
+      width: 6px; height: 6px; flex-shrink: 0; background: var(--accent-secondary);
+      animation: signal-fade 2s linear infinite;
+    }
+    @keyframes signal-fade {
+      0%, 18% { opacity: 0; }
+      28% { opacity: 1; }
+      58% { opacity: 1; }
+      82%, 100% { opacity: 0; }
+    }
+    .gap-line { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .gap-line strong { color: var(--fg); font-weight: 500; }
+    .gap-line em {
+      font-style: normal; color: var(--accent-secondary); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+    }
+    .ready-summary {
+      display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--muted);
+    }
+    .ready-summary .ok-text { color: var(--success); font-weight: 500; }
+    .ready-summary .bad-text { color: var(--accent-secondary); font-weight: 500; }
+    .details-btn {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); text-decoration: underline; text-underline-offset: 3px;
+      padding: 6px 0; height: auto; min-height: 32px;
+    }
+    .details-btn:hover { color: var(--fg); }
+    .owned-list {
+      display: none; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 4px 12px; padding: 8px; background: var(--surface-2);
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.02em;
+    }
+    .owned-list.is-open { display: grid; }
+    .owned-list b { color: var(--fg); font-weight: 500; }
+    .owned-list .st-ok { color: var(--success); }
+    .owned-list .st-gap { color: var(--accent-secondary); }
+    .apply-row { display: grid; gap: 8px; }
+    .apply-controls {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center;
+    }
+    .block-reason {
+      font-size: var(--type-caption); color: var(--muted); padding: 10px 12px; line-height: 1.45;
+      background: color-mix(in srgb, var(--accent-secondary) 8%, var(--surface-2));
+      border-left: 2px solid var(--accent-secondary);
+    }
+    .block-reason.is-clear {
+      background: color-mix(in srgb, var(--success) 8%, var(--surface-2));
+      border-left-color: var(--success);
+    }
+    .block-reason.is-error {
+      background: color-mix(in srgb, var(--danger) 10%, var(--surface-2));
+      border-left-color: var(--danger);
+      color: var(--fg);
+    }
+    .block-reason strong { color: var(--fg); font-weight: 500; }
+    .guidance {
+      display: grid; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle);
+    }
+    .guidance-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+    .hint { font-size: var(--type-caption); color: var(--muted-2); max-width: 52ch; margin: 0; line-height: 1.45; }
+    .soft-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .soft-chip {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 28px; height: 28px; padding: 0 10px;
+      font-size: var(--type-caption); background: var(--surface-2); border: 1px solid var(--border-subtle);
+    }
+    .soft-chip.is-ok { border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+    .soft-chip .pulse {
+      width: 7px; height: 7px; flex-shrink: 0; background: var(--danger);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 50%, transparent);
+      animation: signal-fade 2s linear infinite;
+    }
+    .soft-chip.is-ok .pulse {
+      background: var(--success);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--success) 40%, transparent);
+      animation: none; opacity: 1;
+    }
+    .stat-row {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 14px; align-items: center;
+    }
+    .stat-slider {
+      display: grid; grid-template-columns: minmax(64px, auto) 1fr auto;
+      gap: 4px 8px; align-items: center; min-height: 36px; padding: 4px 0;
+    }
+    .stat-slider .stat-label {
+      font-family: var(--font-mono); font-size: var(--type-label); letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted-2); white-space: nowrap;
+    }
+    .stat-slider .stat-val {
+      font-family: var(--font-mono); font-size: var(--type-caption); font-variant-numeric: tabular-nums;
+      color: var(--fg); min-width: 2.75ch; text-align: right;
+    }
+    .stat-slider input[type="range"] {
+      -webkit-appearance: none; appearance: none; width: 100%; height: 4px; margin: 0;
+      background: color-mix(in srgb, var(--border-subtle) 90%, var(--accent) 10%);
+      border: none; border-radius: 0; outline: none; cursor: pointer;
+    }
+    .stat-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+      background: var(--fg);
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--surface) 80%, transparent);
+      cursor: pointer;
+    }
+    .stat-slider input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px; background: var(--fg);
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      border-radius: 0; cursor: pointer;
+    }
+    .stat-slider input[type="range"]:focus-visible { box-shadow: var(--glow-accent); }
+    .stat-slider input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
+    .stat-slider.is-active .stat-label,
+    .stat-slider.is-active .stat-val { color: var(--fg); }
+    .stat-slider.is-active input[type="range"]::-webkit-slider-thumb { background: var(--accent); }
+    .stat-slider.is-active input[type="range"]::-moz-range-thumb { background: var(--accent); }
+    .stat-row .stat-actions {
+      grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 6px; margin-top: 2px;
+    }
+    .variants {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      padding: 8px 0 0; border-top: 1px solid var(--border-subtle);
+    }
+    .variants .label { margin-right: 4px; }
+    .var-chip {
+      height: 32px; min-height: 32px; padding: 0 12px; font-size: var(--type-caption); letter-spacing: 0.02em;
+      background: var(--surface-2); border: 1px solid var(--border-subtle); color: var(--muted);
+      transition: color 160ms ease-out, background 160ms ease-out, border-color 160ms ease-out;
+    }
+    .var-chip:hover { color: var(--fg); border-color: var(--border); }
+    .var-chip.is-on {
+      color: #031018; background: var(--accent); border-color: var(--accent); font-weight: 600;
+    }
+    .var-create {
+      display: grid; grid-template-columns: 1fr auto; gap: 6px; flex: 1 1 180px; min-width: 160px;
+    }
+    .var-create .input { height: 32px; min-height: 32px; }
+    .empty-state {
+      display: grid; gap: 8px; place-items: center; text-align: center;
+      padding: 28px 16px; color: var(--muted-2); font-size: 12px;
+    }
+    .empty-state svg {
+      width: 28px; height: 28px; stroke: var(--muted-2); fill: none; stroke-width: 1.25;
+      opacity: 0.7;
+    }
+    .empty-state strong { color: var(--muted); font-weight: 500; display: block; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 50;
+      min-width: 200px; max-width: 340px; padding: 12px 14px;
+      background: var(--surface-2); border: 1px solid var(--border); border-left: 2px solid var(--accent);
+      font-family: var(--font-mono); font-size: var(--type-caption); letter-spacing: 0.04em; color: var(--fg);
+      transform: translateY(12px); opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease-out, transform 180ms ease-out;
+    }
+    .toast.is-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .toast.is-ok { border-left-color: var(--success); }
+    .toast.is-bad { border-left-color: var(--accent-secondary); }
+    .overlay {
+      position: fixed; inset: 0; z-index: 60;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      display: none; align-items: stretch; justify-content: flex-end;
+    }
+    .overlay.is-open { display: flex; }
+    .drawer {
+      width: min(420px, 100%); background: var(--surface); border-left: 1px solid var(--border-subtle);
+      display: grid; grid-template-rows: auto auto 1fr auto; gap: 0; max-height: 100%;
+      box-shadow: -12px 0 40px color-mix(in srgb, #000 40%, transparent);
+    }
+    .drawer-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border-subtle);
+    }
+    .drawer-head h2 {
+      margin: 0; font-family: var(--font-display); font-size: 12px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .drawer-search { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); }
+    .drawer-body {
+      overflow: auto; padding: 8px 12px 16px; display: grid; gap: 4px; align-content: start;
+    }
+    .drawer-foot {
+      padding: 12px 16px; border-top: 1px solid var(--border-subtle);
+      display: flex; gap: 8px; justify-content: flex-end;
+    }
+    .pick-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+      padding: 10px; background: var(--surface-2); border: 1px solid transparent;
+      text-align: left; color: inherit; min-height: 48px;
+      transition: border-color 160ms ease-out, background 160ms ease-out;
+    }
+    .pick-item:hover, .pick-item:focus-visible {
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+    }
+    .pick-item:active {
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+    }
+    .pick-item .pn { font-size: 12px; font-weight: 500; }
+    .pick-item .pm {
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted-2); letter-spacing: 0.04em;
+    }
+    .pick-item .badge {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); padding: 4px 6px; border: 1px solid var(--border-subtle);
+    }
+    .pick-item .badge.exotic { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+    .modal-center .drawer {
+      margin: auto; width: min(480px, calc(100% - 32px)); border: 1px solid var(--border);
+      border-left: 1px solid var(--border); max-height: min(80vh, 560px);
+      box-shadow: 0 16px 48px color-mix(in srgb, #000 45%, transparent);
+    }
+    .modal-center { justify-content: center; align-items: center; padding: 16px; }
+    .rules { display: grid; gap: 10px; padding: 4px 4px 8px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .rules ol { margin: 0; padding-left: 1.2em; }
+    .rules li { margin: 0 0 8px; }
+    .rules strong { color: var(--fg); font-weight: 500; }
+    .rules code { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+    .tweaks {
+      position: fixed; top: 12px; right: 12px; z-index: 30; width: 220px;
+      background: var(--surface); border: 1px solid var(--border-subtle);
+      padding: 10px; display: grid; gap: 8px; font-size: 11px; color: var(--muted);
+    }
+    .tweaks summary {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted-2); cursor: pointer; list-style: none;
+    }
+    .tweaks summary::-webkit-details-marker { display: none; }
+    .tweaks label { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 28px; }
+    .tweaks select { width: 100px; height: 28px; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    @media (max-width: 1024px) {
+      .main { grid-template-columns: 1fr; }
+      .rail { grid-template-columns: 1fr; }
+      .apply-controls { grid-template-columns: 1fr; }
+      .apply-controls .btn { width: 100%; }
+      .attach-row { grid-template-columns: 1fr; }
+      .attach-row .btn { width: 100%; }
+    }
+    @media (max-width: 640px) {
+      .shell { padding: var(--space-2); gap: 8px; }
+      .slot-grid { grid-template-columns: 1fr; }
+      .topbar { padding: var(--space-2); }
+      .topbar-actions { width: 100%; }
+      .topbar-actions .btn-primary { flex: 1; }
+      .tweaks { display: none; }
+      .title { font-size: 13px; max-width: 100%; letter-spacing: 0.05em; }
+      .stat-row { grid-template-columns: 1fr; }
+      .zone, .rail { padding: 10px; }
+      .toast { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .tx-line::after, .sp .live-dot, .soft-chip .pulse { opacity: 0.28 !important; animation: none !important; }
+      .btn.is-loading::after { animation: none !important; opacity: 0.7; }
+    }
+    body[data-density="tight"] {
+      --control-h: 36px; --row-h: 40px; --gap-module: 8px;
+    }
+    body[data-density="tight"] .slot-card { min-height: 0; padding: 6px; gap: 0 6px; }
+    body[data-density="tight"] #zone-loadout { padding: 8px; gap: 6px; }
+    body[data-density="tight"] .zone { padding: 10px; gap: 10px; }
+    .zone.is-focus, .rail.is-focus, .variants.is-focus {
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+  </style>
+</head>
+<body data-density="card">
+  <a class="skip-link" href="#main-grid">Skip to loadout</a>
+  <div class="app" data-od-id="app-shell">
+    <div class="stage" aria-hidden="true" data-od-id="env-stage"></div>
+    <div class="shell">
+      <header class="topbar" data-od-id="topbar">
+        <div class="topbar-id">
+          <h1 class="title" data-od-id="build-title" id="buildTitle">Warlock Build</h1>
+          <div class="meta-row" data-od-id="identity-chips" aria-label="Build identity">
+            <span class="chip"><span class="dot" aria-hidden="true"></span><span id="classChip">Warlock</span></span>
+            <span class="chip muted" id="superChip" data-od-id="chip-super">Super · Chaos Reach</span>
+            <span class="chip muted" id="exoticChip" data-od-id="chip-exotic">Geomag Stabilizers</span>
+            <span class="chip crit" id="finishChip" data-od-id="finish-chip" aria-live="polite">Finish · Weapons</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="btn-icon" id="btnTheme" data-od-id="btn-theme" aria-label="Toggle light and dark theme" title="Theme">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M13 3l-1.5 1.5M3 13l1.5-1.5"/></svg>
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" data-od-id="btn-how-finish" id="btnHow">How finish works</button>
+          <button type="button" class="btn btn-primary" data-od-id="btn-save-identity" id="btnSave">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h8l2 2v8H3z"/><path d="M5 3v4h5V3"/><path d="M5 10h6"/></svg>
+            Save identity
+          </button>
+        </div>
+      </header>
+
+      <nav class="steps" data-od-id="step-rail" aria-label="Build steps">
+        <button type="button" class="step is-done" data-step="1" data-target="zone-identity" aria-current="false"><span class="step-num" aria-hidden="true">1</span>Basics</button>
+        <span class="step-sep" aria-hidden="true"></span>
+        <button type="button" class="step is-active" data-step="2" data-target="zone-loadout" aria-current="step"><span class="step-num" aria-hidden="true">2</span>Pins / kit</button>
+        <span class="step-sep" aria-hidden="true"></span>
+        <button type="button" class="step" data-step="3" data-target="readiness-rail" aria-current="false"><span class="step-num" aria-hidden="true">3</span>Save</button>
+        <span class="step-sep" aria-hidden="true"></span>
+        <button type="button" class="step" data-step="4" data-target="variants" aria-current="false"><span class="step-num" aria-hidden="true">4</span>Variants</button>
+      </nav>
+
+      <div class="tx-line" aria-hidden="true" data-od-id="tx-divider"></div>
+
+      <main class="main" data-od-id="main-grid" id="main-grid">
+        <section class="zone" data-od-id="zone-identity" id="zone-identity" aria-labelledby="id-title">
+          <div class="zone-head">
+            <h2 class="zone-title" id="id-title">Identity</h2>
+            <span class="zone-sub">Required before clean save</span>
+          </div>
+          <div class="field" data-od-id="field-name">
+            <label class="label" for="buildName">Name</label>
+            <input class="input" id="buildName" value="Warlock Build" data-od-id="input-build-name" maxlength="48" autocomplete="off" />
+          </div>
+          <div class="field" data-od-id="field-synergy">
+            <div class="label" id="synergyLabel">Synergy types</div>
+            <div class="synergy-row" id="synergyRow" role="list" aria-labelledby="synergyLabel">
+              <span class="tag" data-synergy="Super · Chaos Reach" role="listitem">Super · Chaos Reach
+                <button type="button" aria-label="Remove Chaos Reach" data-od-id="synergy-remove">×</button>
+              </span>
+              <button type="button" class="btn btn-ghost btn-sm" data-od-id="btn-add-synergy" id="btnAddSynergy">+ Add type</button>
+            </div>
+          </div>
+          <div class="field" data-od-id="optional-pins">
+            <div class="label" id="optPinsLabel">Optional pins</div>
+            <div class="pin-opt-list" role="list" aria-labelledby="optPinsLabel">
+              <div class="pin-opt" data-od-id="opt-exotic-armor" data-opt="exotic_armor" role="listitem">
+                <div class="ico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 5l5-2 5 2v4c0 3-2.2 4.8-5 5.5C5.2 13.8 3 12 3 9z"/></svg></div>
+                <div class="body">
+                  <div class="slot-k">Exotic armor</div>
+                  <div class="name" id="nameExoticArmor">Geomag Stabilizers</div>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn btn-sm" data-od-id="search-exotic-armor" data-search="exotic_armor">Search</button>
+                  <button type="button" class="btn-icon" aria-label="Clear exotic armor" data-od-id="clear-exotic-armor" id="clearExoticArmor" title="Clear">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4L4 12"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="pin-opt" data-od-id="opt-exotic-weapon" data-opt="exotic_weapon" role="listitem">
+                <div class="ico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 10l6-6 2 2-6 6H2z"/><path d="M9 5l2 2 2-1-3-3z"/></svg></div>
+                <div class="body">
+                  <div class="slot-k">Exotic weapon</div>
+                  <div class="name empty" id="nameExoticWeapon">Optional — not pinned</div>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn btn-sm" data-od-id="search-exotic-weapon" data-search="exotic_weapon">Search</button>
+                </div>
+              </div>
+              <div class="pin-opt" data-od-id="opt-pinned-super" data-opt="super" role="listitem">
+                <div class="ico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M8 2l1.5 4H14l-3.5 2.5L12 13 8 10.2 4 13l1.5-4.5L2 6h4.5z"/></svg></div>
+                <div class="body">
+                  <div class="slot-k">Pinned super</div>
+                  <div class="name" id="nameSuper">Chaos Reach</div>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn btn-sm" data-od-id="search-super" data-search="super">Search</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kit-line" data-od-id="subclass-kit">
+            <div><strong>Subclass kit</strong> · <span id="kitSummary">2 aspects · 0 fragments</span></div>
+            <div class="kit-controls">
+              <button type="button" class="btn btn-ghost btn-sm" id="btnKitAspect" data-od-id="btn-kit-aspect" title="Cycle aspects">Aspects</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnKitFrag" data-od-id="btn-kit-frag" title="Cycle fragments">Frags</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-od-id="btn-edit-kit" id="btnEditKit">Edit</button>
+            </div>
+          </div>
+          <div class="field" data-od-id="attachments">
+            <div class="label" id="attachLabel">Attachments</div>
+            <div class="attach-row">
+              <select class="select" data-od-id="select-library-set" id="librarySet" aria-label="Library set">
+                <option value="armor">Warlock Build Armor (armor)</option>
+                <option value="weapons">Warlock Build Weapons</option>
+                <option value="mods">Warlock Build Mods</option>
+              </select>
+              <button type="button" class="btn btn-primary btn-sm" data-od-id="btn-attach-set" id="btnAttach">Attach set</button>
+            </div>
+            <div class="attach-list" id="attachList" role="list" aria-labelledby="attachLabel">
+              <div class="attach-item" data-od-id="attach-armor-live" role="listitem"><span>Warlock Build Armor (live)</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4H3v9h9V10"/><path d="M8 8l5-5M10 3h3v3"/></svg>
+              </div>
+              <div class="attach-item" data-od-id="attach-weapons-live" role="listitem"><span>Warlock Build Weapons (live)</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4H3v9h9V10"/><path d="M8 8l5-5M10 3h3v3"/></svg>
+              </div>
+              <div class="attach-item" data-od-id="attach-mods-live" role="listitem"><span>Warlock Build Mods (live)</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4H3v9h9V10"/><path d="M8 8l5-5M10 3h3v3"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="variants" data-od-id="variants" id="variants">
+            <span class="label" id="variantLabel">Variant</span>
+            <div id="variantChips" style="display:contents" role="group" aria-labelledby="variantLabel">
+              <button type="button" class="var-chip is-on" data-variant="Default" data-od-id="variant-default" aria-pressed="true">Default</button>
+            </div>
+            <div class="var-create">
+              <input class="input" placeholder="New variant name" data-od-id="input-variant-name" id="variantName" aria-label="New variant name" />
+              <button type="button" class="btn btn-sm" data-od-id="btn-create-variant" id="btnCreateVariant">Create</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="zone" data-od-id="zone-loadout" id="zone-loadout" aria-labelledby="loadout-title">
+          <div class="slot-toolbar">
+            <div class="zone-head" style="padding:0;flex:1">
+              <h2 class="zone-title" id="loadout-title">Loadout pins</h2>
+              <span class="zone-sub">Instance = owned · Wish = definition only</span>
+            </div>
+            <div class="legend" aria-label="Slot state legend">
+              <span><i class="lg lg-ok" aria-hidden="true"></i>Owned</span>
+              <span><i class="lg lg-gap" aria-hidden="true"></i>Gap</span>
+              <span><i class="lg lg-empty" aria-hidden="true"></i>Empty</span>
+            </div>
+          </div>
+          <div class="slot-grid" data-od-id="slot-grid" id="slotGrid" role="list" aria-label="Equipment slots"></div>
+        </section>
+      </main>
+
+      <section class="rail" data-od-id="readiness-rail" id="readiness-rail" aria-labelledby="ready-title">
+        <div class="rail-block" data-od-id="finish-block">
+          <div class="zone-head">
+            <h2 class="zone-title" id="ready-title">Finish readiness</h2>
+            <span class="zone-sub">One status · equip + export share it</span>
+          </div>
+          <div class="status-pills" data-od-id="category-pills" id="categoryPills" aria-live="polite" aria-atomic="true">
+            <span class="sp ok" data-od-id="pill-armor" id="pillArmor">
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6l3 3 5-5"/></svg>
+              Armor 5/5
+            </span>
+            <span class="sp bad" data-od-id="pill-weapons" id="pillWeapons">
+              <span class="live-dot" aria-hidden="true"></span>
+              Weapons 1/3
+            </span>
+            <span class="sp ok" data-od-id="pill-mods" id="pillMods">
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6l3 3 5-5"/></svg>
+              Mods 1/1
+            </span>
+          </div>
+          <p class="gap-line" data-od-id="gap-line" id="gapLine">
+            <strong>Next:</strong> fill weapons · gaps
+            <em>special</em>, <em>heavy</em>
+          </p>
+          <div class="ready-summary" data-od-id="equip-summary" id="equipSummary">
+            <span class="ok-text" id="equipReadyText">Equip-ready · 6 owned pins</span>
+            <span id="emptyCombatText">Empty combat · special, heavy</span>
+            <button type="button" class="details-btn" id="toggleOwned" data-od-id="btn-toggle-owned" aria-expanded="false" aria-controls="ownedList">Show slots</button>
+          </div>
+          <div class="owned-list" id="ownedList" data-od-id="owned-list" aria-hidden="true"></div>
+          <div class="guidance" data-od-id="soft-guidance">
+            <div class="guidance-head">
+              <span class="zone-title" style="font-size:10px">Soft guidance</span>
+              <span class="hint">Display-only · never blocks save · targets 0–200</span>
+            </div>
+            <div class="soft-chips" data-od-id="coverage-chips" id="coverageChips" aria-live="polite"></div>
+            <div class="stat-row" data-od-id="soft-stats" id="softStats" role="group" aria-label="Soft stat targets">
+              <label class="stat-slider is-active" data-stat="Health" data-od-id="soft-stat-health">
+                <span class="stat-label">Health</span>
+                <input type="range" min="0" max="200" step="5" value="100" aria-valuemin="0" aria-valuemax="200" aria-valuenow="100" aria-label="Health target" />
+                <span class="stat-val" aria-hidden="true">100</span>
+              </label>
+              <label class="stat-slider is-active" data-stat="Melee" data-od-id="soft-stat-melee">
+                <span class="stat-label">Melee</span>
+                <input type="range" min="0" max="200" step="5" value="40" aria-valuemin="0" aria-valuemax="200" aria-valuenow="40" aria-label="Melee target" />
+                <span class="stat-val" aria-hidden="true">40</span>
+              </label>
+              <label class="stat-slider is-active" data-stat="Grenade" data-od-id="soft-stat-grenade">
+                <span class="stat-label">Grenade</span>
+                <input type="range" min="0" max="200" step="5" value="100" aria-valuemin="0" aria-valuemax="200" aria-valuenow="100" aria-label="Grenade target" />
+                <span class="stat-val" aria-hidden="true">100</span>
+              </label>
+              <label class="stat-slider is-active" data-stat="Super" data-od-id="soft-stat-super">
+                <span class="stat-label">Super</span>
+                <input type="range" min="0" max="200" step="5" value="100" aria-valuemin="0" aria-valuemax="200" aria-valuenow="100" aria-label="Super target" />
+                <span class="stat-val" aria-hidden="true">100</span>
+              </label>
+              <label class="stat-slider is-active" data-stat="Class" data-od-id="soft-stat-class">
+                <span class="stat-label">Class</span>
+                <input type="range" min="0" max="200" step="5" value="100" aria-valuemin="0" aria-valuemax="200" aria-valuenow="100" aria-label="Class target" />
+                <span class="stat-val" aria-hidden="true">100</span>
+              </label>
+              <label class="stat-slider is-active" data-stat="Weapons" data-od-id="soft-stat-weapons">
+                <span class="stat-label">Weapons</span>
+                <input type="range" min="0" max="200" step="5" value="70" aria-valuemin="0" aria-valuemax="200" aria-valuenow="70" aria-label="Weapons target" />
+                <span class="stat-val" aria-hidden="true">70</span>
+              </label>
+              <div class="stat-actions">
+                <button type="button" class="btn btn-sm" data-od-id="btn-save-soft" id="btnSoft">Save soft targets</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rail-block apply-row" data-od-id="apply-export-block">
+          <div class="zone-head">
+            <h2 class="zone-title">Apply / export</h2>
+            <span class="zone-sub">Owned instance pins only</span>
+          </div>
+          <div class="field">
+            <label class="label" for="character">Character</label>
+            <select class="select" id="character" data-od-id="select-character">
+              <option selected value="Warlock · 496">Warlock · 496</option>
+              <option value="Titan · 492">Titan · 492</option>
+              <option value="Hunter · 488">Hunter · 488</option>
+            </select>
+          </div>
+          <div class="apply-controls">
+            <button type="button" class="btn" disabled data-od-id="btn-apply" id="btnApply" title="Blocked until weapons complete" aria-describedby="blockReason">Apply to character</button>
+            <button type="button" class="btn" disabled data-od-id="btn-dim" id="btnDim" title="Blocked until equip-ready finish" aria-describedby="blockReason">Copy DIM JSON</button>
+          </div>
+          <div class="block-reason" data-od-id="block-reason" id="blockReason" role="status">
+            <strong>Blocked</strong> — finish incomplete until Armor, Weapons, and Mods are complete (and equip-ready). Soft suggestions stay confirm-only.
+          </div>
+          <p class="hint">Soft suggestions never auto-apply. Hard Destiny limits still block when invalid. Wish pins export as definitions only.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true" data-od-id="toast"></div>
+
+  <div class="overlay" id="searchOverlay" data-od-id="search-overlay" aria-hidden="true">
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" data-od-id="search-drawer">
+      <div class="drawer-head">
+        <h2 id="drawerTitle">Search pin</h2>
+        <button type="button" class="btn-icon" id="btnCloseSearch" aria-label="Close search">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4L4 12"/></svg>
+        </button>
+      </div>
+      <div class="drawer-search">
+        <input class="input" id="searchQuery" type="search" placeholder="Filter catalog…" aria-label="Filter catalog" autocomplete="off" />
+      </div>
+      <div class="drawer-body" id="searchResults" role="listbox" aria-label="Catalog results"></div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-ghost" id="btnSearchCancel">Cancel</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="overlay modal-center" id="howOverlay" data-od-id="how-overlay" aria-hidden="true">
+    <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="howTitle" data-od-id="how-modal">
+      <div class="drawer-head">
+        <h2 id="howTitle">How finish works</h2>
+        <button type="button" class="btn-icon" id="btnCloseHow" aria-label="Close how finish works">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4L4 12"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body rules">
+        <ol>
+          <li><strong>Armor · Weapons · Mods</strong> must each reach complete fill (owned or wish) for finish status.</li>
+          <li><strong>Equip-ready</strong> requires every combat slot to be an <code>owned</code> instance pin — wishes do not equip.</li>
+          <li><strong>Apply</strong> and <strong>Copy DIM JSON</strong> share the same gate: equip-ready finish only.</li>
+          <li><strong>Soft guidance</strong> (stat target sliders, super coverage) is confirm-only — never blocks save or equip.</li>
+          <li>Optional exotic / super pins inform identity chips; they do not replace loadout slots.</li>
+        </ol>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-primary" id="btnHowOk">Understood</button>
+      </div>
+    </div>
+  </div>
+
+  <details class="tweaks" data-od-id="tweaks-panel">
+    <summary>Tweaks</summary>
+    <label>Density
+      <select id="tDensity" aria-label="Density mode">
+        <option value="card" selected>Card compact</option>
+        <option value="tight">Tight</option>
+      </select>
+    </label>
+    <label>Show owned list <input type="checkbox" id="tOwned" /></label>
+    <label>Mods complete <input type="checkbox" id="tMods" checked /></label>
+  </details>
+
+  <script>
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{ density: "card", showOwned: false, modsComplete: true }/*EDITMODE-END*/;
+    const ARMOR_IDS = ["helmet", "arms", "chest", "legs", "class_item"];
+    const WEAPON_IDS = ["primary", "special", "heavy"];
+    const state = {
+      buildName: "Warlock Build", class: "Warlock", exoticArmor: "Geomag Stabilizers", exoticWeapon: "",
+      super: "Chaos Reach", aspects: 2, fragments: 0, modsComplete: TWEAK_DEFAULTS.modsComplete !== false,
+      synergies: ["Super · Chaos Reach"], variants: ["Default"], activeVariant: "Default",
+      softStats: [], softTargets: { Health: 100, Melee: 40, Grenade: 100, Super: 100, Class: 100, Weapons: 70 },
+      searchTarget: null, lastFocus: null
+    };
+    const slots = [
+      { id: "helmet", label: "Helmet", name: "Armor 3767088557", instance: "…07471609", state: "owned", mode: "pin", icon: "helm", cat: "armor" },
+      { id: "arms", label: "Arms", name: "Armor 3261527845", instance: "…480371090", state: "owned", mode: "pin", icon: "arms", cat: "armor" },
+      { id: "chest", label: "Chest", name: "Armor 3571299690", instance: "…950648899", state: "owned", mode: "pin", icon: "chest", cat: "armor" },
+      { id: "legs", label: "Legs", name: "Armor 3558781766", instance: "…3717375652", state: "owned", mode: "pin", icon: "legs", cat: "armor" },
+      { id: "class_item", label: "Class item", name: "Armor 213708705", instance: "…36936791039", state: "owned", mode: "pin", icon: "class", cat: "armor" },
+      { id: "primary", label: "Primary", name: "Better Devils", instance: "…7511790547", state: "owned", mode: "pin", icon: "primary", cat: "weapon" },
+      { id: "special", label: "Special", name: "", instance: "", state: "gap", mode: "wish", icon: "special", cat: "weapon" },
+      { id: "heavy", label: "Heavy", name: "", instance: "", state: "gap", mode: "wish", icon: "heavy", cat: "weapon" }
+    ];
+    const catalog = {
+      helmet: [{ name: "Armor 3767088557", instance: "…07471609", rarity: "legendary" }, { name: "Nezarec's Sin", instance: "…882104411", rarity: "exotic" }, { name: "Fallen Sunstar", instance: "…441902118", rarity: "exotic" }],
+      arms: [{ name: "Armor 3261527845", instance: "…480371090", rarity: "legendary" }, { name: "Ophidian Aspect", instance: "…229001331", rarity: "exotic" }],
+      chest: [{ name: "Armor 3571299690", instance: "…950648899", rarity: "legendary" }, { name: "Starfire Protocol", instance: "…661204882", rarity: "exotic" }],
+      legs: [{ name: "Armor 3558781766", instance: "…3717375652", rarity: "legendary" }, { name: "Geomag Stabilizers", instance: "…918204441", rarity: "exotic" }, { name: "Transversive Steps", instance: "…120994882", rarity: "exotic" }],
+      class_item: [{ name: "Armor 213708705", instance: "…36936791039", rarity: "legendary" }, { name: "Secant Filaments", instance: "…550119203", rarity: "exotic" }],
+      primary: [{ name: "Better Devils", instance: "…7511790547", rarity: "legendary" }, { name: "Sunshot", instance: "…339042880", rarity: "exotic" }, { name: "Multimach CCX", instance: "…228401991", rarity: "legendary" }],
+      special: [{ name: "Cartesian Coordinate", instance: "…441882019", rarity: "legendary" }, { name: "Forbearance", instance: "…882001441", rarity: "legendary" }, { name: "Merciless", instance: "…120048821", rarity: "exotic" }],
+      heavy: [{ name: "Edge Transit", instance: "…550192883", rarity: "legendary" }, { name: "The Colony", instance: "…229401882", rarity: "exotic" }, { name: "Thunderlord", instance: "…881204119", rarity: "exotic" }],
+      exotic_armor: [{ name: "Geomag Stabilizers", instance: "—", rarity: "exotic" }, { name: "Nezarec's Sin", instance: "—", rarity: "exotic" }, { name: "Osmiomancy Gloves", instance: "—", rarity: "exotic" }, { name: "Starfire Protocol", instance: "—", rarity: "exotic" }],
+      exotic_weapon: [{ name: "Sunshot", instance: "—", rarity: "exotic" }, { name: "Merciless", instance: "—", rarity: "exotic" }, { name: "Thunderlord", instance: "—", rarity: "exotic" }, { name: "Vex Mythoclast", instance: "—", rarity: "exotic" }],
+      super: [{ name: "Chaos Reach", instance: "—", rarity: "super" }, { name: "Well of Radiance", instance: "—", rarity: "super" }, { name: "Song of Flame", instance: "—", rarity: "super" }, { name: "Nova Bomb: Cataclysm", instance: "—", rarity: "super" }],
+      synergy: [{ name: "Ability · Grenade", instance: "—", rarity: "type" }, { name: "Ability · Melee", instance: "—", rarity: "type" }, { name: "Weapon · Special", instance: "—", rarity: "type" }, { name: "Keyword · Jolt", instance: "—", rarity: "type" }, { name: "Keyword · Volatile", instance: "—", rarity: "type" }]
+    };
+    const icons = {
+      helm: '<path d="M3 9c0-3 2-5 5-5s5 2 5 5v2H3z"/><path d="M5 11v2h6v-2"/>',
+      arms: '<path d="M5 3v4l-2 5h3l1-3 1 3h3L9 7V3z"/>',
+      chest: '<path d="M5 3l3 1 3-1 2 3v7H3V6z"/>',
+      legs: '<path d="M5 3h6v5l-1 6H9l-1-4-1 4H6L5 8z"/>',
+      class: '<path d="M8 2l5 3v4c0 3-2 5-5 6-3-1-5-3-5-6V5z"/>',
+      primary: '<path d="M2 10l6-6 2 2-6 6H2z"/><path d="M9 5l2 2"/>',
+      special: '<path d="M3 8h10M8 3v10"/><path d="M5 5l6 6M11 5L5 11"/>',
+      heavy: '<path d="M3 11h10V8L8 3 3 8z"/><path d="M6 11v2h4v-2"/>'
+    };
+    const iconCheck = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6l3 3 5-5"/></svg>';
+    const iconX = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3L3 9"/></svg>';
+
+    function shortInstance(s) {
+      if (!s) return "—";
+      const clean = String(s).replace(/^…/, "").replace(/^instance\s*[·-]\s*/i, "");
+      if (clean.length <= 10) return clean;
+      return "…" + clean.slice(-8);
+    }
+    function toast(msg, kind) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.remove("is-ok", "is-bad");
+      if (kind === "ok") el.classList.add("is-ok");
+      if (kind === "bad") el.classList.add("is-bad");
+      el.classList.add("is-on");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("is-on"), 2200);
+    }
+    function setLoading(btn, on) {
+      if (!btn) return;
+      btn.classList.toggle("is-loading", !!on);
+      btn.setAttribute("aria-busy", on ? "true" : "false");
+      if (on) btn.dataset.prevDisabled = btn.disabled ? "1" : "0";
+      else if (btn.dataset.prevDisabled === "0") btn.disabled = false;
+    }
+    function computeReadiness() {
+      const armorSlots = slots.filter((s) => ARMOR_IDS.includes(s.id));
+      const weaponSlots = slots.filter((s) => WEAPON_IDS.includes(s.id));
+      const armorFilled = armorSlots.filter((s) => s.name && s.state !== "empty").length;
+      const weaponFilled = weaponSlots.filter((s) => s.name && s.state !== "empty").length;
+      const armorOwned = armorSlots.filter((s) => s.state === "owned").length;
+      const weaponOwned = weaponSlots.filter((s) => s.state === "owned").length;
+      const ownedPins = slots.filter((s) => s.state === "owned").length;
+      const gaps = slots.filter((s) => s.state === "gap" || (!s.name && s.state !== "owned"));
+      const emptyCombat = weaponSlots.filter((s) => !s.name || s.state === "gap" || s.state === "empty");
+      const wishOnly = slots.filter((s) => s.mode === "wish" && s.name);
+      const armorDone = armorFilled >= 5;
+      const weaponsDone = weaponFilled >= 3;
+      const modsDone = !!state.modsComplete;
+      const finishComplete = armorDone && weaponsDone && modsDone;
+      const equipReady = armorOwned >= 5 && weaponOwned >= 3 && modsDone;
+      return { armorFilled, weaponFilled, armorOwned, weaponOwned, ownedPins, gaps, emptyCombat, wishOnly, armorDone, weaponsDone, modsDone, finishComplete, equipReady };
+    }
+    function pillHtml(ok, label, live) {
+      if (ok) return `${iconCheck} ${label}`;
+      return `${live ? '<span class="live-dot" aria-hidden="true"></span>' : iconX} ${label}`;
+    }
+    function updateReadiness() {
+      const r = computeReadiness();
+      const pillArmor = document.getElementById("pillArmor");
+      const pillWeapons = document.getElementById("pillWeapons");
+      const pillMods = document.getElementById("pillMods");
+      pillArmor.className = "sp " + (r.armorDone ? "ok" : "bad");
+      pillWeapons.className = "sp " + (r.weaponsDone ? "ok" : "bad");
+      pillMods.className = "sp " + (r.modsDone ? "ok" : "bad");
+      pillArmor.innerHTML = pillHtml(r.armorDone, `Armor ${r.armorFilled}/5`, !r.armorDone);
+      pillWeapons.innerHTML = pillHtml(r.weaponsDone, `Weapons ${r.weaponFilled}/3`, !r.weaponsDone);
+      pillMods.innerHTML = pillHtml(r.modsDone, `Mods ${r.modsDone ? "1/1" : "0/1"}`, !r.modsDone);
+      const gapNames = r.emptyCombat.map((s) => s.id.replace("_", " "));
+      const gapLine = document.getElementById("gapLine");
+      if (r.equipReady) gapLine.innerHTML = `<strong>Next:</strong> apply to character or export DIM · all combat slots owned`;
+      else if (gapNames.length) gapLine.innerHTML = `<strong>Next:</strong> fill weapons · gaps ${gapNames.map((g) => `<em>${g}</em>`).join(", ")}`;
+      else if (!r.modsDone) gapLine.innerHTML = `<strong>Next:</strong> complete <em>mods</em> attachment`;
+      else gapLine.innerHTML = `<strong>Next:</strong> convert wish pins to owned instances for equip`;
+      const readyText = document.getElementById("equipReadyText");
+      const emptyText = document.getElementById("emptyCombatText");
+      if (r.equipReady) {
+        readyText.className = "ok-text";
+        readyText.textContent = `Equip-ready · ${r.ownedPins} owned pins`;
+        emptyText.textContent = r.wishOnly.length ? `${r.wishOnly.length} wish-only (export defs)` : "All combat owned";
+      } else {
+        readyText.className = "bad-text";
+        readyText.textContent = `Not equip-ready · ${r.ownedPins} owned pins`;
+        emptyText.textContent = gapNames.length ? `Empty / gap · ${gapNames.join(", ")}` : "Convert wishes → owned pins";
+      }
+      const finishChip = document.getElementById("finishChip");
+      if (r.equipReady) { finishChip.className = "chip ok"; finishChip.textContent = "Finish · Equip-ready"; }
+      else if (r.finishComplete) { finishChip.className = "chip warn"; finishChip.textContent = "Finish · Wish only"; }
+      else if (!r.weaponsDone) { finishChip.className = "chip crit"; finishChip.textContent = "Finish · Weapons"; }
+      else if (!r.armorDone) { finishChip.className = "chip crit"; finishChip.textContent = "Finish · Armor"; }
+      else { finishChip.className = "chip crit"; finishChip.textContent = "Finish · Mods"; }
+      const btnApply = document.getElementById("btnApply");
+      const btnDim = document.getElementById("btnDim");
+      const block = document.getElementById("blockReason");
+      btnApply.disabled = !r.equipReady;
+      btnDim.disabled = !r.equipReady;
+      if (r.equipReady) {
+        btnApply.removeAttribute("title"); btnDim.removeAttribute("title");
+        block.className = "block-reason is-clear";
+        block.innerHTML = `<strong>Clear</strong> — equip-ready. Apply writes owned instance pins to the selected character. DIM export includes owned instances only.`;
+      } else {
+        btnApply.title = "Blocked until equip-ready finish"; btnDim.title = "Blocked until equip-ready finish";
+        block.className = "block-reason";
+        const missing = [];
+        if (!r.armorDone) missing.push("Armor");
+        if (!r.weaponsDone) missing.push("Weapons");
+        if (!r.modsDone) missing.push("Mods");
+        if (r.finishComplete && !r.equipReady) {
+          block.innerHTML = `<strong>Blocked</strong> — slots filled as wishlist only. Convert combat pins to <em style="font-style:normal;color:var(--accent-secondary)">owned instances</em> for equip + DIM.`;
+        } else {
+          block.innerHTML = `<strong>Blocked</strong> — finish incomplete until ${missing.join(", ")} complete (and equip-ready). Soft suggestions stay confirm-only.`;
+        }
+      }
+      const chips = document.getElementById("coverageChips");
+      const superOk = !!state.super;
+      const kitOk = state.aspects >= 2;
+      chips.innerHTML = `
+        <span class="soft-chip ${superOk && kitOk ? "is-ok" : ""}"><span class="pulse" aria-hidden="true"></span>Super: ${state.super || "none"} · ${kitOk ? "kit ok" : "needs aspects"}</span>
+        ${state.exoticArmor ? `<span class="soft-chip is-ok"><span class="pulse" aria-hidden="true"></span>Exotic armor · ${state.exoticArmor}</span>` : `<span class="soft-chip"><span class="pulse" aria-hidden="true"></span>Exotic armor · optional</span>`}`;
+      document.getElementById("superChip").textContent = state.super ? `Super · ${state.super}` : "Super · —";
+      document.getElementById("exoticChip").textContent = state.exoticArmor || "No exotic armor";
+      document.getElementById("kitSummary").textContent = `${state.aspects} aspects · ${state.fragments} fragments`;
+      renderOwnedList();
+    }
+    function renderSlots() {
+      const grid = document.getElementById("slotGrid");
+      grid.innerHTML = slots.map((s) => {
+        const empty = !s.name;
+        const stateLabel = s.state === "owned" ? "owned" : s.state === "gap" ? "gap" : "empty";
+        return `<div class="slot-card" role="listitem" tabindex="0" data-state="${s.state}" data-od-id="slot-${s.id}" data-slot="${s.id}" aria-label="${s.label}: ${empty ? "empty, activate to fill" : s.name + ", " + stateLabel}">
+            <div class="ico" aria-hidden="true"><svg viewBox="0 0 16 16">${icons[s.icon]}</svg></div>
+            <div class="slot-k">${s.label}</div>
+            <div class="slot-name ${empty ? "empty" : ""}">${empty ? "Fill " + s.label.toLowerCase() : s.name}</div>
+            <div class="slot-foot">
+              <span class="instance" title="${s.instance || ""}">${s.state === "owned" ? shortInstance(s.instance) : (s.state === "gap" ? "gap" : "empty")}</span>
+              <div class="seg" role="group" aria-label="${s.label} pin mode">
+                <button type="button" class="${s.mode === "pin" ? "is-on" : ""}" data-mode="pin" data-slot="${s.id}" aria-pressed="${s.mode === "pin"}">Pin</button>
+                <button type="button" class="${s.mode === "wish" ? "is-on" : ""}" data-mode="wish" data-slot="${s.id}" aria-pressed="${s.mode === "wish"}">Wish</button>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+      grid.querySelectorAll(".slot-card").forEach((card) => {
+        const open = () => openSearch(card.getAttribute("data-slot"));
+        card.addEventListener("click", (e) => { if (e.target.closest(".seg")) return; open(); });
+        card.addEventListener("keydown", (e) => {
+          if (e.target.closest(".seg")) return;
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+        });
+      });
+      grid.querySelectorAll(".seg button").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute("data-slot");
+          const mode = btn.getAttribute("data-mode");
+          const slot = slots.find((x) => x.id === id);
+          if (!slot) return;
+          slot.mode = mode;
+          if (mode === "wish" && slot.name) {
+            if (slot.state === "owned") slot.state = "gap";
+            slot.instance = "";
+          } else if (mode === "pin" && slot.name && !slot.instance) {
+            slot.instance = "…" + String(Math.floor(Math.random() * 1e9));
+            slot.state = "owned";
+          } else if (mode === "pin" && slot.name && slot.instance) slot.state = "owned";
+          renderSlots(); updateReadiness();
+          toast(`${slot.label} → ${mode === "pin" ? "Pin (owned)" : "Wishlist"}`);
+        });
+      });
+    }
+    function renderOwnedList() {
+      const list = document.getElementById("ownedList");
+      list.innerHTML = slots.map((s) => {
+        let st = "empty", cls = "";
+        if (s.state === "owned") { st = "owned pin"; cls = "st-ok"; }
+        else if (s.state === "gap") { st = s.name ? "wish / gap" : "needs fill"; cls = "st-gap"; }
+        return `<div><b>${s.id}</b> · <span class="${cls}">${st}</span>${s.name ? " · " + s.name : ""}</div>`;
+      }).join("");
+    }
+    function setOwnedOpen(open) {
+      const list = document.getElementById("ownedList");
+      const btn = document.getElementById("toggleOwned");
+      list.classList.toggle("is-open", open);
+      list.setAttribute("aria-hidden", open ? "false" : "true");
+      btn.textContent = open ? "Hide slots" : "Show slots";
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      document.getElementById("tOwned").checked = open;
+    }
+    function trapFocus(container) {
+      const focusables = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      const list = Array.from(focusables).filter((el) => !el.disabled && el.offsetParent !== null);
+      if (!list.length) return () => {};
+      const first = list[0];
+      const last = list[list.length - 1];
+      function onKey(e) {
+        if (e.key !== "Tab") return;
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+      container.addEventListener("keydown", onKey);
+      return () => container.removeEventListener("keydown", onKey);
+    }
+    let releaseTrap = null;
+    function openSearch(target) {
+      state.searchTarget = target;
+      state.lastFocus = document.activeElement;
+      const overlay = document.getElementById("searchOverlay");
+      const title = document.getElementById("drawerTitle");
+      const labels = { exotic_armor: "Exotic armor", exotic_weapon: "Exotic weapon", super: "Pinned super", synergy: "Synergy type" };
+      const slot = slots.find((s) => s.id === target);
+      title.textContent = labels[target] || (slot ? `Pin · ${slot.label}` : "Search pin");
+      document.getElementById("searchQuery").value = "";
+      renderSearchResults();
+      overlay.classList.add("is-open");
+      overlay.setAttribute("aria-hidden", "false");
+      const drawer = overlay.querySelector(".drawer");
+      if (releaseTrap) releaseTrap();
+      releaseTrap = trapFocus(drawer);
+      setTimeout(() => document.getElementById("searchQuery").focus(), 40);
+    }
+    function closeSearch() {
+      const overlay = document.getElementById("searchOverlay");
+      overlay.classList.remove("is-open");
+      overlay.setAttribute("aria-hidden", "true");
+      state.searchTarget = null;
+      if (releaseTrap) { releaseTrap(); releaseTrap = null; }
+      if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
+    }
+    function renderSearchResults() {
+      const q = document.getElementById("searchQuery").value.trim().toLowerCase();
+      const target = state.searchTarget;
+      const items = (catalog[target] || []).filter((it) => !q || it.name.toLowerCase().includes(q));
+      const body = document.getElementById("searchResults");
+      if (!items.length) {
+        body.innerHTML = `<div class="empty-state" data-od-id="search-empty">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+          <div><strong>No catalog hits</strong>Try another filter or clear the search.</div>
+        </div>`;
+        return;
+      }
+      body.innerHTML = items.map((it, i) => `
+        <button type="button" class="pick-item" role="option" data-idx="${i}" data-od-id="pick-${target}-${i}">
+          <div><div class="pn">${it.name}</div>
+          <div class="pm">${it.instance && it.instance !== "—" ? "instance " + shortInstance(it.instance) : "definition"}</div></div>
+          <span class="badge ${it.rarity === "exotic" ? "exotic" : ""}">${it.rarity}</span>
+        </button>`).join("");
+      body.querySelectorAll(".pick-item").forEach((btn) => {
+        btn.addEventListener("click", () => applyPick(items[+btn.getAttribute("data-idx")]));
+      });
+    }
+    function applyPick(item) {
+      const target = state.searchTarget;
+      if (!item || !target) return;
+      if (target === "exotic_armor") {
+        state.exoticArmor = item.name;
+        const el = document.getElementById("nameExoticArmor");
+        el.textContent = item.name; el.classList.remove("empty");
+        toast(`Exotic armor · ${item.name}`, "ok");
+      } else if (target === "exotic_weapon") {
+        state.exoticWeapon = item.name;
+        const el = document.getElementById("nameExoticWeapon");
+        el.textContent = item.name; el.classList.remove("empty");
+        toast(`Exotic weapon · ${item.name}`, "ok");
+      } else if (target === "super") {
+        state.super = item.name;
+        document.getElementById("nameSuper").textContent = item.name;
+        toast(`Super · ${item.name}`, "ok");
+      } else if (target === "synergy") {
+        if (!state.synergies.includes(item.name)) { state.synergies.push(item.name); renderSynergies(); }
+        toast(`Synergy · ${item.name}`, "ok");
+      } else {
+        const slot = slots.find((s) => s.id === target);
+        if (slot) {
+          slot.name = item.name;
+          slot.instance = item.instance && item.instance !== "—" ? item.instance : "…" + String(Math.floor(Math.random() * 1e9));
+          slot.state = "owned"; slot.mode = "pin";
+          renderSlots(); toast(`${slot.label} pinned · ${item.name}`, "ok");
+        }
+      }
+      closeSearch(); updateReadiness();
+    }
+    function renderSynergies() {
+      const row = document.getElementById("synergyRow");
+      const tags = state.synergies.map((s) =>
+        `<span class="tag" data-synergy="${s}" role="listitem">${s}<button type="button" aria-label="Remove ${s}" data-remove-synergy="${s}">×</button></span>`
+      ).join("");
+      row.innerHTML = tags + `<button type="button" class="btn btn-ghost btn-sm" data-od-id="btn-add-synergy" id="btnAddSynergy">+ Add type</button>`;
+      row.querySelectorAll("[data-remove-synergy]").forEach((b) => {
+        b.addEventListener("click", () => {
+          state.synergies = state.synergies.filter((x) => x !== b.getAttribute("data-remove-synergy"));
+          renderSynergies(); toast("Synergy removed");
+        });
+      });
+      document.getElementById("btnAddSynergy").addEventListener("click", () => openSearch("synergy"));
+    }
+    function syncBuildName() {
+      const name = document.getElementById("buildName").value.trim() || "Untitled Build";
+      state.buildName = name;
+      document.getElementById("buildTitle").textContent = name;
+      document.title = name + " — Loadout Console";
+      const set = document.getElementById("librarySet");
+      set.options[0].text = `${name} Armor (armor)`;
+      set.options[1].text = `${name} Weapons`;
+      set.options[2].text = `${name} Mods`;
+      document.getElementById("attachList").querySelectorAll(".attach-item span").forEach((span, i) => {
+        span.textContent = `${name} ${["Armor (live)", "Weapons (live)", "Mods (live)"][i]}`;
+      });
+    }
+    function buildDimJson() {
+      const r = computeReadiness();
+      const owned = slots.filter((s) => s.state === "owned").map((s) => ({ slot: s.id, name: s.name, instanceId: s.instance, mode: "pin" }));
+      return {
+        schema: "vex-loadout/1", name: state.buildName, class: state.class,
+        character: document.getElementById("character").value, variant: state.activeVariant,
+        super: state.super, exoticArmor: state.exoticArmor || null, exoticWeapon: state.exoticWeapon || null,
+        equipReady: r.equipReady, items: owned, softStats: state.softStats, softTargets: { ...state.softTargets }
+      };
+    }
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      try { localStorage.setItem("vex-theme", theme); } catch (_) {}
+    }
+    (function initTheme() {
+      let t = "dark";
+      try { t = localStorage.getItem("vex-theme") || "dark"; } catch (_) {}
+      applyTheme(t === "light" ? "light" : "dark");
+    })();
+    document.getElementById("btnTheme").addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+      applyTheme(next); toast(`Theme · ${next}`);
+    });
+    document.getElementById("btnCloseSearch").addEventListener("click", closeSearch);
+    document.getElementById("btnSearchCancel").addEventListener("click", closeSearch);
+    document.getElementById("searchOverlay").addEventListener("click", (e) => { if (e.target.id === "searchOverlay") closeSearch(); });
+    document.getElementById("searchQuery").addEventListener("input", renderSearchResults);
+    let releaseHowTrap = null;
+    function openHow() {
+      state.lastFocus = document.activeElement;
+      const o = document.getElementById("howOverlay");
+      o.classList.add("is-open"); o.setAttribute("aria-hidden", "false");
+      const drawer = o.querySelector(".drawer");
+      if (releaseHowTrap) releaseHowTrap();
+      releaseHowTrap = trapFocus(drawer);
+      setTimeout(() => document.getElementById("btnHowOk").focus(), 40);
+    }
+    function closeHow() {
+      const o = document.getElementById("howOverlay");
+      o.classList.remove("is-open"); o.setAttribute("aria-hidden", "true");
+      if (releaseHowTrap) { releaseHowTrap(); releaseHowTrap = null; }
+      if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
+    }
+    document.getElementById("btnHow").addEventListener("click", openHow);
+    document.getElementById("btnCloseHow").addEventListener("click", closeHow);
+    document.getElementById("btnHowOk").addEventListener("click", closeHow);
+    document.getElementById("howOverlay").addEventListener("click", (e) => { if (e.target.id === "howOverlay") closeHow(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeSearch(); closeHow(); } });
+    document.querySelectorAll(".step[data-target]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".step").forEach((s) => {
+          s.classList.remove("is-active");
+          s.setAttribute("aria-current", "false");
+        });
+        btn.classList.add("is-active");
+        btn.setAttribute("aria-current", "step");
+        const id = btn.getAttribute("data-target");
+        document.querySelectorAll(".zone.is-focus, .rail.is-focus, .variants.is-focus").forEach((el) => el.classList.remove("is-focus"));
+        const target = document.getElementById(id) || document.querySelector(`[data-od-id="${id}"]`);
+        if (target) {
+          target.classList.add("is-focus");
+          setTimeout(() => target.classList.remove("is-focus"), 900);
+          if (typeof target.focus === "function") {
+            target.setAttribute("tabindex", "-1");
+            target.focus({ preventScroll: true });
+          }
+        }
+        toast(`Step · ${btn.textContent.replace(/\d/, "").trim()}`);
+      });
+    });
+    document.getElementById("toggleOwned").addEventListener("click", () => {
+      setOwnedOpen(!document.getElementById("ownedList").classList.contains("is-open"));
+    });
+    document.getElementById("btnSave").addEventListener("click", () => {
+      syncBuildName(); toast("Identity saved · soft coverage does not block", "ok");
+    });
+    document.getElementById("buildName").addEventListener("input", syncBuildName);
+    function readSoftTargets() {
+      const out = {};
+      document.querySelectorAll(".stat-slider[data-stat]").forEach((row) => {
+        const key = row.getAttribute("data-stat");
+        const input = row.querySelector('input[type="range"]');
+        out[key] = input ? Number(input.value) : 0;
+      });
+      return out;
+    }
+    function bindSoftSliders() {
+      document.querySelectorAll(".stat-slider[data-stat]").forEach((row) => {
+        const key = row.getAttribute("data-stat");
+        const input = row.querySelector('input[type="range"]');
+        const valEl = row.querySelector(".stat-val");
+        if (!input || !valEl) return;
+        if (state.softTargets && state.softTargets[key] != null) input.value = String(state.softTargets[key]);
+        const sync = () => {
+          const n = Number(input.value);
+          valEl.textContent = String(n);
+          input.setAttribute("aria-valuenow", String(n));
+          if (!state.softTargets) state.softTargets = {};
+          state.softTargets[key] = n;
+          row.classList.toggle("is-active", n > 0);
+        };
+        input.addEventListener("input", sync);
+        sync();
+      });
+    }
+    document.getElementById("btnSoft").addEventListener("click", () => {
+      state.softTargets = readSoftTargets();
+      state.softStats = Object.entries(state.softTargets).filter(([, v]) => v > 0).map(([k, v]) => `${k}:${v}`);
+      const parts = Object.entries(state.softTargets).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v}`);
+      toast(parts.length ? `Soft targets · ${parts.join(" · ")}` : "Soft targets cleared (all 0)", "ok");
+    });
+    bindSoftSliders();
+    document.getElementById("btnApply").addEventListener("click", () => {
+      const r = computeReadiness();
+      const btn = document.getElementById("btnApply");
+      if (!r.equipReady) {
+        document.getElementById("blockReason").classList.add("is-error");
+        toast("Apply blocked · finish incomplete", "bad");
+        setTimeout(() => document.getElementById("blockReason").classList.remove("is-error"), 1200);
+        return;
+      }
+      setLoading(btn, true);
+      setTimeout(() => {
+        setLoading(btn, false);
+        toast(`Applied ${r.ownedPins} pins → ${document.getElementById("character").value}`, "ok");
+      }, 480);
+    });
+    document.getElementById("btnDim").addEventListener("click", async () => {
+      const r = computeReadiness();
+      const btn = document.getElementById("btnDim");
+      if (!r.equipReady) {
+        document.getElementById("blockReason").classList.add("is-error");
+        toast("DIM export blocked · equip-ready required", "bad");
+        setTimeout(() => document.getElementById("blockReason").classList.remove("is-error"), 1200);
+        return;
+      }
+      setLoading(btn, true);
+      const json = JSON.stringify(buildDimJson(), null, 2);
+      try {
+        await navigator.clipboard.writeText(json);
+        setLoading(btn, false);
+        toast("DIM JSON copied · owned instances", "ok");
+      } catch (_) {
+        setLoading(btn, false);
+        toast("DIM payload ready · clipboard blocked in host", "ok");
+        console.log(json);
+      }
+    });
+    document.querySelectorAll("[data-search]").forEach((b) => {
+      b.addEventListener("click", () => openSearch(b.getAttribute("data-search")));
+    });
+    document.getElementById("btnAttach").addEventListener("click", () => {
+      const sel = document.getElementById("librarySet");
+      toast(`Set attached · ${sel.options[sel.selectedIndex].text}`, "ok");
+    });
+    document.getElementById("btnCreateVariant").addEventListener("click", () => {
+      const v = document.getElementById("variantName").value.trim();
+      if (!v) { toast("Enter a variant name", "bad"); return; }
+      if (state.variants.includes(v)) { toast("Variant exists", "bad"); return; }
+      state.variants.push(v); state.activeVariant = v;
+      document.getElementById("variantName").value = "";
+      renderVariants(); toast(`Variant “${v}” created`, "ok");
+    });
+    function renderVariants() {
+      const host = document.getElementById("variantChips");
+      host.innerHTML = state.variants.map((v) =>
+        `<button type="button" class="var-chip ${v === state.activeVariant ? "is-on" : ""}" data-variant="${v}" aria-pressed="${v === state.activeVariant}">${v}</button>`
+      ).join("");
+      host.querySelectorAll(".var-chip").forEach((b) => {
+        b.addEventListener("click", () => {
+          state.activeVariant = b.getAttribute("data-variant");
+          renderVariants(); toast(`Variant · ${state.activeVariant}`);
+        });
+      });
+    }
+    document.getElementById("btnAddSynergy").addEventListener("click", () => openSearch("synergy"));
+    document.querySelector("[data-od-id='synergy-remove']")?.addEventListener("click", (e) => {
+      const tag = e.currentTarget.closest(".tag");
+      const v = tag?.getAttribute("data-synergy");
+      if (v) state.synergies = state.synergies.filter((x) => x !== v);
+      renderSynergies(); toast("Synergy removed");
+    });
+    document.getElementById("btnEditKit").addEventListener("click", () => toast(`Kit · ${state.aspects} aspects · ${state.fragments} fragments`));
+    document.getElementById("btnKitAspect").addEventListener("click", () => {
+      state.aspects = state.aspects >= 2 ? 1 : state.aspects + 1; updateReadiness(); toast(`Aspects · ${state.aspects}`);
+    });
+    document.getElementById("btnKitFrag").addEventListener("click", () => {
+      state.fragments = (state.fragments + 1) % 5; updateReadiness(); toast(`Fragments · ${state.fragments}`);
+    });
+    document.getElementById("clearExoticArmor").addEventListener("click", () => {
+      state.exoticArmor = "";
+      const name = document.getElementById("nameExoticArmor");
+      name.textContent = "Optional — not pinned"; name.classList.add("empty");
+      updateReadiness(); toast("Exotic armor cleared");
+    });
+    document.getElementById("character").addEventListener("change", (e) => {
+      const v = e.target.value; const cls = v.split("·")[0].trim();
+      state.class = cls; document.getElementById("classChip").textContent = cls; toast(`Character · ${v}`);
+    });
+    const dens = document.getElementById("tDensity");
+    dens.value = TWEAK_DEFAULTS.density;
+    document.body.setAttribute("data-density", TWEAK_DEFAULTS.density === "tight" ? "tight" : "card");
+    dens.addEventListener("change", () => {
+      document.body.setAttribute("data-density", dens.value === "tight" ? "tight" : "card");
+    });
+    document.getElementById("tOwned").checked = !!TWEAK_DEFAULTS.showOwned;
+    setOwnedOpen(!!TWEAK_DEFAULTS.showOwned);
+    document.getElementById("tOwned").addEventListener("change", (e) => setOwnedOpen(e.target.checked));
+    document.getElementById("tMods").checked = !!state.modsComplete;
+    document.getElementById("tMods").addEventListener("change", (e) => { state.modsComplete = e.target.checked; updateReadiness(); });
+    renderSlots(); updateReadiness(); syncBuildName();
+  </script>
+</body>
+</html>

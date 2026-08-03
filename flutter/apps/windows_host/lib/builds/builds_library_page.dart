@@ -91,6 +91,8 @@ class _BuildsLibraryPageState extends State<BuildsLibraryPage> {
   bool _subclassKitExpanded = false;
   /// Synergy add row: hidden until user asks to add another type.
   bool _synergyAddExpanded = false;
+  /// Loadout console step rail (build-basics mock): 1 identity · 2 loadout · 3 finish · 4 variants.
+  int _buildDetailStep = 1;
 
   bool get _createExpanded =>
       _createExpandedOverride ??

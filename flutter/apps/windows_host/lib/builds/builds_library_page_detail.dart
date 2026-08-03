@@ -14,85 +14,292 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
       );
     }
     final b = sel.build;
+    final palette = FlapPalette.of(context);
     final synergyText = _controller.synergySummaryOf(b);
     final displayName = _editNameController.text.trim().isNotEmpty
         ? _editNameController.text.trim()
         : (b.name.trim().isNotEmpty ? b.name.trim() : 'Untitled build');
+    final finish = _controller.finishGaps;
+    final finishLabel = finish == null
+        ? 'Finish · —'
+        : (finish.complete
+            ? 'Finish · complete'
+            : 'Finish · ${finish.nextActionable?.category.wireName ?? 'gaps'}');
 
-    return SingleChildScrollView(
-      key: const Key('builds_detail'),
-      padding: const EdgeInsets.all(kPanelPadLg),
+    // docs/ui-mocks/build-basics.html — loadout console: topbar · steps · zones.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 920;
+        final identityColumn = _buildIdentityZone(context);
+        final loadoutColumn = NeonZone(
+          key: const Key('builds_zone_loadout'),
+          padding: const EdgeInsets.all(kSpace12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _zoneHead(
+                context,
+                title: 'Loadout pins',
+                sub: 'Instance = owned · Wish = definition only',
+              ),
+              const SizedBox(height: kSpace12),
+              _buildVariantCompose(context),
+            ],
+          ),
+        );
+
+        final body = wide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 9, child: identityColumn),
+                  const SizedBox(width: kSpace12),
+                  Expanded(flex: 14, child: loadoutColumn),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  identityColumn,
+                  const SizedBox(height: kSpace12),
+                  loadoutColumn,
+                ],
+              );
+
+        return SingleChildScrollView(
+          key: const Key('builds_detail'),
+          padding: const EdgeInsets.fromLTRB(kSpace12, kSpace8, kSpace12, kSpace16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // --- Topbar (mock .topbar) ---
+              NeonZone(
+                padding: const EdgeInsets.fromLTRB(
+                  kSpace12,
+                  kSpace10,
+                  kSpace12,
+                  kSpace12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayName.toUpperCase(),
+                                key: const Key('builds_detail_title'),
+                                style: neonDisplay(
+                                  color: palette.foreground,
+                                  fontSize: 15,
+                                  letterSpacing: 0.06 * 15,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: kSpace8),
+                              Text(
+                                'What this build is — class, synergy, optional pins.',
+                                key: const Key('builds_identity_summary_label'),
+                                style: neonBody(
+                                  color: palette.muted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: kSpace8),
+                              Wrap(
+                                spacing: kSpace6,
+                                runSpacing: kSpace6,
+                                children: [
+                                  KeyedSubtree(
+                                    key: const Key('builds_detail_class'),
+                                    child: NeonMetaPill(
+                                      b.className,
+                                      tone: NeonPillTone.accent,
+                                    ),
+                                  ),
+                                  KeyedSubtree(
+                                    key: const Key('builds_detail_synergy_types'),
+                                    child: NeonMetaPill(
+                                      synergyText.isEmpty
+                                          ? '(no synergy)'
+                                          : synergyText,
+                                    ),
+                                  ),
+                                  if (b.pinnedSuper != null &&
+                                      b.pinnedSuper!.trim().isNotEmpty)
+                                    KeyedSubtree(
+                                      key: const Key(
+                                        'builds_detail_pinned_super',
+                                      ),
+                                      child: NeonMetaPill(
+                                        'Super: ${b.pinnedSuper}',
+                                      ),
+                                    ),
+                                  if (b.exoticArmorName != null ||
+                                      b.exoticArmorHash != null)
+                                    KeyedSubtree(
+                                      key: const Key(
+                                        'builds_detail_exotic_armor',
+                                      ),
+                                      child: NeonMetaPill(
+                                        b.exoticArmorName ??
+                                            'Armor ${b.exoticArmorHash}',
+                                        tone: NeonPillTone.exotic,
+                                      ),
+                                    ),
+                                  if (b.exoticWeaponName != null ||
+                                      b.exoticWeaponHash != null)
+                                    KeyedSubtree(
+                                      key: const Key(
+                                        'builds_detail_exotic_weapon',
+                                      ),
+                                      child: NeonMetaPill(
+                                        b.exoticWeaponName ??
+                                            'Weapon ${b.exoticWeaponHash}',
+                                        tone: NeonPillTone.exotic,
+                                      ),
+                                    ),
+                                  NeonMetaPill(
+                                    finishLabel,
+                                    tone: finish?.complete == true
+                                        ? NeonPillTone.ok
+                                        : NeonPillTone.warn,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: kSpace8),
+                        FilledButton(
+                          key: const Key('builds_save_identity'),
+                          onPressed: _controller.loading ||
+                                  _controller.identitySaveHardBlocked ||
+                                  _controller.identityConfirmRequired
+                              ? null
+                              : () => _saveIdentity(),
+                          child: const Text('Save identity'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: kSpace4),
+                    Text(
+                      'Soft coverage never blocks Save. Hard Destiny limits still do.',
+                      key: const Key('builds_save_identity_hint'),
+                      style: neonBody(color: palette.muted, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: kSpace12),
+              // --- Step rail (mock .steps) ---
+              Text(
+                '1 Identity → 2 Loadout → 3 Finish readiness → 4 Variants',
+                key: const Key('builds_identity_next_step'),
+                style: neonMono(
+                  color: palette.muted,
+                  fontSize: 10,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(height: kSpace8),
+              NeonSegmentedTabs(
+                dense: true,
+                selectedId: '$_buildDetailStep',
+                onSelected: (id) {
+                  final step = int.tryParse(id) ?? 1;
+                  setState(() {
+                    _buildDetailStep = step;
+                    if (step == 1) {
+                      // keep identity open
+                    } else if (step == 2) {
+                      _optionalPinsExpanded = true;
+                    } else if (step == 4) {
+                      // compose is always below
+                    }
+                  });
+                },
+                options: const [
+                  NeonSegmentOption(id: '1', label: '1 Identity'),
+                  NeonSegmentOption(id: '2', label: '2 Loadout'),
+                  NeonSegmentOption(id: '3', label: '3 Finish'),
+                  NeonSegmentOption(id: '4', label: '4 Variants'),
+                ],
+              ),
+              const SizedBox(height: kSpace12),
+              body,
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _zoneHead(
+    BuildContext context, {
+    required String title,
+    required String sub,
+  }) {
+    final palette = FlapPalette.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Expanded(
+          child: Text(
+            title.toUpperCase(),
+            style: neonDisplay(
+              color: palette.foreground,
+              fontSize: 11,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+        Text(
+          sub.toUpperCase(),
+          style: neonMono(
+            color: palette.muted,
+            fontSize: 10,
+            letterSpacing: 0.8,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Identity zone — name, synergy, optional pins, kit, save hard-blocks.
+  Widget _buildIdentityZone(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    return NeonZone(
+      key: const Key('builds_zone_identity'),
+      padding: const EdgeInsets.all(kSpace12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            displayName,
-            key: const Key('builds_detail_title'),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: kSpace4),
-          Text(
-            'What this build is — class, synergy, optional pins.',
-            key: const Key('builds_identity_summary_label'),
-            style: _bodyMutedStyle(context),
-          ),
-          const SizedBox(height: kSpace8),
-          Wrap(
-            spacing: kSpace6,
-            runSpacing: kSpace6,
-            children: [
-              _summaryTag(
-                context,
-                key: const Key('builds_detail_class'),
-                label: b.className,
-              ),
-              _summaryTag(
-                context,
-                key: const Key('builds_detail_synergy_types'),
-                label: synergyText.isEmpty ? '(no synergy)' : synergyText,
-              ),
-              if (b.pinnedSuper != null && b.pinnedSuper!.trim().isNotEmpty)
-                _summaryTag(
-                  context,
-                  key: const Key('builds_detail_pinned_super'),
-                  label: 'Super: ${b.pinnedSuper}',
-                ),
-              if (b.exoticArmorName != null || b.exoticArmorHash != null)
-                _summaryTag(
-                  context,
-                  key: const Key('builds_detail_exotic_armor'),
-                  label: b.exoticArmorName ?? 'Armor ${b.exoticArmorHash}',
-                ),
-              if (b.exoticWeaponName != null || b.exoticWeaponHash != null)
-                _summaryTag(
-                  context,
-                  key: const Key('builds_detail_exotic_weapon'),
-                  label: b.exoticWeaponName ?? 'Weapon ${b.exoticWeaponHash}',
-                ),
-            ],
+          _zoneHead(
+            context,
+            title: 'Identity',
+            sub: 'Required before clean save',
           ),
           const SizedBox(height: kSpace12),
           Text(
-            '1 Basics → 2 Optional pins/kit → 3 Save → 4 Variants below',
-            key: const Key('builds_identity_next_step'),
-            style: _sectionLabelStyle(context),
-          ),
-          const SizedBox(height: kSpace16),
-          Text(
-            '1 · Basics',
-            style: _sectionTitleStyle(context),
+            'NAME',
+            style: neonMono(
+              color: palette.muted,
+              fontSize: 10,
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: kSpace4),
-          Text(
-            'Name and synergy types define identity. Required before a clean Save.',
-            style: _bodyMutedStyle(context),
-          ),
-          const SizedBox(height: kSpace8),
           TextField(
             key: const Key('builds_edit_name'),
             controller: _editNameController,
             decoration: const InputDecoration(
-              labelText: 'Name',
               isDense: true,
               border: OutlineInputBorder(),
             ),
@@ -100,8 +307,12 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
           ),
           const SizedBox(height: kSpace12),
           Text(
-            'Synergy types',
-            style: _sectionLabelStyle(context),
+            'SYNERGY TYPES',
+            style: neonMono(
+              color: palette.muted,
+              fontSize: 10,
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: kSpace6),
           if (_controller.editDraftTypes.isEmpty)
@@ -136,7 +347,7 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
               child: TextButton(
                 key: const Key('builds_edit_add_synergy_open'),
                 onPressed: () => setState(() => _synergyAddExpanded = true),
-                child: const Text('Add another synergy type'),
+                child: const Text('+ Add type'),
               ),
             )
           else
@@ -192,7 +403,6 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
                 ),
               ],
             ),
-          // Keep synergy add keys mounted when row is collapsed (tests / wiring).
           if (!_synergyAddExpanded)
             Offstage(
               offstage: true,
@@ -251,9 +461,7 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
               key: const Key('builds_identity_confirm_panel'),
               padding: const EdgeInsets.all(kPanelPadSm),
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                border: Border.all(color: palette.accent),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -305,48 +513,8 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
               ),
             ),
           ],
-          const SizedBox(height: kSpace16),
-          // Primary identity CTA — soft misses never disable; hard blocks do.
-          FilledButton(
-            key: const Key('builds_save_identity'),
-            onPressed: _controller.loading ||
-                    _controller.identitySaveHardBlocked ||
-                    _controller.identityConfirmRequired
-                ? null
-                : () => _saveIdentity(),
-            child: const Text('Save identity'),
-          ),
-          const SizedBox(height: kSpace4),
-          Text(
-            'Soft coverage never blocks Save. Hard Destiny limits still do.',
-            key: const Key('builds_save_identity_hint'),
-            style: _bodyMutedStyle(context),
-          ),
-          const SizedBox(height: kSpace24),
-          const Divider(height: 1),
-          const SizedBox(height: kSpace12),
-          _buildVariantCompose(context),
         ],
       ),
-    );
-  }
-
-  /// Read-only summary tag (not a tappable filter chip).
-  Widget _summaryTag(
-    BuildContext context, {
-    required Key key,
-    required String label,
-  }) {
-    final scheme = Theme.of(context).colorScheme;
-    return Chip(
-      key: key,
-      label: Text(label),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: const EdgeInsets.symmetric(horizontal: kSpace4),
-      labelStyle: Theme.of(context).textTheme.labelMedium,
-      side: BorderSide(color: scheme.outlineVariant),
-      backgroundColor: scheme.surfaceContainerHighest,
     );
   }
 
