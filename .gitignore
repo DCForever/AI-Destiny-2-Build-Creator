@@ -78,3 +78,8 @@ flutter/**/build/
 # Playwright atlas auth / local capture state
 .atlas/
 docs/atlas/screenshots/*.png
+
+# Machine-local mount of Obsidian ProjectTracker vault (absolute path outside repo).
+# Recreate: pwsh -File scripts/link-projecttracker-requirements.ps1
+# High-level product requirements: requirements/Projects/Destiny 2 Build Creator/
+/requirements

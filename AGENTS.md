@@ -24,16 +24,30 @@ package.json    # thin npm proxy into web/NextJS only
 - **Do not** put Dart packages outside `flutter/`.
 - Shared docs and Spec Kit stay at monorepo root (`docs/`, `specs/`, `.specify/`).
 
+## High-level product requirements (Obsidian)
+
+Working product descriptions live in the **ProjectTracker** vault, not as duplicated bodies under `docs/products/`.
+
+| | |
+| --- | --- |
+| Soft link | [`requirements/`](requirements/) → `C:\Users\Owner\SyncThing\Obsidian\ProjectTracker` |
+| Recreate | `pwsh -File scripts/link-projecttracker-requirements.ps1` |
+| **Read first for intent/scope** | `requirements/Projects/Destiny 2 Build Creator/` (`Products.md`, `Domains/`, `Areas/`, `Destiny Objects/`) |
+| Git pointer | [`docs/products/README.md`](docs/products/README.md) |
+
+When planning product behavior, check that folder for high-level requirements, then enforce via domain specs below.
+
 ## Domain & feature rules (always consult + keep current)
 
 When **planning** or **implementing** product behavior (any stack):
 
 1. **Read first** (domain wins on conflict):
+   - High-level intent: `requirements/Projects/Destiny 2 Build Creator/` (if mount present)
    - [`specs/domain-business-rules.md`](specs/domain-business-rules.md) — `DBR-*`
    - [`specs/domain-acceptance-criteria.md`](specs/domain-acceptance-criteria.md) — `DAC-*`
    - [`specs/business-rules.md`](specs/business-rules.md) — `BR-*` (feature layer)
 
-2. **Update those docs in the same change** when you ship or decide a product rule that is not already captured (new/changed DBR, DAC, BR; supersession notes; **Updated** date). Do not leave rules only in commits or chat.
+2. **Update those docs in the same change** when you ship or decide a product rule that is not already captured (new/changed DBR, DAC, BR; supersession notes; **Updated** date). Do not leave rules only in commits or chat. Vault product notes update when description meaning changes.
 
 3. **Pure UI polish** (density, chrome collapse, viewport lock) stays out of domain P1/P2 gates unless it encodes product semantics — note trackers under `docs/` if needed.
 

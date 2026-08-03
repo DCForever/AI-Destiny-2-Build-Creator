@@ -1,20 +1,33 @@
-# Product descriptions
+# Product descriptions (high-level requirements)
 
-**Working copy is in Obsidian (ProjectTracker), not this folder.**
+**Working copy is in Obsidian (ProjectTracker), not duplicated in git.**
+
+## Local soft link (preferred agent path)
 
 | | |
 | --- | --- |
-| Vault | `ProjectTracker` |
-| Catalog | `Projects/Destiny 2 Build Creator/Products.md` |
-| Domains | `Projects/Destiny 2 Build Creator/Domains/` |
-| Areas | `Projects/Destiny 2 Build Creator/Areas/` |
-| Open in Obsidian | Project note [[Destiny 2 Build Creator]] → [[Products]] |
+| Mount | [`requirements/`](../../requirements/) → vault root |
+| Recreate | `pwsh -File scripts/link-projecttracker-requirements.ps1` |
+| Vault absolute | `C:\Users\Owner\SyncThing\Obsidian\ProjectTracker` |
+| **High-level product requirements** | **`requirements/Projects/Destiny 2 Build Creator/`** |
+
+| Vault path (via mount) | Content |
+| --- | --- |
+| `requirements/Projects/Destiny 2 Build Creator/Products.md` | Catalog index (domains + areas + Destiny objects) |
+| `requirements/Projects/Destiny 2 Build Creator/Domains/` | Domain product descriptions (Build, Variant, Set, Synergy, …) |
+| `requirements/Projects/Destiny 2 Build Creator/Areas/` | Area product descriptions (Shell, Build, Catalog, …) |
+| `requirements/Projects/Destiny 2 Build Creator/Destiny Objects/` | Game entity presentation / domain use |
+| `requirements/Projects/Destiny 2 Build Creator.md` | Project note (purpose, success criteria, status) |
+
+`requirements/` is a **machine-local junction** (gitignored). If missing, run the link script or open the absolute vault path above.
+
+Open in Obsidian: vault `ProjectTracker` → project [[Destiny 2 Build Creator]] → [[Products]].
 
 ## What lives where
 
 | Layer | Location | Owns |
 | --- | --- | --- |
-| **Product descriptions** | **Obsidian** (path above) | Intent, framing, scope narrative for domains + areas |
+| **High-level product requirements** | **Obsidian** `Projects/Destiny 2 Build Creator/` (via `requirements/`) | Intent, framing, scope narrative for domains + areas + Destiny objects |
 | Whole product | [`PRODUCT.md`](../../PRODUCT.md) | Purpose, positioning, principles |
 | Structure | [`docs/product-map/`](../product-map/) | Surfaces, flows, rule *attachments* |
 | Rule wording | [`specs/domain-*.md`](../../specs/), [`business-rules.md`](../../specs/business-rules.md) | Enforceable `DBR` / `DAC` / `BR` text |
@@ -47,6 +60,9 @@
 
 ## Agent / contributor note
 
-Do **not** re-create full product description bodies under `docs/products/domains/` or `docs/products/areas/`. Edit the vault notes instead. Keep this README as the git-side pointer and catalog index.
+1. Prefer reading **`requirements/Projects/Destiny 2 Build Creator/`** for high-level product requirements.
+2. Do **not** re-create full product description bodies under `docs/products/domains/` or `docs/products/areas/`.
+3. Keep this README as the git-side pointer and catalog index.
+4. Enforceable rule IDs still live in `specs/` after re-sync.
 
 Legacy: [`docs/product-areas/`](../product-areas/) also points here.
