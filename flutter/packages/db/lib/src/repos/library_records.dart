@@ -167,6 +167,7 @@ class SynergyLinkRecord {
     this.bonusPieces,
     this.bonusName,
     this.armorSetHash,
+    this.required = false,
   });
 
   final String id;
@@ -182,6 +183,9 @@ class SynergyLinkRecord {
   final int? bonusPieces;
   final String? bonusName;
   final int? armorSetHash;
+
+  /// Required evidence link (DBR-SYN-007–010a). False = soft evidence only.
+  final bool required;
 }
 
 class SynergyWithLinks {

@@ -32,6 +32,7 @@ SynergyLinkRecord _rowToLink(SynergyLink row) {
     bonusPieces: row.bonusPieces,
     bonusName: row.bonusName,
     armorSetHash: row.armorSetHash,
+    required: row.required != 0,
   );
 }
 
@@ -93,6 +94,7 @@ class SynergyLinkInput {
     this.bonusPieces,
     this.bonusName,
     this.armorSetHash,
+    this.required = false,
   });
 
   final String? id;
@@ -107,6 +109,7 @@ class SynergyLinkInput {
   final int? bonusPieces;
   final String? bonusName;
   final int? armorSetHash;
+  final bool required;
 }
 
 Future<void> _insertLinks(
@@ -132,6 +135,7 @@ Future<void> _insertLinks(
             bonusPieces: Value(link.bonusPieces),
             bonusName: Value(link.bonusName),
             armorSetHash: Value(link.armorSetHash),
+            required: Value(link.required ? 1 : 0),
           ),
         );
   }

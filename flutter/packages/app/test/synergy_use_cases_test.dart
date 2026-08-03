@@ -90,6 +90,64 @@ void main() {
       expect(listed, hasLength(1));
     });
 
+    test('required flag round-trips create/edit', () async {
+      final userId = await seedUser();
+      final created = await createUserSynergy(
+        db,
+        userId,
+        const CreateSynergyCommand(
+          id: 'syn-req',
+          name: 'Required Links',
+          type: 'melee',
+          links: [
+            SynergyLinkWrite(
+              id: 'l-req',
+              kind: 'weapon',
+              displayName: 'Must Pin',
+              itemHash: 42,
+              required: true,
+            ),
+            SynergyLinkWrite(
+              id: 'l-soft',
+              kind: 'weapon',
+              displayName: 'Soft Only',
+              itemHash: 43,
+              required: false,
+            ),
+          ],
+        ),
+        now: clock,
+      );
+      expect(created.links.where((l) => l.required).length, 1);
+      expect(created.links.singleWhere((l) => l.id == 'l-req').required, isTrue);
+      expect(
+        created.links.singleWhere((l) => l.id == 'l-soft').required,
+        isFalse,
+      );
+
+      final domain = mapSynergyDomain(created);
+      expect(domain.links.singleWhere((l) => l.id == 'l-req').required, isTrue);
+
+      final updated = await updateUserSynergy(
+        db,
+        userId,
+        'syn-req',
+        const UpdateSynergyCommand(
+          links: [
+            SynergyLinkWrite(
+              id: 'l-req',
+              kind: 'weapon',
+              displayName: 'Must Pin',
+              itemHash: 42,
+              required: false,
+            ),
+          ],
+        ),
+        now: fixedNow(later),
+      );
+      expect(updated!.links.single.required, isFalse);
+    });
+
     test('update description and links keeps designation', () async {
       final userId = await seedUser();
       await createUserSynergy(

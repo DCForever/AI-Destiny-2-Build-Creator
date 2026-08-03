@@ -27,6 +27,9 @@ enum UseCaseErrorCode {
   variantEmpty('VARIANT_EMPTY'),
   defaultVariantIncomplete('DEFAULT_VARIANT_INCOMPLETE'),
 
+  /// Required synergy link unsatisfied on default save (DBR-SYN-010a).
+  requiredLinkUnsatisfied('REQUIRED_LINK_UNSATISFIED'),
+
   /// Optimizer materialize / apply (DART-035).
   invalidCombination('INVALID_COMBINATION'),
   instanceNotOwned('INSTANCE_NOT_OWNED'),

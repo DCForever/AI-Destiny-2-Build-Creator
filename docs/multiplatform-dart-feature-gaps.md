@@ -98,7 +98,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | -- | ------- | ---------------- | - | - | - | ---- | ------------ |
 | **FEAT-COMPOSE-IDENTITY** | Build identity (synergies, exotic, Super) | Build composer | **PASS** | PASS | **PASS** | **shipped** | DART-064 Confirm/Fork + Manifest pickers + kit; soft never auto-applies |
 | **FEAT-COMPOSE-VARIANTS** | Variants + set attachments + slot pins | Build composer | PASS | PASS | PASS | **shipped** | DART-005/028+ |
-| **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | **PASS** | PASS | **PASS** | **shipped** | Domain authoritative + client hard-block UX (DART-064); soft never disables Save |
+| **FEAT-COMPOSE-HARD** | Hard constraints on save/attach | Domain DBR/DAC | **PASS** | PASS | **PASS** | **shipped** | Domain authoritative + client hard-block UX (DART-064); **pkg-default-three-gates** kit bar + artifact + required links on default; soft never disables Save on non-default |
 | **FEAT-COMPOSE-SOFT** | Soft coverage display (never auto-apply) | Soft guidance UI | PASS | PASS | PASS | **shipped** | DART-004/034/041/046; RC-SOFT; soft **never auto-applies** |
 | **FEAT-COMPOSE-SOFT-STATS** | Soft stat targets (explicit save) | Soft stat editor | PASS | PASS | PASS | **shipped** | DART-034/041/046; Jaspr all `ArmorStatName` **DART-057** / GAP-UI-01 closed |
 | **FEAT-COMPOSE-FINISH** | Finish gaps helpers | Finish build UX | **PASS** | PARTIAL | **PASS** | **shipped** | Windows+Jaspr Finish walkthrough **DART-067** / GAP-UI-BUILD-03 closed; Windows Finish Armor improve confirm-only; soft never auto-applies. Residual: web/mobile optimizer path **GAP-FEAT-01** deferred (not unfinished walkthrough) |
@@ -578,7 +578,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | Field | Value |
 | ----- | ----- |
 | **Next planned slice** | **None** — DART-001–068 program complete; residual packages via align-product scan (not new DART-NNN unless product elevates) |
-| **Next phase** | **Post-P9 residual hygiene** (domain/hard gates + inventory enrichment packages); P8 cutover + P9 UI fidelity **done** |
+| **Next phase** | **Post-P9 residual hygiene** — `pkg-default-three-gates` **closed** (compose + required on default); residual: `pkg-variant-subclass-kit`, `pkg-synergy-kinds-v1` |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
 | **Feature inventory** | Aligned with master GAP closed evidence (finish/optimizer/weapon-stats/owned-join) |
 | **unplanned_p0_p1** | *(empty for cutover)* |

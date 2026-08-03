@@ -6,9 +6,11 @@ library;
 
 import '../models/equipment.dart';
 import '../models/failure_codes.dart';
+import '../models/kit.dart';
 import '../models/library.dart';
 import '../models/resolved_variant.dart';
 import '../models/slot_claim.dart';
+import 'default_loadout_completeness.dart';
 
 /// Domain failure for resolve asserts / pair validation.
 ///
@@ -221,7 +223,34 @@ const List<EquipmentSlot> requiredWeaponSlots = EquipmentSlot.weaponSlots;
 /// Required armor slots for default full combat loadout (DBR-CMPL-001).
 const List<EquipmentSlot> requiredArmorSlots = EquipmentSlot.armorSlots;
 
-/// Default variant must be a full combat loadout (weapons + armor + identity + mods).
+/// Options for kit bar + artifact fill on default full combat (DBR-CMPL-001*).
+class FullCombatLoadoutOptions {
+  const FullCombatLoadoutOptions({
+    this.maxAspects = maxSubclassAspects,
+    this.fragmentCapacity = 0,
+    this.capacityResolved = true,
+    this.artifactHash,
+    this.artifactConfig,
+    this.subclassKit,
+    this.requireKitAndArtifact = true,
+  });
+
+  final int maxAspects;
+  final int fragmentCapacity;
+  final bool capacityResolved;
+  final int? artifactHash;
+  final List<int>? artifactConfig;
+
+  /// When set, used for kit-bar gaps instead of [subclassName]-only identity.
+  final SubclassKitFields? subclassKit;
+
+  /// When true (default), enforce subclass kit bar + artifact fill.
+  /// Set false only for pure equipment-gap unit tests.
+  final bool requireKitAndArtifact;
+}
+
+/// Default variant must be a full combat loadout (weapons + armor + identity +
+/// mods + kit bar + artifact when [FullCombatLoadoutOptions.requireKitAndArtifact]).
 ///
 /// [className] / [subclassName] are optional strings so incomplete drafts can
 /// omit identity without requiring a full [Build] row.
@@ -230,7 +259,9 @@ void assertFullCombatLoadout(
   String? className,
   String? subclassName,
   bool hasMods = false,
+  FullCombatLoadoutOptions? options,
 }) {
+  final opts = options ?? const FullCombatLoadoutOptions();
   final missing = <String>[];
   for (final slot in requiredWeaponSlots) {
     if (!resolved.equipment.containsKey(slot)) missing.add(slot.wireName);
@@ -239,8 +270,32 @@ void assertFullCombatLoadout(
     if (!resolved.equipment.containsKey(slot)) missing.add(slot.wireName);
   }
   if (className == null || className.isEmpty) missing.add('className');
-  if (subclassName == null || subclassName.isEmpty) missing.add('subclass');
+
+  final kitFields = opts.subclassKit ??
+      (subclassName != null && subclassName.isNotEmpty
+          ? SubclassKitFields(name: subclassName)
+          : null);
+  if (kitFields == null || !_nonEmptyName(kitFields.name)) {
+    if (!missing.contains('subclass')) missing.add('subclass');
+  }
   if (!hasMods) missing.add('mods');
+
+  if (opts.requireKitAndArtifact) {
+    for (final gap in collectSubclassKitCompleteGaps(
+      kitFields,
+      maxAspects: opts.maxAspects,
+      fragmentCapacity: opts.fragmentCapacity,
+      capacityResolved: opts.capacityResolved,
+    )) {
+      if (!missing.contains(gap)) missing.add(gap);
+    }
+    for (final gap in collectArtifactCompleteGaps(
+      artifactHash: opts.artifactHash,
+      artifactConfig: opts.artifactConfig,
+    )) {
+      if (!missing.contains(gap)) missing.add(gap);
+    }
+  }
 
   if (missing.isNotEmpty) {
     throw ResolveVariantException(
@@ -251,6 +306,9 @@ void assertFullCombatLoadout(
   }
 }
 
+bool _nonEmptyName(String? value) =>
+    value != null && value.trim().isNotEmpty;
+
 /// Completeness policy: default → full combat; non-default → non-empty only.
 ///
 /// DBR-CMPL-001 / DBR-CMPL-002.
@@ -260,6 +318,7 @@ void assertVariantCompleteness(
   String? className,
   String? subclassName,
   bool hasMods = false,
+  FullCombatLoadoutOptions? options,
 }) {
   assertVariantNotEmpty(resolved);
   if (isDefault) {
@@ -268,6 +327,7 @@ void assertVariantCompleteness(
       className: className,
       subclassName: subclassName,
       hasMods: hasMods,
+      options: options,
     );
   }
 }

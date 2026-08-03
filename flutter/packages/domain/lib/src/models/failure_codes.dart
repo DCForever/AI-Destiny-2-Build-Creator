@@ -15,6 +15,9 @@ abstract final class DomainFailureCodes {
   static const defaultVariantIncomplete = 'DEFAULT_VARIANT_INCOMPLETE';
   static const notEquipReady = 'NOT_EQUIP_READY';
 
+  /// Required synergy link unsatisfied on default save (DBR-SYN-010a / BR-VAR-050).
+  static const requiredLinkUnsatisfied = 'REQUIRED_LINK_UNSATISFIED';
+
   /// Soft-path code used alongside exotic ability hard blocks in TS (not a hard save block alone).
   static const exoticAbilityPinProposed = 'EXOTIC_ABILITY_PIN_PROPOSED';
 

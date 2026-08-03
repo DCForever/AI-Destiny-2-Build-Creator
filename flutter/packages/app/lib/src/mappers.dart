@@ -190,6 +190,7 @@ Synergy synergyFromRecord(SynergyWithLinks row) {
         bonusPieces: l.bonusPieces,
         bonusName: l.bonusName,
         armorSetHash: l.armorSetHash,
+        required: l.required,
       ),
     );
   }

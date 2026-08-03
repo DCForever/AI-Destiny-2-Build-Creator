@@ -373,6 +373,30 @@ class SynergiesLibraryController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Toggle required flag on a draft link (DBR-SYN-007–010a). Save links to persist.
+  void setDraftLinkRequired(int index, bool required) {
+    if (index < 0 || index >= _draftLinks.length) return;
+    final cur = _draftLinks[index];
+    final next = List<SynergyLinkWrite>.from(_draftLinks);
+    next[index] = SynergyLinkWrite(
+      id: cur.id,
+      kind: cur.kind,
+      displayName: cur.displayName,
+      itemHash: cur.itemHash,
+      perkHash: cur.perkHash,
+      parentItemHash: cur.parentItemHash,
+      originTraitName: cur.originTraitName,
+      originTraitHash: cur.originTraitHash,
+      armorSetName: cur.armorSetName,
+      bonusPieces: cur.bonusPieces,
+      bonusName: cur.bonusName,
+      armorSetHash: cur.armorSetHash,
+      required: required,
+    );
+    _draftLinks = next;
+    notifyListeners();
+  }
+
   /// Probes designation immutability (for tests / defensive UI). Returns error text.
   Future<String?> attemptChangeType(String newType) async {
     final sel = _selected;
@@ -417,6 +441,7 @@ class SynergiesLibraryController extends ChangeNotifier {
           bonusPieces: l.bonusPieces,
           bonusName: l.bonusName,
           armorSetHash: l.armorSetHash,
+          required: l.required,
         ),
     ];
   }

@@ -67,6 +67,46 @@ void main() {
     );
   }
 
+  test('three-gate readiness soft never hard-blocks non-default Save',
+      () async {
+    // Pure summary: non-default required miss → soft only (BR-VAR-041).
+    final status = evaluateThreeGateReadiness(
+      resolved: ResolvedVariantEquipment(
+        equipment: {
+          EquipmentSlot.primary: const SlotClaim(
+            slot: EquipmentSlot.primary,
+            itemHash: 1,
+            itemName: 'P',
+            source: ClaimSource.set,
+          ),
+        },
+        conflicts: const [],
+      ),
+      isDefault: false,
+      designatedSynergies: [
+        const Synergy(
+          id: 'S1',
+          name: 'Melee',
+          type: SynergyType('melee'),
+          links: [
+            SynergyLink(
+              id: 'L1',
+              synergyId: 'S1',
+              kind: SynergyLinkKind.weapon,
+              displayName: 'Gun',
+              itemHash: 99,
+              required: true,
+            ),
+          ],
+        ),
+      ],
+    );
+    expect(status.requiredLinksSatisfied, isFalse);
+    expect(status.softRequiredWarn, isTrue);
+    expect(status.hardBlocksSave, isFalse);
+    expect(status.chipLabels.length, 3);
+  });
+
   test('US1 create build requires synergy type and selects default variant',
       () async {
     final errEmpty = await controller.createBuild(

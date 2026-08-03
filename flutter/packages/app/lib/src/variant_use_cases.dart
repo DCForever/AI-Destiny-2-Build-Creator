@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show Value;
 
 import 'attachment_use_cases.dart';
 import 'clock_ids.dart';
+import 'coverage_use_cases.dart';
 import 'errors.dart';
 import 'hard_gate_ports.dart';
 import 'hard_gates.dart';
@@ -241,8 +242,30 @@ Future<void> validateVariantSave(
   if (resolved == null) return;
 
   final hasMods = await variantHasMods(db, userId, attachments);
+  // Residual until pkg-variant-subclass-kit: kit bar reads builds.subclass.
   final kit = subclassKitFromJson(build.subclass);
   final domainAtts = attachments.map(attachmentFromRecord).toList();
+
+  final aspects = kit.aspects
+      .map((a) => a.trim())
+      .where((a) => a.isNotEmpty)
+      .toList();
+  final capacity = await ports.resolveFragmentCapacity(aspects);
+  final capacityResolved =
+      aspects.isEmpty || capacity.resolvedCount == aspects.length;
+
+  final designated = variant.isDefault
+      ? await loadDesignatedSynergies(db, userId, build.synergyTypes)
+      : const <Synergy>[];
+
+  InventoryPinIndex inventory = const {};
+  if (variant.isDefault) {
+    final invRows = await listInventoryItems(db, userId);
+    inventory = buildInventoryPinIndex([
+      for (final row in invRows)
+        InventoryPinItem(instanceId: row.instanceId, itemHash: row.itemHash),
+    ]);
+  }
 
   await assertVariantSaveHardGates(
     VariantSaveGateInput(
@@ -252,6 +275,13 @@ Future<void> validateVariantSave(
       className: build.className,
       subclassName: kit.name,
       hasMods: hasMods,
+      subclassKit: kit,
+      fragmentCapacity: capacity.capacity,
+      capacityResolved: capacityResolved,
+      artifactHash: variant.artifactHash,
+      artifactConfig: variant.artifactConfig,
+      designatedSynergies: designated,
+      inventory: inventory,
     ),
     ports: ports,
   );

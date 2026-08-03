@@ -99,6 +99,13 @@ const List<EnsureStepInfo> ensureStepCatalog = [
     description:
         'CREATE build_synergy_types if missing; migrate/drop legacy build_synergies',
   ),
+  EnsureStepInfo(
+    id: 'synergy_link_required',
+    productFunction: 'ensureSynergyLinkRequiredColumn',
+    targetTable: 'synergy_links',
+    description:
+        'ADD COLUMN required INTEGER NOT NULL DEFAULT 0 (DBR-SYN-007–010a)',
+  ),
 ];
 
 /// Expected step ids (for tests / completeness checks).
@@ -113,4 +120,5 @@ const List<String> expectedEnsureStepIds = [
   'builds_soft_stat_targets',
   'sets_optimizer',
   'build_synergy_types',
+  'synergy_link_required',
 ];

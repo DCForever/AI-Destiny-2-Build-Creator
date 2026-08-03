@@ -726,6 +726,19 @@ class _SynergiesLibraryPageState extends State<SynergiesLibraryPage> {
             ),
           ),
           TextButton(
+            key: Key('synergies_link_required_$index'),
+            onPressed: () {
+              final next = !link.required;
+              _controller.setDraftLinkRequired(index, next);
+              setState(
+                () => _statusMessage = next
+                    ? 'Marked required (save links)'
+                    : 'Required cleared',
+              );
+            },
+            child: Text(link.required ? 'Required ✓' : 'Mark required'),
+          ),
+          TextButton(
             key: Key('synergies_link_remove_$index'),
             onPressed: () {
               _controller.removeDraftLinkAt(index);

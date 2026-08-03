@@ -366,13 +366,19 @@ pages:
           - DBR-STAT-004
           - DAC-P2-002
           - DBR-SYN-010
+          - DBR-SYN-010a
+          - BR-VAR-050
+          - BR-VAR-052
       - id: build.edit.default-composer
         kind: surface
         title: Default variant composer (inline)
         rules:
           - DAC-P1-003
           - DBR-CMPL-001
+          - DBR-CMPL-001d
           - BR-BLD-001
+          - BR-VAR-050
+          - BR-VAR-052
           - 043:SC-001
       - id: build.edit.finish
         kind: screen
@@ -1379,7 +1385,9 @@ pages:
                   - DBR-SYN-007
                   - DBR-SYN-008
                   - DBR-SYN-009
+                  - DBR-SYN-010a
                   - DAC-P2-002
+                  - BR-VAR-050
       - id: synergy.edit
         kind: screen
         title: Edit synergy panel
@@ -2032,6 +2040,9 @@ pages:
               - DBR-STAT-004
               - DAC-P2-002
               - DBR-SYN-010
+              - DBR-SYN-010a
+              - BR-VAR-050
+              - BR-VAR-052
             atlas:
               - build-edit-coverage
           - id: journey.p1.intent-compose-equip.compose.finish
@@ -2434,7 +2445,9 @@ pages:
                   - DBR-SYN-007
                   - DBR-SYN-008
                   - DBR-SYN-009
+                  - DBR-SYN-010a
                   - DAC-P2-002
+                  - BR-VAR-050
                 atlas:
                   - synergy-detail-link-required
           - id: journey.p2.library.synergies.detail
@@ -3001,6 +3014,9 @@ pages:
           - DBR-STAT-004
           - DAC-P2-002
           - DBR-SYN-010
+          - DBR-SYN-010a
+          - BR-VAR-050
+          - BR-VAR-052
         atlas:
           - build-edit-coverage
       - id: flow.build.compose-default.finish
@@ -3626,6 +3642,9 @@ pages:
           - DBR-STAT-004
           - DAC-P2-002
           - DBR-SYN-010
+          - DBR-SYN-010a
+          - BR-VAR-050
+          - BR-VAR-052
         atlas:
           - build-edit-coverage
       - id: flow.variant.update.identity-gate
@@ -3966,7 +3985,9 @@ pages:
               - DBR-SYN-007
               - DBR-SYN-008
               - DBR-SYN-009
+              - DBR-SYN-010a
               - DAC-P2-002
+              - BR-VAR-050
             atlas:
               - synergy-detail-link-required
       - id: flow.synergy.library.detail
@@ -4071,7 +4092,9 @@ pages:
           - DBR-SYN-007
           - DBR-SYN-008
           - DBR-SYN-009
+          - DBR-SYN-010a
           - DAC-P2-002
+          - BR-VAR-050
         atlas:
           - synergy-detail-link-required
   - id: flow-flow-synergy-edit

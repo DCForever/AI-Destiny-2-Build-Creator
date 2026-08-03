@@ -193,6 +193,10 @@ class SynergyLinks extends Table {
   TextColumn get bonusName => text().nullable()();
   IntColumn get armorSetHash => integer().nullable()();
 
+  /// 1 = required evidence link (default hard gate); 0 = soft evidence only.
+  IntColumn get required =>
+      integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {id};
 

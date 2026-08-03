@@ -166,6 +166,7 @@ class SynergyLink {
     this.bonusPieces,
     this.bonusName,
     this.armorSetHash,
+    this.required = false,
   });
 
   final String id;
@@ -181,6 +182,10 @@ class SynergyLink {
   final int? bonusPieces;
   final String? bonusName;
   final int? armorSetHash;
+
+  /// Required evidence (DBR-SYN-007–010a): hard on default save; soft warn only
+  /// on non-default. False = soft evidence only.
+  final bool required;
 
   @override
   bool operator ==(Object other) {
@@ -198,7 +203,8 @@ class SynergyLink {
         other.armorSetName == armorSetName &&
         other.bonusPieces == bonusPieces &&
         other.bonusName == bonusName &&
-        other.armorSetHash == armorSetHash;
+        other.armorSetHash == armorSetHash &&
+        other.required == required;
   }
 
   @override
@@ -216,5 +222,6 @@ class SynergyLink {
         bonusPieces,
         bonusName,
         armorSetHash,
+        required,
       );
 }

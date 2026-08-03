@@ -898,7 +898,10 @@ surfaces:
     rules:
       - DAC-P1-003
       - DBR-CMPL-001
+      - DBR-CMPL-001d
       - BR-BLD-001
+      - BR-VAR-050
+      - BR-VAR-052
       - 043:SC-001
     status: active
   - id: build.edit.coverage
@@ -917,6 +920,9 @@ surfaces:
       - DBR-STAT-004
       - DAC-P2-002
       - DBR-SYN-010
+      - DBR-SYN-010a
+      - BR-VAR-050
+      - BR-VAR-052
     status: active
   - id: build.edit.slot-overrides
     title: Per-slot pin / override
@@ -2008,7 +2014,9 @@ surfaces:
       - DBR-SYN-007
       - DBR-SYN-008
       - DBR-SYN-009
+      - DBR-SYN-010a
       - DAC-P2-002
+      - BR-VAR-050
     status: active
   - id: synergy.detail.link.kinds
     title: Link kinds (weapon, perk, origin, set bonus, exotic, artifact…)

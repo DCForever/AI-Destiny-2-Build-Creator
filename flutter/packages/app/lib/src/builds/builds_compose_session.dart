@@ -14,6 +14,7 @@ import '../errors.dart';
 import '../mappers.dart';
 import '../presentation/finish_gaps_format.dart';
 import '../presentation/soft_guidance_format.dart';
+import '../presentation/three_gate_readiness.dart';
 import '../presentation/variant_compose_format.dart';
 import '../set_use_cases.dart';
 import '../variant_use_cases.dart';
@@ -173,6 +174,9 @@ class BuildsComposeSession {
   CoverageQueryResult? _coverage;
   SoftStatTargets _softStatTargets = const SoftStatTargets();
 
+  /// Three-gate readiness (compose / required / equip) — display + default hard.
+  ThreeGateStatus? _threeGate;
+
   /// Optional estimate for soft-stat warnings (tests may inject).
   StatEstimate? softStatEstimateOverride;
 
@@ -212,6 +216,9 @@ class BuildsComposeSession {
       formatSoftStatTargetsSummary(_softStatTargets);
   bool get hasSoftMisses => _coverage?.hasSoftMisses ?? false;
   String get softGuidanceAdvisory => kSoftGuidanceAdvisoryCaption;
+
+  /// Three-gate chips (BR-VAR-041). Soft never disables Save on non-default.
+  ThreeGateStatus? get threeGate => _threeGate;
 
   /// Pure finish-gap readiness for selected variant (DART-057 display).
   /// Soft never auto-applies; equip CTAs are N/A on mobile.
@@ -454,6 +461,7 @@ class BuildsComposeSession {
       _attachments = const [];
       _slotPins = const [];
       _coverage = null;
+      _threeGate = null;
       notifyListeners();
       return;
     }
@@ -471,6 +479,7 @@ class BuildsComposeSession {
       _attachments = const [];
       _slotPins = const [];
       _coverage = null;
+      _threeGate = null;
     }
     notifyListeners();
   }
@@ -782,6 +791,7 @@ class BuildsComposeSession {
     _slotPins = const [];
     _attachableSets = const [];
     _coverage = null;
+    _threeGate = null;
     _softStatTargets = const SoftStatTargets();
   }
 
@@ -825,6 +835,7 @@ class BuildsComposeSession {
       _attachments = const [];
       _slotPins = const [];
       _coverage = null;
+      _threeGate = null;
     }
   }
 
@@ -895,6 +906,7 @@ class BuildsComposeSession {
 
     // Soft coverage: display only — does not mutate attachments/pins/targets.
     await _loadSoftCoverage(userId, buildId, variantId);
+    await _loadThreeGate(userId, buildId, variantId);
   }
 
   Future<void> _loadSoftCoverage(
@@ -917,6 +929,65 @@ class BuildsComposeSession {
       );
     } catch (_) {
       _coverage = null;
+    }
+  }
+
+  Future<void> _loadThreeGate(
+    int userId,
+    String buildId,
+    String variantId,
+  ) async {
+    try {
+      final build = await getBuild(db, userId, buildId);
+      final variant = await getVariant(db, buildId, variantId);
+      if (build == null || variant == null) {
+        _threeGate = null;
+        return;
+      }
+      final resolved = await resolveUserVariant(db, userId, buildId, variantId);
+      if (resolved == null) {
+        _threeGate = null;
+        return;
+      }
+      final kit = subclassKitFromJson(build.subclass);
+      final aspects = kit.aspects
+          .map((a) => a.trim())
+          .where((a) => a.isNotEmpty)
+          .toList();
+      // Capacity unknown without entity ports — soft path (capacityResolved false).
+      final designated = await loadDesignatedSynergies(
+        db,
+        userId,
+        build.synergyTypes,
+      );
+      final invRows = await listInventoryItems(db, userId);
+      final inventory = buildInventoryPinIndex([
+        for (final row in invRows)
+          InventoryPinItem(instanceId: row.instanceId, itemHash: row.itemHash),
+      ]);
+      final hasMods = await variantHasMods(
+        db,
+        userId,
+        await listAttachments(db, variantId),
+      );
+      _threeGate = evaluateThreeGateReadiness(
+        resolved: resolved,
+        isDefault: variant.isDefault,
+        className: build.className,
+        subclassKit: kit,
+        hasMods: hasMods,
+        fragmentCapacity: 0,
+        capacityResolved: aspects.isEmpty,
+        artifactHash: variant.artifactHash,
+        artifactConfig: variant.artifactConfig,
+        designatedSynergies: designated,
+        inventory: inventory,
+        matchCtx: MatchEvidenceContext(
+          setBonusByItemHash: coverageSetBonusByItemHash,
+        ),
+      );
+    } catch (_) {
+      _threeGate = null;
     }
   }
 }

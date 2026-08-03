@@ -3570,6 +3570,14 @@ class $SynergyLinksTable extends SynergyLinks
   late final GeneratedColumn<int> armorSetHash = GeneratedColumn<int>(
       'armor_set_hash', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _requiredMeta =
+      const VerificationMeta('required');
+  @override
+  late final GeneratedColumn<int> required = GeneratedColumn<int>(
+      'required', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -3584,7 +3592,8 @@ class $SynergyLinksTable extends SynergyLinks
         armorSetName,
         bonusPieces,
         bonusName,
-        armorSetHash
+        armorSetHash,
+        required
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3669,6 +3678,10 @@ class $SynergyLinksTable extends SynergyLinks
           armorSetHash.isAcceptableOrUnknown(
               data['armor_set_hash']!, _armorSetHashMeta));
     }
+    if (data.containsKey('required')) {
+      context.handle(_requiredMeta,
+          required.isAcceptableOrUnknown(data['required']!, _requiredMeta));
+    }
     return context;
   }
 
@@ -3704,6 +3717,8 @@ class $SynergyLinksTable extends SynergyLinks
           .read(DriftSqlType.string, data['${effectivePrefix}bonus_name']),
       armorSetHash: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}armor_set_hash']),
+      required: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}required'])!,
     );
   }
 
@@ -3727,6 +3742,9 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
   final int? bonusPieces;
   final String? bonusName;
   final int? armorSetHash;
+
+  /// 1 = required evidence link (default hard gate); 0 = soft evidence only.
+  final int required;
   const SynergyLink(
       {required this.id,
       required this.synergyId,
@@ -3740,7 +3758,8 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
       this.armorSetName,
       this.bonusPieces,
       this.bonusName,
-      this.armorSetHash});
+      this.armorSetHash,
+      required this.required});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3775,6 +3794,7 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
     if (!nullToAbsent || armorSetHash != null) {
       map['armor_set_hash'] = Variable<int>(armorSetHash);
     }
+    map['required'] = Variable<int>(required);
     return map;
   }
 
@@ -3811,6 +3831,7 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
       armorSetHash: armorSetHash == null && nullToAbsent
           ? const Value.absent()
           : Value(armorSetHash),
+      required: Value(required),
     );
   }
 
@@ -3831,6 +3852,7 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
       bonusPieces: serializer.fromJson<int?>(json['bonusPieces']),
       bonusName: serializer.fromJson<String?>(json['bonusName']),
       armorSetHash: serializer.fromJson<int?>(json['armorSetHash']),
+      required: serializer.fromJson<int>(json['required']),
     );
   }
   @override
@@ -3850,6 +3872,7 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
       'bonusPieces': serializer.toJson<int?>(bonusPieces),
       'bonusName': serializer.toJson<String?>(bonusName),
       'armorSetHash': serializer.toJson<int?>(armorSetHash),
+      'required': serializer.toJson<int>(required),
     };
   }
 
@@ -3866,7 +3889,8 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
           Value<String?> armorSetName = const Value.absent(),
           Value<int?> bonusPieces = const Value.absent(),
           Value<String?> bonusName = const Value.absent(),
-          Value<int?> armorSetHash = const Value.absent()}) =>
+          Value<int?> armorSetHash = const Value.absent(),
+          int? required}) =>
       SynergyLink(
         id: id ?? this.id,
         synergyId: synergyId ?? this.synergyId,
@@ -3888,6 +3912,7 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
         bonusName: bonusName.present ? bonusName.value : this.bonusName,
         armorSetHash:
             armorSetHash.present ? armorSetHash.value : this.armorSetHash,
+        required: required ?? this.required,
       );
   SynergyLink copyWithCompanion(SynergyLinksCompanion data) {
     return SynergyLink(
@@ -3916,6 +3941,7 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
       armorSetHash: data.armorSetHash.present
           ? data.armorSetHash.value
           : this.armorSetHash,
+      required: data.required.present ? data.required.value : this.required,
     );
   }
 
@@ -3934,7 +3960,8 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
           ..write('armorSetName: $armorSetName, ')
           ..write('bonusPieces: $bonusPieces, ')
           ..write('bonusName: $bonusName, ')
-          ..write('armorSetHash: $armorSetHash')
+          ..write('armorSetHash: $armorSetHash, ')
+          ..write('required: $required')
           ..write(')'))
         .toString();
   }
@@ -3953,7 +3980,8 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
       armorSetName,
       bonusPieces,
       bonusName,
-      armorSetHash);
+      armorSetHash,
+      required);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3970,7 +3998,8 @@ class SynergyLink extends DataClass implements Insertable<SynergyLink> {
           other.armorSetName == this.armorSetName &&
           other.bonusPieces == this.bonusPieces &&
           other.bonusName == this.bonusName &&
-          other.armorSetHash == this.armorSetHash);
+          other.armorSetHash == this.armorSetHash &&
+          other.required == this.required);
 }
 
 class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
@@ -3987,6 +4016,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
   final Value<int?> bonusPieces;
   final Value<String?> bonusName;
   final Value<int?> armorSetHash;
+  final Value<int> required;
   final Value<int> rowid;
   const SynergyLinksCompanion({
     this.id = const Value.absent(),
@@ -4002,6 +4032,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
     this.bonusPieces = const Value.absent(),
     this.bonusName = const Value.absent(),
     this.armorSetHash = const Value.absent(),
+    this.required = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SynergyLinksCompanion.insert({
@@ -4018,6 +4049,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
     this.bonusPieces = const Value.absent(),
     this.bonusName = const Value.absent(),
     this.armorSetHash = const Value.absent(),
+    this.required = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         synergyId = Value(synergyId),
@@ -4037,6 +4069,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
     Expression<int>? bonusPieces,
     Expression<String>? bonusName,
     Expression<int>? armorSetHash,
+    Expression<int>? required,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4053,6 +4086,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
       if (bonusPieces != null) 'bonus_pieces': bonusPieces,
       if (bonusName != null) 'bonus_name': bonusName,
       if (armorSetHash != null) 'armor_set_hash': armorSetHash,
+      if (required != null) 'required': required,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4071,6 +4105,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
       Value<int?>? bonusPieces,
       Value<String?>? bonusName,
       Value<int?>? armorSetHash,
+      Value<int>? required,
       Value<int>? rowid}) {
     return SynergyLinksCompanion(
       id: id ?? this.id,
@@ -4086,6 +4121,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
       bonusPieces: bonusPieces ?? this.bonusPieces,
       bonusName: bonusName ?? this.bonusName,
       armorSetHash: armorSetHash ?? this.armorSetHash,
+      required: required ?? this.required,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4132,6 +4168,9 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
     if (armorSetHash.present) {
       map['armor_set_hash'] = Variable<int>(armorSetHash.value);
     }
+    if (required.present) {
+      map['required'] = Variable<int>(required.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4154,6 +4193,7 @@ class SynergyLinksCompanion extends UpdateCompanion<SynergyLink> {
           ..write('bonusPieces: $bonusPieces, ')
           ..write('bonusName: $bonusName, ')
           ..write('armorSetHash: $armorSetHash, ')
+          ..write('required: $required, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8065,6 +8105,7 @@ typedef $$SynergyLinksTableCreateCompanionBuilder = SynergyLinksCompanion
   Value<int?> bonusPieces,
   Value<String?> bonusName,
   Value<int?> armorSetHash,
+  Value<int> required,
   Value<int> rowid,
 });
 typedef $$SynergyLinksTableUpdateCompanionBuilder = SynergyLinksCompanion
@@ -8082,6 +8123,7 @@ typedef $$SynergyLinksTableUpdateCompanionBuilder = SynergyLinksCompanion
   Value<int?> bonusPieces,
   Value<String?> bonusName,
   Value<int?> armorSetHash,
+  Value<int> required,
   Value<int> rowid,
 });
 
@@ -8135,6 +8177,9 @@ class $$SynergyLinksTableFilterComposer
 
   ColumnFilters<int> get armorSetHash => $composableBuilder(
       column: $table.armorSetHash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get required => $composableBuilder(
+      column: $table.required, builder: (column) => ColumnFilters(column));
 }
 
 class $$SynergyLinksTableOrderingComposer
@@ -8189,6 +8234,9 @@ class $$SynergyLinksTableOrderingComposer
   ColumnOrderings<int> get armorSetHash => $composableBuilder(
       column: $table.armorSetHash,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get required => $composableBuilder(
+      column: $table.required, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SynergyLinksTableAnnotationComposer
@@ -8238,6 +8286,9 @@ class $$SynergyLinksTableAnnotationComposer
 
   GeneratedColumn<int> get armorSetHash => $composableBuilder(
       column: $table.armorSetHash, builder: (column) => column);
+
+  GeneratedColumn<int> get required =>
+      $composableBuilder(column: $table.required, builder: (column) => column);
 }
 
 class $$SynergyLinksTableTableManager extends RootTableManager<
@@ -8279,6 +8330,7 @@ class $$SynergyLinksTableTableManager extends RootTableManager<
             Value<int?> bonusPieces = const Value.absent(),
             Value<String?> bonusName = const Value.absent(),
             Value<int?> armorSetHash = const Value.absent(),
+            Value<int> required = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               SynergyLinksCompanion(
@@ -8295,6 +8347,7 @@ class $$SynergyLinksTableTableManager extends RootTableManager<
             bonusPieces: bonusPieces,
             bonusName: bonusName,
             armorSetHash: armorSetHash,
+            required: required,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -8311,6 +8364,7 @@ class $$SynergyLinksTableTableManager extends RootTableManager<
             Value<int?> bonusPieces = const Value.absent(),
             Value<String?> bonusName = const Value.absent(),
             Value<int?> armorSetHash = const Value.absent(),
+            Value<int> required = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               SynergyLinksCompanion.insert(
@@ -8327,6 +8381,7 @@ class $$SynergyLinksTableTableManager extends RootTableManager<
             bonusPieces: bonusPieces,
             bonusName: bonusName,
             armorSetHash: armorSetHash,
+            required: required,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

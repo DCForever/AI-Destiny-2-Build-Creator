@@ -457,7 +457,7 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
     );
   }
 
-  /// Finish readiness rail (mock #readiness-rail): gaps · soft · equip · DIM.
+  /// Finish readiness rail (mock #readiness-rail): three-gate · gaps · soft · equip · DIM.
   Widget _buildReadinessRail(BuildContext context) {
     return NeonZone(
       key: const Key('builds_zone_readiness'),
@@ -466,6 +466,8 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_controller.selectedVariant != null) ...[
+            _buildThreeGateChips(context),
+            const SizedBox(height: kSpace12),
             _buildFinishGaps(context),
             const SizedBox(height: kSpace16),
             EquipPanel(
@@ -492,6 +494,78 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
         ],
       ),
     );
+  }
+
+  /// Three-gate readiness chips (BR-VAR-041): compose / required / equip-ready.
+  /// Soft required misses on non-default never hard-disable Save.
+  Widget _buildThreeGateChips(BuildContext context) {
+    final gate = _controller.threeGate;
+    final palette = FlapPalette.of(context);
+    return Column(
+      key: const Key('builds_three_gate_panel'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'THREE-GATE READINESS',
+          style: neonDisplay(
+            color: palette.foreground,
+            fontSize: 11,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: kSpace4),
+        Text(
+          gate == null
+              ? 'Evaluating compose · required · equip…'
+              : (gate.isDefault
+                  ? 'Default: compose + required hard · equip for equip/export'
+                  : 'Non-default: soft required only · soft never blocks Save'),
+          style: neonBody(color: palette.muted, fontSize: 12),
+        ),
+        if (gate != null) ...[
+          const SizedBox(height: kSpace8),
+          Wrap(
+            key: const Key('builds_three_gate_chips'),
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (var i = 0; i < gate.chipLabels.length; i++)
+                Chip(
+                  key: Key('builds_three_gate_chip_$i'),
+                  label: Text(gate.chipLabels[i]),
+                  backgroundColor: _threeGateChipColor(gate, i, palette),
+                ),
+            ],
+          ),
+          if (gate.softRequiredWarn) ...[
+            const SizedBox(height: kSpace4),
+            Text(
+              'Required links soft-warn (non-default) — Save still allowed',
+              key: const Key('builds_three_gate_soft_required'),
+              style: neonBody(color: palette.warning, fontSize: 12),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Color? _threeGateChipColor(
+    ThreeGateStatus gate,
+    int index,
+    FlapPalette palette,
+  ) {
+    final ok = switch (index) {
+      0 => gate.composeComplete,
+      1 => gate.requiredLinksSatisfied,
+      2 => gate.equipReady,
+      _ => true,
+    };
+    if (ok) return palette.success.withValues(alpha: 0.2);
+    if (index == 1 && gate.softRequiredWarn) {
+      return palette.warning.withValues(alpha: 0.25);
+    }
+    return palette.danger.withValues(alpha: 0.2);
   }
 
   Widget _buildFinishGaps(BuildContext context) {

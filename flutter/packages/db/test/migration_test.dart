@@ -16,7 +16,7 @@ void main() {
         ensureStepCatalog.map((s) => s.id).toList(),
         expectedEnsureStepIds,
       );
-      expect(ensureStepCount, 10);
+      expect(ensureStepCount, 11);
       expect(
         ensureStepCatalog.map((s) => s.productFunction).toList(),
         [
@@ -30,6 +30,7 @@ void main() {
           'ensureSoftStatTargetsColumn',
           'ensureSetOptimizerColumns',
           'ensureBuildSynergyTypesTable',
+          'ensureSynergyLinkRequiredColumn',
         ],
       );
       for (final step in ensureStepCatalog) {

@@ -35,4 +35,32 @@ void main() {
     expect(controller.designationOf(controller.selected!), 'melee::Base');
     expect(controller.selected!.links, hasLength(1));
   });
+
+  test('required flag toggle round-trips save (pkg-default-three-gates)',
+      () async {
+    final err = await controller.createSynergy(
+      id: 'syn-req',
+      name: 'Required Loop',
+      type: 'melee',
+      links: const [
+        SynergyLinkWrite(
+          id: 'l1',
+          kind: 'weapon',
+          displayName: 'Must Pin',
+          itemHash: 42,
+          required: false,
+        ),
+      ],
+    );
+    expect(err, isNull);
+    expect(controller.draftLinks.single.required, isFalse);
+
+    controller.setDraftLinkRequired(0, true);
+    expect(controller.draftLinks.single.required, isTrue);
+
+    final saveErr = await controller.saveDraftLinks();
+    expect(saveErr, isNull);
+    expect(controller.selected!.links.single.required, isTrue);
+    expect(controller.draftLinks.single.required, isTrue);
+  });
 }

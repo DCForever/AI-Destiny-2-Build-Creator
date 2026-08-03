@@ -38,6 +38,9 @@ class ComposeHardBlockInput {
     this.fragmentCapacity = 0,
     this.capacityResolved = true,
     this.synergyTypeCount = 1,
+    this.isDefault = false,
+    this.composeMissing = const [],
+    this.requiredFailures = const [],
   });
 
   final List<int> exoticWeaponHashes;
@@ -49,11 +52,18 @@ class ComposeHardBlockInput {
 
   /// When 0, emits NO_SYNERGY hard block (identity create/save).
   final int synergyTypeCount;
+
+  /// When true, surface gate-1 compose gaps + gate-2 required as hard blocks.
+  /// Non-default required failures stay soft (never disable Save alone).
+  final bool isDefault;
+  final List<String> composeMissing;
+  final List<RequiredLinkFailure> requiredFailures;
 }
 
 /// Evaluate dual-exotic + subclass kit + synergy presence for client UX.
 ///
 /// Domain remains authoritative on save; this only previews hard codes.
+/// Soft coverage / non-default required never contribute to hard blocks.
 List<ComposeHardBlock> evaluateComposeHardBlocks(ComposeHardBlockInput input) {
   final out = <ComposeHardBlock>[];
 
@@ -84,6 +94,30 @@ List<ComposeHardBlock> evaluateComposeHardBlocks(ComposeHardBlockInput input) {
   );
   for (final b in kit.hardBlocks) {
     out.add(ComposeHardBlock(code: b.code, message: b.message));
+  }
+
+  if (input.isDefault) {
+    if (input.composeMissing.isNotEmpty) {
+      out.add(
+        ComposeHardBlock(
+          code: DomainFailureCodes.defaultVariantIncomplete,
+          message:
+              'Default loadout incomplete: ${input.composeMissing.join(', ')}',
+        ),
+      );
+    }
+    if (input.requiredFailures.isNotEmpty) {
+      final names = input.requiredFailures
+          .map((f) => f.displayName)
+          .join(', ');
+      out.add(
+        ComposeHardBlock(
+          code: DomainFailureCodes.requiredLinkUnsatisfied,
+          message:
+              'Required links need equip-ready pins or applied kit: $names',
+        ),
+      );
+    }
   }
 
   return out;

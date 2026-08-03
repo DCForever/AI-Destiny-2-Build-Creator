@@ -42,6 +42,7 @@ class SynergyLinkWrite {
     this.bonusPieces,
     this.bonusName,
     this.armorSetHash,
+    this.required = false,
   });
 
   final String? id;
@@ -56,6 +57,9 @@ class SynergyLinkWrite {
   final int? bonusPieces;
   final String? bonusName;
   final int? armorSetHash;
+
+  /// Required evidence (hard on default save). Round-trips create/edit.
+  final bool required;
 }
 
 /// Partial update — designation (type + subType) is immutable after create.
@@ -143,6 +147,7 @@ List<SynergyLinkInput> _validateLinks(List<SynergyLinkWrite> links) {
         bonusPieces: link.bonusPieces,
         bonusName: link.bonusName,
         armorSetHash: link.armorSetHash,
+        required: link.required,
       ),
     );
   }

@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-07-30 (PROC-06 finish-spec thinning checklist + gate; DART-001–068 complete; cutover GO unchanged)  
+**Updated:** 2026-08-03 (`pkg-default-three-gates` closed — compose kit bar + required links; DART-001–068 complete; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -526,6 +526,15 @@ Merged pure `evaluateFinishGaps` + next-slot helpers (`finish_gaps.dart`, `finis
 ### DART-006 note (completed)
 
 Merged pure `computeEquipReady` / wishlist vs owned-pin / stale pin gates into `packages/domain` with golden tests vs TS `equipReady.test.ts` (plus hash_mismatch). Wishlist never equip-ready; post-sync stale covered.
+
+### Residual package note — `pkg-default-three-gates` (closed 2026-08-03)
+
+Post-DART-068 residual package (not a new DART-NNN). Ports Next Phase B/C default three-gate save into Dart:
+
+- `collectSubclassKitCompleteGaps` / `collectArtifactCompleteGaps` + extended `assertFullCombatLoadout` (kit bar Super/melee/grenade + aspects/fragments at capacity; artifact hash + non-empty config)
+- `synergy_links.required` Drift + `assertRequiredLinksSatisfied` (equip-ready pins only; wishlist never; artifact_perk via applied config)
+- Default-only hard gate-2; non-default soft-warn only; host three-gate chips + required toggle (Windows+Jaspr)
+- Residual: kit still from `builds.subclass` until `pkg-variant-subclass-kit`; APPLIED_KIT kinds beyond `artifact_perk` until `pkg-synergy-kinds-v1`
 
 ### DART-005 note (completed)
 

@@ -43,6 +43,12 @@ export 'src/evaluators/stat_nudges.dart';
 // Resolve variant pure merge/conflict/completeness (DART-005)
 export 'src/evaluators/resolve_variant.dart';
 
+// Default kit bar + artifact completeness (pkg-default-three-gates)
+export 'src/evaluators/default_loadout_completeness.dart';
+
+// Required synergy links hard gate (pkg-default-three-gates / DBR-SYN-010a)
+export 'src/evaluators/assert_required_links.dart';
+
 // Equip-ready / wishlist vs owned-pin gates (DART-006)
 export 'src/evaluators/equip_ready.dart';
 

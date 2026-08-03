@@ -160,6 +160,7 @@ Future<void> applyEnsureUpgrades(EnsureUpgradeExecutor ex) async {
   await _ensureSoftStatTargetsColumn(ex);
   await _ensureSetOptimizerColumns(ex);
   await _ensureBuildSynergyTypesTable(ex);
+  await _ensureSynergyLinkRequiredColumn(ex);
 }
 
 Future<void> _addColumnIfMissing(
@@ -180,6 +181,16 @@ Future<void> _ensureSynergySubTypeColumn(EnsureUpgradeExecutor ex) async {
     table: 'synergies',
     column: 'sub_type',
     alterSql: 'ALTER TABLE synergies ADD COLUMN sub_type TEXT',
+  );
+}
+
+Future<void> _ensureSynergyLinkRequiredColumn(EnsureUpgradeExecutor ex) async {
+  await _addColumnIfMissing(
+    ex,
+    table: 'synergy_links',
+    column: 'required',
+    alterSql:
+        'ALTER TABLE synergy_links ADD COLUMN required INTEGER NOT NULL DEFAULT 0',
   );
 }
 

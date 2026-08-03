@@ -882,9 +882,66 @@ class _BuildComposePageState extends State<BuildComposePage> {
               ),
           ],
         ),
+        _buildThreeGateSection(c),
         _buildFinishGapsSection(c),
         _buildEquipSection(equip, finishComplete: c.finishComplete),
         _buildDimSection(dim, finishComplete: c.finishComplete),
+      ],
+    );
+  }
+
+  Component _buildThreeGateSection(BuildsController c) {
+    final gate = c.threeGate;
+    return div(
+      classes: 'compose-section',
+      attributes: {
+        'data-testid': 'builds_three_gate_panel',
+        'id': 'builds_three_gate_panel',
+      },
+      [
+        h2([.text('Three-gate readiness')]),
+        p(
+          classes: 'compose-step-hint',
+          [
+            .text(
+              gate == null
+                  ? 'Compose · required · equip-ready'
+                  : (gate.isDefault
+                      ? 'Default: compose + required hard · equip for equip/export'
+                      : 'Non-default: soft required only · soft never blocks Save'),
+            ),
+          ],
+        ),
+        if (gate != null)
+          div(
+            attributes: {'data-testid': 'builds_three_gate_chips'},
+            [
+              for (var i = 0; i < gate.chipLabels.length; i++)
+                span(
+                  attributes: {
+                    'data-testid': 'builds_three_gate_chip_$i',
+                    'data-gate-ok': switch (i) {
+                      0 => gate.composeComplete ? 'true' : 'false',
+                      1 => gate.requiredLinksSatisfied ? 'true' : 'false',
+                      2 => gate.equipReady ? 'true' : 'false',
+                      _ => 'true',
+                    },
+                  },
+                  classes: 'chip',
+                  [.text(gate.chipLabels[i])],
+                ),
+            ],
+          ),
+        if (gate != null && gate.softRequiredWarn)
+          p(
+            classes: 'soft-advisory',
+            attributes: {'data-testid': 'builds_three_gate_soft_required'},
+            [
+              .text(
+                'Required links soft-warn (non-default) — Save still allowed',
+              ),
+            ],
+          ),
       ],
     );
   }

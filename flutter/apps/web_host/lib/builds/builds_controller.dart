@@ -62,6 +62,7 @@ class BuildsController extends ChangeNotifier {
   String get softStatTargetsSummary => core.softStatTargetsSummary;
   bool get hasSoftMisses => core.hasSoftMisses;
   String get softGuidanceAdvisory => core.softGuidanceAdvisory;
+  ThreeGateStatus? get threeGate => core.threeGate;
   FinishGapsResult? get finishGaps => core.finishGaps;
   bool get finishComplete => finishGaps?.complete ?? false;
 

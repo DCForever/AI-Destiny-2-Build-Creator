@@ -166,6 +166,31 @@ void main() {
     controller.dispose();
   });
 
+  test('three-gate readiness on compose session (pkg-default-three-gates)',
+      () async {
+    // Controller-level (widget pump hits Material ink_sparkle shader env issue).
+    final controller = BuildsLibraryController(
+      db: services.db,
+      session: services.oauthSession,
+      inventorySync: services.inventorySync,
+    );
+    await controller.refresh();
+    final err = await controller.createBuild(
+      name: 'Three Gate Build',
+      className: GuardianClass.hunter,
+      synergyTypes: const [DraftSynergyType(type: 'melee', subType: 'Base')],
+    );
+    expect(err, isNull);
+    expect(controller.threeGate, isNotNull);
+    // Soft never hard-blocks non-default; default starts incomplete.
+    expect(controller.threeGate!.isDefault, isTrue);
+    expect(controller.threeGate!.composeComplete, isFalse);
+    expect(controller.threeGate!.chipLabels, hasLength(3));
+    expect(controller.threeGate!.hardBlocksSave, isTrue);
+
+    controller.dispose();
+  });
+
   testWidgets('US1 attach set shows attachment and slot pin wishlist',
       (tester) async {
     final controller = await pumpPage(tester);

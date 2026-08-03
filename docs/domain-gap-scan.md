@@ -101,10 +101,10 @@
 
 | Rule | Status | Evidence | Gap action |
 | --- | --- | --- | --- |
-| DBR-CMPL-001 weapons + armor + mods | **Partial** | Default: 3 weapon + 5 armor + mods attachment flag | Kit + artifact fill missing |
-| DBR-CMPL-001a artifact config filled | **Done Phase B** | Default save requires hash + non-empty config | Tree shape still data-driven later |
+| DBR-CMPL-001 weapons + armor + mods | **OK (Next + Dart pkg-default-three-gates)** | Default: 3 weapon + 5 armor + mods + kit bar + artifact | Residual: kit still reads `builds.subclass` until pkg-variant-subclass-kit |
+| DBR-CMPL-001a artifact config filled | **Done Phase B / Dart port** | Default save requires hash + non-empty config | Tree shape still data-driven later |
 | DBR-CMPL-001b fashion optional | **OK** | Not required | — |
-| DBR-CMPL-001d three gates | **Partial** | Gate 1 partial; gate 2 missing; gate 3 equip-ready for equip/export | Implement gate 2 |
+| DBR-CMPL-001d three gates | **OK (Next + Dart pkg-default-three-gates)** | Gate 1 compose + gate 2 required (default) + gate 3 equip-ready for equip/export | Soft required never hard-blocks non-default |
 | DBR-CMPL-002 non-default may gap | **OK** | Full loadout only if `isDefault` | — |
 | DBR-CMPL-005 four areas | **Done Phase 2** | Four `isArea` tabs; Finish dashed chrome | Labels match product |
 
@@ -157,10 +157,10 @@
 
 ## 8. Architectural mismatches (high leverage)
 
-1. **Subclass ownership** — Product: kit per **variant**, tree on **Build**. Code: entire subclass blob on **Build**. Unblocks: per-variant kit, tree wipe, mini strip per focused variant, DBR-SUB-003.  
-2. **Default completeness** — Equipment-centric only; product combat loadout includes **kit + artifact fill**.  
-3. **Required links** — Product three-gate model; code has compose (partial) + equip-ready, **no required-link gate**.  
-4. **Set package quality floors** — Documented mins not enforced in `src/`.
+1. **Subclass ownership** — Product: kit per **variant**, tree on **Build**. Next: Phase E shipped; Dart residual until `pkg-variant-subclass-kit` (gate-1 kit still reads `builds.subclass`).  
+2. **Default completeness** — **Done** Next Phase B + Dart `pkg-default-three-gates` (kit bar + artifact fill).  
+3. **Required links** — **Done** Next Phase C + Dart `pkg-default-three-gates` (`required` column + equip-ready / applied kit).  
+4. **Set package quality floors** — Documented mins; Next Phase A shipped; verify Dart attach path when elevating.
 
 ---
 

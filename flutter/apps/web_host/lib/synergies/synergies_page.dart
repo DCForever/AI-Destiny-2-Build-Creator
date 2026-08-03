@@ -370,7 +370,32 @@ class _SynergiesPageState extends State<SynergiesPage> {
                         attributes: {'data-testid': 'synergies-link-row-$i'},
                         [
                           .text(
-                            '${c.draftLinks[i].kind}: ${c.draftLinks[i].displayName}',
+                            '${c.draftLinks[i].kind}: ${c.draftLinks[i].displayName}'
+                            '${c.draftLinks[i].required ? ' [required]' : ''}',
+                          ),
+                          button(
+                            attributes: {
+                              'type': 'button',
+                              'data-testid': 'synergies-link-required-$i',
+                              'data-required':
+                                  c.draftLinks[i].required ? 'true' : 'false',
+                            },
+                            events: {
+                              'click': (_) {
+                                c.setDraftLinkRequired(
+                                  i,
+                                  !c.draftLinks[i].required,
+                                );
+                                setState(() {});
+                              },
+                            },
+                            [
+                              .text(
+                                c.draftLinks[i].required
+                                    ? 'Required ✓'
+                                    : 'Mark required',
+                              ),
+                            ],
                           ),
                           button(
                             attributes: {

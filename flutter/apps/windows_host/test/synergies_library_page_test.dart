@@ -275,6 +275,39 @@ void main() {
     controller.dispose();
   });
 
+  test('required toggle round-trips on controller (pkg-default-three-gates)',
+      () async {
+    // Controller-level (widget pump hits Material ink_sparkle shader env issue).
+    final controller = SynergiesLibraryController(
+      db: services.db,
+      session: services.oauthSession,
+      inventorySync: services.inventorySync,
+    );
+    await controller.refresh();
+    final createErr = await controller.createSynergy(
+      name: 'Req Syn',
+      type: 'melee',
+    );
+    expect(createErr, isNull);
+
+    controller.addDraftLink(
+      const SynergyLinkWrite(
+        kind: 'weapon',
+        displayName: 'Must Pin',
+        itemHash: 42,
+      ),
+    );
+    expect(controller.draftLinks.single.required, isFalse);
+    controller.setDraftLinkRequired(0, true);
+    expect(controller.draftLinks.single.required, isTrue);
+
+    final saveErr = await controller.saveDraftLinks();
+    expect(saveErr, isNull);
+    expect(controller.selected!.links.single.required, isTrue);
+
+    controller.dispose();
+  });
+
   testWidgets('US3 link form add button drafts a weapon link', (tester) async {
     final controller = SynergiesLibraryController(
       db: services.db,

@@ -306,12 +306,14 @@ void main() {
         equipment: fullCombatEquipment(),
         conflicts: const [],
       );
+      // Equipment-only path (kit/artifact gated separately).
       expect(
         () => assertFullCombatLoadout(
           resolved,
           className: 'Titan',
           subclassName: 'Sunbreaker',
           hasMods: true,
+          options: const FullCombatLoadoutOptions(requireKitAndArtifact: false),
         ),
         returnsNormally,
       );

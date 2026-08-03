@@ -51,12 +51,66 @@ CoverageTier tierForMatches(int matched, int total) {
   return CoverageTier.weak;
 }
 
+/// Optional match context (TS `MatchEvidenceContext`).
+///
+/// [setBonusByItemHash] and [artifactConfig] power armor-set / artifact_perk
+/// matches. [perkFamilyByHash] enables base/enhanced perk family (DBR-SYN-014a).
+/// [exoticClassItemHashes] enables class-item exotic_armor perk config (DBR-ID-011).
+class MatchEvidenceContext {
+  const MatchEvidenceContext({
+    this.setBonusByItemHash,
+    this.artifactConfig,
+    this.kit,
+    this.perkFamilyByHash,
+    this.exoticClassItemHashes,
+  });
+
+  final Map<int, SetBonusRecord>? setBonusByItemHash;
+  final List<int>? artifactConfig;
+
+  /// Kit name fields for future applied-kit kinds (aspect/fragment/…); unused
+  /// until pkg-synergy-kinds-v1 expands [SynergyLinkKind].
+  final Map<String, Object?>? kit;
+  final Map<int, Set<int>>? perkFamilyByHash;
+  final Set<int>? exoticClassItemHashes;
+}
+
+bool _selectedPerksIncludeFamily(
+  List<int>? selected,
+  int targetHash,
+  Map<int, Set<int>>? familyByHash,
+) {
+  final perks = selected ?? const <int>[];
+  if (perks.contains(targetHash)) return true;
+  final family = familyByHash?[targetHash];
+  if (family == null) return false;
+  for (final p in perks) {
+    if (family.contains(p)) return true;
+  }
+  return false;
+}
+
+MatchEvidenceContext _asMatchCtx(Object? setBonusByItemHashOrCtx) {
+  if (setBonusByItemHashOrCtx is MatchEvidenceContext) {
+    return setBonusByItemHashOrCtx;
+  }
+  if (setBonusByItemHashOrCtx is Map<int, SetBonusRecord>) {
+    return MatchEvidenceContext(setBonusByItemHash: setBonusByItemHashOrCtx);
+  }
+  return const MatchEvidenceContext();
+}
+
 /// Whether an evidence link is satisfied by current claims (soft match only).
+///
+/// Third argument may be a [Map] of set bonuses (legacy) or [MatchEvidenceContext].
 bool matchEvidenceLink(
   SynergyLink link,
   List<SlotClaim> claims, [
-  Map<int, SetBonusRecord>? setBonusByItemHash,
+  Object? setBonusByItemHashOrCtx,
 ]) {
+  final ctx = _asMatchCtx(setBonusByItemHashOrCtx);
+  final setBonusByItemHash = ctx.setBonusByItemHash;
+
   switch (link.kind) {
     case SynergyLinkKind.weapon:
       return link.itemHash != null &&
@@ -64,13 +118,21 @@ bool matchEvidenceLink(
     case SynergyLinkKind.weaponPerk:
       return link.perkHash != null &&
           claims.any(
-            (c) => (c.selectedPerks ?? const []).contains(link.perkHash),
+            (c) => _selectedPerksIncludeFamily(
+              c.selectedPerks,
+              link.perkHash!,
+              ctx.perkFamilyByHash,
+            ),
           );
     case SynergyLinkKind.originTrait:
       final originHash = link.originTraitHash;
       if (originHash != null) {
         return claims.any(
-          (c) => (c.selectedPerks ?? const []).contains(originHash),
+          (c) => _selectedPerksIncludeFamily(
+            c.selectedPerks,
+            originHash,
+            ctx.perkFamilyByHash,
+          ),
         );
       }
       return false;
@@ -98,16 +160,59 @@ bool matchEvidenceLink(
       }
       return false;
     case SynergyLinkKind.exoticArmor:
-      // Soft match: claim itemHash equals linked exotic armor hash
-      // (build/pair exotic armor claim or armor set piece).
-      return link.itemHash != null &&
-          claims.any((c) => c.itemHash == link.itemHash);
+      // DBR-ID-011: classic = item hash; exotic class items = perk config only.
+      final knownClassItem = link.itemHash != null &&
+          ctx.exoticClassItemHashes != null &&
+          ctx.exoticClassItemHashes!.contains(link.itemHash);
+
+      if (knownClassItem) {
+        if (link.perkHash == null) return false;
+        return claims.any(
+          (c) =>
+              c.slot == EquipmentSlot.classItem &&
+              _selectedPerksIncludeFamily(
+                c.selectedPerks,
+                link.perkHash!,
+                ctx.perkFamilyByHash,
+              ),
+        );
+      }
+
+      if (link.itemHash != null) {
+        final byItem = claims.any(
+          (c) =>
+              EquipmentSlot.armorSlots.contains(c.slot) &&
+              c.itemHash == link.itemHash,
+        );
+        if (byItem) return true;
+        // Soft legacy: any-slot itemHash match (pre-class-item indexes).
+        if (claims.any((c) => c.itemHash == link.itemHash)) return true;
+      }
+
+      if (link.perkHash != null) {
+        return claims.any(
+          (c) =>
+              c.slot == EquipmentSlot.classItem &&
+              _selectedPerksIncludeFamily(
+                c.selectedPerks,
+                link.perkHash!,
+                ctx.perkFamilyByHash,
+              ),
+        );
+      }
+      return false;
     case SynergyLinkKind.artifactPerk:
-      // Soft match: selected perks / artifact config includes perkHash.
-      return link.perkHash != null &&
-          claims.any(
-            (c) => (c.selectedPerks ?? const []).contains(link.perkHash),
-          );
+      final hash = link.perkHash ?? link.itemHash;
+      if (hash == null) return false;
+      // Prefer applied artifact config when provided (product parity).
+      final config = ctx.artifactConfig;
+      if (config != null) {
+        return config.contains(hash);
+      }
+      // Fallback: selectedPerks on claims (soft path without variant context).
+      return claims.any(
+        (c) => (c.selectedPerks ?? const []).contains(hash),
+      );
   }
 }
 

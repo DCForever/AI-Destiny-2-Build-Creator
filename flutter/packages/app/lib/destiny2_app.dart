@@ -32,6 +32,7 @@ export 'src/dim_export/dim_export_session.dart';
 export 'src/equip/equip_session.dart';export 'src/presentation/dim_export_format.dart';export 'src/presentation/equip_format.dart';
 export 'src/presentation/finish_gaps_format.dart';
 export 'src/presentation/soft_guidance_format.dart';
+export 'src/presentation/three_gate_readiness.dart';
 export 'src/presentation/variant_compose_format.dart';export 'src/set_board_presentation.dart';
 export 'src/set_library_presentation.dart';
 export 'src/set_use_cases.dart';
