@@ -12,6 +12,7 @@ import 'package:destiny2_windows_host/settings/inventory_sync_controller.dart';
 import 'package:destiny2_windows_host/settings/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 
 import 'inventory_sync_test_fakes.dart';
 
@@ -135,7 +136,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(home: SettingsPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -177,7 +178,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: SettingsPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -221,7 +222,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: SettingsPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -277,7 +278,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: SettingsPage(services: errServices)),
+      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: errServices)),
     );
     await _pumpFrames(tester);
 
@@ -331,7 +332,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: SettingsPage(services: errServices)),
+      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: errServices)),
     );
     await _pumpFrames(tester);
 

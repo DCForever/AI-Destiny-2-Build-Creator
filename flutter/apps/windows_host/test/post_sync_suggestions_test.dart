@@ -10,6 +10,7 @@ import 'package:destiny2_windows_host/settings/inventory_sync_card.dart';
 import 'package:destiny2_windows_host/settings/inventory_sync_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 
 import 'inventory_sync_test_fakes.dart';
 
@@ -182,6 +183,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: testMaterialTheme(),
         home: Scaffold(
           body: InventorySyncCard(controller: controller, session: session),
         ),

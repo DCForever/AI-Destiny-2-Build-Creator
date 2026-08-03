@@ -13,19 +13,45 @@ import 'inventory_fidelity/compare.dart';
 import 'inventory_fidelity/markers.dart';
 import 'inventory_fidelity/snapshot.dart';
 
-/// Finds workspace root by walking up until harness doc path exists.
+bool _isDartWorkspaceRoot(Directory dir) {
+  final pubspec = File.fromUri(dir.uri.resolve('pubspec.yaml'));
+  if (!pubspec.existsSync()) return false;
+  final text = pubspec.readAsStringSync();
+  return text.contains(RegExp(r'^workspace\s*:', multiLine: true)) ||
+      text.contains('destiny2_build_creator_workspace');
+}
+
+/// Finds the Melos/pub Dart workspace root (`flutter/` after DART-069).
+///
+/// Fixtures live under `flutter/tool/fixtures/...`. Walking only for the
+/// monorepo `docs/` harness path incorrectly treated the git root as the
+/// workspace and broke fixture resolution.
 Directory findWorkspaceRoot([Directory? start]) {
   var dir = start ?? Directory.current;
-  for (var i = 0; i < 8; i++) {
-    final candidate = File('${dir.path}/$kInventoryHarnessDocRelativePath');
-    if (candidate.existsSync()) {
+  while (true) {
+    if (_isDartWorkspaceRoot(dir)) {
       return dir;
     }
+    final nestedFlutter = Directory.fromUri(dir.uri.resolve('flutter/'));
+    if (_isDartWorkspaceRoot(nestedFlutter)) {
+      return nestedFlutter;
+    }
     final parent = dir.parent;
-    if (parent.path == dir.path) break;
+    if (parent.path == dir.path) {
+      return Directory.current;
+    }
     dir = parent;
   }
-  return Directory.current;
+}
+
+/// Harness procedure docs live at the monorepo root (parent of `flutter/`).
+Directory docsRootForHarness(Directory dartWorkspace) {
+  final parent = dartWorkspace.parent;
+  final atParent = File('${parent.path}/$kInventoryHarnessDocRelativePath');
+  if (atParent.existsSync()) return parent;
+  final atDart = File('${dartWorkspace.path}/$kInventoryHarnessDocRelativePath');
+  if (atDart.existsSync()) return dartWorkspace;
+  return parent;
 }
 
 /// Missing required markers in procedure doc (empty = ok).
@@ -67,13 +93,20 @@ class InventoryFidelityGateResult {
 }
 
 /// Run offline inventory fidelity gate against [workspaceRoot].
+///
+/// When [workspaceRoot] is omitted, the Dart workspace (`flutter/`) is used for
+/// fixtures and tool sources; the harness doc is resolved from the monorepo
+/// parent (`docs/...`) after DART-069. Explicit [workspaceRoot] keeps both doc
+/// and fixtures under that directory (tests / temp roots).
 InventoryFidelityGateResult validateInventoryFidelityGate({
   Directory? workspaceRoot,
 }) {
-  final root = workspaceRoot ?? findWorkspaceRoot();
+  final dartRoot = workspaceRoot ?? findWorkspaceRoot();
+  final docsRoot =
+      workspaceRoot != null ? dartRoot : docsRootForHarness(dartRoot);
   final errors = <String>[];
 
-  final docPath = '${root.path}/$kInventoryHarnessDocRelativePath';
+  final docPath = '${docsRoot.path}/$kInventoryHarnessDocRelativePath';
   final docFile = File(docPath);
   final docExists = docFile.existsSync();
   var missing = <String>[];
@@ -86,8 +119,8 @@ InventoryFidelityGateResult validateInventoryFidelityGate({
     }
   }
 
-  final nextPath = '${root.path}/$kNextMatchFixtureRelativePath';
-  final dartPath = '${root.path}/$kDartMatchFixtureRelativePath';
+  final nextPath = '${dartRoot.path}/$kNextMatchFixtureRelativePath';
+  final dartPath = '${dartRoot.path}/$kDartMatchFixtureRelativePath';
   final nextFile = File(nextPath);
   final dartFile = File(dartPath);
   final fixturesExist = nextFile.existsSync() && dartFile.existsSync();
@@ -122,7 +155,7 @@ InventoryFidelityGateResult validateInventoryFidelityGate({
   }
 
   return InventoryFidelityGateResult(
-    workspaceRoot: root.path,
+    workspaceRoot: dartRoot.path,
     docPath: docPath,
     docExists: docExists,
     missingMarkers: missing,

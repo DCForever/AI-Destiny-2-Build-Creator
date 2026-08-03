@@ -5,6 +5,7 @@ import 'package:destiny2_windows_host/settings/legacy_db_import_card.dart';
 import 'package:destiny2_windows_host/settings/legacy_db_import_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 
@@ -74,6 +75,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: testMaterialTheme(),
         home: Scaffold(
           body: SingleChildScrollView(
             child: LegacyDbImportCard(controller: controller),
@@ -99,6 +101,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: testMaterialTheme(),
         home: Scaffold(
           body: SingleChildScrollView(
             child: LegacyDbImportCard(controller: controller),

@@ -3,6 +3,7 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_windows_host/widgets/item_richness.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 
 void main() {
   group('buildPerkColumns', () {
@@ -95,6 +96,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: testMaterialTheme(),
         home: Scaffold(
           body: SingleChildScrollView(
             child: ItemRichnessPanel(

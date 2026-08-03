@@ -57,6 +57,9 @@ ThemeData buildFlapThemeBase({
     brightness: brightness,
     colorScheme: scheme,
     fontFamily: neonBodyFontFamily,
+    // Prefer NoSplash over M3 InkSparkle (shader asset version mismatches
+    // under flutter test on some Windows toolchains).
+    splashFactory: NoSplash.splashFactory,
     scaffoldBackgroundColor: background,
     canvasColor: background,
     cardColor: surface,

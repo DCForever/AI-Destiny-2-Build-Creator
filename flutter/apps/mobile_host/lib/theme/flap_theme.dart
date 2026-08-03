@@ -15,6 +15,9 @@ ThemeData buildFlapTheme({Brightness brightness = Brightness.dark}) {
         side: BorderSide(color: palette.line, width: kFlapRuleThickness),
       );
       return theme.copyWith(
+        // Avoid Material 3 InkSparkle shader decode failures under flutter test
+        // (ink_sparkle.frag stages version mismatch on some Windows hosts).
+        splashFactory: NoSplash.splashFactory,
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: palette.surface,
           indicatorColor: palette.accentDim,

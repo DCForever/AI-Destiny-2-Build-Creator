@@ -9,6 +9,9 @@ ThemeData buildFlapTheme({Brightness brightness = Brightness.dark}) {
     brightness: brightness,
     customize: (theme, tokens, palette) {
       return theme.copyWith(
+        // Avoid Material 3 InkSparkle shader decode failures under flutter test
+        // (ink_sparkle.frag stages version mismatch on some Windows hosts).
+        splashFactory: NoSplash.splashFactory,
         navigationRailTheme: NavigationRailThemeData(
           backgroundColor: palette.surface,
           indicatorColor: palette.accentDim,

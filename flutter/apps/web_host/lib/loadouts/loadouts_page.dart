@@ -8,6 +8,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../compose/compose_styles.dart';
+import '../theme/theme.dart';
 import 'loadouts_controller.dart';
 
 /// Bungie character loadouts list (component 206).
@@ -271,7 +272,7 @@ class _LoadoutsPageState extends State<LoadoutsPage> {
         css('.loadout-item', [
           css('&').styles(
             display: .flex,
-            alignItems: .flexStart,
+            alignItems: .start,
             gap: Gap(column: 0.5.rem),
           ),
         ]),

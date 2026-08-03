@@ -48,7 +48,9 @@ void main() {
     final next = controller.readinessOfSelected()!;
     expect(next.filled, 1);
     expect(next.nextEmptySlot, 'special');
-    expect(next.badgeLabel, contains('1/3 filled'));
+    // Under occupancy floor (DBR-CMP-008): package-min badge, not "filled".
+    expect(next.badgeLabel, contains('1/3'));
+    expect(next.badgeLabel, contains('need 2+'));
   });
 
   test('delete unused set; SET_IN_USE when attached', () async {

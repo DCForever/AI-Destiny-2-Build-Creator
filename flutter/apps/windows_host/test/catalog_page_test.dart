@@ -10,6 +10,7 @@ import 'package:destiny2_windows_host/catalog/catalog_page.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 
 import 'inventory_sync_test_fakes.dart';
 
@@ -118,29 +119,36 @@ void main() {
 
   Future<void> expandFilters(WidgetTester tester) async {
     final toggle = find.byKey(const Key('catalog_filters_toggle'));
-    if (toggle.evaluate().isNotEmpty) {
-      // Open if closed: subtitle is only shown when collapsed.
-      final tile = tester.widget<ListTile>(toggle);
-      if (tile.subtitle != null) {
-        await tester.tap(toggle);
-        await _pumpFrames(tester);
-      }
+    if (toggle.evaluate().isEmpty) return;
+    // Open if closed: subtitle is only shown when collapsed.
+    final tile = tester.widget<ListTile>(toggle);
+    if (tile.subtitle != null) {
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle, warnIfMissed: false);
+      await _pumpFrames(tester);
     }
   }
 
   Future<void> expandMoreFilters(WidgetTester tester) async {
     await expandFilters(tester);
     final more = find.byKey(const Key('catalog_more_filters_toggle'));
-    if (more.evaluate().isNotEmpty) {
-      await tester.ensureVisible(more);
-      await tester.tap(more);
-      await _pumpFrames(tester);
-    }
+    if (more.evaluate().isEmpty) return;
+    await tester.ensureVisible(more);
+    await tester.tap(more, warnIfMissed: false);
+    await _pumpFrames(tester);
+  }
+
+  Future<void> tapChip(WidgetTester tester, Key key) async {
+    final chip = find.byKey(key);
+    expect(chip, findsOneWidget);
+    await tester.ensureVisible(chip);
+    await tester.tap(chip, warnIfMissed: false);
+    await _pumpFrames(tester);
   }
 
   testWidgets('shows fixture item names offline', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -157,14 +165,11 @@ void main() {
 
   testWidgets('element include chip narrows list', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
     await expandFilters(tester);
-
-    await tester.ensureVisible(find.byKey(const Key('element_chip_Solar')));
-    await tester.tap(find.byKey(const Key('element_chip_Solar')));
-    await _pumpFrames(tester);
+    await tapChip(tester, const Key('element_chip_Solar'));
 
     expect(itemKey(2), findsOneWidget);
     expect(itemKey(1), findsNothing);
@@ -173,16 +178,14 @@ void main() {
 
   testWidgets('slot archetype chips and group-by (DART-062)', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
     // Primary facets (slot) open with Filters; archetype/group behind More.
     await expandFilters(tester);
 
     // Slot Energy include
-    await tester.ensureVisible(find.byKey(const Key('slot_chip_Energy')));
-    await tester.tap(find.byKey(const Key('slot_chip_Energy')));
-    await _pumpFrames(tester);
+    await tapChip(tester, const Key('slot_chip_Energy'));
     expect(itemKey(1), findsOneWidget);
     expect(itemKey(3), findsOneWidget);
     expect(itemKey(2), findsNothing);
@@ -190,24 +193,16 @@ void main() {
     await expandMoreFilters(tester);
 
     // Archetype Auto Rifle include further narrows
-    await tester.ensureVisible(
-      find.byKey(const Key('archetype_chip_Auto Rifle')),
-    );
-    await tester.tap(find.byKey(const Key('archetype_chip_Auto Rifle')));
-    await _pumpFrames(tester);
+    await tapChip(tester, const Key('archetype_chip_Auto Rifle'));
     expect(itemKey(3), findsOneWidget);
     expect(itemKey(1), findsNothing);
 
     // Clear archetype by cycling off (include → exclude → off): two more taps
-    await tester.tap(find.byKey(const Key('archetype_chip_Auto Rifle')));
-    await _pumpFrames(tester);
-    await tester.tap(find.byKey(const Key('archetype_chip_Auto Rifle')));
-    await _pumpFrames(tester);
+    await tapChip(tester, const Key('archetype_chip_Auto Rifle'));
+    await tapChip(tester, const Key('archetype_chip_Auto Rifle'));
 
     // Group by element shows header
-    await tester.ensureVisible(find.byKey(const Key('group_chip_element')));
-    await tester.tap(find.byKey(const Key('group_chip_element')));
-    await _pumpFrames(tester);
+    await tapChip(tester, const Key('group_chip_element'));
     expect(
       find.byKey(const Key('catalog_group_Arc'), skipOffstage: false),
       findsOneWidget,
@@ -223,21 +218,27 @@ void main() {
 
   testWidgets('results are alpha-sorted by display name', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
-    // Arc Logic (3), Dragon's Breath (2), Edge Transit (1) — flap board order
-    final y3 = tester.getTopLeft(itemKey(3)).dy;
-    final y2 = tester.getTopLeft(itemKey(2)).dy;
-    final y1 = tester.getTopLeft(itemKey(1)).dy;
-    expect(y3 < y2, isTrue);
-    expect(y2 < y1, isTrue);
+    // Arc Logic (3), Dragon's Breath (2), Edge Transit (1) — reading order on grid
+    // (top-to-bottom, then left-to-right within a row).
+    int gridOrder(Offset a, Offset b) {
+      if ((a.dy - b.dy).abs() > 12) return a.dy.compareTo(b.dy);
+      return a.dx.compareTo(b.dx);
+    }
+
+    final p3 = tester.getTopLeft(itemKey(3));
+    final p2 = tester.getTopLeft(itemKey(2));
+    final p1 = tester.getTopLeft(itemKey(1));
+    expect(gridOrder(p3, p2) < 0, isTrue, reason: 'Arc Logic before Dragon\'s Breath');
+    expect(gridOrder(p2, p1) < 0, isTrue, reason: 'Dragon\'s Breath before Edge Transit');
   });
 
   testWidgets('free-text filters by name', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -266,7 +267,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: emptyServices)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: emptyServices)),
     );
     await _pumpFrames(tester);
 
@@ -292,7 +293,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: emptyServices)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: emptyServices)),
     );
     await _pumpFrames(tester);
 
@@ -355,6 +356,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: testMaterialTheme(),
         home: StatefulBuilder(
           builder: (context, setState) {
             setParent = setState;
@@ -425,7 +427,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: mixedServices)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: mixedServices)),
     );
     await _pumpFrames(tester);
 

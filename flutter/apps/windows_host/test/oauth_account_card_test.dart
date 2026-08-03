@@ -8,6 +8,7 @@ import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
 import 'package:destiny2_windows_host/settings/oauth_account_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 
 Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump();
@@ -54,7 +55,7 @@ void main() {
     await session.restore();
 
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: OAuthAccountCard(session: session))),
+      MaterialApp(theme: testMaterialTheme(), home: Scaffold(body: OAuthAccountCard(session: session))),
     );
     await _pumpFrames(tester);
 
@@ -81,7 +82,7 @@ void main() {
     await session.restore();
 
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: OAuthAccountCard(session: session))),
+      MaterialApp(theme: testMaterialTheme(), home: Scaffold(body: OAuthAccountCard(session: session))),
     );
     await _pumpFrames(tester);
 
@@ -103,7 +104,7 @@ void main() {
     await session.restore();
 
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: OAuthAccountCard(session: session))),
+      MaterialApp(theme: testMaterialTheme(), home: Scaffold(body: OAuthAccountCard(session: session))),
     );
     await _pumpFrames(tester);
 
@@ -147,7 +148,7 @@ void main() {
     await session.restore();
 
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: OAuthAccountCard(session: session))),
+      MaterialApp(theme: testMaterialTheme(), home: Scaffold(body: OAuthAccountCard(session: session))),
     );
     await _pumpFrames(tester);
 

@@ -32,7 +32,10 @@ void main() {
     );
     expect(err, isNull);
     expect(controller.synergies, hasLength(1));
-    expect(controller.designationOf(controller.selected!), 'melee::Base');
+    // Display designation (wire remains melee/Base on the record).
+    expect(controller.designationOf(controller.selected!), 'Melee: Base');
+    expect(controller.selected!.type, 'melee');
+    expect(controller.selected!.subType, 'Base');
     expect(controller.selected!.links, hasLength(1));
   });
 

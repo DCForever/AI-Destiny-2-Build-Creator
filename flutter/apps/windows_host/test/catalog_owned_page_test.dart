@@ -10,6 +10,7 @@ import 'package:destiny2_windows_host/catalog/catalog_page.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_material_theme.dart';
 
 import 'inventory_sync_test_fakes.dart';
 
@@ -165,7 +166,7 @@ void main() {
   testWidgets('All scope shows owned and unowned; owned badge on copies',
       (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -195,7 +196,7 @@ void main() {
   testWidgets('Owned scope filters to synced inventory hashes only',
       (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -226,7 +227,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
@@ -274,7 +275,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: CatalogPage(services: services)),
+      MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 

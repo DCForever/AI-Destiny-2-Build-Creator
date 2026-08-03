@@ -572,12 +572,19 @@ class _CatalogPageState extends State<CatalogPage> {
             ),
           ),
           // --- Filter / channel controls zone (dense inside) ---
+          // Cap height so expanded facets scroll instead of overflowing the body.
           Padding(
             padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace8),
-            child: NeonZone(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.42,
+              ),
+              child: NeonZone(
               padding: const EdgeInsets.fromLTRB(kSpace12, kSpace12, kSpace12, kSpace8),
+              child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     key: const Key('catalog_query'),
@@ -863,7 +870,9 @@ class _CatalogPageState extends State<CatalogPage> {
                     ),
                 ],
               ),
+              ),
             ),
+          ),
           ),
           // Status channel (air between filter zone and results)
           Padding(
