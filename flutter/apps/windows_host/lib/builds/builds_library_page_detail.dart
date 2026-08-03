@@ -26,10 +26,13 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
             ? 'Finish · complete'
             : 'Finish · ${finish.nextActionable?.category.wireName ?? 'gaps'}');
 
-    // docs/ui-mocks/build-basics.html — loadout console: topbar · steps · zones.
+    // docs/ui-mocks/build-basics.html — loadout console:
+    // topbar · steps · Identity | Loadout | Finish readiness rail.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 920;
+        // Triple: true 3-col shell (desktop). Dual: Identity|Loadout, rail under.
+        final triple = constraints.maxWidth >= 1100;
+        final dual = constraints.maxWidth >= 720;
         final identityColumn = _buildIdentityZone(context);
         final loadoutColumn = NeonZone(
           key: const Key('builds_zone_loadout'),
@@ -47,24 +50,48 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
             ],
           ),
         );
+        final readinessColumn = _buildReadinessRail(context);
 
-        final body = wide
-            ? Row(
+        final Widget body;
+        if (triple) {
+          body = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 9, child: identityColumn),
+              const SizedBox(width: kSpace12),
+              Expanded(flex: 12, child: loadoutColumn),
+              const SizedBox(width: kSpace12),
+              Expanded(flex: 10, child: readinessColumn),
+            ],
+          );
+        } else if (dual) {
+          body = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(flex: 9, child: identityColumn),
                   const SizedBox(width: kSpace12),
                   Expanded(flex: 14, child: loadoutColumn),
                 ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  identityColumn,
-                  const SizedBox(height: kSpace12),
-                  loadoutColumn,
-                ],
-              );
+              ),
+              const SizedBox(height: kSpace12),
+              readinessColumn,
+            ],
+          );
+        } else {
+          body = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              identityColumn,
+              const SizedBox(height: kSpace12),
+              loadoutColumn,
+              const SizedBox(height: kSpace12),
+              readinessColumn,
+            ],
+          );
+        }
 
         return SingleChildScrollView(
           key: const Key('builds_detail'),
@@ -247,10 +274,9 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
   }) {
     final palette = FlapPalette.of(context);
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Flexible(
           child: Text(
             title.toUpperCase(),
             style: neonDisplay(
@@ -258,14 +284,22 @@ extension _BuildsLibraryDetailSection on _BuildsLibraryPageState {
               fontSize: 11,
               letterSpacing: 1.0,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        Text(
-          sub.toUpperCase(),
-          style: neonMono(
-            color: palette.muted,
-            fontSize: 10,
-            letterSpacing: 0.8,
+        const SizedBox(width: kSpace8),
+        Flexible(
+          child: Text(
+            sub.toUpperCase(),
+            textAlign: TextAlign.end,
+            style: neonMono(
+              color: palette.muted,
+              fontSize: 9,
+              letterSpacing: 0.6,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

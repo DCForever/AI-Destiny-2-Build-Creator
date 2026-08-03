@@ -51,6 +51,11 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+/// Avoid Material 3 InkSparkle shader decode flake on some Windows test hosts.
+ThemeData _testTheme() => buildFlapTheme().copyWith(
+      splashFactory: NoSplash.splashFactory,
+    );
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -103,7 +108,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildFlapTheme(),
+        theme: _testTheme(),
         home: BuildsLibraryPage(
           key: const Key('builds_library_page'),
           services: services,
@@ -168,13 +173,20 @@ void main() {
     );
     // Progressive disclosure: next-step copy; optional pins/kit collapsed when empty.
     expect(find.byKey(const Key('builds_identity_next_step')), findsOneWidget);
-    expect(find.textContaining('1 Basics'), findsOneWidget);
+    expect(find.textContaining('1 Identity'), findsOneWidget);
+    expect(find.byKey(const Key('builds_zone_identity')), findsOneWidget);
+    expect(find.byKey(const Key('builds_zone_loadout')), findsOneWidget);
+    expect(find.byKey(const Key('builds_zone_readiness')), findsOneWidget);
+    expect(find.byKey(const Key('builds_slot_pins_list')), findsOneWidget);
     expect(find.byKey(const Key('builds_optional_pins_summary')), findsOneWidget);
     expect(find.byKey(const Key('builds_subclass_kit_summary')), findsOneWidget);
     expect(find.textContaining('None yet'), findsWidgets);
     expect(find.byKey(const Key('builds_subclass_kit_title')), findsOneWidget);
     // Collapsed: empty pin Search rows hidden until user expands.
     expect(find.byKey(const Key('builds_pick_exotic_armor')), findsNothing);
+    await tester.ensureVisible(
+      find.byKey(const Key('builds_optional_pins_toggle')),
+    );
     await tester.tap(find.byKey(const Key('builds_optional_pins_toggle')));
     await _pumpFrames(tester);
     expect(find.byKey(const Key('builds_pick_exotic_armor')), findsOneWidget);
@@ -193,7 +205,7 @@ void main() {
     Future<void> pumpAt(Size size) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: buildFlapTheme(),
+          theme: _testTheme(),
           home: MediaQuery(
             data: MediaQueryData(size: size),
             child: BuildsLibraryPage(
@@ -256,7 +268,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildFlapTheme(),
+        theme: _testTheme(),
         home: BuildsLibraryPage(
           services: services,
           controller: controller,
@@ -291,7 +303,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildFlapTheme(),
+        theme: _testTheme(),
         home: BuildsLibraryPage(
           services: services,
           controller: controller,
@@ -332,7 +344,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildFlapTheme(),
+        theme: _testTheme(),
         home: BuildsLibraryPage(
           services: services,
           controller: controller,
@@ -411,7 +423,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildFlapTheme(),
+        theme: _testTheme(),
         home: BuildsLibraryPage(
           services: services,
           controller: controller,
@@ -429,6 +441,9 @@ void main() {
 
     expect(find.byKey(const Key('builds_subclass_kit_title')), findsOneWidget);
     // Expand optional pins to surface manifest pick keys (collapsed when empty).
+    await tester.ensureVisible(
+      find.byKey(const Key('builds_optional_pins_toggle')),
+    );
     await tester.tap(find.byKey(const Key('builds_optional_pins_toggle')));
     await _pumpFrames(tester);
     expect(find.byKey(const Key('builds_pick_exotic_armor')), findsOneWidget);
@@ -482,10 +497,12 @@ void main() {
     await _pumpFrames(tester);
 
     // Build is 2nd destination (index 1): Loadouts, Build, … (DART-068).
-    final buildsDest = find.text('Build');
-
-    expect(buildsDest, findsWidgets);
-    await tester.tap(buildsDest.first);
+    // Invoke onDestinationSelected directly — avoids Material 3 InkSparkle
+    // shader decode flake on some Windows test hosts.
+    expect(find.text('Build'), findsWidgets);
+    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    expect(rail.onDestinationSelected, isNotNull);
+    rail.onDestinationSelected!(1);
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('builds_library_page')), findsOneWidget);

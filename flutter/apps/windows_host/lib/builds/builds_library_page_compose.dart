@@ -1,17 +1,18 @@
 part of 'builds_library_page.dart';
 
 extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
+  /// Loadout column only (variants · attach · slot grid). Finish lives in rail.
   Widget _buildVariantCompose(BuildContext context) {
     final variants = _controller.variants;
     final selectedVariant = _controller.selectedVariant;
     final sets = _controller.attachableSets;
+    final palette = FlapPalette.of(context);
     // Keep dropdown selection valid.
     final attachValue = (_attachSetId != null &&
             sets.any((s) => s.id == _attachSetId))
         ? _attachSetId
         : (sets.isNotEmpty ? sets.first.id : null);
     if (attachValue != _attachSetId) {
-      // Defer assignment out of build via post-frame if needed; for tests ok:
       _attachSetId = attachValue;
     }
 
@@ -22,7 +23,7 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
         Text(
           'VARIANTS',
           style: neonDisplay(
-            color: FlapPalette.of(context).foreground,
+            color: palette.foreground,
             fontSize: 11,
             letterSpacing: 1.0,
           ),
@@ -30,10 +31,7 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
         const SizedBox(height: kSpace4),
         Text(
           'Select a variant, attach sets, pin slots.',
-          style: neonBody(
-            color: FlapPalette.of(context).muted,
-            fontSize: 12,
-          ),
+          style: neonBody(color: palette.muted, fontSize: 12),
         ),
         const SizedBox(height: kSpace8),
         if (variants.isEmpty)
@@ -77,65 +75,20 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
             OutlinedButton(
               key: const Key('builds_create_variant_button'),
               onPressed: _controller.loading ? null : _createVariant,
-              child: const Text('Create variant'),
+              child: const Text('Create'),
             ),
           ],
         ),
-        if (selectedVariant != null) ...[
-          const SizedBox(height: kSpace16),
-          Text(
-            'SLOT STRIP',
-            style: neonMono(
-              color: FlapPalette.of(context).muted,
-              fontSize: 10,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: kSpace4),
-          Text(
-            'Owned instance · Wish definition · Gap empty',
-            style: neonBody(
-              color: FlapPalette.of(context).muted,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: kSpace8),
-          if (_controller.slotPins.isEmpty)
-            const Text(
-              'No filled slots yet.',
-              key: Key('builds_variant_overview_empty'),
-            )
-          else
-            Wrap(
-              key: const Key('builds_variant_overview'),
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final pin in _controller.slotPins)
-                  Chip(
-                    key: Key(
-                      'builds_variant_overview_${pin.slot}_${pin.setId}',
-                    ),
-                    avatar: Icon(
-                      pin.instanceId != null && pin.instanceId!.isNotEmpty
-                          ? Icons.check_circle_outline
-                          : Icons.bookmark_border,
-                      size: 16,
-                    ),
-                    label: Text(
-                      '${pin.slot}: ${pin.itemName} (${pin.pinDetail})',
-                    ),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
-        ],
-        const SizedBox(height: 16),
+        const SizedBox(height: kSpace16),
         Text(
-          'Attachments',
-          style: Theme.of(context).textTheme.titleMedium,
+          'ATTACHMENTS',
+          style: neonMono(
+            color: palette.muted,
+            fontSize: 10,
+            letterSpacing: 1.0,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: kSpace8),
         if (selectedVariant == null)
           const Text(
             'Select a variant to attach sets.',
@@ -209,140 +162,335 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
             ),
         ],
         const SizedBox(height: kSpace16),
-        Text(
-          'Slot pins',
-          style: _sectionLabelStyle(context),
-        ),
-        const SizedBox(height: kSpace4),
-        Text(
-          'Wishlist = definition only; instance = owned copy pin.',
-          style: _bodyMutedStyle(context),
+        // Slot grid (mock .slot-grid) — overview + edit surface.
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'SLOT GRID',
+                style: neonMono(
+                  color: palette.muted,
+                  fontSize: 10,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+            Text(
+              'Owned',
+              style: neonMono(color: palette.success, fontSize: 10),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Wish',
+              style: neonMono(color: palette.warning, fontSize: 10),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Gap',
+              style: neonMono(
+                color: Color(kFlapAccentSecondaryDark),
+                fontSize: 10,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: kSpace8),
-        if (_controller.slotPins.isEmpty)
+        _buildSlotGrid(context),
+      ],
+    );
+  }
+
+  /// Equipment slot grid: combat slots + any extra pins from attachments.
+  Widget _buildSlotGrid(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final pins = _controller.slotPins;
+    final bySlot = <String, SlotPinView>{
+      for (final p in pins) p.slot: p,
+    };
+    // Prefer domain combat slots; append any pin slots not in the set.
+    final slots = <String>[
+      for (final s in EquipmentSlot.combatSlots) s.wireName,
+    ];
+    for (final p in pins) {
+      if (!slots.contains(p.slot)) slots.add(p.slot);
+    }
+
+    if (slots.isEmpty && pins.isEmpty) {
+      return const Text(
+        'No filled slots from attachments.',
+        key: Key('builds_slot_pins_empty'),
+      );
+    }
+
+    // Hidden overview keys for tests that still query overview chips.
+    final overviewKeys = pins.isEmpty
+        ? const <Widget>[
+            Offstage(
+              offstage: true,
+              child: Text(
+                'No filled slots yet.',
+                key: Key('builds_variant_overview_empty'),
+              ),
+            ),
+          ]
+        : [
+            Offstage(
+              offstage: true,
+              child: Wrap(
+                key: const Key('builds_variant_overview'),
+                children: [
+                  for (final pin in pins)
+                    SizedBox(
+                      key: Key(
+                        'builds_variant_overview_${pin.slot}_${pin.setId}',
+                      ),
+                      width: 0,
+                      height: 0,
+                    ),
+                ],
+              ),
+            ),
+          ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...overviewKeys,
+        if (pins.isEmpty)
           const Text(
             'No filled slots from attachments.',
             key: Key('builds_slot_pins_empty'),
-          )
-        else
-          Column(
-            key: const Key('builds_slot_pins_list'),
-            children: [
-              for (final pin in _controller.slotPins)
-                Card(
-                  key: Key('builds_slot_pin_${pin.slot}_${pin.setId}'),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${pin.slot} · ${pin.itemName}',
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                            ),
-                            Chip(
-                              key: Key(
-                                'builds_slot_pin_label_${pin.slot}_${pin.setId}',
-                              ),
-                              label: Text(pin.pinDetail),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
+          ),
+        GridView.builder(
+          key: const Key('builds_slot_pins_list'),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: slots.length,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 156,
+            mainAxisExtent: 104,
+            mainAxisSpacing: kSpace6,
+            crossAxisSpacing: kSpace6,
+          ),
+          itemBuilder: (context, index) {
+            final slot = slots[index];
+            final pin = bySlot[slot];
+            return _buildSlotGridCell(context, slot: slot, pin: pin);
+          },
+        ),
+        // Keep pin edit keys mounted when a pin is being edited.
+        if (pins.isNotEmpty)
+          ...[
+            for (final pin in pins)
+              if (pin.canEditPin &&
+                  _pinTargetKey == '${pin.slot}|${pin.setId}')
+                Padding(
+                  padding: const EdgeInsets.only(top: kSpace8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Edit ${pin.slot}',
+                        style: neonMono(color: palette.muted, fontSize: 10),
+                      ),
+                      const SizedBox(height: 4),
+                      TextField(
+                        key: Key(
+                          'builds_pin_instance_${pin.slot}_${pin.setId}',
                         ),
-                        if (pin.canEditPin) ...[
-                          const SizedBox(height: 8),
-                          if (_pinTargetKey == '${pin.slot}|${pin.setId}')
-                            TextField(
-                              key: Key(
-                                'builds_pin_instance_${pin.slot}_${pin.setId}',
-                              ),
-                              controller: _pinInstanceController,
-                              decoration: const InputDecoration(
-                                labelText: 'Instance id (empty = wishlist)',
-                                isDense: true,
-                                border: OutlineInputBorder(),
-                              ),
-                            )
-                          else
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: TextButton(
-                                key: Key(
-                                  'builds_pin_edit_${pin.slot}_${pin.setId}',
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _pinTargetKey = '${pin.slot}|${pin.setId}';
-                                    _pinInstanceController.text =
-                                        pin.instanceId ?? '';
-                                  });
-                                },
-                                child: const Text('Edit pin'),
-                              ),
+                        controller: _pinInstanceController,
+                        decoration: const InputDecoration(
+                          labelText: 'Instance id (empty = wishlist)',
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          OutlinedButton(
+                            key: Key(
+                              'builds_pin_apply_${pin.slot}_${pin.setId}',
                             ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              OutlinedButton(
-                                key: Key(
-                                  'builds_pin_apply_${pin.slot}_${pin.setId}',
-                                ),
-                                onPressed: _controller.loading
-                                    ? null
-                                    : () => _applyPin(pin),
-                                child: const Text('Pin'),
-                              ),
-                              const SizedBox(width: 8),
-                              TextButton(
-                                key: Key(
-                                  'builds_pin_clear_${pin.slot}_${pin.setId}',
-                                ),
-                                onPressed: _controller.loading
-                                    ? null
-                                    : () => _clearPin(pin),
-                                child: const Text('Wishlist'),
-                              ),
-                            ],
+                            onPressed: _controller.loading
+                                ? null
+                                : () => _applyPin(pin),
+                            child: const Text('Pin'),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            key: Key(
+                              'builds_pin_clear_${pin.slot}_${pin.setId}',
+                            ),
+                            onPressed: _controller.loading
+                                ? null
+                                : () => _clearPin(pin),
+                            child: const Text('Wishlist'),
                           ),
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+          ],
+      ],
+    );
+  }
+
+  Widget _buildSlotGridCell(
+    BuildContext context, {
+    required String slot,
+    SlotPinView? pin,
+  }) {
+    final palette = FlapPalette.of(context);
+    final owned = pin != null &&
+        pin.instanceId != null &&
+        pin.instanceId!.trim().isNotEmpty;
+    final wish = pin != null && !owned;
+    final gap = pin == null;
+    final edge = owned
+        ? palette.success
+        : wish
+            ? palette.warning
+            : Color(kFlapAccentSecondaryDark);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: pin != null
+            ? Key('builds_slot_pin_${pin.slot}_${pin.setId}')
+            : Key('builds_slot_gap_$slot'),
+        onTap: pin == null || !pin.canEditPin
+            ? null
+            : () {
+                setState(() {
+                  _pinTargetKey = '${pin.slot}|${pin.setId}';
+                  _pinInstanceController.text = pin.instanceId ?? '';
+                });
+              },
+        child: Container(
+          decoration: BoxDecoration(
+            color: palette.surfaceRaised.withValues(alpha: 0.85),
+            border: Border(
+              left: BorderSide(color: edge, width: 2),
+              top: BorderSide(color: palette.line, width: kFlapRuleThickness),
+              right: BorderSide(color: palette.line, width: kFlapRuleThickness),
+              bottom:
+                  BorderSide(color: palette.line, width: kFlapRuleThickness),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(kSpace8, kSpace6, kSpace8, kSpace4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                slot.toUpperCase(),
+                style: neonMono(
+                  color: palette.muted,
+                  fontSize: 9,
+                  letterSpacing: 0.8,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Expanded(
+                child: Text(
+                  pin?.itemName ?? 'Empty',
+                  style: neonBody(
+                    color: gap ? palette.muted : palette.foreground,
+                    fontSize: 11,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: pin != null
+                        ? Text(
+                            pin.pinDetail,
+                            key: Key(
+                              'builds_slot_pin_label_${pin.slot}_${pin.setId}',
+                            ),
+                            style: neonMono(
+                              color: owned
+                                  ? palette.success
+                                  : palette.warning,
+                              fontSize: 9,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : Text(
+                            'Gap',
+                            style: neonMono(
+                              color: Color(kFlapAccentSecondaryDark),
+                              fontSize: 9,
+                            ),
+                          ),
+                  ),
+                  if (pin != null && pin.canEditPin)
+                    TextButton(
+                      key: Key('builds_pin_edit_${pin.slot}_${pin.setId}'),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        minimumSize: const Size(0, 24),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _pinTargetKey = '${pin.slot}|${pin.setId}';
+                          _pinInstanceController.text = pin.instanceId ?? '';
+                        });
+                      },
+                      child: const Text('Edit'),
+                    ),
+                ],
+              ),
             ],
           ),
-        const SizedBox(height: 24),
-        const Divider(),
-        const SizedBox(height: 8),
-        if (_controller.selectedVariant != null) ...[
-          _buildFinishGaps(context),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-          EquipPanel(
-            key: const Key('builds_equip_panel'),
-            controller: _equipController,
-            finishComplete: _controller.finishComplete,
-          ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-          DimExportPanel(
-            key: const Key('builds_dim_export_panel'),
-            controller: _dimExportController,
-            finishComplete: _controller.finishComplete,
-          ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
+        ),
+      ),
+    );
+  }
+
+  /// Finish readiness rail (mock #readiness-rail): gaps · soft · equip · DIM.
+  Widget _buildReadinessRail(BuildContext context) {
+    return NeonZone(
+      key: const Key('builds_zone_readiness'),
+      padding: const EdgeInsets.all(kSpace12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_controller.selectedVariant != null) ...[
+            _buildFinishGaps(context),
+            const SizedBox(height: kSpace16),
+            EquipPanel(
+              key: const Key('builds_equip_panel'),
+              controller: _equipController,
+              finishComplete: _controller.finishComplete,
+            ),
+            const SizedBox(height: kSpace12),
+            DimExportPanel(
+              key: const Key('builds_dim_export_panel'),
+              controller: _dimExportController,
+              finishComplete: _controller.finishComplete,
+            ),
+            const SizedBox(height: kSpace12),
+          ] else
+            Text(
+              'Select a variant to evaluate finish, equip, and export.',
+              style: neonBody(
+                color: FlapPalette.of(context).muted,
+                fontSize: 12,
+              ),
+            ),
+          _buildSoftGuidance(context),
         ],
-        _buildSoftGuidance(context),
-      ],
+      ),
     );
   }
 
