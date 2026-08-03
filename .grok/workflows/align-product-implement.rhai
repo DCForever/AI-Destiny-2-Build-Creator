@@ -3,7 +3,7 @@ let meta = #{
     description: "Align multiplatform Dart (and residual Next) with product domain rules; prioritize packages; optionally implement and verify",
     when_to_use: "When closing product/code gaps on multiplatform-dart, running a domain or Dart feature-gap pass, or implementing the next DBR/DAC/DART package",
     phases: [
-        #{ title: "Context", detail: "load domain SSoT, Dart feature gaps, PRODUCT" },
+        #{ title: "Context", detail: "load Obsidian product reqs + domain SSoT, Dart feature gaps, PRODUCT" },
         #{ title: "Probe", detail: "parallel code-vs-rules probes by theme" },
         #{ title: "Packages", detail: "synthesize ranked work packages" },
         #{ title: "Select", detail: "user gate or args.package_id" },
@@ -200,7 +200,12 @@ if mode != "scan" && mode != "implement" && mode != "full" {
 
 log("align-product-implement mode=" + mode + " focus=" + (if focus == "" { "(all open)" } else { focus }));
 
-// Domain SSoT (AGENTS.md) + multiplatform Dart gap ledgers — agents must read with tools.
+// High-level product requirements (Obsidian ProjectTracker) + domain SSoT + Dart gap ledgers.
+// Vault mount: requirements/ → C:\Users\Owner\SyncThing\Obsidian\ProjectTracker (gitignored junction).
+// Recreate: pwsh -File scripts/link-projecttracker-requirements.ps1
+// Pointer: docs/products/README.md
+let product_req_paths = "requirements/Projects/Destiny 2 Build Creator/Products.md, requirements/Projects/Destiny 2 Build Creator/Domains/, requirements/Projects/Destiny 2 Build Creator/Areas/, requirements/Projects/Destiny 2 Build Creator/Destiny Objects/, requirements/Projects/Destiny 2 Build Creator.md (project note)";
+let product_req_fallback = "If requirements/ is missing: docs/products/README.md + absolute vault C:\\Users\\Owner\\SyncThing\\Obsidian\\ProjectTracker\\Projects\\Destiny 2 Build Creator\\";
 let domain_paths = "specs/domain-business-rules.md (DBR-*), specs/domain-acceptance-criteria.md (DAC-*), specs/business-rules.md (BR-*), PRODUCT.md, docs/multiplatform-dart-feature-gaps.md, docs/multiplatform-dart-slice-roadmap.md, docs/multiplatform-dart-ui-fidelity.md, AGENTS.md";
 
 // =============================================================================
@@ -211,19 +216,26 @@ let context_prompt = "";
 context_prompt += "You are aligning Destiny2BuildCreator-multiplatform-dart with product domain requirements.\n";
 context_prompt += "This repo is a Melos monorepo: packages/* (domain, db, bungie, app, ui_flutter, …), apps/* hosts, residual Next src/ for parity reference.\n";
 context_prompt += "Use read_file and grep only. Do not invent rule IDs or GAP/DART IDs.\n\n";
-context_prompt += "MUST read (all that exist):\n";
+context_prompt += "HIGH-LEVEL PRODUCT REQUIREMENTS (Obsidian ProjectTracker) — REQUIRED every alignment pass:\n";
+context_prompt += "- Soft link mount: requirements/ → ProjectTracker vault (see docs/products/README.md).\n";
+context_prompt += "- MUST open and use: " + product_req_paths + "\n";
+context_prompt += "- " + product_req_fallback + "\n";
+context_prompt += "- Product descriptions own intent, framing, scope narrative (Domains + Areas + Destiny Objects).\n";
+context_prompt += "- Precedence: vault prose informs gaps; enforceable DBR/DAC/BR in specs/ win on conflict.\n";
+context_prompt += "- List every vault product note you opened under sources_read (requirements/... paths).\n\n";
+context_prompt += "MUST also read (all that exist):\n";
 context_prompt += "- " + domain_paths + "\n";
 context_prompt += "- docs/multiplatform-dart-feature-gaps.md inventory + open GAP-* rows\n";
 context_prompt += "- docs/multiplatform-dart-slice-roadmap.md for DART-NNN ownership\n\n";
 if focus != "" {
     context_prompt += "FOCUS filter (prioritize related open gaps): " + focus + "\n\n";
 }
-context_prompt += "Produce open_gaps from feature-gap catalog + domain contradictions + incomplete DART slices.\n";
+context_prompt += "Produce open_gaps from: (1) Obsidian product descriptions vs code, (2) feature-gap catalog, (3) domain DBR/DAC/BR contradictions, (4) incomplete DART slices.\n";
 context_prompt += "status values: Gap | Partial | Done | OK | N/A.\n";
 context_prompt += "Only include open items (Gap or Partial) in open_gaps unless focus names a Done item for regression check.\n";
 context_prompt += "List solid_areas briefly (shipped FEAT / pure packages).\n";
-context_prompt += "product_map_notes: host UI fidelity / atlas notes (this repo may not have docs/product-map; use multiplatform-dart-ui-fidelity.md).\n";
-context_prompt += "sources_read: paths you actually opened.\n";
+context_prompt += "product_map_notes: host UI fidelity / atlas notes (use docs/product-map/ when present; else multiplatform-dart-ui-fidelity.md).\n";
+context_prompt += "sources_read: paths you actually opened (include requirements/ vault notes).\n";
 
 let ctx = agent(context_prompt, #{
     label: "context",
@@ -262,12 +274,15 @@ let probe_jobs = [];
 for t in themes {
     let pp = "";
     pp += "Domain / port gap probe theme: " + t + "\n";
-    pp += "Read-only: use grep/read_file under packages/, apps/, tool/, specs/, docs/, and residual src/ (Next parity only).\n";
+    pp += "Read-only: use grep/read_file under packages/, apps/, tool/, specs/, docs/, requirements/ (Obsidian product reqs), residual src/ (Next parity only).\n";
+    pp += "HIGH-LEVEL PRODUCT REQS (required): " + product_req_paths + "\n";
+    pp += product_req_fallback + "\n";
     pp += "Domain SSoT: " + domain_paths + "\n";
     pp += "Also re-read docs/multiplatform-dart-feature-gaps.md and slice roadmap for this theme.\n";
     if focus != "" {
         pp += "Emphasize focus: " + focus + "\n";
     }
+    pp += "Cross-check vault Domains/Areas notes for this theme against code; cite requirements/... paths when product prose is the source of intent.\n";
     pp += "For each relevant DBR/DAC/BR/GAP/DART item in this theme, report status with evidence_path (real file).\n";
     pp += "Prefer packages/domain and packages/app evidence for product rules; apps/* for host UI.\n";
     pp += "Empty findings only if you searched and theme is fully OK.\n";
@@ -313,11 +328,12 @@ phase("Packages");
 // =============================================================================
 
 let packages_prompt = "";
-packages_prompt += "Synthesize ranked implementation packages for multiplatform-dart from domain gaps + probe findings.\n";
+packages_prompt += "Synthesize ranked implementation packages for multiplatform-dart from Obsidian product reqs + domain gaps + probe findings.\n";
 packages_prompt += "Max packages: " + max_packages.to_string() + "\n";
 packages_prompt += "Style packages as small vertical slices with hard gates (DART-NNN or pkg-* slugs).\n";
 packages_prompt += "Each package: package_id (short slug), title, priority (P0/P1/P2), rule_ids, scope, out_of_scope, acceptance, estimate, touches_ui, depends_on.\n";
 packages_prompt += "Prefer pure packages (packages/domain, packages/db, …) then app/host wiring. Prefer shipping one coherent DBR/GAP cluster.\n";
+packages_prompt += "Product intent: requirements/Projects/Destiny 2 Build Creator/ (Obsidian). Enforceable IDs: specs/ DBR/DAC/BR. Specs win on conflict; vault prose informs scope and acceptance language.\n";
 packages_prompt += "Domain wins over feature specs on conflict (AGENTS.md). FEAT cutover PASS does not override open BR/DAC gaps.\n";
 if focus != "" {
     packages_prompt += "Focus filter: " + focus + "\n";
@@ -465,15 +481,16 @@ phase("Plan");
 
 let plan_prompt = "";
 plan_prompt += "Write a concrete implementation plan for package_id=" + selected + " on multiplatform-dart.\n";
-plan_prompt += "Read domain rules and existing code with tools before planning.\n";
+plan_prompt += "Read Obsidian product reqs + domain rules and existing code with tools before planning.\n";
+plan_prompt += "Product reqs: " + product_req_paths + "\n";
 plan_prompt += "Domain SSoT: " + domain_paths + "\n";
 plan_prompt += "Package JSON:\n" + json_encode(selected_pkg) + "\n\n";
 plan_prompt += "Related probe findings:\n" + json_encode(all_findings) + "\n\n";
 plan_prompt += "steps: ordered implementation steps.\n";
 plan_prompt += "files: paths under packages/, apps/, tool/, specs/, docs/ (avoid editing residual Next unless parity-only).\n";
 plan_prompt += "tests: dart test for packages, host tests, tool/*_gate.dart as applicable.\n";
-plan_prompt += "docs: multiplatform-dart-feature-gaps.md, slice roadmap, DBR/DAC/BR if product rules change.\n";
-plan_prompt += "product_map: N/A unless docs/product-map exists; else ui-fidelity / host notes.\n";
+plan_prompt += "docs: multiplatform-dart-feature-gaps.md, slice roadmap, DBR/DAC/BR if product rules change; vault product notes only if description meaning changes (edit via requirements/ / Obsidian).\n";
+plan_prompt += "product_map: use docs/product-map when present; else ui-fidelity / host notes.\n";
 plan_prompt += "risks: short.\n";
 plan_prompt += "Pure UI polish without product semantics stays out of domain P1/P2 (AGENTS.md); track under docs/ui-polish-tracker.md if needed.\n";
 
@@ -505,11 +522,12 @@ phase("Implement");
 
 let impl_prompt = "";
 impl_prompt += "Implement package_id=" + selected + " per the plan on multiplatform-dart. Use tools; do not skip tests.\n";
-impl_prompt += "Domain SSoT wins: " + domain_paths + "\n\n";
+impl_prompt += "Product intent: " + product_req_paths + "\n";
+impl_prompt += "Domain SSoT wins on conflict: " + domain_paths + "\n\n";
 impl_prompt += "Package:\n" + json_encode(selected_pkg) + "\n\n";
 impl_prompt += "Plan:\n" + json_encode(plan.output) + "\n\n";
 impl_prompt += "Rules:\n";
-impl_prompt += "1. Update domain docs in the same change when you ship a new/changed product rule.\n";
+impl_prompt += "1. Update domain docs (DBR/DAC/BR) in the same change when you ship a new/changed product rule; update Obsidian product notes under requirements/ when description meaning changes.\n";
 impl_prompt += "2. Update docs/multiplatform-dart-feature-gaps.md (and slice roadmap) when closing GAP/DART items.\n";
 impl_prompt += "3. Prefer packages/domain + packages/app pure logic; wire hosts (apps/*) only as needed.\n";
 if skip_product_map {

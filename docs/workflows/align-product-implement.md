@@ -4,27 +4,30 @@
 
 **Repo**: `F:\Destiny2BuildCreator-multiplatform-dart` (Melos monorepo — Dart packages + host apps; residual Next `src/` for parity reference only).
 
-Closes the loop from **product domain requirements → ranked packages → implement → verify**, adapted for multiplatform Dart gap ledgers (`GAP-*`, `DART-NNN`).
+Closes the loop from **Obsidian product requirements + domain rules → ranked packages → implement → verify**, adapted for multiplatform Dart gap ledgers (`GAP-*`, `DART-NNN`).
 
 ## When to use
 
 - “What’s left vs DBR/DAC/BR on Dart?”
 - “Next DART slice / feature gap package”
-- After re-syncing domain markdown or running dual-use, before a coding session
+- After re-syncing domain markdown or Obsidian product notes, before a coding session
 
-## Domain SSoT (AGENTS.md + port ledgers)
+## Product + domain SSoT (always read)
 
-| Layer | Path | IDs |
+| Layer | Path | Owns |
 | --- | --- | --- |
-| Domain rules | `specs/domain-business-rules.md` | `DBR-*` |
+| **High-level product requirements** | [`requirements/Projects/Destiny 2 Build Creator/`](../../requirements/Projects/Destiny%202%20Build%20Creator/) (Obsidian ProjectTracker mount) | Intent, framing, Domains / Areas / Destiny Objects |
+| Recreate mount | `pwsh -File scripts/link-projecttracker-requirements.ps1` | Junction `requirements/` → vault |
+| Git pointer | [`docs/products/README.md`](../products/README.md) | When mount missing |
+| Domain rules | `specs/domain-business-rules.md` | `DBR-*` (enforceable) |
 | Acceptance | `specs/domain-acceptance-criteria.md` | `DAC-*` |
 | Feature rules | `specs/business-rules.md` | `BR-*` |
-| Product purpose | `PRODUCT.md` | capabilities |
+| Product purpose | `PRODUCT.md` | Whole-product framing |
 | Dart feature gaps | `docs/multiplatform-dart-feature-gaps.md` | `GAP-*`, inventory |
 | Slice roadmap | `docs/multiplatform-dart-slice-roadmap.md` | `DART-NNN` |
 | Host UI fidelity | `docs/multiplatform-dart-ui-fidelity.md` | `GAP-UI-*` |
 
-Domain wording wins on conflict. FEAT cutover **PASS** does **not** override open BR/DAC gaps.
+**Every Context + Probe pass must open the Obsidian product folder** (via `requirements/`). Specs win on conflict with vault prose; vault prose informs scope and acceptance language. FEAT cutover **PASS** does **not** override open BR/DAC gaps.
 
 ## Code layout probes should use
 
