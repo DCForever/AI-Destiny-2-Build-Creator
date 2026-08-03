@@ -1,9 +1,9 @@
 let meta = #{
     name: "align-product-implement",
-    description: "Align multiplatform Dart (and residual Next) with product domain rules; prioritize packages; optionally implement and verify",
-    when_to_use: "When closing product/code gaps on multiplatform-dart, running a domain or Dart feature-gap pass, or implementing the next DBR/DAC/DART package",
+    description: "Align multiplatform Dart with product requirements + domain specs (SSoT); prioritize packages; optionally implement and verify. NextJS is not SSoT.",
+    when_to_use: "When closing product/code gaps on multiplatform Dart hosts, running a domain or feature-gap pass, or implementing the next DBR/DAC/DART package from specs and product requirements",
     phases: [
-        #{ title: "Context", detail: "load Obsidian product reqs + domain SSoT, Dart feature gaps, PRODUCT" },
+        #{ title: "Context", detail: "load product reqs + specs SSoT, Dart feature gaps, PRODUCT" },
         #{ title: "Probe", detail: "parallel code-vs-rules probes by theme" },
         #{ title: "Packages", detail: "synthesize ranked work packages" },
         #{ title: "Select", detail: "user gate or args.package_id" },
@@ -200,42 +200,57 @@ if mode != "scan" && mode != "implement" && mode != "full" {
 
 log("align-product-implement mode=" + mode + " focus=" + (if focus == "" { "(all open)" } else { focus }));
 
-// High-level product requirements (Obsidian ProjectTracker) + domain SSoT + Dart gap ledgers.
+// === SOURCE OF TRUTH (hard rules for every agent in this workflow) ===
+// 1. Product requirements (Obsidian ProjectTracker via requirements/) — intent, framing, Domains/Areas/Destiny Objects
+// 2. Specs — enforceable DBR-* / DAC-* / BR-* in specs/ (+ PRODUCT.md whole-product framing)
+// 3. Dart implementation under flutter/ — code under test
+// NextJS (web/NextJS/) is NOT a source of truth. Do not treat Next behavior, tests, or "golden parity with Next"
+// as acceptance criteria. Do not invent product rules from Next. Optional legacy reference only if user asks.
+//
 // Vault mount: requirements/ → C:\Users\Owner\SyncThing\Obsidian\ProjectTracker (gitignored junction).
 // Recreate: pwsh -File scripts/link-projecttracker-requirements.ps1
 // Pointer: docs/products/README.md
 let product_req_paths = "requirements/Projects/Destiny 2 Build Creator/Products.md, requirements/Projects/Destiny 2 Build Creator/Domains/, requirements/Projects/Destiny 2 Build Creator/Areas/, requirements/Projects/Destiny 2 Build Creator/Destiny Objects/, requirements/Projects/Destiny 2 Build Creator.md (project note)";
 let product_req_fallback = "If requirements/ is missing: docs/products/README.md + absolute vault C:\\Users\\Owner\\SyncThing\\Obsidian\\ProjectTracker\\Projects\\Destiny 2 Build Creator\\";
 let domain_paths = "specs/domain-business-rules.md (DBR-*), specs/domain-acceptance-criteria.md (DAC-*), specs/business-rules.md (BR-*), PRODUCT.md, docs/multiplatform-dart-feature-gaps.md, docs/multiplatform-dart-slice-roadmap.md, docs/multiplatform-dart-ui-fidelity.md, AGENTS.md";
+let ssot_rules = "";
+ssot_rules += "SOURCE OF TRUTH (mandatory):\n";
+ssot_rules += "1. Product requirements — " + product_req_paths + "\n";
+ssot_rules += "2. Specs — DBR/DAC/BR in specs/ (enforceable). PRODUCT.md for whole-product framing.\n";
+ssot_rules += "3. Dart code under flutter/ packages and apps — implementation evidence only.\n";
+ssot_rules += "PRECEDENCE: On conflict, specs (DBR/DAC/BR) win over vault prose; vault prose informs intent/scope language; both win over any legacy code (including NextJS).\n";
+ssot_rules += "NextJS (web/NextJS/, residual src/) is NOT SSoT. Forbidden as acceptance: \"match Next\", \"port Next Phase X\", \"golden parity with Next tests\", cloning Next behavior without a DBR/DAC/BR or product-req citation.\n";
+ssot_rules += "You may open Next only as optional historical reference if a gap note already points there — never to invent rules or override specs/product reqs.\n";
 
 // =============================================================================
 phase("Context");
 // =============================================================================
 
 let context_prompt = "";
-context_prompt += "You are aligning Destiny2BuildCreator-multiplatform-dart with product domain requirements.\n";
-context_prompt += "This repo is a Melos monorepo: packages/* (domain, db, bungie, app, ui_flutter, …), apps/* hosts, residual Next src/ for parity reference.\n";
+context_prompt += "You are aligning multiplatform Dart (flutter/) with product requirements and domain specs.\n";
+context_prompt += "This monorepo: flutter/packages/* (domain, db, bungie, app, …), flutter/apps/* hosts, docs/, specs/, requirements/ (Obsidian mount).\n";
 context_prompt += "Use read_file and grep only. Do not invent rule IDs or GAP/DART IDs.\n\n";
+context_prompt += ssot_rules + "\n";
 context_prompt += "HIGH-LEVEL PRODUCT REQUIREMENTS (Obsidian ProjectTracker) — REQUIRED every alignment pass:\n";
 context_prompt += "- Soft link mount: requirements/ → ProjectTracker vault (see docs/products/README.md).\n";
 context_prompt += "- MUST open and use: " + product_req_paths + "\n";
 context_prompt += "- " + product_req_fallback + "\n";
 context_prompt += "- Product descriptions own intent, framing, scope narrative (Domains + Areas + Destiny Objects).\n";
-context_prompt += "- Precedence: vault prose informs gaps; enforceable DBR/DAC/BR in specs/ win on conflict.\n";
 context_prompt += "- List every vault product note you opened under sources_read (requirements/... paths).\n\n";
 context_prompt += "MUST also read (all that exist):\n";
 context_prompt += "- " + domain_paths + "\n";
 context_prompt += "- docs/multiplatform-dart-feature-gaps.md inventory + open GAP-* rows\n";
-context_prompt += "- docs/multiplatform-dart-slice-roadmap.md for DART-NNN ownership\n\n";
+context_prompt += "- docs/multiplatform-dart-slice-roadmap.md for DART-NNN ownership\n";
+context_prompt += "- Do NOT treat web/NextJS as authoritative; skip Next unless a gap note requires a historical cite.\n\n";
 if focus != "" {
     context_prompt += "FOCUS filter (prioritize related open gaps): " + focus + "\n\n";
 }
-context_prompt += "Produce open_gaps from: (1) Obsidian product descriptions vs code, (2) feature-gap catalog, (3) domain DBR/DAC/BR contradictions, (4) incomplete DART slices.\n";
+context_prompt += "Produce open_gaps from: (1) Obsidian product descriptions vs Dart code, (2) feature-gap catalog, (3) domain DBR/DAC/BR contradictions, (4) incomplete DART slices.\n";
 context_prompt += "status values: Gap | Partial | Done | OK | N/A.\n";
 context_prompt += "Only include open items (Gap or Partial) in open_gaps unless focus names a Done item for regression check.\n";
 context_prompt += "List solid_areas briefly (shipped FEAT / pure packages).\n";
-context_prompt += "product_map_notes: host UI fidelity / atlas notes (use docs/product-map/ when present; else multiplatform-dart-ui-fidelity.md).\n";
-context_prompt += "sources_read: paths you actually opened (include requirements/ vault notes).\n";
+context_prompt += "product_map_notes: docs/product-map/ when present; else multiplatform-dart-ui-fidelity.md.\n";
+context_prompt += "sources_read: paths you actually opened (include requirements/ vault notes + specs).\n";
 
 let ctx = agent(context_prompt, #{
     label: "context",
@@ -257,12 +272,13 @@ phase("Probe");
 // =============================================================================
 
 // Fixed probe themes (bounded fan-out). Script enforces list; agents do not invent themes.
+// host-ui-fidelity = Flutter hosts vs product/specs (not Next parity).
 let themes = [
     "sets-and-occupancy",
     "builds-identity-kit",
     "synergy-links-coverage",
     "completeness-gates-ui",
-    "dart-host-parity",
+    "host-ui-fidelity",
 ];
 
 if focus != "" {
@@ -273,20 +289,22 @@ if focus != "" {
 let probe_jobs = [];
 for t in themes {
     let pp = "";
-    pp += "Domain / port gap probe theme: " + t + "\n";
-    pp += "Read-only: use grep/read_file under packages/, apps/, tool/, specs/, docs/, requirements/ (Obsidian product reqs), residual src/ (Next parity only).\n";
+    pp += "Product/domain gap probe theme: " + t + "\n";
+    pp += "Read-only: grep/read_file under flutter/packages/, flutter/apps/, flutter/tool/, specs/, docs/, requirements/ (product reqs).\n";
+    pp += ssot_rules + "\n";
     pp += "HIGH-LEVEL PRODUCT REQS (required): " + product_req_paths + "\n";
     pp += product_req_fallback + "\n";
-    pp += "Domain SSoT: " + domain_paths + "\n";
+    pp += "Specs: " + domain_paths + "\n";
     pp += "Also re-read docs/multiplatform-dart-feature-gaps.md and slice roadmap for this theme.\n";
     if focus != "" {
         pp += "Emphasize focus: " + focus + "\n";
     }
-    pp += "Cross-check vault Domains/Areas notes for this theme against code; cite requirements/... paths when product prose is the source of intent.\n";
-    pp += "For each relevant DBR/DAC/BR/GAP/DART item in this theme, report status with evidence_path (real file).\n";
-    pp += "Prefer packages/domain and packages/app evidence for product rules; apps/* for host UI.\n";
+    pp += "Cross-check vault Domains/Areas notes for this theme against Dart code; cite requirements/... and specs/ rule IDs.\n";
+    pp += "For each relevant DBR/DAC/BR/GAP/DART item in this theme, report status with evidence_path (real file under flutter/, specs/, docs/, or requirements/).\n";
+    pp += "Prefer packages/domain and packages/app evidence for product rules; flutter/apps/* for host UI.\n";
+    pp += "Do NOT open web/NextJS unless a feature-gap row already names a historical residual; never status a gap as Gap solely because Next differs.\n";
     pp += "Empty findings only if you searched and theme is fully OK.\n";
-    pp += "suggested_fix: concrete next Dart/doc step, not vague.\n";
+    pp += "suggested_fix: concrete next Dart/doc step grounded in specs/product reqs, not vague and not \"port from Next\".\n";
     pp += "theme field in output MUST be exactly: " + t + "\n";
     probe_jobs.push(#{
         prompt: pp,
@@ -328,21 +346,26 @@ phase("Packages");
 // =============================================================================
 
 let packages_prompt = "";
-packages_prompt += "Synthesize ranked implementation packages for multiplatform-dart from Obsidian product reqs + domain gaps + probe findings.\n";
+packages_prompt += "Synthesize ranked implementation packages for multiplatform Dart from product requirements + domain specs + probe findings.\n";
+packages_prompt += ssot_rules + "\n";
 packages_prompt += "Max packages: " + max_packages.to_string() + "\n";
 packages_prompt += "Style packages as small vertical slices with hard gates (DART-NNN or pkg-* slugs).\n";
 packages_prompt += "Each package: package_id (short slug), title, priority (P0/P1/P2), rule_ids, scope, out_of_scope, acceptance, estimate, touches_ui, depends_on.\n";
-packages_prompt += "Prefer pure packages (packages/domain, packages/db, …) then app/host wiring. Prefer shipping one coherent DBR/GAP cluster.\n";
-packages_prompt += "Product intent: requirements/Projects/Destiny 2 Build Creator/ (Obsidian). Enforceable IDs: specs/ DBR/DAC/BR. Specs win on conflict; vault prose informs scope and acceptance language.\n";
+packages_prompt += "Prefer pure packages (flutter/packages/domain, db, app, …) then host wiring. Prefer shipping one coherent DBR/GAP cluster.\n";
+packages_prompt += "Acceptance criteria MUST cite DBR/DAC/BR and/or product-req outcomes — NEVER \"match Next\" or \"Next golden parity\".\n";
+packages_prompt += "Scope MUST describe Dart work under flutter/; do not prescribe porting Next files as the definition of done.\n";
 packages_prompt += "Domain wins over feature specs on conflict (AGENTS.md). FEAT cutover PASS does not override open BR/DAC gaps.\n";
 if focus != "" {
     packages_prompt += "Focus filter: " + focus + "\n";
+}
+if package_id != "" {
+    packages_prompt += "REQUIRED: Include package_id exactly \"" + package_id + "\" in packages[] and set recommended_first to that id. Fully specify that package; other packages may fill remaining slots.\n";
 }
 packages_prompt += "\nContext open_gaps JSON:\n";
 packages_prompt += json_encode(open_gaps);
 packages_prompt += "\n\nProbe findings JSON:\n";
 packages_prompt += json_encode(all_findings);
-packages_prompt += "\n\nrecommended_first = package_id of the best next slice.\n";
+packages_prompt += "\n\nrecommended_first = package_id of the best next slice (must equal args package_id when provided).\n";
 packages_prompt += "Do not invent rule/GAP/DART IDs not present in inputs or docs you re-read.\n";
 
 let pkgs = agent(packages_prompt, #{
@@ -439,7 +462,7 @@ if selected == "" {
     selected = recommended;
 }
 
-// Validate selected is in package_list; if not, fall back to recommended
+// Validate selected is in package_list. Honor explicit package_id — never silently swap packages.
 let selected_ok = false;
 let selected_pkg = ();
 for p in package_list {
@@ -448,18 +471,46 @@ for p in package_list {
         selected_pkg = p;
     }
 }
-if !selected_ok && package_list.len() > 0 {
-    selected = package_list[0].package_id;
-    selected_pkg = package_list[0];
-    log("package_id not in list; using " + selected);
-}
 
-if package_list.len() == 0 {
+if package_list.len() == 0 && package_id == "" {
     complete(#{
         mode: mode,
         summary: "No packages to implement — product alignment found no open work under focus.",
         packages: [],
     });
+}
+
+if !selected_ok {
+    if package_id != "" {
+        // Build a minimal package shell so implement still targets the requested id
+        // rather than hijacking to recommended (prevents dart-070 → three-gates swaps).
+        log("package_id " + package_id + " not in synthesis list; forcing requested package shell");
+        selected = package_id;
+        selected_pkg = #{
+            package_id: package_id,
+            title: package_id,
+            priority: "P0",
+            rule_ids: [],
+            scope: "Implement package_id=" + package_id + " from product requirements (requirements/) + specs DBR/DAC/BR. Do not substitute a different package. Do not use NextJS as SSoT.",
+            out_of_scope: "Other packages; NextJS ports as definition of done",
+            acceptance: "Package intent met against product requirements and specs; Dart tests green; docs updated if rules/gaps close",
+            estimate: "unknown",
+            touches_ui: false,
+            depends_on: [],
+        };
+        package_list.push(selected_pkg);
+        selected_ok = true;
+    } else if package_list.len() > 0 {
+        selected = package_list[0].package_id;
+        selected_pkg = package_list[0];
+        log("no package_id; using first synthesized " + selected);
+    } else {
+        complete(#{
+            mode: mode,
+            summary: "No packages to implement.",
+            packages: [],
+        });
+    }
 }
 
 if package_id == "" {
@@ -468,6 +519,7 @@ if package_id == "" {
     gate_msg += "Priority: " + selected_pkg.priority + "\n";
     gate_msg += "Rules: " + json_encode(selected_pkg.rule_ids) + "\n";
     gate_msg += "Scope: " + selected_pkg.scope + "\n\n";
+    gate_msg += "SSoT: product requirements + specs (not NextJS).\n";
     gate_msg += "Resume to implement this package.\n";
     gate_msg += "Or re-run with args.package_id set to another package_id from the list.\n";
     await_user("user", gate_msg);
@@ -480,16 +532,18 @@ phase("Plan");
 // =============================================================================
 
 let plan_prompt = "";
-plan_prompt += "Write a concrete implementation plan for package_id=" + selected + " on multiplatform-dart.\n";
-plan_prompt += "Read Obsidian product reqs + domain rules and existing code with tools before planning.\n";
+plan_prompt += "Write a concrete implementation plan for package_id=" + selected + " on multiplatform Dart (flutter/).\n";
+plan_prompt += "You MUST implement THIS package_id only — do not substitute another package.\n";
+plan_prompt += ssot_rules + "\n";
+plan_prompt += "Read product reqs + specs + existing Dart code with tools before planning.\n";
 plan_prompt += "Product reqs: " + product_req_paths + "\n";
-plan_prompt += "Domain SSoT: " + domain_paths + "\n";
+plan_prompt += "Specs: " + domain_paths + "\n";
 plan_prompt += "Package JSON:\n" + json_encode(selected_pkg) + "\n\n";
 plan_prompt += "Related probe findings:\n" + json_encode(all_findings) + "\n\n";
-plan_prompt += "steps: ordered implementation steps.\n";
-plan_prompt += "files: paths under packages/, apps/, tool/, specs/, docs/ (avoid editing residual Next unless parity-only).\n";
-plan_prompt += "tests: dart test for packages, host tests, tool/*_gate.dart as applicable.\n";
-plan_prompt += "docs: multiplatform-dart-feature-gaps.md, slice roadmap, DBR/DAC/BR if product rules change; vault product notes only if description meaning changes (edit via requirements/ / Obsidian).\n";
+plan_prompt += "steps: ordered implementation steps grounded in DBR/DAC/BR + product reqs.\n";
+plan_prompt += "files: paths under flutter/packages/, flutter/apps/, flutter/tool/, specs/, docs/ only (do not plan edits under web/NextJS).\n";
+plan_prompt += "tests: dart/flutter test for packages and hosts; tool/*_gate.dart as applicable. Tests assert product/spec behavior — not Next fixtures.\n";
+plan_prompt += "docs: multiplatform-dart-feature-gaps.md, slice roadmap, DBR/DAC/BR if product rules change; vault product notes only if description meaning changes (requirements/ / Obsidian).\n";
 plan_prompt += "product_map: use docs/product-map when present; else ui-fidelity / host notes.\n";
 plan_prompt += "risks: short.\n";
 plan_prompt += "Pure UI polish without product semantics stays out of domain P1/P2 (AGENTS.md); track under docs/ui-polish-tracker.md if needed.\n";
@@ -521,29 +575,32 @@ phase("Implement");
 // =============================================================================
 
 let impl_prompt = "";
-impl_prompt += "Implement package_id=" + selected + " per the plan on multiplatform-dart. Use tools; do not skip tests.\n";
+impl_prompt += "Implement package_id=" + selected + " per the plan under flutter/. Use tools; do not skip tests.\n";
+impl_prompt += "You MUST implement THIS package_id only — do not switch to a different package mid-flight.\n";
+impl_prompt += ssot_rules + "\n";
 impl_prompt += "Product intent: " + product_req_paths + "\n";
-impl_prompt += "Domain SSoT wins on conflict: " + domain_paths + "\n\n";
+impl_prompt += "Specs (enforceable): " + domain_paths + "\n\n";
 impl_prompt += "Package:\n" + json_encode(selected_pkg) + "\n\n";
 impl_prompt += "Plan:\n" + json_encode(plan.output) + "\n\n";
 impl_prompt += "Rules:\n";
 impl_prompt += "1. Update domain docs (DBR/DAC/BR) in the same change when you ship a new/changed product rule; update Obsidian product notes under requirements/ when description meaning changes.\n";
 impl_prompt += "2. Update docs/multiplatform-dart-feature-gaps.md (and slice roadmap) when closing GAP/DART items.\n";
-impl_prompt += "3. Prefer packages/domain + packages/app pure logic; wire hosts (apps/*) only as needed.\n";
+impl_prompt += "3. Prefer flutter/packages/domain + app pure logic; wire flutter/apps/* only as needed.\n";
 if skip_product_map {
     impl_prompt += "4. skip_product_map=true — note UI fidelity follow-up instead of product-map sync.\n";
 } else {
     impl_prompt += "4. If docs/product-map exists and UI structure changes, sync it; otherwise update multiplatform-dart-ui-fidelity.md notes.\n";
 }
-impl_prompt += "5. Prefer pure Dart evaluators + hard gates + package tests (mirror Next patterns in packages/domain where applicable).\n";
-impl_prompt += "6. Do NOT git commit unless commit flag is true (currently " + do_commit.to_string() + ").\n";
+impl_prompt += "5. Prefer pure Dart evaluators + hard gates + package tests derived from specs/product reqs — do NOT port NextJS as the design authority.\n";
+impl_prompt += "6. Do not edit web/NextJS for this package unless the user explicitly asked; default is Dart-only.\n";
+impl_prompt += "7. Do NOT git commit unless commit flag is true (currently " + do_commit.to_string() + ").\n";
 if do_commit {
-    impl_prompt += "7. If commit=true: stage only related files, conventional commit message, do not push unless user already requested push in args (not set by default).\n";
+    impl_prompt += "8. If commit=true: stage only related files, conventional commit message, do not push unless user already requested push in args (not set by default).\n";
 } else {
-    impl_prompt += "7. Leave changes uncommitted for user review.\n";
+    impl_prompt += "8. Leave changes uncommitted for user review.\n";
 }
-impl_prompt += "8. Run focused dart test (package/app) for touched areas; fix failures you introduced.\n";
-impl_prompt += "Return done=true only if acceptance criteria for the package are met in code.\n";
+impl_prompt += "9. Run focused dart/flutter tests for touched areas; fix failures you introduced.\n";
+impl_prompt += "Return done=true only if acceptance criteria for THIS package are met in Dart against product/specs.\n";
 
 let impl = agent(impl_prompt, #{
     label: "implement",
@@ -562,13 +619,15 @@ phase("Verify");
 // =============================================================================
 
 let verify_prompt = "";
-verify_prompt += "Verify implementation of package " + selected + " on multiplatform-dart.\n";
-verify_prompt += "Use grep/read_file and run focused dart test (and tool gates if relevant) via shell.\n";
+verify_prompt += "Verify implementation of package " + selected + " on multiplatform Dart (flutter/).\n";
+verify_prompt += ssot_rules + "\n";
+verify_prompt += "Use grep/read_file and run focused dart/flutter tests (and tool gates if relevant) via shell.\n";
 verify_prompt += "Check:\n";
-verify_prompt += "1. Acceptance from package is met or explicitly blocked with evidence.\n";
-verify_prompt += "2. Domain docs / multiplatform-dart-feature-gaps.md updated if behavior shipped.\n";
-verify_prompt += "3. No bare-hash primary labels regressions if UI touched (DBR-UI-006).\n";
-verify_prompt += "4. Pure package boundaries respected (domain does not import Flutter UI).\n";
+verify_prompt += "1. Acceptance from package is met against product requirements + specs (not Next parity), or explicitly blocked with evidence.\n";
+verify_prompt += "2. Wrong package was not implemented (changed files/summary must match package_id=" + selected + ").\n";
+verify_prompt += "3. Domain docs / multiplatform-dart-feature-gaps.md updated if behavior shipped.\n";
+verify_prompt += "4. No bare-hash primary labels regressions if UI touched (DBR-UI-006).\n";
+verify_prompt += "5. Pure package boundaries respected (domain does not import Flutter UI).\n";
 verify_prompt += "Implement report:\n" + json_encode(impl.output) + "\n\n";
 verify_prompt += "Plan:\n" + json_encode(plan.output) + "\n\n";
 verify_prompt += "ok=false if any required check fails.\n";

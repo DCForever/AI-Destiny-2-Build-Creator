@@ -1,42 +1,59 @@
-# Workflow: align-product-implement (multiplatform-dart)
+# Workflow: align-product-implement (multiplatform Dart)
 
 **Script**: [`.grok/workflows/align-product-implement.rhai`](../../.grok/workflows/align-product-implement.rhai)
 
-**Repo**: `F:\Destiny2BuildCreator-multiplatform-dart` (Melos monorepo — Dart packages + host apps; residual Next `src/` for parity reference only).
+Closes the loop from **product requirements + domain specs → ranked packages → implement → verify** for multiplatform Dart (`flutter/`).
 
-Closes the loop from **Obsidian product requirements + domain rules → ranked packages → implement → verify**, adapted for multiplatform Dart gap ledgers (`GAP-*`, `DART-NNN`).
+## Source of truth (mandatory)
+
+| Rank | Layer | Path | Owns |
+| --- | --- | --- | --- |
+| **1** | **High-level product requirements** | [`requirements/Projects/Destiny 2 Build Creator/`](../../requirements/Projects/Destiny%202%20Build%20Creator/) (Obsidian ProjectTracker mount) | Intent, framing, Domains / Areas / Destiny Objects |
+| **2** | **Enforceable specs** | `specs/domain-business-rules.md`, `domain-acceptance-criteria.md`, `business-rules.md` | `DBR-*` / `DAC-*` / `BR-*` |
+| **2b** | Whole-product framing | `PRODUCT.md` | Purpose, positioning, principles |
+| **3** | Implementation | `flutter/packages/*`, `flutter/apps/*` | Code under test |
+| **Not SSoT** | **NextJS** | `web/NextJS/` | Legacy residual only |
+
+**Precedence:** Specs win over vault prose on conflict; vault prose informs intent and acceptance language; **both beat any legacy code**, including NextJS.
+
+### Explicitly forbidden as acceptance criteria
+
+- “Match Next” / “port Next Phase X” / “golden parity with Next tests”
+- Cloning Next behavior without a **DBR / DAC / BR** or product-requirement citation
+- Using Next as the definition of done for a package
+
+Next may be opened only as **optional historical reference** when a gap note already points there — never to invent rules.
+
+Recreate product-req mount: `pwsh -File scripts/link-projecttracker-requirements.ps1`  
+Git pointer when mount missing: [`docs/products/README.md`](../products/README.md)
+
+## Supporting ledgers (not product SSoT)
+
+| Layer | Path | IDs |
+| --- | --- | --- |
+| Dart feature gaps | `docs/multiplatform-dart-feature-gaps.md` | `GAP-*` |
+| Slice roadmap | `docs/multiplatform-dart-slice-roadmap.md` | `DART-NNN` |
+| Host UI fidelity | `docs/multiplatform-dart-ui-fidelity.md` | `GAP-UI-*` |
+| Product map | `docs/product-map/` | surfaces / flows |
+
+FEAT cutover **PASS** does **not** override open BR/DAC gaps.
 
 ## When to use
 
-- “What’s left vs DBR/DAC/BR on Dart?”
-- “Next DART slice / feature gap package”
+- “What’s left vs product reqs + DBR/DAC/BR on Dart?”
+- “Next DART / pkg slice”
 - After re-syncing domain markdown or Obsidian product notes, before a coding session
-
-## Product + domain SSoT (always read)
-
-| Layer | Path | Owns |
-| --- | --- | --- |
-| **High-level product requirements** | [`requirements/Projects/Destiny 2 Build Creator/`](../../requirements/Projects/Destiny%202%20Build%20Creator/) (Obsidian ProjectTracker mount) | Intent, framing, Domains / Areas / Destiny Objects |
-| Recreate mount | `pwsh -File scripts/link-projecttracker-requirements.ps1` | Junction `requirements/` → vault |
-| Git pointer | [`docs/products/README.md`](../products/README.md) | When mount missing |
-| Domain rules | `specs/domain-business-rules.md` | `DBR-*` (enforceable) |
-| Acceptance | `specs/domain-acceptance-criteria.md` | `DAC-*` |
-| Feature rules | `specs/business-rules.md` | `BR-*` |
-| Product purpose | `PRODUCT.md` | Whole-product framing |
-| Dart feature gaps | `docs/multiplatform-dart-feature-gaps.md` | `GAP-*`, inventory |
-| Slice roadmap | `docs/multiplatform-dart-slice-roadmap.md` | `DART-NNN` |
-| Host UI fidelity | `docs/multiplatform-dart-ui-fidelity.md` | `GAP-UI-*` |
-
-**Every Context + Probe pass must open the Obsidian product folder** (via `requirements/`). Specs win on conflict with vault prose; vault prose informs scope and acceptance language. FEAT cutover **PASS** does **not** override open BR/DAC gaps.
 
 ## Code layout probes should use
 
 | Area | Paths |
 | --- | --- |
-| Pure logic | `packages/domain`, `packages/db`, `packages/bungie`, `packages/app`, … |
-| Hosts | `apps/windows_host`, `apps/web_host`, `apps/mobile_host` |
-| Gates | `tool/*_gate.dart` |
-| Next parity (read-only) | residual `src/` |
+| Pure logic | `flutter/packages/domain`, `db`, `bungie`, `app`, … |
+| Hosts | `flutter/apps/windows_host`, `web_host`, `mobile_host` |
+| Gates | `flutter/tool/*_gate.dart` |
+| Product reqs | `requirements/Projects/Destiny 2 Build Creator/` |
+| Specs | `specs/` |
+| NextJS | **Do not probe by default** |
 
 ## Modes
 
@@ -44,7 +61,7 @@ Closes the loop from **Obsidian product requirements + domain rules → ranked p
 | --- | --- |
 | `scan` (default) | Context + probes + ranked packages + report. **No code changes.** |
 | `full` | Scan → user confirms package → plan → user confirms plan → implement → verify → report |
-| `implement` | Uses `package_id` (or recommended) after package synthesis; pauses if `package_id` omitted |
+| `implement` | Synthesizes packages but **honors `package_id`** (does not silently swap to another package) |
 
 ## Args
 
@@ -55,7 +72,7 @@ Closes the loop from **Obsidian product requirements + domain rules → ranked p
   "package_id": "optional slug from a prior scan",
   "max_packages": 5,
   "commit": false,
-  "skip_product_map": true
+  "skip_product_map": false
 }
 ```
 
@@ -63,12 +80,12 @@ Closes the loop from **Obsidian product requirements + domain rules → ranked p
 | --- | --- | --- |
 | `mode` | `scan` | `scan` \| `full` \| `implement` |
 | `focus` | _(all open)_ | Narrows prioritization |
-| `package_id` | recommended | Must match a synthesized package when implementing |
+| `package_id` | recommended | **Required for unattended implement**; workflow forces this id if synthesis omits it |
 | `max_packages` | `5` | Cap 1–8 |
 | `commit` | `false` | If true, implement agent may commit related files only (no push by default) |
-| `skip_product_map` | often `true` here | This repo usually has no `docs/product-map`; use ui-fidelity notes |
+| `skip_product_map` | `false` | When true, skip product-map sync and note fidelity follow-up |
 
-## How to run (Grok) — open this repo first
+## How to run (Grok)
 
 **Scan only**
 
@@ -86,32 +103,32 @@ Closes the loop from **Obsidian product requirements + domain rules → ranked p
 /workflow align-product-implement {"mode":"full","focus":"builds"}
 ```
 
-**Implement a known package**
+**Implement a known package** (honors id; product/specs SSoT)
 
 ```text
-/workflow align-product-implement {"mode":"implement","package_id":"your-slug","commit":false}
+/workflow align-product-implement {"mode":"implement","package_id":"dart-070-set-occupancy","commit":false}
 ```
 
 Watch progress in `/workflows`. Resume pauses with `/workflow resume <display-name>`.
 
 ## Phases
 
-1. **Context** — domain SSoT + multiplatform feature-gap inventory  
-2. **Probe** — sets, builds/kit, synergy, completeness/UI, **dart-host-parity**  
-3. **Packages** — ranked vertical slices (acceptance + estimate)  
-4. **Select** — `await_user` unless `package_id` provided  
-5. **Plan** — files under `packages/` / `apps/`, dart tests, docs  
+1. **Context** — product requirements + specs SSoT + feature-gap inventory  
+2. **Probe** — sets, builds/kit, synergy, completeness/UI, **host-ui-fidelity** (Flutter vs product/specs)  
+3. **Packages** — ranked vertical slices (acceptance cites DBR/DAC/BR, not Next)  
+4. **Select** — `await_user` unless `package_id` provided; **never silently replace** an explicit `package_id`  
+5. **Plan** — files under `flutter/` + `specs/` / `docs/`  
 6. **Implement** — Dart code + gap/domain docs  
-7. **Verify** — focused `dart test` + rule capture  
+7. **Verify** — focused tests + wrong-package check + rule capture  
 8. **Report** — `scratch/align-*-report.md`
 
 ## Implementation conventions
 
-- Prefer pure packages + hard gates + package tests  
+- Prefer pure packages + hard gates + package tests derived from **specs / product reqs**  
 - Update `docs/multiplatform-dart-feature-gaps.md` when closing a gap  
 - Update slice roadmap when shipping `DART-NNN` work  
 - Pure UI polish → `docs/ui-polish-tracker.md`, not domain P1/P2  
-- Related workflows already in this repo: `dart-gaps-analysis`, `dart-speckit-loop`
+- Related workflows: `dart-gaps-analysis`, `dart-speckit-loop`
 
 ## Agent budget
 
@@ -124,4 +141,4 @@ Watch progress in `/workflows`. Resume pauses with `/workflow resume <display-na
 
 - Feature gap catalog: [`docs/multiplatform-dart-feature-gaps.md`](../multiplatform-dart-feature-gaps.md)  
 - Slice roadmap: [`docs/multiplatform-dart-slice-roadmap.md`](../multiplatform-dart-slice-roadmap.md)  
-- Source workflow (Next-first repo): `F:\Destiny2BuildCreator\.grok\workflows\align-product-implement.rhai`  
+- Product requirements pointer: [`docs/products/README.md`](../products/README.md)  
