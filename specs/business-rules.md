@@ -257,6 +257,7 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-CAT-007 | Catalog results may **group by** one or more dimensions (element, ammo, archetype, frame, slot, class) for browse; group-by does not replace filter semantics. | [DBR-ROLL-010](./domain-business-rules.md) |
 | BR-CAT-008 | Catalog may filter by library **synergy membership** (include/exclude) via server allowlist and/or client hash sets when mixed. | [DBR-ROLL-010](./domain-business-rules.md) |
 | BR-CAT-009 | Catalog provides a **Universal** mode for mixed-kind composition search (weapons, armor, mods, perks, traits, set bonuses, artifact perks, subclass pieces). From hit detail, users may create/add **Sets** (wizard + instance pin rules) or **Synergies** only—not Build kit attach. | [027](027-catalog-universal-search/spec.md) |
+| BR-CAT-016c | When craftable (**including craftable exotics**), weapon detail offers **possible crafted** options when data exists; current craft is selected plugs (no duplicate current-craft panel). Craft UI and exotic catalyst UI are independent when both apply. | [DBR-UI-007](./domain-business-rules.md), vault Destiny Weapon DO-WPN-029 / DO-WPN-052 |
 
 ---
 

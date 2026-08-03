@@ -2,7 +2,7 @@ import 'package:destiny2_mobile_host/surface_matrix.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('mobile surface matrix (DART-057 / GAP-MOB-01)', () {
+  group('mobile surface matrix (UX rebuild baseline)', () {
     test('covers required AppShell + equip/DIM/optimizer keys', () {
       final keys = kMobileSurfaceMatrix.map((e) => e.key).toSet();
       for (final required in kMobileMatrixRequiredKeys) {
@@ -21,35 +21,36 @@ void main() {
       }
     });
 
-    test('bottom nav keys match matrix bottomNav rows (Builds|Settings)', () {
+    test('bottom nav keys match matrix bottomNav rows (Settings only)', () {
       final navFromMatrix = kMobileSurfaceMatrix
           .where((e) => e.bottomNav)
           .map((e) => e.key)
           .toList();
       expect(navFromMatrix, kMobileBottomNavKeys);
-      expect(kMobileBottomNavKeys, ['build', 'settings']);
-      expect(kMobileBottomNavLabels, ['Builds', 'Settings']);
+      expect(kMobileBottomNavKeys, ['settings']);
+      expect(kMobileBottomNavLabels, ['Settings']);
     });
 
-    test('equip, dim, catalog product-marked N/A (not silent MISS)', () {
+    test('equip and dim product-marked N/A (not silent MISS)', () {
       expect(mobileSurfaceByKey('equip')!.status, MobileSurfaceStatus.na);
       expect(mobileSurfaceByKey('dim')!.status, MobileSurfaceStatus.na);
-      expect(mobileSurfaceByKey('catalog')!.status, MobileSurfaceStatus.na);
     });
 
-    test('optimizer deferred (GAP-FEAT-01)', () {
+    test('stripped product areas are deferred until UX rebuild', () {
+      expect(mobileSurfaceByKey('build')!.status, MobileSurfaceStatus.deferred);
+      expect(mobileSurfaceByKey('catalog')!.status, MobileSurfaceStatus.deferred);
       expect(
         mobileSurfaceByKey('optimizer')!.status,
         MobileSurfaceStatus.deferred,
       );
     });
 
-    test('build PASS and settings PARTIAL', () {
-      expect(mobileSurfaceByKey('build')!.status, MobileSurfaceStatus.pass);
+    test('settings PARTIAL and is the only bottomNav', () {
       expect(
         mobileSurfaceByKey('settings')!.status,
         MobileSurfaceStatus.partial,
       );
+      expect(mobileSurfaceByKey('settings')!.bottomNav, isTrue);
     });
   });
 }

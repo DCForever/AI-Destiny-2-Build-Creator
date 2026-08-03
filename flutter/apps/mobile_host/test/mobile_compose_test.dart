@@ -2,8 +2,8 @@ import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
-import 'package:destiny2_mobile_host/app.dart';
 import 'package:destiny2_mobile_host/builds/builds_controller.dart';
+import 'package:destiny2_mobile_host/builds/builds_list_page.dart';
 import 'package:destiny2_mobile_host/host_bootstrap.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:flutter/material.dart';
@@ -59,10 +59,17 @@ void main() {
   });
 
   Future<void> pumpApp(WidgetTester tester) async {
+    // Page-level pump: shell is Settings-only during UX rebuild.
     await tester.pumpWidget(
-      Destiny2MobileApp(
-        services: services,
-        buildsController: controller,
+      MaterialApp(
+        home: Navigator(
+          onGenerateRoute: (settings) {
+            return MaterialPageRoute<void>(
+              settings: settings,
+              builder: (_) => BuildsListPage(controller: controller),
+            );
+          },
+        ),
       ),
     );
     await tester.pumpAndSettle();

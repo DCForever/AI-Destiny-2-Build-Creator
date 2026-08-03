@@ -3,9 +3,8 @@
 /// Status vocabulary matches cutover/feature-gap language:
 /// PASS / PARTIAL / MISS / N/A (+ deferred for intentional later work).
 ///
-/// Product defaults (research A1): phone bottom nav stays Builds | Settings.
-/// Equip/catalog/DIM require OAuth + inventory sync not present on mobile → N/A
-/// (not silent MISS). Optimizer remains deferred (GAP-FEAT-01).
+/// **UX rebuild baseline (2026-08):** bottom nav is **Settings only**. Other
+/// product areas are deferred until rebuilt via the area UX redesign loop.
 library;
 
 /// Matrix status for one mobile surface.
@@ -40,39 +39,39 @@ class MobileSurfaceEntry {
   final bool bottomNav;
 }
 
-/// Canonical mobile surface matrix (DART-057).
+/// Canonical mobile surface matrix during Settings-only UX rebuild baseline.
 const List<MobileSurfaceEntry> kMobileSurfaceMatrix = [
   MobileSurfaceEntry(
     key: 'build',
-    status: MobileSurfaceStatus.pass,
-    note: 'List + linear compose (variants, attach, pins, soft stats)',
-    bottomNav: true,
+    status: MobileSurfaceStatus.deferred,
+    note: 'Stripped for UX rebuild; returns via area-ux-redesign',
   ),
   MobileSurfaceEntry(
     key: 'synergy',
-    status: MobileSurfaceStatus.na,
-    note: 'No top-level nav; create-build designates synergy types',
+    status: MobileSurfaceStatus.deferred,
+    note: 'No top-level nav until area rebuild',
   ),
   MobileSurfaceEntry(
     key: 'sets',
-    status: MobileSurfaceStatus.na,
-    note: 'No top-level nav; compose attach sheet reaches set attach',
+    status: MobileSurfaceStatus.deferred,
+    note: 'No top-level nav until area rebuild',
   ),
   MobileSurfaceEntry(
     key: 'catalog',
-    status: MobileSurfaceStatus.na,
-    note: 'Phone density; catalog browse on Windows/Jaspr (needs entity + sync)',
+    status: MobileSurfaceStatus.deferred,
+    note: 'Next area after Settings baseline (weapons slice first)',
   ),
   MobileSurfaceEntry(
     key: 'settings',
     status: MobileSurfaceStatus.partial,
-    note: 'Storage/DB path + manifest + surface matrix; OAuth/sync deferred',
+    note:
+        'Only product surface during UX rebuild baseline (full body; bottom nav returns when second area lands)',
     bottomNav: true,
   ),
   MobileSurfaceEntry(
     key: 'loadouts',
-    status: MobileSurfaceStatus.na,
-    note: 'Windows/Jaspr first (DART-055); phone top-level deferred',
+    status: MobileSurfaceStatus.deferred,
+    note: 'Windows-first historically; mobile deferred until rebuild',
   ),
   MobileSurfaceEntry(
     key: 'equip',
@@ -92,8 +91,8 @@ const List<MobileSurfaceEntry> kMobileSurfaceMatrix = [
 ];
 
 /// Bottom-nav destination keys that MUST match [kMobileSurfaceMatrix] rows
-/// with [MobileSurfaceEntry.bottomNav] == true (order: Builds, Settings).
-const List<String> kMobileBottomNavKeys = ['build', 'settings'];
+/// with [MobileSurfaceEntry.bottomNav] == true (Settings only during baseline).
+const List<String> kMobileBottomNavKeys = ['settings'];
 
 /// Matrix keys required by exit criteria (AppShell + equip/DIM/optimizer).
 const List<String> kMobileMatrixRequiredKeys = [
@@ -116,4 +115,4 @@ MobileSurfaceEntry? mobileSurfaceByKey(String key) {
 }
 
 /// Nav labels shown in the shell (paired with [kMobileBottomNavKeys]).
-const List<String> kMobileBottomNavLabels = ['Builds', 'Settings'];
+const List<String> kMobileBottomNavLabels = ['Settings'];

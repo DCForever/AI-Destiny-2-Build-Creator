@@ -41,14 +41,16 @@ const items = <CatalogItem>[
 
 void main() {
   group('groupCatalogItems', () {
-    test('empty dimensions → single All results bucket, alpha items', () {
+    test('empty dimensions → single All results bucket, preserves input order',
+        () {
       final groups = groupCatalogItems(items, const []);
       expect(groups, hasLength(1));
       expect(groups.single.key, '__all__');
       expect(groups.single.label, 'All results');
+      // Input order (not alpha re-sort) so weapons sort survives group-by none.
       expect(
         groups.single.items.map((i) => i.name).toList(),
-        ['Alpha', 'Beta', 'Synthoceps', 'Zebra'],
+        ['Zebra', 'Alpha', 'Beta', 'Synthoceps'],
       );
     });
 
@@ -64,6 +66,7 @@ void main() {
         'Unknown element',
         'Void',
       });
+      // Encounter order within Solar: Alpha (hash2) then Beta (hash3).
       expect(byLabel['Solar']!.map((i) => i.name), ['Alpha', 'Beta']);
     });
 

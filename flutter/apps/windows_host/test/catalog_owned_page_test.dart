@@ -219,11 +219,9 @@ void main() {
     expect(status.data, contains('OWNED'));
   });
 
-  testWidgets('select owned row shows instance projections power-desc',
+  testWidgets('select owned row shows instance strip power-desc default highest',
       (tester) async {
-    // Tall surface so both dense ItemRichness instance cards stay built
-    // (ListView is lazy and disposes off-viewport children).
-    await tester.binding.setSurfaceSize(const Size(1400, 2400));
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -234,7 +232,6 @@ void main() {
     final itemFinder =
         find.byKey(const Key('catalog_item_100'), skipOffstage: false);
     expect(itemFinder, findsOneWidget);
-    // Catalog list is the primary vertical scrollable (filters use horizontal).
     final listScrollable = find.descendant(
       of: find.byKey(const Key('catalog_list')),
       matching: find.byType(Scrollable),
@@ -248,18 +245,24 @@ void main() {
     await tester.tap(itemFinder);
     await _pumpFrames(tester);
 
-    expect(find.byKey(const Key('instance_list')), findsOneWidget);
-    // Title key is per instance card (ItemRichness), not once per panel.
-    expect(find.byKey(const Key('instance_panel_title')), findsNWidgets(2));
-    final hiFinder = find.byKey(const Key('instance_inst-hi'));
-    final loFinder = find.byKey(const Key('instance_inst-lo'));
+    expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
+    final hiFinder = find.byKey(const Key('instance_chip_inst-hi'));
+    final loFinder = find.byKey(const Key('instance_chip_inst-lo'));
     expect(hiFinder, findsOneWidget);
     expect(loFinder, findsOneWidget);
 
-    // Power-desc: higher power tile appears first in list.
+    // Power-desc: higher power chip first (leftmost).
     final hi = tester.getTopLeft(hiFinder);
     final lo = tester.getTopLeft(loFinder);
-    expect(hi.dy, lessThan(lo.dy));
+    expect(hi.dx, lessThan(lo.dx));
+
+    // Default selection is highest power.
+    final hiChip = tester.widget<ChoiceChip>(hiFinder);
+    expect(hiChip.selected, isTrue);
+
+    // Detail pane is ~400px fixed width (not 320 library rail).
+    final detail = tester.getSize(find.byKey(const Key('catalog_detail_pane')));
+    expect(detail.width, 400);
   });
 
   testWidgets('Owned empty when inventory cleared', (tester) async {

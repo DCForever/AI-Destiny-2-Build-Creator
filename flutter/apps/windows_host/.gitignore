@@ -44,6 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .env.windows.local
+.env.windows.local.bak*
 *.local.env
 secrets/
 

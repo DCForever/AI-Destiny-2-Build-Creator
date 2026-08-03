@@ -1,7 +1,6 @@
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_mobile_host/app.dart';
-import 'package:destiny2_mobile_host/builds/builds_controller.dart';
 import 'package:destiny2_mobile_host/host_bootstrap.dart';
 import 'package:destiny2_mobile_host/surface_matrix.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
@@ -33,87 +32,58 @@ void main() {
 
   late AppDatabase db;
   late MobileAppServices services;
-  late BuildsController controller;
 
   setUp(() async {
     db = AppDatabase.memory();
     services = MobileAppServices(
-      storageRoot: StorageRoot(basePath: '/tmp/dart040_shell'),
+      storageRoot: StorageRoot(basePath: '/tmp/dart_shell_settings'),
       db: db,
       manifestRefresh: _FakeRefresh(),
     );
-    controller = BuildsController(db: db);
   });
 
   tearDown(() async {
-    controller.dispose();
     await services.dispose();
   });
 
-  testWidgets('bottom nav switches Builds and Settings', (tester) async {
+  testWidgets('Settings-only shell shows Settings page without bottom nav',
+      (tester) async {
     await tester.pumpWidget(
-      Destiny2MobileApp(
-        services: services,
-        buildsController: controller,
-      ),
+      Destiny2MobileApp(services: services),
     );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('mobile_shell')), findsOneWidget);
-    expect(find.byKey(const Key('mobile_bottom_nav')), findsOneWidget);
-    expect(find.byKey(const Key('builds_list_page')), findsOneWidget);
-    expect(find.text('Builds'), findsWidgets);
-
-    // Settings destination.
-    await tester.tap(find.byKey(const Key('nav_settings')));
-    await tester.pumpAndSettle();
-
+    // SettingsPage and its Scaffold both use settings_page key historically.
+    expect(find.byKey(const Key('settings_page')), findsWidgets);
     expect(find.byKey(const Key('db_path')), findsOneWidget);
     expect(find.byKey(const Key('manifest_status_card')), findsOneWidget);
-    expect(find.text('Settings'), findsWidgets);
 
-    // Back to Builds.
-    await tester.tap(find.byKey(const Key('nav_builds')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('builds_list_page')), findsOneWidget);
-    expect(find.byKey(const Key('builds_empty')), findsOneWidget);
-    expect(find.textContaining('Tap + to create'), findsOneWidget);
+    // Single-destination baseline: no Material NavigationBar (≥2 required).
+    expect(find.byKey(const Key('mobile_bottom_nav')), findsNothing);
+    expect(find.byKey(const Key('nav_builds')), findsNothing);
+    expect(find.byKey(const Key('nav_catalog')), findsNothing);
+    expect(find.byKey(const Key('builds_list_page')), findsNothing);
   });
 
-  testWidgets('bottom nav matches published surface matrix destinations',
+  testWidgets('surface matrix marks Settings as sole bottomNav destination',
       (tester) async {
-    // Matrix single source of truth: only build + settings are bottomNav.
-    expect(kMobileBottomNavKeys, ['build', 'settings']);
+    expect(kMobileBottomNavKeys, ['settings']);
     expect(
       kMobileSurfaceMatrix.where((e) => e.bottomNav).map((e) => e.key),
       kMobileBottomNavKeys,
     );
 
     await tester.pumpWidget(
-      Destiny2MobileApp(
-        services: services,
-        buildsController: controller,
-      ),
+      Destiny2MobileApp(services: services),
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('nav_builds')), findsOneWidget);
-    expect(find.byKey(const Key('nav_settings')), findsOneWidget);
-    // No catalog / equip / loadouts destinations in shell.
-    expect(find.byKey(const Key('nav_catalog')), findsNothing);
-    expect(find.byKey(const Key('nav_equip')), findsNothing);
-    expect(find.byKey(const Key('nav_loadouts')), findsNothing);
-
-    await tester.tap(find.byKey(const Key('nav_settings')));
-    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('surface_matrix_card')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.byKey(const Key('surface_matrix_card')), findsOneWidget);
-    expect(find.byKey(const Key('surface_matrix_row_equip')), findsOneWidget);
-    expect(find.textContaining('N/A'), findsWidgets);
   });
 }

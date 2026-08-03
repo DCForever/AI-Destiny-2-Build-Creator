@@ -87,8 +87,10 @@ String dimensionValue(CatalogItem item, CatalogGroupDimension dim) {
 
 /// Partition [items] by [dimensions] without changing membership.
 ///
-/// Empty [dimensions] → single "All results" group. Items and group labels are
-/// alpha-sorted by display name (PRODUCT-CAT-ALPHA-SORT / BR-CAT-007).
+/// Empty [dimensions] → single "All results" group that **preserves** [items]
+/// order (caller owns sort: weapons slot→exotic→ammo→archetype, armor/universal
+/// alpha via [filterCatalogClient]). Group labels are alpha-sorted; within a
+/// multi-dim group, relative input order is preserved (BR-CAT-007).
 List<CatalogGroup> groupCatalogItems(
   List<CatalogItem> items,
   List<CatalogGroupDimension> dimensions,
@@ -98,7 +100,7 @@ List<CatalogGroup> groupCatalogItems(
       CatalogGroup(
         key: '__all__',
         label: 'All results',
-        items: sortByDisplayName(items, (i) => i.name),
+        items: List<CatalogItem>.from(items),
       ),
     ];
   }
@@ -115,7 +117,8 @@ List<CatalogGroup> groupCatalogItems(
         (e) => CatalogGroup(
           key: e.key,
           label: e.key,
-          items: sortByDisplayName(e.value, (i) => i.name),
+          // Preserve encounter order within the bucket (input order).
+          items: List<CatalogItem>.from(e.value),
         ),
       )
       .toList();

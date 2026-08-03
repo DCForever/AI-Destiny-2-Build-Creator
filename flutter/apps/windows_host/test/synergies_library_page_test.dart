@@ -349,27 +349,18 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('US4 Synergies nav destination shows library page',
-      (tester) async {
-    await tester.pumpWidget(
-      Destiny2WindowsApp(services: services),
-    );
-    await _pumpFrames(tester);
-
-    expect(
-      find.byKey(const Key('loadouts_page'), skipOffstage: false),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.text('Synergy').first);
-    await _pumpFrames(tester);
-
-    expect(
-      find.byKey(const Key('synergies_library_page'), skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('synergies_create_toggle')), findsOneWidget);
-  });
+  // UX rebuild: Synergy stripped from shell nav; page tests above still cover SynergiesLibraryPage.
+  testWidgets(
+    'US4 Synergies nav destination shows library page',
+    skip: true,
+    (tester) async {
+      await tester.pumpWidget(
+        Destiny2WindowsApp(services: services),
+      );
+      await _pumpFrames(tester);
+      expect(find.text('Catalog'), findsWidgets);
+    },
+  );
 
   testWidgets('dual-pane list and detail present after create', (tester) async {
     final controller = SynergiesLibraryController(

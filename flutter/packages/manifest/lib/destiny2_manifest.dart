@@ -21,6 +21,7 @@ export 'src/catalog/manifest_search_picks.dart';
 export 'src/catalog/offline_catalog.dart';
 export 'src/catalog/owned_catalog.dart';
 export 'src/catalog/sort_by_name.dart';
+export 'src/catalog/sort_weapons.dart';
 export 'src/entity_bundle.dart';
 export 'src/entity_bundle_channel.dart';
 export 'src/entity_cache.dart';

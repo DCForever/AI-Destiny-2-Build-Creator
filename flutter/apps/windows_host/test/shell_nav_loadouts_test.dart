@@ -47,7 +47,7 @@ void main() {
   late AppDatabase db;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('dart055_nav_');
+    tempDir = await Directory.systemTemp.createTemp('dart_shell_catalog_');
     final root = StorageRoot(basePath: tempDir.path);
     await root.ensureLayout();
     db = AppDatabase.memory();
@@ -80,79 +80,28 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels match AppShell short labels and order (DART-068)', () {
-    expect(
-      Destiny2WindowsApp.navLabels,
-      [
-        'Loadouts',
-        'Build',
-        'Synergy',
-        'Sets',
-        'Catalog',
-        'Settings',
-      ],
-    );
+  test('navLabels are Catalog + Settings during UX rebuild', () {
+    expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Settings']);
+    expect(Destiny2WindowsApp.catalogNavIndex, 0);
+    expect(Destiny2WindowsApp.settingsNavIndex, 1);
   });
 
-
-  testWidgets('NavigationRail shows Loadouts destination', (tester) async {
+  testWidgets('NavigationRail shows Catalog and Settings', (tester) async {
     await tester.pumpWidget(Destiny2WindowsApp(services: services));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('host_nav_rail')), findsOneWidget);
-    expect(find.text('Loadouts'), findsWidgets);
-    // IndexedStack keeps offstage children; use skipOffstage: false.
-    expect(
-      find.byKey(const Key('loadouts_page'), skipOffstage: false),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('selecting Loadouts keeps page mounted in stack', (tester) async {
-    await tester.pumpWidget(Destiny2WindowsApp(services: services));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    // Destination index 0 = Loadouts (DART-068 order)
-    await tester.tap(find.text('Loadouts').first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    expect(find.byKey(const Key('loadouts_title')), findsOneWidget);
-    expect(find.text('In-Game Loadouts'), findsOneWidget);
-  });
-
-  testWidgets('returning to Catalog from Settings keeps Catalog mounted',
-      (tester) async {
-    // BUG-20260725-001: shell bumps reloadToken when re-selecting Catalog so
-    // IndexedStack does not keep a pre-sync empty list forever.
-    await tester.pumpWidget(Destiny2WindowsApp(services: services));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
+    expect(find.text('Catalog'), findsWidgets);
+    expect(find.text('Settings'), findsWidgets);
     expect(
       find.byKey(const Key('catalog_page'), skipOffstage: false),
       findsOneWidget,
     );
 
-    await tester.tap(find.text('Settings').first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byKey(const Key('settings_page')), findsOneWidget);
-
-    await tester.tap(find.text('Catalog').first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    expect(
-      find.byKey(const Key('catalog_page'), skipOffstage: false),
-      findsOneWidget,
-    );
-    // Still a single CatalogPage instance in the stack (token updates in place).
-    expect(
-      find.byKey(const Key('catalog_page'), skipOffstage: false),
-      findsOneWidget,
-    );
+    expect(find.text('Loadouts'), findsNothing);
+    expect(find.text('Build'), findsNothing);
+    expect(find.text('Synergy'), findsNothing);
+    expect(find.text('Sets'), findsNothing);
   });
 }

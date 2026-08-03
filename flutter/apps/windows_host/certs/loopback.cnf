@@ -6,13 +6,17 @@ distinguished_name = dn
 x509_extensions = v3_req
 
 [dn]
-CN = 127.0.0.1
+CN = Destiny2BuildCreator OAuth Loopback
+O = Destiny2BuildCreator Local Dev
 
 [v3_req]
+# Self-signed; CA:TRUE so CurrentUser\Root import is accepted by Chromium/Edge.
 subjectAltName = @alt_names
-basicConstraints = CA:FALSE
-keyUsage = digitalSignature, keyEncipherment
+basicConstraints = critical, CA:TRUE, pathlen:0
+keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign
 extendedKeyUsage = serverAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
 
 [alt_names]
 IP.1 = 127.0.0.1

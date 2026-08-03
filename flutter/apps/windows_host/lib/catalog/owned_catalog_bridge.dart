@@ -175,12 +175,19 @@ class OwnedCatalogBridge {
   }
 
   /// Filter annotated base for [mode] with client facets + [scope].
+  ///
+  /// Weapons mode re-sorts after filter: slot → exotic → ammo → archetype → name.
+  /// Armor / universal keep alpha from [filterCatalogClient].
   List<CatalogItem> browse(
     CatalogClientFilters filters, {
     CatalogBrowseMode mode = CatalogBrowseMode.universal,
   }) {
     final scoped = itemsForBrowseMode(_annotatedBase, mode);
-    return filterCatalogClient(scoped, filters);
+    final filtered = filterCatalogClient(scoped, filters);
+    if (mode == CatalogBrowseMode.weapons) {
+      return sortCatalogWeapons(filtered);
+    }
+    return filtered;
   }
 
   /// Instance projections for a definition hash (power-desc).

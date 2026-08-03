@@ -6,20 +6,14 @@
 
 - Resolves **StorageRoot** via path_provider application-support (not repo `.cache`)
 - Opens a **single** Drift `AppDatabase` at `app.db`
-- **Catalog** offline browse from entity stores + **All | Owned** scope after inventory sync (DART-026); instance projections on row select for pickers
-- **Sets library** dual-pane (DART-030): create/edit sets via `destiny2_app` use cases; fill slots from catalog/owned picker
-- **Armor optimizer workspace** on Sets detail for armor sets (DART-036): goals → **Find kits** (isolate/local optimize, never writes) → suggestions → **explicit confirm** apply-in-place or materialize; soft never auto-applies; never silent apply
-- **Synergy library** dual-pane (DART-031): create synergies via `destiny2_app`; designation immutable after create; evidence links add/remove
-- **Builds library** dual-pane (DART-032): create builds with class + synergy types + optional exotic/super identity pins via `destiny2_app` `createUserBuild`
-- **Variant compose** on Builds detail (DART-033): list/create/select variants; attach/detach library sets; slot pins wishlist vs instance; hard conflicts (e.g. slot overlap) surfaced
-- **Soft guidance** on Builds detail (DART-034): coverage chips (supported/weak/missing), soft stat targets with explicit save; **never auto-applies**; display-only soft path (**P3 phase gate**)
-- **Equip / Apply** on Builds detail (DART-038): class-filtered character pick; equip-ready gate (wishlist/stale block Apply); empty combat **gaps confirm**; plan + best-effort execute (DART-037); **step report** (completed/failed). Soft never auto-applies. No CLIENT_SECRET.
-- **DIM export** on Builds detail (DART-039): **Copy DIM JSON** (jsonOnly `{ loadout }` via pure `buildJsonOnlyDimExport`); clipboard write; **blocked when not equip-ready**. No dim.gg network; soft never auto-applies.
-- **Settings**:
+- **Shell (UX rebuild):** **Catalog** + **Settings** in the nav. Loadouts, Build, Synergy, and Sets return area-by-area via the redesign workflows (`area-ux-redesign` → `area-implement`). See monorepo `docs/ux-redesign/README.md`.
+- **Settings** (active production surface):
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
-  - **Inventory sync** card (DART-025): Sync now → full-replace into Drift; busy/error UX; 60s freshness label
+  - **Inventory sync** card: Sync now → full-replace into Drift; busy/error UX; 60s freshness label
   - Manifest status (cached / remote / stale / entity cache)
-- Matte Flap Ledger theme stub (DART-029)
+  - Theme (Neon void / Cool technical)
+- Design system: `destiny2_ui_tokens` + `destiny2_ui_flutter` (unchanged during strip)
+- Legacy area page code may still exist under `lib/` for rebuild reference / direct page tests; it is **not** mounted in the shell
 - **No CLIENT_SECRET**
 
 ## Run
@@ -40,11 +34,12 @@ The Windows host uses **Public + PKCE** and a **loopback** callback. It is **not
 4. Use that app’s **Client Id** and API key for `--dart-define` / `.env.windows.local`.
 5. Do **not** reuse the Confidential Next redirect (`:3000/api/auth/callback`).
 6. First browser visit may warn about a **self-signed certificate** (`certs/loopback-*.pem`). Choose Advanced → continue to 127.0.0.1 (local OAuth only).
+7. `.\run-windows.ps1` auto-generates missing `certs/loopback-cert.pem` + `loopback-key.pem` via `openssl` + `certs/loopback.cnf` (Git for Windows openssl is fine). The private key is gitignored.
 
 ### Launch
 
 ```powershell
-cd F:\Destiny2BuildCreator-multiplatform-dart\apps\windows_host
+cd F:\Destiny2BuildCreator\flutter\apps\windows_host
 flutter pub get
 flutter run -d windows `
   --dart-define=BUNGIE_API_KEY=your_public_api_key `
@@ -52,9 +47,27 @@ flutter run -d windows `
   --dart-define=BUNGIE_REDIRECT_URI=https://127.0.0.1:8765/callback
 ```
 
-Or fill gitignored `.env.windows.local` and run `.\run-windows.ps1`.
+Or fill gitignored `.env.windows.local` (Public app client id + API key; **no** secret required) and run `.\run-windows.ps1`.
 
-Then: Settings → confirm **Redirect URI** shows `https://127.0.0.1:8765/callback` → Sign in → accept cert warning if prompted → **Sync now** → Catalog / Sets / Synergies / Builds.
+Then: **Catalog** (weapons) or Settings → confirm **Redirect URI** shows `https://127.0.0.1:8765/callback` → Sign in → accept cert warning if prompted → **Sync now**.
+
+### Windows path length (worktrees)
+
+Deep paths under `.grok/worktrees/...` can break MSBuild for plugins (e.g. `flutter_secure_storage_windows` `MSB3491` / missing `.tlog`). Prefer a **short junction** to the Melos root:
+
+```powershell
+# One-time (admin not required for junction)
+cmd /c mklink /J C:\d2f C:\Users\Owner\.grok\worktrees\destiny2buildcreator\flutter-ui-rebuild-2\flutter
+cd C:\d2f\apps\windows_host
+flutter clean
+cd C:\d2f
+dart pub get
+cd C:\d2f\apps\windows_host
+flutter run -d windows
+# or: flutter build windows --debug
+```
+
+Building from the long worktree path may fail even when `dart analyze` / `flutter test` pass.
 
 ### Flutter Driver / agent screenshots (optional)
 

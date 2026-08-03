@@ -490,28 +490,18 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('US3 Builds nav destination shows builds page', (tester) async {
-    await tester.pumpWidget(
-      Destiny2WindowsApp(services: services),
-    );
-    await _pumpFrames(tester);
-
-    // Build is 2nd destination (index 1): Loadouts, Build, … (DART-068).
-    // Invoke onDestinationSelected directly — avoids Material 3 InkSparkle
-    // shader decode flake on some Windows test hosts.
-    expect(find.text('Build'), findsWidgets);
-    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-    expect(rail.onDestinationSelected, isNotNull);
-    rail.onDestinationSelected!(1);
-    await _pumpFrames(tester);
-
-    expect(find.byKey(const Key('builds_library_page')), findsOneWidget);
-    expect(find.byKey(const Key('builds_list_empty')), findsOneWidget);
-
-    // Other destinations still present in rail.
-    expect(find.text('Catalog'), findsOneWidget);
-    expect(find.text('Sets'), findsOneWidget);
-    expect(find.text('Synergy'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
-  });
+  // UX rebuild: Build stripped from shell nav; page tests above still cover BuildsLibraryPage.
+  testWidgets(
+    'US3 Builds nav destination shows builds page',
+    skip: true,
+    (tester) async {
+      await tester.pumpWidget(
+        Destiny2WindowsApp(services: services),
+      );
+      await _pumpFrames(tester);
+      expect(find.text('Catalog'), findsWidgets);
+    },
+  );
 }
+
+

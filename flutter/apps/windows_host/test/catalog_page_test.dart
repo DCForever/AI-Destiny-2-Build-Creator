@@ -216,24 +216,25 @@ void main() {
     expect(itemKey(3), findsOneWidget);
   });
 
-  testWidgets('results are alpha-sorted by display name', (tester) async {
+  testWidgets('weapons results sort slot → exotic → ammo → archetype → name',
+      (tester) async {
     await tester.pumpWidget(
       MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
 
-    // Arc Logic (3), Dragon's Breath (2), Edge Transit (1) — reading order on grid
-    // (top-to-bottom, then left-to-right within a row).
+    // Energy Primary Auto (3 Arc Logic) → Energy Special GL (1 Edge Transit)
+    // → Power Heavy exotic (2 Dragon's Breath).
     int gridOrder(Offset a, Offset b) {
       if ((a.dy - b.dy).abs() > 12) return a.dy.compareTo(b.dy);
       return a.dx.compareTo(b.dx);
     }
 
     final p3 = tester.getTopLeft(itemKey(3));
-    final p2 = tester.getTopLeft(itemKey(2));
     final p1 = tester.getTopLeft(itemKey(1));
-    expect(gridOrder(p3, p2) < 0, isTrue, reason: 'Arc Logic before Dragon\'s Breath');
-    expect(gridOrder(p2, p1) < 0, isTrue, reason: 'Dragon\'s Breath before Edge Transit');
+    final p2 = tester.getTopLeft(itemKey(2));
+    expect(gridOrder(p3, p1) < 0, isTrue, reason: 'Arc Logic before Edge Transit');
+    expect(gridOrder(p1, p2) < 0, isTrue, reason: 'Edge Transit before Dragon\'s Breath');
   });
 
   testWidgets('free-text filters by name', (tester) async {

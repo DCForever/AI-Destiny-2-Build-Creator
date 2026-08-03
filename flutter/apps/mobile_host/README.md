@@ -6,16 +6,11 @@
 
 - Resolves **StorageRoot** via path_provider application-support (not repo `.cache`)
 - Opens a **single** Drift `AppDatabase` at `app.db`
-- **Bottom navigation**: Builds | Settings (published surface matrix DART-057)
-- **Focus Swap** (DESIGN.md): Builds list XOR detail route (nested navigator — not dual-pane)
-- **Create build** via bottom sheet (FAB); optional name + class + synergy type
-- **Linear compose** on detail: variants → attach set sheet → slot pins → soft guidance → finish-gap display
-- Shared `destiny2_app` use cases (`createUserBuild`, attach, `queryVariantCoverage`, …)
-- **Settings**: storage/DB path + manifest status + **mobile surface matrix**
-- Matte Flap Ledger theme (`destiny2_ui_tokens`)
-- **No CLIENT_SECRET**; soft guidance never auto-applies
-- Mobile OAuth / catalog / equip / DIM: **N/A** (product matrix; use Windows/Jaspr)
-- Optimizer: **deferred** (GAP-FEAT-01)
+- **Shell (UX rebuild baseline):** **Settings only** (full body). No bottom nav until a second area lands (Material `NavigationBar` requires ≥2 destinations). Builds, Catalog, and other areas return via the redesign workflows (`docs/ux-redesign/README.md`)
+- **Settings**: storage/DB path + manifest status + **mobile surface matrix** (areas marked deferred during rebuild)
+- Design system: Neon void / Cool technical via `destiny2_ui_tokens` / `destiny2_ui_flutter`
+- Legacy Builds page code may remain under `lib/builds/` for rebuild reference / page-level tests; not mounted in shell
+- **No CLIENT_SECRET**
 
 ## Run
 

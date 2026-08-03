@@ -1,20 +1,16 @@
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
-import 'builds/builds_library_page.dart';
 import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
-import 'loadouts/loadouts_page.dart';
-import 'sets/sets_library_page.dart';
 import 'settings/settings_page.dart';
-import 'synergies/synergies_library_page.dart';
 import 'theme/flap_theme.dart';
 
-/// Root Flutter app for the Windows host (DART-019…039 + DART-055 Loadouts + DART-068 shell).
+/// Root Flutter app for the Windows host.
 ///
-/// Shell destinations match product AppShell short labels/order:
-/// Loadouts, Build, Synergy, Sets, Catalog, Settings.
-/// Appearance: **Neon void** dark + **Cool technical** light ([ThemeMode]).
+/// **UX rebuild:** Catalog (weapons) + Settings. Other product areas return via
+/// the area UX redesign loop. Appearance: **Neon void** dark + **Cool technical**
+/// light ([ThemeMode]). Design system tokens unchanged.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
@@ -23,35 +19,28 @@ class Destiny2WindowsApp extends StatefulWidget {
 
   final AppServices services;
 
-  /// Primary nav destination labels (product AppShell short — DART-068).
+  /// Nav labels while other areas are still stripped.
   static const List<String> navLabels = [
-    'Loadouts',
-    'Build',
-    'Synergy',
-    'Sets',
     'Catalog',
     'Settings',
   ];
 
-  /// Index of Catalog destination (reload token on re-select).
-  static const int catalogNavIndex = 4;
+  static const int catalogNavIndex = 0;
+  static const int settingsNavIndex = 1;
 
   @override
   State<Destiny2WindowsApp> createState() => _Destiny2WindowsAppState();
 }
 
 class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
-  int _index = 0;
+  int _index = Destiny2WindowsApp.catalogNavIndex;
   ThemeMode _themeMode = ThemeMode.system;
 
-  /// Bumped when Catalog is re-selected so IndexedStack does not keep a stale
-  /// empty load from before Settings manifest/inventory sync (BUG-20260725-001).
+  /// Bumped when Catalog is re-selected so IndexedStack reloads after Settings sync.
   int _catalogReloadToken = 0;
 
   void _onDestinationSelected(int i) {
     setState(() {
-      // Catalog stays mounted under IndexedStack — reload when returning from
-      // another destination so entity stores + inventory join.
       if (i == Destiny2WindowsApp.catalogNavIndex &&
           _index != Destiny2WindowsApp.catalogNavIndex) {
         _catalogReloadToken++;
@@ -64,7 +53,6 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Destiny 2 Build Creator',
-      // MaterialApp: theme=light face, darkTheme=dark face.
       theme: buildFlapTheme(brightness: Brightness.light),
       darkTheme: buildFlapTheme(brightness: Brightness.dark),
       themeMode: _themeMode,
@@ -80,26 +68,6 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                 labelType: NavigationRailLabelType.all,
                 backgroundColor: Colors.transparent,
                 destinations: const [
-                  NavigationRailDestination(
-                    icon: Icon(Icons.playlist_add_check_outlined),
-                    selectedIcon: Icon(Icons.playlist_add_check),
-                    label: Text('Loadouts'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.construction_outlined),
-                    selectedIcon: Icon(Icons.construction),
-                    label: Text('Build'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.hub_outlined),
-                    selectedIcon: Icon(Icons.hub),
-                    label: Text('Synergy'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.layers_outlined),
-                    selectedIcon: Icon(Icons.layers),
-                    label: Text('Sets'),
-                  ),
                   NavigationRailDestination(
                     icon: Icon(Icons.inventory_2_outlined),
                     selectedIcon: Icon(Icons.inventory_2),
@@ -117,23 +85,6 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                 child: IndexedStack(
                   index: _index,
                   children: [
-                    LoadoutsPage(
-                      key: const Key('loadouts_page'),
-                      services: widget.services,
-                      onOpenSettings: () => setState(() => _index = 5),
-                    ),
-                    BuildsLibraryPage(
-                      key: const Key('builds_library_page'),
-                      services: widget.services,
-                    ),
-                    SynergiesLibraryPage(
-                      key: const Key('synergies_library_page'),
-                      services: widget.services,
-                    ),
-                    SetsLibraryPage(
-                      key: const Key('sets_library_page'),
-                      services: widget.services,
-                    ),
                     CatalogPage(
                       key: const Key('catalog_page'),
                       services: widget.services,

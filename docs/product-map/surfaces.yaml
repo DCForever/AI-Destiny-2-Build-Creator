@@ -1206,7 +1206,7 @@ surfaces:
         path: /catalog
         captureId: catalog-weapons-owned
       flutter-windows:
-        status: stub
+        status: capturing
         route: /catalog
         captureId: catalog-weapons-owned
   - id: catalog.weapons.filters
@@ -1220,6 +1220,11 @@ surfaces:
       - BR-CAT-003
       - BR-CAT-004
     status: active
+    platforms:
+      flutter-windows:
+        status: capturing
+        route: /catalog
+        captureId: catalog-weapons-filters
   - id: catalog.weapons.filter.text
     title: Free-text search
     kind: field
@@ -1277,6 +1282,11 @@ surfaces:
       - 003:SC-004
       - 010:SC-001
     status: active
+    platforms:
+      flutter-windows:
+        status: capturing
+        route: /catalog
+        captureId: catalog-weapons-list
   - id: catalog.weapons.instance-card
     title: Owned instance card
     kind: surface
@@ -1287,6 +1297,11 @@ surfaces:
       - 010:SC-001
       - 011:SC-001
     status: active
+    platforms:
+      flutter-windows:
+        status: capturing
+        route: /catalog
+        captureId: catalog-weapons-instance-card
   - id: catalog.weapons.perk-grid
     title: Per-copy perk grid
     kind: field
@@ -1297,6 +1312,11 @@ surfaces:
       - 011:SC-002
       - BR-ROLL-002
     status: active
+    platforms:
+      flutter-windows:
+        status: capturing
+        route: /catalog
+        captureId: catalog-weapons-perk-grid
   - id: catalog.weapons.manifest
     title: Weapons — Manifest (all)
     kind: screen
@@ -1314,7 +1334,7 @@ surfaces:
         path: /catalog
         captureId: catalog-weapons-manifest
       flutter-windows:
-        status: stub
+        status: capturing
         route: /catalog
         captureId: catalog-weapons-manifest
   - id: catalog.weapon.detail
@@ -1334,7 +1354,7 @@ surfaces:
         path: /catalog
         captureId: catalog-weapon-detail
       flutter-windows:
-        status: stub
+        status: capturing
         route: /catalog
         captureId: catalog-weapon-detail
   - id: catalog.weapon.detail.stats

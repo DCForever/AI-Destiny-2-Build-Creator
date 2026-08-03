@@ -74,6 +74,11 @@ class _CatalogPageState extends State<CatalogPage> {
   List<CatalogInstanceProjection> _instances = const [];
   List<LinkedSynergyBadge> _reverseTags = const [];
   String? _actionMessage;
+  String? _selectedInstanceId;
+
+  /// Weapons detail: can-roll / craft toggles OFF by default (DBR-ROLL).
+  bool _showCanRoll = false;
+  bool _showCraft = false;
 
   /// Facet / group chrome collapsed by default (P0 — reduce chrome explosion).
   bool _filtersExpanded = false;
@@ -185,6 +190,7 @@ class _CatalogPageState extends State<CatalogPage> {
       setState(() {
         _instances = const [];
         _reverseTags = const [];
+        _selectedInstanceId = null;
       });
       return;
     }
@@ -195,6 +201,7 @@ class _CatalogPageState extends State<CatalogPage> {
         _selected = null;
         _instances = const [];
         _reverseTags = const [];
+        _selectedInstanceId = null;
       });
       return;
     }
@@ -211,6 +218,7 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _instances = instances;
       _reverseTags = tags;
+      _selectedInstanceId = defaultHighestPowerInstanceId(instances);
     });
   }
 
@@ -218,6 +226,9 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _selected = item;
       _actionMessage = null;
+      _showCanRoll = false;
+      _showCraft = false;
+      _selectedInstanceId = null;
       // BUG-20260726-005: reclaim vertical space for board + detail.
       _filtersExpanded = false;
       _moreFiltersExpanded = false;
@@ -321,6 +332,7 @@ class _CatalogPageState extends State<CatalogPage> {
 
   void _clearAllFilters() {
     setState(() {
+      _queryController.clear();
       _elements = emptyFacet();
       _ammos = emptyFacet();
       _slots = emptyFacet();
@@ -332,6 +344,15 @@ class _CatalogPageState extends State<CatalogPage> {
       _results = _applyFilters();
     });
     _syncSelection();
+  }
+
+  Future<void> _syncInventory() async {
+    try {
+      await widget.services.inventorySync.syncNow();
+    } catch (_) {
+      // Soft fail — empty state stays; user can open Settings.
+    }
+    await _load();
   }
 
   String _filtersSummaryLabel() {
@@ -458,7 +479,6 @@ class _CatalogPageState extends State<CatalogPage> {
     required void Function(String) onCycle,
     String Function(String)? labelOf,
   }) {
-    final palette = FlapPalette.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -467,35 +487,11 @@ class _CatalogPageState extends State<CatalogPage> {
           for (final value in values)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Builder(
-                builder: (context) {
-                  final state = facetChipState(facet, value);
-                  final selected = state != FacetChipState.off;
-                  final exclude = state == FacetChipState.exclude;
-                  final label = labelOf?.call(value) ?? value;
-                  return FilterChip(
-                    key: Key('${keyPrefix}_chip_$value'),
-                    label: Text(
-                      label,
-                      style: TextStyle(
-                        decoration:
-                            exclude ? TextDecoration.lineThrough : null,
-                        color: exclude ? palette.danger : null,
-                      ),
-                    ),
-                    selected: selected,
-                    selectedColor: exclude
-                        ? palette.danger.withValues(alpha: 0.12)
-                        : palette.accentDim,
-                    onSelected: (_) => onCycle(value),
-                    avatar: _facetAvatar(state),
-                    tooltip: exclude
-                        ? 'Exclude $label (tap to cycle)'
-                        : selected
-                            ? 'Include $label (tap to cycle)'
-                            : 'Filter $label (tap include → exclude → off)',
-                  );
-                },
+              child: NeonFacetChip(
+                key: Key('${keyPrefix}_chip_$value'),
+                label: labelOf?.call(value) ?? value,
+                state: facetChipState(facet, value),
+                onCycle: () => onCycle(value),
               ),
             ),
         ],
@@ -889,46 +885,19 @@ class _CatalogPageState extends State<CatalogPage> {
               ),
             ),
           ),
-          // --- Results + detail: air between columns, soft zones ---
+          // --- Results + full-height ~400px detail (not LibraryWorkspace 320 rail) ---
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: NeonZone(
-                      child: _buildBody(),
-                    ),
-                  ),
-                  if (_selected != null) ...[
-                    const SizedBox(width: kSpace16),
-                    Expanded(
-                      flex: 2,
-                      child: NeonZone(
-                        child: _buildDetailPanel(),
-                      ),
-                    ),
-                  ],
-                ],
+              child: CatalogWeaponsWorkspace(
+                main: _buildBody(),
+                detail: _selected == null ? null : _buildDetailPanel(),
               ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Widget? _facetAvatar(FacetChipState state) {
-    switch (state) {
-      case FacetChipState.include:
-        return const Icon(Icons.add, size: 16);
-      case FacetChipState.exclude:
-        return const Icon(Icons.remove, size: 16);
-      case FacetChipState.off:
-        return null;
-    }
   }
 
   /// Short manifest version for status (full string on tooltip).
@@ -967,9 +936,7 @@ class _CatalogPageState extends State<CatalogPage> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(key: Key('catalog_loading')),
-      );
+      return const CatalogLoadingSkeleton();
     }
     if (_error != null) {
       return Center(
@@ -1001,8 +968,7 @@ class _CatalogPageState extends State<CatalogPage> {
     }
     final groups = _groupedResults();
     final palette = FlapPalette.of(context);
-    // Vex dense module grid: cards fill columns; air between cells = 12.
-    // Max extent keeps ~2–4 columns on desktop library panes.
+    final signedIn = widget.services.oauthSession.isSignedIn;
     const gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
       maxCrossAxisExtent: 260,
       mainAxisExtent: 168,
@@ -1050,7 +1016,17 @@ class _CatalogPageState extends State<CatalogPage> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final item = group.items[index];
-                  return _catalogGridCard(item);
+                  return CatalogWeaponCard(
+                    item: item,
+                    selected: _selected?.hash == item.hash,
+                    showOwned: signedIn,
+                    onTap: () => _selectItem(item),
+                    leading: EntityIcon(
+                      key: Key('catalog_item_icon_${item.hash}'),
+                      icon: item.icon,
+                      size: 36,
+                    ),
+                  );
                 },
                 childCount: group.items.length,
               ),
@@ -1061,107 +1037,38 @@ class _CatalogPageState extends State<CatalogPage> {
     );
   }
 
-  Widget _catalogGridCard(CatalogItem item) {
-    final selected = _selected?.hash == item.hash;
-    final typeParts = <String>[
-      if (item.itemTypeName != null) item.itemTypeName!,
-      if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
-      if (item.classType != null) item.classType!,
-      if (item.linkedSynergyIds.isNotEmpty)
-        '${item.linkedSynergyIds.length} syn',
-    ];
-    final ownedLabel = item.owned ? '×${item.ownedCount}' : null;
-    final identityLine = [
-      if (item.element != null) item.element!,
-      if (item.slot != null) item.slot!,
-      if (item.isExotic) 'Exotic',
-    ].join(' · ');
-    final typeLine = [
-      if (identityLine.isNotEmpty) identityLine,
-      ...typeParts,
-    ].join(' · ');
-    return NeonItemCard(
-      key: Key('catalog_item_${item.hash}'),
-      name: item.name,
-      slot: item.slot,
-      element: item.element,
-      typeLine: typeLine.isEmpty ? null : typeLine,
-      rarity: neonItemRarity(isExotic: item.isExotic),
-      ownedLabel: ownedLabel,
-      selected: selected,
-      minHeight: 152,
-      onTap: () => _selectItem(item),
-      nameKey: Key('catalog_item_name_${item.hash}'),
-      metaKey: Key('catalog_item_meta_${item.hash}'),
-      ownedKey: item.owned ? Key('owned_badge_${item.hash}') : null,
-      leading: EntityIcon(
-        key: Key('catalog_item_icon_${item.hash}'),
-        icon: item.icon,
-        size: 36,
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
     final message = _emptyMessage();
     final filterEmpty = _emptyReason == CatalogEmptyReason.none &&
-        _activeFilterCount() > 0;
+        (_activeFilterCount() > 0 || _queryController.text.trim().isNotEmpty);
     final entityEmpty = _emptyReason == CatalogEmptyReason.noVersion ||
         _emptyReason == CatalogEmptyReason.noStores;
+    final signedIn = widget.services.oauthSession.isSignedIn;
     final invEmpty =
         _scope == CatalogScope.owned && _bridge.inventory.isEmpty && !entityEmpty;
 
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                key: const Key('catalog_empty'),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: [
-                  if (filterEmpty)
-                    FilledButton(
-                      key: const Key('catalog_empty_clear_filters'),
-                      onPressed: _clearAllFilters,
-                      child: const Text('Clear filters'),
-                    ),
-                  if (entityEmpty || invEmpty)
-                    FilledButton.tonal(
-                      key: const Key('catalog_empty_reload'),
-                      onPressed: _load,
-                      child: const Text('Reload catalog'),
-                    ),
-                  if (entityEmpty)
-                    Text(
-                      key: const Key('catalog_empty_settings_hint'),
-                      'Then open Settings → Refresh manifest',
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                  if (invEmpty)
-                    Text(
-                      key: const Key('catalog_empty_sync_hint'),
-                      'Sign in and Settings → Sync inventory if needed',
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    final CatalogEmptyKind kind;
+    if (entityEmpty) {
+      kind = CatalogEmptyKind.missingManifest;
+    } else if (_scope == CatalogScope.owned && !signedIn) {
+      kind = CatalogEmptyKind.ownedSignedOut;
+    } else if (invEmpty) {
+      kind = CatalogEmptyKind.ownedEmpty;
+    } else if (filterEmpty || _results.isEmpty) {
+      kind = CatalogEmptyKind.zeroMatch;
+    } else {
+      kind = CatalogEmptyKind.generic;
+    }
+
+    return CatalogEmptyState(
+      kind: kind,
+      message: message,
+      onClearFilters: filterEmpty || kind == CatalogEmptyKind.zeroMatch
+          ? _clearAllFilters
+          : null,
+      onReload: entityEmpty || invEmpty ? _load : null,
+      onSync: invEmpty && signedIn ? _syncInventory : null,
+      onOpenSettings: null, // Shell nav owns Settings; copy still guides user.
     );
   }
 
@@ -1192,6 +1099,46 @@ class _CatalogPageState extends State<CatalogPage> {
 
   Widget _buildDetailPanel() {
     final item = _selected!;
+
+    // Weapons path: composition-aid detail with disabled Set/Synergy stubs.
+    if (_mode == CatalogBrowseMode.weapons) {
+      return CatalogWeaponDetail(
+        item: item,
+        instances: _instances,
+        selectedInstanceId: _selectedInstanceId,
+        onSelectInstance: (inst) {
+          setState(() => _selectedInstanceId = inst.instanceId);
+        },
+        showCanRoll: _showCanRoll,
+        showCraft: _showCraft,
+        // Craft toggle available only when any copy is crafted or has craft flag —
+        // never invent craft pools (host passes empty craftColumns).
+        craftAvailable: _instances.any((i) => i.isCrafted),
+        craftColumns: const [],
+        onCanRollChanged: (v) => setState(() => _showCanRoll = v),
+        onCraftChanged: (v) => setState(() => _showCraft = v),
+        plugNameByHash: _bridge.plugNameByHash,
+        intrinsicDescription: item.isExotic ? item.description : null,
+        headerTrailing: _reverseTags.isEmpty
+            ? null
+            : Wrap(
+                key: const Key('linked_synergy_badges'),
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final badge in _reverseTags)
+                    Chip(
+                      key: Key('synergy_badge_${badge.id}'),
+                      label: Text(badge.name),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+      );
+    }
+
+    // Armor / Universal: retain richer dossier + universal live outbound.
     final kind = compositionKindFromCatalogItem(item);
     final actions = kind == null
         ? (set: false, synergy: false)
@@ -1237,7 +1184,6 @@ class _CatalogPageState extends State<CatalogPage> {
             actions: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // BR-SYN-004 reverse tags
                 if (_reverseTags.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -1257,7 +1203,6 @@ class _CatalogPageState extends State<CatalogPage> {
                       ],
                     ),
                   ),
-                // Universal composition actions (Set / Synergy only — never Build attach)
                 if (_mode == CatalogBrowseMode.universal) ...[
                   Wrap(
                     key: const Key('universal_actions'),
@@ -1352,8 +1297,6 @@ class _CatalogPageState extends State<CatalogPage> {
               key: const Key('instance_list'),
               padding: EdgeInsets.zero,
               children: [
-                // Single dossier: definition-only when unpinned; one card per
-                // owned copy otherwise (avoid stacking N full definition clones).
                 if (_instances.isEmpty) ...[
                   ItemRichnessPanel(
                     key: Key('item_richness_def_${item.hash}'),
@@ -1383,7 +1326,6 @@ class _CatalogPageState extends State<CatalogPage> {
                       item,
                       _instances[i],
                       kind,
-                      // First copy expanded (scan); rest collapsed for density.
                       expandRoll: i == 0,
                     ),
               ],
@@ -1417,7 +1359,6 @@ class _CatalogPageState extends State<CatalogPage> {
         instance: inst,
         kindLabel: kind != null ? compositionKindLabel(kind) : null,
         plugNameByHash: _bridge.plugNameByHash,
-        // Hero only on the expanded lead copy — avoid N diamond stacks.
         showHero: expandRoll,
         initialOpen: expandRoll
             ? {
