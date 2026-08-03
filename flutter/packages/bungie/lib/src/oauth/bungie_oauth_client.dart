@@ -95,6 +95,10 @@ class BungieOAuthClient {
   }
 
   /// Refreshes tokens using the refresh token grant (public client).
+  ///
+  /// When Bungie omits `refresh_token` on the response (common for non-rotating
+  /// refresh grants), the previous refresh token and its expiry are preserved so
+  /// cold starts can keep refreshing instead of forcing re-auth.
   Future<BungieTokens> refreshTokens(
     BungieTokens tokens, {
     DateTime? now,
@@ -108,7 +112,8 @@ class BungieOAuthClient {
       'refresh_token': tokens.refreshToken,
       'client_id': clientId,
     };
-    return _postToken(body, now: now);
+    final mapped = await _postToken(body, now: now);
+    return preserveRefreshCredentials(previous: tokens, next: mapped);
   }
 
   Future<BungieTokens> _postToken(

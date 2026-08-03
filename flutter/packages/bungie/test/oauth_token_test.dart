@@ -191,11 +191,40 @@ void main() {
 
       final next = await client.refreshTokens(old);
       expect(next.accessToken, 'new-acc');
+      // Response includes refresh; kept as returned.
+      expect(next.refreshToken, 'ref');
       expect(seen!.body, contains('grant_type=refresh_token'));
       expect(seen!.body, contains('refresh_token=refresh-abc'));
       expect(seen!.body, contains('client_id=client123'));
       expect(seen!.body!.toLowerCase(), isNot(contains('client_secret')));
       expect(seen!.headers.containsKey('Authorization'), isFalse);
+    });
+
+    test('preserves prior refresh when response omits refresh_token', () async {
+      final client = BungieOAuthClient(
+        clientId: 'client123',
+        redirectUri: 'http://127.0.0.1/cb',
+        transport: (_) async => BungieHttpResponse(
+          statusCode: 200,
+          body: jsonEncode({
+            'access_token': 'new-acc-only',
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'membership_id': 'm',
+          }),
+        ),
+      );
+      final old = BungieTokens(
+        accessToken: 'old',
+        refreshToken: 'keep-refresh',
+        expiresAt: DateTime.utc(2020),
+        refreshExpiresAt: DateTime.utc(2030),
+        bungieMembershipId: 'm',
+      );
+      final next = await client.refreshTokens(old);
+      expect(next.accessToken, 'new-acc-only');
+      expect(next.refreshToken, 'keep-refresh');
+      expect(next.refreshExpiresAt, DateTime.utc(2030));
     });
   });
 
@@ -221,6 +250,40 @@ void main() {
         expiresAt: now.add(const Duration(minutes: 5)),
       );
       expect(needsRefresh(fresh, now: now), isFalse);
+
+      final accessOnlyAlive = BungieTokens(
+        accessToken: 'a',
+        refreshToken: '',
+        expiresAt: now.add(const Duration(minutes: 10)),
+        refreshExpiresAt: now.add(const Duration(minutes: 10)),
+        bungieMembershipId: 'm',
+      );
+      expect(isSessionExpired(accessOnlyAlive, now: now), isFalse);
+      expect(
+        isSessionExpired(
+          accessOnlyAlive.copyWith(
+            expiresAt: now.subtract(const Duration(seconds: 1)),
+          ),
+          now: now,
+        ),
+        isTrue,
+      );
+
+      final merged = preserveRefreshCredentials(
+        previous: tokens.copyWith(
+          refreshToken: 'keep-me',
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+        ),
+        next: BungieTokens(
+          accessToken: 'new-a',
+          refreshToken: '',
+          expiresAt: now.add(const Duration(hours: 1)),
+          refreshExpiresAt: now.add(const Duration(hours: 1)),
+          bungieMembershipId: 'm',
+        ),
+      );
+      expect(merged.accessToken, 'new-a');
+      expect(merged.refreshToken, 'keep-me');
     });
   });
 

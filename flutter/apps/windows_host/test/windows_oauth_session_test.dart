@@ -238,6 +238,43 @@ void main() {
       expect(await store.read(), isNull);
     });
 
+    test('restore keeps store on transient refresh failure', () async {
+      final store = MemoryTokenStore();
+      final now = DateTime.now().toUtc();
+      await store.write(
+        BungieTokens(
+          accessToken: 'acc-stale',
+          refreshToken: 'ref-keep',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+          bungieMembershipId: 'mem-keep',
+        ),
+      );
+
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: store,
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => const BungieHttpResponse(
+            statusCode: 503,
+            body: '{"error":"server_error"}',
+          ),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+      );
+
+      await session.restore();
+      // Not signed in, but credentials must remain for next launch.
+      expect(session.isSignedIn, isFalse);
+      expect(session.status, OAuthSessionStatus.error);
+      final kept = await store.read();
+      expect(kept, isNotNull);
+      expect(kept!.refreshToken, 'ref-keep');
+    });
+
     test('restore refreshes when access expired and refresh present',
         () async {
       final store = MemoryTokenStore();

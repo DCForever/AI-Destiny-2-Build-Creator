@@ -73,6 +73,45 @@ void main() {
     });
   });
 
+  group('FileTokenStore + DualTokenStore', () {
+    test('file store round-trips under temp dir', () async {
+      final dir = await Directory.systemTemp.createTemp('tok_file_');
+      addTearDown(() async {
+        if (await dir.exists()) await dir.delete(recursive: true);
+      });
+      final store = FileTokenStore(baseDir: dir.path);
+      final tokens = sampleTokens();
+      await store.write(tokens);
+      final read = await store.read();
+      expect(read, isNotNull);
+      expect(read!.accessToken, tokens.accessToken);
+      expect(read.refreshToken, tokens.refreshToken);
+      await store.clear();
+      expect(await store.read(), isNull);
+    });
+
+    test('dual store recovers from empty primary via secondary', () async {
+      final dir = await Directory.systemTemp.createTemp('tok_dual_');
+      addTearDown(() async {
+        if (await dir.exists()) await dir.delete(recursive: true);
+      });
+      final primary = MemoryTokenStore();
+      final secondary = FileTokenStore(baseDir: dir.path);
+      final dual = DualTokenStore(primary: primary, secondary: secondary);
+      final tokens = sampleTokens(access: 'dual-acc', refresh: 'dual-ref');
+      await dual.write(tokens);
+      // Simulate Credential Manager miss after process restart.
+      await primary.clear();
+      expect(await primary.read(), isNull);
+      final recovered = await dual.read();
+      expect(recovered, isNotNull);
+      expect(recovered!.accessToken, 'dual-acc');
+      expect(recovered.refreshToken, 'dual-ref');
+      // Healed primary.
+      expect((await primary.read())?.accessToken, 'dual-acc');
+    });
+  });
+
   group('MemoryTokenStore US1', () {
     test('write/read/clear', () async {
       final store = MemoryTokenStore();

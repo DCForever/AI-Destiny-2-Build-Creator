@@ -124,7 +124,13 @@ class HostBootstrap {
         ? kDefaultWindowsRedirectUri
         : redirectUri;
 
-    final store = tokenStore ?? SecureTokenStore();
+    // Prefer OS secure storage + application-support file mirror so cold starts
+    // do not force re-auth when Credential Locker misses a key.
+    final store = tokenStore ??
+        DualTokenStore(
+          primary: SecureTokenStore(),
+          secondary: FileTokenStore(baseDir: root.basePath),
+        );
     final client = oauthClient ??
         BungieOAuthClient(
           clientId: resolvedClientId.isEmpty ? 'unconfigured' : resolvedClientId,

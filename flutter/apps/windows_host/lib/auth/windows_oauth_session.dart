@@ -62,8 +62,12 @@ class WindowsOAuthSession extends ChangeNotifier {
 
   /// Loads tokens from secure storage (call once after bootstrap).
   ///
-  /// Public Bungie clients have no refresh_token. Keep the session while the
-  /// access token is valid; clear when expired and no refresh is available.
+  /// Persistence strategy:
+  /// - Access still valid → signed in immediately.
+  /// - Access near/expired + live refresh token → refresh and persist.
+  /// - No refresh and access expired → clear (re-auth required).
+  /// - Transient network/refresh errors → **do not clear** stored credentials
+  ///   so the next launch can retry without a full browser sign-in.
   Future<void> restore() async {
     try {
       final existing = await _tokenStore.read();
@@ -94,13 +98,25 @@ class WindowsOAuthSession extends ChangeNotifier {
         return;
       }
 
-      if (existing.refreshToken.isEmpty || isSessionExpired(existing)) {
+      // Access expired (or inside safety margin).
+      if (existing.refreshToken.isEmpty) {
+        // Access-only session cannot be extended.
         // ignore: avoid_print
         print(
-          'OAuth: restore — cannot refresh '
-          '(refreshLen=${existing.refreshToken.length}, '
-          'sessionExpired=${isSessionExpired(existing)}); clearing',
+          'OAuth: restore — access expired and no refresh_token; clearing',
         );
+        try {
+          await _tokenStore.clear();
+        } catch (_) {}
+        _tokens = null;
+        _status = OAuthSessionStatus.signedOut;
+        _errorMessage = null;
+        return;
+      }
+
+      if (isSessionExpired(existing)) {
+        // ignore: avoid_print
+        print('OAuth: restore — refresh token expired; clearing');
         try {
           await _tokenStore.clear();
         } catch (_) {}
@@ -112,30 +128,56 @@ class WindowsOAuthSession extends ChangeNotifier {
 
       // ignore: avoid_print
       print('OAuth: restore — refreshing access token…');
-      final refreshed = await _oauthClient.refreshTokens(existing).timeout(
-            const Duration(seconds: 45),
-            onTimeout: () => throw const BungieOAuthException(
-              'Token refresh timed out after 45s',
-            ),
-          );
-      await _tokenStore.write(refreshed);
-      _tokens = refreshed;
-      _status = OAuthSessionStatus.signedIn;
-      _errorMessage = null;
-      // ignore: avoid_print
-      print(
-        'OAuth: restore — refresh OK membership=${refreshed.bungieMembershipId} '
-        'refreshLen=${refreshed.refreshToken.length}',
-      );
+      try {
+        final refreshed = await _oauthClient.refreshTokens(existing).timeout(
+              const Duration(seconds: 45),
+              onTimeout: () => throw const BungieOAuthException(
+                'Token refresh timed out after 45s',
+              ),
+            );
+        await _tokenStore.write(refreshed);
+        _tokens = refreshed;
+        _status = OAuthSessionStatus.signedIn;
+        _errorMessage = null;
+        // ignore: avoid_print
+        print(
+          'OAuth: restore — refresh OK membership=${refreshed.bungieMembershipId} '
+          'refreshLen=${refreshed.refreshToken.length}',
+        );
+      } on BungieOAuthException catch (e) {
+        // invalid_grant / revoked → clear; network/timeout → keep store.
+        final msg = e.message.toLowerCase();
+        final definitive = msg.contains('invalid_grant') ||
+            msg.contains('invalid_token') ||
+            (e.statusCode != null &&
+                (e.statusCode == 400 || e.statusCode == 401));
+        // ignore: avoid_print
+        print(
+          'OAuth: restore — refresh failed definitive=$definitive: $e',
+        );
+        if (definitive) {
+          try {
+            await _tokenStore.clear();
+          } catch (_) {}
+          _tokens = null;
+          _status = OAuthSessionStatus.signedOut;
+          _errorMessage = null;
+        } else {
+          // Keep credentials for next launch; UI shows signed-out until online.
+          _tokens = null;
+          _status = OAuthSessionStatus.error;
+          _errorMessage =
+              'Could not refresh session (network). Try again when online — '
+              'you should not need to re-authorize.';
+        }
+      }
     } catch (e, st) {
       // ignore: avoid_print
-      print('OAuth: restore failed: $e\n$st');
-      try {
-        await _tokenStore.clear();
-      } catch (_) {}
+      print('OAuth: restore failed (keeping store): $e\n$st');
+      // Never wipe storage on unexpected I/O errors — that forces re-auth.
       _tokens = null;
-      _status = OAuthSessionStatus.signedOut;
-      _errorMessage = 'Could not restore session';
+      _status = OAuthSessionStatus.error;
+      _errorMessage = 'Could not restore session (storage). Retry or re-sign-in.';
     } finally {
       _loaded = true;
       notifyListeners();

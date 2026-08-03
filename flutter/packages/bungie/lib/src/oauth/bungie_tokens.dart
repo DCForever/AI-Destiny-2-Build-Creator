@@ -49,9 +49,36 @@ bool needsRefresh(BungieTokens tokens, {DateTime? now}) {
 }
 
 /// `true` when the refresh token is at/ past [BungieTokens.refreshExpiresAt].
+///
+/// Access-only sessions (empty [BungieTokens.refreshToken]) treat the access
+/// expiry as the session boundary.
 bool isSessionExpired(BungieTokens tokens, {DateTime? now}) {
   final clock = now ?? DateTime.now().toUtc();
+  if (tokens.refreshToken.isEmpty) {
+    return needsRefresh(tokens, now: clock);
+  }
   return !tokens.refreshExpiresAt.toUtc().isAfter(clock);
+}
+
+/// Keeps the prior refresh credential when a token response omits it.
+///
+/// OAuth refresh responses often return only a new `access_token` (+ expires).
+/// Mapping that to an empty [BungieTokens.refreshToken] and persisting it would
+/// force re-authentication on every subsequent cold start.
+BungieTokens preserveRefreshCredentials({
+  required BungieTokens previous,
+  required BungieTokens next,
+}) {
+  if (next.refreshToken.isNotEmpty) {
+    return next;
+  }
+  if (previous.refreshToken.isEmpty) {
+    return next;
+  }
+  return next.copyWith(
+    refreshToken: previous.refreshToken,
+    refreshExpiresAt: previous.refreshExpiresAt,
+  );
 }
 
 /// Maps a Bungie OAuth token JSON object to [BungieTokens].
