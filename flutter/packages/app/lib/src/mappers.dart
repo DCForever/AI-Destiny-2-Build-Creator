@@ -2,7 +2,7 @@
 import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
 import 'package:destiny2_domain/destiny2_domain.dart';
 
-/// Parse subclass JSON object from build row into [SubclassKit].
+/// Parse subclass JSON object from build/variant row into [SubclassKit].
 SubclassKit subclassKitFromJson(Object? raw) {
   if (raw is! Map) return const SubclassKit();
   final m = Map<String, Object?>.from(
@@ -36,7 +36,7 @@ SubclassKit subclassKitFromJson(Object? raw) {
   );
 }
 
-/// Serialize [SubclassKit] to product-shaped JSON map.
+/// Serialize [SubclassKit] to product-shaped JSON map (full kit or pieces).
 Map<String, Object?> subclassKitToJson(SubclassKit kit) {
   return {
     'aspects': kit.aspects,
@@ -47,6 +47,40 @@ Map<String, Object?> subclassKitToJson(SubclassKit kit) {
     if (kit.classAbility != null) 'classAbility': kit.classAbility,
     if (kit.name != null) 'name': kit.name,
   };
+}
+
+/// Tree-only JSON for `builds.subclass` (DBR-SUB-001).
+Map<String, Object?> subclassTreeToJson(String? treeName) {
+  return subclassKitToJson(subclassTreeOnly(treeName));
+}
+
+/// Kit-pieces JSON for `build_variants.subclass_kit` (DBR-SUB-003).
+Map<String, Object?> subclassKitPiecesToJson(SubclassKit kit) {
+  return subclassKitToJson(variantKitPiecesOnly(kit));
+}
+
+/// Load effective kit: variant pieces + build tree + pinned Super.
+///
+/// When [variantSubclassKit] is null, falls back to kit pieces on the build
+/// subclass blob (legacy pre-pkg-variant-subclass-kit rows).
+SubclassKit loadEffectiveSubclassKit({
+  required Object? buildSubclass,
+  Object? variantSubclassKit,
+  String? pinnedSuper,
+}) {
+  final buildKit = subclassKitFromJson(buildSubclass);
+  final SubclassKit variantPieces;
+  if (variantSubclassKit != null) {
+    variantPieces = variantKitPiecesOnly(subclassKitFromJson(variantSubclassKit));
+  } else {
+    // Legacy fallback: shared kit blob on builds.subclass.
+    variantPieces = variantKitPiecesOnly(buildKit);
+  }
+  return mergeEffectiveSubclassKit(
+    variantKit: variantPieces,
+    treeName: buildKit.name,
+    pinnedSuper: pinnedSuper,
+  );
 }
 
 /// Soft stat targets JSON map for persistence (Armor 3.0 wire names).
@@ -131,6 +165,7 @@ Variant variantFromRecord(VariantRecord r) {
     artifactHash: r.artifactHash,
     artifactName: r.artifactName,
     artifactConfig: r.artifactConfig,
+    subclassKit: variantKitPiecesOnly(subclassKitFromJson(r.subclassKit)),
     notes: r.notes,
   );
 }

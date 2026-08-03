@@ -973,7 +973,12 @@ class BuildsComposeSession {
         _threeGate = null;
         return;
       }
-      final kit = subclassKitFromJson(build.subclass);
+      // Gate-1 kit bar: effective kit for the **active** variant only.
+      final kit = loadEffectiveSubclassKit(
+        buildSubclass: build.subclass,
+        variantSubclassKit: variant.subclassKit,
+        pinnedSuper: build.pinnedSuper,
+      );
       final aspects = kit.aspects
           .map((a) => a.trim())
           .where((a) => a.isNotEmpty)

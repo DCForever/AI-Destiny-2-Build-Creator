@@ -70,8 +70,6 @@ String _sortedDesignationKey(List<SynergyTypeDesignation> rows) {
   return keys.join(';');
 }
 
-bool _subclassEqual(SubclassKit a, SubclassKit b) => a == b;
-
 /// Detect which identity fields change between stored build and next values.
 ///
 /// Returns empty when no identity confirm is required.
@@ -79,6 +77,10 @@ bool _subclassEqual(SubclassKit a, SubclassKit b) => a == b;
 /// [existingExoticArmorSlot] / [nextExoticArmorSlot] are optional catalog slots
 /// (e.g. `ClassItem`). When unknown, any exotic armor hash change is treated
 /// as classic identity-affecting (safe default).
+///
+/// Subclass identity is **tree name only** (DBR-ID-008a / DBR-SUB-001).
+/// Aspect/fragment/ability kit diffs are variant composition (DBR-ID-008b,
+/// DBR-ID-010) and never raise IDENTITY_CONFIRM_REQUIRED.
 List<String> detectIdentityFieldChanges({
   required List<SynergyTypeDesignation> existingSynergyTypes,
   required List<SynergyTypeDesignation>? nextSynergyTypes,
@@ -128,7 +130,9 @@ List<String> detectIdentityFieldChanges({
     if (a != b) fields.add('pinnedSuper');
   }
 
-  if (nextSubclass != null && !_subclassEqual(existingSubclass, nextSubclass)) {
+  // DBR-ID-008a: only subclass **tree** change is identity (not kit picks).
+  if (nextSubclass != null &&
+      !subclassTreeNameEqual(existingSubclass.name, nextSubclass.name)) {
     fields.add('subclass');
   }
 

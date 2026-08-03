@@ -161,6 +161,7 @@ Future<void> applyEnsureUpgrades(EnsureUpgradeExecutor ex) async {
   await _ensureSetOptimizerColumns(ex);
   await _ensureBuildSynergyTypesTable(ex);
   await _ensureSynergyLinkRequiredColumn(ex);
+  await _ensureVariantSubclassKitColumn(ex);
 }
 
 Future<void> _addColumnIfMissing(
@@ -277,6 +278,40 @@ Future<void> _ensureVariantArtifactColumns(EnsureUpgradeExecutor ex) async {
   }
 }
 
+/// Add `build_variants.subclass_kit` and seed kit pieces from legacy builds.subclass.
+///
+/// Tree identity remains on builds.subclass (DBR-SUB-001). Kit composition moves
+/// per-variant (DBR-SUB-003 / pkg-variant-subclass-kit).
+Future<void> _ensureVariantSubclassKitColumn(EnsureUpgradeExecutor ex) async {
+  if (!await ex.tableExists('build_variants')) return;
+  final cols = await ex.columnNames('build_variants');
+  final hadColumn = cols.contains('subclass_kit');
+  if (!hadColumn) {
+    await ex.exec(
+      "ALTER TABLE build_variants ADD COLUMN subclass_kit TEXT NOT NULL DEFAULT '{}'",
+    );
+  }
+  // Seed empty / missing kits from builds.subclass (legacy shared kit blob).
+  // Safe to re-run: only fills empty '{}' rows so intentional empties after
+  // first seed are not re-overwritten once the user clears pieces — but on
+  // first ensure after upgrade, all rows still hold default '{}'.
+  if (!await ex.tableExists('builds')) return;
+  await ex.exec('''
+UPDATE build_variants
+SET subclass_kit = (
+  SELECT subclass FROM builds WHERE builds.id = build_variants.build_id
+)
+WHERE (subclass_kit IS NULL OR subclass_kit = '' OR subclass_kit = '{}')
+  AND EXISTS (
+    SELECT 1 FROM builds
+    WHERE builds.id = build_variants.build_id
+      AND builds.subclass IS NOT NULL
+      AND builds.subclass != ''
+      AND builds.subclass != '{}'
+  )
+''');
+}
+
 Future<void> _ensureBuildsIdentityColumns(EnsureUpgradeExecutor ex) async {
   if (!await ex.tableExists('builds')) return;
   final cols = await ex.columnNames('builds');
@@ -372,6 +407,7 @@ const lateColumnsByTable = <String, List<String>>{
     'artifact_hash',
     'artifact_name',
     'artifact_config',
+    'subclass_kit',
   ],
   'sets': ['optimizer_constraints', 'linked_mod_set_id'],
 };

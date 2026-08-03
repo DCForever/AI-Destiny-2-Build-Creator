@@ -78,7 +78,7 @@ void main() {
       expect(fields, contains('exoticArmorHash'));
     });
 
-    test('subclass change is identity', () {
+    test('subclass tree rename is identity (DBR-ID-008a)', () {
       final fields = detectIdentityFieldChanges(
         existingSynergyTypes: [melee],
         nextSynergyTypes: null,
@@ -88,10 +88,32 @@ void main() {
         nextExoticWeaponHash: null,
         existingPinnedSuper: null,
         nextPinnedSuper: null,
-        existingSubclass: const SubclassKit(aspects: ['A']),
-        nextSubclass: const SubclassKit(aspects: ['A', 'B']),
+        existingSubclass: const SubclassKit(name: 'Gunslinger', aspects: ['A']),
+        nextSubclass: const SubclassKit(name: 'Arcstrider', aspects: ['A']),
       );
       expect(fields, contains('subclass'));
+    });
+
+    test('kit-only subclass diffs are not identity (DBR-ID-008b/010)', () {
+      final fields = detectIdentityFieldChanges(
+        existingSynergyTypes: [melee],
+        nextSynergyTypes: null,
+        existingExoticArmorHash: null,
+        nextExoticArmorHash: null,
+        existingExoticWeaponHash: null,
+        nextExoticWeaponHash: null,
+        existingPinnedSuper: null,
+        nextPinnedSuper: null,
+        existingSubclass: const SubclassKit(name: 'Gunslinger', aspects: ['A']),
+        nextSubclass: const SubclassKit(
+          name: 'Gunslinger',
+          aspects: ['A', 'B'],
+          fragments: ['F1'],
+          superAbility: 'Golden Gun',
+        ),
+      );
+      expect(fields, isEmpty);
+      expect(fields, isNot(contains('subclass')));
     });
   });
 

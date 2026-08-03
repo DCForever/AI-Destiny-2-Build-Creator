@@ -49,6 +49,9 @@ export 'src/evaluators/resolve_variant.dart';
 // Default kit bar + artifact completeness (pkg-default-three-gates)
 export 'src/evaluators/default_loadout_completeness.dart';
 
+// Per-variant effective subclass kit merge (pkg-variant-subclass-kit)
+export 'src/evaluators/effective_subclass_kit.dart';
+
 // Required synergy links hard gate (pkg-default-three-gates / DBR-SYN-010a)
 export 'src/evaluators/assert_required_links.dart';
 

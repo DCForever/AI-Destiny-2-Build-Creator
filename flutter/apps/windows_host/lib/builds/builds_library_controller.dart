@@ -160,6 +160,34 @@ class BuildsLibraryController extends ChangeNotifier {
 
   Future<int> resolveLibraryUserId() => core.resolveLibraryUserId();
 
+  /// Effective kit for [detail]/[variant] (tree + variant pieces + pinned Super).
+  SubclassKit _effectiveKit(BuildDetail detail, [VariantRecord? variant]) {
+    VariantRecord? v = variant;
+    if (v == null) {
+      for (final candidate in detail.variants) {
+        if (candidate.isDefault) {
+          v = candidate;
+          break;
+        }
+      }
+      v ??= detail.variants.isEmpty ? null : detail.variants.first;
+    }
+    return loadEffectiveSubclassKit(
+      buildSubclass: detail.build.subclass,
+      variantSubclassKit: v?.subclassKit,
+      pinnedSuper: detail.build.pinnedSuper,
+    );
+  }
+
+  void _reloadEditSubclassFromSelection() {
+    final row = selected;
+    if (row == null) {
+      _editSubclass = const SubclassKit();
+      return;
+    }
+    _editSubclass = _effectiveKit(row, selectedVariant);
+  }
+
   Future<void> refresh({bool keepSelection = true}) async {
     if (!keepSelection) {
       core.clearSelection();
@@ -171,11 +199,11 @@ class BuildsLibraryController extends ChangeNotifier {
     final row = selected;
     if (row != null) {
       _editDraftTypes = _recordsToDrafts(row.build.synergyTypes);
-      _editSubclass = subclassKitFromJson(row.build.subclass);
-      _refreshComposeHardBlocks();
       if (priorVariant != null) {
         await core.selectVariant(priorVariant);
       }
+      _reloadEditSubclassFromSelection();
+      _refreshComposeHardBlocks();
     }
     _syncCoverageIndexesFromCatalog();
   }
@@ -194,9 +222,7 @@ class BuildsLibraryController extends ChangeNotifier {
     final row = selected;
     _editDraftTypes =
         row != null ? _recordsToDrafts(row.build.synergyTypes) : const [];
-    _editSubclass = row != null
-        ? subclassKitFromJson(row.build.subclass)
-        : const SubclassKit();
+    _reloadEditSubclassFromSelection();
     _pendingIdentityFields = null;
     _pendingIdentityPayload = null;
     if (row != null) {
@@ -251,15 +277,75 @@ class BuildsLibraryController extends ChangeNotifier {
     final created = selected;
     if (err == null && created != null) {
       _editDraftTypes = _recordsToDrafts(created.build.synergyTypes);
-      _editSubclass = subclassKitFromJson(created.build.subclass);
+      _reloadEditSubclassFromSelection();
       _refreshComposeHardBlocks();
     }
     return err;
   }
 
-  Future<void> selectVariant(String? variantId) => core.selectVariant(variantId);
-  Future<String?> createVariant({required String name}) =>
-      core.createVariant(name: name);
+  Future<void> selectVariant(String? variantId) async {
+    await core.selectVariant(variantId);
+    _reloadEditSubclassFromSelection();
+    _refreshComposeHardBlocks();
+    notifyListeners();
+  }
+
+  Future<String?> createVariant({required String name}) async {
+    final err = await core.createVariant(name: name);
+    if (err == null) {
+      _reloadEditSubclassFromSelection();
+      _refreshComposeHardBlocks();
+    }
+    return err;
+  }
+
+  /// Persist active-variant kit pieces without Confirm/Fork (DBR-ID-008b/010).
+  ///
+  /// When [reload] is false, only writes the kit (caller reloads selection).
+  Future<String?> saveActiveVariantSubclassKit({
+    SubclassKit? kit,
+    bool reload = true,
+  }) async {
+    final sel = selected;
+    final variant = selectedVariant;
+    final uid = userId;
+    if (sel == null || variant == null || uid == null) {
+      return 'No variant selected';
+    }
+    final pieces = variantKitPiecesOnly(kit ?? _editSubclass);
+    try {
+      await updateUserVariant(
+        db,
+        uid,
+        sel.build.id,
+        variant.id,
+        UpdateVariantCommand(
+          setSubclassKit: true,
+          subclassKit: pieces,
+        ),
+      );
+      if (reload) {
+        final detail = await getBuildDetail(db, uid, sel.build.id);
+        if (detail != null) {
+          await core.openBuild(detail.build.id);
+          await core.selectVariant(variant.id);
+        }
+        _reloadEditSubclassFromSelection();
+        _refreshComposeHardBlocks();
+        core.reportError(null);
+        notifyListeners();
+      }
+      return null;
+    } on UseCaseException catch (e) {
+      core.reportError(e.message);
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      core.reportError(e.toString());
+      notifyListeners();
+      return e.toString();
+    }
+  }
   Future<String?> attachSet(
     String setId, {
     AttachmentMode mode = AttachmentMode.live,
@@ -352,6 +438,7 @@ class BuildsLibraryController extends ChangeNotifier {
     }
 
     final kit = subclass ?? _editSubclass;
+    _editSubclass = kit;
     _refreshComposeHardBlocks(
       exoticArmorHash: setExoticArmor ? exoticArmorHash : sel.build.exoticArmorHash,
       exoticWeaponHash:
@@ -371,6 +458,12 @@ class BuildsLibraryController extends ChangeNotifier {
 
     try {
       final priorVariantId = selectedVariant?.id;
+      // Kit composition → active variant (not identity). Tree → Build.
+      if (priorVariantId != null) {
+        final kitErr =
+            await saveActiveVariantSubclassKit(kit: kit, reload: false);
+        if (kitErr != null) return kitErr;
+      }
       final updated = await updateUserBuild(
         db,
         uid,
@@ -378,7 +471,8 @@ class BuildsLibraryController extends ChangeNotifier {
         UpdateBuildCommand(
           name: name,
           className: className,
-          subclass: kit,
+          // Tree name only on Build (DBR-SUB-001 / DBR-ID-008a).
+          subclass: subclassTreeOnly(kit.name),
           synergyTypes: [for (final d in types) d.toDomain()],
           setExoticArmor: setExoticArmor,
           exoticArmorHash: exoticArmorHash,
@@ -405,7 +499,7 @@ class BuildsLibraryController extends ChangeNotifier {
         await core.selectVariant(priorVariantId);
       }
       _editDraftTypes = _recordsToDrafts(updated.build.synergyTypes);
-      _editSubclass = subclassKitFromJson(updated.build.subclass);
+      _reloadEditSubclassFromSelection();
       core.reportError(null);
       notifyListeners();
       return null;

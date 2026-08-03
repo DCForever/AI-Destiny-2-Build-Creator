@@ -247,7 +247,12 @@ Future<CoverageQueryResult?> queryVariantCoverage(
     build.synergyTypes,
   );
 
-  final kit = subclassKitFromJson(build.subclass);
+  // Coverage uses the active variant's effective kit (DBR-CMPL-001c).
+  final kit = loadEffectiveSubclassKit(
+    buildSubclass: build.subclass,
+    variantSubclassKit: variant.subclassKit,
+    pinnedSuper: build.pinnedSuper,
+  );
   final subclassMap = subclassKitToJson(kit);
 
   final idx = indexes ??

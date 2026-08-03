@@ -69,6 +69,9 @@ class Build {
 }
 
 /// Build variant (default or alternate) with optional exotic/artifact pins.
+///
+/// Subclass **tree** is Build-owned (DBR-SUB-001). Kit composition
+/// ([subclassKit] aspects/fragments/abilities) is variant-owned (DBR-SUB-003).
 class Variant {
   const Variant({
     required this.id,
@@ -80,6 +83,7 @@ class Variant {
     this.artifactHash,
     this.artifactName,
     this.artifactConfig = const [],
+    this.subclassKit = const SubclassKit(),
     this.notes,
   });
 
@@ -92,6 +96,9 @@ class Variant {
   final int? artifactHash;
   final String? artifactName;
   final List<int> artifactConfig;
+
+  /// Variant-owned kit pieces (aspects/fragments/abilities). Tree name ignored.
+  final SubclassKit subclassKit;
   final String? notes;
 
   @override
@@ -107,6 +114,7 @@ class Variant {
         other.artifactHash == artifactHash &&
         other.artifactName == artifactName &&
         _intListEquals(other.artifactConfig, artifactConfig) &&
+        other.subclassKit == subclassKit &&
         other.notes == notes;
   }
 
@@ -121,6 +129,7 @@ class Variant {
         artifactHash,
         artifactName,
         Object.hashAll(artifactConfig),
+        subclassKit,
         notes,
       );
 }

@@ -218,6 +218,7 @@ class VariantRecord {
     this.artifactHash,
     this.artifactName,
     this.artifactConfig = const [],
+    this.subclassKit,
     this.notes,
     required this.createdAt,
     required this.updatedAt,
@@ -232,6 +233,9 @@ class VariantRecord {
   final int? artifactHash;
   final String? artifactName;
   final List<int> artifactConfig;
+
+  /// Parsed JSON from build_variants.subclass_kit (kit pieces; tree on Build).
+  final Object? subclassKit;
   final String? notes;
   final String createdAt;
   final String updatedAt;

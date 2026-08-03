@@ -54,7 +54,8 @@ void main() {
       expect(await listUserBuilds(db, userId), isEmpty);
     });
 
-    test('legal create persists build + empty default variant', () async {
+    test('legal create persists tree on build + kit pieces on default variant',
+        () async {
       final userId = await seedUser();
       final detail = await createUserBuild(
         db,
@@ -77,6 +78,12 @@ void main() {
       expect(detail.variants.single.isDefault, isTrue);
       expect(detail.domain.synergyTypes, hasLength(1));
       expect(detail.domain.subclass.name, 'Arcstrider');
+      // Tree-only on Build; pieces on default variant (DBR-SUB-001/003).
+      final tree = subclassKitFromJson(detail.build.subclass);
+      expect(tree.name, 'Arcstrider');
+      expect(tree.aspects, isEmpty);
+      final pieces = subclassKitFromJson(detail.variants.single.subclassKit);
+      expect(pieces.aspects, ['Flow State']);
 
       final listed = await listUserBuilds(db, userId);
       expect(listed, hasLength(1));

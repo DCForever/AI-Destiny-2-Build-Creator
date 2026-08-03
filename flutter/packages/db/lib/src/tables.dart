@@ -258,6 +258,10 @@ class BuildVariants extends Table {
   IntColumn get artifactHash => integer().nullable()();
   TextColumn get artifactName => text().nullable()();
   TextColumn get artifactConfig => text().withDefault(const Constant('[]'))();
+  /// Variant-owned subclass kit JSON (aspects/fragments/abilities).
+  ///
+  /// Tree/element lives on [Builds.subclass] only (DBR-SUB-001 / DBR-SUB-003).
+  TextColumn get subclassKit => text().withDefault(const Constant('{}'))();
   TextColumn get notes => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();

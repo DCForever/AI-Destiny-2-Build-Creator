@@ -106,6 +106,14 @@ const List<EnsureStepInfo> ensureStepCatalog = [
     description:
         'ADD COLUMN required INTEGER NOT NULL DEFAULT 0 (DBR-SYN-007–010a)',
   ),
+  EnsureStepInfo(
+    id: 'variant_subclass_kit',
+    productFunction: 'ensureVariantSubclassKitColumn',
+    targetTable: 'build_variants',
+    description:
+        'ADD subclass_kit TEXT DEFAULT \'{}\'; seed kit pieces from builds.subclass '
+        '(pkg-variant-subclass-kit / DBR-SUB-003)',
+  ),
 ];
 
 /// Expected step ids (for tests / completeness checks).
@@ -121,4 +129,5 @@ const List<String> expectedEnsureStepIds = [
   'sets_optimizer',
   'build_synergy_types',
   'synergy_link_required',
+  'variant_subclass_kit',
 ];

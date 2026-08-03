@@ -83,6 +83,7 @@ class DefaultVariantSeed {
     this.artifactHash,
     this.artifactName,
     this.artifactConfig = const [],
+    this.subclassKit,
     this.notes,
     this.attachments = const [],
   });
@@ -94,6 +95,9 @@ class DefaultVariantSeed {
   final int? artifactHash;
   final String? artifactName;
   final List<int> artifactConfig;
+
+  /// When null, create seeds kit pieces from [CreateBuildCommand.subclass].
+  final SubclassKit? subclassKit;
   final String? notes;
   final List<SetAttachmentInput> attachments;
 }
@@ -230,13 +234,19 @@ Future<BuildDetail> createUserBuild(
       ? null
       : (input.exoticWeaponName ?? 'Exotic ($exoticWeaponHash)');
 
+  // Build owns tree only; kit pieces seed the default variant (DBR-SUB-001/003).
+  final treeOnly = subclassTreeOnly(input.subclass.name);
+  final defaultKitPieces = variantKitPiecesOnly(
+    seed.subclassKit ?? input.subclass,
+  );
+
   await createBuildRecord(
     db,
     userId,
     id: buildId,
     name: name,
     className: input.className.wireName,
-    subclass: subclassKitToJson(input.subclass),
+    subclass: subclassTreeToJson(treeOnly.name),
     exoticArmorHash: exoticArmorHash,
     exoticArmorName: exoticArmorName,
     exoticWeaponHash: exoticWeaponHash,
@@ -259,6 +269,7 @@ Future<BuildDetail> createUserBuild(
     artifactHash: seed.artifactHash,
     artifactName: seed.artifactName,
     artifactConfig: seed.artifactConfig,
+    subclassKit: subclassKitPiecesToJson(defaultKitPieces),
     notes: seed.notes,
     now: ts,
   );
@@ -369,10 +380,14 @@ Future<BuildDetail?> updateUserBuild(
     // confirm — fall through to in-place update
   }
 
-  // Re-run identity gates when identity-affecting fields change or always for safety.
+  // Identity path: tree name + pins. Kit composition is variant-owned.
+  // Hard gates still use next tree name with empty pieces for synergy/count
+  // when kit is not part of this write; exotic ability uses effective kit
+  // only when tree/pin changes with existing variant kit on create path.
+  final treeForGates = subclassTreeOnly(nextSubclass.name);
   await assertBuildIdentityHardGates(
     synergyTypes: nextSynergy,
-    subclass: nextSubclass,
+    subclass: treeForGates,
     exoticArmorHash: nextExoticHash,
     exoticArmorName: nextExoticName,
     pinnedSuper: nextPinned,
@@ -398,7 +413,10 @@ Future<BuildDetail?> updateUserBuild(
     buildId,
     name: nextName,
     className: input.className?.wireName,
-    subclass: input.subclass != null ? subclassKitToJson(input.subclass!) : null,
+    // Tree-only writes going forward (legacy full-blob still readable).
+    subclass: input.subclass != null
+        ? subclassTreeToJson(input.subclass!.name)
+        : null,
     exoticArmorHash:
         input.setExoticArmor ? Value(input.exoticArmorHash) : const Value.absent(),
     exoticArmorName:
@@ -468,7 +486,7 @@ Future<BuildDetail> _forkBuildWithIdentity(
     id: forkedId,
     name: name,
     className: className,
-    subclass: subclassKitToJson(nextSubclass),
+    subclass: subclassTreeToJson(nextSubclass.name),
     exoticArmorHash: nextExoticHash,
     exoticArmorName: nextExoticHash == null
         ? null
@@ -487,6 +505,11 @@ Future<BuildDetail> _forkBuildWithIdentity(
   final variants = await listVariants(db, existing.id);
   for (final variant in variants) {
     final newVariantId = newId();
+    // Fork clones each variant's subclass_kit (independent kits under new tree).
+    final kitJson = variant.subclassKit ??
+        subclassKitPiecesToJson(
+          variantKitPiecesOnly(subclassKitFromJson(existing.subclass)),
+        );
     await createVariantRecord(
       db,
       id: newVariantId,
@@ -498,6 +521,7 @@ Future<BuildDetail> _forkBuildWithIdentity(
       artifactHash: variant.artifactHash,
       artifactName: variant.artifactName,
       artifactConfig: variant.artifactConfig,
+      subclassKit: kitJson,
       notes: variant.notes,
       now: ts,
     );

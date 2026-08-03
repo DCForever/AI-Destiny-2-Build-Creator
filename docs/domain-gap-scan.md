@@ -20,7 +20,7 @@
 | Priority | Theme | Status | Notes |
 | --- | --- | --- | --- |
 | P0 | Set save minimums (Weapon/Armor ≥2, Mod multi-piece) | **Done (Phase A)** | Attach + attached soft-remove; empty scaffold OK for finish |
-| P0 | Per-variant subclass kit (aspects/fragments/abilities) | **Done (Phase E)** | `build_variants.subclass_kit`; effective kit per variant |
+| P0 | Per-variant subclass kit (aspects/fragments/abilities) | **Done (Phase E + Dart pkg-variant-subclass-kit)** | `build_variants.subclass_kit`; effective kit per variant |
 | P0 | Default kit bar (aspects + fragments at capacity + Super/melee/grenade) | **Done (Phase B)** | `defaultLoadoutCompleteness` + `assertFullCombatLoadout` |
 | P0 | Artifact filled on default | **Done (Phase B)** | Hash + non-empty config required on default save |
 | P0 | Required-link hard gate on default (pins only) | **Done (Phase C)** | `required` column + `assertRequiredLinksSatisfied` on default save |
@@ -101,7 +101,7 @@
 
 | Rule | Status | Evidence | Gap action |
 | --- | --- | --- | --- |
-| DBR-CMPL-001 weapons + armor + mods | **OK (Next + Dart pkg-default-three-gates)** | Default: 3 weapon + 5 armor + mods + kit bar + artifact | Residual: kit still reads `builds.subclass` until pkg-variant-subclass-kit |
+| DBR-CMPL-001 weapons + armor + mods | **OK (Next + Dart pkg-default-three-gates + pkg-variant-subclass-kit)** | Default: 3 weapon + 5 armor + mods + kit bar + artifact; kit = active variant effective | — |
 | DBR-CMPL-001a artifact config filled | **Done Phase B / Dart port** | Default save requires hash + non-empty config | Tree shape still data-driven later |
 | DBR-CMPL-001b fashion optional | **OK** | Not required | — |
 | DBR-CMPL-001d three gates | **OK (Next + Dart pkg-default-three-gates)** | Gate 1 compose + gate 2 required (default) + gate 3 equip-ready for equip/export | Soft required never hard-blocks non-default |
@@ -157,7 +157,7 @@
 
 ## 8. Architectural mismatches (high leverage)
 
-1. **Subclass ownership** — Product: kit per **variant**, tree on **Build**. Next: Phase E shipped; Dart residual until `pkg-variant-subclass-kit` (gate-1 kit still reads `builds.subclass`).  
+1. **Subclass ownership** — Product: kit per **variant**, tree on **Build**. Next: Phase E shipped; Dart **`pkg-variant-subclass-kit` closed** (`build_variants.subclass_kit` + effective merge; tree-only on Build).  
 2. **Default completeness** — **Done** Next Phase B + Dart `pkg-default-three-gates` (kit bar + artifact fill).  
 3. **Required links** — **Done** Next Phase C + Dart `pkg-default-three-gates` (`required` column + equip-ready / applied kit).  
 4. **Set package quality floors** — Documented mins; Next Phase A shipped; verify Dart attach path when elevating.

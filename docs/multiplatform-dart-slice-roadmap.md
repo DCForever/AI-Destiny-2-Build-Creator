@@ -535,7 +535,18 @@ Post-DART-068 residual package (not a new DART-NNN). Ports Next Phase B/C defaul
 - `collectSubclassKitCompleteGaps` / `collectArtifactCompleteGaps` + extended `assertFullCombatLoadout` (kit bar Super/melee/grenade + aspects/fragments at capacity; artifact hash + non-empty config)
 - `synergy_links.required` Drift + `assertRequiredLinksSatisfied` (equip-ready pins only; wishlist never; artifact_perk via applied config)
 - Default-only hard gate-2; non-default soft-warn only; host three-gate chips + required toggle (Windows+Jaspr)
-- Residual: kit still from `builds.subclass` until `pkg-variant-subclass-kit`; APPLIED_KIT kinds beyond `artifact_perk` until `pkg-synergy-kinds-v1`
+- Residual closed by `pkg-variant-subclass-kit` (2026-08-03): kit from `build_variants.subclass_kit` + effective merge (tree/pin Super on Build)
+- Residual: APPLIED_KIT kinds beyond `artifact_perk` until `pkg-synergy-kinds-v1`
+
+### Residual package note — `pkg-variant-subclass-kit` (closed 2026-08-03)
+
+Post-DART-068 residual package (not a new DART-NNN). Per-variant subclass kit ownership (DBR-SUB-001/003, DBR-CMPL-001c, DBR-ID-008a/b/010):
+
+- Domain `mergeEffectiveSubclassKit` (variant pieces + build tree + pinned Super; no exotic auto-pin)
+- Drift `build_variants.subclass_kit` + ensure heal from legacy `builds.subclass`; tree-only writes on Build
+- Identity detector keys only on tree name; kit saves via `updateUserVariant` without Confirm/Fork
+- Gate-1 / coverage / three-gate / validateVariantSave read **active variant** effective kit
+- Hosts (Windows + Jaspr): load/save kit on active variant; switch-variant reloads kit
 
 ### DART-005 note (completed)
 

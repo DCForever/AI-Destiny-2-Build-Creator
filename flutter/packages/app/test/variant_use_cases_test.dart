@@ -93,6 +93,113 @@ void main() {
     );
   }
 
+  group('pkg-variant-subclass-kit', () {
+    test('two variants keep independent kits under one tree', () async {
+      final ctx = await seedBuild();
+      // Default seeded from create may be empty pieces; set kit A.
+      await updateUserVariant(
+        db,
+        ctx.userId,
+        ctx.buildId,
+        ctx.defaultVariantId,
+        const UpdateVariantCommand(
+          setSubclassKit: true,
+          subclassKit: SubclassKit(
+            aspects: ['Flow State'],
+            superAbility: 'Arc Staff',
+            melee: 'Combination Blow',
+          ),
+        ),
+        now: clock,
+      );
+      final alt = await createUserVariant(
+        db,
+        ctx.userId,
+        ctx.buildId,
+        const CreateVariantCommand(
+          id: 'v-kit-b',
+          name: 'Alt kit',
+          subclassKit: SubclassKit(
+            aspects: ['Tempest Strike'],
+            superAbility: "Storm's Edge",
+            grenade: 'Skip Grenade',
+          ),
+        ),
+        now: clock,
+      );
+      expect(alt, isNotNull);
+
+      final build = await getBuild(db, ctx.userId, ctx.buildId);
+      final def = await getVariant(db, ctx.buildId, ctx.defaultVariantId);
+      final other = await getVariant(db, ctx.buildId, 'v-kit-b');
+      expect(build, isNotNull);
+      expect(def, isNotNull);
+      expect(other, isNotNull);
+
+      final treeName = subclassKitFromJson(build!.subclass).name;
+      expect(treeName, 'Arcstrider');
+
+      final effectiveA = loadEffectiveSubclassKit(
+        buildSubclass: build.subclass,
+        variantSubclassKit: def!.subclassKit,
+        pinnedSuper: build.pinnedSuper,
+      );
+      final effectiveB = loadEffectiveSubclassKit(
+        buildSubclass: build.subclass,
+        variantSubclassKit: other!.subclassKit,
+        pinnedSuper: build.pinnedSuper,
+      );
+      expect(effectiveA.name, 'Arcstrider');
+      expect(effectiveB.name, 'Arcstrider');
+      expect(effectiveA.aspects, ['Flow State']);
+      expect(effectiveB.aspects, ['Tempest Strike']);
+      expect(effectiveA.superAbility, 'Arc Staff');
+      expect(effectiveB.superAbility, "Storm's Edge");
+    });
+
+    test('illegal kit hard-blocks without touching identity', () async {
+      final ctx = await seedBuild();
+      await expectLater(
+        () => updateUserVariant(
+          db,
+          ctx.userId,
+          ctx.buildId,
+          ctx.defaultVariantId,
+          const UpdateVariantCommand(
+            setSubclassKit: true,
+            subclassKit: SubclassKit(aspects: ['A', 'B', 'C']),
+          ),
+          now: clock,
+        ),
+        throwsA(
+          isA<UseCaseException>().having(
+            (e) => e.code,
+            'code',
+            UseCaseErrorCode.illegalSubclassKit,
+          ),
+        ),
+      );
+    });
+
+    test('kit save does not require identity confirm', () async {
+      final ctx = await seedBuild();
+      final updated = await updateUserVariant(
+        db,
+        ctx.userId,
+        ctx.buildId,
+        ctx.defaultVariantId,
+        const UpdateVariantCommand(
+          setSubclassKit: true,
+          subclassKit: SubclassKit(aspects: ['Flow State']),
+        ),
+        now: clock,
+      );
+      expect(updated, isNotNull);
+      final kit = subclassKitFromJson(updated!.subclassKit);
+      expect(kit.aspects, ['Flow State']);
+    });
+  });
+
   group('US2 variant equipment hard gates', () {
     test('non-default name-only update succeeds without full combat', () async {
       final ctx = await seedBuild();

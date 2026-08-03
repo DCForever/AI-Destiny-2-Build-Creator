@@ -119,6 +119,33 @@ class BuildsController extends ChangeNotifier {
   Future<void> refresh() => core.refresh();
   Future<int> resolveLibraryUserId() => core.resolveLibraryUserId();
 
+  SubclassKit _effectiveKit(BuildDetail detail, [VariantRecord? variant]) {
+    VariantRecord? v = variant;
+    if (v == null) {
+      for (final candidate in detail.variants) {
+        if (candidate.isDefault) {
+          v = candidate;
+          break;
+        }
+      }
+      v ??= detail.variants.isEmpty ? null : detail.variants.first;
+    }
+    return loadEffectiveSubclassKit(
+      buildSubclass: detail.build.subclass,
+      variantSubclassKit: v?.subclassKit,
+      pinnedSuper: detail.build.pinnedSuper,
+    );
+  }
+
+  void _reloadEditSubclassFromSelection() {
+    final row = selected;
+    if (row == null) {
+      _editSubclass = const SubclassKit();
+      return;
+    }
+    _editSubclass = _effectiveKit(row, selectedVariant);
+  }
+
   Future<BuildDetail?> openBuild(String buildId) async {
     final d = await core.openBuild(buildId);
     if (d != null) {
@@ -126,7 +153,7 @@ class BuildsController extends ChangeNotifier {
         for (final x in d.build.synergyTypes)
           DraftSynergyType(type: x.type, subType: x.subType),
       ];
-      _editSubclass = subclassKitFromJson(d.build.subclass);
+      _reloadEditSubclassFromSelection();
       _pendingIdentityFields = null;
       _refreshComposeHardBlocks();
     } else {
@@ -175,16 +202,70 @@ class BuildsController extends ChangeNotifier {
         for (final x in created.build.synergyTypes)
           DraftSynergyType(type: x.type, subType: x.subType),
       ];
-      _editSubclass = subclassKitFromJson(created.build.subclass);
+      _reloadEditSubclassFromSelection();
       _refreshComposeHardBlocks();
     }
     return err;
   }
 
-  Future<void> selectVariant(String? variantId) =>
-      core.selectVariant(variantId);
-  Future<String?> createVariant({required String name}) =>
-      core.createVariant(name: name);
+  Future<void> selectVariant(String? variantId) async {
+    await core.selectVariant(variantId);
+    _reloadEditSubclassFromSelection();
+    _refreshComposeHardBlocks();
+    notifyListeners();
+  }
+
+  Future<String?> createVariant({required String name}) async {
+    final err = await core.createVariant(name: name);
+    if (err == null) {
+      _reloadEditSubclassFromSelection();
+      _refreshComposeHardBlocks();
+    }
+    return err;
+  }
+
+  /// Persist active-variant kit pieces without Confirm/Fork (DBR-ID-008b/010).
+  Future<String?> saveActiveVariantSubclassKit({
+    SubclassKit? kit,
+    bool reload = true,
+  }) async {
+    final sel = selected;
+    final variant = selectedVariant;
+    final uid = userId;
+    if (sel == null || variant == null || uid == null) {
+      return 'No variant selected';
+    }
+    final pieces = variantKitPiecesOnly(kit ?? _editSubclass);
+    try {
+      await updateUserVariant(
+        db,
+        uid,
+        sel.build.id,
+        variant.id,
+        UpdateVariantCommand(
+          setSubclassKit: true,
+          subclassKit: pieces,
+        ),
+      );
+      if (reload) {
+        await core.openBuild(sel.build.id);
+        await core.selectVariant(variant.id);
+        _reloadEditSubclassFromSelection();
+        _refreshComposeHardBlocks();
+        core.reportError(null);
+        notifyListeners();
+      }
+      return null;
+    } on UseCaseException catch (e) {
+      core.reportError(e.message);
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      core.reportError(e.toString());
+      notifyListeners();
+      return e.toString();
+    }
+  }
   Future<String?> attachSet(
     String setId, {
     AttachmentMode mode = AttachmentMode.live,
@@ -300,13 +381,19 @@ class BuildsController extends ChangeNotifier {
 
     try {
       final priorVariantId = selectedVariant?.id;
+      if (priorVariantId != null) {
+        final kitErr =
+            await saveActiveVariantSubclassKit(kit: kit, reload: false);
+        if (kitErr != null) return kitErr;
+      }
       final updated = await updateUserBuild(
         db,
         uid,
         sel.build.id,
         UpdateBuildCommand(
           name: name,
-          subclass: kit,
+          // Tree name only on Build (DBR-SUB-001 / DBR-ID-008a).
+          subclass: subclassTreeOnly(kit.name),
           synergyTypes: [for (final d in types) d.toDomain()],
           setExoticArmor: setExoticArmor,
           exoticArmorHash: exoticArmorHash,
@@ -327,7 +414,7 @@ class BuildsController extends ChangeNotifier {
       if (priorVariantId != null) {
         await core.selectVariant(priorVariantId);
       }
-      _editSubclass = subclassKitFromJson(updated.build.subclass);
+      _reloadEditSubclassFromSelection();
       _editDraftTypes = [
         for (final d in updated.build.synergyTypes)
           DraftSynergyType(type: d.type, subType: d.subType),

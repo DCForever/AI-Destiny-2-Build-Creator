@@ -21,6 +21,7 @@ class CreateVariantCommand {
     this.artifactHash,
     this.artifactName,
     this.artifactConfig = const [],
+    this.subclassKit = const SubclassKit(),
     this.notes,
   });
 
@@ -32,6 +33,9 @@ class CreateVariantCommand {
   final int? artifactHash;
   final String? artifactName;
   final List<int> artifactConfig;
+
+  /// Variant-owned kit pieces (aspects/fragments/abilities). Tree ignored.
+  final SubclassKit subclassKit;
   final String? notes;
 }
 
@@ -46,6 +50,8 @@ class UpdateVariantCommand {
     this.artifactHash,
     this.artifactName,
     this.artifactConfig,
+    this.setSubclassKit = false,
+    this.subclassKit,
     this.setNotes = false,
     this.notes,
     this.attachments,
@@ -59,6 +65,10 @@ class UpdateVariantCommand {
   final int? artifactHash;
   final String? artifactName;
   final List<int>? artifactConfig;
+
+  /// When true, replace variant kit pieces with [subclassKit] (DBR-SUB-003).
+  final bool setSubclassKit;
+  final SubclassKit? subclassKit;
   final bool setNotes;
   final String? notes;
 
@@ -242,8 +252,12 @@ Future<void> validateVariantSave(
   if (resolved == null) return;
 
   final hasMods = await variantHasMods(db, userId, attachments);
-  // Residual until pkg-variant-subclass-kit: kit bar reads builds.subclass.
-  final kit = subclassKitFromJson(build.subclass);
+  // Gate-1 / kit bar: effective kit for **this** variant (DBR-CMPL-001c).
+  final kit = loadEffectiveSubclassKit(
+    buildSubclass: build.subclass,
+    variantSubclassKit: variant.subclassKit,
+    pinnedSuper: build.pinnedSuper,
+  );
   final domainAtts = attachments.map(attachmentFromRecord).toList();
 
   final aspects = kit.aspects
@@ -307,6 +321,8 @@ Future<VariantRecord?> createUserVariant(
     );
   }
 
+  // Seed empty kit unless caller provided pieces (fork copies kit explicitly).
+  final kitPieces = variantKitPiecesOnly(input.subclassKit);
   return createVariantRecord(
     db,
     id: input.id ?? newId(),
@@ -318,12 +334,13 @@ Future<VariantRecord?> createUserVariant(
     artifactHash: input.artifactHash,
     artifactName: input.artifactName,
     artifactConfig: input.artifactConfig,
+    subclassKit: subclassKitPiecesToJson(kitPieces),
     notes: input.notes,
     now: now(),
   );
 }
 
-/// Update variant; equipment-affecting changes re-run hard gates with rollback.
+/// Update variant; equipment/kit-affecting changes re-run hard gates with rollback.
 Future<VariantRecord?> updateUserVariant(
   AppDatabase db,
   int userId,
@@ -339,6 +356,8 @@ Future<VariantRecord?> updateUserVariant(
   final existing = await getVariant(db, buildId, variantId);
   if (existing == null) return null;
 
+  // Equipment save re-runs full gate order with rollback.
+  // Kit-only edits: hard-check legality first (DBR-SUB-004); not identity.
   final equipmentAffecting =
       input.attachments != null || input.setExoticWeapon;
 
@@ -352,10 +371,83 @@ Future<VariantRecord?> updateUserVariant(
           artifactHash: existing.artifactHash,
           artifactName: existing.artifactName,
           artifactConfig: existing.artifactConfig,
+          subclassKit: existing.subclassKit,
           notes: existing.notes,
           updatedAt: existing.updatedAt,
         )
       : null;
+
+  // Illegal kit hard-blocks before write (aspect/fragment capacity + ability pins).
+  if (input.setSubclassKit) {
+    final nextPieces = variantKitPiecesOnly(
+      input.subclassKit ?? const SubclassKit(),
+    );
+    final aspects = nextPieces.aspects
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    final fragments = nextPieces.fragments
+        .map((f) => f.trim())
+        .where((f) => f.isNotEmpty)
+        .toList();
+    final capacity = await ports.resolveFragmentCapacity(aspects);
+    final capacityResolved =
+        aspects.isEmpty || capacity.resolvedCount == aspects.length;
+    final kitEval = evaluateSubclassKit(
+      SubclassKitEvalInput(
+        aspectCount: aspects.length,
+        fragmentCount: fragments.length,
+        fragmentCapacity: capacity.capacity,
+        capacityResolved: capacityResolved,
+      ),
+    );
+    if (kitEval.isHardBlocked) {
+      final first = kitEval.hardBlocks.first;
+      throw UseCaseException(
+        UseCaseErrorCode.fromDomainCode(first.code) ??
+            UseCaseErrorCode.illegalSubclassKit,
+        kitEval.hardBlocks.map((b) => b.message).join('; '),
+        details: {
+          'hardBlocks': [
+            for (final b in kitEval.hardBlocks)
+              {'code': b.code, 'message': b.message},
+          ],
+        },
+      );
+    }
+
+    // Exotic ability match against effective kit (pinned Super + next pieces).
+    final required = ports.lookupAbilityRequirements(
+      hash: build.exoticArmorHash,
+      name: build.exoticArmorName,
+    );
+    if (required != null) {
+      final effective = mergeEffectiveSubclassKit(
+        variantKit: nextPieces,
+        treeName: subclassKitFromJson(build.subclass).name,
+        pinnedSuper: build.pinnedSuper,
+      );
+      final abilityEval = evaluateExoticAbilityMatch(
+        required: required,
+        kit: effective.abilityKit,
+        pinnedSuper: build.pinnedSuper,
+      );
+      if (abilityEval.isHardBlocked) {
+        final first = abilityEval.hardBlocks.first;
+        throw UseCaseException(
+          UseCaseErrorCode.fromDomainCode(first.code) ??
+              UseCaseErrorCode.exoticAbilityMismatch,
+          abilityEval.hardBlocks.map((b) => b.message).join('; '),
+          details: {
+            'hardBlocks': [
+              for (final b in abilityEval.hardBlocks)
+                {'code': b.code, 'message': b.message},
+            ],
+          },
+        );
+      }
+    }
+  }
 
   final ts = now();
   String? nextName;
@@ -386,6 +478,13 @@ Future<VariantRecord?> updateUserVariant(
     artifactName:
         input.setArtifact ? Value(input.artifactName) : const Value.absent(),
     artifactConfig: input.artifactConfig,
+    subclassKit: input.setSubclassKit
+        ? Value(
+            subclassKitPiecesToJson(
+              variantKitPiecesOnly(input.subclassKit ?? const SubclassKit()),
+            ),
+          )
+        : const Value.absent(),
     notes: input.setNotes ? Value(input.notes) : const Value.absent(),
     now: ts,
   );
@@ -412,7 +511,7 @@ Future<VariantRecord?> updateUserVariant(
         ports: ports,
       );
     } catch (e) {
-      // R1: restore prior variant + attachments.
+      // R1: restore prior variant + attachments (includes subclass_kit).
       await updateVariantRecord(
         db,
         buildId,
@@ -423,6 +522,7 @@ Future<VariantRecord?> updateUserVariant(
         artifactHash: Value(previousSnapshot.artifactHash),
         artifactName: Value(previousSnapshot.artifactName),
         artifactConfig: previousSnapshot.artifactConfig,
+        subclassKit: Value(previousSnapshot.subclassKit),
         notes: Value(previousSnapshot.notes),
         now: previousSnapshot.updatedAt,
       );

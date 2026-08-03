@@ -16,6 +16,7 @@ VariantRecord _rowToVariant(BuildVariant row) {
     artifactHash: row.artifactHash,
     artifactName: row.artifactName,
     artifactConfig: parseIntJsonArray(row.artifactConfig),
+    subclassKit: decodeJsonValue(row.subclassKit),
     notes: row.notes,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -67,6 +68,7 @@ Future<VariantRecord> createVariantRecord(
   int? artifactHash,
   String? artifactName,
   List<int> artifactConfig = const [],
+  Object? subclassKit,
   String? notes,
   required String now,
 }) async {
@@ -81,6 +83,7 @@ Future<VariantRecord> createVariantRecord(
           artifactHash: Value(artifactHash),
           artifactName: Value(artifactName),
           artifactConfig: Value(encodeIntJsonArray(artifactConfig)),
+          subclassKit: Value(encodeJsonValue(subclassKit ?? const <String, Object?>{})),
           notes: Value(notes),
           createdAt: now,
           updatedAt: now,
@@ -99,6 +102,7 @@ Future<VariantRecord?> updateVariantRecord(
   Value<int?> artifactHash = const Value.absent(),
   Value<String?> artifactName = const Value.absent(),
   List<int>? artifactConfig,
+  Value<Object?> subclassKit = const Value.absent(),
   Value<String?> notes = const Value.absent(),
   required String now,
 }) async {
@@ -125,6 +129,9 @@ Future<VariantRecord?> updateVariantRecord(
       artifactConfig: Value(
         encodeIntJsonArray(artifactConfig ?? existing.artifactConfig),
       ),
+      subclassKit: subclassKit.present
+          ? Value(encodeJsonValue(subclassKit.value ?? const <String, Object?>{}))
+          : Value(encodeJsonValue(existing.subclassKit ?? const <String, Object?>{})),
       notes: notes.present ? notes : Value(existing.notes),
       updatedAt: Value(now),
     ),

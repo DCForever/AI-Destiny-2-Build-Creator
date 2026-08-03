@@ -5124,6 +5124,14 @@ class $BuildVariantsTable extends BuildVariants
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('[]'));
+  static const VerificationMeta _subclassKitMeta =
+      const VerificationMeta('subclassKit');
+  @override
+  late final GeneratedColumn<String> subclassKit = GeneratedColumn<String>(
+      'subclass_kit', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('{}'));
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -5152,6 +5160,7 @@ class $BuildVariantsTable extends BuildVariants
         artifactHash,
         artifactName,
         artifactConfig,
+        subclassKit,
         notes,
         createdAt,
         updatedAt
@@ -5217,6 +5226,12 @@ class $BuildVariantsTable extends BuildVariants
           artifactConfig.isAcceptableOrUnknown(
               data['artifact_config']!, _artifactConfigMeta));
     }
+    if (data.containsKey('subclass_kit')) {
+      context.handle(
+          _subclassKitMeta,
+          subclassKit.isAcceptableOrUnknown(
+              data['subclass_kit']!, _subclassKitMeta));
+    }
     if (data.containsKey('notes')) {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
@@ -5260,6 +5275,8 @@ class $BuildVariantsTable extends BuildVariants
           .read(DriftSqlType.string, data['${effectivePrefix}artifact_name']),
       artifactConfig: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}artifact_config'])!,
+      subclassKit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}subclass_kit'])!,
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       createdAt: attachedDatabase.typeMapping
@@ -5285,6 +5302,11 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
   final int? artifactHash;
   final String? artifactName;
   final String artifactConfig;
+
+  /// Variant-owned subclass kit JSON (aspects/fragments/abilities).
+  ///
+  /// Tree/element lives on [Builds.subclass] only (DBR-SUB-001 / DBR-SUB-003).
+  final String subclassKit;
   final String? notes;
   final String createdAt;
   final String updatedAt;
@@ -5298,6 +5320,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
       this.artifactHash,
       this.artifactName,
       required this.artifactConfig,
+      required this.subclassKit,
       this.notes,
       required this.createdAt,
       required this.updatedAt});
@@ -5321,6 +5344,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
       map['artifact_name'] = Variable<String>(artifactName);
     }
     map['artifact_config'] = Variable<String>(artifactConfig);
+    map['subclass_kit'] = Variable<String>(subclassKit);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -5348,6 +5372,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
           ? const Value.absent()
           : Value(artifactName),
       artifactConfig: Value(artifactConfig),
+      subclassKit: Value(subclassKit),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       createdAt: Value(createdAt),
@@ -5368,6 +5393,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
       artifactHash: serializer.fromJson<int?>(json['artifactHash']),
       artifactName: serializer.fromJson<String?>(json['artifactName']),
       artifactConfig: serializer.fromJson<String>(json['artifactConfig']),
+      subclassKit: serializer.fromJson<String>(json['subclassKit']),
       notes: serializer.fromJson<String?>(json['notes']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
@@ -5386,6 +5412,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
       'artifactHash': serializer.toJson<int?>(artifactHash),
       'artifactName': serializer.toJson<String?>(artifactName),
       'artifactConfig': serializer.toJson<String>(artifactConfig),
+      'subclassKit': serializer.toJson<String>(subclassKit),
       'notes': serializer.toJson<String?>(notes),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
@@ -5402,6 +5429,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
           Value<int?> artifactHash = const Value.absent(),
           Value<String?> artifactName = const Value.absent(),
           String? artifactConfig,
+          String? subclassKit,
           Value<String?> notes = const Value.absent(),
           String? createdAt,
           String? updatedAt}) =>
@@ -5421,6 +5449,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
         artifactName:
             artifactName.present ? artifactName.value : this.artifactName,
         artifactConfig: artifactConfig ?? this.artifactConfig,
+        subclassKit: subclassKit ?? this.subclassKit,
         notes: notes.present ? notes.value : this.notes,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -5446,6 +5475,8 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
       artifactConfig: data.artifactConfig.present
           ? data.artifactConfig.value
           : this.artifactConfig,
+      subclassKit:
+          data.subclassKit.present ? data.subclassKit.value : this.subclassKit,
       notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -5464,6 +5495,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
           ..write('artifactHash: $artifactHash, ')
           ..write('artifactName: $artifactName, ')
           ..write('artifactConfig: $artifactConfig, ')
+          ..write('subclassKit: $subclassKit, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -5482,6 +5514,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
       artifactHash,
       artifactName,
       artifactConfig,
+      subclassKit,
       notes,
       createdAt,
       updatedAt);
@@ -5498,6 +5531,7 @@ class BuildVariant extends DataClass implements Insertable<BuildVariant> {
           other.artifactHash == this.artifactHash &&
           other.artifactName == this.artifactName &&
           other.artifactConfig == this.artifactConfig &&
+          other.subclassKit == this.subclassKit &&
           other.notes == this.notes &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -5513,6 +5547,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
   final Value<int?> artifactHash;
   final Value<String?> artifactName;
   final Value<String> artifactConfig;
+  final Value<String> subclassKit;
   final Value<String?> notes;
   final Value<String> createdAt;
   final Value<String> updatedAt;
@@ -5527,6 +5562,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
     this.artifactHash = const Value.absent(),
     this.artifactName = const Value.absent(),
     this.artifactConfig = const Value.absent(),
+    this.subclassKit = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -5542,6 +5578,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
     this.artifactHash = const Value.absent(),
     this.artifactName = const Value.absent(),
     this.artifactConfig = const Value.absent(),
+    this.subclassKit = const Value.absent(),
     this.notes = const Value.absent(),
     required String createdAt,
     required String updatedAt,
@@ -5561,6 +5598,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
     Expression<int>? artifactHash,
     Expression<String>? artifactName,
     Expression<String>? artifactConfig,
+    Expression<String>? subclassKit,
     Expression<String>? notes,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
@@ -5576,6 +5614,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
       if (artifactHash != null) 'artifact_hash': artifactHash,
       if (artifactName != null) 'artifact_name': artifactName,
       if (artifactConfig != null) 'artifact_config': artifactConfig,
+      if (subclassKit != null) 'subclass_kit': subclassKit,
       if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -5593,6 +5632,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
       Value<int?>? artifactHash,
       Value<String?>? artifactName,
       Value<String>? artifactConfig,
+      Value<String>? subclassKit,
       Value<String?>? notes,
       Value<String>? createdAt,
       Value<String>? updatedAt,
@@ -5607,6 +5647,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
       artifactHash: artifactHash ?? this.artifactHash,
       artifactName: artifactName ?? this.artifactName,
       artifactConfig: artifactConfig ?? this.artifactConfig,
+      subclassKit: subclassKit ?? this.subclassKit,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -5644,6 +5685,9 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
     if (artifactConfig.present) {
       map['artifact_config'] = Variable<String>(artifactConfig.value);
     }
+    if (subclassKit.present) {
+      map['subclass_kit'] = Variable<String>(subclassKit.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -5671,6 +5715,7 @@ class BuildVariantsCompanion extends UpdateCompanion<BuildVariant> {
           ..write('artifactHash: $artifactHash, ')
           ..write('artifactName: $artifactName, ')
           ..write('artifactConfig: $artifactConfig, ')
+          ..write('subclassKit: $subclassKit, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -8832,6 +8877,7 @@ typedef $$BuildVariantsTableCreateCompanionBuilder = BuildVariantsCompanion
   Value<int?> artifactHash,
   Value<String?> artifactName,
   Value<String> artifactConfig,
+  Value<String> subclassKit,
   Value<String?> notes,
   required String createdAt,
   required String updatedAt,
@@ -8848,6 +8894,7 @@ typedef $$BuildVariantsTableUpdateCompanionBuilder = BuildVariantsCompanion
   Value<int?> artifactHash,
   Value<String?> artifactName,
   Value<String> artifactConfig,
+  Value<String> subclassKit,
   Value<String?> notes,
   Value<String> createdAt,
   Value<String> updatedAt,
@@ -8892,6 +8939,9 @@ class $$BuildVariantsTableFilterComposer
   ColumnFilters<String> get artifactConfig => $composableBuilder(
       column: $table.artifactConfig,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subclassKit => $composableBuilder(
+      column: $table.subclassKit, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
@@ -8944,6 +8994,9 @@ class $$BuildVariantsTableOrderingComposer
       column: $table.artifactConfig,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get subclassKit => $composableBuilder(
+      column: $table.subclassKit, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
@@ -8990,6 +9043,9 @@ class $$BuildVariantsTableAnnotationComposer
   GeneratedColumn<String> get artifactConfig => $composableBuilder(
       column: $table.artifactConfig, builder: (column) => column);
 
+  GeneratedColumn<String> get subclassKit => $composableBuilder(
+      column: $table.subclassKit, builder: (column) => column);
+
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
@@ -9035,6 +9091,7 @@ class $$BuildVariantsTableTableManager extends RootTableManager<
             Value<int?> artifactHash = const Value.absent(),
             Value<String?> artifactName = const Value.absent(),
             Value<String> artifactConfig = const Value.absent(),
+            Value<String> subclassKit = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<String> createdAt = const Value.absent(),
             Value<String> updatedAt = const Value.absent(),
@@ -9050,6 +9107,7 @@ class $$BuildVariantsTableTableManager extends RootTableManager<
             artifactHash: artifactHash,
             artifactName: artifactName,
             artifactConfig: artifactConfig,
+            subclassKit: subclassKit,
             notes: notes,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -9065,6 +9123,7 @@ class $$BuildVariantsTableTableManager extends RootTableManager<
             Value<int?> artifactHash = const Value.absent(),
             Value<String?> artifactName = const Value.absent(),
             Value<String> artifactConfig = const Value.absent(),
+            Value<String> subclassKit = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             required String createdAt,
             required String updatedAt,
@@ -9080,6 +9139,7 @@ class $$BuildVariantsTableTableManager extends RootTableManager<
             artifactHash: artifactHash,
             artifactName: artifactName,
             artifactConfig: artifactConfig,
+            subclassKit: subclassKit,
             notes: notes,
             createdAt: createdAt,
             updatedAt: updatedAt,

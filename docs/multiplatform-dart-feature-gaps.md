@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-08-03 (dart-070-set-occupancy: package save floors + attach gates; PRODUCTION_CUTOVER GO **unchanged**)  
+**Updated:** 2026-08-03 (pkg-variant-subclass-kit closed: per-variant kit ownership; PRODUCTION_CUTOVER GO **unchanged**)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -579,7 +579,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | Field | Value |
 | ----- | ----- |
 | **Next planned slice** | **None** — DART-001–068 program complete; residual packages via align-product scan (not new DART-NNN unless product elevates) |
-| **Next phase** | **Post-P9 residual hygiene** — `pkg-default-three-gates` **closed** (compose + required on default); residual: `pkg-variant-subclass-kit`, `pkg-synergy-kinds-v1` |
+| **Next phase** | **Post-P9 residual hygiene** — `pkg-default-three-gates` **closed**; `pkg-variant-subclass-kit` **closed** (per-variant kit + effective merge); residual: `pkg-synergy-kinds-v1` |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
 | **Feature inventory** | Aligned with master GAP closed evidence (finish/optimizer/weapon-stats/owned-join) |
 | **unplanned_p0_p1** | *(empty for cutover)* |

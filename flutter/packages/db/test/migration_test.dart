@@ -16,7 +16,7 @@ void main() {
         ensureStepCatalog.map((s) => s.id).toList(),
         expectedEnsureStepIds,
       );
-      expect(ensureStepCount, 11);
+      expect(ensureStepCount, 12);
       expect(
         ensureStepCatalog.map((s) => s.productFunction).toList(),
         [
@@ -31,6 +31,7 @@ void main() {
           'ensureSetOptimizerColumns',
           'ensureBuildSynergyTypesTable',
           'ensureSynergyLinkRequiredColumn',
+          'ensureVariantSubclassKitColumn',
         ],
       );
       for (final step in ensureStepCatalog) {
@@ -328,6 +329,57 @@ CREATE TABLE build_variants (
       expect(cols, contains('artifact_hash'));
       expect(cols, contains('artifact_name'));
       expect(cols, contains('artifact_config'));
+      expect(cols, contains('subclass_kit'));
+    });
+
+    test('variant_subclass_kit seeds kit pieces from builds.subclass', () async {
+      raw.execute('''
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  bungie_membership_id TEXT NOT NULL UNIQUE,
+  membership_type INTEGER NOT NULL,
+  display_name TEXT NOT NULL DEFAULT '',
+  last_sync_at TEXT
+);
+CREATE TABLE builds (
+  id TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  class_name TEXT NOT NULL,
+  subclass TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE build_variants (
+  id TEXT PRIMARY KEY,
+  build_id TEXT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  is_default INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+INSERT INTO users (id, bungie_membership_id, membership_type, display_name)
+VALUES (1, 'm1', 3, 'T');
+INSERT INTO builds (id, user_id, name, class_name, subclass, created_at, updated_at)
+VALUES (
+  'b1', 1, 'Arc', 'Hunter',
+  '{"name":"Arcstrider","aspects":["Flow State"],"super":"Arc Staff"}',
+  't', 't'
+);
+INSERT INTO build_variants (id, build_id, name, is_default, created_at, updated_at)
+VALUES ('v1', 'b1', 'Default', 1, 't', 't');
+''');
+
+      await applyEnsureUpgrades(ex);
+      final cols = await ex.columnNames('build_variants');
+      expect(cols, contains('subclass_kit'));
+      final row = raw.select(
+        'SELECT subclass_kit FROM build_variants WHERE id = ?',
+        ['v1'],
+      ).single;
+      final kit = row['subclass_kit'] as String;
+      expect(kit, contains('Flow State'));
+      expect(kit, contains('Arc Staff'));
     });
   });
 }
