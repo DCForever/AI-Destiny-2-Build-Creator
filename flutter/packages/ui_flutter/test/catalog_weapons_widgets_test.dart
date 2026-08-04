@@ -26,6 +26,7 @@ void main() {
               NeonFacetChip(
                 key: const Key('element_chip_Solar'),
                 label: 'Solar',
+                value: 'Solar',
                 state: shown,
                 onCycle: () {
                   setState(() {
@@ -50,6 +51,42 @@ void main() {
       await tester.tap(find.byKey(const Key('element_chip_Solar')));
       await tester.pump();
       expect(shown, FacetChipState.off);
+    });
+
+    testWidgets('official icon-only element/ammo chips resolve visuals',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          Column(
+            children: [
+              NeonFacetChip(
+                key: const Key('icon_solar'),
+                label: 'Solar',
+                value: 'Solar',
+                state: FacetChipState.include,
+                iconOnly: true,
+                onCycle: () {},
+              ),
+              NeonFacetChip(
+                key: const Key('icon_heavy'),
+                label: 'Heavy',
+                value: 'Heavy',
+                state: FacetChipState.off,
+                iconOnly: true,
+                onCycle: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('icon_solar')), findsOneWidget);
+      expect(find.byKey(const Key('icon_heavy')), findsOneWidget);
+      expect(officialElementVisual('Solar'), isNotNull);
+      expect(officialAmmoVisual('Heavy'), isNotNull);
+      // Icon-only: no primary text label widgets for element/ammo names.
+      expect(find.text('Solar'), findsNothing);
+      expect(find.text('Heavy'), findsNothing);
     });
   });
 
@@ -166,7 +203,10 @@ void main() {
       expect(find.byKey(const Key('catalog_item_1')), findsOneWidget);
       expect(find.byKey(const Key('catalog_item_2')), findsOneWidget);
       expect(find.byKey(const Key('catalog_item_meta_1')), findsOneWidget);
-      expect(find.textContaining('Void'), findsWidgets);
+      // Type-only body — weapon type text, not element/slot/ammo labels.
+      expect(find.text('Grenade Launcher'), findsOneWidget);
+      expect(find.text('Void'), findsNothing);
+      expect(find.text('Energy'), findsNothing);
 
       await tester.tap(find.byKey(const Key('catalog_item_2')));
       await tester.pump();
@@ -262,6 +302,67 @@ void main() {
       expect(find.byKey(const Key('catalog_skeleton_0')), findsOneWidget);
       expect(find.byKey(const Key('catalog_empty_clear_filters')), findsNothing);
       expect(find.byKey(const Key('catalog_empty_sync')), findsNothing);
+    });
+  });
+
+  group('NeonItemCard official chrome', () {
+    testWidgets(
+        'element/ammo/frame icons present; type-only body; rarity badge',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NeonItemCard(
+            name: 'Funnelweb',
+            slot: 'Energy',
+            element: 'Void',
+            ammo: 'Heavy',
+            frame: 'Precision Frame',
+            typeLine: 'Submachine Gun',
+            rarity: NeonItemRarity.legendary,
+          ),
+        ),
+      );
+      // Allow Image.network to settle / fail into fallback.
+      await tester.pump();
+
+      expect(find.byKey(const Key('neon_card_element_glyph')), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_foot_icons')), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_slot_icon')), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_ammo_icon')), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_frame_icon')), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_rarity_badge')), findsOneWidget);
+      expect(find.text('◆'), findsOneWidget); // legendary chrome badge
+      // Type-only body — no element/ammo text labels on card.
+      expect(find.text('Submachine Gun'), findsOneWidget);
+      expect(find.text('Void'), findsNothing);
+      expect(find.text('Heavy'), findsNothing);
+      // Official lookups resolve (mock Unicode not required).
+      expect(officialElementVisual('Void')?.color.toARGB32(), 0xFFB184C5);
+      expect(officialAmmoVisual('Heavy')?.color.toARGB32(), 0xFFB184C5);
+      expect(officialWeaponFrameVisual('Precision Frame'), isNotNull);
+    });
+  });
+
+  group('CatalogScopeControl', () {
+    testWidgets('All / Owned cycle scope', (tester) async {
+      var scope = CatalogScope.all;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              CatalogScopeControl(
+                scope: scope,
+                ownedLabel: 'Owned · 2',
+                onChanged: (s) => setState(() => scope = s),
+              ),
+            );
+          },
+        ),
+      );
+      expect(find.byKey(const Key('catalog_scope_control')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('scope_chip_owned')));
+      await tester.pump();
+      expect(scope, CatalogScope.owned);
     });
   });
 

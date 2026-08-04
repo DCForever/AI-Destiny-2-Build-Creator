@@ -75,6 +75,10 @@ void main() {
       expect(exoWeapon.isExotic, isTrue);
       expect(exoWeapon.slot, 'Power');
       expect(exoWeapon.sourceStore, 'exotic-weapons');
+      expect(exoWeapon.intrinsicName, 'Wolfpack Rounds');
+      expect(exoWeapon.description, 'Cluster missiles.');
+      // Catalyst null when record has none — never invent.
+      expect(exoWeapon.catalystName, isNull);
 
       final armor = items.firstWhere((i) => i.hash == 20);
       expect(armor.slot, 'Helmet');
@@ -88,6 +92,36 @@ void main() {
       expect(legendArmor.classType, 'Titan');
       expect(legendArmor.slot, 'Gauntlets');
       expect(legendArmor.sourceStore, 'legendary-armor');
+    });
+
+    test('exotic projector maps intrinsicName + catalyst fields without invent',
+        () {
+      final items = projectMvpStores(
+        exoticWeapons: [
+          const ExoticWeaponRecord(
+            hash: 77,
+            name: 'Gjallarhorn',
+            searchName: 'gjallarhorn',
+            slot: WeaponSlotName.power,
+            element: ElementName.solar,
+            ammo: AmmoTypeName.heavy,
+            frame: 'Exotic',
+            intrinsic: NamedDescription(
+              name: 'Wolfpack Rounds',
+              description: 'Rockets spawn seekers.',
+            ),
+            catalyst: NamedDescription(
+              name: 'Gjallarhorn Catalyst',
+              description: 'More wolfpack.',
+            ),
+            itemTypeName: 'Rocket Launcher',
+          ),
+        ],
+      );
+      final exo = items.single;
+      expect(exo.intrinsicName, 'Wolfpack Rounds');
+      expect(exo.catalystName, 'Gjallarhorn Catalyst');
+      expect(exo.catalystDescription, 'More wolfpack.');
     });
 
     test('dedupes weapons and exoticWeapons by hash preferring exotic', () {

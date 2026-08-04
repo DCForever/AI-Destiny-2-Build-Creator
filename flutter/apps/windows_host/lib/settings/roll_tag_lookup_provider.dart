@@ -4,16 +4,17 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 /// Production roll-tag enrichment builders for Windows inventory sync (DART-051).
 ///
 /// - **Perk names:** raw `DestinyInventoryItemDefinition.displayProperties.name`
-///   for equipped plug hashes (MVP has no `weapon-perks` entity store).
+/// - **Perk icons:** raw `displayProperties.icon` (Bungie CDN path)
 /// - **Weapon meta:** OfflineCatalog legendary rows with `frame` + `itemTypeName`
-///   for frame-based champion tags (Next legendary `WeaponRecord` path).
 class WindowsRollTagEnrichment {
   const WindowsRollTagEnrichment({
     required this.perkNameMapBuilder,
+    required this.perkIconMapBuilder,
     required this.weaponRollMetaLookupBuilder,
   });
 
   final PerkNameMapBuilder perkNameMapBuilder;
+  final PerkNameMapBuilder perkIconMapBuilder;
   final WeaponRollMetaLookupBuilder weaponRollMetaLookupBuilder;
 }
 
@@ -21,21 +22,50 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
   required OfflineCatalog offlineCatalog,
   BungieManifestService? manifestService,
 }) {
-  Future<Map<int, String>> perkBuilder(List<int> plugHashes) async {
-    // Always return a non-null Map (Catalog crashes if Future completes null).
-    final empty = <int, String>{};
-    if (plugHashes.isEmpty) return empty;
+  /// One table load serves both name + icon builders (memoized per call batch).
+  Map<dynamic, dynamic>? cachedTable;
+  String? cachedVersion;
+
+  Future<Map<dynamic, dynamic>?> loadItemDefs() async {
     final service = manifestService;
-    if (service == null) return empty;
+    if (service == null) return null;
     try {
       final version = await service.readCurrentVersion();
-      if (version == null || version.isEmpty) return empty;
+      if (version == null || version.isEmpty) return null;
+      if (cachedTable != null && cachedVersion == version) return cachedTable;
       final table = await service.loadRawTable(
         version,
         'DestinyInventoryItemDefinition',
       );
-      final map = buildPerkNameMapFromItemDefs(table, plugHashes);
-      return Map<int, String>.from(map);
+      cachedTable = table;
+      cachedVersion = version;
+      return table;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<int, String>> perkNameBuilder(List<int> plugHashes) async {
+    // Always a real Map — never null (Catalog / sync crash on null Future result).
+    final empty = <int, String>{};
+    if (plugHashes.isEmpty) return empty;
+    try {
+      final table = await loadItemDefs();
+      if (table == null) return empty;
+      // build* returns a fresh map; avoid Map.from (extra copy of large results).
+      return buildPerkNameMapFromItemDefs(table, plugHashes);
+    } catch (_) {
+      return empty;
+    }
+  }
+
+  Future<Map<int, String>> perkIconBuilder(List<int> plugHashes) async {
+    final empty = <int, String>{};
+    if (plugHashes.isEmpty) return empty;
+    try {
+      final table = await loadItemDefs();
+      if (table == null) return empty;
+      return buildPerkIconMapFromItemDefs(table, plugHashes);
     } catch (_) {
       return empty;
     }
@@ -63,14 +93,13 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
   }
 
   return WindowsRollTagEnrichment(
-    perkNameMapBuilder: perkBuilder,
+    perkNameMapBuilder: perkNameBuilder,
+    perkIconMapBuilder: perkIconBuilder,
     weaponRollMetaLookupBuilder: weaponBuilder,
   );
 }
 
 /// Catalog-only weapon meta (web / hosts without raw plug defs).
-///
-/// Frame champion tags work; perk-name rules need raw defs or injected maps.
 WindowsRollTagEnrichment createCatalogRollTagEnrichment({
   required OfflineCatalog offlineCatalog,
 }) {

@@ -44,6 +44,7 @@ class InventorySyncController extends ChangeNotifier {
     this.equipmentBucketLookupBuilder,
     this.perkNameMap,
     this.perkNameMapBuilder,
+    this.perkIconMapBuilder,
     this.weaponRollMetaLookup,
     this.weaponRollMetaLookupBuilder,
     this.weaponSocketContextBuilder,
@@ -72,6 +73,9 @@ class InventorySyncController extends ChangeNotifier {
 
   /// Production builder: plug names from raw item defs (DART-051).
   final PerkNameMapBuilder? perkNameMapBuilder;
+
+  /// Production builder: plug hashes → Bungie icon paths (displayProperties.icon).
+  final PerkNameMapBuilder? perkIconMapBuilder;
 
   /// Explicit itemHash → weapon frame/type meta (tests / overrides).
   final Map<int, RollTagWeaponMeta>? weaponRollMetaLookup;
@@ -235,12 +239,18 @@ class InventorySyncController extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
       // Soft best-effort — never auto-applies kits (BR-OPT-004 / GAP-UI-SETTINGS-04).
-      await fetchPostSyncSuggestions();
+      try {
+        await fetchPostSyncSuggestions();
+      } catch (_) {
+        // Suggestions optional; inventory write already succeeded.
+      }
       return;
     } on SyncInProgressError catch (e) {
       _phase = InventorySyncPhase.error;
       _errorMessage = e.message;
-    } catch (e) {
+    } catch (e, st) {
+      // Surface real failure without process kill when possible.
+      debugPrint('InventorySyncController.syncNow failed: $e\n$st');
       _phase = InventorySyncPhase.error;
       _errorMessage = _safeErrorMessage(e);
     }

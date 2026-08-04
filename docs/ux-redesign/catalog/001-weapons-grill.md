@@ -24,6 +24,10 @@
 | Possible crafted | **Toggle** (off by default). When shown, uses the **same column/cell format as Perks** (barrel/mag/traits), not a bullet list. No duplicate current-craft list. |
 | Exotic intrinsic | **Separate** from roll perk columns; shown under **Exotic identity** next to **Catalyst** (fixed trait + catalyst status/plug). |
 | Craftable exotics | Craftable is not legendary-only. Craftable exotic may have both possible crafted **and** catalyst independently (DO-WPN-052–054). |
+| Card body text | Weapon **type only** — no element/slot/ammo/frame in description |
+| Card icons | Element BL bloom+glyph; foot slot/ammo/frame; rarity TR badge; icons &gt; text |
+| Hue split | Legendary = warm grape (right); Void = cool violet `❖` (BL); Heavy = gold `▲`; Power `P` = steel-gold (not void) |
+| Card density | Compact: desktop ~156×112 min; mobile ~108px tall |
 
 ## Mobile
 

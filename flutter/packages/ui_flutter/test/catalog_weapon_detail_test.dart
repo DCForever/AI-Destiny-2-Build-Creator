@@ -60,6 +60,106 @@ void main() {
     });
   });
 
+  group('buildCatalogPerkColumns definition fallback', () {
+    test('unowned always shows full possible rolls (not curated-only)', () {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: null,
+        definitionSocketPlugs: const [
+          {
+            'columnKind': 'barrel',
+            'columnLabel': 'Barrel',
+            'equippedPlugHash': 10,
+            'reusablePlugHashes': [10, 11, 12],
+          },
+        ],
+        plugNameByHash: const {
+          10: 'Arrowhead Brake',
+          11: 'Chambered',
+          12: 'Corkscrew',
+        },
+        // Can-roll toggle is for owned copies; unowned ignores it.
+        showCanRoll: false,
+      );
+      expect(cols, hasLength(1));
+      expect(cols.single.cells.map((c) => c.hash).toSet(), {10, 11, 12});
+      expect(cols.single.cells.every((c) => !c.selected), isTrue);
+      expect(cols.single.cells.every((c) => c.fromCanRollPool), isTrue);
+    });
+
+    test('definition possible rolls include pool without can-roll flag', () {
+      final cols = buildCatalogPerkColumns(
+        definitionSocketPlugs: const [
+          {
+            'columnKind': 'barrel',
+            'columnLabel': 'Barrel',
+            'equippedPlugHash': 10,
+            'reusablePlugHashes': [10, 11],
+          },
+        ],
+        plugNameByHash: const {10: 'Arrowhead Brake', 11: 'Chambered'},
+        showCanRoll: false,
+      );
+      expect(cols.single.cells.map((c) => c.hash).toList(), [10, 11]);
+      expect(cols.single.cells.every((c) => c.fromCanRollPool), isTrue);
+    });
+
+    test('instance sockets merge definition reusables when can-roll on', () {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'intrinsic',
+            'columnLabel': 'Intrinsic',
+            'equippedPlugHash': 1,
+            'reusablePlugHashes': [1],
+          },
+          {
+            'columnKind': 'barrel',
+            'columnLabel': 'Barrel',
+            'equippedPlugHash': 10,
+            'reusablePlugHashes': [10],
+          },
+        ],
+        definitionSocketPlugs: const [
+          {
+            'columnKind': 'barrel',
+            'columnLabel': 'Barrel',
+            'equippedPlugHash': 10,
+            'reusablePlugHashes': [10, 11, 12],
+          },
+        ],
+        plugNameByHash: const {
+          1: 'Frame',
+          10: 'Arrowhead Brake',
+          11: 'Chambered',
+          12: 'Corkscrew',
+        },
+        showCanRoll: true,
+      );
+      expect(cols, hasLength(2));
+      final barrel = cols.firstWhere((c) => c.label == 'Barrel');
+      expect(barrel.cells.map((c) => c.hash).toSet(), {10, 11, 12});
+    });
+
+    test('column-label hash fallback treated as unknown', () {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 555,
+            'reusablePlugHashes': <int>[],
+          },
+        ],
+        plugCards: const [
+          // Projection fallback name before real defs resolve.
+        ],
+        plugNameByHash: const {},
+      );
+      // When plugCards carry "Trait (#555)" style via empty map — equipped only.
+      expect(cols.single.cells.single.unknown, isTrue);
+      expect(cols.single.cells.single.displayName, 'Unknown perk');
+    });
+  });
+
   group('buildCatalogPerkColumns / CatalogPerkGrid', () {
     final sockets = [
       {
@@ -365,7 +465,66 @@ void main() {
           tester.widget<FilledButton>(find.byKey(const Key('catalog_stub_set')));
       expect(setBtn.onPressed, isNull);
       expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_perk_section_perks')), findsOneWidget);
       expect(selected, 'high');
+    });
+
+    testWidgets('unowned shows Possible Rolls section + full definition pool',
+        (tester) async {
+      const item = CatalogItem(
+        hash: 50,
+        name: 'Palmyra-B',
+        slot: 'Power',
+        element: 'Stasis',
+        ammo: 'Heavy',
+        itemTypeName: 'Rocket Launcher',
+        isExotic: false,
+        owned: false,
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: item,
+            instances: const [],
+            definitionSocketPlugs: const [
+              {
+                'columnKind': 'barrel',
+                'columnLabel': 'Barrel',
+                'equippedPlugHash': 1,
+                'reusablePlugHashes': [1, 2],
+              },
+              {
+                'columnKind': 'trait',
+                'columnLabel': 'Trait 1',
+                'equippedPlugHash': 3,
+                'reusablePlugHashes': [3, 4],
+              },
+            ],
+            plugNameByHash: const {
+              1: 'Volatile Launch',
+              2: 'Confined Launch',
+              3: 'Impulse Amplifier',
+              4: 'Clown Cartridge',
+            },
+            onCanRollChanged: (_) {},
+            onCraftChanged: (_) {},
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const Key('catalog_perk_section_possible_rolls')),
+        findsOneWidget,
+      );
+      expect(find.text('POSSIBLE ROLLS'), findsOneWidget);
+      // No owned-copy can-roll toggle on definition-only weapons.
+      expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNothing);
+      expect(find.text('Volatile Launch'), findsOneWidget);
+      expect(find.text('Confined Launch'), findsOneWidget);
+      expect(find.text('Impulse Amplifier'), findsOneWidget);
+      expect(find.text('Clown Cartridge'), findsOneWidget);
+      expect(find.byKey(const Key('catalog_perk_grid')), findsOneWidget);
     });
   });
 }

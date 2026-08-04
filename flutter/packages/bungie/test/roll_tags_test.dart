@@ -81,6 +81,26 @@ void main() {
     });
   });
 
+  group('buildPerkIconMapFromItemDefs', () {
+    test('reads displayProperties.icon for plug hashes', () {
+      final table = <String, dynamic>{
+        '5': {
+          'hash': 5,
+          'displayProperties': {
+            'name': 'Fluted Barrel',
+            'icon': '/common/destiny2_content/icons/barrel.png',
+          },
+        },
+        '99': {
+          'hash': 99,
+          'displayProperties': {'name': 'X', 'icon': ''},
+        },
+      };
+      final map = buildPerkIconMapFromItemDefs(table, [5, 99, 1]);
+      expect(map, {5: '/common/destiny2_content/icons/barrel.png'});
+    });
+  });
+
   group('buildPerkNameMapFromNamedHashes', () {
     test('maps catalog entity names for requested plugs only', () {
       final map = buildPerkNameMapFromNamedHashes(

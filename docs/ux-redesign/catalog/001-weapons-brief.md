@@ -27,7 +27,8 @@
 | Possible crafted | Toggle **OFF** default; **same column/cell format as Perks**; no duplicate current-craft list |
 | Exotic | **Intrinsic** separate, near **Catalyst**; craftable exotic + catalyst independent; soft-only catalyst |
 | Outbound | Set/Synergy **disabled stubs** only |
-| Implementation posture | Re-skin/reuse Windows catalog semantics; extract god page; pure filter/sort in packages |
+| Weapon cards | **Icon-first layout** from mockups (type-only body; element BL bloom; foot meta; density). **Icons/colors = official Bungie/Destiny** (`destiny_official_icons.dart`), not mock Unicode/placeholder hues. Mockups are structure SSoT only. |
+| Implementation posture | Re-skin/reuse Windows catalog semantics; extract god page; pure filter/sort in packages; **NeonItemCard** uses official CDN icons + damage-type colors |
 
 ## Surfaces
 

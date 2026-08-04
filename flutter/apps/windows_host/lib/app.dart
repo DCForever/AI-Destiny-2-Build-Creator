@@ -89,6 +89,9 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                       key: const Key('catalog_page'),
                       services: widget.services,
                       reloadToken: _catalogReloadToken,
+                      onOpenSettings: () => _onDestinationSelected(
+                        Destiny2WindowsApp.settingsNavIndex,
+                      ),
                     ),
                     SettingsPage(
                       key: const Key('settings_page'),

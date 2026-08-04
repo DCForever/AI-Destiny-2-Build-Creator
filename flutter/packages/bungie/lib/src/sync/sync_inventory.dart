@@ -146,12 +146,16 @@ Future<SyncInventoryResult> _performSync({
     lookup,
   );
 
-  final plugHashes = <int>[
+  // Unique hashes only — inventory can repeat plugs across copies.
+  final plugHashes = <int>{
     for (final item in resolved.items) ...item.plugHashes,
-  ];
-  final itemHashes = <int>[
+  }.toList(growable: false);
+  final itemHashes = <int>{
     for (final item in resolved.items) item.itemHash,
-  ];
+  }.toList(growable: false);
+
+  // Enrichment is soft: never abort the Drift write if raw-def loading OOMs
+  // or a builder returns null (common with 190MB item definition tables).
   final resolvedPerkMap = await _resolvePerkNameMap(
     plugHashes: plugHashes,
     perkNameMap: perkNameMap,
@@ -163,10 +167,15 @@ Future<SyncInventoryResult> _performSync({
     weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
   );
 
-  final socketPlugsByInstance = await _buildSocketPlugsForItems(
-    resolved.items,
-    weaponSocketContextBuilder: weaponSocketContextBuilder,
-  );
+  Map<String, List<Map<String, Object?>>?> socketPlugsByInstance;
+  try {
+    socketPlugsByInstance = await _buildSocketPlugsForItems(
+      resolved.items,
+      weaponSocketContextBuilder: weaponSocketContextBuilder,
+    );
+  } catch (_) {
+    socketPlugsByInstance = const {};
+  }
 
   final records = _normalizeItems(
     resolved.items,
@@ -208,7 +217,28 @@ Future<Map<int, int>> _resolveEquipmentBucketLookup({
 }) async {
   final merged = <int, int>{};
   if (equipmentBucketLookupBuilder != null && transferHashes.isNotEmpty) {
-    merged.addAll(await equipmentBucketLookupBuilder(transferHashes));
+    try {
+      final dynamic raw = await equipmentBucketLookupBuilder(transferHashes);
+      if (raw is Map) {
+        for (final e in raw.entries) {
+          final k = e.key;
+          final v = e.value;
+          final hash = k is int
+              ? k
+              : k is num
+                  ? k.toInt()
+                  : int.tryParse('$k');
+          final bucket = v is int
+              ? v
+              : v is num
+                  ? v.toInt()
+                  : int.tryParse('$v');
+          if (hash != null && bucket != null) merged[hash] = bucket;
+        }
+      }
+    } catch (_) {
+      // Soft: vault resolution may drop items; sync still writes rest.
+    }
   }
   if (equipmentBucketLookup != null) {
     merged.addAll(equipmentBucketLookup);
@@ -223,7 +253,25 @@ Future<Map<int, String>> _resolvePerkNameMap({
 }) async {
   final merged = <int, String>{};
   if (perkNameMapBuilder != null && plugHashes.isNotEmpty) {
-    merged.addAll(await perkNameMapBuilder(plugHashes));
+    try {
+      final dynamic raw = await perkNameMapBuilder(plugHashes);
+      if (raw is Map) {
+        for (final e in raw.entries) {
+          final k = e.key;
+          final v = e.value;
+          final hash = k is int
+              ? k
+              : k is num
+                  ? k.toInt()
+                  : int.tryParse('$k');
+          if (hash != null && v is String && v.isNotEmpty) {
+            merged[hash] = v;
+          }
+        }
+      }
+    } catch (_) {
+      // Soft: roll tags degrade to Crafted-only when names unavailable.
+    }
   }
   if (perkNameMap != null) {
     merged.addAll(perkNameMap);
@@ -238,7 +286,25 @@ Future<Map<int, RollTagWeaponMeta>> _resolveWeaponRollMetaLookup({
 }) async {
   final merged = <int, RollTagWeaponMeta>{};
   if (weaponRollMetaLookupBuilder != null && itemHashes.isNotEmpty) {
-    merged.addAll(await weaponRollMetaLookupBuilder(itemHashes));
+    try {
+      final dynamic raw = await weaponRollMetaLookupBuilder(itemHashes);
+      if (raw is Map) {
+        for (final e in raw.entries) {
+          final k = e.key;
+          final v = e.value;
+          final hash = k is int
+              ? k
+              : k is num
+                  ? k.toInt()
+                  : int.tryParse('$k');
+          if (hash != null && v is RollTagWeaponMeta) {
+            merged[hash] = v;
+          }
+        }
+      }
+    } catch (_) {
+      // Soft: champion frame tags optional.
+    }
   }
   if (weaponRollMetaLookup != null) {
     merged.addAll(weaponRollMetaLookup);

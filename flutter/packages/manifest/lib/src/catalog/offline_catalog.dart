@@ -21,20 +21,45 @@ enum CatalogEmptyReason {
 
 /// Result of loading offline entity stores into catalog rows.
 class OfflineCatalogLoadResult {
-  const OfflineCatalogLoadResult({
+  OfflineCatalogLoadResult({
     required this.version,
     required this.items,
     this.error,
     this.emptyReason = CatalogEmptyReason.none,
-  });
+    Map<String, int>? storeCounts,
+  }) : storeCounts = storeCounts ?? const <String, int>{};
 
   final String? version;
   final List<CatalogItem> items;
   final String? error;
   final CatalogEmptyReason emptyReason;
 
+  /// Per-store row counts after load (`exotic-weapons` → 0 when missing).
+  /// Always non-null (empty map when unknown / preloaded / load error).
+  final Map<String, int> storeCounts;
+
   bool get ok => error == null;
   bool get isEmpty => items.isEmpty;
+
+  /// MVP stores expected by [mvpExtractors] / [MvpStoreName] that loaded empty
+  /// or were missing from disk (common cause of “no exotics in weapons”).
+  List<String> get missingOrEmptyStores {
+    final counts = storeCounts;
+    final out = <String>[];
+    for (final s in MvpStoreName.values) {
+      final n = counts[s.fileStem] ?? 0;
+      if (n <= 0) out.add(s.fileStem);
+    }
+    return out;
+  }
+
+  /// True when legendary weapons loaded but exotic weapons did not.
+  bool get missingExoticWeapons {
+    final counts = storeCounts;
+    final legendary = counts[MvpStoreName.weapons.fileStem] ?? 0;
+    final exotic = counts[MvpStoreName.exoticWeapons.fileStem] ?? 0;
+    return legendary > 0 && exotic <= 0;
+  }
 }
 
 /// Offline catalog: project MVP entity stores and filter facets offline.
@@ -72,6 +97,7 @@ class OfflineCatalog {
                   ? CatalogEmptyReason.noVersion
                   : CatalogEmptyReason.noStores)
               : CatalogEmptyReason.none,
+          storeCounts: const {},
         ) {
     _base = _preloaded!.items;
     _loadedVersion = version;
@@ -92,9 +118,17 @@ class OfflineCatalog {
   String? _loadedVersion;
   OfflineCatalogLoadResult? _lastLoad;
 
+  /// Weapon definition perk pools (itemHash → columns) from entity stores.
+  /// Used for catalog detail can-roll / unowned definition fallback.
+  Map<int, List<WeaponPerkColumn>> _perkColumnsByHash = const {};
+
   List<CatalogItem> get baseItems => _base;
   String? get loadedVersion => _loadedVersion;
   OfflineCatalogLoadResult? get lastLoad => _lastLoad;
+
+  /// Definition [WeaponPerkColumn]s for [itemHash], or empty when unknown.
+  List<WeaponPerkColumn> perkColumnsFor(int itemHash) =>
+      _perkColumnsByHash[itemHash] ?? const [];
 
   /// Load (or reload) base catalog from entity stores.
   Future<OfflineCatalogLoadResult> loadBase() async {
@@ -103,6 +137,7 @@ class OfflineCatalog {
       _base = pre.items;
       _loadedVersion = pre.version;
       _lastLoad = pre;
+      // Preloaded items lack raw WeaponRecord; keep any prior map or empty.
       return pre;
     }
 
@@ -113,10 +148,12 @@ class OfflineCatalog {
       if (ver == null || ver.isEmpty) {
         _base = const [];
         _loadedVersion = null;
-        _lastLoad = const OfflineCatalogLoadResult(
+        _perkColumnsByHash = const {};
+        _lastLoad = OfflineCatalogLoadResult(
           version: null,
-          items: [],
+          items: const [],
           emptyReason: CatalogEmptyReason.noVersion,
+          storeCounts: const {},
         );
         return _lastLoad!;
       }
@@ -143,14 +180,18 @@ class OfflineCatalog {
           await _tryStore<AbilityRecord>(cache, MvpStoreName.abilities);
       final mods = await _tryStore<ModRecord>(cache, MvpStoreName.mods);
 
-      final anyLoaded = weapons.isNotEmpty ||
-          exoticWeapons.isNotEmpty ||
-          exoticArmor.isNotEmpty ||
-          legendaryArmor.isNotEmpty ||
-          aspects.isNotEmpty ||
-          fragments.isNotEmpty ||
-          abilities.isNotEmpty ||
-          mods.isNotEmpty;
+      final storeCounts = <String, int>{
+        MvpStoreName.weapons.fileStem: weapons.length,
+        MvpStoreName.exoticWeapons.fileStem: exoticWeapons.length,
+        MvpStoreName.exoticArmor.fileStem: exoticArmor.length,
+        MvpStoreName.legendaryArmor.fileStem: legendaryArmor.length,
+        MvpStoreName.aspects.fileStem: aspects.length,
+        MvpStoreName.fragments.fileStem: fragments.length,
+        MvpStoreName.abilities.fileStem: abilities.length,
+        MvpStoreName.mods.fileStem: mods.length,
+      };
+
+      final anyLoaded = storeCounts.values.any((n) => n > 0);
 
       final items = projectMvpStores(
         weapons: weapons,
@@ -163,6 +204,20 @@ class OfflineCatalog {
         mods: mods,
       );
 
+      // Prefer exotic row when both stores list the same hash.
+      final perkMap = <int, List<WeaponPerkColumn>>{};
+      for (final w in weapons) {
+        if (w.perkColumns.isNotEmpty) {
+          perkMap[w.hash] = List<WeaponPerkColumn>.unmodifiable(w.perkColumns);
+        }
+      }
+      for (final w in exoticWeapons) {
+        if (w.perkColumns.isNotEmpty) {
+          perkMap[w.hash] = List<WeaponPerkColumn>.unmodifiable(w.perkColumns);
+        }
+      }
+      _perkColumnsByHash = Map<int, List<WeaponPerkColumn>>.unmodifiable(perkMap);
+
       _base = items;
       _loadedVersion = ver;
       _lastLoad = OfflineCatalogLoadResult(
@@ -171,15 +226,18 @@ class OfflineCatalog {
         emptyReason: anyLoaded || items.isNotEmpty
             ? CatalogEmptyReason.none
             : CatalogEmptyReason.noStores,
+        storeCounts: storeCounts,
       );
       return _lastLoad!;
     } catch (e) {
       _base = const [];
       _loadedVersion = null;
+      _perkColumnsByHash = const {};
       _lastLoad = OfflineCatalogLoadResult(
         version: null,
         items: const [],
         error: e.toString(),
+        storeCounts: const {},
       );
       return _lastLoad!;
     }

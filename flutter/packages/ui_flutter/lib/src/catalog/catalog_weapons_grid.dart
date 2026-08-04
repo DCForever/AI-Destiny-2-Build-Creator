@@ -6,7 +6,8 @@ import '../neon_item_card.dart';
 
 /// Identity-primary weapon card (NeonItemCard adapter).
 ///
-/// Owned badge only when [showOwned] and item.owned — never fakes ownership.
+/// Type-only body; element/slot/ammo as mock glyphs. Owned badge only when
+/// [showOwned] and item.owned — never fakes ownership.
 class CatalogWeaponCard extends StatelessWidget {
   const CatalogWeaponCard({
     super.key,
@@ -29,28 +30,28 @@ class CatalogWeaponCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final owned = showOwned && item.owned;
     final ownedLabel = owned ? '×${item.ownedCount}' : null;
-    final identityLine = [
-      if (item.element != null) item.element!,
-      if (item.slot != null) item.slot!,
-      if (item.ammo != null) item.ammo!,
-      if (item.isExotic) 'Exotic',
-    ].join(' · ');
+    // Type-only body (mock): element/slot/ammo live as glyphs, not text.
     final typeParts = <String>[
-      if (identityLine.isNotEmpty) identityLine,
-      if (item.itemTypeName != null) item.itemTypeName!,
-      if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
+      if (item.itemTypeName != null && item.itemTypeName!.isNotEmpty)
+        item.itemTypeName!,
     ];
+    final typeLine = typeParts.isEmpty ? 'Weapon' : typeParts.join(' · ');
 
     return NeonItemCard(
       key: Key('catalog_item_${item.hash}'),
       name: item.name,
       slot: item.slot,
       element: item.element,
-      typeLine: typeParts.isEmpty ? null : typeParts.join(' · '),
-      rarity: neonItemRarity(isExotic: item.isExotic),
+      ammo: item.ammo,
+      frame: item.frame,
+      typeLine: typeLine,
+      // Destiny weapons are legendary unless exotic (mock chrome ◆ vs ✦).
+      rarity: item.isExotic
+          ? NeonItemRarity.exotic
+          : NeonItemRarity.legendary,
       ownedLabel: ownedLabel,
       selected: selected,
-      minHeight: 152,
+      minHeight: 100,
       onTap: onTap,
       nameKey: Key('catalog_item_name_${item.hash}'),
       metaKey: Key('catalog_item_meta_${item.hash}'),
@@ -70,6 +71,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
     this.onSelect,
     this.leadingBuilder,
     this.headerLabel = 'CATALOG NODES · GRID',
+    this.groups,
   });
 
   final List<CatalogItem> items;
@@ -79,14 +81,21 @@ class CatalogWeaponsGrid extends StatelessWidget {
   final Widget Function(CatalogItem item)? leadingBuilder;
   final String headerLabel;
 
+  /// Optional pre-grouped rows (label + items). When null, flat [items].
+  final List<({String key, String label, List<CatalogItem> items})>? groups;
+
   @override
   Widget build(BuildContext context) {
+    // Dense grid: shorter cells, tighter gaps; card chrome fills height.
     const gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
-      maxCrossAxisExtent: 260,
-      mainAxisExtent: 168,
-      mainAxisSpacing: kSpace12,
-      crossAxisSpacing: kSpace12,
+      maxCrossAxisExtent: 200,
+      mainAxisExtent: 112,
+      mainAxisSpacing: kSpace8,
+      crossAxisSpacing: kSpace8,
     );
+
+    final grouped = groups;
+    final useGroups = grouped != null && grouped.isNotEmpty;
 
     return CustomScrollView(
       key: const Key('catalog_list'),
@@ -101,25 +110,59 @@ class CatalogWeaponsGrid extends StatelessWidget {
             ),
           ),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          sliver: SliverGrid(
-            gridDelegate: gridDelegate,
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = items[index];
-                return CatalogWeaponCard(
-                  item: item,
-                  selected: selectedHash == item.hash,
-                  showOwned: showOwned,
-                  leading: leadingBuilder?.call(item),
-                  onTap: onSelect == null ? null : () => onSelect!(item),
-                );
-              },
-              childCount: items.length,
+        if (!useGroups)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            sliver: SliverGrid(
+              gridDelegate: gridDelegate,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = items[index];
+                  return CatalogWeaponCard(
+                    item: item,
+                    selected: selectedHash == item.hash,
+                    showOwned: showOwned,
+                    leading: leadingBuilder?.call(item),
+                    onTap: onSelect == null ? null : () => onSelect!(item),
+                  );
+                },
+                childCount: items.length,
+              ),
             ),
-          ),
-        ),
+          )
+        else
+          for (final group in grouped) ...[
+            if (group.label.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  key: Key('catalog_group_${group.key}'),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: Text(
+                    '${group.label} (${group.items.length})'.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ),
+              ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              sliver: SliverGrid(
+                gridDelegate: gridDelegate,
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = group.items[index];
+                    return CatalogWeaponCard(
+                      item: item,
+                      selected: selectedHash == item.hash,
+                      showOwned: showOwned,
+                      leading: leadingBuilder?.call(item),
+                      onTap: onSelect == null ? null : () => onSelect!(item),
+                    );
+                  },
+                  childCount: group.items.length,
+                ),
+              ),
+            ),
+          ],
       ],
     );
   }

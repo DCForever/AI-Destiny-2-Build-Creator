@@ -13,39 +13,45 @@ EquipmentBucketLookupBuilder createWindowsEquipmentBucketLookupBuilder({
   BungieManifestService? manifestService,
 }) {
   return (List<int> transferItemHashes) async {
-    if (transferItemHashes.isEmpty) return const {};
+    // Always return a non-null Map (sync crashes if Future completes null).
+    final empty = <int, int>{};
+    if (transferItemHashes.isEmpty) return empty;
 
-    final service = manifestService;
-    if (service != null) {
-      final version = await service.readCurrentVersion();
-      if (version != null && version.isNotEmpty) {
-        try {
-          final table = await service.loadRawTable(
-            version,
-            'DestinyInventoryItemDefinition',
-          );
-          final fromRaw =
-              buildEquipmentBucketLookup(table, transferItemHashes);
-          if (fromRaw.isNotEmpty) {
-            return fromRaw;
+    try {
+      final service = manifestService;
+      if (service != null) {
+        final version = await service.readCurrentVersion();
+        if (version != null && version.isNotEmpty) {
+          try {
+            final table = await service.loadRawTable(
+              version,
+              'DestinyInventoryItemDefinition',
+            );
+            final fromRaw =
+                buildEquipmentBucketLookup(table, transferItemHashes);
+            if (fromRaw.isNotEmpty) {
+              return fromRaw;
+            }
+          } catch (_) {
+            // Fall through to catalog slots when raw missing/corrupt/OOM.
           }
-        } catch (_) {
-          // Fall through to catalog slots when raw missing/corrupt.
         }
       }
-    }
 
-    if (offlineCatalog.baseItems.isEmpty) {
-      await offlineCatalog.loadBase();
+      if (offlineCatalog.baseItems.isEmpty) {
+        await offlineCatalog.loadBase();
+      }
+      final slots = <int, String>{
+        for (final item in offlineCatalog.baseItems)
+          if (item.slot != null && item.slot!.isNotEmpty) item.hash: item.slot!,
+      };
+      return buildEquipmentBucketLookupFromSlots(
+        slots,
+        onlyHashes: transferItemHashes,
+      );
+    } catch (_) {
+      return empty;
     }
-    final slots = <int, String>{
-      for (final item in offlineCatalog.baseItems)
-        if (item.slot != null && item.slot!.isNotEmpty) item.hash: item.slot!,
-    };
-    return buildEquipmentBucketLookupFromSlots(
-      slots,
-      onlyHashes: transferItemHashes,
-    );
   };
 }
 

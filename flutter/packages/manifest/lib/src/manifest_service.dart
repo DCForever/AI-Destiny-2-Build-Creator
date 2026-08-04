@@ -114,6 +114,9 @@ class BungieManifestService {
         'Raw table "$table" for version "$version" is not a valid JSON object.',
       );
     }
+    // Prefer the decoded map as-is — Map.from on DestinyInventoryItemDefinition
+    // (~190MB JSON) roughly doubles peak memory and can OOM Windows hosts.
+    if (parsed is Map<String, dynamic>) return parsed;
     return Map<String, dynamic>.from(parsed);
   }
 

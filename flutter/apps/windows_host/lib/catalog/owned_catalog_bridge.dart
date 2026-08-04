@@ -11,10 +11,10 @@ import '../settings/inventory_sync_controller.dart';
 /// DART-063: also annotates library synergy membership for membership filters
 /// and reverse tags (BR-SYN-004). Soft guidance never auto-applies.
 ///
-/// Plug display names (Next parity with `buildPlugMapForInventory`):
-/// - seed from OfflineCatalog base rows (mods / weapons / armor names)
-/// - fill gaps via [plugNameMapBuilder] (raw DestinyInventoryItemDefinition)
-/// so Catalog / Item Dossier show "Fluted Barrel" not `#hash`.
+/// Plug display names + icons (Next parity with `buildPlugMapForInventory`):
+/// - seed names/icons from OfflineCatalog base rows
+/// - fill gaps via [plugNameMapBuilder] / [plugIconMapBuilder]
+///   (raw DestinyInventoryItemDefinition) so perk grid is icon-first.
 class OwnedCatalogBridge {
   OwnedCatalogBridge({
     required this.db,
@@ -22,8 +22,11 @@ class OwnedCatalogBridge {
     required this.session,
     required this.inventorySync,
     Map<int, String> plugNameByHash = const {},
+    Map<int, String> plugIconByHash = const {},
     this.plugNameMapBuilder,
-  }) : _plugNameByHash = Map<int, String>.from(plugNameByHash);
+    this.plugIconMapBuilder,
+  })  : _plugNameByHash = Map<int, String>.from(plugNameByHash),
+        _plugIconByHash = Map<int, String>.from(plugIconByHash);
 
   final AppDatabase db;
   final OfflineCatalog offlineCatalog;
@@ -33,7 +36,11 @@ class OwnedCatalogBridge {
   /// Production builder: plug hashes → names from raw item defs (DART-051 / Next).
   final PerkNameMapBuilder? plugNameMapBuilder;
 
+  /// Production builder: plug hashes → Bungie icon paths.
+  final PerkNameMapBuilder? plugIconMapBuilder;
+
   Map<int, String> _plugNameByHash;
+  Map<int, String> _plugIconByHash;
 
   List<CatalogItem> _annotatedBase = const [];
   List<InventoryItemRecord> _inventory = const [];
@@ -55,13 +62,17 @@ class OwnedCatalogBridge {
   Map<int, String> get plugNameByHash =>
       Map<int, String>.unmodifiable(_plugNameByHash);
 
+  /// Resolved plug hash → Bungie icon path (grows with [ensurePlugNames]).
+  Map<int, String> get plugIconByHash =>
+      Map<int, String>.unmodifiable(_plugIconByHash);
+
   /// Load entity base (if needed) + inventory annotate + synergy membership.
   Future<void> refresh({bool reloadEntities = true}) async {
     if (reloadEntities) {
       await offlineCatalog.loadBase();
     }
 
-    // Seed names from MVP entity projection (mods, weapons, armor, etc.).
+    // Seed names/icons from MVP entity projection (mods, weapons, armor, etc.).
     _seedNamesFromCatalogBase();
 
     _userId = await _resolveUserId();
@@ -113,39 +124,63 @@ class OwnedCatalogBridge {
     _annotatedBase = annotateCatalogWithLinkedSynergies(owned, linkedByHash);
   }
 
-  /// Ensure [hashes] have display names (entity seed + raw def builder).
+  /// Ensure [hashes] have display names **and** icons (entity seed + raw defs).
   ///
   /// Safe to call repeatedly; only fetches missing hashes.
-  /// Never throws — Catalog must not red-screen on name resolution failure.
+  /// Never throws — Catalog must not red-screen on resolution failure.
   Future<void> ensurePlugNames(Iterable<int> hashes) async {
-    final missing = <int>[
+    final list = [for (final h in hashes) if (h != 0) h];
+    if (list.isEmpty) return;
+
+    await _resolveInto(
+      list,
+      map: _plugNameByHash,
+      setMap: (m) => _plugNameByHash = m,
+      explicit: inventorySync.perkNameMap,
+      builder: plugNameMapBuilder ?? inventorySync.perkNameMapBuilder,
+    );
+    await _resolveInto(
+      list,
+      map: _plugIconByHash,
+      setMap: (m) => _plugIconByHash = m,
+      explicit: null,
+      builder: plugIconMapBuilder ?? inventorySync.perkIconMapBuilder,
+    );
+  }
+
+  Future<void> _resolveInto(
+    List<int> hashes, {
+    required Map<int, String> map,
+    required void Function(Map<int, String>) setMap,
+    required Map<int, String>? explicit,
+    required PerkNameMapBuilder? builder,
+  }) async {
+    var current = Map<int, String>.from(map);
+    var missing = <int>[
       for (final h in hashes)
-        if (h != 0 && !_plugNameByHash.containsKey(h)) h,
+        if (!current.containsKey(h)) h,
     ];
     if (missing.isEmpty) return;
 
-    final explicit = inventorySync.perkNameMap;
     if (explicit != null && explicit.isNotEmpty) {
+      final more = <int, String>{};
       for (final h in missing) {
-        final n = explicit[h];
-        if (n != null && n.isNotEmpty) _plugNameByHash[h] = n;
+        final v = explicit[h];
+        if (v != null && v.isNotEmpty) more[h] = v;
+      }
+      if (more.isNotEmpty) {
+        current = {...current, ...more};
+        setMap(current);
+        missing = [
+          for (final h in missing)
+            if (!more.containsKey(h)) h,
+        ];
       }
     }
-
-    final stillMissing = <int>[
-      for (final h in missing)
-        if (!_plugNameByHash.containsKey(h)) h,
-    ];
-    if (stillMissing.isEmpty) return;
-
-    final builder = plugNameMapBuilder ?? inventorySync.perkNameMapBuilder;
-    if (builder == null) return;
+    if (missing.isEmpty || builder == null) return;
 
     try {
-      // Avoid typed await of Map — a null completion throws
-      // "Null is not a subtype of Map<int,String> of function result" and can
-      // surface as a Catalog red screen if not coerced via dynamic.
-      final dynamic fut = builder(List<int>.from(stillMissing));
+      final dynamic fut = builder(List<int>.from(missing));
       final Object? raw = fut is Future ? await fut : fut;
       if (raw is! Map) return;
       final more = <int, String>{};
@@ -161,9 +196,9 @@ class OwnedCatalogBridge {
         more[hash] = v;
       }
       if (more.isEmpty) return;
-      _plugNameByHash = {..._plugNameByHash, ...more};
+      setMap({...current, ...more});
     } catch (_) {
-      // Degrade to #hash display; do not fail catalog load.
+      // Degrade gracefully; do not fail catalog load.
     }
   }
 
@@ -171,6 +206,10 @@ class OwnedCatalogBridge {
     for (final item in offlineCatalog.baseItems) {
       if (item.name.isEmpty) continue;
       _plugNameByHash.putIfAbsent(item.hash, () => item.name);
+      final icon = item.icon;
+      if (icon != null && icon.isNotEmpty) {
+        _plugIconByHash.putIfAbsent(item.hash, () => icon);
+      }
     }
   }
 

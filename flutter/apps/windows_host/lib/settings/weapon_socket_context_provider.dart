@@ -22,15 +22,16 @@ WindowsWeaponSocketEnrichment createWindowsWeaponSocketEnrichment({
     int itemHash,
     List<int> plugHashes,
   ) async {
-    final service = manifestService;
-    if (service == null) {
-      return const WeaponSocketContext(plugCategoryByHash: {});
-    }
-    final version = await service.readCurrentVersion();
-    if (version == null || version.isEmpty) {
-      return const WeaponSocketContext(plugCategoryByHash: {});
-    }
+    // Soft enrichment only — never throw into inventory sync.
     try {
+      final service = manifestService;
+      if (service == null) {
+        return const WeaponSocketContext(plugCategoryByHash: {});
+      }
+      final version = await service.readCurrentVersion();
+      if (version == null || version.isEmpty) {
+        return const WeaponSocketContext(plugCategoryByHash: {});
+      }
       final table = await service.loadRawTable(
         version,
         'DestinyInventoryItemDefinition',

@@ -117,17 +117,6 @@ void main() {
   Finder itemKey(int hash) =>
       find.byKey(Key('catalog_item_$hash'), skipOffstage: false);
 
-  Future<void> expandFilters(WidgetTester tester) async {
-    final toggle = find.byKey(const Key('catalog_filters_toggle'));
-    if (toggle.evaluate().isEmpty) return;
-    final tile = tester.widget<ListTile>(toggle);
-    if (tile.subtitle != null) {
-      await tester.ensureVisible(toggle);
-      await tester.tap(toggle, warnIfMissed: false);
-      await _pumpFrames(tester);
-    }
-  }
-
   testWidgets('signed-out All grid + not-owned honesty', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -148,6 +137,11 @@ void main() {
     // Never fake owned badges when signed out.
     expect(find.byKey(const Key('owned_badge_1')), findsNothing);
     expect(find.byKey(const Key('owned_badge_2')), findsNothing);
+    // Primary filter chips visible without double-expand ListTile.
+    expect(find.byKey(const Key('element_chip_Solar')), findsOneWidget);
+    expect(find.byKey(const Key('slot_chip_Kinetic')), findsOneWidget);
+    expect(find.byKey(const Key('catalog_scope_control')), findsOneWidget);
+    expect(find.byKey(const Key('catalog_filters_toggle')), findsNothing);
   });
 
   testWidgets('facet refilter + RESET + zero empty Clear', (tester) async {
@@ -158,8 +152,8 @@ void main() {
       ),
     );
     await _pumpFrames(tester);
-    await expandFilters(tester);
 
+    // Primary chips always on — no expand required.
     await tester.tap(find.byKey(const Key('element_chip_Solar')));
     await _pumpFrames(tester);
     expect(itemKey(2), findsOneWidget);
@@ -218,6 +212,10 @@ void main() {
   });
 
   testWidgets('missing-manifest empty CTAs still wired', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    var openedSettings = false;
     final emptyServices = AppServices(
       storageRoot: services.storageRoot,
       db: services.db,
@@ -235,12 +233,43 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: testMaterialTheme(),
-        home: CatalogPage(services: emptyServices),
+        home: CatalogPage(
+          services: emptyServices,
+          onOpenSettings: () => openedSettings = true,
+        ),
       ),
     );
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('catalog_empty')), findsOneWidget);
     expect(find.byKey(const Key('catalog_empty_reload')), findsOneWidget);
+    final settings = find.byKey(const Key('catalog_empty_settings'));
+    expect(settings, findsOneWidget);
+    await tester.ensureVisible(settings);
+    await _pumpFrames(tester);
+    await tester.tap(settings, warnIfMissed: false);
+    await _pumpFrames(tester);
+    expect(openedSettings, isTrue);
+  });
+
+  testWidgets('select weapon: craft toggle hidden without craft pool data',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: CatalogPage(services: services),
+      ),
+    );
+    await _pumpFrames(tester);
+
+    await tester.tap(itemKey(2));
+    await _pumpFrames(tester);
+
+    expect(find.byKey(const Key('catalog_toggle_can_roll')), findsOneWidget);
+    // craftAvailable false when craftColumns empty — no false-positive toggle.
+    expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
   });
 }

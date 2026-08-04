@@ -117,20 +117,8 @@ void main() {
   Finder itemKey(int hash) =>
       find.byKey(Key('catalog_item_$hash'), skipOffstage: false);
 
-  Future<void> expandFilters(WidgetTester tester) async {
-    final toggle = find.byKey(const Key('catalog_filters_toggle'));
-    if (toggle.evaluate().isEmpty) return;
-    // Open if closed: subtitle is only shown when collapsed.
-    final tile = tester.widget<ListTile>(toggle);
-    if (tile.subtitle != null) {
-      await tester.ensureVisible(toggle);
-      await tester.tap(toggle, warnIfMissed: false);
-      await _pumpFrames(tester);
-    }
-  }
-
+  /// Primary facets (element/slot) are always on — only More is expandable.
   Future<void> expandMoreFilters(WidgetTester tester) async {
-    await expandFilters(tester);
     final more = find.byKey(const Key('catalog_more_filters_toggle'));
     if (more.evaluate().isEmpty) return;
     await tester.ensureVisible(more);
@@ -159,7 +147,10 @@ void main() {
     expect(find.byKey(const Key('catalog_status')), findsOneWidget);
     expect(find.byKey(const Key('mode_chip_weapons')), findsOneWidget);
     expect(find.byKey(const Key('mode_chip_universal')), findsOneWidget);
-    expect(find.byKey(const Key('catalog_filters_toggle')), findsOneWidget);
+    // Primary filter chips always visible (no double-collapse).
+    expect(find.byKey(const Key('element_chip_Solar')), findsOneWidget);
+    expect(find.byKey(const Key('slot_chip_Energy')), findsOneWidget);
+    expect(find.byKey(const Key('catalog_scope_control')), findsOneWidget);
     expect(find.byKey(const Key('catalog_board_header')), findsOneWidget);
   });
 
@@ -168,7 +159,7 @@ void main() {
       MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
-    await expandFilters(tester);
+    // Primary chips always on — no expand required.
     await tapChip(tester, const Key('element_chip_Solar'));
 
     expect(itemKey(2), findsOneWidget);
@@ -181,8 +172,7 @@ void main() {
       MaterialApp(theme: testMaterialTheme(), home: CatalogPage(services: services)),
     );
     await _pumpFrames(tester);
-    // Primary facets (slot) open with Filters; archetype/group behind More.
-    await expandFilters(tester);
+    // Primary facets always on; archetype/group behind More.
 
     // Slot Energy include
     await tapChip(tester, const Key('slot_chip_Energy'));

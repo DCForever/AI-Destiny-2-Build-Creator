@@ -76,6 +76,25 @@ class _SettingsPageState extends State<SettingsPage> {
     return total == 0;
   }
 
+  /// Partial rebuilds can omit stores (e.g. exotic-weapons) while weapons exist.
+  static bool _isEntityCacheIncomplete(ManifestStatus status) {
+    final meta = status.entityCache;
+    if (meta == null) return true;
+    if (_isEntityCacheEmpty(status)) return true;
+    // Expected MVP stems — missing key or zero count means rebuild needed.
+    const required = [
+      'weapons',
+      'exotic-weapons',
+      'exotic-armor',
+      'legendary-armor',
+    ];
+    for (final key in required) {
+      final n = meta.counts[key] ?? 0;
+      if (n <= 0) return true;
+    }
+    return false;
+  }
+
   Future<void> _loadStatus() async {
     setState(() {
       _loading = true;
@@ -260,6 +279,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     'not solely an inventory sync problem. Use Refresh manifest '
                     'below so entity stores are built (GAP-INV-06).',
                     key: const Key('entity_cache_empty_warning_text'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ] else if (_isEntityCacheIncomplete(_status!)) ...[
+              Card(
+                key: const Key('entity_cache_incomplete_warning'),
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Entity cache is incomplete (e.g. missing exotic-weapons or '
+                    'legendary-armor). Catalog Weapons will show legendaries only. '
+                    'Use Refresh manifest below to rebuild all MVP stores.',
+                    key: const Key('entity_cache_incomplete_warning_text'),
                   ),
                 ),
               ),

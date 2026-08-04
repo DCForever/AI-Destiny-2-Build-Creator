@@ -75,6 +75,14 @@ List<CatalogItem> projectMvpStores({
         description: w.intrinsic.description.isNotEmpty
             ? w.intrinsic.description
             : w.intrinsic.name,
+        intrinsicName: w.intrinsic.name.isNotEmpty ? w.intrinsic.name : null,
+        catalystName: w.catalyst != null && w.catalyst!.name.isNotEmpty
+            ? w.catalyst!.name
+            : null,
+        catalystDescription:
+            w.catalyst != null && w.catalyst!.description.isNotEmpty
+                ? w.catalyst!.description
+                : null,
         isExotic: true,
         owned: false,
         ownedCount: 0,
@@ -95,6 +103,7 @@ List<CatalogItem> projectMvpStores({
         description: a.intrinsic.description.isNotEmpty
             ? a.intrinsic.description
             : a.intrinsic.name,
+        intrinsicName: a.intrinsic.name.isNotEmpty ? a.intrinsic.name : null,
         isExotic: true,
         owned: false,
         ownedCount: 0,

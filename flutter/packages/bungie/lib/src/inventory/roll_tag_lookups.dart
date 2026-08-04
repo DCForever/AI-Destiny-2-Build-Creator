@@ -24,6 +24,30 @@ Map<int, String> buildPerkNameMapFromItemDefs(
   return map;
 }
 
+/// Build plugHash → Bungie icon path from DestinyInventoryItemDefinition.
+///
+/// Reads `displayProperties.icon` (e.g. `/common/destiny2_content/icons/…`).
+/// Used for icon-first perk cells (DIM-style); never invents paths.
+Map<int, String> buildPerkIconMapFromItemDefs(
+  Map<dynamic, dynamic> inventoryItemDefinitionTable,
+  Iterable<int> plugHashes,
+) {
+  if (plugHashes.isEmpty) return const {};
+
+  final map = <int, String>{};
+  for (final hash in plugHashes.toSet()) {
+    final raw = _tableEntry(inventoryItemDefinitionTable, hash);
+    if (raw is! Map) continue;
+    final display = raw['displayProperties'];
+    if (display is! Map) continue;
+    final icon = display['icon'];
+    if (icon is String && icon.trim().isNotEmpty) {
+      map[hash] = icon.trim();
+    }
+  }
+  return map;
+}
+
 /// Seed plugHash → display name from catalog/entity rows (hash + name).
 ///
 /// Web residual path (GAP-INV-02): MVP entity stores project mods/weapons/armor

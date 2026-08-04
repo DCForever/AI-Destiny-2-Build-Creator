@@ -75,7 +75,7 @@ class _Segment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final minH = dense ? 36.0 : 40.0;
+    final minH = dense ? 32.0 : 40.0;
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -88,8 +88,8 @@ class _Segment extends StatelessWidget {
           curve: Curves.easeOut,
           constraints: BoxConstraints(minHeight: minH),
           padding: EdgeInsets.symmetric(
-            horizontal: dense ? kSpace12 : 14,
-            vertical: dense ? 8 : 10,
+            horizontal: dense ? kSpace8 : 14,
+            vertical: dense ? 6 : 10,
           ),
           decoration: BoxDecoration(
             color: selected
@@ -137,10 +137,16 @@ class NeonPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
+    final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(kSpace16, kSpace12, kSpace16, kSpace8),
+      padding: EdgeInsets.fromLTRB(
+        kSpace16,
+        hasSubtitle ? kSpace12 : kSpace8,
+        kSpace16,
+        hasSubtitle ? kSpace8 : kSpace6,
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
@@ -151,21 +157,21 @@ class NeonPageHeader extends StatelessWidget {
                     kicker!.toUpperCase(),
                     style: neonMono(
                       color: palette.muted.withValues(alpha: 0.9),
-                      fontSize: 11,
-                      letterSpacing: 1.4,
+                      fontSize: 10,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                if (kicker != null) const SizedBox(height: kSpace8),
+                if (kicker != null) const SizedBox(height: kSpace4),
                 Text(
                   title.toUpperCase(),
                   key: titleKey,
                   style: neonDisplay(
                     color: palette.foreground,
-                    fontSize: 20,
-                    letterSpacing: 0.06 * 20,
+                    fontSize: hasSubtitle ? 20 : 16,
+                    letterSpacing: 0.06 * (hasSubtitle ? 20 : 16),
                   ),
                 ),
-                if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                if (hasSubtitle) ...[
                   const SizedBox(height: kSpace8),
                   Text(
                     subtitle!,

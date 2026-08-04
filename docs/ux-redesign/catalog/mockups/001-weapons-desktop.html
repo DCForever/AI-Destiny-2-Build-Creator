@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Catalog · Weapons — Desktop mockup</title>
+  <title>Catalog · Weapon details — Desktop mockup</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -12,36 +12,36 @@
       --bg: #05050f;
       --surface: #0a0a18;
       --raised: #101028;
-      --line: rgba(255, 255, 255, 0.12);
-      --line-strong: rgba(255, 255, 255, 0.22);
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
       --fg: #f0fdff;
       --muted: #7dd3e0;
       --muted-dim: rgba(125, 211, 224, 0.45);
       --accent: #00e5ff;
-      --accent-deep: #00b8d4;
       --accent-wash: rgba(0, 229, 255, 0.14);
       --danger: #ff003c;
       --success: #2ee6a6;
       --warn: #f5c542;
-      --magenta: #ff1a8c;
       --el-kinetic: #ffffff;
       --el-arc: #85c5ec;
       --el-solar: #f2721b;
-      --el-void: #b184c5;
+      --el-void: #8b7cf0;
+      --el-void-deep: #2a1f5c;
       --el-stasis: #4d88ff;
       --el-strand: #35e366;
-      --el-prismatic: #d67ee2;
       --rarity-exotic: #ceae33;
-      --rarity-legendary: #522f65;
-      --font-d: "Orbitron", "Electrolize", system-ui, sans-serif;
+      --rarity-legendary: #4a2458;
+      --rarity-legendary-edge: #c49ad4;
+      --ammo-special: #6fdc8c;
+      --ammo-heavy: #f0a020;
+      --ammo-heavy-hot: #ffc14d;
+      --slot-power: #d4b06a;
+      --font-d: "Orbitron", system-ui, sans-serif;
       --font-b: "Inter", system-ui, sans-serif;
       --font-m: "JetBrains Mono", ui-monospace, monospace;
       --detail-w: 400px;
-      --page-max: 1600px;
-      --ctrl-h: 40px;
       --radius: 2px;
     }
-
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
     body {
@@ -54,27 +54,11 @@
       display: flex;
       flex-direction: column;
     }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    button, input, select {
-      font: inherit;
-      color: inherit;
-    }
-    button {
-      cursor: pointer;
-      border: 0;
-      background: transparent;
-      padding: 0;
-    }
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.45;
-    }
-    :focus-visible {
-      outline: 1px solid var(--accent);
-      outline-offset: 2px;
-    }
-
-    /* ---- mock scenario bar ---- */
     .mock-bar {
       flex: 0 0 auto;
       display: flex;
@@ -116,7 +100,8 @@
       border-radius: var(--radius);
       font-family: var(--font-m);
       font-size: 11px;
-      min-width: 280px;
+      min-width: 300px;
+      max-width: 100%;
     }
     .auth-toggle {
       display: inline-flex;
@@ -141,14 +126,12 @@
       box-shadow: inset 0 -1px 0 var(--accent);
     }
 
-    /* ---- app shell: main column + full-height detail sidebar ---- */
     .shell {
       flex: 1;
       min-height: 0;
       display: flex;
       flex-direction: row;
-      align-items: stretch;
-      max-width: var(--page-max);
+      max-width: 1600px;
       width: 100%;
       margin: 0 auto;
       overflow: hidden;
@@ -195,9 +178,6 @@
       color: var(--accent);
       background: var(--accent-wash);
     }
-    .nav-item.is-stub {
-      opacity: 0.4;
-    }
     .nav-right {
       margin-left: auto;
       display: flex;
@@ -208,285 +188,233 @@
       color: var(--muted);
     }
     .lamp {
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       border-radius: 50%;
       background: var(--success);
       box-shadow: 0 0 6px var(--success);
     }
+    .lamp.off { background: var(--muted-dim); box-shadow: none; }
     .lamp.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
     .lamp.danger { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
-    .lamp.off { background: var(--muted-dim); box-shadow: none; }
 
-    /* ---- catalog chrome ---- */
-    .catalog-head {
+    .catalog-title {
       flex: 0 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px 12px;
-      padding: 10px 12px 8px;
-      background: var(--bg);
+      padding: 10px 12px 6px;
+      background: var(--surface);
       border-bottom: 1px solid var(--line);
     }
-    .catalog-head .title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 140px;
-    }
-    .catalog-head .title {
+    .catalog-title .title {
       font-family: var(--font-d);
       font-size: 13px;
-      font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
     }
-    .catalog-head .subtitle {
-      font-size: 11px;
-      color: var(--muted);
+    .catalog-title .subtitle {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin-top: 2px;
     }
-    .seg {
+
+    .filter-bar {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-primary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+    }
+    .scope-seg {
       display: inline-flex;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       overflow: hidden;
-      height: var(--ctrl-h);
+      height: 32px;
     }
-    .seg button {
-      padding: 0 14px;
+    .scope-seg button {
+      padding: 0 12px;
       font-family: var(--font-d);
-      font-size: 10px;
+      font-size: 9px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
       border-right: 1px solid var(--line);
     }
-    .seg button:last-child { border-right: 0; }
-    .seg button[aria-pressed="true"] {
+    .scope-seg button:last-child { border-right: 0; }
+    .scope-seg button[aria-pressed="true"] {
       color: var(--fg);
       background: var(--accent-wash);
-      box-shadow: inset 0 -2px 0 var(--accent);
-    }
-    .seg button.is-stub {
-      opacity: 0.35;
+      box-shadow: inset 0 -1px 0 var(--accent);
     }
     .search-wrap {
-      flex: 1;
-      min-width: 180px;
-      max-width: 360px;
-      position: relative;
-    }
-    .search-wrap input {
-      width: 100%;
-      height: var(--ctrl-h);
-      padding: 0 12px 0 34px;
-      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 10px;
+      min-width: 160px;
+      flex: 1 1 180px;
+      max-width: 280px;
+      background: var(--bg);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      font-size: 13px;
     }
-    .search-wrap input::placeholder { color: var(--muted-dim); }
-    .search-wrap .icon {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      font-size: 14px;
-      pointer-events: none;
-    }
-    .scope-seg { margin-left: auto; }
-
-    /* ---- facets: single compact line when width allows ---- */
-    .facets {
-      flex: 0 0 auto;
-      padding: 6px 12px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .facets-primary {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px 8px;
-      min-height: 32px;
+    .search-wrap .icon { color: var(--muted-dim); font-size: 12px; }
+    .search-wrap input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font-size: 12px;
     }
     .facet-group {
       display: inline-flex;
-      flex-wrap: nowrap;
       align-items: center;
       gap: 4px;
-      flex-shrink: 0;
-    }
-    .facet-group + .facet-group {
-      padding-left: 8px;
-      border-left: 1px solid var(--line);
-    }
-    .facet-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
     }
     .facet-label {
       font-family: var(--font-d);
       font-size: 8px;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted-dim);
-      flex-shrink: 0;
-    }
-    .facets-primary .facet-label {
-      width: auto;
       margin-right: 2px;
     }
-    .facets-primary .hint-cycle {
-      margin-left: auto;
-      flex-shrink: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 280px;
-    }
-    @media (max-width: 1100px) {
-      .facets-primary .hint-cycle { display: none; }
-    }
-    @media (max-width: 720px) {
-      .facet-group {
-        flex-wrap: wrap;
-      }
-      .facet-group + .facet-group {
-        padding-left: 0;
-        border-left: 0;
-      }
-    }
-    .facets-primary .more-btn {
-      height: 28px;
-    }
-    .secondary-facets {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px 10px;
-      padding-top: 4px;
-      border-top: 1px dashed var(--line);
-    }
-    .secondary-facets[hidden] { display: none !important; }
-    .secondary-facets .facet-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .filter-summary {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-    }
-    /* Compact icon/color chips — text only when no glyph (frame labels) */
     .chip {
       height: 28px;
-      min-width: 28px;
-      padding: 0 6px;
+      padding: 0 8px;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 4px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: transparent;
-      font-family: var(--font-d);
-      font-size: 9px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      background: var(--bg);
       color: var(--muted);
-      transition: background 0.12s, border-color 0.12s, color 0.12s, box-shadow 0.12s;
+      font-size: 11px;
+      position: relative;
     }
-    .chip.icon-only {
-      width: 32px;
-      padding: 0;
-    }
-    .chip .chip-text { display: none; }
-    .chip.has-text .chip-text { display: inline; }
-    .chip.has-text { padding: 0 8px; }
-    .chip:hover { border-color: var(--line-strong); color: var(--fg); }
+    .chip.icon-only { width: 28px; padding: 0; justify-content: center; }
     .chip[data-state="include"] {
-      background: var(--accent-wash);
-      border-color: rgba(0, 229, 255, 0.45);
       color: var(--fg);
-      box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.35);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
     }
     .chip[data-state="exclude"] {
-      background: rgba(255, 0, 60, 0.08);
-      border-color: rgba(255, 0, 60, 0.35);
       color: var(--warn);
-      opacity: 0.85;
+      border-color: rgba(245, 197, 66, 0.45);
+      background: rgba(245, 197, 66, 0.08);
+      text-decoration: line-through;
     }
-    .chip[data-state="exclude"] .chip-mark {
-      color: var(--danger);
-    }
-    .chip-mark {
-      position: absolute;
-      top: 1px;
-      right: 2px;
+    .chip .chip-mark {
       font-family: var(--font-m);
-      font-size: 8px;
-      line-height: 1;
-      width: auto;
-      text-align: center;
-      pointer-events: none;
+      font-size: 10px;
+      color: var(--accent);
     }
-    .chip { position: relative; }
-    .chip .el-dot {
-      width: 12px;
-      height: 12px;
+    .chip[data-state="exclude"] .chip-mark { color: var(--warn); }
+    .el-dot {
+      width: 10px; height: 10px;
       border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+    }
+    .glyph-ico { font-size: 11px; line-height: 1; }
+    .glyph-ico.exotic { color: var(--rarity-exotic); }
+    .glyph-ico.legendary { color: var(--rarity-legendary-edge); }
+    /* Official Bungie facet / perk icons (CDN); letter monogram fallback when missing */
+    .facet-img {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      display: block;
       flex-shrink: 0;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
     }
-    .chip .glyph-ico {
-      font-size: 12px;
-      line-height: 1;
-      font-family: var(--font-m);
-      font-weight: 600;
+    .chip.icon-only .facet-img { width: 18px; height: 18px; }
+    /* Weapon type silhouettes (destiny-icons / DIM) via mask — inherits chip color */
+    .type-ico {
+      display: block;
+      width: 26px;
+      height: 12px;
+      flex-shrink: 0;
+      background: currentColor;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: contain;
+      mask-size: contain;
     }
-    .chip .glyph-ico.slot-k { color: #e8e8e8; }
-    .chip .glyph-ico.slot-e { color: var(--el-solar); }
-    .chip .glyph-ico.slot-p { color: var(--el-void); }
-    .chip .glyph-ico.ammo-p { color: var(--muted); }
-    .chip .glyph-ico.ammo-s { color: var(--el-arc); }
-    .chip .glyph-ico.ammo-h { color: var(--el-solar); }
-    .chip .glyph-ico.exotic { color: var(--rarity-exotic); }
-    .chip .glyph-ico.legendary { color: #b184c5; }
-    .more-btn {
-      height: 28px;
+    .chip.icon-only .type-ico { width: 28px; height: 12px; }
+    .card-type-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .card-type-row .type-ico {
+      width: 32px;
+      height: 12px;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+    .hero-type-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .hero-type-row .type-ico {
+      width: 40px;
+      height: 14px;
+      color: var(--muted);
+    }
+    .more-btn, .reset-btn {
+      height: 32px;
       padding: 0 10px;
       font-family: var(--font-d);
       font-size: 9px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
       border: 1px dashed var(--line);
       border-radius: var(--radius);
+      color: var(--muted);
     }
     .more-btn[aria-expanded="true"] {
       color: var(--accent);
       border-style: solid;
       border-color: rgba(0, 229, 255, 0.35);
     }
-    .secondary-facets[hidden] { display: none; }
-
-    .filter-summary {
+    .reset-btn {
+      color: var(--danger);
+      border: 1px solid rgba(255, 0, 60, 0.4);
+    }
+    .reset-btn[hidden], .secondary-facets[hidden], .filter-summary[hidden] { display: none !important; }
+    .hint-cycle {
+      margin-left: auto;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    @media (max-width: 1100px) { .hint-cycle { display: none; } }
+    .secondary-facets {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 6px 8px;
-      min-height: 24px;
+      gap: 6px 10px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--line);
     }
-    .filter-summary[hidden] { display: none; }
+    .filter-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+    }
     .summary-chip {
       height: 22px;
       padding: 0 8px;
@@ -498,45 +426,18 @@
       background: var(--raised);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      color: var(--fg);
     }
-    .summary-chip.exclude {
-      color: var(--warn);
-      text-decoration: line-through;
-    }
+    .summary-chip.exclude { color: var(--warn); text-decoration: line-through; }
     .summary-chip .x {
       color: var(--muted);
-      margin-left: 2px;
       cursor: pointer;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
     }
     .summary-chip .x:hover { color: var(--danger); }
-    .reset-btn {
-      height: 22px;
-      padding: 0 8px;
-      font-family: var(--font-d);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--danger);
-      border: 1px solid rgba(255, 0, 60, 0.35);
-      border-radius: var(--radius);
-    }
-    .reset-btn:hover { background: rgba(255, 0, 60, 0.1); }
-    .hint-cycle {
-      margin-left: auto;
-      font-family: var(--font-m);
-      font-size: 10px;
-      color: var(--muted-dim);
-    }
 
-    /* ---- results grid (sidebar is sibling of main-column, full shell height) ---- */
-    .workspace {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
     .results {
       flex: 1;
       min-height: 0;
@@ -549,6 +450,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
       padding: 8px 12px;
       border-bottom: 1px solid var(--line);
       font-family: var(--font-m);
@@ -556,226 +458,277 @@
       color: var(--muted);
       background: var(--surface);
     }
-    .results-meta strong {
-      color: var(--fg);
-      font-weight: 500;
-    }
+    .results-meta strong { color: var(--fg); font-weight: 500; }
     .board {
       flex: 1;
       min-height: 0;
       overflow: auto;
-      padding: 12px;
+      padding: 10px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+      gap: 6px;
       align-content: start;
     }
-    .board:empty { display: block; }
-    .slot-group {
-      grid-column: 1 / -1;
-      padding: 4px 2px 0;
-      font-family: var(--font-d);
-      font-size: 9px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted-dim);
-    }
+
     .weapon-card {
+      position: relative;
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      gap: 6px;
+      min-height: 112px;
       padding: 8px;
-      min-height: 0;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      cursor: pointer;
-      position: relative;
-      background: var(--surface);
-      width: 100%;
       text-align: left;
-      transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+      width: 100%;
+      border: 1px solid rgba(232, 238, 242, 0.12);
+      border-radius: var(--radius);
+      background: rgba(10, 10, 24, 0.88);
+      overflow: hidden;
+      transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
     }
     .weapon-card:hover {
-      border-color: var(--line-strong);
-      background: var(--raised);
+      background: rgba(16, 16, 40, 0.92);
+      border-color: var(--line);
     }
     .weapon-card[aria-selected="true"] {
-      border-color: rgba(0, 229, 255, 0.55);
-      background: var(--accent-wash);
-      box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.25);
+      background: color-mix(in srgb, var(--raised) 92%, var(--accent) 8%);
+      border-color: rgba(0, 229, 255, 0.45);
+      box-shadow: 0 0 12px rgba(0, 229, 255, 0.18);
     }
-    .weapon-card .icon-cell {
-      width: 100%;
-      aspect-ratio: 1;
-      position: relative;
-      background: var(--raised);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
+    .weapon-card[aria-selected="true"]::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      z-index: 2;
+    }
+    .weapon-card.rarity-exotic {
+      background-image: linear-gradient(270deg, rgba(206,174,51,0.22) 0%, rgba(206,174,51,0.10) 30%, transparent 62%);
+    }
+    .weapon-card.rarity-legendary {
+      background-image: linear-gradient(
+        270deg,
+        color-mix(in srgb, var(--rarity-legendary-edge) 22%, transparent) 0%,
+        color-mix(in srgb, var(--rarity-legendary) 28%, transparent) 28%,
+        transparent 58%
+      );
+    }
+    .weapon-card .el-bloom {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 92% 88% at 0% 100%,
+        color-mix(in srgb, var(--el) 78%, transparent) 0%,
+        color-mix(in srgb, var(--el) 22%, transparent) 42%,
+        transparent 78%
+      );
+      z-index: 0;
+    }
+    .weapon-card .el-glyph {
+      position: absolute;
+      left: 5px; bottom: 5px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      z-index: 2;
+      pointer-events: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 11px;
+      color: #05050f;
       overflow: hidden;
+      background: radial-gradient(circle at 35% 30%, #fff 0%, var(--el) 42%, color-mix(in srgb, var(--el) 50%, #000) 100%);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--el) 75%, #000), 0 0 14px color-mix(in srgb, var(--el) 60%, transparent);
     }
-    .weapon-card .icon-cell.exotic {
-      box-shadow: inset 0 0 0 1px rgba(206, 174, 51, 0.55);
+    .weapon-card .el-glyph.void {
+      background: radial-gradient(circle at 35% 30%, #e4e0ff 0%, var(--el-void) 46%, var(--el-void-deep) 100%);
+      color: #f4f2ff;
     }
-    .weapon-card .icon-cell.legendary {
-      box-shadow: inset 0 0 0 1px rgba(82, 47, 101, 0.75);
+    .weapon-card .el-glyph.kinetic {
+      background: radial-gradient(circle at 35% 30%, #fff 0%, #d0d0d0 55%, #666 100%);
+      color: #1a1a1a;
     }
-    .weapon-card .icon-wash {
-      position: absolute;
-      inset: 0;
-      opacity: 0.22;
-      pointer-events: none;
+    .weapon-card .el-glyph .facet-img {
+      width: 12px;
+      height: 12px;
     }
-    .weapon-card .icon-wash.exotic { background: linear-gradient(135deg, var(--rarity-exotic), transparent); }
-    .weapon-card .icon-wash.legendary { background: linear-gradient(135deg, var(--rarity-legendary), transparent); }
-    .weapon-card .card-el {
-      position: absolute;
-      left: 4px;
-      bottom: 4px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+    .weapon-card > .card-inner {
+      position: relative;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
     }
-    .weapon-card .card-owned {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      z-index: 1;
+    .card-top { display: flex; gap: 6px; align-items: flex-start; min-width: 0; }
+    .entity-icon {
+      width: 28px; height: 28px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+    .entity-icon.placeholder { color: var(--muted-dim); font-family: var(--font-m); font-size: 10px; }
+    .card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .card-header-row { display: flex; align-items: center; gap: 4px; }
+    .rarity-badge {
+      flex-shrink: 0;
+      margin-left: auto;
+      width: 15px; height: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       font-family: var(--font-m);
       font-size: 9px;
-      padding: 1px 4px;
-      background: rgba(46, 230, 166, 0.15);
-      border: 1px solid rgba(46, 230, 166, 0.35);
-      border-radius: var(--radius);
-      color: var(--fg);
+      color: var(--muted);
+    }
+    .rarity-badge.exotic { color: var(--rarity-exotic); border-color: rgba(206, 174, 51, 0.55); }
+    .rarity-badge.legendary {
+      color: var(--rarity-legendary-edge);
+      border-color: color-mix(in srgb, var(--rarity-legendary-edge) 55%, transparent);
+      background: color-mix(in srgb, var(--rarity-legendary) 45%, transparent);
     }
     .card-name {
       font-family: var(--font-d);
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      line-height: 1.25;
+      letter-spacing: 0.03em;
+      line-height: 1.2;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 2.5em;
     }
-    .card-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      font-family: var(--font-m);
-      font-size: 9px;
+    .weapon-card.rarity-exotic .card-name { color: var(--rarity-exotic); }
+    .card-type {
+      font-size: 10px;
       color: var(--muted);
-    }
-    .row-main { min-width: 0; }
-    .row-name {
-      font-family: var(--font-d);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .row-meta {
+    .card-foot {
+      margin-top: auto;
+      padding-top: 6px;
+      padding-left: 28px;
+      border-top: 1px solid rgba(232, 238, 242, 0.15);
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 4px 8px;
-      margin-top: 2px;
-      font-size: 11px;
-      color: var(--muted);
+      gap: 4px;
+      min-height: 20px;
     }
-    .glyph {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-family: var(--font-m);
-      font-size: 10px;
-    }
-    .glyph .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-    }
-    .micro {
-      display: inline-flex;
-      gap: 3px;
-      align-items: center;
-    }
-    .micro-g {
-      width: 14px;
-      height: 14px;
-      border: 1px solid var(--line);
-      border-radius: 1px;
+    .meta-glyphs { display: inline-flex; gap: 3px; align-items: center; flex: 1; min-width: 0; }
+    .meta-ico {
+      width: 16px; height: 16px;
+      flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 8px;
-      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 2px;
       background: var(--bg);
+      font-size: 9px;
+      color: var(--muted);
     }
-    .micro-g.on { color: var(--accent); border-color: rgba(0,229,255,0.35); }
-    .micro-g.warn { color: var(--warn); }
-    .row-side {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 3px;
+    .meta-ico.ammo-primary { color: #e8e8e8; border-color: rgba(255,255,255,0.32); }
+    .meta-ico.ammo-special { color: var(--ammo-special); border-color: color-mix(in srgb, var(--ammo-special) 55%, transparent); }
+    .meta-ico.ammo-heavy { color: var(--ammo-heavy-hot); border-color: color-mix(in srgb, var(--ammo-heavy) 70%, transparent); font-size: 10px; }
+    .meta-ico.slot-k { color: #e8e8e8; }
+    .meta-ico.slot-e { color: var(--el-solar); }
+    .meta-ico.slot-p { color: var(--slot-power); }
+    .owned-count {
       font-family: var(--font-m);
       font-size: 10px;
-      color: var(--muted);
+      color: var(--accent);
+      flex-shrink: 0;
     }
-    .owned-seal {
-      padding: 1px 5px;
+
+    .skel-card {
+      min-height: 112px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      color: var(--fg);
-      background: rgba(46, 230, 166, 0.08);
-      border-color: rgba(46, 230, 166, 0.25);
+      background: var(--surface);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
     }
-    .not-owned {
+    .skel-line {
+      height: 8px;
+      border-radius: 1px;
+      background: linear-gradient(90deg, var(--raised), rgba(16,16,40,0.4), var(--raised));
+      background-size: 200% 100%;
+      animation: shimmer 1.2s ease-in-out infinite;
+    }
+    .skel-icon { width: 28px; height: 28px; border-radius: var(--radius); background: var(--raised); }
+    @keyframes shimmer {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .state-panel {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+      min-height: 280px;
+    }
+    .state-card {
+      max-width: 420px;
+      text-align: center;
+      padding: 28px 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .state-card .kicker {
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
       color: var(--muted-dim);
-      font-style: normal;
-      letter-spacing: 0.04em;
+      margin-bottom: 8px;
     }
-    .power {
-      color: var(--fg);
-      font-weight: 500;
+    .state-card h2 {
+      margin: 0 0 8px;
+      font-family: var(--font-d);
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
-    /* ---- detail SIDEBAR: full height of shell (viewport content area) ---- */
+    .state-card p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .state-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    /* ---- Detail sidebar ~400px full-height (NOT LibraryWorkspace 320 rail) ---- */
     .detail {
       flex: 0 0 var(--detail-w);
       width: var(--detail-w);
-      align-self: stretch;
       min-height: 0;
-      height: auto;
-      max-height: none;
       overflow: auto;
       background: var(--surface);
-      position: relative;
       border-left: 1px solid var(--line);
-      z-index: 5;
-    }
-    .shell.hide-detail .detail {
-      display: none;
-    }
-    .shell.hide-detail .main-column {
-      flex: 1;
     }
     .detail-empty {
       height: 100%;
+      min-height: 320px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -784,6 +737,7 @@
       color: var(--muted);
       padding: 24px;
       text-align: center;
+      background: var(--raised);
     }
     .detail-empty .kicker {
       font-family: var(--font-d);
@@ -792,73 +746,89 @@
       text-transform: uppercase;
       color: var(--muted-dim);
     }
-    .detail-empty p {
-      margin: 0;
-      max-width: 320px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
+    .detail-empty p { margin: 0; max-width: 280px; font-size: 13px; line-height: 1.5; }
 
+    /* Compact NeonDetailHeader — title stack + meta pills; no notes/kill tracker */
     .detail-sticky {
       position: sticky;
       top: 0;
       z-index: 5;
-      background: linear-gradient(180deg, var(--surface) 80%, transparent);
+      background: linear-gradient(180deg, var(--surface) 88%, transparent);
       border-bottom: 1px solid var(--line);
-      padding: 14px 16px 12px;
+      padding: 12px 14px 10px;
     }
-    .detail-hero {
-      display: grid;
-      grid-template-columns: 72px 1fr auto;
-      gap: 12px;
-      align-items: start;
+    .detail-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
     }
-    .hero-icon {
-      width: 72px;
-      height: 72px;
-      background: var(--raised);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+    .header-icon {
+      width: 40px; height: 40px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      position: relative;
-      overflow: hidden;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 18px;
     }
-    .hero-icon .wash {
-      position: absolute;
-      inset: 0;
-      opacity: 0.22;
-    }
-    .hero-icon .wash.exotic { background: linear-gradient(160deg, var(--rarity-exotic), transparent 70%); }
-    .hero-icon .wash.legendary { background: linear-gradient(160deg, var(--rarity-legendary), transparent 70%); }
-    .hero-text { min-width: 0; }
+    .header-stack { flex: 1; min-width: 0; }
     .hero-name {
       font-family: var(--font-d);
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      margin: 0 0 4px;
+      margin: 0;
+      line-height: 1.25;
     }
-    .hero-type {
+    .hero-name.exotic { color: var(--rarity-exotic); }
+    .hero-type { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    /* Icon-only meta row — no text duplicate of type/frame/element/slot/ammo */
+    .meta-icons {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px 10px;
       align-items: center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .meta-pills {
-      display: flex;
-      flex-wrap: wrap;
       gap: 6px;
-      margin-top: 8px;
+      margin-top: 6px;
     }
+    .meta-icons .facet-img {
+      width: 16px;
+      height: 16px;
+    }
+    .meta-icons .type-ico {
+      width: 34px;
+      height: 12px;
+      color: var(--muted);
+    }
+    .meta-icons .slot-letter {
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-m);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      background: var(--raised);
+    }
+    .meta-icons .slot-letter.power { color: var(--slot-power); }
+    .meta-icons .slot-letter.energy { color: var(--el-solar); }
+    .meta-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
     .pill {
-      height: 22px;
-      padding: 0 8px;
+      height: 20px;
+      padding: 0 7px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -867,51 +837,66 @@
       font-family: var(--font-m);
       font-size: 10px;
       background: var(--raised);
-      color: var(--fg);
     }
     .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-    .hero-side {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 6px;
-    }
-    .power-big {
-      font-family: var(--font-m);
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--fg);
-    }
-    .power-big span {
-      font-size: 11px;
-      color: var(--muted);
-      margin-left: 2px;
-    }
-
-    .instance-strip {
-      margin-top: 12px;
+    .pill.owned { color: var(--success); border-color: rgba(46, 230, 166, 0.35); }
+    .synergy-chips {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
+      gap: 4px;
+      margin-top: 8px;
     }
-    .instance-strip .label {
+    .synergy-chip {
+      height: 22px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      cursor: default;
+      pointer-events: none;
+    }
+    .synergy-chip .tag {
       font-family: var(--font-d);
-      font-size: 9px;
-      letter-spacing: 0.12em;
+      font-size: 8px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted-dim);
       margin-right: 4px;
     }
+
+    /* Compact PL chips — power-desc, MW/Craft marks, accent selected */
+    .instance-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+    }
+    .instance-strip .label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-right: 2px;
+    }
     .inst-chip {
-      height: 28px;
-      padding: 0 10px;
+      height: 26px;
+      padding: 0 8px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       font-family: var(--font-m);
       font-size: 11px;
       color: var(--muted);
       background: var(--bg);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .inst-chip[aria-pressed="true"] {
       color: var(--fg);
@@ -919,14 +904,25 @@
       box-shadow: inset 2px 0 0 var(--accent);
       border-color: rgba(0, 229, 255, 0.35);
     }
-    .inst-chip .pw { color: var(--fg); }
+    .inst-chip .pw { color: var(--fg); font-weight: 500; }
+    .inst-chip .mark {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .inst-chip[aria-pressed="true"] .mark { color: var(--accent); }
+    .inst-note {
+      font-size: 11px;
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+    }
 
     .detail-body {
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      max-width: 720px;
+      gap: 16px;
     }
     .section-title {
       font-family: var(--font-d);
@@ -934,7 +930,7 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
-      margin: 0 0 10px;
+      margin: 0 0 8px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -945,61 +941,17 @@
       height: 1px;
       background: var(--line);
     }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px 24px;
-    }
-    .stat-row {
-      display: grid;
-      grid-template-columns: 100px 1fr 28px;
-      gap: 8px;
-      align-items: center;
-      font-size: 12px;
-    }
-    .stat-row .name { color: var(--muted); }
-    .stat-bar {
-      height: 6px;
-      background: var(--raised);
-      border: 1px solid var(--line);
-      border-radius: 1px;
-      overflow: hidden;
-    }
-    .stat-bar > i {
-      display: block;
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-deep), var(--accent));
-      opacity: 0.85;
-    }
-    .stat-row .val {
-      font-family: var(--font-m);
-      font-size: 11px;
-      text-align: right;
-      color: var(--fg);
-    }
-
     .section-head {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px 10px;
-      margin-bottom: 10px;
-    }
-    .section-head .section-title {
-      margin: 0;
-      flex: 1;
-      min-width: 120px;
-    }
-    .toggle-row {
-      display: inline-flex;
-      flex-wrap: wrap;
-      align-items: center;
       gap: 6px;
+      margin-bottom: 8px;
     }
+    .section-head .section-title { margin: 0; flex: 1; min-width: 72px; }
     .view-toggle {
-      height: 28px;
-      padding: 0 10px;
+      height: 26px;
+      padding: 0 8px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -1007,24 +959,18 @@
       border-radius: 999px;
       background: var(--bg);
       font-family: var(--font-d);
-      font-size: 9px;
+      font-size: 8px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
-    }
-    .view-toggle:hover {
-      border-color: var(--line-strong);
-      color: var(--fg);
     }
     .view-toggle[aria-pressed="true"] {
       color: var(--fg);
       background: var(--accent-wash);
       border-color: rgba(0, 229, 255, 0.45);
-      box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.25);
     }
     .view-toggle .knob {
-      width: 28px;
-      height: 14px;
+      width: 26px; height: 12px;
       border-radius: 999px;
       background: var(--raised);
       border: 1px solid var(--line);
@@ -1034,10 +980,8 @@
     .view-toggle .knob::after {
       content: "";
       position: absolute;
-      top: 1px;
-      left: 2px;
-      width: 10px;
-      height: 10px;
+      top: 1px; left: 2px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--muted);
       transition: transform 0.12s, background 0.12s;
@@ -1050,188 +994,176 @@
       transform: translateX(12px);
       background: var(--accent);
     }
-    .view-toggle:disabled {
-      opacity: 0.4;
+
+    /* Perk grid: all columns fit detail width — no horizontal scroll */
+    .perk-scroll {
+      overflow-x: hidden;
+      overflow-y: visible;
+      width: 100%;
+      max-width: 100%;
+      padding: 0 0 4px;
     }
-    .perk-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-    }
-    @media (max-width: 900px) {
-      .perk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    .exotic-identity-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      align-items: start;
-    }
-    @media (max-width: 700px) {
-      .exotic-identity-row { grid-template-columns: 1fr; }
-    }
-    .exotic-identity-col {
+    .perk-grid-cols {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: flex-start;
       gap: 6px;
+      width: 100%;
       min-width: 0;
-    }
-    .exotic-identity-col .perk-col-label {
-      font-family: var(--font-d);
-      font-size: 8px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted-dim);
-      padding: 0 2px 4px;
-      border-bottom: 1px solid var(--line);
     }
     .perk-col {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      align-items: stretch;
+      flex: 1 1 0;
+      min-width: 0;
     }
     .perk-col-label {
       font-family: var(--font-d);
-      font-size: 8px;
-      letter-spacing: 0.12em;
+      font-size: 7px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted-dim);
-      padding: 0 2px 4px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 2px;
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .perk-cell {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      min-height: 36px;
+      gap: 3px;
+      padding: 4px 2px;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 52px;
+      margin-bottom: 4px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: var(--surface);
-      font-size: 11px;
-      color: var(--muted);
-      text-align: left;
-      width: 100%;
+      background: var(--bg);
+      font-size: 9px;
+      cursor: default;
     }
-    .perk-cell:hover { border-color: var(--line-strong); color: var(--fg); }
-    .perk-cell.selected {
-      color: var(--fg);
-      background: var(--accent-wash);
-      box-shadow: inset 2px 0 0 var(--accent);
-      border-color: rgba(0, 229, 255, 0.3);
-      font-weight: 500;
-    }
-    .perk-cell.pool {
-      opacity: 0.72;
-    }
-    .perk-cell.unknown {
-      border-style: dashed;
-      color: var(--warn);
-    }
-    .perk-icon {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1px solid var(--line);
-      background: var(--raised);
+    .perk-cell .ico {
+      width: 32px; height: 32px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
-    }
-    .perk-name { min-width: 0; line-height: 1.25; }
-    .perk-hash {
-      display: block;
-      font-family: var(--font-m);
-      font-size: 9px;
-      color: var(--muted-dim);
-      margin-top: 2px;
-    }
-
-    .craft-block {
-      border: 1px solid var(--line);
-      background: var(--surface);
-      padding: 12px;
-      border-radius: var(--radius);
-    }
-    .craft-block p {
-      margin: 0 0 8px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-    .craft-compare {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .craft-col {
-      padding: 8px;
       background: var(--raised);
       border: 1px solid var(--line);
-    }
-    .craft-col h4 {
-      margin: 0 0 6px;
-      font-family: var(--font-d);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      border-radius: 1px;
+      font-size: 12px;
+      font-family: var(--font-m);
       color: var(--muted);
+      overflow: hidden;
     }
-    .craft-col ul {
-      margin: 0;
-      padding: 0 0 0 14px;
-      font-size: 11px;
+    .perk-cell .ico img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .perk-cell .cap {
+      width: 100%;
+      text-align: center;
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+    /* Selected: cyan wash + accent border (not cyan cage frame) */
+    .perk-cell.selected {
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.45);
+      box-shadow: inset 2px 0 0 var(--accent);
       color: var(--fg);
     }
+    /* Pool: muted hairline + muted caption */
+    .perk-cell.pool {
+      border-color: rgba(232, 238, 242, 0.14);
+      background: transparent;
+      color: var(--muted-dim);
+    }
+    .perk-cell.pool .cap { color: var(--muted-dim); }
+    .perk-cell.pool .ico { opacity: 0.65; }
+    .perk-cell.unknown {
+      border-style: dashed;
+      border-color: rgba(245, 197, 66, 0.4);
+      color: var(--warn);
+    }
+    .perk-cell:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .col-missing {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      padding: 6px 4px;
+      line-height: 1.4;
+    }
 
-    .soft-flag {
+    /* Minimal DIM-like stat bars — omit entire block when missing */
+    .stat-rows { display: flex; flex-direction: column; gap: 6px; }
+    .stat-row {
+      display: grid;
+      grid-template-columns: 72px 1fr 28px;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .stat-bar {
+      height: 4px;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .stat-bar > i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      opacity: 0.75;
+    }
+    .stat-val { text-align: right; color: var(--fg); }
+
+    .exotic-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .catalyst-soft {
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      padding: 10px 12px;
-      border: 1px solid rgba(245, 197, 66, 0.25);
-      background: rgba(245, 197, 66, 0.06);
+      padding: 8px 10px;
+      border: 1px solid rgba(245, 197, 66, 0.22);
+      background: rgba(245, 197, 66, 0.05);
       border-radius: var(--radius);
       font-size: 12px;
-      color: var(--fg);
     }
-    .soft-flag .flag {
+    .catalyst-soft .flag {
       font-family: var(--font-d);
-      font-size: 9px;
+      font-size: 8px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--warn);
       flex-shrink: 0;
       margin-top: 2px;
     }
-    .soft-flag .note {
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 2px;
-    }
-
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .tag {
-      height: 24px;
-      padding: 0 8px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      font-family: var(--font-m);
-      font-size: 10px;
-      color: var(--muted);
-      background: var(--raised);
-    }
+    .catalyst-soft .note { color: var(--muted); font-size: 11px; margin-top: 2px; }
 
     .detail-footer {
-      margin-top: 8px;
-      padding-top: 16px;
+      margin-top: 4px;
+      padding-top: 14px;
       border-top: 1px solid var(--line);
       display: flex;
       flex-wrap: wrap;
@@ -1239,8 +1171,8 @@
       align-items: center;
     }
     .btn {
-      height: 36px;
-      padding: 0 14px;
+      height: 34px;
+      padding: 0 12px;
       font-family: var(--font-d);
       font-size: 10px;
       letter-spacing: 0.1em;
@@ -1257,103 +1189,38 @@
     .btn-primary {
       background: var(--accent-wash);
       border-color: rgba(0, 229, 255, 0.4);
-      color: var(--fg);
-      box-shadow: inset 0 0 0 1px transparent;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background: rgba(0, 229, 255, 0.22);
-    }
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
     }
     .btn-stub {
-      opacity: 0.45;
+      opacity: 0.42;
+      color: var(--muted);
+      border-color: var(--line);
+      background: var(--bg);
     }
     .stub-note {
       flex: 1 1 100%;
       font-size: 11px;
       color: var(--muted-dim);
       font-family: var(--font-m);
+      line-height: 1.4;
     }
-
-    /* ---- empty / error states ---- */
-    .state-panel {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 16px;
-      grid-column: 1 / -1;
+    .hash-footer {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin-top: 4px;
+      flex: 1 1 100%;
     }
-    .state-card {
-      max-width: 420px;
-      text-align: center;
-      padding: 28px 24px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
+    .plug-note {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin: 6px 0 0;
+      line-height: 1.4;
     }
-    .state-card .icon {
-      font-size: 28px;
-      margin-bottom: 12px;
-      opacity: 0.7;
-    }
-    .state-card h2 {
-      margin: 0 0 8px;
-      font-family: var(--font-d);
-      font-size: 13px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .state-card p {
-      margin: 0 0 16px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    .state-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    /* loading skeleton */
-    .skeleton-row {
-      display: grid;
-      grid-template-columns: 40px 1fr 48px;
-      gap: 8px;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--line);
-      align-items: center;
-    }
-    .sk {
-      background: linear-gradient(90deg, var(--raised) 25%, rgba(255,255,255,0.06) 50%, var(--raised) 75%);
-      background-size: 200% 100%;
-      animation: sk 1.2s ease-in-out infinite;
-      border-radius: 1px;
-      height: 12px;
-    }
-    .sk.icon { width: 36px; height: 36px; }
-    .sk.wide { height: 14px; width: 70%; }
-    .sk.narrow { height: 10px; width: 40%; margin-top: 6px; }
-    @keyframes sk {
-      0% { background-position: 100% 0; }
-      100% { background-position: -100% 0; }
-    }
-
-    .workspace.full-empty {
-      display: flex;
-    }
-
     .a11y-live {
       position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
       overflow: hidden;
       clip: rect(0,0,0,0);
       border: 0;
@@ -1362,1388 +1229,1271 @@
 </head>
 <body>
   <div class="mock-bar" role="region" aria-label="Mock scenario controls">
-    <h1>UX Mock · Catalog Weapons</h1>
-    <span class="meta">desktop · grid · full-height sidebar · 1-line filters</span>
+    <h1>Catalog · Weapon details</h1>
+    <span class="meta">~400px sidebar · toggles OFF default · hide craft when empty · stubs only · no LibraryWorkspace 320</span>
     <div class="spacer"></div>
     <span class="scenario-label">Scenario</span>
     <select id="scenario" class="scenario-select" aria-label="Mock scenario">
-      <option value="signed-out">Signed-out · manifest · not-owned</option>
-      <option value="results" selected>Signed-in · All · multi-facet results</option>
-      <option value="owned">Signed-in · Owned · instances</option>
-      <option value="owned-empty">Signed-in · Owned · empty inventory</option>
-      <option value="zero">Zero filter matches</option>
-      <option value="loading">Loading · skeleton</option>
-      <option value="missing-manifest">Missing manifest · actionable empty</option>
-      <option value="detail-craft">Detail · craftable legendary</option>
-      <option value="detail-exotic">Detail · exotic catalyst (display-only)</option>
-      <option value="detail-exotic-craft">Detail · craftable exotic + catalyst</option>
-      <option value="detail-unknown">Detail · unknown perk (hash footer)</option>
+      <option value="signed-out">signed-out · identity · manifest possible rolls</option>
+      <option value="signed-out-owned">signed-out · Owned · empty + sign-in</option>
+      <option value="loading">loading · grid skeleton + detail idle</option>
+      <option value="owned-empty">owned empty · Sync+Settings</option>
+      <option value="results" selected>results · All grid · detail idle</option>
+      <option value="owned">owned multi-instance · power-desc strip</option>
+      <option value="can-roll">detail can-roll ON · selected vs pool</option>
+      <option value="partial-pool">detail partial can-roll · honest missing col</option>
+      <option value="craft-missing">detail craft missing · hide craft toggle</option>
+      <option value="craftable-exotic">detail craftable exotic · craft + soft catalyst</option>
+      <option value="unknown-perk">detail unknown perk · hash footer only</option>
+      <option value="stubs">stubs disabled · reverse-synergy chips</option>
+      <option value="zero">zero filter matches · Clear</option>
+      <option value="missing-manifest">missing manifest · Reload+Settings</option>
+      <option value="unknown-weapon">missing identity · Unknown weapon</option>
     </select>
     <div class="auth-toggle" role="group" aria-label="Auth mock">
-      <button type="button" id="auth-out" aria-pressed="false">Signed out</button>
-      <button type="button" id="auth-in" aria-pressed="true">Signed in</button>
+      <button type="button" id="auth-out" aria-pressed="false">Signed-out</button>
+      <button type="button" id="auth-in" aria-pressed="true">Signed-in</button>
     </div>
   </div>
 
-  <div class="shell" id="app">
+  <div class="shell" id="shell">
     <div class="main-column">
       <nav class="app-nav" aria-label="Primary">
-        <span class="brand">D2 Build Creator</span>
-        <button type="button" class="nav-item is-stub" title="Out of this slice">Builds</button>
-        <button type="button" class="nav-item is-stub" title="Out of this slice">Sets</button>
+        <span class="brand">D2 Build</span>
         <button type="button" class="nav-item" aria-current="page">Catalog</button>
-        <button type="button" class="nav-item is-stub" title="Out of this slice">Synergy</button>
         <button type="button" class="nav-item">Settings</button>
         <div class="nav-right">
-          <span class="lamp" id="sync-lamp" title="Inventory sync"></span>
+          <span class="lamp" id="sync-lamp" aria-hidden="true"></span>
           <span id="sync-label">Inventory synced</span>
-          <span id="user-label">Guardian</span>
         </div>
       </nav>
 
-      <header class="catalog-head">
-        <div class="title-block">
-          <div class="title">Catalog</div>
-          <div class="subtitle">Composition aid · not inventory manager</div>
-        </div>
-        <div class="seg" role="tablist" aria-label="Catalog mode">
-          <button type="button" role="tab" aria-pressed="true" data-mode="weapons">Weapons</button>
-          <button type="button" role="tab" class="is-stub" aria-pressed="false" disabled title="Out of weapons slice">Armor</button>
-          <button type="button" role="tab" class="is-stub" aria-pressed="false" disabled title="Out of weapons slice">Universal</button>
-        </div>
-        <div class="search-wrap">
-          <span class="icon" aria-hidden="true">⌕</span>
-          <input id="search" type="search" placeholder="Filter by name…" autocomplete="off" aria-label="Free-text weapon filter" />
-        </div>
-        <div class="seg scope-seg" role="group" aria-label="Ownership scope">
-          <button type="button" data-scope="all" aria-pressed="true">All</button>
-          <button type="button" data-scope="owned" aria-pressed="false">Owned</button>
-        </div>
-      </header>
+      <div class="catalog-title">
+        <div class="title">Weapons</div>
+        <div class="subtitle" id="catalog-subtitle">Composition aid · not product home (DBR-PUR-002)</div>
+      </div>
 
-      <div class="facets" id="facets">
-        <div class="facets-primary" role="toolbar" aria-label="Weapon filters">
-          <div class="facet-group" data-facet="element">
-            <span class="facet-label" title="Element">El</span>
-            <button type="button" class="chip icon-only" data-facet="element" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic"><span class="el-dot" style="background:var(--el-kinetic)"></span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="element" data-value="arc" data-state="off" title="Arc" aria-label="Arc"><span class="el-dot" style="background:var(--el-arc)"></span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="element" data-value="solar" data-state="off" title="Solar" aria-label="Solar"><span class="el-dot" style="background:var(--el-solar)"></span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="element" data-value="void" data-state="off" title="Void" aria-label="Void"><span class="el-dot" style="background:var(--el-void)"></span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="element" data-value="stasis" data-state="off" title="Stasis" aria-label="Stasis"><span class="el-dot" style="background:var(--el-stasis)"></span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="element" data-value="strand" data-state="off" title="Strand" aria-label="Strand"><span class="el-dot" style="background:var(--el-strand)"></span><span class="chip-mark"></span></button>
+      <section class="filter-bar" aria-label="Weapon filters" id="filter-bar">
+        <div class="filter-primary">
+          <div class="scope-seg" role="group" aria-label="Ownership scope">
+            <button type="button" data-scope="all" aria-pressed="true">All</button>
+            <button type="button" data-scope="owned" aria-pressed="false">Owned</button>
           </div>
-          <div class="facet-group" data-facet="slot">
-            <span class="facet-label" title="Slot">Slot</span>
-            <button type="button" class="chip icon-only" data-facet="slot" data-value="kinetic" data-state="off" title="Kinetic slot" aria-label="Kinetic slot"><span class="glyph-ico slot-k">K</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="slot" data-value="energy" data-state="off" title="Energy slot" aria-label="Energy slot"><span class="glyph-ico slot-e">E</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="slot" data-value="power" data-state="off" title="Power slot" aria-label="Power slot"><span class="glyph-ico slot-p">P</span><span class="chip-mark"></span></button>
+          <div class="search-wrap">
+            <span class="icon" aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="Search weapons…" aria-label="Search weapons" autocomplete="off" />
           </div>
-          <div class="facet-group" data-facet="exotic">
-            <span class="facet-label" title="Rarity">Rar</span>
-            <button type="button" class="chip icon-only" data-facet="exotic" data-value="exotic" data-state="off" title="Exotic only" aria-label="Exotic only"><span class="glyph-ico exotic">✦</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="exotic" data-value="legendary" data-state="off" title="Legendary" aria-label="Legendary"><span class="glyph-ico legendary">◆</span><span class="chip-mark"></span></button>
+          <div class="facet-group" data-facet="slot" role="group" aria-label="Slot filters">
+            <span class="facet-label">Slot</span>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="kinetic" data-state="off" title="Kinetic slot · cycle off → include → exclude" aria-label="Kinetic slot filter"><span class="glyph-ico">K</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="energy" data-state="off" title="Energy slot" aria-label="Energy slot filter"><span class="glyph-ico" style="color:var(--el-solar)">E</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="power" data-state="off" title="Power slot" aria-label="Power slot filter"><span class="glyph-ico" style="color:var(--slot-power)">P</span><span class="chip-mark" hidden></span></button>
           </div>
-          <button type="button" class="more-btn" id="more-facets" aria-expanded="false" aria-controls="secondary-facets">More</button>
-          <span class="hint-cycle" title="Chip cycle">off→include→exclude · tooltips</span>
-        </div>
-        <div id="secondary-facets" class="secondary-facets" hidden>
-          <div class="facet-group" data-facet="ammo">
+          <div class="facet-group" data-facet="element" role="group" aria-label="Element filters">
+            <span class="facet-label">El</span>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="solar" data-state="off" title="Solar" aria-label="Solar filter"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="arc" data-state="off" title="Arc" aria-label="Arc filter"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="void" data-state="off" title="Void" aria-label="Void filter"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="stasis" data-state="off" title="Stasis" aria-label="Stasis filter"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_530c4c3e7981dc2aefd24fd3293482bf.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="strand" data-state="off" title="Strand" aria-label="Strand filter"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_b2fe51a94f3533f97079dfa0d27a4096.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic element filter"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png" alt="" /><span class="chip-mark" hidden></span></button>
+          </div>
+          <div class="facet-group" data-facet="ammo" role="group" aria-label="Ammo filters">
             <span class="facet-label">Ammo</span>
-            <button type="button" class="chip icon-only" data-facet="ammo" data-value="primary" data-state="off" title="Primary ammo" aria-label="Primary ammo"><span class="glyph-ico ammo-p">●</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="ammo" data-value="special" data-state="off" title="Special ammo" aria-label="Special ammo"><span class="glyph-ico ammo-s">◈</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip icon-only" data-facet="ammo" data-value="heavy" data-state="off" title="Heavy ammo" aria-label="Heavy ammo"><span class="glyph-ico ammo-h">▲</span><span class="chip-mark"></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="primary" data-state="off" title="Primary" aria-label="Primary ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="special" data-state="off" title="Special" aria-label="Special ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="heavy" data-state="off" title="Heavy" aria-label="Heavy ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png" alt="" /><span class="chip-mark" hidden></span></button>
           </div>
-          <div class="facet-group" data-facet="archetype">
+          <button type="button" class="more-btn" id="more-btn" aria-expanded="false" aria-controls="secondary-facets">More</button>
+          <button type="button" class="reset-btn" id="reset-btn" hidden data-action="clear-filters">Reset</button>
+          <span class="hint-cycle">chip: off → include → exclude · arrows+Enter select · Esc clears detail</span>
+        </div>
+        <div class="secondary-facets" id="secondary-facets" hidden>
+          <div class="facet-group" data-facet="type" role="group" aria-label="Weapon type filters">
+            <span class="facet-label">Type</span>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="auto rifle" data-state="off" title="Auto Rifle" aria-label="Auto Rifle filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/auto_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/auto_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="pulse rifle" data-state="off" title="Pulse Rifle" aria-label="Pulse Rifle filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/pulse_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/pulse_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="hand cannon" data-state="off" title="Hand Cannon" aria-label="Hand Cannon filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/hand_cannon.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/hand_cannon.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="submachine gun" data-state="off" title="Submachine Gun" aria-label="Submachine Gun filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/smg.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/smg.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="sidearm" data-state="off" title="Sidearm" aria-label="Sidearm filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sidearm.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sidearm.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="combat bow" data-state="off" title="Combat Bow" aria-label="Combat Bow filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/bow.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/bow.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="shotgun" data-state="off" title="Shotgun" aria-label="Shotgun filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/shotgun.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/shotgun.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="sniper rifle" data-state="off" title="Sniper Rifle" aria-label="Sniper Rifle filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sniper_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sniper_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="grenade launcher" data-state="off" title="Grenade Launcher" aria-label="Grenade Launcher filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/grenade_launcher.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/grenade_launcher.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="rocket launcher" data-state="off" title="Rocket Launcher" aria-label="Rocket Launcher filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/rocket_launcher.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/rocket_launcher.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="machine gun" data-state="off" title="Machine Gun" aria-label="Machine Gun filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/machinegun.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/machinegun.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="sword" data-state="off" title="Sword" aria-label="Sword filter"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sword_heavy.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sword_heavy.svg)"></span><span class="chip-mark" hidden></span></button>
+          </div>
+          <div class="facet-group" data-facet="frame" role="group" aria-label="Frame filters">
             <span class="facet-label">Frame</span>
-            <button type="button" class="chip has-text" data-facet="archetype" data-value="precision" data-state="off" title="Precision"><span class="chip-text">Precision</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip has-text" data-facet="archetype" data-value="aggressive" data-state="off" title="Aggressive"><span class="chip-text">Aggressive</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip has-text" data-facet="archetype" data-value="adaptive" data-state="off" title="Adaptive"><span class="chip-text">Adaptive</span><span class="chip-mark"></span></button>
-            <button type="button" class="chip has-text" data-facet="archetype" data-value="rapid" data-state="off" title="Rapid-Fire"><span class="chip-text">Rapid</span><span class="chip-mark"></span></button>
+            <button type="button" class="chip" data-facet="frame" data-value="precision" data-state="off" aria-label="Precision frame" title="Precision"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/e9dd736124e8ef94048901a279a5bb18.png" alt="" /> Precision<span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip" data-facet="frame" data-value="adaptive" data-state="off" aria-label="Adaptive frame" title="Adaptive"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/967fb4abc6ab98f74639d6c08e5f56ee.png" alt="" /> Adaptive<span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip" data-facet="frame" data-value="aggressive" data-state="off" aria-label="Aggressive frame" title="Aggressive"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/64209c4fd20513b33109c374179d0958.png" alt="" /> Aggressive<span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip" data-facet="frame" data-value="wave" data-state="off" aria-label="Wave frame" title="Wave"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/30428876335fdd1e164128b9e5a6e4ad.png" alt="" /> Wave<span class="chip-mark" hidden></span></button>
           </div>
-          <div class="facet-group" data-facet="groupby">
-            <span class="facet-label">Group</span>
-            <button type="button" class="chip has-text" data-facet="groupby" data-value="none" data-state="include" title="Flat grid (default)"><span class="chip-text">Flat grid</span><span class="chip-mark">+</span></button>
-            <button type="button" class="chip has-text" data-facet="groupby" data-value="slot" data-state="off" title="Group by slot"><span class="chip-text">By slot</span><span class="chip-mark"></span></button>
+          <div class="facet-group" data-facet="rarity" role="group" aria-label="Rarity filters">
+            <span class="facet-label">Rarity</span>
+            <button type="button" class="chip icon-only" data-facet="rarity" data-value="exotic" data-state="off" title="Exotic" aria-label="Exotic filter"><span class="glyph-ico exotic">✦</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="rarity" data-value="legendary" data-state="off" title="Legendary" aria-label="Legendary filter"><span class="glyph-ico legendary">◆</span><span class="chip-mark" hidden></span></button>
           </div>
         </div>
-        <div class="filter-summary" id="filter-summary" hidden>
-          <span class="facet-label">Active</span>
-          <div id="summary-chips"></div>
-          <button type="button" class="reset-btn" id="reset-filters">Reset</button>
-        </div>
-      </div>
+        <div class="filter-summary" id="filter-summary" hidden></div>
+      </section>
 
-      <div class="workspace" id="workspace">
-        <section class="results" id="rail" aria-label="Weapons grid">
-          <div class="results-meta">
-            <span><strong id="result-count">0</strong> weapons · grid of all</span>
-            <span id="sort-hint">sort: slot → exotic → ammo → frame · click → full-height sidebar</span>
-          </div>
-          <div class="board" id="board" role="listbox" aria-label="Weapon results grid" tabindex="0"></div>
-        </section>
-      </div>
+      <section class="results" aria-label="Weapon results">
+        <div class="results-meta">
+          <span id="count-label"><strong>0</strong> identities</span>
+          <span id="sort-hint">sort: slot → exotic → ammo → archetype · select → ~400px detail</span>
+        </div>
+        <div class="board" id="board" role="listbox" aria-label="Weapon identity grid" tabindex="0"></div>
+      </section>
     </div>
-    <aside class="detail" id="detail" aria-label="Weapon detail sidebar" tabindex="-1"></aside>
+    <aside class="detail" id="detail" aria-label="Weapon composition detail" tabindex="-1"></aside>
   </div>
   <div class="a11y-live" id="live" aria-live="polite"></div>
 
   <script>
 (function () {
   const EL = {
-    kinetic: "var(--el-kinetic)",
-    arc: "var(--el-arc)",
-    solar: "var(--el-solar)",
-    void: "var(--el-void)",
-    stasis: "var(--el-stasis)",
-    strand: "var(--el-strand)",
-    prismatic: "var(--el-prismatic)",
+    kinetic: "var(--el-kinetic)", arc: "var(--el-arc)", solar: "var(--el-solar)",
+    void: "var(--el-void)", stasis: "var(--el-stasis)", strand: "var(--el-strand)",
+  };
+  const SLOT_ORDER = { kinetic: 0, energy: 1, power: 2 };
+  const AMMO_ORDER = { primary: 0, special: 1, heavy: 2 };
+  const COL_LABELS = {
+    barrel: "Barrel",
+    magazine: "Magazine",
+    trait1: "Trait 1",
+    trait2: "Trait 2",
+    origin: "Origin Trait",
+  };
+  /** Column order for perk grid — same layout selected-only and can-roll. */
+  const PERK_COL_KEYS = ["barrel", "magazine", "trait1", "trait2", "origin"];
+  const CDN = "https://www.bungie.net";
+  /** destiny-icons weapon silhouettes (same set as Next `weaponTypeIcons.ts` / DIM). */
+  const TYPE_ICON_CDN = "https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons";
+  const TYPE_ICON_FILE = {
+    "auto rifle": "auto_rifle.svg",
+    "pulse rifle": "pulse_rifle.svg",
+    "scout rifle": "scout_rifle.svg",
+    "hand cannon": "hand_cannon.svg",
+    "sidearm": "sidearm.svg",
+    "submachine gun": "smg.svg",
+    "combat bow": "bow.svg",
+    "bow": "bow.svg",
+    "fusion rifle": "fusion_rifle.svg",
+    "glaive": "glaive.svg",
+    "sniper rifle": "sniper_rifle.svg",
+    "shotgun": "shotgun.svg",
+    "trace rifle": "beam_weapon.svg",
+    "grenade launcher": "grenade_launcher.svg",
+    "rocket launcher": "rocket_launcher.svg",
+    "linear fusion rifle": "wire_rifle.svg",
+    "machine gun": "machinegun.svg",
+    "sword": "sword_heavy.svg",
+  };
+  function typeIconUrl(typeName) {
+    if (!typeName) return null;
+    const file = TYPE_ICON_FILE[String(typeName).trim().toLowerCase()];
+    return file ? `${TYPE_ICON_CDN}/${file}` : null;
+  }
+  /** Official Bungie perk icons when known (mock stand-in for plug def icons). */
+  const PERK_ICONS = {
+    "Arrowhead Brake": "/common/destiny2_content/icons/8f7fb54687aa52a9c2595d90ce9c9417.png",
+    "Appended Mag": "/common/destiny2_content/icons/d9f468cce26fe35d9db413e2f8451127.png",
+    "Overflow": "/common/destiny2_content/icons/3165fec56b59363fa974a11f5730f4ec.png",
+    "Rampage": "/common/destiny2_content/icons/8976ead57430e4f5f8af1b3005de4f83.png",
+    "Chambered Compensator": "/common/destiny2_content/icons/0b451cbccc7f11f6aec9c153e59474cb.png",
+    "Corkscrew Rifling": "/common/destiny2_content/icons/0b451cbccc7f11f6aec9c153e59474cb.png",
+    "Frenzy": "/common/destiny2_content/icons/23e06f4ced1b3e6476f342978ff5bb37.png",
+    "Kill Clip": "/common/destiny2_content/icons/0afd4799427004b2d8170ab213a2ef0c.png",
+    "Smallbore": "/common/destiny2_content/icons/7d1bb6a623f14959a47156ee71acfc3a.png",
+    "Hammer-Forged Rifling": "/common/destiny2_content/icons/2b9eb6d4489cffc18c10223279198bcc.png",
+    "Polygonal Rifling": "/common/destiny2_content/icons/2b9eb6d4489cffc18c10223279198bcc.png",
+    "Accurized Rounds": "/common/destiny2_content/icons/d85024478504205359c7fb52dbc4f6b6.png",
+    "Perpetual Motion": "/common/destiny2_content/icons/8b9a4582016210723532907414759e69.png",
+    "Volatile Launch": "/common/destiny2_content/icons/d255c9140cf640cfc820f995d1c1e96a.png",
+    "Confined Launch": "/common/destiny2_content/icons/d255c9140cf640cfc820f995d1c1e96a.png",
+    "Quick Launch": "/common/destiny2_content/icons/d255c9140cf640cfc820f995d1c1e96a.png",
+    "Impulse Amplifier": "/common/destiny2_content/icons/85269cc90d2005ccd6a41b5d830e223d.png",
+    "Explosive Light": "/common/destiny2_content/icons/a19132880fae832711f474218e791d21.png",
+    "Natural String": "/common/destiny2_content/icons/a2d4be4d60a82efbd0ce54f7bc1c3c3d.png",
+    "Compact Arrow Shaft": "/common/destiny2_content/icons/92192e1f865a985b853ca28f5321c1ba.png",
+    "Feeding Frenzy": "/common/destiny2_content/icons/3165fec56b59363fa974a11f5730f4ec.png",
+    "One for All": "/common/destiny2_content/icons/8976ead57430e4f5f8af1b3005de4f83.png",
+    "Tactical Mag": "/common/destiny2_content/icons/d9f468cce26fe35d9db413e2f8451127.png",
+    "Alloy Magazine": "/common/destiny2_content/icons/d9f468cce26fe35d9db413e2f8451127.png",
+    "Subsistence": "/common/destiny2_content/icons/8b9a4582016210723532907414759e69.png",
+    "Threat Detector": "/common/destiny2_content/icons/8b9a4582016210723532907414759e69.png",
+    "Field Prep": "/common/destiny2_content/icons/85269cc90d2005ccd6a41b5d830e223d.png",
+    "Alloy Casing": "/common/destiny2_content/icons/d9f468cce26fe35d9db413e2f8451127.png",
+    "Black Powder": "/common/destiny2_content/icons/d85024478504205359c7fb52dbc4f6b6.png",
+    "Nascent Dawn": "/common/destiny2_content/icons/8b9a4582016210723532907414759e69.png",
+    "Veist Stinger": "/common/destiny2_content/icons/3165fec56b59363fa974a11f5730f4ec.png",
+    "Omolon Fluid Dynamics": "/common/destiny2_content/icons/85269cc90d2005ccd6a41b5d830e223d.png",
+    "Wild Card": "/common/destiny2_content/icons/8976ead57430e4f5f8af1b3005de4f83.png",
   };
 
+  /**
+   * craftAvailable + craftColumns: only show Possible crafted toggle when columns exist.
+   * poolMissing on a column: can-roll partial honesty (selected only + note).
+   * No invent of farms/catalyst progress/desired-roll chrome.
+   */
   const WEAPONS = [
     {
-      id: "w1",
-      name: "The Ringing Nail",
-      type: "Auto Rifle",
-      archetype: "precision",
-      slot: "energy",
-      element: "solar",
-      ammo: "primary",
-      rarity: "legendary",
-      craftable: true,
-      owned: 2,
-      icon: "⚔",
-      stats: { rpm: 450, impact: 29, range: 73, stability: 57, handling: 67, reload: 62 },
+      id: "w1", hash: 3549153978, name: "The Ringing Nail", type: "Auto Rifle", frame: "Precision Frame",
+      slot: "energy", element: "solar", ammo: "primary", rarity: "legendary", owned: 2, icon: "⚔",
+      stats: { impact: 29, range: 68, stability: 42, handling: 51, reload: 46 },
+      reverseSynergies: ["Solar AR traits"],
       instances: [
-        { id: "i1", power: 2020, mw: "Range", location: "Character" },
-        { id: "i2", power: 2005, mw: "Handling", location: "Vault" },
+        { id: "i1", power: 2020, mw: "Range", crafted: false },
+        { id: "i2", power: 2005, mw: "Handling", crafted: false },
       ],
       perks: {
-        barrel: { selected: "Arrowhead Brake", pool: ["Arrowhead Brake", "Chambered Compensator", "Corkscrew Rifling"] },
-        magazine: { selected: "Appended Mag", pool: ["Appended Mag", "Tactical Mag", "Extended Mag"] },
-        trait1: { selected: "Overflow", pool: ["Overflow", "Feeding Frenzy", "Subsistence"] },
-        trait2: { selected: "Rampage", pool: ["Rampage", "One for All", "Multikill Clip"] },
+        barrel: { selected: "Arrowhead Brake", pool: ["Arrowhead Brake", "Chambered Compensator", "Corkscrew Rifling"], selectedHash: 839105230 },
+        magazine: { selected: "Appended Mag", pool: ["Appended Mag", "Tactical Mag"], selectedHash: 1087426260 },
+        trait1: { selected: "Overflow", pool: ["Overflow", "Feeding Frenzy"], selectedHash: 3643424744 },
+        trait2: { selected: "Rampage", pool: ["Rampage", "One for All"], selectedHash: 3425386926 },
+        origin: { selected: "Wild Card", pool: ["Wild Card"] },
       },
-      craft: {
-        // column format matches Perks (possible options only)
-        possible: {
-          barrel: ["Arrowhead Brake", "Chambered Compensator", "Corkscrew Rifling"],
-          magazine: ["Appended Mag", "Tactical Mag", "Extended Mag"],
-          trait1: ["Overflow", "Feeding Frenzy", "Subsistence"],
-          trait2: ["Rampage", "One for All", "Frenzy"],
-        },
+      craftAvailable: true,
+      craftColumns: {
+        barrel: { selected: "Arrowhead Brake", pool: ["Arrowhead Brake", "Chambered Compensator", "Polygonal Rifling"] },
+        magazine: { selected: "Appended Mag", pool: ["Appended Mag", "Alloy Magazine"] },
+        trait1: { selected: "Overflow", pool: ["Overflow", "Subsistence"] },
+        trait2: { selected: "Rampage", pool: ["Rampage", "Kill Clip"] },
+        origin: { selected: "Wild Card", pool: ["Wild Card"] },
       },
-      synergies: ["Solar auto mid-range", "Add-clear core"],
     },
     {
-      id: "w2",
-      name: "Wish-Keeper",
-      type: "Combat Bow",
-      archetype: "precision",
-      slot: "kinetic",
-      element: "kinetic",
-      ammo: "primary",
-      rarity: "exotic",
-      craftable: true,
-      owned: 1,
-      icon: "🏹",
-      intrinsic: {
-        name: "Snareweaver",
-        description: "Precision hits weave a suspending snare. Exotic intrinsic — not a random roll column.",
-      },
-      catalyst: {
-        complete: false,
-        progress: "12 / 20 Snareweaver kills",
-        name: "Wish-Keeper Catalyst",
-        note: "Completing/inserting catalyst can change the catalyst plug on this copy (soft only).",
-        selected: null,
-        pool: ["Wish-Keeper Catalyst"],
-      },
-      deepsight: false,
-      stats: { rpm: 0, impact: 76, range: 80, stability: 55, handling: 60, reload: 40 },
-      instances: [{ id: "i3", power: 2015, mw: "Draw Time", location: "Character" }],
+      id: "w2", hash: 3886416794, name: "Wish-Keeper", type: "Combat Bow", frame: "Precision Frame",
+      slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "exotic", owned: 1, icon: "🏹",
+      intrinsic: "Snareweaver", catalystKnown: true, catalystLabel: "Catalyst available (soft)",
+      stats: { impact: 76, accuracy: 70, stability: 46, handling: 68, reload: 50, draw: 684 },
+      reverseSynergies: ["Strand snare set"],
+      instances: [{ id: "i3", power: 2015, mw: "Draw Time", crafted: true }],
       perks: {
-        barrel: { selected: "Natural String", pool: ["Natural String", "Polymer String", "Agile Bowstring"] },
+        barrel: { selected: "Natural String", pool: ["Natural String"], selectedHash: 2801223410 },
+        magazine: { selected: "Compact Arrow Shaft", pool: ["Compact Arrow Shaft"], selectedHash: 1639272550 },
+        trait1: { selected: "Enduring Snare", pool: ["Enduring Snare"], selectedHash: 4012967024 },
+        trait2: { selected: null, pool: [] },
+      },
+      craftAvailable: true,
+      craftColumns: {
+        barrel: { selected: "Natural String", pool: ["Natural String"] },
         magazine: { selected: "Compact Arrow Shaft", pool: ["Compact Arrow Shaft", "Fiberglass Arrow Shaft"] },
         trait1: { selected: "Enduring Snare", pool: ["Enduring Snare"] },
         trait2: { selected: null, pool: [] },
       },
-      craft: {
-        possible: {
-          barrel: ["Natural String", "Polymer String", "Agile Bowstring"],
-          magazine: ["Compact Arrow Shaft", "Fiberglass Arrow Shaft"],
-          trait1: ["Enduring Snare", "Enduring Snare (enhanced)"],
-          trait2: [],
-        },
-      },
-      synergies: ["Strand suspend support"],
     },
     {
-      id: "w3",
-      name: "Palmyra-B",
-      type: "Rocket Launcher",
-      archetype: "precision",
-      slot: "power",
-      element: "stasis",
-      ammo: "heavy",
-      rarity: "legendary",
-      craftable: true,
-      owned: 0,
-      icon: "🚀",
-      stats: { rpm: 15, impact: 90, range: 70, stability: 40, handling: 45, reload: 35 },
+      id: "w3", hash: 2817576600, name: "Palmyra-B", type: "Rocket Launcher", frame: "Precision Frame",
+      slot: "power", element: "stasis", ammo: "heavy", rarity: "legendary", owned: 0, icon: "🚀",
+      stats: { blast: 50, velocity: 72, stability: 38, handling: 41, reload: 32 },
+      reverseSynergies: [],
       instances: [],
       perks: {
         barrel: { selected: null, pool: ["Volatile Launch", "Confined Launch", "Quick Launch"] },
-        magazine: { selected: null, pool: ["Alloy Casing", "Black Powder", "High-Velocity Rounds"] },
-        trait1: { selected: null, pool: ["Impulse Amplifier", "Field Prep", "Auto-Loading Holster"] },
-        trait2: { selected: null, pool: ["Explosive Light", "Lasting Impression", "Bait and Switch"] },
+        magazine: { selected: null, pool: ["Alloy Casing", "Black Powder"] },
+        trait1: { selected: null, pool: ["Impulse Amplifier", "Field Prep"] },
+        trait2: { selected: null, pool: ["Explosive Light", "Frenzy"] },
+        origin: { selected: null, pool: ["Omolon Fluid Dynamics"] },
       },
-      craft: {
-        possible: {
-          barrel: ["Volatile Launch", "Confined Launch", "Quick Launch"],
-          magazine: ["Alloy Casing", "Black Powder", "High-Velocity Rounds"],
-          trait1: ["Impulse Amplifier", "Field Prep", "Auto-Loading Holster"],
-          trait2: ["Explosive Light", "Lasting Impression", "Bait and Switch"],
-        },
-      },
-      synergies: [],
+      craftAvailable: false,
+      craftColumns: null,
     },
     {
-      id: "w4",
-      name: "Funnelweb",
-      type: "Submachine Gun",
-      archetype: "aggressive",
-      slot: "energy",
-      element: "void",
-      ammo: "primary",
-      rarity: "legendary",
-      craftable: false,
-      owned: 3,
-      icon: "⌁",
-      stats: { rpm: 900, impact: 22, range: 45, stability: 40, handling: 70, reload: 30 },
+      id: "w4", hash: 1298815317, name: "Funnelweb", type: "Submachine Gun", frame: "Aggressive Frame",
+      slot: "energy", element: "void", ammo: "primary", rarity: "legendary", owned: 3, icon: "⌁",
+      stats: { impact: 22, range: 49, stability: 34, handling: 62, reload: 28 },
+      reverseSynergies: ["Void SMG ammo"],
       instances: [
-        { id: "i4", power: 2018, mw: "Range", location: "Character" },
-        { id: "i5", power: 2010, mw: "Stability", location: "Vault" },
-        { id: "i6", power: 1998, mw: "Handling", location: "Vault" },
+        { id: "i4", power: 2018, mw: "Range", crafted: false },
+        { id: "i5", power: 2010, mw: "Stability", crafted: false },
+        { id: "i6", power: 1998, mw: "Handling", crafted: true },
       ],
       perks: {
-        barrel: { selected: "Smallbore", pool: ["Smallbore", "Hammer-Forged", "Polygonal"] },
-        magazine: { selected: "Accurized Rounds", pool: ["Accurized Rounds", "Ricochet Rounds"] },
-        trait1: { selected: "Perpetual Motion", pool: ["Perpetual Motion", "Subsistence", "Heating Up"] },
-        trait2: { selected: "Frenzy", pool: ["Frenzy", "Rangefinder", "Kill Clip"] },
+        barrel: { selected: "Smallbore", pool: ["Smallbore", "Hammer-Forged Rifling", "Polygonal Rifling"], selectedHash: 1482024992 },
+        magazine: { selected: "Accurized Rounds", pool: ["Accurized Rounds", "Appended Mag"], selectedHash: 3142289711 },
+        trait1: { selected: "Perpetual Motion", pool: ["Perpetual Motion", "Subsistence", "Threat Detector"], selectedHash: 1428297954, poolMissing: false },
+        trait2: { selected: "Frenzy", pool: ["Frenzy", "Kill Clip"], selectedHash: 4104185692 },
+        origin: { selected: "Veist Stinger", pool: ["Veist Stinger"] },
       },
-      synergies: ["Void primary add clear"],
+      craftAvailable: false,
+      craftColumns: null,
     },
     {
-      id: "w5",
-      name: "Indebted Kindness",
-      type: "Sidearm",
-      archetype: "adaptive",
-      slot: "energy",
-      element: "arc",
-      ammo: "special",
-      rarity: "legendary",
-      craftable: true,
-      owned: 1,
-      icon: "◎",
-      stats: { rpm: 325, impact: 49, range: 40, stability: 55, handling: 60, reload: 45 },
-      instances: [{ id: "i7", power: 2012, mw: "Velocity", location: "Character" }],
+      id: "w5", hash: 1478986057, name: "Indebted Kindness", type: "Sidearm", frame: "Adaptive Frame",
+      slot: "energy", element: "arc", ammo: "special", rarity: "legendary", owned: 1, icon: "◎",
+      stats: { impact: 49, range: 35, stability: 52, handling: 58, reload: 33 },
+      reverseSynergies: [],
+      instances: [{ id: "i7", power: 2012, mw: "Velocity", crafted: true }],
       perks: {
+        barrel: { selected: "Volatile Launch", pool: ["Volatile Launch"], selectedHash: 3523292311 },
+        magazine: { selected: "High-Velocity Rounds", pool: ["High-Velocity Rounds"], selectedHash: 2827040344 },
+        trait1: { selected: "Beacon Rounds", pool: ["Beacon Rounds"], selectedHash: 2611812810 },
+        trait2: { selected: "Voltshot", pool: ["Voltshot"], selectedHash: 3511092560 },
+        origin: { selected: "Wild Card", pool: ["Wild Card"] },
+      },
+      craftAvailable: true,
+      craftColumns: {
         barrel: { selected: "Volatile Launch", pool: ["Volatile Launch", "Confined Launch"] },
         magazine: { selected: "High-Velocity Rounds", pool: ["High-Velocity Rounds", "Implosion Rounds"] },
-        trait1: { selected: "Beacon Rounds", pool: ["Beacon Rounds", "Impulse Amplifier"] },
-        trait2: { selected: "Voltshot", pool: ["Voltshot", "Adrenaline Junkie"] },
+        trait1: { selected: "Beacon Rounds", pool: ["Beacon Rounds"] },
+        trait2: { selected: "Voltshot", pool: ["Voltshot"] },
+        origin: { selected: "Wild Card", pool: ["Wild Card"] },
       },
-      craft: {
-        possible: {
-          barrel: ["Volatile Launch", "Confined Launch"],
-          magazine: ["High-Velocity Rounds", "Implosion Rounds"],
-          trait1: ["Beacon Rounds", "Impulse Amplifier"],
-          trait2: ["Voltshot", "Adrenaline Junkie"],
-        },
-      },
-      synergies: ["Arc special jolt"],
     },
     {
-      id: "w6",
-      name: "Quicksilver Storm",
-      type: "Auto Rifle",
-      archetype: "adaptive",
-      slot: "kinetic",
-      element: "kinetic",
-      ammo: "primary",
-      rarity: "exotic",
-      craftable: false,
-      owned: 0,
-      icon: "✧",
-      intrinsic: {
-        name: "Rocket Tracers",
-        description: "Landing multiple hits loads a homing micro-rocket. Exotic intrinsic — fixed, not a roll column.",
-      },
-      catalyst: {
-        complete: true,
-        progress: "Complete · inserted",
-        name: "Quicksilver Storm Catalyst",
-        selected: "Nanotech Tracer Rockets",
-        pool: ["Nanotech Tracer Rockets"],
-      },
-      deepsight: false,
-      stats: { rpm: 720, impact: 22, range: 40, stability: 50, handling: 55, reload: 40 },
+      id: "w6", hash: 2940035732, name: "Quicksilver Storm", type: "Auto Rifle", frame: "Adaptive Frame",
+      slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "exotic", owned: 0, icon: "✧",
+      intrinsic: "Rocket Tracers", catalystKnown: false, catalystLabel: "Catalyst status unknown",
+      stats: { impact: 21, range: 42, stability: 48, handling: 64, reload: 51 },
+      reverseSynergies: [],
       instances: [],
       perks: {
-        barrel: { selected: "Polycarbonate Stock", pool: ["Polycarbonate Stock"] },
-        magazine: { selected: "Extended Mag", pool: ["Extended Mag"] },
+        barrel: { selected: null, pool: ["Polycarbonate Stock"] },
+        magazine: { selected: null, pool: ["Extended Mag"] },
         trait1: { selected: null, pool: [] },
         trait2: { selected: null, pool: [] },
       },
-      synergies: [],
+      craftAvailable: false,
+      craftColumns: null,
     },
     {
-      id: "w7",
-      name: "Corrective Measure",
-      type: "Machine Gun",
-      archetype: "adaptive",
-      slot: "power",
-      element: "void",
-      ammo: "heavy",
-      rarity: "legendary",
-      craftable: false,
-      owned: 1,
-      icon: "▣",
-      stats: { rpm: 450, impact: 41, range: 55, stability: 50, handling: 45, reload: 40 },
-      instances: [{ id: "i8", power: 2008, mw: "Range", location: "Vault" }],
+      id: "w7", hash: 3928779360, name: "Corrective Measure", type: "Machine Gun", frame: "Adaptive Frame",
+      slot: "power", element: "void", ammo: "heavy", rarity: "legendary", owned: 1, icon: "▣",
+      stats: { impact: 41, range: 60, stability: 48, handling: 45, reload: 39 },
+      reverseSynergies: [],
+      instances: [{ id: "i8", power: 2008, mw: "Range", crafted: false }],
       perks: {
-        barrel: { selected: "Arrowhead Brake", pool: ["Arrowhead Brake", "Fluted Barrel"] },
-        magazine: { selected: "Appended Mag", pool: ["Appended Mag", "Extended Mag"] },
-        trait1: { selected: "Rewind Rounds", pool: ["Rewind Rounds", "Subsistence"] },
-        trait2: { selected: "Unknown perk", pool: ["Unknown perk", "Firefly"], unknownHash: 3928779367 },
+        barrel: { selected: "Arrowhead Brake", pool: ["Arrowhead Brake"], selectedHash: 839105230 },
+        magazine: { selected: "Appended Mag", pool: ["Appended Mag"], selectedHash: 1087426260 },
+        trait1: { selected: "Rewind Rounds", pool: ["Rewind Rounds"], selectedHash: 3413909080 },
+        trait2: { selected: "Unknown perk", pool: ["Unknown perk"], unknown: true, selectedHash: 999000123 },
       },
-      synergies: ["Void heavy sustain"],
-      hasUnknown: true,
+      craftAvailable: false,
+      craftColumns: null,
     },
     {
-      id: "w8",
-      name: "Forbearance",
-      type: "Grenade Launcher",
-      archetype: "wave",
-      slot: "energy",
-      element: "arc",
-      ammo: "special",
-      rarity: "legendary",
-      craftable: true,
-      owned: 1,
-      icon: "◈",
-      stats: { rpm: 72, impact: 0, range: 0, stability: 50, handling: 70, reload: 60 },
-      instances: [{ id: "i9", power: 2019, mw: "Velocity", location: "Character" }],
+      id: "w8", hash: 613314059, name: "Forbearance", type: "Grenade Launcher", frame: "Wave Frame",
+      slot: "energy", element: "arc", ammo: "special", rarity: "legendary", owned: 1, icon: "◈",
+      stats: { blast: 20, velocity: 73, stability: 27, handling: 69, reload: 63 },
+      reverseSynergies: ["Arc special wave"],
+      instances: [{ id: "i9", power: 2019, mw: "Velocity", crafted: true }],
       perks: {
-        barrel: { selected: "Volatile Launch", pool: ["Volatile Launch", "Linear Compensator"] },
-        magazine: { selected: "Implosion Rounds", pool: ["Implosion Rounds", "High-Velocity Rounds"] },
-        trait1: { selected: "Ambitious Assassin", pool: ["Ambitious Assassin", "Unrelenting"] },
-        trait2: { selected: "Chain Reaction", pool: ["Chain Reaction", "Wellspring"] },
+        barrel: { selected: "Volatile Launch", pool: ["Volatile Launch", "Linear Compensator"], selectedHash: 3523292311 },
+        magazine: { selected: "Implosion Rounds", pool: null, poolMissing: true, selectedHash: 3796461486 },
+        trait1: { selected: "Ambitious Assassin", pool: ["Ambitious Assassin", "Stats for All"], selectedHash: 2010801679 },
+        trait2: { selected: "Chain Reaction", pool: null, poolMissing: true, selectedHash: 2396480958 },
+        origin: { selected: "Nascent Dawn", pool: ["Nascent Dawn"] },
       },
-      craft: {
-        possible: {
-          barrel: ["Volatile Launch", "Linear Compensator"],
-          magazine: ["Implosion Rounds", "High-Velocity Rounds"],
-          trait1: ["Ambitious Assassin", "Unrelenting"],
-          trait2: ["Chain Reaction", "Wellspring"],
-        },
+      craftAvailable: false,
+      craftColumns: null,
+    },
+    {
+      id: "w9", hash: 999000001, name: null, type: null, frame: null,
+      slot: "energy", element: "solar", ammo: "primary", rarity: "legendary", owned: 0, icon: null,
+      instances: [], missingIdentity: true,
+      reverseSynergies: [],
+      perks: {
+        barrel: { selected: null, pool: [] },
+        magazine: { selected: null, pool: [] },
+        trait1: { selected: null, pool: [] },
+        trait2: { selected: null, pool: [] },
       },
-      synergies: ["Add clear special"],
+      craftAvailable: false,
+      craftColumns: null,
     },
   ];
 
   const state = {
-    signedIn: true,
-    scope: "all", // all | owned
-    search: "",
-    facets: {}, // facet -> { value: off|include|exclude }
-    groupBy: "none",
-    /** Detail density: off by default — user toggles to reveal */
-    showCanRoll: false,
-    showPossibleCraft: false,
-    selectedId: null,
-    selectedInstanceId: null,
-    scenario: "results",
-    moreOpen: false,
+    signedIn: true, scope: "all", search: "", facets: {},
+    showCanRoll: false, showPossibleCraft: false,
+    selectedId: null, selectedInstanceId: null,
+    scenario: "results", moreOpen: false,
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-  function announce(msg) {
-    $("#live").textContent = msg;
-  }
-
+  function announce(msg) { $("#live").textContent = msg; }
   function cycleState(cur) {
     if (cur === "off") return "include";
     if (cur === "include") return "exclude";
     return "off";
   }
-
   function getFacetState(facet, value) {
     return (state.facets[facet] && state.facets[facet][value]) || "off";
   }
-
   function setFacetState(facet, value, s) {
     if (!state.facets[facet]) state.facets[facet] = {};
-    if (s === "off") {
-      delete state.facets[facet][value];
-      if (!Object.keys(state.facets[facet]).length) delete state.facets[facet];
-    } else {
-      // groupby is single-select include only
-      if (facet === "groupby") {
-        state.facets.groupby = {};
-        if (s === "include") state.facets.groupby[value] = "include";
-        state.groupBy = s === "include" ? value : "slot";
-        if (value === "none" && s === "include") state.groupBy = "none";
-      } else {
-        state.facets[facet][value] = s;
+    if (s === "off") delete state.facets[facet][value];
+    else state.facets[facet][value] = s;
+    if (state.facets[facet] && !Object.keys(state.facets[facet]).length) delete state.facets[facet];
+  }
+  function activeFilters() {
+    const out = [];
+    for (const [facet, map] of Object.entries(state.facets)) {
+      for (const [value, st] of Object.entries(map)) {
+        if (st !== "off") out.push({ facet, value, state: st });
       }
     }
+    return out;
+  }
+  function hasActiveFilters() {
+    return activeFilters().length > 0 || !!state.search.trim();
+  }
+  function displayName(w) {
+    if (w.name && w.name.trim()) return w.name;
+    return "Unknown weapon";
+  }
+  function typeLine(w) { return w.type || "Weapon"; }
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function typeIcoHtml(typeName) {
+    const url = typeIconUrl(typeName);
+    if (!url) return "";
+    return `<span class="type-ico" style="-webkit-mask-image:url(${url});mask-image:url(${url})" title="${escapeHtml(typeName || "")}" role="img" aria-label="${escapeHtml(typeName || "")}"></span>`;
   }
 
-  function activeFilters() {
-    const list = [];
-    for (const [facet, map] of Object.entries(state.facets)) {
-      if (facet === "groupby") continue;
-      for (const [value, st] of Object.entries(map)) {
-        list.push({ facet, value, state: st });
-      }
-    }
-    if (state.search.trim()) {
-      list.push({ facet: "text", value: state.search.trim(), state: "include" });
-    }
-    return list;
+  const ELEMENT_ICON = {
+    kinetic: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png",
+    arc: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png",
+    solar: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png",
+    void: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png",
+    stasis: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_530c4c3e7981dc2aefd24fd3293482bf.png",
+    strand: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_b2fe51a94f3533f97079dfa0d27a4096.png",
+  };
+  const AMMO_ICON = {
+    primary: "/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png",
+    special: "/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png",
+    heavy: "/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png",
+  };
+  const FRAME_ICON = {
+    precision: "/common/destiny2_content/icons/e9dd736124e8ef94048901a279a5bb18.png",
+    adaptive: "/common/destiny2_content/icons/967fb4abc6ab98f74639d6c08e5f56ee.png",
+    aggressive: "/common/destiny2_content/icons/64209c4fd20513b33109c374179d0958.png",
+    wave: "/common/destiny2_content/icons/30428876335fdd1e164128b9e5a6e4ad.png",
+  };
+
+  function bungieImg(path, title) {
+    if (!path) return "";
+    return `<img class="facet-img" src="${CDN}${path}" alt="" title="${escapeHtml(title || "")}" role="img" aria-label="${escapeHtml(title || "")}" />`;
+  }
+
+  /** Card bloom still uses color wash; official PNG for meta strip. */
+  function elGlyph(el) {
+    const e = (el || "kinetic").toLowerCase();
+    const css = EL[e] || EL.kinetic;
+    const path = ELEMENT_ICON[e] || ELEMENT_ICON.kinetic;
+    return `<span class="el-glyph" style="--el:${css}" title="${escapeHtml(cap(e))}">${bungieImg(path, cap(e))}</span>`;
+  }
+  function elIco(el) {
+    const e = (el || "kinetic").toLowerCase();
+    return bungieImg(ELEMENT_ICON[e] || ELEMENT_ICON.kinetic, cap(e));
+  }
+  function ammoIco(ammo) {
+    const a = (ammo || "primary").toLowerCase();
+    return bungieImg(AMMO_ICON[a] || AMMO_ICON.primary, `${cap(a)} ammo`);
+  }
+  function frameIco(frame) {
+    if (!frame) return "";
+    const f = frame.toLowerCase();
+    let key = null;
+    if (f.includes("precision")) key = "precision";
+    else if (f.includes("aggressive")) key = "aggressive";
+    else if (f.includes("adaptive")) key = "adaptive";
+    else if (f.includes("wave")) key = "wave";
+    if (!key || !FRAME_ICON[key]) return "";
+    return bungieImg(FRAME_ICON[key], frame);
+  }
+  function slotIco(slot) {
+    const s = (slot || "").toLowerCase();
+    if (s === "kinetic") return `<span class="slot-letter" title="Kinetic" role="img" aria-label="Kinetic">K</span>`;
+    if (s === "energy") return `<span class="slot-letter energy" title="Energy" role="img" aria-label="Energy">E</span>`;
+    if (s === "power") return `<span class="slot-letter power" title="Power" role="img" aria-label="Power">P</span>`;
+    return "";
+  }
+
+  /** Icon-only meta strip for detail header (titles = a11y). */
+  function metaIconsHtml(w) {
+    const owned = showOwned() && w.owned
+      ? `<span class="pill owned" title="Owned copies">×${w.owned}</span>`
+      : state.signedIn
+        ? `<span class="pill" title="Not owned">—</span>`
+        : `<span class="pill" title="Manifest only">·</span>`;
+    return `<div class="meta-icons" role="group" aria-label="Weapon meta">
+      ${typeIcoHtml(w.type)}
+      ${frameIco(w.frame)}
+      ${elIco(w.element)}
+      ${slotIco(w.slot)}
+      ${ammoIco(w.ammo)}
+      ${owned}
+    </div>`;
   }
 
   function matchesWeapon(w) {
-    // scope
+    if (state.scenario === "unknown-weapon" && !w.missingIdentity) return false;
+    if (state.scenario !== "unknown-weapon" && w.missingIdentity) return false;
     if (state.scope === "owned") {
       if (!state.signedIn) return false;
       if (!w.owned) return false;
     }
-
     const q = state.search.trim().toLowerCase();
-    if (q && !w.name.toLowerCase().includes(q) && !w.type.toLowerCase().includes(q)) {
-      return false;
+    if (q) {
+      const hay = [displayName(w), w.type, w.frame, w.element, w.slot, w.ammo, w.rarity]
+        .filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
     }
-
-    // facets: AND across facets; OR within include; any exclude drops
-    const facetKeys = Object.keys(state.facets).filter((k) => k !== "groupby");
-    for (const facet of facetKeys) {
-      const map = state.facets[facet];
+    for (const [facet, map] of Object.entries(state.facets)) {
       const includes = Object.entries(map).filter(([, s]) => s === "include").map(([v]) => v);
       const excludes = Object.entries(map).filter(([, s]) => s === "exclude").map(([v]) => v);
-
-      let weaponVal;
-      if (facet === "exotic") {
-        weaponVal = w.rarity; // exotic | legendary
-      } else if (facet === "element") {
-        weaponVal = w.element;
-      } else if (facet === "slot") {
-        weaponVal = w.slot;
-      } else if (facet === "ammo") {
-        weaponVal = w.ammo;
-      } else if (facet === "archetype") {
-        weaponVal = w.archetype;
-      } else {
-        continue;
-      }
-
-      if (excludes.includes(weaponVal)) return false;
-      if (includes.length && !includes.includes(weaponVal)) return false;
+      let field;
+      if (facet === "frame") field = (w.frame || "").toLowerCase().replace(/ frame$/, "");
+      else if (facet === "rarity") field = w.rarity;
+      else if (facet === "type") field = (w.type || "").toLowerCase();
+      else field = w[facet];
+      if (excludes.includes(field)) return false;
+      if (includes.length && !includes.includes(field)) return false;
     }
     return true;
   }
 
   function sortWeapons(list) {
-    const slotOrder = { kinetic: 0, energy: 1, power: 2 };
-    const ammoOrder = { primary: 0, special: 1, heavy: 2 };
     return list.slice().sort((a, b) => {
-      if (slotOrder[a.slot] !== slotOrder[b.slot]) return slotOrder[a.slot] - slotOrder[b.slot];
-      const ae = a.rarity === "exotic" ? 0 : 1;
-      const be = b.rarity === "exotic" ? 0 : 1;
-      if (ae !== be) return ae - be;
-      if (ammoOrder[a.ammo] !== ammoOrder[b.ammo]) return ammoOrder[a.ammo] - ammoOrder[b.ammo];
-      return a.archetype.localeCompare(b.archetype) || a.name.localeCompare(b.name);
+      const sa = SLOT_ORDER[a.slot] ?? 9, sb = SLOT_ORDER[b.slot] ?? 9;
+      if (sa !== sb) return sa - sb;
+      const ea = a.rarity === "exotic" ? 0 : 1, eb = b.rarity === "exotic" ? 0 : 1;
+      if (ea !== eb) return ea - eb;
+      const aa = AMMO_ORDER[a.ammo] ?? 9, ab = AMMO_ORDER[b.ammo] ?? 9;
+      if (aa !== ab) return aa - ab;
+      const fa = (a.frame || a.type || displayName(a)).toLowerCase();
+      const fb = (b.frame || b.type || displayName(b)).toLowerCase();
+      if (fa !== fb) return fa.localeCompare(fb);
+      return displayName(a).localeCompare(displayName(b));
     });
   }
 
   function filtered() {
+    if (state.scenario === "loading" || state.scenario === "missing-manifest") return [];
+    if (state.scenario === "owned-empty" || state.scenario === "signed-out-owned") return [];
+    if (state.scenario === "zero") return [];
     return sortWeapons(WEAPONS.filter(matchesWeapon));
   }
 
-  function elDot(el) {
-    return `<span class="dot" style="background:${EL[el] || EL.kinetic}"></span>`;
+  function showOwned() { return state.signedIn; }
+
+  function renderCard(w, selected) {
+    const exotic = w.rarity === "exotic";
+    const legendary = w.rarity === "legendary";
+    const rarityClass = exotic ? "rarity-exotic" : legendary ? "rarity-legendary" : "";
+    const el = w.element || "kinetic";
+    const elCss = EL[el] || EL.kinetic;
+    const name = displayName(w);
+    const owned = showOwned() && w.owned > 0 ? `<span class="owned-count" title="Owned copies">×${w.owned}</span>` : "";
+    const icon = w.icon
+      ? `<span class="entity-icon" aria-hidden="true">${w.icon}</span>`
+      : `<span class="entity-icon placeholder" aria-hidden="true">?</span>`;
+    const badgeClass = exotic ? "exotic" : legendary ? "legendary" : "";
+    const badgeMark = exotic ? "✦" : legendary ? "◆" : "·";
+    const a11y = [name, typeLine(w), el, w.slot, w.ammo, w.frame, owned ? `owned ×${w.owned}` : ""].filter(Boolean).join(", ");
+    return `
+      <button type="button" class="weapon-card ${rarityClass}" role="option" data-id="${escapeHtml(w.id)}"
+        aria-selected="${selected ? "true" : "false"}" aria-label="${escapeHtml(a11y)}">
+        <span class="el-bloom" style="--el:${elCss}"></span>
+        ${elGlyph(el)}
+        <span class="card-inner">
+          <span class="card-top">
+            ${icon}
+            <span class="card-text">
+              <span class="card-header-row">
+                <span class="rarity-badge ${badgeClass}" aria-hidden="true">${badgeMark}</span>
+              </span>
+              <span class="card-name">${escapeHtml(name)}</span>
+              <span class="card-type card-type-row" title="${escapeHtml(typeLine(w))}">${typeIcoHtml(w.type)}</span>
+            </span>
+          </span>
+          <span class="card-foot">
+            <span class="meta-glyphs">${slotIco(w.slot)}${ammoIco(w.ammo)}${frameIco(w.frame)}</span>
+            ${owned}
+          </span>
+        </span>
+      </button>`;
   }
 
-  function microGlyphs(w) {
-    let html = `<span class="micro">`;
-    if (w.rarity === "exotic") html += `<span class="micro-g on" title="Exotic">E</span>`;
-    if (w.craftable) html += `<span class="micro-g" title="Craftable">C</span>`;
-    if (w.catalyst) html += `<span class="micro-g ${w.catalyst.complete ? "on" : "warn"}" title="Catalyst">✦</span>`;
-    if (w.owned && w.instances[0]?.mw) html += `<span class="micro-g" title="Masterwork">MW</span>`;
-    html += `</span>`;
-    return html;
+  function renderSkeleton() {
+    return Array.from({ length: 8 }, () => `
+      <div class="skel-card" aria-hidden="true">
+        <div style="display:flex;gap:8px">
+          <div class="skel-icon"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+            <div class="skel-line" style="width:40%"></div>
+            <div class="skel-line" style="width:75%"></div>
+            <div class="skel-line" style="width:55%"></div>
+          </div>
+        </div>
+      </div>`).join("");
+  }
+
+  function renderEmptyState() {
+    if (state.scenario === "missing-manifest") {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Manifest</div>
+        <h2>Definitions unavailable</h2>
+        <p>Weapon identities cannot be resolved. Reload definitions or open Settings — never show bare item hashes as card titles.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="reload">Reload</button>
+          <button type="button" class="btn" data-action="settings">Settings</button>
+        </div>
+      </div></div>`;
+    }
+    if (state.scenario === "loading") return "";
+    if (!state.signedIn && state.scope === "owned") {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Owned scope</div>
+        <h2>Sign in to view owned weapons</h2>
+        <p>Owned badges stay hidden while signed out. Catalog never invents ownership (BR-CAT-004 / DAC-CAT-003).</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="sign-in">Sign in</button>
+          <button type="button" class="btn" data-action="scope-all">Browse All</button>
+        </div>
+      </div></div>`;
+    }
+    if (state.scenario === "owned-empty") {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Inventory</div>
+        <h2>No owned weapons</h2>
+        <p>Local inventory is empty. Sync characters or open Settings — zero placeholder cards.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="sync">Sync</button>
+          <button type="button" class="btn" data-action="settings">Settings</button>
+        </div>
+      </div></div>`;
+    }
+    if (state.scenario === "zero" || (filtered().length === 0 && hasActiveFilters() && state.scenario !== "owned-empty")) {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Filters</div>
+        <h2>No matching weapons</h2>
+        <p>Zero identities match the current facets and search. Clear filters to restore the grid.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="clear-filters">Clear filters</button>
+        </div>
+      </div></div>`;
+    }
+    if (filtered().length === 0) {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Catalog</div>
+        <h2>No weapons to show</h2>
+        <p>Adjust scope or filters. Catalog is a composition aid — not product home.</p>
+        <div class="state-actions">
+          <button type="button" class="btn" data-action="scope-all">Browse All</button>
+        </div>
+      </div></div>`;
+    }
+    return "";
   }
 
   function renderBoard() {
     const board = $("#board");
-    const list = filtered();
-    $("#result-count").textContent = String(list.length);
-
     if (state.scenario === "loading") {
-      board.innerHTML = Array.from({ length: 12 }, () => `
-        <div class="weapon-card" aria-hidden="true" style="pointer-events:none">
-          <div class="sk icon" style="width:100%;aspect-ratio:1;height:auto"></div>
-          <div class="sk wide" style="height:10px"></div>
-        </div>`).join("");
+      board.innerHTML = renderSkeleton();
+      board.setAttribute("aria-busy", "true");
+      $("#count-label").innerHTML = `<strong>…</strong> loading`;
       return;
     }
-
-    if (!list.length) {
-      board.innerHTML = "";
+    board.removeAttribute("aria-busy");
+    const empty = renderEmptyState();
+    if (empty) {
+      board.innerHTML = empty;
+      $("#count-label").innerHTML = `<strong>0</strong> identities`;
       return;
     }
+    const list = filtered();
+    board.innerHTML = list.map((w) => renderCard(w, state.selectedId === w.id)).join("");
+    $("#count-label").innerHTML = `<strong>${list.length}</strong> identities`;
+  }
 
-    const groupBy = state.groupBy === "none" ? null : state.groupBy;
-    let html = "";
-    let lastGroup = null;
+  function selectedWeapon() { return WEAPONS.find((w) => w.id === state.selectedId) || null; }
+  function instancesFor(w) {
+    if (!state.signedIn || !w.owned) return [];
+    return (w.instances || []).slice().sort((a, b) => b.power - a.power);
+  }
+  function hasOwnedInstance(w) {
+    return state.signedIn && w.owned > 0 && instancesFor(w).length > 0;
+  }
 
-    list.forEach((w) => {
-      if (groupBy === "slot" && w.slot !== lastGroup) {
-        lastGroup = w.slot;
-        const labels = { kinetic: "Kinetic slot", energy: "Energy slot", power: "Power slot" };
-        html += `<div class="slot-group">${labels[w.slot] || w.slot}</div>`;
+  function renderPerkCell(name, { selected, pool, unknown }) {
+    const label = unknown || name === "Unknown perk" ? "Unknown perk" : name;
+    const cls = [
+      "perk-cell",
+      selected ? "selected" : "",
+      pool ? "pool" : "",
+      (unknown || name === "Unknown perk") ? "unknown" : "",
+    ].filter(Boolean).join(" ");
+    const tip = escapeHtml(label);
+    const iconPath = (!unknown && name !== "Unknown perk") ? PERK_ICONS[name] : null;
+    const mark = (unknown || name === "Unknown perk")
+      ? "?"
+      : (label && label[0] ? label[0].toUpperCase() : "◆");
+    const icoInner = iconPath
+      ? `<img src="${CDN}${iconPath}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${mark}'))" />`
+      : escapeHtml(mark);
+    return `<div class="${cls}" tabindex="0" title="${tip}" role="listitem" aria-label="${tip}${selected ? ", selected" : pool ? ", pool option" : ""}">
+      <span class="ico" aria-hidden="true">${icoInner}</span>
+      <span class="cap">${escapeHtml(label)}</span>
+    </div>`;
+  }
+
+  /** Build perk columns: same column spacing always (Image 1 layout).
+   *  Owned + can-roll OFF = selected only per column; ON = pool under selected.
+   *  Unowned = definition possible rolls. Origin trait is a normal column when present.
+   */
+  function renderPerkGrid(w, { showCanRoll, craftMode }) {
+    const source = craftMode && w.craftColumns ? w.craftColumns : w.perks;
+    const owned = hasOwnedInstance(w);
+    const expand = showCanRoll || (!owned && !craftMode);
+    const cells = PERK_COL_KEYS.map((k) => {
+      const col = source[k];
+      if (!col) return "";
+      const label = COL_LABELS[k] || k;
+      if (col.poolMissing && expand) {
+        const sel = col.selected
+          ? renderPerkCell(col.selected, { selected: true, pool: false, unknown: col.unknown })
+          : "";
+        return `<div class="perk-col">
+          <div class="perk-col-label">${escapeHtml(label)}</div>
+          ${sel}
+          <div class="col-missing">Pool unavailable for this column</div>
+        </div>`;
       }
+      if (expand) {
+        const pool = col.pool || [];
+        if (!pool.length && !col.selected) {
+          return `<div class="perk-col">
+            <div class="perk-col-label">${escapeHtml(label)}</div>
+            <div class="col-missing">No plug data</div>
+          </div>`;
+        }
+        const names = pool.length ? pool : (col.selected ? [col.selected] : []);
+        const html = names.map((n) => {
+          const isSel = owned && col.selected && n === col.selected;
+          const unk = n === "Unknown perk" || (col.unknown && n === col.selected);
+          // Unowned: all pool cells (no fake selected)
+          const selected = owned ? isSel : false;
+          const poolCell = owned ? !isSel : true;
+          return renderPerkCell(n, { selected, pool: poolCell, unknown: unk });
+        }).join("");
+        return `<div class="perk-col"><div class="perk-col-label">${escapeHtml(label)}</div>${html}</div>`;
+      }
+      // selected plugs only (owned, can-roll OFF) — same column track width as expand
+      if (!col.selected) {
+        return ""; // omit empty origin/etc. rather than sparse 2×2
+      }
+      return `<div class="perk-col">
+        <div class="perk-col-label">${escapeHtml(label)}</div>
+        ${renderPerkCell(col.selected, { selected: true, pool: false, unknown: col.unknown || col.selected === "Unknown perk" })}
+      </div>`;
+    }).join("");
 
-      const selected = state.selectedId === w.id;
-      const ownedBadge = w.owned
-        ? `<span class="card-owned" title="Owned copies">×${w.owned}</span>`
-        : "";
-      const topPower = w.instances.length
-        ? Math.max(...w.instances.map((i) => i.power))
-        : null;
-
-      html += `
-        <button type="button" class="weapon-card" role="option" aria-selected="${selected}" data-id="${w.id}" id="row-${w.id}" title="${escapeHtml(w.name)}">
-          <span class="icon-cell ${w.rarity}">
-            <span class="icon-wash ${w.rarity}"></span>
-            ${ownedBadge}
-            <span class="card-el" style="background:${EL[w.element] || EL.kinetic}" title="${escapeHtml(w.element)}"></span>
-            <span aria-hidden="true">${w.icon}</span>
-          </span>
-          <span class="card-name">${escapeHtml(w.name)}</span>
-          <span class="card-meta">
-            <span title="${escapeHtml(w.type)}">${escapeHtml(w.type)}</span>
-            ${topPower != null ? `<span class="power">${topPower}</span>` : (!w.owned && state.signedIn ? `<span class="not-owned">—</span>` : "")}
-          </span>
-        </button>`;
-    });
-
-    board.innerHTML = html;
+    // Always same grid: auto-flow columns (never two-col / different spacing)
+    return `<div class="perk-scroll"><div class="perk-grid-cols" role="list">${cells}</div></div>`;
   }
 
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  function renderStats(w) {
+    if (!w.stats || !Object.keys(w.stats).length) return "";
+    const max = 100;
+    const rows = Object.entries(w.stats).map(([k, v]) => {
+      const pct = Math.min(100, Math.round((Number(v) / max) * 100));
+      return `<div class="stat-row">
+        <span>${escapeHtml(cap(k))}</span>
+        <span class="stat-bar" aria-hidden="true"><i style="width:${pct}%"></i></span>
+        <span class="stat-val">${escapeHtml(String(v))}</span>
+      </div>`;
+    }).join("");
+    return `<section aria-label="Investment stats">
+      <h3 class="section-title">Stats</h3>
+      <div class="stat-rows">${rows}</div>
+    </section>`;
   }
 
-  function selectedWeapon() {
-    return WEAPONS.find((w) => w.id === state.selectedId) || null;
+  function unknownHashes(w) {
+    const hashes = [];
+    for (const col of Object.values(w.perks || {})) {
+      if (col && (col.unknown || col.selected === "Unknown perk") && col.selectedHash) {
+        hashes.push(col.selectedHash);
+      }
+    }
+    return hashes;
   }
 
   function renderDetail() {
-    const pane = $("#detail");
-    const w = selectedWeapon();
-
+    const el = $("#detail");
     if (state.scenario === "loading") {
-      pane.innerHTML = `
-        <div class="detail-empty">
-          <div class="kicker">Loading</div>
-          <p>Refreshing catalog… selection held if still valid.</p>
-          <div class="sk wide" style="width:200px;height:12px;margin:12px auto"></div>
-        </div>`;
+      el.innerHTML = `<div class="detail-empty"><span class="kicker">Detail</span>
+        <p>Select a weapon to inspect when the catalog is ready.</p></div>`;
       return;
     }
-
+    if (state.scenario === "missing-manifest") {
+      el.innerHTML = `<div class="detail-empty"><span class="kicker">Detail</span>
+        <p>Manifest missing — detail stays idle. No invented plugs.</p></div>`;
+      return;
+    }
+    const w = selectedWeapon();
     if (!w) {
-      pane.innerHTML = `
-        <div class="detail-empty">
-          <div class="kicker">Weapon detail</div>
-          <p>Select a weapon identity from the board. Dense rows scan first; perks, craft, and catalyst live here—not on the list.</p>
-        </div>`;
+      el.innerHTML = `<div class="detail-empty"><span class="kicker">Composition detail</span>
+        <p>Select a weapon to inspect</p>
+        <p style="font-size:11px;color:var(--muted-dim);max-width:260px">~400px full-height sidebar · not LibraryWorkspace 320 rail · composition aid only</p></div>`;
       return;
     }
 
-    // default instance: highest power
-    const instances = (w.instances || []).slice().sort((a, b) => b.power - a.power);
-    if (!state.selectedInstanceId || !instances.find((i) => i.id === state.selectedInstanceId)) {
-      state.selectedInstanceId = instances[0]?.id || null;
-    }
-    const inst = instances.find((i) => i.id === state.selectedInstanceId);
+    const name = displayName(w);
+    const exotic = w.rarity === "exotic";
+    const inst = instancesFor(w);
+    if (!state.selectedInstanceId && inst[0]) state.selectedInstanceId = inst[0].id;
+    const ownedInst = hasOwnedInstance(w);
+    // Can-roll only meaningful when inspecting owned instance OR always available for definition pool view
+    const showCanRollToggle = ownedInst;
+    // Craft: hide entirely when craftAvailable false / no columns (Q-UX-DET-05)
+    const craftOk = !!(w.craftAvailable && w.craftColumns);
 
-    const showCraft = w.craftable && w.craft && (state.scenario === "detail-craft" || state.scenario === "results" || state.scenario === "owned");
-    const showCatalyst = w.catalyst && (state.scenario === "detail-exotic" || w.rarity === "exotic");
-    const forceUnknown = state.scenario === "detail-unknown" || w.hasUnknown;
-
-    // Roll columns only — exotic intrinsic + catalyst live in their own section near each other.
-    const cols = [
-      { key: "barrel", label: "Barrel" },
-      { key: "magazine", label: "Magazine" },
-      { key: "trait1", label: "Trait" },
-      { key: "trait2", label: "Trait" },
-    ];
-
-    function renderPlugCell(name, opts) {
-      const isSelected = !!opts.selected;
-      const unknown = !!opts.unknown;
-      const hash = opts.hash;
-      return `
-          <button type="button" class="perk-cell ${isSelected ? "selected" : "pool"} ${unknown ? "unknown" : ""}" title="${escapeHtml(opts.title || name || "")}">
-            <span class="perk-icon" aria-hidden="true">${isSelected ? "●" : "○"}</span>
-            <span class="perk-name">
-              ${escapeHtml(unknown ? "Unknown perk" : name)}
-              ${unknown && hash ? `<span class="perk-hash">hash ${hash} · footer addendum only</span>` : ""}
-            </span>
-          </button>`;
+    let instanceHtml = "";
+    if (!state.signedIn) {
+      instanceHtml = `<span class="inst-note">Sign in + sync to inspect owned copies. Manifest possible rolls only.</span>`;
+    } else if (!w.owned) {
+      instanceHtml = `<span class="inst-note">Not owned · definition possible rolls · no fake selected</span>`;
+    } else if (inst.length) {
+      instanceHtml = `<span class="label">Instances</span>` + inst.map((i) => {
+        const marks = [];
+        if (i.mw) marks.push(i.mw);
+        if (i.crafted) marks.push("Craft");
+        return `<button type="button" class="inst-chip" data-inst="${escapeHtml(i.id)}"
+          aria-pressed="${state.selectedInstanceId === i.id ? "true" : "false"}"
+          title="Power ${i.power}${i.mw ? " · " + i.mw : ""}${i.crafted ? " · crafted" : ""}">
+          <span class="pw">${i.power}</span>
+          ${marks.length ? `<span class="mark">${escapeHtml(marks.join(" · "))}</span>` : ""}
+        </button>`;
+      }).join("");
     }
 
-    function renderColumnGrid(columns, mode) {
-      // mode: "perks" | "craft"
-      let html = `<div class="perk-grid">`;
-      let any = false;
-      columns.forEach((col) => {
-        let ordered = [];
-        let selectedName = null;
-        let unknownHash = null;
-        if (mode === "perks") {
-          const data = w.perks && w.perks[col.key];
-          if (!data) return;
-          selectedName = data.selected;
-          unknownHash = data.unknownHash;
-          const pool = data.pool || [];
-          if (!selectedName && !pool.length) return; // omit empty roll columns
-          any = true;
-          if (selectedName) ordered.push(selectedName);
-          if (state.showCanRoll) {
-            pool.forEach((p) => {
-              if (p !== selectedName) ordered.push(p);
-            });
-          } else if (!selectedName && pool.length) {
-            ordered.push(pool[0]);
-          }
-        } else {
-          const pool = (w.craft && w.craft.possible && w.craft.possible[col.key]) || [];
-          if (!pool.length) return;
-          any = true;
-          ordered = pool.slice();
-        }
-        html += `<div class="perk-col"><div class="perk-col-label">${col.label}</div>`;
-        ordered.forEach((name) => {
-          const isSelected = mode === "perks" && name === selectedName;
-          const unknown =
-            mode === "perks" &&
-            (name === "Unknown perk" ||
-              (forceUnknown && name === "Unknown perk"));
-          html += renderPlugCell(name, {
-            selected: isSelected,
-            unknown,
-            hash: unknownHash,
-            title: mode === "craft" ? "Possible crafted option" : isSelected ? "Selected / equipped" : "Can-roll pool",
-          });
-        });
-        if (!ordered.length) {
-          html += `<div class="perk-cell pool"><span class="perk-name">—</span></div>`;
-        }
-        html += `</div>`;
-      });
-      html += `</div>`;
-      return any ? html : "";
-    }
+    const synergyHtml = (w.reverseSynergies && w.reverseSynergies.length)
+      ? `<div class="synergy-chips" aria-label="Reverse synergies (display only)">${
+          w.reverseSynergies.map((s) =>
+            `<span class="synergy-chip"><span class="tag">Syn</span>${escapeHtml(s)}</span>`
+          ).join("")
+        }</div>`
+      : "";
 
-    const perkHtml = renderColumnGrid(cols, "perks");
-
-    const stats = w.stats || {};
-    const statRows = [
-      ["RPM", stats.rpm, 900],
-      ["Impact", stats.impact, 100],
-      ["Range", stats.range, 100],
-      ["Stability", stats.stability, 100],
-      ["Handling", stats.handling, 100],
-      ["Reload", stats.reload, 100],
-    ];
-
-    let instanceStrip = "";
-    if (state.signedIn && instances.length) {
-      instanceStrip = `
-        <div class="instance-strip" role="group" aria-label="Owned instances">
-          <span class="label">Instances</span>
-          ${instances
-            .map(
-              (i) => `
-            <button type="button" class="inst-chip" data-inst="${i.id}" aria-pressed="${i.id === state.selectedInstanceId}">
-              <span class="pw">${i.power}</span> · ${escapeHtml(i.mw || "—")} · ${escapeHtml(i.location)}
-            </button>`
-            )
-            .join("")}
-        </div>`;
-    } else if (!state.signedIn) {
-      instanceStrip = `
-        <div class="instance-strip">
-          <span class="label">Owned</span>
-          <span class="not-owned" style="font-size:12px">Sign in + inventory sync to see instances. Manifest identity only.</span>
-        </div>`;
-    } else if (state.scope === "all" && !w.owned) {
-      instanceStrip = `
-        <div class="instance-strip">
-          <span class="label">Owned</span>
-          <span class="not-owned" style="font-size:12px">Not owned · no instances invented</span>
-        </div>`;
-    }
-
-    // Possible crafted uses same column/cell format as Perks (not a bullet list).
-    let craftBlock = "";
-    if (showCraft && w.craft && w.craft.possible) {
-      const possibleOn = state.showPossibleCraft;
-      const craftGrid = possibleOn ? renderColumnGrid(cols, "craft") : "";
-      const hasAnyPossible = cols.some(
-        (c) => (w.craft.possible[c.key] || []).length > 0
-      );
-      craftBlock = `
-          <section>
-            <div class="section-head">
-              <h3 class="section-title">Possible crafted</h3>
-              <div class="toggle-row">
-                <button type="button" class="view-toggle" id="toggle-possible-craft" aria-pressed="${possibleOn ? "true" : "false"}" ${hasAnyPossible ? "" : "disabled"}>
-                  <span class="knob" aria-hidden="true"></span>
-                  Show
-                </button>
-              </div>
-            </div>
-            <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">Same column layout as Perks. Current craft = selected plugs above — not repeated. Toggle to inspect shaped options when data exists.</p>
-            ${
-              possibleOn
-                ? craftGrid || `<p style="margin:0;color:var(--muted-dim);font-size:12px">Craft options unavailable for this identity.</p>`
-                : `<p style="margin:0;font-size:12px;color:var(--muted-dim)">Hidden — toggle Show to expand possible crafted columns.</p>`
-            }
-          </section>`;
-    }
-
-    // Exotic intrinsic (fixed) + catalyst sit together — separate from roll perk columns.
-    let exoticIdentityBlock = "";
-    if (w.rarity === "exotic" && (w.intrinsic || (showCatalyst && w.catalyst))) {
-      let intrinsicHtml = "";
-      if (w.intrinsic) {
-        intrinsicHtml = `
-          <div class="exotic-identity-col">
-            <div class="perk-col-label">Intrinsic trait</div>
-            <button type="button" class="perk-cell selected" title="Exotic intrinsic (fixed)">
-              <span class="perk-icon" aria-hidden="true">◆</span>
-              <span class="perk-name">
-                ${escapeHtml(w.intrinsic.name)}
-                ${w.intrinsic.description ? `<span class="perk-hash" style="color:var(--muted);text-decoration:none">${escapeHtml(w.intrinsic.description)}</span>` : ""}
-              </span>
-            </button>
-          </div>`;
-      }
-      let catalystHtml = "";
-      if (showCatalyst && w.catalyst) {
-        const catSelected = w.catalyst.selected;
-        const catPool = w.catalyst.pool || (w.catalyst.name ? [w.catalyst.name] : []);
-        const catCells = [];
-        if (catSelected) {
-          catCells.push(renderPlugCell(catSelected, { selected: true, title: "Catalyst inserted" }));
-        } else if (catPool.length) {
-          catCells.push(renderPlugCell(catPool[0], { selected: false, title: "Catalyst available / not inserted" }));
-        }
-        catalystHtml = `
-          <div class="exotic-identity-col">
-            <div class="perk-col-label">Catalyst</div>
-            ${catCells.join("") || `<div class="perk-cell pool"><span class="perk-name">—</span></div>`}
-            <div class="soft-flag" style="margin-top:8px">
-              <span class="flag">Display only</span>
-              <div>
-                <div>${escapeHtml(w.catalyst.progress || "")}</div>
-                ${w.catalyst.note ? `<div class="note">${escapeHtml(w.catalyst.note)}</div>` : ""}
-                ${
-                  w.craftable
-                    ? `<div class="note">Craftable exotic: possible crafted + catalyst are independent (DO-WPN-052).</div>`
-                    : ""
-                }
-                <div class="note">Soft only — never gates save / equip (DBR-ROLL-007).</div>
-              </div>
-            </div>
-          </div>`;
-      }
-      exoticIdentityBlock = `
-        <section>
-          <h3 class="section-title">Exotic identity</h3>
-          <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">Intrinsic trait is fixed and separate from random/crafted perk columns. Catalyst sits beside it.</p>
-          <div class="exotic-identity-row">
-            ${intrinsicHtml}
-            ${catalystHtml}
-          </div>
-        </section>`;
-    }
-
-    const tags = w.synergies || [];
-    const tagsBlock =
-      tags.length
-        ? `<section>
-            <h3 class="section-title">Reverse synergy tags</h3>
-            <div class="tag-row">${tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>
-          </section>`
-        : `<section>
-            <h3 class="section-title">Reverse synergy tags</h3>
-            <p style="margin:0;color:var(--muted);font-size:12px">No library synergy membership for this identity.</p>
-          </section>`;
-
-    pane.innerHTML = `
-      <div class="detail-sticky">
-        <div class="detail-hero">
-          <div class="hero-icon ${w.rarity}">
-            <span class="wash ${w.rarity}"></span>
-            <span aria-hidden="true">${w.icon}</span>
-          </div>
-          <div class="hero-text">
-            <h2 class="hero-name">${escapeHtml(w.name)}</h2>
-            <div class="hero-type">
-              <span class="glyph">${elDot(w.element)}${escapeHtml(w.type)}</span>
-              <span>·</span>
-              <span>${escapeHtml(w.archetype)} frame</span>
-              <span>·</span>
-              <span>${escapeHtml(w.slot)} / ${escapeHtml(w.ammo)}</span>
-            </div>
-            <div class="meta-pills">
-              <span class="pill">${escapeHtml(w.rarity)}</span>
-              ${w.craftable ? `<span class="pill">Craftable</span>` : ""}
-              ${w.rarity === "exotic" && w.craftable ? `<span class="pill">Exotic · craft</span>` : ""}
-              ${w.owned ? `<span class="pill">Owned ×${w.owned}</span>` : `<span class="pill">Not owned</span>`}
-              ${inst ? `<span class="pill">MW ${escapeHtml(inst.mw || "—")}</span>` : ""}
-            </div>
-          </div>
-          <div class="hero-side">
-            ${inst ? `<div class="power-big">${inst.power}<span>PL</span></div>` : `<div class="power-big" style="color:var(--muted-dim)">—</div>`}
+    let exoticBlock = "";
+    if (exotic && w.intrinsic) {
+      exoticBlock = `<section class="exotic-block" aria-label="Exotic identity">
+        <h3 class="section-title">Exotic identity</h3>
+        ${renderPerkCell(w.intrinsic, { selected: true, pool: false, unknown: false })}
+        <div class="catalyst-soft">
+          <span class="flag">Catalyst</span>
+          <div>
+            <div>${escapeHtml(w.catalystLabel || (w.catalystKnown ? "Catalyst known" : "Catalyst status unknown"))}</div>
+            <div class="note">Soft-only · never a hard gate or primary CTA (DBR-ROLL-007). Craft + catalyst independent on craftable exotics.</div>
           </div>
         </div>
-        ${instanceStrip}
+      </section>`;
+    }
+
+    const toggles = [];
+    if (showCanRollToggle) {
+      toggles.push(`<button type="button" class="view-toggle" id="tog-can-roll" aria-pressed="${state.showCanRoll}">
+        <span class="knob" aria-hidden="true"></span> Can roll
+      </button>`);
+    }
+    if (craftOk) {
+      toggles.push(`<button type="button" class="view-toggle" id="tog-craft" aria-pressed="${state.showPossibleCraft}">
+        <span class="knob" aria-hidden="true"></span> Possible crafted
+      </button>`);
+    }
+
+    const showingCraft = craftOk && state.showPossibleCraft;
+    const showingPool = ownedInst ? state.showCanRoll : true;
+    let perkSectionNote = "";
+    if (!ownedInst) {
+      perkSectionNote = `<p class="plug-note">Unowned · full definition possible rolls · no selected chrome invented.</p>`;
+    } else if (!state.showCanRoll && !showingCraft) {
+      perkSectionNote = `<p class="plug-note">Selected plugs only · Can roll OFF by default.</p>`;
+    } else if (state.showCanRoll) {
+      perkSectionNote = `<p class="plug-note">Selected cyan cells · pool hairline · per-column honesty when pool missing · no invented farms.</p>`;
+    }
+    if (showingCraft) {
+      perkSectionNote += `<p class="plug-note">Possible crafted uses same column/cell UI as Perks · no duplicate current-craft list (selected plugs = current).</p>`;
+    }
+
+    const unk = unknownHashes(w);
+    const hashLine = [
+      `Item hash ${w.hash}`,
+      ...unk.map((h) => `unknown plug ${h}`),
+    ].join(" · ");
+
+    el.innerHTML = `
+      <div class="detail-sticky">
+        <div class="detail-header">
+          <div class="header-row">
+            <div class="header-icon" aria-hidden="true">${w.icon || "?"}</div>
+            <div class="header-stack">
+              <h2 class="hero-name ${exotic ? "exotic" : ""}">${escapeHtml(name)}</h2>
+              ${metaIconsHtml(w)}
+            </div>
+          </div>
+          ${synergyHtml}
+          <div class="instance-strip">${instanceHtml}</div>
+        </div>
       </div>
       <div class="detail-body">
-        <section>
-          <h3 class="section-title">Stats</h3>
-          <div class="stats-grid">
-            ${statRows
-              .map(([name, val, max]) => {
-                const v = val || 0;
-                const pct = Math.min(100, Math.round((v / max) * 100));
-                return `<div class="stat-row">
-                  <span class="name">${name}</span>
-                  <span class="stat-bar"><i style="width:${pct}%"></i></span>
-                  <span class="val">${v}</span>
-                </div>`;
-              })
-              .join("")}
-          </div>
-        </section>
-        <section>
+        ${exoticBlock}
+        ${renderStats(w)}
+        <section aria-label="Perks">
           <div class="section-head">
-            <h3 class="section-title">Perks</h3>
-            <div class="toggle-row">
-              <button type="button" class="view-toggle" id="toggle-can-roll" aria-pressed="${state.showCanRoll ? "true" : "false"}">
-                <span class="knob" aria-hidden="true"></span>
-                Can roll
-              </button>
-            </div>
+            <h3 class="section-title">${showingCraft ? "Possible crafted" : "Perks"}</h3>
+            ${toggles.join("")}
           </div>
-          <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">${
-            state.showCanRoll
-              ? "Cyan inset = selected/equipped. Muted cells = can-roll pool. Names first; no bare hashes as labels."
-              : "Showing selected plugs only. Toggle <strong>Can roll</strong> to expand each column’s pool."
-          }</p>
-          ${perkHtml}
+          ${renderPerkGrid(w, { showCanRoll: showingPool && !showingCraft, craftMode: showingCraft })}
+          ${perkSectionNote}
         </section>
-        ${craftBlock}
-        ${exoticIdentityBlock}
-        ${tagsBlock}
-        <div class="detail-footer">
-          <button type="button" class="btn btn-stub" disabled title="Shared Sets lifecycle not wired">Create Set</button>
-          <button type="button" class="btn btn-stub" disabled title="Shared Synergy lifecycle not wired">Create Synergy</button>
-          <button type="button" class="btn btn-ghost" id="deselect-btn">Clear selection · Esc</button>
-          <span class="stub-note">Outbound CTAs disabled until shared Set/Synergy lifecycle exists — no Catalog-local mini-editor (BR-CAT-020/021). Catalog remains composition aid (DBR-PUR-002).</span>
-        </div>
+        <section aria-label="Outbound stubs">
+          <h3 class="section-title">Outbound</h3>
+          <div class="detail-footer">
+            <button type="button" class="btn btn-stub" disabled title="Sets area not live this slice">Add to Set</button>
+            <button type="button" class="btn btn-stub" disabled title="Synergy area not live this slice">Open Synergy</button>
+            <span class="stub-note">Set / Synergy deferred — disabled stubs only. Reverse-synergy chips above are display-only. No live create/add this residual (DBR-PUR-002).</span>
+            <div class="hash-footer">${escapeHtml(hashLine)} · footer only — never primary label (DO-WPN-010)</div>
+          </div>
+        </section>
       </div>`;
   }
 
   function renderSummary() {
-    const filters = activeFilters();
     const box = $("#filter-summary");
-    const chips = $("#summary-chips");
-    if (!filters.length) {
+    const filters = activeFilters();
+    if (!filters.length && !state.search.trim()) {
       box.hidden = true;
-      chips.innerHTML = "";
+      box.innerHTML = "";
       return;
     }
     box.hidden = false;
-    chips.innerHTML = filters
-      .map((f) => {
-        const label =
-          f.facet === "text"
-            ? `“${escapeHtml(f.value)}”`
-            : `${escapeHtml(f.facet)}:${escapeHtml(f.value)}`;
-        return `<span class="summary-chip ${f.state === "exclude" ? "exclude" : ""}" data-facet="${f.facet}" data-value="${escapeHtml(f.value)}">
-          ${f.state === "exclude" ? "− " : ""}${label}
-          <button type="button" class="x" data-remove-facet="${f.facet}" data-remove-value="${escapeHtml(f.value)}" aria-label="Remove filter">×</button>
-        </span>`;
-      })
-      .join("");
+    const chips = filters.map((f) => `
+      <span class="summary-chip ${f.state === "exclude" ? "exclude" : ""}">
+        ${escapeHtml(f.facet)}:${escapeHtml(f.value)}
+        <button type="button" class="x" data-clear-facet="${escapeHtml(f.facet)}" data-clear-value="${escapeHtml(f.value)}" aria-label="Remove filter">×</button>
+      </span>`).join("");
+    const searchChip = state.search.trim()
+      ? `<span class="summary-chip">q:${escapeHtml(state.search.trim())}<button type="button" class="x" data-clear-search aria-label="Clear search">×</button></span>`
+      : "";
+    box.innerHTML = chips + searchChip;
   }
 
   function syncChipDom() {
     $$(".chip[data-facet]").forEach((btn) => {
-      const facet = btn.dataset.facet;
-      const value = btn.dataset.value;
-      let s = getFacetState(facet, value);
-      if (facet === "groupby") {
-        if (value === "slot" && state.groupBy === "slot") s = "include";
-        else if (value === "none" && state.groupBy === "none") s = "include";
-        else s = "off";
-      }
-      btn.dataset.state = s;
+      const st = getFacetState(btn.dataset.facet, btn.dataset.value);
+      btn.dataset.state = st;
       const mark = btn.querySelector(".chip-mark");
       if (mark) {
-        mark.textContent = s === "include" ? "+" : s === "exclude" ? "−" : "";
+        if (st === "include") { mark.hidden = false; mark.textContent = "+"; }
+        else if (st === "exclude") { mark.hidden = false; mark.textContent = "−"; }
+        else { mark.hidden = true; mark.textContent = ""; }
       }
+      btn.setAttribute("aria-pressed", st !== "off" ? "true" : "false");
     });
-  }
-
-  function renderEmptyOverlay() {
-    const ws = $("#workspace");
-    // remove prior overlay
-    const old = $("#state-overlay");
-    if (old) old.remove();
-    ws.classList.remove("full-empty");
-
-    if (state.scenario === "missing-manifest") {
-      ws.classList.add("full-empty");
-      ws.insertAdjacentHTML(
-        "beforeend",
-        `<div class="state-panel" id="state-overlay">
-          <div class="state-card">
-            <div class="icon">⌀</div>
-            <h2>Manifest unavailable</h2>
-            <p>Weapon entities are missing or not loaded. Catalog cannot invent rows. Reload catalog data or check Settings for download status.</p>
-            <div class="state-actions">
-              <button type="button" class="btn btn-primary" id="cta-reload">Reload catalog</button>
-              <button type="button" class="btn" id="cta-settings">Settings</button>
-            </div>
-          </div>
-        </div>`
-      );
-      $("#rail").style.display = "none";
-      $("#detail").style.display = "none";
-      return;
-    }
-
-    if (state.scenario === "owned-empty" || (state.scope === "owned" && state.signedIn && !WEAPONS.some((w) => w.owned) && state.scenario === "owned-empty")) {
-      // handled via board empty + message
-    }
-
-    $("#rail").style.display = "";
-    $("#detail").style.display = "";
-
-    if (state.scenario === "owned-empty") {
-      const board = $("#board");
-      board.innerHTML = "";
-      $("#result-count").textContent = "0";
-      $("#detail").innerHTML = `
-        <div class="state-panel" style="height:100%">
-          <div class="state-card">
-            <div class="icon">↻</div>
-            <h2>No owned weapons</h2>
-            <p>Owned scope needs sign-in and inventory sync. Empty vault is not an error — sync to pull instances, or switch to All for manifest browse.</p>
-            <div class="state-actions">
-              <button type="button" class="btn btn-primary" id="cta-sync">Sync inventory</button>
-              <button type="button" class="btn" id="cta-settings2">Settings</button>
-              <button type="button" class="btn btn-ghost" data-scope-all>Browse All</button>
-            </div>
-          </div>
-        </div>`;
-      return true;
-    }
-
-    if (state.scenario === "zero" || (filtered().length === 0 && state.scenario === "results" && activeFilters().length)) {
-      // zero matches — show in board area message
-    }
-
-    const list = filtered();
-    if (!list.length && state.scenario !== "loading" && state.scenario !== "missing-manifest" && state.scenario !== "owned-empty") {
-      const hasFilters = activeFilters().length > 0 || state.scope === "owned";
-      $("#board").innerHTML = "";
-      $("#result-count").textContent = "0";
-      if (state.scope === "owned" && state.signedIn && !hasFilters) {
-        // empty owned without scenario — treat similar
-      }
-      $("#detail").innerHTML = `
-        <div class="state-panel" style="height:100%">
-          <div class="state-card">
-            <div class="icon">${hasFilters ? "∅" : "⌀"}</div>
-            <h2>${hasFilters ? "No matches" : "No weapons"}</h2>
-            <p>${
-              hasFilters
-                ? "Zero matches is empty, not an error. Broaden include chips, remove excludes, or clear free-text."
-                : "Nothing to show for this scope."
-            }</p>
-            <div class="state-actions">
-              ${hasFilters ? `<button type="button" class="btn btn-primary" id="cta-clear">Clear filters</button>` : ""}
-              ${state.scope === "owned" ? `<button type="button" class="btn" data-scope-all>Browse All</button>` : ""}
-            </div>
-          </div>
-        </div>`;
-      return true;
-    }
-    return false;
   }
 
   function renderChrome() {
-    // auth
+    $$("[data-scope]").forEach((b) => {
+      b.setAttribute("aria-pressed", b.dataset.scope === state.scope ? "true" : "false");
+    });
     $("#auth-in").setAttribute("aria-pressed", state.signedIn ? "true" : "false");
     $("#auth-out").setAttribute("aria-pressed", state.signedIn ? "false" : "true");
-    $("#user-label").textContent = state.signedIn ? "Guardian" : "Signed out";
+
     const lamp = $("#sync-lamp");
-    const syncLabel = $("#sync-label");
+    const label = $("#sync-label");
     if (!state.signedIn) {
       lamp.className = "lamp off";
-      syncLabel.textContent = "Manifest only";
-    } else if (state.scenario === "owned-empty" || state.scenario === "loading") {
+      label.textContent = "Signed out · manifest only";
+    } else if (state.scenario === "loading") {
       lamp.className = "lamp warn";
-      syncLabel.textContent = state.scenario === "loading" ? "Syncing…" : "Inventory empty";
+      label.textContent = "Syncing…";
     } else if (state.scenario === "missing-manifest") {
       lamp.className = "lamp danger";
-      syncLabel.textContent = "Manifest missing";
+      label.textContent = "Manifest missing";
+    } else if (state.scenario === "owned-empty") {
+      lamp.className = "lamp warn";
+      label.textContent = "Inventory empty";
     } else {
       lamp.className = "lamp";
-      syncLabel.textContent = "Inventory synced";
+      label.textContent = "Inventory synced";
     }
 
-    $$("[data-scope]").forEach((btn) => {
-      if (btn.dataset.scope) {
-        btn.setAttribute("aria-pressed", btn.dataset.scope === state.scope ? "true" : "false");
-      }
-    });
+    $("#catalog-subtitle").textContent = state.signedIn
+      ? "Composition aid · manifest + owned · detail inspect only"
+      : "Composition aid · manifest only · no owned chrome";
 
-    $("#search").value = state.search;
-    $("#more-facets").setAttribute("aria-expanded", state.moreOpen ? "true" : "false");
+    $("#more-btn").setAttribute("aria-expanded", state.moreOpen ? "true" : "false");
     $("#secondary-facets").hidden = !state.moreOpen;
-
-    // disable owned if signed out? still clickable → prompts
+    $("#reset-btn").hidden = !hasActiveFilters();
+    $("#search").value = state.search;
     syncChipDom();
     renderSummary();
   }
 
-  function render() {
+  function renderAll() {
     renderChrome();
-    if (state.scenario === "missing-manifest") {
-      renderEmptyOverlay();
-      return;
-    }
     renderBoard();
-    const empty = renderEmptyOverlay();
-    if (!empty) renderDetail();
-    bindDynamic();
+    renderDetail();
   }
 
-  function bindDynamic() {
-    $$(".weapon-card[data-id]").forEach((row) => {
-      row.addEventListener("click", () => {
-        state.selectedId = row.dataset.id;
-        state.selectedInstanceId = null;
-        announce(`Selected ${selectedWeapon()?.name || ""}`);
-        render();
-        $("#detail").focus({ preventScroll: true });
-      });
-    });
-
-    $$(".inst-chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        state.selectedInstanceId = chip.dataset.inst;
-        render();
-      });
-    });
-
-    $("#deselect-btn")?.addEventListener("click", () => {
-      state.selectedId = null;
-      render();
-      $("#board").focus();
-    });
-
-    $("#toggle-can-roll")?.addEventListener("click", () => {
-      state.showCanRoll = !state.showCanRoll;
-      render();
-    });
-    $("#toggle-possible-craft")?.addEventListener("click", () => {
-      state.showPossibleCraft = !state.showPossibleCraft;
-      render();
-    });
-
-    $("#cta-clear")?.addEventListener("click", () => {
-      clearFilters();
-      render();
-    });
-    $("#cta-sync")?.addEventListener("click", () => {
-      state.scenario = "owned";
-      $("#scenario").value = "owned";
-      announce("Mock: inventory sync complete");
-      render();
-    });
-    $("#cta-reload")?.addEventListener("click", () => {
-      state.scenario = "results";
-      $("#scenario").value = "results";
-      render();
-    });
-    $$("[data-scope-all]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.scope = "all";
-        state.scenario = state.signedIn ? "results" : "signed-out";
-        $("#scenario").value = state.scenario;
-        render();
-      })
-    );
-    $$("#cta-settings, #cta-settings2").forEach((b) =>
-      b?.addEventListener("click", () => announce("Would open Settings (mock)"))
-    );
-
-    $$("[data-remove-facet]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const facet = btn.dataset.removeFacet;
-        const value = btn.dataset.removeValue;
-        if (facet === "text") {
-          state.search = "";
-        } else {
-          setFacetState(facet, value, "off");
-        }
-        render();
-      });
-    });
-  }
-
-  function clearFilters() {
-    state.facets = {};
+  function applyScenario(sc) {
+    state.scenario = sc;
+    state.showCanRoll = false;
+    state.showPossibleCraft = false;
     state.search = "";
-    state.groupBy = "none";
-    state.facets.groupby = { none: "include" };
+    state.facets = {};
+    state.moreOpen = false;
+    state.selectedInstanceId = null;
+
+    if (sc === "signed-out") {
+      state.signedIn = false; state.scope = "all"; state.selectedId = "w3";
+    } else if (sc === "signed-out-owned") {
+      state.signedIn = false; state.scope = "owned"; state.selectedId = null;
+    } else if (sc === "loading") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+    } else if (sc === "owned-empty") {
+      state.signedIn = true; state.scope = "owned"; state.selectedId = null;
+    } else if (sc === "owned") {
+      state.signedIn = true; state.scope = "owned"; state.selectedId = "w4"; state.selectedInstanceId = "i4";
+    } else if (sc === "can-roll") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w4";
+      state.selectedInstanceId = "i4"; state.showCanRoll = true;
+    } else if (sc === "partial-pool") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w8";
+      state.selectedInstanceId = "i9"; state.showCanRoll = true;
+    } else if (sc === "craft-missing") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w4";
+      state.selectedInstanceId = "i4";
+    } else if (sc === "craftable-exotic") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w2";
+      state.selectedInstanceId = "i3"; state.showPossibleCraft = true;
+    } else if (sc === "unknown-perk") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w7";
+      state.selectedInstanceId = "i8";
+    } else if (sc === "stubs") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w1";
+      state.selectedInstanceId = "i1";
+    } else if (sc === "zero") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+      setFacetState("element", "strand", "include");
+      setFacetState("ammo", "heavy", "include");
+    } else if (sc === "missing-manifest") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+    } else if (sc === "unknown-weapon") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = "w9";
+    } else {
+      // results
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+    }
+    renderAll();
+    announce("Scenario: " + sc);
   }
 
-  // chip clicks
-  document.addEventListener("click", (e) => {
-    const chip = e.target.closest(".chip[data-facet]");
-    if (!chip) return;
-    const facet = chip.dataset.facet;
-    const value = chip.dataset.value;
-    if (facet === "groupby") {
-      const cur = getFacetState(facet, value);
-      // toggle include only for groupby
-      if (cur === "include") {
-        setFacetState(facet, value, "off");
-        state.groupBy = "slot";
-      } else {
-        setFacetState(facet, value, "include");
+  $("#scenario").addEventListener("change", (e) => applyScenario(e.target.value));
+
+  $("#auth-in").addEventListener("click", () => {
+    state.signedIn = true;
+    if (state.scenario === "signed-out") state.scenario = "results";
+    if (state.scenario === "signed-out-owned") state.scenario = "owned";
+    $("#scenario").value = state.scenario;
+    renderAll();
+  });
+  $("#auth-out").addEventListener("click", () => {
+    state.signedIn = false;
+    state.selectedId = null;
+    state.scenario = state.scope === "owned" ? "signed-out-owned" : "signed-out";
+    $("#scenario").value = state.scenario;
+    renderAll();
+  });
+
+  $$("[data-scope]").forEach((b) => {
+    b.addEventListener("click", () => {
+      state.scope = b.dataset.scope;
+      if (!state.signedIn && state.scope === "owned") {
+        state.scenario = "signed-out-owned";
+        $("#scenario").value = "signed-out-owned";
+      } else if (state.scenario === "signed-out-owned" && state.scope === "all") {
+        state.scenario = "signed-out";
+        $("#scenario").value = "signed-out";
+      } else if (state.scenario === "owned-empty" && state.scope === "all") {
+        state.scenario = "results";
+        $("#scenario").value = "results";
       }
-    } else {
-      const next = cycleState(getFacetState(facet, value));
-      setFacetState(facet, value, next);
-    }
-    render();
-  });
-
-  $("#more-facets").addEventListener("click", () => {
-    state.moreOpen = !state.moreOpen;
-    render();
-  });
-
-  $("#reset-filters").addEventListener("click", () => {
-    clearFilters();
-    render();
-    announce("Filters reset");
+      state.selectedId = null;
+      renderAll();
+    });
   });
 
   $("#search").addEventListener("input", (e) => {
     state.search = e.target.value;
-    render();
-  });
-
-  $$(".scope-seg [data-scope]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const scope = btn.dataset.scope;
-      if (scope === "owned" && !state.signedIn) {
-        announce("Owned requires sign-in. Switch to signed-in scenario or sign in.");
-        // still allow switch to show empty/prompt
-        state.scope = "owned";
-        state.scenario = "signed-out";
-        $("#scenario").value = "signed-out";
-        render();
-        // show sign-in in detail
-        $("#detail").innerHTML = `
-          <div class="state-panel" style="height:100%">
-            <div class="state-card">
-              <div class="icon">⚿</div>
-              <h2>Sign in for owned</h2>
-              <p>Owned instances require signed-in inventory sync. Manifest browse stays available under All with clear not-owned marks — never fake owned data.</p>
-              <div class="state-actions">
-                <button type="button" class="btn btn-primary" id="cta-signin">Sign in</button>
-                <button type="button" class="btn" data-scope-all>Stay on All</button>
-              </div>
-            </div>
-          </div>`;
-        $("#cta-signin")?.addEventListener("click", () => {
-          state.signedIn = true;
-          state.scope = "owned";
-          state.scenario = "owned";
-          $("#scenario").value = "owned";
-          render();
-        });
-        $$("[data-scope-all]").forEach((b) =>
-          b.addEventListener("click", () => {
-            state.scope = "all";
-            render();
-          })
-        );
-        renderChrome();
-        return;
-      }
-      state.scope = scope;
-      if (scope === "owned" && state.scenario === "results") {
-        // keep results data but scope filter
-      }
-      render();
-    });
-  });
-
-  $("#auth-in").addEventListener("click", () => {
-    state.signedIn = true;
-    if (state.scenario === "signed-out") {
+    if (state.scenario === "zero" && !hasActiveFilters()) {
       state.scenario = "results";
       $("#scenario").value = "results";
     }
-    render();
-  });
-  $("#auth-out").addEventListener("click", () => {
-    state.signedIn = false;
-    state.scope = "all";
-    state.scenario = "signed-out";
-    $("#scenario").value = "signed-out";
-    render();
+    renderAll();
   });
 
-  $("#scenario").addEventListener("change", (e) => {
-    applyScenario(e.target.value);
+  $("#more-btn").addEventListener("click", () => {
+    state.moreOpen = !state.moreOpen;
+    renderChrome();
   });
 
-  function applyScenario(id) {
-    state.scenario = id;
-    clearFilters();
-    state.selectedId = null;
-    state.selectedInstanceId = null;
-    state.moreOpen = false;
-
-    switch (id) {
-      case "signed-out":
-        state.signedIn = false;
-        state.scope = "all";
-        state.selectedId = "w3"; // not owned legendary
-        break;
-      case "results":
-        state.signedIn = true;
-        state.scope = "all";
-        setFacetState("element", "solar", "include");
-        setFacetState("element", "arc", "include");
-        setFacetState("ammo", "heavy", "exclude");
-        state.moreOpen = true;
-        state.selectedId = "w1";
-        break;
-      case "owned":
-        state.signedIn = true;
-        state.scope = "owned";
-        state.selectedId = "w4"; // 3 instances
-        break;
-      case "owned-empty":
-        state.signedIn = true;
-        state.scope = "owned";
-        break;
-      case "zero":
-        state.signedIn = true;
-        state.scope = "all";
-        setFacetState("element", "stasis", "include");
-        setFacetState("slot", "kinetic", "include");
-        setFacetState("exotic", "exotic", "include");
-        state.search = "zzzz-nope";
-        break;
-      case "loading":
-        state.signedIn = true;
-        state.scope = "all";
-        state.selectedId = "w1";
-        break;
-      case "missing-manifest":
-        state.signedIn = true;
-        state.scope = "all";
-        break;
-      case "detail-craft":
-        state.signedIn = true;
-        state.scope = "all";
-        state.selectedId = "w1";
-        break;
-      case "detail-exotic":
-      case "detail-exotic-craft":
-        state.signedIn = true;
-        state.scope = "owned";
-        state.selectedId = "w2";
-        state.showCanRoll = false;
-        state.showPossibleCraft = id === "detail-exotic-craft";
-        break;
-      case "detail-unknown":
-        state.signedIn = true;
-        state.scope = "owned";
-        state.selectedId = "w7";
-        break;
-      default:
-        break;
+  function clearAllFilters() {
+    state.facets = {};
+    state.search = "";
+    if (state.scenario === "zero") {
+      state.scenario = "results";
+      $("#scenario").value = "results";
     }
-    render();
+    renderAll();
   }
 
-  // keyboard
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (state.selectedId) {
-        state.selectedId = null;
-        render();
-        $("#board").focus();
-        e.preventDefault();
+  $("#filter-bar").addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip[data-facet]");
+    if (chip) {
+      const next = cycleState(chip.dataset.state || "off");
+      setFacetState(chip.dataset.facet, chip.dataset.value, next);
+      if (state.scenario === "zero" && activeFilters().length === 0) {
+        state.scenario = "results";
+        $("#scenario").value = "results";
       }
+      renderAll();
+      announce(`${chip.dataset.facet} ${chip.dataset.value}: ${next}`);
+      return;
     }
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      const list = filtered();
-      if (!list.length) return;
-      const idx = list.findIndex((w) => w.id === state.selectedId);
-      let next = idx;
-      if (e.key === "ArrowDown") next = Math.min(list.length - 1, (idx < 0 ? -1 : idx) + 1);
-      else next = Math.max(0, (idx < 0 ? 0 : idx) - 1);
-      if (list[next]) {
-        state.selectedId = list[next].id;
-        state.selectedInstanceId = null;
-        render();
-        $(`#row-${state.selectedId}`)?.scrollIntoView({ block: "nearest" });
+    const clear = e.target.closest("[data-clear-facet]");
+    if (clear) {
+      setFacetState(clear.dataset.clearFacet, clear.dataset.clearValue, "off");
+      renderAll();
+      return;
+    }
+    if (e.target.closest("[data-clear-search]")) {
+      state.search = "";
+      renderAll();
+      return;
+    }
+    if (e.target.closest("[data-action='clear-filters']")) clearAllFilters();
+  });
+
+  function selectWeapon(id) {
+    state.selectedId = id;
+    state.selectedInstanceId = null;
+    const w = selectedWeapon();
+    const inst = w ? instancesFor(w) : [];
+    if (inst[0]) state.selectedInstanceId = inst[0].id;
+    state.showCanRoll = false;
+    state.showPossibleCraft = false;
+    renderAll();
+    announce("Selected " + (w ? displayName(w) : ""));
+  }
+
+  $("#board").addEventListener("click", (e) => {
+    const card = e.target.closest(".weapon-card[data-id]");
+    if (card) {
+      selectWeapon(card.dataset.id);
+      return;
+    }
+    const action = e.target.closest("[data-action]");
+    if (!action) return;
+    const a = action.dataset.action;
+    if (a === "sign-in") {
+      state.signedIn = true; state.scenario = "owned";
+      $("#scenario").value = "owned"; renderAll();
+    } else if (a === "scope-all") {
+      state.scope = "all";
+      state.scenario = state.signedIn ? "results" : "signed-out";
+      $("#scenario").value = state.scenario; renderAll();
+    } else if (a === "sync") {
+      state.scenario = "results"; state.scope = "all";
+      $("#scenario").value = "results";
+      announce("Mock sync complete"); renderAll();
+    } else if (a === "clear-filters") {
+      clearAllFilters();
+    } else if (a === "reload") {
+      state.scenario = "results";
+      $("#scenario").value = "results";
+      announce("Manifest reloaded (mock)"); renderAll();
+    } else if (a === "settings") {
+      announce("Navigate to Settings (mock)");
+    }
+  });
+
+  // Keyboard: arrows+Enter on grid; Esc clears selection only (Q-UX-DET-07)
+  $("#board").addEventListener("keydown", (e) => {
+    const list = filtered();
+    if (!list.length) return;
+    const idx = list.findIndex((w) => w.id === state.selectedId);
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = list[Math.min(list.length - 1, Math.max(0, idx) + 1)] || list[0];
+      selectWeapon(next.id);
+      const btn = $(`.weapon-card[data-id="${next.id}"]`);
+      if (btn) btn.focus();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = list[Math.max(0, (idx < 0 ? 0 : idx) - 1)] || list[0];
+      selectWeapon(prev.id);
+      const btn = $(`.weapon-card[data-id="${prev.id}"]`);
+      if (btn) btn.focus();
+    } else if (e.key === "Enter" || e.key === " ") {
+      const focused = document.activeElement?.closest?.(".weapon-card[data-id]");
+      if (focused) {
         e.preventDefault();
+        selectWeapon(focused.dataset.id);
+        $("#detail").focus();
       }
     }
   });
 
-  // init groupby default
-  state.facets.groupby = { slot: "include" };
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.selectedId) {
+      state.selectedId = null;
+      state.selectedInstanceId = null;
+      state.showCanRoll = false;
+      state.showPossibleCraft = false;
+      renderAll();
+      $("#board").focus();
+      announce("Selection cleared");
+    }
+  });
+
+  $("#detail").addEventListener("click", (e) => {
+    const inst = e.target.closest("[data-inst]");
+    if (inst) {
+      state.selectedInstanceId = inst.dataset.inst;
+      state.showCanRoll = false;
+      state.showPossibleCraft = false;
+      renderDetail();
+      announce("Instance " + inst.dataset.inst);
+      return;
+    }
+    if (e.target.closest("#tog-can-roll")) {
+      state.showCanRoll = !state.showCanRoll;
+      if (state.showCanRoll) state.showPossibleCraft = false;
+      renderDetail();
+      announce("Can roll " + (state.showCanRoll ? "on" : "off"));
+      return;
+    }
+    if (e.target.closest("#tog-craft")) {
+      state.showPossibleCraft = !state.showPossibleCraft;
+      if (state.showPossibleCraft) state.showCanRoll = false;
+      renderDetail();
+      announce("Possible crafted " + (state.showPossibleCraft ? "on" : "off"));
+    }
+  });
+
   applyScenario("results");
 })();
   </script>

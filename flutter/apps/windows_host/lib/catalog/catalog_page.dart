@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
 import '../widgets/entity_icon.dart';
-import '../widgets/item_richness.dart';
 import 'owned_catalog_bridge.dart';
 
 /// Catalog board columns: NAME · IDENTITY · TYPE · OWNED
@@ -34,6 +33,7 @@ class CatalogPage extends StatefulWidget {
     required this.services,
     this.bridge,
     this.reloadToken = 0,
+    this.onOpenSettings,
   });
 
   final AppServices services;
@@ -44,6 +44,9 @@ class CatalogPage extends StatefulWidget {
   /// When this value changes (e.g. user returns to Catalog after Settings sync),
   /// reloads entity stores + inventory. IndexedStack keeps this page alive.
   final int reloadToken;
+
+  /// Shell callback to open Settings (empty-state CTAs).
+  final VoidCallback? onOpenSettings;
 
   @override
   State<CatalogPage> createState() => _CatalogPageState();
@@ -80,10 +83,8 @@ class _CatalogPageState extends State<CatalogPage> {
   bool _showCanRoll = false;
   bool _showCraft = false;
 
-  /// Facet / group chrome collapsed by default (P0 — reduce chrome explosion).
-  bool _filtersExpanded = false;
-
   /// Secondary facets (ammo, archetype, class, group) behind "More".
+  /// Primary line (scope + free-text + element/slot icon chips) is always on.
   bool _moreFiltersExpanded = false;
 
   OwnedCatalogBridge _createBridge() {
@@ -208,17 +209,36 @@ class _CatalogPageState extends State<CatalogPage> {
     final treatArmor = _mode == CatalogBrowseMode.armor ||
         compositionKindFromCatalogItem(sel) == CompositionKind.armor ||
         compositionKindFromCatalogItem(sel) == CompositionKind.exoticArmor;
-    // Next parity: resolve plug names before projecting instance cards.
+
+    // Show sockets immediately (unknown names ok) — do not block the grid on
+    // the ~190MB DestinyInventoryItemDefinition load.
+    final quick = _bridge.instancesFor(sel.hash, treatAsArmor: treatArmor);
+    if (!mounted) return;
+    setState(() {
+      _instances = quick;
+      _selectedInstanceId = defaultHighestPowerInstanceId(quick);
+    });
+
+    // Resolve plug names/icons + reverse tags; re-project when names land.
     final instances = await _bridge.instancesForResolved(
       sel.hash,
       treatAsArmor: treatArmor,
     );
+    // Also resolve definition can-roll plugs for this weapon identity.
+    final defCols =
+        widget.services.offlineCatalog.perkColumnsFor(sel.hash);
+    if (defCols.isNotEmpty) {
+      await _bridge.ensurePlugNames(collectPlugHashesFromPerkColumns(defCols));
+    }
     final tags = await _bridge.reverseTagsFor(sel);
     if (!mounted) return;
+    // Selection may have changed while names resolved.
+    if (_selected?.hash != sel.hash) return;
     setState(() {
       _instances = instances;
       _reverseTags = tags;
-      _selectedInstanceId = defaultHighestPowerInstanceId(instances);
+      _selectedInstanceId =
+          _selectedInstanceId ?? defaultHighestPowerInstanceId(instances);
     });
   }
 
@@ -229,8 +249,7 @@ class _CatalogPageState extends State<CatalogPage> {
       _showCanRoll = false;
       _showCraft = false;
       _selectedInstanceId = null;
-      // BUG-20260726-005: reclaim vertical space for board + detail.
-      _filtersExpanded = false;
+      // Collapse secondary filters only — primary line stays visible.
       _moreFiltersExpanded = false;
     });
     await _syncSelection();
@@ -311,12 +330,6 @@ class _CatalogPageState extends State<CatalogPage> {
     _syncSelection();
   }
 
-  String _exoticLabel() {
-    if (_exotic == true) return 'Exotic only';
-    if (_exotic == false) return 'No exotic';
-    return 'Exotic: any';
-  }
-
   int _activeFilterCount() {
     var n = 0;
     if (!isFacetEmpty(_elements)) n++;
@@ -353,12 +366,6 @@ class _CatalogPageState extends State<CatalogPage> {
       // Soft fail — empty state stays; user can open Settings.
     }
     await _load();
-  }
-
-  String _filtersSummaryLabel() {
-    final n = _activeFilterCount();
-    if (n == 0) return 'Filters · none active';
-    return 'Filters · $n active';
   }
 
   Future<void> _createSetFromHit(CatalogItem item) async {
@@ -472,26 +479,88 @@ class _CatalogPageState extends State<CatalogPage> {
     }
   }
 
-  Widget _facetChipRow({
-    required String keyPrefix,
-    required List<String> values,
-    required FacetFilter facet,
-    required void Function(String) onCycle,
-    String Function(String)? labelOf,
-  }) {
+  List<CatalogFacetGroup> _primaryFacetGroups() {
+    return [
+      if (catalogShowsElementFacet(_mode))
+        CatalogFacetGroup(
+          id: 'element',
+          values: catalogElements,
+          facet: _elements,
+          onCycle: _cycleElement,
+          // Official Bungie element icons (icon-only density).
+          iconOnly: true,
+        ),
+      CatalogFacetGroup(
+        id: 'slot',
+        values: catalogSlotsForMode(_mode),
+        facet: _slots,
+        onCycle: _cycleSlot,
+        // K / E / P icon-only (mock density); labels via tooltip.
+        iconOnly: true,
+      ),
+    ];
+  }
+
+  List<CatalogFacetGroup> _secondaryFacetGroups() {
+    return [
+      if (catalogShowsAmmoFacet(_mode))
+        CatalogFacetGroup(
+          id: 'ammo',
+          values: catalogAmmoTypes,
+          facet: _ammos,
+          onCycle: _cycleAmmo,
+          iconOnly: true,
+        ),
+      if (catalogShowsClassFacet(_mode))
+        CatalogFacetGroup(
+          id: 'class',
+          values: catalogClassNames,
+          facet: _classNames,
+          onCycle: _cycleClass,
+        ),
+      CatalogFacetGroup(
+        id: 'archetype',
+        values: catalogArchetypesForMode(_mode),
+        facet: _archetypes,
+        onCycle: _cycleArchetype,
+      ),
+      if (_bridge.synergyMembership.isNotEmpty)
+        CatalogFacetGroup(
+          id: 'synergy',
+          values: _bridge.synergyMembership.map((s) => s.id).toList(),
+          facet: _synergies,
+          onCycle: _cycleSynergy,
+          labelOf: (id) => _bridge.synergyNames[id] ?? 'Synergy',
+        ),
+    ];
+  }
+
+  Widget _groupByRow() {
+    final palette = FlapPalette.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
+        key: const Key('catalog_group_by'),
         children: [
-          for (final value in values)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              'GROUP',
+              style: neonMono(
+                color: palette.muted,
+                fontSize: 10,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          for (final dim in catalogGroupDimensions)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: NeonFacetChip(
-                key: Key('${keyPrefix}_chip_$value'),
-                label: labelOf?.call(value) ?? value,
-                state: facetChipState(facet, value),
-                onCycle: () => onCycle(value),
+              padding: const EdgeInsets.only(right: 4),
+              child: FilterChip(
+                key: Key('group_chip_${dim.id.name}'),
+                label: Text(dim.label),
+                selected: _groupBy.contains(dim.id),
+                onSelected: (_) => _toggleGroupDimension(dim.id),
               ),
             ),
         ],
@@ -528,11 +597,10 @@ class _CatalogPageState extends State<CatalogPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Thin header: title + live pulse only (no multi-line subtitle block).
           NeonPageHeader(
             kicker: 'Module · Build Creator',
             title: 'Catalog',
-            subtitle:
-                'Browse weapon and armor nodes. Calibrate filters, then open a construct for perks and stats.',
             trailing: Tooltip(
               message: _version ?? 'No entity channel version',
               child: NeonLivePulse(
@@ -567,103 +635,114 @@ class _CatalogPageState extends State<CatalogPage> {
               ),
             ),
           ),
-          // --- Filter / channel controls zone (dense inside) ---
-          // Cap height so expanded facets scroll instead of overflowing the body.
+          // --- Single primary filter band (mode · scope · search · chips) ---
           Padding(
-            padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace8),
+            padding: const EdgeInsets.fromLTRB(kSpace12, 0, kSpace12, kSpace6),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.42,
+                maxHeight: MediaQuery.sizeOf(context).height * 0.36,
               ),
               child: NeonZone(
-              padding: const EdgeInsets.fromLTRB(kSpace12, kSpace12, kSpace12, kSpace8),
-              child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    key: const Key('catalog_query'),
-                    controller: _queryController,
-                    decoration: InputDecoration(
-                      labelText: 'Search nodes',
-                      hintText: 'Name, type, element…',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      isDense: true,
-                      labelStyle: neonMono(
-                        color: palette.muted,
-                        fontSize: 11,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    onChanged: (_) => _refilter(),
-                  ),
-                  const SizedBox(height: kSpace12),
-                  // Channel modes — cyan only on selected segment
-                  Text(
-                    'CHANNEL',
-                    style: neonMono(
-                      color: palette.muted,
-                      fontSize: 10,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: kSpace8),
-                  KeyedSubtree(
-                    key: const Key('catalog_mode_row'),
-                    child: NeonSegmentedTabs(
-                      selectedId: _mode.name,
-                      onSelected: (id) {
-                        final mode = CatalogBrowseMode.values.firstWhere(
-                          (m) => m.name == id,
-                          orElse: () => CatalogBrowseMode.weapons,
-                        );
-                        _setMode(mode);
-                      },
-                      options: [
-                        for (final mode in CatalogBrowseMode.values)
-                          NeonSegmentOption(
-                            id: mode.name,
-                            label: browseModeLabel(mode),
-                            key: Key('mode_chip_${mode.name}'),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: kSpace12),
-                  Row(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: kSpace8,
+                  vertical: kSpace8,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      NeonSegmentedTabs(
-                        dense: true,
-                        selectedId: _scope.name,
-                        onSelected: (id) {
-                          _setScope(
-                            id == CatalogScope.owned.name
-                                ? CatalogScope.owned
-                                : CatalogScope.all,
+                      CatalogFilterBar(
+                        queryController: _queryController,
+                        onQueryChanged: (_) => _refilter(),
+                        activeFilterCount: _activeFilterCount() +
+                            (_queryController.text.trim().isEmpty ? 0 : 1),
+                        moreExpanded: _moreFiltersExpanded,
+                        onToggleMore: () {
+                          setState(
+                            () =>
+                                _moreFiltersExpanded = !_moreFiltersExpanded,
                           );
                         },
-                        options: [
-                          const NeonSegmentOption(
-                            id: 'all',
-                            label: 'All',
-                            key: Key('scope_chip_all'),
+                        onReset: _clearAllFilters,
+                        exotic: _exotic,
+                        onCycleExotic: _cycleExotic,
+                        // Mode tabs on the same line as scope/search/chips.
+                        prefix: KeyedSubtree(
+                          key: const Key('catalog_mode_row'),
+                          child: NeonSegmentedTabs(
+                            dense: true,
+                            selectedId: _mode.name,
+                            onSelected: (id) {
+                              final mode = CatalogBrowseMode.values.firstWhere(
+                                (m) => m.name == id,
+                                orElse: () => CatalogBrowseMode.weapons,
+                              );
+                              _setMode(mode);
+                            },
+                            options: [
+                              for (final mode in CatalogBrowseMode.values)
+                                NeonSegmentOption(
+                                  id: mode.name,
+                                  label: browseModeLabel(mode),
+                                  key: Key('mode_chip_${mode.name}'),
+                                ),
+                            ],
                           ),
-                          NeonSegmentOption(
-                            id: 'owned',
-                            label: _ownedChipLabel(),
-                            key: const Key('scope_chip_owned'),
-                          ),
-                        ],
+                        ),
+                        leading: CatalogScopeControl(
+                          scope: _scope,
+                          ownedLabel: _ownedChipLabel(),
+                          onChanged: _setScope,
+                        ),
+                        primaryGroups: _primaryFacetGroups(),
+                        secondaryGroups: _secondaryFacetGroups(),
                       ),
-                      const Spacer(),
-                      if (_activeFilterCount() > 0)
+                      if (_moreFiltersExpanded) ...[
+                        const SizedBox(height: 4),
+                        _groupByRow(),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Incomplete entity cache (e.g. missing exotic-weapons.json).
+          if (_missingExoticWeaponsStore) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kSpace12, 0, kSpace12, kSpace6),
+              child: Material(
+                key: const Key('catalog_missing_exotic_weapons_banner'),
+                color: palette.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(kRadiusMax),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: kSpace12,
+                    vertical: kSpace8,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          size: 18, color: palette.warning),
+                      const SizedBox(width: kSpace8),
+                      Expanded(
+                        child: Text(
+                          'Exotic weapons store is missing or empty '
+                          '(only legendary weapons are loaded). '
+                          'Rebuild entity stores: Settings → Refresh manifest.',
+                          style: neonBody(
+                            color: palette.foreground,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      if (widget.onOpenSettings != null)
                         TextButton(
-                          key: const Key('catalog_clear_filters'),
-                          onPressed: _clearAllFilters,
+                          key: const Key('catalog_missing_exotic_settings'),
+                          onPressed: widget.onOpenSettings,
                           child: Text(
-                            'RESET FILTERS',
+                            'SETTINGS',
                             style: neonMono(
                               color: palette.accent,
                               fontSize: 10,
@@ -673,203 +752,10 @@ class _CatalogPageState extends State<CatalogPage> {
                         ),
                     ],
                   ),
-                  // Progressive disclosure: facets/group behind toggle (P0).
-                  ListTile(
-                    key: const Key('catalog_filters_toggle'),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      _filtersSummaryLabel(),
-                      key: const Key('catalog_filters_summary'),
-                      style: neonMono(
-                        color: palette.foreground,
-                        fontSize: 11,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    subtitle: _filtersExpanded
-                        ? null
-                        : Text(
-                            'Element, slot, archetype, exotic, group…',
-                            style: neonBody(
-                              color: palette.muted,
-                              fontSize: 12,
-                            ),
-                          ),
-                    trailing: Icon(
-                      _filtersExpanded
-                          ? Icons.expand_less
-                          : Icons.expand_more,
-                      color: palette.muted,
-                    ),
-                    onTap: () {
-                      setState(
-                        () => _filtersExpanded = !_filtersExpanded,
-                      );
-                    },
-                  ),
-                  if (_filtersExpanded)
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: _moreFiltersExpanded ? 260 : 140,
-                      ),
-                      child: SingleChildScrollView(
-                        key: const Key('catalog_filters_scroll'),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (catalogShowsElementFacet(_mode))
-                              _facetChipRow(
-                                keyPrefix: 'element',
-                                values: catalogElements,
-                                facet: _elements,
-                                onCycle: _cycleElement,
-                              ),
-                            const SizedBox(height: 4),
-                            _facetChipRow(
-                              keyPrefix: 'slot',
-                              values: catalogSlotsForMode(_mode),
-                              facet: _slots,
-                              onCycle: _cycleSlot,
-                            ),
-                            const SizedBox(height: 4),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: FilterChip(
-                                key: const Key('exotic_chip'),
-                                label: Text(_exoticLabel()),
-                                selected: _exotic != null,
-                                onSelected: (_) => _cycleExotic(),
-                              ),
-                            ),
-                            ListTile(
-                              key: const Key('catalog_more_filters_toggle'),
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(
-                                _moreFiltersExpanded
-                                    ? 'Less filters'
-                                    : 'More filters (ammo, type, group…)',
-                                style: neonMono(
-                                  color: palette.muted,
-                                  fontSize: 10,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                              trailing: Icon(
-                                _moreFiltersExpanded
-                                    ? Icons.expand_less
-                                    : Icons.expand_more,
-                                color: palette.muted,
-                              ),
-                              onTap: () {
-                                setState(
-                                  () => _moreFiltersExpanded =
-                                      !_moreFiltersExpanded,
-                                );
-                              },
-                            ),
-                            if (_moreFiltersExpanded) ...[
-                              if (catalogShowsAmmoFacet(_mode)) ...[
-                                const SizedBox(height: 4),
-                                _facetChipRow(
-                                  keyPrefix: 'ammo',
-                                  values: catalogAmmoTypes,
-                                  facet: _ammos,
-                                  onCycle: _cycleAmmo,
-                                ),
-                              ],
-                              if (catalogShowsClassFacet(_mode)) ...[
-                                const SizedBox(height: 4),
-                                _facetChipRow(
-                                  keyPrefix: 'class',
-                                  values: catalogClassNames,
-                                  facet: _classNames,
-                                  onCycle: _cycleClass,
-                                ),
-                              ],
-                              const SizedBox(height: 4),
-                              _facetChipRow(
-                                keyPrefix: 'archetype',
-                                values: catalogArchetypesForMode(_mode),
-                                facet: _archetypes,
-                                onCycle: _cycleArchetype,
-                              ),
-                              if (_bridge.synergyMembership.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Synergy membership',
-                                  key: const Key('synergy_filter_label'),
-                                  style: neonMono(
-                                    color: palette.muted,
-                                    fontSize: 10,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                                _facetChipRow(
-                                  keyPrefix: 'synergy',
-                                  values: _bridge.synergyMembership
-                                      .map((s) => s.id)
-                                      .toList(),
-                                  facet: _synergies,
-                                  onCycle: _cycleSynergy,
-                                  labelOf: (id) =>
-                                      _bridge.synergyNames[id] ?? 'Synergy',
-                                ),
-                              ],
-                              const SizedBox(height: 4),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  key: const Key('catalog_group_by'),
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        right: 8,
-                                      ),
-                                      child: Text(
-                                        'GROUP',
-                                        style: neonMono(
-                                          color: palette.muted,
-                                          fontSize: 10,
-                                          letterSpacing: 0.8,
-                                        ),
-                                      ),
-                                    ),
-                                    for (final dim
-                                        in catalogGroupDimensions)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 4,
-                                        ),
-                                        child: FilterChip(
-                                          key: Key(
-                                            'group_chip_${dim.id.name}',
-                                          ),
-                                          label: Text(dim.label),
-                                          selected:
-                                              _groupBy.contains(dim.id),
-                                          onSelected: (_) =>
-                                              _toggleGroupDimension(
-                                            dim.id,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 8),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                ),
               ),
             ),
-          ),
-          ),
+          ],
           // Status channel (air between filter zone and results)
           Padding(
             padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace8),
@@ -913,6 +799,37 @@ class _CatalogPageState extends State<CatalogPage> {
     return '…${version.substring(version.length - 14)}';
   }
 
+  /// Legendary weapons present but exotic-weapons store empty/missing.
+  ///
+  /// Prefer projected [isExotic] flags (always safe). Optionally refine with
+  /// [OfflineCatalogLoadResult.storeCounts] when present.
+  bool get _missingExoticWeaponsStore {
+    if (_loading || _error != null) return false;
+    if (_mode != CatalogBrowseMode.weapons) return false;
+
+    // Primary signal: weapon rows with no isExotic (store never projected).
+    final base = _bridge.annotatedBase;
+    if (base.isEmpty) return false;
+    final weapons = base
+        .where((i) => itemMatchesBrowseMode(i, CatalogBrowseMode.weapons))
+        .toList();
+    if (weapons.isEmpty) return false;
+    final anyExotic = weapons.any((i) => i.isExotic);
+    final anyLegendary = weapons.any((i) => !i.isExotic);
+    if (anyLegendary && !anyExotic) return true;
+
+    // Secondary: explicit store counts when loaded.
+    final load = widget.services.offlineCatalog.lastLoad;
+    if (load == null) return false;
+    try {
+      final counts = load.storeCounts;
+      if (counts.isEmpty) return false;
+      return load.missingExoticWeapons;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String _statusLine() {
     if (_loading) return 'Loading entity stores…';
     if (_error != null) return 'Load failed — use Reload or check Settings';
@@ -921,8 +838,17 @@ class _CatalogPageState extends State<CatalogPage> {
     final inv = _bridge.inventory.length;
     final scopeLabel = _scope == CatalogScope.owned ? 'OWNED' : 'ALL';
     final modeLabel = browseModeLabel(_mode).toUpperCase();
+    final exo = _bridge.annotatedBase
+        .where(
+          (i) =>
+              i.isExotic && itemMatchesBrowseMode(i, CatalogBrowseMode.weapons),
+        )
+        .length;
+    final exoPart = _missingExoticWeaponsStore
+        ? 'exotics 0 (store missing)'
+        : 'exotics $exo';
     return '$v  ·  ${_results.length}/$base  ·  $modeLabel  ·  '
-        '$scopeLabel  ·  $inv copies';
+        '$scopeLabel  ·  $inv copies  ·  $exoPart';
   }
 
   String _ownedChipLabel() {
@@ -967,73 +893,29 @@ class _CatalogPageState extends State<CatalogPage> {
       return _buildEmptyState();
     }
     final groups = _groupedResults();
-    final palette = FlapPalette.of(context);
     final signedIn = widget.services.oauthSession.isSignedIn;
-    const gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
-      maxCrossAxisExtent: 260,
-      mainAxisExtent: 168,
-      mainAxisSpacing: kSpace12,
-      crossAxisSpacing: kSpace12,
-    );
+    final useGroupHeaders = _groupBy.isNotEmpty || groups.length > 1;
 
-    return CustomScrollView(
-      key: const Key('catalog_list'),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            key: const Key('catalog_board_header'),
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            child: Text(
-              'CATALOG NODES · GRID',
-              style: neonMono(
-                color: palette.muted,
-                fontSize: 10,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-        ),
-        for (final group in groups) ...[
-          if (_groupBy.isNotEmpty || groups.length > 1)
-            SliverToBoxAdapter(
-              child: Padding(
-                key: Key('catalog_group_${group.key}'),
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Text(
-                  '${group.label} (${group.items.length})'.toUpperCase(),
-                  style: neonMono(
-                    color: palette.muted,
-                    fontSize: 11,
-                    letterSpacing: 1.0,
-                  ),
+    return CatalogWeaponsGrid(
+      items: _results,
+      selectedHash: _selected?.hash,
+      showOwned: signedIn,
+      onSelect: _selectItem,
+      leadingBuilder: (item) => EntityIcon(
+        key: Key('catalog_item_icon_${item.hash}'),
+        icon: item.icon,
+        size: 36,
+      ),
+      groups: useGroupHeaders
+          ? [
+              for (final group in groups)
+                (
+                  key: group.key,
+                  label: group.label,
+                  items: group.items,
                 ),
-              ),
-            ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            sliver: SliverGrid(
-              gridDelegate: gridDelegate,
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final item = group.items[index];
-                  return CatalogWeaponCard(
-                    item: item,
-                    selected: _selected?.hash == item.hash,
-                    showOwned: signedIn,
-                    onTap: () => _selectItem(item),
-                    leading: EntityIcon(
-                      key: Key('catalog_item_icon_${item.hash}'),
-                      icon: item.icon,
-                      size: 36,
-                    ),
-                  );
-                },
-                childCount: group.items.length,
-              ),
-            ),
-          ),
-        ],
-      ],
+            ]
+          : null,
     );
   }
 
@@ -1068,7 +950,7 @@ class _CatalogPageState extends State<CatalogPage> {
           : null,
       onReload: entityEmpty || invEmpty ? _load : null,
       onSync: invEmpty && signedIn ? _syncInventory : null,
-      onOpenSettings: null, // Shell nav owns Settings; copy still guides user.
+      onOpenSettings: widget.onOpenSettings,
     );
   }
 
@@ -1102,6 +984,18 @@ class _CatalogPageState extends State<CatalogPage> {
 
     // Weapons path: composition-aid detail with disabled Set/Synergy stubs.
     if (_mode == CatalogBrowseMode.weapons) {
+      final defCols =
+          widget.services.offlineCatalog.perkColumnsFor(item.hash);
+      // Always include randomized hashes in the definition map so can-roll
+      // merge can expand instance reusables; selected-only view still hides
+      // them until the toggle is on (buildCatalogPerkColumns).
+      final defSockets = defCols.isEmpty
+          ? const <Map<String, Object?>>[]
+          : weaponPerkColumnsToSocketPlugs(
+              defCols,
+              includeRandomized: true,
+            );
+
       return CatalogWeaponDetail(
         item: item,
         instances: _instances,
@@ -1111,14 +1005,21 @@ class _CatalogPageState extends State<CatalogPage> {
         },
         showCanRoll: _showCanRoll,
         showCraft: _showCraft,
-        // Craft toggle available only when any copy is crafted or has craft flag —
-        // never invent craft pools (host passes empty craftColumns).
-        craftAvailable: _instances.any((i) => i.isCrafted),
+        // craftAvailable must not use isCrafted alone when craftColumns empty
+        // (false-positive toggle). Only show when host has real craft pool data.
+        craftAvailable: false,
         craftColumns: const [],
+        definitionSocketPlugs: defSockets,
         onCanRollChanged: (v) => setState(() => _showCanRoll = v),
         onCraftChanged: (v) => setState(() => _showCraft = v),
         plugNameByHash: _bridge.plugNameByHash,
-        intrinsicDescription: item.isExotic ? item.description : null,
+        plugIconByHash: _bridge.plugIconByHash,
+        intrinsicName: item.isExotic ? item.intrinsicName : null,
+        intrinsicDescription: item.isExotic
+            ? (item.description ?? item.intrinsicName)
+            : null,
+        catalystName: item.isExotic ? item.catalystName : null,
+        catalystDescription: item.isExotic ? item.catalystDescription : null,
         headerTrailing: _reverseTags.isEmpty
             ? null
             : Wrap(

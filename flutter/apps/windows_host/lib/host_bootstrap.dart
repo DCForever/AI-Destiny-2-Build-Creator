@@ -182,6 +182,7 @@ class HostBootstrap {
           lock: inventoryLock,
           equipmentBucketLookupBuilder: lookupBuilder,
           perkNameMapBuilder: rollTags.perkNameMapBuilder,
+          perkIconMapBuilder: rollTags.perkIconMapBuilder,
           weaponRollMetaLookupBuilder: rollTags.weaponRollMetaLookupBuilder,
           weaponSocketContextBuilder: sockets.weaponSocketContextBuilder,
         );

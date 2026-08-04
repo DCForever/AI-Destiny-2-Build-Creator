@@ -90,7 +90,7 @@ surfaces:
       nextjs:
         path: /catalog
       flutter-windows:
-        status: stub
+        status: done
         route: /catalog
   - id: shell.nav.settings
     title: Nav → Settings
@@ -1165,7 +1165,7 @@ surfaces:
         path: /catalog
         captureId: catalog-signed-out-weapons
       flutter-windows:
-        status: stub
+        status: done
         route: /catalog
         captureId: catalog-signed-out-weapons
   - id: catalog.signed-out.armor
@@ -1206,7 +1206,7 @@ surfaces:
         path: /catalog
         captureId: catalog-weapons-owned
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapons-owned
   - id: catalog.weapons.filters
@@ -1222,7 +1222,7 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapons-filters
   - id: catalog.weapons.filter.text
@@ -1284,7 +1284,7 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapons-list
   - id: catalog.weapons.instance-card
@@ -1299,7 +1299,7 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapons-instance-card
   - id: catalog.weapons.perk-grid
@@ -1314,7 +1314,7 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapons-perk-grid
   - id: catalog.weapons.manifest
@@ -1334,7 +1334,7 @@ surfaces:
         path: /catalog
         captureId: catalog-weapons-manifest
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapons-manifest
   - id: catalog.weapon.detail
@@ -1354,7 +1354,7 @@ surfaces:
         path: /catalog
         captureId: catalog-weapon-detail
       flutter-windows:
-        status: capturing
+        status: done
         route: /catalog
         captureId: catalog-weapon-detail
   - id: catalog.weapon.detail.stats
@@ -1517,6 +1517,10 @@ surfaces:
       - DBR-PUR-002
       - DBR-ROLL-010
     status: active
+    platforms:
+      flutter-windows:
+        status: done
+        route: /catalog
   - id: sets.signed-out
     title: Sets — signed-out gate
     kind: gate

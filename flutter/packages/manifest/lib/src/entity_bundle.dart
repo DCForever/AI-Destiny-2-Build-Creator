@@ -138,12 +138,16 @@ class EntityBundleDocument {
   /// Load result suitable for offline catalog / UI.
   OfflineCatalogLoadResult toLoadResult() {
     final items = toCatalogItems();
+    final storeCounts = <String, int>{
+      for (final e in stores.entries) e.key.fileStem: e.value.length,
+    };
     return OfflineCatalogLoadResult(
       version: version,
       items: items,
       emptyReason: items.isEmpty
           ? CatalogEmptyReason.noStores
           : CatalogEmptyReason.none,
+      storeCounts: storeCounts,
     );
   }
 }
