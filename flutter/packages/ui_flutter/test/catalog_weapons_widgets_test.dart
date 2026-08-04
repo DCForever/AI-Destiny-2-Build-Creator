@@ -344,7 +344,7 @@ void main() {
   });
 
   group('CatalogScopeControl', () {
-    testWidgets('All / Owned cycle scope', (tester) async {
+    testWidgets('All default; OWNED · N host label; cycle scope', (tester) async {
       var scope = CatalogScope.all;
       await tester.pumpWidget(
         StatefulBuilder(
@@ -352,7 +352,7 @@ void main() {
             return _wrap(
               CatalogScopeControl(
                 scope: scope,
-                ownedLabel: 'Owned · 2',
+                ownedLabel: 'OWNED · 790',
                 onChanged: (s) => setState(() => scope = s),
               ),
             );
@@ -360,6 +360,10 @@ void main() {
         ),
       );
       expect(find.byKey(const Key('catalog_scope_control')), findsOneWidget);
+      expect(scope, CatalogScope.all);
+      // NeonSegmented mono-uppercases labels.
+      expect(find.text('ALL'), findsOneWidget);
+      expect(find.text('OWNED · 790'), findsOneWidget);
       await tester.tap(find.byKey(const Key('scope_chip_owned')));
       await tester.pump();
       expect(scope, CatalogScope.owned);

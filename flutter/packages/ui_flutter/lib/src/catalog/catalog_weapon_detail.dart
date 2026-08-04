@@ -8,12 +8,16 @@ import '../destiny_official_icons.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import '../neon_item_detail.dart';
+import 'catalog_weapon_meta_strip.dart';
 
 // ---------------------------------------------------------------------------
 // Presentation models (host supplies data; widgets never invent pools)
 // ---------------------------------------------------------------------------
 
 /// One plug cell in the weapons perk grid.
+///
+/// Tiers (owned): ① [selected] · ② unselected instance · ③ [fromCanRollPool].
+/// Enhanced is orthogonal to any tier.
 class CatalogPerkCell {
   const CatalogPerkCell({
     required this.hash,
@@ -23,6 +27,7 @@ class CatalogPerkCell {
     this.fromCanRollPool = false,
     this.fromCraftPool = false,
     this.unknown = false,
+    this.enhanced = false,
   });
 
   final int hash;
@@ -30,10 +35,21 @@ class CatalogPerkCell {
 
   /// Bungie relative icon path (`/common/destiny2_content/icons/…`), when known.
   final String? icon;
+
+  /// ① Selected on this owned instance.
   final bool selected;
+
+  /// ③ Definition possible-roll pool (only when Possible rolls is ON for owned).
   final bool fromCanRollPool;
   final bool fromCraftPool;
   final bool unknown;
+
+  /// Enhanced plug (gold/E) — name heuristic and/or host flag.
+  final bool enhanced;
+
+  /// ② Unselected instance plug (owned): not selected and not pool/craft.
+  bool get isInstanceUnselected =>
+      !selected && !fromCanRollPool && !fromCraftPool;
 }
 
 /// One column in the weapons perk grid.
@@ -51,12 +67,14 @@ class CatalogPerkColumn {
 
 /// Build columns from instance sockets and/or definition perk columns.
 ///
-/// - **Owned instance:** selected plugs always shown; can-roll pool only when
-///   [showCanRoll] (and definition reusables merge when provided).
+/// - **Owned instance:** ① selected + ② instance reusables always; ③ definition
+///   possible rolls only when [showCanRoll] (never invent plugs).
 /// - **Unowned / definition-only:** full **possible rolls** (curated ∪ randomized
 ///   from [definitionSocketPlugs]) — always shown as pool cells (no fake selected
 ///   roll). Does not invent plugs.
+/// - **Origin:** only when a column has origin kind/data with plugs; never invent.
 /// - Craft pool only when [showCraft] and craft cells provided (never invent).
+/// - Enhanced when [plugEnhancedByHash] says so or display name looks enhanced.
 /// - Unknown names → label "Unknown perk" + hash tracked for footer.
 List<CatalogPerkColumn> buildCatalogPerkColumns({
   List<Map<String, Object?>>? socketPlugs,
@@ -64,6 +82,7 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
   List<ResolvedPlugCard> plugCards = const [],
   Map<int, String> plugNameByHash = const {},
   Map<int, String> plugIconByHash = const {},
+  Map<int, bool> plugEnhancedByHash = const {},
   bool showCanRoll = false,
   bool showCraft = false,
   List<CatalogPerkColumn> craftColumns = const [],
@@ -71,51 +90,39 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
   final out = <CatalogPerkColumn>[];
 
   // Prefer instance sockets; fall back to definition (unowned / missing capture).
+  // Do not pre-merge definition into instance reusables — ② vs ③ must stay distinct.
   List<Map<String, Object?>>? effectiveSockets;
   var usingDefinitionOnly = false;
   if (socketPlugs != null && socketPlugs.isNotEmpty) {
-    if (showCanRoll &&
-        definitionSocketPlugs != null &&
-        definitionSocketPlugs.isNotEmpty) {
-      effectiveSockets = _mergeDefinitionReusablesIntoSockets(
-        socketPlugs,
-        definitionSocketPlugs,
-      );
-    } else {
-      effectiveSockets = socketPlugs;
-    }
+    effectiveSockets = socketPlugs;
   } else if (definitionSocketPlugs != null &&
       definitionSocketPlugs.isNotEmpty) {
     effectiveSockets = definitionSocketPlugs;
     usingDefinitionOnly = true;
   }
 
+  // Definition pool hashes by non-meta column order (for owned ③ expansion).
+  final defPoolByNonMetaIndex = <int, Set<int>>{};
+  if (!usingDefinitionOnly &&
+      showCanRoll &&
+      definitionSocketPlugs != null &&
+      definitionSocketPlugs.isNotEmpty) {
+    var defIdx = 0;
+    for (final def in definitionSocketPlugs) {
+      final kind = (def['columnKind'] as String?)?.toLowerCase() ?? '';
+      if (_isMetaColumnKind(kind)) continue;
+      defPoolByNonMetaIndex[defIdx++] = _hashesFromSocketMap(def);
+    }
+  }
+
   if (effectiveSockets != null && effectiveSockets.isNotEmpty) {
+    var nonMetaIdx = 0;
     for (final raw in effectiveSockets) {
       final kind = raw['columnKind'] as String?;
+      final kindLower = kind?.toLowerCase() ?? '';
       final label = (raw['columnLabel'] as String?)?.trim();
-      final equippedRaw = raw['equippedPlugHash'];
-      final equipped = equippedRaw is int
-          ? equippedRaw
-          : equippedRaw is num
-              ? equippedRaw.toInt()
-              : null;
-
-      List<int> parseReusable() {
-        final out = <int>[];
-        final rawReusable = raw['reusablePlugHashes'];
-        if (rawReusable is List) {
-          for (final e in rawReusable) {
-            final h = e is int
-                ? e
-                : e is num
-                    ? e.toInt()
-                    : int.tryParse('$e');
-            if (h != null && h != 0) out.add(h);
-          }
-        }
-        return out;
-      }
+      final equipped = _parseHash(raw['equippedPlugHash']);
+      final instanceReusable = _parseHashList(raw['reusablePlugHashes']);
 
       final cells = <CatalogPerkCell>[];
       void addCell(int h, {required bool selected, required bool pool}) {
@@ -124,6 +131,8 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
         final name = plugNameByHash[h] ?? _cardName(plugCards, h);
         final unknown = _isUnknownPerkName(name, h);
         final display = unknown ? 'Unknown perk' : (name ?? 'Unknown perk');
+        final enhanced = plugEnhancedByHash[h] == true ||
+            (!unknown && _looksEnhanced(display));
         cells.add(
           CatalogPerkCell(
             hash: h,
@@ -133,27 +142,40 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
             selected: selected,
             fromCanRollPool: pool && !selected,
             unknown: unknown,
+            enhanced: enhanced,
           ),
         );
       }
 
       if (usingDefinitionOnly) {
-        // Possible rolls: full definition pool, no owned selected highlight.
+        // ③ Possible rolls only: full definition pool, no owned selected highlight.
         final pool = <int>{
           if (equipped != null && equipped != 0) equipped,
-          ...parseReusable(),
+          ...instanceReusable,
         };
         for (final h in pool) {
           addCell(h, selected: false, pool: true);
         }
       } else {
-        final reusable = showCanRoll ? parseReusable() : const <int>[];
+        // ① Selected on this copy.
         if (equipped != null) addCell(equipped, selected: true, pool: false);
-        for (final h in reusable) {
-          if (h != equipped) addCell(h, selected: false, pool: true);
+        // ② Unselected instance plugs (always for owned).
+        for (final h in instanceReusable) {
+          if (h != equipped) addCell(h, selected: false, pool: false);
+        }
+        // ③ Definition possible rolls when Possible rolls toggle is ON.
+        if (showCanRoll && !_isMetaColumnKind(kindLower)) {
+          final defPool = defPoolByNonMetaIndex[nonMetaIdx] ?? const <int>{};
+          for (final h in defPool) {
+            addCell(h, selected: false, pool: true);
+          }
+          nonMetaIdx++;
+        } else if (!_isMetaColumnKind(kindLower)) {
+          nonMetaIdx++;
         }
       }
 
+      // Origin (and any column) with no plugs is omitted — never invent Origin.
       if (cells.isEmpty) continue;
       final colLabel = (label != null && label.isNotEmpty)
           ? label
@@ -192,6 +214,8 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
                 unknown: c.displayName.isEmpty ||
                     c.displayName == '#${c.hash}' ||
                     !c.resolved,
+                enhanced: plugEnhancedByHash[c.hash] == true ||
+                    _looksEnhanced(c.displayName),
               ),
           ],
         ),
@@ -219,6 +243,7 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
                 selected: false,
                 fromCraftPool: true,
                 unknown: cell.unknown,
+                enhanced: cell.enhanced || _looksEnhanced(cell.displayName),
               ),
             );
           }
@@ -241,6 +266,7 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
                   icon: c.icon,
                   fromCraftPool: true,
                   unknown: c.unknown,
+                  enhanced: c.enhanced || _looksEnhanced(c.displayName),
                 ),
             ],
           ),
@@ -250,6 +276,46 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
   }
 
   return List.unmodifiable(out);
+}
+
+bool _isMetaColumnKind(String kindLower) {
+  return kindLower == 'intrinsic' ||
+      kindLower == 'masterwork' ||
+      kindLower == 'catalyst' ||
+      kindLower == 'origin';
+}
+
+int? _parseHash(Object? raw) {
+  if (raw is int) return raw == 0 ? null : raw;
+  if (raw is num) {
+    final v = raw.toInt();
+    return v == 0 ? null : v;
+  }
+  return int.tryParse('$raw');
+}
+
+List<int> _parseHashList(Object? raw) {
+  final out = <int>[];
+  if (raw is! List) return out;
+  for (final e in raw) {
+    final h = _parseHash(e);
+    if (h != null) out.add(h);
+  }
+  return out;
+}
+
+Set<int> _hashesFromSocketMap(Map<String, Object?> raw) {
+  final out = <int>{};
+  final equipped = _parseHash(raw['equippedPlugHash']);
+  if (equipped != null) out.add(equipped);
+  out.addAll(_parseHashList(raw['reusablePlugHashes']));
+  return out;
+}
+
+/// Name-heuristic enhanced detection when plug category is unavailable.
+bool _looksEnhanced(String? name) {
+  if (name == null || name.isEmpty) return false;
+  return RegExp(r'enhanced', caseSensitive: false).hasMatch(name);
 }
 
 String? _cardName(List<ResolvedPlugCard> cards, int hash) {
@@ -267,53 +333,6 @@ bool _isUnknownPerkName(String? name, int hash) {
   if (name.endsWith('(#$hash)')) return true;
   if (name.startsWith('#') && name.substring(1) == '$hash') return true;
   return false;
-}
-
-/// Expand instance `reusablePlugHashes` with definition pool hashes (can-roll).
-///
-/// Aligns non-meta instance columns (skips intrinsic/masterwork/catalyst/origin)
-/// to definition columns in order.
-List<Map<String, Object?>> _mergeDefinitionReusablesIntoSockets(
-  List<Map<String, Object?>> instanceSockets,
-  List<Map<String, Object?>> definitionSockets,
-) {
-  var defIdx = 0;
-  final out = <Map<String, Object?>>[];
-  for (final raw in instanceSockets) {
-    final kind = (raw['columnKind'] as String?)?.toLowerCase() ?? '';
-    final isMeta = kind == 'intrinsic' ||
-        kind == 'masterwork' ||
-        kind == 'catalyst' ||
-        kind == 'origin';
-    final map = Map<String, Object?>.from(raw);
-    if (!isMeta && defIdx < definitionSockets.length) {
-      final def = definitionSockets[defIdx++];
-      final hashes = <int>{};
-      void take(Object? list) {
-        if (list is! List) return;
-        for (final e in list) {
-          final h = e is int
-              ? e
-              : e is num
-                  ? e.toInt()
-                  : int.tryParse('$e');
-          if (h != null && h != 0) hashes.add(h);
-        }
-      }
-
-      take(map['reusablePlugHashes']);
-      take(def['reusablePlugHashes']);
-      final equipped = def['equippedPlugHash'];
-      if (equipped is int && equipped != 0) {
-        hashes.add(equipped);
-      } else if (equipped is num && equipped.toInt() != 0) {
-        hashes.add(equipped.toInt());
-      }
-      map['reusablePlugHashes'] = hashes.toList(growable: false);
-    }
-    out.add(map);
-  }
-  return out;
 }
 
 /// Official frame icon when plug defs unavailable (structure fallback only).
@@ -336,7 +355,9 @@ List<int> unknownPerkHashes(List<CatalogPerkColumn> columns) {
 // Widgets
 // ---------------------------------------------------------------------------
 
-/// Can-roll and possible-crafted toggles (both OFF by default at host).
+/// Possible-rolls and possible-crafted toggles (both OFF by default at host).
+///
+/// Finder keys stay stable (`catalog_toggle_can_roll` / `catalog_toggle_craft`).
 class CatalogDetailToggles extends StatelessWidget {
   const CatalogDetailToggles({
     super.key,
@@ -367,7 +388,7 @@ class CatalogDetailToggles extends StatelessWidget {
         FilterChip(
           key: const Key('catalog_toggle_can_roll'),
           label: Text(
-            'Can roll',
+            'Possible rolls',
             style: neonMono(color: palette.foreground, fontSize: 11),
           ),
           selected: showCanRoll,
@@ -390,7 +411,9 @@ class CatalogDetailToggles extends StatelessWidget {
   }
 }
 
-/// DIM-style perk grid: selected distinct; pool cells only when toggled.
+/// Equal-width perk columns — no horizontal scroll at [kCatalogWeaponsDetailWidth].
+///
+/// Icon-first cells with ellipsis captions; compress under multi-column ③ pools.
 class CatalogPerkGrid extends StatelessWidget {
   const CatalogPerkGrid({
     super.key,
@@ -413,42 +436,43 @@ class CatalogPerkGrid extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
+    // Equal-width Expanded columns; never SingleChildScrollView Axis.horizontal.
+    return Row(
       key: const Key('catalog_perk_grid'),
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final col in columns)
-            Padding(
-              padding: const EdgeInsets.only(right: kSpace8),
-              child: SizedBox(
-                width: 72,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      col.label.toUpperCase(),
-                      style: neonMono(
-                        color: palette.muted,
-                        fontSize: 9,
-                        letterSpacing: 0.6,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < columns.length; i++)
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(right: i == columns.length - 1 ? 0 : 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    columns[i].label.toUpperCase(),
+                    style: neonMono(
+                      color: palette.muted,
+                      fontSize: 8,
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(height: 4),
-                    for (final cell in col.cells)
-                      _PerkCellTile(cell: cell),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 3),
+                  for (final cell in columns[i].cells)
+                    _PerkCellTile(cell: cell),
+                ],
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
+
+/// Gold enhanced accent (game-language legendary enhance chrome).
+const Color _kEnhancedGold = Color(0xFFF5C542);
 
 class _PerkCellTile extends StatelessWidget {
   const _PerkCellTile({required this.cell});
@@ -460,64 +484,110 @@ class _PerkCellTile extends StatelessWidget {
     final palette = FlapPalette.of(context);
     final selected = cell.selected;
     final pool = cell.fromCanRollPool || cell.fromCraftPool;
-    final border = selected
-        ? palette.accent.withValues(alpha: 0.55)
-        : pool
-            ? palette.line
-            : palette.line.withValues(alpha: 0.4);
+    final enhanced = cell.enhanced;
+    final border = enhanced
+        ? _kEnhancedGold.withValues(alpha: 0.85)
+        : selected
+            ? palette.accent.withValues(alpha: 0.55)
+            : pool
+                ? palette.line.withValues(alpha: 0.55)
+                : palette.line.withValues(alpha: 0.7);
     final bg = selected
         ? palette.accent.withValues(alpha: 0.12)
         : palette.surfaceRaised.withValues(alpha: 0.5);
     final iconPath = cell.icon;
-    final accent = selected ? palette.accent : palette.muted;
+    final accent = enhanced
+        ? _kEnhancedGold
+        : selected
+            ? palette.accent
+            : palette.muted;
+    final tip = StringBuffer(cell.displayName);
+    if (selected) {
+      tip.write(' · ① on this copy');
+    } else if (cell.isInstanceUnselected) {
+      tip.write(' · ② unselected (instance)');
+    } else if (pool) {
+      tip.write(' · ③ possible roll');
+    }
+    if (enhanced) tip.write(' · Enhanced');
 
     return Tooltip(
-      message: cell.displayName,
+      message: tip.toString(),
       child: Container(
         key: Key('perk_cell_${cell.hash}'),
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.all(4),
+        margin: const EdgeInsets.only(bottom: 3),
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           color: bg,
           border: Border.all(color: border, width: kFlapRuleThickness),
           borderRadius: BorderRadius.circular(kRadiusMax),
+          boxShadow: enhanced
+              ? [
+                  BoxShadow(
+                    color: _kEnhancedGold.withValues(alpha: 0.2),
+                    blurRadius: 6,
+                  ),
+                ]
+              : null,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            if (iconPath != null && iconPath.isNotEmpty)
-              BungieContentIcon(
-                key: selected ? Key('perk_selected_${cell.hash}') : null,
-                pathOrUrl: iconPath,
-                size: 36,
-                // Parent Tooltip names the cell — avoid AX thrash on image load.
-                fallback: _PerkIconFallback(
-                  label: cell.displayName,
-                  color: accent,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (iconPath != null && iconPath.isNotEmpty)
+                  BungieContentIcon(
+                    key: selected ? Key('perk_selected_${cell.hash}') : null,
+                    pathOrUrl: iconPath,
+                    size: 28,
+                    // Parent Tooltip names the cell — avoid AX thrash on image load.
+                    fallback: _PerkIconFallback(
+                      label: cell.displayName,
+                      color: accent,
+                      size: 28,
+                    ),
+                  )
+                else
+                  _PerkIconFallback(
+                    key: selected ? Key('perk_selected_${cell.hash}') : null,
+                    label: cell.displayName,
+                    color: accent,
+                    size: 28,
+                  ),
+                const SizedBox(height: 1),
+                Text(
+                  // Caption under icon — never bare-hash primary (DBR-UI-006).
+                  cell.displayName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: neonBody(
+                    color: enhanced
+                        ? _kEnhancedGold
+                        : selected
+                            ? palette.foreground
+                            : pool
+                                ? palette.muted
+                                : palette.foreground,
+                    fontSize: 8,
+                  ),
                 ),
-              )
-            else
-              _PerkIconFallback(
-                key: selected ? Key('perk_selected_${cell.hash}') : null,
-                label: cell.displayName,
-                color: accent,
-              ),
-            const SizedBox(height: 2),
-            Text(
-              // Caption under icon — never bare-hash primary (DBR-UI-006).
-              cell.displayName,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: neonBody(
-                color: selected
-                    ? palette.foreground
-                    : pool
-                        ? palette.muted
-                        : palette.foreground,
-                fontSize: 9,
-              ),
+              ],
             ),
+            if (enhanced)
+              Positioned(
+                left: 0,
+                bottom: 0,
+                child: Text(
+                  key: Key('perk_enhanced_mark_${cell.hash}'),
+                  'E',
+                  style: neonMono(
+                    color: _kEnhancedGold,
+                    fontSize: 8,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -530,17 +600,19 @@ class _PerkIconFallback extends StatelessWidget {
     super.key,
     required this.label,
     required this.color,
+    this.size = 28,
   });
 
   final String label;
   final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final mark = label.isNotEmpty ? label[0].toUpperCase() : '?';
     return SizedBox(
-      width: 36,
-      height: 36,
+      width: size,
+      height: size,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
@@ -550,7 +622,7 @@ class _PerkIconFallback extends StatelessWidget {
         child: Center(
           child: Text(
             mark,
-            style: neonMono(color: color, fontSize: 14),
+            style: neonMono(color: color, fontSize: size * 0.4),
           ),
         ),
       ),
@@ -607,7 +679,7 @@ class ExoticIdentityBlock extends StatelessWidget {
               intrinsicName!,
               key: const Key('exotic_intrinsic_name'),
               style: neonDisplay(
-                color: Color(kRarityExotic),
+                color: const Color(kRarityExotic),
                 fontSize: 13,
               ),
             ),
@@ -713,15 +785,15 @@ class CatalogOutboundStubs extends StatelessWidget {
       key: const Key('catalog_outbound_stubs'),
       spacing: 8,
       children: [
-        FilledButton.tonal(
-          key: const Key('catalog_stub_set'),
+        const FilledButton.tonal(
+          key: Key('catalog_stub_set'),
           onPressed: null,
-          child: const Text('Set'),
+          child: Text('Set'),
         ),
-        FilledButton.tonal(
-          key: const Key('catalog_stub_synergy'),
+        const FilledButton.tonal(
+          key: Key('catalog_stub_synergy'),
           onPressed: null,
-          child: const Text('Synergy'),
+          child: Text('Synergy'),
         ),
         Text(
           'Outbound create deferred',
@@ -815,12 +887,14 @@ class CatalogWeaponDetail extends StatelessWidget {
     this.definitionSocketPlugs = const [],
     this.plugNameByHash = const {},
     this.plugIconByHash = const {},
+    this.plugEnhancedByHash = const {},
     this.intrinsicName,
     this.intrinsicDescription,
     this.catalystName,
     this.catalystDescription,
     this.catalystComplete,
     this.headerTrailing,
+    this.showOwnedMetaMark = true,
   });
 
   final CatalogItem item;
@@ -838,12 +912,18 @@ class CatalogWeaponDetail extends StatelessWidget {
   final List<Map<String, Object?>> definitionSocketPlugs;
   final Map<int, String> plugNameByHash;
   final Map<int, String> plugIconByHash;
+
+  /// Host-supplied enhanced flags (optional; name heuristic also applies).
+  final Map<int, bool> plugEnhancedByHash;
   final String? intrinsicName;
   final String? intrinsicDescription;
   final String? catalystName;
   final String? catalystDescription;
   final bool? catalystComplete;
   final Widget? headerTrailing;
+
+  /// When false, meta strip omits ×N (signed-out honesty).
+  final bool showOwnedMetaMark;
 
   CatalogInstanceProjection? get _selected {
     if (instances.isEmpty) return null;
@@ -859,7 +939,7 @@ class CatalogWeaponDetail extends StatelessWidget {
     final palette = FlapPalette.of(context);
     final inst = _selected;
     final hasOwnedCopy = instances.isNotEmpty;
-    // Instance sockets drive selected plugs. Unowned → definition possible rolls.
+    // Instance sockets drive ①+②. Unowned → definition ③ possible rolls.
     final columns = buildCatalogPerkColumns(
       socketPlugs: inst?.socketPlugs,
       definitionSocketPlugs:
@@ -867,16 +947,12 @@ class CatalogWeaponDetail extends StatelessWidget {
       plugCards: inst?.plugCards ?? const [],
       plugNameByHash: plugNameByHash,
       plugIconByHash: plugIconByHash,
+      plugEnhancedByHash: plugEnhancedByHash,
       showCanRoll: showCanRoll,
       showCraft: showCraft,
       craftColumns: craftColumns,
     );
     final unknowns = unknownPerkHashes(columns);
-    final typeLine = [
-      if (item.itemTypeName != null) item.itemTypeName!,
-      if (item.frame != null && item.frame!.isNotEmpty) item.frame!,
-      if (item.slot != null) item.slot!,
-    ].join(' · ');
     final perkSectionLabel = hasOwnedCopy ? 'PERKS' : 'POSSIBLE ROLLS';
 
     return Material(
@@ -888,19 +964,23 @@ class CatalogWeaponDetail extends StatelessWidget {
             title: item.name,
             kicker: item.isExotic ? 'Weapon · Exotic' : 'Weapon',
             kickerKey: const Key('detail_kind_label'),
-            subtitle: typeLine.isEmpty ? null : typeLine,
-            pills: [
-              if (item.element != null)
-                NeonMetaPill(item.element!, tone: NeonPillTone.accent),
-              if (item.isExotic)
-                const NeonMetaPill('Exotic', tone: NeonPillTone.exotic),
-              if (item.owned)
-                NeonMetaPill(
-                  'Owned ×${item.ownedCount}',
-                  tone: NeonPillTone.ok,
-                ),
-            ],
+            // Icon-only meta strip replaces text subtitle + KINETIC/OWNED pills.
+            subtitle: null,
+            pills: const [],
             actions: headerTrailing,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(kSpace12, 0, kSpace12, kSpace8),
+            child: CatalogWeaponMetaStrip(
+              itemTypeName: item.itemTypeName,
+              frame: item.frame,
+              element: item.element,
+              slot: item.slot,
+              ammo: item.ammo,
+              owned: item.owned,
+              ownedCount: item.ownedCount,
+              showOwnedMark: showOwnedMetaMark,
+            ),
           ),
           if (hasOwnedCopy) ...[
             Padding(
@@ -922,8 +1002,8 @@ class CatalogWeaponDetail extends StatelessWidget {
                 style: neonBody(color: palette.muted, fontSize: 12),
               ),
             ),
-          // Can-roll / craft toggles only for owned copies (selected vs pool).
-          // Unowned always shows possible rolls below.
+          // Possible-rolls / craft toggles only for owned copies.
+          // Unowned always shows ③ possible rolls below (no toggle).
           if (hasOwnedCopy &&
               onCanRollChanged != null &&
               onCraftChanged != null)

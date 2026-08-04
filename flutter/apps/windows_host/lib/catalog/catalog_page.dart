@@ -97,16 +97,24 @@ class _CatalogPageState extends State<CatalogPage> {
         );
   }
 
+  int _loadSeq = 0;
+
   @override
   void initState() {
     super.initState();
     _bridge = _createBridge();
+    // Rebind Owned when OAuth signs in without leaving Catalog / hot restart.
+    widget.services.oauthSession.addListener(_onOAuthSessionChanged);
     _load();
   }
 
   @override
   void didUpdateWidget(covariant CatalogPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.services != widget.services) {
+      oldWidget.services.oauthSession.removeListener(_onOAuthSessionChanged);
+      widget.services.oauthSession.addListener(_onOAuthSessionChanged);
+    }
     final servicesChanged = oldWidget.services != widget.services ||
         oldWidget.bridge != widget.bridge;
     if (servicesChanged) {
@@ -119,20 +127,29 @@ class _CatalogPageState extends State<CatalogPage> {
 
   @override
   void dispose() {
+    widget.services.oauthSession.removeListener(_onOAuthSessionChanged);
     _queryController.dispose();
     super.dispose();
   }
 
+  void _onOAuthSessionChanged() {
+    if (!mounted) return;
+    // Sign-in / sign-out without leaving Catalog (no hot restart required).
+    _load();
+  }
+
   Future<void> _load() async {
+    final seq = ++_loadSeq;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      if (widget.services.oauthSession.isSignedIn) {
-        await widget.services.inventorySync.refreshStatus();
-      }
+      // Always refresh local status: works signed-in and after Public access expiry.
+      await widget.services.inventorySync.refreshStatus();
+      if (!mounted || seq != _loadSeq) return;
       await _bridge.refresh(reloadEntities: true);
+      if (!mounted || seq != _loadSeq) return;
       final load = widget.services.offlineCatalog.lastLoad;
       if (!mounted) return;
       setState(() {
@@ -852,12 +869,15 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   String _ownedChipLabel() {
+    final defs = _bridge.ownedDefinitionCount;
+    final hasLocal = _bridge.userId != null && _bridge.inventory.isNotEmpty;
+    if (hasLocal || defs > 0) {
+      return 'Owned · $defs';
+    }
     if (!widget.services.oauthSession.isSignedIn) {
       return 'Owned · sign in';
     }
-    final n = _bridge.inventory.length;
-    if (n == 0) return 'Owned · 0';
-    return 'Owned · ${_bridge.ownedDefinitionCount}';
+    return 'Owned · 0';
   }
 
   Widget _buildBody() {
@@ -893,13 +913,15 @@ class _CatalogPageState extends State<CatalogPage> {
       return _buildEmptyState();
     }
     final groups = _groupedResults();
-    final signedIn = widget.services.oauthSession.isSignedIn;
+    final hasLocalOwned =
+        _bridge.userId != null && _bridge.inventory.isNotEmpty;
     final useGroupHeaders = _groupBy.isNotEmpty || groups.length > 1;
 
     return CatalogWeaponsGrid(
       items: _results,
       selectedHash: _selected?.hash,
-      showOwned: signedIn,
+      // Local inventory survives Public OAuth access expiry (~1h).
+      showOwned: hasLocalOwned || widget.services.oauthSession.isSignedIn,
       onSelect: _selectItem,
       leadingBuilder: (item) => EntityIcon(
         key: Key('catalog_item_icon_${item.hash}'),

@@ -83,3 +83,42 @@ Future<User?> getUserByMembership(
         ..where((t) => t.bungieMembershipId.equals(bungieMembershipId)))
       .getSingleOrNull();
 }
+
+/// Synthetic host user used for offline library demos — never a Bungie account.
+const String kLocalLibraryMembershipId = 'local-library';
+
+/// Most recently inventory-synced Bungie user row (excludes [kLocalLibraryMembershipId]).
+///
+/// Used when OAuth access has expired: Bungie **Public** clients do not receive
+/// refresh tokens, but local Drift inventory must still power Catalog Owned.
+Future<User?> findLastSyncedBungieUser(AppDatabase db) async {
+  final metas = await db.select(db.inventorySyncMeta).get();
+  if (metas.isEmpty) return null;
+
+  // Prefer non-null lastFullSyncAt, then highest syncVersion / itemCount.
+  metas.sort((a, b) {
+    final aAt = a.lastFullSyncAt;
+    final bAt = b.lastFullSyncAt;
+    if (aAt != null && bAt != null) {
+      final cmp = bAt.compareTo(aAt);
+      if (cmp != 0) return cmp;
+    } else if (aAt != null) {
+      return -1;
+    } else if (bAt != null) {
+      return 1;
+    }
+    final v = b.syncVersion.compareTo(a.syncVersion);
+    if (v != 0) return v;
+    return b.itemCount.compareTo(a.itemCount);
+  });
+
+  for (final meta in metas) {
+    if (meta.itemCount <= 0) continue;
+    final user = await getUser(db, meta.userId);
+    if (user == null) continue;
+    if (user.bungieMembershipId == kLocalLibraryMembershipId) continue;
+    if (user.bungieMembershipId.trim().isEmpty) continue;
+    return user;
+  }
+  return null;
+}

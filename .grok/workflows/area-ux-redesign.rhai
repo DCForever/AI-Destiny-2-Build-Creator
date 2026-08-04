@@ -26,6 +26,8 @@ let context_schema = #{
         "host_code_notes": #{ "type": "string" },
         "design_system_notes": #{ "type": "string" },
         "constraints": #{ "type": "array", "maxItems": 12, "items": #{ "type": "string" } },
+        "prior_implementation_shots": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
+        "prior_compare_index": #{ "type": "string" },
     },
 };
 
@@ -140,7 +142,10 @@ ctx_prompt += host_list;
 ctx_prompt += ". USE TOOLS: read_file/grep/list_dir. Read (1) requirements/Projects/Destiny 2 Build Creator/Areas for matching Area note ";
 ctx_prompt += "(or absolute vault path if requirements missing), (2) Destiny Objects if gear-related, (3) PRODUCT.md, ";
 ctx_prompt += "(4) docs/product-map/surfaces.yaml + flows.yaml for this area, (5) specs BR-CAT / DBR-ROLL / DBR-UI as relevant, ";
-ctx_prompt += "(6) flutter/packages/ui_flutter and ui_tokens README/exports, (7) current host code under flutter/apps/windows_host and mobile_host. ";
+ctx_prompt += "(6) flutter/packages/ui_flutter and ui_tokens README/exports, (7) current host code under flutter/apps/windows_host and mobile_host, ";
+ctx_prompt += "(8) **required for iteration** — prior implementation screenshots beside mockups: list_dir docs/ux-redesign/<area>/implementation-shots/ and read any COMPARE.md; ";
+ctx_prompt += "include shot paths in prior_implementation_shots and compare index path in prior_compare_index (empty array/string if none yet). ";
+ctx_prompt += "Next-round mockups must react to deltas between prior mockups and those shots (not mockups alone). ";
 ctx_prompt += "Do not invent product rules. Return structured context only.";
 
 let ctx = agent(ctx_prompt, #{
@@ -169,6 +174,7 @@ prod_prompt += ". Context JSON: ";
 prod_prompt += ctx_json;
 prod_prompt += ". Produce a GRILL for the human product owner: hard questions that refine scope. ";
 prod_prompt += "Challenge feature creep, Catalog-as-home, lite forks of Sets/Synergy lifecycles, and primary-job drift (DBR-PUR-002). ";
+prod_prompt += "If prior_implementation_shots exist in context, grill residuals (mock vs ship gaps) before inventing new chrome. ";
 prod_prompt += "Include recommended_default per question. List non_goals. role must be product. USE tools if you need to re-check Area notes or DBR/BR IDs.";
 
 let prod = agent(prod_prompt, #{
@@ -231,6 +237,7 @@ mock_prompt += "/mockups/ with desktop and mobile variants (e.g. 001-";
 mock_prompt += sub;
 mock_prompt += "-desktop.html and -mobile.html). ";
 mock_prompt += "Requirements: clickable facet chips (off/include/exclude cycle if filters apply), search, select item to detail, empty/error states, DISABLED stub CTAs with honest product copy when outbound areas do not exist. ";
+mock_prompt += "If prior_implementation_shots / prior_compare_index are present in context, treat them as ship ground truth: mockups must close residual gaps from COMPARE.md (structure + interaction), not redesign only from old HTML. ";
 mock_prompt += "Approximate Neon void dark palette; icon-first density; no new brand. No build step. USE write/search_replace tools. Return paths and flows_demonstrated.";
 
 let mock = agent(mock_prompt, #{

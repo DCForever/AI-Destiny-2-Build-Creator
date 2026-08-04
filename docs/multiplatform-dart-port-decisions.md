@@ -50,6 +50,7 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 - **Dev:** one Public application with a **multi-redirect matrix** (loopback / debug schemes per platform) is fine while Windows is the only shell.
 - **Prod:** start with one Public app + production redirects; **split** (e.g. mobile vs desktop/web, or per store) when redirect/ops/store-review pain warrants it — not required on day one.
 - Document platform → exact `redirect_uri` → Bungie app name the same way README documents `https://127.0.0.1:3000/api/auth/callback` today.
+- **Not decided:** optional **Confidential Windows desktop** for DIM-like refresh (~90d). Public policy means no `refresh_token` today; local Owned survives access expiry. Implications + Flutter options: [flutter-confidential-desktop-oauth-note.md](./flutter-confidential-desktop-oauth-note.md). Would require ADR carve-out from “no secret in Flutter” (operator-only secret, local helper, or BFF) — not the default.
 
 ## Implications by phase
 

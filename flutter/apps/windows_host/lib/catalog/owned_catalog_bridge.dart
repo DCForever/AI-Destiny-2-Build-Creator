@@ -282,18 +282,24 @@ class OwnedCatalogBridge {
     if (fromSync != null) return fromSync;
 
     final tokens = session.tokens;
-    if (!session.isSignedIn || tokens == null) return null;
+    if (session.isSignedIn && tokens != null) {
+      final membershipId = tokens.bungieMembershipId;
+      if (membershipId.isNotEmpty) {
+        final user = await ensureUser(
+          db,
+          bungieMembershipId: membershipId,
+          membershipType: 0,
+          displayName: '',
+        );
+        return user.id;
+      }
+    }
 
-    final membershipId = tokens.bungieMembershipId;
-    if (membershipId.isEmpty) return null;
-
-    final user = await ensureUser(
-      db,
-      bungieMembershipId: membershipId,
-      membershipType: 0,
-      displayName: '',
-    );
-    return user.id;
+    // Bungie Public OAuth has no refresh_token: access dies ~hourly and session
+    // clears. Local inventory must still resolve for Catalog Owned (DIM-like
+    // "use my vault offline" without re-auth for browse).
+    final local = await findLastSyncedBungieUser(db);
+    return local?.id;
   }
 }
 

@@ -36,6 +36,15 @@ Rules: DBR-PUR-002, DBR-ROLL-001/007/008/010, DBR-UI-001/005/006/007, BR-CAT-*, 
 - Live Set/Synergy create remains universal-only (not weapons detail).
 - `product-map:sync` may need `web/NextJS` yaml install for generated inventory/drawio.
 
+## Implementation shots (next redesign input)
+
+Drop live Flutter screenshots next to mockups and keep the compare table current:
+
+- Folder: [`implementation-shots/001-weapons/`](implementation-shots/001-weapons/)
+- Index: [`implementation-shots/001-weapons/COMPARE.md`](implementation-shots/001-weapons/COMPARE.md)
+
+The next `area-ux-redesign` for catalog/weapons **must** load those shots + mockups (see `docs/ux-redesign/README.md` loop).
+
 ## Tests
 
 ```text

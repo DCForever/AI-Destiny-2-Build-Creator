@@ -1,11 +1,11 @@
 # Parity: flutter-windows
 
-Generated: 2026-08-01
+Generated: 2026-08-04
 
 | Metric | Value |
 |--------|-------|
 | Platform status | planned |
-| Stubs | 63 |
+| Stubs | 57 |
 | Deferred | 7 |
 | Missing platform block | 0 |
 | Captures on disk | 0 |
@@ -23,7 +23,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `shell.nav.build` | stub | /build | — | no | 0 |
 | `shell.nav.synergy` | stub | /synergy | — | no | 0 |
 | `shell.nav.sets` | stub | /sets | — | no | 0 |
-| `shell.nav.catalog` | stub | /catalog | — | no | 0 |
 | `shell.nav.settings` | stub | /settings | — | no | 0 |
 | `shell.signed-out-gate` | stub | / | — | no | 2 |
 | `build.signed-out` | stub | /build | build-signed-out | no | 2 |
@@ -47,11 +46,7 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `build.finish.armor-optimize` | stub | /build | — | no | 6 |
 | `build.finish.equip-gate` | stub | /build | — | no | 4 |
 | `build.conflicts` | stub | /build | — | no | 6 |
-| `catalog.signed-out.weapons` | stub | /catalog | catalog-signed-out-weapons | no | 4 |
 | `catalog.signed-out.armor` | stub | /catalog | catalog-signed-out-armor | no | 3 |
-| `catalog.weapons.owned` | stub | /catalog | catalog-weapons-owned | no | 6 |
-| `catalog.weapons.manifest` | stub | /catalog | catalog-weapons-manifest | no | 4 |
-| `catalog.weapon.detail` | stub | /catalog | catalog-weapon-detail | no | 4 |
 | `catalog.armor.owned` | stub | /catalog | catalog-armor-owned | no | 4 |
 | `catalog.armor.manifest` | stub | /catalog | catalog-armor-manifest | no | 2 |
 | `catalog.armor.detail` | stub | /catalog | catalog-armor-detail | no | 3 |
@@ -59,7 +54,7 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `sets.signed-out` | stub | /sets | sets-signed-out | no | 2 |
 | `sets.library` | stub | /sets | sets-library | no | 8 |
 | `sets.create` | stub | /sets | sets-create | no | 7 |
-| `sets.detail` | stub | /sets | sets-detail | no | 6 |
+| `sets.detail` | stub | /sets | sets-detail | no | 15 |
 | `sets.edit` | stub | /sets | sets-edit | no | 3 |
 | `sets.fill-slot` | stub | /sets | sets-fill-slot | no | 6 |
 | `sets.fill-slot.exotic-block` | stub | /sets | — | no | 4 |
@@ -79,7 +74,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `build.create.draft.general` | stub | /build | build-create-draft-general | no | 0 |
 | `build.create.draft.locked.tabs` | stub | /build | build-create-draft-locked-tabs | no | 0 |
 | `build.edit.finish` | stub | /build | build-edit-finish | no | 0 |
-| `catalog.filters.open` | stub | /catalog | catalog-filters-open | no | 0 |
 | `loadouts.signed.in` | stub | /loadouts | loadouts-signed-in | no | 0 |
 
 ## Checklist

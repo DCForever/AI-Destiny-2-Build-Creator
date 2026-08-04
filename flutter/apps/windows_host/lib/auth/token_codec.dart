@@ -29,9 +29,9 @@ BungieTokens? decodeBungieTokens(String? raw) {
     final expiresAtRaw = map['expires_at'];
     final refreshExpiresAtRaw = map['refresh_expires_at'];
 
-    // Bungie Public OAuth does not issue refresh_token. Empty/omitted refresh
-    // is valid; requiring non-empty made every cold start look signed-out while
-    // access was still good (BUG-20260725-002).
+    // Bungie Public clients do not receive refresh_token (portal OAuth docs).
+    // Empty/omitted refresh is valid. Requiring non-empty made cold starts
+    // look signed-out while access was still good (BUG-20260725-002).
     if (access is! String ||
         access.isEmpty ||
         membershipId is! String ||

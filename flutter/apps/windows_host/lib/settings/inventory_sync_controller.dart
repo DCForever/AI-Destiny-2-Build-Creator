@@ -157,30 +157,41 @@ class InventorySyncController extends ChangeNotifier {
     return isInventoryFresh(_lastFullSyncAt, nowMs: nowMs);
   }
 
-  /// Load inventory sync meta for the signed-in user (no network).
+  /// Load inventory sync meta (no network).
+  ///
+  /// When OAuth is live: ensure/lookup the signed-in membership.
+  /// When OAuth is expired/absent: still surface the last local Bungie user's
+  /// sync meta so Catalog Owned works without hourly re-login (Public clients
+  /// do not receive refresh tokens from Bungie).
   Future<void> refreshStatus() async {
-    if (!_session.isSignedIn || _session.tokens == null) {
-      _localUserId = null;
-      _itemCount = null;
-      _syncVersion = null;
-      _lastFullSyncAt = null;
-      _lastDiagnostics = null;
-      _errorMessage = null;
-      _phase = InventorySyncPhase.idle;
-      notifyListeners();
-      return;
-    }
-
     _phase = InventorySyncPhase.loadingStatus;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final user = await _ensureLocalUser();
-      _localUserId = user.id;
-      final status = await getInventoryStatus(_db, user.id);
-      _applyStatus(status);
-      _phase = InventorySyncPhase.idle;
+      if (_session.isSignedIn && _session.tokens != null) {
+        final user = await _ensureLocalUser();
+        _localUserId = user.id;
+        final status = await getInventoryStatus(_db, user.id);
+        _applyStatus(status);
+        _lastDiagnostics = null;
+        _phase = InventorySyncPhase.idle;
+      } else {
+        final local = await findLastSyncedBungieUser(_db);
+        if (local == null) {
+          _localUserId = null;
+          _itemCount = null;
+          _syncVersion = null;
+          _lastFullSyncAt = null;
+          _lastDiagnostics = null;
+        } else {
+          _localUserId = local.id;
+          final status = await getInventoryStatus(_db, local.id);
+          _applyStatus(status);
+          _lastDiagnostics = null;
+        }
+        _phase = InventorySyncPhase.idle;
+      }
     } catch (e) {
       _phase = InventorySyncPhase.error;
       _errorMessage = _safeErrorMessage(e);

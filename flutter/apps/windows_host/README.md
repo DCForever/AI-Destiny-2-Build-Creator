@@ -27,6 +27,12 @@ The Windows host uses **Public + PKCE** and a **loopback** callback. It is **not
 | Client type | **Confidential** | **Public** |
 | Redirect | `https://127.0.0.1:3000/api/auth/callback` | `https://127.0.0.1:8765/callback` |
 | Secret | `BUNGIE_CLIENT_SECRET` on server | **Never** ship a secret |
+| Refresh token | Yes (~90 days) — DIM-like multi-day session | **No** (Bungie Public policy) — live access ~1h |
+| After access expires | Silent refresh | Re-sign-in for **Sync / live API** only; **Catalog Owned uses local DB** |
+
+**Why not like DIM?** DIM uses a **Confidential** Bungie app (server-held secret + refresh). This host is Public+PKCE by design (no secret on device). That is not a mapping bug — Bungie docs state Public clients do not receive `refresh_token`.
+
+**Potential switch to Confidential desktop:** implications (secret risk, gates, UX) and Flutter implementation options (operator env secret vs local helper vs BFF) are recorded in monorepo [`docs/flutter-confidential-desktop-oauth-note.md`](../../../docs/flutter-confidential-desktop-oauth-note.md). Not the default path; ADR required before shipping.
 
 1. Create a **second** application at <https://www.bungie.net/en/Application> (or a dedicated Public app).
 2. OAuth type: **Public**.
@@ -69,11 +75,11 @@ flutter run -d windows
 
 Building from the long worktree path may fail even when `dart analyze` / `flutter test` pass.
 
-### Flutter Driver / agent screenshots (optional)
+### Flutter Driver / agent screenshots (required for area-implement Verify)
 
-For [Dart MCP](https://docs.flutter.dev/ai/mcp-server#interact-with-a-running-app) / `/impeccable-flutter` (screenshot, tap, scroll):
+Used by [Dart MCP](https://docs.flutter.dev/ai/mcp-server#interact-with-a-running-app), `/impeccable-flutter`, and **`area-implement` Capture** so implementation PNGs land beside mockups under `docs/ux-redesign/<area>/implementation-shots/`.
 
-**Preferred (agent):** MCP `launch_app` with `target=lib/main_mcp.dart` (enables Driver + returns DTD automatically). Host OAuth keys still load from `.env.windows.local` when present.
+**Preferred (agent):** MCP `launch_app` with `target=lib/main_mcp.dart` (enables Driver + returns DTD automatically). Then `flutter_driver` · `screenshot` per scenario. Host OAuth keys still load from `.env.windows.local` when present.
 
 **Manual shell:**
 

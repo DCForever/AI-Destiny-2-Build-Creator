@@ -2595,7 +2595,7 @@ surfaces:
       nextjs:
         captureId: catalog-filters-open
       flutter-windows:
-        status: stub
+        status: done
         route: /catalog
         captureId: catalog-filters-open
   - id: loadouts.signed.in

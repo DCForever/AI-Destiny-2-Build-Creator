@@ -1,37 +1,45 @@
-# Catalog · Weapons mockup approval
+# Catalog · Full residual pass — mockup approval
 
 **continue with workflow**
 
 Approved after interactive review of:
 
-- `docs/ux-redesign/catalog/mockups/001-weapons-desktop.html`
-- `docs/ux-redesign/catalog/mockups/001-weapons-mobile.html`
+- `docs/ux-redesign/catalog/mockups/001-full-desktop.html`
+- `docs/ux-redesign/catalog/mockups/001-full-mobile.html`
+
+**Workflow:** `area-ux-redesign-6`  
+**Date:** 2026-08-04  
+**Dual ground truth:** implementation-shots/001-weapons + COMPARE residuals + DIM reference
+
+---
 
 ## Slice on this gate
 
-**Weapon details** (windows + mobile)  
-Out of scope: Armor, Universal, constrained pick, live Set/Synergy outbound
+**Full Catalog residual pass** (windows + mobile)  
+Out of scope: constrained pick, live Set/Synergy outbound, new design system
 
-## Locked UX decisions (summary)
+## Locked UX decisions
 
-### Workspace / cards (prior — still locked)
+### Perk detail — three tiers + enhanced
 
-- Default: **grid of all weapons** (All scope); flat grid by default
-- Desktop detail: **full-height sidebar** (~400px)
-- Filters: **icon/color** chips; **one primary line** when space allows
-- **Can roll**: toggle (off default) — selected plugs only until expanded
-- **Possible crafted**: toggle (off default); same column format as Perks
-- Mockups = structure SSoT; implement uses **official Destiny icons** (Bungie CDN)
+| Tier | Name | Meaning | Visual |
+| --- | --- | --- | --- |
+| **①** | **Selected** | On this owned instance | Blue fill, badge `1` |
+| **②** | **Unselected** | Other options on this owned instance | Solid + gold chevron, badge `2` |
+| **③** | **Possible rolls** | Weapon definition can-roll pool | Dashed muted, badge `3` |
+| **E** | **Enhanced** | Enhanced variant (any of ①/②/③) | Gold ring + **E** mark |
 
-### Weapon details (this slice)
+### Rules
 
-- **Detail meta**: icon-only row — weapon type silhouette, frame, element, slot (K/E/P), ammo; owned as compact ×N (no “Solar / Energy / Primary” text pills; no type text next to type icon)
-- **Unowned**: section **POSSIBLE ROLLS** — full definition pools always; no can-roll toggle
-- **Owned**: section **PERKS** — selected only until Can roll ON
-- **Perk grid**: equal-width columns; **all columns visible without horizontal scroll** (Barrel, Mag, Trait 1/2, **Origin Trait** when present)
-- **Perk cells**: icon-first (plug icons when known; letter fallback)
-- **Facets**: official element/ammo icons; weapon type icons (destiny-icons / type silhouettes); frame icons when available
+- **Owned default:** ① + ② only; **③ hidden**
+- **Owned + “Possible rolls” toggle ON:** show ③ (toggle **off by default**)
+- **Unowned:** section Possible rolls — **③ only** (no toggle)
+- **Enhanced** orthogonal to tier — any legendary plug can be enhanced
+- Origin column only when data exists
+- Equal-width columns; no H-scroll at ~400px detail
+- Icon-only meta strip (type · frame · element · slot · ammo + ×N)
+- Stub outbound Set/Synergy only
+- Craft toggle only when craft data exists
+- Mock structure SSoT; implement uses official Destiny icons
 
-Date: 2026-08-04  
-Phrase required by workflow gate: continue with workflow  
-Slice goal on this resume: **Weapon details**
+Phrase required by workflow gate: continue with workflow

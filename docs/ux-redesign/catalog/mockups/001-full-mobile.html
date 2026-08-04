@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catalog · Full residual pass — Mobile mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --el-kinetic: #ffffff;
+      --el-arc: #85c5ec;
+      --el-solar: #f2721b;
+      --el-void: #8b7cf0;
+      --el-stasis: #4d88ff;
+      --el-strand: #35e366;
+      --rarity-exotic: #ceae33;
+      --rarity-legendary: #4a2458;
+      --rarity-legendary-edge: #c49ad4;
+      --ammo-special: #6fdc8c;
+      --ammo-heavy: #f0a020;
+      --slot-power: #d4b06a;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --nav-h: 52px;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --phone-w: 390px;
+      --phone-h: 780px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #030308;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .mock-bar {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 430px;
+      padding: 8px 10px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .scenario-select {
+      width: 100%;
+      height: 32px;
+      padding: 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+    }
+    .auth-row { display: flex; gap: 6px; }
+    .auth-row button {
+      flex: 1;
+      height: 28px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .auth-row button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .residual-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .residual-row span::before { content: "✓ "; color: var(--success); }
+
+    .phone {
+      flex: 1;
+      min-height: 0;
+      width: min(100%, var(--phone-w));
+      max-height: min(100vh - 160px, var(--phone-h));
+      margin: 8px auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .topbar {
+      flex: 0 0 auto;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar .back {
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--accent);
+      border-radius: var(--radius);
+    }
+    .topbar .back[hidden] { display: none !important; }
+    .topbar .title {
+      flex: 1;
+      min-width: 0;
+      font-family: var(--font-d);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topbar .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .lamp {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+    .lamp.off { background: var(--muted-dim); box-shadow: none; }
+    .lamp.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .lamp.danger { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+    .defer-banner {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--muted);
+      background: rgba(245, 197, 66, 0.06);
+      border-bottom: 1px solid rgba(245, 197, 66, 0.2);
+      font-family: var(--font-m);
+    }
+    .defer-banner strong { color: var(--warn); font-weight: 500; }
+
+    .pane-stack {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .pane {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      transition: transform 0.22s ease;
+    }
+    .pane-list { z-index: 1; }
+    .pane-detail {
+      z-index: 2;
+      transform: translateX(100%);
+    }
+    .phone.detail-open .pane-detail { transform: translateX(0); }
+    .phone.detail-open .pane-list { transform: translateX(-18%); }
+
+    .list-chrome {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mode-row { display: flex; gap: 4px; overflow-x: auto; }
+    .mode-chip {
+      height: 30px;
+      padding: 0 10px;
+      flex-shrink: 0;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+    .mode-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .scope-search { display: flex; gap: 6px; }
+    .scope-seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: 34px;
+      flex-shrink: 0;
+    }
+    .scope-seg button {
+      padding: 0 10px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+    .scope-seg button:last-child { border-right: 0; }
+    .scope-seg button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .search-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .search-wrap .icon { color: var(--muted-dim); }
+    .search-wrap input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+    }
+    .facets-scroll {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .chip {
+      height: 30px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .chip.icon-only { width: 30px; padding: 0; justify-content: center; }
+    .chip[data-state="include"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .chip[data-state="exclude"] {
+      color: var(--warn);
+      border-color: rgba(245, 197, 66, 0.45);
+      background: rgba(245, 197, 66, 0.08);
+    }
+    .chip .chip-mark {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--accent);
+    }
+    .chip[data-state="exclude"] .chip-mark { color: var(--warn); }
+    .glyph-ico { font-size: 11px; }
+    .glyph-ico.exotic { color: var(--rarity-exotic); }
+    .facet-img {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+    }
+    .chip.icon-only .facet-img { width: 18px; height: 18px; }
+    .type-ico {
+      display: block;
+      width: 26px;
+      height: 12px;
+      flex-shrink: 0;
+      background: currentColor;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+    }
+    .reset-btn {
+      height: 30px;
+      padding: 0 10px;
+      flex-shrink: 0;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--danger);
+      border: 1px solid rgba(255, 0, 60, 0.4);
+      border-radius: var(--radius);
+    }
+    .reset-btn[hidden] { display: none !important; }
+
+    .count-bar {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .count-bar strong { color: var(--fg); font-weight: 500; }
+
+    .board {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      align-content: start;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .weapon-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100px;
+      padding: 8px;
+      text-align: left;
+      border: 1px solid rgba(232, 238, 242, 0.12);
+      border-radius: var(--radius);
+      background: rgba(10, 10, 24, 0.88);
+      overflow: hidden;
+    }
+    .weapon-card[aria-selected="true"] {
+      border-color: rgba(0, 229, 255, 0.45);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+    }
+    .weapon-card[aria-selected="true"]::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--accent);
+    }
+    .weapon-card.rarity-exotic {
+      background-image: linear-gradient(270deg, rgba(206,174,51,0.22) 0%, transparent 60%);
+    }
+    .weapon-card.rarity-legendary {
+      background-image: linear-gradient(270deg, rgba(196,154,212,0.18) 0%, transparent 58%);
+    }
+    .weapon-card .el-bloom {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 90% 80% at 0% 100%, color-mix(in srgb, var(--el) 70%, transparent), transparent 75%);
+    }
+    .card-inner { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .card-top { display: flex; gap: 6px; min-width: 0; }
+    .entity-icon {
+      width: 26px; height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .card-text { flex: 1; min-width: 0; }
+    .card-name {
+      font-family: var(--font-d);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .weapon-card.rarity-exotic .card-name { color: var(--rarity-exotic); }
+    .card-type {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .card-type .type-ico { width: 28px; height: 11px; color: var(--muted); }
+    .card-foot {
+      margin-top: auto;
+      padding-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-top: 1px solid rgba(232, 238, 242, 0.12);
+    }
+    .meta-glyphs { display: inline-flex; gap: 3px; flex: 1; }
+    .slot-letter {
+      width: 16px; height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-m);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      background: var(--raised);
+    }
+    .slot-letter.energy { color: var(--el-solar); }
+    .slot-letter.power { color: var(--slot-power); }
+    .owned-count {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--accent);
+    }
+
+    .state-panel {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 12px;
+      min-height: 220px;
+    }
+    .state-card {
+      max-width: 320px;
+      text-align: center;
+      padding: 20px 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .state-card .kicker {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 6px;
+    }
+    .state-card h2 {
+      margin: 0 0 8px;
+      font-family: var(--font-d);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .state-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .state-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .skel-card {
+      min-height: 100px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 8px;
+    }
+    .skel-line {
+      height: 8px;
+      margin-bottom: 6px;
+      border-radius: 1px;
+      background: linear-gradient(90deg, var(--raised), rgba(16,16,40,0.4), var(--raised));
+      background-size: 200% 100%;
+      animation: shimmer 1.2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Detail push pane — residual locks same as desktop */
+    .detail-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(16px + var(--safe-b));
+    }
+    .detail-header {
+      padding: 14px 12px 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-row { display: flex; gap: 10px; align-items: flex-start; }
+    .header-icon {
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .header-stack { flex: 1; min-width: 0; }
+    .hero-name {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.25;
+    }
+    .hero-name.exotic { color: var(--rarity-exotic); }
+    /* R1: icon-only meta — no text subtitle / no KINETIC·OWNED pills */
+    .meta-icons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .meta-icons .facet-img { width: 16px; height: 16px; }
+    .meta-icons .type-ico { width: 34px; height: 12px; color: var(--muted); }
+    .owned-x {
+      height: 18px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--success);
+      border: 1px solid rgba(46, 230, 166, 0.35);
+      border-radius: var(--radius);
+    }
+    .owned-x.empty {
+      color: var(--muted-dim);
+      border-color: var(--line);
+    }
+
+    .instance-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+    }
+    .instance-strip .label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .inst-chip {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .inst-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 2px 0 0 var(--accent);
+      border-color: rgba(0, 229, 255, 0.35);
+    }
+    .inst-chip .pw { color: var(--fg); font-weight: 500; }
+    .inst-note {
+      font-size: 11px;
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+    }
+
+    .detail-body {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-title {
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .section-head .section-title { margin: 0; flex: 1; min-width: 64px; }
+    .view-toggle {
+      height: 28px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .view-toggle[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.45);
+    }
+    .view-toggle .knob {
+      width: 26px; height: 12px;
+      border-radius: 999px;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .view-toggle .knob::after {
+      content: "";
+      position: absolute;
+      top: 1px; left: 2px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .view-toggle[aria-pressed="true"] .knob::after {
+      transform: translateX(12px);
+      background: var(--accent);
+    }
+
+    /* R3: equal-width columns, no H-scroll */
+    .perk-scroll {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+    .perk-grid-cols {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 4px;
+      width: 100%;
+      min-width: 0;
+    }
+    .perk-col {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 2px;
+      width: 100%;
+      min-height: 48px;
+      margin-bottom: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 9px;
+    }
+    .perk-cell .ico {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      overflow: hidden;
+    }
+    .perk-cell .ico img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .perk-cell .cap {
+      width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 8px;
+      line-height: 1.15;
+    }
+    .perk-grid-cols.selected-only .perk-cell .cap {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      font-size: 9px;
+    }
+    .perk-grid-cols.selected-only .perk-cell .ico {
+      width: 32px; height: 32px;
+    }
+    .perk-cell { position: relative; }
+    .perk-cell.selected {
+      background: rgba(64, 140, 220, 0.35);
+      border-color: rgba(100, 180, 255, 0.75);
+      box-shadow: inset 0 0 0 1px rgba(120, 200, 255, 0.35);
+    }
+    .perk-cell.selected .ico {
+      background: rgba(64, 140, 220, 0.45);
+      border-color: rgba(120, 200, 255, 0.55);
+    }
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      font-family: var(--font-m);
+      font-size: 7px;
+      color: rgba(160, 220, 255, 0.95);
+    }
+    .perk-cell.unselected {
+      border-color: rgba(232, 238, 242, 0.22);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .perk-cell.unselected .ico { border-color: rgba(245, 197, 66, 0.35); }
+    .perk-cell.unselected::before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
+      border-bottom: 4px solid rgba(245, 197, 66, 0.85);
+    }
+    .perk-cell.unselected::after {
+      content: "2";
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      font-family: var(--font-m);
+      font-size: 7px;
+      color: rgba(245, 197, 66, 0.9);
+    }
+    .perk-cell.possible {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.1);
+      background: transparent;
+      color: var(--muted-dim);
+      opacity: 0.72;
+    }
+    .perk-cell.possible .ico { opacity: 0.45; }
+    .perk-cell.possible::after {
+      content: "3";
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      font-family: var(--font-m);
+      font-size: 7px;
+      color: var(--muted-dim);
+    }
+    .perk-grid-cols.definition-only .perk-cell.possible::after { content: none; }
+    .perk-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin: 0 0 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .perk-legend .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .perk-legend .swatch i {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      display: inline-block;
+      box-sizing: border-box;
+    }
+    .perk-legend .swatch.t1 i {
+      background: rgba(64, 140, 220, 0.45);
+      border: 1px solid rgba(100, 180, 255, 0.75);
+    }
+    .perk-legend .swatch.t2 i {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(245, 197, 66, 0.45);
+    }
+    .perk-legend .swatch.t3 i {
+      border: 1px dashed rgba(232, 238, 242, 0.22);
+      background: transparent;
+    }
+    .perk-legend .swatch.enh i {
+      border: 1px solid rgba(245, 197, 66, 0.85);
+      background: rgba(245, 197, 66, 0.15);
+    }
+    .perk-cell.enhanced .ico {
+      border-color: rgba(245, 197, 66, 0.85);
+      box-shadow: 0 0 0 1px rgba(245, 197, 66, 0.45), 0 0 8px rgba(245, 197, 66, 0.2);
+    }
+    .perk-cell.enhanced .cap { color: #e8c35a; }
+    .perk-cell.enhanced .enh-mark {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      font-family: var(--font-m);
+      font-size: 7px;
+      font-weight: 600;
+      color: #f5c542;
+      line-height: 1;
+    }
+    .perk-band {
+      font-family: var(--font-m);
+      font-size: 7px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin: 5px 0 2px;
+      padding-top: 3px;
+      border-top: 1px solid rgba(232, 238, 242, 0.08);
+    }
+    .perk-band:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+    .perk-cell.unknown {
+      border-style: dashed;
+      border-color: rgba(245, 197, 66, 0.4);
+      color: var(--warn);
+    }
+    .col-missing {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      padding: 4px;
+    }
+
+    .catalyst-soft {
+      display: flex;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid rgba(245, 197, 66, 0.22);
+      background: rgba(245, 197, 66, 0.05);
+      border-radius: var(--radius);
+      font-size: 12px;
+    }
+    .catalyst-soft .flag {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--warn);
+      flex-shrink: 0;
+    }
+    .catalyst-soft .note { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+    .detail-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .btn {
+      height: 36px;
+      padding: 0 12px;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--fg);
+    }
+    .btn-primary {
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .btn-stub {
+      opacity: 0.42;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .stub-note {
+      flex: 1 1 100%;
+      font-size: 11px;
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+      line-height: 1.4;
+    }
+    .hash-footer {
+      flex: 1 1 100%;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .plug-note {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin: 6px 0 0;
+      line-height: 1.4;
+    }
+    .audit-note {
+      padding: 10px;
+      border: 1px dashed rgba(245, 197, 66, 0.3);
+      background: rgba(245, 197, 66, 0.04);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .audit-note strong { color: var(--warn); font-weight: 500; }
+    .detail-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .detail-empty .kicker {
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+
+    .bottom-nav {
+      flex: 0 0 auto;
+      height: calc(52px + var(--safe-b));
+      padding-bottom: var(--safe-b);
+      display: flex;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .bottom-nav button {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .bottom-nav button[aria-current="page"] { color: var(--accent); }
+    .bottom-nav .ico { font-size: 16px; }
+    .bottom-nav.deferred button[data-nav="catalog"] {
+      color: var(--muted-dim);
+    }
+    .a11y-live {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-bar" role="region" aria-label="Mock scenario controls">
+    <h1>Catalog · Full residual · Mobile</h1>
+    <span class="meta">Push-detail IA · host Catalog nav deferred · residuals same as desktop</span>
+    <select id="scenario" class="scenario-select" aria-label="Mock scenario">
+      <option value="results" selected>results · All grid</option>
+      <option value="signed-out">signed-out · OWNED · SIGN IN</option>
+      <option value="signed-out-owned">signed-out · Owned empty</option>
+      <option value="loading">loading skeleton</option>
+      <option value="owned-empty">owned empty · Sync</option>
+      <option value="owned">owned · ①+② default · ③ possible OFF</option>
+      <option value="can-roll">can-roll ON · equal-width no H-scroll</option>
+      <option value="unowned">unowned · Hung Jury · hide Origin</option>
+      <option value="unowned-exotic">unowned exotic · soft catalyst</option>
+      <option value="zero">zero matches · Clear</option>
+      <option value="missing-manifest">missing manifest</option>
+      <option value="armor-mode">armor mode · audit</option>
+      <option value="universal-mode">universal mode · audit</option>
+      <option value="deferred-shell">deferred shell · Settings-only host</option>
+    </select>
+    <div class="auth-row">
+      <button type="button" id="auth-out" aria-pressed="false">Signed-out</button>
+      <button type="button" id="auth-in" aria-pressed="true">Signed-in</button>
+    </div>
+    <div class="residual-row">
+      <span>Icon-only meta</span>
+      <span>Origin when data</span>
+      <span>Equal-width no H-scroll</span>
+    </div>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="topbar">
+      <button type="button" class="back" id="back-btn" hidden aria-label="Back to list">←</button>
+      <div class="title" id="top-title">Catalog</div>
+      <div class="status">
+        <span class="lamp" id="sync-lamp" aria-hidden="true"></span>
+        <span id="sync-label">Live</span>
+      </div>
+    </div>
+
+    <div class="defer-banner" id="defer-banner">
+      <strong>Mobile Catalog deferred</strong> on host (Settings-only shell). This mock shows push-detail IA for later parity — does not gate windows residual exit.
+    </div>
+
+    <div class="pane-stack">
+      <div class="pane pane-list" id="pane-list">
+        <div class="list-chrome">
+          <div class="mode-row" role="group" aria-label="Catalog mode">
+            <button type="button" class="mode-chip" data-mode="weapons" aria-pressed="true">Weapons</button>
+            <button type="button" class="mode-chip" data-mode="armor" aria-pressed="false">Armor</button>
+            <button type="button" class="mode-chip" data-mode="universal" aria-pressed="false">Universal</button>
+          </div>
+          <div class="scope-search">
+            <div class="scope-seg" role="group" aria-label="Ownership scope">
+              <button type="button" data-scope="all" aria-pressed="true">All</button>
+              <button type="button" data-scope="owned" aria-pressed="false" id="scope-owned-btn">Owned</button>
+            </div>
+            <div class="search-wrap">
+              <span class="icon" aria-hidden="true">⌕</span>
+              <input id="search" type="search" placeholder="Search…" aria-label="Search" autocomplete="off" />
+            </div>
+          </div>
+          <div class="facets-scroll weapons-facets" id="facets" role="group" aria-label="Facets">
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic"><span class="glyph-ico">K</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="energy" data-state="off" title="Energy" aria-label="Energy"><span class="glyph-ico" style="color:var(--el-solar)">E</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="power" data-state="off" title="Power" aria-label="Power"><span class="glyph-ico" style="color:var(--slot-power)">P</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="solar" data-state="off" title="Solar" aria-label="Solar"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="arc" data-state="off" title="Arc" aria-label="Arc"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="void" data-state="off" title="Void" aria-label="Void"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic element"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="primary" data-state="off" title="Primary" aria-label="Primary"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="special" data-state="off" title="Special" aria-label="Special"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="heavy" data-state="off" title="Heavy" aria-label="Heavy"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="rarity" data-value="exotic" data-state="off" title="Exotic" aria-label="Exotic"><span class="glyph-ico exotic">✦</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="reset-btn" id="reset-btn" hidden data-action="clear-filters">Reset</button>
+          </div>
+        </div>
+        <div class="count-bar" id="count-label"><strong>0</strong> identities</div>
+        <div class="board" id="board" role="listbox" aria-label="Catalog grid" tabindex="0"></div>
+      </div>
+
+      <div class="pane pane-detail" id="pane-detail" aria-label="Detail">
+        <div class="detail-scroll" id="detail"></div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Primary">
+      <button type="button" data-nav="catalog" aria-current="page">
+        <span class="ico" aria-hidden="true">▣</span>
+        Catalog
+      </button>
+      <button type="button" data-nav="settings">
+        <span class="ico" aria-hidden="true">⚙</span>
+        Settings
+      </button>
+    </nav>
+  </div>
+  <div class="a11y-live" id="live" aria-live="polite"></div>
+
+  <script>
+(function () {
+  const EL = {
+    kinetic: "var(--el-kinetic)", arc: "var(--el-arc)", solar: "var(--el-solar)",
+    void: "var(--el-void)", stasis: "var(--el-stasis)", strand: "var(--el-strand)",
+  };
+  const SLOT_ORDER = { kinetic: 0, energy: 1, power: 2 };
+  const AMMO_ORDER = { primary: 0, special: 1, heavy: 2 };
+  const COL_LABELS = {
+    barrel: "Barrel", magazine: "Magazine", trait1: "Trait 1", trait2: "Trait 2", origin: "Origin",
+  };
+  const PERK_COL_KEYS = ["barrel", "magazine", "trait1", "trait2", "origin"];
+  const CDN = "https://www.bungie.net";
+  const TYPE_ICON_CDN = "https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons";
+  const TYPE_ICON_FILE = {
+    "pulse rifle": "pulse_rifle.svg", "scout rifle": "scout_rifle.svg", "auto rifle": "auto_rifle.svg",
+    "hand cannon": "hand_cannon.svg", "submachine gun": "smg.svg", "combat bow": "bow.svg",
+    "rocket launcher": "rocket_launcher.svg", "grenade launcher": "grenade_launcher.svg",
+    "machine gun": "machinegun.svg",
+  };
+  function typeIconUrl(t) {
+    const f = TYPE_ICON_FILE[String(t || "").toLowerCase()];
+    return f ? `${TYPE_ICON_CDN}/${f}` : null;
+  }
+  const PERK_ICONS = {
+    "Hammer-Forged Rifling": "/common/destiny2_content/icons/2b9eb6d4489cffc18c10223279198bcc.png",
+    "Smallbore": "/common/destiny2_content/icons/7d1bb6a623f14959a47156ee71acfc3a.png",
+    "Arrowhead Brake": "/common/destiny2_content/icons/8f7fb54687aa52a9c2595d90ce9c9417.png",
+    "Alloy Magazine": "/common/destiny2_content/icons/d9f468cce26fe35d9db413e2f8451127.png",
+    "Accurized Rounds": "/common/destiny2_content/icons/d85024478504205359c7fb52dbc4f6b6.png",
+    "Rapid Hit": "/common/destiny2_content/icons/8b9a4582016210723532907414759e69.png",
+    "Kinetic Tremors": "/common/destiny2_content/icons/8976ead57430e4f5f8af1b3005de4f83.png",
+    "Elliptical Orbit": "/common/destiny2_content/icons/3165fec56b59363fa974a11f5730f4ec.png",
+    "Demolitionist": "/common/destiny2_content/icons/8b9a4582016210723532907414759e69.png",
+    "Frenzy": "/common/destiny2_content/icons/23e06f4ced1b3e6476f342978ff5bb37.png",
+    "Explosive Payload": "/common/destiny2_content/icons/a19132880fae832711f474218e791d21.png",
+    "Bewildering Burst": "/common/destiny2_content/icons/23e06f4ced1b3e6476f342978ff5bb37.png",
+    "Binary Orbit": "/common/destiny2_content/icons/3165fec56b59363fa974a11f5730f4ec.png",
+    "One for All": "/common/destiny2_content/icons/8976ead57430e4f5f8af1b3005de4f83.png",
+    "Flared Magwell": "/common/destiny2_content/icons/d9f468cce26fe35d9db413e2f8451127.png",
+    "Attrition Orbs": "/common/destiny2_content/icons/85269cc90d2005ccd6a41b5d830e223d.png",
+  };
+
+  const WEAPONS = [
+    {
+      id: "cb", hash: 2284241583, name: "Chattering Bone", type: "Pulse Rifle", frame: "Lightweight Frame",
+      slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "legendary", owned: 5, icon: "⌁",
+      instances: [
+        { id: "cb1", power: 550 }, { id: "cb2", power: 550 }, { id: "cb3", power: 550 },
+        { id: "cb4", power: 550 }, { id: "cb5", power: 550 },
+      ],
+      perks: {
+        barrel: {
+          selected: "Hammer-Forged Rifling",
+          unselected: ["Smallbore", "Arrowhead Brake"],
+          possible: ["Hammer-Forged Rifling", "Smallbore", "Arrowhead Brake", "Chambered Compensator", "Corkscrew Rifling", "Polygonal Rifling"],
+          enhanced: ["Hammer-Forged Rifling", "Smallbore"],
+        },
+        magazine: {
+          selected: "Alloy Magazine",
+          unselected: ["Flared Magwell", "Accurized Rounds"],
+          possible: ["Alloy Magazine", "Flared Magwell", "Accurized Rounds", "Tactical Mag", "Appended Mag", "Extended Mag"],
+          enhanced: ["Accurized Rounds"],
+        },
+        trait1: {
+          selected: "Rapid Hit",
+          unselected: ["Overflow"],
+          possible: ["Rapid Hit", "Overflow", "Bewildering Burst", "Attrition Orbs", "Perpetual Motion"],
+          enhanced: ["Rapid Hit", "Overflow"],
+        },
+        trait2: {
+          selected: "Kinetic Tremors",
+          unselected: ["Rampage", "Kill Clip"],
+          possible: ["Kinetic Tremors", "Rampage", "Kill Clip", "Binary Orbit", "One for All", "Frenzy"],
+          enhanced: ["Kinetic Tremors"],
+        },
+        origin: { selected: "Elliptical Orbit", unselected: [], possible: ["Elliptical Orbit"], enhanced: [] },
+      },
+      craftAvailable: false,
+    },
+    {
+      id: "hj", hash: 2139311493, name: "Hung Jury SR4", type: "Scout Rifle", frame: "Precision Frame",
+      slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "legendary", owned: 0, icon: "◎",
+      instances: [],
+      perks: {
+        barrel: { selected: null, unselected: [], possible: ["Arrowhead Brake", "Chambered Compensator", "Smallbore", "Corkscrew Rifling"] },
+        magazine: { selected: null, unselected: [], possible: ["Accurized Rounds", "Appended Mag", "Tactical Mag", "Extended Mag"] },
+        trait1: { selected: null, unselected: [], possible: ["Demolitionist", "Kinetic Tremors", "Rapid Hit", "Overflow"] },
+        trait2: { selected: null, unselected: [], possible: ["Frenzy", "Explosive Payload", "One for All", "Kill Clip"] },
+      },
+      craftAvailable: false,
+    },
+    {
+      id: "w1", hash: 3549153978, name: "The Ringing Nail", type: "Auto Rifle", frame: "Precision Frame",
+      slot: "energy", element: "solar", ammo: "primary", rarity: "legendary", owned: 2, icon: "⚔",
+      instances: [{ id: "i1", power: 2020 }, { id: "i2", power: 2005 }],
+      perks: {
+        barrel: { selected: "Arrowhead Brake", unselected: ["Smallbore"], possible: ["Arrowhead Brake", "Smallbore", "Chambered Compensator"] },
+        magazine: { selected: "Appended Mag", unselected: ["Alloy Magazine"], possible: ["Appended Mag", "Alloy Magazine", "Tactical Mag"] },
+        trait1: { selected: "Overflow", unselected: ["Rapid Hit"], possible: ["Overflow", "Rapid Hit", "Perpetual Motion"] },
+        trait2: { selected: "Rampage", unselected: ["One for All"], possible: ["Rampage", "One for All", "Kill Clip"] },
+        origin: { selected: "Wild Card", unselected: [], possible: ["Wild Card"] },
+      },
+      craftAvailable: true,
+      craftColumns: {
+        barrel: { selected: "Arrowhead Brake", unselected: ["Smallbore"], possible: ["Arrowhead Brake", "Smallbore"] },
+        magazine: { selected: "Appended Mag", unselected: [], possible: ["Appended Mag"] },
+        trait1: { selected: "Overflow", unselected: [], possible: ["Overflow"] },
+        trait2: { selected: "Rampage", unselected: [], possible: ["Rampage"] },
+        origin: { selected: "Wild Card", unselected: [], possible: ["Wild Card"] },
+      },
+    },
+    {
+      id: "w6", hash: 2940035732, name: "Quicksilver Storm", type: "Auto Rifle", frame: "Adaptive Frame",
+      slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "exotic", owned: 0, icon: "✧",
+      intrinsic: "Rocket Tracers", catalystLabel: "Catalyst status unknown",
+      instances: [],
+      perks: {
+        barrel: { selected: null, unselected: [], possible: ["Polycarbonate Stock"] },
+        magazine: { selected: null, unselected: [], possible: ["Extended Mag"] },
+        trait1: { selected: null, unselected: [], possible: ["Unknown perk"], unknown: true },
+        trait2: { selected: null, unselected: [], possible: [] },
+      },
+      craftAvailable: false,
+    },
+    {
+      id: "w4", hash: 1298815317, name: "Funnelweb", type: "Submachine Gun", frame: "Aggressive Frame",
+      slot: "energy", element: "void", ammo: "primary", rarity: "legendary", owned: 3, icon: "⌁",
+      instances: [{ id: "i4", power: 2018 }, { id: "i5", power: 2010 }],
+      perks: {
+        barrel: { selected: "Smallbore", unselected: ["Hammer-Forged Rifling"], possible: ["Smallbore", "Hammer-Forged Rifling", "Polygonal Rifling"] },
+        magazine: { selected: "Accurized Rounds", unselected: ["Alloy Magazine"], possible: ["Accurized Rounds", "Alloy Magazine", "Appended Mag"] },
+        trait1: { selected: "Perpetual Motion", unselected: ["Rapid Hit"], possible: ["Perpetual Motion", "Rapid Hit", "Overflow"] },
+        trait2: { selected: "Frenzy", unselected: ["Kill Clip"], possible: ["Frenzy", "Kill Clip", "Rampage"] },
+        origin: { selected: "Veist Stinger", unselected: [], possible: ["Veist Stinger"] },
+      },
+      craftAvailable: false,
+    },
+  ];
+
+  const ARMOR = [
+    { id: "a1", name: "Gyrfalcon's Hauberk", slot: "Chest", class: "Hunter", tier: "exotic", owned: 1, icon: "✧", element: "void" },
+    { id: "a2", name: "Dunemarchers", slot: "Legs", class: "Titan", tier: "exotic", owned: 1, icon: "✧", element: "arc" },
+    { id: "a3", name: "Solstice Helm", slot: "Helmet", class: "Hunter", tier: "legendary", owned: 0, icon: "⬡", element: "solar" },
+  ];
+
+  const UNIVERSAL = [
+    { id: "u1", name: "Powerful Friends", kind: "Mod", owned: 1, icon: "◆" },
+    { id: "u2", name: "Elemental Charge", kind: "Mod", owned: 1, icon: "◆" },
+    { id: "u3", name: "Time Dilation", kind: "Mod", owned: 0, icon: "◇" },
+  ];
+
+  const state = {
+    signedIn: true, mode: "weapons", scope: "all", search: "", facets: {},
+    showCanRoll: false, showPossibleCraft: false,
+    selectedId: null, selectedInstanceId: null,
+    scenario: "results", detailOpen: false, deferredShell: false,
+  };
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  function announce(m) { $("#live").textContent = m; }
+  function cycleState(c) { return c === "off" ? "include" : c === "include" ? "exclude" : "off"; }
+  function getFacetState(f, v) { return (state.facets[f] && state.facets[f][v]) || "off"; }
+  function setFacetState(f, v, s) {
+    if (!state.facets[f]) state.facets[f] = {};
+    if (s === "off") delete state.facets[f][v];
+    else state.facets[f][v] = s;
+    if (state.facets[f] && !Object.keys(state.facets[f]).length) delete state.facets[f];
+  }
+  function activeFilters() {
+    const out = [];
+    for (const [f, map] of Object.entries(state.facets))
+      for (const [v, s] of Object.entries(map)) if (s !== "off") out.push({ facet: f, value: v, state: s });
+    return out;
+  }
+  function hasActiveFilters() { return activeFilters().length > 0 || !!state.search.trim(); }
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function typeIcoHtml(t) {
+    const u = typeIconUrl(t);
+    if (!u) return "";
+    return `<span class="type-ico" style="-webkit-mask-image:url(${u});mask-image:url(${u})" title="${escapeHtml(t || "")}" role="img" aria-label="${escapeHtml(t || "")}"></span>`;
+  }
+  const ELEMENT_ICON = {
+    kinetic: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png",
+    arc: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png",
+    solar: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png",
+    void: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png",
+    stasis: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_530c4c3e7981dc2aefd24fd3293482bf.png",
+    strand: "/common/destiny2_content/icons/DestinyDamageTypeDefinition_b2fe51a94f3533f97079dfa0d27a4096.png",
+  };
+  const AMMO_ICON = {
+    primary: "/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png",
+    special: "/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png",
+    heavy: "/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png",
+  };
+  const FRAME_ICON = {
+    precision: "/common/destiny2_content/icons/e9dd736124e8ef94048901a279a5bb18.png",
+    adaptive: "/common/destiny2_content/icons/967fb4abc6ab98f74639d6c08e5f56ee.png",
+    aggressive: "/common/destiny2_content/icons/64209c4fd20513b33109c374179d0958.png",
+    lightweight: "/common/destiny2_content/icons/967fb4abc6ab98f74639d6c08e5f56ee.png",
+  };
+  function bungieImg(path, title) {
+    if (!path) return "";
+    return `<img class="facet-img" src="${CDN}${path}" alt="" title="${escapeHtml(title || "")}" role="img" aria-label="${escapeHtml(title || "")}" />`;
+  }
+  function elIco(el) {
+    const e = (el || "kinetic").toLowerCase();
+    return bungieImg(ELEMENT_ICON[e] || ELEMENT_ICON.kinetic, cap(e));
+  }
+  function ammoIco(a) {
+    const k = (a || "primary").toLowerCase();
+    return bungieImg(AMMO_ICON[k] || AMMO_ICON.primary, `${cap(k)} ammo`);
+  }
+  function frameIco(frame) {
+    if (!frame) return "";
+    const f = frame.toLowerCase();
+    let key = null;
+    if (f.includes("precision")) key = "precision";
+    else if (f.includes("aggressive")) key = "aggressive";
+    else if (f.includes("lightweight")) key = "lightweight";
+    else if (f.includes("adaptive")) key = "adaptive";
+    if (!key) return "";
+    return bungieImg(FRAME_ICON[key], frame);
+  }
+  function slotIco(slot) {
+    const s = (slot || "").toLowerCase();
+    if (s === "kinetic") return `<span class="slot-letter" title="Kinetic" role="img" aria-label="Kinetic">K</span>`;
+    if (s === "energy") return `<span class="slot-letter energy" title="Energy" role="img" aria-label="Energy">E</span>`;
+    if (s === "power") return `<span class="slot-letter power" title="Power" role="img" aria-label="Power">P</span>`;
+    return "";
+  }
+
+  function metaIconsHtml(w) {
+    let owned = "";
+    if (state.signedIn && w.owned > 0) owned = `<span class="owned-x" title="Owned ×${w.owned}" aria-label="Owned ${w.owned}">×${w.owned}</span>`;
+    else if (state.signedIn) owned = `<span class="owned-x empty" title="Not owned">—</span>`;
+    return `<div class="meta-icons" role="group" aria-label="Weapon meta">
+      ${typeIcoHtml(w.type)}${frameIco(w.frame)}${elIco(w.element)}${slotIco(w.slot)}${ammoIco(w.ammo)}${owned}
+    </div>`;
+  }
+
+  function matchesWeapon(w) {
+    if (state.scope === "owned") {
+      if (!state.signedIn || !w.owned) return false;
+    }
+    const q = state.search.trim().toLowerCase();
+    if (q) {
+      const hay = [w.name, w.type, w.frame, w.element, w.slot, w.ammo].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    for (const [facet, map] of Object.entries(state.facets)) {
+      const includes = Object.entries(map).filter(([, s]) => s === "include").map(([v]) => v);
+      const excludes = Object.entries(map).filter(([, s]) => s === "exclude").map(([v]) => v);
+      let field = facet === "rarity" ? w.rarity : facet === "type" ? (w.type || "").toLowerCase() : w[facet];
+      if (excludes.includes(field)) return false;
+      if (includes.length && !includes.includes(field)) return false;
+    }
+    return true;
+  }
+
+  function sortWeapons(list) {
+    return list.slice().sort((a, b) => {
+      const sa = SLOT_ORDER[a.slot] ?? 9, sb = SLOT_ORDER[b.slot] ?? 9;
+      if (sa !== sb) return sa - sb;
+      const ea = a.rarity === "exotic" ? 0 : 1, eb = b.rarity === "exotic" ? 0 : 1;
+      if (ea !== eb) return ea - eb;
+      const aa = AMMO_ORDER[a.ammo] ?? 9, ab = AMMO_ORDER[b.ammo] ?? 9;
+      if (aa !== ab) return aa - ab;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  function filteredWeapons() {
+    if (["loading", "missing-manifest", "owned-empty", "signed-out-owned", "zero"].includes(state.scenario)) return [];
+    return sortWeapons(WEAPONS.filter(matchesWeapon));
+  }
+  function filteredArmor() {
+    if (["loading", "missing-manifest"].includes(state.scenario)) return [];
+    let list = ARMOR.slice();
+    if (state.scope === "owned") list = state.signedIn ? list.filter((a) => a.owned > 0) : [];
+    const q = state.search.trim().toLowerCase();
+    if (q) list = list.filter((a) => a.name.toLowerCase().includes(q));
+    return list;
+  }
+  function filteredUniversal() {
+    if (["loading", "missing-manifest"].includes(state.scenario)) return [];
+    let list = UNIVERSAL.slice();
+    if (state.scope === "owned") list = state.signedIn ? list.filter((u) => u.owned > 0) : [];
+    const q = state.search.trim().toLowerCase();
+    if (q) list = list.filter((u) => u.name.toLowerCase().includes(q));
+    return list;
+  }
+
+  function ownedIdentityCount() {
+    return state.signedIn ? WEAPONS.filter((w) => w.owned > 0).length : 0;
+  }
+
+  function hasOriginData(source) {
+    const col = source && source.origin;
+    if (!col) return false;
+    if (col.selected) return true;
+    if (col.unselected && col.unselected.length) return true;
+    if (col.possible && col.possible.length) return true;
+    if (col.pool && col.pool.length) return true;
+    return false;
+  }
+
+  function normalizePerkCol(col) {
+    if (!col) return { selected: null, unselected: [], possible: [], enhanced: new Set(), unknown: false };
+    const possible = Array.isArray(col.possible)
+      ? col.possible.slice()
+      : (Array.isArray(col.pool) ? col.pool.slice() : []);
+    return {
+      selected: col.selected || null,
+      unselected: Array.isArray(col.unselected) ? col.unselected.slice() : [],
+      possible,
+      enhanced: new Set(Array.isArray(col.enhanced) ? col.enhanced.filter(Boolean) : []),
+      unknown: !!col.unknown,
+    };
+  }
+
+  function renderPerkCell(name, { tier, unknown, enhanced }) {
+    const label = unknown || name === "Unknown perk" ? "Unknown perk" : name;
+    const cls = ["perk-cell", tier, enhanced ? "enhanced" : "", (unknown || name === "Unknown perk") ? "unknown" : ""].filter(Boolean).join(" ");
+    const tipExtra =
+      (tier === "selected" ? " · ① on this copy" :
+      tier === "unselected" ? " · ② unselected (instance)" :
+      " · ③ possible roll") + (enhanced ? " · Enhanced" : "");
+    const iconPath = (!unknown && name !== "Unknown perk") ? PERK_ICONS[name] : null;
+    const mark = (unknown || name === "Unknown perk") ? "?" : (label[0] || "◆").toUpperCase();
+    const ico = iconPath
+      ? `<img src="${CDN}${iconPath}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${mark}'))" />`
+      : escapeHtml(mark);
+    return `<div class="${cls}" title="${escapeHtml(label)}${tipExtra}" role="listitem" aria-label="${escapeHtml(label)}${tipExtra}">
+      <span class="ico" aria-hidden="true">${ico}</span>
+      <span class="cap">${escapeHtml(label)}</span>
+      ${enhanced ? `<span class="enh-mark" aria-hidden="true">E</span>` : ""}
+    </div>`;
+  }
+
+  function renderPerkGrid(w, { craftMode, showPossibleRolls }) {
+    const source = craftMode && w.craftColumns ? w.craftColumns : w.perks;
+    const owned = state.signedIn && w.owned > 0 && (w.instances || []).length > 0;
+    const includePossible = !owned || !!showPossibleRolls;
+    const keys = PERK_COL_KEYS.filter((k) => {
+      if (k === "origin") return hasOriginData(source);
+      return !!source[k];
+    });
+    const cells = keys.map((k) => {
+      const col = normalizePerkCol(source[k]);
+      const label = COL_LABELS[k] || k;
+      const tiers = new Map();
+      const setTier = (n, t) => {
+        if (!n) return;
+        const prev = tiers.get(n);
+        const rank = { selected: 3, unselected: 2, possible: 1 };
+        if (!prev || rank[t] > rank[prev]) tiers.set(n, t);
+      };
+      if (owned) {
+        if (col.selected) setTier(col.selected, "selected");
+        for (const n of col.unselected) if (n !== col.selected) setTier(n, "unselected");
+        if (includePossible) {
+          for (const n of col.possible) if (!tiers.has(n)) setTier(n, "possible");
+        }
+      } else {
+        for (const n of col.possible) setTier(n, "possible");
+      }
+      if (!tiers.size) {
+        return `<div class="perk-col"><div class="perk-col-label">${escapeHtml(label)}</div><div class="col-missing">No plug data</div></div>`;
+      }
+      const ordered = [...tiers.entries()].sort((a, b) => {
+        const rank = { selected: 0, unselected: 1, possible: 2 };
+        return rank[a[1]] - rank[b[1]];
+      });
+      let lastBand = null;
+      const html = ordered.map(([n, tier]) => {
+        const unk = n === "Unknown perk" || (col.unknown && n === col.selected);
+        const enh = col.enhanced.has(n);
+        let band = "";
+        if (owned && tier !== lastBand) {
+          lastBand = tier;
+          band = `<div class="perk-band">${
+            tier === "selected" ? "① On this copy" :
+            tier === "unselected" ? "② Unselected" : "③ Possible"
+          }</div>`;
+        }
+        return band + renderPerkCell(n, { tier, unknown: unk, enhanced: enh });
+      }).join("");
+      return `<div class="perk-col"><div class="perk-col-label">${escapeHtml(label)}</div>${html}</div>`;
+    }).join("");
+    const gridCls = owned ? "perk-grid-cols" : "perk-grid-cols definition-only";
+    return `<div class="perk-scroll"><div class="${gridCls}" role="list">${cells}</div></div>`;
+  }
+
+  function renderPerkLegend(owned, showPossibleRolls) {
+    const enh = `<span class="swatch enh"><i aria-hidden="true"></i> Enhanced</span>`;
+    if (owned) {
+      return `<div class="perk-legend" aria-label="Perk legend">
+        <span class="swatch t1"><i aria-hidden="true"></i> ① Selected</span>
+        <span class="swatch t2"><i aria-hidden="true"></i> ② Unselected</span>
+        ${showPossibleRolls
+          ? `<span class="swatch t3"><i aria-hidden="true"></i> ③ Possible</span>`
+          : `<span class="swatch t3" style="opacity:0.55"><i aria-hidden="true"></i> ③ hidden</span>`}
+        ${enh}
+      </div>`;
+    }
+    return `<div class="perk-legend" aria-label="Perk legend">
+      <span class="swatch t3"><i aria-hidden="true"></i> ③ Possible rolls only</span>
+      ${enh}
+    </div>`;
+  }
+
+  function renderCard(w) {
+    const exotic = w.rarity === "exotic";
+    const el = w.element || "kinetic";
+    const owned = state.signedIn && w.owned > 0 ? `<span class="owned-count">×${w.owned}</span>` : "";
+    return `<button type="button" class="weapon-card ${exotic ? "rarity-exotic" : "rarity-legendary"}" role="option"
+      data-id="${escapeHtml(w.id)}" data-kind="weapon" aria-selected="${state.selectedId === w.id}"
+      aria-label="${escapeHtml(w.name)}">
+      <span class="el-bloom" style="--el:${EL[el] || EL.kinetic}"></span>
+      <span class="card-inner">
+        <span class="card-top">
+          <span class="entity-icon" aria-hidden="true">${w.icon}</span>
+          <span class="card-text">
+            <span class="card-name">${escapeHtml(w.name)}</span>
+            <span class="card-type">${typeIcoHtml(w.type)}</span>
+          </span>
+        </span>
+        <span class="card-foot">
+          <span class="meta-glyphs">${slotIco(w.slot)}${ammoIco(w.ammo)}</span>
+          ${owned}
+        </span>
+      </span>
+    </button>`;
+  }
+
+  function renderArmorCard(a) {
+    return `<button type="button" class="weapon-card ${a.tier === "exotic" ? "rarity-exotic" : "rarity-legendary"}" role="option"
+      data-id="${escapeHtml(a.id)}" data-kind="armor" aria-selected="${state.selectedId === a.id}">
+      <span class="card-inner">
+        <span class="card-top">
+          <span class="entity-icon">${a.icon}</span>
+          <span class="card-text">
+            <span class="card-name" style="${a.tier === "exotic" ? "color:var(--rarity-exotic)" : ""}">${escapeHtml(a.name)}</span>
+            <span class="card-type">${escapeHtml(a.slot)} · ${escapeHtml(a.class)}</span>
+          </span>
+        </span>
+        <span class="card-foot">
+          <span class="meta-glyphs">${elIco(a.element)}</span>
+          ${state.signedIn && a.owned > 0 ? `<span class="owned-count">×${a.owned}</span>` : ""}
+        </span>
+      </span>
+    </button>`;
+  }
+
+  function renderUnivCard(u) {
+    return `<button type="button" class="weapon-card" role="option"
+      data-id="${escapeHtml(u.id)}" data-kind="universal" aria-selected="${state.selectedId === u.id}">
+      <span class="card-inner">
+        <span class="card-top">
+          <span class="entity-icon">${u.icon}</span>
+          <span class="card-text">
+            <span class="card-name">${escapeHtml(u.name)}</span>
+            <span class="card-type">${escapeHtml(u.kind)}</span>
+          </span>
+        </span>
+        <span class="card-foot">
+          <span class="meta-glyphs"></span>
+          ${state.signedIn && u.owned > 0 ? `<span class="owned-count">×${u.owned}</span>` : ""}
+        </span>
+      </span>
+    </button>`;
+  }
+
+  function renderEmpty() {
+    if (state.scenario === "missing-manifest") {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Manifest</div>
+        <h2>Definitions unavailable</h2>
+        <p>Reload definitions or open Settings.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="reload">Reload</button>
+          <button type="button" class="btn" data-action="settings">Settings</button>
+        </div>
+      </div></div>`;
+    }
+    if (!state.signedIn && state.scope === "owned") {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Owned</div>
+        <h2>Sign in to view owned</h2>
+        <p>Never invent ownership when signed out.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="sign-in">Sign in</button>
+          <button type="button" class="btn" data-action="scope-all">Browse All</button>
+        </div>
+      </div></div>`;
+    }
+    if (state.scenario === "owned-empty") {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Inventory</div>
+        <h2>No owned items</h2>
+        <p>Sync characters or open Settings.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="sync">Sync</button>
+          <button type="button" class="btn" data-action="settings">Settings</button>
+        </div>
+      </div></div>`;
+    }
+    if (state.scenario === "zero" || (filteredWeapons().length === 0 && hasActiveFilters() && state.mode === "weapons")) {
+      return `<div class="state-panel"><div class="state-card">
+        <div class="kicker">Filters</div>
+        <h2>No matches</h2>
+        <p>Clear filters to restore the grid.</p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary" data-action="clear-filters">Clear filters</button>
+        </div>
+      </div></div>`;
+    }
+    return `<div class="state-panel"><div class="state-card">
+      <div class="kicker">Catalog</div>
+      <h2>Nothing to show</h2>
+      <p>Adjust scope or filters.</p>
+    </div></div>`;
+  }
+
+  function renderBoard() {
+    const board = $("#board");
+    if (state.scenario === "loading") {
+      board.innerHTML = Array.from({ length: 6 }, () => `<div class="skel-card" aria-hidden="true"><div class="skel-line" style="width:50%"></div><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:40%"></div></div>`).join("");
+      $("#count-label").innerHTML = `<strong>…</strong> loading`;
+      return;
+    }
+    if (state.mode === "armor") {
+      const list = filteredArmor();
+      if (!list.length) { board.innerHTML = renderEmpty(); $("#count-label").innerHTML = `<strong>0</strong>`; return; }
+      board.innerHTML = list.map(renderArmorCard).join("");
+      $("#count-label").innerHTML = `<strong>${list.length}</strong> armor`;
+      return;
+    }
+    if (state.mode === "universal") {
+      const list = filteredUniversal();
+      if (!list.length) { board.innerHTML = renderEmpty(); $("#count-label").innerHTML = `<strong>0</strong>`; return; }
+      board.innerHTML = list.map(renderUnivCard).join("");
+      $("#count-label").innerHTML = `<strong>${list.length}</strong> universal`;
+      return;
+    }
+    const list = filteredWeapons();
+    if (!list.length) {
+      board.innerHTML = renderEmpty();
+      $("#count-label").innerHTML = `<strong>0</strong> identities`;
+      return;
+    }
+    board.innerHTML = list.map(renderCard).join("");
+    $("#count-label").innerHTML = `<strong>${list.length}</strong> identities`;
+  }
+
+  function selectedWeapon() { return WEAPONS.find((w) => w.id === state.selectedId); }
+  function selectedArmor() { return ARMOR.find((a) => a.id === state.selectedId); }
+  function selectedUniv() { return UNIVERSAL.find((u) => u.id === state.selectedId); }
+
+  function renderWeaponDetail(w) {
+    const owned = state.signedIn && w.owned > 0;
+    const inst = owned ? (w.instances || []).slice().sort((a, b) => b.power - a.power) : [];
+    if (!state.selectedInstanceId && inst[0]) state.selectedInstanceId = inst[0].id;
+    const craftOk = !!(w.craftAvailable && w.craftColumns);
+    const exotic = w.rarity === "exotic";
+
+    let instanceHtml = "";
+    if (!state.signedIn) instanceHtml = `<span class="inst-note">Sign in for owned copies</span>`;
+    else if (!w.owned) instanceHtml = `<span class="inst-note">Not owned · possible rolls</span>`;
+    else if (inst.length) {
+      instanceHtml = `<span class="label">Instances</span>` + inst.map((i) =>
+        `<button type="button" class="inst-chip" data-inst="${escapeHtml(i.id)}" aria-pressed="${state.selectedInstanceId === i.id}">
+          <span class="pw">PL ${i.power}</span>
+        </button>`
+      ).join("");
+    }
+
+    const toggles = [];
+    if (owned) {
+      toggles.push(`<button type="button" class="view-toggle" id="tog-possible-rolls" aria-pressed="${state.showCanRoll}"><span class="knob"></span> Possible rolls</button>`);
+    }
+    if (craftOk) {
+      toggles.push(`<button type="button" class="view-toggle" id="tog-craft" aria-pressed="${state.showPossibleCraft}"><span class="knob"></span> Crafted</button>`);
+    }
+
+    const showingCraft = craftOk && state.showPossibleCraft;
+    const showPossibleRolls = owned ? state.showCanRoll : true;
+    const sectionLabel = showingCraft ? "Possible crafted" : (owned ? "Perks" : "Possible rolls");
+
+    let exoticBlock = "";
+    if (exotic && w.intrinsic) {
+      exoticBlock = `<section>
+        <h3 class="section-title">Exotic</h3>
+        ${renderPerkCell(w.intrinsic, { selected: true, pool: false, unknown: false })}
+        <div class="catalyst-soft" style="margin-top:8px">
+          <span class="flag">Catalyst</span>
+          <div>${escapeHtml(w.catalystLabel || "Unknown")}<div class="note">Soft-only · never a hard gate</div></div>
+        </div>
+      </section>`;
+    }
+
+    return `
+      <div class="detail-header">
+        <div class="header-row">
+          <div class="header-icon">${w.icon}</div>
+          <div class="header-stack">
+            <h2 class="hero-name ${exotic ? "exotic" : ""}">${escapeHtml(w.name)}</h2>
+            ${metaIconsHtml(w)}
+          </div>
+        </div>
+        <div class="instance-strip">${instanceHtml}</div>
+      </div>
+      <div class="detail-body">
+        ${exoticBlock}
+        <section>
+          <div class="section-head">
+            <h3 class="section-title">${escapeHtml(sectionLabel)}</h3>
+            ${toggles.join("")}
+          </div>
+          ${showingCraft ? "" : renderPerkLegend(owned, showPossibleRolls)}
+          ${renderPerkGrid(w, { craftMode: showingCraft, showPossibleRolls: showPossibleRolls && !showingCraft })}
+          <p class="plug-note">${owned
+            ? (showPossibleRolls
+              ? "①+②+③ · Possible rolls toggle ON"
+              : "① Selected · ② Unselected · ③ hidden by default")
+            : "③ Possible rolls only · no owned copy"}</p>
+        </section>
+        <section>
+          <h3 class="section-title">Outbound</h3>
+          <div class="detail-footer">
+            <button type="button" class="btn btn-stub" disabled>Set</button>
+            <button type="button" class="btn btn-stub" disabled>Synergy</button>
+            <span class="stub-note">Outbound create deferred — stubs only. Composition aid (DBR-PUR-002).</span>
+            <div class="hash-footer">hash ${w.hash} · footer only</div>
+          </div>
+        </section>
+      </div>`;
+  }
+
+  function renderDetail() {
+    const el = $("#detail");
+    if (!state.selectedId) {
+      el.innerHTML = `<div class="detail-empty"><span class="kicker">Detail</span><p>Select an item</p></div>`;
+      return;
+    }
+    if (state.mode === "armor") {
+      const a = selectedArmor();
+      if (!a) return;
+      el.innerHTML = `
+        <div class="detail-header">
+          <div class="header-row">
+            <div class="header-icon">${a.icon}</div>
+            <div class="header-stack">
+              <h2 class="hero-name ${a.tier === "exotic" ? "exotic" : ""}">${escapeHtml(a.name)}</h2>
+              <div class="meta-icons">${elIco(a.element)}${state.signedIn && a.owned ? `<span class="owned-x">×${a.owned}</span>` : ""}</div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="audit-note"><strong>Armor residual backlog</strong> — chrome align only; no optimizer / vault polish.</div>
+          <p class="plug-note">${escapeHtml(a.class)} · ${escapeHtml(a.slot)}</p>
+          <div class="detail-footer">
+            <button type="button" class="btn btn-stub" disabled>Set</button>
+            <button type="button" class="btn btn-stub" disabled>Synergy</button>
+            <span class="stub-note">No Catalog-local Set editors.</span>
+          </div>
+        </div>`;
+      return;
+    }
+    if (state.mode === "universal") {
+      const u = selectedUniv();
+      if (!u) return;
+      el.innerHTML = `
+        <div class="detail-header">
+          <div class="header-row">
+            <div class="header-icon">${u.icon}</div>
+            <div class="header-stack">
+              <h2 class="hero-name">${escapeHtml(u.name)}</h2>
+              <div class="meta-icons"><span class="owned-x empty">${escapeHtml(u.kind)}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="audit-note"><strong>Universal residual</strong> — shared lifecycle only; no lite create forks.</div>
+          <div class="detail-footer">
+            <button type="button" class="btn btn-stub" disabled>Set</button>
+            <button type="button" class="btn btn-stub" disabled>Synergy</button>
+          </div>
+        </div>`;
+      return;
+    }
+    const w = selectedWeapon();
+    if (!w) return;
+    el.innerHTML = renderWeaponDetail(w);
+  }
+
+  function openDetail(id, kind) {
+    state.selectedId = id;
+    state.selectedInstanceId = null;
+    state.showCanRoll = false;
+    state.showPossibleCraft = false;
+    state.detailOpen = true;
+    $("#phone").classList.add("detail-open");
+    $("#back-btn").hidden = false;
+    const item = kind === "weapon" ? selectedWeapon() : kind === "armor" ? selectedArmor() : selectedUniv();
+    $("#top-title").textContent = item ? item.name : "Detail";
+    renderDetail();
+    announce("Opened " + (item ? item.name : id));
+  }
+
+  function closeDetail() {
+    state.detailOpen = false;
+    state.selectedId = null;
+    state.showCanRoll = false;
+    state.showPossibleCraft = false;
+    $("#phone").classList.remove("detail-open");
+    $("#back-btn").hidden = true;
+    $("#top-title").textContent = "Catalog";
+    renderBoard();
+    announce("Back to list");
+  }
+
+  function renderChrome() {
+    $$("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.mode === state.mode ? "true" : "false"));
+    $$("[data-scope]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.scope === state.scope ? "true" : "false"));
+    $("#scope-owned-btn").textContent = state.signedIn ? `Owned · ${ownedIdentityCount()}` : "Owned · Sign in";
+    $("#auth-in").setAttribute("aria-pressed", state.signedIn ? "true" : "false");
+    $("#auth-out").setAttribute("aria-pressed", state.signedIn ? "false" : "true");
+    $("#search").value = state.search;
+    $("#reset-btn").hidden = !hasActiveFilters();
+
+    const lamp = $("#sync-lamp");
+    const label = $("#sync-label");
+    if (!state.signedIn) { lamp.className = "lamp off"; label.textContent = "Out"; }
+    else if (state.scenario === "loading") { lamp.className = "lamp warn"; label.textContent = "…"; }
+    else if (state.scenario === "missing-manifest") { lamp.className = "lamp danger"; label.textContent = "Err"; }
+    else { lamp.className = "lamp"; label.textContent = "Live"; }
+
+    $$(".weapons-facets").forEach((el) => {
+      el.style.display = state.mode === "weapons" ? "" : "none";
+    });
+
+    $$(".chip[data-facet]").forEach((btn) => {
+      const st = getFacetState(btn.dataset.facet, btn.dataset.value);
+      btn.dataset.state = st;
+      const mark = btn.querySelector(".chip-mark");
+      if (mark) {
+        if (st === "include") { mark.hidden = false; mark.textContent = "+"; }
+        else if (st === "exclude") { mark.hidden = false; mark.textContent = "−"; }
+        else { mark.hidden = true; }
+      }
+    });
+
+    if (state.deferredShell) {
+      $("#defer-banner").innerHTML = `<strong>Host reality</strong> — mobile Catalog nav deferred; Settings-only shell. This push IA is forward design, not a residual gate.`;
+      $("#bottom-nav").classList.add("deferred");
+      $$("#bottom-nav [data-nav]").forEach((b) => {
+        b.setAttribute("aria-current", b.dataset.nav === "settings" ? "page" : null);
+      });
+    } else {
+      $("#defer-banner").innerHTML = `<strong>Mobile Catalog deferred</strong> on host (Settings-only shell). This mock shows push-detail IA for later parity — does not gate windows residual exit.`;
+      $("#bottom-nav").classList.remove("deferred");
+      $$("#bottom-nav [data-nav]").forEach((b) => {
+        b.setAttribute("aria-current", b.dataset.nav === "catalog" ? "page" : null);
+      });
+    }
+  }
+
+  function renderAll() {
+    renderChrome();
+    if (state.detailOpen && state.selectedId) {
+      renderDetail();
+      $("#phone").classList.add("detail-open");
+      $("#back-btn").hidden = false;
+    } else {
+      $("#phone").classList.remove("detail-open");
+      $("#back-btn").hidden = true;
+      $("#top-title").textContent = "Catalog";
+      renderBoard();
+    }
+  }
+
+  function applyScenario(sc) {
+    state.scenario = sc;
+    state.showCanRoll = false;
+    state.showPossibleCraft = false;
+    state.search = "";
+    state.facets = {};
+    state.selectedInstanceId = null;
+    state.mode = "weapons";
+    state.deferredShell = false;
+    state.detailOpen = false;
+
+    if (sc === "signed-out") {
+      state.signedIn = false; state.scope = "all"; state.selectedId = null;
+    } else if (sc === "signed-out-owned") {
+      state.signedIn = false; state.scope = "owned"; state.selectedId = null;
+    } else if (sc === "loading") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+    } else if (sc === "owned-empty") {
+      state.signedIn = true; state.scope = "owned"; state.selectedId = null;
+    } else if (sc === "owned") {
+      state.signedIn = true; state.scope = "owned";
+      openDetail("cb", "weapon"); return applyScenarioTail(sc);
+    } else if (sc === "can-roll") {
+      state.signedIn = true; state.scope = "owned"; state.showCanRoll = true;
+      openDetail("cb", "weapon"); return applyScenarioTail(sc);
+    } else if (sc === "unowned") {
+      state.signedIn = true; state.scope = "all";
+      openDetail("hj", "weapon"); return applyScenarioTail(sc);
+    } else if (sc === "unowned-exotic") {
+      state.signedIn = true; state.scope = "all";
+      openDetail("w6", "weapon"); return applyScenarioTail(sc);
+    } else if (sc === "zero") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+      setFacetState("element", "strand", "include");
+      setFacetState("ammo", "heavy", "include");
+    } else if (sc === "missing-manifest") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+    } else if (sc === "armor-mode") {
+      state.signedIn = true; state.scope = "all"; state.mode = "armor";
+      openDetail("a1", "armor"); return applyScenarioTail(sc);
+    } else if (sc === "universal-mode") {
+      state.signedIn = true; state.scope = "all"; state.mode = "universal";
+      openDetail("u1", "universal"); return applyScenarioTail(sc);
+    } else if (sc === "deferred-shell") {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null; state.deferredShell = true;
+    } else {
+      state.signedIn = true; state.scope = "all"; state.selectedId = null;
+    }
+    applyScenarioTail(sc);
+  }
+
+  function applyScenarioTail(sc) {
+    $("#scenario").value = sc;
+    renderAll();
+    announce("Scenario: " + sc);
+  }
+
+  $("#scenario").addEventListener("change", (e) => applyScenario(e.target.value));
+  $("#auth-in").addEventListener("click", () => {
+    state.signedIn = true;
+    if (state.scenario.startsWith("signed-out")) { state.scenario = "results"; $("#scenario").value = "results"; }
+    renderAll();
+  });
+  $("#auth-out").addEventListener("click", () => {
+    state.signedIn = false;
+    closeDetail();
+    state.scenario = state.scope === "owned" ? "signed-out-owned" : "signed-out";
+    $("#scenario").value = state.scenario;
+    renderAll();
+  });
+  $("#back-btn").addEventListener("click", closeDetail);
+
+  $$("[data-mode]").forEach((b) => {
+    b.addEventListener("click", () => {
+      state.mode = b.dataset.mode;
+      closeDetail();
+      state.facets = {};
+      renderAll();
+    });
+  });
+  $$("[data-scope]").forEach((b) => {
+    b.addEventListener("click", () => {
+      state.scope = b.dataset.scope;
+      if (!state.signedIn && state.scope === "owned") {
+        state.scenario = "signed-out-owned";
+        $("#scenario").value = "signed-out-owned";
+      }
+      closeDetail();
+      renderAll();
+    });
+  });
+  $("#search").addEventListener("input", (e) => {
+    state.search = e.target.value;
+    if (state.scenario === "zero" && !hasActiveFilters()) {
+      state.scenario = "results";
+      $("#scenario").value = "results";
+    }
+    renderAll();
+  });
+
+  $("#facets").addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip[data-facet]");
+    if (chip) {
+      setFacetState(chip.dataset.facet, chip.dataset.value, cycleState(chip.dataset.state || "off"));
+      if (state.scenario === "zero" && activeFilters().length === 0) {
+        state.scenario = "results";
+        $("#scenario").value = "results";
+      }
+      renderAll();
+      return;
+    }
+    if (e.target.closest("[data-action='clear-filters']")) {
+      state.facets = {};
+      state.search = "";
+      if (state.scenario === "zero") { state.scenario = "results"; $("#scenario").value = "results"; }
+      renderAll();
+    }
+  });
+
+  $("#board").addEventListener("click", (e) => {
+    const card = e.target.closest("[data-id][data-kind]");
+    if (card) {
+      openDetail(card.dataset.id, card.dataset.kind);
+      renderChrome();
+      return;
+    }
+    const action = e.target.closest("[data-action]");
+    if (!action) return;
+    const a = action.dataset.action;
+    if (a === "sign-in") { state.signedIn = true; state.scenario = "results"; $("#scenario").value = "results"; renderAll(); }
+    else if (a === "scope-all") { state.scope = "all"; state.scenario = state.signedIn ? "results" : "signed-out"; $("#scenario").value = state.scenario; renderAll(); }
+    else if (a === "sync") { state.scenario = "results"; state.scope = "all"; $("#scenario").value = "results"; renderAll(); }
+    else if (a === "clear-filters") { state.facets = {}; state.search = ""; state.scenario = "results"; $("#scenario").value = "results"; renderAll(); }
+    else if (a === "reload") { state.scenario = "results"; $("#scenario").value = "results"; renderAll(); }
+    else if (a === "settings") announce("Settings (mock)");
+  });
+
+  $("#detail").addEventListener("click", (e) => {
+    const inst = e.target.closest("[data-inst]");
+    if (inst) {
+      state.selectedInstanceId = inst.dataset.inst;
+      state.showCanRoll = false;
+      state.showPossibleCraft = false;
+      renderDetail();
+      return;
+    }
+    if (e.target.closest("#tog-possible-rolls")) {
+      state.showCanRoll = !state.showCanRoll;
+      if (state.showCanRoll) state.showPossibleCraft = false;
+      renderDetail();
+      return;
+    }
+    if (e.target.closest("#tog-craft")) {
+      state.showPossibleCraft = !state.showPossibleCraft;
+      if (state.showPossibleCraft) state.showCanRoll = false;
+      renderDetail();
+    }
+  });
+
+  $("#bottom-nav").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-nav]");
+    if (!btn) return;
+    if (btn.dataset.nav === "settings") announce("Settings (mock)");
+    else if (state.deferredShell) announce("Catalog nav deferred on mobile host");
+  });
+
+  applyScenario("results");
+})();
+  </script>
+</body>
+</html>

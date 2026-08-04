@@ -10,6 +10,8 @@
 
 Dart shells use **Public + PKCE only**. Confidential Next credentials (`BUNGIE_CLIENT_SECRET`, `SESSION_SECRET`) stay **server-only** until cutover retires Next. **Never** embed those secrets in Flutter or Jaspr clients.
 
+**Note (2026-08-04):** Public clients do not receive `refresh_token` (~1h live access). Local inventory still powers Catalog Owned after expiry. A **potential** Confidential desktop path for DIM-like sessions (implications + Flutter options) is documented in [flutter-confidential-desktop-oauth-note.md](./flutter-confidential-desktop-oauth-note.md) — not implemented; ADR required before changing defaults.
+
 ## Bungie application
 
 | Field | Value |

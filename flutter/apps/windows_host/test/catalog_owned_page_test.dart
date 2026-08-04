@@ -263,6 +263,15 @@ void main() {
     // Detail pane is ~400px fixed width (not 320 library rail).
     final detail = tester.getSize(find.byKey(const Key('catalog_detail_pane')));
     expect(detail.width, 400);
+
+    // Owned path: PERKS section + can-roll OFF by default; craft hidden when
+    // host has no craft pool data (craftAvailable false — never invent).
+    expect(find.byKey(const Key('catalog_perk_section_perks')), findsOneWidget);
+    final canRoll = tester.widget<FilterChip>(
+      find.byKey(const Key('catalog_toggle_can_roll')),
+    );
+    expect(canRoll.selected, isFalse);
+    expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
   });
 
   testWidgets('Owned empty when inventory cleared', (tester) async {

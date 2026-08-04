@@ -174,7 +174,7 @@ void main() {
     expect(find.byKey(const Key('catalog_list')), findsOneWidget);
   });
 
-  testWidgets('select weapon opens ~400px detail; toggles off; stubs disabled',
+  testWidgets('select unowned weapon opens ~400px detail; POSSIBLE ROLLS; stubs disabled',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -194,10 +194,15 @@ void main() {
     final detail = tester.getSize(find.byKey(const Key('catalog_detail_pane')));
     expect(detail.width, 400);
 
-    final canRoll = tester.widget<FilterChip>(
-      find.byKey(const Key('catalog_toggle_can_roll')),
+    // Unowned: full definition pools as POSSIBLE ROLLS — can-roll/craft toggles
+    // are owned-only (selected-until-can-roll does not apply without a copy).
+    expect(
+      find.byKey(const Key('catalog_perk_section_possible_rolls')),
+      findsOneWidget,
     );
-    expect(canRoll.selected, isFalse);
+    expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNothing);
+    expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
+    expect(find.byKey(const Key('instance_panel_empty')), findsOneWidget);
 
     final setBtn =
         tester.widget<FilledButton>(find.byKey(const Key('catalog_stub_set')));
@@ -252,24 +257,9 @@ void main() {
     expect(openedSettings, isTrue);
   });
 
-  testWidgets('select weapon: craft toggle hidden without craft pool data',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: testMaterialTheme(),
-        home: CatalogPage(services: services),
-      ),
-    );
-    await _pumpFrames(tester);
-
-    await tester.tap(itemKey(2));
-    await _pumpFrames(tester);
-
-    expect(find.byKey(const Key('catalog_toggle_can_roll')), findsOneWidget);
-    // craftAvailable false when craftColumns empty — no false-positive toggle.
-    expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
-  });
+  // Owned can-roll OFF default + craft hidden when no craft pool data is
+  // covered in catalog_owned_page_test (signed-in inventory bootstrap).
 }
+
+
+

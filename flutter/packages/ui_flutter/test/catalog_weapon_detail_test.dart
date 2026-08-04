@@ -33,30 +33,52 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('CatalogDetailToggles', () {
-    testWidgets('can-roll and craft OFF by default', (tester) async {
+    testWidgets('Possible rolls + craft OFF by default; craft hidden when unavailable',
+        (tester) async {
       var canRoll = false;
       var craft = false;
       await tester.pumpWidget(
         StatefulBuilder(
           builder: (context, setState) {
             return _wrap(
-              CatalogDetailToggles(
-                showCanRoll: canRoll,
-                showCraft: craft,
-                onCanRollChanged: (v) => setState(() => canRoll = v),
-                onCraftChanged: (v) => setState(() => craft = v),
+              Column(
+                children: [
+                  CatalogDetailToggles(
+                    showCanRoll: canRoll,
+                    showCraft: craft,
+                    craftAvailable: true,
+                    onCanRollChanged: (v) => setState(() => canRoll = v),
+                    onCraftChanged: (v) => setState(() => craft = v),
+                  ),
+                  CatalogDetailToggles(
+                    key: const Key('toggles_no_craft'),
+                    showCanRoll: false,
+                    showCraft: false,
+                    craftAvailable: false,
+                    onCanRollChanged: (_) {},
+                    onCraftChanged: (_) {},
+                  ),
+                ],
               ),
             );
           },
         ),
       );
 
-      final canRollChip =
-          tester.widget<FilterChip>(find.byKey(const Key('catalog_toggle_can_roll')));
-      final craftChip =
-          tester.widget<FilterChip>(find.byKey(const Key('catalog_toggle_craft')));
+      final canRollChip = tester
+          .widget<FilterChip>(find.byKey(const Key('catalog_toggle_can_roll')).first);
       expect(canRollChip.selected, isFalse);
-      expect(craftChip.selected, isFalse);
+      expect(find.text('Possible rolls'), findsWidgets);
+      expect(find.byKey(const Key('catalog_toggle_craft')), findsOneWidget);
+
+      // craftAvailable false → craft chip hidden.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('toggles_no_craft')),
+          matching: find.byKey(const Key('catalog_toggle_craft')),
+        ),
+        findsNothing,
+      );
     });
   });
 
@@ -103,7 +125,7 @@ void main() {
       expect(cols.single.cells.every((c) => c.fromCanRollPool), isTrue);
     });
 
-    test('instance sockets merge definition reusables when can-roll on', () {
+    test('owned ③ merges definition reusables when Possible rolls on', () {
       final cols = buildCatalogPerkColumns(
         socketPlugs: const [
           {
@@ -138,6 +160,10 @@ void main() {
       expect(cols, hasLength(2));
       final barrel = cols.firstWhere((c) => c.label == 'Barrel');
       expect(barrel.cells.map((c) => c.hash).toSet(), {10, 11, 12});
+      expect(
+        barrel.cells.where((c) => c.fromCanRollPool).map((c) => c.hash).toSet(),
+        {11, 12},
+      );
     });
 
     test('column-label hash fallback treated as unknown', () {
@@ -149,14 +175,66 @@ void main() {
             'reusablePlugHashes': <int>[],
           },
         ],
-        plugCards: const [
-          // Projection fallback name before real defs resolve.
-        ],
+        plugCards: const [],
         plugNameByHash: const {},
       );
-      // When plugCards carry "Trait (#555)" style via empty map — equipped only.
       expect(cols.single.cells.single.unknown, isTrue);
       expect(cols.single.cells.single.displayName, 'Unknown perk');
+    });
+
+    test('Origin column present when origin plugs exist; absent when none', () {
+      final withOrigin = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'barrel',
+            'columnLabel': 'Barrel',
+            'equippedPlugHash': 10,
+            'reusablePlugHashes': [10],
+          },
+          {
+            'columnKind': 'origin',
+            'columnLabel': 'Origin Trait',
+            'equippedPlugHash': 90,
+            'reusablePlugHashes': [90],
+          },
+        ],
+        plugNameByHash: const {
+          10: 'Fluted Barrel',
+          90: 'Elliptical Orbit',
+        },
+      );
+      expect(withOrigin.any((c) => c.kind == 'origin'), isTrue);
+      expect(
+        withOrigin.firstWhere((c) => c.kind == 'origin').cells.single.displayName,
+        'Elliptical Orbit',
+      );
+
+      final noOrigin = buildCatalogPerkColumns(
+        definitionSocketPlugs: const [
+          {
+            'columnKind': 'barrel',
+            'columnLabel': 'Barrel',
+            'equippedPlugHash': 10,
+            'reusablePlugHashes': [10, 11],
+          },
+        ],
+        plugNameByHash: const {10: 'Fluted Barrel', 11: 'Arrowhead'},
+      );
+      expect(noOrigin.any((c) => c.kind == 'origin'), isFalse);
+      expect(noOrigin.any((c) => c.label.toLowerCase().contains('origin')), isFalse);
+
+      // Empty origin column never invented.
+      final emptyOrigin = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'origin',
+            'columnLabel': 'Origin Trait',
+            'equippedPlugHash': 0,
+            'reusablePlugHashes': <int>[],
+          },
+        ],
+      );
+      expect(emptyOrigin, isEmpty);
     });
   });
 
@@ -175,32 +253,65 @@ void main() {
         'reusablePlugHashes': [20, 21],
       },
     ];
+    final defSockets = [
+      {
+        'columnKind': 'barrel',
+        'columnLabel': 'Barrel',
+        'equippedPlugHash': 10,
+        'reusablePlugHashes': [10, 11, 12, 13],
+      },
+      {
+        'columnKind': 'trait',
+        'columnLabel': 'Trait',
+        'equippedPlugHash': 20,
+        'reusablePlugHashes': [20, 21, 22],
+      },
+    ];
     final names = {
       10: 'Fluted Barrel',
       11: 'Arrowhead Brake',
       12: 'Chambered Compensator',
+      13: 'Polygonal Rifling',
       20: 'Kill Clip',
       21: 'Rampage',
+      22: 'Frenzy',
     };
 
-    test('selected plugs only when can-roll off; pool when on', () {
+    test('owned default ①+②; ③ only after Possible rolls ON', () {
       final off = buildCatalogPerkColumns(
         socketPlugs: sockets,
+        definitionSocketPlugs: defSockets,
         plugNameByHash: names,
         showCanRoll: false,
       );
       expect(off.length, 2);
-      expect(off[0].cells.map((c) => c.hash).toList(), [10]);
-      expect(off[0].cells.single.selected, isTrue);
-      expect(off[0].cells.single.fromCanRollPool, isFalse);
+      // ① selected + ② instance reusables
+      expect(off[0].cells.map((c) => c.hash).toList(), [10, 11, 12]);
+      expect(off[0].cells.where((c) => c.selected).map((c) => c.hash), [10]);
+      expect(
+        off[0].cells.where((c) => c.isInstanceUnselected).map((c) => c.hash).toSet(),
+        {11, 12},
+      );
+      expect(off[0].cells.every((c) => !c.fromCanRollPool), isTrue);
+      // Definition-only 13 must not appear until Possible rolls ON.
+      expect(off[0].cells.any((c) => c.hash == 13), isFalse);
 
       final on = buildCatalogPerkColumns(
         socketPlugs: sockets,
+        definitionSocketPlugs: defSockets,
         plugNameByHash: names,
         showCanRoll: true,
       );
-      expect(on[0].cells.map((c) => c.hash).toList(), [10, 11, 12]);
-      expect(on[0].cells.where((c) => c.fromCanRollPool).length, 2);
+      expect(on[0].cells.map((c) => c.hash).toSet(), {10, 11, 12, 13});
+      expect(
+        on[0].cells.where((c) => c.fromCanRollPool).map((c) => c.hash).toSet(),
+        {13},
+      );
+      // ② stay unselected instance, not reclassified as pool.
+      expect(
+        on[0].cells.where((c) => c.isInstanceUnselected).map((c) => c.hash).toSet(),
+        {11, 12},
+      );
     });
 
     test('craft pool only when toggled; never invent when empty', () {
@@ -240,25 +351,110 @@ void main() {
           isTrue);
     });
 
-    testWidgets('selected plugs distinct; can-roll pool only when toggled on',
+    test('enhanced flag from name heuristic and host map', () {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'trait',
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 20,
+            'reusablePlugHashes': [20, 21],
+          },
+        ],
+        plugNameByHash: const {
+          20: 'Kill Clip',
+          21: 'Enhanced Frenzy',
+        },
+        plugEnhancedByHash: const {20: true},
+      );
+      final cells = cols.single.cells;
+      expect(cells.firstWhere((c) => c.hash == 20).enhanced, isTrue);
+      expect(cells.firstWhere((c) => c.hash == 21).enhanced, isTrue);
+    });
+
+    testWidgets('①② default visible; ③ pool only when Possible rolls on',
         (tester) async {
       final colsOff = buildCatalogPerkColumns(
         socketPlugs: sockets,
+        definitionSocketPlugs: defSockets,
         plugNameByHash: names,
         showCanRoll: false,
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: colsOff)));
       expect(find.byKey(const Key('perk_selected_10')), findsOneWidget);
-      expect(find.byKey(const Key('perk_cell_11')), findsNothing);
+      expect(find.byKey(const Key('perk_cell_11')), findsOneWidget); // ②
+      expect(find.byKey(const Key('perk_cell_13')), findsNothing); // ③ hidden
 
       final colsOn = buildCatalogPerkColumns(
         socketPlugs: sockets,
+        definitionSocketPlugs: defSockets,
         plugNameByHash: names,
         showCanRoll: true,
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: colsOn)));
-      expect(find.byKey(const Key('perk_cell_11')), findsOneWidget);
-      expect(find.text('Arrowhead Brake'), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_13')), findsOneWidget);
+      expect(find.text('Polygonal Rifling'), findsOneWidget);
+    });
+
+    testWidgets('equal Expanded columns; no horizontal Scrollable at width 400',
+        (tester) async {
+      final multi = <Map<String, Object?>>[
+        for (var i = 0; i < 5; i++)
+          {
+            'columnKind': i == 4 ? 'origin' : 'trait',
+            'columnLabel': i == 4 ? 'Origin Trait' : 'Col $i',
+            'equippedPlugHash': 100 + i,
+            'reusablePlugHashes': [100 + i, 200 + i, 300 + i],
+          },
+      ];
+      final namesMulti = <int, String>{
+        for (var i = 0; i < 5; i++) ...{
+          100 + i: 'Sel $i',
+          200 + i: 'Uns $i',
+          300 + i: 'Pool $i',
+        },
+      };
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: multi,
+        definitionSocketPlugs: multi,
+        plugNameByHash: namesMulti,
+        showCanRoll: true,
+      );
+      expect(cols.length, 5);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: Scaffold(
+            body: SizedBox(
+              width: kCatalogWeaponsDetailWidth,
+              height: 600,
+              child: CatalogPerkGrid(columns: cols),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final grid = find.byKey(const Key('catalog_perk_grid'));
+      expect(grid, findsOneWidget);
+      final gridSize = tester.getSize(grid);
+      expect(gridSize.width, lessThanOrEqualTo(kCatalogWeaponsDetailWidth + 0.5));
+
+      // No horizontal scroll view on the perk grid itself.
+      final scrollables = tester.widgetList<Scrollable>(find.byType(Scrollable));
+      for (final s in scrollables) {
+        expect(
+          s.axisDirection == AxisDirection.left ||
+              s.axisDirection == AxisDirection.right,
+          isFalse,
+          reason: 'perk grid must not use horizontal Scrollable',
+        );
+      }
+
+      // Equal-width columns: Expanded children of the Row.
+      final row = tester.widget<Row>(grid);
+      expect(row.children.whereType<Expanded>().length, 5);
     });
 
     testWidgets('craftable same-column cells when on; off shows no craft pool',
@@ -288,6 +484,7 @@ void main() {
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: on)));
       expect(find.text('Enhanced Kill Clip'), findsOneWidget);
       expect(find.byKey(const Key('perk_cell_99')), findsOneWidget);
+      expect(find.byKey(const Key('perk_enhanced_mark_99')), findsOneWidget);
     });
   });
 
@@ -399,9 +596,110 @@ void main() {
     });
   });
 
+  group('CatalogWeaponMetaStrip', () {
+    testWidgets('icon-only meta; no type·frame text; no KINETIC/OWNED pills',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const CatalogWeaponMetaStrip(
+            itemTypeName: 'Pulse Rifle',
+            frame: 'Lightweight Frame',
+            element: 'Kinetic',
+            slot: 'Kinetic',
+            ammo: 'Primary',
+            owned: true,
+            ownedCount: 5,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('catalog_weapon_meta_strip')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_meta_type')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_meta_frame')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_meta_element')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_meta_slot')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_meta_ammo')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_meta_owned_count')), findsOneWidget);
+      expect(find.text('×5'), findsOneWidget);
+
+      // No text subtitle or text pills.
+      expect(find.textContaining('Pulse Rifle ·'), findsNothing);
+      expect(find.text('KINETIC'), findsNothing);
+      expect(find.text('OWNED'), findsNothing);
+      expect(find.textContaining('Owned ×'), findsNothing);
+    });
+  });
+
   group('CatalogWeaponDetail', () {
-    testWidgets('integrates toggles off + stubs disabled + strip', (tester) async {
-      final item = const CatalogItem(
+    testWidgets('icon-only meta strip; no type subtitle or KINETIC/OWNED pills',
+        (tester) async {
+      const item = CatalogItem(
+        hash: 99,
+        name: 'Chattering Bone',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Pulse Rifle',
+        frame: 'Lightweight Frame',
+        isExotic: false,
+        owned: true,
+        ownedCount: 5,
+      );
+      final instances = [
+        _inst(
+          id: 'a',
+          power: 550,
+          socketPlugs: const [
+            {
+              'columnKind': 'origin',
+              'columnLabel': 'Origin Trait',
+              'equippedPlugHash': 90,
+              'reusablePlugHashes': [90],
+            },
+            {
+              'columnLabel': 'Trait',
+              'equippedPlugHash': 20,
+              'reusablePlugHashes': [20, 21],
+            },
+          ],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: item,
+            instances: instances,
+            craftAvailable: false,
+            onCanRollChanged: (_) {},
+            onCraftChanged: (_) {},
+            plugNameByHash: const {
+              20: 'Rapid Hit',
+              21: 'Overflow',
+              90: 'Elliptical Orbit',
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('catalog_weapon_meta_strip')), findsOneWidget);
+      expect(find.text('Pulse Rifle · Lightweight Frame · Kinetic'), findsNothing);
+      expect(find.text('KINETIC'), findsNothing);
+      expect(find.text('OWNED'), findsNothing);
+      // Origin present when data.
+      expect(find.text('ORIGIN TRAIT'), findsOneWidget);
+      expect(find.text('Elliptical Orbit'), findsOneWidget);
+      // Craft hidden.
+      expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
+      // ①+② default (not just selected).
+      expect(find.byKey(const Key('perk_selected_20')), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_21')), findsOneWidget);
+    });
+
+    testWidgets('owned: ①+② default; ③ after Possible rolls ON', (tester) async {
+      const item = CatalogItem(
         hash: 99,
         name: 'Funnelweb',
         slot: 'Energy',
@@ -418,6 +716,7 @@ void main() {
           power: 1800,
           socketPlugs: const [
             {
+              'columnKind': 'trait',
               'columnLabel': 'Trait',
               'equippedPlugHash': 20,
               'reusablePlugHashes': [20, 21],
@@ -446,7 +745,19 @@ void main() {
                 craftAvailable: true,
                 onCanRollChanged: (v) => setState(() => canRoll = v),
                 onCraftChanged: (v) => setState(() => craft = v),
-                plugNameByHash: const {20: 'Frenzy', 21: 'Adrenaline Junkie'},
+                definitionSocketPlugs: const [
+                  {
+                    'columnKind': 'trait',
+                    'columnLabel': 'Trait',
+                    'equippedPlugHash': 20,
+                    'reusablePlugHashes': [20, 21, 22],
+                  },
+                ],
+                plugNameByHash: const {
+                  20: 'Frenzy',
+                  21: 'Adrenaline Junkie',
+                  22: 'Kill Clip',
+                },
               ),
             );
           },
@@ -460,6 +771,7 @@ void main() {
             .selected,
         isFalse,
       );
+      expect(find.text('Possible rolls'), findsOneWidget);
       expect(find.byKey(const Key('catalog_stub_set')), findsOneWidget);
       final setBtn =
           tester.widget<FilledButton>(find.byKey(const Key('catalog_stub_set')));
@@ -467,17 +779,29 @@ void main() {
       expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
       expect(find.byKey(const Key('catalog_perk_section_perks')), findsOneWidget);
       expect(selected, 'high');
+
+      // Switch to instance with sockets for tier assertions.
+      await tester.tap(find.byKey(const Key('instance_chip_low')));
+      await tester.pump();
+      expect(find.byKey(const Key('perk_cell_21')), findsOneWidget); // ②
+      expect(find.byKey(const Key('perk_cell_22')), findsNothing); // ③ off
+
+      await tester.tap(find.byKey(const Key('catalog_toggle_can_roll')));
+      await tester.pump();
+      expect(canRoll, isTrue);
+      expect(find.byKey(const Key('perk_cell_22')), findsOneWidget); // ③ on
     });
 
-    testWidgets('unowned shows Possible Rolls section + full definition pool',
+    testWidgets('unowned: POSSIBLE ROLLS + full ③; no Possible rolls toggle',
         (tester) async {
       const item = CatalogItem(
         hash: 50,
-        name: 'Palmyra-B',
-        slot: 'Power',
-        element: 'Stasis',
-        ammo: 'Heavy',
-        itemTypeName: 'Rocket Launcher',
+        name: 'Hung Jury SR4',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Scout Rifle',
+        frame: 'Precision Frame',
         isExotic: false,
         owned: false,
       );
@@ -518,13 +842,18 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('POSSIBLE ROLLS'), findsOneWidget);
-      // No owned-copy can-roll toggle on definition-only weapons.
       expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNothing);
+      expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
       expect(find.text('Volatile Launch'), findsOneWidget);
       expect(find.text('Confined Launch'), findsOneWidget);
       expect(find.text('Impulse Amplifier'), findsOneWidget);
       expect(find.text('Clown Cartridge'), findsOneWidget);
       expect(find.byKey(const Key('catalog_perk_grid')), findsOneWidget);
+      // No Origin when definition has none.
+      expect(find.text('ORIGIN TRAIT'), findsNothing);
+      // Icon-only meta.
+      expect(find.byKey(const Key('catalog_weapon_meta_strip')), findsOneWidget);
+      expect(find.textContaining('Scout Rifle ·'), findsNothing);
     });
   });
 }

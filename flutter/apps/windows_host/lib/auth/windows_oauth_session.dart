@@ -305,10 +305,13 @@ class WindowsOAuthSession extends ChangeNotifier {
           'membership=${tokens.bungieMembershipId}; writing secure storage…',
         );
         if (tokens.refreshToken.isEmpty) {
+          // Bungie portal docs: Public clients are not issued refresh_token.
+          // Confidential (Next) gets ~90d refresh. Live API re-auth ~hourly;
+          // local inventory browse must not depend on this (see OwnedCatalogBridge).
           // ignore: avoid_print
           print(
-            'OAuth: WARNING empty refresh_token (expected for Bungie Public) — '
-            'session lasts for access token TTL only (~1h)',
+            'OAuth: empty refresh_token (Bungie Public clients do not receive one) — '
+            'live access lasts ~1h; re-sign-in only required for Sync/API, not local Owned',
           );
         }
         await _tokenStore.write(tokens).timeout(

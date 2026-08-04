@@ -7,9 +7,10 @@ let meta = #{
         #{ title: "Plan", detail: "file-level implement plan + test inventory" },
         #{ title: "Human gate", detail: "approve plan" },
         #{ title: "Implement", detail: "Flutter code + tests" },
-        #{ title: "Verify", detail: "analyze + tests" },
-        #{ title: "Review", detail: "product/UX vs brief" },
-        #{ title: "Report", detail: "ship notes + Widgetbook backlog" },
+        #{ title: "Verify", detail: "analyze + tests + Flutter MCP Driver screenshots" },
+        #{ title: "Review", detail: "product/UX vs brief + shot evidence" },
+        #{ title: "Capture", detail: "save Driver screenshots beside mockups + COMPARE.md" },
+        #{ title: "Report", detail: "ship notes + Widgetbook backlog + shot index" },
     ],
 };
 
@@ -56,6 +57,8 @@ let verify_schema = #{
         "tests_ok": #{ "type": "boolean" },
         "commands": #{ "type": "array", "maxItems": 12, "items": #{ "type": "string" } },
         "failures": #{ "type": "array", "maxItems": 12, "items": #{ "type": "string" } },
+        "driver_screenshot_ok": #{ "type": "boolean" },
+        "driver_shot_paths": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
     },
 };
 
@@ -67,6 +70,20 @@ let review_schema = #{
         "gaps": #{ "type": "array", "maxItems": 12, "items": #{ "type": "string" } },
         "widgetbook_backlog": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
         "vault_note_updated": #{ "type": "boolean" },
+    },
+};
+
+let capture_schema = #{
+    "type": "object",
+    "required": ["shots_dir", "shot_paths", "compare_index_path", "mockup_paths", "gaps_for_next_redesign", "notes"],
+    "properties": #{
+        "shots_dir": #{ "type": "string" },
+        "shot_paths": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
+        "compare_index_path": #{ "type": "string" },
+        "mockup_paths": #{ "type": "array", "maxItems": 8, "items": #{ "type": "string" } },
+        "gaps_for_next_redesign": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
+        "notes": #{ "type": "string" },
+        "human_capture_required": #{ "type": "boolean" },
     },
 };
 
@@ -115,7 +132,8 @@ let plan_prompt = "";
 plan_prompt += "You are flutter-architect + implement planner. Produce a file-level implementation plan for: ";
 plan_prompt += loaded_json;
 plan_prompt += ". Map mockup regions to Flutter widgets in packages/ui_flutter and thin host wiring in apps/windows_host and apps/mobile_host as needed. ";
-plan_prompt += "REQUIRED: tests array must include higher-level widget tests (cards, chips, empty states, detail pieces) plus host smoke. ";
+plan_prompt += "REQUIRED: tests array must include higher-level widget tests (cards, chips, empty states, detail pieces) plus host smoke — tests always, never optional. ";
+plan_prompt += "REQUIRED: plan must list a screenshot scenario matrix for Flutter MCP Driver (launch lib/main_mcp.dart, flutter_driver screenshot) saved under docs/ux-redesign/<area>/implementation-shots/<slice>/. ";
 plan_prompt += "Do not change design system tokens. Do not reintroduce stripped unrelated areas. Honor purity. USE tools to inspect existing packages.";
 
 let plan = agent(plan_prompt, #{
@@ -159,13 +177,26 @@ let impl = agent(impl_prompt, #{
 // --- Verify ---
 phase("Verify");
 let ver_prompt = "";
-ver_prompt += "Verify the implementation. Run dart analyze / flutter test for touched packages and hosts under flutter/. ";
+ver_prompt += "Verify the implementation in TWO layers (both required). ";
+ver_prompt += "A) Automated: Run dart analyze / flutter test for touched packages and hosts under flutter/. ";
 ver_prompt += "Confirm widget tests exist for higher-level composables listed in the plan. ";
+ver_prompt += "B) Visual (Flutter MCP + Driver — REQUIRED as part of testing): ";
+ver_prompt += "1) Use Dart MCP: list_devices; add_roots for the host; stop stale apps; ";
+ver_prompt += "launch_app on windows (or primary host) with target lib/main_mcp.dart (Flutter Driver on). ";
+ver_prompt += "2) Connect DTD; flutter_driver get_health; get_widget_tree when needed. ";
+ver_prompt += "3) Drive scenario matrix (browse, detail owned, detail unowned, can-roll, empty if relevant). ";
+ver_prompt += "4) For each state: flutter_driver command=screenshot and SAVE PNG under ";
+ver_prompt += "docs/ux-redesign/<area>/implementation-shots/<slice-id>/ with scenario filenames. ";
+ver_prompt += "5) stop_app when done. ";
+ver_prompt += "Do NOT invent screenshots. If launch_app fails, try ENABLE_FLUTTER_DRIVER shell fallback; ";
+ver_prompt += "if still impossible set driver_screenshot_ok=false and list failures honestly. ";
 ver_prompt += "Implementation notes: ";
 if impl != () && impl.success { ver_prompt += json_encode(impl.output); } else { ver_prompt += "implement result missing"; }
 ver_prompt += ". Plan tests: ";
 ver_prompt += json_encode(plan.output.tests);
-ver_prompt += ". USE shell tools. Report analyze_ok, tests_ok, commands, failures honestly.";
+ver_prompt += ". Load: ";
+ver_prompt += loaded_json;
+ver_prompt += ". USE shell + Dart MCP tools. Report analyze_ok, tests_ok, driver_screenshot_ok, driver_shot_paths, commands, failures.";
 
 let ver = agent(ver_prompt, #{
     label: "verify",
@@ -193,6 +224,33 @@ let rev = agent(rev_prompt, #{
     output_schema: review_schema,
 });
 
+// --- Capture (finalize shot package next to mockups) ---
+phase("Capture");
+let cap_prompt = "";
+cap_prompt += "Finalize the **implementation-shots package** next to mockups (closes redesign↔implement loop). ";
+cap_prompt += "Load: ";
+cap_prompt += loaded_json;
+cap_prompt += ". Plan: ";
+cap_prompt += json_encode(plan.output);
+cap_prompt += ". Verify (includes Driver shots): ";
+if ver != () && ver.success { cap_prompt += json_encode(ver.output); } else { cap_prompt += "n/a"; }
+cap_prompt += ". Review gaps: ";
+if rev != () && rev.success { cap_prompt += json_encode(rev.output); } else { cap_prompt += "n/a"; }
+cap_prompt += ". REQUIRED: docs/ux-redesign/<area>/implementation-shots/<slice-id>/ with PNGs from Flutter MCP Driver ";
+cap_prompt += "(prefer dart__flutter_driver_command screenshot while app runs on lib/main_mcp.dart). ";
+cap_prompt += "If Verify already wrote PNGs, organize/rename them to scenario names and do not re-fake. ";
+cap_prompt += "If shots are missing, launch_app + Driver screenshot now (same protocol as Verify B). ";
+cap_prompt += "Write/update COMPARE.md (mockup | shot | scenario | residual) and area implementation-shots/README.md. ";
+cap_prompt += "human_capture_required=true ONLY if MCP Driver truly cannot run; still document checklist. Never invent images. ";
+cap_prompt += "USE Dart MCP + file tools. Return shots_dir, shot_paths, compare_index_path, mockup_paths, gaps_for_next_redesign, notes, human_capture_required.";
+
+let cap = agent(cap_prompt, #{
+    label: "capture-shots",
+    capability_mode: "all",
+    agent_type: "general-purpose",
+    output_schema: capture_schema,
+});
+
 // --- Report ---
 phase("Report");
 let report = "";
@@ -207,7 +265,10 @@ report += "\n\n## Verify\n";
 if ver != () && ver.success { report += json_encode(ver.output); } else { report += "failed"; }
 report += "\n\n## Review\n";
 if rev != () && rev.success { report += json_encode(rev.output); } else { report += "failed"; }
-report += "\n";
+report += "\n\n## Capture (implementation shots)\n";
+if cap != () && cap.success { report += json_encode(cap.output); } else { report += "failed or skipped"; }
+report += "\n\n## Next redesign\n";
+report += "Start the next area-ux-redesign for this area with **mockups + implementation-shots/COMPARE.md** as dual ground truth.\n";
 
 let path = write_scratch_file("area-implement-report.md", report);
 complete(#{
@@ -215,4 +276,5 @@ complete(#{
     report: path,
     verify: if ver != () && ver.success { ver.output } else { () },
     review: if rev != () && rev.success { rev.output } else { () },
+    capture: if cap != () && cap.success { cap.output } else { () },
 });

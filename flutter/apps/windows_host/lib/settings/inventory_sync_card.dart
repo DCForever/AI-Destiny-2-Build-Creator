@@ -104,10 +104,23 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
             const SizedBox(height: 8),
             if (!signedIn) ...[
               Text(
-                'Sign in to sync owned inventory into the local database.',
+                c.localUserId != null && (c.itemCount ?? 0) > 0
+                    ? 'Local owned inventory is available in Catalog. '
+                        'Bungie Public OAuth has no refresh token — sign in again '
+                        'to Sync live (access lasts ~1 hour).'
+                    : 'Sign in to sync owned inventory into the local database.',
                 key: const Key('inventory_sync_signed_out'),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
+              if (c.localUserId != null && (c.itemCount ?? 0) > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Local copies: ${c.itemCount}'
+                  '${c.lastFullSyncAt != null ? ' · last sync ${c.lastFullSyncAt}' : ''}',
+                  key: const Key('inventory_sync_local_only_meta'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ] else ...[
               Row(
                 children: [
