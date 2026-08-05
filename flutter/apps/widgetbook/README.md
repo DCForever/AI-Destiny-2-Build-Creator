@@ -57,16 +57,15 @@ lib/
   use_cases/catalog/        # Phase 1 catalog stories
 ```
 
-## Phase 1 coverage
+## Coverage
 
-- Meta strip, cards, family cards (incl. multi-hash Base chip regression)
-- Facets, scope, empty states
-- Group header + outline rail
-- Detail / instance strip / perk grid / toggles
-- Workspace grid + 400 detail
+**Phase 1:** Meta, cards, family (multi-hash Base chip), facets, scope, empty,
+group chrome, detail/perks, workspace.
 
-Phase 2 (sort sheet, full filter bar composition, knobs) is documented under
-`docs/ux-redesign/widgetbook.md`.
+**Phase 2:** Sort/group sheet, type-icon filter bar, outline jump expand+scroll,
+mobile list→push detail, knobs (element/slot/owned), Neon shell/board.
+
+See `docs/ux-redesign/widgetbook.md` for phase notes.
 
 ## Rules
 

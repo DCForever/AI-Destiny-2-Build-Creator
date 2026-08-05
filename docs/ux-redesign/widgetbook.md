@@ -21,16 +21,22 @@ Catalog folders under Widgetbook:
 - Detail (instance strip, owned/unowned detail, perk grid, toggles)
 - Workspace (grid + 400 detail / grid only)
 
-## Phase 2 (backlog)
+## Phase 2 (shipped)
 
-From catalog implement-report `widgetbook_backlog` entries not yet storied:
+| Area | Stories |
+| --- | --- |
+| Sort & group | `CatalogSortGroupSheet` default / active dims / interactive apply |
+| Filter bar | Type-icon primary line · More expanded · narrow wrap |
+| Outline jump | Expand-on-jump + scroll demo (grid + rail) |
+| Mobile | List → push detail · full-screen detail (phone frame) |
+| Knobs | NeonItemCard element/slot/owned · family owned chrome · meta strip |
+| Neon | Shell blooms/horizon · NeonZone · Flap board sets/builds · atmosphere knobs |
 
-- `CatalogSortGroupSheet` reorder keys + dims
-- Primary-line type-icon filter bar composition
-- Outline jump expand-on-jump demo with scroll
-- Mobile structure-only detail push viewport
-- Knobs for element / slot / ownedCount
-- Neon board primitives / atmosphere
+## Phase 3 (backlog)
+
+- ViewportAddon matrix (phone/tablet/desktop) when useful beyond fixed frames
+- Sort sheet live reorder golden / interaction tests
+- Host-parity filter bar with live exotic cycle semantics screenshots
 
 ## Rules
 

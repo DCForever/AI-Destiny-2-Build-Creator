@@ -18,12 +18,22 @@ import 'package:destiny2_widgetbook/use_cases/catalog/facet_scope_empty_use_case
     as _destiny2_widgetbook_use_cases_catalog_facet_scope_empty_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/family_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_family_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/filter_bar_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/group_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_group_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/knobs_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_knobs_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/meta_strip_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_meta_strip_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/mobile_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_mobile_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/sort_group_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_sort_group_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/workspace_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_workspace_use_cases;
+import 'package:destiny2_widgetbook/use_cases/neon/board_atmosphere_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
 
 final directories = <_widgetbook.WidgetbookNode>[
@@ -196,6 +206,34 @@ final directories = <_widgetbook.WidgetbookNode>[
         ],
       ),
       _widgetbook.WidgetbookFolder(
+        name: 'FilterBar',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogFilterBar',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'More expanded (secondary facets)',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases
+                        .filterBarMoreExpanded,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Narrow width wrap',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases
+                        .filterBarNarrow,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Type icon filters · scope · search',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases
+                        .filterBarTypeIcons,
+              ),
+            ],
+          )
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
         name: 'Group',
         children: [
           _widgetbook.WidgetbookComponent(
@@ -217,9 +255,49 @@ final directories = <_widgetbook.WidgetbookNode>[
             name: 'CatalogGroupOutlineRail',
             useCases: [
               _widgetbook.WidgetbookUseCase(
+                name: 'Outline jump · expand-on-jump + scroll',
+                builder: _destiny2_widgetbook_use_cases_catalog_group_use_cases
+                    .groupOutlineJumpExpand,
+              ),
+              _widgetbook.WidgetbookUseCase(
                 name: 'Outline rail (≥2 groups)',
                 builder: _destiny2_widgetbook_use_cases_catalog_group_use_cases
                     .groupOutlineRail,
+              ),
+            ],
+          ),
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'Knobs',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogWeaponFamilyCard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Family card · owned / signed-out',
+                builder: _destiny2_widgetbook_use_cases_catalog_knobs_use_cases
+                    .knobsFamilyCard,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogWeaponMetaStrip',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Meta strip · facets knobs',
+                builder: _destiny2_widgetbook_use_cases_catalog_knobs_use_cases
+                    .knobsMetaStrip,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'NeonItemCard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'NeonItemCard · element / slot / owned',
+                builder: _destiny2_widgetbook_use_cases_catalog_knobs_use_cases
+                    .knobsNeonItemCard,
               )
             ],
           ),
@@ -254,6 +332,31 @@ final directories = <_widgetbook.WidgetbookNode>[
         ],
       ),
       _widgetbook.WidgetbookFolder(
+        name: 'Mobile',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogWeaponDetail',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Detail full-screen (phone frame)',
+                builder: _destiny2_widgetbook_use_cases_catalog_mobile_use_cases
+                    .mobileDetailFull,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogWeaponsGrid',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'List → push detail (phone frame)',
+                builder: _destiny2_widgetbook_use_cases_catalog_mobile_use_cases
+                    .mobileListPushDetail,
+              )
+            ],
+          ),
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
         name: 'Scope',
         children: [
           _widgetbook.WidgetbookComponent(
@@ -265,6 +368,34 @@ final directories = <_widgetbook.WidgetbookNode>[
                     _destiny2_widgetbook_use_cases_catalog_facet_scope_empty_use_cases
                         .scopeControl,
               )
+            ],
+          )
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'SortGroup',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogSortGroupSheet',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Active slot · element groups',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_sort_group_use_cases
+                        .sortGroupWithDims,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Default keys · empty groups',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_sort_group_use_cases
+                        .sortGroupDefault,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Interactive apply (snackbar)',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_sort_group_use_cases
+                        .sortGroupInteractive,
+              ),
             ],
           )
         ],
@@ -292,5 +423,71 @@ final directories = <_widgetbook.WidgetbookNode>[
         ],
       ),
     ],
-  )
+  ),
+  _widgetbook.WidgetbookCategory(
+    name: 'Neon',
+    children: [
+      _widgetbook.WidgetbookFolder(
+        name: 'Atmosphere',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'NeonShellBackground',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Atmosphere knobs',
+                builder:
+                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                        .neonAtmosphereKnobs,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Shell blooms + horizon',
+                builder:
+                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                        .neonShellFull,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Shell blooms only (no horizon)',
+                builder:
+                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                        .neonShellBloomsOnly,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'NeonZone',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'NeonZone soft surface',
+                builder:
+                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                        .neonZone,
+              )
+            ],
+          ),
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'Board',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'FlapBoardHeader',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Flap board header + rows (sets template)',
+                builder:
+                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                        .flapBoardSets,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Flap board · builds template',
+                builder:
+                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                        .flapBoardBuilds,
+              ),
+            ],
+          )
+        ],
+      ),
+    ],
+  ),
 ];
