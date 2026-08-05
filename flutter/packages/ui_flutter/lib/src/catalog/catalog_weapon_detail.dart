@@ -1693,9 +1693,8 @@ class _FamilyVersionSwitch extends StatelessWidget {
               ChoiceChip(
                 key: Key('family_version_select_${m.hash}'),
                 label: Text(
-                  m.ownedCount > 0
-                      ? '${m.label} ×${m.ownedCount}'
-                      : m.label,
+                  // Disambiguate multi-hash same-kind (e.g. five Ribbontail Base defs).
+                  weaponVersionSwitchLabel(m, members),
                   style: neonMono(fontSize: 10),
                 ),
                 selected: m.hash == selectedHash,

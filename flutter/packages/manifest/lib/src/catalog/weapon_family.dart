@@ -26,6 +26,25 @@ String weaponVersionLabel(WeaponVersionKind kind) {
   }
 }
 
+/// Detail version-switch label for [m] within [members].
+///
+/// Unique kinds: `Base` / `Base ×2`. Colliding kinds (multi-hash Base fan-out)
+/// append a short hash tail so ChoiceChips stay distinguishable.
+String weaponVersionSwitchLabel(
+  WeaponFamilyMember m,
+  List<WeaponFamilyMember> members,
+) {
+  final owned = m.ownedCount > 0 ? '${m.label} ×${m.ownedCount}' : m.label;
+  var kindCount = 0;
+  for (final other in members) {
+    if (other.kind == m.kind) kindCount++;
+  }
+  if (kindCount <= 1) return owned;
+  final hex = m.hash.toRadixString(16);
+  final tail = hex.length <= 4 ? hex : hex.substring(hex.length - 4);
+  return '$owned · $tail';
+}
+
 /// Detect Adept / Holofoil from a weapon display name.
 WeaponVersionKind weaponVersionKindFromName(String name) {
   final n = name.trim().toLowerCase();
@@ -129,9 +148,41 @@ class WeaponFamily {
 
   bool get anyOwned => ownedTotal > 0;
 
-  /// Owned members only (for non-selectable version chips).
+  /// Owned members only (all definition hashes with copies).
+  ///
+  /// Prefer [ownedVersionChipMembers] for grid chips — Destiny often has
+  /// multiple hashes for one Base/Adept/Holofoil kind (tiers, watermarks).
   List<WeaponFamilyMember> get ownedMembers =>
       members.where((m) => m.ownedCount > 0).toList();
+
+  /// Grid version chips: **one chip per version kind** among owned members.
+  ///
+  /// Collapses multi-hash same-kind rows (e.g. five "Ribbontail" Base defs)
+  /// so the card shows Base / Adept / Holofoil once each, not Base×N.
+  /// Representative is the first owned member of that kind in stable order.
+  List<WeaponFamilyMember> get ownedVersionChipMembers {
+    final seen = <WeaponVersionKind>{};
+    final out = <WeaponFamilyMember>[];
+    for (final m in members) {
+      if (m.ownedCount <= 0) continue;
+      if (!seen.add(m.kind)) continue;
+      out.add(m);
+    }
+    return out;
+  }
+
+  /// Count of members sharing [kind] (definition-hash fan-out).
+  int memberCountForKind(WeaponVersionKind kind) {
+    var n = 0;
+    for (final m in members) {
+      if (m.kind == kind) n++;
+    }
+    return n;
+  }
+
+  /// Detail switch label: kind (+ owned ×N), disambiguated when kinds collide.
+  String versionSwitchLabel(WeaponFamilyMember m) =>
+      weaponVersionSwitchLabel(m, members);
 
   WeaponFamilyMember? memberByHash(int hash) {
     for (final m in members) {

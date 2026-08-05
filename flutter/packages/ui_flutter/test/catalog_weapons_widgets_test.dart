@@ -337,6 +337,43 @@ void main() {
       expect(find.text('×3'), findsNothing);
       expect(find.text('Base'), findsNothing);
     });
+
+    testWidgets('multi-hash same kind: one Base chip not Base×N', (tester) async {
+      final items = [
+        for (final h in [201, 202, 203])
+          CatalogItem(
+            hash: h,
+            name: 'Ribbontail',
+            slot: 'Kinetic',
+            element: 'Strand',
+            ammo: 'Special',
+            itemTypeName: 'Trace Rifle',
+            isExotic: false,
+            owned: true,
+            ownedCount: 1,
+          ),
+      ];
+      final families = groupWeaponFamilies(items);
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 400,
+            height: 300,
+            child: CatalogWeaponsGrid(
+              families: families,
+              showOwned: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Ribbontail'), findsWidgets);
+      expect(find.text('×3'), findsOneWidget);
+      // One Base chip only — three owned hashes of the same kind.
+      expect(find.text('Base'), findsOneWidget);
+      expect(find.text('Adept'), findsNothing);
+    });
   });
 
   group('Catalog group collapse + outline', () {

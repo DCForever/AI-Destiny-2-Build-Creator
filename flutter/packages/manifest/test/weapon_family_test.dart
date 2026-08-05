@@ -85,9 +85,46 @@ void main() {
       expect(coup.cardItem.name, 'Midnight Coup');
       expect(coup.primaryMember.hash, 1);
       expect(coup.ownedMembers.map((m) => m.label).toList(), ['Base', 'Adept']);
+      expect(
+        coup.ownedVersionChipMembers.map((m) => m.label).toList(),
+        ['Base', 'Adept'],
+      );
 
       final ace = families.firstWhere((f) => f.displayName == 'Ace of Spades');
       expect(ace.members.length, 1);
+    });
+
+    test('multi-hash same kind collapses to one grid chip', () {
+      // Ribbontail-style: several Base definitions, no Adept suffix.
+      final items = [
+        for (final h in [10, 20, 30, 40, 50])
+          CatalogItem(
+            hash: h,
+            name: 'Ribbontail',
+            slot: 'Kinetic',
+            element: 'Strand',
+            itemTypeName: 'Trace Rifle',
+            isExotic: false,
+            owned: h <= 30,
+            ownedCount: h <= 30 ? 1 : 0,
+          ),
+      ];
+      final family = groupWeaponFamilies(items).single;
+      expect(family.members.length, 5);
+      expect(family.ownedTotal, 3);
+      expect(family.ownedMembers.length, 3);
+      // Grid chips: one Base only (not Base Base Base).
+      expect(
+        family.ownedVersionChipMembers.map((m) => m.label).toList(),
+        ['Base'],
+      );
+      expect(family.ownedVersionChipMembers.single.hash, 10);
+      // Detail labels disambiguate colliding kinds.
+      final labels = family.members
+          .map((m) => family.versionSwitchLabel(m))
+          .toList();
+      expect(labels.toSet().length, 5);
+      expect(labels.first, startsWith('Base ×1 ·'));
     });
   });
 

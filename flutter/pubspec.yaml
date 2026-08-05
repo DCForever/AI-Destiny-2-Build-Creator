@@ -17,6 +17,7 @@ workspace:
   - packages/ui_flutter
   - apps/windows_host
   - apps/mobile_host
+  - apps/widgetbook
   # apps/web_host is NOT a pub workspace member: Jaspr 0.23 builder
   # requires analyzer/meta newer than flutter_test pins. Resolve with
   # `dart pub get` inside apps/web_host (path deps still work).
@@ -50,3 +51,11 @@ melos:
     analyze:
       description: "Run dart analyze on workspace Dart packages (Flutter host uses flutter analyze)"
       run: dart analyze --fatal-infos packages/domain packages/sandbox_data packages/storage packages/db packages/manifest packages/bungie packages/app packages/ui_tokens packages/ui_flutter
+
+    widgetbook:gen:
+      description: Generate Widgetbook directories (apps/widgetbook)
+      run: dart run build_runner build -d
+      exec:
+        concurrency: 1
+      packageFilters:
+        scope: destiny2_widgetbook

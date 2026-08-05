@@ -103,8 +103,9 @@ class CatalogWeaponFamilyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final item = family.cardItem;
+    // One chip per Base/Adept/Holofoil kind — not one per definition hash.
     final ownedChips =
-        showOwned ? family.ownedMembers : const <WeaponFamilyMember>[];
+        showOwned ? family.ownedVersionChipMembers : const <WeaponFamilyMember>[];
     final card = CatalogWeaponCard(
       item: item,
       selected: selected,
@@ -160,7 +161,9 @@ class _OwnedVersionChips extends StatelessWidget {
         children: [
           for (final m in members)
             Container(
-              key: Key('family_version_chip_${m.kind.name}_$familyKey'),
+              // Include hash so multi-hash same-kind never trips duplicate-key
+              // ErrorWidget (red unclickable card) if a caller skips kind dedupe.
+              key: Key('family_version_chip_${m.kind.name}_${m.hash}_$familyKey'),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
                 border: Border.all(
