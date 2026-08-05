@@ -6,7 +6,9 @@ library;
 
 export 'src/catalog/catalog_empty_state.dart';
 export 'src/catalog/catalog_filter_bar.dart';
+export 'src/catalog/catalog_group_chrome.dart';
 export 'src/catalog/catalog_scope_control.dart';
+export 'src/catalog/catalog_sort_group_sheet.dart';
 export 'src/catalog/catalog_weapon_detail.dart';
 export 'src/catalog/catalog_weapon_meta_strip.dart';
 export 'src/catalog/catalog_weapons_grid.dart';

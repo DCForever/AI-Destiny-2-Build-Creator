@@ -1,5 +1,6 @@
 import 'package:destiny2_app/destiny2_app.dart';
-import 'package:destiny2_db/destiny2_db.dart' hide Build, SetItem, Synergy, SynergyLink;
+import 'package:destiny2_db/destiny2_db.dart'
+    hide Build, SetItem, Synergy, SynergyLink, kLocalLibraryMembershipId;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:flutter/foundation.dart';

@@ -15,6 +15,7 @@ pubspec.yaml              # workspace root + Melos 7+ `melos:` scripts
 melos.yaml                # pointer only (config lives in pubspec.yaml)
 analysis_options.yaml     # shared analyzer defaults
 apps/
+  widgetbook/             # Widgetbook isolation app — destiny2_widgetbook (not a product host)
   windows_host/           # Flutter Windows shell (DART-019…039) — destiny2_windows_host
     lib/
       main.dart           # BUNGIE_API_KEY / BUNGIE_CLIENT_ID / BUNGIE_REDIRECT_URI defines

@@ -106,7 +106,8 @@ pwsh -File scripts/link-projecttracker-requirements.ps1
 6. **Verify** also captures **Flutter MCP + Driver screenshots** (part of testing, not optional polish)  
 7. **Capture** organizes those shots into `implementation-shots/` + `COMPARE.md` beside mockups  
 8. **Next redesign** must load `implementation-shots/` + mockups  
-9. **Widgetbook** (follow-up after first shared composables)
+9. **Widgetbook** — isolated catalog of shared composables  
+   App: [`flutter/apps/widgetbook`](../../flutter/apps/widgetbook) · notes: [`widgetbook.md`](widgetbook.md)
 
 ## How to capture shots (required path: Flutter MCP + Driver)
 

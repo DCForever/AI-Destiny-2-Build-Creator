@@ -93,6 +93,80 @@ Anti-pattern this log prevents:
 
 ## Closed gaps
 
+### GAP-CAT-BROWSE-001 — Weapon family cards (version collapse)
+- **Status:** closed
+- **Closed:** 2026-08-05 (area-implement browse-chrome Capture dual-truth)
+- **Area:** catalog
+- **Slice:** browse-chrome
+- **Kind:** product-behavior
+- **Severity:** P0
+- **blocks_dual_truth:** true
+- **Mockup SSoT:** `docs/ux-redesign/catalog/mockups/001-browse-chrome-desktop.html` · mobile sibling · `MOCKUP-APPROVED.md` · brief `001-browse-chrome-brief.md`
+- **Proof:**
+  - Code: `weapon_family.dart`, family card owned-only chips, detail `_FamilyVersionSwitch`
+  - Host smoke + pure tests (`weapon_family_test`, browse-chrome host fixtures)
+  - Capture 2026-08-05: `implementation-shots/001-browse-chrome/desktop-family-card.png` (one Midnight Coup card Base+Adept ×3, Holofoil omitted), `desktop-detail-versions.png` (Base/Adept/Holofoil + openVersion Adept PL1810)
+  - Entry: `lib/main_browse_chrome_capture.dart`
+- **shot_matrix proves tokens:** `family-card-one`, `owned-version-chips-readonly`, `detail-all-versions`
+
+### GAP-CAT-BROWSE-002 — Collapsible groups + outline jump
+- **Status:** closed
+- **Closed:** 2026-08-05 (area-implement browse-chrome Capture dual-truth)
+- **Area:** catalog
+- **Slice:** browse-chrome
+- **Kind:** interaction
+- **Severity:** P0
+- **blocks_dual_truth:** true
+- **Mockup SSoT:** `001-browse-chrome-desktop.html` · mobile · MOCKUP-APPROVED
+- **Proof:**
+  - Code: `CatalogGroupHeader` view-only collapse; `CatalogGroupOutlineRail`; host `ensureVisible` jump
+  - Host smoke: collapse Kinetic leaves Energy; outline jump expands
+  - Capture: `desktop-group-collapse.png`, `desktop-group-outline-jump.png`
+- **shot_matrix proves tokens:** `group-collapse`, `group-outline-jump`
+
+### GAP-CAT-BROWSE-003 — User sort + group priority reorder
+- **Status:** closed
+- **Closed:** 2026-08-05 (area-implement browse-chrome Capture dual-truth)
+- **Area:** catalog
+- **Slice:** browse-chrome
+- **Kind:** interaction
+- **Severity:** P0
+- **blocks_dual_truth:** true
+- **Mockup SSoT:** `001-browse-chrome-desktop.html` · mobile · MOCKUP-APPROVED
+- **Proof:**
+  - Code: `CatalogSortGroupSheet` + multi-key sort/group pure tests
+  - Capture: `desktop-sort-reorder.png` (SORT PRIORITY list + GROUP BY Slot), `desktop-group-priority.png` (ENERGY · SOLAR / KINETIC · KINETIC)
+- **shot_matrix proves tokens:** `sort-priority-reorder`, `group-priority-reorder`
+
+### GAP-CAT-BROWSE-004 — Weapon type filters as official icons
+- **Status:** closed
+- **Closed:** 2026-08-05 (area-implement browse-chrome Capture dual-truth)
+- **Area:** catalog
+- **Slice:** browse-chrome
+- **Kind:** visual-parity
+- **Severity:** P1
+- **blocks_dual_truth:** true
+- **Mockup SSoT:** `001-browse-chrome-desktop.html` primary-line type silhouettes · MOCKUP-APPROVED
+- **Proof:**
+  - Code: primary `iconOnly` + `DestinyWeaponTypeIcon` / Semantics; host smoke `archetype_chip_*`
+  - Capture: `desktop-type-icon-filters.png` (+ co-visible on `desktop-family-card.png`) — primary-line silhouettes
+  - Structure asserts required (not PNG-only); widget/host tests green
+- **shot_matrix proves tokens:** `type-filter-icons`
+
+### GAP-CAT-PERK-004 — Remove perk band labels (① On this copy / ② Unselected / ③ Possible rolls)
+- **Status:** closed
+- **Closed:** 2026-08-05 (area-implement browse-chrome Capture dual-truth)
+- **Area:** catalog
+- **Slice:** residual-polish / browse-chrome implement
+- **Kind:** visual-parity
+- **Severity:** P1
+- **blocks_dual_truth:** true
+- **Mockup SSoT:** User 2026-08-05 — band strings not needed; tier is clear from cell chrome (badges ①②③, chevron, dashed)
+- **Proof:**
+  - Code: `_PerkBandLabel` / `perk_band_*` removed; legend + cell chrome retained
+  - Host smoke: no band keys/text; Capture: `desktop-detail-no-band-labels.png` (Possible ON · legend · tier badges · no column band strings)
+- **shot_matrix proves tokens:** `no-perk-band-labels`, `tier-cell-chrome-only`
+
 ### GAP-CAT-PERK-001 — Perk grid visual parity vs residual mockups
 - **Status:** closed
 - **Closed:** 2026-08-04 (area-implement residual-polish perk chrome)
@@ -137,6 +211,11 @@ Anti-pattern this log prevents:
 
 | ID | Status | Area | blocks_dual_truth | Title |
 | --- | --- | --- | --- | --- |
+| GAP-CAT-BROWSE-001 | closed | catalog | true | Weapon family cards (version collapse) |
+| GAP-CAT-BROWSE-002 | closed | catalog | true | Collapsible groups + outline jump |
+| GAP-CAT-BROWSE-003 | closed | catalog | true | User sort + group priority reorder |
+| GAP-CAT-BROWSE-004 | closed | catalog | true | Weapon type filters as official icons |
 | GAP-CAT-PERK-001 | closed | catalog | true | Perk grid visual parity vs residual mockups |
 | GAP-CAT-PERK-002 | closed | catalog | true | Enhanced live path misses DIM-enhanced rolls |
 | GAP-CAT-PERK-003 | open | catalog | false | Possible crafted toggle visibility vs mock |
+| GAP-CAT-PERK-004 | closed | catalog | true | Remove perk band labels (cell chrome only) |

@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catalog · Browse chrome — Mobile mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --enhanced: #ceae33;
+      --rarity-exotic: #ceae33;
+      --rarity-legendary-edge: #c49ad4;
+      --slot-power: #d4b06a;
+      --el-kinetic: #ffffff;
+      --el-arc: #85c5ec;
+      --el-solar: #f2721b;
+      --el-void: #8b7cf0;
+      --el-stasis: #4d88ff;
+      --el-strand: #35e366;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --nav-h: 52px;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --phone-w: 390px;
+      --phone-h: 780px;
+      --meta-chip: 22px;
+      --card-h: 112px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #030308;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 430px;
+      padding: 8px 10px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .scenario-select {
+      width: 100%;
+      height: 32px;
+      padding: 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+    }
+    .auth-row { display: flex; gap: 6px; }
+    .auth-row button {
+      flex: 1;
+      height: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .auth-row button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+    }
+    .deferred-note {
+      width: 100%;
+      max-width: 430px;
+      padding: 6px 10px;
+      background: rgba(245, 197, 66, 0.08);
+      border-bottom: 1px solid rgba(245, 197, 66, 0.25);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--warn);
+    }
+    .deferred-note strong { font-weight: 500; }
+
+    .gap-strip {
+      width: 100%;
+      max-width: 430px;
+      padding: 4px 10px;
+      background: rgba(0, 229, 255, 0.05);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .gap-strip strong { color: var(--accent); font-weight: 500; }
+
+    .phone-frame {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: var(--phone-w);
+      margin: 8px auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      height: min(var(--phone-h), calc(100vh - 200px));
+      position: relative;
+    }
+
+    .app-top {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .app-top .brand {
+      font-family: var(--font-d);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .app-top .mod {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .lamp {
+      margin-left: auto;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+    .lamp.off { background: var(--muted-dim); box-shadow: none; }
+    .lamp.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .lamp.danger { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+    .filter-bar {
+      flex: 0 0 auto;
+      padding: 8px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .scope-seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: 30px;
+    }
+    .scope-seg button {
+      padding: 0 10px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+    .scope-seg button:last-child { border-right: 0; }
+    .scope-seg button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 8px;
+      flex: 1 1 120px;
+      min-width: 100px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .search-wrap input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font-size: 12px;
+    }
+    .chip {
+      height: 28px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .chip.icon-only { width: 28px; padding: 0; }
+    .chip[data-state="include"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .chip[data-state="exclude"] {
+      color: var(--warn);
+      border-color: rgba(245, 197, 66, 0.45);
+      background: rgba(245, 197, 66, 0.08);
+      text-decoration: line-through;
+    }
+    .chip .chip-mark {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--accent);
+    }
+    .chip[data-state="exclude"] .chip-mark { color: var(--warn); }
+    .glyph-ico { font-size: 11px; }
+    .facet-img { width: 16px; height: 16px; object-fit: contain; display: block; }
+    .type-ico {
+      display: block;
+      width: 26px;
+      height: 12px;
+      background: currentColor;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+    }
+    .facets-scroll {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .facets-scroll::-webkit-scrollbar { height: 0; }
+    .tool-btn {
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .tool-btn[aria-expanded="true"], .tool-btn.on {
+      color: var(--fg);
+      background: var(--accent-wash);
+    }
+    .status-line {
+      flex: 0 0 auto;
+      padding: 4px 10px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .status-line strong { color: var(--muted); font-weight: 500; }
+
+    /* Compact outline as sticky subheader chips (mobile expression of GAP-002) */
+    .outline-strip {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 6px 8px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      -webkit-overflow-scrolling: touch;
+    }
+    .outline-chip {
+      flex-shrink: 0;
+      height: 26px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--bg);
+      white-space: nowrap;
+    }
+    .outline-chip[aria-current="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.35);
+    }
+    .outline-chip .n { color: var(--muted-dim); margin-left: 3px; }
+
+    .board-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .results-meta {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      margin-bottom: 6px;
+    }
+    .results-meta strong { color: var(--fg); font-weight: 500; }
+
+    .group-section { margin-bottom: 10px; }
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      text-align: left;
+      padding: 8px 4px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .group-header .chev { color: var(--accent); width: 12px; }
+    .group-header[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+    .group-header .g-count {
+      margin-left: auto;
+      font-family: var(--font-m);
+      font-size: 10px;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--muted-dim);
+    }
+    .group-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .board-flat {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .weapon-card {
+      position: relative;
+      text-align: left;
+      padding: 8px;
+      height: var(--card-h);
+      min-height: var(--card-h);
+      max-height: var(--card-h);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+    .weapon-card[aria-selected="true"] {
+      border-color: rgba(0, 229, 255, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.25);
+    }
+    .weapon-card.rarity-exotic { border-color: rgba(206, 174, 51, 0.35); }
+    .weapon-card.rarity-legendary { border-left: 2px solid var(--rarity-legendary-edge); }
+    .el-bloom {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 40px; height: 40px;
+      background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--el) 28%, transparent), transparent 70%);
+      pointer-events: none;
+    }
+    .card-top { display: flex; gap: 6px; min-width: 0; }
+    .entity-icon {
+      width: 32px; height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 14px;
+    }
+    .card-text { flex: 1; min-width: 0; }
+    .card-name {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-type-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      color: var(--muted-dim);
+      font-size: 10px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .card-type-row .type-ico { width: 24px; height: 10px; color: var(--muted); }
+    .version-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      width: 100%;
+      margin-top: 2px;
+    }
+    .ver-chip {
+      display: inline-flex;
+      height: 14px;
+      padding: 0 4px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      color: var(--muted-dim);
+      border: 1px solid rgba(232, 238, 242, 0.16);
+      border-radius: var(--radius);
+      background: rgba(16, 16, 40, 0.6);
+      pointer-events: none;
+      user-select: none;
+    }
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: auto;
+    }
+    .card-meta-row .slot-letter {
+      width: 14px; height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-m);
+      font-size: 8px;
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      color: var(--muted);
+    }
+    .card-meta-row .facet-img { width: 12px; height: 12px; }
+    .owned-count {
+      margin-left: auto;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--success);
+    }
+
+    .board-empty, .board-error {
+      padding: 24px 12px;
+      text-align: center;
+      color: var(--muted);
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .board-empty .actions, .board-error .actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .board-empty .btn, .board-error .btn {
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .skeleton-card {
+      height: var(--card-h);
+      background: linear-gradient(90deg, var(--surface) 25%, var(--raised) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: sk 1.2s ease-in-out infinite;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    @keyframes sk {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Detail push sheet (deferred product push — structure parity) */
+    .detail-layer {
+      position: absolute;
+      inset: 0;
+      background: var(--surface);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .detail-nav {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .detail-nav .back {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .detail-nav .title {
+      font-family: var(--font-d);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .detail-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .hero-row { display: flex; gap: 10px; }
+    .hero-icon {
+      width: 48px; height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .hero-name {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .hero-name.exotic { color: var(--rarity-exotic); }
+    .hero-sub {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin-top: 2px;
+    }
+    .meta-icons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .meta-chip {
+      width: var(--meta-chip);
+      height: var(--meta-chip);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--raised);
+      color: var(--muted);
+    }
+    .meta-chip .facet-img { width: 14px; height: 14px; }
+    .meta-chip .type-ico { width: 18px; height: 11px; color: var(--fg); }
+    .meta-chip.owned {
+      width: auto;
+      padding: 0 5px;
+      color: var(--success);
+      border-color: rgba(46, 230, 166, 0.35);
+      font-family: var(--font-m);
+      font-size: 11px;
+    }
+    .version-switch { margin-top: 12px; }
+    .version-switch .v-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .version-seg { display: flex; flex-wrap: wrap; gap: 4px; }
+    .ver-btn {
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ver-btn[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .ver-btn .own-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    .rebind-note {
+      margin: 12px 0;
+      padding: 8px;
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: var(--radius);
+      background: rgba(0, 229, 255, 0.05);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .rebind-note strong { color: var(--accent); font-weight: 500; }
+    .section-title {
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 12px 0 8px;
+    }
+    .view-toggle {
+      height: 26px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+    .view-toggle[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+    }
+    .view-toggle .knob {
+      width: 26px; height: 12px;
+      border-radius: 999px;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      position: relative;
+    }
+    .view-toggle .knob::after {
+      content: "";
+      position: absolute;
+      top: 1px; left: 2px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .view-toggle[aria-pressed="true"] .knob::after {
+      transform: translateX(12px);
+      background: var(--accent);
+    }
+    .perk-grid-cols { display: flex; gap: 4px; }
+    .perk-col { flex: 1; min-width: 0; }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 2px;
+      min-height: 48px;
+      margin-bottom: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      position: relative;
+    }
+    .perk-cell .ico {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .perk-cell .cap {
+      font-size: 8px;
+      color: var(--muted);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .perk-cell.selected {
+      background: rgba(0, 120, 212, 0.18);
+      border-color: rgba(80, 160, 255, 0.65);
+    }
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: #9fd0ff;
+      background: rgba(0, 80, 180, 0.55);
+    }
+    .perk-cell.unselected::after {
+      content: "2";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--raised);
+    }
+    .perk-cell.possible {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+    }
+    .perk-cell.possible .ico { opacity: 0.45; }
+    .perk-cell.possible::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      border: 1px dashed var(--line);
+    }
+    .btn-stub {
+      height: 32px;
+      padding: 0 12px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      background: var(--bg);
+      margin-right: 6px;
+      margin-top: 8px;
+    }
+    .stub-note {
+      display: block;
+      margin-top: 8px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+    .hash-footer {
+      margin-top: 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+
+    /* Bottom sheet: sort/group + jump */
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 30;
+      display: flex;
+      align-items: flex-end;
+    }
+    .sheet {
+      width: 100%;
+      max-height: 78%;
+      overflow: auto;
+      background: var(--surface);
+      border-top: 1px solid var(--line-strong);
+      border-radius: 10px 10px 0 0;
+      padding-bottom: calc(12px + var(--safe-b));
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--line-strong);
+      border-radius: 2px;
+      margin: 8px auto 4px;
+    }
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      padding: 8px 14px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .sheet-head h2 {
+      margin: 0;
+      flex: 1;
+      font-family: var(--font-d);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .sheet-head .close {
+      width: 32px; height: 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .sheet-body { padding: 12px 14px; }
+    .sheet-section { margin-bottom: 14px; }
+    .sheet-section h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .sheet-section p.help {
+      margin: 0 0 8px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+    .reorder-item, .group-dim-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+    }
+    .reorder-item .name, .group-dim-row .name { flex: 1; font-family: var(--font-m); font-size: 12px; }
+    .reorder-item .prio, .group-dim-row .prio {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .moves button {
+      width: 32px; height: 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .group-dim-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .group-dim-row input { accent-color: var(--accent); }
+    .sheet-foot {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .btn-primary {
+      height: 36px;
+      padding: 0 16px;
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      border-radius: var(--radius);
+      background: var(--accent-wash);
+      color: var(--fg);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .btn-ghost {
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .tab-bar {
+      flex: 0 0 auto;
+      display: flex;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+      padding-bottom: var(--safe-b);
+      height: calc(var(--nav-h) + var(--safe-b));
+    }
+    .tab-bar button {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tab-bar button[aria-current="page"] {
+      color: var(--accent);
+    }
+    .tab-bar .ico { font-size: 16px; }
+
+    .a11y-live {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-bar" role="region" aria-label="Mock scenario controls">
+    <h1>Catalog · Browse chrome · Mobile</h1>
+    <span class="meta">Same product rules as Windows · push deferred · structure parity only</span>
+    <select id="scenario" class="scenario-select" aria-label="Mock scenario">
+      <option value="results" selected>results · family cards · owned version chips</option>
+      <option value="signed-out">signed-out · no owned chips</option>
+      <option value="loading">loading · skeleton</option>
+      <option value="empty-sync">owned-empty · Sync CTA</option>
+      <option value="zero">zero-match · Clear filters</option>
+      <option value="group">group-collapsed · outline strip jump</option>
+      <option value="reorder">sort-groupby · bottom sheet reorder</option>
+      <option value="type-filter">type-filter · silhouette chips</option>
+      <option value="detail">detail push · family versions switch</option>
+      <option value="adept-switch">detail · Adept rebind · stubs disabled</option>
+      <option value="error">error · retry</option>
+    </select>
+    <div class="auth-row">
+      <button type="button" id="auth-out" aria-pressed="false">Signed-out</button>
+      <button type="button" id="auth-in" aria-pressed="true">Signed-in</button>
+    </div>
+  </div>
+  <div class="deferred-note" role="note">
+    <strong>Mobile Catalog push deferred</strong> — dual-truth gate is Windows. This mock is structure parity (same rules, bottom sheet reorder / outline strip) not a mobile-only product fork.
+  </div>
+  <div class="gap-strip">
+    <strong>GAP-001–004</strong> family cards · collapse+jump · sort/group reorder · type silhouettes
+  </div>
+
+  <div class="phone-frame" id="phone">
+    <div class="app-top">
+      <span class="brand">Catalog</span>
+      <span class="mod">Weapons · browse</span>
+      <span class="lamp" id="sync-lamp" aria-hidden="true"></span>
+    </div>
+
+    <section class="filter-bar" aria-label="Catalog filters">
+      <div class="filter-row">
+        <div class="scope-seg" role="group" aria-label="Ownership scope">
+          <button type="button" data-scope="all" aria-pressed="true">All</button>
+          <button type="button" data-scope="owned" aria-pressed="false" id="scope-owned-btn">Owned</button>
+        </div>
+        <div class="search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="Search…" aria-label="Search catalog" autocomplete="off" />
+        </div>
+        <button type="button" class="tool-btn" id="sort-group-btn" aria-expanded="false">Sort</button>
+        <button type="button" class="tool-btn" id="reset-btn" hidden>Reset</button>
+      </div>
+      <div class="facets-scroll" role="toolbar" aria-label="Primary facets">
+        <button type="button" class="chip icon-only" data-facet="slot" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic"><span class="glyph-ico">K</span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="slot" data-value="energy" data-state="off" title="Energy" aria-label="Energy"><span class="glyph-ico" style="color:var(--el-solar)">E</span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="slot" data-value="power" data-state="off" title="Power" aria-label="Power"><span class="glyph-ico" style="color:var(--slot-power)">P</span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="element" data-value="solar" data-state="off" title="Solar" aria-label="Solar"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png" alt="" /><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="element" data-value="arc" data-state="off" title="Arc" aria-label="Arc"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png" alt="" /><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="element" data-value="void" data-state="off" title="Void" aria-label="Void"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png" alt="" /><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="ammo" data-value="primary" data-state="off" title="Primary" aria-label="Primary ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png" alt="" /><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="ammo" data-value="special" data-state="off" title="Special" aria-label="Special ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png" alt="" /><span class="chip-mark" hidden></span></button>
+        <!-- GAP-004 type silhouettes primary -->
+        <button type="button" class="chip icon-only" data-facet="type" data-value="hand cannon" data-state="off" title="Hand Cannon" aria-label="Hand Cannon"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/hand_cannon.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/hand_cannon.svg)"></span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="type" data-value="auto rifle" data-state="off" title="Auto Rifle" aria-label="Auto Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/auto_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/auto_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="type" data-value="pulse rifle" data-state="off" title="Pulse Rifle" aria-label="Pulse Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/pulse_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/pulse_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="type" data-value="scout rifle" data-state="off" title="Scout Rifle" aria-label="Scout Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/scout_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/scout_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="type" data-value="shotgun" data-state="off" title="Shotgun" aria-label="Shotgun"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/shotgun.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/shotgun.svg)"></span><span class="chip-mark" hidden></span></button>
+        <button type="button" class="chip icon-only" data-facet="type" data-value="combat bow" data-state="off" title="Combat Bow" aria-label="Combat Bow"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/bow.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/bow.svg)"></span><span class="chip-mark" hidden></span></button>
+      </div>
+    </section>
+
+    <div class="status-line" id="status-line">weapons · all</div>
+    <nav class="outline-strip" id="outline-strip" hidden aria-label="Group jump (scroll only)"></nav>
+
+    <div class="board-scroll" id="board-scroll">
+      <div class="results-meta" id="count-label"><strong>0</strong> families</div>
+      <div id="board"></div>
+    </div>
+
+    <nav class="tab-bar" aria-label="Primary">
+      <button type="button" aria-current="page"><span class="ico" aria-hidden="true">▣</span>Catalog</button>
+      <button type="button"><span class="ico" aria-hidden="true">⚙</span>Settings</button>
+    </nav>
+
+    <div class="detail-layer" id="detail-layer" hidden></div>
+
+    <div class="sheet-backdrop" id="sort-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <h2 id="sheet-title">Sort &amp; group</h2>
+          <button type="button" class="close" id="sheet-close" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+          <div class="sheet-section">
+            <h3>Sort priority</h3>
+            <p class="help">Same BR-CAT-010c defaults · reorder with ↑↓ · progressive sheet (not permanent dual lists).</p>
+            <div id="sort-list"></div>
+          </div>
+          <div class="sheet-section">
+            <h3>Group-by dimensions</h3>
+            <p class="help">Active + priority · does not rewrite filter match (BR-CAT-007).</p>
+            <div id="group-dim-list"></div>
+          </div>
+          <div class="sheet-foot">
+            <button type="button" class="btn-ghost" id="sheet-reset">Defaults</button>
+            <button type="button" class="btn-primary" id="sheet-apply">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="a11y-live" id="live" aria-live="polite"></div>
+
+  <script>
+(function () {
+  const EL = {
+    kinetic: "var(--el-kinetic)", arc: "var(--el-arc)", solar: "var(--el-solar)",
+    void: "var(--el-void)", stasis: "var(--el-stasis)", strand: "var(--el-strand)",
+  };
+  const SLOT_ORDER = { kinetic: 0, energy: 1, power: 2 };
+  const AMMO_ORDER = { primary: 0, special: 1, heavy: 2 };
+  const TYPE_ICON_CDN = "https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons";
+  const TYPE_ICON_FILE = {
+    "auto rifle": "auto_rifle.svg", "pulse rifle": "pulse_rifle.svg", "scout rifle": "scout_rifle.svg",
+    "hand cannon": "hand_cannon.svg", "sidearm": "sidearm.svg", "submachine gun": "smg.svg",
+    "combat bow": "bow.svg", "sniper rifle": "sniper_rifle.svg", "shotgun": "shotgun.svg",
+    "grenade launcher": "grenade_launcher.svg",
+  };
+  const EL_ICONS = {
+    solar: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png",
+    arc: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png",
+    void: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png",
+    kinetic: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png",
+  };
+  const AMMO_ICONS = {
+    primary: "https://www.bungie.net/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png",
+    special: "https://www.bungie.net/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png",
+    heavy: "https://www.bungie.net/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png",
+  };
+  function typeIconUrl(t) {
+    const f = TYPE_ICON_FILE[String(t || "").toLowerCase()];
+    return f ? `${TYPE_ICON_CDN}/${f}` : null;
+  }
+
+  const FAMILIES = [
+    { id: "midnight-coup", name: "Midnight Coup", type: "Hand Cannon", slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "legendary", frame: "aggressive", icon: "🔫",
+      versions: [
+        { id: "base", hash: 3141979346, label: "Base", owned: 2, powerLevels: [1810, 1805] },
+        { id: "adept", hash: 3141979347, label: "Adept", owned: 1, powerLevels: [1810] },
+        { id: "holofoil", hash: 3141979348, label: "Holofoil", owned: 0, powerLevels: [] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Firefly", "Frenzy"], unselected: ["Outlaw", "Rampage"], pool: ["Rapid Hit"] },
+        adept: { owned: true, selected: ["Outlaw", "Frenzy"], unselected: ["Firefly", "Rampage"], pool: ["Rapid Hit"] },
+        holofoil: { owned: false, selected: [], unselected: [], pool: ["Firefly", "Frenzy", "Outlaw"] },
+      } },
+    { id: "ringing-nail", name: "Ringing Nail", type: "Auto Rifle", slot: "energy", element: "solar", ammo: "primary", rarity: "legendary", frame: "adaptive", icon: "〰",
+      versions: [
+        { id: "base", hash: 2001001, label: "Base", owned: 1, powerLevels: [1800] },
+        { id: "adept", hash: 2001002, label: "Adept", owned: 0, powerLevels: [] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Subsistence", "Rampage"], unselected: ["Outlaw", "Swash"], pool: ["Kill Clip"] },
+        adept: { owned: false, selected: [], unselected: [], pool: ["Subsistence", "Rampage"] },
+      } },
+    { id: "ace-of-spades", name: "Ace of Spades", type: "Hand Cannon", slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "exotic", frame: "adaptive", icon: "♠",
+      versions: [{ id: "base", hash: 347366834, label: "Base", owned: 1, powerLevels: [1810] }],
+      perks: { base: { owned: true, selected: ["Memento Mori", "Firefly"], unselected: [], pool: [] } }, catalyst: "Ace of Spades Catalyst" },
+    { id: "multimach-ccx", name: "Multimach CCX", type: "Submachine Gun", slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "legendary", frame: "lightweight", icon: "≡",
+      versions: [
+        { id: "base", hash: 3001001, label: "Base", owned: 3, powerLevels: [1810, 1808, 1790] },
+        { id: "adept", hash: 3001002, label: "Adept", owned: 1, powerLevels: [1810] },
+        { id: "holofoil", hash: 3001003, label: "Holofoil", owned: 1, powerLevels: [1805] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Dynamic Sway", "Kill Clip"], unselected: ["Subsistence", "Frenzy"], pool: [] },
+        adept: { owned: true, selected: ["Dynamic Sway", "Frenzy"], unselected: ["Kill Clip"], pool: [] },
+        holofoil: { owned: true, selected: ["Outlaw", "Rampage"], unselected: ["Frenzy"], pool: [] },
+      } },
+    { id: "weighted-plate", name: "Weighted Plate", type: "Shotgun", slot: "energy", element: "void", ammo: "special", rarity: "legendary", frame: "precision", icon: "▣",
+      versions: [
+        { id: "base", hash: 4001001, label: "Base", owned: 0, powerLevels: [] },
+        { id: "adept", hash: 4001002, label: "Adept", owned: 0, powerLevels: [] },
+      ],
+      perks: {
+        base: { owned: false, selected: [], unselected: [], pool: ["Slideshot", "Opening Shot"] },
+        adept: { owned: false, selected: [], unselected: [], pool: ["Slideshot", "Opening Shot"] },
+      } },
+    { id: "hung-jury", name: "Hung Jury SR4", type: "Scout Rifle", slot: "kinetic", element: "kinetic", ammo: "primary", rarity: "legendary", frame: "precision", icon: "┊",
+      versions: [
+        { id: "base", hash: 6001001, label: "Base", owned: 1, powerLevels: [1810] },
+        { id: "adept", hash: 6001002, label: "Adept", owned: 1, powerLevels: [1810] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Rapid Hit", "Explosive"], unselected: ["Box Breathing"], pool: [] },
+        adept: { owned: true, selected: ["Rapid Hit", "Box Breathing"], unselected: ["Explosive"], pool: [] },
+      } },
+    { id: "trinity-ghoul", name: "Trinity Ghoul", type: "Combat Bow", slot: "energy", element: "arc", ammo: "primary", rarity: "exotic", frame: "precision", icon: "➳",
+      versions: [{ id: "base", hash: 7001001, label: "Base", owned: 0, powerLevels: [] }],
+      perks: { base: { owned: false, selected: [], unselected: [], pool: ["Lightning Rod", "Sneak Bow"] } } },
+    { id: "beloved", name: "Beloved", type: "Sniper Rifle", slot: "energy", element: "solar", ammo: "special", rarity: "legendary", frame: "adaptive", icon: "◎",
+      versions: [
+        { id: "base", hash: 8001001, label: "Base", owned: 0, powerLevels: [] },
+        { id: "adept", hash: 8001002, label: "Adept", owned: 1, powerLevels: [1808] },
+      ],
+      perks: {
+        base: { owned: false, selected: [], unselected: [], pool: ["Snapshot", "Box Breathing"] },
+        adept: { owned: true, selected: ["Snapshot", "Box Breathing"], unselected: ["Firing Line"], pool: [] },
+      } },
+  ];
+
+  const SORT_KEYS_DEFAULT = [
+    { id: "slot", label: "Slot" },
+    { id: "exotic", label: "Exotic first" },
+    { id: "ammo", label: "Ammo" },
+    { id: "archetype", label: "Archetype" },
+    { id: "name", label: "Name" },
+  ];
+  const GROUP_DIMS_ALL = [
+    { id: "slot", label: "Slot" },
+    { id: "element", label: "Element" },
+    { id: "type", label: "Weapon type" },
+    { id: "ammo", label: "Ammo" },
+    { id: "rarity", label: "Rarity" },
+  ];
+
+  const state = {
+    signedIn: true,
+    scope: "all",
+    search: "",
+    facets: {},
+    sortKeys: SORT_KEYS_DEFAULT.map((k) => k.id),
+    groupDims: [],
+    groupExpanded: {},
+    selectedFamilyId: null,
+    selectedVersionId: null,
+    canRoll: false,
+    view: "results",
+    sheetOpen: false,
+    draftSort: null,
+    draftGroup: null,
+  };
+
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  function announce(m) { const el = $("#live"); if (el) el.textContent = m; }
+
+  function familyOwnedTotal(f) { return f.versions.reduce((s, v) => s + (v.owned || 0), 0); }
+  function primaryVersion(f) { return f.versions.find((v) => v.id === "base") || f.versions[0]; }
+  function ownedVersions(f) { return f.versions.filter((v) => (v.owned || 0) > 0); }
+  function versionById(f, id) { return f.versions.find((v) => v.id === id) || primaryVersion(f); }
+  function facetState(facet, value) { return (state.facets[facet] && state.facets[facet][value]) || "off"; }
+
+  function cycleFacet(facet, value) {
+    const cur = facetState(facet, value);
+    const next = cur === "off" ? "include" : cur === "include" ? "exclude" : "off";
+    if (!state.facets[facet]) state.facets[facet] = {};
+    if (next === "off") delete state.facets[facet][value];
+    else state.facets[facet][value] = next;
+    if (!Object.keys(state.facets[facet] || {}).length) delete state.facets[facet];
+    renderAll();
+  }
+  function clearFacets() {
+    state.facets = {};
+    state.search = "";
+    $("#search").value = "";
+    renderAll();
+  }
+
+  function memberMatches(f, v) {
+    const q = state.search.trim().toLowerCase();
+    if (q) {
+      const hay = `${f.name} ${f.type} ${f.frame} ${v.label}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    for (const [facet, val] of [["slot", f.slot], ["element", f.element], ["ammo", f.ammo], ["type", f.type.toLowerCase()], ["rarity", f.rarity]]) {
+      const map = state.facets[facet];
+      if (!map || !Object.keys(map).length) continue;
+      const includes = Object.entries(map).filter(([, s]) => s === "include").map(([k]) => k);
+      const excludes = Object.entries(map).filter(([, s]) => s === "exclude").map(([k]) => k);
+      const vNorm = String(val).toLowerCase();
+      if (excludes.some((e) => e.toLowerCase() === vNorm)) return false;
+      if (includes.length && !includes.some((e) => e.toLowerCase() === vNorm)) return false;
+    }
+    return true;
+  }
+  function familySurvives(f) {
+    if (state.scope === "owned") {
+      if (!state.signedIn || familyOwnedTotal(f) === 0) return false;
+    }
+    return f.versions.some((v) => memberMatches(f, v));
+  }
+  function openVersionForFamily(f) {
+    const matching = f.versions.filter((v) => memberMatches(f, v));
+    const q = state.search.trim().toLowerCase();
+    if (q.includes("adept")) {
+      const a = matching.find((v) => v.id === "adept") || f.versions.find((v) => v.id === "adept");
+      if (a) return a.id;
+    }
+    if (matching.length === 1) return matching[0].id;
+    const prim = primaryVersion(f);
+    if (matching.some((v) => v.id === prim.id)) return prim.id;
+    return matching[0] ? matching[0].id : prim.id;
+  }
+  function compareFamilies(a, b) {
+    for (const key of state.sortKeys) {
+      let cmp = 0;
+      if (key === "slot") cmp = (SLOT_ORDER[a.slot] ?? 9) - (SLOT_ORDER[b.slot] ?? 9);
+      else if (key === "exotic") cmp = (a.rarity === "exotic" ? 0 : 1) - (b.rarity === "exotic" ? 0 : 1);
+      else if (key === "ammo") cmp = (AMMO_ORDER[a.ammo] ?? 9) - (AMMO_ORDER[b.ammo] ?? 9);
+      else if (key === "archetype") cmp = String(a.frame).localeCompare(String(b.frame)) || String(a.type).localeCompare(String(b.type));
+      else if (key === "name") cmp = a.name.localeCompare(b.name);
+      if (cmp) return cmp;
+    }
+    return a.name.localeCompare(b.name);
+  }
+  function groupKeyFor(f) {
+    if (!state.groupDims.length) return null;
+    return state.groupDims.map((d) => {
+      if (d === "type") return f.type;
+      return f[d] || "?";
+    }).join(" · ");
+  }
+  function groupLabel(key) { return key ? key.toUpperCase() : ""; }
+  function filteredSorted() { return FAMILIES.filter(familySurvives).sort(compareFamilies); }
+  function partitionGroups(list) {
+    if (!state.groupDims.length) return null;
+    const map = new Map();
+    for (const f of list) {
+      const k = groupKeyFor(f);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k).push(f);
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  function updateChipDom() {
+    $$(".chip[data-facet]").forEach((c) => {
+      const st = facetState(c.dataset.facet, c.dataset.value);
+      c.dataset.state = st;
+      const m = c.querySelector(".chip-mark");
+      if (m) {
+        if (st === "include") { m.hidden = false; m.textContent = "+"; }
+        else if (st === "exclude") { m.hidden = false; m.textContent = "−"; }
+        else { m.hidden = true; m.textContent = ""; }
+      }
+    });
+    const has = Object.keys(state.facets).length || state.search;
+    $("#reset-btn").hidden = !has;
+  }
+
+  function renderCard(f) {
+    const ownedTotal = familyOwnedTotal(f);
+    const showOwned = state.signedIn && ownedTotal > 0;
+    const ownedVers = ownedVersions(f);
+    const selected = state.selectedFamilyId === f.id;
+    const typeUrl = typeIconUrl(f.type);
+    const chips = (showOwned && ownedVers.length)
+      ? `<span class="version-chips" aria-label="Owned versions (indicators only)">${ownedVers.map((v) =>
+          `<span class="ver-chip" title="Owned: ${v.label}">${v.label}</span>`).join("")}</span>`
+      : "";
+    return `<button type="button" class="weapon-card rarity-${f.rarity}" data-family="${f.id}" aria-selected="${selected}"
+      aria-label="${f.name}, ${f.type}${showOwned ? `, ×${ownedTotal}` : ""}">
+      <span class="el-bloom" style="--el:${EL[f.element] || EL.kinetic}"></span>
+      <div class="card-top">
+        <span class="entity-icon" aria-hidden="true">${f.icon}</span>
+        <div class="card-text">
+          <span class="card-name">${f.name}</span>
+          <div class="card-type-row">
+            ${typeUrl ? `<span class="type-ico" style="-webkit-mask-image:url(${typeUrl});mask-image:url(${typeUrl})"></span>` : ""}
+            <span>${f.type}</span>
+          </div>
+          ${chips}
+        </div>
+      </div>
+      <div class="card-meta-row">
+        <span class="slot-letter">${f.slot[0].toUpperCase()}</span>
+        <img class="facet-img" src="${EL_ICONS[f.element] || EL_ICONS.kinetic}" alt="" />
+        <img class="facet-img" src="${AMMO_ICONS[f.ammo]}" alt="" />
+        ${showOwned ? `<span class="owned-count">×${ownedTotal}</span>` : ""}
+      </div>
+    </button>`;
+  }
+
+  function renderBoard() {
+    const board = $("#board");
+    const outline = $("#outline-strip");
+    const count = $("#count-label");
+
+    if (state.view === "loading") {
+      outline.hidden = true;
+      board.innerHTML = `<div class="skeleton-grid">${Array.from({ length: 6 }, () => `<div class="skeleton-card"></div>`).join("")}</div>`;
+      count.innerHTML = `Loading…`;
+      return;
+    }
+    if (state.view === "error") {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-error"><p><strong>Could not load catalog</strong></p>
+        <div class="actions"><button type="button" class="btn" id="err-retry">Retry</button></div></div>`;
+      $("#err-retry")?.addEventListener("click", () => { state.view = "results"; renderAll(); });
+      count.innerHTML = `Error`;
+      return;
+    }
+    if (state.view === "empty-sync") {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-empty"><p><strong>No owned weapons</strong></p>
+        <p>Sync inventory for Owned scope.</p>
+        <div class="actions"><button type="button" class="btn" id="sync-cta">Sync</button>
+        <button type="button" class="btn">Settings</button></div></div>`;
+      count.innerHTML = `<strong>0</strong> owned`;
+      return;
+    }
+
+    const list = filteredSorted();
+    if (!list.length) {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-empty"><p><strong>No matches</strong></p>
+        <p>BR-CAT-006 filters · group never rewrites match (BR-CAT-007).</p>
+        <div class="actions"><button type="button" class="btn" id="clear-cta">Clear filters</button></div></div>`;
+      $("#clear-cta")?.addEventListener("click", clearFacets);
+      count.innerHTML = `<strong>0</strong> families`;
+      return;
+    }
+
+    count.innerHTML = `<strong>${list.length}</strong> families · sort ${state.sortKeys.slice(0, 3).join("→")}${state.groupDims.length ? ` · group ${state.groupDims.join("→")}` : ""}`;
+    const groups = partitionGroups(list);
+
+    if (!groups) {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-flat">${list.map(renderCard).join("")}</div>`;
+    } else {
+      const showOutline = groups.length >= 2;
+      outline.hidden = !showOutline;
+      if (showOutline) {
+        outline.innerHTML = groups.map(([key, items]) =>
+          `<button type="button" class="outline-chip" data-jump="${key}">${groupLabel(key)}<span class="n">${items.length}</span></button>`
+        ).join("");
+        outline.querySelectorAll(".outline-chip").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const key = btn.getAttribute("data-jump");
+            state.groupExpanded[key] = true;
+            renderBoard();
+            requestAnimationFrame(() => {
+              const el = Array.from(document.querySelectorAll("[data-group-key]")).find((n) => n.getAttribute("data-group-key") === key);
+              el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              outline.querySelectorAll(".outline-chip").forEach((b) => b.removeAttribute("aria-current"));
+              btn.setAttribute("aria-current", "true");
+              announce(`Jump ${groupLabel(key)}`);
+            });
+          });
+        });
+      }
+      board.innerHTML = groups.map(([key, items]) => {
+        const expanded = state.groupExpanded[key] !== false;
+        return `<section class="group-section" data-group-key="${key}">
+          <button type="button" class="group-header" aria-expanded="${expanded}" data-toggle-group="${key}">
+            <span class="chev">▾</span><span>${groupLabel(key)}</span><span class="g-count">${items.length}</span>
+          </button>
+          <div class="group-body" ${expanded ? "" : "hidden"}>${items.map(renderCard).join("")}</div>
+        </section>`;
+      }).join("");
+      board.querySelectorAll("[data-toggle-group]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const key = btn.getAttribute("data-toggle-group");
+          state.groupExpanded[key] = !(state.groupExpanded[key] !== false);
+          renderBoard();
+        });
+      });
+    }
+
+    board.querySelectorAll(".weapon-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const id = card.getAttribute("data-family");
+        const f = FAMILIES.find((x) => x.id === id);
+        if (!f) return;
+        state.selectedFamilyId = id;
+        state.selectedVersionId = openVersionForFamily(f);
+        renderAll();
+        announce(`Opened ${f.name}`);
+      });
+    });
+  }
+
+  function renderDetail() {
+    const layer = $("#detail-layer");
+    if (!state.selectedFamilyId) {
+      layer.hidden = true;
+      layer.innerHTML = "";
+      return;
+    }
+    const f = FAMILIES.find((x) => x.id === state.selectedFamilyId);
+    if (!f) { layer.hidden = true; return; }
+    const ver = versionById(f, state.selectedVersionId || primaryVersion(f).id);
+    const perkData = (f.perks && f.perks[ver.id]) || { owned: false, selected: [], unselected: [], pool: [] };
+    const showOwned = state.signedIn && ver.owned > 0;
+    const typeUrl = typeIconUrl(f.type);
+
+    const versionSeg = f.versions.map((v) => {
+      const hasOwn = state.signedIn && v.owned > 0;
+      return `<button type="button" class="ver-btn" data-ver="${v.id}" aria-pressed="${v.id === ver.id}">
+        ${hasOwn ? `<span class="own-dot"></span>` : ""}<span>${v.label}</span>
+      </button>`;
+    }).join("");
+
+    let perksHtml = "";
+    if (perkData.owned && showOwned) {
+      perksHtml = `
+        <div class="section-title">Perks
+          <button type="button" class="view-toggle" id="can-roll-toggle" aria-pressed="${state.canRoll}">
+            Possible rolls<span class="knob"></span>
+          </button>
+        </div>
+        <div class="perk-grid-cols">
+          <div class="perk-col">
+            <div class="perk-col-label">Trait 1</div>
+            ${perkData.selected[0] ? `<div class="perk-cell selected"><span class="ico">◆</span><span class="cap">${perkData.selected[0]}</span></div>` : ""}
+            ${perkData.unselected[0] ? `<div class="perk-cell unselected"><span class="ico">◇</span><span class="cap">${perkData.unselected[0]}</span></div>` : ""}
+            ${state.canRoll && perkData.pool[0] ? `<div class="perk-cell possible"><span class="ico">○</span><span class="cap">${perkData.pool[0]}</span></div>` : ""}
+          </div>
+          <div class="perk-col">
+            <div class="perk-col-label">Trait 2</div>
+            ${perkData.selected[1] ? `<div class="perk-cell selected"><span class="ico">◆</span><span class="cap">${perkData.selected[1]}</span></div>` : ""}
+            ${perkData.unselected[1] ? `<div class="perk-cell unselected"><span class="ico">◇</span><span class="cap">${perkData.unselected[1]}</span></div>` : ""}
+          </div>
+        </div>`;
+    } else {
+      perksHtml = `
+        <div class="section-title">Perks · ③ only</div>
+        <div class="perk-grid-cols"><div class="perk-col">
+          ${(perkData.pool.length ? perkData.pool : ["Pool"]).slice(0, 3).map((n) =>
+            `<div class="perk-cell possible"><span class="ico">○</span><span class="cap">${n}</span></div>`).join("")}
+        </div></div>`;
+    }
+
+    layer.hidden = false;
+    layer.innerHTML = `
+      <div class="detail-nav">
+        <button type="button" class="back" id="detail-back">← Back</button>
+        <span class="title">${f.name}</span>
+      </div>
+      <div class="detail-scroll">
+        <div class="hero-row">
+          <span class="hero-icon">${f.icon}</span>
+          <div>
+            <h2 class="hero-name ${f.rarity === "exotic" ? "exotic" : ""}">${f.name}</h2>
+            <div class="hero-sub">${f.type} · ${ver.label}</div>
+            <div class="meta-icons">
+              <span class="meta-chip">${typeUrl ? `<span class="type-ico" style="-webkit-mask-image:url(${typeUrl});mask-image:url(${typeUrl})"></span>` : "?"}</span>
+              <span class="meta-chip" style="font-family:var(--font-m);font-size:10px">${f.slot[0].toUpperCase()}</span>
+              <span class="meta-chip"><img class="facet-img" src="${EL_ICONS[f.element] || EL_ICONS.kinetic}" alt="" /></span>
+              ${showOwned ? `<span class="meta-chip owned">×${ver.owned}</span>` : ""}
+            </div>
+          </div>
+        </div>
+        ${f.versions.length > 1 ? `
+        <div class="version-switch">
+          <span class="v-label">Family versions · full rebind</span>
+          <div class="version-seg">${versionSeg}</div>
+        </div>` : ""}
+        <p class="rebind-note"><strong>Rebind:</strong> perks + hash follow selected version. Grid keeps family selection.</p>
+        ${f.catalyst ? `<div class="section-title">Catalyst</div><p class="hero-sub">${f.catalyst} · display-only</p>` : ""}
+        ${perksHtml}
+        <button type="button" class="btn-stub" disabled>Add to Set</button>
+        <button type="button" class="btn-stub" disabled>Open Synergy</button>
+        <span class="stub-note">Set / Synergy create deferred — stubs disabled.</span>
+        <div class="hash-footer">hash ${ver.hash} · ${ver.id}</div>
+      </div>`;
+
+    $("#detail-back")?.addEventListener("click", () => {
+      state.selectedFamilyId = null;
+      state.selectedVersionId = null;
+      renderAll();
+    });
+    layer.querySelectorAll(".ver-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.selectedVersionId = btn.getAttribute("data-ver");
+        state.canRoll = false;
+        renderAll();
+      });
+    });
+    $("#can-roll-toggle")?.addEventListener("click", () => {
+      state.canRoll = !state.canRoll;
+      renderDetail();
+    });
+  }
+
+  function renderSortSheet() {
+    const list = $("#sort-list");
+    const dims = $("#group-dim-list");
+    const sortIds = state.draftSort || state.sortKeys.slice();
+    const active = state.draftGroup || state.groupDims.slice();
+    list.innerHTML = sortIds.map((id, i) => {
+      const meta = SORT_KEYS_DEFAULT.find((k) => k.id === id) || { label: id };
+      return `<div class="reorder-item">
+        <span class="name">${meta.label}</span>
+        <span class="prio">#${i + 1}</span>
+        <span class="moves">
+          <button type="button" data-move-sort="${id}" data-dir="-1" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" data-move-sort="${id}" data-dir="1" ${i === sortIds.length - 1 ? "disabled" : ""}>↓</button>
+        </span>
+      </div>`;
+    }).join("");
+    const ordered = [...active, ...GROUP_DIMS_ALL.map((d) => d.id).filter((id) => !active.includes(id))];
+    dims.innerHTML = ordered.map((id) => {
+      const meta = GROUP_DIMS_ALL.find((d) => d.id === id) || { label: id };
+      const on = active.includes(id);
+      const prio = on ? active.indexOf(id) + 1 : "—";
+      return `<div class="group-dim-row">
+        <label><input type="checkbox" data-toggle-dim="${id}" ${on ? "checked" : ""} /> On</label>
+        <span class="name">${meta.label}</span>
+        <span class="prio">#${prio}</span>
+        <span class="moves">
+          <button type="button" data-move-dim="${id}" data-dir="-1" ${!on || active.indexOf(id) === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" data-move-dim="${id}" data-dir="1" ${!on || active.indexOf(id) === active.length - 1 ? "disabled" : ""}>↓</button>
+        </span>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll("[data-move-sort]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-move-sort");
+        const dir = Number(btn.getAttribute("data-dir"));
+        const arr = (state.draftSort || state.sortKeys.slice()).slice();
+        const i = arr.indexOf(id);
+        const j = i + dir;
+        if (j < 0 || j >= arr.length) return;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        state.draftSort = arr;
+        renderSortSheet();
+      });
+    });
+    dims.querySelectorAll("[data-toggle-dim]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const id = cb.getAttribute("data-toggle-dim");
+        let arr = (state.draftGroup || state.groupDims.slice()).slice();
+        if (cb.checked) { if (!arr.includes(id)) arr.push(id); }
+        else arr = arr.filter((x) => x !== id);
+        state.draftGroup = arr;
+        renderSortSheet();
+      });
+    });
+    dims.querySelectorAll("[data-move-dim]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-move-dim");
+        const dir = Number(btn.getAttribute("data-dir"));
+        const arr = (state.draftGroup || state.groupDims.slice()).slice();
+        const i = arr.indexOf(id);
+        if (i < 0) return;
+        const j = i + dir;
+        if (j < 0 || j >= arr.length) return;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        state.draftGroup = arr;
+        renderSortSheet();
+      });
+    });
+  }
+
+  function openSheet() {
+    state.sheetOpen = true;
+    state.draftSort = state.sortKeys.slice();
+    state.draftGroup = state.groupDims.slice();
+    $("#sort-sheet").hidden = false;
+    $("#sort-group-btn").setAttribute("aria-expanded", "true");
+    renderSortSheet();
+  }
+  function closeSheet() {
+    state.sheetOpen = false;
+    state.draftSort = null;
+    state.draftGroup = null;
+    $("#sort-sheet").hidden = true;
+    $("#sort-group-btn").setAttribute("aria-expanded", "false");
+  }
+  function applySheet() {
+    if (state.draftSort) state.sortKeys = state.draftSort.slice();
+    if (state.draftGroup) { state.groupDims = state.draftGroup.slice(); state.groupExpanded = {}; }
+    closeSheet();
+    renderAll();
+  }
+
+  function renderStatus() {
+    const list = ["loading", "error", "empty-sync"].includes(state.view) ? [] : filteredSorted();
+    $("#status-line").innerHTML =
+      `weapons · <strong>${state.scope}</strong> · ${state.signedIn ? "in" : "out"} · <strong>${list.length}</strong> families` +
+      (state.groupDims.length ? ` · group ${state.groupDims.join("→")}` : "");
+    const lamp = $("#sync-lamp");
+    if (!state.signedIn) lamp.className = "lamp off";
+    else if (state.view === "error") lamp.className = "lamp danger";
+    else if (state.view === "loading" || state.view === "empty-sync") lamp.className = "lamp warn";
+    else lamp.className = "lamp";
+    $("#auth-out").setAttribute("aria-pressed", state.signedIn ? "false" : "true");
+    $("#auth-in").setAttribute("aria-pressed", state.signedIn ? "true" : "false");
+    const ownedBtn = $("#scope-owned-btn");
+    ownedBtn.disabled = !state.signedIn;
+    $$("[data-scope]").forEach((b) => b.setAttribute("aria-pressed", b.getAttribute("data-scope") === state.scope ? "true" : "false"));
+  }
+
+  function renderAll() {
+    updateChipDom();
+    renderStatus();
+    renderBoard();
+    renderDetail();
+  }
+
+  function applyScenario(id) {
+    state.view = "results";
+    state.selectedFamilyId = null;
+    state.selectedVersionId = null;
+    state.canRoll = false;
+    state.groupExpanded = {};
+    state.facets = {};
+    state.search = "";
+    $("#search").value = "";
+    state.scope = "all";
+    state.groupDims = [];
+    state.sortKeys = SORT_KEYS_DEFAULT.map((k) => k.id);
+    closeSheet();
+
+    switch (id) {
+      case "signed-out": state.signedIn = false; break;
+      case "loading": state.signedIn = true; state.view = "loading"; break;
+      case "empty-sync": state.signedIn = true; state.scope = "owned"; state.view = "empty-sync"; break;
+      case "zero": state.signedIn = true; state.facets = { type: { "linear fusion rifle": "include" } }; break;
+      case "group":
+        state.signedIn = true;
+        state.groupDims = ["slot"];
+        {
+          const groups = partitionGroups(filteredSorted());
+          if (groups && groups[0]) state.groupExpanded[groups[0][0]] = false;
+        }
+        break;
+      case "reorder": state.signedIn = true; state.groupDims = ["element"]; openSheet(); break;
+      case "type-filter": state.signedIn = true; state.facets = { type: { "hand cannon": "include" } }; break;
+      case "detail": state.signedIn = true; state.selectedFamilyId = "midnight-coup"; state.selectedVersionId = "base"; break;
+      case "adept-switch": state.signedIn = true; state.selectedFamilyId = "midnight-coup"; state.selectedVersionId = "adept"; break;
+      case "error": state.signedIn = true; state.view = "error"; break;
+      default: state.signedIn = true; break;
+    }
+    renderAll();
+    if (id === "reorder") renderSortSheet();
+  }
+
+  $("#scenario").addEventListener("change", (e) => applyScenario(e.target.value));
+  $("#auth-out").addEventListener("click", () => { state.signedIn = false; if (state.scope === "owned") state.scope = "all"; state.view = "results"; renderAll(); });
+  $("#auth-in").addEventListener("click", () => { state.signedIn = true; state.view = "results"; renderAll(); });
+  $$("[data-scope]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.disabled) return;
+      state.scope = btn.getAttribute("data-scope");
+      if (state.view === "empty-sync" && state.scope === "all") state.view = "results";
+      renderAll();
+    });
+  });
+  $("#search").addEventListener("input", (e) => { state.search = e.target.value; renderAll(); });
+  $$(".chip[data-facet]").forEach((chip) => chip.addEventListener("click", () => cycleFacet(chip.dataset.facet, chip.dataset.value)));
+  $("#reset-btn").addEventListener("click", clearFacets);
+  $("#sort-group-btn").addEventListener("click", () => { if (state.sheetOpen) closeSheet(); else openSheet(); });
+  $("#sheet-close").addEventListener("click", closeSheet);
+  $("#sheet-apply").addEventListener("click", applySheet);
+  $("#sheet-reset").addEventListener("click", () => {
+    state.draftSort = SORT_KEYS_DEFAULT.map((k) => k.id);
+    state.draftGroup = [];
+    renderSortSheet();
+  });
+  $("#sort-sheet").addEventListener("click", (e) => { if (e.target === $("#sort-sheet")) closeSheet(); });
+
+  applyScenario("results");
+})();
+  </script>
+</body>
+</html>

@@ -39,6 +39,14 @@ final palette = Theme.of(context).extension<FlapPalette>()!;
 final success = flapToneColor(context, 'success');
 ```
 
+## UI iteration
+
+Prefer **Widgetbook** over the full Windows host when polishing widgets:
+
+- App: [`apps/widgetbook`](../../apps/widgetbook) — see [ITERATE.md](../../apps/widgetbook/ITERATE.md)
+- Run: `cd apps/widgetbook; .\run-windows.ps1 -SkipPubGet` (or IDE launch **`widgetbook`**)
+- Edit this package → hot reload **`r`** in the Widgetbook terminal
+
 ## Tests
 
 ```powershell

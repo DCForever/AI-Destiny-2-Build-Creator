@@ -478,9 +478,11 @@ void main() {
       expect(find.byKey(const Key('perk_chevron_11')), findsOneWidget);
       // Selected has no chevron
       expect(find.byKey(const Key('perk_chevron_10')), findsNothing);
-      // Band labels present for owned tiers
-      expect(find.byKey(const Key('perk_band_selected_0')), findsOneWidget);
-      expect(find.byKey(const Key('perk_band_unselected_0')), findsOneWidget);
+      // GAP-CAT-PERK-004: no per-column band labels; legend + cell chrome only.
+      expect(find.byKey(const Key('perk_band_selected_0')), findsNothing);
+      expect(find.byKey(const Key('perk_band_unselected_0')), findsNothing);
+      expect(find.textContaining('On this copy'), findsNothing);
+      expect(find.textContaining('Unselected (instance)'), findsNothing);
       expect(find.byKey(const Key('catalog_perk_legend')), findsOneWidget);
     });
 
@@ -509,7 +511,9 @@ void main() {
       );
       // No E chrome on pool even if map says enhanced.
       expect(find.byKey(const Key('perk_enhanced_mark_13')), findsNothing);
-      expect(find.byKey(const Key('perk_band_possible_0')), findsOneWidget);
+      // GAP-CAT-PERK-004: no per-column band keys; ③ badge remains.
+      expect(find.byKey(const Key('perk_band_possible_0')), findsNothing);
+      expect(find.byKey(const Key('perk_tier_badge_13')), findsOneWidget);
     });
 
     testWidgets(
@@ -1297,6 +1301,87 @@ void main() {
       await tester.pump();
       expect(canRoll, isTrue);
       expect(find.byKey(const Key('perk_cell_22')), findsOneWidget); // ③ on
+    });
+
+    testWidgets(
+        'family version switch lists all members + rebind callback',
+        (tester) async {
+      final family = groupWeaponFamilies([
+        const CatalogItem(
+          hash: 101,
+          name: 'Midnight Coup',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          ammo: 'Primary',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+          owned: true,
+          ownedCount: 2,
+        ),
+        const CatalogItem(
+          hash: 102,
+          name: 'Midnight Coup (Adept)',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          ammo: 'Primary',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+          owned: true,
+          ownedCount: 1,
+        ),
+        const CatalogItem(
+          hash: 103,
+          name: 'Midnight Coup Holofoil',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          ammo: 'Primary',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+          owned: false,
+          ownedCount: 0,
+        ),
+      ]).single;
+
+      WeaponFamilyMember? selected;
+      var current = family.members.first.item;
+
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              CatalogWeaponDetail(
+                item: current,
+                instances: [
+                  _inst(id: 'a', power: 1800),
+                ],
+                familyMembers: family.members,
+                onSelectFamilyMember: (m) {
+                  setState(() {
+                    selected = m;
+                    current = m.item;
+                  });
+                },
+                onCanRollChanged: (_) {},
+                onCraftChanged: (_) {},
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('catalog_family_version_switch')), findsOneWidget);
+      expect(find.byKey(const Key('family_version_select_101')), findsOneWidget);
+      expect(find.byKey(const Key('family_version_select_102')), findsOneWidget);
+      expect(find.byKey(const Key('family_version_select_103')), findsOneWidget);
+      // Unowned Holofoil still listable for inspect.
+      expect(find.textContaining('Holofoil'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('family_version_select_102')));
+      await tester.pump();
+      expect(selected, isNotNull);
+      expect(selected!.hash, 102);
+      expect(current.hash, 102);
     });
 
     testWidgets('unowned: POSSIBLE ROLLS + full ③; no Possible rolls toggle',

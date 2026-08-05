@@ -669,7 +669,6 @@ class CatalogPerkGrid extends StatelessWidget {
                   child: _PerkColumnBody(
                     columnIndex: i,
                     column: columns[i],
-                    showBands: hasInstanceTiers || hasCraft,
                   ),
                 ),
               ),
@@ -782,12 +781,10 @@ class _PerkColumnBody extends StatelessWidget {
   const _PerkColumnBody({
     required this.columnIndex,
     required this.column,
-    required this.showBands,
   });
 
   final int columnIndex;
   final CatalogPerkColumn column;
-  final bool showBands;
 
   @override
   Widget build(BuildContext context) {
@@ -799,73 +796,15 @@ class _PerkColumnBody extends StatelessWidget {
       const SizedBox(height: 3),
     ];
 
-    String? lastBand;
+    // GAP-CAT-PERK-004: no per-column band text labels ("On this copy" etc.).
+    // Tier is conveyed by cell chrome only (①/②/③ badges, chevron, dashed).
     for (final cell in column.cells) {
-      final band = showBands ? _bandKeyForCell(cell) : null;
-      if (band != null && band != lastBand) {
-        lastBand = band;
-        children.add(
-          _PerkBandLabel(
-            key: Key('perk_band_${band}_$columnIndex'),
-            label: _bandLabelForKey(band),
-          ),
-        );
-      }
       children.add(_PerkCellTile(cell: cell));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: children,
-    );
-  }
-}
-
-/// Band identity for tier group labels (owned ①/②/③ or craft).
-String? _bandKeyForCell(CatalogPerkCell cell) {
-  if (cell.fromCraftPool) return 'craft';
-  if (cell.selected) return 'selected';
-  if (cell.isInstanceUnselected) return 'unselected';
-  if (cell.fromCanRollPool) return 'possible';
-  return null;
-}
-
-String _bandLabelForKey(String key) {
-  switch (key) {
-    case 'selected':
-      return '① On this copy';
-    case 'unselected':
-      return '② Unselected (instance)';
-    case 'possible':
-      return '③ Possible rolls';
-    case 'craft':
-      return '③ Possible crafted';
-    default:
-      return key;
-  }
-}
-
-class _PerkBandLabel extends StatelessWidget {
-  const _PerkBandLabel({super.key, required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = FlapPalette.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 2),
-      child: Text(
-        label.toUpperCase(),
-        textAlign: TextAlign.center,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: neonMono(
-          color: palette.muted,
-          fontSize: 7,
-          letterSpacing: 0.5,
-        ),
-      ),
     );
   }
 }
@@ -1528,6 +1467,8 @@ class CatalogWeaponDetail extends StatelessWidget {
     this.catalystComplete,
     this.headerTrailing,
     this.showOwnedMetaMark = true,
+    this.familyMembers = const [],
+    this.onSelectFamilyMember,
   });
 
   final CatalogItem item;
@@ -1557,6 +1498,10 @@ class CatalogWeaponDetail extends StatelessWidget {
 
   /// When false, meta strip omits ×N (signed-out honesty).
   final bool showOwnedMetaMark;
+
+  /// All family versions for detail switch (GAP-CAT-BROWSE-001). Unowned listable.
+  final List<WeaponFamilyMember> familyMembers;
+  final ValueChanged<WeaponFamilyMember>? onSelectFamilyMember;
 
   CatalogInstanceProjection? get _selected {
     if (instances.isEmpty) return null;
@@ -1623,6 +1568,15 @@ class CatalogWeaponDetail extends StatelessWidget {
               showOwnedMark: showOwnedMetaMark,
             ),
           ),
+          if (familyMembers.length > 1 && onSelectFamilyMember != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kSpace12, 0, kSpace12, kSpace8),
+              child: _FamilyVersionSwitch(
+                members: familyMembers,
+                selectedHash: item.hash,
+                onSelect: onSelectFamilyMember!,
+              ),
+            ),
           if (hasOwnedCopy) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kSpace12),
@@ -1699,6 +1653,58 @@ class CatalogWeaponDetail extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Family version switcher — full hash rebind on select (detail only).
+class _FamilyVersionSwitch extends StatelessWidget {
+  const _FamilyVersionSwitch({
+    required this.members,
+    required this.selectedHash,
+    required this.onSelect,
+  });
+
+  final List<WeaponFamilyMember> members;
+  final int selectedHash;
+  final ValueChanged<WeaponFamilyMember> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    return Column(
+      key: const Key('catalog_family_version_switch'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'VERSIONS',
+          style: neonMono(
+            color: palette.muted,
+            fontSize: 9,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            for (final m in members)
+              ChoiceChip(
+                key: Key('family_version_select_${m.hash}'),
+                label: Text(
+                  // Disambiguate multi-hash same-kind (e.g. five Ribbontail Base defs).
+                  weaponVersionSwitchLabel(m, members),
+                  style: neonMono(fontSize: 10),
+                ),
+                selected: m.hash == selectedHash,
+                onSelected: (_) => onSelect(m),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -74,6 +74,8 @@ class _CatalogPageState extends State<CatalogPage> {
   final List<CatalogGroupDimension> _groupBy = [];
 
   CatalogItem? _selected;
+  WeaponFamily? _selectedFamily;
+  List<WeaponFamily> _families = const [];
   List<CatalogInstanceProjection> _instances = const [];
   List<LinkedSynergyBadge> _reverseTags = const [];
   String? _actionMessage;
@@ -83,9 +85,19 @@ class _CatalogPageState extends State<CatalogPage> {
   bool _showCanRoll = false;
   bool _showCraft = false;
 
-  /// Secondary facets (ammo, archetype, class, group) behind "More".
-  /// Primary line (scope + free-text + element/slot icon chips) is always on.
+  /// Secondary facets (ammo, class, synergy) behind "More".
+  /// Primary line (scope + free-text + element/slot/type icon chips) is always on.
   bool _moreFiltersExpanded = false;
+
+  /// Session-only sort priority (GAP-CAT-BROWSE-003).
+  List<CatalogSortKey> _sortKeys = List<CatalogSortKey>.from(
+    kDefaultWeaponSortKeys,
+  );
+
+  /// Collapsed group keys (view-only; default expanded).
+  final Set<String> _collapsedGroups = {};
+  final Map<String, GlobalKey> _groupAnchorKeys = {};
+  String? _outlineActiveKey;
 
   OwnedCatalogBridge _createBridge() {
     return widget.bridge ??
@@ -157,7 +169,7 @@ class _CatalogPageState extends State<CatalogPage> {
         _error = load?.error;
         _emptyReason = load?.emptyReason ?? CatalogEmptyReason.none;
         _version = load?.version;
-        _results = _applyFilters();
+        _applyBrowse();
       });
       await _syncSelection();
     } catch (e) {
@@ -166,8 +178,10 @@ class _CatalogPageState extends State<CatalogPage> {
         _loading = false;
         _error = e.toString();
         _results = const [];
+        _families = const [];
         _instances = const [];
         _reverseTags = const [];
+        _selectedFamily = null;
       });
     }
   }
@@ -186,22 +200,90 @@ class _CatalogPageState extends State<CatalogPage> {
     );
   }
 
-  List<CatalogItem> _applyFilters() {
-    return _bridge.browse(_filters(), mode: _mode);
+  void _applyBrowse() {
+    if (_mode == CatalogBrowseMode.weapons) {
+      _families = _bridge.browseFamilies(
+        _filters(),
+        sortKeys: _sortKeys,
+      );
+      // Flat item list for status counts / empty checks.
+      _results = [
+        for (final f in _families)
+          for (final m in f.members) m.item,
+      ];
+    } else {
+      _families = const [];
+      _results = _bridge.browse(
+        _filters(),
+        mode: _mode,
+        sortKeys: _sortKeys,
+      );
+    }
   }
 
   List<CatalogGroup> _groupedResults() {
-    return groupCatalogItems(_results, List<CatalogGroupDimension>.from(_groupBy));
+    return groupCatalogItems(
+      _results,
+      List<CatalogGroupDimension>.from(_groupBy),
+    );
+  }
+
+  List<CatalogFamilyGroup> _groupedFamilies() {
+    return groupWeaponFamilyBrowse(
+      _families,
+      List<CatalogGroupDimension>.from(_groupBy),
+    );
   }
 
   void _refilter() {
     setState(() {
-      _results = _applyFilters();
+      _applyBrowse();
     });
     _syncSelection();
   }
 
   Future<void> _syncSelection() async {
+    // Sticky family: keep selection if family still visible after refilter.
+    if (_mode == CatalogBrowseMode.weapons && _selectedFamily != null) {
+      final key = _selectedFamily!.key;
+      WeaponFamily? still;
+      for (final f in _families) {
+        if (f.key == key) {
+          still = f;
+          break;
+        }
+      }
+      if (still == null) {
+        if (!mounted) return;
+        setState(() {
+          _selected = null;
+          _selectedFamily = null;
+          _instances = const [];
+          _reverseTags = const [];
+          _selectedInstanceId = null;
+        });
+        return;
+      }
+      // Family sticky; rebind selected hash if dropped from family or filters.
+      final sel = _selected;
+      final memberStill = sel != null && still.memberByHash(sel.hash) != null;
+      if (!memberStill) {
+        final opened = openVersionForFamily(
+          still,
+          filters: _filters(),
+          maxPowerByHash: _bridge.maxPowerByHash(),
+        );
+        if (!mounted) return;
+        setState(() {
+          _selectedFamily = still;
+          _selected = opened;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() => _selectedFamily = still);
+      }
+    }
+
     final sel = _selected;
     if (sel == null) {
       if (!mounted) return;
@@ -212,11 +294,15 @@ class _CatalogPageState extends State<CatalogPage> {
       });
       return;
     }
-    final stillVisible = _results.any((i) => i.hash == sel.hash);
+    final stillVisible = _mode == CatalogBrowseMode.weapons
+        ? (_selectedFamily?.memberByHash(sel.hash) != null ||
+            _families.any((f) => f.memberByHash(sel.hash) != null))
+        : _results.any((i) => i.hash == sel.hash);
     if (!stillVisible) {
       if (!mounted) return;
       setState(() {
         _selected = null;
+        _selectedFamily = null;
         _instances = const [];
         _reverseTags = const [];
         _selectedInstanceId = null;
@@ -262,12 +348,42 @@ class _CatalogPageState extends State<CatalogPage> {
   Future<void> _selectItem(CatalogItem item) async {
     setState(() {
       _selected = item;
+      _selectedFamily = null;
       _actionMessage = null;
       _showCanRoll = false;
       _showCraft = false;
       _selectedInstanceId = null;
       // Collapse secondary filters only — primary line stays visible.
       _moreFiltersExpanded = false;
+    });
+    await _syncSelection();
+  }
+
+  Future<void> _selectFamily(WeaponFamily family) async {
+    final opened = openVersionForFamily(
+      family,
+      filters: _filters(),
+      maxPowerByHash: _bridge.maxPowerByHash(),
+    );
+    setState(() {
+      _selectedFamily = family;
+      _selected = opened;
+      _actionMessage = null;
+      _showCanRoll = false;
+      _showCraft = false;
+      _selectedInstanceId = null;
+      _moreFiltersExpanded = false;
+    });
+    await _syncSelection();
+  }
+
+  Future<void> _selectFamilyMember(WeaponFamilyMember member) async {
+    setState(() {
+      _selected = member.item;
+      // Keep sticky family; full identity rebind for perks/instances.
+      _showCanRoll = false;
+      _showCraft = false;
+      _selectedInstanceId = null;
     });
     await _syncSelection();
   }
@@ -288,7 +404,9 @@ class _CatalogPageState extends State<CatalogPage> {
       _classNames = emptyFacet();
       _archetypes = emptyFacet();
       _groupBy.clear();
-      _results = _applyFilters();
+      _collapsedGroups.clear();
+      _selectedFamily = null;
+      _applyBrowse();
     });
     _syncSelection();
   }
@@ -330,7 +448,57 @@ class _CatalogPageState extends State<CatalogPage> {
       } else {
         _groupBy.add(dim);
       }
+      _collapsedGroups.clear();
     });
+  }
+
+  void _toggleGroupCollapse(String key) {
+    setState(() {
+      if (_collapsedGroups.contains(key)) {
+        _collapsedGroups.remove(key);
+      } else {
+        _collapsedGroups.add(key);
+      }
+    });
+  }
+
+  void _jumpToGroup(String key) {
+    setState(() {
+      _collapsedGroups.remove(key);
+      _outlineActiveKey = key;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final gk = _groupAnchorKeys[key];
+      final ctx = gk?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 280),
+          alignment: 0.05,
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _openSortGroupSheet() {
+    showCatalogSortGroupSheet(
+      context: context,
+      sortKeys: _sortKeys,
+      groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
+      availableGroupDimensions: weaponGroupDimensions,
+      onApply: (sortKeys, groupDims) {
+        setState(() {
+          _sortKeys = sortKeys;
+          _groupBy
+            ..clear()
+            ..addAll(groupDims);
+          _collapsedGroups.clear();
+          _applyBrowse();
+        });
+        _syncSelection();
+      },
+    );
   }
 
   void _cycleExotic() {
@@ -342,7 +510,7 @@ class _CatalogPageState extends State<CatalogPage> {
       } else {
         _exotic = null;
       }
-      _results = _applyFilters();
+      _applyBrowse();
     });
     _syncSelection();
   }
@@ -371,7 +539,8 @@ class _CatalogPageState extends State<CatalogPage> {
       _synergies = emptyFacet();
       _exotic = null;
       _groupBy.clear();
-      _results = _applyFilters();
+      _collapsedGroups.clear();
+      _applyBrowse();
     });
     _syncSelection();
   }
@@ -484,7 +653,7 @@ class _CatalogPageState extends State<CatalogPage> {
       await _bridge.refresh(reloadEntities: false);
       if (!mounted) return;
       setState(() {
-        _results = _applyFilters();
+        _applyBrowse();
         _actionMessage = 'Created Synergy "${created.name}" linked to ${item.name}.';
       });
       await _syncSelection();
@@ -515,6 +684,15 @@ class _CatalogPageState extends State<CatalogPage> {
         // K / E / P icon-only (mock density); labels via tooltip.
         iconOnly: true,
       ),
+      // GAP-CAT-BROWSE-004: weapon type silhouettes on primary line.
+      if (_mode == CatalogBrowseMode.weapons)
+        CatalogFacetGroup(
+          id: 'archetype',
+          values: catalogArchetypesForMode(_mode),
+          facet: _archetypes,
+          onCycle: _cycleArchetype,
+          iconOnly: true,
+        ),
     ];
   }
 
@@ -535,12 +713,14 @@ class _CatalogPageState extends State<CatalogPage> {
           facet: _classNames,
           onCycle: _cycleClass,
         ),
-      CatalogFacetGroup(
-        id: 'archetype',
-        values: catalogArchetypesForMode(_mode),
-        facet: _archetypes,
-        onCycle: _cycleArchetype,
-      ),
+      // Weapons: archetype is primary iconOnly — do not repeat as text under More.
+      if (_mode != CatalogBrowseMode.weapons)
+        CatalogFacetGroup(
+          id: 'archetype',
+          values: catalogArchetypesForMode(_mode),
+          facet: _archetypes,
+          onCycle: _cycleArchetype,
+        ),
       if (_bridge.synergyMembership.isNotEmpty)
         CatalogFacetGroup(
           id: 'synergy',
@@ -715,6 +895,31 @@ class _CatalogPageState extends State<CatalogPage> {
                         primaryGroups: _primaryFacetGroups(),
                         secondaryGroups: _secondaryFacetGroups(),
                       ),
+                      if (_mode == CatalogBrowseMode.weapons) ...[
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            key: const Key('catalog_sort_group_open'),
+                            onPressed: _openSortGroupSheet,
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: const Size(0, 28),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'SORT & GROUP',
+                              style: neonMono(
+                                color: palette.muted,
+                                fontSize: 10,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       if (_moreFiltersExpanded) ...[
                         const SizedBox(height: 4),
                         _groupByRow(),
@@ -909,19 +1114,80 @@ class _CatalogPageState extends State<CatalogPage> {
         ),
       );
     }
-    if (_results.isEmpty) {
+    final isWeapons = _mode == CatalogBrowseMode.weapons;
+    final empty = isWeapons ? _families.isEmpty : _results.isEmpty;
+    if (empty) {
       return _buildEmptyState();
     }
-    final groups = _groupedResults();
     final hasLocalOwned =
         _bridge.userId != null && _bridge.inventory.isNotEmpty;
-    final useGroupHeaders = _groupBy.isNotEmpty || groups.length > 1;
+    final showOwned =
+        hasLocalOwned || widget.services.oauthSession.isSignedIn;
 
+    if (isWeapons) {
+      final fGroups = _groupedFamilies();
+      final useGroupHeaders = _groupBy.isNotEmpty;
+      // Ensure stable GlobalKeys for outline jump.
+      if (useGroupHeaders) {
+        for (final g in fGroups) {
+          _groupAnchorKeys.putIfAbsent(g.key, GlobalKey.new);
+        }
+      }
+      final showOutline = useGroupHeaders && fGroups.length >= 2;
+      final grid = CatalogWeaponsGrid(
+        families: _families,
+        selectedHash: _selected?.hash,
+        selectedFamilyKey: _selectedFamily?.key,
+        showOwned: showOwned,
+        onSelectFamily: _selectFamily,
+        familyLeadingBuilder: (family) => EntityIcon(
+          key: Key('catalog_item_icon_${family.cardItem.hash}'),
+          icon: family.cardItem.icon,
+          size: 36,
+        ),
+        familyGroups: useGroupHeaders
+            ? [
+                for (final group in fGroups)
+                  (
+                    key: group.key,
+                    label: group.label,
+                    families: group.families,
+                  ),
+              ]
+            : null,
+        collapsedGroupKeys: Set<String>.from(_collapsedGroups),
+        onToggleGroup: _toggleGroupCollapse,
+        groupKeys: _groupAnchorKeys,
+      );
+      if (!showOutline) return grid;
+      return Row(
+        key: const Key('catalog_grid_with_outline'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: grid),
+          CatalogGroupOutlineRail(
+            groups: [
+              for (final g in fGroups)
+                (key: g.key, label: g.label, count: g.families.length),
+            ],
+            activeKey: _outlineActiveKey,
+            onJump: _jumpToGroup,
+          ),
+        ],
+      );
+    }
+
+    final groups = _groupedResults();
+    final useGroupHeaders = _groupBy.isNotEmpty;
+    if (useGroupHeaders) {
+      for (final g in groups) {
+        _groupAnchorKeys.putIfAbsent(g.key, GlobalKey.new);
+      }
+    }
     return CatalogWeaponsGrid(
       items: _results,
       selectedHash: _selected?.hash,
-      // Local inventory survives Public OAuth access expiry (~1h).
-      showOwned: hasLocalOwned || widget.services.oauthSession.isSignedIn,
+      showOwned: showOwned,
       onSelect: _selectItem,
       leadingBuilder: (item) => EntityIcon(
         key: Key('catalog_item_icon_${item.hash}'),
@@ -938,6 +1204,9 @@ class _CatalogPageState extends State<CatalogPage> {
                 ),
             ]
           : null,
+      collapsedGroupKeys: Set<String>.from(_collapsedGroups),
+      onToggleGroup: _toggleGroupCollapse,
+      groupKeys: _groupAnchorKeys,
     );
   }
 
@@ -1018,6 +1287,7 @@ class _CatalogPageState extends State<CatalogPage> {
               includeRandomized: true,
             );
 
+      final family = _selectedFamily;
       return CatalogWeaponDetail(
         item: item,
         instances: _instances,
@@ -1043,6 +1313,11 @@ class _CatalogPageState extends State<CatalogPage> {
             : null,
         catalystName: item.isExotic ? item.catalystName : null,
         catalystDescription: item.isExotic ? item.catalystDescription : null,
+        familyMembers: family?.members ?? const [],
+        onSelectFamilyMember:
+            family != null && family.members.length > 1
+                ? _selectFamilyMember
+                : null,
         headerTrailing: _reverseTags.isEmpty
             ? null
             : Wrap(

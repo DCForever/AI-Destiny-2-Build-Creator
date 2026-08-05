@@ -1251,6 +1251,7 @@ surfaces:
     kind: field
     area: catalog
     parent: catalog.weapons.filters
+    notes: Weapons primary-line iconOnly official type silhouettes (GAP-CAT-BROWSE-004); not text under More for weapons.
     status: active
   - id: catalog.weapons.filter.slot
     title: Slot facet
@@ -1269,18 +1270,22 @@ surfaces:
     kind: field
     area: catalog
     parent: catalog.weapons.filters
+    notes: Collapsible sections + outline jump when group-by + ≥2 groups (GAP-CAT-BROWSE-002); reorder via sort/group sheet (GAP-CAT-BROWSE-003). View-only — never rewrites filters (BR-CAT-007).
     rules:
       - DBR-ROLL-010
+      - BR-CAT-007
     status: active
   - id: catalog.weapons.list
     title: Result list / instance cards
     kind: surface
     area: catalog
     parent: catalog.weapons.owned
+    notes: Family cards (one-per name-normalized+slot/element/type family) + owned-only non-selectable version indicators (GAP-CAT-BROWSE-001). Density 200×112.
     rules:
       - 003:SC-001
       - 003:SC-004
       - 010:SC-001
+      - GAP-CAT-BROWSE-001
     status: active
     platforms:
       flutter-windows:
@@ -1345,6 +1350,7 @@ surfaces:
     area: catalog
     auth: signed-in
     parent: null
+    notes: Family version switch full hash rebind (GAP-CAT-BROWSE-001); no per-column perk band labels (GAP-CAT-PERK-004); cell chrome + legend only. Width 400.
     rules:
       - BR-CAT-006
       - BR-CAT-007
@@ -1355,6 +1361,8 @@ surfaces:
       - BR-CAT-016b
       - BR-CAT-016c
       - DBR-UI-006
+      - GAP-CAT-BROWSE-001
+      - GAP-CAT-PERK-004
       - DBR-UI-007
     status: active
     platforms:
