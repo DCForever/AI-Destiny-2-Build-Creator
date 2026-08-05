@@ -17,7 +17,7 @@ let meta = #{
 
 let load_schema = #{
     "type": "object",
-    "required": ["brief_path", "mockup_paths", "rule_ids", "hosts", "summary"],
+    "required": ["brief_path", "mockup_paths", "rule_ids", "hosts", "summary", "open_gap_ids", "blocking_gap_ids"],
     "properties": #{
         "brief_path": #{ "type": "string" },
         "mockup_paths": #{ "type": "array", "maxItems": 8, "items": #{ "type": "string" } },
@@ -25,18 +25,23 @@ let load_schema = #{
         "hosts": #{ "type": "array", "maxItems": 4, "items": #{ "type": "string" } },
         "summary": #{ "type": "string" },
         "widget_test_inventory": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
+        "open_gap_ids": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
+        "blocking_gap_ids": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
+        "open_gaps_summary": #{ "type": "string" },
     },
 };
 
 let plan_schema = #{
     "type": "object",
-    "required": ["files", "tests", "acceptance", "risks", "shot_matrix"],
+    "required": ["files", "tests", "acceptance", "risks", "shot_matrix", "addresses_gap_ids"],
     "properties": #{
         "files": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
         "tests": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
         "acceptance": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
         "risks": #{ "type": "array", "maxItems": 10, "items": #{ "type": "string" } },
         "product_map_updates": #{ "type": "array", "maxItems": 8, "items": #{ "type": "string" } },
+        "addresses_gap_ids": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
+        "deferred_gap_ids": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
         "shot_matrix": #{
             "type": "array",
             "minItems": 1,
@@ -81,10 +86,11 @@ let verify_structure_schema = #{
 
 let review_schema = #{
     "type": "object",
-    "required": ["matches_brief", "gaps", "widgetbook_backlog"],
+    "required": ["matches_brief", "gaps", "widgetbook_backlog", "blocking_gaps_still_open"],
     "properties": #{
         "matches_brief": #{ "type": "boolean" },
         "matches_dual_truth": #{ "type": "boolean" },
+        "blocking_gaps_still_open": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
         "gaps": #{ "type": "array", "maxItems": 12, "items": #{ "type": "string" } },
         "widgetbook_backlog": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
         "vault_note_updated": #{ "type": "boolean" },
@@ -105,6 +111,7 @@ let capture_schema = #{
         "human_capture_required",
         "launch_method",
         "slice_status",
+        "blocking_gaps_remaining",
     ],
     "properties": #{
         "shots_dir": #{ "type": "string" },
@@ -118,6 +125,8 @@ let capture_schema = #{
         "human_capture_required": #{ "type": "boolean" },
         "launch_method": #{ "type": "string" },
         "slice_status": #{ "type": "string" },
+        "blocking_gaps_remaining": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
+        "gaps_closed_this_run": #{ "type": "array", "maxItems": 16, "items": #{ "type": "string" } },
         "matrix_coverage": #{
             "type": "array",
             "maxItems": 16,
@@ -157,7 +166,12 @@ load_prompt += "; area=";
 load_prompt += area_s;
 load_prompt += "; subarea=";
 load_prompt += sub_s;
-load_prompt += ". USE read_file/grep. Read docs/ux-redesign/README.md, docs/ux-redesign/CAPTURE.md, the brief, mockup HTML, product rules referenced, and current flutter hosts. ";
+load_prompt += ". USE read_file/grep. Read docs/ux-redesign/README.md, docs/ux-redesign/CAPTURE.md, docs/ux-redesign/DUAL-TRUTH-GAPS.md ";
+load_prompt += "(and docs/ux-redesign/";
+load_prompt += area_s;
+load_prompt += "/DUAL-TRUTH-GAPS.md if present), the brief, mockup HTML, product rules referenced, and current flutter hosts. ";
+load_prompt += "From DUAL-TRUTH-GAPS.md: list open gap ids for this area in open_gap_ids; list those with blocks_dual_truth true in blocking_gap_ids; summarize titles in open_gaps_summary. ";
+load_prompt += "Empty arrays only if no open gaps for this area. ";
 load_prompt += "Return brief_path, mockup_paths, rule_ids, hosts, summary, widget_test_inventory from brief/architect notes. ";
 load_prompt += "Fail closed if mockups or brief missing.";
 
@@ -185,6 +199,9 @@ plan_prompt += "REQUIRED: shot_matrix — structured dual-truth scenario contrac
 plan_prompt += "Each row: id (PNG basename without .png), must (bool), proves (string tokens), drive (live-inventory|host-fixture|widget-test-only). ";
 plan_prompt += "At least one must:true row. Prefer host-fixture for enhanced map, catalyst-present, enhance-note when live inventory cannot guarantee. ";
 plan_prompt += "widget-test-only rows must NOT be must:true. ";
+plan_prompt += "REQUIRED: addresses_gap_ids — every blocking_gap_ids from Load must appear in addresses_gap_ids OR deferred_gap_ids. ";
+plan_prompt += "For addresses_gap_ids, plan files/tests/shot_matrix proves tokens from the gap Acceptance lines. ";
+plan_prompt += "PNG presence alone does NOT close visual-parity gaps (e.g. perk tile chrome vs mockup). ";
 plan_prompt += "Do not change design system tokens. Do not reintroduce stripped unrelated areas. Honor purity. USE tools to inspect existing packages.";
 
 let plan = agent(plan_prompt, #{
@@ -204,7 +221,8 @@ let gate = "";
 gate += "Approve this implementation plan (or request changes on resume):\n";
 gate += json_encode(plan.output);
 gate += "\n\nshot_matrix is the dual-truth contract — every must:true id needs a real PNG after Capture.\n";
-gate += "Brief/mockups: ";
+gate += "Open dual-truth gaps (DUAL-TRUTH-GAPS.md) must be addressed or explicitly deferred — PNG alone does not close visual-parity.\n";
+gate += "Brief/mockups/gaps: ";
 gate += loaded_json;
 await_user("user", gate);
 
@@ -217,6 +235,8 @@ impl_prompt += ". Load context: ";
 impl_prompt += loaded_json;
 impl_prompt += ". Write production Flutter code + unit tests + REQUIRED higher-level widget tests. ";
 impl_prompt += "If shot_matrix has drive=host-fixture rows, implement fixtures/seeds/harness so Capture can drive them (document under fixtures_for_matrix). ";
+impl_prompt += "If plan.addresses_gap_ids is non-empty, implement those gap Acceptance criteria (read docs/ux-redesign/DUAL-TRUTH-GAPS.md). ";
+impl_prompt += "For visual-parity gaps, match mockup interaction/chrome model (tiers, toggle shape, uniform tiles) — not only widget tests. ";
 impl_prompt += "Match mockup interaction model (not pixel-perfect HTML port). Reuse ui_flutter/tokens. ";
 impl_prompt += "Melos root is flutter/. No secrets. No purity violations. USE tools to edit and run tests as you go.";
 
@@ -275,7 +295,8 @@ rev_prompt += ". Impl: ";
 if impl != () && impl.success { rev_prompt += json_encode(impl.output); } else { rev_prompt += "n/a"; }
 rev_prompt += ". Structure verify: ";
 rev_prompt += json_encode(ver.output);
-rev_prompt += ". Set matches_brief from structure evidence. Set matches_dual_truth=false unless you have on-disk PNGs for every must shot_matrix row (usually false here). ";
+rev_prompt += ". Re-read docs/ux-redesign/DUAL-TRUTH-GAPS.md. Set blocking_gaps_still_open to open gap ids with blocks_dual_truth true for this area. ";
+rev_prompt += "Set matches_brief from structure evidence. Set matches_dual_truth=false if any blocking gap still open OR must PNGs missing. ";
 rev_prompt += "List gaps. List Widgetbook backlog use-cases (components, sub-screens, screens). ";
 rev_prompt += "If ship diverged, update vault UX note under requirements/Projects/Destiny 2 Build Creator/UX/. USE tools.";
 
@@ -291,9 +312,12 @@ phase("Capture");
 
 fn build_capture_prompt(loaded_json, plan_out, ver_out, rev_out, prior_cap_notes) {
     let cap_prompt = "";
-    cap_prompt += "DUAL-TRUTH CAPTURE GATE. Read docs/ux-redesign/CAPTURE.md and follow it exactly. ";
-    cap_prompt += "Score plan.shot_matrix — dual_truth_ok true ONLY if every must:true row is status=captured with a real PNG on disk. ";
-    cap_prompt += "Never invent images. ";
+    cap_prompt += "DUAL-TRUTH CAPTURE GATE. Read docs/ux-redesign/CAPTURE.md and docs/ux-redesign/DUAL-TRUTH-GAPS.md; follow both. ";
+    cap_prompt += "Score plan.shot_matrix — every must:true row needs status=captured with a real PNG on disk. ";
+    cap_prompt += "ALSO: re-read open gaps with blocks_dual_truth true for this area. dual_truth_ok true ONLY if matrix complete AND blocking_gaps_remaining is empty ";
+    cap_prompt += "(or human structure-only accepted those gap ids). PNG presence does NOT close visual-parity gaps (GAP-CAT-PERK-001 style). ";
+    cap_prompt += "If you closed a gap with real ship+mock proof, list id in gaps_closed_this_run and update DUAL-TRUTH-GAPS.md Status to closed with proof. ";
+    cap_prompt += "blocking_gaps_remaining = still-open blocking ids. Never invent images. ";
     cap_prompt += "Launch rules: NEVER flutter run/attach as foreground blocking shell. Prefer Dart MCP launch_app + Driver + stop_app. ";
     cap_prompt += "Shell fallback ONLY background=true with ENABLE_FLUTTER_DRIVER + lib/main_mcp.dart; set_frame_sync false; always stop/kill. ";
     cap_prompt += "launch_method must be mcp_launch_app | background_shell | none. ";
@@ -357,16 +381,17 @@ while !dual_ok && !structure_only && capture_round < max_capture_rounds {
     } else {
         hmsg += "capture agent failed";
     }
-    hmsg += "\n\nPROTOCOL (see docs/ux-redesign/CAPTURE.md):\n";
-    hmsg += "1) Finish missing must:true PNGs (Driver or drop files under shots_dir named <id>.png), then resume.\n";
-    hmsg += "2) Or accept structure-only: say you accept structure-only ship (dual-truth stays open for next redesign).\n";
-    hmsg += "3) Do not claim dual-truth complete without real PNGs.\n";
+    hmsg += "\n\nPROTOCOL (see docs/ux-redesign/CAPTURE.md + DUAL-TRUTH-GAPS.md):\n";
+    hmsg += "1) Finish missing must:true PNGs and/or close open blocking gaps (code + visual proof), then resume.\n";
+    hmsg += "2) Or accept structure-only: say you accept structure-only (list gap ids if partial); dual-truth stays open.\n";
+    hmsg += "3) File new visual mismatches anytime in docs/ux-redesign/DUAL-TRUTH-GAPS.md.\n";
+    hmsg += "4) Do not claim dual-truth complete with PNGs alone while blocking gaps remain open.\n";
     await_user("user", hmsg);
 
     let re_notes = "";
-    re_notes += "User resumed after dual-truth gate. Re-score matrix on disk. ";
+    re_notes += "User resumed after dual-truth gate. Re-score matrix on disk AND DUAL-TRUTH-GAPS.md blocking open gaps. ";
     re_notes += "If user accepted structure-only, set structure_only_accepted=true, dual_truth_ok=false, slice_status=structure-only, human_capture_required=false. ";
-    re_notes += "If new PNGs exist for must rows, set dual_truth_ok accordingly. Never invent images.";
+    re_notes += "dual_truth_ok only if matrix complete AND blocking_gaps_remaining empty. Never invent images.";
 
     cap = agent(build_capture_prompt(
         loaded_json,
@@ -406,12 +431,13 @@ report += "# area-implement report\n\n";
 report += "## Gates\n";
 report += "- STRUCTURE: pass\n";
 if dual_ok {
-    report += "- DUAL_TRUTH: pass\n";
+    report += "- DUAL_TRUTH: pass (matrix + no blocking open gaps)\n";
 } else if structure_only {
     report += "- DUAL_TRUTH: structure-only (accepted)\n";
 } else {
     report += "- DUAL_TRUTH: fail\n";
 }
+report += "- Gap log: docs/ux-redesign/DUAL-TRUTH-GAPS.md\n";
 report += "\n## Load\n";
 report += loaded_json;
 report += "\n\n## Plan (includes shot_matrix)\n";

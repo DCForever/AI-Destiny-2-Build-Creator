@@ -4,6 +4,7 @@
 **Capture run:** MCP Flutter Driver — live-inventory (prior) + host-fixture via `lib/main_residual_capture.dart` shell fallback (`launch_app` unavailable this session)  
 **Hosts:** windows (primary); mobile deferred  
 **Brief / approval:** `docs/ux-redesign/catalog/001-residual-polish-brief.md`, `MOCKUP-APPROVED.md`  
+**Open dual-truth gaps (do not soft-close):** [`DUAL-TRUTH-GAPS.md`](../../DUAL-TRUTH-GAPS.md) — **GAP-CAT-PERK-001**, **GAP-CAT-PERK-002** (P0).  
 **Mockups (structure SSoT):**
 
 - `docs/ux-redesign/catalog/mockups/001-residual-polish-desktop.html`

@@ -145,7 +145,9 @@ ctx_prompt += "(4) docs/product-map/surfaces.yaml + flows.yaml for this area, (5
 ctx_prompt += "(6) flutter/packages/ui_flutter and ui_tokens README/exports, (7) current host code under flutter/apps/windows_host and mobile_host, ";
 ctx_prompt += "(8) **required for iteration** — prior implementation screenshots beside mockups: list_dir docs/ux-redesign/<area>/implementation-shots/ and read any COMPARE.md; ";
 ctx_prompt += "include shot paths in prior_implementation_shots and compare index path in prior_compare_index (empty array/string if none yet). ";
-ctx_prompt += "Next-round mockups must react to deltas between prior mockups and those shots (not mockups alone). ";
+ctx_prompt += "(9) **required** — read docs/ux-redesign/DUAL-TRUTH-GAPS.md (and docs/ux-redesign/<area>/DUAL-TRUTH-GAPS.md if present); ";
+ctx_prompt += "list open gap ids for this area in constraints (prefix OPEN-GAP:) and treat blocks_dual_truth gaps as hard residuals for mockups/grill. ";
+ctx_prompt += "Next-round mockups must react to deltas between prior mockups and those shots (not mockups alone) and must address open visual-parity gaps. ";
 ctx_prompt += "Do not invent product rules. Return structured context only.";
 
 let ctx = agent(ctx_prompt, #{
@@ -238,6 +240,7 @@ mock_prompt += sub;
 mock_prompt += "-desktop.html and -mobile.html). ";
 mock_prompt += "Requirements: clickable facet chips (off/include/exclude cycle if filters apply), search, select item to detail, empty/error states, DISABLED stub CTAs with honest product copy when outbound areas do not exist. ";
 mock_prompt += "If prior_implementation_shots / prior_compare_index are present in context, treat them as ship ground truth: mockups must close residual gaps from COMPARE.md (structure + interaction), not redesign only from old HTML. ";
+mock_prompt += "Also read docs/ux-redesign/DUAL-TRUTH-GAPS.md open gaps for this area — visual-parity gaps must remain demonstrable in interactive mockups (do not silently drop agreed chrome). ";
 mock_prompt += "Approximate Neon void dark palette; icon-first density; no new brand. No build step. USE write/search_replace tools. Return paths and flows_demonstrated.";
 
 let mock = agent(mock_prompt, #{

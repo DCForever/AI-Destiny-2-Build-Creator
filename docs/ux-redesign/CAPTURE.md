@@ -1,15 +1,25 @@
 # Dual-truth capture protocol (area-implement)
 
-Closes the redesign ↔ implement loop. **Structure green ≠ dual-truth closed.**
+Closes the redesign ↔ implement loop. **Structure green ≠ dual-truth closed.**  
+**PNG on disk ≠ visual parity with mockup.**
 
 Agents and humans follow this for `area-implement` **Verify-structure**, **Capture**, and any manual re-capture.
 
-## Two gates
+## Three gates (all required for dual-truth close)
 
 | Gate | Proves | Fail policy |
 | --- | --- | --- |
 | **Structure** | `dart analyze` + widget/host tests for the plan | Hard fail — do not ship |
-| **Dual-truth** | PNG for every **must** row in the plan `shot_matrix` | Pause for human capture **or** explicit structure-only accept |
+| **Shot matrix** | PNG for every **must** row in the plan `shot_matrix` | Pause for human capture **or** explicit structure-only accept |
+| **Gap log** | No **open** gaps with `blocks_dual_truth: true` for this area/slice in [`DUAL-TRUTH-GAPS.md`](DUAL-TRUTH-GAPS.md) (unless structure-only accepted per gap) | Plan must address gaps; Capture must set `dual_truth_ok=false` while they remain open |
+
+### Human gap memory
+
+File visual/product mismatches you notice (mockup vs Flutter, or DIM vs Flutter) in:
+
+**[`docs/ux-redesign/DUAL-TRUTH-GAPS.md`](DUAL-TRUTH-GAPS.md)**
+
+Workflows **must read** that file on Load. Do not mark dual-truth closed while blocking gaps stay open.
 
 ## Shot matrix contract
 
@@ -32,7 +42,12 @@ Plan output **must** include `shot_matrix`: an array of scenario rows.
 
 Capture returns `matrix_coverage`: one entry per plan row with `status` ∈ `captured` | `missing` | `skipped`, optional `path` and `reason`.
 
-**`dual_truth_ok` is true only if every `must: true` row has `status: captured` and a real PNG on disk under the shots dir.** Never invent images.
+**`dual_truth_ok` is true only if:**
+
+1. Every `must: true` matrix row has `status: captured` and a real PNG on disk under the shots dir, **and**
+2. Every **open** gap in `DUAL-TRUTH-GAPS.md` for this area with `blocks_dual_truth: true` is either closed with proof **or** explicitly structure-only-accepted by the human.
+
+Never invent images. Never treat “PNG exists for desktop-detail-owned” as proof that mockup perk chrome matches ship.
 
 ## Flutter process rules (hard)
 

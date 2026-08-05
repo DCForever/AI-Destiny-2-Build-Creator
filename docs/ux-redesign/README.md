@@ -16,7 +16,9 @@ Capture           →  shot_matrix dual-truth PNGs next to mockups
 next area-ux-redesign uses mockups + shots as dual ground truth
 ```
 
-**Two implement gates:** **structure** (analyze + tests) and **dual-truth** (real PNGs for every `must` row in plan `shot_matrix`). Structure green alone is not ship-complete for dual-truth. Protocol: [`CAPTURE.md`](CAPTURE.md).
+**Implement gates:** **structure** (analyze + tests) · **shot matrix** (real PNGs for every `must` row) · **gap log** (open `blocks_dual_truth` items in [`DUAL-TRUTH-GAPS.md`](DUAL-TRUTH-GAPS.md)). Structure green + PNG presence alone is not dual-truth if the user can still see mockup≠ship. Protocol: [`CAPTURE.md`](CAPTURE.md).
+
+**How you flag gaps:** edit [`DUAL-TRUTH-GAPS.md`](DUAL-TRUTH-GAPS.md) (template inside). Paste or link screenshots; set `blocks_dual_truth: true` so implement cannot soft-close.
 
 ## Workflows
 
@@ -43,6 +45,7 @@ Run from Grok Build:
 docs/ux-redesign/
   README.md
   CAPTURE.md                      # dual-truth matrix + Flutter launch rules
+  DUAL-TRUTH-GAPS.md              # human gap memory (workflows must load)
   _template-area-brief.md
   _template-implementation-shots-compare.md
   <area>/
