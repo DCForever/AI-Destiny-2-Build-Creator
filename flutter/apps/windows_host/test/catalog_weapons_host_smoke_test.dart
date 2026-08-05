@@ -10,6 +10,7 @@ import 'package:destiny2_windows_host/catalog/catalog_page.dart';
 import 'package:destiny2_windows_host/catalog/owned_catalog_bridge.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'catalog_residual_polish_fixtures.dart';
@@ -399,12 +400,37 @@ void main() {
           find.byKey(const Key('perk_enhanced_mark_$kResidualBasePlugHash')),
           findsNothing,
         );
-        // Possible rolls OFF default — no enhance note yet.
-        final canRoll = tester.widget<FilterChip>(
-          find.byKey(const Key('catalog_toggle_can_roll')),
+        // Possible rolls OFF default — mock view-toggle (not FilterChip on toggle key).
+        expect(
+          find.ancestor(
+            of: find.byKey(const Key('catalog_toggle_can_roll')),
+            matching: find.byType(FilterChip),
+          ),
+          findsNothing,
         );
-        expect(canRoll.selected, isFalse);
+        expect(
+          find.descendant(
+            of: find.byKey(const Key('catalog_toggle_can_roll')),
+            matching: find.byType(FilterChip),
+          ),
+          findsNothing,
+        );
+        expect(
+          tester
+              .getSemantics(find.byKey(const Key('catalog_toggle_can_roll')))
+              .hasFlag(SemanticsFlag.isToggled),
+          isFalse,
+        );
         expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
+        // Tier chrome: ① badge + ② chevron on residual HC.
+        expect(
+          find.byKey(const Key('perk_tier_badge_$kResidualEnhancedPlugHash')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('perk_chevron_$kResidualBasePlugHash')),
+          findsOneWidget,
+        );
       },
     );
 

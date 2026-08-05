@@ -73,48 +73,6 @@ Anti-pattern this log prevents:
 
 ## Open gaps
 
-### GAP-CAT-PERK-001 — Perk grid visual parity vs residual mockups
-- **Status:** open
-- **Area:** catalog
-- **Slice:** residual-polish (also affects full / weapons detail)
-- **Kind:** visual-parity
-- **Severity:** P0
-- **blocks_dual_truth:** true
-- **Mockup SSoT:**
-  - `docs/ux-redesign/catalog/mockups/001-residual-polish-desktop.html` (detail owned OFF / can-roll ON)
-  - same patterns in `001-full-desktop.html` where three-tier bands appear
-- **Ship evidence:** live Catalog weapons detail (e.g. Ringing Nail) — Flutter FilterChip + non-uniform perk tiles; no ①②③ badges / band labels
-- **Agreed product:** Possible rolls is a **toggle OFF by default**; three tiers + enhanced orthogonal; mock structure is SSoT for chrome
-- **Failure mode:** residual implement closed dual-truth on meta/silhouettes/headers/fixture PNGs without matching **perk cell chrome** to mockup
-- **Acceptance (must prove):**
-  - Possible rolls control matches mock **toggle** language (not only Material FilterChip look-alike)
-  - ① selected / ② unselected / ③ possible have distinct mock-like chrome (badges and/or band labels)
-  - ② shows gold chevron (or mock-equivalent) for unselected instance
-  - ③ dashed muted cells when Possible rolls ON
-  - **Uniform perk tile size** in a column (fixed min size; no content-driven uneven cells)
-  - Equal-width columns retained at 400px detail; no H-scroll
-- **shot_matrix proves tokens:** `toggle-possible-rolls`, `tier-badges-or-bands`, `perk-uniform-tile`, `possible-dashed-muted`
-- **Owner next:** area-implement (ui_flutter CatalogPerkGrid / CatalogDetailToggles / cell tiles)
-
-### GAP-CAT-PERK-002 — Enhanced live path misses DIM-enhanced rolls
-- **Status:** open
-- **Area:** catalog
-- **Slice:** residual-polish
-- **Kind:** data-wiring
-- **Severity:** P0
-- **blocks_dual_truth:** true
-- **Mockup SSoT:** gold + **E** on ①/② when this copy’s plug is enhanced
-- **Ship evidence:** Ringing Nail owned detail — no E marks; DIM overview shows enhanced arrows on this roll’s plugs
-- **DIM / external:** DIM weapon overview enhanced indicators on selected plugs for this copy
-- **Agreed product:** Enhanced orthogonal to tier; E on instance ①/② only when data says enhanced; never fake E on ③ pool cells
-- **Failure mode:** host `isEnhancedPlug(name, '')` with **empty category** → only names containing “enhanced” mark true; Bungie enhanced plugs with base display names + `enhancements.v2` (or equivalent) never enter `plugEnhancedByHash`
-- **Acceptance (must prove):**
-  - Enhanced resolution uses plug **category** and/or inventory enhanced relation (not name-only empty category)
-  - Live or fixture weapon that DIM marks enhanced shows gold/E on matching ①/② cells
-  - ③ / unowned still: no E cells; note-only when pool can enhance
-- **shot_matrix proves tokens:** `e-on-12-live-or-fixture`, `no-e-on-3`, `plugEnhancedByHash-category`
-- **Owner next:** area-implement (windows_host OwnedCatalogBridge + bungie classify / socket category)
-
 ### GAP-CAT-PERK-003 — Possible crafted toggle visibility vs mock
 - **Status:** open
 - **Area:** catalog
@@ -129,12 +87,49 @@ Anti-pattern this log prevents:
 - **Acceptance (must prove):** when `craftAvailable`, toggle chrome matches Possible rolls control; craft pool cells use same ③-style dashed uniform tiles
 - **shot_matrix proves tokens:** `toggle-possible-crafted`, `craft-pool-as-possible-style`
 - **Owner next:** area-implement when craft fixtures available
+- **Note (2026-08-04):** Toggle chrome now shares `_CatalogViewToggle` with Possible rolls; craft pool cells reuse ③ dashed uniform tiles. Remains open until craftAvailable ON dual-truth re-shot / craft fixture Capture.
 
 ---
 
 ## Closed gaps
 
-_(None yet for this log. Move closed items here with proof.)_
+### GAP-CAT-PERK-001 — Perk grid visual parity vs residual mockups
+- **Status:** closed
+- **Closed:** 2026-08-04 (area-implement residual-polish perk chrome)
+- **Area:** catalog
+- **Slice:** residual-polish (also affects full / weapons detail)
+- **Kind:** visual-parity
+- **Severity:** P0
+- **blocks_dual_truth:** true
+- **Mockup SSoT:**
+  - `docs/ux-redesign/catalog/mockups/001-residual-polish-desktop.html` (detail owned OFF / can-roll ON)
+  - same patterns in `001-full-desktop.html` where three-tier bands appear
+- **Proof:**
+  - `CatalogDetailToggles` → mock pill+knob `_CatalogViewToggle` with `Semantics(toggled:)` (not FilterChip)
+  - `_PerkCellTile`: ①/②/③ badges, ② gold chevron, ③ dashed muted, `kCatalogPerkCellMinHeight=48`
+  - Band labels + legend when tiers present; equal Expanded @400; no H-scroll
+  - Widget tests in `flutter/packages/ui_flutter/test/catalog_weapon_detail_test.dart`
+  - Host smoke residual group asserts toggle + badges/chevron
+  - Capture re-shot 2026-08-04: `implementation-shots/001-residual-polish/desktop-detail-owned.png`, `desktop-can-roll.png`, `desktop-enhance-note.png` (host-fixture Residual Enhanced HC / Enhance-Note Scout)
+- **shot_matrix proves tokens:** `toggle-possible-rolls`, `tier-badges-or-bands`, `perk-uniform-tile`, `possible-dashed-muted`
+- **Capture note:** structure asserts required; PNG archive updated with post-chrome host-fixture Driver shots
+
+### GAP-CAT-PERK-002 — Enhanced live path misses DIM-enhanced rolls
+- **Status:** closed
+- **Closed:** 2026-08-04 (area-implement category enhanced map)
+- **Area:** catalog
+- **Slice:** residual-polish
+- **Kind:** data-wiring
+- **Severity:** P0
+- **blocks_dual_truth:** true
+- **Mockup SSoT:** gold + **E** on ①/② when this copy’s plug is enhanced
+- **Proof:**
+  - `buildPlugEnhancedMapFromItemDefs` — name + `plugCategoryIdentifier` via `isEnhancedPlug` (not empty-category primary)
+  - `WindowsRollTagEnrichment.plugEnhancedMapBuilder` wired through `InventorySyncController` → `OwnedCatalogBridge` fallback
+  - Host-fixture residual + widget tests: gold/E on ①/② only; no E on ③
+  - Unit: `roll_tags_test` / `owned_catalog_bridge_plug_names_test` category path without "Enhanced" in name
+  - Capture re-shot 2026-08-04: `implementation-shots/001-residual-polish/desktop-enhanced-live.png` (E on ① only) · `desktop-can-roll.png` / `desktop-enhance-note.png` (no E on ③)
+- **shot_matrix proves tokens:** `e-on-12-live-or-fixture`, `no-e-on-3`, `plugEnhancedByHash-category`
 
 ---
 
@@ -142,6 +137,6 @@ _(None yet for this log. Move closed items here with proof.)_
 
 | ID | Status | Area | blocks_dual_truth | Title |
 | --- | --- | --- | --- | --- |
-| GAP-CAT-PERK-001 | open | catalog | true | Perk grid visual parity vs residual mockups |
-| GAP-CAT-PERK-002 | open | catalog | true | Enhanced live path misses DIM-enhanced rolls |
+| GAP-CAT-PERK-001 | closed | catalog | true | Perk grid visual parity vs residual mockups |
+| GAP-CAT-PERK-002 | closed | catalog | true | Enhanced live path misses DIM-enhanced rolls |
 | GAP-CAT-PERK-003 | open | catalog | false | Possible crafted toggle visibility vs mock |

@@ -453,6 +453,7 @@ List<int> unknownPerkHashes(List<CatalogPerkColumn> columns) {
 
 /// Possible-rolls and possible-crafted toggles (both OFF by default at host).
 ///
+/// Mock residual chrome: pill + knob view-toggle (not Material FilterChip).
 /// Finder keys stay stable (`catalog_toggle_can_roll` / `catalog_toggle_craft`).
 class CatalogDetailToggles extends StatelessWidget {
   const CatalogDetailToggles({
@@ -474,43 +475,145 @@ class CatalogDetailToggles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = FlapPalette.of(context);
     return Wrap(
       key: const Key('catalog_detail_toggles'),
       spacing: 12,
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        FilterChip(
+        _CatalogViewToggle(
           key: const Key('catalog_toggle_can_roll'),
-          label: Text(
-            'Possible rolls',
-            style: neonMono(color: palette.foreground, fontSize: 11),
-          ),
-          selected: showCanRoll,
-          onSelected: onCanRollChanged,
-          visualDensity: VisualDensity.compact,
+          label: 'Possible rolls',
+          pressed: showCanRoll,
+          onChanged: onCanRollChanged,
         ),
         if (craftAvailable)
-          FilterChip(
+          _CatalogViewToggle(
             key: const Key('catalog_toggle_craft'),
-            label: Text(
-              'Possible crafted',
-              style: neonMono(color: palette.foreground, fontSize: 11),
-            ),
-            selected: showCraft,
-            onSelected: onCraftChanged,
-            visualDensity: VisualDensity.compact,
+            label: 'Possible crafted',
+            pressed: showCraft,
+            onChanged: onCraftChanged,
           ),
       ],
     );
   }
 }
 
+/// Mock residual view-toggle: pill border + track knob + [Semantics] toggled.
+///
+/// Matches `view-toggle` / `aria-pressed` in residual polish mockups.
+class _CatalogViewToggle extends StatelessWidget {
+  const _CatalogViewToggle({
+    super.key,
+    required this.label,
+    required this.pressed,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool pressed;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final borderColor = pressed
+        ? palette.accent.withValues(alpha: 0.45)
+        : palette.line;
+    final fg = pressed ? palette.foreground : palette.muted;
+    final bg = pressed
+        ? palette.accent.withValues(alpha: 0.12)
+        : palette.background;
+
+    return Semantics(
+      button: true,
+      toggled: pressed,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onChanged(!pressed),
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            height: 26,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: borderColor, width: kFlapRuleThickness),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: neonMono(
+                    color: fg,
+                    fontSize: 8,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _ToggleKnob(pressed: pressed, palette: palette),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToggleKnob extends StatelessWidget {
+  const _ToggleKnob({required this.pressed, required this.palette});
+
+  final bool pressed;
+  final FlapPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      width: 26,
+      height: 12,
+      decoration: BoxDecoration(
+        color: pressed
+            ? palette.accent.withValues(alpha: 0.2)
+            : palette.surfaceRaised,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: pressed
+              ? palette.accent.withValues(alpha: 0.45)
+              : palette.line,
+          width: kFlapRuleThickness,
+        ),
+      ),
+      child: Align(
+        alignment: pressed ? Alignment.centerRight : Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: pressed ? palette.accent : palette.muted,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Uniform perk cell min height (mock residual `.perk-cell { min-height: 48px }`).
+const double kCatalogPerkCellMinHeight = 48;
+
 /// Equal-width perk columns — no horizontal scroll at [kCatalogWeaponsDetailWidth].
 ///
 /// Icon-first cells with ellipsis captions; compress under multi-column ③ pools.
 /// Headers: ellipsis + Tooltip + Semantics (no pane widen / no H-scroll).
+/// Residual chrome: tier band labels + cell badges/chevron/dashed pool tiles.
 class CatalogPerkGrid extends StatelessWidget {
   const CatalogPerkGrid({
     super.key,
@@ -533,30 +636,236 @@ class CatalogPerkGrid extends StatelessWidget {
       );
     }
 
+    final hasInstanceTiers = columns.any(
+      (c) => c.cells.any((x) => x.selected || x.isInstanceUnselected),
+    );
+    final hasPool = columns.any(
+      (c) => c.cells.any((x) => x.fromCanRollPool || x.fromCraftPool),
+    );
+    final hasCraft = columns.any(
+      (c) => c.cells.any((x) => x.fromCraftPool),
+    );
+
     // Equal-width Expanded columns; never SingleChildScrollView Axis.horizontal.
-    return Row(
-      key: const Key('catalog_perk_grid'),
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      key: const Key('catalog_perk_grid_shell'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var i = 0; i < columns.length; i++)
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: i == columns.length - 1 ? 0 : 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _PerkColumnHeader(
-                    key: Key('perk_column_header_$i'),
-                    label: columns[i].label,
-                  ),
-                  const SizedBox(height: 3),
-                  for (final cell in columns[i].cells)
-                    _PerkCellTile(cell: cell),
-                ],
-              ),
-            ),
+        if (hasInstanceTiers || hasPool)
+          _PerkTierLegend(
+            owned: hasInstanceTiers,
+            showPossible: hasPool && !hasCraft,
+            craftMode: hasCraft && !hasInstanceTiers,
           ),
+        Row(
+          key: const Key('catalog_perk_grid'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < columns.length; i++)
+              Expanded(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(right: i == columns.length - 1 ? 0 : 4),
+                  child: _PerkColumnBody(
+                    columnIndex: i,
+                    column: columns[i],
+                    showBands: hasInstanceTiers || hasCraft,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ],
+    );
+  }
+}
+
+/// Compact ①/②/③ legend (mock residual `.perk-legend`).
+class _PerkTierLegend extends StatelessWidget {
+  const _PerkTierLegend({
+    required this.owned,
+    required this.showPossible,
+    required this.craftMode,
+  });
+
+  final bool owned;
+  final bool showPossible;
+  final bool craftMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final swatches = <Widget>[];
+    if (craftMode) {
+      swatches.add(_legendSwatch(palette, '③', 'Possible crafted', dashed: true));
+    } else if (owned) {
+      swatches.add(_legendSwatch(palette, '①', 'Selected', solid: true));
+      swatches.add(_legendSwatch(palette, '②', 'Unselected'));
+      if (showPossible) {
+        swatches.add(
+          _legendSwatch(palette, '③', 'Possible rolls', dashed: true),
+        );
+      }
+      swatches.add(
+        Text(
+          'E = enhanced on this copy (①/② only)',
+          style: neonMono(color: palette.muted, fontSize: 8),
+        ),
+      );
+    } else {
+      swatches.add(
+        _legendSwatch(palette, '③', 'Possible rolls only', dashed: true),
+      );
+    }
+
+    return Padding(
+      key: const Key('catalog_perk_legend'),
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Semantics(
+        label: 'Perk legend',
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          children: swatches,
+        ),
+      ),
+    );
+  }
+
+  Widget _legendSwatch(
+    FlapPalette palette,
+    String mark,
+    String label, {
+    bool solid = false,
+    bool dashed = false,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: solid
+                ? palette.accent.withValues(alpha: 0.55)
+                : Colors.transparent,
+            border: Border.all(
+              color: dashed
+                  ? palette.line.withValues(alpha: 0.7)
+                  : solid
+                      ? palette.accent.withValues(alpha: 0.9)
+                      : palette.lineStrong,
+              width: kFlapRuleThickness,
+              style: dashed ? BorderStyle.none : BorderStyle.solid,
+            ),
+            borderRadius: BorderRadius.circular(1),
+          ),
+          foregroundDecoration: dashed
+              ? _DashedBorderDecoration(
+                  color: palette.line.withValues(alpha: 0.7),
+                  strokeWidth: kFlapRuleThickness,
+                  radius: 1,
+                )
+              : null,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '$mark $label',
+          style: neonMono(color: palette.muted, fontSize: 8),
+        ),
+      ],
+    );
+  }
+}
+
+class _PerkColumnBody extends StatelessWidget {
+  const _PerkColumnBody({
+    required this.columnIndex,
+    required this.column,
+    required this.showBands,
+  });
+
+  final int columnIndex;
+  final CatalogPerkColumn column;
+  final bool showBands;
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[
+      _PerkColumnHeader(
+        key: Key('perk_column_header_$columnIndex'),
+        label: column.label,
+      ),
+      const SizedBox(height: 3),
+    ];
+
+    String? lastBand;
+    for (final cell in column.cells) {
+      final band = showBands ? _bandKeyForCell(cell) : null;
+      if (band != null && band != lastBand) {
+        lastBand = band;
+        children.add(
+          _PerkBandLabel(
+            key: Key('perk_band_${band}_$columnIndex'),
+            label: _bandLabelForKey(band),
+          ),
+        );
+      }
+      children.add(_PerkCellTile(cell: cell));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
+    );
+  }
+}
+
+/// Band identity for tier group labels (owned ①/②/③ or craft).
+String? _bandKeyForCell(CatalogPerkCell cell) {
+  if (cell.fromCraftPool) return 'craft';
+  if (cell.selected) return 'selected';
+  if (cell.isInstanceUnselected) return 'unselected';
+  if (cell.fromCanRollPool) return 'possible';
+  return null;
+}
+
+String _bandLabelForKey(String key) {
+  switch (key) {
+    case 'selected':
+      return '① On this copy';
+    case 'unselected':
+      return '② Unselected (instance)';
+    case 'possible':
+      return '③ Possible rolls';
+    case 'craft':
+      return '③ Possible crafted';
+    default:
+      return key;
+  }
+}
+
+class _PerkBandLabel extends StatelessWidget {
+  const _PerkBandLabel({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 2),
+      child: Text(
+        label.toUpperCase(),
+        textAlign: TextAlign.center,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: neonMono(
+          color: palette.muted,
+          fontSize: 7,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
@@ -640,6 +949,8 @@ class CatalogEnhanceNote extends StatelessWidget {
 /// Gold enhanced accent (game-language legendary enhance chrome).
 const Color _kEnhancedGold = Color(0xFFF5C542);
 
+/// Mock residual perk cell: uniform min height, tier badge, ② gold chevron,
+/// ③ dashed muted border, gold/E only when [CatalogPerkCell.enhanced].
 class _PerkCellTile extends StatelessWidget {
   const _PerkCellTile({required this.cell});
 
@@ -649,115 +960,271 @@ class _PerkCellTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
     final selected = cell.selected;
+    final unselected = cell.isInstanceUnselected;
     final pool = cell.fromCanRollPool || cell.fromCraftPool;
-    final enhanced = cell.enhanced;
-    final border = enhanced
+    final enhanced = cell.enhanced && !pool; // never E chrome on ③/craft
+    final borderColor = enhanced
         ? _kEnhancedGold.withValues(alpha: 0.85)
         : selected
-            ? palette.accent.withValues(alpha: 0.55)
+            ? palette.accent.withValues(alpha: 0.65)
             : pool
-                ? palette.line.withValues(alpha: 0.55)
-                : palette.line.withValues(alpha: 0.7);
+                ? palette.line.withValues(alpha: 0.45)
+                : palette.lineStrong;
     final bg = selected
         ? palette.accent.withValues(alpha: 0.12)
-        : palette.surfaceRaised.withValues(alpha: 0.5);
+        : pool
+            ? Colors.transparent
+            : palette.surfaceRaised.withValues(alpha: 0.5);
     final iconPath = cell.icon;
     final accent = enhanced
         ? _kEnhancedGold
         : selected
             ? palette.accent
-            : palette.muted;
+            : pool
+                ? palette.muted.withValues(alpha: 0.55)
+                : palette.muted;
     final tip = StringBuffer(cell.displayName);
     if (selected) {
       tip.write(' · ① on this copy');
-    } else if (cell.isInstanceUnselected) {
+    } else if (unselected) {
       tip.write(' · ② unselected (instance)');
     } else if (pool) {
-      tip.write(' · ③ possible roll');
+      tip.write(
+        cell.fromCraftPool ? ' · ③ possible crafted' : ' · ③ possible roll',
+      );
     }
     if (enhanced) tip.write(' · Enhanced');
 
-    return Tooltip(
-      message: tip.toString(),
-      child: Container(
-        key: Key('perk_cell_${cell.hash}'),
-        margin: const EdgeInsets.only(bottom: 3),
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: border, width: kFlapRuleThickness),
-          borderRadius: BorderRadius.circular(kRadiusMax),
-          boxShadow: enhanced
-              ? [
-                  BoxShadow(
-                    color: _kEnhancedGold.withValues(alpha: 0.2),
-                    blurRadius: 6,
-                  ),
-                ]
-              : null,
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
+    final tierBadge = selected
+        ? '①'
+        : unselected
+            ? '②'
+            : pool
+                ? '③'
+                : null;
+
+    final content = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (iconPath != null && iconPath.isNotEmpty)
-                  BungieContentIcon(
-                    key: selected ? Key('perk_selected_${cell.hash}') : null,
-                    pathOrUrl: iconPath,
-                    size: 28,
-                    // Parent Tooltip names the cell — avoid AX thrash on image load.
-                    fallback: _PerkIconFallback(
+            Opacity(
+              opacity: pool ? 0.45 : 1,
+              child: iconPath != null && iconPath.isNotEmpty
+                  ? BungieContentIcon(
+                      key: selected ? Key('perk_selected_${cell.hash}') : null,
+                      pathOrUrl: iconPath,
+                      size: 28,
+                      fallback: _PerkIconFallback(
+                        label: cell.displayName,
+                        color: accent,
+                        size: 28,
+                      ),
+                    )
+                  : _PerkIconFallback(
+                      key: selected ? Key('perk_selected_${cell.hash}') : null,
                       label: cell.displayName,
                       color: accent,
                       size: 28,
                     ),
-                  )
-                else
-                  _PerkIconFallback(
-                    key: selected ? Key('perk_selected_${cell.hash}') : null,
-                    label: cell.displayName,
-                    color: accent,
-                    size: 28,
-                  ),
-                const SizedBox(height: 1),
-                Text(
-                  // Caption under icon — never bare-hash primary (DBR-UI-006).
-                  cell.displayName,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: neonBody(
-                    color: enhanced
-                        ? _kEnhancedGold
-                        : selected
-                            ? palette.foreground
-                            : pool
-                                ? palette.muted
-                                : palette.foreground,
-                    fontSize: 8,
-                  ),
-                ),
-              ],
             ),
-            if (enhanced)
-              Positioned(
-                left: 0,
-                bottom: 0,
-                child: Text(
-                  key: Key('perk_enhanced_mark_${cell.hash}'),
-                  'E',
-                  style: neonMono(
-                    color: _kEnhancedGold,
-                    fontSize: 8,
-                  ),
-                ),
+            const SizedBox(height: 1),
+            Text(
+              // Caption under icon — never bare-hash primary (DBR-UI-006).
+              cell.displayName,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: neonBody(
+                color: enhanced
+                    ? _kEnhancedGold
+                    : selected
+                        ? palette.foreground
+                        : pool
+                            ? palette.muted.withValues(alpha: 0.65)
+                            : palette.foreground,
+                fontSize: 8,
               ),
+            ),
           ],
         ),
+        // Gold chevron (mock residual ② unselected).
+        if (unselected)
+          Positioned(
+            top: 0,
+            left: 0,
+            child: CustomPaint(
+              key: Key('perk_chevron_${cell.hash}'),
+              size: const Size(8, 8),
+              painter: _GoldChevronPainter(color: _kEnhancedGold),
+            ),
+          ),
+        // Tier badge ①/②/③ (mock residual corner mark).
+        if (tierBadge != null)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              key: Key('perk_tier_badge_${cell.hash}'),
+              width: 12,
+              height: 12,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? palette.accent.withValues(alpha: 0.45)
+                    : palette.surfaceRaised,
+                borderRadius: BorderRadius.circular(1),
+              ),
+              child: Text(
+                tierBadge,
+                style: neonMono(
+                  color: selected
+                      ? const Color(0xFF9FD0FF)
+                      : palette.muted,
+                  fontSize: 8,
+                ),
+              ),
+            ),
+          ),
+        if (enhanced)
+          Positioned(
+            left: 0,
+            bottom: 0,
+            child: Text(
+              key: Key('perk_enhanced_mark_${cell.hash}'),
+              'E',
+              style: neonMono(
+                color: _kEnhancedGold,
+                fontSize: 8,
+              ),
+            ),
+          ),
+      ],
+    );
+
+    final box = Container(
+      key: Key('perk_cell_${cell.hash}'),
+      margin: const EdgeInsets.only(bottom: 3),
+      padding: const EdgeInsets.fromLTRB(2, 4, 2, 4),
+      constraints: const BoxConstraints(minHeight: kCatalogPerkCellMinHeight),
+      decoration: BoxDecoration(
+        color: bg,
+        border: pool
+            ? null
+            : Border.all(color: borderColor, width: kFlapRuleThickness),
+        borderRadius: BorderRadius.circular(kRadiusMax),
+        boxShadow: enhanced
+            ? [
+                BoxShadow(
+                  color: _kEnhancedGold.withValues(alpha: 0.2),
+                  blurRadius: 6,
+                ),
+              ]
+            : null,
+      ),
+      foregroundDecoration: pool
+          ? _DashedBorderDecoration(
+              color: borderColor,
+              strokeWidth: kFlapRuleThickness,
+              radius: kRadiusMax.toDouble(),
+            )
+          : null,
+      child: content,
+    );
+
+    return Tooltip(
+      message: tip.toString(),
+      child: Semantics(
+        label: tip.toString(),
+        child: box,
       ),
     );
+  }
+}
+
+/// Corner gold chevron for ② unselected instance plugs (mock residual).
+class _GoldChevronPainter extends CustomPainter {
+  _GoldChevronPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GoldChevronPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+/// Lightweight dashed rect decoration (no extra package).
+class _DashedBorderDecoration extends Decoration {
+  const _DashedBorderDecoration({
+    required this.color,
+    this.strokeWidth = 1,
+    this.radius = 2,
+  });
+
+  final Color color;
+  final double strokeWidth;
+  final double radius;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) {
+    return _DashedBorderPainter(
+      color: color,
+      strokeWidth: strokeWidth,
+      radius: radius,
+    );
+  }
+}
+
+class _DashedBorderPainter extends BoxPainter {
+  _DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.radius,
+  });
+
+  final Color color;
+  final double strokeWidth;
+  final double radius;
+  static const double _dash = 3;
+  static const double _gap = 2;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size;
+    if (size == null) return;
+    final rect = offset & size;
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next = distance + _dash;
+        canvas.drawPath(
+          metric.extractPath(distance, next.clamp(0, metric.length)),
+          paint,
+        );
+        distance = next + _gap;
+      }
+    }
   }
 }
 

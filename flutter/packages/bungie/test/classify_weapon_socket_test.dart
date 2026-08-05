@@ -188,9 +188,18 @@ void main() {
     });
 
     test('detects enhanced plug variants', () {
+      // Name Enhanced OR category enhancements.v2 / enhanced; plain trait false.
       expect(isEnhancedPlug('Zen Moment', 'enhancements.v2'), isTrue);
       expect(isEnhancedPlug('Zen Moment Enhanced', 'traits.weapon'), isTrue);
       expect(isEnhancedPlug('Zen Moment', 'traits.weapon'), isFalse);
+      expect(isEnhancedPlug('Rapid Hit', ''), isFalse);
+      expect(isEnhancedPlug('Rapid Hit', 'enhancements.v2_general'), isTrue);
+      expect(isEnhancedPlug(null, 'enhanced.trait'), isTrue);
+      // Avoid over-broad enhancements.* (armor masterwork is not weapon enhance).
+      expect(
+        isEnhancedPlug('Masterwork', 'enhancements.weapon.masterwork'),
+        isFalse,
+      );
     });
   });
 }

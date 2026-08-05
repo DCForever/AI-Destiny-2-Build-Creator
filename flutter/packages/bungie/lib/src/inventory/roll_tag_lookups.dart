@@ -1,3 +1,4 @@
+import 'classify_weapon_socket.dart';
 import 'roll_tags.dart';
 
 /// Build plugHash → display name from DestinyInventoryItemDefinition-shaped data.
@@ -43,6 +44,42 @@ Map<int, String> buildPerkIconMapFromItemDefs(
     final icon = display['icon'];
     if (icon is String && icon.trim().isNotEmpty) {
       map[hash] = icon.trim();
+    }
+  }
+  return map;
+}
+
+/// Build plugHash → enhanced flag from DestinyInventoryItemDefinition.
+///
+/// Primary enhanced path for catalog gold/E (GAP-CAT-PERK-002): uses
+/// [isEnhancedPlug] with **name + plugCategoryIdentifier** so plugs whose
+/// display name omits "Enhanced" but sit under `enhancements.v2` / `enhanced`
+/// categories still mark true. Only `true` entries are retained (unknown /
+/// false omitted). Never invents hashes.
+///
+/// Name-only empty-category is a **fallback** for hosts without raw defs —
+/// not the primary production path.
+Map<int, bool> buildPlugEnhancedMapFromItemDefs(
+  Map<dynamic, dynamic> inventoryItemDefinitionTable,
+  Iterable<int> plugHashes,
+) {
+  if (plugHashes.isEmpty) return const {};
+
+  final map = <int, bool>{};
+  for (final hash in plugHashes.toSet()) {
+    if (hash == 0) continue;
+    final raw = _tableEntry(inventoryItemDefinitionTable, hash);
+    if (raw is! Map) continue;
+    final display = raw['displayProperties'];
+    final name = display is Map ? display['name'] as String? : null;
+    var category = '';
+    final plugBlock = raw['plug'];
+    if (plugBlock is Map) {
+      final cat = plugBlock['plugCategoryIdentifier'];
+      if (cat is String) category = cat;
+    }
+    if (isEnhancedPlug(name, category)) {
+      map[hash] = true;
     }
   }
   return map;
@@ -120,6 +157,11 @@ Map<int, RollTagWeaponMeta> buildWeaponRollMetaLookup(
 
 /// Optional async builder: plug hashes → perk display names.
 typedef PerkNameMapBuilder = Future<Map<int, String>> Function(
+  List<int> plugHashes,
+);
+
+/// Optional async builder: plug hashes → enhanced flags (category + name).
+typedef PlugEnhancedMapBuilder = Future<Map<int, bool>> Function(
   List<int> plugHashes,
 );
 

@@ -7,6 +7,11 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 /// Drive with injectable [OwnedCatalogBridge] + signed-in inventory on
 /// [CatalogPage]. Keys stay stable for Flutter Driver / widget finders.
 ///
+/// Enhanced path (GAP-CAT-PERK-002): seed [kResidualPlugEnhancedByHash] and/or
+/// `plugEnhancedMapBuilder` that marks category-enhanced hashes (name may omit
+/// "Enhanced"). Production uses `buildPlugEnhancedMapFromItemDefs` via
+/// inventorySync; fixtures seed the map so Capture does not need raw manifest.
+///
 /// See `docs/ux-redesign/catalog/implementation-shots/001-residual-polish/COMPARE.md`.
 
 // ---------------------------------------------------------------------------

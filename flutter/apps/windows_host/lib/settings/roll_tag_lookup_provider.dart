@@ -5,17 +5,21 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 ///
 /// - **Perk names:** raw `DestinyInventoryItemDefinition.displayProperties.name`
 /// - **Perk icons:** raw `displayProperties.icon` (Bungie CDN path)
+/// - **Enhanced flags:** name + `plug.plugCategoryIdentifier` via
+///   [buildPlugEnhancedMapFromItemDefs] (GAP-CAT-PERK-002; not name-only)
 /// - **Weapon meta:** OfflineCatalog legendary rows with `frame` + `itemTypeName`
 class WindowsRollTagEnrichment {
   const WindowsRollTagEnrichment({
     required this.perkNameMapBuilder,
     required this.perkIconMapBuilder,
     required this.weaponRollMetaLookupBuilder,
+    required this.plugEnhancedMapBuilder,
   });
 
   final PerkNameMapBuilder perkNameMapBuilder;
   final PerkNameMapBuilder perkIconMapBuilder;
   final WeaponRollMetaLookupBuilder weaponRollMetaLookupBuilder;
+  final PlugEnhancedMapBuilder plugEnhancedMapBuilder;
 }
 
 WindowsRollTagEnrichment createWindowsRollTagEnrichment({
@@ -71,6 +75,18 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
     }
   }
 
+  Future<Map<int, bool>> plugEnhancedBuilder(List<int> plugHashes) async {
+    final empty = <int, bool>{};
+    if (plugHashes.isEmpty) return empty;
+    try {
+      final table = await loadItemDefs();
+      if (table == null) return empty;
+      return buildPlugEnhancedMapFromItemDefs(table, plugHashes);
+    } catch (_) {
+      return empty;
+    }
+  }
+
   Future<Map<int, RollTagWeaponMeta>> weaponBuilder(List<int> itemHashes) async {
     if (itemHashes.isEmpty) return const {};
     if (offlineCatalog.baseItems.isEmpty) {
@@ -96,6 +112,7 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
     perkNameMapBuilder: perkNameBuilder,
     perkIconMapBuilder: perkIconBuilder,
     weaponRollMetaLookupBuilder: weaponBuilder,
+    plugEnhancedMapBuilder: plugEnhancedBuilder,
   );
 }
 

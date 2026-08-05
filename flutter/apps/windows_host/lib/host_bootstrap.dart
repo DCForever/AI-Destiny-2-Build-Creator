@@ -183,6 +183,7 @@ class HostBootstrap {
           equipmentBucketLookupBuilder: lookupBuilder,
           perkNameMapBuilder: rollTags.perkNameMapBuilder,
           perkIconMapBuilder: rollTags.perkIconMapBuilder,
+          plugEnhancedMapBuilder: rollTags.plugEnhancedMapBuilder,
           weaponRollMetaLookupBuilder: rollTags.weaponRollMetaLookupBuilder,
           weaponSocketContextBuilder: sockets.weaponSocketContextBuilder,
         );

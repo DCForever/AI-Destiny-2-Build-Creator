@@ -44,9 +44,10 @@ class OwnedCatalogBridge {
 
   /// Optional builder: plug hashes → enhanced flags (category path).
   ///
-  /// When null, enhanced flags are derived from resolved names via
-  /// [isEnhancedPlug] after [ensurePlugNames] (name-heuristic host map).
-  final Future<Map<int, bool>> Function(List<int> hashes)? plugEnhancedMapBuilder;
+  /// When null, falls back to [InventorySyncController.plugEnhancedMapBuilder]
+  /// (production category path from raw item defs). Name-heuristic
+  /// [isEnhancedPlug] with empty category is last-resort only.
+  final PlugEnhancedMapBuilder? plugEnhancedMapBuilder;
 
   Map<int, String> _plugNameByHash;
   Map<int, String> _plugIconByHash;
@@ -167,11 +168,14 @@ class OwnedCatalogBridge {
     await _resolveEnhancedFlags(list);
   }
 
-  /// Populate [plugEnhancedByHash] from optional builder + name heuristic.
+  /// Populate [plugEnhancedByHash] from category builder + name heuristic.
   ///
-  /// Only stores `true` entries (unknown / false hashes omitted from map).
+  /// Order: explicit [plugEnhancedMapBuilder] → inventorySync builder
+  /// (category path) → name-only [isEnhancedPlug] fallback. Only stores
+  /// `true` entries (unknown / false hashes omitted from map).
   Future<void> _resolveEnhancedFlags(List<int> hashes) async {
-    final builder = plugEnhancedMapBuilder;
+    final builder =
+        plugEnhancedMapBuilder ?? inventorySync.plugEnhancedMapBuilder;
     if (builder != null) {
       try {
         final raw = await builder(List<int>.from(hashes));
@@ -185,7 +189,7 @@ class OwnedCatalogBridge {
       }
     }
 
-    // Name-heuristic path (isEnhancedPlug) for hashes with known names.
+    // Name-heuristic fallback when category builder omitted the hash.
     for (final h in hashes) {
       if (_plugEnhancedByHash[h] == true) continue;
       final name = _plugNameByHash[h];

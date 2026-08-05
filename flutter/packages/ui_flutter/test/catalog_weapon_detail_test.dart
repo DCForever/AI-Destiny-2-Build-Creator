@@ -2,6 +2,7 @@ import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _wrap(Widget child) {
@@ -33,7 +34,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('CatalogDetailToggles', () {
-    testWidgets('Possible rolls + craft OFF by default; craft hidden when unavailable',
+    testWidgets(
+        'Possible rolls is mock view-toggle (not FilterChip); OFF default; Semantics toggled; craft hidden when craftAvailable false',
         (tester) async {
       var canRoll = false;
       var craft = false;
@@ -65,19 +67,70 @@ void main() {
         ),
       );
 
-      final canRollChip = tester
-          .widget<FilterChip>(find.byKey(const Key('catalog_toggle_can_roll')).first);
-      expect(canRollChip.selected, isFalse);
-      expect(find.text('Possible rolls'), findsWidgets);
+      // Mock residual chrome: no Material FilterChip look-alike.
+      expect(find.byType(FilterChip), findsNothing);
+      // Two toggle rows (craftAvailable true + false) both expose can-roll key.
+      expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNWidgets(2));
+      expect(find.textContaining('POSSIBLE ROLLS'), findsWidgets);
+
+      final canRollFinder = find.byKey(const Key('catalog_toggle_can_roll')).first;
+      final canRollSem = tester.getSemantics(canRollFinder);
+      expect(canRollSem.hasFlag(SemanticsFlag.isToggled), isFalse);
+      expect(canRollSem.hasFlag(SemanticsFlag.isButton), isTrue);
+
       expect(find.byKey(const Key('catalog_toggle_craft')), findsOneWidget);
 
-      // craftAvailable false → craft chip hidden.
+      // craftAvailable false → craft toggle hidden.
       expect(
         find.descendant(
           of: find.byKey(const Key('toggles_no_craft')),
           matching: find.byKey(const Key('catalog_toggle_craft')),
         ),
         findsNothing,
+      );
+
+      // Tap first (craftAvailable) toggles Semantics + callback.
+      await tester.tap(canRollFinder);
+      await tester.pump();
+      expect(canRoll, isTrue);
+      final toggledSem = tester.getSemantics(canRollFinder);
+      expect(toggledSem.hasFlag(SemanticsFlag.isToggled), isTrue);
+    });
+
+    testWidgets(
+        'craft toggle same chrome as Possible rolls when craftAvailable true',
+        (tester) async {
+      var craft = false;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              CatalogDetailToggles(
+                showCanRoll: false,
+                showCraft: craft,
+                craftAvailable: true,
+                onCanRollChanged: (_) {},
+                onCraftChanged: (v) => setState(() => craft = v),
+              ),
+            );
+          },
+        ),
+      );
+      expect(find.byType(FilterChip), findsNothing);
+      expect(find.byKey(const Key('catalog_toggle_craft')), findsOneWidget);
+      final craftSem = tester.getSemantics(
+        find.byKey(const Key('catalog_toggle_craft')),
+      );
+      expect(craftSem.hasFlag(SemanticsFlag.isToggled), isFalse);
+      expect(craftSem.hasFlag(SemanticsFlag.isButton), isTrue);
+      await tester.tap(find.byKey(const Key('catalog_toggle_craft')));
+      await tester.pump();
+      expect(craft, isTrue);
+      expect(
+        tester
+            .getSemantics(find.byKey(const Key('catalog_toggle_craft')))
+            .hasFlag(SemanticsFlag.isToggled),
+        isTrue,
       );
     });
   });
@@ -394,6 +447,116 @@ void main() {
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: colsOn)));
       expect(find.byKey(const Key('perk_cell_13')), findsOneWidget);
       expect(find.text('Polygonal Rifling'), findsOneWidget);
+    });
+
+    testWidgets(
+        'owned: ① badge on selected; ② badge + gold chevron on unselected',
+        (tester) async {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: sockets,
+        plugNameByHash: names,
+      );
+      await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: cols)));
+      // ① selected badge
+      expect(find.byKey(const Key('perk_tier_badge_10')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('perk_tier_badge_10')),
+          matching: find.text('①'),
+        ),
+        findsOneWidget,
+      );
+      // ② unselected badge + gold chevron
+      expect(find.byKey(const Key('perk_tier_badge_11')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('perk_tier_badge_11')),
+          matching: find.text('②'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('perk_chevron_11')), findsOneWidget);
+      // Selected has no chevron
+      expect(find.byKey(const Key('perk_chevron_10')), findsNothing);
+      // Band labels present for owned tiers
+      expect(find.byKey(const Key('perk_band_selected_0')), findsOneWidget);
+      expect(find.byKey(const Key('perk_band_unselected_0')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_perk_legend')), findsOneWidget);
+    });
+
+    testWidgets(
+        '③ ON: dashed muted pool cells + tier badge 3; no E on pool cells',
+        (tester) async {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: sockets,
+        definitionSocketPlugs: defSockets,
+        plugNameByHash: {
+          ...names,
+          13: 'Enhanced Polygonal',
+        },
+        plugEnhancedByHash: const {13: true},
+        showCanRoll: true,
+      );
+      await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: cols)));
+      expect(find.byKey(const Key('perk_cell_13')), findsOneWidget);
+      expect(find.byKey(const Key('perk_tier_badge_13')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('perk_tier_badge_13')),
+          matching: find.text('③'),
+        ),
+        findsOneWidget,
+      );
+      // No E chrome on pool even if map says enhanced.
+      expect(find.byKey(const Key('perk_enhanced_mark_13')), findsNothing);
+      expect(find.byKey(const Key('perk_band_possible_0')), findsOneWidget);
+    });
+
+    testWidgets(
+        'uniform perk tile minHeight (~48); equal Expanded @400; no H-scroll',
+        (tester) async {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: sockets,
+        definitionSocketPlugs: defSockets,
+        plugNameByHash: names,
+        showCanRoll: true,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: Scaffold(
+            body: SizedBox(
+              width: kCatalogWeaponsDetailWidth,
+              height: 600,
+              child: CatalogPerkGrid(columns: cols),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Uniform min height for every perk cell.
+      for (final hash in [10, 11, 13]) {
+        final size = tester.getSize(find.byKey(Key('perk_cell_$hash')));
+        expect(
+          size.height,
+          greaterThanOrEqualTo(kCatalogPerkCellMinHeight - 0.5),
+          reason: 'perk cell $hash must be uniform minHeight',
+        );
+      }
+
+      final grid = find.byKey(const Key('catalog_perk_grid'));
+      final row = tester.widget<Row>(grid);
+      expect(row.children.whereType<Expanded>().length, cols.length);
+
+      final scrollables = tester.widgetList<Scrollable>(find.byType(Scrollable));
+      for (final s in scrollables) {
+        expect(
+          s.axisDirection == AxisDirection.left ||
+              s.axisDirection == AxisDirection.right,
+          isFalse,
+        );
+      }
     });
 
     testWidgets('equal Expanded columns; no horizontal Scrollable at width 400',
@@ -1108,13 +1271,14 @@ void main() {
       );
 
       expect(find.byKey(const Key('catalog_toggle_can_roll')), findsOneWidget);
+      expect(find.byType(FilterChip), findsNothing);
       expect(
         tester
-            .widget<FilterChip>(find.byKey(const Key('catalog_toggle_can_roll')))
-            .selected,
+            .getSemantics(find.byKey(const Key('catalog_toggle_can_roll')))
+            .hasFlag(SemanticsFlag.isToggled),
         isFalse,
       );
-      expect(find.text('Possible rolls'), findsOneWidget);
+      expect(find.textContaining('POSSIBLE ROLLS'), findsOneWidget);
       expect(find.byKey(const Key('catalog_stub_set')), findsOneWidget);
       final setBtn =
           tester.widget<FilledButton>(find.byKey(const Key('catalog_stub_set')));

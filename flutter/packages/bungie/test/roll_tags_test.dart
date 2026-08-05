@@ -101,6 +101,55 @@ void main() {
     });
   });
 
+  group('buildPlugEnhancedMapFromItemDefs', () {
+    test('name without Enhanced + category enhancements.v2 → true', () {
+      final table = <String, dynamic>{
+        '10': {
+          'hash': 10,
+          'displayProperties': {'name': 'Zen Moment'},
+          'plug': {'plugCategoryIdentifier': 'enhancements.v2'},
+        },
+        '11': {
+          'hash': 11,
+          'displayProperties': {'name': 'Rapid Hit'},
+          'plug': {'plugCategoryIdentifier': 'traits.weapon'},
+        },
+        '12': {
+          'hash': 12,
+          'displayProperties': {'name': 'Kill Clip Enhanced'},
+          'plug': {'plugCategoryIdentifier': 'traits.weapon'},
+        },
+      };
+      final map = buildPlugEnhancedMapFromItemDefs(table, [10, 11, 12, 99]);
+      // Category path (DIM-style base display name + enhancements.v2).
+      expect(map[10], isTrue);
+      // Plain trait omitted.
+      expect(map.containsKey(11), isFalse);
+      // Name "Enhanced" still marks true.
+      expect(map[12], isTrue);
+      // Missing def omitted.
+      expect(map.containsKey(99), isFalse);
+    });
+
+    test('enhancements.v2_* subcategory and enhanced token mark true', () {
+      final table = <String, dynamic>{
+        '20': {
+          'hash': 20,
+          'displayProperties': {'name': 'Hammer-Forged Rifling'},
+          'plug': {'plugCategoryIdentifier': 'enhancements.v2_general'},
+        },
+        '21': {
+          'hash': 21,
+          'displayProperties': {'name': 'Smallbore'},
+          'plug': {'plugCategoryIdentifier': 'enhanced.barrel'},
+        },
+      };
+      final map = buildPlugEnhancedMapFromItemDefs(table, [20, 21]);
+      expect(map[20], isTrue);
+      expect(map[21], isTrue);
+    });
+  });
+
   group('buildPerkNameMapFromNamedHashes', () {
     test('maps catalog entity names for requested plugs only', () {
       final map = buildPerkNameMapFromNamedHashes(

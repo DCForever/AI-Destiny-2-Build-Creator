@@ -234,4 +234,87 @@ void main() {
 
     sync.dispose();
   });
+
+  test(
+    'inventorySync/explicit plugEnhancedMapBuilder category path marks hash true without Enhanced name; empty-category name fallback still works',
+    () async {
+      final session = WindowsOAuthSession(
+        clientId: '',
+        redirectUri: 'http://127.0.0.1:8765/callback',
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: 'x',
+          redirectUri: 'http://127.0.0.1:8765/callback',
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+      );
+      await session.restore();
+
+      // Category builder on inventorySync — production CatalogPage path.
+      final sync = InventorySyncController(
+        db: db,
+        session: session,
+        profileClient: FakeProfileClient(),
+        plugEnhancedMapBuilder: (hashes) async {
+          // Simulates buildPlugEnhancedMapFromItemDefs:
+          // base display name + enhancements.v2 category → true.
+          final out = <int, bool>{};
+          for (final h in hashes) {
+            if (h == 301) out[h] = true; // "Rapid Hit" via category
+          }
+          return out;
+        },
+      );
+
+      final bridgeViaSync = OwnedCatalogBridge(
+        db: db,
+        offlineCatalog: services.offlineCatalog,
+        session: session,
+        inventorySync: sync,
+        // No explicit plugEnhancedMapBuilder — must use inventorySync.
+        plugNameMapBuilder: (hashes) async => {
+          for (final h in hashes)
+            h: h == 301
+                ? 'Rapid Hit'
+                : h == 302
+                    ? 'Enhanced Overflow'
+                    : 'Trait $h',
+        },
+      );
+
+      await bridgeViaSync.refresh();
+      await bridgeViaSync.ensurePlugNames([301, 302, 303]);
+
+      // Category path (no "Enhanced" in name).
+      expect(bridgeViaSync.plugEnhancedByHash[301], isTrue);
+      // Empty-category name fallback still works.
+      expect(bridgeViaSync.plugEnhancedByHash[302], isTrue);
+      // Plain trait omitted.
+      expect(bridgeViaSync.plugEnhancedByHash.containsKey(303), isFalse);
+
+      // Explicit builder wins over inventorySync for overlapping hashes.
+      final bridgeExplicit = OwnedCatalogBridge(
+        db: db,
+        offlineCatalog: services.offlineCatalog,
+        session: session,
+        inventorySync: sync,
+        plugNameMapBuilder: (hashes) async => {
+          for (final h in hashes) h: 'Rapid Hit',
+        },
+        plugEnhancedMapBuilder: (hashes) async => {
+          // Only 401 — does not include 301 from sync.
+          401: true,
+        },
+      );
+      await bridgeExplicit.refresh();
+      await bridgeExplicit.ensurePlugNames([301, 401]);
+      expect(bridgeExplicit.plugEnhancedByHash[401], isTrue);
+      // Explicit builder used (not merged with sync for missing keys from
+      // explicit); name fallback still can mark others.
+      // 301 was not returned by explicit builder → not from category this path.
+      expect(bridgeExplicit.plugEnhancedByHash.containsKey(301), isFalse);
+
+      sync.dispose();
+    },
+  );
 }
