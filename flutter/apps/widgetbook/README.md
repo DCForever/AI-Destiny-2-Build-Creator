@@ -65,6 +65,9 @@ group chrome, detail/perks, workspace.
 **Phase 2:** Sort/group sheet, type-icon filter bar, outline jump expand+scroll,
 mobile list→push detail, knobs (element/slot/owned), Neon shell/board.
 
+**Phase 3:** Viewport addon (phone/tablet/desktop), host-parity filter bar exotic
+cycle, sort reorder interaction smoke tests.
+
 See `docs/ux-redesign/widgetbook.md` for phase notes.
 
 ## Rules

@@ -32,11 +32,14 @@ Catalog folders under Widgetbook:
 | Knobs | NeonItemCard element/slot/owned · family owned chrome · meta strip |
 | Neon | Shell blooms/horizon · NeonZone · Flap board sets/builds · atmosphere knobs |
 
-## Phase 3 (backlog)
+## Phase 3 (shipped)
 
-- ViewportAddon matrix (phone/tablet/desktop) when useful beyond fixed frames
-- Sort sheet live reorder golden / interaction tests
-- Host-parity filter bar with live exotic cycle semantics screenshots
+| Area | What |
+| --- | --- |
+| Viewport addon | `ViewportAddon`: None · iPhone 13 · iPad Pro 11 · Windows Desktop |
+| Viewport stories | Filter bar / workspace / mobile list under `[Catalog]/Viewport` |
+| Sort interaction | Smoke: reorder sort keys + add group dim + apply (`phase3_use_cases_smoke_test`) |
+| Host-parity filter bar | Weapons element·slot·type + exotic any→only→exclude→any + RESET |
 
 ## Rules
 

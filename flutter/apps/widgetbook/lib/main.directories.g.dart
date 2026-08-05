@@ -18,6 +18,8 @@ import 'package:destiny2_widgetbook/use_cases/catalog/facet_scope_empty_use_case
     as _destiny2_widgetbook_use_cases_catalog_facet_scope_empty_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/family_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_family_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/filter_bar_host_parity_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_filter_bar_host_parity_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/filter_bar_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/group_use_cases.dart'
@@ -30,6 +32,8 @@ import 'package:destiny2_widgetbook/use_cases/catalog/mobile_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_mobile_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/sort_group_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_sort_group_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/viewport_matrix_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_viewport_matrix_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/workspace_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_workspace_use_cases;
 import 'package:destiny2_widgetbook/use_cases/neon/board_atmosphere_use_cases.dart'
@@ -229,8 +233,31 @@ final directories = <_widgetbook.WidgetbookNode>[
                     _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases
                         .filterBarTypeIcons,
               ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Weapons host parity · exotic cycle',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_bar_host_parity_use_cases
+                        .filterBarHostParityExotic,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Weapons host parity · wide primary line',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_bar_host_parity_use_cases
+                        .filterBarHostParityWide,
+              ),
             ],
-          )
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'NeonExoticChip',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Exotic chip only · cycle labels',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_bar_host_parity_use_cases
+                        .exoticChipCycle,
+              )
+            ],
+          ),
         ],
       ),
       _widgetbook.WidgetbookFolder(
@@ -398,6 +425,44 @@ final directories = <_widgetbook.WidgetbookNode>[
               ),
             ],
           )
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'Viewport',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogFilterBar',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Filter bar · use Viewport addon',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_viewport_matrix_use_cases
+                        .viewportFilterBar,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogWeaponsGrid',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Mobile list push · use Viewport addon',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_viewport_matrix_use_cases
+                        .viewportMobileList,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogWeaponsWorkspace',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Workspace grid · use Viewport addon',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_viewport_matrix_use_cases
+                        .viewportWorkspace,
+              )
+            ],
+          ),
         ],
       ),
       _widgetbook.WidgetbookFolder(

@@ -44,6 +44,13 @@ class Destiny2WidgetbookApp extends StatelessWidget {
             WidgetbookTheme(name: 'Flap Light', data: light),
           ],
         ),
+        // Phase 3: phone / tablet / desktop matrix (None = unconstrained canvas).
+        ViewportAddon([
+          Viewports.none,
+          IosViewports.iPhone13,
+          IosViewports.iPadPro11Inches,
+          WindowsViewports.desktop,
+        ]),
         InspectorAddon(),
         AlignmentAddon(initialAlignment: Alignment.center),
       ],
