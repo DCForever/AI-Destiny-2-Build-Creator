@@ -8,7 +8,7 @@ import 'package:widgetbook_annotation/widgetbook_annotation.dart' as widgetbook;
 import 'main.directories.g.dart';
 
 /// Everyday entry: driver off unless `ENABLE_FLUTTER_DRIVER=true`.
-/// Prefer [main_mcp.dart] for Dart MCP screenshots.
+/// Prefer [main_mcp.dart] for Dart MCP screenshots (enables driver once).
 const bool _enableFlutterDriver =
     bool.fromEnvironment('ENABLE_FLUTTER_DRIVER', defaultValue: false);
 
@@ -19,6 +19,11 @@ void main() {
       'Flutter Driver extension enabled (ENABLE_FLUTTER_DRIVER).',
     );
   }
+  runWidgetbook();
+}
+
+/// Shared run path for [main] and [main_mcp] (no second driver bind).
+void runWidgetbook() {
   runApp(const Destiny2WidgetbookApp());
 }
 

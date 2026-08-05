@@ -5,13 +5,15 @@ import 'main.dart' as app;
 
 /// MCP / agent entrypoint: always enables Flutter Driver, then runs Widgetbook.
 ///
+/// Do **not** also pass `ENABLE_FLUTTER_DRIVER=true` (would double-bind).
+///
 /// ```text
-/// launch_app root=…/apps/widgetbook device=windows target=lib/main_mcp.dart
+/// flutter run -d windows -t lib/main_mcp.dart
 /// ```
 Future<void> main() async {
   enableFlutterDriverExtension();
   debugPrint(
     'main_mcp: Flutter Driver extension enabled (Widgetbook MCP entrypoint).',
   );
-  app.main();
+  app.runWidgetbook();
 }
