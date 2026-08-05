@@ -9,21 +9,21 @@ Design system (`packages/ui_tokens`, `packages/ui_flutter`) stays. Product inten
 ```text
 area-ux-redesign  →  mockups + brief
         ↓
-area-implement    →  Flutter + tests
+area-implement    →  Flutter + tests (structure gate)
         ↓
-Capture           →  implementation screenshots next to mockups
-        ↓
+Capture           →  shot_matrix dual-truth PNGs next to mockups
+        ↓              (pause if must-rows missing — see CAPTURE.md)
 next area-ux-redesign uses mockups + shots as dual ground truth
 ```
 
-**Missing link (now required):** after implement, capture **screenshots of the running product** and store them **beside the mockups**. The next redesign round must read those shots so UI/UX work closes residual gaps instead of redesigning from HTML alone.
+**Two implement gates:** **structure** (analyze + tests) and **dual-truth** (real PNGs for every `must` row in plan `shot_matrix`). Structure green alone is not ship-complete for dual-truth. Protocol: [`CAPTURE.md`](CAPTURE.md).
 
 ## Workflows
 
 | Workflow | Path | Purpose |
 | --- | --- | --- |
 | `area-ux-redesign` | [`.grok/workflows/area-ux-redesign.rhai`](../../.grok/workflows/area-ux-redesign.rhai) | Product grill → UX grill → **interactive HTML mockups** → human gate → synthesis → architect → Obsidian UX note. **Loads prior `implementation-shots/`** when present. |
-| `area-implement` | [`.grok/workflows/area-implement.rhai`](../../.grok/workflows/area-implement.rhai) | Implement locked brief + mockups with required widget tests → review → **Capture shots** → report |
+| `area-implement` | [`.grok/workflows/area-implement.rhai`](../../.grok/workflows/area-implement.rhai) | Plan includes **shot_matrix** → implement → **Verify-structure** → review → **Capture** (score matrix) → human capture gate if incomplete → report |
 
 Run from Grok Build:
 
@@ -42,6 +42,7 @@ Run from Grok Build:
 ```text
 docs/ux-redesign/
   README.md
+  CAPTURE.md                      # dual-truth matrix + Flutter launch rules
   _template-area-brief.md
   _template-implementation-shots-compare.md
   <area>/
