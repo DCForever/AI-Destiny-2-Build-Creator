@@ -6,7 +6,9 @@ Isolated design catalog for Flutter Matte Flap / Neon composables.
 | --- | --- |
 | App | `flutter/apps/widgetbook` (`destiny2_widgetbook`) |
 | Widgets | `flutter/packages/ui_flutter` |
-| Run | See [`flutter/apps/widgetbook/README.md`](../../flutter/apps/widgetbook/README.md) |
+| Run | [`README.md`](../../flutter/apps/widgetbook/README.md) · **UI loop:** [`ITERATE.md`](../../flutter/apps/widgetbook/ITERATE.md) |
+| Script | `flutter/apps/widgetbook/run-windows.ps1` (`-SkipPubGet`, `-Gen`, `-Clean`, `-EnableFlutterDriver`) |
+| IDE | VS Code / Cursor launch: **`widgetbook`**, **`widgetbook (Driver)`**, **`widgetbook (Chrome)`** |
 
 ## Why
 

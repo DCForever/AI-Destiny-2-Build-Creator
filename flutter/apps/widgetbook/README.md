@@ -5,10 +5,23 @@ Isolated **Widgetbook** app for Matte Flap / Neon catalog composables from
 
 Not a product host: **no** OAuth, inventory sync, Drift, or secrets.
 
+## Iterate on UI (start here)
+
+**Day-to-day loop:** [ITERATE.md](./ITERATE.md)
+
+Short version:
+
+1. Leave Widgetbook running: `.\run-windows.ps1 -SkipPubGet` (or IDE launch **`widgetbook`**)
+2. Edit `packages/ui_flutter` (or use cases / fixtures)
+3. Press **`r`** hot reload (or **`R`** hot restart) in the Flutter terminal
+4. Open the matching story in the left nav; use knobs / Viewport addon
+
+Only run `build_runner` when you add or rename `@UseCase` entries (`-Gen` or `melos run widgetbook:watch`).
+
 ## Prerequisites
 
 - Workspace root: `flutter/`
-- `dart pub get` from `flutter/` (workspace member)
+- `dart pub get` from `flutter/` (workspace member) once per session / dep change
 
 ## Generate directories
 
@@ -27,21 +40,43 @@ melos run widgetbook:gen
 
 ## Run
 
+Preferred (mirrors `windows_host/run-windows.ps1`):
+
+```powershell
+cd flutter/apps/widgetbook
+.\run-windows.ps1
+```
+
+| Flag | Effect |
+| --- | --- |
+| (none) | `flutter run -d windows` → `lib/main.dart` (+ workspace `dart pub get`) |
+| `-SkipPubGet` | Faster re-launch while iterating (skip workspace pub get) |
+| `-EnableFlutterDriver` | `lib/main_mcp.dart` (Driver on for MCP screenshots) |
+| `-Gen` | `dart run build_runner build -d` first |
+| `-Clean` | `flutter clean` + wipe `build/` and `windows/flutter/ephemeral` (fixes C1083 / empty wrapper) |
+| `-Device chrome` | Run on Chrome instead of Windows (faster cold start) |
+
+If MSBuild fails with **C1083** on `cpp_client_wrapper\*.cc`, run:
+
+```powershell
+.\run-windows.ps1 -Clean
+```
+
+From monorepo root:
+
+```powershell
+pwsh -File flutter/apps/widgetbook/run-windows.ps1
+pwsh -File flutter/apps/widgetbook/run-windows.ps1 -EnableFlutterDriver
+```
+
+Raw Flutter (no script):
+
 ```powershell
 cd flutter/apps/widgetbook
 flutter run -d windows
 # or
 flutter run -d chrome
-```
-
-### Flutter Driver / MCP screenshots
-
-```powershell
-cd flutter/apps/widgetbook
-# Agent entrypoint (driver always on):
 flutter run -d windows -t lib/main_mcp.dart
-# Or everyday main with define:
-flutter run -d windows --dart-define=ENABLE_FLUTTER_DRIVER=true
 ```
 
 Dart MCP: prefer `launch_app` with `target=lib/main_mcp.dart` when available, then

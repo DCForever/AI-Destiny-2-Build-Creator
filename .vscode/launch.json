@@ -36,6 +36,31 @@
             "type": "dart"
         },
         {
+            "name": "widgetbook",
+            "cwd": "flutter\\apps\\widgetbook",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "windows",
+            "toolArgs": []
+        },
+        {
+            "name": "widgetbook (Driver)",
+            "cwd": "flutter\\apps\\widgetbook",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_mcp.dart",
+            "deviceId": "windows"
+        },
+        {
+            "name": "widgetbook (Chrome)",
+            "cwd": "flutter\\apps\\widgetbook",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome"
+        },
+        {
             "name": "windows_host",
             "cwd": "flutter\\apps\\windows_host",
             "request": "launch",

@@ -59,3 +59,19 @@ melos:
         concurrency: 1
       packageFilters:
         scope: destiny2_widgetbook
+
+    widgetbook:watch:
+      description: Watch-mode codegen for Widgetbook use cases (second terminal while iterating)
+      run: dart run build_runner watch -d
+      exec:
+        concurrency: 1
+      packageFilters:
+        scope: destiny2_widgetbook
+
+    widgetbook:run:
+      description: Launch Widgetbook on Windows (UI iteration host)
+      run: pwsh -NoProfile -File apps/widgetbook/run-windows.ps1 -SkipPubGet
+
+    widgetbook:chrome:
+      description: Launch Widgetbook on Chrome (faster cold start)
+      run: pwsh -NoProfile -File apps/widgetbook/run-windows.ps1 -SkipPubGet -Device chrome
