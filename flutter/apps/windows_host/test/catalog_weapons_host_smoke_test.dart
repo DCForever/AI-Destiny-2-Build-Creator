@@ -7,10 +7,12 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/auth/browser_launcher.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/catalog/catalog_page.dart';
+import 'package:destiny2_windows_host/catalog/owned_catalog_bridge.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'catalog_residual_polish_fixtures.dart';
 import 'inventory_sync_test_fakes.dart';
 import 'test_material_theme.dart';
 
@@ -259,6 +261,224 @@ void main() {
 
   // Owned can-roll OFF default + craft hidden when no craft pool data is
   // covered in catalog_owned_page_test (signed-in inventory bootstrap).
+
+  group('residual-polish host fixtures', () {
+    late Directory residualDir;
+    late AppServices residualServices;
+    late AppDatabase residualDb;
+    late OwnedCatalogBridge residualBridge;
+
+    setUp(() async {
+      residualDir =
+          await Directory.systemTemp.createTemp('weapons_residual_');
+      final root = StorageRoot(basePath: residualDir.path);
+      await root.ensureLayout();
+      residualDb = AppDatabase.memory();
+      final tokenStore = MemoryTokenStore();
+      await seedSignedIn(tokenStore, membershipId: 'bungie-residual');
+
+      residualServices = await HostBootstrap.open(
+        storageRoot: root,
+        database: residualDb,
+        manifestRefresh: _FakeRefresh(),
+        offlineCatalog: OfflineCatalog.preloaded(
+          storageRoot: root,
+          items: residualPolishCatalogItems(),
+          version: 'residual-polish-1',
+          perkColumnsByHash: residualPolishPerkColumns(),
+        ),
+        clientId: 'test-client',
+        tokenStore: tokenStore,
+        browserLauncher: FakeBrowserLauncher(),
+        profileClient: FakeProfileClient(),
+        oauthClient: BungieOAuthClient(
+          clientId: 'test-client',
+          redirectUri: kDefaultWindowsRedirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+      );
+
+      final user = await ensureUser(
+        residualDb,
+        bungieMembershipId: 'bungie-residual',
+        membershipType: 3,
+        displayName: 'Residual Guardian',
+      );
+      await replaceInventoryBatch(
+        residualDb,
+        user.id,
+        now: '2026-08-04T12:00:00.000Z',
+        items: [residualEnhancedInventoryRow()],
+      );
+
+      residualBridge = OwnedCatalogBridge(
+        db: residualDb,
+        offlineCatalog: residualServices.offlineCatalog,
+        session: residualServices.oauthSession,
+        inventorySync: residualServices.inventorySync,
+        plugNameByHash: kResidualPlugNameByHash,
+        plugEnhancedByHash: kResidualPlugEnhancedByHash,
+        plugNameMapBuilder: (hashes) async => {
+          for (final h in hashes)
+            if (kResidualPlugNameByHash.containsKey(h))
+              h: kResidualPlugNameByHash[h]!,
+        },
+        plugEnhancedMapBuilder: (hashes) async => {
+          for (final h in hashes)
+            if (kResidualPlugEnhancedByHash[h] == true) h: true,
+        },
+      );
+    });
+
+    tearDown(() async {
+      await residualServices.dispose();
+      if (residualDir.existsSync()) {
+        await residualDir.delete(recursive: true);
+      }
+    });
+
+    Future<void> pumpResidualCatalog(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: testMaterialTheme(),
+          home: CatalogPage(
+            services: residualServices,
+            bridge: residualBridge,
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+      // Allow inventory annotate + plug resolve.
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    Future<void> tapItem(WidgetTester tester, int hash) async {
+      final finder = itemKey(hash);
+      expect(finder, findsOneWidget);
+      final listScrollable = find.descendant(
+        of: find.byKey(const Key('catalog_list')),
+        matching: find.byType(Scrollable),
+      );
+      if (listScrollable.evaluate().isNotEmpty) {
+        await tester.scrollUntilVisible(
+          finder,
+          64,
+          scrollable: listScrollable,
+        );
+        await _pumpFrames(tester);
+      }
+      await tester.tap(finder);
+      await _pumpFrames(tester);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets(
+      'desktop-enhanced-live: plugEnhancedByHash → gold+E on ① only; no E on ②',
+      (tester) async {
+        await pumpResidualCatalog(tester);
+        await tapItem(tester, kResidualEnhancedWeaponHash);
+
+        expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
+        expect(
+          find.byKey(const Key('catalog_perk_section_perks')),
+          findsOneWidget,
+        );
+        // ① Enhanced Frenzy marked.
+        expect(
+          find.byKey(
+            const Key('perk_enhanced_mark_$kResidualEnhancedPlugHash'),
+          ),
+          findsOneWidget,
+        );
+        // ② Overflow not enhanced.
+        expect(
+          find.byKey(const Key('perk_enhanced_mark_$kResidualBasePlugHash')),
+          findsNothing,
+        );
+        // Possible rolls OFF default — no enhance note yet.
+        final canRoll = tester.widget<FilterChip>(
+          find.byKey(const Key('catalog_toggle_can_roll')),
+        );
+        expect(canRoll.selected, isFalse);
+        expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'desktop-enhanced-live ③ ON: no E on pool cells; enhance note when pool can enhance',
+      (tester) async {
+        await pumpResidualCatalog(tester);
+        await tapItem(tester, kResidualEnhancedWeaponHash);
+
+        await tester.tap(find.byKey(const Key('catalog_toggle_can_roll')));
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 50));
+
+        // ① still has E.
+        expect(
+          find.byKey(
+            const Key('perk_enhanced_mark_$kResidualEnhancedPlugHash'),
+          ),
+          findsOneWidget,
+        );
+        // Pool enhanced identity must not get E cell chrome.
+        expect(
+          find.byKey(
+            const Key('perk_enhanced_mark_$kResidualPoolEnhancedPlugHash'),
+          ),
+          findsNothing,
+        );
+        expect(find.byKey(const Key('catalog_enhance_note')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'desktop-catalyst-present: soft catalyst display-only; no equip gate',
+      (tester) async {
+        await pumpResidualCatalog(tester);
+        await tapItem(tester, kResidualCatalystExoticHash);
+
+        expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
+        expect(find.byKey(const Key('exotic_catalyst_name')), findsOneWidget);
+        expect(
+          find.byKey(const Key('exotic_catalyst_display_only')),
+          findsOneWidget,
+        );
+        // Unowned exotic: no fake selected / no can-roll toggle.
+        expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNothing);
+        expect(find.byKey(const Key('instance_panel_empty')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'desktop-enhance-note: unowned definition pool note; one cell; no E',
+      (tester) async {
+        await pumpResidualCatalog(tester);
+        await tapItem(tester, kResidualEnhanceNoteWeaponHash);
+
+        expect(
+          find.byKey(const Key('catalog_perk_section_possible_rolls')),
+          findsOneWidget,
+        );
+        // Identity collapse: base Rapid Hit + Enhanced Kill Clip → note, no E.
+        expect(find.byKey(const Key('catalog_enhance_note')), findsOneWidget);
+        expect(
+          find.byKey(
+            const Key('perk_enhanced_mark_$kResidualPoolEnhancedPlugHash'),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('perk_cell_$kResidualPoolBasePlugHash')),
+          findsOneWidget,
+        );
+      },
+    );
+  });
 }
 
 

@@ -84,10 +84,14 @@ class OfflineCatalog {
 
   /// In-memory base list (widget tests / fakes / web prebuilt) —
   /// [loadBase] returns it as-is. No [StorageRoot] required (DART-044).
+  ///
+  /// Optional [perkColumnsByHash] seeds definition can-roll / unowned pools
+  /// (host-fixture residual-polish Capture + smoke; never invent plugs).
   OfflineCatalog.preloaded({
     required List<CatalogItem> items,
     this.version,
     this.storageRoot,
+    Map<int, List<WeaponPerkColumn>> perkColumnsByHash = const {},
   })  : _injectedCache = null,
         _preloaded = OfflineCatalogLoadResult(
           version: version,
@@ -102,6 +106,14 @@ class OfflineCatalog {
     _base = _preloaded!.items;
     _loadedVersion = version;
     _lastLoad = _preloaded;
+    if (perkColumnsByHash.isNotEmpty) {
+      _perkColumnsByHash = Map<int, List<WeaponPerkColumn>>.unmodifiable(
+        {
+          for (final e in perkColumnsByHash.entries)
+            e.key: List<WeaponPerkColumn>.unmodifiable(e.value),
+        },
+      );
+    }
   }
 
   /// Optional disk root for [FileEntityCache] / current-version.json.
