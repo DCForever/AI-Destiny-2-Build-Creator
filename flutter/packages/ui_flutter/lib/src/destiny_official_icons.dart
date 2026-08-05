@@ -199,6 +199,104 @@ const Map<String, DestinyOfficialVisual> kWeaponFrameOfficial = {
   ),
 };
 
+// ---------------------------------------------------------------------------
+// Weapon types — destiny-icons silhouettes (package assets, DIM set)
+// ---------------------------------------------------------------------------
+
+/// Package-asset silhouette for a weapon type (never invent art).
+///
+/// [assetPath] is relative to this package (e.g.
+/// `assets/destiny-icons/weapons/pulse_rifle.svg`).
+class DestinyWeaponTypeVisual {
+  const DestinyWeaponTypeVisual({
+    required this.assetPath,
+    this.color = _kMuted,
+  });
+
+  final String assetPath;
+  final Color color;
+}
+
+/// Known weapon-type → destiny-icons SVG (same mapping as Next `weaponTypeIcons`).
+const Map<String, DestinyWeaponTypeVisual> kWeaponTypeOfficial = {
+  'Auto Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/auto_rifle.svg',
+  ),
+  'Pulse Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/pulse_rifle.svg',
+  ),
+  'Scout Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/scout_rifle.svg',
+  ),
+  'Hand Cannon': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/hand_cannon.svg',
+  ),
+  'Sidearm': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/sidearm.svg',
+  ),
+  'Submachine Gun': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/smg.svg',
+  ),
+  'Bow': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/bow.svg',
+  ),
+  'Combat Bow': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/bow.svg',
+  ),
+  'Fusion Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/fusion_rifle.svg',
+  ),
+  'Glaive': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/glaive.svg',
+  ),
+  'Sniper Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/sniper_rifle.svg',
+  ),
+  'Shotgun': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/shotgun.svg',
+  ),
+  'Trace Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/beam_weapon.svg',
+  ),
+  'Grenade Launcher': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/grenade_launcher.svg',
+  ),
+  'Rocket Launcher': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/rocket_launcher.svg',
+  ),
+  'Linear Fusion Rifle': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/wire_rifle.svg',
+  ),
+  'Machine Gun': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/machinegun.svg',
+  ),
+  'Sword': DestinyWeaponTypeVisual(
+    assetPath: 'assets/destiny-icons/weapons/sword_heavy.svg',
+  ),
+};
+
+/// Plural / DIM label aliases → canonical map key.
+const Map<String, String> _kWeaponTypeAliases = {
+  'bows': 'Bow',
+  'submachine guns': 'Submachine Gun',
+  'smg': 'Submachine Gun',
+  'trace rifles': 'Trace Rifle',
+  'grenade launchers': 'Grenade Launcher',
+  'linear fusion rifles': 'Linear Fusion Rifle',
+  'machine guns': 'Machine Gun',
+  'swords': 'Sword',
+  'glaives': 'Glaive',
+  'auto rifles': 'Auto Rifle',
+  'pulse rifles': 'Pulse Rifle',
+  'scout rifles': 'Scout Rifle',
+  'hand cannons': 'Hand Cannon',
+  'sidearms': 'Sidearm',
+  'fusion rifles': 'Fusion Rifle',
+  'sniper rifles': 'Sniper Rifle',
+  'shotguns': 'Shotgun',
+  'rocket launchers': 'Rocket Launcher',
+};
+
 String _norm(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
 /// Official element visual, or null if unknown.
@@ -231,6 +329,34 @@ DestinyOfficialVisual? officialWeaponFrameVisual(String? frame) {
     }
   }
   return null;
+}
+
+/// Official weapon-type silhouette, or null when unmapped (letter last-resort).
+///
+/// Never invents art for unknown types — callers must fall back to a letter mark.
+DestinyWeaponTypeVisual? officialWeaponTypeVisual(String? typeName) {
+  if (typeName == null || typeName.trim().isEmpty) return null;
+  final raw = typeName.trim();
+  final direct = kWeaponTypeOfficial[raw];
+  if (direct != null) return direct;
+  final lower = raw.toLowerCase();
+  for (final e in kWeaponTypeOfficial.entries) {
+    if (e.key.toLowerCase() == lower) return e.value;
+  }
+  final alias = _kWeaponTypeAliases[lower];
+  if (alias != null) return kWeaponTypeOfficial[alias];
+  return null;
+}
+
+/// Compact letter/abbrev mark when no official weapon-type silhouette is mapped.
+String weaponTypeLetterMark(String? typeName) {
+  final t = (typeName ?? '').trim();
+  if (t.isEmpty) return '?';
+  final words = t.split(RegExp(r'\s+'));
+  if (words.length >= 2) {
+    return '${words[0][0]}${words[1][0]}'.toUpperCase();
+  }
+  return t.length <= 2 ? t.toUpperCase() : t.substring(0, 2).toUpperCase();
 }
 
 /// Prefer official element color; fall back to token palette via caller.

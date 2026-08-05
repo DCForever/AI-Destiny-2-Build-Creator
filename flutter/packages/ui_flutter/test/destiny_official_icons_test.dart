@@ -31,5 +31,28 @@ void main() {
       expect(officialElementVisual('Solar')?.color.toARGB32(), 0xFFF2721B);
       expect(officialElementVisual('ARC')?.color.toARGB32(), 0xFF85C5EC);
     });
+
+    test('kWeaponTypeOfficial maps known types; unknown → null', () {
+      expect(officialWeaponTypeVisual('Pulse Rifle'), isNotNull);
+      expect(
+        officialWeaponTypeVisual('Pulse Rifle')!.assetPath,
+        contains('pulse_rifle.svg'),
+      );
+      expect(officialWeaponTypeVisual('Hand Cannon'), isNotNull);
+      expect(officialWeaponTypeVisual('Scout Rifle'), isNotNull);
+      expect(officialWeaponTypeVisual('Submachine Gun'), isNotNull);
+      expect(officialWeaponTypeVisual('smg'), isNotNull); // alias
+      expect(officialWeaponTypeVisual('Linear Fusion Rifle')!.assetPath,
+          contains('wire_rifle'));
+      expect(officialWeaponTypeVisual('Trace Rifle')!.assetPath,
+          contains('beam_weapon'));
+      expect(officialWeaponTypeVisual(null), isNull);
+      expect(officialWeaponTypeVisual(''), isNull);
+      expect(officialWeaponTypeVisual('Unknown Type XYZ'), isNull);
+      // Letter last-resort helper.
+      expect(weaponTypeLetterMark('Pulse Rifle'), 'PR');
+      expect(weaponTypeLetterMark('Hand Cannon'), 'HC');
+      expect(weaponTypeLetterMark('Sword'), 'SW');
+    });
   });
 }

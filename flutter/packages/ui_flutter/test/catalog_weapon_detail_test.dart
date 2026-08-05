@@ -463,7 +463,8 @@ void main() {
         const CatalogPerkColumn(
           label: 'Trait',
           kind: 'trait',
-          cells: [CatalogPerkCell(hash: 99, displayName: 'Enhanced Kill Clip')],
+          cells: [CatalogPerkCell(hash: 99, displayName: 'Enhanced Harmony')],
+          canBeEnhanced: true,
         ),
       ];
       final off = buildCatalogPerkColumns(
@@ -473,7 +474,8 @@ void main() {
         craftColumns: craftCols,
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: off)));
-      expect(find.text('Enhanced Kill Clip'), findsNothing);
+      expect(find.text('Harmony'), findsNothing);
+      expect(find.text('Enhanced Harmony'), findsNothing);
 
       final on = buildCatalogPerkColumns(
         socketPlugs: sockets,
@@ -482,9 +484,163 @@ void main() {
         craftColumns: craftCols,
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: on)));
-      expect(find.text('Enhanced Kill Clip'), findsOneWidget);
+      // Craft pool: stripped base display, no E mark on pool cell.
+      expect(find.text('Harmony'), findsOneWidget);
       expect(find.byKey(const Key('perk_cell_99')), findsOneWidget);
-      expect(find.byKey(const Key('perk_enhanced_mark_99')), findsOneWidget);
+      expect(find.byKey(const Key('perk_enhanced_mark_99')), findsNothing);
+      expect(on.any((c) => c.canBeEnhanced), isTrue);
+    });
+
+    test('pool/unowned: no E cells; canBeEnhanced note flag; identity collapse',
+        () {
+      final unowned = buildCatalogPerkColumns(
+        definitionSocketPlugs: const [
+          {
+            'columnKind': 'trait',
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 20,
+            'reusablePlugHashes': [20, 21, 22],
+          },
+        ],
+        plugNameByHash: const {
+          20: 'Kill Clip',
+          21: 'Enhanced Kill Clip',
+          22: 'Frenzy',
+        },
+        plugEnhancedByHash: const {21: true},
+      );
+      expect(unowned.single.cells.map((c) => c.hash).toSet(), {20, 22});
+      expect(unowned.single.cells.every((c) => !c.enhanced), isTrue);
+      expect(unowned.single.canBeEnhanced, isTrue);
+      expect(catalogColumnsCanBeEnhanced(unowned), isTrue);
+
+      final ownedPool = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'trait',
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 20,
+            'reusablePlugHashes': [20, 21],
+          },
+        ],
+        definitionSocketPlugs: const [
+          {
+            'columnKind': 'trait',
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 20,
+            'reusablePlugHashes': [20, 21, 30],
+          },
+        ],
+        plugNameByHash: const {
+          20: 'Kill Clip',
+          21: 'Rampage',
+          30: 'Enhanced Frenzy',
+        },
+        showCanRoll: true,
+      );
+      // ①+② + ③ Frenzy (stripped); no E on pool.
+      expect(
+        ownedPool.single.cells.where((c) => c.fromCanRollPool).every(
+              (c) => !c.enhanced,
+            ),
+        isTrue,
+      );
+      expect(ownedPool.single.canBeEnhanced, isTrue);
+      expect(
+        ownedPool.single.cells
+            .where((c) => c.fromCanRollPool)
+            .map((c) => c.displayName)
+            .toSet(),
+        contains('Frenzy'),
+      );
+    });
+
+    test('instance ①/② get E from host map; name heuristic still works', () {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'trait',
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 20,
+            'reusablePlugHashes': [20, 21],
+          },
+        ],
+        plugNameByHash: const {
+          20: 'Kill Clip',
+          21: 'Enhanced Frenzy',
+        },
+        plugEnhancedByHash: const {20: true},
+      );
+      expect(cols.single.cells.firstWhere((c) => c.hash == 20).enhanced, isTrue);
+      expect(cols.single.cells.firstWhere((c) => c.hash == 21).enhanced, isTrue);
+      expect(cols.single.cells.every((c) => !c.fromCanRollPool), isTrue);
+    });
+
+    testWidgets('③ ON headers: ellipsis + Tooltip + Semantics; no H-scroll',
+        (tester) async {
+      final multi = <Map<String, Object?>>[
+        for (var i = 0; i < 5; i++)
+          {
+            'columnKind': i == 4 ? 'origin' : 'trait',
+            'columnLabel': i == 4
+                ? 'Origin Trait Super Long Label'
+                : 'Masterwork Column $i Extra',
+            'equippedPlugHash': 100 + i,
+            'reusablePlugHashes': [100 + i],
+          },
+      ];
+      final namesMulti = <int, String>{
+        for (var i = 0; i < 5; i++) 100 + i: 'Sel $i',
+      };
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: multi,
+        plugNameByHash: namesMulti,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: Scaffold(
+            body: SizedBox(
+              width: kCatalogWeaponsDetailWidth,
+              height: 600,
+              child: CatalogPerkGrid(columns: cols),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('perk_column_header_0')), findsOneWidget);
+      expect(find.byKey(const Key('perk_column_header_4')), findsOneWidget);
+
+      // Tooltip + Semantics wrappers present on headers.
+      final header = find.byKey(const Key('perk_column_header_4'));
+      expect(
+        find.descendant(of: header, matching: find.byType(Tooltip)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: header, matching: find.byType(Semantics)),
+        findsWidgets,
+      );
+      final tip = tester.widget<Tooltip>(
+        find.descendant(of: header, matching: find.byType(Tooltip)),
+      );
+      expect(tip.message, 'Origin Trait Super Long Label');
+
+      // Equal Expanded; no horizontal scroll.
+      final grid = find.byKey(const Key('catalog_perk_grid'));
+      final row = tester.widget<Row>(grid);
+      expect(row.children.whereType<Expanded>().length, 5);
+      final scrollables = tester.widgetList<Scrollable>(find.byType(Scrollable));
+      for (final s in scrollables) {
+        expect(
+          s.axisDirection == AxisDirection.left ||
+              s.axisDirection == AxisDirection.right,
+          isFalse,
+        );
+      }
     });
   });
 
@@ -511,6 +667,34 @@ void main() {
       // No gate buttons / save blockers.
       expect(find.byType(ElevatedButton), findsNothing);
       expect(find.textContaining('gate'), findsOneWidget);
+    });
+
+    testWidgets('soft catalyst omitted when empty; present display-only',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ExoticIdentityBlock(
+            intrinsicName: 'Memento Mori',
+            intrinsicDescription: 'Kills with primary reload the magazine.',
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('exotic_identity_block')), findsOneWidget);
+      expect(find.byKey(const Key('exotic_catalyst_name')), findsNothing);
+      expect(find.byKey(const Key('exotic_catalyst_display_only')), findsNothing);
+      expect(find.text('CATALYST'), findsNothing);
+
+      await tester.pumpWidget(
+        _wrap(
+          const ExoticIdentityBlock(
+            catalystName: 'Ace of Spades Catalyst',
+            catalystComplete: true,
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('exotic_catalyst_name')), findsOneWidget);
+      expect(find.byKey(const Key('exotic_catalyst_display_only')), findsOneWidget);
+      expect(find.byKey(const Key('exotic_catalyst_status')), findsOneWidget);
     });
   });
 
@@ -628,6 +812,165 @@ void main() {
       expect(find.text('KINETIC'), findsNothing);
       expect(find.text('OWNED'), findsNothing);
       expect(find.textContaining('Owned ×'), findsNothing);
+    });
+
+    testWidgets('chip size == 22×22; strip not full-width bars', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapThemeBase(),
+          home: const Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 80,
+              child: CatalogWeaponMetaStrip(
+                itemTypeName: 'Pulse Rifle',
+                frame: 'Lightweight Frame',
+                element: 'Kinetic',
+                slot: 'Kinetic',
+                ammo: 'Primary',
+                owned: true,
+                ownedCount: 3,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final chipKeys = [
+        const Key('catalog_meta_type'),
+        const Key('catalog_meta_frame'),
+        const Key('catalog_meta_element'),
+        const Key('catalog_meta_slot'),
+        const Key('catalog_meta_ammo'),
+      ];
+      final rects = <Rect>[];
+      for (final key in chipKeys) {
+        final size = tester.getSize(find.byKey(key));
+        expect(size.width, kCatalogMetaChipSize,
+            reason: '$key width must be fixed 22');
+        expect(size.height, kCatalogMetaChipSize,
+            reason: '$key height must be fixed 22');
+        // Not full-width bars under 400 parent.
+        expect(size.width, lessThan(100));
+        rects.add(tester.getRect(find.byKey(key)));
+      }
+
+      // Compact horizontal strip: chips share a row and advance left→right.
+      for (var i = 1; i < rects.length; i++) {
+        expect(rects[i].left, greaterThan(rects[i - 1].right - 0.5),
+            reason: 'chips must lay out horizontally, not stacked full-width');
+        expect((rects[i].top - rects[0].top).abs(), lessThan(1.0));
+      }
+      // Total chip band width is well under the 400 pane (not bar geometry).
+      final band = rects.last.right - rects.first.left;
+      expect(band, lessThan(200));
+    });
+
+    testWidgets('mapped type → silhouette; unmapped → letter + Semantics',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const Column(
+            children: [
+              CatalogWeaponMetaStrip(
+                key: Key('mapped'),
+                itemTypeName: 'Pulse Rifle',
+              ),
+              CatalogWeaponMetaStrip(
+                key: Key('unmapped'),
+                itemTypeName: 'Mystery Weapon Type',
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(officialWeaponTypeVisual('Pulse Rifle'), isNotNull);
+      expect(officialWeaponTypeVisual('Mystery Weapon Type'), isNull);
+
+      // Mapped uses DestinyWeaponTypeIcon path.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('mapped')),
+          matching: find.byType(DestinyWeaponTypeIcon),
+        ),
+        findsOneWidget,
+      );
+
+      // Unmapped letter mark.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('unmapped')),
+          matching: find.text(weaponTypeLetterMark('Mystery Weapon Type')),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('unmapped')),
+          matching: find.byType(DestinyWeaponTypeIcon),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('×N only when owned+count; showOwnedMark false omits chrome',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const Column(
+            children: [
+              CatalogWeaponMetaStrip(
+                key: Key('owned_on'),
+                itemTypeName: 'Sword',
+                owned: true,
+                ownedCount: 4,
+                showOwnedMark: true,
+              ),
+              CatalogWeaponMetaStrip(
+                key: Key('signed_out'),
+                itemTypeName: 'Sword',
+                owned: true,
+                ownedCount: 4,
+                showOwnedMark: false,
+              ),
+              CatalogWeaponMetaStrip(
+                key: Key('zero_count'),
+                itemTypeName: 'Sword',
+                owned: true,
+                ownedCount: 0,
+                showOwnedMark: true,
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('owned_on')),
+          matching: find.byKey(const Key('catalog_meta_owned_count')),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('×4'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('signed_out')),
+          matching: find.byKey(const Key('catalog_meta_owned_count')),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('zero_count')),
+          matching: find.byKey(const Key('catalog_meta_owned_count')),
+        ),
+        findsNothing,
+      );
     });
   });
 
@@ -854,6 +1197,130 @@ void main() {
       // Icon-only meta.
       expect(find.byKey(const Key('catalog_weapon_meta_strip')), findsOneWidget);
       expect(find.textContaining('Scout Rifle ·'), findsNothing);
+    });
+
+    testWidgets(
+        'unowned enhance note when canBeEnhanced; no E cells; no fake selected',
+        (tester) async {
+      const item = CatalogItem(
+        hash: 50,
+        name: 'Hung Jury SR4',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Scout Rifle',
+        isExotic: false,
+        owned: false,
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: item,
+            instances: const [],
+            definitionSocketPlugs: const [
+              {
+                'columnKind': 'trait',
+                'columnLabel': 'Trait',
+                'equippedPlugHash': 3,
+                'reusablePlugHashes': [3, 4],
+              },
+            ],
+            plugNameByHash: const {
+              3: 'Rapid Hit',
+              4: 'Enhanced Frenzy',
+            },
+            plugEnhancedByHash: const {4: true},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('catalog_enhance_note')), findsOneWidget);
+      expect(find.textContaining('Can be enhanced'), findsOneWidget);
+      // No E marks on pool cells.
+      expect(find.byKey(const Key('perk_enhanced_mark_3')), findsNothing);
+      expect(find.byKey(const Key('perk_enhanced_mark_4')), findsNothing);
+      // No fake selected roll.
+      expect(find.byKey(const Key('perk_selected_3')), findsNothing);
+      expect(find.byKey(const Key('perk_selected_4')), findsNothing);
+    });
+
+    testWidgets('detail enhanced: gold+E on ①/② only; ③ ON → no E on pool',
+        (tester) async {
+      const item = CatalogItem(
+        hash: 99,
+        name: 'Chattering Bone',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Pulse Rifle',
+        isExotic: false,
+        owned: true,
+        ownedCount: 1,
+      );
+      final instances = [
+        _inst(
+          id: 'a',
+          power: 550,
+          socketPlugs: const [
+            {
+              'columnKind': 'trait',
+              'columnLabel': 'Trait',
+              'equippedPlugHash': 20,
+              'reusablePlugHashes': [20, 21],
+            },
+          ],
+        ),
+      ];
+
+      var canRoll = false;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              CatalogWeaponDetail(
+                item: item,
+                instances: instances,
+                showCanRoll: canRoll,
+                showCraft: false,
+                craftAvailable: false,
+                onCanRollChanged: (v) => setState(() => canRoll = v),
+                onCraftChanged: (_) {},
+                definitionSocketPlugs: const [
+                  {
+                    'columnKind': 'trait',
+                    'columnLabel': 'Trait',
+                    'equippedPlugHash': 20,
+                    'reusablePlugHashes': [20, 21, 22],
+                  },
+                ],
+                plugNameByHash: const {
+                  20: 'Rapid Hit',
+                  21: 'Overflow',
+                  22: 'Enhanced Kill Clip',
+                },
+                plugEnhancedByHash: const {20: true},
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pump();
+
+      // ① enhanced from host map.
+      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsOneWidget);
+      // ② not enhanced.
+      expect(find.byKey(const Key('perk_enhanced_mark_21')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('catalog_toggle_can_roll')));
+      await tester.pump();
+      // ③ pool cell present without E.
+      expect(find.byKey(const Key('perk_cell_22')), findsOneWidget);
+      expect(find.byKey(const Key('perk_enhanced_mark_22')), findsNothing);
+      expect(find.byKey(const Key('catalog_enhance_note')), findsOneWidget);
+      // ① still has E.
+      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsOneWidget);
     });
   });
 }

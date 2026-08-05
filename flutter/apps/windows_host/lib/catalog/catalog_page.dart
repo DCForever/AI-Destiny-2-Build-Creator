@@ -1036,6 +1036,7 @@ class _CatalogPageState extends State<CatalogPage> {
         onCraftChanged: (v) => setState(() => _showCraft = v),
         plugNameByHash: _bridge.plugNameByHash,
         plugIconByHash: _bridge.plugIconByHash,
+        plugEnhancedByHash: _bridge.plugEnhancedByHash,
         intrinsicName: item.isExotic ? item.intrinsicName : null,
         intrinsicDescription: item.isExotic
             ? (item.description ?? item.intrinsicName)

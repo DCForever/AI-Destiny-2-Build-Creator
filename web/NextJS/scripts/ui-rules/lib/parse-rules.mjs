@@ -247,13 +247,14 @@ export function loadAllRules() {
   if (fs.existsSync(DOMAIN_BR_PATH)) {
     const text = fs.readFileSync(DOMAIN_BR_PATH, "utf8");
     rules.push(
-      ...parseTableRules(text, rel(DOMAIN_BR_PATH), "dbr", /^DBR-[A-Z0-9-]+$/),
+      // Letter suffixes (e.g. DBR-CMPL-001d, DBR-SYN-010a) are product IDs.
+      ...parseTableRules(text, rel(DOMAIN_BR_PATH), "dbr", /^DBR-[A-Za-z0-9-]+$/),
     );
   }
   if (fs.existsSync(FEATURE_BR_PATH)) {
     const text = fs.readFileSync(FEATURE_BR_PATH, "utf8");
     rules.push(
-      ...parseTableRules(text, rel(FEATURE_BR_PATH), "br", /^BR-[A-Z0-9-]+$/),
+      ...parseTableRules(text, rel(FEATURE_BR_PATH), "br", /^BR-[A-Za-z0-9-]+$/),
     );
   }
 

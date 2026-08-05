@@ -940,6 +940,12 @@ pages:
           - BR-CAT-007
           - DAC-DST-008
           - DBR-ROLL-007
+          - BR-CAT-016
+          - BR-CAT-016a
+          - BR-CAT-016b
+          - BR-CAT-016c
+          - DBR-UI-006
+          - DBR-UI-007
         atlas:
           - catalog-weapon-detail
         children:
@@ -949,6 +955,12 @@ pages:
             rules:
               - DBR-ROLL-002
               - BR-ROLL-001
+              - BR-CAT-016
+              - BR-CAT-016a
+              - BR-CAT-016b
+              - BR-CAT-016c
+              - DBR-UI-006
+              - DBR-UI-007
           - id: catalog.weapon.detail.stats
             kind: field
             title: Weapon stats panel
@@ -1049,6 +1061,8 @@ pages:
                       - 011:SC-001
                       - 011:SC-002
                       - BR-ROLL-002
+                      - DBR-UI-006
+                      - DBR-UI-007
   - id: sets
     label: Sets
     description: |
@@ -4246,6 +4260,12 @@ pages:
           - BR-CAT-007
           - DAC-DST-008
           - DBR-ROLL-007
+          - BR-CAT-016
+          - BR-CAT-016a
+          - BR-CAT-016b
+          - BR-CAT-016c
+          - DBR-UI-006
+          - DBR-UI-007
         path: /catalog
         auth: signed-in
         atlas:

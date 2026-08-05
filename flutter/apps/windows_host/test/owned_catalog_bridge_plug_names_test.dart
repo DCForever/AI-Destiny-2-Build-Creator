@@ -175,4 +175,63 @@ void main() {
 
     sync.dispose();
   });
+
+  test('plugEnhancedByHash from name heuristic + optional builder', () async {
+    final session = WindowsOAuthSession(
+      clientId: '',
+      redirectUri: 'http://127.0.0.1:8765/callback',
+      tokenStore: MemoryTokenStore(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'x',
+        redirectUri: 'http://127.0.0.1:8765/callback',
+      ),
+      browserLauncher: FakeBrowserLauncher(),
+    );
+    await session.restore();
+
+    final sync = InventorySyncController(
+      db: db,
+      session: session,
+      profileClient: FakeProfileClient(),
+    );
+
+    final bridge = OwnedCatalogBridge(
+      db: db,
+      offlineCatalog: services.offlineCatalog,
+      session: session,
+      inventorySync: sync,
+      plugNameMapBuilder: (hashes) async => {
+        for (final h in hashes)
+          h: h == 200 ? 'Enhanced Frenzy' : 'Name-$h',
+      },
+      plugEnhancedMapBuilder: (hashes) async => {
+        // Explicit host path (e.g. category) — true only for 201.
+        201: true,
+        202: false,
+      },
+    );
+
+    await bridge.refresh();
+    await bridge.ensurePlugNames([200, 201, 202, 203]);
+
+    // Name heuristic marks Enhanced Frenzy.
+    expect(bridge.plugEnhancedByHash[200], isTrue);
+    // Builder true retained.
+    expect(bridge.plugEnhancedByHash[201], isTrue);
+    // false / unknown omitted from map.
+    expect(bridge.plugEnhancedByHash.containsKey(202), isFalse);
+    expect(bridge.plugEnhancedByHash.containsKey(203), isFalse);
+
+    // Seeded constructor map preserved.
+    final bridgeSeed = OwnedCatalogBridge(
+      db: db,
+      offlineCatalog: services.offlineCatalog,
+      session: session,
+      inventorySync: sync,
+      plugEnhancedByHash: const {9: true},
+    );
+    expect(bridgeSeed.plugEnhancedByHash[9], isTrue);
+
+    sync.dispose();
+  });
 }

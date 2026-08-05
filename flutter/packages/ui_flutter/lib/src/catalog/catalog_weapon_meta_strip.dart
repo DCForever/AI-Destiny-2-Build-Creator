@@ -7,10 +7,14 @@ import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import '../neon_item_card.dart';
 
+/// Fixed meta chip edge (COMPARE residual — compact horizontal, not full-width bars).
+const double kCatalogMetaChipSize = 22;
+
 /// Pure icon-only weapon meta strip (type · frame · element · slot · ammo + ×N).
 ///
 /// No type·frame text subtitle and no KINETIC/OWNED text pills (COMPARE residual).
-/// Official Destiny icons when known; slot/type use letter/abbrev structure chrome.
+/// Official Destiny icons when known; type uses destiny-icons silhouette or letter
+/// last-resort; slot stays letter.
 class CatalogWeaponMetaStrip extends StatelessWidget {
   const CatalogWeaponMetaStrip({
     super.key,
@@ -38,18 +42,28 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
+    final typeVisual = officialWeaponTypeVisual(itemTypeName);
     final frameVisual = officialWeaponFrameVisual(frame);
     final elVisual = officialElementVisual(element);
     final ammoVisual = officialAmmoVisual(ammo);
 
     final chips = <Widget>[
       if (itemTypeName != null && itemTypeName!.trim().isNotEmpty)
-        _MetaGlyphChip(
-          key: const Key('catalog_meta_type'),
-          tooltip: itemTypeName!,
-          mark: _typeMark(itemTypeName!),
-          color: palette.muted,
-        ),
+        if (typeVisual != null)
+          _MetaTypeSilhouetteChip(
+            key: const Key('catalog_meta_type'),
+            visual: typeVisual,
+            tooltip: itemTypeName!,
+            fallbackMark: weaponTypeLetterMark(itemTypeName),
+          )
+        else
+          _MetaGlyphChip(
+            key: const Key('catalog_meta_type'),
+            tooltip: itemTypeName!,
+            mark: weaponTypeLetterMark(itemTypeName),
+            color: palette.muted,
+            semanticLabel: itemTypeName!,
+          ),
       if (frameVisual != null)
         _MetaOfficialChip(
           key: const Key('catalog_meta_frame'),
@@ -84,6 +98,7 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
           tooltip: slot!,
           mark: neonSlotGlyphMark(slot),
           color: _slotColor(palette, slot),
+          semanticLabel: '$slot slot',
         ),
       if (ammoVisual != null)
         _MetaOfficialChip(
@@ -110,14 +125,19 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
       return const SizedBox.shrink(key: Key('catalog_weapon_meta_strip_empty'));
     }
 
+    // Compact horizontal strip (max-content): fixed chips; never full-width bars.
+    // Key on the Row (mainAxisSize.min) — Semantics alone expands to max constraints.
     return Semantics(
-      key: const Key('catalog_weapon_meta_strip'),
       label: _a11yLabel(),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: chips,
+      child: Row(
+        key: const Key('catalog_weapon_meta_strip'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < chips.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            chips[i],
+          ],
+        ],
       ),
     );
   }
@@ -134,17 +154,6 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
     return parts.join(', ');
   }
 
-  static String _typeMark(String type) {
-    final t = type.trim();
-    if (t.isEmpty) return '?';
-    // Compact structure mark when no official weapon-type icon path is wired.
-    final words = t.split(RegExp(r'\s+'));
-    if (words.length >= 2) {
-      return '${words[0][0]}${words[1][0]}'.toUpperCase();
-    }
-    return t.length <= 2 ? t.toUpperCase() : t.substring(0, 2).toUpperCase();
-  }
-
   static Color _slotColor(FlapPalette palette, String? slot) {
     switch ((slot ?? '').toLowerCase()) {
       case 'kinetic':
@@ -155,6 +164,50 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
       default:
         return palette.muted;
     }
+  }
+}
+
+/// Fixed 22×22 chip with destiny-icons type silhouette.
+class _MetaTypeSilhouetteChip extends StatelessWidget {
+  const _MetaTypeSilhouetteChip({
+    super.key,
+    required this.visual,
+    required this.tooltip,
+    this.fallbackMark,
+  });
+
+  final DestinyWeaponTypeVisual visual;
+  final String tooltip;
+  final String? fallbackMark;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        label: tooltip,
+        image: true,
+        child: Container(
+          width: kCatalogMetaChipSize,
+          height: kCatalogMetaChipSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: palette.surfaceRaised.withValues(alpha: 0.6),
+            border: Border.all(
+              color: visual.color.withValues(alpha: 0.55),
+              width: kFlapRuleThickness,
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+          child: DestinyWeaponTypeIcon(
+            visual: visual,
+            size: 15,
+            fallbackMark: fallbackMark,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -176,8 +229,8 @@ class _MetaOfficialChip extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Container(
-        width: 22,
-        height: 22,
+        width: kCatalogMetaChipSize,
+        height: kCatalogMetaChipSize,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: palette.surfaceRaised.withValues(alpha: 0.6),
@@ -197,45 +250,54 @@ class _MetaOfficialChip extends StatelessWidget {
   }
 }
 
+/// Fixed 22×22 letter/glyph chip — never expands to full-width bars.
 class _MetaGlyphChip extends StatelessWidget {
   const _MetaGlyphChip({
     super.key,
     required this.tooltip,
     required this.mark,
     required this.color,
+    this.semanticLabel,
   });
 
   final String tooltip;
   final String mark;
   final Color color;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
     return Tooltip(
       message: tooltip,
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: palette.surfaceRaised.withValues(alpha: 0.6),
-          border: Border.all(
-            color: color.withValues(alpha: 0.45),
-            width: kFlapRuleThickness,
+      child: Semantics(
+        label: semanticLabel ?? tooltip,
+        child: Container(
+          width: kCatalogMetaChipSize,
+          height: kCatalogMetaChipSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: palette.surfaceRaised.withValues(alpha: 0.6),
+            border: Border.all(
+              color: color.withValues(alpha: 0.45),
+              width: kFlapRuleThickness,
+            ),
+            borderRadius: BorderRadius.circular(2),
           ),
-          borderRadius: BorderRadius.circular(2),
-        ),
-        child: Text(
-          mark,
-          style: neonMono(color: color, fontSize: 10),
+          child: Text(
+            mark,
+            style: neonMono(color: color, fontSize: 9),
+            maxLines: 1,
+            overflow: TextOverflow.clip,
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );
   }
 }
 
-/// ×N only — never "OWNED" text pill.
+/// ×N only — never "OWNED" text pill. Height fixed 22; width hugs content.
 class _OwnedCountChip extends StatelessWidget {
   const _OwnedCountChip({super.key, required this.count});
 
@@ -247,7 +309,12 @@ class _OwnedCountChip extends StatelessWidget {
     return Tooltip(
       message: 'Owned copies',
       child: Container(
-        height: 22,
+        height: kCatalogMetaChipSize,
+        constraints: const BoxConstraints(
+          minWidth: kCatalogMetaChipSize,
+          minHeight: kCatalogMetaChipSize,
+          maxHeight: kCatalogMetaChipSize,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(

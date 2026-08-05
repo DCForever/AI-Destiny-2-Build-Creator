@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-08-03 (dart-070: BR-SLOT-014 Pair complete; BR-ATT-006/006a attach floors; `PAIR_INCOMPLETE` / `SET_NOT_ATTACHABLE`)
+**Updated**: 2026-08-04 (catalog residual polish: BR-CAT-016 / 016a / 016b; 016c craft enhance note)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -257,7 +257,10 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-CAT-007 | Catalog results may **group by** one or more dimensions (element, ammo, archetype, frame, slot, class) for browse; group-by does not replace filter semantics. | [DBR-ROLL-010](./domain-business-rules.md) |
 | BR-CAT-008 | Catalog may filter by library **synergy membership** (include/exclude) via server allowlist and/or client hash sets when mixed. | [DBR-ROLL-010](./domain-business-rules.md) |
 | BR-CAT-009 | Catalog provides a **Universal** mode for mixed-kind composition search (weapons, armor, mods, perks, traits, set bonuses, artifact perks, subclass pieces). From hit detail, users may create/add **Sets** (wizard + instance pin rules) or **Synergies** only—not Build kit attach. | [027](027-catalog-universal-search/spec.md) |
-| BR-CAT-016c | When craftable (**including craftable exotics**), weapon detail offers **possible crafted** options when data exists; current craft is selected plugs (no duplicate current-craft panel). Craft UI and exotic catalyst UI are independent when both apply. | [DBR-UI-007](./domain-business-rules.md), vault Destiny Weapon DO-WPN-029 / DO-WPN-052 |
+| BR-CAT-016 | Weapon detail perk tiers: **①** selected on this owned instance, **②** other plugs on this instance, **③** definition possible-roll pool. Owned default shows ①+② only with **Possible rolls OFF**; unowned shows ③-only (no fake selected). Never invent plugs. | [DBR-ROLL-001](./domain-business-rules.md), [DBR-UI-007](./domain-business-rules.md) |
+| BR-CAT-016a | **Enhanced** chrome (gold border + **E**) only on **①/②** when this copy’s plug is enhanced (`plugEnhancedByHash` / host map; name heuristic fallback). **③ / unowned / Possible crafted** show **one cell per perk identity** and a **“Can be enhanced”** note when the pool supports Enhanced — never base+enhanced as two cells, never E on pool cells. | [DBR-UI-007](./domain-business-rules.md), [DBR-ROLL-007](./domain-business-rules.md) |
+| BR-CAT-016b | Weapon detail chrome honesty: icon-only meta strip (type silhouette or letter last-resort · frame · element · slot · ammo + ×N when owned); equal-width perk columns with header ellipsis+Tooltip+Semantics at ~400px detail width (no perk-grid H-scroll); Origin column only when data exists; soft catalyst omit-when-empty / display-only when present. | [DBR-UI-006](./domain-business-rules.md), [DBR-UI-007](./domain-business-rules.md) |
+| BR-CAT-016c | When craftable (**including craftable exotics**), weapon detail offers **possible crafted** options when data exists; current craft is selected plugs (no duplicate current-craft panel). Craft UI and exotic catalyst UI are independent when both apply. Possible crafted uses the same toggle OFF-default + ③-style columns as Possible rolls; hide until craft data exists. Same enhance rules as ③ (note only). | [DBR-UI-007](./domain-business-rules.md), vault Destiny Weapon DO-WPN-029 / DO-WPN-052 |
 
 ---
 

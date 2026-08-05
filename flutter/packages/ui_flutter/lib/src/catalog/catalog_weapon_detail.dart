@@ -58,11 +58,15 @@ class CatalogPerkColumn {
     required this.label,
     required this.cells,
     this.kind,
+    this.canBeEnhanced = false,
   });
 
   final String label;
   final String? kind;
   final List<CatalogPerkCell> cells;
+
+  /// Pool/unowned/craft supports Enhanced variants — note only, no E cells.
+  final bool canBeEnhanced;
 }
 
 /// Build columns from instance sockets and/or definition perk columns.
@@ -74,7 +78,9 @@ class CatalogPerkColumn {
 ///   roll). Does not invent plugs.
 /// - **Origin:** only when a column has origin kind/data with plugs; never invent.
 /// - Craft pool only when [showCraft] and craft cells provided (never invent).
-/// - Enhanced when [plugEnhancedByHash] says so or display name looks enhanced.
+/// - **Enhanced gold/E only on ①/②** instance plugs when [plugEnhancedByHash]
+///   or name heuristic says so. ③ / unowned / craft = one cell per identity +
+///   [CatalogPerkColumn.canBeEnhanced] note (never base+enhanced pair; no E).
 /// - Unknown names → label "Unknown perk" + hash tracked for footer.
 List<CatalogPerkColumn> buildCatalogPerkColumns({
   List<Map<String, Object?>>? socketPlugs,
@@ -125,24 +131,74 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
       final instanceReusable = _parseHashList(raw['reusablePlugHashes']);
 
       final cells = <CatalogPerkCell>[];
+      var colCanBeEnhanced = false;
+
       void addCell(int h, {required bool selected, required bool pool}) {
         if (h == 0) return;
         if (cells.any((c) => c.hash == h)) return;
         final name = plugNameByHash[h] ?? _cardName(plugCards, h);
         final unknown = _isUnknownPerkName(name, h);
-        final display = unknown ? 'Unknown perk' : (name ?? 'Unknown perk');
-        final enhanced = plugEnhancedByHash[h] == true ||
-            (!unknown && _looksEnhanced(display));
+        final rawDisplay = unknown ? 'Unknown perk' : (name ?? 'Unknown perk');
+        final looksEnh = !unknown &&
+            (plugEnhancedByHash[h] == true || _looksEnhanced(rawDisplay));
+
+        // ③ / unowned pool: no E chrome; one cell per perk identity.
+        if (pool || usingDefinitionOnly) {
+          if (looksEnh) colCanBeEnhanced = true;
+          final identity = _perkIdentityKey(rawDisplay);
+          final existingIdx = cells.indexWhere(
+            (c) => _perkIdentityKey(c.displayName) == identity,
+          );
+          if (existingIdx >= 0) {
+            // Already have this family (①/② or earlier pool). Note only.
+            if (looksEnh || _looksEnhanced(cells[existingIdx].displayName)) {
+              colCanBeEnhanced = true;
+            }
+            // Prefer base display name on pool-only cells when both present.
+            final prev = cells[existingIdx];
+            if (prev.fromCanRollPool &&
+                _looksEnhanced(prev.displayName) &&
+                !looksEnh) {
+              cells[existingIdx] = CatalogPerkCell(
+                hash: h,
+                displayName: rawDisplay,
+                icon: plugIconByHash[h] ?? prev.icon,
+                selected: false,
+                fromCanRollPool: true,
+                unknown: unknown,
+                enhanced: false,
+              );
+            }
+            return;
+          }
+          final display =
+              looksEnh ? _stripEnhancedDisplay(rawDisplay) : rawDisplay;
+          cells.add(
+            CatalogPerkCell(
+              hash: h,
+              displayName: display,
+              icon: plugIconByHash[h] ??
+                  (unknown ? null : _frameIconFallback(display)),
+              selected: false,
+              fromCanRollPool: true,
+              unknown: unknown,
+              enhanced: false,
+            ),
+          );
+          return;
+        }
+
+        // ① / ② instance plugs — gold/E when this copy’s plug is enhanced.
         cells.add(
           CatalogPerkCell(
             hash: h,
-            displayName: display,
+            displayName: rawDisplay,
             icon: plugIconByHash[h] ??
-                (unknown ? null : _frameIconFallback(display)),
+                (unknown ? null : _frameIconFallback(rawDisplay)),
             selected: selected,
-            fromCanRollPool: pool && !selected,
+            fromCanRollPool: false,
             unknown: unknown,
-            enhanced: enhanced,
+            enhanced: looksEnh,
           ),
         );
       }
@@ -182,10 +238,17 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
           : (kind != null && kind.isNotEmpty)
               ? kind
               : 'Plug';
-      out.add(CatalogPerkColumn(label: colLabel, kind: kind, cells: cells));
+      out.add(
+        CatalogPerkColumn(
+          label: colLabel,
+          kind: kind,
+          cells: cells,
+          canBeEnhanced: colCanBeEnhanced,
+        ),
+      );
     }
   } else if (plugCards.isNotEmpty) {
-    // Selected-only flat cards when no socket structure.
+    // Selected-only flat cards when no socket structure (owned instance path).
     final byLabel = <String, List<ResolvedPlugCard>>{};
     for (final c in plugCards) {
       final key = (c.columnLabel != null && c.columnLabel!.isNotEmpty)
@@ -223,9 +286,34 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
     }
   }
 
-  // Craft: same column/cell format, only when toggled and host provided data.
+  // Craft: same column/cell format as ③ (dashed pool, no E cells); note only.
   if (showCraft && craftColumns.isNotEmpty) {
     for (final craftCol in craftColumns) {
+      final craftCells = <CatalogPerkCell>[];
+      var craftCanEnhance = craftCol.canBeEnhanced;
+      for (final cell in craftCol.cells) {
+        final looksEnh =
+            cell.enhanced || _looksEnhanced(cell.displayName);
+        if (looksEnh) craftCanEnhance = true;
+        final identity = _perkIdentityKey(cell.displayName);
+        if (craftCells.any((c) => _perkIdentityKey(c.displayName) == identity)) {
+          continue;
+        }
+        craftCells.add(
+          CatalogPerkCell(
+            hash: cell.hash,
+            displayName: looksEnh
+                ? _stripEnhancedDisplay(cell.displayName)
+                : cell.displayName,
+            icon: cell.icon,
+            selected: false,
+            fromCraftPool: true,
+            unknown: cell.unknown,
+            enhanced: false,
+          ),
+        );
+      }
+
       final existing = out.indexWhere(
         (c) =>
             c.label == craftCol.label ||
@@ -233,42 +321,29 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
       );
       if (existing >= 0) {
         final merged = [...out[existing].cells];
-        for (final cell in craftCol.cells) {
-          if (!merged.any((m) => m.hash == cell.hash)) {
-            merged.add(
-              CatalogPerkCell(
-                hash: cell.hash,
-                displayName: cell.displayName,
-                icon: cell.icon,
-                selected: false,
-                fromCraftPool: true,
-                unknown: cell.unknown,
-                enhanced: cell.enhanced || _looksEnhanced(cell.displayName),
-              ),
-            );
+        var mergedCan = out[existing].canBeEnhanced || craftCanEnhance;
+        for (final cell in craftCells) {
+          final identity = _perkIdentityKey(cell.displayName);
+          if (merged.any((m) => m.hash == cell.hash)) continue;
+          if (merged.any((m) => _perkIdentityKey(m.displayName) == identity)) {
+            mergedCan = true;
+            continue;
           }
+          merged.add(cell);
         }
         out[existing] = CatalogPerkColumn(
           label: out[existing].label,
           kind: out[existing].kind,
           cells: merged,
+          canBeEnhanced: mergedCan,
         );
       } else {
         out.add(
           CatalogPerkColumn(
             label: craftCol.label,
             kind: craftCol.kind,
-            cells: [
-              for (final c in craftCol.cells)
-                CatalogPerkCell(
-                  hash: c.hash,
-                  displayName: c.displayName,
-                  icon: c.icon,
-                  fromCraftPool: true,
-                  unknown: c.unknown,
-                  enhanced: c.enhanced || _looksEnhanced(c.displayName),
-                ),
-            ],
+            cells: craftCells,
+            canBeEnhanced: craftCanEnhance,
           ),
         );
       }
@@ -277,6 +352,10 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
 
   return List.unmodifiable(out);
 }
+
+/// True when any column reports pool/craft can-be-enhanced (note-only path).
+bool catalogColumnsCanBeEnhanced(List<CatalogPerkColumn> columns) =>
+    columns.any((c) => c.canBeEnhanced);
 
 bool _isMetaColumnKind(String kindLower) {
   return kindLower == 'intrinsic' ||
@@ -316,6 +395,23 @@ Set<int> _hashesFromSocketMap(Map<String, Object?> raw) {
 bool _looksEnhanced(String? name) {
   if (name == null || name.isEmpty) return false;
   return RegExp(r'enhanced', caseSensitive: false).hasMatch(name);
+}
+
+/// Family key for base ↔ enhanced collapse (pool / unowned / craft only).
+String _perkIdentityKey(String name) {
+  return _stripEnhancedDisplay(name)
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'\s+'), ' ');
+}
+
+/// Strip common Enhanced prefixes/suffixes for identity collapse display.
+String _stripEnhancedDisplay(String name) {
+  var s = name.trim();
+  s = s.replaceAll(RegExp(r'\s*\(enhanced\)\s*$', caseSensitive: false), '');
+  s = s.replaceAll(RegExp(r'\s+enhanced\s*$', caseSensitive: false), '');
+  s = s.replaceAll(RegExp(r'^enhanced\s+', caseSensitive: false), '');
+  return s.trim().isEmpty ? name.trim() : s.trim();
 }
 
 String? _cardName(List<ResolvedPlugCard> cards, int hash) {
@@ -414,6 +510,7 @@ class CatalogDetailToggles extends StatelessWidget {
 /// Equal-width perk columns — no horizontal scroll at [kCatalogWeaponsDetailWidth].
 ///
 /// Icon-first cells with ellipsis captions; compress under multi-column ③ pools.
+/// Headers: ellipsis + Tooltip + Semantics (no pane widen / no H-scroll).
 class CatalogPerkGrid extends StatelessWidget {
   const CatalogPerkGrid({
     super.key,
@@ -448,16 +545,9 @@ class CatalogPerkGrid extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    columns[i].label.toUpperCase(),
-                    style: neonMono(
-                      color: palette.muted,
-                      fontSize: 8,
-                      letterSpacing: 0.5,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                  _PerkColumnHeader(
+                    key: Key('perk_column_header_$i'),
+                    label: columns[i].label,
                   ),
                   const SizedBox(height: 3),
                   for (final cell in columns[i].cells)
@@ -467,6 +557,82 @@ class CatalogPerkGrid extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// ③ ON density: ellipsis + Tooltip + Semantics; full name in tooltip.
+class _PerkColumnHeader extends StatelessWidget {
+  const _PerkColumnHeader({
+    super.key,
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final upper = label.toUpperCase();
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        header: true,
+        child: Text(
+          upper,
+          style: neonMono(
+            color: palette.muted,
+            fontSize: 8,
+            letterSpacing: 0.5,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+/// Soft “Can be enhanced” note for ③ / unowned / craft pools (no E cells).
+class CatalogEnhanceNote extends StatelessWidget {
+  const CatalogEnhanceNote({
+    super.key,
+    this.contextLabel = 'Possible rolls',
+  });
+
+  /// Short context for the note (e.g. "Possible rolls", "Definition pool").
+  final String contextLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    return Padding(
+      key: const Key('catalog_enhance_note'),
+      padding: const EdgeInsets.only(bottom: kSpace8),
+      child: Semantics(
+        label: 'Can be enhanced. $contextLabel perks that support Enhanced '
+            'show once; no second cell.',
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'Can be enhanced',
+                style: neonMono(
+                  color: _kEnhancedGold,
+                  fontSize: 10,
+                ),
+              ),
+              TextSpan(
+                text: ' — $contextLabel perks that support Enhanced show once '
+                    '(no second cell).',
+                style: neonBody(color: palette.muted, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -954,6 +1120,14 @@ class CatalogWeaponDetail extends StatelessWidget {
     );
     final unknowns = unknownPerkHashes(columns);
     final perkSectionLabel = hasOwnedCopy ? 'PERKS' : 'POSSIBLE ROLLS';
+    final showEnhanceNote = catalogColumnsCanBeEnhanced(columns);
+    final enhanceContext = !hasOwnedCopy
+        ? 'Definition pool'
+        : showCraft && showCanRoll
+            ? 'Possible rolls / crafted'
+            : showCraft
+                ? 'Possible crafted'
+                : 'Possible rolls';
 
     return Material(
       color: Colors.transparent,
@@ -1047,6 +1221,8 @@ class CatalogWeaponDetail extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
+                if (showEnhanceNote)
+                  CatalogEnhanceNote(contextLabel: enhanceContext),
                 CatalogPerkGrid(columns: columns),
                 CatalogHashFooter(unknownHashes: unknowns),
                 const SizedBox(height: kSpace16),

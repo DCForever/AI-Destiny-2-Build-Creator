@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'destiny_official_icons.dart';
 
@@ -142,6 +143,78 @@ class DestinyOfficialIcon extends StatelessWidget {
                 ),
               ),
             ),
+    );
+  }
+}
+
+/// Weapon-type silhouette from package destiny-icons SVG assets.
+///
+/// On asset miss / test without flutter assets, shows [fallbackMark] letter.
+class DestinyWeaponTypeIcon extends StatelessWidget {
+  const DestinyWeaponTypeIcon({
+    super.key,
+    required this.visual,
+    this.size = 15,
+    this.semanticLabel,
+    this.fallbackMark,
+  });
+
+  final DestinyWeaponTypeVisual visual;
+  final double size;
+  final String? semanticLabel;
+  final String? fallbackMark;
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = fallbackMark;
+    final fallbackChild = mark == null
+        ? SizedBox(
+            width: size,
+            height: size,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: visual.color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          )
+        : Center(
+            child: Text(
+              mark,
+              style: TextStyle(
+                fontSize: size * 0.65,
+                height: 1,
+                color: visual.color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+
+    Widget content = SvgPicture.asset(
+      visual.assetPath,
+      package: 'destiny2_ui_flutter',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      colorFilter: ColorFilter.mode(visual.color, BlendMode.srcIn),
+      // Asset miss must not throw in widget tests.
+      placeholderBuilder: (_) => fallbackChild,
+      errorBuilder: (_, __, ___) => fallbackChild,
+    );
+
+    final boxed = SizedBox(
+      width: size,
+      height: size,
+      child: ExcludeSemantics(child: content),
+    );
+
+    final label = semanticLabel?.trim();
+    if (label == null || label.isEmpty) return boxed;
+
+    return Semantics(
+      label: label,
+      image: true,
+      child: boxed,
     );
   }
 }

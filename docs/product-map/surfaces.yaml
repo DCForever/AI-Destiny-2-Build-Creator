@@ -1311,6 +1311,8 @@ surfaces:
       - 011:SC-001
       - 011:SC-002
       - BR-ROLL-002
+      - DBR-UI-006
+      - DBR-UI-007
     status: active
     platforms:
       flutter-windows:
@@ -1348,6 +1350,12 @@ surfaces:
       - BR-CAT-007
       - DAC-DST-008
       - DBR-ROLL-007
+      - BR-CAT-016
+      - BR-CAT-016a
+      - BR-CAT-016b
+      - BR-CAT-016c
+      - DBR-UI-006
+      - DBR-UI-007
     status: active
     platforms:
       nextjs:
@@ -1371,6 +1379,12 @@ surfaces:
     rules:
       - DBR-ROLL-002
       - BR-ROLL-001
+      - BR-CAT-016
+      - BR-CAT-016a
+      - BR-CAT-016b
+      - BR-CAT-016c
+      - DBR-UI-006
+      - DBR-UI-007
     status: active
   - id: catalog.weapon.detail.synergies
     title: Linked library synergies

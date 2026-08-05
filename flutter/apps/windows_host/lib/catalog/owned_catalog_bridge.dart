@@ -23,10 +23,13 @@ class OwnedCatalogBridge {
     required this.inventorySync,
     Map<int, String> plugNameByHash = const {},
     Map<int, String> plugIconByHash = const {},
+    Map<int, bool> plugEnhancedByHash = const {},
     this.plugNameMapBuilder,
     this.plugIconMapBuilder,
+    this.plugEnhancedMapBuilder,
   })  : _plugNameByHash = Map<int, String>.from(plugNameByHash),
-        _plugIconByHash = Map<int, String>.from(plugIconByHash);
+        _plugIconByHash = Map<int, String>.from(plugIconByHash),
+        _plugEnhancedByHash = Map<int, bool>.from(plugEnhancedByHash);
 
   final AppDatabase db;
   final OfflineCatalog offlineCatalog;
@@ -39,8 +42,15 @@ class OwnedCatalogBridge {
   /// Production builder: plug hashes → Bungie icon paths.
   final PerkNameMapBuilder? plugIconMapBuilder;
 
+  /// Optional builder: plug hashes → enhanced flags (category path).
+  ///
+  /// When null, enhanced flags are derived from resolved names via
+  /// [isEnhancedPlug] after [ensurePlugNames] (name-heuristic host map).
+  final Future<Map<int, bool>> Function(List<int> hashes)? plugEnhancedMapBuilder;
+
   Map<int, String> _plugNameByHash;
   Map<int, String> _plugIconByHash;
+  final Map<int, bool> _plugEnhancedByHash;
 
   List<CatalogItem> _annotatedBase = const [];
   List<InventoryItemRecord> _inventory = const [];
@@ -65,6 +75,13 @@ class OwnedCatalogBridge {
   /// Resolved plug hash → Bungie icon path (grows with [ensurePlugNames]).
   Map<int, String> get plugIconByHash =>
       Map<int, String>.unmodifiable(_plugIconByHash);
+
+  /// Plug hash → enhanced (instance ①/② gold/E). Only true entries retained.
+  ///
+  /// Populated by [ensurePlugNames] from optional [plugEnhancedMapBuilder]
+  /// and/or name heuristic ([isEnhancedPlug]). Unknown hashes omitted.
+  Map<int, bool> get plugEnhancedByHash =>
+      Map<int, bool>.unmodifiable(_plugEnhancedByHash);
 
   /// Load entity base (if needed) + inventory annotate + synergy membership.
   Future<void> refresh({bool reloadEntities = true}) async {
@@ -126,7 +143,8 @@ class OwnedCatalogBridge {
 
   /// Ensure [hashes] have display names **and** icons (entity seed + raw defs).
   ///
-  /// Safe to call repeatedly; only fetches missing hashes.
+  /// Also refreshes [plugEnhancedByHash] for resolved names (and optional
+  /// [plugEnhancedMapBuilder]). Safe to call repeatedly; only fetches missing.
   /// Never throws — Catalog must not red-screen on resolution failure.
   Future<void> ensurePlugNames(Iterable<int> hashes) async {
     final list = [for (final h in hashes) if (h != 0) h];
@@ -146,6 +164,36 @@ class OwnedCatalogBridge {
       explicit: null,
       builder: plugIconMapBuilder ?? inventorySync.perkIconMapBuilder,
     );
+    await _resolveEnhancedFlags(list);
+  }
+
+  /// Populate [plugEnhancedByHash] from optional builder + name heuristic.
+  ///
+  /// Only stores `true` entries (unknown / false hashes omitted from map).
+  Future<void> _resolveEnhancedFlags(List<int> hashes) async {
+    final builder = plugEnhancedMapBuilder;
+    if (builder != null) {
+      try {
+        final raw = await builder(List<int>.from(hashes));
+        for (final e in raw.entries) {
+          if (e.value == true) {
+            _plugEnhancedByHash[e.key] = true;
+          }
+        }
+      } catch (_) {
+        // Degrade to name heuristic only.
+      }
+    }
+
+    // Name-heuristic path (isEnhancedPlug) for hashes with known names.
+    for (final h in hashes) {
+      if (_plugEnhancedByHash[h] == true) continue;
+      final name = _plugNameByHash[h];
+      if (name == null || name.isEmpty) continue;
+      if (isEnhancedPlug(name, '')) {
+        _plugEnhancedByHash[h] = true;
+      }
+    }
   }
 
   Future<void> _resolveInto(
@@ -209,6 +257,9 @@ class OwnedCatalogBridge {
       final icon = item.icon;
       if (icon != null && icon.isNotEmpty) {
         _plugIconByHash.putIfAbsent(item.hash, () => icon);
+      }
+      if (isEnhancedPlug(item.name, '')) {
+        _plugEnhancedByHash.putIfAbsent(item.hash, () => true);
       }
     }
   }
