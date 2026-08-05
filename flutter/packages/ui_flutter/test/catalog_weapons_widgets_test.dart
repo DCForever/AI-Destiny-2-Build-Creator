@@ -239,6 +239,270 @@ void main() {
     });
   });
 
+  group('CatalogWeaponFamilyCard / family grid', () {
+    final familyItems = [
+      const CatalogItem(
+        hash: 101,
+        name: 'Midnight Coup',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Hand Cannon',
+        isExotic: false,
+        owned: true,
+        ownedCount: 2,
+      ),
+      const CatalogItem(
+        hash: 102,
+        name: 'Midnight Coup (Adept)',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Hand Cannon',
+        isExotic: false,
+        owned: true,
+        ownedCount: 1,
+      ),
+      const CatalogItem(
+        hash: 103,
+        name: 'Midnight Coup Holofoil',
+        slot: 'Kinetic',
+        element: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Hand Cannon',
+        isExotic: false,
+        owned: false,
+        ownedCount: 0,
+      ),
+    ];
+
+    testWidgets('one card per family; base name; owned-only non-interactive chips',
+        (tester) async {
+      final families = groupWeaponFamilies(familyItems);
+      expect(families.length, 1);
+      WeaponFamily? tapped;
+
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 400,
+            height: 300,
+            child: CatalogWeaponsGrid(
+              families: families,
+              showOwned: true,
+              onSelectFamily: (f) => tapped = f,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // One family card (not three hash cards).
+      expect(find.byKey(Key('catalog_family_${families.single.key}')), findsOneWidget);
+      expect(find.text('Midnight Coup'), findsWidgets);
+      // Unowned Holofoil omitted from chips.
+      final chips = find.byKey(Key('family_version_chips_${families.single.key}'));
+      expect(chips, findsOneWidget);
+      expect(find.text('Base'), findsOneWidget);
+      expect(find.text('Adept'), findsOneWidget);
+      expect(find.text('Holofoil'), findsNothing);
+      // ×N sums family.
+      expect(find.text('×3'), findsOneWidget);
+
+      await tester.tap(find.byKey(Key('catalog_family_${families.single.key}')));
+      await tester.pump();
+      expect(tapped, isNotNull);
+      expect(tapped!.key, families.single.key);
+    });
+
+    testWidgets('signed-out honesty: no chips / no ×N', (tester) async {
+      final families = groupWeaponFamilies(familyItems);
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 400,
+            height: 300,
+            child: CatalogWeaponsGrid(
+              families: families,
+              showOwned: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(
+        find.byKey(Key('family_version_chips_${families.single.key}')),
+        findsNothing,
+      );
+      expect(find.text('×3'), findsNothing);
+      expect(find.text('Base'), findsNothing);
+    });
+  });
+
+  group('Catalog group collapse + outline', () {
+    testWidgets('collapse toggles view-only; outline hidden flat or <2 groups',
+        (tester) async {
+      final families = groupWeaponFamilies([
+        const CatalogItem(
+          hash: 1,
+          name: 'A',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+        ),
+        const CatalogItem(
+          hash: 2,
+          name: 'B',
+          slot: 'Energy',
+          element: 'Solar',
+          itemTypeName: 'Auto Rifle',
+          isExotic: false,
+        ),
+      ]);
+      final groups = groupWeaponFamilyBrowse(
+        families,
+        const [CatalogGroupDimension.slot],
+      );
+      expect(groups.length, greaterThanOrEqualTo(2));
+
+      var collapsed = <String>{};
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              SizedBox(
+                width: 600,
+                height: 500,
+                child: CatalogWeaponsGrid(
+                  families: families,
+                  familyGroups: [
+                    for (final g in groups)
+                      (
+                        key: g.key,
+                        label: g.label,
+                        families: g.families,
+                      ),
+                  ],
+                  collapsedGroupKeys: collapsed,
+                  onToggleGroup: (k) {
+                    setState(() {
+                      if (collapsed.contains(k)) {
+                        collapsed = {...collapsed}..remove(k);
+                      } else {
+                        collapsed = {...collapsed, k};
+                      }
+                    });
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pump();
+
+      final firstKey = groups.first.key;
+      expect(find.byKey(Key('catalog_group_header_$firstKey')), findsOneWidget);
+      // Flat outline is host-owned — grid itself has no outline rail.
+      expect(find.byKey(const Key('catalog_group_outline_rail')), findsNothing);
+
+      // Collapse first group: cards for that group leave the tree.
+      final firstFamilyKey = groups.first.families.first.key;
+      expect(
+        find.byKey(Key('catalog_family_$firstFamilyKey')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(Key('catalog_group_header_$firstKey')));
+      await tester.pump();
+      expect(
+        find.byKey(Key('catalog_family_$firstFamilyKey')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('outline rail jump keys present when ≥2 groups', (tester) async {
+      var jumped = '';
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 200,
+            height: 300,
+            child: CatalogGroupOutlineRail(
+              groups: const [
+                (key: 'Kinetic', label: 'Kinetic', count: 2),
+                (key: 'Energy', label: 'Energy', count: 1),
+              ],
+              onJump: (k) => jumped = k,
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('catalog_group_outline_rail')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('catalog_outline_jump_Energy')));
+      await tester.pump();
+      expect(jumped, 'Energy');
+    });
+  });
+
+  group('CatalogSortGroupSheet', () {
+    testWidgets('reorder sort keys + apply group dims', (tester) async {
+      List<CatalogSortKey>? appliedSort;
+      List<CatalogGroupDimension>? appliedGroup;
+
+      await tester.pumpWidget(
+        _wrap(
+          CatalogSortGroupSheet(
+            sortKeys: List<CatalogSortKey>.from(kDefaultWeaponSortKeys),
+            groupDimensions: const [],
+            availableGroupDimensions: weaponGroupDimensions,
+            onApply: (s, g) {
+              appliedSort = s;
+              appliedGroup = g;
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('catalog_sort_group_sheet')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_sort_keys_list')), findsOneWidget);
+
+      // Add a group dimension.
+      await tester.tap(find.byKey(const Key('group_dim_add_slot')));
+      await tester.pump();
+      expect(find.byKey(const Key('group_dim_slot')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_sort_group_apply')));
+      await tester.pump();
+      expect(appliedSort, isNotNull);
+      expect(appliedSort!.first, CatalogSortKey.slot);
+      expect(appliedGroup, contains(CatalogGroupDimension.slot));
+    });
+  });
+
+  group('weapon type iconOnly facets', () {
+    testWidgets('archetype primary iconOnly + Semantics/tooltip; no text label',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          NeonFacetChip(
+            key: const Key('archetype_chip_Hand Cannon'),
+            label: 'Hand Cannon',
+            value: 'Hand Cannon',
+            state: FacetChipState.off,
+            iconOnly: true,
+            onCycle: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('archetype_chip_Hand Cannon')), findsOneWidget);
+      expect(find.text('Hand Cannon'), findsNothing);
+      expect(officialWeaponTypeVisual('Hand Cannon'), isNotNull);
+      expect(find.byType(DestinyWeaponTypeIcon), findsOneWidget);
+    });
+  });
+
   group('CatalogEmptyState', () {
     testWidgets('zero-match shows Clear filters only', (tester) async {
       var cleared = false;

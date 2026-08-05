@@ -7,46 +7,102 @@ const List<String> kWeaponSlotSortOrder = ['Kinetic', 'Energy', 'Power'];
 /// Ammo order for weapons default sort (Primary → Special → Heavy, then rest).
 const List<String> kWeaponAmmoSortOrder = ['Primary', 'Special', 'Heavy'];
 
+/// Ordered sort keys for weapons browse (GAP-CAT-BROWSE-003).
+///
+/// Host may reorder via progressive sheet; default is
+/// slot → exotic → ammo → archetype → name.
+enum CatalogSortKey {
+  slot,
+  exotic,
+  ammo,
+  archetype,
+  name,
+}
+
+/// Default sort priority (brief lock).
+const List<CatalogSortKey> kDefaultWeaponSortKeys = [
+  CatalogSortKey.slot,
+  CatalogSortKey.exotic,
+  CatalogSortKey.ammo,
+  CatalogSortKey.archetype,
+  CatalogSortKey.name,
+];
+
+/// Human labels for sort/group progressive sheet.
+const Map<CatalogSortKey, String> kCatalogSortKeyLabels = {
+  CatalogSortKey.slot: 'Slot',
+  CatalogSortKey.exotic: 'Exotic first',
+  CatalogSortKey.ammo: 'Ammo',
+  CatalogSortKey.archetype: 'Archetype / frame',
+  CatalogSortKey.name: 'Name',
+};
+
 int _indexOrTail(List<String> order, String? value) {
   if (value == null || value.isEmpty) return order.length;
   final i = order.indexOf(value);
   return i < 0 ? order.length : i;
 }
 
-/// Compare two catalog rows with weapons default order:
-/// slot → exotic (exotics first) → ammo → archetype → display name.
-///
-/// Pure; does not mutate inputs. Use after [filterCatalogClient] for weapons
-/// browse only — armor/universal callers keep alpha via [sortByDisplayName].
-int compareCatalogWeapons(CatalogItem a, CatalogItem b) {
-  final slotCmp =
-      _indexOrTail(kWeaponSlotSortOrder, a.slot).compareTo(
-    _indexOrTail(kWeaponSlotSortOrder, b.slot),
-  );
-  if (slotCmp != 0) return slotCmp;
-
-  // Exotics first within slot.
-  if (a.isExotic != b.isExotic) {
-    return a.isExotic ? -1 : 1;
+int _compareBySortKey(CatalogItem a, CatalogItem b, CatalogSortKey key) {
+  switch (key) {
+    case CatalogSortKey.slot:
+      return _indexOrTail(kWeaponSlotSortOrder, a.slot).compareTo(
+        _indexOrTail(kWeaponSlotSortOrder, b.slot),
+      );
+    case CatalogSortKey.exotic:
+      // Exotics first.
+      if (a.isExotic == b.isExotic) return 0;
+      return a.isExotic ? -1 : 1;
+    case CatalogSortKey.ammo:
+      return _indexOrTail(kWeaponAmmoSortOrder, a.ammo).compareTo(
+        _indexOrTail(kWeaponAmmoSortOrder, b.ammo),
+      );
+    case CatalogSortKey.archetype:
+      final archA = (a.itemTypeName ?? a.frame ?? '').toLowerCase();
+      final archB = (b.itemTypeName ?? b.frame ?? '').toLowerCase();
+      final typeCmp = archA.compareTo(archB);
+      if (typeCmp != 0) return typeCmp;
+      final frameA = (a.frame ?? '').toLowerCase();
+      final frameB = (b.frame ?? '').toLowerCase();
+      return frameA.compareTo(frameB);
+    case CatalogSortKey.name:
+      return compareDisplayName(a.name, b.name);
   }
-
-  final ammoCmp =
-      _indexOrTail(kWeaponAmmoSortOrder, a.ammo).compareTo(
-    _indexOrTail(kWeaponAmmoSortOrder, b.ammo),
-  );
-  if (ammoCmp != 0) return ammoCmp;
-
-  final archA = (a.itemTypeName ?? a.frame ?? '').toLowerCase();
-  final archB = (b.itemTypeName ?? b.frame ?? '').toLowerCase();
-  final archCmp = archA.compareTo(archB);
-  if (archCmp != 0) return archCmp;
-
-  return compareDisplayName(a.name, b.name);
 }
 
-/// Stable weapons default sort: slot → exotic → ammo → archetype → name.
-List<CatalogItem> sortCatalogWeapons(Iterable<CatalogItem> items) {
+/// Compare two catalog rows by an ordered list of [sortKeys].
+///
+/// Pure; does not mutate inputs. Falls back to name then hash for stability.
+int compareCatalogItemsByKeys(
+  CatalogItem a,
+  CatalogItem b,
+  List<CatalogSortKey> sortKeys,
+) {
+  final keys = sortKeys.isEmpty ? kDefaultWeaponSortKeys : sortKeys;
+  for (final key in keys) {
+    final cmp = _compareBySortKey(a, b, key);
+    if (cmp != 0) return cmp;
+  }
+  final nameCmp = compareDisplayName(a.name, b.name);
+  if (nameCmp != 0) return nameCmp;
+  return a.hash.compareTo(b.hash);
+}
+
+/// Compare two catalog rows with weapons default order:
+/// slot → exotic → ammo → archetype → display name.
+///
+/// Pure; does not mutate inputs. Use after [filterCatalogClient] for weapons
+/// browse only — armor/universal callers keep alpha via [filterCatalogClient].
+int compareCatalogWeapons(CatalogItem a, CatalogItem b) {
+  return compareCatalogItemsByKeys(a, b, kDefaultWeaponSortKeys);
+}
+
+/// Stable weapons sort with optional multi-key priority.
+List<CatalogItem> sortCatalogWeapons(
+  Iterable<CatalogItem> items, {
+  List<CatalogSortKey> sortKeys = kDefaultWeaponSortKeys,
+}) {
   final list = List<CatalogItem>.from(items);
-  list.sort(compareCatalogWeapons);
+  list.sort((a, b) => compareCatalogItemsByKeys(a, b, sortKeys));
   return list;
 }

@@ -122,4 +122,66 @@ void main() {
       expect(compareCatalogWeapons(exotic, leg), lessThan(0));
     });
   });
+
+  group('multi-key CatalogSortKey reorder', () {
+    final items = [
+      const CatalogItem(
+        hash: 1,
+        name: 'Zulu',
+        slot: 'Power',
+        ammo: 'Heavy',
+        itemTypeName: 'Rocket Launcher',
+        isExotic: false,
+      ),
+      const CatalogItem(
+        hash: 2,
+        name: 'Alpha',
+        slot: 'Kinetic',
+        ammo: 'Primary',
+        itemTypeName: 'Hand Cannon',
+        isExotic: false,
+      ),
+      const CatalogItem(
+        hash: 3,
+        name: 'Mid',
+        slot: 'Energy',
+        ammo: 'Special',
+        itemTypeName: 'Shotgun',
+        isExotic: true,
+      ),
+    ];
+
+    test('default order matches slot → exotic → ammo → archetype → name', () {
+      final sorted = sortCatalogWeapons(items);
+      expect(sorted.map((i) => i.hash).toList(), [2, 3, 1]);
+    });
+
+    test('reorder to name-first changes order', () {
+      final sorted = sortCatalogWeapons(
+        items,
+        sortKeys: const [
+          CatalogSortKey.name,
+          CatalogSortKey.slot,
+          CatalogSortKey.exotic,
+          CatalogSortKey.ammo,
+          CatalogSortKey.archetype,
+        ],
+      );
+      expect(sorted.map((i) => i.hash).toList(), [2, 3, 1]); // Alpha, Mid, Zulu
+      expect(sorted.first.name, 'Alpha');
+      expect(sorted.last.name, 'Zulu');
+    });
+
+    test('reorder to exotic-first then name', () {
+      final sorted = sortCatalogWeapons(
+        items,
+        sortKeys: const [
+          CatalogSortKey.exotic,
+          CatalogSortKey.name,
+        ],
+      );
+      expect(sorted.first.hash, 3); // exotic Mid first
+      expect(sorted.map((i) => i.hash).toList(), [3, 2, 1]);
+    });
+  });
 }

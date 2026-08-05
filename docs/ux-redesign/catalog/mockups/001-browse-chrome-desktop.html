@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catalog · Browse chrome — Desktop mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --enhanced: #ceae33;
+      --rarity-exotic: #ceae33;
+      --rarity-legendary-edge: #c49ad4;
+      --slot-power: #d4b06a;
+      --el-kinetic: #ffffff;
+      --el-arc: #85c5ec;
+      --el-solar: #f2721b;
+      --el-void: #8b7cf0;
+      --el-stasis: #4d88ff;
+      --el-strand: #35e366;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --detail-w: 400px;
+      --radius: 2px;
+      --meta-chip: 22px;
+      --card-h: 112px;
+      --outline-w: 132px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      padding: 8px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+      z-index: 50;
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      max-width: 520px;
+    }
+    .mock-bar .spacer { flex: 1; min-width: 8px; }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      height: 28px;
+      padding: 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      min-width: 320px;
+      max-width: 100%;
+    }
+    .auth-toggle {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .auth-toggle button {
+      height: 28px;
+      padding: 0 10px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+    .auth-toggle button:last-child { border-right: 0; }
+    .auth-toggle button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+
+    .gap-banner {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding: 6px 12px;
+      background: rgba(0, 229, 255, 0.05);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .gap-banner strong {
+      color: var(--accent);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .gap-banner .tok {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--warn);
+    }
+    .gap-banner .tok::before { content: "→"; font-size: 10px; }
+
+    .shell {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .rail {
+      flex: 0 0 56px;
+      width: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 0;
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+    }
+    .rail-item {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .rail-item .ico { font-size: 16px; line-height: 1; }
+    .rail-item[aria-current="page"] {
+      color: var(--accent);
+      background: var(--accent-wash);
+    }
+    .main-column {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .app-nav {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      height: 40px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .app-nav .brand {
+      font-family: var(--font-d);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .app-nav .module {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .nav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .lamp {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+    .lamp.off { background: var(--muted-dim); box-shadow: none; }
+    .lamp.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .lamp.danger { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+    .catalog-title {
+      flex: 0 0 auto;
+      padding: 8px 12px 4px;
+      background: var(--surface);
+    }
+    .catalog-title .title {
+      font-family: var(--font-d);
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .catalog-title .subtitle {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin-top: 2px;
+    }
+
+    .filter-bar {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-primary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+    }
+    .mode-seg, .scope-seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: 32px;
+    }
+    .mode-seg button, .scope-seg button {
+      padding: 0 12px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+    .mode-seg button:last-child, .scope-seg button:last-child { border-right: 0; }
+    .mode-seg button[aria-pressed="true"],
+    .scope-seg button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 10px;
+      min-width: 140px;
+      flex: 1 1 160px;
+      max-width: 240px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .search-wrap .icon { color: var(--muted-dim); font-size: 12px; }
+    .search-wrap input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font-size: 12px;
+    }
+    .facet-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .facet-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-right: 2px;
+    }
+    .chip {
+      height: 28px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 11px;
+      position: relative;
+    }
+    .chip.icon-only { width: 28px; padding: 0; justify-content: center; }
+    .chip[data-state="include"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .chip[data-state="exclude"] {
+      color: var(--warn);
+      border-color: rgba(245, 197, 66, 0.45);
+      background: rgba(245, 197, 66, 0.08);
+      text-decoration: line-through;
+    }
+    .chip .chip-mark {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--accent);
+    }
+    .chip[data-state="exclude"] .chip-mark { color: var(--warn); }
+    .glyph-ico { font-size: 11px; line-height: 1; }
+    .glyph-ico.exotic { color: var(--rarity-exotic); }
+    .glyph-ico.legendary { color: var(--rarity-legendary-edge); }
+    .facet-img {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+    }
+    .chip.icon-only .facet-img { width: 18px; height: 18px; }
+    .type-ico {
+      display: block;
+      width: 26px;
+      height: 12px;
+      flex-shrink: 0;
+      background: currentColor;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+    }
+    .chip.icon-only .type-ico { width: 28px; height: 12px; }
+    .more-btn, .reset-btn, .sort-group-btn {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .more-btn[aria-expanded="true"],
+    .sort-group-btn[aria-expanded="true"],
+    .reset-btn {
+      color: var(--fg);
+      background: var(--accent-wash);
+    }
+    .hint-cycle {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .secondary-facets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding-top: 4px;
+    }
+    .filter-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding-top: 2px;
+    }
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 22px;
+      padding: 0 6px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+    }
+    .summary-chip.exclude { color: var(--warn); border-color: rgba(245, 197, 66, 0.4); }
+    .summary-chip .x {
+      width: 14px; height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-dim);
+      font-size: 12px;
+    }
+
+    .status-line {
+      flex: 0 0 auto;
+      padding: 4px 12px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .status-line strong { color: var(--muted); font-weight: 500; }
+
+    .results {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .results-meta {
+      flex: 0 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px 4px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .results-meta strong { color: var(--fg); font-weight: 500; }
+
+    /* Grid + outline jump rail (GAP-002) */
+    .results-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+    .outline-rail {
+      flex: 0 0 var(--outline-w);
+      width: var(--outline-w);
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      overflow: auto;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .outline-rail .outline-title {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      padding: 4px 6px 8px;
+    }
+    .outline-item {
+      text-align: left;
+      padding: 6px 8px;
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .outline-item:hover {
+      color: var(--fg);
+      background: rgba(255,255,255,0.04);
+    }
+    .outline-item[aria-current="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.25);
+    }
+    .outline-item .n {
+      color: var(--muted-dim);
+      margin-left: 4px;
+    }
+
+    .board-scroll {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      padding: 8px 12px 16px;
+    }
+
+    .group-section {
+      margin-bottom: 12px;
+    }
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      padding: 6px 4px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .group-header:hover { color: var(--fg); }
+    .group-header .chev {
+      width: 14px;
+      display: inline-flex;
+      justify-content: center;
+      color: var(--accent);
+      transition: transform 0.12s;
+    }
+    .group-header[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+    .group-header .g-count {
+      font-family: var(--font-m);
+      font-size: 10px;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--muted-dim);
+      margin-left: auto;
+    }
+    .group-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      align-content: start;
+    }
+    .group-body[hidden] { display: none !important; }
+
+    .board-flat {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      align-content: start;
+    }
+
+    /* Family card — density lock: ~200×112 (GAP-001) */
+    .weapon-card {
+      position: relative;
+      text-align: left;
+      padding: 8px 10px;
+      height: var(--card-h);
+      min-height: var(--card-h);
+      max-height: var(--card-h);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+    }
+    .weapon-card:hover { border-color: var(--line-strong); }
+    .weapon-card[aria-selected="true"] {
+      border-color: rgba(0, 229, 255, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.25);
+    }
+    .weapon-card.rarity-exotic { border-color: rgba(206, 174, 51, 0.35); }
+    .weapon-card.rarity-legendary { border-left: 2px solid var(--rarity-legendary-edge); }
+    .el-bloom {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 48px; height: 48px;
+      background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--el) 28%, transparent), transparent 70%);
+      pointer-events: none;
+    }
+    .card-top {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      min-width: 0;
+    }
+    .entity-icon {
+      width: 36px; height: 36px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 15px;
+    }
+    .card-text { flex: 1; min-width: 0; }
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 1px;
+    }
+    .rarity-badge {
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .rarity-badge.exotic { color: var(--rarity-exotic); }
+    .rarity-badge.legendary { color: var(--rarity-legendary-edge); }
+    .card-name {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-type-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 1px;
+      color: var(--muted-dim);
+      font-size: 11px;
+      min-width: 0;
+    }
+    .card-type-row .type-ico {
+      width: 28px;
+      height: 11px;
+      color: var(--muted);
+    }
+    .card-type-row .type-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Owned-only version chips — indicators, not controls (GAP-001) */
+    .version-chips {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 3px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .ver-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 16px;
+      padding: 0 5px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      letter-spacing: 0.02em;
+      color: var(--muted-dim);
+      border: 1px solid rgba(232, 238, 242, 0.16);
+      border-radius: var(--radius);
+      background: rgba(16, 16, 40, 0.6);
+      cursor: default;
+      user-select: none;
+      pointer-events: none; /* non-interactive */
+    }
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: auto;
+      padding-top: 2px;
+    }
+    .card-meta-row .slot-letter,
+    .card-meta-row .facet-img {
+      width: 14px;
+      height: 14px;
+    }
+    .card-meta-row .slot-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-m);
+      font-size: 9px;
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      color: var(--muted);
+    }
+    .owned-count {
+      margin-left: auto;
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--success);
+    }
+
+    .board-empty, .board-error {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .board-empty .actions, .board-error .actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .board-empty .btn, .board-error .btn, .detail-footer .btn {
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .board-empty .btn:not(:disabled):hover,
+    .board-error .btn:not(:disabled):hover {
+      color: var(--fg);
+      border-color: var(--accent);
+    }
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .skeleton-card {
+      height: var(--card-h);
+      background: linear-gradient(90deg, var(--surface) 25%, var(--raised) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: sk 1.2s ease-in-out infinite;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    @keyframes sk {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Detail 400px */
+    .detail {
+      flex: 0 0 var(--detail-w);
+      width: var(--detail-w);
+      min-width: var(--detail-w);
+      max-width: var(--detail-w);
+      border-left: 1px solid var(--line);
+      background: var(--surface);
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-empty {
+      padding: 28px 16px;
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+      font-size: 11px;
+      text-align: center;
+    }
+    .detail-hero {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .detail-hero .close-x {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .detail-hero .close-x:hover { color: var(--fg); }
+    .hero-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .hero-icon {
+      width: 48px; height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .header-stack { flex: 1; min-width: 0; padding-right: 28px; }
+    .hero-name {
+      font-family: var(--font-d);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0;
+      line-height: 1.25;
+    }
+    .hero-name.exotic { color: var(--rarity-exotic); }
+    .hero-sub {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin-top: 2px;
+    }
+    .meta-icons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      width: max-content;
+      max-width: 100%;
+    }
+    .meta-chip {
+      width: var(--meta-chip);
+      height: var(--meta-chip);
+      flex: 0 0 var(--meta-chip);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--raised);
+      box-sizing: border-box;
+      color: var(--muted);
+      overflow: hidden;
+    }
+    .meta-chip .facet-img { width: 14px; height: 14px; }
+    .meta-chip .type-ico {
+      width: 18px;
+      height: 11px;
+      color: var(--fg);
+    }
+    .meta-chip.type-letter {
+      font-family: var(--font-m);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+    .meta-chip.slot {
+      font-family: var(--font-m);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .meta-chip.owned {
+      width: auto;
+      min-width: var(--meta-chip);
+      flex: 0 0 auto;
+      padding: 0 5px;
+      color: var(--success);
+      border-color: rgba(46, 230, 166, 0.35);
+      background: rgba(46, 230, 166, 0.06);
+      font-family: var(--font-m);
+      font-size: 11px;
+    }
+
+    /* Family version switcher (GAP-001 detail) */
+    .version-switch {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .version-switch .v-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .version-seg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .ver-btn {
+      height: 26px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ver-btn[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .ver-btn .own-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+    }
+    .ver-btn.unowned { opacity: 0.75; }
+    .ver-btn .hash-hint {
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+
+    .instance-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 5px;
+      overflow-x: auto;
+      max-width: 100%;
+      padding-bottom: 2px;
+    }
+    .instance-strip .label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-right: 2px;
+      flex-shrink: 0;
+    }
+    .inst-chip {
+      height: 26px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .inst-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 2px 0 0 var(--accent);
+      border-color: rgba(0, 229, 255, 0.35);
+    }
+    .inst-chip .pw { color: var(--fg); font-weight: 500; }
+
+    .detail-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .section-title {
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .section-head .section-title { margin: 0; flex: 1; min-width: 72px; }
+    .view-toggle {
+      height: 26px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .view-toggle[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.45);
+    }
+    .view-toggle .knob {
+      width: 26px; height: 12px;
+      border-radius: 999px;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .view-toggle .knob::after {
+      content: "";
+      position: absolute;
+      top: 1px; left: 2px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .view-toggle[aria-pressed="true"] .knob::after {
+      transform: translateX(12px);
+      background: var(--accent);
+    }
+    .perk-grid-cols {
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+      width: 100%;
+      min-width: 0;
+    }
+    .perk-col {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 2px;
+      min-height: 48px;
+      margin-bottom: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 9px;
+      position: relative;
+    }
+    .perk-cell .ico {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .perk-cell .cap {
+      max-width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      font-size: 8px;
+    }
+    .perk-cell.selected {
+      background: rgba(0, 120, 212, 0.18);
+      border-color: rgba(80, 160, 255, 0.65);
+    }
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: #9fd0ff;
+      background: rgba(0, 80, 180, 0.55);
+      border-radius: 1px;
+    }
+    .perk-cell.unselected::before {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      border: 4px solid transparent;
+      border-top-color: var(--enhanced);
+      border-left-color: var(--enhanced);
+      opacity: 0.85;
+    }
+    .perk-cell.unselected::after {
+      content: "2";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--raised);
+      border-radius: 1px;
+    }
+    .perk-cell.possible {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-cell.possible .cap { color: var(--muted-dim); }
+    .perk-cell.possible .ico { opacity: 0.45; }
+    .perk-cell.possible::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      border: 1px dashed var(--line);
+      border-radius: 1px;
+    }
+    .perk-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin-bottom: 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .btn-stub {
+      height: 30px;
+      padding: 0 12px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      background: var(--bg);
+    }
+    .detail-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .stub-note {
+      flex: 1 1 100%;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+    .hash-footer {
+      flex: 1 1 100%;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      opacity: 0.75;
+    }
+    .rebind-note {
+      margin: 0;
+      padding: 8px 10px;
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: var(--radius);
+      background: rgba(0, 229, 255, 0.05);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .rebind-note strong { color: var(--accent); font-weight: 500; }
+
+    /* Sort & group sheet (GAP-003) */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 80;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px 16px;
+    }
+    .sheet {
+      width: min(480px, 100%);
+      max-height: min(80vh, 640px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+    }
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .sheet-head h2 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      flex: 1;
+    }
+    .sheet-head .close {
+      width: 28px; height: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .sheet-body { padding: 12px 14px 16px; }
+    .sheet-section { margin-bottom: 16px; }
+    .sheet-section h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .sheet-section p.help {
+      margin: 0 0 10px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+    .reorder-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .reorder-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .reorder-item .grip {
+      color: var(--muted-dim);
+      font-size: 12px;
+      cursor: grab;
+      user-select: none;
+    }
+    .reorder-item .name {
+      flex: 1;
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .reorder-item .prio {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      min-width: 28px;
+    }
+    .reorder-item .moves {
+      display: flex;
+      gap: 2px;
+    }
+    .reorder-item .moves button {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .reorder-item .moves button:hover {
+      color: var(--fg);
+      border-color: var(--accent);
+    }
+    .group-dim-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .group-dim-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .group-dim-row .name { flex: 1; font-family: var(--font-m); font-size: 12px; }
+    .group-dim-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .group-dim-row input { accent-color: var(--accent); }
+    .sheet-foot {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      margin-top: 4px;
+    }
+    .sheet-foot .btn-primary {
+      height: 30px;
+      padding: 0 14px;
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      border-radius: var(--radius);
+      background: var(--accent-wash);
+      color: var(--fg);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .sheet-foot .btn-ghost {
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .a11y-live {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-bar" role="region" aria-label="Mock scenario controls">
+    <h1>Catalog · Browse chrome</h1>
+    <span class="meta">GAP-CAT-BROWSE-001–004 · family cards · collapse + outline · sort/group reorder · type silhouettes primary · residual perk chrome held</span>
+    <div class="spacer"></div>
+    <span class="scenario-label">Scenario</span>
+    <select id="scenario" class="scenario-select" aria-label="Mock scenario">
+      <option value="results" selected>results · family cards · owned version chips readonly</option>
+      <option value="signed-out">signed-out · All flat · no owned chips</option>
+      <option value="loading">loading · manifest skeleton</option>
+      <option value="empty-sync">owned-empty · Sync + Settings CTA</option>
+      <option value="zero">zero-match · Clear filters</option>
+      <option value="group">group-collapsed · outline jump rail</option>
+      <option value="reorder">sort-groupby · priority reorder sheet</option>
+      <option value="type-filter">type-filter · silhouette chips primary</option>
+      <option value="detail">detail · all family versions + switch</option>
+      <option value="adept-switch">detail · switch Adept · full rebind · stubs disabled</option>
+      <option value="error">error · manifest/browse retry</option>
+    </select>
+    <div class="auth-toggle" role="group" aria-label="Auth mock">
+      <button type="button" id="auth-out" aria-pressed="false">Signed-out</button>
+      <button type="button" id="auth-in" aria-pressed="true">Signed-in</button>
+    </div>
+  </div>
+
+  <div class="gap-banner" role="note" aria-label="Open dual-truth browse gaps">
+    <strong>Browse gaps (open)</strong>
+    <span class="tok">001 family-card-one · owned-version-chips-readonly · detail-all-versions</span>
+    <span class="tok">002 group-collapse · group-outline-jump</span>
+    <span class="tok">003 sort-priority-reorder · group-priority-reorder</span>
+    <span class="tok">004 type-filter-icons primary · no text archetype under More</span>
+  </div>
+
+  <div class="shell" id="shell">
+    <nav class="rail" aria-label="Primary">
+      <button type="button" class="rail-item" aria-current="page" title="Catalog (composition aid — not product home)">
+        <span class="ico" aria-hidden="true">▣</span>
+        Catalog
+      </button>
+      <button type="button" class="rail-item" title="Settings">
+        <span class="ico" aria-hidden="true">⚙</span>
+        Settings
+      </button>
+    </nav>
+
+    <div class="main-column">
+      <div class="app-nav">
+        <span class="brand">Catalog</span>
+        <span class="module">Module · Build Creator · browse chrome</span>
+        <div class="nav-right">
+          <span class="lamp" id="sync-lamp" aria-hidden="true"></span>
+          <span id="sync-label">Inventory synced</span>
+        </div>
+      </div>
+
+      <div class="catalog-title">
+        <div class="title">Weapons</div>
+        <div class="subtitle">Composition aid · not product home (DBR-PUR-002) · family = name-normalized + slot/element/type</div>
+      </div>
+
+      <section class="filter-bar" aria-label="Catalog filters" id="filter-bar">
+        <div class="filter-primary">
+          <div class="mode-seg" role="group" aria-label="Catalog mode">
+            <button type="button" data-mode="weapons" aria-pressed="true">Weapons</button>
+            <button type="button" data-mode="armor" aria-pressed="false" title="Armor out of this browse gate">Armor</button>
+            <button type="button" data-mode="universal" aria-pressed="false" title="Universal out of this browse gate">Universal</button>
+          </div>
+          <div class="scope-seg" role="group" aria-label="Ownership scope">
+            <button type="button" data-scope="all" aria-pressed="true">All</button>
+            <button type="button" data-scope="owned" aria-pressed="false" id="scope-owned-btn">Owned</button>
+          </div>
+          <div class="search-wrap">
+            <span class="icon" aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="Search weapons…" aria-label="Search catalog" autocomplete="off" />
+          </div>
+          <div class="facet-group" data-facet="slot" role="group" aria-label="Slot filters">
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic slot"><span class="glyph-ico">K</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="energy" data-state="off" title="Energy" aria-label="Energy slot"><span class="glyph-ico" style="color:var(--el-solar)">E</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="slot" data-value="power" data-state="off" title="Power" aria-label="Power slot"><span class="glyph-ico" style="color:var(--slot-power)">P</span><span class="chip-mark" hidden></span></button>
+          </div>
+          <div class="facet-group" data-facet="element" role="group" aria-label="Element filters">
+            <button type="button" class="chip icon-only" data-facet="element" data-value="solar" data-state="off" title="Solar" aria-label="Solar"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="arc" data-state="off" title="Arc" aria-label="Arc"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="void" data-state="off" title="Void" aria-label="Void"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="stasis" data-state="off" title="Stasis" aria-label="Stasis"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_530c4c3e7981dc2aefd24fd3293482bf.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="strand" data-state="off" title="Strand" aria-label="Strand"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_b2fe51a94f3533f97079dfa0d27a4096.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="element" data-value="kinetic" data-state="off" title="Kinetic" aria-label="Kinetic element"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png" alt="" /><span class="chip-mark" hidden></span></button>
+          </div>
+          <div class="facet-group" data-facet="ammo" role="group" aria-label="Ammo filters">
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="primary" data-state="off" title="Primary" aria-label="Primary ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="special" data-state="off" title="Special" aria-label="Special ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png" alt="" /><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="ammo" data-value="heavy" data-state="off" title="Heavy" aria-label="Heavy ammo"><img class="facet-img" src="https://www.bungie.net/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png" alt="" /><span class="chip-mark" hidden></span></button>
+          </div>
+          <!-- GAP-004: weapon type silhouettes on primary line (not text under More) -->
+          <div class="facet-group" data-facet="type" role="group" aria-label="Weapon type filters">
+            <button type="button" class="chip icon-only" data-facet="type" data-value="hand cannon" data-state="off" title="Hand Cannon" aria-label="Hand Cannon"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/hand_cannon.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/hand_cannon.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="auto rifle" data-state="off" title="Auto Rifle" aria-label="Auto Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/auto_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/auto_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="pulse rifle" data-state="off" title="Pulse Rifle" aria-label="Pulse Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/pulse_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/pulse_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="scout rifle" data-state="off" title="Scout Rifle" aria-label="Scout Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/scout_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/scout_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="combat bow" data-state="off" title="Combat Bow" aria-label="Combat Bow"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/bow.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/bow.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="shotgun" data-state="off" title="Shotgun" aria-label="Shotgun"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/shotgun.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/shotgun.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="sniper rifle" data-state="off" title="Sniper Rifle" aria-label="Sniper Rifle"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sniper_rifle.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/sniper_rifle.svg)"></span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="type" data-value="submachine gun" data-state="off" title="SMG" aria-label="Submachine Gun"><span class="type-ico" style="-webkit-mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/smg.svg);mask-image:url(https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/smg.svg)"></span><span class="chip-mark" hidden></span></button>
+          </div>
+          <button type="button" class="sort-group-btn" id="sort-group-btn" aria-expanded="false" aria-controls="sort-group-sheet" title="Reorder sort keys and group-by dimensions">Sort &amp; group</button>
+          <button type="button" class="more-btn" id="more-btn" aria-expanded="false" aria-controls="secondary-facets">More</button>
+          <button type="button" class="reset-btn" id="reset-btn" hidden>Reset</button>
+          <span class="hint-cycle">facets: off→include→exclude · version chips never cycle · Esc closes detail</span>
+        </div>
+        <div class="secondary-facets" id="secondary-facets" hidden>
+          <div class="facet-group" data-facet="rarity" role="group" aria-label="Rarity">
+            <span class="facet-label">Rarity</span>
+            <button type="button" class="chip icon-only" data-facet="rarity" data-value="exotic" data-state="off" title="Exotic" aria-label="Exotic"><span class="glyph-ico exotic">✦</span><span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip icon-only" data-facet="rarity" data-value="legendary" data-state="off" title="Legendary" aria-label="Legendary"><span class="glyph-ico legendary">◆</span><span class="chip-mark" hidden></span></button>
+          </div>
+          <div class="facet-group" data-facet="frame" role="group" aria-label="Frame / archetype">
+            <span class="facet-label">Frame</span>
+            <button type="button" class="chip" data-facet="frame" data-value="aggressive" data-state="off" title="Aggressive" aria-label="Aggressive frame">Aggressive<span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip" data-facet="frame" data-value="adaptive" data-state="off" title="Adaptive" aria-label="Adaptive frame">Adaptive<span class="chip-mark" hidden></span></button>
+            <button type="button" class="chip" data-facet="frame" data-value="precision" data-state="off" title="Precision" aria-label="Precision frame">Precision<span class="chip-mark" hidden></span></button>
+          </div>
+          <p class="hint-cycle" style="margin:0;width:100%">Text archetype facet removed from More — type silhouettes live on primary (GAP-004). Search still matches type names.</p>
+        </div>
+        <div class="filter-summary" id="filter-summary" hidden></div>
+      </section>
+
+      <div class="status-line" id="status-line">bnet · weapons · all · families —</div>
+
+      <section class="results" aria-label="Catalog results">
+        <div class="results-meta">
+          <span id="count-label"><strong>0</strong> families</span>
+          <span id="sort-hint">sort: slot → exotic → ammo → archetype → name · group off</span>
+        </div>
+        <div class="results-body">
+          <nav class="outline-rail" id="outline-rail" hidden aria-label="Group outline jump (scroll only — does not filter)"></nav>
+          <div class="board-scroll" id="board-scroll">
+            <div id="board"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <aside class="detail" id="detail" aria-label="Composition detail" tabindex="-1"></aside>
+  </div>
+
+  <div class="sheet-backdrop" id="sort-group-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="sheet-title">Sort &amp; group</h2>
+        <button type="button" class="close" id="sheet-close" aria-label="Close">✕</button>
+      </div>
+      <div class="sheet-body">
+        <div class="sheet-section">
+          <h3>Sort priority</h3>
+          <p class="help">Drag order = compare order (BR-CAT-010c default: slot → exotic → ammo → archetype → name). Reorder with ↑↓; last choice persists for session.</p>
+          <ul class="reorder-list" id="sort-list"></ul>
+        </div>
+        <div class="sheet-section">
+          <h3>Group-by dimensions</h3>
+          <p class="help">Enable dims + reorder priority (outer → inner). Group-by does not change filter match set (BR-CAT-007). Jump rail appears when ≥2 groups have items.</p>
+          <div class="group-dim-list" id="group-dim-list"></div>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn-ghost" id="sheet-reset-defaults">Restore defaults</button>
+          <button type="button" class="btn-primary" id="sheet-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="a11y-live" id="live" aria-live="polite"></div>
+
+  <script>
+(function () {
+  const EL = {
+    kinetic: "var(--el-kinetic)", arc: "var(--el-arc)", solar: "var(--el-solar)",
+    void: "var(--el-void)", stasis: "var(--el-stasis)", strand: "var(--el-strand)",
+  };
+  const SLOT_ORDER = { kinetic: 0, energy: 1, power: 2 };
+  const AMMO_ORDER = { primary: 0, special: 1, heavy: 2 };
+  const TYPE_ICON_CDN = "https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons";
+  const TYPE_ICON_FILE = {
+    "auto rifle": "auto_rifle.svg", "pulse rifle": "pulse_rifle.svg", "scout rifle": "scout_rifle.svg",
+    "hand cannon": "hand_cannon.svg", "sidearm": "sidearm.svg", "submachine gun": "smg.svg",
+    "combat bow": "bow.svg", "sniper rifle": "sniper_rifle.svg", "shotgun": "shotgun.svg",
+    "grenade launcher": "grenade_launcher.svg", "rocket launcher": "rocket_launcher.svg",
+    "machine gun": "machinegun.svg", "sword": "sword_heavy.svg",
+  };
+  const TYPE_LETTER = {
+    "auto rifle": "AR", "pulse rifle": "PR", "scout rifle": "SR", "hand cannon": "HC",
+    "sidearm": "SA", "submachine gun": "SMG", "combat bow": "BW", "sniper rifle": "SNP",
+    "shotgun": "SG", "grenade launcher": "GL", "rocket launcher": "RL", "machine gun": "MG",
+    "sword": "SW",
+  };
+  const EL_ICONS = {
+    solar: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png",
+    arc: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png",
+    void: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png",
+    stasis: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_530c4c3e7981dc2aefd24fd3293482bf.png",
+    strand: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_b2fe51a94f3533f97079dfa0d27a4096.png",
+    kinetic: "https://www.bungie.net/common/destiny2_content/icons/DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png",
+  };
+  const AMMO_ICONS = {
+    primary: "https://www.bungie.net/common/destiny2_content/icons/56761c8361e33a367c6fa94f397d8692.png",
+    special: "https://www.bungie.net/common/destiny2_content/icons/35e9d5635599be5c0fc306732f881459.png",
+    heavy: "https://www.bungie.net/common/destiny2_content/icons/fdcbb78db8f38cec62ec7ca2dbab12cc.png",
+  };
+
+  function typeIconUrl(typeName) {
+    const file = TYPE_ICON_FILE[String(typeName || "").trim().toLowerCase()];
+    return file ? `${TYPE_ICON_CDN}/${file}` : null;
+  }
+  function typeLetter(typeName) {
+    return TYPE_LETTER[String(typeName || "").trim().toLowerCase()] || "?";
+  }
+  function typeIcoHtml(typeName, cls) {
+    const url = typeIconUrl(typeName);
+    if (url) {
+      return `<span class="type-ico ${cls || ""}" style="-webkit-mask-image:url(${url});mask-image:url(${url})" aria-hidden="true"></span>`;
+    }
+    return `<span class="type-letter" aria-hidden="true">${typeLetter(typeName)}</span>`;
+  }
+
+  /**
+   * Families: one card per name-normalized + slot/element/type family.
+   * Versions: base / adept / holofoil (no invented collectible graph).
+   * primaryVersion = base when present, else first member.
+   */
+  const FAMILIES = [
+    {
+      id: "midnight-coup",
+      name: "Midnight Coup",
+      type: "Hand Cannon",
+      slot: "kinetic",
+      element: "kinetic",
+      ammo: "primary",
+      rarity: "legendary",
+      frame: "aggressive",
+      icon: "🔫",
+      versions: [
+        { id: "base", hash: 3141979346, label: "Base", owned: 2, powerLevels: [1810, 1805] },
+        { id: "adept", hash: 3141979347, label: "Adept", owned: 1, powerLevels: [1810] },
+        { id: "holofoil", hash: 3141979348, label: "Holofoil", owned: 0, powerLevels: [] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Corkscrew", "Accurized", "Firefly", "Frenzy"], unselected: ["Smallbore", "Appended", "Outlaw", "Rampage"], pool: ["Rapid Hit", "Kill Clip"] },
+        adept: { owned: true, selected: ["Arrowhead", "Tactical", "Outlaw", "Frenzy"], unselected: ["Fluted", "Extended", "Firefly", "Rampage"], pool: ["Rapid Hit", "Kill Clip"] },
+        holofoil: { owned: false, selected: [], unselected: [], pool: ["Corkscrew", "Accurized", "Firefly", "Frenzy", "Outlaw", "Rampage"] },
+      },
+    },
+    {
+      id: "ringing-nail",
+      name: "Ringing Nail",
+      type: "Auto Rifle",
+      slot: "energy",
+      element: "solar",
+      ammo: "primary",
+      rarity: "legendary",
+      frame: "adaptive",
+      icon: "〰",
+      versions: [
+        { id: "base", hash: 2001001, label: "Base", owned: 1, powerLevels: [1800] },
+        { id: "adept", hash: 2001002, label: "Adept", owned: 0, powerLevels: [] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Arrowhead", "Appended", "Subsistence", "Rampage"], unselected: ["Chambered", "Alloy", "Outlaw", "Swash"], pool: ["Feeding Frenzy", "Kill Clip"] },
+        adept: { owned: false, selected: [], unselected: [], pool: ["Arrowhead", "Appended", "Subsistence", "Rampage"] },
+      },
+    },
+    {
+      id: "ace-of-spades",
+      name: "Ace of Spades",
+      type: "Hand Cannon",
+      slot: "kinetic",
+      element: "kinetic",
+      ammo: "primary",
+      rarity: "exotic",
+      frame: "adaptive",
+      icon: "♠",
+      versions: [{ id: "base", hash: 347366834, label: "Base", owned: 1, powerLevels: [1810] }],
+      perks: {
+        base: { owned: true, selected: ["Memento Mori", "Corkscrew", "Accurized", "Firefly"], unselected: [], pool: [] },
+      },
+      catalyst: "Ace of Spades Catalyst",
+    },
+    {
+      id: "multimach-ccx",
+      name: "Multimach CCX",
+      type: "Submachine Gun",
+      slot: "kinetic",
+      element: "kinetic",
+      ammo: "primary",
+      rarity: "legendary",
+      frame: "lightweight",
+      icon: "≡",
+      versions: [
+        { id: "base", hash: 3001001, label: "Base", owned: 3, powerLevels: [1810, 1808, 1790] },
+        { id: "adept", hash: 3001002, label: "Adept", owned: 1, powerLevels: [1810] },
+        { id: "holofoil", hash: 3001003, label: "Holofoil", owned: 1, powerLevels: [1805] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Fluted", "Ricochet", "Dynamic Sway", "Kill Clip"], unselected: ["Hammer", "Light Mag", "Subsistence", "Frenzy"], pool: ["Moving Target", "Tap the Trigger"] },
+        adept: { owned: true, selected: ["Smallbore", "Accurized", "Dynamic Sway", "Frenzy"], unselected: ["Arrowhead", "Alloy", "Subsistence", "Kill Clip"], pool: ["Moving Target"] },
+        holofoil: { owned: true, selected: ["Chambered", "Appended", "Outlaw", "Rampage"], unselected: ["Corkscrew", "Flared", "Subsistence", "Frenzy"], pool: [] },
+      },
+    },
+    {
+      id: "weighted-plate",
+      name: "Weighted Plate",
+      type: "Shotgun",
+      slot: "energy",
+      element: "void",
+      ammo: "special",
+      rarity: "legendary",
+      frame: "precision",
+      icon: "▣",
+      versions: [
+        { id: "base", hash: 4001001, label: "Base", owned: 0, powerLevels: [] },
+        { id: "adept", hash: 4001002, label: "Adept", owned: 0, powerLevels: [] },
+      ],
+      perks: {
+        base: { owned: false, selected: [], unselected: [], pool: ["Full Choke", "Assault Mag", "Slideshot", "Opening Shot"] },
+        adept: { owned: false, selected: [], unselected: [], pool: ["Full Choke", "Assault Mag", "Slideshot", "Opening Shot"] },
+      },
+    },
+    {
+      id: "travellers-judgment",
+      name: "Traveler's Judgment 5",
+      type: "Sidearm",
+      slot: "energy",
+      element: "arc",
+      ammo: "primary",
+      rarity: "legendary",
+      frame: "adaptive",
+      icon: "◇",
+      versions: [{ id: "base", hash: 5001001, label: "Base", owned: 2, powerLevels: [1805, 1795] }],
+      perks: {
+        base: { owned: true, selected: ["Fluted", "Ricochet", "Rangefinder", "Kill Clip"], unselected: ["Hammer", "Light Mag", "Outlaw", "Rampage"], pool: ["Demolitionist"] },
+      },
+    },
+    {
+      id: "hung-jury",
+      name: "Hung Jury SR4",
+      type: "Scout Rifle",
+      slot: "kinetic",
+      element: "kinetic",
+      ammo: "primary",
+      rarity: "legendary",
+      frame: "precision",
+      icon: "┊",
+      versions: [
+        { id: "base", hash: 6001001, label: "Base", owned: 1, powerLevels: [1810] },
+        { id: "adept", hash: 6001002, label: "Adept", owned: 1, powerLevels: [1810] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Arrowhead", "Accurized", "Rapid Hit", "Explosive"], unselected: ["Chambered", "Tactical", "Outlaw", "Box Breathing"], pool: ["No Distractions"] },
+        adept: { owned: true, selected: ["Fluted", "Ricochet", "Rapid Hit", "Box Breathing"], unselected: ["Hammer", "Appended", "Outlaw", "Explosive"], pool: [] },
+      },
+    },
+    {
+      id: "trinity-ghoul",
+      name: "Trinity Ghoul",
+      type: "Combat Bow",
+      slot: "energy",
+      element: "arc",
+      ammo: "primary",
+      rarity: "exotic",
+      frame: "precision",
+      icon: "➳",
+      versions: [{ id: "base", hash: 7001001, label: "Base", owned: 0, powerLevels: [] }],
+      perks: {
+        base: { owned: false, selected: [], unselected: [], pool: ["Lightning Rod", "Natural String", "Carbon Arrow", "Sneak Bow"] },
+      },
+    },
+    {
+      id: "beloved",
+      name: "Beloved",
+      type: "Sniper Rifle",
+      slot: "energy",
+      element: "solar",
+      ammo: "special",
+      rarity: "legendary",
+      frame: "adaptive",
+      icon: "◎",
+      versions: [
+        { id: "base", hash: 8001001, label: "Base", owned: 0, powerLevels: [] },
+        { id: "adept", hash: 8001002, label: "Adept", owned: 1, powerLevels: [1808] },
+      ],
+      perks: {
+        base: { owned: false, selected: [], unselected: [], pool: ["Fluted", "Accurized", "Snapshot", "Box Breathing"] },
+        adept: { owned: true, selected: ["Arrowhead", "Tactical", "Snapshot", "Box Breathing"], unselected: ["Corkscrew", "Extended", "Moving Target", "Firing Line"], pool: [] },
+      },
+    },
+    {
+      id: "forbearance",
+      name: "Forbearance",
+      type: "Grenade Launcher",
+      slot: "energy",
+      element: "arc",
+      ammo: "special",
+      rarity: "legendary",
+      frame: "wave",
+      icon: "◈",
+      versions: [
+        { id: "base", hash: 9001001, label: "Base", owned: 1, powerLevels: [1810] },
+        { id: "adept", hash: 9001002, label: "Adept", owned: 2, powerLevels: [1810, 1805] },
+      ],
+      perks: {
+        base: { owned: true, selected: ["Volatile", "High-Velocity", "Ambitious", "Chain Reaction"], unselected: ["Confined", "Implosion", "Demolitionist", "Danger Zone"], pool: [] },
+        adept: { owned: true, selected: ["Volatile", "Implosion", "Ambitious", "Chain Reaction"], unselected: ["Confined", "High-Velocity", "Demo", "Danger Zone"], pool: [] },
+      },
+    },
+  ];
+
+  const SORT_KEYS_DEFAULT = [
+    { id: "slot", label: "Slot" },
+    { id: "exotic", label: "Exotic first" },
+    { id: "ammo", label: "Ammo" },
+    { id: "archetype", label: "Archetype / frame" },
+    { id: "name", label: "Name" },
+  ];
+  const GROUP_DIMS_ALL = [
+    { id: "slot", label: "Slot" },
+    { id: "element", label: "Element" },
+    { id: "type", label: "Weapon type" },
+    { id: "ammo", label: "Ammo" },
+    { id: "rarity", label: "Rarity" },
+  ];
+
+  const state = {
+    signedIn: true,
+    scope: "all",
+    search: "",
+    facets: {}, // facet -> value -> include|exclude
+    sortKeys: SORT_KEYS_DEFAULT.map((k) => k.id),
+    groupDims: [], // ordered active dims
+    groupExpanded: {}, // groupKey -> bool (default true)
+    selectedFamilyId: null,
+    selectedVersionId: null,
+    canRoll: false,
+    view: "results", // scenario-driven board mode
+    sheetOpen: false,
+    draftSort: null,
+    draftGroup: null,
+  };
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  function announce(msg) {
+    const el = $("#live");
+    if (el) el.textContent = msg;
+  }
+
+  function familyOwnedTotal(f) {
+    return f.versions.reduce((s, v) => s + (v.owned || 0), 0);
+  }
+  function primaryVersion(f) {
+    const base = f.versions.find((v) => v.id === "base");
+    return base || f.versions[0];
+  }
+  function ownedVersions(f) {
+    return f.versions.filter((v) => (v.owned || 0) > 0);
+  }
+  function versionById(f, id) {
+    return f.versions.find((v) => v.id === id) || primaryVersion(f);
+  }
+
+  function facetState(facet, value) {
+    return (state.facets[facet] && state.facets[facet][value]) || "off";
+  }
+
+  function cycleFacet(facet, value) {
+    const cur = facetState(facet, value);
+    const next = cur === "off" ? "include" : cur === "include" ? "exclude" : "off";
+    if (!state.facets[facet]) state.facets[facet] = {};
+    if (next === "off") delete state.facets[facet][value];
+    else state.facets[facet][value] = next;
+    if (Object.keys(state.facets[facet]).length === 0) delete state.facets[facet];
+    renderAll();
+  }
+
+  function clearFacets() {
+    state.facets = {};
+    state.search = "";
+    const input = $("#search");
+    if (input) input.value = "";
+    $$(".chip[data-facet]").forEach((c) => {
+      c.dataset.state = "off";
+      const m = c.querySelector(".chip-mark");
+      if (m) { m.hidden = true; m.textContent = ""; }
+    });
+    renderAll();
+  }
+
+  function memberMatchesFilters(f, v) {
+    // Free text: match family name, type, or version label
+    const q = state.search.trim().toLowerCase();
+    if (q) {
+      const hay = `${f.name} ${f.type} ${f.frame} ${v.label} ${v.hash}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    // Facets: within facet OR of includes; across facets AND; exclude drops
+    const checks = [
+      ["slot", f.slot],
+      ["element", f.element],
+      ["ammo", f.ammo],
+      ["type", f.type.toLowerCase()],
+      ["rarity", f.rarity],
+      ["frame", f.frame],
+    ];
+    for (const [facet, val] of checks) {
+      const map = state.facets[facet];
+      if (!map || Object.keys(map).length === 0) continue;
+      const includes = Object.entries(map).filter(([, s]) => s === "include").map(([k]) => k);
+      const excludes = Object.entries(map).filter(([, s]) => s === "exclude").map(([k]) => k);
+      const vNorm = String(val).toLowerCase();
+      if (excludes.some((e) => e.toLowerCase() === vNorm)) return false;
+      if (includes.length && !includes.some((e) => e.toLowerCase() === vNorm)) return false;
+    }
+    // Special: search "adept" implies version label affinity — already covered by hay
+    return true;
+  }
+
+  /** Family visible if any member matches (GAP Q9). */
+  function familySurvives(f) {
+    if (state.scope === "owned") {
+      if (!state.signedIn) return false;
+      if (familyOwnedTotal(f) === 0) return false;
+    }
+    return f.versions.some((v) => memberMatchesFilters(f, v));
+  }
+
+  /** Open version: matching member when filters uniquely imply, else primary. */
+  function openVersionForFamily(f) {
+    const matching = f.versions.filter((v) => memberMatchesFilters(f, v));
+    const q = state.search.trim().toLowerCase();
+    if (q.includes("adept")) {
+      const adept = matching.find((v) => v.id === "adept") || f.versions.find((v) => v.id === "adept");
+      if (adept) return adept.id;
+    }
+    if (q.includes("holofoil")) {
+      const h = matching.find((v) => v.id === "holofoil") || f.versions.find((v) => v.id === "holofoil");
+      if (h) return h.id;
+    }
+    // type/version filters don't uniquely pick version usually — use primary among matching if owned scope prefers owned primary
+    if (matching.length === 1) return matching[0].id;
+    // Prefer primary (base) if it matches, else first matching
+    const prim = primaryVersion(f);
+    if (matching.some((v) => v.id === prim.id)) return prim.id;
+    return matching[0] ? matching[0].id : prim.id;
+  }
+
+  function compareFamilies(a, b) {
+    for (const key of state.sortKeys) {
+      let cmp = 0;
+      if (key === "slot") cmp = (SLOT_ORDER[a.slot] ?? 9) - (SLOT_ORDER[b.slot] ?? 9);
+      else if (key === "exotic") {
+        const ae = a.rarity === "exotic" ? 0 : 1;
+        const be = b.rarity === "exotic" ? 0 : 1;
+        cmp = ae - be;
+      } else if (key === "ammo") cmp = (AMMO_ORDER[a.ammo] ?? 9) - (AMMO_ORDER[b.ammo] ?? 9);
+      else if (key === "archetype") cmp = String(a.frame).localeCompare(String(b.frame)) || String(a.type).localeCompare(String(b.type));
+      else if (key === "name") cmp = a.name.localeCompare(b.name);
+      if (cmp !== 0) return cmp;
+    }
+    return a.name.localeCompare(b.name);
+  }
+
+  function groupKeyFor(f) {
+    if (!state.groupDims.length) return null;
+    return state.groupDims.map((d) => {
+      if (d === "type") return f.type;
+      if (d === "slot") return f.slot;
+      if (d === "element") return f.element;
+      if (d === "ammo") return f.ammo;
+      if (d === "rarity") return f.rarity;
+      return "?";
+    }).join(" · ");
+  }
+
+  function groupLabel(key) {
+    return key ? key.toUpperCase() : "";
+  }
+
+  function filteredSorted() {
+    return FAMILIES.filter(familySurvives).sort(compareFamilies);
+  }
+
+  function partitionGroups(list) {
+    if (!state.groupDims.length) return null;
+    const map = new Map();
+    for (const f of list) {
+      const k = groupKeyFor(f);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k).push(f);
+    }
+    // Sort groups by first sort key of first item roughly by key string
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  function updateChipDom() {
+    $$(".chip[data-facet]").forEach((c) => {
+      const facet = c.dataset.facet;
+      const value = c.dataset.value;
+      const st = facetState(facet, value);
+      c.dataset.state = st;
+      const m = c.querySelector(".chip-mark");
+      if (m) {
+        if (st === "include") { m.hidden = false; m.textContent = "+"; }
+        else if (st === "exclude") { m.hidden = false; m.textContent = "−"; }
+        else { m.hidden = true; m.textContent = ""; }
+      }
+    });
+  }
+
+  function updateFilterSummary() {
+    const el = $("#filter-summary");
+    const chips = [];
+    for (const [facet, map] of Object.entries(state.facets)) {
+      for (const [value, st] of Object.entries(map)) {
+        chips.push({ facet, value, st });
+      }
+    }
+    if (!chips.length && !state.search) {
+      el.hidden = true;
+      el.innerHTML = "";
+      $("#reset-btn").hidden = true;
+      return;
+    }
+    el.hidden = false;
+    $("#reset-btn").hidden = false;
+    el.innerHTML = chips.map((c) =>
+      `<span class="summary-chip ${c.st === "exclude" ? "exclude" : ""}">${c.facet}:${c.value}
+        <button type="button" class="x" data-clear-facet="${c.facet}" data-clear-value="${c.value}" aria-label="Remove ${c.facet} ${c.value}">×</button>
+      </span>`
+    ).join("") + (state.search ? `<span class="summary-chip">q:“${state.search}”
+      <button type="button" class="x" data-clear-search="1" aria-label="Clear search">×</button></span>` : "");
+    el.querySelectorAll("[data-clear-facet]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const f = btn.getAttribute("data-clear-facet");
+        const v = btn.getAttribute("data-clear-value");
+        if (state.facets[f]) {
+          delete state.facets[f][v];
+          if (!Object.keys(state.facets[f]).length) delete state.facets[f];
+        }
+        renderAll();
+      });
+    });
+    el.querySelectorAll("[data-clear-search]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.search = "";
+        $("#search").value = "";
+        renderAll();
+      });
+    });
+  }
+
+  function renderCard(f) {
+    const ownedTotal = familyOwnedTotal(f);
+    const showOwned = state.signedIn && ownedTotal > 0;
+    const ownedVers = ownedVersions(f);
+    const selected = state.selectedFamilyId === f.id;
+    const elVar = EL[f.element] || EL.kinetic;
+    const typeUrl = typeIconUrl(f.type);
+    const chipsHtml = (showOwned && ownedVers.length)
+      ? `<span class="version-chips" role="group" aria-label="Owned versions (indicators only, not selectable)">${
+          ownedVers.map((v) =>
+            `<span class="ver-chip" title="Owned: ${v.label} (not selectable)" aria-hidden="true">${v.label}</span>`
+          ).join("")
+        }</span>`
+      : "";
+    const typeRow = `
+      <div class="card-type-row">
+        ${typeUrl
+          ? `<span class="type-ico" style="-webkit-mask-image:url(${typeUrl});mask-image:url(${typeUrl})" aria-hidden="true"></span>`
+          : `<span aria-hidden="true">${typeLetter(f.type)}</span>`}
+        <span class="type-name">${f.type}</span>
+        ${chipsHtml}
+      </div>`;
+    return `
+      <button type="button" class="weapon-card rarity-${f.rarity}" role="option"
+        data-family="${f.id}" aria-selected="${selected}"
+        aria-label="${f.name}, ${f.type}${showOwned ? `, ${ownedTotal} owned` : ""}${ownedVers.length ? `, owned versions: ${ownedVers.map((v) => v.label).join(", ")}` : ""}">
+        <span class="el-bloom" style="--el:${elVar}"></span>
+        <div class="card-top">
+          <span class="entity-icon" aria-hidden="true">${f.icon}</span>
+          <div class="card-text">
+            <div class="card-header-row">
+              <span class="rarity-badge ${f.rarity}" aria-hidden="true">${f.rarity === "exotic" ? "✦" : "◆"}</span>
+              <span class="card-name">${f.name}</span>
+            </div>
+            ${typeRow}
+          </div>
+        </div>
+        <div class="card-meta-row">
+          <span class="slot-letter" title="${f.slot}">${f.slot[0].toUpperCase()}</span>
+          <img class="facet-img" src="${EL_ICONS[f.element] || EL_ICONS.kinetic}" alt="" />
+          <img class="facet-img" src="${AMMO_ICONS[f.ammo]}" alt="" />
+          ${showOwned ? `<span class="owned-count">×${ownedTotal}</span>` : ""}
+        </div>
+      </button>`;
+  }
+
+  function renderBoard() {
+    const board = $("#board");
+    const outline = $("#outline-rail");
+    const countLabel = $("#count-label");
+    const sortHint = $("#sort-hint");
+
+    if (state.view === "loading") {
+      outline.hidden = true;
+      board.innerHTML = `<div class="skeleton-grid">${Array.from({ length: 8 }, () => `<div class="skeleton-card"></div>`).join("")}</div>`;
+      countLabel.innerHTML = `<strong>—</strong> loading families`;
+      sortHint.textContent = "manifest loading…";
+      return;
+    }
+    if (state.view === "error") {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-error">
+        <p><strong>Could not load catalog</strong></p>
+        <p>Manifest or browse request failed. Check network / bungie.net status.</p>
+        <div class="actions">
+          <button type="button" class="btn" id="err-retry">Retry</button>
+          <button type="button" class="btn" id="err-settings">Settings</button>
+        </div>
+      </div>`;
+      $("#err-retry")?.addEventListener("click", () => { state.view = "results"; renderAll(); announce("Retrying catalog load"); });
+      countLabel.innerHTML = `<strong>0</strong> families`;
+      sortHint.textContent = "error";
+      return;
+    }
+    if (state.view === "empty-sync") {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-empty">
+        <p><strong>No owned weapons yet</strong></p>
+        <p>Sync inventory to populate Owned scope. Catalog remains a composition aid (DBR-PUR-002).</p>
+        <div class="actions">
+          <button type="button" class="btn" id="sync-cta">Sync inventory</button>
+          <button type="button" class="btn" id="settings-cta">Settings</button>
+        </div>
+      </div>`;
+      countLabel.innerHTML = `<strong>0</strong> owned families`;
+      sortHint.textContent = "owned empty";
+      return;
+    }
+
+    const list = filteredSorted();
+    if (!list.length) {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-empty">
+        <p><strong>No weapons match</strong></p>
+        <p>Filters use include OR · across AND · exclude drop (BR-CAT-006). Group-by never rewrites the match set (BR-CAT-007).</p>
+        <div class="actions">
+          <button type="button" class="btn" id="clear-filters-cta">Clear filters</button>
+        </div>
+      </div>`;
+      $("#clear-filters-cta")?.addEventListener("click", clearFacets);
+      countLabel.innerHTML = `<strong>0</strong> families`;
+      sortHint.textContent = "zero match";
+      return;
+    }
+
+    const groups = partitionGroups(list);
+    const sortStr = state.sortKeys.join(" → ");
+    const groupStr = state.groupDims.length ? `group: ${state.groupDims.join(" → ")}` : "group off";
+    sortHint.textContent = `sort: ${sortStr} · ${groupStr}`;
+    countLabel.innerHTML = `<strong>${list.length}</strong> families`;
+
+    if (!groups) {
+      outline.hidden = true;
+      board.innerHTML = `<div class="board-flat" role="listbox" aria-label="Weapon family grid">${list.map(renderCard).join("")}</div>`;
+    } else {
+      // Outline when ≥2 groups
+      const showOutline = groups.length >= 2;
+      outline.hidden = !showOutline;
+      if (showOutline) {
+        outline.innerHTML = `<div class="outline-title">Jump</div>` + groups.map(([key, items], i) =>
+          `<button type="button" class="outline-item" data-jump="${CSS.escape(key)}" title="Scroll to ${groupLabel(key)} (does not filter)">
+            ${groupLabel(key)}<span class="n">${items.length}</span>
+          </button>`
+        ).join("");
+        outline.querySelectorAll(".outline-item").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const key = btn.getAttribute("data-jump");
+            // Expand if collapsed
+            state.groupExpanded[key] = true;
+            renderBoard();
+            requestAnimationFrame(() => {
+              const sec = document.querySelector(`[data-group-key="${CSS.escape(key)}"]`) ||
+                document.querySelector(`[data-group-key="${key}"]`);
+              // data-group-key is raw; use attribute selector carefully
+              const el = Array.from(document.querySelectorAll("[data-group-key]")).find((n) => n.getAttribute("data-group-key") === key);
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+                announce(`Jumped to group ${groupLabel(key)}`);
+              }
+              outline.querySelectorAll(".outline-item").forEach((b) => b.removeAttribute("aria-current"));
+              btn.setAttribute("aria-current", "true");
+            });
+          });
+        });
+      }
+
+      board.innerHTML = groups.map(([key, items]) => {
+        const expanded = state.groupExpanded[key] !== false; // default expanded
+        return `
+          <section class="group-section" data-group-key="${key.replace(/"/g, "&quot;")}">
+            <button type="button" class="group-header" aria-expanded="${expanded}" data-toggle-group="${key.replace(/"/g, "&quot;")}">
+              <span class="chev" aria-hidden="true">▾</span>
+              <span>${groupLabel(key)}</span>
+              <span class="g-count">${items.length}</span>
+            </button>
+            <div class="group-body" ${expanded ? "" : "hidden"} role="listbox" aria-label="${groupLabel(key)}">
+              ${items.map(renderCard).join("")}
+            </div>
+          </section>`;
+      }).join("");
+
+      board.querySelectorAll("[data-toggle-group]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const key = btn.getAttribute("data-toggle-group");
+          const cur = state.groupExpanded[key] !== false;
+          state.groupExpanded[key] = !cur;
+          renderBoard();
+          announce(`${groupLabel(key)} ${!cur ? "expanded" : "collapsed"}`);
+        });
+        btn.addEventListener("keydown", (e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            btn.click();
+          }
+        });
+      });
+    }
+
+    board.querySelectorAll(".weapon-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const id = card.getAttribute("data-family");
+        const f = FAMILIES.find((x) => x.id === id);
+        if (!f) return;
+        state.selectedFamilyId = id;
+        state.selectedVersionId = openVersionForFamily(f);
+        renderAll();
+        announce(`Opened ${f.name}`);
+        $("#detail")?.focus();
+      });
+    });
+  }
+
+  function renderDetail() {
+    const root = $("#detail");
+    if (!state.selectedFamilyId) {
+      root.innerHTML = `<div class="detail-empty">Select a family card to inspect definition · composition aid only</div>`;
+      return;
+    }
+    const f = FAMILIES.find((x) => x.id === state.selectedFamilyId);
+    if (!f) {
+      root.innerHTML = `<div class="detail-empty">Family not found</div>`;
+      return;
+    }
+    const verId = state.selectedVersionId || primaryVersion(f).id;
+    const ver = versionById(f, verId);
+    const perkData = (f.perks && f.perks[ver.id]) || { owned: false, selected: [], unselected: [], pool: [] };
+    const showOwned = state.signedIn && ver.owned > 0;
+    const typeUrl = typeIconUrl(f.type);
+
+    const versionSeg = f.versions.map((v) => {
+      const pressed = v.id === ver.id;
+      const hasOwn = state.signedIn && v.owned > 0;
+      return `<button type="button" class="ver-btn ${hasOwn ? "" : "unowned"}" data-ver="${v.id}"
+        aria-pressed="${pressed}" title="${v.label} · hash ${v.hash}${hasOwn ? ` · ×${v.owned}` : " · unowned (inspectable)"}">
+        ${hasOwn ? `<span class="own-dot" aria-hidden="true"></span>` : ""}
+        <span>${v.label}</span>
+        <span class="hash-hint">#${String(v.hash).slice(-4)}</span>
+      </button>`;
+    }).join("");
+
+    let perksHtml = "";
+    if (perkData.owned && showOwned) {
+      const showPool = state.canRoll;
+      const cols = [
+        { label: "Trait 1", cells: [
+          ...perkData.selected.slice(0, 1).map((n) => ({ n, t: "selected" })),
+          ...perkData.unselected.slice(0, 1).map((n) => ({ n, t: "unselected" })),
+          ...(showPool ? perkData.pool.slice(0, 1).map((n) => ({ n, t: "possible" })) : []),
+        ]},
+        { label: "Trait 2", cells: [
+          ...perkData.selected.slice(1, 2).map((n) => ({ n, t: "selected" })),
+          ...perkData.unselected.slice(1, 2).map((n) => ({ n, t: "unselected" })),
+          ...(showPool ? perkData.pool.slice(1, 2).map((n) => ({ n, t: "possible" })) : []),
+        ]},
+      ];
+      perksHtml = `
+        <div class="section-head">
+          <h3 class="section-title">Perks</h3>
+          <button type="button" class="view-toggle" id="can-roll-toggle" aria-pressed="${state.canRoll}" title="Possible rolls">
+            Possible rolls<span class="knob" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="perk-legend"><span>① on this copy · ② unselected · ③ pool</span></div>
+        <div class="perk-grid-cols">
+          ${cols.map((c) => `
+            <div class="perk-col">
+              <div class="perk-col-label" title="${c.label}">${c.label}</div>
+              ${c.cells.map((cell) => `
+                <div class="perk-cell ${cell.t}">
+                  <span class="ico" aria-hidden="true">◆</span>
+                  <span class="cap">${cell.n}</span>
+                </div>`).join("")}
+            </div>`).join("")}
+        </div>`;
+    } else {
+      const pool = perkData.pool.length ? perkData.pool : ["Definition pool"];
+      perksHtml = `
+        <div class="section-head"><h3 class="section-title">Perks</h3></div>
+        <div class="perk-legend"><span>③ Possible rolls only (unowned / definition)</span></div>
+        <div class="perk-grid-cols">
+          <div class="perk-col">
+            <div class="perk-col-label">Pool</div>
+            ${pool.slice(0, 4).map((n) => `
+              <div class="perk-cell possible">
+                <span class="ico" aria-hidden="true">◇</span>
+                <span class="cap">${n}</span>
+              </div>`).join("")}
+          </div>
+        </div>`;
+    }
+
+    const instStrip = showOwned && ver.powerLevels && ver.powerLevels.length
+      ? `<div class="instance-strip" aria-label="Owned instances for this version">
+          <span class="label">Copies</span>
+          ${ver.powerLevels.map((pl, i) =>
+            `<button type="button" class="inst-chip" aria-pressed="${i === 0}"><span class="pw">PL ${pl}</span></button>`
+          ).join("")}
+        </div>`
+      : (showOwned ? "" : `<p class="hero-sub" style="margin-top:8px">Unowned version — inspect only · no instances</p>`);
+
+    root.innerHTML = `
+      <div class="detail-hero">
+        <button type="button" class="close-x" id="detail-close" aria-label="Close detail">✕</button>
+        <div class="hero-row">
+          <span class="hero-icon" aria-hidden="true">${f.icon}</span>
+          <div class="header-stack">
+            <h2 class="hero-name ${f.rarity === "exotic" ? "exotic" : ""}">${f.name}</h2>
+            <div class="hero-sub">${f.type} · ${f.frame} · ${ver.label}</div>
+            <div class="meta-icons" aria-label="Weapon meta">
+              <span class="meta-chip" title="${f.type}" aria-label="${f.type}">
+                ${typeUrl
+                  ? `<span class="type-ico" style="-webkit-mask-image:url(${typeUrl});mask-image:url(${typeUrl})"></span>`
+                  : `<span class="type-letter">${typeLetter(f.type)}</span>`}
+              </span>
+              <span class="meta-chip slot" title="${f.slot}">${f.slot[0].toUpperCase()}</span>
+              <span class="meta-chip"><img class="facet-img" src="${EL_ICONS[f.element]}" alt="" /></span>
+              <span class="meta-chip"><img class="facet-img" src="${AMMO_ICONS[f.ammo]}" alt="" /></span>
+              ${showOwned ? `<span class="meta-chip owned">×${ver.owned}</span>` : ""}
+            </div>
+            ${f.versions.length > 1 ? `
+            <div class="version-switch">
+              <span class="v-label">Family versions · full rebind on switch</span>
+              <div class="version-seg" role="group" aria-label="Family version switcher">${versionSeg}</div>
+            </div>` : ""}
+            ${instStrip}
+          </div>
+        </div>
+      </div>
+      <div class="detail-body">
+        <p class="rebind-note"><strong>Version rebind:</strong> perks, instance strip, and hash follow selected family member only. Grid selection stays on the family card (not per-hash).</p>
+        ${f.catalyst ? `<div class="section-title">Catalyst</div><p class="hero-sub">${f.catalyst} · display-only</p>` : ""}
+        ${perksHtml}
+        <div class="detail-footer">
+          <button type="button" class="btn-stub" disabled title="Outbound create deferred">Add to Set</button>
+          <button type="button" class="btn-stub" disabled title="Outbound create deferred">Open Synergy</button>
+          <span class="stub-note">Set / Synergy create deferred — stubs disabled with honest product copy (not live CTAs).</span>
+          <span class="hash-footer">hash ${ver.hash} · family ${f.id} · version ${ver.id}</span>
+        </div>
+      </div>`;
+
+    $("#detail-close")?.addEventListener("click", () => {
+      state.selectedFamilyId = null;
+      state.selectedVersionId = null;
+      renderAll();
+    });
+    root.querySelectorAll(".ver-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.selectedVersionId = btn.getAttribute("data-ver");
+        state.canRoll = false;
+        renderAll();
+        announce(`Switched to ${state.selectedVersionId}`);
+      });
+    });
+    $("#can-roll-toggle")?.addEventListener("click", () => {
+      state.canRoll = !state.canRoll;
+      renderDetail();
+      // keep board selection state
+      $$(".weapon-card").forEach((c) => {
+        c.setAttribute("aria-selected", c.getAttribute("data-family") === state.selectedFamilyId ? "true" : "false");
+      });
+    });
+  }
+
+  function renderSortSheet() {
+    const list = $("#sort-list");
+    const dims = $("#group-dim-list");
+    const sortIds = state.draftSort || state.sortKeys.slice();
+    const active = state.draftGroup || state.groupDims.slice();
+
+    list.innerHTML = sortIds.map((id, i) => {
+      const meta = SORT_KEYS_DEFAULT.find((k) => k.id === id) || { label: id };
+      return `<li class="reorder-item" data-sort-id="${id}">
+        <span class="grip" aria-hidden="true">⠿</span>
+        <span class="name">${meta.label}</span>
+        <span class="prio">#${i + 1}</span>
+        <span class="moves">
+          <button type="button" data-move-sort="${id}" data-dir="-1" aria-label="Move ${meta.label} up" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" data-move-sort="${id}" data-dir="1" aria-label="Move ${meta.label} down" ${i === sortIds.length - 1 ? "disabled" : ""}>↓</button>
+        </span>
+      </li>`;
+    }).join("");
+
+    // All dims: active ordered first, then inactive
+    const ordered = [
+      ...active,
+      ...GROUP_DIMS_ALL.map((d) => d.id).filter((id) => !active.includes(id)),
+    ];
+    dims.innerHTML = ordered.map((id, i) => {
+      const meta = GROUP_DIMS_ALL.find((d) => d.id === id) || { label: id };
+      const on = active.includes(id);
+      const prio = on ? active.indexOf(id) + 1 : "—";
+      return `<div class="group-dim-row" data-dim-id="${id}">
+        <label><input type="checkbox" data-toggle-dim="${id}" ${on ? "checked" : ""} /> Active</label>
+        <span class="name">${meta.label}</span>
+        <span class="prio" style="font-family:var(--font-m);font-size:10px;color:var(--muted-dim)">#${prio}</span>
+        <span class="moves">
+          <button type="button" data-move-dim="${id}" data-dir="-1" aria-label="Move ${meta.label} up" ${!on || active.indexOf(id) === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" data-move-dim="${id}" data-dir="1" aria-label="Move ${meta.label} down" ${!on || active.indexOf(id) === active.length - 1 ? "disabled" : ""}>↓</button>
+        </span>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll("[data-move-sort]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-move-sort");
+        const dir = Number(btn.getAttribute("data-dir"));
+        const arr = (state.draftSort || state.sortKeys.slice()).slice();
+        const i = arr.indexOf(id);
+        const j = i + dir;
+        if (j < 0 || j >= arr.length) return;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        state.draftSort = arr;
+        renderSortSheet();
+      });
+    });
+    dims.querySelectorAll("[data-toggle-dim]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const id = cb.getAttribute("data-toggle-dim");
+        let arr = (state.draftGroup || state.groupDims.slice()).slice();
+        if (cb.checked) {
+          if (!arr.includes(id)) arr.push(id);
+        } else {
+          arr = arr.filter((x) => x !== id);
+        }
+        state.draftGroup = arr;
+        renderSortSheet();
+      });
+    });
+    dims.querySelectorAll("[data-move-dim]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-move-dim");
+        const dir = Number(btn.getAttribute("data-dir"));
+        const arr = (state.draftGroup || state.groupDims.slice()).slice();
+        const i = arr.indexOf(id);
+        if (i < 0) return;
+        const j = i + dir;
+        if (j < 0 || j >= arr.length) return;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        state.draftGroup = arr;
+        renderSortSheet();
+      });
+    });
+  }
+
+  function openSheet() {
+    state.sheetOpen = true;
+    state.draftSort = state.sortKeys.slice();
+    state.draftGroup = state.groupDims.slice();
+    const sheet = $("#sort-group-sheet");
+    sheet.hidden = false;
+    $("#sort-group-btn").setAttribute("aria-expanded", "true");
+    renderSortSheet();
+    $("#sheet-close")?.focus();
+  }
+  function closeSheet() {
+    state.sheetOpen = false;
+    state.draftSort = null;
+    state.draftGroup = null;
+    $("#sort-group-sheet").hidden = true;
+    $("#sort-group-btn").setAttribute("aria-expanded", "false");
+  }
+  function applySheet() {
+    if (state.draftSort) state.sortKeys = state.draftSort.slice();
+    if (state.draftGroup) {
+      state.groupDims = state.draftGroup.slice();
+      state.groupExpanded = {};
+    }
+    closeSheet();
+    renderAll();
+    announce(`Sort ${state.sortKeys.join(" → ")}; group ${state.groupDims.join(" → ") || "off"}`);
+  }
+
+  function renderStatus() {
+    const list = state.view === "results" || state.view === "group" || state.view === "type-filter" || state.view === "detail" || state.view === "adept-switch" || state.view === "reorder" || state.view === "signed-out"
+      ? filteredSorted()
+      : [];
+    const ownedCopies = state.signedIn
+      ? FAMILIES.reduce((s, f) => s + familyOwnedTotal(f), 0)
+      : 0;
+    $("#status-line").innerHTML =
+      `bnet · weapons · <strong>${state.scope}</strong> · ${state.signedIn ? "signed-in" : "signed-out"} · ` +
+      `<strong>${list.length}</strong> families` +
+      (state.signedIn ? ` · copies ${ownedCopies}` : " · no owned chips") +
+      (state.groupDims.length ? ` · grouped by ${state.groupDims.join("→")}` : "");
+  }
+
+  function renderAuthChrome() {
+    $("#auth-out").setAttribute("aria-pressed", state.signedIn ? "false" : "true");
+    $("#auth-in").setAttribute("aria-pressed", state.signedIn ? "true" : "false");
+    const lamp = $("#sync-lamp");
+    const label = $("#sync-label");
+    if (!state.signedIn) {
+      lamp.className = "lamp off";
+      label.textContent = "Signed out · manifest only";
+    } else if (state.view === "error") {
+      lamp.className = "lamp danger";
+      label.textContent = "Sync error";
+    } else if (state.view === "loading") {
+      lamp.className = "lamp warn";
+      label.textContent = "Loading manifest…";
+    } else if (state.view === "empty-sync") {
+      lamp.className = "lamp warn";
+      label.textContent = "Inventory not synced";
+    } else {
+      lamp.className = "lamp";
+      label.textContent = "Inventory synced";
+    }
+    // Scope owned disabled when signed-out
+    const ownedBtn = $("#scope-owned-btn");
+    if (ownedBtn) {
+      ownedBtn.disabled = !state.signedIn;
+      if (!state.signedIn && state.scope === "owned") {
+        state.scope = "all";
+      }
+    }
+    $$("[data-scope]").forEach((b) => {
+      b.setAttribute("aria-pressed", b.getAttribute("data-scope") === state.scope ? "true" : "false");
+    });
+  }
+
+  function renderAll() {
+    updateChipDom();
+    updateFilterSummary();
+    renderAuthChrome();
+    renderStatus();
+    renderBoard();
+    renderDetail();
+  }
+
+  function applyScenario(id) {
+    state.view = "results";
+    state.selectedFamilyId = null;
+    state.selectedVersionId = null;
+    state.canRoll = false;
+    state.groupExpanded = {};
+    closeSheet();
+
+    // Reset facets lightly
+    state.facets = {};
+    state.search = "";
+    $("#search").value = "";
+    state.scope = "all";
+    state.groupDims = [];
+    state.sortKeys = SORT_KEYS_DEFAULT.map((k) => k.id);
+
+    switch (id) {
+      case "signed-out":
+        state.signedIn = false;
+        state.scope = "all";
+        break;
+      case "loading":
+        state.signedIn = true;
+        state.view = "loading";
+        break;
+      case "empty-sync":
+        state.signedIn = true;
+        state.scope = "owned";
+        state.view = "empty-sync";
+        break;
+      case "zero":
+        state.signedIn = true;
+        state.facets = { type: { "linear fusion rifle": "include" } };
+        break;
+      case "group":
+        state.signedIn = true;
+        state.groupDims = ["slot", "type"];
+        // collapse first group to demo
+        {
+          const list = filteredSorted();
+          const groups = partitionGroups(list);
+          if (groups && groups[0]) state.groupExpanded[groups[0][0]] = false;
+        }
+        break;
+      case "reorder":
+        state.signedIn = true;
+        state.groupDims = ["element"];
+        openSheet();
+        break;
+      case "type-filter":
+        state.signedIn = true;
+        state.facets = { type: { "hand cannon": "include" } };
+        break;
+      case "detail":
+        state.signedIn = true;
+        state.selectedFamilyId = "midnight-coup";
+        state.selectedVersionId = "base";
+        break;
+      case "adept-switch":
+        state.signedIn = true;
+        state.selectedFamilyId = "midnight-coup";
+        state.selectedVersionId = "adept";
+        break;
+      case "error":
+        state.signedIn = true;
+        state.view = "error";
+        break;
+      case "results":
+      default:
+        state.signedIn = true;
+        break;
+    }
+    // Auth toggle UI for signed-out scenario
+    if (id === "signed-out") state.signedIn = false;
+    renderAll();
+    if (id === "reorder") {
+      // sheet already open; ensure re-render after draft
+      renderSortSheet();
+    }
+  }
+
+  // Events
+  $("#scenario").addEventListener("change", (e) => applyScenario(e.target.value));
+  $("#auth-out").addEventListener("click", () => {
+    state.signedIn = false;
+    if (state.scope === "owned") state.scope = "all";
+    state.view = "results";
+    renderAll();
+  });
+  $("#auth-in").addEventListener("click", () => {
+    state.signedIn = true;
+    state.view = "results";
+    renderAll();
+  });
+  $$("[data-scope]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.disabled) return;
+      state.scope = btn.getAttribute("data-scope");
+      if (state.view === "empty-sync" && state.scope === "all") state.view = "results";
+      renderAll();
+    });
+  });
+  $$("[data-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      $$("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+      if (btn.getAttribute("data-mode") !== "weapons") {
+        announce("Armor / Universal not in this browse-chrome gate");
+      }
+    });
+  });
+  $("#search").addEventListener("input", (e) => {
+    state.search = e.target.value;
+    renderAll();
+  });
+  $$(".chip[data-facet]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      cycleFacet(chip.dataset.facet, chip.dataset.value);
+    });
+  });
+  $("#more-btn").addEventListener("click", () => {
+    const panel = $("#secondary-facets");
+    const open = panel.hidden;
+    panel.hidden = !open;
+    $("#more-btn").setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  $("#reset-btn").addEventListener("click", clearFacets);
+  $("#sort-group-btn").addEventListener("click", () => {
+    if (state.sheetOpen) closeSheet();
+    else openSheet();
+  });
+  $("#sheet-close").addEventListener("click", closeSheet);
+  $("#sheet-apply").addEventListener("click", applySheet);
+  $("#sheet-reset-defaults").addEventListener("click", () => {
+    state.draftSort = SORT_KEYS_DEFAULT.map((k) => k.id);
+    state.draftGroup = [];
+    renderSortSheet();
+  });
+  $("#sort-group-sheet").addEventListener("click", (e) => {
+    if (e.target === $("#sort-group-sheet")) closeSheet();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (state.sheetOpen) {
+        closeSheet();
+        return;
+      }
+      if (state.selectedFamilyId) {
+        state.selectedFamilyId = null;
+        state.selectedVersionId = null;
+        renderAll();
+      }
+    }
+  });
+
+  // Initial
+  applyScenario("results");
+})();
+  </script>
+</body>
+</html>

@@ -48,6 +48,11 @@ class NeonFacetChip extends StatelessWidget {
     return officialElementVisual(v) ?? officialAmmoVisual(v);
   }
 
+  DestinyWeaponTypeVisual? get _weaponType {
+    final v = value ?? label;
+    return officialWeaponTypeVisual(v);
+  }
+
   /// Slot letter (K/E/P) when no official PNG — structure chrome only.
   String? get _slotLetter {
     switch ((value ?? label).trim().toLowerCase()) {
@@ -66,10 +71,12 @@ class NeonFacetChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
     final official = _official;
+    final weaponType = _weaponType;
     final accent = color ?? official?.color ?? palette.accent;
     final selected = isActive;
     final exclude = isExclude;
     final slotLetter = _slotLetter;
+    final typeLetter = weaponTypeLetterMark(value ?? label);
 
     Widget? avatar = icon;
     if (avatar == null && official != null) {
@@ -78,12 +85,28 @@ class NeonFacetChip extends StatelessWidget {
         visual: official,
         size: 14,
       );
+    } else if (avatar == null && weaponType != null) {
+      avatar = DestinyWeaponTypeIcon(
+        visual: weaponType,
+        size: 14,
+        fallbackMark: typeLetter,
+      );
     } else if (avatar == null && iconOnly && slotLetter != null) {
       avatar = Text(
         slotLetter,
         style: neonMono(
           color: accent,
           fontSize: 12,
+          letterSpacing: 0,
+        ),
+      );
+    } else if (avatar == null && iconOnly && weaponType == null) {
+      // Unknown weapon type — letter last-resort (never invent art).
+      avatar = Text(
+        typeLetter,
+        style: neonMono(
+          color: accent,
+          fontSize: 11,
           letterSpacing: 0,
         ),
       );
@@ -103,7 +126,7 @@ class NeonFacetChip extends StatelessWidget {
               ? const SizedBox(width: 0, height: 0)
               : Text(
                   slotLetter ??
-                      (label.isNotEmpty ? label[0].toUpperCase() : '?'),
+                      typeLetter,
                   style: neonMono(color: accent, fontSize: 12),
                 ))
           : Text(
@@ -120,7 +143,7 @@ class NeonFacetChip extends StatelessWidget {
       checkmarkColor: exclude ? palette.danger : accent,
       onSelected: (_) => onCycle(),
       avatar: iconOnly ? avatar : avatar,
-      showCheckmark: !iconOnly && official == null,
+      showCheckmark: !iconOnly && official == null && weaponType == null,
       padding: iconOnly ? const EdgeInsets.all(4) : null,
       labelPadding: iconOnly ? EdgeInsets.zero : null,
       visualDensity: VisualDensity.compact,
@@ -142,7 +165,14 @@ class NeonFacetChip extends StatelessWidget {
                 ? 'Include $label (tap to cycle)'
                 : 'Filter $label (tap include → exclude → off)');
 
-    return Tooltip(message: tip, child: chip);
+    return Tooltip(
+      message: tip,
+      child: Semantics(
+        label: label,
+        button: true,
+        child: chip,
+      ),
+    );
   }
 }
 

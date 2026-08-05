@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'catalog_browse_chrome_fixtures.dart';
 import 'catalog_residual_polish_fixtures.dart';
 import 'inventory_sync_test_fakes.dart';
 import 'test_material_theme.dart';
@@ -502,6 +503,392 @@ void main() {
           find.byKey(const Key('perk_cell_$kResidualPoolBasePlugHash')),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'desktop-detail-no-band-labels: residual owned has tier chrome, no band keys',
+      (tester) async {
+        await pumpResidualCatalog(tester);
+        await tapItem(tester, kResidualEnhancedWeaponHash);
+
+        expect(find.byKey(const Key('perk_band_selected_0')), findsNothing);
+        expect(find.byKey(const Key('perk_band_unselected_0')), findsNothing);
+        expect(find.textContaining('On this copy'), findsNothing);
+        expect(
+          find.byKey(const Key('perk_tier_badge_$kResidualEnhancedPlugHash')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('perk_chevron_$kResidualBasePlugHash')),
+          findsOneWidget,
+        );
+      },
+    );
+  });
+
+  group('browse-chrome host fixtures', () {
+    late Directory browseDir;
+    late AppServices browseServices;
+    late AppDatabase browseDb;
+    late OwnedCatalogBridge browseBridge;
+
+    setUp(() async {
+      browseDir = await Directory.systemTemp.createTemp('weapons_browse_');
+      final root = StorageRoot(basePath: browseDir.path);
+      await root.ensureLayout();
+      browseDb = AppDatabase.memory();
+      final tokenStore = MemoryTokenStore();
+      await seedSignedIn(tokenStore, membershipId: 'bungie-browse');
+
+      browseServices = await HostBootstrap.open(
+        storageRoot: root,
+        database: browseDb,
+        manifestRefresh: _FakeRefresh(),
+        offlineCatalog: OfflineCatalog.preloaded(
+          storageRoot: root,
+          items: browseChromeCatalogItems(),
+          version: 'browse-chrome-1',
+          perkColumnsByHash: browseChromePerkColumns(),
+        ),
+        clientId: 'test-client',
+        tokenStore: tokenStore,
+        browserLauncher: FakeBrowserLauncher(),
+        profileClient: FakeProfileClient(),
+        oauthClient: BungieOAuthClient(
+          clientId: 'test-client',
+          redirectUri: kDefaultWindowsRedirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+      );
+
+      final user = await ensureUser(
+        browseDb,
+        bungieMembershipId: 'bungie-browse',
+        membershipType: 3,
+        displayName: 'Browse Guardian',
+      );
+      await replaceInventoryBatch(
+        browseDb,
+        user.id,
+        now: '2026-08-05T12:00:00.000Z',
+        items: browseChromeOwnedInventory(syncedAt: '2026-08-05T12:00:00.000Z'),
+      );
+
+      browseBridge = OwnedCatalogBridge(
+        db: browseDb,
+        offlineCatalog: browseServices.offlineCatalog,
+        session: browseServices.oauthSession,
+        inventorySync: browseServices.inventorySync,
+        plugNameByHash: kBrowsePlugNameByHash,
+        plugNameMapBuilder: (hashes) async => {
+          for (final h in hashes)
+            if (kBrowsePlugNameByHash.containsKey(h))
+              h: kBrowsePlugNameByHash[h]!,
+        },
+      );
+    });
+
+    tearDown(() async {
+      await browseServices.dispose();
+      if (browseDir.existsSync()) {
+        await browseDir.delete(recursive: true);
+      }
+    });
+
+    Future<void> pumpBrowseCatalog(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: testMaterialTheme(),
+          home: CatalogPage(
+            services: browseServices,
+            bridge: browseBridge,
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets(
+      'desktop-family-card: one card per family + owned-only version chips',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+
+        // Three definition hashes for Midnight Coup → one family card.
+        expect(find.text('Midnight Coup'), findsWidgets);
+        expect(find.byKey(const Key('catalog_item_$kBrowseAdeptHash')), findsNothing);
+        expect(find.byKey(const Key('catalog_item_$kBrowseHolofoilHash')), findsNothing);
+        expect(find.byKey(const Key('catalog_item_$kBrowseBaseHash')), findsOneWidget);
+
+        // Family version chips keyed by family (not free-text labels).
+        final coupKey = weaponFamilyKey(
+          browseChromeCatalogItems().firstWhere((i) => i.hash == kBrowseBaseHash),
+        );
+        expect(find.byKey(Key('family_version_chips_$coupKey')), findsOneWidget);
+        expect(
+          find.byKey(Key('family_version_chip_base_$coupKey')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(Key('family_version_chip_adept_$coupKey')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(Key('family_version_chip_holofoil_$coupKey')),
+          findsNothing,
+        );
+        // ×N = 2 base + 1 adept.
+        expect(find.text('×3'), findsOneWidget);
+
+        // Primary weapon-type icon chips present.
+        expect(
+          find.byKey(const Key('archetype_chip_Hand Cannon')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('catalog_sort_group_open')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'desktop-detail-versions: all family versions + sticky family rebind',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+
+        await tester.tap(find.byKey(const Key('catalog_item_$kBrowseBaseHash')));
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
+        // openVersion prefers owned max-power (adept 1810 > base 1805).
+        expect(
+          find.byKey(const Key('family_version_select_$kBrowseAdeptHash')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('family_version_select_$kBrowseBaseHash')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('family_version_select_$kBrowseHolofoilHash')),
+          findsOneWidget,
+        );
+
+        // Switch to base — full rebind.
+        await tester.tap(
+          find.byKey(const Key('family_version_select_$kBrowseBaseHash')),
+        );
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'desktop-sort-reorder: sort sheet applies without rewriting filters',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+
+        // Set an include facet first.
+        await tester.tap(find.byKey(const Key('element_chip_Kinetic')));
+        await _pumpFrames(tester);
+
+        await tester.tap(find.byKey(const Key('catalog_sort_group_open')));
+        await _pumpFrames(tester);
+        expect(find.byKey(const Key('catalog_sort_group_sheet')), findsOneWidget);
+
+        // Sheet is tall — scroll to group add + apply.
+        final addSlot = find.byKey(const Key('group_dim_add_slot'));
+        await tester.ensureVisible(addSlot);
+        await _pumpFrames(tester);
+        await tester.tap(addSlot);
+        await _pumpFrames(tester);
+
+        final apply = find.byKey(const Key('catalog_sort_group_apply'));
+        await tester.ensureVisible(apply);
+        await _pumpFrames(tester);
+        await tester.tap(apply);
+        await _pumpFrames(tester);
+
+        // Group headers appear; Kinetic filter still applied (not cleared).
+        expect(
+          find.byKey(const Key('catalog_group_header_Kinetic')),
+          findsOneWidget,
+        );
+        // Still only Kinetic-matching families.
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseEnergyHash')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseBaseHash')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    Future<void> enableGroupBySlot(WidgetTester tester) async {
+      // GROUP chip row lives under More (secondary chrome).
+      final more = find.byKey(const Key('catalog_more_filters_toggle'));
+      expect(more, findsOneWidget);
+      await tester.tap(more);
+      await _pumpFrames(tester);
+
+      final chip = find.byKey(const Key('group_chip_slot'));
+      expect(chip, findsOneWidget);
+      await tester.ensureVisible(chip);
+      await _pumpFrames(tester);
+      await tester.tap(chip);
+      await _pumpFrames(tester);
+    }
+
+    testWidgets(
+      'desktop-group-collapse: collapse hides cards; does not rewrite filters',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+        await enableGroupBySlot(tester);
+
+        expect(
+          find.byKey(const Key('catalog_group_header_Kinetic')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('catalog_group_header_Energy')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseBaseHash')),
+          findsOneWidget,
+        );
+
+        // Collapse Kinetic — cards leave tree; Energy remains (view-only).
+        await tester.tap(find.byKey(const Key('catalog_group_header_Kinetic')));
+        await _pumpFrames(tester);
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseBaseHash')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseEnergyHash')),
+          findsOneWidget,
+        );
+        // Facet chips still present — collapse never rewrites filters.
+        expect(find.byKey(const Key('element_chip_Kinetic')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'desktop-group-outline-jump: outline when ≥2 groups; jump expands',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+        await enableGroupBySlot(tester);
+
+        expect(
+          find.byKey(const Key('catalog_group_outline_rail')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('catalog_outline_jump_Energy')),
+          findsOneWidget,
+        );
+
+        // Collapse Energy then jump — expand-on-jump restores cards.
+        await tester.tap(find.byKey(const Key('catalog_group_header_Energy')));
+        await _pumpFrames(tester);
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseEnergyHash')),
+          findsNothing,
+        );
+
+        await tester.tap(find.byKey(const Key('catalog_outline_jump_Energy')));
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.byKey(const Key('catalog_item_$kBrowseEnergyHash')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'desktop-group-priority: multi-dim group keys from active dim order',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+
+        // Chip add order = active dimension priority (slot then element).
+        await enableGroupBySlot(tester);
+        final elementChip = find.byKey(const Key('group_chip_element'));
+        await tester.ensureVisible(elementChip);
+        await _pumpFrames(tester);
+        await tester.tap(elementChip);
+        await _pumpFrames(tester);
+
+        // Composite labels use dim order slot · element.
+        expect(
+          find.byKey(const Key('catalog_group_header_Kinetic · Kinetic')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('catalog_group_header_Energy · Solar')),
+          findsOneWidget,
+        );
+        // Outline present for multi-group.
+        expect(
+          find.byKey(const Key('catalog_group_outline_rail')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'desktop-type-icon-filters: primary archetype iconOnly chips present',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+
+        expect(
+          find.byKey(const Key('archetype_chip_Hand Cannon')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('archetype_chip_Auto Rifle')),
+          findsOneWidget,
+        );
+        // No text label on primary type chips (iconOnly).
+        // Hand Cannon may still appear as card type-line — check chip has no
+        // primary-line archetype text under More (weapons archetype is primary).
+        expect(
+          find.byKey(const Key('catalog_more_filters_toggle')),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const Key('catalog_more_filters_toggle')));
+        await _pumpFrames(tester);
+        // Secondary must not re-list archetype as text chips for weapons —
+        // primary iconOnly chip remains a single instance.
+        expect(
+          find.byKey(const Key('archetype_chip_Hand Cannon')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'desktop-detail-no-band-labels: owned detail has tier chrome only',
+      (tester) async {
+        await pumpBrowseCatalog(tester);
+
+        await tester.tap(find.byKey(const Key('catalog_item_$kBrowseBaseHash')));
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
+        expect(find.byKey(const Key('perk_band_selected_0')), findsNothing);
+        expect(find.byKey(const Key('perk_band_unselected_0')), findsNothing);
+        expect(find.byKey(const Key('perk_band_possible_0')), findsNothing);
+        expect(find.textContaining('On this copy'), findsNothing);
+        expect(find.textContaining('Unselected (instance)'), findsNothing);
       },
     );
   });

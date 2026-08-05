@@ -275,13 +275,43 @@ class OwnedCatalogBridge {
   List<CatalogItem> browse(
     CatalogClientFilters filters, {
     CatalogBrowseMode mode = CatalogBrowseMode.universal,
+    List<CatalogSortKey> sortKeys = kDefaultWeaponSortKeys,
   }) {
     final scoped = itemsForBrowseMode(_annotatedBase, mode);
     final filtered = filterCatalogClient(scoped, filters);
     if (mode == CatalogBrowseMode.weapons) {
-      return sortCatalogWeapons(filtered);
+      return sortCatalogWeapons(filtered, sortKeys: sortKeys);
     }
     return filtered;
+  }
+
+  /// Weapons family browse: one card per name+slot/element/type family.
+  ///
+  /// Survives when any member matches [filters]; full membership retained for
+  /// detail version switch (GAP-CAT-BROWSE-001).
+  List<WeaponFamily> browseFamilies(
+    CatalogClientFilters filters, {
+    List<CatalogSortKey> sortKeys = kDefaultWeaponSortKeys,
+  }) {
+    final scoped =
+        itemsForBrowseMode(_annotatedBase, CatalogBrowseMode.weapons);
+    return buildWeaponFamilyBrowse(
+      scoped,
+      filters: filters,
+      sortKeys: sortKeys,
+    );
+  }
+
+  /// Max power among owned inventory instances per definition hash.
+  Map<int, int> maxPowerByHash() {
+    final out = <int, int>{};
+    for (final row in _inventory) {
+      final h = row.itemHash;
+      final p = row.power;
+      final prev = out[h];
+      if (prev == null || p > prev) out[h] = p;
+    }
+    return out;
   }
 
   /// Instance projections for a definition hash (power-desc).
