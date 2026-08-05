@@ -83,3 +83,6 @@ docs/atlas/screenshots/*.png
 # Recreate: pwsh -File scripts/link-projecttracker-requirements.ps1
 # High-level product requirements: requirements/Projects/Destiny 2 Build Creator/
 /requirements
+
+# Graphify skill generated knowledge graphs / caches (any cwd)
+graphify-out/
