@@ -102,36 +102,35 @@ void main() {
       ],
     );
 
-    test('perfect preferred and clean avoid (plug-level multi-pick)', () {
-      // barrel preferred {10,11} both on copy; trait1 {20}; trait2 {30,31} both on copy
+    test('column-level multi-accept: many preferred in one column = 1 credit',
+        () {
+      // barrel has two preferred alternatives; only one column credit.
       final m = scoreInstanceAgainstTarget(target, {
         'barrel': {10, 11},
         'trait1': {20},
         'trait2': {30, 31},
         'origin': {99},
       });
-      // preferred plugs: 10,11,20,30,31 = 5
-      expect(m.preferredMatched, 5);
-      expect(m.preferredScored, 5);
+      expect(m.preferredMatched, 3);
+      expect(m.preferredScored, 3); // not 5 plug-level
       expect(m.preferredRatio, 1.0);
       expect(m.isPerfectPreferred, isTrue);
       expect(m.avoidHits, 0);
-      // avoid plugs: 19, 29, 28 = 3
-      expect(m.avoidScored, 3);
+      expect(m.avoidScored, 2); // barrel + trait1 avoid columns
       expect(m.isCleanAvoid, isTrue);
       expect(m.preferredByColumn['origin'], PreferredColumnState.unscored);
     });
 
-    test('partial preferred and avoid hits (plug-level)', () {
+    test('partial preferred and avoid hits', () {
       final m = scoreInstanceAgainstTarget(target, {
-        'barrel': {19}, // avoid hit 19; preferred 10/11 miss
+        'barrel': {19}, // avoid hit, preferred miss
         'trait1': {20}, // preferred match
-        'trait2': {99}, // preferred 30/31 miss
+        'trait2': {99}, // preferred miss
       });
       expect(m.preferredMatched, 1);
-      expect(m.preferredScored, 5); // 2+1+2 preferred plugs
+      expect(m.preferredScored, 3);
       expect(m.avoidHits, 1);
-      expect(m.avoidScored, 3);
+      expect(m.avoidScored, 2);
       expect(m.avoidByColumn['barrel'], AvoidColumnState.hit);
       expect(m.preferredByColumn['barrel'], PreferredColumnState.miss);
       expect(m.preferredByColumn['trait1'], PreferredColumnState.matched);
@@ -144,15 +143,15 @@ void main() {
         'trait2': 31,
       });
       expect(m.preferredMatched, 3);
-      expect(m.preferredScored, 5);
+      expect(m.preferredScored, 3);
     });
 
     test('missing plugs count as preferred miss and avoid clear', () {
       final m = scoreInstanceAgainstTarget(target, {});
       expect(m.preferredMatched, 0);
-      expect(m.preferredScored, 5);
+      expect(m.preferredScored, 3);
       expect(m.avoidHits, 0);
-      expect(m.avoidScored, 3);
+      expect(m.avoidScored, 2);
     });
 
     test('family match counts preferred', () {
@@ -174,15 +173,41 @@ void main() {
       expect(m.preferredByColumn['trait1'], PreferredColumnState.matched);
     });
 
-    test('on-this-copy reusable preferred and avoid count', () {
-      // Equipped is junk; preferred/avoid live in reusables on the copy.
+    test('on-this-copy reusable preferred matches column', () {
+      // Equipped is junk; preferred lives in reusables on the copy.
       final m = scoreInstanceAgainstTarget(target, {
-        'barrel': {99, 10, 19}, // preferred 10 + avoid 19 on copy
-        'trait1': {20, 29}, // preferred 20 + avoid 29
+        'barrel': {99, 10}, // preferred 10 on copy
+        'trait1': {20},
         'trait2': {30},
       });
-      expect(m.preferredMatched, 3); // 10, 20, 30
-      expect(m.avoidHits, 2); // 19, 29
+      expect(m.preferredMatched, 3);
+      expect(m.preferredScored, 3);
+    });
+
+    test('does not inflate M with multi-pick alternatives (3/6 not 3/16)', () {
+      // Six preferred columns; multi-pick within barrel does not add to M.
+      final wide = WeaponRollTarget(
+        id: '1',
+        userId: 'u',
+        weaponKey: '100',
+        name: 'PvE',
+        columns: [
+          for (var i = 0; i < 6; i++)
+            RollTargetColumn(
+              columnKey: 'c$i',
+              preferredPlugHashes: {100 + i, 200 + i, 300 + i}, // 3 alts each
+            ),
+        ],
+      );
+      final m = scoreInstanceAgainstTarget(wide, {
+        'c0': {100},
+        'c1': {101},
+        'c2': {102},
+        // c3–c5 miss
+      });
+      expect(m.preferredMatched, 3);
+      expect(m.preferredScored, 6);
+      expect(m.preferredRatio, closeTo(0.5, 0.001));
     });
   });
 
@@ -241,10 +266,10 @@ void main() {
 
     test('avoid-only ranks least bad first when preferred empty', () {
       final avoidOnly = WeaponRollTarget(
-        id: '2',
+        id: '1',
         userId: 'u',
         weaponKey: '100',
-        name: 'Trash filter',
+        name: 'PvE',
         columns: const [
           RollTargetColumn(
             columnKey: 't1',
@@ -258,22 +283,25 @@ void main() {
       );
       final instances = [
         const RollTargetInstanceInput(
-          instanceId: 'dirty',
+          instanceId: 'bad',
           plugsByColumn: {'t1': 9, 't2': 8},
+          power: 1800,
         ),
         const RollTargetInstanceInput(
           instanceId: 'clean',
           plugsByColumn: {'t1': 1, 't2': 2},
+          power: 1700,
         ),
         const RollTargetInstanceInput(
-          instanceId: 'half',
+          instanceId: 'one',
           plugsByColumn: {'t1': 9, 't2': 2},
+          power: 1900,
         ),
       ];
       final ranked = rankOwnedAgainstTarget(avoidOnly, instances);
       expect(
         ranked.map((r) => r.instance.instanceId).toList(),
-        ['clean', 'half', 'dirty'],
+        ['clean', 'one', 'bad'],
       );
     });
 

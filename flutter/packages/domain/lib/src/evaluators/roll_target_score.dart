@@ -86,12 +86,16 @@ bool plugMatchesAcceptable(
 ///
 /// [plugsByColumn]: columnKey → plug hash(es) on that instance for the column.
 /// Accepts a single equipped hash (`int`) or a set of equipped + reusable plugs
-/// (`Set<int>` / `Iterable<int>`). Multi-pick preferred/avoid are counted
-/// **per plug** (not per column): N/M = matched preferred plugs / total
-/// preferred plugs; Av k = avoid plugs present on the instance.
+/// (`Set<int>` / `Iterable<int>`).
 ///
-/// Columns with empty preferred are unscored for preferred; empty avoid
-/// unscored for avoid.
+/// **Dual segs N/M** (DBR-IDL-002/005): **one credit per column** with preferred
+/// multi-picks — any listed preferred on this copy (equipped or reusable)
+/// matches that column. M = columns with preferred; N = matched columns.
+/// Multi-pick alternatives in one column do **not** inflate M (avoids 3/16 when
+/// the user marked 6 columns / 6 ideal slots).
+///
+/// **Av k** (DBR-IDL-003/006): one hit per column with avoid multi-picks when
+/// any listed avoid is on this copy.
 RollTargetMatchResult scoreInstanceAgainstTarget(
   WeaponRollTarget target,
   Map<String, Object?> plugsByColumn, {
@@ -139,33 +143,27 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
     if (col.preferredPlugHashes.isEmpty) {
       preferredByColumn[key] = PreferredColumnState.unscored;
     } else {
-      // Plug-level multi-pick: each preferred hash is one score unit.
-      var colMatched = 0;
-      for (final want in col.preferredPlugHashes) {
-        preferredScored++;
-        if (anyPlugMatches(instancePlugs, {want})) {
-          preferredMatched++;
-          colMatched++;
-        }
+      // Column-level multi-accept: any preferred on this copy → match.
+      preferredScored++;
+      if (anyPlugMatches(instancePlugs, col.preferredPlugHashes)) {
+        preferredMatched++;
+        preferredByColumn[key] = PreferredColumnState.matched;
+      } else {
+        preferredByColumn[key] = PreferredColumnState.miss;
       }
-      preferredByColumn[key] = colMatched > 0
-          ? PreferredColumnState.matched
-          : PreferredColumnState.miss;
     }
 
     if (col.avoidPlugHashes.isEmpty) {
       avoidByColumn[key] = AvoidColumnState.unscored;
     } else {
-      var colHits = 0;
-      for (final bad in col.avoidPlugHashes) {
-        avoidScored++;
-        if (anyPlugMatches(instancePlugs, {bad})) {
-          avoidHits++;
-          colHits++;
-        }
+      // Column-level multi-reject: any avoid on this copy → hit.
+      avoidScored++;
+      if (anyPlugMatches(instancePlugs, col.avoidPlugHashes)) {
+        avoidHits++;
+        avoidByColumn[key] = AvoidColumnState.hit;
+      } else {
+        avoidByColumn[key] = AvoidColumnState.clear;
       }
-      avoidByColumn[key] =
-          colHits > 0 ? AvoidColumnState.hit : AvoidColumnState.clear;
     }
   }
 

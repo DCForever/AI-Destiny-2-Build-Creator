@@ -970,14 +970,20 @@ class _PerkCellTile extends StatelessWidget {
     final want = targetMode == CatalogRollPlugTargetMode.want;
     final avoid = targetMode == CatalogRollPlugTargetMode.avoid;
 
+    // Preferred/avoid chrome wins over selected cyan so ideal green stays
+    // readable on equipped plugs (user report: selected ideal not visible).
     Color borderColor;
     Color bg;
-    if (editingRollTarget && want) {
-      borderColor = palette.success.withValues(alpha: 0.55);
-      bg = palette.success.withValues(alpha: 0.12);
-    } else if (editingRollTarget && avoid) {
-      borderColor = palette.danger.withValues(alpha: 0.5);
-      bg = palette.danger.withValues(alpha: 0.1);
+    if (want) {
+      borderColor = palette.success;
+      bg = selected
+          ? palette.success.withValues(alpha: 0.28)
+          : palette.success.withValues(alpha: editingRollTarget ? 0.18 : 0.14);
+    } else if (avoid) {
+      borderColor = palette.danger.withValues(alpha: 0.85);
+      bg = selected
+          ? palette.danger.withValues(alpha: 0.2)
+          : palette.danger.withValues(alpha: editingRollTarget ? 0.14 : 0.1);
     } else if (enhanced) {
       borderColor = kCatalogPerkEnhancedGold.withValues(alpha: 0.85);
       bg = selected
@@ -998,13 +1004,13 @@ class _PerkCellTile extends StatelessWidget {
               : palette.surfaceRaised.withValues(alpha: 0.5);
     }
 
-    final useSolidBorder = editingRollTarget && (want || avoid);
+    final useSolidBorder = want || avoid;
     final useDashed = pool && !useSolidBorder;
 
     final iconPath = cell.icon;
-    final accent = editingRollTarget && want
+    final accent = want
         ? palette.success
-        : editingRollTarget && avoid
+        : avoid
             ? palette.danger
             : selected
                 ? palette.accent
@@ -1072,13 +1078,21 @@ class _PerkCellTile extends StatelessWidget {
             ? null
             : Border.all(
                 color: borderColor,
-                width: selected || enhanced || useSolidBorder
-                    ? 1.5
-                    : kFlapRuleThickness,
+                width: want || avoid
+                    ? 2.0
+                    : selected || enhanced || useSolidBorder
+                        ? 1.5
+                        : kFlapRuleThickness,
               ),
         borderRadius: BorderRadius.circular(kRadiusMax),
         boxShadow: [
-          if (enhanced)
+          if (want)
+            BoxShadow(
+              color: palette.success.withValues(alpha: selected ? 0.45 : 0.28),
+              blurRadius: selected ? 8 : 5,
+              spreadRadius: 0,
+            ),
+          if (enhanced && !want)
             BoxShadow(
               color: kCatalogPerkEnhancedGold.withValues(alpha: 0.22),
               blurRadius: 6,
@@ -1112,8 +1126,12 @@ class _PerkCellTile extends StatelessWidget {
                 ),
                 painter: _DiagonalTargetWashPainter(
                   color: want
-                      ? palette.success.withValues(alpha: 0.26)
-                      : palette.danger.withValues(alpha: 0.24),
+                      ? palette.success.withValues(
+                          alpha: selected ? 0.42 : 0.32,
+                        )
+                      : palette.danger.withValues(
+                          alpha: selected ? 0.36 : 0.28,
+                        ),
                 ),
               ),
             ),
