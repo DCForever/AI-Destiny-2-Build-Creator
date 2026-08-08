@@ -5,6 +5,27 @@ Isolated **Widgetbook** app for Matte Flap / Neon catalog composables from
 
 Not a product host: **no** OAuth, inventory sync, Drift, or secrets.
 
+## Icons (offline-friendly)
+
+Catalog chrome uses two icon systems from `destiny2_ui_flutter`:
+
+| Kind | Source | Notes |
+| --- | --- | --- |
+| **Weapon type silhouettes** | Package SVGs `assets/destiny-icons/weapons/` | Fallback when `CatalogItem.icon` is null (`DestinyWeaponTypeIcon`) |
+| **Weapon item art** | Package JPGs in `assets/bungie-content/icons/` | Real Bungie inventory icons (Ace, Midnight Coup, Cerberus, …) via `CatalogItem.icon` |
+| **Official meta PNGs** | Same folder | Element, ammo, frame, armor-archetype; CDN basenames |
+| **Perk stand-ins** | Same folder | Fixture `kPlugIconByHash` (official art; live host supplies real plug icons) |
+
+`BungieContentIcon` resolves **package asset first**, then bungie.net.
+
+Refresh / expand the Bungie set (from `packages/ui_flutter`):
+
+```powershell
+python tool/fetch_bungie_content_icons.py
+```
+
+That re-downloads paths referenced in `destiny_official_icons.dart` (+ Next filter visuals) and regenerates `bungie_content_local_assets.g.dart`.
+
 ## Iterate on UI (start here)
 
 **Day-to-day loop:** [ITERATE.md](./ITERATE.md)

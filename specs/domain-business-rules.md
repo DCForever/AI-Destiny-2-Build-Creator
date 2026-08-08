@@ -1,7 +1,7 @@
 # Domain Business Rules — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-07-29  
+**Updated**: 2026-08-07 (DBR-IDL-001–009 Catalog roll targets; exotics disallowed)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; presentation North Star 2026-07-27; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29** (Domains + Destiny Objects in ProjectTracker vault)
 
@@ -175,6 +175,22 @@ Identity is what makes two loadouts the “same build” vs a different build.
 | DBR-ROLL-008 | **Deepsight / pattern progress**: display-only with warns; no save/equip gate. |
 | DBR-ROLL-009 | Exotic class item variants store **full selected perk config** (instance or wishlist desired config). |
 | DBR-ROLL-010 | Catalog **browse** for composition supports multi-dimension filtering (e.g. element, ammo, archetype/frame, slot, class, exotic constraint, free-text, optional synergy membership) with **include OR within a facet**, **AND across facets**, and **exclude** drops; optional **group-by** one or more dimensions for browse. Catalog is a composition aid, not a separate product job (see DBR-PUR-002). |
+
+### 8.1 Catalog roll targets (ideal + anti-ideal) — not equip wishlist
+
+User-authored **roll targets** on Catalog weapon identities. **Not** DBR-ROLL wishlist pins (desired roll on Set/Variant without instance). Soft scores only.
+
+| ID | Rule |
+|----|------|
+| DBR-IDL-001 | A user may define **named roll targets** per weapon identity (e.g. PvE / PvP). Multiple names per weapon are allowed. |
+| DBR-IDL-002 | Each target column may list **preferred** plug hashes (multi-accept: any listed plug matches that column for ideal score). |
+| DBR-IDL-003 | Each target column may list **avoid** plug hashes (multi-reject: any listed plug **hits** anti-ideal for that column). |
+| DBR-IDL-004 | Preferred and avoid sets on the **same column must be disjoint**; overlapping writes are rejected. |
+| DBR-IDL-005 | **Preferred score** = matched preferred columns / scored preferred columns (empty preferred columns are unscored). |
+| DBR-IDL-006 | **Avoid score** = avoid hits among avoid-scored columns (empty avoid columns are unscored). Higher hits = worse. |
+| DBR-IDL-007 | Owned-instance **rank** for an active target: preferred ratio **desc**, then avoid hits **asc**, then power/tier as product tie-break. Soft display only. |
+| DBR-IDL-008 | Roll-target scores **never** hard-block Set/variant save, equip, or DIM export. Soft never auto-applies. Do not invent can-roll plugs. |
+| DBR-IDL-009 | **Exotic weapons** do **not** support roll targets (ideal/avoid). Exotic perk columns are **fixed** identity; preferred/avoid multi-pick, dual scores, and rank-by-target do not apply. Legendary (and other non-exotic) weapons only. |
 
 ---
 

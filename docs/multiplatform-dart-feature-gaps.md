@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-08-03 (pkg-variant-subclass-kit closed: per-variant kit ownership; PRODUCTION_CUTOVER GO **unchanged**)  
+**Updated:** 2026-08-07 (FEAT-UI-WEAPON-ROLL-TARGETS / GAP-UI-ROLL-01 + DART-073 pure score; D-LANES; PRODUCTION_CUTOVER GO **unchanged**)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -11,10 +11,11 @@
 | Doc | Role |
 | --- | ---- |
 | [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) | **Host UI fidelity** master (atlas parity, GAP-UI-*, rules matrix, DART-062+) — distinct from cutover |
-| [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md) | Slice backlog + DART-NNN status |
+| [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md) | Spec Kit (system) backlog + DART-NNN status |
+| [ux-redesign/README.md](./ux-redesign/README.md) | **UI/UX lane** — area-ux-redesign / area-ux-component / area-implement |
 | [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) | Program vs production cutover gates (**GO** unchanged by fidelity) |
-| [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md) | Architecture freezes |
-| [ui-polish-tracker.md](./ui-polish-tracker.md) | Pure visual density only |
+| [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md) | Architecture freezes + workstream-lane decision |
+| [ui-polish-tracker.md](./ui-polish-tracker.md) | Pure visual density only (not Spec Kit) |
 | Product `PRODUCT.md` | Canonical product purpose + confirmed capabilities |
 | Workflow `dart-gaps-analysis` | Re-scan Next vs Dart; refresh this catalog + inventory |
 | Workflow `align-product-implement` | Domain DBR/DAC/BR + GAP packages → optional implement ([docs](./workflows/align-product-implement.md)) |
@@ -26,9 +27,29 @@ This document is the **canonical product→port planning ledger**:
 
 1. **Product feature inventory** — every confirmed PRODUCT / AppShell capability with Dart status and plan ownership.  
 2. **Gap catalog (GAP-\*)** — residual mismatches vs Next with severity and exit criteria.  
-3. **Slice map (DART-050+)** — reserved Spec Kit work that closes those gaps.
+3. **Work map** — **system** work via Spec Kit **DART-NNN**; **UI/UX** work via the area-ux track (not Spec Kit).
 
-Nothing here retires Next; it only plans the port. **Rule:** no open P0/P1 without a planned DART-NNN (or explicit deferred/N/A with reason).
+Nothing here retires Next; it only plans the port. **Rule:** no open P0/P1 **system** residual without a planned DART-NNN (or explicit deferred/N/A with reason). Pure presentation residuals may map to a UX brief/slice ID instead of Spec Kit.
+
+---
+
+## Workstream lanes (going forward)
+
+**Policy (2026-08-06):** separate **underlying system** work from **UI/UX** work. Do not run one Spec Kit cycle that both invents pure models and ships widget chrome.
+
+| Lane | Scope | Process | IDs / artifacts |
+| ---- | ----- | ------- | --------------- |
+| **System (Spec Kit)** | Pure domain/data/algorithm; presentation **models & resolvers** (no Flutter/Jaspr widgets); Drift/IO/auth/sync; package tests without device UI | Spec Kit: `specify → plan → tasks → implement → finish-spec` on `dart-NNN-*` → merge `feature/multiplatform-dart` | **DART-NNN**; `specs/dart-NNN-*/` |
+| **UI / UX** | Mockups, interaction, chrome, Widgetbook, host wire of already-shipped models, dual-truth Capture | [`docs/ux-redesign/`](./ux-redesign/README.md): `area-ux-redesign` / `area-ux-component` → `area-implement` | Area briefs `docs/ux-redesign/<area>/NNN-*.md`; optional **UX-*** tags on FEAT/GAP rows |
+
+**Split rule:** if a FEAT needs both (e.g. nested group-by tree **and** nested headers), log **two** planned tracks on the same GAP:
+
+1. **System first** (or contract-first): Spec Kit lands pure API + tests.  
+2. **UX second:** area-ux consumes that API; no re-deriving group keys only in widgets.
+
+**Do not use Spec Kit for:** mockup-only polish, density tweaks, Widgetbook knobs, token chrome, dual-truth Capture residuals that do not change pure contracts. Track those under ux-redesign / [ui-polish-tracker.md](./ui-polish-tracker.md).
+
+**Historical note:** DART-062–068 mixed host presentation into Spec Kit during post-cutover fidelity. That program is **closed**. New work follows the two-lane policy above.
 
 ---
 
@@ -36,20 +57,23 @@ Nothing here retires Next; it only plans the port. **Rule:** no open P0/P1 witho
 
 1. Start from the **Product feature inventory** — every row must have Plan ownership (`shipped` / `planned` / `deferred` / `n/a`).
 2. Every Next product capability that is not fully matched on a required shell gets a **GAP-*** row (or is **N/A** with reason).
-3. Every non-N/A gap has **planned work**: one or more **DART-NNN** slice IDs (pending/active/done).
-4. After `dart-gaps-analysis` or live dual-use, update inventory status, gap **Status**, **Evidence**, and **Planned slices**.
-5. New Spec Kit slices start at **DART-050+** (do not reuse product `0NN` numbers).
-6. Exit criteria for each planned slice must be **parity-specific** (e.g. vault copies stored), not “sync button works”.
+3. Every non-N/A gap has **planned work**:
+   - **System residual** → one or more **DART-NNN** (Spec Kit).
+   - **UI/UX residual** → area-ux brief/slice (and optional **UX-*** id); **not** a Spec Kit-only close.
+4. After `dart-gaps-analysis`, dual-use, or UX Capture, update inventory status, gap **Status**, **Evidence**, and **Planned tracks**.
+5. New Spec Kit slices start at **DART-050+** (do not reuse product `0NN` numbers) and must stay **non-UI** (system lane).
+6. Exit criteria for Spec Kit slices must be **system-specific** (e.g. vault copies stored; pure tree API tested), not “screen looks right”.
+7. Exit criteria for UX work must be **presentation-specific** (mockup dual-truth, a11y chrome) and may **depend on** a shipped system API.
 
 ### Status values (gaps)
 
 | Status | Meaning |
 | ------ | ------- |
 | `open` | Confirmed gap; work planned or needed |
-| `partial` | Some shells/paths OK; residual listed |
-| `planned` | Spec not started; DART-NNN reserved |
-| `in_progress` | Active Spec Kit branch |
-| `done` | Merged to `feature/multiplatform-dart`; re-verify live |
+| `partial` | Some shells/paths OK; residual listed (often system shipped, UX open — or vice versa) |
+| `planned` | Work reserved (DART and/or UX brief not started) |
+| `in_progress` | Active Spec Kit branch and/or active area-ux implement |
+| `done` | All planned tracks closed; re-verify live |
 | `deferred` | Explicitly not planned for cutover (reason required) |
 | `n/a` | Non-goal or not required |
 
@@ -57,8 +81,8 @@ Nothing here retires Next; it only plans the port. **Rule:** no open P0/P1 witho
 
 | Plan | Meaning |
 | ---- | ------- |
-| **shipped** | Delivered on DART-001–049 (or earlier); residual only if GAP open |
-| **planned** | Reserved DART-050+ on roadmap (cutover 050–061 done; UI fidelity 062–068) |
+| **shipped** | Delivered (system and/or UX tracks closed as required) |
+| **planned** | Open work reserved — see Slices column for **system** DART and/or **UX** brief IDs |
 | **deferred** | Explicitly out of cutover scope until product elevates |
 | **n/a** | Non-goal for multiplatform port / cutover |
 
@@ -88,7 +112,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **FEAT-NAV-BUILD** | Build library + composer | `/build` | **PASS** | PASS | **PASS** | **shipped** | Cutover spine PASS; identity/kit (DART-064); Finish walkthrough (DART-067); density overview (DART-068) |
 | **FEAT-NAV-SYNERGY** | Synergy library | `/synergy` | **PASS** | N/A\* | **PASS** | **shipped** | Catalog picker + filters + delete (DART-066); designation chrome (DART-068) |
 | **FEAT-NAV-SETS** | Sets library | `/sets` | **PASS** | N/A\* | **PASS** | **shipped** | Board + filters + readiness + delete (DART-065/066); icons on filled rows (DART-068) |
-| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PASS** | N/A\* | **PASS** | **shipped** | Multi-facet/group-by/alpha (DART-062) + modes/tags/owned (DART-063); icons+dense meta (DART-068) |
+| **FEAT-NAV-CATALOG** | Catalog browse | `/catalog` | **PASS** | N/A\* | **PASS** | **shipped** | Multi-facet/group-by/alpha (DART-062) + modes/tags/owned (DART-063); icons+dense meta (DART-068). Residual: **flat** multi-dim headers → **FEAT-UI-CATALOG-NESTED-GROUP** / **GAP-UI-CATALOG-11** |
 | **FEAT-NAV-SETTINGS** | Settings (auth, sync, data) | `/settings` | **PASS** | PARTIAL | **PASS** | **shipped** | OAuth + sync + diagnostics PASS; READY chips + ONLINE chrome (DART-068); post-sync banner (DART-067) |
 | **FEAT-NAV-LOADOUTS** | In-Game Loadouts browser | `/loadouts` | **PASS** | N/A\* | **PASS** | **shipped** | **DART-055** cutover PASS; density color/exotics/expand (DART-068) |
 
@@ -142,6 +166,14 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **FEAT-FLUTTER-WEB** | Flutter Web product target | — | **n/a** | Jaspr is web target (port decisions) |
 | **FEAT-SHARE-LINKS** | Shareable public build links | PRODUCT open decision | **deferred** | Not cutover-blocking; no DART until product locks scope |
 
+### F. System presentation (cross-surface, post-cutover)
+
+| ID | Feature | Product evidence | Dart today | Plan | Slices / GAP |
+| -- | ------- | ---------------- | ---------- | ---- | ------------ |
+| **FEAT-UI-ENTITY-DESC** | Destiny **entity description** capability: shared presentation **model** + **1+3** chrome (L1 hotspot + L2 popover/sheet) | DBR-UI-001/005/006; DIM perk popup; Next `EntityHotspot`/`InfoHotspot` | Sparse inline desc + name tooltips; no shared model or L1→L2 stack | **planned** (split) | **GAP-UI-DESC-01**: **system** **DART-071** (entity presentation ref + resolve); **UX** `UX-CATALOG-ENTITY-DESC` (area-ux 1+3 chrome). Soft never auto-applies; no invent text |
+| **FEAT-UI-CATALOG-NESTED-GROUP** | Catalog **multi-level (nested) group-by**: ordered dims form a **tree** (Energy → Arc → …), not flat `A · B · C` headers | Product UX request 2026-08-06; BR-CAT-007 view-only collapse | Flat composite multi-dim group-by (DART-062) | **planned** (split) | **GAP-UI-CATALOG-11**: **system** **DART-072** (pure nested tree + rollups); **UX** `UX-CATALOG-NESTED-GROUP` (nested headers + hierarchical JUMP). BR-CAT-006 unchanged |
+| **FEAT-UI-WEAPON-ROLL-TARGETS** | Catalog **weapon roll targets**: named multi-profiles with **preferred** + **avoid** multi-pick; rank owned by preferred then avoid hits; **exotics excluded** (fixed perks, DBR-IDL-009) | Product plan 2026-08-07 (Catalog-first; not equip-ready “wishlist”) | Pure score/persist + Catalog chrome shipped (003); exotic detail hides roll-target UI | **planned** (split) | **GAP-UI-ROLL-01** / **DART-073** + **UX-CATALOG-ROLL-TARGETS**. Soft display only; soft never auto-applies |
+
 ### Inventory planning coverage check
 
 | Check | Result |
@@ -150,8 +182,9 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | Every PRODUCT confirmed capability has a FEAT row | **Yes** (compose spine, inventory, optimizer, equip/export, LLM, legacy) |
 | Every open/partial **P0/P1** cutover residual maps to DART-050–061 | **Yes** — cutover residuals closed; `unplanned_p0_p1` cutover = empty |
 | Every open **P1 GAP-UI-*** maps to DART-062+ | **Yes** — see [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) + master table below |
+| Every open **P2** product elevation has system and/or UX track | **Yes** — DESC-01, CATALOG-11, **ROLL-01** (DART-073 + UX-CATALOG-ROLL-TARGETS) |
 | Every deferred/n/a has reason | **Yes** — section E + deferred gap table |
-| Next Spec Kit start | **DART-062** (UI fidelity P1; cutover GO unchanged) |
+| Next Spec Kit (system only) | **DART-071** then **DART-072** (reorderable); UI chrome only via area-ux after system APIs |
 
 ---
 
@@ -163,6 +196,10 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **P7** | Nav & residual product surfaces | DART-055–057 | Loadouts; web sync depth; mobile gaps worth shipping |
 | **P8** | Production readiness | DART-058–061 | Public auth matrix, entity CDN, dual-run ops, cutover re-gate (**GO**) |
 | **P9** | Host UI fidelity (post-cutover) | DART-062–068 | Atlas/BR/DAC presentation parity on Windows+Jaspr; **not** cutover re-gate |
+| **P10** | Entity presentation **system** | DART-071 | Pure entity presentation ref + description resolve; **not** widget chrome; **not** cutover re-gate |
+| **P10b** | Nested group-by **system** | DART-072 | Pure nested group tree + rollup counts; **not** header chrome; **not** cutover re-gate |
+| **P11** | Weapon roll targets **system** | DART-073 | Pure preferred + avoid score/rank + persist; **not** Catalog chrome; **not** cutover re-gate |
+| **UX** | Entity desc + nested group + roll-target **presentation** | (no Spec Kit) | area-ux after system APIs |
 
 ---
 
@@ -239,6 +276,9 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-SETTINGS-02** | Inventory sync card presentation | **P2** | `closed` (DART-068) | ONLINE chip + human last sync + Refresh | ONLINE + human last sync + Refresh | **DART-068** | **BUG-20260725-003** |
 | **GAP-UI-SETTINGS-04** | Post-sync soft armor kit banner | **P2** | `closed` (DART-067) | Confirm/Dismiss better-kit Callout | Windows afterSync Confirm/Dismiss only | **DART-067** done | Soft never auto-apply |
 | **GAP-UI-SHELL-01** | AppShell nav labels/order | **P2** | `closed` (DART-068) | Loadouts, Build, Synergy, Sets, Catalog, Settings | Product short labels + order | **DART-068** | Not cutover; fidelity |
+| **GAP-UI-DESC-01** | Entity descriptions (model + 1+3 chrome) | **P2** | `open` / `planned` | Next EntityHotspot; DIM perk popup; DBR-UI-001/005/006 | No shared presentation model or L1→L2 stack | **sys** DART-071 + **ux** UX-CATALOG-ENTITY-DESC | Not cutover; split lanes |
+| **GAP-UI-CATALOG-11** | Nested multi-level group-by (tree + chrome) | **P2** | `open` / `planned` | Product: Energy → Arc → …; BR-CAT-007 | Flat `parts.join(' · ')` groups (DART-062) | **sys** DART-072 + **ux** UX-CATALOG-NESTED-GROUP | Not cutover; split lanes |
+| **GAP-UI-ROLL-01** | Weapon roll targets (preferred + avoid + rank owned) | **P2** | `open` / `planned` | Product plan: Catalog ideal/anti-ideal | No user targets; plugs without score | **sys** DART-073 + **ux** UX-CATALOG-ROLL-TARGETS | Not cutover; ≠ DBR-ROLL wishlist |
 
 ---
 
@@ -558,18 +598,110 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | GAP-FEAT-05 | Analyze primary tab | Adjacent legacy | *Non-goal* |
 
 **Closed on DART-057:** **GAP-FEAT-06** (finish-gaps host UX), **GAP-MOB-01**, **GAP-UI-01**. **GAP-FEAT-01** remains deferred (optimizer mobile/web).  
-**Post-cutover fidelity:** Full GAP-UI-* detail + rules matrix + exit criteria live in [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) (do not duplicate prose here unless a slice closes a gap).
+**Post-cutover fidelity:** Full GAP-UI-* detail + rules matrix + exit criteria live in [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) (do not duplicate prose here unless a slice closes a gap).  
+**Product residual (open, split lanes):** **GAP-UI-DESC-01** (sys DART-071 + ux UX-CATALOG-ENTITY-DESC); **GAP-UI-CATALOG-11** (sys DART-072 + ux UX-CATALOG-NESTED-GROUP). Neither re-opens PRODUCTION_CUTOVER. Spec Kit is **system only**.
+
+---
+
+### GAP-UI-DESC-01 — Entity descriptions (model + 1+3 chrome) (**P2**) — **open / planned** (split)
+
+**Problem:** Icon-first surfaces hide Destiny **definition text**. Need a shared presentation **model** and 1+3 chrome without inventing copy. Today: name tooltips + sparse inline desc only.
+
+**Product UX choice (chrome):** **1+3 only** — L1 hotspot tooltip + L2 popover/sheet (not other proposals). L3 (wiki/LLM/full nav) out of scope.
+
+| Layer | Lane | Behavior |
+| ----- | ---- | -------- |
+| **Model** | **System** | Entity presentation ref: display name, kind?, icon path?, description?, meta lines?; resolve from host-supplied maps; never invent text; hash never primary label (`DBR-UI-006`) |
+| **L0–L2 chrome** | **UI/UX** | Icon-first trigger; L1 short name/meta; L2 full description popover/sheet (desktop/narrow); single-open; Neon/Flap |
+
+**Non-goals (both lanes):** invent description text; replace Catalog detail as primary workspace; soft auto-apply; CLIENT_SECRET; cutover re-gate.
+
+**Evidence:** Next `EntityHotspot`/`InfoHotspot`; DIM perk popup; Catalog residual “future description popup”; Flutter lacks shared model + L2 stack.
+
+#### Track A — **System / Spec Kit: DART-071** `entity-presentation-model` (pending)
+
+| Deliverable | Exit criteria |
+| ----------- | ------------- |
+| Pure (or host-neutral pure-friendly) **entity presentation** type + resolve helpers from existing catalog/plug maps | Unit tests: name/icon/desc when present; empty desc honest; never invents; hash not primary label; **no Flutter/Jaspr imports** |
+| Document host map contract (what keys/fields hosts pass) | README or package doc; residual when map missing is empty fields not crash |
+| Optional thin adapter tests with fixture maps | Green under `dart test` for owning package |
+
+**Not in DART-071:** hotspot widgets, popovers, Widgetbook, Catalog grid wiring chrome.
+
+#### Track B — **UI/UX: UX-CATALOG-ENTITY-DESC** (after Track A, or mock with fixtures)
+
+| Process | `area-ux-component` (or redesign) → brief → implement → Capture |
+| ------- | --------------------------------------------------------------- |
+| Scope | L1+L2 primitives in `ui_flutter`; Catalog weapons first (perk/meta/origin); consume DART-071 model; Widgetbook; host thin wire |
+| Exit | Dual-truth vs brief; a11y names; missing desc honest; no 400-detail / perk H-scroll regression |
+
+**Related:** **FEAT-UI-ENTITY-DESC**; rules DBR-UI-001/005/006.
+
+---
+
+### GAP-UI-CATALOG-11 — Nested multi-level group-by (**P2**) — **open / planned** (split)
+
+**Problem:** Multi-dim group-by is **flat** composite keys (`ENERGY · ARC · PRIMARY · AUTO RIFLE (19)`). Users want a **tree**: Energy rolls up all Energy; Arc under Energy rolls up Arc; collapse parents without filter rewrite.
+
+**Non-goals:** change BR-CAT-006 filters; collapse rewriting filters (BR-CAT-007); invent dimensions.
+
+**Evidence:** live flat headers + JUMP; `group_catalog.dart` `parts.join(' · ')`.
+
+#### Track A — **System / Spec Kit: DART-072** `catalog-nested-group-tree` (pending)
+
+| Deliverable | Exit criteria |
+| ----------- | ------------- |
+| Pure nested group tree API (path segments, rollup counts, children / leaf items or families) from ordered `CatalogGroupDimension` | Pure tests: nest by slot→element; reorder re-parents; single dim ≡ flat list; filters applied **before** group only |
+| Collapse **state helpers** pure if useful (path keys expanded set); no widgets | Parent path collapse semantics unit-tested without Flutter |
+| Armor dims share same pure API | No weapons-only fork of tree logic |
+| Keep or wrap existing flat API until UX migrates | Compatibility note; no silent break of current callers without follow-up UX |
+
+**Not in DART-072:** nested header chrome, outline JUMP UI, Widgetbook density, host layout.
+
+#### Track B — **UI/UX: UX-CATALOG-NESTED-GROUP** (after Track A)
+
+| Process | `area-ux-component` / redesign → brief → implement → Capture |
+| ------- | ------------------------------------------------------------ |
+| Scope | Nested headers (indent/weight); per-level chevrons; hierarchical outline JUMP; leaf grids reuse cards; consume pure tree |
+| Exit | Energy collapses all Energy subtrees; Arc under Energy collapses Arc only; JUMP never filters; dual-truth vs brief |
+
+**Related:** **FEAT-UI-CATALOG-NESTED-GROUP**; predecessor GAP-UI-CATALOG-02 (flat multi-dim closed); BR-CAT-006/007.
+
+---
+
+### GAP-UI-ROLL-01 — Weapon roll targets preferred + avoid (**P2**) — **open / planned** (split)
+
+**Problem:** Catalog shows owned plugs but cannot answer “how close to my ideal?” or “how bad is this roll vs perks I avoid?” Equip-ready **wishlist** (DBR-ROLL-*) is a different compose concept.
+
+**Product (locked):** Catalog-first named multi-profiles; multi-pick **preferred** + multi-pick **avoid** per column; rank by preferred ratio desc then avoid hits asc; dual chips; soft display only.
+
+#### Track A — **System / Spec Kit: DART-073** `weapon-roll-targets` (in progress)
+
+| Deliverable | Exit | Status |
+| ----------- | ---- | ------ |
+| Pure `WeaponRollTarget` + score/rank | Unit tests | **landed** (`packages/domain`) |
+| Persist CRUD + active target | User-scoped Drift; soft never auto-applies | **landed** (`weapon_roll_targets`, `weapon_roll_target_active`; app use cases) |
+| Docs DBR-IDL-*/FEAT/GAP | Ledger | **landed** DBR-IDL-001–008 |
+| Full Spec Kit folder / finish-spec | Optional formalize | pending |
+
+**Not in DART-073:** Catalog editor chrome, dual-truth Capture.
+
+#### Track B — **UI/UX: UX-CATALOG-ROLL-TARGETS** (after Track A)
+
+Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no dismantle CTA MVP.
+
+**Related:** **FEAT-UI-WEAPON-ROLL-TARGETS**; ≠ DBR-ROLL wishlist.
 
 ---
 
 ## Update checklist (after gaps analysis or finish-spec)
 
-- [x] Touch **Updated** date (2026-07-30 — ledger hygiene + PROC-06 closed; cutover GO unchanged)
-- [x] Refresh **Product feature inventory** — FEAT-COMPOSE-FINISH / FEAT-OPTIMIZER / FEAT-INV-WEAPON-STATS / OWNED-JOIN aligned with closed GAPs
-- [x] Set gap **Status** — GAP-UI-* closed (DART-062–068); cutover gaps remain closed
-- [x] **PROC-06** closed via [finish-spec-thinning-checklist.md](./finish-spec-thinning-checklist.md) + `dart run tool/proc06_thinning_gate.dart`
+- [x] Touch **Updated** date (2026-08-06 — workstream lanes + split open FEATs; cutover GO unchanged)
+- [x] Refresh **Product feature inventory** — section **F** planned with **system + UX** tracks
+- [x] Set gap **Status** — DESC-01 / CATALOG-11 open split; prior GAP-UI-* closed (DART-062–068); cutover gaps remain closed
+- [x] Document **Spec Kit = system only**; UI/UX via [ux-redesign](./ux-redesign/README.md)
+- [x] **PROC-06** closed via thinning checklist + gate
 - [x] Cutover checklist **not** re-gated (PRODUCTION_CUTOVER GO stands)
-- [x] Cross-link [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); pure visual density only on [ui-polish-tracker.md](./ui-polish-tracker.md)
 - [x] Soft never auto-applies; no CLIENT_SECRET
 
 ---
@@ -578,13 +710,14 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 | Field | Value |
 | ----- | ----- |
-| **Next planned slice** | **None** — DART-001–068 program complete; residual packages via align-product scan (not new DART-NNN unless product elevates) |
-| **Next phase** | **Post-P9 residual hygiene** — `pkg-default-three-gates` **closed**; `pkg-variant-subclass-kit` **closed** (per-variant kit + effective merge); residual: `pkg-synergy-kinds-v1` |
+| **Next Spec Kit (system)** | **DART-073** `weapon-roll-targets` (preferred+avoid pure score; active); also **DART-071/072** pending; **no UI chrome in Spec Kit** |
+| **Next UI/UX** | After system APIs: entity-desc, nested-group, **UX-CATALOG-ROLL-TARGETS** |
+| **Next phase** | P10–P11 **system** + paired UX tracks |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
-| **Feature inventory** | Aligned with master GAP closed evidence (finish/optimizer/weapon-stats/owned-join) |
+| **Feature inventory** | Aligned + split-lane planned FEATs incl. **FEAT-UI-WEAPON-ROLL-TARGETS** |
 | **unplanned_p0_p1** | *(empty for cutover)* |
-| **Open GAP-UI count** | **0** open P1/P2 program gaps (closed in DART-062–068; residual notes only) |
-| **Process** | **PROC-01–06 closed**; PROC-06 enforced by thinning checklist + gate |
+| **Open GAP-UI count** | **3** open P2 residuals (DESC-01, CATALOG-11, **ROLL-01**); DART-062–068 remain closed |
+| **Process** | **PROC-01–06 closed**; Spec Kit ≠ UI/UX lane |
 | **Non-goal residual** | **GAP-FEAT-01** web/mobile optimizer deferred; **GAP-FEAT-02** dim.gg deferred (jsonOnly sufficient) |
 | **Bug crosswalk** | **BUG-20260725-003** → **GAP-UI-SETTINGS-02** (closed DART-068) |
-| **Policy** | Soft guidance **never auto-applies**; no CLIENT_SECRET in clients |
+| **Policy** | Soft guidance **never auto-applies**; no CLIENT_SECRET in clients; **lanes split** |

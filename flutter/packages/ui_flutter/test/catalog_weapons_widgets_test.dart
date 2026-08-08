@@ -203,8 +203,8 @@ void main() {
       expect(find.byKey(const Key('catalog_item_1')), findsOneWidget);
       expect(find.byKey(const Key('catalog_item_2')), findsOneWidget);
       expect(find.byKey(const Key('catalog_item_meta_1')), findsOneWidget);
-      // Type-only body — weapon type text, not element/slot/ammo labels.
-      expect(find.text('Grenade Launcher'), findsOneWidget);
+      // Type is icon/meta key — not body text; no element/slot/ammo labels.
+      expect(find.text('Grenade Launcher'), findsNothing);
       expect(find.text('Void'), findsNothing);
       expect(find.text('Energy'), findsNothing);
 
@@ -628,15 +628,17 @@ void main() {
 
       expect(find.byKey(const Key('neon_card_element_glyph')), findsOneWidget);
       expect(find.byKey(const Key('neon_card_foot_icons')), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_type_icon')), findsOneWidget);
       expect(find.byKey(const Key('neon_card_slot_icon')), findsOneWidget);
       expect(find.byKey(const Key('neon_card_ammo_icon')), findsOneWidget);
       expect(find.byKey(const Key('neon_card_frame_icon')), findsOneWidget);
       expect(find.byKey(const Key('neon_card_rarity_badge')), findsOneWidget);
       expect(find.text('◆'), findsOneWidget); // legendary chrome badge
-      // Type-only body — no element/ammo text labels on card.
-      expect(find.text('Submachine Gun'), findsOneWidget);
+      // Type silhouette in meta row — no type/element/ammo body text.
+      expect(find.text('Submachine Gun'), findsNothing);
       expect(find.text('Void'), findsNothing);
       expect(find.text('Heavy'), findsNothing);
+      expect(find.byType(DestinyWeaponTypeIcon), findsOneWidget);
       // Official lookups resolve (mock Unicode not required).
       expect(officialElementVisual('Void')?.color.toARGB32(), 0xFFB184C5);
       expect(officialAmmoVisual('Heavy')?.color.toARGB32(), 0xFFB184C5);

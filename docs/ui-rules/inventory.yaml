@@ -935,6 +935,7 @@ pages:
         title: Weapon detail pane
         path: /catalog
         auth: signed-in
+        notes: Family version switch full hash rebind (GAP-CAT-BROWSE-001); no per-column perk band labels (GAP-CAT-PERK-004); cell chrome + legend only. Width 400. CatalogRollTargets 003 — named preferred+avoid multi-pick, dual N/M+Av segs, rankOwnedForRollTarget.
         rules:
           - BR-CAT-006
           - BR-CAT-007
@@ -945,7 +946,19 @@ pages:
           - BR-CAT-016b
           - BR-CAT-016c
           - DBR-UI-006
+          - GAP-CAT-BROWSE-001
+          - GAP-CAT-PERK-004
           - DBR-UI-007
+          - DBR-IDL-001
+          - DBR-IDL-002
+          - DBR-IDL-003
+          - DBR-IDL-004
+          - DBR-IDL-005
+          - DBR-IDL-006
+          - DBR-IDL-007
+          - DBR-IDL-008
+          - FEAT-UI-WEAPON-ROLL-TARGETS
+          - GAP-UI-ROLL-01
         atlas:
           - catalog-weapon-detail
         children:
@@ -961,6 +974,16 @@ pages:
               - BR-CAT-016c
               - DBR-UI-006
               - DBR-UI-007
+              - DBR-IDL-001
+              - DBR-IDL-002
+              - DBR-IDL-003
+              - DBR-IDL-004
+              - DBR-IDL-005
+              - DBR-IDL-006
+              - DBR-IDL-007
+              - DBR-IDL-008
+              - FEAT-UI-WEAPON-ROLL-TARGETS
+              - GAP-UI-ROLL-01
           - id: catalog.weapon.detail.stats
             kind: field
             title: Weapon stats panel
@@ -1014,6 +1037,7 @@ pages:
               - id: catalog.weapons.filter.archetype
                 kind: field
                 title: Archetype / frame facet
+                notes: Weapons primary-line iconOnly official type silhouettes (GAP-CAT-BROWSE-004); not text under More for weapons.
                 rules: []
               - id: catalog.weapons.filter.element
                 kind: field
@@ -1026,8 +1050,10 @@ pages:
               - id: catalog.weapons.filter.groupby
                 kind: field
                 title: Group-by dimension
+                notes: Collapsible sections + outline jump when group-by + ≥2 groups (GAP-CAT-BROWSE-002); reorder via sort/group sheet (GAP-CAT-BROWSE-003). View-only — never rewrites filters (BR-CAT-007).
                 rules:
                   - DBR-ROLL-010
+                  - BR-CAT-007
               - id: catalog.weapons.filter.slot
                 kind: field
                 title: Slot facet
@@ -1041,10 +1067,12 @@ pages:
           - id: catalog.weapons.list
             kind: surface
             title: Result list / instance cards
+            notes: Family cards (one-per name-normalized+slot/element/type family) + owned-only non-selectable version indicators (GAP-CAT-BROWSE-001). Density 200×112.
             rules:
               - 003:SC-001
               - 003:SC-004
               - 010:SC-001
+              - GAP-CAT-BROWSE-001
             children:
               - id: catalog.weapons.instance-card
                 kind: surface
@@ -4265,7 +4293,19 @@ pages:
           - BR-CAT-016b
           - BR-CAT-016c
           - DBR-UI-006
+          - GAP-CAT-BROWSE-001
+          - GAP-CAT-PERK-004
           - DBR-UI-007
+          - DBR-IDL-001
+          - DBR-IDL-002
+          - DBR-IDL-003
+          - DBR-IDL-004
+          - DBR-IDL-005
+          - DBR-IDL-006
+          - DBR-IDL-007
+          - DBR-IDL-008
+          - FEAT-UI-WEAPON-ROLL-TARGETS
+          - GAP-UI-ROLL-01
         path: /catalog
         auth: signed-in
         atlas:

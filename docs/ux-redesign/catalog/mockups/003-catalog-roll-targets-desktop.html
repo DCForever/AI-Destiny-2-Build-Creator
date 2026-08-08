@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catalog · CatalogRollTargets — Desktop mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --enhanced: #ceae33;
+      --rarity-legendary-edge: #c49ad4;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --detail-w: 400px;
+      --radius: 2px;
+      --chip-h: 30px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    /* ── Mock chrome ── */
+    .mock-bar {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      padding: 8px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+      z-index: 50;
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      max-width: 460px;
+    }
+    .mock-bar .spacer { flex: 1; min-width: 8px; }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      height: 28px;
+      padding: 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      min-width: 300px;
+      max-width: 100%;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .pill.ok { border-color: rgba(46, 230, 166, 0.4); color: var(--success); }
+    .pill.warn { border-color: rgba(245, 197, 66, 0.4); color: var(--warn); }
+    .pill.rule { border-color: rgba(0, 229, 255, 0.3); color: var(--accent); }
+
+    /* ── Stage ── */
+    .stage {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 0;
+    }
+    .stage-main {
+      min-width: 0;
+      overflow: auto;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 0%, rgba(0, 229, 255, 0.04), transparent 60%),
+        var(--bg);
+    }
+    .stage-side {
+      border-left: 1px solid var(--line);
+      background: var(--surface);
+      overflow: auto;
+      padding: 14px 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .frame-caption {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .frame-caption strong { color: var(--muted); font-weight: 500; }
+
+    /* Thin detail frame — CatalogWeaponDetail ~400 */
+    .detail-frame {
+      width: var(--detail-w);
+      max-width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+    .detail-header {
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .header-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: var(--raised);
+      border: 1px solid var(--rarity-legendary-edge);
+      border-radius: var(--radius);
+      font-size: 20px;
+      color: var(--muted);
+    }
+    .header-stack { min-width: 0; flex: 1; }
+    .hero-name {
+      margin: 0 0 6px;
+      font-family: var(--font-d);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--fg);
+    }
+    .meta-stub {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .meta-chip {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+
+    /* ═══════════════════════════════════════════
+       TARGET: CatalogRollTargets — active switcher
+       ═══════════════════════════════════════════ */
+    .roll-target-bar {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rt-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .rt-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-right: 2px;
+      flex-shrink: 0;
+    }
+    .rt-switch {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+    .rt-opt {
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--raised);
+      transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .rt-opt:hover:not([aria-pressed="true"]):not(:disabled) {
+      border-color: rgba(0, 229, 255, 0.35);
+      background: #12122a;
+    }
+    .rt-opt[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.5);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .rt-opt.is-off[aria-pressed="true"] {
+      box-shadow: inset 0 -2px 0 var(--muted-dim);
+      border-color: var(--line-strong);
+      background: rgba(125, 211, 224, 0.08);
+    }
+    .rt-actions {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .rt-btn {
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .rt-btn:hover:not(:disabled) {
+      border-color: rgba(0, 229, 255, 0.35);
+      color: var(--fg);
+    }
+    .rt-btn.primary {
+      border-color: rgba(0, 229, 255, 0.4);
+      color: var(--accent);
+      background: var(--accent-wash);
+    }
+    .rt-btn.primary[aria-pressed="true"] {
+      color: var(--fg);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .rt-btn.danger:hover:not(:disabled) {
+      border-color: rgba(255, 0, 60, 0.45);
+      color: var(--danger);
+    }
+    .rt-rename {
+      height: 26px;
+      width: 100px;
+      padding: 0 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--fg);
+    }
+    .rt-empty-hint {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+
+    /* ═══════════════════════════════════════════
+       TARGET: WeaponInstanceStrip + dual score segs
+       002 locked base + additive trailing scores
+       ═══════════════════════════════════════════ */
+    .instance-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      padding-bottom: 2px;
+    }
+    .instance-strip .label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-right: 2px;
+      flex-shrink: 0;
+    }
+    .inst-rank-note {
+      flex: 1 1 100%;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin: 0 0 2px;
+      letter-spacing: 0.02em;
+    }
+    .inst-rank-note strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .inst-chip {
+      height: var(--chip-h);
+      padding: 0 10px 0 9px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--raised);
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+      transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .inst-chip:hover:not([aria-pressed="true"]) {
+      border-color: rgba(0, 229, 255, 0.35);
+      background: #12122a;
+    }
+    .inst-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 3px 0 0 var(--accent);
+      border-color: rgba(0, 229, 255, 0.5);
+    }
+    .inst-chip.perfect-pulse[aria-pressed="true"] {
+      animation: perfect-glow 1.8s ease-in-out infinite;
+    }
+    @keyframes perfect-glow {
+      0%, 100% { box-shadow: inset 3px 0 0 var(--accent), 0 0 0 0 rgba(46, 230, 166, 0); }
+      50% { box-shadow: inset 3px 0 0 var(--success), 0 0 10px 1px rgba(46, 230, 166, 0.22); }
+    }
+    .inst-chip .seg {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+    }
+    .inst-chip .sep {
+      width: 1px;
+      height: 14px;
+      margin: 0 7px;
+      background: rgba(232, 238, 242, 0.18);
+      flex-shrink: 0;
+    }
+    .inst-chip[aria-pressed="true"] .sep {
+      background: rgba(0, 229, 255, 0.35);
+    }
+    .inst-chip .pw {
+      color: var(--fg);
+      font-weight: 600;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+      min-width: 2.2ch;
+    }
+    .inst-chip .tier {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.75rem;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 1px;
+      font-size: 11px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      color: var(--fg);
+      background: rgba(125, 211, 224, 0.12);
+      border: 1px solid rgba(125, 211, 224, 0.28);
+    }
+    .inst-chip[aria-pressed="true"] .tier {
+      background: rgba(0, 229, 255, 0.16);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .inst-chip .tier[data-t="1"] { opacity: 0.75; }
+    .inst-chip .tier[data-t="2"] { opacity: 0.85; }
+    .inst-chip .tier[data-t="3"] { opacity: 0.92; }
+    .inst-chip .tier[data-t="4"],
+    .inst-chip .tier[data-t="5"] { opacity: 1; }
+    .inst-chip .special {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 1px;
+      line-height: 1.2;
+    }
+    .inst-chip .special[data-kind="adept"] {
+      color: #f0d78c;
+      background: rgba(245, 197, 66, 0.12);
+      border: 1px solid rgba(245, 197, 66, 0.4);
+    }
+    .inst-chip .special[data-kind="holofoil"] {
+      color: #e0b8f0;
+      background: rgba(196, 154, 212, 0.14);
+      border: 1px solid rgba(196, 154, 212, 0.45);
+    }
+
+    /* Additive dual score segments (never replace power|tier|special) */
+    .inst-chip .score-pref {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+    .inst-chip .score-pref.perfect {
+      color: var(--success);
+      text-shadow: 0 0 8px rgba(46, 230, 166, 0.35);
+    }
+    .inst-chip .score-pref.partial {
+      color: var(--fg);
+    }
+    .inst-chip .score-pref.miss {
+      color: var(--muted-dim);
+    }
+    .inst-chip .score-avoid {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 1px;
+    }
+    .inst-chip .score-avoid.clear {
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px solid rgba(125, 211, 224, 0.15);
+    }
+    .inst-chip .score-avoid.hit {
+      color: #ffb3c0;
+      background: rgba(255, 0, 60, 0.12);
+      border: 1px solid rgba(255, 0, 60, 0.4);
+    }
+    .inst-chip .score-avoid.hit.warn-only {
+      color: #f5d98a;
+      background: rgba(245, 197, 66, 0.12);
+      border-color: rgba(245, 197, 66, 0.4);
+    }
+    .inst-empty {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-b);
+      margin-top: 10px;
+    }
+
+    /* ═══════════════════════════════════════════
+       Editor: Want | Avoid | Off multi-pick pool
+       ═══════════════════════════════════════════ */
+    .detail-body {
+      padding: 12px 14px 14px;
+    }
+    .editor-mode-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed rgba(232, 238, 242, 0.1);
+    }
+    .editor-mode-bar .title {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .editor-mode-bar .sub {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      flex: 1 1 120px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 1px;
+      border: 1px solid var(--line);
+    }
+    .legend-swatch.want {
+      background: rgba(46, 230, 166, 0.25);
+      border-color: rgba(46, 230, 166, 0.55);
+    }
+    .legend-swatch.avoid {
+      background: rgba(255, 0, 60, 0.2);
+      border-color: rgba(255, 0, 60, 0.5);
+    }
+    .legend-swatch.off {
+      background: transparent;
+      border-style: dashed;
+    }
+
+    .soft-error {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255, 0, 60, 0.4);
+      border-radius: var(--radius);
+      background: rgba(255, 0, 60, 0.08);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: #ffb3c0;
+      line-height: 1.4;
+    }
+    .soft-error .code {
+      color: var(--danger);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .soft-error strong { color: var(--fg); font-weight: 500; }
+
+    .perk-scroll {
+      overflow-x: hidden;
+      overflow-y: visible;
+      width: 100%;
+      max-width: 100%;
+    }
+    .perk-grid-cols {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 4px;
+      width: 100%;
+      min-width: 0;
+    }
+    .perk-col {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .perk-col.has-overlap .perk-col-label {
+      color: var(--danger);
+    }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 2px;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 48px;
+      margin-bottom: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 9px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.1s ease, background 0.1s ease;
+    }
+    .perk-cell > * {
+      position: relative;
+      z-index: 1;
+    }
+    /*
+     * View mode only: soft diagonal wash behind perk icon (z-index 0).
+     * Anchored lower-right → fades toward upper-left so both bottom corners
+     * pick up color; ideal green / avoid red.
+     */
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="want"]::before,
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="avoid"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: var(--radius);
+    }
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="want"]::before {
+      background: linear-gradient(
+        to top left,
+        rgba(46, 230, 166, 0.26) 0%,
+        rgba(46, 230, 166, 0.12) 28%,
+        rgba(46, 230, 166, 0.05) 52%,
+        transparent 78%
+      );
+    }
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="avoid"]::before {
+      background: linear-gradient(
+        to top left,
+        rgba(255, 0, 60, 0.24) 0%,
+        rgba(255, 0, 60, 0.11) 28%,
+        rgba(255, 0, 60, 0.04) 52%,
+        transparent 78%
+      );
+    }
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="want"] .ico,
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="avoid"] .ico {
+      z-index: 1;
+      position: relative;
+    }
+    .perk-cell:hover {
+      border-color: rgba(0, 229, 255, 0.35);
+    }
+    .perk-cell .ico {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .perk-cell .cap {
+      max-width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      line-height: 1.2;
+      font-size: 8px;
+    }
+    /* Instance display-only badges ① / ② when not editing (above target wash) */
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: #9fd0ff;
+      background: rgba(0, 80, 180, 0.55);
+      border-radius: 1px;
+      z-index: 2;
+    }
+    .perk-cell.selected {
+      background: rgba(0, 120, 212, 0.18);
+      border-color: rgba(80, 160, 255, 0.65);
+    }
+    .perk-cell.unselected::after {
+      content: "2";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--raised);
+      border-radius: 1px;
+    }
+    .perk-cell.possible {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-cell.possible .cap { color: var(--muted-dim); }
+    .perk-cell.possible .ico { opacity: 0.55; }
+    .perk-cell.possible::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px dashed var(--line);
+      border-radius: 1px;
+      z-index: 2;
+    }
+
+    /* Editor tri-state (Want | Avoid | Off) — W/A badges only; no corner gradients */
+    .perk-grid-cols.editing .perk-cell {
+      cursor: pointer;
+    }
+    .perk-grid-cols.editing .perk-cell::after {
+      /* mode badge replaces ①②③ while editing */
+      content: attr(data-mode-badge);
+      width: auto;
+      min-width: 12px;
+      padding: 0 3px;
+      border: 0;
+      background: var(--raised);
+      color: var(--muted-dim);
+      z-index: 2;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"] {
+      background: rgba(46, 230, 166, 0.12);
+      border-color: rgba(46, 230, 166, 0.55);
+      border-style: solid;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"] .ico {
+      border-color: rgba(46, 230, 166, 0.45);
+      background: rgba(46, 230, 166, 0.12);
+      opacity: 1;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"] .cap { color: var(--success); }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"]::after {
+      content: "W";
+      color: #0a1a14;
+      background: var(--success);
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"] {
+      background: rgba(255, 0, 60, 0.1);
+      border-color: rgba(255, 0, 60, 0.5);
+      border-style: solid;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"] .ico {
+      border-color: rgba(255, 0, 60, 0.4);
+      background: rgba(255, 0, 60, 0.1);
+      opacity: 1;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"] .cap { color: #ffb3c0; }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"]::after {
+      content: "A";
+      color: #1a0508;
+      background: var(--danger);
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"] {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"] .ico { opacity: 0.5; }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"] .cap { color: var(--muted-dim); }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"]::after {
+      content: "·";
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px dashed var(--line);
+    }
+    .perk-grid-cols.editing .perk-cell.overlap-cell {
+      box-shadow: 0 0 0 1px var(--danger);
+      animation: shake-soft 0.35s ease;
+    }
+    @keyframes shake-soft {
+      0%, 100% { transform: translateX(0); }
+      30% { transform: translateX(-2px); }
+      60% { transform: translateX(2px); }
+    }
+
+    .editor-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .hash-footer {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(232, 238, 242, 0.1);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .hash-footer code { color: var(--muted); }
+    .body-stub {
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+      font-size: 10px;
+    }
+    .body-stub em { color: var(--muted); font-style: normal; }
+
+    /* Side panels */
+    .side-block h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .side-block {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: var(--bg);
+    }
+    .side-block pre {
+      margin: 0;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .side-block .live { color: var(--accent); }
+    .side-block ul {
+      margin: 0;
+      padding-left: 16px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.5;
+    }
+    .side-block li { margin-bottom: 4px; }
+    .side-block code { color: var(--muted); }
+    .a11y-hint {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      border-left: 2px solid var(--accent);
+      padding: 4px 0 4px 10px;
+    }
+    .flow-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .flow-list button {
+      text-align: left;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .flow-list button:hover {
+      border-color: rgba(0, 229, 255, 0.35);
+      color: var(--fg);
+    }
+    .flow-list button.active {
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.45);
+      color: var(--fg);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    @media (max-width: 900px) {
+      .stage { grid-template-columns: 1fr; }
+      .stage-side { border-left: 0; border-top: 1px solid var(--line); max-height: 40vh; }
+    }
+  </style>
+</head>
+<body>
+  <header class="mock-bar" role="banner">
+    <h1>CatalogRollTargets</h1>
+    <span class="meta">DART-073 · named preferred+avoid · dual N/M + avoid hits · rank closest/cleanest · Neon/Flap · ~400 detail</span>
+    <span class="spacer"></span>
+    <span class="scenario-label" id="sc-label">Scenario</span>
+    <select class="scenario-select" id="scenario" aria-labelledby="sc-label">
+      <option value="owned-no-targets">owned-no-targets · power-desc · no dual · editor closed</option>
+      <option value="owned-targets-none-active">owned-targets-none-active · Off · power-desc</option>
+      <option value="active-unscored">active-unscored · empty cols · no dual segs</option>
+      <option value="active-partial" selected>active-partial · 2/4 + Av1 · ranked</option>
+      <option value="active-perfect-clean">active-perfect-clean · 4/4 + Av0 · top</option>
+      <option value="active-bad-roll">active-bad-roll · low N/M + hits · sorted after</option>
+      <option value="multi-profile-switch">multi-profile-switch · PvE↔PvP rebind</option>
+      <option value="editor-want-avoid-off">editor-want-avoid-off · tri-state pool</option>
+      <option value="editor-overlap-reject">editor-overlap-reject · soft error · save off</option>
+      <option value="unowned-or-empty">unowned-or-empty · no strip dual · ③ pool only</option>
+      <option value="keyboard-a11y">keyboard-a11y · Tab switcher→chips→pool</option>
+    </select>
+    <span class="pill ok" title="DART-073">DART-073</span>
+    <span class="pill rule" title="DBR-IDL preferred+avoid">DBR-IDL</span>
+    <span class="pill warn" title="DBR-UI-006 named plugs">DBR-UI-006</span>
+  </header>
+
+  <div class="stage">
+    <main class="stage-main" id="stage-main">
+      <!-- filled by JS -->
+    </main>
+    <aside class="stage-side" aria-label="Mock controls and rules">
+      <div class="side-block">
+        <h3>State log</h3>
+        <pre class="live" id="live-log">—</pre>
+      </div>
+      <div class="side-block">
+        <h3>Quick flows</h3>
+        <div class="flow-list" id="flow-list" role="list"></div>
+      </div>
+      <div class="side-block">
+        <h3>Rules (must)</h3>
+        <ul>
+          <li>Dual segs <code>N/M</code> + <code>Av k</code> only when active && <code>hasAnyScoreDimension</code></li>
+          <li>Base chip = power · T{tier} · special (002 locked) — scores additive only</li>
+          <li>Rank = preferredRatio desc → avoidHits asc → power/tier when active</li>
+          <li>Want|Avoid|Off on can-roll ③ pool; named plugs only (DBR-UI-006)</li>
+          <li><strong>View mode only:</strong> soft <em>diagonal</em> wash (lower-right → upper-left, reaches lower-left), green = ideal / red = avoid, <strong>behind</strong> perk icon (not while editing)</li>
+          <li>Preferred∩avoid rejected soft (DBR-IDL-004); never blocks equip (DBR-IDL-008)</li>
+          <li>No bare hash labels; hash footer unknowns-only</li>
+          <li>≠ equip wishlist; no dismantle CTA</li>
+        </ul>
+      </div>
+      <div class="side-block">
+        <h3>A11y</h3>
+        <p class="a11y-hint">Tab: switcher → instance chips → pool cells. Focus-visible cyan ring. Aria: named target + “N of M preferred, k avoid hits”.</p>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  /** @typedef {{id:string,power:number,tier:number,special?:string,plugs:Record<string,string>}} Inst */
+  /** @typedef {{id:string,name:string,columns:Record<string,{want:string[],avoid:string[]}>}} Target */
+
+  const COLS = [
+    { key: "barrel", label: "Barrel" },
+    { key: "mag", label: "Magazine" },
+    { key: "trait1", label: "Trait" },
+    { key: "trait2", label: "Trait" },
+  ];
+
+  const POOL = {
+    barrel: [
+      { hash: "1001", name: "Fluted Barrel", icon: "⎢" },
+      { hash: "1002", name: "Arrowhead Brake", icon: "▲" },
+      { hash: "1003", name: "Chambered Comp", icon: "◆" },
+    ],
+    mag: [
+      { hash: "2001", name: "Accurized Rounds", icon: "●" },
+      { hash: "2002", name: "Tactical Mag", icon: "▣" },
+      { hash: "2003", name: "Appended Mag", icon: "▤" },
+    ],
+    trait1: [
+      { hash: "3001", name: "Outlaw", icon: "★" },
+      { hash: "3002", name: "Rapid Hit", icon: "⚡" },
+      { hash: "3003", name: "Subsistence", icon: "↻" },
+    ],
+    trait2: [
+      { hash: "4001", name: "Kill Clip", icon: "☠" },
+      { hash: "4002", name: "Frenzy", icon: "🔥" },
+      { hash: "4003", name: "One for All", icon: "⊕" },
+    ],
+  };
+
+  const PLUG_NAME = {};
+  Object.values(POOL).forEach((list) => list.forEach((p) => { PLUG_NAME[p.hash] = p.name; }));
+
+  const BASE_INSTANCES = [
+    {
+      id: "i-best",
+      power: 450,
+      tier: 5,
+      special: "Adept",
+      plugs: { barrel: "1001", mag: "2001", trait1: "3001", trait2: "4001" },
+    },
+    {
+      id: "i-mid",
+      power: 445,
+      tier: 4,
+      special: "Holofoil",
+      plugs: { barrel: "1002", mag: "2001", trait1: "3002", trait2: "4001" },
+    },
+    {
+      id: "i-dirty",
+      power: 448,
+      tier: 4,
+      plugs: { barrel: "1003", mag: "2003", trait1: "3003", trait2: "4003" },
+    },
+    {
+      id: "i-low",
+      power: 335,
+      tier: 3,
+      special: "Adept",
+      plugs: { barrel: "1001", mag: "2002", trait1: "3001", trait2: "4002" },
+    },
+  ];
+
+  const TARGETS = {
+    pve: {
+      id: "pve",
+      name: "PvE",
+      columns: {
+        barrel: { want: ["1001", "1002"], avoid: ["1003"] },
+        mag: { want: ["2001"], avoid: ["2003"] },
+        trait1: { want: ["3001", "3002"], avoid: [] },
+        trait2: { want: ["4001"], avoid: ["4003"] },
+      },
+    },
+    pvp: {
+      id: "pvp",
+      name: "PvP",
+      columns: {
+        barrel: { want: ["1002"], avoid: [] },
+        mag: { want: ["2001", "2002"], avoid: [] },
+        trait1: { want: ["3002"], avoid: ["3003"] },
+        trait2: { want: ["4002"], avoid: ["4001"] },
+      },
+    },
+    empty: {
+      id: "empty",
+      name: "Draft",
+      columns: {
+        barrel: { want: [], avoid: [] },
+        mag: { want: [], avoid: [] },
+        trait1: { want: [], avoid: [] },
+        trait2: { want: [], avoid: [] },
+      },
+    },
+  };
+
+  const SCENARIO_META = {
+    "owned-no-targets": "No profiles · power-desc · no dual segs · editor closed",
+    "owned-targets-none-active": "Profiles listed · Off active · power-desc · no dual",
+    "active-unscored": "Draft target · no score dimensions · no dual segs",
+    "active-partial": "PvE active · mixed scores · rank closest/cleanest",
+    "active-perfect-clean": "Perfect preferred + clean avoid · pulse on selected",
+    "active-bad-roll": "Dirty copy visible · sorted after cleaner rolls",
+    "multi-profile-switch": "Click PvE ↔ PvP to rebind scores + rank",
+    "editor-want-avoid-off": "Editor open · cycle Want→Avoid→Off on pool cells",
+    "editor-overlap-reject": "Same plug Want+Avoid · soft Neon error · save disabled",
+    "unowned-or-empty": "No local copies · switcher+editor on definition ③ pool",
+    "keyboard-a11y": "Tab through switcher → chips → pool; aria named",
+  };
+
+  const state = {
+    scenario: "active-partial",
+    targets: [],
+    activeId: null,
+    instances: [],
+    selectedId: null,
+    editorOpen: false,
+    draft: null, // clone of active columns for edit
+    renameValue: "",
+    forceOverlap: false,
+  };
+
+  const stageMain = document.getElementById("stage-main");
+  const liveLog = document.getElementById("live-log");
+  const scenarioSel = document.getElementById("scenario");
+  const flowList = document.getElementById("flow-list");
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function specialKind(special) {
+    if (!special) return "other";
+    const s = String(special).toLowerCase();
+    if (s === "adept") return "adept";
+    if (s === "holofoil") return "holofoil";
+    return "other";
+  }
+
+  function cloneTarget(t) {
+    const columns = {};
+    COLS.forEach((c) => {
+      const col = t.columns[c.key] || { want: [], avoid: [] };
+      columns[c.key] = {
+        want: col.want.slice(),
+        avoid: col.avoid.slice(),
+      };
+    });
+    return { id: t.id, name: t.name, columns };
+  }
+
+  /** Score instance vs target → RollTargetMatchResult-shaped */
+  function scoreInstance(target, inst) {
+    if (!target) {
+      return {
+        preferredMatched: 0,
+        preferredScored: 0,
+        avoidHits: 0,
+        avoidScored: 0,
+        preferredRatio: 0,
+        hasAnyScoreDimension: false,
+        isPerfectPreferred: false,
+        isCleanAvoid: true,
+      };
+    }
+    let preferredMatched = 0;
+    let preferredScored = 0;
+    let avoidHits = 0;
+    let avoidScored = 0;
+    COLS.forEach((c) => {
+      const col = target.columns[c.key] || { want: [], avoid: [] };
+      const plug = inst.plugs[c.key];
+      if (col.want.length) {
+        preferredScored++;
+        if (plug && col.want.includes(plug)) preferredMatched++;
+      }
+      if (col.avoid.length) {
+        avoidScored++;
+        if (plug && col.avoid.includes(plug)) avoidHits++;
+      }
+    });
+    const preferredRatio = preferredScored === 0 ? 0 : preferredMatched / preferredScored;
+    return {
+      preferredMatched,
+      preferredScored,
+      avoidHits,
+      avoidScored,
+      preferredRatio,
+      hasAnyScoreDimension: preferredScored > 0 || avoidScored > 0,
+      isPerfectPreferred: preferredScored > 0 && preferredMatched === preferredScored,
+      isCleanAvoid: avoidHits === 0,
+    };
+  }
+
+  function activeTarget() {
+    if (!state.activeId) return null;
+    return state.targets.find((t) => t.id === state.activeId) || null;
+  }
+
+  function draftOrActive() {
+    if (state.editorOpen && state.draft) return state.draft;
+    return activeTarget();
+  }
+
+  function hasOverlap(target) {
+    if (!target) return false;
+    return COLS.some((c) => {
+      const col = target.columns[c.key];
+      if (!col) return false;
+      return col.want.some((h) => col.avoid.includes(h));
+    });
+  }
+
+  function overlapColumns(target) {
+    if (!target) return [];
+    return COLS.filter((c) => {
+      const col = target.columns[c.key];
+      return col && col.want.some((h) => col.avoid.includes(h));
+    }).map((c) => c.label);
+  }
+
+  /** rankOwnedForRollTarget: preferredRatio desc → avoidHits asc → power/tier */
+  function rankInstances(instances, target) {
+    const list = instances.slice();
+    if (!target || !scoreInstance(target, list[0] || { plugs: {} }).hasAnyScoreDimension) {
+      // unscored active or no active → power-desc + tier
+      return list.sort((a, b) => {
+        if (b.power !== a.power) return b.power - a.power;
+        return (b.tier || 0) - (a.tier || 0);
+      });
+    }
+    return list.sort((a, b) => {
+      const sa = scoreInstance(target, a);
+      const sb = scoreInstance(target, b);
+      if (sb.preferredRatio !== sa.preferredRatio) return sb.preferredRatio - sa.preferredRatio;
+      if (sa.avoidHits !== sb.avoidHits) return sa.avoidHits - sb.avoidHits;
+      if (b.power !== a.power) return b.power - a.power;
+      return (b.tier || 0) - (a.tier || 0);
+    });
+  }
+
+  function powerDesc(instances) {
+    return instances.slice().sort((a, b) => {
+      if (b.power !== a.power) return b.power - a.power;
+      return (b.tier || 0) - (a.tier || 0);
+    });
+  }
+
+  function defaultHighestId(instances) {
+    const o = powerDesc(instances);
+    return o.length ? o[0].id : null;
+  }
+
+  function chipInnerHtml(inst, score, showScore) {
+    const parts = [];
+    parts.push(`<span class="seg"><span class="pw">${escapeHtml(String(inst.power))}</span></span>`);
+    if (inst.tier != null && inst.tier >= 1 && inst.tier <= 5) {
+      parts.push(`<span class="sep" aria-hidden="true"></span>`);
+      parts.push(
+        `<span class="seg"><span class="tier" data-t="${inst.tier}">T${inst.tier}</span></span>`
+      );
+    }
+    if (inst.special) {
+      parts.push(`<span class="sep" aria-hidden="true"></span>`);
+      parts.push(
+        `<span class="seg"><span class="special" data-kind="${specialKind(inst.special)}">${escapeHtml(inst.special)}</span></span>`
+      );
+    }
+    if (showScore && score && score.hasAnyScoreDimension) {
+      const n = score.preferredMatched;
+      const m = score.preferredScored;
+      let prefClass = "partial";
+      if (m > 0 && n === m) prefClass = "perfect";
+      else if (n === 0) prefClass = "miss";
+      parts.push(`<span class="sep" aria-hidden="true"></span>`);
+      parts.push(
+        `<span class="seg"><span class="score-pref ${prefClass}" title="Preferred matched / scored">${n}/${m}</span></span>`
+      );
+      if (score.avoidScored > 0) {
+        const k = score.avoidHits;
+        const avClass = k > 0 ? (k >= 2 ? "hit" : "hit warn-only") : "clear";
+        const avLabel = k > 0 ? `Av ${k}` : "Av 0";
+        parts.push(`<span class="sep" aria-hidden="true"></span>`);
+        parts.push(
+          `<span class="seg"><span class="score-avoid ${avClass}" title="Avoid hits">${escapeHtml(avLabel)}</span></span>`
+        );
+      }
+    }
+    return parts.join("");
+  }
+
+  function ariaName(inst, score, showScore) {
+    let n = "Power " + inst.power;
+    if (inst.tier != null) n += ", tier " + inst.tier;
+    if (inst.special) n += ", " + inst.special;
+    if (showScore && score && score.hasAnyScoreDimension) {
+      n +=
+        ", " +
+        score.preferredMatched +
+        " of " +
+        score.preferredScored +
+        " preferred";
+      if (score.avoidScored > 0) {
+        n += ", " + score.avoidHits + " avoid hits";
+      }
+    }
+    return n;
+  }
+
+  function renderSwitcher() {
+    if (!state.targets.length && state.scenario === "owned-no-targets") {
+      return `
+        <div class="roll-target-bar" data-key="catalog_roll_targets_switcher">
+          <div class="rt-row">
+            <span class="rt-label">Roll target</span>
+            <span class="rt-empty-hint">No targets yet</span>
+            <div class="rt-actions">
+              <button type="button" class="rt-btn primary" data-action="new-target">New target</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const opts = [];
+    opts.push(
+      `<button type="button" class="rt-opt is-off" data-action="set-active" data-id=""
+        aria-pressed="${!state.activeId ? "true" : "false"}"
+        aria-label="No active roll target">Off</button>`
+    );
+    state.targets.forEach((t) => {
+      opts.push(
+        `<button type="button" class="rt-opt" data-action="set-active" data-id="${escapeHtml(t.id)}"
+          aria-pressed="${state.activeId === t.id ? "true" : "false"}"
+          aria-label="Roll target ${escapeHtml(t.name)}">${escapeHtml(t.name)}</button>`
+      );
+    });
+
+    const canEdit = !!state.activeId;
+    const rename =
+      state.editorOpen && canEdit
+        ? `<input class="rt-rename" type="text" data-action="rename" value="${escapeHtml(state.renameValue)}" aria-label="Rename roll target" maxlength="32" />`
+        : "";
+
+    return `
+      <div class="roll-target-bar" data-key="catalog_roll_targets_switcher">
+        <div class="rt-row">
+          <span class="rt-label">Roll target</span>
+          <div class="rt-switch" role="group" aria-label="Active roll target">${opts.join("")}</div>
+        </div>
+        <div class="rt-row">
+          ${rename}
+          <div class="rt-actions">
+            <button type="button" class="rt-btn primary" data-action="toggle-editor"
+              aria-pressed="${state.editorOpen ? "true" : "false"}"
+              ${!canEdit && !state.editorOpen ? 'title="Select a named target to edit"' : ""}>
+              ${state.editorOpen ? "Close editor" : "Edit roll target"}
+            </button>
+            <button type="button" class="rt-btn" data-action="new-target">New</button>
+            <button type="button" class="rt-btn danger" data-action="delete-target" ${!canEdit ? "disabled" : ""}>Delete</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderStrip() {
+    const target = activeTarget();
+    const showScore = !!(target && scoreInstance(target, { plugs: {} }).hasAnyScoreDimension === false
+      ? false
+      : target &&
+        state.instances.some((i) => scoreInstance(target, i).hasAnyScoreDimension));
+
+    // hasAnyScoreDimension from target shape
+    const targetHasScore =
+      !!target &&
+      COLS.some((c) => {
+        const col = target.columns[c.key];
+        return col && (col.want.length > 0 || col.avoid.length > 0);
+      });
+
+    if (!state.instances.length) {
+      return `<div class="inst-empty" data-key="weapon_instance_strip_empty" id="weapon_instance_strip_empty">No local copies</div>`;
+    }
+
+    const ranked = target && targetHasScore
+      ? rankInstances(state.instances, target)
+      : powerDesc(state.instances);
+    const rankingActive = !!(target && targetHasScore);
+
+    const note = rankingActive
+      ? `<span class="inst-rank-note" data-key="roll_target_rank_note">Ranked by <strong>roll target</strong> · preferred desc → avoid asc → power</span>`
+      : `<span class="inst-rank-note" data-key="power_desc_note">Order: power-desc · highest default</span>`;
+
+    const chips = ranked
+      .map((inst) => {
+        const score = scoreInstance(target, inst);
+        const show = rankingActive && score.hasAnyScoreDimension;
+        const pressed = state.selectedId === inst.id;
+        const perfect =
+          show && score.isPerfectPreferred && score.isCleanAvoid && pressed;
+        return `<button type="button" class="inst-chip${perfect ? " perfect-pulse" : ""}"
+          data-key="instance_chip_${escapeHtml(inst.id)}"
+          data-inst="${escapeHtml(inst.id)}"
+          aria-pressed="${pressed ? "true" : "false"}"
+          aria-label="${escapeHtml(ariaName(inst, score, show))}"
+          title="${escapeHtml(ariaName(inst, score, show))}">
+          ${chipInnerHtml(inst, score, show)}
+        </button>`;
+      })
+      .join("");
+
+    return `<div class="instance-strip" data-key="weapon_instance_strip" id="weapon_instance_strip" role="listbox" aria-label="Owned instances">
+      <span class="label">Instances</span>
+      ${note}
+      ${chips}
+    </div>`;
+  }
+
+  function modeForPlug(target, colKey, hash) {
+    if (!target) return "off";
+    const col = target.columns[colKey] || { want: [], avoid: [] };
+    if (col.want.includes(hash)) return "want";
+    if (col.avoid.includes(hash)) return "avoid";
+    return "off";
+  }
+
+  function cycleMode(mode) {
+    if (mode === "off") return "want";
+    if (mode === "want") return "avoid";
+    return "off";
+  }
+
+  function renderPool() {
+    const editing = state.editorOpen;
+    const target = draftOrActive();
+    const inst = state.instances.find((i) => i.id === state.selectedId);
+    const overlap = editing && hasOverlap(target);
+    const ovCols = overlap ? overlapColumns(target) : [];
+
+    let errorHtml = "";
+    if (overlap) {
+      errorHtml = `<div class="soft-error" role="alert" data-key="roll_target_overlap_error">
+        <span class="code">DBR-IDL-004</span>
+        <span>Preferred and avoid overlap on <strong>${escapeHtml(ovCols.join(", "))}</strong>. Clear one mode per plug before save. Soft score only — equip/export still allowed.</span>
+      </div>`;
+    }
+
+    let modeBar = "";
+    if (editing) {
+      modeBar = `
+        <div class="editor-mode-bar" data-key="roll_target_editor_bar">
+          <span class="title">Edit · ${escapeHtml((target && target.name) || "target")}</span>
+          <span class="sub">Want → Avoid → Off · can-roll pool only · click or Space</span>
+          <button type="button" class="rt-btn primary" data-action="save-target" ${overlap ? "disabled" : ""}>Save</button>
+          <button type="button" class="rt-btn" data-action="cancel-editor">Cancel</button>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span class="legend-item"><span class="legend-swatch want"></span> Want (preferred)</span>
+          <span class="legend-item"><span class="legend-swatch avoid"></span> Avoid</span>
+          <span class="legend-item"><span class="legend-swatch off"></span> Off (unscored)</span>
+        </div>`;
+    } else if (!state.instances.length) {
+      modeBar = `<p class="body-stub">Definition <em>③ can-roll pool</em> — open editor with an active named target to multi-pick preferred/avoid.</p>`;
+    } else {
+      modeBar = `<p class="body-stub">Selected instance <em>①/②</em> display · pool is can-roll <em>③</em>. Open <em>Edit roll target</em> to author Want|Avoid|Off.</p>`;
+    }
+
+    const colsHtml = COLS.map((c) => {
+      const colOverlap =
+        editing &&
+        target &&
+        target.columns[c.key] &&
+        target.columns[c.key].want.some((h) => target.columns[c.key].avoid.includes(h));
+      const plugs = POOL[c.key];
+      const cells = plugs
+        .map((p) => {
+          const mode = editing ? modeForPlug(target, c.key, p.hash) : "off";
+          // View-mode target overlay uses active target (not draft) when editor closed
+          const viewTarget = !editing ? activeTarget() : null;
+          const viewMode =
+            viewTarget ? modeForPlug(viewTarget, c.key, p.hash) : "off";
+          let dispClass = "possible";
+          if (!editing && inst) {
+            if (inst.plugs[c.key] === p.hash) dispClass = "selected";
+            else dispClass = "possible";
+          }
+          const classes = editing
+            ? `perk-cell${colOverlap && mode !== "off" && target.columns[c.key].want.includes(p.hash) && target.columns[c.key].avoid.includes(p.hash) ? " overlap-cell" : ""}`
+            : `perk-cell ${dispClass}`;
+          const dataMode = editing ? ` data-mode="${mode}"` : "";
+          const dataTarget =
+            !editing && (viewMode === "want" || viewMode === "avoid")
+              ? ` data-target="${viewMode}"`
+              : "";
+          const viewHint =
+            !editing && viewMode === "want"
+              ? ", ideal for active target"
+              : !editing && viewMode === "avoid"
+                ? ", avoid for active target"
+                : "";
+          return `<button type="button" class="${classes}"
+            data-action="${editing ? "cycle-plug" : "noop"}"
+            data-col="${escapeHtml(c.key)}"
+            data-hash="${escapeHtml(p.hash)}"
+            ${dataMode}${dataTarget}
+            aria-label="${escapeHtml(p.name)}${editing ? ", " + mode : viewHint}"
+            title="${escapeHtml(p.name)}${editing ? " · " + mode : viewHint}"
+            ${!editing ? 'tabindex="-1"' : ""}>
+            <span class="ico" aria-hidden="true">${escapeHtml(p.icon)}</span>
+            <span class="cap">${escapeHtml(p.name)}</span>
+          </button>`;
+        })
+        .join("");
+      return `<div class="perk-col${colOverlap ? " has-overlap" : ""}" data-col="${escapeHtml(c.key)}">
+        <div class="perk-col-label" title="${escapeHtml(c.label)}">${escapeHtml(c.label)}</div>
+        ${cells}
+      </div>`;
+    }).join("");
+
+    return `
+      <div class="detail-body">
+        ${modeBar}
+        ${errorHtml}
+        <div class="perk-scroll">
+          <div class="perk-grid-cols${editing ? " editing" : ""}" data-key="roll_target_pool" role="${editing ? "group" : "presentation"}" aria-label="${editing ? "Can-roll pool Want Avoid Off editor" : "Can-roll pool display"}">
+            ${colsHtml}
+          </div>
+        </div>
+        <div class="hash-footer" data-key="catalog_hash_footer">
+          Unknown plugs only · <code>CatalogHashFooter</code> · authoring uses <strong>named plugs</strong> (DBR-UI-006)
+        </div>
+      </div>`;
+  }
+
+  function renderFrame() {
+    return `
+      <p class="frame-caption">Thin detail frame · <strong>kCatalogWeaponsDetailWidth = 400</strong> · CatalogRollTargets on CatalogWeaponDetail</p>
+      <div class="detail-frame" aria-label="Weapon detail with roll targets">
+        <div class="detail-header">
+          <div class="header-row">
+            <div class="header-icon" aria-hidden="true">⚔</div>
+            <div class="header-stack">
+              <h2 class="hero-name">Midnight Coup</h2>
+              <div class="meta-stub" aria-hidden="true">
+                <span class="meta-chip">HC</span>
+                <span class="meta-chip">Kin</span>
+                <span class="meta-chip">Pri</span>
+                <span class="meta-chip">×${state.instances.length || 0}</span>
+              </div>
+            </div>
+          </div>
+          ${renderSwitcher()}
+          ${renderStrip()}
+        </div>
+        ${renderPool()}
+      </div>
+      <p class="frame-caption" style="margin-top:8px">${escapeHtml(SCENARIO_META[state.scenario] || "")}</p>`;
+  }
+
+  function updateLog() {
+    const t = activeTarget();
+    const targetHasScore =
+      !!t &&
+      COLS.some((c) => {
+        const col = t.columns[c.key];
+        return col && (col.want.length > 0 || col.avoid.length > 0);
+      });
+    const ranked = t && targetHasScore
+      ? rankInstances(state.instances, t)
+      : powerDesc(state.instances);
+    const lines = [
+      "scenario: " + state.scenario,
+      "targets: " + (state.targets.map((x) => x.name).join(", ") || "(none)"),
+      "active: " + (t ? t.name : "Off"),
+      "editorOpen: " + state.editorOpen,
+      "overlap: " + hasOverlap(draftOrActive()),
+      "hasAnyScoreDimension: " + targetHasScore,
+      "order: " +
+        (ranked
+          .map((i) => {
+            const s = scoreInstance(t, i);
+            if (targetHasScore && s.hasAnyScoreDimension) {
+              return i.power + "(" + s.preferredMatched + "/" + s.preferredScored + ",Av" + s.avoidHits + ")";
+            }
+            return String(i.power);
+          })
+          .join(" → ") || "(none)"),
+      "selectedId: " + (state.selectedId || "null"),
+      "rankMode: " + (targetHasScore ? "rankOwnedForRollTarget" : "power-desc"),
+    ];
+    liveLog.textContent = lines.join("\n");
+  }
+
+  function announce(msg) {
+    let live = document.getElementById("sr-live");
+    if (!live) {
+      live = document.createElement("div");
+      live.id = "sr-live";
+      live.setAttribute("role", "status");
+      live.setAttribute("aria-live", "polite");
+      live.style.cssText =
+        "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)";
+      document.body.appendChild(live);
+    }
+    live.textContent = msg;
+  }
+
+  function applyScenario(id) {
+    state.scenario = id;
+    state.forceOverlap = false;
+    state.editorOpen = false;
+    state.draft = null;
+    state.renameValue = "";
+
+    switch (id) {
+      case "owned-no-targets":
+        state.targets = [];
+        state.activeId = null;
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = defaultHighestId(state.instances);
+        break;
+      case "owned-targets-none-active":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = null;
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = defaultHighestId(state.instances);
+        break;
+      case "active-unscored":
+        state.targets = [cloneTarget(TARGETS.empty), cloneTarget(TARGETS.pve)];
+        state.activeId = "empty";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = defaultHighestId(state.instances);
+        break;
+      case "active-partial":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = "i-mid";
+        break;
+      case "active-perfect-clean":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = "i-best";
+        break;
+      case "active-bad-roll":
+        state.targets = [cloneTarget(TARGETS.pve)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = "i-dirty";
+        break;
+      case "multi-profile-switch":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = "i-mid";
+        break;
+      case "editor-want-avoid-off":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = "i-best";
+        state.editorOpen = true;
+        state.draft = cloneTarget(TARGETS.pve);
+        state.renameValue = "PvE";
+        break;
+      case "editor-overlap-reject": {
+        state.targets = [cloneTarget(TARGETS.pve)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+        state.selectedId = "i-best";
+        state.editorOpen = true;
+        const d = cloneTarget(TARGETS.pve);
+        // Force preferred ∩ avoid on trait2 Kill Clip
+        d.columns.trait2.want = ["4001"];
+        d.columns.trait2.avoid = ["4001", "4003"];
+        state.draft = d;
+        state.renameValue = "PvE";
+        state.forceOverlap = true;
+        break;
+      }
+      case "unowned-or-empty":
+        state.targets = [cloneTarget(TARGETS.pve)];
+        state.activeId = "pve";
+        state.instances = [];
+        state.selectedId = null;
+        state.editorOpen = false;
+        break;
+      case "keyboard-a11y":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = BASE_INSTANCES.slice(0, 3).map((x) => ({
+          ...x,
+          plugs: { ...x.plugs },
+        }));
+        state.selectedId = "i-best";
+        state.editorOpen = true;
+        state.draft = cloneTarget(TARGETS.pve);
+        state.renameValue = "PvE";
+        break;
+      default:
+        break;
+    }
+  }
+
+  function bind() {
+    stageMain.querySelectorAll("[data-action]").forEach((el) => {
+      const action = el.getAttribute("data-action");
+      if (action === "rename") {
+        el.addEventListener("input", () => {
+          state.renameValue = el.value;
+        });
+        el.addEventListener("change", () => {
+          const t = activeTarget();
+          if (t && state.renameValue.trim()) {
+            t.name = state.renameValue.trim();
+            if (state.draft) state.draft.name = t.name;
+            render();
+            announce("Renamed to " + t.name);
+          }
+        });
+        return;
+      }
+      el.addEventListener("click", () => {
+        if (action === "set-active") {
+          const id = el.getAttribute("data-id") || "";
+          const prevSelected = state.selectedId;
+          state.activeId = id || null;
+          // keep selection if still present
+          if (prevSelected && !state.instances.some((i) => i.id === prevSelected)) {
+            state.selectedId = defaultHighestId(state.instances);
+          }
+          if (state.editorOpen && state.activeId) {
+            const t = activeTarget();
+            state.draft = t ? cloneTarget(t) : null;
+            state.renameValue = t ? t.name : "";
+          } else if (!state.activeId) {
+            state.editorOpen = false;
+            state.draft = null;
+          }
+          render();
+          announce(
+            state.activeId
+              ? "Active roll target " + (activeTarget() && activeTarget().name)
+              : "No active roll target"
+          );
+        } else if (action === "toggle-editor") {
+          if (!state.activeId && !state.editorOpen) {
+            announce("Select a named target to edit");
+            return;
+          }
+          state.editorOpen = !state.editorOpen;
+          if (state.editorOpen) {
+            const t = activeTarget();
+            state.draft = t ? cloneTarget(t) : null;
+            state.renameValue = t ? t.name : "";
+          } else {
+            state.draft = null;
+          }
+          render();
+        } else if (action === "new-target") {
+          const n = state.targets.length + 1;
+          const id = "t" + n;
+          const t = {
+            id,
+            name: "Target " + n,
+            columns: {
+              barrel: { want: [], avoid: [] },
+              mag: { want: [], avoid: [] },
+              trait1: { want: [], avoid: [] },
+              trait2: { want: [], avoid: [] },
+            },
+          };
+          state.targets.push(t);
+          state.activeId = id;
+          state.editorOpen = true;
+          state.draft = cloneTarget(t);
+          state.renameValue = t.name;
+          render();
+          announce("Created " + t.name);
+        } else if (action === "delete-target") {
+          if (!state.activeId) return;
+          const name = activeTarget() && activeTarget().name;
+          state.targets = state.targets.filter((t) => t.id !== state.activeId);
+          state.activeId = null;
+          state.editorOpen = false;
+          state.draft = null;
+          render();
+          announce("Deleted " + (name || "target"));
+        } else if (action === "save-target") {
+          if (!state.draft || hasOverlap(state.draft)) return;
+          const idx = state.targets.findIndex((t) => t.id === state.draft.id);
+          if (idx >= 0) {
+            state.targets[idx] = cloneTarget(state.draft);
+            if (state.renameValue.trim()) {
+              state.targets[idx].name = state.renameValue.trim();
+            }
+          }
+          state.editorOpen = false;
+          state.draft = null;
+          render();
+          announce("Saved roll target");
+        } else if (action === "cancel-editor") {
+          state.editorOpen = false;
+          state.draft = null;
+          render();
+        } else if (action === "cycle-plug") {
+          if (!state.draft) return;
+          const col = el.getAttribute("data-col");
+          const hash = el.getAttribute("data-hash");
+          const mode = modeForPlug(state.draft, col, hash);
+          const next = cycleMode(mode);
+          const c = state.draft.columns[col];
+          c.want = c.want.filter((h) => h !== hash);
+          c.avoid = c.avoid.filter((h) => h !== hash);
+          if (next === "want") c.want.push(hash);
+          if (next === "avoid") c.avoid.push(hash);
+          render();
+          announce(PLUG_NAME[hash] + " " + next);
+        } else if (action === "noop") {
+          /* display only */
+        }
+      });
+    });
+
+    stageMain.querySelectorAll(".inst-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-inst");
+        if (!id || id === state.selectedId) return;
+        state.selectedId = id;
+        render();
+        announce("Selected " + id);
+      });
+    });
+
+    // keyboard cycle on focused pool cells
+    stageMain.querySelectorAll('.perk-grid-cols.editing .perk-cell').forEach((btn) => {
+      btn.addEventListener("keydown", (e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          btn.click();
+        }
+      });
+    });
+  }
+
+  function render() {
+    stageMain.innerHTML = renderFrame();
+    bind();
+    updateLog();
+    // mark active flow
+    flowList.querySelectorAll("button").forEach((b) => {
+      b.classList.toggle("active", b.getAttribute("data-scenario") === state.scenario);
+    });
+  }
+
+  // flow list
+  Object.keys(SCENARIO_META).forEach((key) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("data-scenario", key);
+    b.setAttribute("role", "listitem");
+    b.textContent = key;
+    b.addEventListener("click", () => {
+      scenarioSel.value = key;
+      applyScenario(key);
+      render();
+    });
+    flowList.appendChild(b);
+  });
+
+  scenarioSel.addEventListener("change", () => {
+    applyScenario(scenarioSel.value);
+    render();
+  });
+
+  applyScenario(scenarioSel.value);
+  render();
+})();
+  </script>
+</body>
+</html>

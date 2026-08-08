@@ -70,9 +70,15 @@ Dual-run Next paths are monorepo-relative, e.g. `web/NextJS/package.json`, `web/
 - Flutter Windows stubs / parity: [`../docs/product-map/FLUTTER.md`](../docs/product-map/FLUTTER.md).
 - Hub edits still go through monorepo `docs/product-map/` + `npm run product-map:sync` (Next scripts).
 
-## Spec Kit slices
+## Spec Kit vs UI/UX
 
-- Multiplatform slices: monorepo `specs/dart-*/`.
+**Spec Kit** (`specs/dart-*/`, product `specs/0NN-*`): **non-UI / system** work only — pure domain/data, models/resolvers, IO/auth/sync. Exit criteria are package tests and contracts, not mockup dual-truth.
+
+**UI/UX:** [`docs/ux-redesign/`](../docs/ux-redesign/README.md) — `area-ux-redesign` / `area-ux-component` / `area-implement`. Do not open a DART Spec Kit slice for chrome-only or Widgetbook-only work.
+
+When both are needed, **split** (system Spec Kit → then area-ux). Policy: **D-LANES** in [`docs/multiplatform-dart-port-decisions.md`](../docs/multiplatform-dart-port-decisions.md); ledger: [`docs/multiplatform-dart-feature-gaps.md`](../docs/multiplatform-dart-feature-gaps.md).
+
+- Multiplatform system slices: monorepo `specs/dart-*/`.
 - Layout nests: e.g. `specs/dart-069-nest-flutter-workspace/`, `specs/045-nest-nextjs-web/`.
 - Implement against domain docs first; keep pure packages testable without device/UI.
 

@@ -312,3 +312,55 @@ class VariantSetAttachments extends Table {
         'FOREIGN KEY (set_id) REFERENCES sets (id) ON DELETE RESTRICT',
       ];
 }
+
+/// User-authored Catalog weapon roll targets (preferred + avoid columns).
+///
+/// DART-073 / DBR-IDL-*. Not equip-ready wishlist (DBR-ROLL-*).
+/// [columnsJson] encodes ordered columns: columnKey, label?, preferred[], avoid[].
+/// Data class is [WeaponRollTargetRow] so it does not clash with domain
+/// `WeaponRollTarget`.
+@DataClassName('WeaponRollTargetRow')
+@TableIndex(
+  name: 'idx_weapon_roll_targets_user_weapon',
+  columns: {#userId, #weaponKey},
+)
+@TableIndex(
+  name: 'idx_weapon_roll_targets_user_weapon_name',
+  columns: {#userId, #weaponKey, #name},
+  unique: true,
+)
+class WeaponRollTargets extends Table {
+  TextColumn get id => text()();
+  IntColumn get userId => integer()();
+  TextColumn get weaponKey => text()();
+  TextColumn get name => text()();
+  TextColumn get columnsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+        'FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE',
+      ];
+}
+
+/// Active roll target per user + weapon for ranking UI.
+@DataClassName('WeaponRollTargetActiveRow')
+class WeaponRollTargetActive extends Table {
+  IntColumn get userId => integer()();
+  TextColumn get weaponKey => text()();
+  TextColumn get targetId => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {userId, weaponKey};
+
+  @override
+  List<String> get customConstraints => [
+        'FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE',
+        'FOREIGN KEY (target_id) REFERENCES weapon_roll_targets (id) ON DELETE CASCADE',
+      ];
+}

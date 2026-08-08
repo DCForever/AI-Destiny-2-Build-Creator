@@ -144,9 +144,9 @@ Widget flapBoardBuilds(BuildContext context) {
 }
 
 @widgetbook.UseCase(
-  name: 'Atmosphere knobs',
+  name: 'Blooms / horizon / caption',
   type: NeonShellBackground,
-  path: '[Neon]/Atmosphere',
+  path: '[Neon]/Atmosphere/Knobs',
 )
 Widget neonAtmosphereKnobs(BuildContext context) {
   final blooms = context.knobs.boolean(label: 'Blooms', initialValue: true);

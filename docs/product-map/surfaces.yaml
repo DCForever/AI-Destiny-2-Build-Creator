@@ -1350,7 +1350,7 @@ surfaces:
     area: catalog
     auth: signed-in
     parent: null
-    notes: Family version switch full hash rebind (GAP-CAT-BROWSE-001); no per-column perk band labels (GAP-CAT-PERK-004); cell chrome + legend only. Width 400.
+    notes: Family version switch full hash rebind (GAP-CAT-BROWSE-001); no per-column perk band labels (GAP-CAT-PERK-004); cell chrome + legend only. Width 400. CatalogRollTargets 003 — named preferred+avoid multi-pick, dual N/M+Av segs, rankOwnedForRollTarget.
     rules:
       - BR-CAT-006
       - BR-CAT-007
@@ -1364,6 +1364,16 @@ surfaces:
       - GAP-CAT-BROWSE-001
       - GAP-CAT-PERK-004
       - DBR-UI-007
+      - DBR-IDL-001
+      - DBR-IDL-002
+      - DBR-IDL-003
+      - DBR-IDL-004
+      - DBR-IDL-005
+      - DBR-IDL-006
+      - DBR-IDL-007
+      - DBR-IDL-008
+      - FEAT-UI-WEAPON-ROLL-TARGETS
+      - GAP-UI-ROLL-01
     status: active
     platforms:
       nextjs:
@@ -1393,6 +1403,16 @@ surfaces:
       - BR-CAT-016c
       - DBR-UI-006
       - DBR-UI-007
+      - DBR-IDL-001
+      - DBR-IDL-002
+      - DBR-IDL-003
+      - DBR-IDL-004
+      - DBR-IDL-005
+      - DBR-IDL-006
+      - DBR-IDL-007
+      - DBR-IDL-008
+      - FEAT-UI-WEAPON-ROLL-TARGETS
+      - GAP-UI-ROLL-01
     status: active
   - id: catalog.weapon.detail.synergies
     title: Linked library synergies

@@ -1,8 +1,9 @@
 /// Neon Network catalog item card.
 ///
-/// Soft surface + rarity wash + element corner bloom + **official** damage-type
-/// icon. Type-only body text; slot letter / official ammo / official frame icons
-/// in the foot.
+/// Soft surface + rarity wash + **element bloom**. Bottom band aligns the
+/// element disc with meta icons: **element · type · slot · ammo · frame**
+/// (+ ×N / power). Weapon type is a silhouette (or letter last-resort), never
+/// body text. Optional [footer] (Base/Adept chips) sits just above that band.
 ///
 /// HTML mockups use Unicode placeholders (no Bungie CDN). Implement against
 /// [destiny_official_icons] — not mock glyph/color inventions.
@@ -114,6 +115,7 @@ class NeonItemCard extends StatelessWidget {
     this.power,
     this.ownedLabel,
     this.leading,
+    this.footer,
     this.selected = false,
     this.onTap,
     this.nameKey,
@@ -128,12 +130,15 @@ class NeonItemCard extends StatelessWidget {
   final String? ammo;
   final String? frame;
 
-  /// Type-only body meta (weapon type). Element/slot/ammo/frame are icons.
+  /// Weapon type name for silhouette lookup + a11y (not rendered as body text).
   final String? typeLine;
   final NeonItemRarity rarity;
   final int? power;
   final String? ownedLabel;
   final Widget? leading;
+
+  /// In-flow content under the meta row (e.g. Base/Adept version chips).
+  final Widget? footer;
   final bool selected;
   final VoidCallback? onTap;
   final Key? nameKey;
@@ -148,6 +153,7 @@ class NeonItemCard extends StatelessWidget {
     final el = elVisual?.color ?? flapElementColor(context, element);
     final ammoVisual = officialAmmoVisual(ammo);
     final frameVisual = officialWeaponFrameVisual(frame);
+    final typeVisual = officialWeaponTypeVisual(typeLine);
     final exotic = rarity == NeonItemRarity.exotic;
     final legendary = rarity == NeonItemRarity.legendary;
 
@@ -179,10 +185,73 @@ class NeonItemCard extends StatelessWidget {
 
     final nameColor = exotic ? Color(kRarityExotic) : palette.foreground;
 
+    final hasType = typeLine != null && typeLine!.trim().isNotEmpty;
+    final hasElement = element != null && element!.trim().isNotEmpty;
+
+    // Meta icons share the bottom band with the element disc (same baseline).
+    final metaIcons = <Widget>[
+      if (hasType)
+        if (typeVisual != null)
+          _TypeSilhouetteIcon(
+            key: metaKey ?? const Key('neon_card_type_icon'),
+            visual: typeVisual,
+            tooltip: typeLine!,
+            fallbackMark: weaponTypeLetterMark(typeLine),
+          )
+        else
+          _FallbackGlyphIcon(
+            key: metaKey ?? const Key('neon_card_type_icon'),
+            mark: weaponTypeLetterMark(typeLine),
+            tooltip: typeLine!,
+            color: palette.muted,
+          ),
+      if (slot != null && slot!.isNotEmpty)
+        _SlotLetterIcon(
+          key: const Key('neon_card_slot_icon'),
+          slot: slot!,
+          color: _slotColor(palette, slot),
+        ),
+      if (ammoVisual != null)
+        _OfficialMetaIcon(
+          key: const Key('neon_card_ammo_icon'),
+          visual: ammoVisual,
+          tooltip: '$ammo ammo',
+          fallbackMark: neonAmmoGlyphMark(ammo),
+        )
+      else if (ammo != null && ammo!.isNotEmpty)
+        _FallbackGlyphIcon(
+          key: const Key('neon_card_ammo_icon'),
+          mark: neonAmmoGlyphMark(ammo),
+          tooltip: '$ammo ammo',
+          color: palette.muted,
+        ),
+      if (frameVisual != null)
+        _OfficialMetaIcon(
+          key: const Key('neon_card_frame_icon'),
+          visual: frameVisual,
+          tooltip: frame ?? 'Frame',
+          fallbackMark: '◇',
+        )
+      else if (frame != null && frame!.isNotEmpty)
+        _FallbackGlyphIcon(
+          key: const Key('neon_card_frame_icon'),
+          mark: '◇',
+          tooltip: frame!,
+          color: palette.muted,
+        ),
+    ];
+
+    final hasBottomBand = hasElement ||
+        metaIcons.isNotEmpty ||
+        power != null ||
+        ownedLabel != null ||
+        footer != null;
+
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       curve: Curves.easeOut,
-      constraints: BoxConstraints(minHeight: minHeight),
+      // Fixed height matches catalog grid cells so the meta band pins bottom.
+      height: minHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(kRadiusMax),
         border: Border.all(color: borderColor, width: kFlapRuleThickness),
@@ -206,9 +275,9 @@ class NeonItemCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
-        fit: StackFit.passthrough,
+        fit: StackFit.expand,
         children: [
-          // Element corner bloom from official damage-type color.
+          // Element corner bloom (disc sits in the bottom meta band).
           if (el != null)
             Positioned.fill(
               child: IgnorePointer(
@@ -228,18 +297,6 @@ class NeonItemCard extends StatelessWidget {
                 ),
               ),
             ),
-          // Official damage-type icon (not mock Unicode).
-          if (element != null && element!.trim().isNotEmpty)
-            Positioned(
-              left: 5,
-              bottom: 5,
-              child: _ElementOfficialGlyph(
-                key: const Key('neon_card_element_glyph'),
-                element: element!,
-                visual: elVisual,
-                color: el ?? palette.muted,
-              ),
-            ),
           if (selected)
             Positioned(
               left: 0,
@@ -249,147 +306,120 @@ class NeonItemCard extends StatelessWidget {
               child: ColoredBox(color: palette.accent),
             ),
           Padding(
-            // Tight inset — density over airy mock padding.
-            padding: const EdgeInsets.fromLTRB(kSpace6, kSpace6, kSpace6, kSpace6),
+            padding: const EdgeInsets.fromLTRB(
+              kSpace6,
+              kSpace6,
+              kSpace6,
+              kSpace6,
+            ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (leading != null) ...[
-                      leading!,
-                      const SizedBox(width: kSpace6),
+                      // Fixed corner plate size (avoid FittedBox → parentDataDirty).
+                      SizedBox(width: 32, height: 32, child: leading!),
+                      const SizedBox(width: 4),
                     ],
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Name + rarity on one row (no wasted badge-only line).
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  name,
-                                  key: nameKey,
-                                  style: neonDisplay(
-                                    color: nameColor,
-                                    fontSize: 12,
-                                    letterSpacing: 0.03 * 12,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              _RarityBadge(rarity: rarity),
-                            ],
-                          ),
-                          if (typeLine != null && typeLine!.trim().isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 1),
-                              child: Text(
-                                typeLine!,
-                                key: metaKey,
-                                style: neonBody(
-                                  color: palette.muted,
-                                  fontSize: 11,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                        ],
+                      child: Text(
+                        name,
+                        key: nameKey,
+                        style: neonDisplay(
+                          color: nameColor,
+                          fontSize: 12,
+                          letterSpacing: 0.03 * 12,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    _RarityBadge(rarity: rarity),
+                  ],
+                ),
+                if (hasBottomBand) ...[
+                  const Spacer(),
+                  if (footer != null) ...[
+                    // Version chips (Base/Adept) — right-aligned above meta band.
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: footer!,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: kSpace6),
-                Container(
-                  // Room for larger element disc at BL.
-                  padding: const EdgeInsets.only(top: 5, left: 28),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: palette.line.withValues(alpha: 0.55),
-                        width: kFlapRuleThickness,
+                  // Bottom band: element disc + type/slot/ammo/frame + ×N.
+                  Container(
+                    padding: const EdgeInsets.only(top: 5),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: palette.line.withValues(alpha: 0.55),
+                          width: kFlapRuleThickness,
+                        ),
                       ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          key: const Key('neon_card_foot_icons'),
-                          children: [
-                            if (slot != null && slot!.isNotEmpty)
-                              _SlotLetterIcon(
-                                key: const Key('neon_card_slot_icon'),
-                                slot: slot!,
-                                color: _slotColor(palette, slot),
-                              ),
-                            if (ammoVisual != null) ...[
-                              const SizedBox(width: 4),
-                              _OfficialMetaIcon(
-                                key: const Key('neon_card_ammo_icon'),
-                                visual: ammoVisual,
-                                tooltip: '$ammo ammo',
-                                fallbackMark: neonAmmoGlyphMark(ammo),
-                              ),
-                            ] else if (ammo != null && ammo!.isNotEmpty) ...[
-                              const SizedBox(width: 4),
-                              _FallbackGlyphIcon(
-                                key: const Key('neon_card_ammo_icon'),
-                                mark: neonAmmoGlyphMark(ammo),
-                                tooltip: '$ammo ammo',
-                                color: palette.muted,
-                              ),
-                            ],
-                            if (frameVisual != null) ...[
-                              const SizedBox(width: 4),
-                              _OfficialMetaIcon(
-                                key: const Key('neon_card_frame_icon'),
-                                visual: frameVisual,
-                                tooltip: frame ?? 'Frame',
-                                fallbackMark: '◇',
-                              ),
-                            ] else if (frame != null && frame!.isNotEmpty) ...[
-                              const SizedBox(width: 4),
-                              _FallbackGlyphIcon(
-                                key: const Key('neon_card_frame_icon'),
-                                mark: '◇',
-                                tooltip: frame!,
-                                color: palette.muted,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (power != null)
-                        Text(
-                          key: const Key('neon_card_power'),
-                          'P$power',
-                          style: neonMono(
-                            color: palette.muted,
-                            fontSize: 10,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          // Horizontal scroll absorbs tight widths (phone
+                          // viewport / outline demos) without FittedBox —
+                          // FittedBox left parentDataDirty during semantics.
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              key: const Key('neon_card_foot_icons'),
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (hasElement) ...[
+                                  _ElementOfficialGlyph(
+                                    key: const Key('neon_card_element_glyph'),
+                                    element: element!,
+                                    visual: elVisual,
+                                    color: el ?? palette.muted,
+                                  ),
+                                  if (metaIcons.isNotEmpty)
+                                    const SizedBox(width: 6),
+                                ],
+                                for (var i = 0; i < metaIcons.length; i++) ...[
+                                  if (i > 0) const SizedBox(width: 3),
+                                  metaIcons[i],
+                                ],
+                              ],
+                            ),
                           ),
                         ),
-                      if (ownedLabel != null) ...[
-                        if (power != null) const SizedBox(width: 4),
-                        Text(
-                          ownedLabel!,
-                          key: ownedKey,
-                          style: neonMono(
-                            color: palette.accent,
-                            fontSize: 11,
+                        if (power != null) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            key: const Key('neon_card_power'),
+                            'P$power',
+                            style: neonMono(
+                              color: palette.muted,
+                              fontSize: 10,
+                            ),
                           ),
-                        ),
+                        ],
+                        if (ownedLabel != null) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            ownedLabel!,
+                            key: ownedKey,
+                            style: neonMono(
+                              color: palette.accent,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -397,17 +427,66 @@ class NeonItemCard extends StatelessWidget {
       ),
     );
 
-    if (onTap == null) return card;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(kRadiusMax),
-        focusColor: palette.accent.withValues(alpha: 0.12),
-        hoverColor: palette.surfaceRaised.withValues(alpha: 0.35),
-        child: card,
-      ),
+    // One semantic node per card (Windows AX). Nested Text / Tooltip / icon
+    // nodes reparent on select/scroll and thrash accessibility_bridge.
+    final a11y = _cardA11yLabel(
+      name: name,
+      typeLine: typeLine,
+      element: element,
+      slot: slot,
+      ammo: ammo,
+      frame: frame,
+      power: power,
+      ownedLabel: ownedLabel,
+      selected: selected,
     );
+
+    Widget body = card;
+    if (onTap != null) {
+      body = Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(kRadiusMax),
+          focusColor: palette.accent.withValues(alpha: 0.12),
+          hoverColor: palette.surfaceRaised.withValues(alpha: 0.35),
+          child: card,
+        ),
+      );
+    }
+
+    return Semantics(
+      button: onTap != null,
+      selected: selected,
+      label: a11y,
+      excludeSemantics: true,
+      child: body,
+    );
+  }
+
+  static String _cardA11yLabel({
+    required String name,
+    String? typeLine,
+    String? element,
+    String? slot,
+    String? ammo,
+    String? frame,
+    int? power,
+    String? ownedLabel,
+    required bool selected,
+  }) {
+    final parts = <String>[
+      name,
+      if (typeLine != null && typeLine.trim().isNotEmpty) typeLine.trim(),
+      if (element != null && element.trim().isNotEmpty) element.trim(),
+      if (slot != null && slot.trim().isNotEmpty) '$slot slot',
+      if (ammo != null && ammo.trim().isNotEmpty) '$ammo ammo',
+      if (frame != null && frame.trim().isNotEmpty) frame.trim(),
+      if (power != null) 'power $power',
+      if (ownedLabel != null && ownedLabel.trim().isNotEmpty) ownedLabel.trim(),
+      if (selected) 'selected',
+    ];
+    return parts.join(', ');
   }
 
   /// Slot letters are structure chrome (no stable official weapon-bucket icons).
@@ -426,7 +505,54 @@ class NeonItemCard extends StatelessWidget {
   }
 }
 
-/// Corner element disc with official damage-type PNG.
+/// Dense meta chip edge (fits ~120px foot with element + 4 icons + ×N).
+const double _kMetaChip = 16;
+const double _kElementDisc = 20;
+
+/// Weapon-type silhouette chip (meta row).
+class _TypeSilhouetteIcon extends StatelessWidget {
+  const _TypeSilhouetteIcon({
+    super.key,
+    required this.visual,
+    required this.tooltip,
+    this.fallbackMark,
+  });
+
+  final DestinyWeaponTypeVisual visual;
+  final String tooltip;
+  final String? fallbackMark;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    return Tooltip(
+      message: tooltip,
+      excludeFromSemantics: true,
+      child: ExcludeSemantics(
+        child: Container(
+          width: _kMetaChip,
+          height: _kMetaChip,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: palette.background.withValues(alpha: 0.6),
+            border: Border.all(
+              color: visual.color.withValues(alpha: 0.55),
+              width: kFlapRuleThickness,
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+          child: DestinyWeaponTypeIcon(
+            visual: visual,
+            size: 12,
+            fallbackMark: fallbackMark,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Element disc in the bottom meta band (+ bloom behind the card).
 class _ElementOfficialGlyph extends StatelessWidget {
   const _ElementOfficialGlyph({
     super.key,
@@ -441,42 +567,45 @@ class _ElementOfficialGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Hover-only; NeonItemCard owns the accessible name (Windows AX).
     return Tooltip(
       message: element,
-      child: Container(
-        width: 24,
-        height: 24,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.22),
-          border: Border.all(
-            color: color.withValues(alpha: 0.75),
-            width: kFlapRuleThickness,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.5),
-              blurRadius: 12,
+      excludeFromSemantics: true,
+      child: ExcludeSemantics(
+        child: Container(
+          width: _kElementDisc,
+          height: _kElementDisc,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.22),
+            border: Border.all(
+              color: color.withValues(alpha: 0.75),
+              width: kFlapRuleThickness,
             ),
-          ],
-        ),
-        // Tooltip owns a11y name — no nested Semantics on CDN image (Windows AX).
-        child: visual != null
-            ? DestinyOfficialIcon(
-                visual: visual!,
-                size: 16,
-                fallbackMark: neonElementGlyphMark(element),
-              )
-            : Text(
-                neonElementGlyphMark(element),
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1,
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.5),
+                blurRadius: 10,
               ),
+            ],
+          ),
+          child: visual != null
+              ? DestinyOfficialIcon(
+                  visual: visual!,
+                  size: 13,
+                  fallbackMark: neonElementGlyphMark(element),
+                )
+              : Text(
+                  neonElementGlyphMark(element),
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
       ),
     );
   }
@@ -497,25 +626,28 @@ class _OfficialMetaIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
+    // Hover-only; parent card owns a11y name (Windows AX).
     return Tooltip(
       message: tooltip,
-      child: Container(
-        width: 20,
-        height: 20,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: palette.background.withValues(alpha: 0.6),
-          border: Border.all(
-            color: visual.color.withValues(alpha: 0.55),
-            width: kFlapRuleThickness,
+      excludeFromSemantics: true,
+      child: ExcludeSemantics(
+        child: Container(
+          width: _kMetaChip,
+          height: _kMetaChip,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: palette.background.withValues(alpha: 0.6),
+            border: Border.all(
+              color: visual.color.withValues(alpha: 0.55),
+              width: kFlapRuleThickness,
+            ),
+            borderRadius: BorderRadius.circular(2),
           ),
-          borderRadius: BorderRadius.circular(2),
-        ),
-        // Tooltip owns a11y name — keep CDN image non-semantic.
-        child: DestinyOfficialIcon(
-          visual: visual,
-          size: 15,
-          fallbackMark: fallbackMark,
+          child: DestinyOfficialIcon(
+            visual: visual,
+            size: 12,
+            fallbackMark: fallbackMark,
+          ),
         ),
       ),
     );
@@ -557,27 +689,31 @@ class _FallbackGlyphIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
+    // Hover-only; parent card owns a11y name (Windows AX).
     return Tooltip(
       message: tooltip,
-      child: Container(
-        width: 20,
-        height: 20,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: palette.background.withValues(alpha: 0.6),
-          border: Border.all(
-            color: color.withValues(alpha: 0.45),
-            width: kFlapRuleThickness,
+      excludeFromSemantics: true,
+      child: ExcludeSemantics(
+        child: Container(
+          width: _kMetaChip,
+          height: _kMetaChip,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: palette.background.withValues(alpha: 0.6),
+            border: Border.all(
+              color: color.withValues(alpha: 0.45),
+              width: kFlapRuleThickness,
+            ),
+            borderRadius: BorderRadius.circular(2),
           ),
-          borderRadius: BorderRadius.circular(2),
-        ),
-        child: Text(
-          mark,
-          style: TextStyle(
-            fontSize: 11,
-            height: 1,
-            color: color,
-            fontWeight: FontWeight.w600,
+          child: Text(
+            mark,
+            style: TextStyle(
+              fontSize: 10,
+              height: 1,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

@@ -76,39 +76,46 @@ class _Segment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final minH = dense ? 32.0 : 40.0;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        key: option.key,
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(kRadiusMax),
-        focusColor: palette.accent.withValues(alpha: 0.14),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
-          constraints: BoxConstraints(minHeight: minH),
-          padding: EdgeInsets.symmetric(
-            horizontal: dense ? kSpace8 : 14,
-            vertical: dense ? 6 : 10,
-          ),
-          decoration: BoxDecoration(
-            color: selected
-                ? palette.accent.withValues(alpha: 0.10)
-                : palette.surface.withValues(alpha: 0.50),
-            borderRadius: BorderRadius.circular(kRadiusMax),
-            border: Border.all(
-              color: selected
-                  ? palette.accent.withValues(alpha: 0.35)
-                  : palette.line.withValues(alpha: 0.5),
-              width: kFlapRuleThickness,
+    // Single owner (Windows AX): InkWell + Text nest reparents on selection.
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: option.label,
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          key: option.key,
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(kRadiusMax),
+          focusColor: palette.accent.withValues(alpha: 0.14),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            constraints: BoxConstraints(minHeight: minH),
+            padding: EdgeInsets.symmetric(
+              horizontal: dense ? kSpace8 : 14,
+              vertical: dense ? 6 : 10,
             ),
-          ),
-          child: Text(
-            option.label.toUpperCase(),
-            style: neonMono(
-              color: selected ? palette.accent : palette.muted,
-              fontSize: 11,
-              letterSpacing: 1.0,
+            decoration: BoxDecoration(
+              color: selected
+                  ? palette.accent.withValues(alpha: 0.10)
+                  : palette.surface.withValues(alpha: 0.50),
+              borderRadius: BorderRadius.circular(kRadiusMax),
+              border: Border.all(
+                color: selected
+                    ? palette.accent.withValues(alpha: 0.35)
+                    : palette.line.withValues(alpha: 0.5),
+                width: kFlapRuleThickness,
+              ),
+            ),
+            child: Text(
+              option.label.toUpperCase(),
+              style: neonMono(
+                color: selected ? palette.accent : palette.muted,
+                fontSize: 11,
+                letterSpacing: 1.0,
+              ),
             ),
           ),
         ),

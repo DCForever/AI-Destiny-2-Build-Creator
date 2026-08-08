@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catalog · WeaponInstanceStrip — Mobile mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --rarity-legendary-edge: #c49ad4;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      /* residual-mobile uses 28; desktop SSoT for host remains 26 — mobile optional density */
+      --chip-h: 32px;
+      --phone-w: 390px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #03030a;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 0;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      width: 100%;
+      max-width: 480px;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .pill.ok { border-color: rgba(46, 230, 166, 0.4); color: var(--success); }
+
+    .phone-shell {
+      width: min(100%, var(--phone-w));
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      max-height: calc(100vh - 140px);
+    }
+    @media (min-height: 700px) {
+      .phone-shell { max-height: 720px; margin: 12px 0; border-radius: 12px; border: 1px solid var(--line-strong); overflow: hidden; }
+    }
+
+    .phone-scroll {
+      flex: 1;
+      overflow: auto;
+      padding: 14px 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .frame-caption {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .frame-caption strong { color: var(--muted); font-weight: 500; }
+
+    .detail-frame {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .detail-header { padding: 12px; }
+    .header-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .header-icon {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: var(--raised);
+      border: 1px solid var(--rarity-legendary-edge);
+      border-radius: var(--radius);
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .hero-name {
+      margin: 0 0 6px;
+      font-family: var(--font-d);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+    .meta-stub { display: flex; gap: 4px; }
+    .meta-chip {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .detail-body-stub {
+      padding: 10px 12px 12px;
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+      font-size: 10px;
+      border-top: 1px dashed rgba(232, 238, 242, 0.1);
+    }
+
+    /* Target strip — multi-row wrap (prefer wrap over H-scroll) */
+    .instance-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 6px;
+      max-width: 100%;
+      padding-bottom: 4px;
+    }
+    .instance-strip .label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-right: 2px;
+      flex-shrink: 0;
+    }
+    .inst-chip {
+      height: var(--chip-h);
+      padding: 0 11px 0 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--raised);
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      min-height: 32px;
+      transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .inst-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 3px 0 0 var(--accent);
+      border-color: rgba(0, 229, 255, 0.5);
+    }
+    .inst-chip .seg {
+      display: inline-flex;
+      align-items: center;
+    }
+    .inst-chip .sep {
+      width: 1px;
+      height: 15px;
+      margin: 0 7px;
+      background: rgba(232, 238, 242, 0.18);
+      flex-shrink: 0;
+    }
+    .inst-chip[aria-pressed="true"] .sep {
+      background: rgba(0, 229, 255, 0.35);
+    }
+    .inst-chip .pw {
+      color: var(--fg);
+      font-weight: 600;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+      min-width: 2.2ch;
+    }
+    .inst-chip .tier {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.85rem;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 1px;
+      font-size: 11px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      color: var(--fg);
+      background: rgba(125, 211, 224, 0.12);
+      border: 1px solid rgba(125, 211, 224, 0.28);
+    }
+    .inst-chip[aria-pressed="true"] .tier {
+      background: rgba(0, 229, 255, 0.16);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .inst-chip .tier[data-t="1"] { opacity: 0.75; }
+    .inst-chip .tier[data-t="2"] { opacity: 0.85; }
+    .inst-chip .tier[data-t="3"] { opacity: 0.92; }
+    .inst-chip .tier[data-t="4"],
+    .inst-chip .tier[data-t="5"] { opacity: 1; }
+    .inst-chip .special {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: 1px;
+      line-height: 1.2;
+    }
+    .inst-chip .special[data-kind="adept"] {
+      color: #f0d78c;
+      background: rgba(245, 197, 66, 0.12);
+      border: 1px solid rgba(245, 197, 66, 0.4);
+    }
+    .inst-chip .special[data-kind="holofoil"] {
+      color: #e0b8f0;
+      background: rgba(196, 154, 212, 0.14);
+      border: 1px solid rgba(196, 154, 212, 0.45);
+    }
+    .inst-chip .special[data-kind="other"] {
+      color: var(--muted);
+      background: rgba(125, 211, 224, 0.1);
+      border: 1px solid rgba(125, 211, 224, 0.28);
+    }
+    .inst-chip[aria-pressed="true"] .special[data-kind="adept"] {
+      background: rgba(245, 197, 66, 0.2);
+      border-color: rgba(245, 197, 66, 0.55);
+    }
+    .inst-chip[aria-pressed="true"] .special[data-kind="holofoil"] {
+      background: rgba(196, 154, 212, 0.22);
+      border-color: rgba(196, 154, 212, 0.55);
+    }
+
+    .inst-note {
+      font-size: 11px;
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+      line-height: 1.4;
+    }
+    .inst-empty {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .live-bar {
+      flex: 0 0 auto;
+      width: min(100%, var(--phone-w));
+      padding: 8px 12px 12px;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: pre-wrap;
+    }
+    .live-bar .k { color: var(--muted-dim); }
+    .live-bar .v { color: var(--accent); }
+
+    .standalone-strip {
+      width: 100%;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .standalone-strip .instance-strip { margin-top: 0; }
+
+    .knobs-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .knobs-panel h3 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .knob-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .knob-row label { flex: 1 1 100%; color: var(--muted-dim); font-size: 10px; }
+    .knob-row input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+    .knob-row .val { min-width: 40px; text-align: right; color: var(--fg); }
+    .toggle-btn {
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .toggle-btn[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.35);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+
+    .compare-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: var(--surface);
+      margin-bottom: 8px;
+    }
+    .compare-card .tag {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .compare-card.ship .tag { color: var(--warn); }
+    .compare-card.target .tag { color: var(--success); }
+    .compare-card p {
+      margin: 0;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+    .fake-choice-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .fake-choice {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 16px;
+      background: rgba(125, 211, 224, 0.12);
+      color: var(--muted);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .fake-choice.sel {
+      background: rgba(0, 229, 255, 0.28);
+      color: var(--fg);
+    }
+
+    .a11y-hint {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      border-left: 2px solid var(--accent);
+      padding: 4px 0 4px 10px;
+    }
+
+    .note-density {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      padding: 8px 10px;
+      background: rgba(0, 229, 255, 0.05);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      border-radius: var(--radius);
+    }
+  </style>
+</head>
+<body>
+  <header class="mock-bar" role="banner">
+    <h1>WeaponInstanceStrip · Mobile</h1>
+    <span class="meta">power + T{n} + special · e.g. 335 T3 Adept · wrap multi-row · chip h=32</span>
+    <label class="scenario-label" for="scenario">Scenario</label>
+    <select class="scenario-select" id="scenario">
+      <option value="empty">Empty · No local copies</option>
+      <option value="single">Single copy · selected default</option>
+      <option value="multi" selected>Multi-PL 3 · power-desc + highest</option>
+      <option value="special-adept">Special · Adept copies</option>
+      <option value="special-holofoil">Special · Holofoil + base</option>
+      <option value="multi-pl-fixture">Fixed · 450 T5 Adept / 445 T4 / 335 T3 Adept</option>
+      <option value="overflow">Multi-PL 8 · wrap to multiple rows</option>
+      <option value="select-lower">Select lower PL (tap)</option>
+      <option value="parent-unowned">Parent unowned · strip not mounted</option>
+      <option value="parent-empty">Parent owned empty edge</option>
+      <option value="keyboard">Focus ring · a11y</option>
+      <option value="knobs">Widgetbook All knobs · live</option>
+      <option value="dual-truth">Dual-truth · ChoiceChip vs Flap</option>
+    </select>
+    <div class="pills">
+      <span class="pill ok">BR-CAT-016</span>
+      <span class="pill">flex-wrap · multi-row</span>
+      <span class="pill">desktop 26 SSoT host</span>
+    </div>
+  </header>
+
+  <div class="phone-shell">
+    <div class="phone-scroll" id="main"></div>
+  </div>
+  <div class="live-bar" id="live-log" aria-live="polite">—</div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const main = document.getElementById("main");
+      const liveLog = document.getElementById("live-log");
+      const scenarioEl = document.getElementById("scenario");
+
+      /** @typedef {{ id: string, power: number, tier?: number, special?: string }} Inst */
+
+      const FIXED_FIXTURE = /** @type {Inst[]} */ ([
+        { id: "i-high", power: 450, tier: 5, special: "Adept" },
+        { id: "i-mid", power: 445, tier: 4 },
+        { id: "i-low", power: 335, tier: 3, special: "Adept" },
+      ]);
+
+      const knobs = {
+        empty: false,
+        count: 3,
+        highest: 450,
+        step: 10,
+        baseTier: 5,
+        highestSpecial: "Adept",
+      };
+
+      let state = { selectedId: null, instances: [], mode: "multi" };
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function powerDesc(list) {
+        return list.slice().sort((a, b) => b.power - a.power);
+      }
+
+      function defaultHighestId(list) {
+        if (!list.length) return null;
+        return powerDesc(list)[0].id;
+      }
+
+      function buildFromKnobs() {
+        if (knobs.empty) return [];
+        const out = [];
+        for (let i = 0; i < knobs.count; i++) {
+          const power = knobs.highest - i * knobs.step;
+          const tier = Math.max(1, Math.min(5, (knobs.baseTier || 5) - i));
+          out.push({
+            id: "k-" + i,
+            power,
+            tier,
+            special: i === 0 ? knobs.highestSpecial || undefined : undefined,
+          });
+        }
+        return out;
+      }
+
+      function chipLabel(inst) {
+        // Canonical: "{power} T{tier} {special?}" e.g. "335 T3 Adept"
+        const parts = [String(inst.power)];
+        if (inst.tier != null && inst.tier >= 1 && inst.tier <= 5) {
+          parts.push("T" + inst.tier);
+        }
+        if (inst.special) parts.push(inst.special);
+        return parts.join(" ");
+      }
+
+      function titleFor(inst) {
+        return chipLabel(inst);
+      }
+
+      function ariaName(inst) {
+        let n = "Power " + inst.power;
+        if (inst.tier != null) n += ", tier " + inst.tier;
+        if (inst.special) n += ", " + inst.special;
+        return n;
+      }
+
+      function specialKind(special) {
+        if (!special) return "other";
+        const s = String(special).toLowerCase();
+        if (s === "adept") return "adept";
+        if (s === "holofoil") return "holofoil";
+        return "other";
+      }
+
+      function chipInnerHtml(inst) {
+        const parts = [];
+        parts.push(
+          `<span class="seg"><span class="pw">${escapeHtml(String(inst.power))}</span></span>`
+        );
+        if (inst.tier != null && inst.tier >= 1 && inst.tier <= 5) {
+          parts.push(`<span class="sep" aria-hidden="true"></span>`);
+          parts.push(
+            `<span class="seg"><span class="tier" data-t="${inst.tier}">T${inst.tier}</span></span>`
+          );
+        }
+        if (inst.special) {
+          parts.push(`<span class="sep" aria-hidden="true"></span>`);
+          parts.push(
+            `<span class="seg"><span class="special" data-kind="${specialKind(inst.special)}">${escapeHtml(inst.special)}</span></span>`
+          );
+        }
+        return parts.join("");
+      }
+
+      function renderStrip(instances, selectedId) {
+        if (!instances.length) {
+          return `<div class="inst-empty" data-key="weapon_instance_strip_empty">No local copies</div>`;
+        }
+        const ordered = powerDesc(instances);
+        const chips = ordered
+          .map((inst) => {
+            const pressed = selectedId === inst.id;
+            return `<button type="button" class="inst-chip"
+              data-key="instance_chip_${escapeHtml(inst.id)}"
+              data-inst="${escapeHtml(inst.id)}"
+              aria-pressed="${pressed ? "true" : "false"}"
+              aria-label="${escapeHtml(ariaName(inst))}"
+              title="${escapeHtml(titleFor(inst))}">
+              ${chipInnerHtml(inst)}
+            </button>`;
+          })
+          .join("");
+        return `<div class="instance-strip" data-key="weapon_instance_strip" role="listbox" aria-label="Owned instances">
+          <span class="label">Instances</span>${chips}
+        </div>`;
+      }
+
+      function thinFrame(stripHtml, bodyNote) {
+        return `
+          <div class="detail-frame" aria-label="Weapon detail (strip focus)">
+            <div class="detail-header">
+              <div class="header-row">
+                <div class="header-icon" aria-hidden="true">⚔</div>
+                <div>
+                  <h2 class="hero-name">Midnight Coup</h2>
+                  <div class="meta-stub" aria-hidden="true">
+                    <span class="meta-chip">HC</span>
+                    <span class="meta-chip">Kin</span>
+                    <span class="meta-chip">×3</span>
+                  </div>
+                </div>
+              </div>
+              ${stripHtml}
+            </div>
+            <div class="detail-body-stub">${bodyNote || "Perk grid omitted · non-goal."}</div>
+          </div>`;
+      }
+
+      function updateLog() {
+        const ordered = powerDesc(state.instances);
+        const sel = ordered.find((i) => i.id === state.selectedId);
+        liveLog.innerHTML =
+          `<span class="k">mode</span> <span class="v">${escapeHtml(state.mode)}</span>  ` +
+          `<span class="k">n</span> <span class="v">${state.instances.length}</span>\n` +
+          `<span class="k">order</span> <span class="v">${escapeHtml(ordered.map((i) => i.power).join("→") || "—")}</span>\n` +
+          `<span class="k">selected</span> <span class="v">${sel ? "PL " + sel.power + " (" + sel.id + ")" : "null"}</span>`;
+      }
+
+      function bindStripClicks(root) {
+        root.querySelectorAll(".inst-chip").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-inst");
+            if (!id) return;
+            state.selectedId = id;
+            root.querySelectorAll(".inst-chip").forEach((b) => {
+              b.setAttribute("aria-pressed", b.getAttribute("data-inst") === id ? "true" : "false");
+            });
+            updateLog();
+          });
+        });
+      }
+
+      function knobsHtml() {
+        return `
+          <div class="knobs-panel" id="knobs-panel">
+            <h3>Widgetbook knobs</h3>
+            <div class="knob-row">
+              <label>Empty (no copies)</label>
+              <button type="button" class="toggle-btn" id="k-empty" aria-pressed="${knobs.empty}">${knobs.empty ? "Empty on" : "Empty off"}</button>
+            </div>
+            <div class="knob-row">
+              <label for="k-count">Copy count 1–8</label>
+              <input type="range" id="k-count" min="1" max="8" value="${knobs.count}" />
+              <span class="val" id="k-count-v">${knobs.count}</span>
+            </div>
+            <div class="knob-row">
+              <label for="k-hi">Highest power</label>
+              <input type="range" id="k-hi" min="1600" max="2020" value="${knobs.highest}" />
+              <span class="val" id="k-hi-v">${knobs.highest}</span>
+            </div>
+            <div class="knob-row">
+              <label for="k-step">Power step</label>
+              <input type="range" id="k-step" min="0" max="50" value="${knobs.step}" />
+              <span class="val" id="k-step-v">${knobs.step}</span>
+            </div>
+            <div class="knob-row">
+          </div>`;
+      }
+
+      function scenarioConfig(id) {
+        switch (id) {
+          case "empty":
+            return { instances: [], selectedId: null, mount: "standalone", caption: "Empty honesty · No local copies" };
+          case "single":
+            return { instances: [{ id: "only", power: 335, tier: 3, special: "Adept" }], selectedId: "only", mount: "frame", caption: "Single · 335 T3 Adept" };
+          case "multi":
+            return {
+              instances: [
+                { id: "a", power: 335, tier: 3, special: "Adept" },
+                { id: "b", power: 450, tier: 5 },
+                { id: "c", power: 445, tier: 4, special: "Holofoil" },
+              ],
+              selectedId: null,
+              mount: "frame",
+              caption: "Power-desc re-sort · highest default",
+            };
+          case "special-adept":
+            return {
+              instances: [
+                { id: "hi", power: 450, tier: 5, special: "Adept" },
+                { id: "mid", power: 445, tier: 4 },
+                { id: "lo", power: 430, tier: 3 },
+              ],
+              selectedId: null,
+              mount: "frame",
+              caption: "Adept specialness · e.g. 450 T5 Adept",
+            };
+          case "special-holofoil":
+            return {
+              instances: [
+                { id: "hi", power: 450, tier: 5 },
+                { id: "mid", power: 440, tier: 4, special: "Holofoil" },
+                { id: "lo", power: 335, tier: 2 },
+              ],
+              selectedId: null,
+              mount: "frame",
+              caption: "Holofoil mixed with base · power-desc",
+            };
+          case "multi-pl-fixture":
+            return {
+              instances: FIXED_FIXTURE.slice(),
+              selectedId: null,
+              mount: "frame",
+              caption: "Fixed fixture · 450 T5 Adept / 445 T4 / 335 T3 Adept",
+            };
+          case "overflow": {
+            const list = [];
+            for (let i = 0; i < 8; i++) {
+              list.push({
+                id: "o" + i,
+                power: 450 - i * 5,
+                tier: Math.max(1, 5 - Math.floor(i / 2)),
+                special: i === 0 ? "Adept" : i === 3 ? "Holofoil" : undefined,
+              });
+            }
+            return { instances: list, selectedId: null, mount: "frame", caption: "×8 chips · wrap to multiple rows" };
+          }
+          case "select-lower":
+            return {
+              instances: FIXED_FIXTURE.slice(),
+              selectedId: "i-high",
+              mount: "frame",
+              caption: "Tap lower PL · chrome moves",
+              hint: "Tap PL 1790 — order stays power-desc.",
+            };
+          case "parent-unowned":
+            return {
+              instances: [],
+              selectedId: null,
+              mount: "unowned",
+              caption: "Unowned · strip not mounted",
+              note: "No local copies — showing possible rolls from definition",
+            };
+          case "parent-empty":
+            return { instances: [], selectedId: null, mount: "frame", caption: "Owned empty edge · short empty" };
+          case "keyboard":
+            return {
+              instances: FIXED_FIXTURE.slice(),
+              selectedId: null,
+              mount: "frame",
+              caption: "focus-visible ring · aria-pressed",
+              hint: "External keyboard: Tab into chips, Space selects.",
+            };
+          case "knobs":
+            return { instances: buildFromKnobs(), selectedId: null, mount: "knobs", caption: "All knobs · instance strip" };
+          case "dual-truth":
+            return { instances: FIXED_FIXTURE.slice(), selectedId: null, mount: "dual", caption: "Ship ChoiceChip vs Flap target" };
+          default:
+            return scenarioConfig("multi");
+        }
+      }
+
+      function wireKnobs() {
+        const emptyBtn = document.getElementById("k-empty");
+        if (!emptyBtn) return;
+
+        function toggle(btn, key, onL, offL) {
+          btn.addEventListener("click", () => {
+            knobs[key] = !knobs[key];
+            btn.setAttribute("aria-pressed", String(knobs[key]));
+            btn.textContent = knobs[key] ? onL : offL;
+            render();
+          });
+        }
+        toggle(emptyBtn, "empty", "Empty on", "Empty off");
+
+        function range(id, key, valId) {
+          const el = document.getElementById(id);
+          const val = document.getElementById(valId);
+          if (!el) return;
+          el.addEventListener("input", () => {
+            knobs[key] = Number(el.value);
+            val.textContent = String(knobs[key]);
+            render();
+          });
+        }
+        range("k-count", "count", "k-count-v");
+        range("k-hi", "highest", "k-hi-v");
+        range("k-step", "step", "k-step-v");
+      }
+
+      function render() {
+        const id = scenarioEl.value;
+        state.mode = id;
+        const cfg = scenarioConfig(id);
+        let instances = id === "knobs" ? buildFromKnobs() : cfg.instances;
+        state.instances = instances;
+        state.selectedId =
+          cfg.selectedId !== undefined && cfg.selectedId !== null
+            ? cfg.selectedId
+            : defaultHighestId(instances);
+
+        let html = `<p class="frame-caption">${escapeHtml(cfg.caption || "")}</p>`;
+        if (id !== "knobs") {
+          html += `<p class="note-density">Mobile chip h=28 / pad 0 10 (residual-mobile). Windows host SSoT remains desktop 26 unless shared density token justified.</p>`;
+        }
+        if (cfg.hint) {
+          html += `<p class="a11y-hint">${escapeHtml(cfg.hint)}</p>`;
+        }
+
+        if (cfg.mount === "unowned") {
+          html += thinFrame(
+            `<div class="instance-strip" role="status"><span class="inst-note">${escapeHtml(cfg.note)}</span></div>`,
+            "<em>Strip not mounted</em> — longer definition empty line only."
+          );
+        } else if (cfg.mount === "standalone") {
+          html += `<div class="standalone-strip">${renderStrip(instances, state.selectedId)}</div>`;
+        } else if (cfg.mount === "knobs") {
+          html += knobsHtml();
+          html += `<div class="standalone-strip" style="margin-top:10px">${renderStrip(instances, state.selectedId)}</div>`;
+        } else if (cfg.mount === "dual") {
+          html += `
+            <div class="compare-card ship">
+              <span class="tag">Ship · ChoiceChip-like</span>
+              <p>Material density / selected fill / flat PL. No tier/special. No inset accent bar.</p>
+              <div class="fake-choice-row">
+                ${powerDesc(instances)
+                  .map(
+                    (i) =>
+                      `<span class="fake-choice ${state.selectedId === i.id ? "sel" : ""}">${escapeHtml(chipLabel(i))}</span>`
+                  )
+                  .join("")}
+              </div>
+            </div>
+            <div class="compare-card target">
+              <span class="tag">Target · Flap .inst-chip</span>
+              <p>Line border · accent-wash · inset accent bar · power | tier | special · wrap multi-row.</p>
+              <div class="standalone-strip" style="margin-top:8px;padding:0;border:0;background:transparent">
+                ${renderStrip(instances, state.selectedId)}
+              </div>
+            </div>`;
+        } else {
+          html += thinFrame(renderStrip(instances, state.selectedId), cfg.body);
+        }
+
+        main.innerHTML = html;
+        bindStripClicks(main);
+        if (cfg.mount === "knobs") wireKnobs();
+        updateLog();
+      }
+
+      scenarioEl.addEventListener("change", render);
+      render();
+    })();
+  </script>
+</body>
+</html>

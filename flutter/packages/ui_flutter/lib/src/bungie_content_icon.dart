@@ -1,17 +1,22 @@
-/// Network image for Bungie CDN content paths (entity / damage / ammo icons).
+/// Network / package-asset image for Bungie CDN content paths.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'bungie_content_assets.dart';
 import 'destiny_official_icons.dart';
 
 /// Renders a relative Bungie path or absolute URL as a compact icon.
 ///
-/// On failure (offline tests, 404), shows [fallback] or a neutral box.
+/// Resolution order:
+/// 1. Package asset when the CDN basename ships under [kBungieContentAssetDir]
+///    (offline Widgetbook / hosts without network)
+/// 2. [Image.network] against bungie.net
+/// 3. [fallback] or a neutral box
 ///
-/// **Accessibility:** [Image.network] load/error swaps thrash the Windows AX
-/// tree if each phase is a semantic node. The image subtree is always
+/// **Accessibility:** image load/error swaps thrash the Windows AX tree if
+/// each phase is a semantic node. The image subtree is always
 /// [ExcludeSemantics]; optional [semanticLabel] is a single stable wrapper.
 class BungieContentIcon extends StatelessWidget {
   const BungieContentIcon({
@@ -21,6 +26,7 @@ class BungieContentIcon extends StatelessWidget {
     this.color,
     this.fallback,
     this.semanticLabel,
+    this.preferNetwork = false,
   });
 
   /// Relative `/common/…` path or absolute `https://www.bungie.net/…` URL.
@@ -35,6 +41,9 @@ class BungieContentIcon extends StatelessWidget {
   /// dense grids and omit this to avoid duplicate AX nodes.
   final String? semanticLabel;
 
+  /// When true, skip package assets and load CDN only (debug / refresh check).
+  final bool preferNetwork;
+
   static String? resolveUrl(String? pathOrUrl) {
     if (pathOrUrl == null || pathOrUrl.trim().isEmpty) return null;
     final t = pathOrUrl.trim();
@@ -46,6 +55,8 @@ class BungieContentIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = resolveUrl(pathOrUrl);
+    final packageAsset =
+        preferNetwork ? null : bungieContentPackageAsset(pathOrUrl);
     final fallbackChild = fallback ??
         SizedBox(
           width: size,
@@ -59,32 +70,33 @@ class BungieContentIcon extends StatelessWidget {
         );
 
     Widget content;
-    if (url == null) {
-      content = fallbackChild;
-    } else {
-      content = Image.network(
-        url,
+    if (packageAsset != null) {
+      content = Image.asset(
+        packageAsset,
+        package: kDestiny2UiFlutterPackage,
         width: size,
         height: size,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
         gaplessPlayback: true,
-        errorBuilder: (_, __, ___) => fallbackChild,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return SizedBox(
-            width: size,
-            height: size,
-            child: fallbackChild,
-          );
+        excludeFromSemantics: true,
+        errorBuilder: (_, __, ___) {
+          // Asset listed but missing at runtime — try network, then fallback.
+          if (url == null) return fallbackChild;
+          return _networkImage(url, fallbackChild);
         },
       );
-      if (color != null) {
-        content = ColorFiltered(
-          colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
-          child: content,
-        );
-      }
+    } else if (url != null) {
+      content = _networkImage(url, fallbackChild);
+    } else {
+      content = fallbackChild;
+    }
+
+    if (color != null) {
+      content = ColorFiltered(
+        colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
+        child: content,
+      );
     }
 
     // Exclude image load/error child swaps from the AX tree (Windows bridge).
@@ -101,6 +113,27 @@ class BungieContentIcon extends StatelessWidget {
       label: label,
       image: true,
       child: boxed,
+    );
+  }
+
+  Widget _networkImage(String url, Widget fallbackChild) {
+    return Image.network(
+      url,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      gaplessPlayback: true,
+      excludeFromSemantics: true,
+      errorBuilder: (_, __, ___) => fallbackChild,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return SizedBox(
+          width: size,
+          height: size,
+          child: fallbackChild,
+        );
+      },
     );
   }
 }

@@ -114,6 +114,13 @@ const List<EnsureStepInfo> ensureStepCatalog = [
         'ADD subclass_kit TEXT DEFAULT \'{}\'; seed kit pieces from builds.subclass '
         '(pkg-variant-subclass-kit / DBR-SUB-003)',
   ),
+  EnsureStepInfo(
+    id: 'weapon_roll_targets',
+    productFunction: 'ensureWeaponRollTargetsTables',
+    targetTable: 'weapon_roll_targets',
+    description:
+        'CREATE weapon_roll_targets + weapon_roll_target_active (DART-073 / DBR-IDL-*)',
+  ),
 ];
 
 /// Expected step ids (for tests / completeness checks).
@@ -130,4 +137,5 @@ const List<String> expectedEnsureStepIds = [
   'build_synergy_types',
   'synergy_link_required',
   'variant_subclass_kit',
+  'weapon_roll_targets',
 ];

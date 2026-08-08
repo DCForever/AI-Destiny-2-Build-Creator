@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catalog · CatalogRollTargets — Mobile mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --rarity-legendary-edge: #c49ad4;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --chip-h: 32px;
+      --phone-w: 390px;
+      --hit: 44px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #03030a;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      width: 100%;
+      max-width: 480px;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      width: 100%;
+      height: 40px;
+      min-height: var(--hit);
+      padding: 0 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .pill.ok { border-color: rgba(46, 230, 166, 0.4); color: var(--success); }
+    .pill.rule { border-color: rgba(0, 229, 255, 0.3); color: var(--accent); }
+
+    .phone-shell {
+      width: min(100%, var(--phone-w));
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      max-height: calc(100vh - 160px);
+    }
+    @media (min-height: 700px) {
+      .phone-shell {
+        max-height: 740px;
+        margin: 12px 0;
+        border-radius: 12px;
+        border: 1px solid var(--line-strong);
+        overflow: hidden;
+      }
+    }
+
+    .phone-scroll {
+      flex: 1;
+      overflow: auto;
+      padding: 14px 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .frame-caption {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .frame-caption strong { color: var(--muted); font-weight: 500; }
+
+    .detail-frame {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .detail-header {
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .header-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .header-icon {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: var(--raised);
+      border: 1px solid var(--rarity-legendary-edge);
+      border-radius: var(--radius);
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .header-stack { min-width: 0; flex: 1; }
+    .hero-name {
+      margin: 0 0 6px;
+      font-family: var(--font-d);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--fg);
+    }
+    .meta-stub { display: flex; gap: 4px; flex-wrap: wrap; }
+    .meta-chip {
+      width: 22px; height: 22px;
+      display: grid; place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+
+    /* Roll target switcher — full width mobile */
+    .roll-target-bar {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rt-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .rt-switch {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      gap: 6px;
+      width: 100%;
+    }
+    .rt-opt {
+      min-height: var(--hit);
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--raised);
+    }
+    .rt-opt[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.5);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .rt-opt.is-off[aria-pressed="true"] {
+      box-shadow: inset 0 -2px 0 var(--muted-dim);
+      border-color: var(--line-strong);
+      background: rgba(125, 211, 224, 0.08);
+    }
+    .rt-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+    }
+    .rt-btn {
+      min-height: var(--hit);
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .rt-btn.primary {
+      border-color: rgba(0, 229, 255, 0.4);
+      color: var(--accent);
+      background: var(--accent-wash);
+    }
+    .rt-btn.primary[aria-pressed="true"] {
+      color: var(--fg);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .rt-btn.danger { color: var(--muted); }
+    .rt-btn.span2 { grid-column: span 2; }
+    .rt-rename {
+      width: 100%;
+      min-height: var(--hit);
+      padding: 0 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 13px;
+      color: var(--fg);
+    }
+    .rt-empty-hint {
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted-dim);
+      min-height: var(--hit);
+      display: flex;
+      align-items: center;
+    }
+
+    /* Sticky editor mode bar (mobile nice-to-have) */
+    .editor-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(10, 10, 24, 0.96);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--line);
+      margin: 0 -12px;
+      padding: 8px 12px;
+    }
+
+    /* Instance strip — 002 language + dual segs wrap */
+    .instance-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+    }
+    .instance-strip .label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      flex: 1 1 100%;
+    }
+    .inst-rank-note {
+      flex: 1 1 100%;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin: 0 0 2px;
+    }
+    .inst-rank-note strong { color: var(--accent); font-weight: 500; }
+    .inst-chip {
+      min-height: var(--chip-h);
+      height: auto;
+      padding: 4px 10px 4px 9px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--raised);
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+      max-width: 100%;
+    }
+    .inst-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 3px 0 0 var(--accent);
+      border-color: rgba(0, 229, 255, 0.5);
+    }
+    .inst-chip.perfect-pulse[aria-pressed="true"] {
+      animation: perfect-glow 1.8s ease-in-out infinite;
+    }
+    @keyframes perfect-glow {
+      0%, 100% { box-shadow: inset 3px 0 0 var(--accent), 0 0 0 0 rgba(46, 230, 166, 0); }
+      50% { box-shadow: inset 3px 0 0 var(--success), 0 0 10px 1px rgba(46, 230, 166, 0.22); }
+    }
+    .inst-chip .seg { display: inline-flex; align-items: center; }
+    .inst-chip .sep {
+      width: 1px;
+      height: 14px;
+      margin: 0 6px;
+      background: rgba(232, 238, 242, 0.18);
+      flex-shrink: 0;
+    }
+    .inst-chip[aria-pressed="true"] .sep {
+      background: rgba(0, 229, 255, 0.35);
+    }
+    .inst-chip .pw {
+      color: var(--fg);
+      font-weight: 600;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .inst-chip .tier {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.75rem;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 1px;
+      font-size: 11px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--fg);
+      background: rgba(125, 211, 224, 0.12);
+      border: 1px solid rgba(125, 211, 224, 0.28);
+    }
+    .inst-chip .special {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 1px;
+    }
+    .inst-chip .special[data-kind="adept"] {
+      color: #f0d78c;
+      background: rgba(245, 197, 66, 0.12);
+      border: 1px solid rgba(245, 197, 66, 0.4);
+    }
+    .inst-chip .special[data-kind="holofoil"] {
+      color: #e0b8f0;
+      background: rgba(196, 154, 212, 0.14);
+      border: 1px solid rgba(196, 154, 212, 0.45);
+    }
+    .inst-chip .score-pref {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .inst-chip .score-pref.perfect {
+      color: var(--success);
+      text-shadow: 0 0 8px rgba(46, 230, 166, 0.35);
+    }
+    .inst-chip .score-pref.partial { color: var(--fg); }
+    .inst-chip .score-pref.miss { color: var(--muted-dim); }
+    .inst-chip .score-avoid {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 1px;
+    }
+    .inst-chip .score-avoid.clear {
+      color: var(--muted-dim);
+      border: 1px solid rgba(125, 211, 224, 0.15);
+    }
+    .inst-chip .score-avoid.hit {
+      color: #ffb3c0;
+      background: rgba(255, 0, 60, 0.12);
+      border: 1px solid rgba(255, 0, 60, 0.4);
+    }
+    .inst-chip .score-avoid.hit.warn-only {
+      color: #f5d98a;
+      background: rgba(245, 197, 66, 0.12);
+      border-color: rgba(245, 197, 66, 0.4);
+    }
+    .inst-empty {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: var(--hit);
+      display: flex;
+      align-items: center;
+    }
+
+    .detail-body { padding: 12px; }
+    .editor-mode-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .editor-mode-bar .title {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      flex: 1 1 auto;
+    }
+    .editor-mode-bar .sub {
+      flex: 1 1 100%;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .legend-swatch {
+      width: 12px; height: 12px;
+      border-radius: 1px;
+      border: 1px solid var(--line);
+    }
+    .legend-swatch.want {
+      background: rgba(46, 230, 166, 0.25);
+      border-color: rgba(46, 230, 166, 0.55);
+    }
+    .legend-swatch.avoid {
+      background: rgba(255, 0, 60, 0.2);
+      border-color: rgba(255, 0, 60, 0.5);
+    }
+    .legend-swatch.off {
+      background: transparent;
+      border-style: dashed;
+    }
+
+    .soft-error {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255, 0, 60, 0.4);
+      border-radius: var(--radius);
+      background: rgba(255, 0, 60, 0.08);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: #ffb3c0;
+      line-height: 1.4;
+    }
+    .soft-error .code {
+      color: var(--danger);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .soft-error strong { color: var(--fg); font-weight: 500; }
+
+    .perk-scroll { width: 100%; overflow-x: hidden; }
+    .perk-grid-cols {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 4px;
+      width: 100%;
+      min-width: 0;
+    }
+    .perk-col {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .perk-col.has-overlap .perk-col-label { color: var(--danger); }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 2px;
+      width: 100%;
+      min-height: 52px;
+      margin-bottom: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+    .perk-cell > * {
+      position: relative;
+      z-index: 1;
+    }
+    /* View mode only: soft diagonal wash behind icon (lower-right → upper-left) */
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="want"]::before,
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="avoid"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: var(--radius);
+    }
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="want"]::before {
+      background: linear-gradient(
+        to top left,
+        rgba(46, 230, 166, 0.26) 0%,
+        rgba(46, 230, 166, 0.12) 28%,
+        rgba(46, 230, 166, 0.05) 52%,
+        transparent 78%
+      );
+    }
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="avoid"]::before {
+      background: linear-gradient(
+        to top left,
+        rgba(255, 0, 60, 0.24) 0%,
+        rgba(255, 0, 60, 0.11) 28%,
+        rgba(255, 0, 60, 0.04) 52%,
+        transparent 78%
+      );
+    }
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="want"] .ico,
+    .perk-grid-cols:not(.editing) .perk-cell[data-target="avoid"] .ico {
+      z-index: 1;
+      position: relative;
+    }
+    .perk-cell .ico {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .perk-cell .cap {
+      max-width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.2;
+    }
+    .perk-cell.selected {
+      background: rgba(0, 120, 212, 0.18);
+      border-color: rgba(80, 160, 255, 0.65);
+    }
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: #9fd0ff;
+      background: rgba(0, 80, 180, 0.55);
+      border-radius: 1px;
+      z-index: 2;
+    }
+    .perk-cell.possible {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-cell.possible .cap { color: var(--muted-dim); }
+    .perk-cell.possible .ico { opacity: 0.55; }
+    .perk-cell.possible::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      border: 1px dashed var(--line);
+      border-radius: 1px;
+      z-index: 2;
+    }
+
+    /* Editor: W/A badges only — no corner gradients */
+    .perk-grid-cols.editing .perk-cell::after {
+      content: attr(data-mode-badge);
+      width: auto;
+      min-width: 12px;
+      padding: 0 3px;
+      border: 0;
+      background: var(--raised);
+      color: var(--muted-dim);
+      z-index: 2;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"] {
+      background: rgba(46, 230, 166, 0.12);
+      border-color: rgba(46, 230, 166, 0.55);
+      border-style: solid;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"] .ico {
+      border-color: rgba(46, 230, 166, 0.45);
+      opacity: 1;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"] .cap { color: var(--success); }
+    .perk-grid-cols.editing .perk-cell[data-mode="want"]::after {
+      content: "W";
+      color: #0a1a14;
+      background: var(--success);
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"] {
+      background: rgba(255, 0, 60, 0.1);
+      border-color: rgba(255, 0, 60, 0.5);
+      border-style: solid;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"] .ico {
+      border-color: rgba(255, 0, 60, 0.4);
+      opacity: 1;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"] .cap { color: #ffb3c0; }
+    .perk-grid-cols.editing .perk-cell[data-mode="avoid"]::after {
+      content: "A";
+      color: #1a0508;
+      background: var(--danger);
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"] {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"] .ico { opacity: 0.5; }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"] .cap { color: var(--muted-dim); }
+    .perk-grid-cols.editing .perk-cell[data-mode="off"]::after {
+      content: "·";
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px dashed var(--line);
+    }
+
+    .hash-footer {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(232, 238, 242, 0.1);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .hash-footer code { color: var(--muted); }
+    .body-stub {
+      color: var(--muted-dim);
+      font-family: var(--font-m);
+      font-size: 11px;
+      margin: 0 0 8px;
+    }
+    .body-stub em { color: var(--muted); font-style: normal; }
+
+    .live-bar {
+      width: 100%;
+      max-width: 480px;
+      padding: 8px 12px 14px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      white-space: pre-wrap;
+      border-top: 1px solid var(--line);
+      background: #080812;
+    }
+    .live-bar .live { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header class="mock-bar" role="banner">
+    <h1>CatalogRollTargets · Mobile 390</h1>
+    <span class="meta">≥44px hits · dual segs wrap · full-width switcher · sticky editor bar</span>
+    <span class="scenario-label" id="sc-label">Scenario</span>
+    <select class="scenario-select" id="scenario" aria-labelledby="sc-label">
+      <option value="owned-no-targets">owned-no-targets</option>
+      <option value="owned-targets-none-active">owned-targets-none-active</option>
+      <option value="active-unscored">active-unscored</option>
+      <option value="active-partial" selected>active-partial · ranked dual chips</option>
+      <option value="active-perfect-clean">active-perfect-clean</option>
+      <option value="active-bad-roll">active-bad-roll</option>
+      <option value="multi-profile-switch">multi-profile-switch</option>
+      <option value="editor-want-avoid-off">editor-want-avoid-off</option>
+      <option value="editor-overlap-reject">editor-overlap-reject</option>
+      <option value="unowned-or-empty">unowned-or-empty</option>
+      <option value="mobile-390">mobile-390 · wrap + full switcher</option>
+      <option value="keyboard-a11y">keyboard-a11y</option>
+    </select>
+    <div class="pills">
+      <span class="pill ok">DART-073</span>
+      <span class="pill rule">390 shell</span>
+      <span class="pill rule">≥44px</span>
+    </div>
+  </header>
+
+  <div class="phone-shell" id="phone-shell">
+    <div class="phone-scroll" id="stage-main">
+      <!-- JS -->
+    </div>
+  </div>
+  <div class="live-bar"><pre class="live" id="live-log">—</pre></div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const COLS = [
+    { key: "barrel", label: "Barrel" },
+    { key: "mag", label: "Mag" },
+    { key: "trait1", label: "Trait" },
+    { key: "trait2", label: "Trait" },
+  ];
+
+  const POOL = {
+    barrel: [
+      { hash: "1001", name: "Fluted", icon: "⎢" },
+      { hash: "1002", name: "Arrowhead", icon: "▲" },
+      { hash: "1003", name: "Chambered", icon: "◆" },
+    ],
+    mag: [
+      { hash: "2001", name: "Accurized", icon: "●" },
+      { hash: "2002", name: "Tactical", icon: "▣" },
+      { hash: "2003", name: "Appended", icon: "▤" },
+    ],
+    trait1: [
+      { hash: "3001", name: "Outlaw", icon: "★" },
+      { hash: "3002", name: "Rapid Hit", icon: "⚡" },
+      { hash: "3003", name: "Subsist", icon: "↻" },
+    ],
+    trait2: [
+      { hash: "4001", name: "Kill Clip", icon: "☠" },
+      { hash: "4002", name: "Frenzy", icon: "🔥" },
+      { hash: "4003", name: "One for All", icon: "⊕" },
+    ],
+  };
+
+  const PLUG_NAME = {};
+  Object.values(POOL).forEach((list) => list.forEach((p) => { PLUG_NAME[p.hash] = p.name; }));
+
+  const BASE_INSTANCES = [
+    { id: "i-best", power: 450, tier: 5, special: "Adept", plugs: { barrel: "1001", mag: "2001", trait1: "3001", trait2: "4001" } },
+    { id: "i-mid", power: 445, tier: 4, special: "Holofoil", plugs: { barrel: "1002", mag: "2001", trait1: "3002", trait2: "4001" } },
+    { id: "i-dirty", power: 448, tier: 4, plugs: { barrel: "1003", mag: "2003", trait1: "3003", trait2: "4003" } },
+    { id: "i-low", power: 335, tier: 3, special: "Adept", plugs: { barrel: "1001", mag: "2002", trait1: "3001", trait2: "4002" } },
+  ];
+
+  const TARGETS = {
+    pve: {
+      id: "pve", name: "PvE",
+      columns: {
+        barrel: { want: ["1001", "1002"], avoid: ["1003"] },
+        mag: { want: ["2001"], avoid: ["2003"] },
+        trait1: { want: ["3001", "3002"], avoid: [] },
+        trait2: { want: ["4001"], avoid: ["4003"] },
+      },
+    },
+    pvp: {
+      id: "pvp", name: "PvP",
+      columns: {
+        barrel: { want: ["1002"], avoid: [] },
+        mag: { want: ["2001", "2002"], avoid: [] },
+        trait1: { want: ["3002"], avoid: ["3003"] },
+        trait2: { want: ["4002"], avoid: ["4001"] },
+      },
+    },
+    empty: {
+      id: "empty", name: "Draft",
+      columns: {
+        barrel: { want: [], avoid: [] },
+        mag: { want: [], avoid: [] },
+        trait1: { want: [], avoid: [] },
+        trait2: { want: [], avoid: [] },
+      },
+    },
+  };
+
+  const state = {
+    scenario: "active-partial",
+    targets: [],
+    activeId: null,
+    instances: [],
+    selectedId: null,
+    editorOpen: false,
+    draft: null,
+    renameValue: "",
+  };
+
+  const stageMain = document.getElementById("stage-main");
+  const liveLog = document.getElementById("live-log");
+  const scenarioSel = document.getElementById("scenario");
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function specialKind(special) {
+    if (!special) return "other";
+    const s = String(special).toLowerCase();
+    if (s === "adept") return "adept";
+    if (s === "holofoil") return "holofoil";
+    return "other";
+  }
+
+  function cloneTarget(t) {
+    const columns = {};
+    COLS.forEach((c) => {
+      const col = t.columns[c.key] || { want: [], avoid: [] };
+      columns[c.key] = { want: col.want.slice(), avoid: col.avoid.slice() };
+    });
+    return { id: t.id, name: t.name, columns };
+  }
+
+  function scoreInstance(target, inst) {
+    if (!target) {
+      return {
+        preferredMatched: 0, preferredScored: 0, avoidHits: 0, avoidScored: 0,
+        preferredRatio: 0, hasAnyScoreDimension: false,
+        isPerfectPreferred: false, isCleanAvoid: true,
+      };
+    }
+    let preferredMatched = 0, preferredScored = 0, avoidHits = 0, avoidScored = 0;
+    COLS.forEach((c) => {
+      const col = target.columns[c.key] || { want: [], avoid: [] };
+      const plug = inst.plugs[c.key];
+      if (col.want.length) {
+        preferredScored++;
+        if (plug && col.want.includes(plug)) preferredMatched++;
+      }
+      if (col.avoid.length) {
+        avoidScored++;
+        if (plug && col.avoid.includes(plug)) avoidHits++;
+      }
+    });
+    return {
+      preferredMatched, preferredScored, avoidHits, avoidScored,
+      preferredRatio: preferredScored === 0 ? 0 : preferredMatched / preferredScored,
+      hasAnyScoreDimension: preferredScored > 0 || avoidScored > 0,
+      isPerfectPreferred: preferredScored > 0 && preferredMatched === preferredScored,
+      isCleanAvoid: avoidHits === 0,
+    };
+  }
+
+  function activeTarget() {
+    if (!state.activeId) return null;
+    return state.targets.find((t) => t.id === state.activeId) || null;
+  }
+
+  function draftOrActive() {
+    if (state.editorOpen && state.draft) return state.draft;
+    return activeTarget();
+  }
+
+  function hasOverlap(target) {
+    if (!target) return false;
+    return COLS.some((c) => {
+      const col = target.columns[c.key];
+      return col && col.want.some((h) => col.avoid.includes(h));
+    });
+  }
+
+  function overlapColumns(target) {
+    if (!target) return [];
+    return COLS.filter((c) => {
+      const col = target.columns[c.key];
+      return col && col.want.some((h) => col.avoid.includes(h));
+    }).map((c) => c.label);
+  }
+
+  function targetHasScoreDim(t) {
+    return !!t && COLS.some((c) => {
+      const col = t.columns[c.key];
+      return col && (col.want.length > 0 || col.avoid.length > 0);
+    });
+  }
+
+  function rankInstances(instances, target) {
+    const list = instances.slice();
+    if (!target || !targetHasScoreDim(target)) {
+      return list.sort((a, b) => b.power - a.power || (b.tier || 0) - (a.tier || 0));
+    }
+    return list.sort((a, b) => {
+      const sa = scoreInstance(target, a);
+      const sb = scoreInstance(target, b);
+      if (sb.preferredRatio !== sa.preferredRatio) return sb.preferredRatio - sa.preferredRatio;
+      if (sa.avoidHits !== sb.avoidHits) return sa.avoidHits - sb.avoidHits;
+      return b.power - a.power || (b.tier || 0) - (a.tier || 0);
+    });
+  }
+
+  function powerDesc(instances) {
+    return instances.slice().sort((a, b) => b.power - a.power || (b.tier || 0) - (a.tier || 0));
+  }
+
+  function defaultHighestId(instances) {
+    const o = powerDesc(instances);
+    return o.length ? o[0].id : null;
+  }
+
+  function chipInnerHtml(inst, score, showScore) {
+    const parts = [];
+    parts.push(`<span class="seg"><span class="pw">${escapeHtml(String(inst.power))}</span></span>`);
+    if (inst.tier != null) {
+      parts.push(`<span class="sep" aria-hidden="true"></span>`);
+      parts.push(`<span class="seg"><span class="tier" data-t="${inst.tier}">T${inst.tier}</span></span>`);
+    }
+    if (inst.special) {
+      parts.push(`<span class="sep" aria-hidden="true"></span>`);
+      parts.push(`<span class="seg"><span class="special" data-kind="${specialKind(inst.special)}">${escapeHtml(inst.special)}</span></span>`);
+    }
+    if (showScore && score && score.hasAnyScoreDimension) {
+      const n = score.preferredMatched, m = score.preferredScored;
+      let prefClass = n === 0 ? "miss" : n === m ? "perfect" : "partial";
+      parts.push(`<span class="sep" aria-hidden="true"></span>`);
+      parts.push(`<span class="seg"><span class="score-pref ${prefClass}">${n}/${m}</span></span>`);
+      if (score.avoidScored > 0) {
+        const k = score.avoidHits;
+        const avClass = k > 0 ? (k >= 2 ? "hit" : "hit warn-only") : "clear";
+        parts.push(`<span class="sep" aria-hidden="true"></span>`);
+        parts.push(`<span class="seg"><span class="score-avoid ${avClass}">${k > 0 ? "Av " + k : "Av 0"}</span></span>`);
+      }
+    }
+    return parts.join("");
+  }
+
+  function ariaName(inst, score, showScore) {
+    let n = "Power " + inst.power;
+    if (inst.tier != null) n += ", tier " + inst.tier;
+    if (inst.special) n += ", " + inst.special;
+    if (showScore && score && score.hasAnyScoreDimension) {
+      n += ", " + score.preferredMatched + " of " + score.preferredScored + " preferred";
+      if (score.avoidScored > 0) n += ", " + score.avoidHits + " avoid hits";
+    }
+    return n;
+  }
+
+  function modeForPlug(target, colKey, hash) {
+    if (!target) return "off";
+    const col = target.columns[colKey] || { want: [], avoid: [] };
+    if (col.want.includes(hash)) return "want";
+    if (col.avoid.includes(hash)) return "avoid";
+    return "off";
+  }
+
+  function cycleMode(mode) {
+    if (mode === "off") return "want";
+    if (mode === "want") return "avoid";
+    return "off";
+  }
+
+  function renderSwitcher() {
+    if (!state.targets.length) {
+      return `
+        <div class="roll-target-bar">
+          <span class="rt-label">Roll target</span>
+          <span class="rt-empty-hint">No targets yet</span>
+          <div class="rt-actions" style="grid-template-columns:1fr">
+            <button type="button" class="rt-btn primary" data-action="new-target">New target</button>
+          </div>
+        </div>`;
+    }
+    const opts = [
+      `<button type="button" class="rt-opt is-off" data-action="set-active" data-id=""
+        aria-pressed="${!state.activeId ? "true" : "false"}" aria-label="No active roll target">Off</button>`,
+    ];
+    state.targets.forEach((t) => {
+      opts.push(
+        `<button type="button" class="rt-opt" data-action="set-active" data-id="${escapeHtml(t.id)}"
+          aria-pressed="${state.activeId === t.id ? "true" : "false"}"
+          aria-label="Roll target ${escapeHtml(t.name)}">${escapeHtml(t.name)}</button>`
+      );
+    });
+    const canEdit = !!state.activeId;
+    const rename = state.editorOpen && canEdit
+      ? `<input class="rt-rename" type="text" data-action="rename" value="${escapeHtml(state.renameValue)}" aria-label="Rename roll target" maxlength="32" />`
+      : "";
+    return `
+      <div class="roll-target-bar" data-key="catalog_roll_targets_switcher">
+        <span class="rt-label">Roll target</span>
+        <div class="rt-switch" role="group" aria-label="Active roll target">${opts.join("")}</div>
+        ${rename}
+        <div class="rt-actions">
+          <button type="button" class="rt-btn primary span2" data-action="toggle-editor"
+            aria-pressed="${state.editorOpen ? "true" : "false"}">
+            ${state.editorOpen ? "Close editor" : "Edit roll target"}
+          </button>
+          <button type="button" class="rt-btn" data-action="new-target">New</button>
+          <button type="button" class="rt-btn danger" data-action="delete-target" ${!canEdit ? "disabled" : ""} style="grid-column:span 3">Delete active</button>
+        </div>
+      </div>`;
+  }
+
+  function renderStrip() {
+    const target = activeTarget();
+    const rankingActive = targetHasScoreDim(target);
+    if (!state.instances.length) {
+      return `<div class="inst-empty">No local copies</div>`;
+    }
+    const ranked = rankingActive
+      ? rankInstances(state.instances, target)
+      : powerDesc(state.instances);
+    const note = rankingActive
+      ? `<span class="inst-rank-note">Ranked by <strong>roll target</strong></span>`
+      : `<span class="inst-rank-note">Order: power-desc</span>`;
+    const chips = ranked.map((inst) => {
+      const score = scoreInstance(target, inst);
+      const show = rankingActive && score.hasAnyScoreDimension;
+      const pressed = state.selectedId === inst.id;
+      const perfect = show && score.isPerfectPreferred && score.isCleanAvoid && pressed;
+      return `<button type="button" class="inst-chip${perfect ? " perfect-pulse" : ""}"
+        data-inst="${escapeHtml(inst.id)}"
+        aria-pressed="${pressed ? "true" : "false"}"
+        aria-label="${escapeHtml(ariaName(inst, score, show))}">
+        ${chipInnerHtml(inst, score, show)}
+      </button>`;
+    }).join("");
+    return `<div class="instance-strip" role="listbox" aria-label="Owned instances">
+      <span class="label">Instances</span>${note}${chips}
+    </div>`;
+  }
+
+  function renderPool() {
+    const editing = state.editorOpen;
+    const target = draftOrActive();
+    const inst = state.instances.find((i) => i.id === state.selectedId);
+    const overlap = editing && hasOverlap(target);
+    const ovCols = overlap ? overlapColumns(target) : [];
+
+    let sticky = "";
+    if (editing) {
+      sticky = `
+        <div class="editor-sticky">
+          <div class="editor-mode-bar">
+            <span class="title">Edit · ${escapeHtml((target && target.name) || "target")}</span>
+            <button type="button" class="rt-btn primary" data-action="save-target" ${overlap ? "disabled" : ""} style="min-height:40px;padding:0 12px">Save</button>
+            <button type="button" class="rt-btn" data-action="cancel-editor" style="min-height:40px;padding:0 12px">Cancel</button>
+            <span class="sub">Tap cell: Want → Avoid → Off · can-roll ③ only</span>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch want"></span> Want</span>
+          <span class="legend-item"><span class="legend-swatch avoid"></span> Avoid</span>
+          <span class="legend-item"><span class="legend-swatch off"></span> Off</span>
+        </div>`;
+    } else if (!state.instances.length) {
+      sticky = `<p class="body-stub">Definition <em>③ pool</em> — open editor on a named target.</p>`;
+    } else {
+      sticky = `<p class="body-stub">Instance <em>①</em> display · open <em>Edit roll target</em> for Want|Avoid|Off.</p>`;
+    }
+
+    let errorHtml = "";
+    if (overlap) {
+      errorHtml = `<div class="soft-error" role="alert">
+        <span class="code">DBR-IDL-004</span>
+        <span>Overlap on <strong>${escapeHtml(ovCols.join(", "))}</strong>. Disjoint before save. Soft only — equip still allowed.</span>
+      </div>`;
+    }
+
+    const colsHtml = COLS.map((c) => {
+      const col = target && target.columns[c.key];
+      const colOverlap = editing && col && col.want.some((h) => col.avoid.includes(h));
+      const cells = POOL[c.key].map((p) => {
+        const mode = editing ? modeForPlug(target, c.key, p.hash) : "off";
+        const viewTarget = !editing ? activeTarget() : null;
+        const viewMode =
+          viewTarget ? modeForPlug(viewTarget, c.key, p.hash) : "off";
+        let dispClass = "possible";
+        if (!editing && inst && inst.plugs[c.key] === p.hash) dispClass = "selected";
+        const classes = editing ? "perk-cell" : `perk-cell ${dispClass}`;
+        const dataMode = editing ? ` data-mode="${mode}"` : "";
+        const dataTarget =
+          !editing && (viewMode === "want" || viewMode === "avoid")
+            ? ` data-target="${viewMode}"`
+            : "";
+        const viewHint =
+          !editing && viewMode === "want"
+            ? ", ideal for active target"
+            : !editing && viewMode === "avoid"
+              ? ", avoid for active target"
+              : "";
+        return `<button type="button" class="${classes}"
+          data-action="${editing ? "cycle-plug" : "noop"}"
+          data-col="${escapeHtml(c.key)}" data-hash="${escapeHtml(p.hash)}"
+          ${dataMode}${dataTarget}
+          aria-label="${escapeHtml(p.name)}${editing ? ", " + mode : viewHint}"
+          ${!editing ? 'tabindex="-1"' : ""}>
+          <span class="ico" aria-hidden="true">${escapeHtml(p.icon)}</span>
+          <span class="cap">${escapeHtml(p.name)}</span>
+        </button>`;
+      }).join("");
+      return `<div class="perk-col${colOverlap ? " has-overlap" : ""}">
+        <div class="perk-col-label">${escapeHtml(c.label)}</div>${cells}
+      </div>`;
+    }).join("");
+
+    return `<div class="detail-body">
+      ${sticky}
+      ${errorHtml}
+      <div class="perk-scroll">
+        <div class="perk-grid-cols${editing ? " editing" : ""}" role="${editing ? "group" : "presentation"}"
+          aria-label="${editing ? "Can-roll pool Want Avoid Off editor" : "Can-roll pool"}">
+          ${colsHtml}
+        </div>
+      </div>
+      <div class="hash-footer">Unknowns only · <code>CatalogHashFooter</code> · named plugs (DBR-UI-006)</div>
+    </div>`;
+  }
+
+  function renderFrame() {
+    return `
+      <p class="frame-caption">Mobile 390 · CatalogRollTargets · dual segs wrap</p>
+      <div class="detail-frame" aria-label="Weapon detail with roll targets">
+        <div class="detail-header">
+          <div class="header-row">
+            <div class="header-icon" aria-hidden="true">⚔</div>
+            <div class="header-stack">
+              <h2 class="hero-name">Midnight Coup</h2>
+              <div class="meta-stub" aria-hidden="true">
+                <span class="meta-chip">HC</span>
+                <span class="meta-chip">Kin</span>
+                <span class="meta-chip">×${state.instances.length || 0}</span>
+              </div>
+            </div>
+          </div>
+          ${renderSwitcher()}
+          ${renderStrip()}
+        </div>
+        ${renderPool()}
+      </div>`;
+  }
+
+  function updateLog() {
+    const t = activeTarget();
+    const rankingActive = targetHasScoreDim(t);
+    const ranked = rankingActive ? rankInstances(state.instances, t) : powerDesc(state.instances);
+    liveLog.textContent = [
+      "scenario: " + state.scenario,
+      "active: " + (t ? t.name : "Off"),
+      "editor: " + state.editorOpen,
+      "overlap: " + hasOverlap(draftOrActive()),
+      "order: " + (ranked.map((i) => {
+        const s = scoreInstance(t, i);
+        return rankingActive && s.hasAnyScoreDimension
+          ? i.power + "(" + s.preferredMatched + "/" + s.preferredScored + ",Av" + s.avoidHits + ")"
+          : String(i.power);
+      }).join(" → ") || "(none)"),
+      "selected: " + (state.selectedId || "null"),
+    ].join("\n");
+  }
+
+  function announce(msg) {
+    let live = document.getElementById("sr-live");
+    if (!live) {
+      live = document.createElement("div");
+      live.id = "sr-live";
+      live.setAttribute("role", "status");
+      live.setAttribute("aria-live", "polite");
+      live.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)";
+      document.body.appendChild(live);
+    }
+    live.textContent = msg;
+  }
+
+  function applyScenario(id) {
+    state.scenario = id;
+    state.editorOpen = false;
+    state.draft = null;
+    state.renameValue = "";
+
+    const withBase = () => BASE_INSTANCES.map((x) => ({ ...x, plugs: { ...x.plugs } }));
+
+    switch (id) {
+      case "owned-no-targets":
+        state.targets = [];
+        state.activeId = null;
+        state.instances = withBase();
+        state.selectedId = defaultHighestId(state.instances);
+        break;
+      case "owned-targets-none-active":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = null;
+        state.instances = withBase();
+        state.selectedId = defaultHighestId(state.instances);
+        break;
+      case "active-unscored":
+        state.targets = [cloneTarget(TARGETS.empty), cloneTarget(TARGETS.pve)];
+        state.activeId = "empty";
+        state.instances = withBase();
+        state.selectedId = defaultHighestId(state.instances);
+        break;
+      case "active-partial":
+      case "mobile-390":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = withBase();
+        state.selectedId = "i-mid";
+        break;
+      case "active-perfect-clean":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = withBase();
+        state.selectedId = "i-best";
+        break;
+      case "active-bad-roll":
+        state.targets = [cloneTarget(TARGETS.pve)];
+        state.activeId = "pve";
+        state.instances = withBase();
+        state.selectedId = "i-dirty";
+        break;
+      case "multi-profile-switch":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = withBase();
+        state.selectedId = "i-mid";
+        break;
+      case "editor-want-avoid-off":
+      case "keyboard-a11y":
+        state.targets = [cloneTarget(TARGETS.pve), cloneTarget(TARGETS.pvp)];
+        state.activeId = "pve";
+        state.instances = withBase();
+        state.selectedId = "i-best";
+        state.editorOpen = true;
+        state.draft = cloneTarget(TARGETS.pve);
+        state.renameValue = "PvE";
+        break;
+      case "editor-overlap-reject": {
+        state.targets = [cloneTarget(TARGETS.pve)];
+        state.activeId = "pve";
+        state.instances = withBase();
+        state.selectedId = "i-best";
+        state.editorOpen = true;
+        const d = cloneTarget(TARGETS.pve);
+        d.columns.trait2.want = ["4001"];
+        d.columns.trait2.avoid = ["4001", "4003"];
+        state.draft = d;
+        state.renameValue = "PvE";
+        break;
+      }
+      case "unowned-or-empty":
+        state.targets = [cloneTarget(TARGETS.pve)];
+        state.activeId = "pve";
+        state.instances = [];
+        state.selectedId = null;
+        break;
+      default:
+        break;
+    }
+  }
+
+  function bind() {
+    stageMain.querySelectorAll("[data-action]").forEach((el) => {
+      const action = el.getAttribute("data-action");
+      if (action === "rename") {
+        el.addEventListener("input", () => { state.renameValue = el.value; });
+        el.addEventListener("change", () => {
+          const t = activeTarget();
+          if (t && state.renameValue.trim()) {
+            t.name = state.renameValue.trim();
+            if (state.draft) state.draft.name = t.name;
+            render();
+          }
+        });
+        return;
+      }
+      el.addEventListener("click", () => {
+        if (action === "set-active") {
+          const id = el.getAttribute("data-id") || "";
+          state.activeId = id || null;
+          if (state.editorOpen && state.activeId) {
+            const t = activeTarget();
+            state.draft = t ? cloneTarget(t) : null;
+            state.renameValue = t ? t.name : "";
+          } else if (!state.activeId) {
+            state.editorOpen = false;
+            state.draft = null;
+          }
+          render();
+          announce(state.activeId ? "Active " + (activeTarget() && activeTarget().name) : "Off");
+        } else if (action === "toggle-editor") {
+          if (!state.activeId && !state.editorOpen) return;
+          state.editorOpen = !state.editorOpen;
+          if (state.editorOpen) {
+            const t = activeTarget();
+            state.draft = t ? cloneTarget(t) : null;
+            state.renameValue = t ? t.name : "";
+          } else state.draft = null;
+          render();
+        } else if (action === "new-target") {
+          const n = state.targets.length + 1;
+          const t = {
+            id: "t" + n, name: "Target " + n,
+            columns: {
+              barrel: { want: [], avoid: [] }, mag: { want: [], avoid: [] },
+              trait1: { want: [], avoid: [] }, trait2: { want: [], avoid: [] },
+            },
+          };
+          state.targets.push(t);
+          state.activeId = t.id;
+          state.editorOpen = true;
+          state.draft = cloneTarget(t);
+          state.renameValue = t.name;
+          render();
+        } else if (action === "delete-target") {
+          if (!state.activeId) return;
+          state.targets = state.targets.filter((t) => t.id !== state.activeId);
+          state.activeId = null;
+          state.editorOpen = false;
+          state.draft = null;
+          render();
+        } else if (action === "save-target") {
+          if (!state.draft || hasOverlap(state.draft)) return;
+          const idx = state.targets.findIndex((t) => t.id === state.draft.id);
+          if (idx >= 0) {
+            state.targets[idx] = cloneTarget(state.draft);
+            if (state.renameValue.trim()) state.targets[idx].name = state.renameValue.trim();
+          }
+          state.editorOpen = false;
+          state.draft = null;
+          render();
+          announce("Saved");
+        } else if (action === "cancel-editor") {
+          state.editorOpen = false;
+          state.draft = null;
+          render();
+        } else if (action === "cycle-plug") {
+          if (!state.draft) return;
+          const col = el.getAttribute("data-col");
+          const hash = el.getAttribute("data-hash");
+          const next = cycleMode(modeForPlug(state.draft, col, hash));
+          const c = state.draft.columns[col];
+          c.want = c.want.filter((h) => h !== hash);
+          c.avoid = c.avoid.filter((h) => h !== hash);
+          if (next === "want") c.want.push(hash);
+          if (next === "avoid") c.avoid.push(hash);
+          render();
+          announce((PLUG_NAME[hash] || hash) + " " + next);
+        }
+      });
+    });
+
+    stageMain.querySelectorAll(".inst-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-inst");
+        if (!id || id === state.selectedId) return;
+        state.selectedId = id;
+        render();
+      });
+    });
+  }
+
+  function render() {
+    stageMain.innerHTML = renderFrame();
+    bind();
+    updateLog();
+  }
+
+  scenarioSel.addEventListener("change", () => {
+    applyScenario(scenarioSel.value);
+    render();
+  });
+
+  applyScenario(scenarioSel.value);
+  render();
+})();
+  </script>
+</body>
+</html>

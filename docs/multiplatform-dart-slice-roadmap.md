@@ -1,7 +1,7 @@
 # Multiplatform Dart Port — Slice Roadmap
 
 **Status:** active program plan  
-**Updated:** 2026-08-03 (dart-070-set-occupancy closed — package min floors + attach gates; DART-001–068 + dart-070; cutover GO unchanged)  
+**Updated:** 2026-08-06 (lanes: Spec Kit = **system/non-UI only**; UI/UX via area-ux; DART-071/072 system-scoped; cutover GO unchanged)  
 **Workstream ID:** **DART** (parallel to product Spec Kit `001`–`043+` on the Next.js line)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`  
@@ -9,11 +9,20 @@
 
 **Architecture freezes:** [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md)  
 **Branch / worktree rules:** [multiplatform-dart-branching.md](./multiplatform-dart-branching.md)  
-**Feature gaps (canonical):** [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) — every open P0–P1 gap maps to a DART-NNN below  
-**UI fidelity (post-cutover):** [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) — GAP-UI-* → DART-062–068; **does not re-open cutover**  
+**Feature gaps (canonical):** [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md) — **system** residuals → DART-NNN; **UI/UX** residuals → [ux-redesign](./ux-redesign/README.md)  
+**UI fidelity (post-cutover):** [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) — DART-062–068 closed (historical mixed UI Spec Kit); new presentation chrome is **not** Spec Kit  
 **Exploration / gaps workflows:** `explore-flutter-port`, **`dart-gaps-analysis`**  
 
-This is the **canonical list of Spec Kit slices** for the full port. Implement **in order** (do not skip phase gates). Each row is one feature branch / one `specs/dart-NNN-short-name/` directory — sized so a single Spec Kit cycle is realistic (roughly days to ~1–2 weeks of focused work, not a whole phase).
+This is the **canonical list of Spec Kit slices** for **system / non-UI** port work. Implement **in order** (do not skip phase gates). Each row is one feature branch / one `specs/dart-NNN-short-name/` directory — sized so a single Spec Kit cycle is realistic (roughly days to ~1–2 weeks of focused work, not a whole phase).
+
+### Spec Kit vs UI/UX (going forward)
+
+| Lane | In this roadmap? | Use for |
+| ---- | ---------------- | ------- |
+| **Spec Kit (DART-NNN)** | **Yes** | Pure domain/data/algorithm; presentation **models/resolvers** without widgets; Drift/IO/auth/sync; package tests without device UI |
+| **UI/UX (area-ux)** | **No** — see [ux-redesign/README.md](./ux-redesign/README.md) | Mockups, chrome, Widgetbook, host presentation wire, dual-truth Capture |
+
+**Rule:** do not schedule Spec Kit tasks for “make the header nested” or “add hotspot popover chrome”. Land the pure API on DART-NNN; land chrome on an area-ux brief that depends on that API. Historical P9 (DART-062–068) mixed host UI into Spec Kit and is **closed** — do not extend that pattern.
 
 ---
 
@@ -61,8 +70,9 @@ $env:GIT_BRANCH_NAME = "dart-001-domain-foundation"
 A slice is “small enough” when:
 
 - One primary package area or one vertical thin slice (not “all of Phase 3”)
-- Exit criteria fit on one screen and are testable
+- Exit criteria fit on one screen and are testable **and system-specific** (API/tests, not “screen matches mockup”)
 - Spec Kit `tasks.md` stays under ~25 tasks (soft limit; split if you blow past)
+- **No Flutter/Jaspr widget chrome** as Spec Kit deliverables (host smoke that only asserts pure wiring is OK; Widgetbook dual-truth is UX lane)
 - No dual UI shell work in the same slice as pure domain ports
 - Hard vs soft DBR parity is never “later” for the functions that slice owns
 
@@ -167,6 +177,9 @@ Order is strict. IDs start at **`DART-001`**.
 | **DART-067** | **done** | `finish-walkthrough-armor-optimize` | `dart-067-finish-walkthrough-armor-optimize` | P9 | DART-064, DART-036 | Finish one-tap Create/Capture/fill; Build Finish armor improve; Settings post-sync banner | **GAP-UI-BUILD-03, 04; GAP-UI-SETTINGS-04** closed. BR-BLD-008 walkthrough Create/Capture/fill (Windows+Jaspr); Windows Build Finish Find kits → confirm apply; Windows post-sync better-kit Confirm/Dismiss only — **never auto-apply**. Web optimizer remains GAP-FEAT-01 deferred. Soft never auto-applies; no CLIENT_SECRET |
 | **DART-068** | **done** | `presentation-shell-loadouts-settings` | `dart-068-presentation-shell-loadouts-settings` | P9 | DART-062+ as needed | Shell labels; icons/meta; loadouts density; Settings chrome; designation icons | **GAP-UI-CATALOG-09; GAP-UI-BUILD-06; GAP-UI-SYN-05; GAP-UI-LOADOUTS-01..03; GAP-UI-SETTINGS-01, 02; GAP-UI-SHELL-01** closed. AppShell label/order; item icons; loadout color bar/swatch + exotic names + expand; READY/entity chips + ONLINE/Refresh; variant icon overview. **Not cutover re-gate.** Soft never auto-applies; no CLIENT_SECRET |
 | **dart-070** | **done** | `set-occupancy` | `dart-070-set-occupancy` | P0 | domain + app | Set package min occupancy + Pair complete on save/attach | **GAP-DOM-SET-01** closed. Pure `set_minimum_occupancy` (Weapon/Armor ≥2 → `SET_MIN_ITEMS`; Mod ≥2 pieces → `MOD_SET_MIN_SLOTS`; Pair both → `PAIR_INCOMPLETE`; Fashion exempt). App assert + attach gates (BR-ATT-006); attachableSets filter; readiness package-min; hosts plain-language. Soft never auto-applies; no CLIENT_SECRET |
+| **DART-071** | **pending** | `entity-presentation-model` | `dart-071-entity-presentation-model` | P10 | catalog/manifest maps | Pure **entity presentation** model + resolve (name/kind/icon/description/meta); no invent text | Closes **system half** of **GAP-UI-DESC-01** / **FEAT-UI-ENTITY-DESC**. Package tests only; **no** hotspot/popover/Widgetbook. Chrome → **UX-CATALOG-ENTITY-DESC** (area-ux). **Not cutover re-gate.** Soft never auto-applies; no CLIENT_SECRET |
+| **DART-072** | **pending** | `catalog-nested-group-tree` | `dart-072-catalog-nested-group-tree` | P10b | DART-062 flat group-by pure API | Pure **nested group tree** + rollup counts from ordered dims | Closes **system half** of **GAP-UI-CATALOG-11** / **FEAT-UI-CATALOG-NESTED-GROUP**. Pure tests; **no** nested header chrome / JUMP UI. Chrome → **UX-CATALOG-NESTED-GROUP** (area-ux). BR-CAT-006 semantics unchanged. **Not cutover re-gate.** Soft never auto-applies; no CLIENT_SECRET |
+| **DART-073** | **pending** | `weapon-roll-targets` | `dart-073-weapon-roll-targets` | P11 | domain pure + inventory plugs | Pure **roll targets**: named preferred multi-pick + avoid multi-pick; score/rank owned | Closes **system half** of **GAP-UI-ROLL-01** / **FEAT-UI-WEAPON-ROLL-TARGETS**. Model + score/rank tests first; persist CRUD in same slice; **no** Catalog editor chrome. Chrome → **UX-CATALOG-ROLL-TARGETS**. ≠ DBR-ROLL equip wishlist. Soft never auto-applies; no CLIENT_SECRET |
 
 ---
 
@@ -228,16 +241,24 @@ Public OAuth matrix (no secrets in clients), entity bundle channel, dual-run ops
 
 | Field | Value |
 | ----- | ----- |
-| **Next / active slice** | **None** — P9 host UI fidelity complete (DART-062–068 **done**) |
+| **Next / active slice** | **DART-071** then **DART-072** — **pending** system-only (product may reorder); paired UX tracks are **not** Spec Kit |
 | **Active branch** | `feature/multiplatform-dart` |
-| **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
+| **Specs dir** | [multiplatform-dart-feature-gaps.md](./multiplatform-dart-feature-gaps.md); [ui-fidelity.md](./multiplatform-dart-ui-fidelity.md); UX [ux-redesign/README.md](./ux-redesign/README.md); cutover [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) |
 | **Active worktree** | `F:\Destiny2BuildCreator-multiplatform-dart` |
-| **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). P9 UI fidelity closed (does not re-open cutover). Human/release may merge toward production/`main` (RC-BRANCH) |
-| **Phase plan** | P6–P9 **done** (DART-050–068); host UI fidelity residual closed |
+| **Blocked on** | **None** for cutover — **PRODUCTION_CUTOVER: GO** (DART-061). P9 closed; P10/P10b **system** planned; UI chrome via area-ux after APIs. Human/release may merge toward production/`main` (RC-BRANCH) |
+| **Phase plan** | P6–P9 **done**; **P10/P10b** Spec Kit system pending + UX tracks outside this table |
 
-### P9 note — host UI fidelity post-cutover
+### P9 note — host UI fidelity post-cutover (historical Spec Kit UI)
 
-After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS. **DART-062–068 done** closed catalog/build/sets/synergy/finish/presentation residuals vs Next atlas. Canonical ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
+After PRODUCTION_CUTOVER GO, Windows+Jaspr host spines remain cutover-PASS. **DART-062–068 done** closed catalog/build/sets/synergy/finish/presentation residuals vs Next atlas via Spec Kit (mixed UI — **do not extend**). Canonical ledger: [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md). Soft never auto-applies; no CLIENT_SECRET. **Does not re-open PRODUCTION_CUTOVER.**
+
+### P10 note — entity presentation **model** (system)
+
+**DART-071** lands pure entity presentation ref + resolve only. **1+3 chrome** is **UX-CATALOG-ENTITY-DESC** (area-ux), not Spec Kit. Ledger: **GAP-UI-DESC-01** split tracks.
+
+### P10b note — nested group **tree** (system)
+
+**DART-072** lands pure nested group tree + rollups only. Nested headers / JUMP chrome is **UX-CATALOG-NESTED-GROUP** (area-ux). Ledger: **GAP-UI-CATALOG-11** split tracks.
 
 ### DART-062 note (completed) — catalog browse semantics
 

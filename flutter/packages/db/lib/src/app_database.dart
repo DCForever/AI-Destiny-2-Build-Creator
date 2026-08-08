@@ -34,6 +34,8 @@ part 'app_database.g.dart';
     BuildVariants,
     BuildSynergyTypes,
     VariantSetAttachments,
+    WeaponRollTargets,
+    WeaponRollTargetActive,
   ],
 )
 class AppDatabase extends _$AppDatabase {

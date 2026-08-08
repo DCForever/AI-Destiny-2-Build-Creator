@@ -1,69 +1,33 @@
-# Catalog · Browse chrome — mockup approval
+# Mockup approvals — Catalog UX
+
+## CatalogRollTargets (003) — current gate
 
 **continue with workflow**
 
-Approved after interactive review of:
+- Desktop: `docs/ux-redesign/catalog/mockups/003-catalog-roll-targets-desktop.html`
+- Mobile: `docs/ux-redesign/catalog/mockups/003-catalog-roll-targets-mobile.html`
+- Approved: 2026-08-07 (“looks good”)
 
-- `docs/ux-redesign/catalog/mockups/001-browse-chrome-desktop.html`
-- `docs/ux-redesign/catalog/mockups/001-browse-chrome-mobile.html`
-
-**Workflow:** `area-ux-redesign-8`  
-**Date:** 2026-08-05  
-**Gaps:** GAP-CAT-BROWSE-001 … 004 (`docs/ux-redesign/DUAL-TRUTH-GAPS.md`)
-
----
-
-## Slice on this gate
-
-**Catalog browse chrome** (windows + mobile structure SSoT)
-
-1. **Family weapon cards** — one card per regular / Adept / Holofoil / … family  
-2. **Collapsible group-by** sections  
-3. **User sort priority reorder**  
-4. **User group-by dimension priority reorder**  
-5. **Weapon type filters as official type icons**  
-6. **Group outline** for jump when grouping is applied  
-
-**Out of scope:** live Set/Synergy CTAs, armor family as gate, inventing collectible graph without data, Catalog-as-home, new design system, selectable version chips on grid.
+### Locked visual notes
+- Lives on standard **CatalogWeaponDetail** (~400) — not a separate screen.
+- **View mode only:** active roll target paints soft **diagonal** wash on can-roll pool cells (lower-right → upper-left, reaches lower-left): **green** = ideal/preferred, **red** = avoid; wash **behind** perk icon.
+- **Edit mode:** Want|Avoid|Off via W/A badges only — no diagonal wash.
+- Instance strip: dual segs `N/M` + `Av k` when active target scores; base chip power · T{tier} · special unchanged.
+- Soft scores only; ≠ equip-ready wishlist; no dismantle CTA.
 
 ---
 
-## Locked UX decisions
+## WeaponInstanceStrip (002) — prior
 
-### Family cards (GAP-CAT-BROWSE-001)
+**continue with workflow** (historical)
 
-| Rule | Decision |
-| --- | --- |
-| Grid identity | **One card per weapon family** (name-normalized + slot/element/type guard) |
-| Card tap | Opens **primary** version detail (owned max-power if available, else base, else stable default) |
-| Version chips on **grid card** | **Owned-only** indicators · **not selectable** · not version pickers |
-| Unowned versions on card | **Do not** show as chips on the grid card |
-| Detail | Shows **all** known family versions; owned clearly marked; user **switches inspected version on detail** (plugs/instances rebind) |
-| Owned aggregate | Sum of version counts; honest tooltip breakdown OK |
-| Filter | Family appears if **any** version matches; exclude drops family only if all versions excluded |
+- Desktop: `docs/ux-redesign/catalog/mockups/002-weapon-instance-strip-desktop.html`
+- Mobile: `docs/ux-redesign/catalog/mockups/002-weapon-instance-strip-mobile.html`
+- Approved: 2026-08-06
 
-### Groups (GAP-CAT-BROWSE-002)
-
-- Group headers **collapse / expand** (default expanded)  
-- When grouping is on: **outline** of groups (label + count) for **quick jump** to section  
-- Jump may expand a collapsed group  
-
-### Sort & group priority (GAP-CAT-BROWSE-003)
-
-- **Sort:** multi-key **priority list reorder** (e.g. Slot → Exotic → Ammo → Type → Name)  
-- **Group-by:** multi-dimension **priority list reorder** (first = outer)  
-- Pure logic in manifest; host holds order state  
-
-### Weapon type filters (GAP-CAT-BROWSE-004)
-
-- Type filters use **official weapon-type silhouettes** (`iconOnly`)  
-- Full type name via tooltip + Semantics  
-- Prefer visible/primary line (not buried text-only under More only)  
-
-### Carry-forward
-
-- Composition aid only (DBR-PUR-002)  
-- Neon / Flap + official Destiny icons  
-- Residual-polish perk detail rules still in force (not reopened this slice)  
-
-Phrase required by workflow gate: continue with workflow
+### Locked decisions
+1. Chip label: **`{power} T{tier} {special?}`** (e.g. `335 T3 Adept`) — no MW/Craft on chip.
+2. Segmented readability: bold power · tier plate · special color (Adept gold / Holofoil violet).
+3. Layout: **multi-row wrap** (`flex-wrap`) preferred over horizontal scroll at detail width.
+4. Power-desc order · highest default selected · empty honesty preserved.
+5. Specialness only when the copy is special (Adept, Holofoil, …).

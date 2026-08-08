@@ -85,6 +85,22 @@ class _CatalogPageState extends State<CatalogPage> {
   bool _showCanRoll = false;
   bool _showCraft = false;
 
+  // --- 003 CatalogRollTargets (DART-073) ---
+  List<WeaponRollTarget> _rollTargets = const [];
+  String? _activeRollTargetId;
+  bool _editingRollTarget = false;
+  bool _creatingRollTarget = false;
+  String _rollDraftName = '';
+  Map<String, Set<int>> _rollDraftPreferred = const {};
+  Map<String, Set<int>> _rollDraftAvoid = const {};
+  /// Snapshot for cancel restore.
+  String? _rollEditSnapshotId;
+  String _rollEditSnapshotName = '';
+  Map<String, Set<int>> _rollEditSnapshotPreferred = const {};
+  Map<String, Set<int>> _rollEditSnapshotAvoid = const {};
+  /// Before edit, restore can-roll toggle.
+  bool _showCanRollBeforeEdit = false;
+
   /// Secondary facets (ammo, class, synergy) behind "More".
   /// Primary line (scope + free-text + element/slot/type icon chips) is always on.
   bool _moreFiltersExpanded = false;
@@ -343,6 +359,8 @@ class _CatalogPageState extends State<CatalogPage> {
       _selectedInstanceId =
           _selectedInstanceId ?? defaultHighestPowerInstanceId(instances);
     });
+    // Keep roll-target profiles aligned after async instance resolve.
+    await _loadRollTargetsForSelection();
   }
 
   Future<void> _selectItem(CatalogItem item) async {
@@ -353,10 +371,12 @@ class _CatalogPageState extends State<CatalogPage> {
       _showCanRoll = false;
       _showCraft = false;
       _selectedInstanceId = null;
+      _resetRollTargetUi();
       // Collapse secondary filters only — primary line stays visible.
       _moreFiltersExpanded = false;
     });
     await _syncSelection();
+    await _loadRollTargetsForSelection();
   }
 
   Future<void> _selectFamily(WeaponFamily family) async {
@@ -372,9 +392,11 @@ class _CatalogPageState extends State<CatalogPage> {
       _showCanRoll = false;
       _showCraft = false;
       _selectedInstanceId = null;
+      _resetRollTargetUi();
       _moreFiltersExpanded = false;
     });
     await _syncSelection();
+    await _loadRollTargetsForSelection();
   }
 
   Future<void> _selectFamilyMember(WeaponFamilyMember member) async {
@@ -384,8 +406,349 @@ class _CatalogPageState extends State<CatalogPage> {
       _showCanRoll = false;
       _showCraft = false;
       _selectedInstanceId = null;
+      _resetRollTargetUi();
     });
     await _syncSelection();
+    await _loadRollTargetsForSelection();
+  }
+
+  void _resetRollTargetUi() {
+    _rollTargets = const [];
+    _activeRollTargetId = null;
+    _editingRollTarget = false;
+    _creatingRollTarget = false;
+    _rollDraftName = '';
+    _rollDraftPreferred = const {};
+    _rollDraftAvoid = const {};
+  }
+
+  Future<int?> _resolveRollTargetUserId() async {
+    final fromBridge = _bridge.userId;
+    if (fromBridge != null) return fromBridge;
+    // Offline library authoring without inventory session.
+    final user = await ensureUser(
+      widget.services.db,
+      bungieMembershipId: 'local-library',
+      membershipType: 0,
+      displayName: 'Local',
+    );
+    return user.id;
+  }
+
+  String? _weaponKeyForSelection() {
+    final sel = _selected;
+    if (sel == null) return null;
+    return '${sel.hash}';
+  }
+
+  Future<void> _loadRollTargetsForSelection() async {
+    final weaponKey = _weaponKeyForSelection();
+    if (weaponKey == null) return;
+    // DBR-IDL-009: exotic weapons have fixed perks — no roll targets UI/data.
+    final sel = _selected;
+    if (sel != null && sel.isExotic) {
+      if (!mounted) return;
+      setState(_resetRollTargetUi);
+      return;
+    }
+    final uid = await _resolveRollTargetUserId();
+    if (uid == null || !mounted) return;
+    final listed = await listWeaponRollTargets(
+      widget.services.db,
+      userId: uid,
+      weaponKey: weaponKey,
+    );
+    final active = await getActiveWeaponRollTarget(
+      widget.services.db,
+      userId: uid,
+      weaponKey: weaponKey,
+    );
+    if (!mounted || _weaponKeyForSelection() != weaponKey) return;
+    final priorId = _selectedInstanceId;
+    setState(() {
+      _rollTargets = listed;
+      _activeRollTargetId = active?.id;
+      // Sticky selection after rank reorder — only re-default if missing.
+      if (priorId != null &&
+          _instances.any((i) => i.instanceId == priorId)) {
+        _selectedInstanceId = priorId;
+      } else if (_instances.isNotEmpty) {
+        _selectedInstanceId =
+            _selectedInstanceId ?? defaultHighestPowerInstanceId(_instances);
+      }
+    });
+  }
+
+  WeaponRollTarget? get _activeRollTarget {
+    final id = _activeRollTargetId;
+    if (id == null) return null;
+    for (final t in _rollTargets) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
+  Map<String, Set<int>> _preferredMapFromTarget(WeaponRollTarget? t) {
+    if (t == null) return const {};
+    return {
+      for (final c in t.columns)
+        if (c.preferredPlugHashes.isNotEmpty)
+          c.columnKey: Set<int>.from(c.preferredPlugHashes),
+    };
+  }
+
+  Map<String, Set<int>> _avoidMapFromTarget(WeaponRollTarget? t) {
+    if (t == null) return const {};
+    return {
+      for (final c in t.columns)
+        if (c.avoidPlugHashes.isNotEmpty)
+          c.columnKey: Set<int>.from(c.avoidPlugHashes),
+    };
+  }
+
+  List<RollTargetColumn> _columnsFromDraftMaps() {
+    final keys = {
+      ..._rollDraftPreferred.keys,
+      ..._rollDraftAvoid.keys,
+    };
+    return [
+      for (final k in keys)
+        RollTargetColumn(
+          columnKey: k,
+          preferredPlugHashes: _rollDraftPreferred[k] ?? const {},
+          avoidPlugHashes: _rollDraftAvoid[k] ?? const {},
+        ),
+    ];
+  }
+
+  CatalogInstanceRollScore _toPresentationScore(RollTargetMatchResult m) {
+    return CatalogInstanceRollScore(
+      preferredMatched: m.preferredMatched,
+      preferredScored: m.preferredScored,
+      avoidHits: m.avoidHits,
+      avoidScored: m.avoidScored,
+    );
+  }
+
+  /// Host rank + scores for active target (domain pure score; no UI reimpl).
+  ({
+    List<CatalogInstanceProjection> instances,
+    Map<String, CatalogInstanceRollScore> scores,
+    bool ranked,
+  }) _rankedInstancesAndScores() {
+    final active = _activeRollTarget;
+    final exotic = _selected?.isExotic ?? false;
+    if (exotic || active == null || _instances.isEmpty) {
+      return (
+        instances: _instances,
+        scores: const <String, CatalogInstanceRollScore>{},
+        ranked: false,
+      );
+    }
+    final inputs = <RollTargetInstanceInput>[
+      for (final inst in _instances)
+        RollTargetInstanceInput(
+          instanceId: inst.instanceId,
+          plugsByColumn:
+              catalogRollPlugsByColumnFromSockets(inst.socketPlugs),
+          power: inst.power,
+          gearTier: inst.gearTier,
+        ),
+    ];
+    final ranked = rankOwnedForRollTarget(active, inputs);
+    final byId = {for (final i in _instances) i.instanceId: i};
+    final ordered = <CatalogInstanceProjection>[
+      for (final r in ranked)
+        if (byId.containsKey(r.instance.instanceId))
+          byId[r.instance.instanceId]!,
+    ];
+    // Append any not in rank (shouldn't happen).
+    for (final i in _instances) {
+      if (!ordered.any((o) => o.instanceId == i.instanceId)) {
+        ordered.add(i);
+      }
+    }
+    final scores = <String, CatalogInstanceRollScore>{
+      for (final r in ranked)
+        r.instance.instanceId: _toPresentationScore(r.match),
+    };
+    return (instances: ordered, scores: scores, ranked: true);
+  }
+
+  Future<void> _setActiveRollTarget(String? targetId) async {
+    final weaponKey = _weaponKeyForSelection();
+    if (weaponKey == null) return;
+    if (_selected?.isExotic ?? false) return;
+    final uid = await _resolveRollTargetUserId();
+    if (uid == null || !mounted) return;
+    await setActiveWeaponRollTarget(
+      widget.services.db,
+      userId: uid,
+      weaponKey: weaponKey,
+      targetId: targetId,
+    );
+    if (!mounted) return;
+    final priorId = _selectedInstanceId;
+    setState(() {
+      _activeRollTargetId = targetId;
+      // Selection sticky after rank reorder.
+      if (priorId != null &&
+          _instances.any((i) => i.instanceId == priorId)) {
+        _selectedInstanceId = priorId;
+      }
+    });
+  }
+
+  void _beginEditRollTarget({required bool creating}) {
+    if (_selected?.isExotic ?? false) return;
+    final active = _activeRollTarget;
+    setState(() {
+      _creatingRollTarget = creating;
+      _editingRollTarget = true;
+      _showCanRollBeforeEdit = _showCanRoll;
+      _showCanRoll = true; // editor needs ③ can-roll pool (BR-CAT-016)
+      if (creating) {
+        _rollDraftName = '';
+        _rollDraftPreferred = const {};
+        _rollDraftAvoid = const {};
+        _rollEditSnapshotId = null;
+      } else if (active != null) {
+        _rollDraftName = active.name;
+        _rollDraftPreferred = _preferredMapFromTarget(active);
+        _rollDraftAvoid = _avoidMapFromTarget(active);
+        _rollEditSnapshotId = active.id;
+        _rollEditSnapshotName = active.name;
+        _rollEditSnapshotPreferred = _preferredMapFromTarget(active);
+        _rollEditSnapshotAvoid = _avoidMapFromTarget(active);
+      } else {
+        // Edit with Off → treat as New
+        _creatingRollTarget = true;
+        _rollDraftName = '';
+        _rollDraftPreferred = const {};
+        _rollDraftAvoid = const {};
+        _rollEditSnapshotId = null;
+      }
+    });
+  }
+
+  void _cancelEditRollTarget() {
+    setState(() {
+      _editingRollTarget = false;
+      _creatingRollTarget = false;
+      _showCanRoll = _showCanRollBeforeEdit;
+      if (_rollEditSnapshotId != null) {
+        _rollDraftName = _rollEditSnapshotName;
+        _rollDraftPreferred = _rollEditSnapshotPreferred;
+        _rollDraftAvoid = _rollEditSnapshotAvoid;
+      } else {
+        _rollDraftName = '';
+        _rollDraftPreferred = const {};
+        _rollDraftAvoid = const {};
+      }
+    });
+  }
+
+  Future<void> _saveRollTarget() async {
+    final weaponKey = _weaponKeyForSelection();
+    if (weaponKey == null) return;
+    final isExotic = _selected?.isExotic ?? false;
+    if (isExotic) return;
+    final name = _rollDraftName.trim();
+    if (name.isEmpty) return;
+    if (catalogRollTargetHasOverlap(
+      preferredByColumn: _rollDraftPreferred,
+      avoidByColumn: _rollDraftAvoid,
+    )) {
+      return; // soft block save only
+    }
+    final uid = await _resolveRollTargetUserId();
+    if (uid == null || !mounted) return;
+    final columns = _columnsFromDraftMaps();
+    try {
+      if (_creatingRollTarget || _rollEditSnapshotId == null) {
+        final created = await createWeaponRollTarget(
+          widget.services.db,
+          userId: uid,
+          weaponKey: weaponKey,
+          name: name,
+          columns: columns,
+          isExotic: isExotic,
+        );
+        await setActiveWeaponRollTarget(
+          widget.services.db,
+          userId: uid,
+          weaponKey: weaponKey,
+          targetId: created.id,
+        );
+      } else {
+        await updateWeaponRollTarget(
+          widget.services.db,
+          userId: uid,
+          id: _rollEditSnapshotId!,
+          name: name,
+          columns: columns,
+          isExotic: isExotic,
+        );
+      }
+    } on RollTargetValidationException {
+      // Domain hard-rejects overlap; UI already soft-blocks — stay open.
+      if (mounted) setState(() {});
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _editingRollTarget = false;
+      _creatingRollTarget = false;
+      _showCanRoll = _showCanRollBeforeEdit;
+    });
+    await _loadRollTargetsForSelection();
+  }
+
+  Future<void> _deleteActiveRollTarget() async {
+    final active = _activeRollTarget;
+    final weaponKey = _weaponKeyForSelection();
+    if (active == null || weaponKey == null) return;
+    final uid = await _resolveRollTargetUserId();
+    if (uid == null || !mounted) return;
+    await deleteWeaponRollTarget(
+      widget.services.db,
+      userId: uid,
+      id: active.id,
+    );
+    await setActiveWeaponRollTarget(
+      widget.services.db,
+      userId: uid,
+      weaponKey: weaponKey,
+      targetId: null,
+    );
+    if (!mounted) return;
+    setState(() {
+      _editingRollTarget = false;
+      _creatingRollTarget = false;
+      _activeRollTargetId = null;
+    });
+    await _loadRollTargetsForSelection();
+  }
+
+  void _cycleRollPlug(String columnKey, int plugHash) {
+    final current = catalogRollPlugModeFor(
+      columnKey: columnKey,
+      plugHash: plugHash,
+      preferredByColumn: _rollDraftPreferred,
+      avoidByColumn: _rollDraftAvoid,
+    );
+    final next = nextCatalogRollPlugMode(current);
+    final applied = applyCatalogRollPlugMode(
+      columnKey: columnKey,
+      plugHash: plugHash,
+      mode: next,
+      preferredByColumn: _rollDraftPreferred,
+      avoidByColumn: _rollDraftAvoid,
+    );
+    setState(() {
+      _rollDraftPreferred = applied.preferredByColumn;
+      _rollDraftAvoid = applied.avoidByColumn;
+    });
   }
 
   void _setScope(CatalogScope scope) {
@@ -753,11 +1116,19 @@ class _CatalogPageState extends State<CatalogPage> {
           for (final dim in catalogGroupDimensions)
             Padding(
               padding: const EdgeInsets.only(right: 4),
-              child: FilterChip(
-                key: Key('group_chip_${dim.id.name}'),
-                label: Text(dim.label),
+              // Single semantic owner (Windows AX) — raw FilterChip nests
+              // label/selection nodes that thrash on group-by toggles.
+              child: Semantics(
+                button: true,
                 selected: _groupBy.contains(dim.id),
-                onSelected: (_) => _toggleGroupDimension(dim.id),
+                label: 'Group by ${dim.label}',
+                excludeSemantics: true,
+                child: FilterChip(
+                  key: Key('group_chip_${dim.id.name}'),
+                  label: Text(dim.label),
+                  selected: _groupBy.contains(dim.id),
+                  onSelected: (_) => _toggleGroupDimension(dim.id),
+                ),
               ),
             ),
         ],
@@ -783,11 +1154,19 @@ class _CatalogPageState extends State<CatalogPage> {
           ),
         ),
         actions: [
-          IconButton(
-            key: const Key('catalog_reload'),
-            tooltip: 'Sync catalog channel',
-            onPressed: _loading ? null : _load,
-            icon: const Icon(Icons.refresh),
+          // Single semantic owner (Windows AX) — IconButton tooltip + icon
+          // otherwise nest nodes that thrash on loading state flips.
+          Semantics(
+            button: true,
+            enabled: !_loading,
+            label: 'Sync catalog channel',
+            excludeSemantics: true,
+            child: IconButton(
+              key: const Key('catalog_reload'),
+              tooltip: 'Sync catalog channel',
+              onPressed: _loading ? null : _load,
+              icon: const Icon(Icons.refresh),
+            ),
           ),
         ],
       ),
@@ -800,6 +1179,7 @@ class _CatalogPageState extends State<CatalogPage> {
             title: 'Catalog',
             trailing: Tooltip(
               message: _version ?? 'No entity channel version',
+              excludeFromSemantics: true,
               child: NeonLivePulse(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -983,6 +1363,7 @@ class _CatalogPageState extends State<CatalogPage> {
             padding: const EdgeInsets.fromLTRB(kSpace16, 0, kSpace16, kSpace8),
             child: Tooltip(
               message: _version ?? 'No entity channel version',
+              excludeFromSemantics: true,
               child: Text(
                 _statusLine(),
                 key: const Key('catalog_status'),
@@ -1288,14 +1669,38 @@ class _CatalogPageState extends State<CatalogPage> {
             );
 
       final family = _selectedFamily;
+      final allowsRollTargets = !item.isExotic;
+      final ranked = _rankedInstancesAndScores();
+      final active = allowsRollTargets ? _activeRollTarget : null;
+      final viewPreferred = !allowsRollTargets
+          ? const <String, Set<int>>{}
+          : (_editingRollTarget
+              ? _rollDraftPreferred
+              : _preferredMapFromTarget(active));
+      final viewAvoid = !allowsRollTargets
+          ? const <String, Set<int>>{}
+          : (_editingRollTarget
+              ? _rollDraftAvoid
+              : _avoidMapFromTarget(active));
+      final hasOverlap = catalogRollTargetHasOverlap(
+        preferredByColumn: _rollDraftPreferred,
+        avoidByColumn: _rollDraftAvoid,
+      );
+      final draftNameOk = _rollDraftName.trim().isNotEmpty;
+      final canSave =
+          allowsRollTargets && _editingRollTarget && draftNameOk && !hasOverlap;
+
+      // Key by hash so detail AX nodes remount on weapon switch (Windows
+      // accessibility_bridge thrashs when reparenting a large in-place tree).
       return CatalogWeaponDetail(
+        key: ValueKey<String>('catalog_weapon_detail_${item.hash}'),
         item: item,
-        instances: _instances,
+        instances: ranked.instances,
         selectedInstanceId: _selectedInstanceId,
         onSelectInstance: (inst) {
           setState(() => _selectedInstanceId = inst.instanceId);
         },
-        showCanRoll: _showCanRoll,
+        showCanRoll: _showCanRoll || (_editingRollTarget && allowsRollTargets),
         showCraft: _showCraft,
         // craftAvailable must not use isCrafted alone when craftColumns empty
         // (false-positive toggle). Only show when host has real craft pool data.
@@ -1318,6 +1723,54 @@ class _CatalogPageState extends State<CatalogPage> {
             family != null && family.members.length > 1
                 ? _selectFamilyMember
                 : null,
+        // 003 roll targets — legendary only (DBR-IDL-009)
+        rollTargets: [
+          if (allowsRollTargets)
+            for (final t in _rollTargets)
+              CatalogRollTargetOption(id: t.id, name: t.name),
+        ],
+        activeRollTargetId: allowsRollTargets ? _activeRollTargetId : null,
+        activeRollTargetName: allowsRollTargets ? active?.name : null,
+        onActiveRollTargetChanged: allowsRollTargets
+            ? (id) {
+                _setActiveRollTarget(id);
+              }
+            : null,
+        instanceRollScores:
+            allowsRollTargets ? ranked.scores : const {},
+        preserveInstanceOrder: allowsRollTargets && ranked.ranked,
+        rankedByRollTarget: allowsRollTargets && ranked.ranked,
+        editingRollTarget: allowsRollTargets && _editingRollTarget,
+        onEditRollTarget: allowsRollTargets
+            ? () => _beginEditRollTarget(creating: false)
+            : null,
+        onNewRollTarget: allowsRollTargets
+            ? () => _beginEditRollTarget(creating: true)
+            : null,
+        onDeleteRollTarget: allowsRollTargets && _activeRollTargetId != null
+            ? () {
+                _deleteActiveRollTarget();
+              }
+            : null,
+        canDeleteRollTarget:
+            allowsRollTargets && _activeRollTargetId != null,
+        rollTargetDraftName: _rollDraftName,
+        onRollTargetDraftNameChanged: allowsRollTargets
+            ? (v) => setState(() => _rollDraftName = v)
+            : null,
+        rollTargetHasOverlap: hasOverlap,
+        onSaveRollTarget: canSave
+            ? () {
+                _saveRollTarget();
+              }
+            : null,
+        onCancelRollTarget:
+            allowsRollTargets ? _cancelEditRollTarget : null,
+        canSaveRollTarget: canSave,
+        preferredByColumn: viewPreferred,
+        avoidByColumn: viewAvoid,
+        onCycleRollPlug:
+            allowsRollTargets && _editingRollTarget ? _cycleRollPlug : null,
         headerTrailing: _reverseTags.isEmpty
             ? null
             : Wrap(

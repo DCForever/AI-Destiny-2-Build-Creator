@@ -6364,6 +6364,670 @@ class VariantSetAttachmentsCompanion
   }
 }
 
+class $WeaponRollTargetsTable extends WeaponRollTargets
+    with TableInfo<$WeaponRollTargetsTable, WeaponRollTargetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeaponRollTargetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _weaponKeyMeta =
+      const VerificationMeta('weaponKey');
+  @override
+  late final GeneratedColumn<String> weaponKey = GeneratedColumn<String>(
+      'weapon_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _columnsJsonMeta =
+      const VerificationMeta('columnsJson');
+  @override
+  late final GeneratedColumn<String> columnsJson = GeneratedColumn<String>(
+      'columns_json', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('[]'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, userId, weaponKey, name, columnsJson, createdAt, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weapon_roll_targets';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<WeaponRollTargetRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('weapon_key')) {
+      context.handle(_weaponKeyMeta,
+          weaponKey.isAcceptableOrUnknown(data['weapon_key']!, _weaponKeyMeta));
+    } else if (isInserting) {
+      context.missing(_weaponKeyMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('columns_json')) {
+      context.handle(
+          _columnsJsonMeta,
+          columnsJson.isAcceptableOrUnknown(
+              data['columns_json']!, _columnsJsonMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WeaponRollTargetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeaponRollTargetRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}user_id'])!,
+      weaponKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}weapon_key'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      columnsJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}columns_json'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $WeaponRollTargetsTable createAlias(String alias) {
+    return $WeaponRollTargetsTable(attachedDatabase, alias);
+  }
+}
+
+class WeaponRollTargetRow extends DataClass
+    implements Insertable<WeaponRollTargetRow> {
+  final String id;
+  final int userId;
+  final String weaponKey;
+  final String name;
+  final String columnsJson;
+  final String createdAt;
+  final String updatedAt;
+  const WeaponRollTargetRow(
+      {required this.id,
+      required this.userId,
+      required this.weaponKey,
+      required this.name,
+      required this.columnsJson,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<int>(userId);
+    map['weapon_key'] = Variable<String>(weaponKey);
+    map['name'] = Variable<String>(name);
+    map['columns_json'] = Variable<String>(columnsJson);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  WeaponRollTargetsCompanion toCompanion(bool nullToAbsent) {
+    return WeaponRollTargetsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      weaponKey: Value(weaponKey),
+      name: Value(name),
+      columnsJson: Value(columnsJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory WeaponRollTargetRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeaponRollTargetRow(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<int>(json['userId']),
+      weaponKey: serializer.fromJson<String>(json['weaponKey']),
+      name: serializer.fromJson<String>(json['name']),
+      columnsJson: serializer.fromJson<String>(json['columnsJson']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<int>(userId),
+      'weaponKey': serializer.toJson<String>(weaponKey),
+      'name': serializer.toJson<String>(name),
+      'columnsJson': serializer.toJson<String>(columnsJson),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  WeaponRollTargetRow copyWith(
+          {String? id,
+          int? userId,
+          String? weaponKey,
+          String? name,
+          String? columnsJson,
+          String? createdAt,
+          String? updatedAt}) =>
+      WeaponRollTargetRow(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        weaponKey: weaponKey ?? this.weaponKey,
+        name: name ?? this.name,
+        columnsJson: columnsJson ?? this.columnsJson,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  WeaponRollTargetRow copyWithCompanion(WeaponRollTargetsCompanion data) {
+    return WeaponRollTargetRow(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      weaponKey: data.weaponKey.present ? data.weaponKey.value : this.weaponKey,
+      name: data.name.present ? data.name.value : this.name,
+      columnsJson:
+          data.columnsJson.present ? data.columnsJson.value : this.columnsJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeaponRollTargetRow(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('weaponKey: $weaponKey, ')
+          ..write('name: $name, ')
+          ..write('columnsJson: $columnsJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, userId, weaponKey, name, columnsJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeaponRollTargetRow &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.weaponKey == this.weaponKey &&
+          other.name == this.name &&
+          other.columnsJson == this.columnsJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class WeaponRollTargetsCompanion extends UpdateCompanion<WeaponRollTargetRow> {
+  final Value<String> id;
+  final Value<int> userId;
+  final Value<String> weaponKey;
+  final Value<String> name;
+  final Value<String> columnsJson;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const WeaponRollTargetsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.weaponKey = const Value.absent(),
+    this.name = const Value.absent(),
+    this.columnsJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WeaponRollTargetsCompanion.insert({
+    required String id,
+    required int userId,
+    required String weaponKey,
+    required String name,
+    this.columnsJson = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        userId = Value(userId),
+        weaponKey = Value(weaponKey),
+        name = Value(name),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<WeaponRollTargetRow> custom({
+    Expression<String>? id,
+    Expression<int>? userId,
+    Expression<String>? weaponKey,
+    Expression<String>? name,
+    Expression<String>? columnsJson,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (weaponKey != null) 'weapon_key': weaponKey,
+      if (name != null) 'name': name,
+      if (columnsJson != null) 'columns_json': columnsJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WeaponRollTargetsCompanion copyWith(
+      {Value<String>? id,
+      Value<int>? userId,
+      Value<String>? weaponKey,
+      Value<String>? name,
+      Value<String>? columnsJson,
+      Value<String>? createdAt,
+      Value<String>? updatedAt,
+      Value<int>? rowid}) {
+    return WeaponRollTargetsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      weaponKey: weaponKey ?? this.weaponKey,
+      name: name ?? this.name,
+      columnsJson: columnsJson ?? this.columnsJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<int>(userId.value);
+    }
+    if (weaponKey.present) {
+      map['weapon_key'] = Variable<String>(weaponKey.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (columnsJson.present) {
+      map['columns_json'] = Variable<String>(columnsJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeaponRollTargetsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('weaponKey: $weaponKey, ')
+          ..write('name: $name, ')
+          ..write('columnsJson: $columnsJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WeaponRollTargetActiveTable extends WeaponRollTargetActive
+    with TableInfo<$WeaponRollTargetActiveTable, WeaponRollTargetActiveRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeaponRollTargetActiveTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _weaponKeyMeta =
+      const VerificationMeta('weaponKey');
+  @override
+  late final GeneratedColumn<String> weaponKey = GeneratedColumn<String>(
+      'weapon_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _targetIdMeta =
+      const VerificationMeta('targetId');
+  @override
+  late final GeneratedColumn<String> targetId = GeneratedColumn<String>(
+      'target_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [userId, weaponKey, targetId, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weapon_roll_target_active';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<WeaponRollTargetActiveRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('weapon_key')) {
+      context.handle(_weaponKeyMeta,
+          weaponKey.isAcceptableOrUnknown(data['weapon_key']!, _weaponKeyMeta));
+    } else if (isInserting) {
+      context.missing(_weaponKeyMeta);
+    }
+    if (data.containsKey('target_id')) {
+      context.handle(_targetIdMeta,
+          targetId.isAcceptableOrUnknown(data['target_id']!, _targetIdMeta));
+    } else if (isInserting) {
+      context.missing(_targetIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, weaponKey};
+  @override
+  WeaponRollTargetActiveRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeaponRollTargetActiveRow(
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}user_id'])!,
+      weaponKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}weapon_key'])!,
+      targetId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}target_id'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $WeaponRollTargetActiveTable createAlias(String alias) {
+    return $WeaponRollTargetActiveTable(attachedDatabase, alias);
+  }
+}
+
+class WeaponRollTargetActiveRow extends DataClass
+    implements Insertable<WeaponRollTargetActiveRow> {
+  final int userId;
+  final String weaponKey;
+  final String targetId;
+  final String updatedAt;
+  const WeaponRollTargetActiveRow(
+      {required this.userId,
+      required this.weaponKey,
+      required this.targetId,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<int>(userId);
+    map['weapon_key'] = Variable<String>(weaponKey);
+    map['target_id'] = Variable<String>(targetId);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  WeaponRollTargetActiveCompanion toCompanion(bool nullToAbsent) {
+    return WeaponRollTargetActiveCompanion(
+      userId: Value(userId),
+      weaponKey: Value(weaponKey),
+      targetId: Value(targetId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory WeaponRollTargetActiveRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeaponRollTargetActiveRow(
+      userId: serializer.fromJson<int>(json['userId']),
+      weaponKey: serializer.fromJson<String>(json['weaponKey']),
+      targetId: serializer.fromJson<String>(json['targetId']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<int>(userId),
+      'weaponKey': serializer.toJson<String>(weaponKey),
+      'targetId': serializer.toJson<String>(targetId),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  WeaponRollTargetActiveRow copyWith(
+          {int? userId,
+          String? weaponKey,
+          String? targetId,
+          String? updatedAt}) =>
+      WeaponRollTargetActiveRow(
+        userId: userId ?? this.userId,
+        weaponKey: weaponKey ?? this.weaponKey,
+        targetId: targetId ?? this.targetId,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  WeaponRollTargetActiveRow copyWithCompanion(
+      WeaponRollTargetActiveCompanion data) {
+    return WeaponRollTargetActiveRow(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      weaponKey: data.weaponKey.present ? data.weaponKey.value : this.weaponKey,
+      targetId: data.targetId.present ? data.targetId.value : this.targetId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeaponRollTargetActiveRow(')
+          ..write('userId: $userId, ')
+          ..write('weaponKey: $weaponKey, ')
+          ..write('targetId: $targetId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(userId, weaponKey, targetId, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeaponRollTargetActiveRow &&
+          other.userId == this.userId &&
+          other.weaponKey == this.weaponKey &&
+          other.targetId == this.targetId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class WeaponRollTargetActiveCompanion
+    extends UpdateCompanion<WeaponRollTargetActiveRow> {
+  final Value<int> userId;
+  final Value<String> weaponKey;
+  final Value<String> targetId;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const WeaponRollTargetActiveCompanion({
+    this.userId = const Value.absent(),
+    this.weaponKey = const Value.absent(),
+    this.targetId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WeaponRollTargetActiveCompanion.insert({
+    required int userId,
+    required String weaponKey,
+    required String targetId,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  })  : userId = Value(userId),
+        weaponKey = Value(weaponKey),
+        targetId = Value(targetId),
+        updatedAt = Value(updatedAt);
+  static Insertable<WeaponRollTargetActiveRow> custom({
+    Expression<int>? userId,
+    Expression<String>? weaponKey,
+    Expression<String>? targetId,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (weaponKey != null) 'weapon_key': weaponKey,
+      if (targetId != null) 'target_id': targetId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WeaponRollTargetActiveCompanion copyWith(
+      {Value<int>? userId,
+      Value<String>? weaponKey,
+      Value<String>? targetId,
+      Value<String>? updatedAt,
+      Value<int>? rowid}) {
+    return WeaponRollTargetActiveCompanion(
+      userId: userId ?? this.userId,
+      weaponKey: weaponKey ?? this.weaponKey,
+      targetId: targetId ?? this.targetId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<int>(userId.value);
+    }
+    if (weaponKey.present) {
+      map['weapon_key'] = Variable<String>(weaponKey.value);
+    }
+    if (targetId.present) {
+      map['target_id'] = Variable<String>(targetId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeaponRollTargetActiveCompanion(')
+          ..write('userId: $userId, ')
+          ..write('weaponKey: $weaponKey, ')
+          ..write('targetId: $targetId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6384,6 +7048,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $BuildSynergyTypesTable(this);
   late final $VariantSetAttachmentsTable variantSetAttachments =
       $VariantSetAttachmentsTable(this);
+  late final $WeaponRollTargetsTable weaponRollTargets =
+      $WeaponRollTargetsTable(this);
+  late final $WeaponRollTargetActiveTable weaponRollTargetActive =
+      $WeaponRollTargetActiveTable(this);
   late final Index idxInventoryUserHash = Index('idx_inventory_user_hash',
       'CREATE INDEX idx_inventory_user_hash ON inventory_items (user_id, item_hash)');
   late final Index idxInventoryUserBucket = Index('idx_inventory_user_bucket',
@@ -6404,6 +7072,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxVariantAttachmentsSet = Index(
       'idx_variant_attachments_set',
       'CREATE INDEX idx_variant_attachments_set ON variant_set_attachments (set_id)');
+  late final Index idxWeaponRollTargetsUserWeapon = Index(
+      'idx_weapon_roll_targets_user_weapon',
+      'CREATE INDEX idx_weapon_roll_targets_user_weapon ON weapon_roll_targets (user_id, weapon_key)');
+  late final Index idxWeaponRollTargetsUserWeaponName = Index(
+      'idx_weapon_roll_targets_user_weapon_name',
+      'CREATE UNIQUE INDEX idx_weapon_roll_targets_user_weapon_name ON weapon_roll_targets (user_id, weapon_key, name)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6423,6 +7097,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         buildVariants,
         buildSynergyTypes,
         variantSetAttachments,
+        weaponRollTargets,
+        weaponRollTargetActive,
         idxInventoryUserHash,
         idxInventoryUserBucket,
         idxInventoryUserLocation,
@@ -6431,7 +7107,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxSetTagsTag,
         idxSetItemsSet,
         idxSynergyLinksSynergy,
-        idxVariantAttachmentsSet
+        idxVariantAttachmentsSet,
+        idxWeaponRollTargetsUserWeapon,
+        idxWeaponRollTargetsUserWeaponName
       ];
 }
 
@@ -9524,6 +10202,378 @@ typedef $$VariantSetAttachmentsTableProcessedTableManager
         ),
         VariantSetAttachment,
         PrefetchHooks Function()>;
+typedef $$WeaponRollTargetsTableCreateCompanionBuilder
+    = WeaponRollTargetsCompanion Function({
+  required String id,
+  required int userId,
+  required String weaponKey,
+  required String name,
+  Value<String> columnsJson,
+  required String createdAt,
+  required String updatedAt,
+  Value<int> rowid,
+});
+typedef $$WeaponRollTargetsTableUpdateCompanionBuilder
+    = WeaponRollTargetsCompanion Function({
+  Value<String> id,
+  Value<int> userId,
+  Value<String> weaponKey,
+  Value<String> name,
+  Value<String> columnsJson,
+  Value<String> createdAt,
+  Value<String> updatedAt,
+  Value<int> rowid,
+});
+
+class $$WeaponRollTargetsTableFilterComposer
+    extends Composer<_$AppDatabase, $WeaponRollTargetsTable> {
+  $$WeaponRollTargetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get weaponKey => $composableBuilder(
+      column: $table.weaponKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get columnsJson => $composableBuilder(
+      column: $table.columnsJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$WeaponRollTargetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WeaponRollTargetsTable> {
+  $$WeaponRollTargetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get weaponKey => $composableBuilder(
+      column: $table.weaponKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get columnsJson => $composableBuilder(
+      column: $table.columnsJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$WeaponRollTargetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WeaponRollTargetsTable> {
+  $$WeaponRollTargetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get weaponKey =>
+      $composableBuilder(column: $table.weaponKey, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get columnsJson => $composableBuilder(
+      column: $table.columnsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$WeaponRollTargetsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $WeaponRollTargetsTable,
+    WeaponRollTargetRow,
+    $$WeaponRollTargetsTableFilterComposer,
+    $$WeaponRollTargetsTableOrderingComposer,
+    $$WeaponRollTargetsTableAnnotationComposer,
+    $$WeaponRollTargetsTableCreateCompanionBuilder,
+    $$WeaponRollTargetsTableUpdateCompanionBuilder,
+    (
+      WeaponRollTargetRow,
+      BaseReferences<_$AppDatabase, $WeaponRollTargetsTable,
+          WeaponRollTargetRow>
+    ),
+    WeaponRollTargetRow,
+    PrefetchHooks Function()> {
+  $$WeaponRollTargetsTableTableManager(
+      _$AppDatabase db, $WeaponRollTargetsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WeaponRollTargetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WeaponRollTargetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WeaponRollTargetsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<int> userId = const Value.absent(),
+            Value<String> weaponKey = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> columnsJson = const Value.absent(),
+            Value<String> createdAt = const Value.absent(),
+            Value<String> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WeaponRollTargetsCompanion(
+            id: id,
+            userId: userId,
+            weaponKey: weaponKey,
+            name: name,
+            columnsJson: columnsJson,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required int userId,
+            required String weaponKey,
+            required String name,
+            Value<String> columnsJson = const Value.absent(),
+            required String createdAt,
+            required String updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WeaponRollTargetsCompanion.insert(
+            id: id,
+            userId: userId,
+            weaponKey: weaponKey,
+            name: name,
+            columnsJson: columnsJson,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$WeaponRollTargetsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $WeaponRollTargetsTable,
+    WeaponRollTargetRow,
+    $$WeaponRollTargetsTableFilterComposer,
+    $$WeaponRollTargetsTableOrderingComposer,
+    $$WeaponRollTargetsTableAnnotationComposer,
+    $$WeaponRollTargetsTableCreateCompanionBuilder,
+    $$WeaponRollTargetsTableUpdateCompanionBuilder,
+    (
+      WeaponRollTargetRow,
+      BaseReferences<_$AppDatabase, $WeaponRollTargetsTable,
+          WeaponRollTargetRow>
+    ),
+    WeaponRollTargetRow,
+    PrefetchHooks Function()>;
+typedef $$WeaponRollTargetActiveTableCreateCompanionBuilder
+    = WeaponRollTargetActiveCompanion Function({
+  required int userId,
+  required String weaponKey,
+  required String targetId,
+  required String updatedAt,
+  Value<int> rowid,
+});
+typedef $$WeaponRollTargetActiveTableUpdateCompanionBuilder
+    = WeaponRollTargetActiveCompanion Function({
+  Value<int> userId,
+  Value<String> weaponKey,
+  Value<String> targetId,
+  Value<String> updatedAt,
+  Value<int> rowid,
+});
+
+class $$WeaponRollTargetActiveTableFilterComposer
+    extends Composer<_$AppDatabase, $WeaponRollTargetActiveTable> {
+  $$WeaponRollTargetActiveTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get weaponKey => $composableBuilder(
+      column: $table.weaponKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get targetId => $composableBuilder(
+      column: $table.targetId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$WeaponRollTargetActiveTableOrderingComposer
+    extends Composer<_$AppDatabase, $WeaponRollTargetActiveTable> {
+  $$WeaponRollTargetActiveTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get weaponKey => $composableBuilder(
+      column: $table.weaponKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get targetId => $composableBuilder(
+      column: $table.targetId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$WeaponRollTargetActiveTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WeaponRollTargetActiveTable> {
+  $$WeaponRollTargetActiveTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get weaponKey =>
+      $composableBuilder(column: $table.weaponKey, builder: (column) => column);
+
+  GeneratedColumn<String> get targetId =>
+      $composableBuilder(column: $table.targetId, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$WeaponRollTargetActiveTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $WeaponRollTargetActiveTable,
+    WeaponRollTargetActiveRow,
+    $$WeaponRollTargetActiveTableFilterComposer,
+    $$WeaponRollTargetActiveTableOrderingComposer,
+    $$WeaponRollTargetActiveTableAnnotationComposer,
+    $$WeaponRollTargetActiveTableCreateCompanionBuilder,
+    $$WeaponRollTargetActiveTableUpdateCompanionBuilder,
+    (
+      WeaponRollTargetActiveRow,
+      BaseReferences<_$AppDatabase, $WeaponRollTargetActiveTable,
+          WeaponRollTargetActiveRow>
+    ),
+    WeaponRollTargetActiveRow,
+    PrefetchHooks Function()> {
+  $$WeaponRollTargetActiveTableTableManager(
+      _$AppDatabase db, $WeaponRollTargetActiveTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WeaponRollTargetActiveTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WeaponRollTargetActiveTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WeaponRollTargetActiveTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> userId = const Value.absent(),
+            Value<String> weaponKey = const Value.absent(),
+            Value<String> targetId = const Value.absent(),
+            Value<String> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WeaponRollTargetActiveCompanion(
+            userId: userId,
+            weaponKey: weaponKey,
+            targetId: targetId,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int userId,
+            required String weaponKey,
+            required String targetId,
+            required String updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WeaponRollTargetActiveCompanion.insert(
+            userId: userId,
+            weaponKey: weaponKey,
+            targetId: targetId,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$WeaponRollTargetActiveTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $WeaponRollTargetActiveTable,
+        WeaponRollTargetActiveRow,
+        $$WeaponRollTargetActiveTableFilterComposer,
+        $$WeaponRollTargetActiveTableOrderingComposer,
+        $$WeaponRollTargetActiveTableAnnotationComposer,
+        $$WeaponRollTargetActiveTableCreateCompanionBuilder,
+        $$WeaponRollTargetActiveTableUpdateCompanionBuilder,
+        (
+          WeaponRollTargetActiveRow,
+          BaseReferences<_$AppDatabase, $WeaponRollTargetActiveTable,
+              WeaponRollTargetActiveRow>
+        ),
+        WeaponRollTargetActiveRow,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9555,4 +10605,9 @@ class $AppDatabaseManager {
       $$BuildSynergyTypesTableTableManager(_db, _db.buildSynergyTypes);
   $$VariantSetAttachmentsTableTableManager get variantSetAttachments =>
       $$VariantSetAttachmentsTableTableManager(_db, _db.variantSetAttachments);
+  $$WeaponRollTargetsTableTableManager get weaponRollTargets =>
+      $$WeaponRollTargetsTableTableManager(_db, _db.weaponRollTargets);
+  $$WeaponRollTargetActiveTableTableManager get weaponRollTargetActive =>
+      $$WeaponRollTargetActiveTableTableManager(
+          _db, _db.weaponRollTargetActive);
 }

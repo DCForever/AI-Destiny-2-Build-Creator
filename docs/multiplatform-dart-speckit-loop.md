@@ -1,6 +1,9 @@
 # DART Spec Kit auto-loop
 
 **Workflow:** `dart-speckit-loop` (`.grok/workflows/dart-speckit-loop.rhai`)  
+
+**Scope (D-LANES):** advances **system / non-UI** DART slices only. Do **not** use this loop for presentation chrome, mockups, or dual-truth Capture — use [ux-redesign](./ux-redesign/README.md).  
+
 **Roadmap:** [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md)  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
 

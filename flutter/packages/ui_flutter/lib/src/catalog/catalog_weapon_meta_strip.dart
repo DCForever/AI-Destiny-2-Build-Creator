@@ -62,7 +62,6 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
             tooltip: itemTypeName!,
             mark: weaponTypeLetterMark(itemTypeName),
             color: palette.muted,
-            semanticLabel: itemTypeName!,
           ),
       if (frameVisual != null)
         _MetaOfficialChip(
@@ -98,7 +97,6 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
           tooltip: slot!,
           mark: neonSlotGlyphMark(slot),
           color: _slotColor(palette, slot),
-          semanticLabel: '$slot slot',
         ),
       if (ammoVisual != null)
         _MetaOfficialChip(
@@ -127,8 +125,11 @@ class CatalogWeaponMetaStrip extends StatelessWidget {
 
     // Compact horizontal strip (max-content): fixed chips; never full-width bars.
     // Key on the Row (mainAxisSize.min) — Semantics alone expands to max constraints.
+    // excludeSemantics: one stable AX node for the strip. Nested chip Tooltip +
+    // Semantics reparent on rebuild/hover and break the Windows accessibility bridge.
     return Semantics(
       label: _a11yLabel(),
+      excludeSemantics: true,
       child: Row(
         key: const Key('catalog_weapon_meta_strip'),
         mainAxisSize: MainAxisSize.min,
@@ -183,28 +184,26 @@ class _MetaTypeSilhouetteChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
+    // Hover-only Tooltip; strip (or parent) owns a11y name (Windows AX).
     return Tooltip(
       message: tooltip,
-      child: Semantics(
-        label: tooltip,
-        image: true,
-        child: Container(
-          width: kCatalogMetaChipSize,
-          height: kCatalogMetaChipSize,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: palette.surfaceRaised.withValues(alpha: 0.6),
-            border: Border.all(
-              color: visual.color.withValues(alpha: 0.55),
-              width: kFlapRuleThickness,
-            ),
-            borderRadius: BorderRadius.circular(2),
+      excludeFromSemantics: true,
+      child: Container(
+        width: kCatalogMetaChipSize,
+        height: kCatalogMetaChipSize,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: palette.surfaceRaised.withValues(alpha: 0.6),
+          border: Border.all(
+            color: visual.color.withValues(alpha: 0.55),
+            width: kFlapRuleThickness,
           ),
-          child: DestinyWeaponTypeIcon(
-            visual: visual,
-            size: 15,
-            fallbackMark: fallbackMark,
-          ),
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: DestinyWeaponTypeIcon(
+          visual: visual,
+          size: 15,
+          fallbackMark: fallbackMark,
         ),
       ),
     );
@@ -228,6 +227,7 @@ class _MetaOfficialChip extends StatelessWidget {
     final palette = FlapPalette.of(context);
     return Tooltip(
       message: tooltip,
+      excludeFromSemantics: true,
       child: Container(
         width: kCatalogMetaChipSize,
         height: kCatalogMetaChipSize,
@@ -257,40 +257,37 @@ class _MetaGlyphChip extends StatelessWidget {
     required this.tooltip,
     required this.mark,
     required this.color,
-    this.semanticLabel,
   });
 
   final String tooltip;
   final String mark;
   final Color color;
-  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
+    // Hover-only Tooltip; parent strip owns a11y (Windows AX).
     return Tooltip(
       message: tooltip,
-      child: Semantics(
-        label: semanticLabel ?? tooltip,
-        child: Container(
-          width: kCatalogMetaChipSize,
-          height: kCatalogMetaChipSize,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: palette.surfaceRaised.withValues(alpha: 0.6),
-            border: Border.all(
-              color: color.withValues(alpha: 0.45),
-              width: kFlapRuleThickness,
-            ),
-            borderRadius: BorderRadius.circular(2),
+      excludeFromSemantics: true,
+      child: Container(
+        width: kCatalogMetaChipSize,
+        height: kCatalogMetaChipSize,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: palette.surfaceRaised.withValues(alpha: 0.6),
+          border: Border.all(
+            color: color.withValues(alpha: 0.45),
+            width: kFlapRuleThickness,
           ),
-          child: Text(
-            mark,
-            style: neonMono(color: color, fontSize: 9),
-            maxLines: 1,
-            overflow: TextOverflow.clip,
-            textAlign: TextAlign.center,
-          ),
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Text(
+          mark,
+          style: neonMono(color: color, fontSize: 9),
+          maxLines: 1,
+          overflow: TextOverflow.clip,
+          textAlign: TextAlign.center,
         ),
       ),
     );
@@ -308,6 +305,7 @@ class _OwnedCountChip extends StatelessWidget {
     final palette = FlapPalette.of(context);
     return Tooltip(
       message: 'Owned copies',
+      excludeFromSemantics: true,
       child: Container(
         height: kCatalogMetaChipSize,
         constraints: const BoxConstraints(

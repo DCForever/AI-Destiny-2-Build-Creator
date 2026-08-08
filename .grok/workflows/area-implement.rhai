@@ -33,7 +33,7 @@ let load_schema = #{
 
 let plan_schema = #{
     "type": "object",
-    "required": ["files", "tests", "acceptance", "risks", "shot_matrix", "addresses_gap_ids"],
+    "required": ["files", "tests", "acceptance", "risks", "shot_matrix", "addresses_gap_ids", "ste_map"],
     "properties": #{
         "files": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
         "tests": #{ "type": "array", "maxItems": 24, "items": #{ "type": "string" } },
@@ -54,6 +54,22 @@ let plan_schema = #{
                     "must": #{ "type": "boolean" },
                     "proves": #{ "type": "array", "maxItems": 8, "items": #{ "type": "string" } },
                     "drive": #{ "type": "string" },
+                },
+            },
+        },
+        // STE (Simplified Technical English) architecture → file map.
+        // End of plan: short bullets that link product/architecture intent to concrete paths.
+        "ste_map": #{
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 20,
+            "items": #{
+                "type": "object",
+                "required": ["architecture", "task", "file"],
+                "properties": #{
+                    "architecture": #{ "type": "string" },
+                    "task": #{ "type": "string" },
+                    "file": #{ "type": "string" },
                 },
             },
         },
@@ -202,6 +218,11 @@ plan_prompt += "widget-test-only rows must NOT be must:true. ";
 plan_prompt += "REQUIRED: addresses_gap_ids — every blocking_gap_ids from Load must appear in addresses_gap_ids OR deferred_gap_ids. ";
 plan_prompt += "For addresses_gap_ids, plan files/tests/shot_matrix proves tokens from the gap Acceptance lines. ";
 plan_prompt += "PNG presence alone does NOT close visual-parity gaps (e.g. perk tile chrome vs mockup). ";
+plan_prompt += "REQUIRED: ste_map — end-of-plan STE (Simplified Technical English) map from architecture to files. ";
+plan_prompt += "Each ste_map row: architecture (product/layer concept in plain words), task (one short active-voice STE sentence: what you change), file (path or small path group). ";
+plan_prompt += "Rules for STE task text: one idea per sentence; active voice; no marketing fluff; prefer verb+object (Add X. Wire Y. Extend Z.). ";
+plan_prompt += "Cover pure domain/app APIs (if any), ui_flutter widgets, host wire, tests, Widgetbook, docs/product-map when relevant. ";
+plan_prompt += "ste_map must make architecture→file changes scannable without reading the full file list. ";
 plan_prompt += "Do not change design system tokens. Do not reintroduce stripped unrelated areas. Honor purity. USE tools to inspect existing packages.";
 
 let plan = agent(plan_prompt, #{
@@ -220,7 +241,9 @@ phase("Human gate");
 let gate = "";
 gate += "Approve this implementation plan (or request changes on resume):\n";
 gate += json_encode(plan.output);
-gate += "\n\nshot_matrix is the dual-truth contract — every must:true id needs a real PNG after Capture.\n";
+gate += "\n\n## STE map (architecture → file)\n";
+gate += "Scan ste_map bullets: each row links architecture intent to a concrete file task.\n";
+gate += "\nshot_matrix is the dual-truth contract — every must:true id needs a real PNG after Capture.\n";
 gate += "Open dual-truth gaps (DUAL-TRUTH-GAPS.md) must be addressed or explicitly deferred — PNG alone does not close visual-parity.\n";
 gate += "Brief/mockups/gaps: ";
 gate += loaded_json;

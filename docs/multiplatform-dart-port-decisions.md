@@ -1,12 +1,12 @@
 # Multiplatform Dart port — architecture decisions
 
 **Status:** decided (exploration follow-up)  
-**Updated:** 2026-08-01  
+**Updated:** 2026-08-06 (D-LANES: Spec Kit = system/non-UI; UI/UX = area-ux)  
 **Source:** workflow `explore-flutter-port` + product follow-up answers  
 **Related report:** session scratch `flutter-port-exploration.md` (run `explore-flutter-port`)  
 **Branching / worktrees:** [`multiplatform-dart-branching.md`](./multiplatform-dart-branching.md) — **all** Spec Kit work for this port lives on `feature/multiplatform-dart` (+ child feature branches), in the dedicated worktree — not on product slices (e.g. `043-*`).  
-**Slice roadmap (all phases, small Spec Kit slices):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — IDs **`DART-001`…** (parallel workstream; not product `0NN`)  
-**Feature gaps vs Next (planned work):** [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) — GAP-* → DART-050+
+**Slice roadmap (Spec Kit / system):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — IDs **`DART-001`…** (parallel workstream; not product `0NN`)  
+**Feature gaps vs Next (planned work):** [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) — system → DART; UI/UX → [ux-redesign](./ux-redesign/README.md)
 
 This note freezes port *architecture* choices. It does **not** change live product domain rules (DBR/DAC/BR). Next.js remains production until explicit cutover gates pass.
 
@@ -42,6 +42,7 @@ Shared pure-Dart packages own domain/data contracts. UI is **not** one shared wi
 | D-WEB-AUTH | Jaspr vs confidential cookies | **Public + PKCE** on pure clients. Do **not** pursue confidential + iron-session cookie parity via a local BFF/helper for Jaspr. Do **not** embed `BUNGIE_CLIENT_SECRET` or `SESSION_SECRET` in Flutter/Jaspr. |
 | D-BUNGIE (Q2) | Bungie application layout | **Hybrid** (see below). |
 | D-NOT-FLUTTER-WEB | Web stack | Prefer Jaspr for web; **not** Flutter Web as the product web target. |
+| **D-LANES** | Spec Kit vs UI/UX | **Going forward:** Spec Kit (`DART-NNN` / product `0NN`) is for **non-UI / system** work only (pure domain/data/algorithm, presentation **models/resolvers**, IO/auth/sync). **UI/UX** (mockups, widget chrome, Widgetbook, dual-truth Capture, host presentation wire of shipped models) uses the **area-ux** track under [`docs/ux-redesign/`](./ux-redesign/README.md) — not Spec Kit. Features that need both **split**: system Spec Kit first (or contract-first), then UX implement. Historical DART-062–068 mixed host UI into Spec Kit and is closed — do not extend. Vault ADR: ProjectTracker `Decisions/DEC-2026-08-07-001 Spec Kit system lane vs area UX lane.md` (accepted). |
 
 ### D-BUNGIE hybrid detail
 

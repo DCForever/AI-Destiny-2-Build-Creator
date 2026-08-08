@@ -18,12 +18,33 @@ void main() {
       'Flutter Driver extension enabled (ENABLE_FLUTTER_DRIVER).',
     );
   }
-  runWidgetbook();
+  // Default: publish real semantics so Widgetbook exercises shared UI a11y
+  // (errors usually come from ui_flutter / host icons, not Widgetbook chrome).
+  // Opt-in silence: --dart-define=EXCLUDE_WIDGETBOOK_SEMANTICS=true
+  const excludeSemantics = bool.fromEnvironment(
+    'EXCLUDE_WIDGETBOOK_SEMANTICS',
+    defaultValue: false,
+  );
+  runWidgetbook(excludePlatformSemantics: excludeSemantics);
 }
 
 /// Shared run path for [main] and [main_mcp] (no second driver bind).
-void runWidgetbook() {
-  runApp(const Destiny2WidgetbookApp());
+///
+/// Prefer fixing shared widgets under [destiny2_ui_flutter] rather than
+/// excluding semantics here. [excludePlatformSemantics] is an opt-in escape
+/// hatch for noisy Windows bridge logs while iterating.
+void runWidgetbook({bool excludePlatformSemantics = false}) {
+  Widget app = const Destiny2WidgetbookApp();
+  if (excludePlatformSemantics) {
+    app = ExcludeSemantics(child: app);
+    assert(() {
+      debugPrint(
+        'Widgetbook: ExcludeSemantics on (EXCLUDE_WIDGETBOOK_SEMANTICS).',
+      );
+      return true;
+    }());
+  }
+  runApp(app);
 }
 
 @widgetbook.App()
@@ -51,6 +72,7 @@ class Destiny2WidgetbookApp extends StatelessWidget {
           IosViewports.iPadPro11Inches,
           WindowsViewports.desktop,
         ]),
+        // Off by default — inspector overlays also thrash Windows AX when on.
         InspectorAddon(),
         AlignmentAddon(initialAlignment: Alignment.center),
       ],

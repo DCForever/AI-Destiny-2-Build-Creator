@@ -1,0 +1,26 @@
+[
+  {
+    "tapKey": "catalog_item_92001",
+    "shot": "desktop-detail-active-partial-scores"
+  },
+  {
+    "tapKey": "instance_chip_rt-perfect",
+    "shot": "desktop-detail-active-perfect-clean"
+  },
+  {
+    "tapKey": "instance_chip_rt-dirty",
+    "shot": "desktop-detail-active-bad-roll"
+  },
+  {
+    "tapKey": "instance_chip_rt-partial",
+    "shot": "desktop-detail-rank-reorder"
+  },
+  {
+    "tapKey": "roll_target_opt_off",
+    "shot": "desktop-detail-targets-off"
+  },
+  {
+    "tapKey": "catalog_item_92002",
+    "shot": "desktop-detail-empty-unowned"
+  }
+]

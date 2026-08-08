@@ -26,30 +26,38 @@ class CatalogGroupHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
     final text = '${label.toUpperCase()} ($count)';
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: Key('catalog_group_header_$groupKey'),
-        onTap: onToggle,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: Row(
-            children: [
-              Icon(
-                expanded ? Icons.expand_more : Icons.chevron_right,
-                key: Key('catalog_group_chevron_$groupKey'),
-                size: 18,
-                color: palette.muted,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  text,
-                  key: Key('catalog_group_$groupKey'),
-                  style: Theme.of(context).textTheme.labelSmall,
+    // Single owner (Windows AX): InkWell + Icon + Text otherwise publish
+    // nested nodes that reparent on expand/collapse.
+    return Semantics(
+      button: true,
+      expanded: expanded,
+      label: expanded ? 'Collapse $label, $count items' : 'Expand $label, $count items',
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: Key('catalog_group_header_$groupKey'),
+          onTap: onToggle,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Row(
+              children: [
+                Icon(
+                  expanded ? Icons.expand_more : Icons.chevron_right,
+                  key: Key('catalog_group_chevron_$groupKey'),
+                  size: 18,
+                  color: palette.muted,
                 ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    text,
+                    key: Key('catalog_group_$groupKey'),
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -99,50 +107,56 @@ class CatalogGroupOutlineRail extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final g = groups[index];
                   final active = activeKey == g.key;
-                  return InkWell(
-                    key: Key('catalog_outline_jump_${g.key}'),
-                    onTap: () => onJump(g.key),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          left: BorderSide(
-                            color: active
-                                ? palette.accent
-                                : Colors.transparent,
-                            width: 2,
-                          ),
+                  return Semantics(
+                    button: true,
+                    selected: active,
+                    label: 'Jump to ${g.label}, ${g.count} items',
+                    excludeSemantics: true,
+                    child: InkWell(
+                      key: Key('catalog_outline_jump_${g.key}'),
+                      onTap: () => onJump(g.key),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
                         ),
-                        color: active
-                            ? palette.accent.withValues(alpha: 0.08)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              g.label,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: neonMono(
-                                color: active
-                                    ? palette.accent
-                                    : palette.foreground,
-                                fontSize: 10,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(
+                              color: active
+                                  ? palette.accent
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          color: active
+                              ? palette.accent.withValues(alpha: 0.08)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                g.label,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: neonMono(
+                                  color: active
+                                      ? palette.accent
+                                      : palette.foreground,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            '${g.count}',
-                            style: neonMono(
-                              color: palette.muted,
-                              fontSize: 9,
+                            Text(
+                              '${g.count}',
+                              style: neonMono(
+                                color: palette.muted,
+                                fontSize: 9,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   );

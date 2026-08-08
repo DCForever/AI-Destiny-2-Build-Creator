@@ -1,7 +1,7 @@
 # Multiplatform Dart — branch & worktree isolation
 
-**Updated:** 2026-07-25 (DART-061 **RC-BRANCH** / **PRODUCTION_CUTOVER_GO**)  
-**Purpose:** Keep Spec Kit + Dart/Jaspr/Flutter port work **completely separate** from product UI features (e.g. `043-default-variant-composer`).
+**Updated:** 2026-08-06 (D-LANES: Spec Kit = system/non-UI; UI/UX = area-ux)  
+**Purpose:** Keep Spec Kit + Dart system work **separate** from product Spec Kit `0NN` **and** from Flutter **UI/UX** redesign work.
 
 ## Topology
 
@@ -46,15 +46,16 @@ Rules for this policy:
 1. **Never** implement multiplatform Dart/Jaspr/Flutter port work on product feature branches (`043-*`, equip/composer slices, etc.).
 2. **Never** merge multiplatform slices into product feature branches. Land slices onto **`feature/multiplatform-dart` only**.
 3. **Do not** merge `feature/multiplatform-dart` → `main` until **`PRODUCTION_CUTOVER: GO`** (see **RC-BRANCH** section above; GO set by DART-061). Before GO this merge was forbidden; after GO it is policy-allowed as a human/release step.
-4. Use **full Spec Kit lifecycle** for every slice on this line:
+4. Use **full Spec Kit lifecycle** for every **system** slice on this line:
    - `/speckit-specify` → (optional `/speckit-clarify`) → `/speckit-plan` → `/speckit-tasks` → `/speckit-implement` → finish-spec
-5. When finishing a slice, **base branch = `feature/multiplatform-dart`** (not `main`, not `feature/overhall`). Override finish-spec base if `git-config.yml` still says `main`.
-6. **Parallel numbering:** this workstream uses **`DART-001`…** only — never product `044+`. Branches and specs: `dart-NNN-short-name` / `specs/dart-NNN-short-name/`.
-7. Architecture freezes: [`multiplatform-dart-port-decisions.md`](./multiplatform-dart-port-decisions.md).
-8. **Slice backlog (canonical):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — **DART-001–DART-049**; update status after every finish-spec.
-9. Exploration Grok workflow (read-only): `.grok/workflows/explore-flutter-port.rhai` — maintain on this line; optional, not a product runtime dependency.
-10. **Auto Spec Kit loop:** `.grok/workflows/dart-speckit-loop.rhai` — advances DART slices in order (specify→plan→tasks→implement→finish). Operator notes: [`multiplatform-dart-speckit-loop.md`](./multiplatform-dart-speckit-loop.md).
-11. **Gaps analysis:** `.grok/workflows/dart-gaps-analysis.rhai` — Next vs Dart parity scan; updates [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) so every P0–P1 gap has a planned DART-NNN.
+5. **Spec Kit scope (D-LANES):** only **non-UI / system** work (pure packages, models/resolvers, IO, auth, sync). Do **not** open DART Spec Kit for mockup-driven chrome, Widgetbook-only, or dual-truth Capture — use [`docs/ux-redesign/`](./ux-redesign/README.md) (`area-ux-redesign` / `area-ux-component` / `area-implement`).
+6. When finishing a slice, **base branch = `feature/multiplatform-dart`** (not `main`, not `feature/overhall`). Override finish-spec base if `git-config.yml` still says `main`.
+7. **Parallel numbering:** this workstream uses **`DART-001`…** only — never product `044+`. Branches and specs: `dart-NNN-short-name` / `specs/dart-NNN-short-name/`.
+8. Architecture freezes: [`multiplatform-dart-port-decisions.md`](./multiplatform-dart-port-decisions.md) (includes **D-LANES**).
+9. **Slice backlog (canonical):** [`multiplatform-dart-slice-roadmap.md`](./multiplatform-dart-slice-roadmap.md) — system DART rows; update status after every finish-spec.
+10. Exploration Grok workflow (read-only): `.grok/workflows/explore-flutter-port.rhai` — maintain on this line; optional, not a product runtime dependency.
+11. **Auto Spec Kit loop:** `.grok/workflows/dart-speckit-loop.rhai` — advances **system** DART slices in order. Operator notes: [`multiplatform-dart-speckit-loop.md`](./multiplatform-dart-speckit-loop.md). Do not point the loop at pure UI polish.
+12. **Gaps analysis:** `.grok/workflows/dart-gaps-analysis.rhai` — Next vs Dart parity scan; updates [`multiplatform-dart-feature-gaps.md`](./multiplatform-dart-feature-gaps.md) so system P0–P1 residuals have DART-NNN and presentation residuals can map to UX tracks.
 
 ## Creating a new Spec Kit slice (agents)
 

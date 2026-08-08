@@ -171,7 +171,8 @@
       "area": "catalog",
       "path": "/catalog",
       "auth": "signed-in",
-      "surfaceId": "catalog.weapon.detail"
+      "surfaceId": "catalog.weapon.detail",
+      "notes": "Family version switch full hash rebind (GAP-CAT-BROWSE-001); no per-column perk band labels (GAP-CAT-PERK-004); cell chrome + legend only. Width 400. CatalogRollTargets 003 — named preferred+avoid multi-pick, dual N/M+Av segs, rankOwnedForRollTarget."
     },
     {
       "id": "catalog-armor-owned",

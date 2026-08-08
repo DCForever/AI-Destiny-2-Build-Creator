@@ -24,8 +24,6 @@ import 'package:destiny2_widgetbook/use_cases/catalog/filter_bar_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/group_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_group_use_cases;
-import 'package:destiny2_widgetbook/use_cases/catalog/knobs_use_cases.dart'
-    as _destiny2_widgetbook_use_cases_catalog_knobs_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/meta_strip_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_meta_strip_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/mobile_use_cases.dart'
@@ -59,6 +57,83 @@ final directories = <_widgetbook.WidgetbookNode>[
                 name: 'Legendary owned',
                 builder: _destiny2_widgetbook_use_cases_catalog_cards_use_cases
                     .cardLegendary,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookFolder(
+            name: 'Family',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogWeaponFamilyCard',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Base + Adept chips (Holofoil unowned omitted)',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_family_use_cases
+                            .familyBaseAdept,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Multi-hash Base → one chip (Ribbontail-style)',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_family_use_cases
+                            .familyMultiHashBase,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Selected family',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_family_use_cases
+                            .familySelected,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Signed-out honesty (no chips / no ×N)',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_family_use_cases
+                            .familySignedOut,
+                  ),
+                ],
+              ),
+              _widgetbook.WidgetbookFolder(
+                name: 'Knobs',
+                children: [
+                  _widgetbook.WidgetbookComponent(
+                    name: 'CatalogWeaponFamilyCard',
+                    useCases: [
+                      _widgetbook.WidgetbookUseCase(
+                        name: 'All knobs · family card',
+                        builder:
+                            _destiny2_widgetbook_use_cases_catalog_family_use_cases
+                                .knobsFamilyCard,
+                      )
+                    ],
+                  )
+                ],
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookFolder(
+            name: 'Knobs',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogWeaponCard',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'All knobs · weapon card',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_cards_use_cases
+                            .knobsCatalogWeaponCard,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'NeonItemCard',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'All knobs · item card',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_cards_use_cases
+                            .knobsNeonItemCard,
+                  )
+                ],
               ),
             ],
           ),
@@ -114,6 +189,55 @@ final directories = <_widgetbook.WidgetbookNode>[
                 name: 'Unowned · POSSIBLE ROLLS only',
                 builder: _destiny2_widgetbook_use_cases_catalog_detail_use_cases
                     .detailUnowned,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookFolder(
+            name: 'Knobs',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogDetailToggles',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'All knobs · detail toggles',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .knobsDetailToggles,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogPerkGrid',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'All knobs · perk grid',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .knobsPerkGrid,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogWeaponDetail',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'All knobs · weapon detail',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .knobsWeaponDetail,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'WeaponInstanceStrip',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'All knobs · instance strip',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .knobsInstanceStrip,
+                  )
+                ],
               ),
             ],
           ),
@@ -174,36 +298,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                 builder:
                     _destiny2_widgetbook_use_cases_catalog_facet_scope_empty_use_cases
                         .facetIconOnly,
-              ),
-            ],
-          )
-        ],
-      ),
-      _widgetbook.WidgetbookFolder(
-        name: 'Family',
-        children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'CatalogWeaponFamilyCard',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'Base + Adept chips (Holofoil unowned omitted)',
-                builder: _destiny2_widgetbook_use_cases_catalog_family_use_cases
-                    .familyBaseAdept,
-              ),
-              _widgetbook.WidgetbookUseCase(
-                name: 'Multi-hash Base → one chip (Ribbontail-style)',
-                builder: _destiny2_widgetbook_use_cases_catalog_family_use_cases
-                    .familyMultiHashBase,
-              ),
-              _widgetbook.WidgetbookUseCase(
-                name: 'Selected family',
-                builder: _destiny2_widgetbook_use_cases_catalog_family_use_cases
-                    .familySelected,
-              ),
-              _widgetbook.WidgetbookUseCase(
-                name: 'Signed-out honesty (no chips / no ×N)',
-                builder: _destiny2_widgetbook_use_cases_catalog_family_use_cases
-                    .familySignedOut,
               ),
             ],
           )
@@ -296,41 +390,6 @@ final directories = <_widgetbook.WidgetbookNode>[
         ],
       ),
       _widgetbook.WidgetbookFolder(
-        name: 'Knobs',
-        children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'CatalogWeaponFamilyCard',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'Family card · owned / signed-out',
-                builder: _destiny2_widgetbook_use_cases_catalog_knobs_use_cases
-                    .knobsFamilyCard,
-              )
-            ],
-          ),
-          _widgetbook.WidgetbookComponent(
-            name: 'CatalogWeaponMetaStrip',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'Meta strip · facets knobs',
-                builder: _destiny2_widgetbook_use_cases_catalog_knobs_use_cases
-                    .knobsMetaStrip,
-              )
-            ],
-          ),
-          _widgetbook.WidgetbookComponent(
-            name: 'NeonItemCard',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'NeonItemCard · element / slot / owned',
-                builder: _destiny2_widgetbook_use_cases_catalog_knobs_use_cases
-                    .knobsNeonItemCard,
-              )
-            ],
-          ),
-        ],
-      ),
-      _widgetbook.WidgetbookFolder(
         name: 'Meta',
         children: [
           _widgetbook.WidgetbookComponent(
@@ -355,7 +414,23 @@ final directories = <_widgetbook.WidgetbookNode>[
                         .metaStripSparse,
               ),
             ],
-          )
+          ),
+          _widgetbook.WidgetbookFolder(
+            name: 'Knobs',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogWeaponMetaStrip',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Facets · element / slot / owned',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_meta_strip_use_cases
+                            .knobsMetaStrip,
+                  )
+                ],
+              )
+            ],
+          ),
         ],
       ),
       _widgetbook.WidgetbookFolder(
@@ -495,15 +570,25 @@ final directories = <_widgetbook.WidgetbookNode>[
       _widgetbook.WidgetbookFolder(
         name: 'Atmosphere',
         children: [
+          _widgetbook.WidgetbookFolder(
+            name: 'Knobs',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'NeonShellBackground',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Blooms / horizon / caption',
+                    builder:
+                        _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
+                            .neonAtmosphereKnobs,
+                  )
+                ],
+              )
+            ],
+          ),
           _widgetbook.WidgetbookComponent(
             name: 'NeonShellBackground',
             useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'Atmosphere knobs',
-                builder:
-                    _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases
-                        .neonAtmosphereKnobs,
-              ),
               _widgetbook.WidgetbookUseCase(
                 name: 'Shell blooms + horizon',
                 builder:

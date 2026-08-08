@@ -25,6 +25,8 @@ const expectedCoreTables = <String>[
   'build_variants',
   'build_synergy_types',
   'variant_set_attachments',
+  'weapon_roll_targets',
+  'weapon_roll_target_active',
 ];
 
 /// Critical unique constraints (logical).
@@ -38,6 +40,8 @@ const expectedCoreTables = <String>[
 /// | build_tags | build_id, tag_id | table UNIQUE |
 /// | build_synergy_types | build_id, type, sub_type | table UNIQUE |
 /// | inventory_sync_meta | user_id | PRIMARY KEY |
+/// | weapon_roll_targets | user_id, weapon_key, name | named ideals per weapon |
+/// | weapon_roll_target_active | user_id, weapon_key | one active target |
 const criticalUniqueNotes = <String, List<String>>{
   'users': ['bungie_membership_id'],
   'inventory_items': ['user_id', 'instance_id'],
@@ -46,6 +50,8 @@ const criticalUniqueNotes = <String, List<String>>{
   'build_tags': ['build_id', 'tag_id'],
   'build_synergy_types': ['build_id', 'type', 'sub_type'],
   'inventory_sync_meta': ['user_id'],
+  'weapon_roll_targets': ['user_id', 'weapon_key', 'name'],
+  'weapon_roll_target_active': ['user_id', 'weapon_key'],
 };
 
 /// Supporting non-unique indexes (product names).

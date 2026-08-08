@@ -162,6 +162,7 @@ Future<void> applyEnsureUpgrades(EnsureUpgradeExecutor ex) async {
   await _ensureBuildSynergyTypesTable(ex);
   await _ensureSynergyLinkRequiredColumn(ex);
   await _ensureVariantSubclassKitColumn(ex);
+  await _ensureWeaponRollTargetsTables(ex);
 }
 
 Future<void> _addColumnIfMissing(
@@ -387,6 +388,38 @@ FROM build_synergies bs
 INNER JOIN synergies s ON s.id = bs.synergy_id;
 DROP TABLE build_synergies;
 ''');
+}
+
+/// DART-073: Catalog roll targets (preferred + avoid).
+Future<void> _ensureWeaponRollTargetsTables(EnsureUpgradeExecutor ex) async {
+  if (!await ex.tableExists('weapon_roll_targets')) {
+    await ex.exec('''
+CREATE TABLE weapon_roll_targets (
+  id TEXT NOT NULL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  weapon_key TEXT NOT NULL,
+  name TEXT NOT NULL,
+  columns_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX idx_weapon_roll_targets_user_weapon_name
+  ON weapon_roll_targets (user_id, weapon_key, name);
+CREATE INDEX idx_weapon_roll_targets_user_weapon
+  ON weapon_roll_targets (user_id, weapon_key);
+''');
+  }
+  if (!await ex.tableExists('weapon_roll_target_active')) {
+    await ex.exec('''
+CREATE TABLE weapon_roll_target_active (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  weapon_key TEXT NOT NULL,
+  target_id TEXT NOT NULL REFERENCES weapon_roll_targets(id) ON DELETE CASCADE,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, weapon_key)
+);
+''');
+  }
 }
 
 /// Convenience: open a raw in-memory sqlite3 DB (tests / tools).

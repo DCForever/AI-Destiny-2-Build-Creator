@@ -167,8 +167,12 @@ void main() {
       );
       expect(find.byKey(const Key('card_name')), findsOneWidget);
       expect(find.text('Sunshot'), findsOneWidget);
-      expect(find.text('EXOTIC'), findsOneWidget);
+      expect(find.byKey(const Key('neon_card_rarity_badge')), findsOneWidget);
+      expect(find.text(neonRarityMark(NeonItemRarity.exotic)), findsOneWidget);
       expect(find.byKey(const Key('card_owned')), findsOneWidget);
+      // Type lives on the meta row as icon, not body text.
+      expect(find.text('Hand Cannon · Adaptive'), findsNothing);
+      expect(find.byKey(const Key('neon_card_foot_icons')), findsOneWidget);
     });
   });
 

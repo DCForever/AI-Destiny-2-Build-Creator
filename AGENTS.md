@@ -87,6 +87,7 @@ Dart / Flutter commands: **cwd must be `flutter/`** (see [`flutter/AGENTS.md`](f
 - Config: [`.specify/`](.specify/)
 - Feature slices: [`specs/`](specs/) (`00N-*` product, `dart-*` multiplatform, layout slices as needed)
 - Default git base branch for new features: see `.specify/extensions/git/git-config.yml` (`base_branch`)
+- **Going forward (D-LANES):** Spec Kit is for **non-UI / system** work (domain, data, models, IO). **UI/UX** (mockups, chrome, dual-truth) uses [`docs/ux-redesign/`](docs/ux-redesign/README.md) — not Spec Kit. Split features that need both. See [`docs/multiplatform-dart-port-decisions.md`](docs/multiplatform-dart-port-decisions.md) **D-LANES**.
 
 ## Decisions & tracking
 

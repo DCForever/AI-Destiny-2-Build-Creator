@@ -51,13 +51,28 @@ dart run build_runner watch -d
 
 Then hot restart Widgetbook (`R`).
 
-### 5. Knobs & viewports (no code)
+### 5. Nav layout, knobs & viewports
 
-- **Knobs** panel — element / slot / owned counts on knob stories  
+Tree shape (each component owns its fixed stories + a **Knobs** subgroup):
+
+```text
+[Catalog]
+  Cards/                 item cards (fixed states)
+  Cards/Knobs/           interactive NeonItemCard
+  Cards/Family/          family cards (Base/Adept, signed-out, …)
+  Cards/Family/Knobs/    owned / signed-out / adept
+  Meta/ + Meta/Knobs/
+  Detail/, FilterBar/, …
+[Neon]
+  Atmosphere/ + Atmosphere/Knobs/
+  Board/
+```
+
+- **Knobs** panel — only on `…/Knobs` stories (element / slot / owned, etc.)  
 - **Viewport** addon — None · iPhone 13 · iPad · Windows Desktop  
 - **Theme** addon — Flap Dark / Light  
 
-Use these before inventing new boolean flags in widgets.
+Use knobs before inventing new boolean flags in widgets. Keep fixed stories for named dual-truth states.
 
 ## Faster options
 
@@ -84,6 +99,20 @@ Chrome is quicker to start; Windows is closer to the product shell. Prefer Windo
 ```
 
 Host remains the dual-truth gate; Widgetbook is the **tight loop**.
+
+## Windows console noise (`accessibility_bridge.cc`)
+
+Those logs usually come from **shared UI** (`destiny2_ui_flutter` / host icons),
+not Widgetbook chrome: nested `Semantics`/`Tooltip`/`FilterChip`, and especially
+`Image.network` (which always publishes an image node unless
+`excludeFromSemantics: true`). Prefer fixing the widget; only silence as a last
+resort:
+
+```powershell
+flutter run -d windows --dart-define=EXCLUDE_WIDGETBOOK_SEMANTICS=true
+```
+
+After a11y-related widget changes, **hot restart (`R`)** or relaunch.
 
 ## Smoke tests (optional, while iterating)
 

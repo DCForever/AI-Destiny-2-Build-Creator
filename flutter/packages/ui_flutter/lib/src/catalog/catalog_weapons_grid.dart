@@ -2,15 +2,81 @@ import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../bungie_content_icon.dart';
+import '../destiny_official_icons.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import '../neon_item_card.dart';
 import 'catalog_group_chrome.dart';
 
+/// Top-left weapon plate: CDN [CatalogItem.icon], else type silhouette.
+///
+/// Hosts may pass their own [leading]; when omitted, cards still show a corner
+/// weapon mark so Widgetbook / demos are not icon-empty.
+class CatalogWeaponIconPlate extends StatelessWidget {
+  const CatalogWeaponIconPlate({
+    super.key,
+    required this.item,
+    this.size = 32,
+  });
+
+  final CatalogItem item;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final typeVisual = officialWeaponTypeVisual(item.itemTypeName);
+    final mark = weaponTypeLetterMark(item.itemTypeName);
+
+    Widget typeMark = typeVisual != null
+        ? DestinyWeaponTypeIcon(
+            visual: typeVisual,
+            size: size * 0.62,
+            fallbackMark: mark,
+          )
+        : Text(
+            mark,
+            style: neonMono(color: palette.muted, fontSize: size * 0.32),
+          );
+
+    final plate = DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.surfaceRaised.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(2),
+        border: Border.all(
+          color: palette.line.withValues(alpha: 0.65),
+          width: kFlapRuleThickness,
+        ),
+      ),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Center(child: typeMark),
+      ),
+    );
+
+    final path = item.icon?.trim();
+    if (path == null || path.isEmpty) {
+      return KeyedSubtree(
+        key: Key('catalog_item_icon_${item.hash}'),
+        child: plate,
+      );
+    }
+
+    return BungieContentIcon(
+      key: Key('catalog_item_icon_${item.hash}'),
+      pathOrUrl: path,
+      size: size,
+      fallback: plate,
+    );
+  }
+}
+
 /// Identity-primary weapon card (NeonItemCard adapter).
 ///
-/// Type-only body; element/slot/ammo as mock glyphs. Owned badge only when
-/// [showOwned] and item.owned — never fakes ownership.
+/// Meta row is icon-only (type · element · slot · ammo · frame). Owned badge
+/// only when [showOwned] and item.owned — never fakes ownership.
 class CatalogWeaponCard extends StatelessWidget {
   const CatalogWeaponCard({
     super.key,
@@ -34,7 +100,7 @@ class CatalogWeaponCard extends StatelessWidget {
   /// When set (family ×N sum), overrides [item.ownedCount] for the badge.
   final int? ownedCountOverride;
 
-  /// Optional footer below foot icons (owned-only version chips).
+  /// In-flow footer under meta row (owned-only version chips).
   final Widget? footer;
 
   @override
@@ -42,14 +108,12 @@ class CatalogWeaponCard extends StatelessWidget {
     final count = ownedCountOverride ?? item.ownedCount;
     final owned = showOwned && (item.owned || count > 0);
     final ownedLabel = owned && count > 0 ? '×$count' : null;
-    // Type-only body (mock): element/slot/ammo live as glyphs, not text.
-    final typeParts = <String>[
-      if (item.itemTypeName != null && item.itemTypeName!.isNotEmpty)
-        item.itemTypeName!,
-    ];
-    final typeLine = typeParts.isEmpty ? 'Weapon' : typeParts.join(' · ');
+    // Type name for silhouette lookup + a11y (not body text).
+    final typeLine = (item.itemTypeName != null && item.itemTypeName!.isNotEmpty)
+        ? item.itemTypeName!
+        : 'Weapon';
 
-    final card = NeonItemCard(
+    return NeonItemCard(
       key: Key('catalog_item_${item.hash}'),
       name: item.name,
       slot: item.slot,
@@ -63,22 +127,14 @@ class CatalogWeaponCard extends StatelessWidget {
           : NeonItemRarity.legendary,
       ownedLabel: ownedLabel,
       selected: selected,
-      minHeight: 100,
+      minHeight: footer == null ? 100 : 112,
       onTap: onTap,
       nameKey: Key('catalog_item_name_${item.hash}'),
       metaKey: Key('catalog_item_meta_${item.hash}'),
       ownedKey: owned ? Key('owned_badge_${item.hash}') : null,
-      leading: leading,
-    );
-
-    if (footer == null) return card;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Expanded(child: card),
-        footer!,
-      ],
+      // Always show a corner weapon plate unless host overrides [leading].
+      leading: leading ?? CatalogWeaponIconPlate(item: item),
+      footer: footer,
     );
   }
 }
@@ -106,35 +162,24 @@ class CatalogWeaponFamilyCard extends StatelessWidget {
     // One chip per Base/Adept/Holofoil kind — not one per definition hash.
     final ownedChips =
         showOwned ? family.ownedVersionChipMembers : const <WeaponFamilyMember>[];
-    final card = CatalogWeaponCard(
-      item: item,
-      selected: selected,
-      showOwned: showOwned,
-      ownedCountOverride: showOwned ? family.ownedTotal : 0,
-      leading: leading,
-      onTap: onTap,
-    );
 
-    // Density lock 200×112: chips overlay inside the cell (not extra height).
+    // Chips live in-flow under the meta row (never Stack-over element icons).
     return KeyedSubtree(
       key: Key('catalog_family_${family.key}'),
-      child: ownedChips.isEmpty
-          ? card
-          : Stack(
-              fit: StackFit.expand,
-              children: [
-                card,
-                Positioned(
-                  left: 6,
-                  right: 6,
-                  bottom: 22,
-                  child: _OwnedVersionChips(
-                    familyKey: family.key,
-                    members: ownedChips,
-                  ),
-                ),
-              ],
-            ),
+      child: CatalogWeaponCard(
+        item: item,
+        selected: selected,
+        showOwned: showOwned,
+        ownedCountOverride: showOwned ? family.ownedTotal : 0,
+        leading: leading,
+        onTap: onTap,
+        footer: ownedChips.isEmpty
+            ? null
+            : _OwnedVersionChips(
+                familyKey: family.key,
+                members: ownedChips,
+              ),
+      ),
     );
   }
 }
@@ -154,10 +199,14 @@ class _OwnedVersionChips extends StatelessWidget {
     final palette = FlapPalette.of(context);
     return Semantics(
       label: 'Owned versions (indicators only, not selectable)',
+      // One node for the indicator group — Text labels thrash Windows AX when
+      // owned chips appear/disappear on filter/sync rebuilds.
+      excludeSemantics: true,
       child: Wrap(
         key: Key('family_version_chips_$familyKey'),
         spacing: 4,
         runSpacing: 2,
+        alignment: WrapAlignment.end,
         children: [
           for (final m in members)
             Container(
@@ -255,9 +304,44 @@ class CatalogWeaponsGrid extends StatelessWidget {
     final useItemGroups =
         !useFamilies && iGroups != null && iGroups.isNotEmpty;
 
-    return CustomScrollView(
+    // ViewportAddon / device-frame transitions can briefly give 0 cross-axis
+    // extent; SliverGrid asserts crossAxisExtent > 0.
+    return LayoutBuilder(
       key: const Key('catalog_list'),
-      slivers: [
+      builder: (context, constraints) {
+        final maxW = constraints.maxWidth;
+        if (!maxW.isFinite || maxW < 1) {
+          return const SizedBox.shrink();
+        }
+        return CustomScrollView(
+          slivers: [
+            ..._buildSlivers(
+              context,
+              fams: fams,
+              useFamilies: useFamilies,
+              fGroups: fGroups,
+              iGroups: iGroups,
+              useFamilyGroups: useFamilyGroups,
+              useItemGroups: useItemGroups,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildSlivers(
+    BuildContext context, {
+    required List<WeaponFamily>? fams,
+    required bool useFamilies,
+    required List<({String key, String label, List<WeaponFamily> families})>?
+        fGroups,
+    required List<({String key, String label, List<CatalogItem> items})>?
+        iGroups,
+    required bool useFamilyGroups,
+    required bool useItemGroups,
+  }) {
+    return [
         SliverToBoxAdapter(
           child: Padding(
             key: const Key('catalog_board_header'),
@@ -268,7 +352,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
             ),
           ),
         ),
-        if (useFamilyGroups)
+        if (useFamilyGroups && fGroups != null)
           for (final group in fGroups) ...[
             SliverToBoxAdapter(
               child: KeyedSubtree(
@@ -307,7 +391,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
                 ),
               ),
           ]
-        else if (useFamilies)
+        else if (useFamilies && fams != null)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             sliver: SliverGrid(
@@ -351,7 +435,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
               ),
             ),
           )
-        else
+        else if (iGroups != null)
           for (final group in iGroups) ...[
             SliverToBoxAdapter(
               child: KeyedSubtree(
@@ -387,7 +471,6 @@ class CatalogWeaponsGrid extends StatelessWidget {
                 ),
               ),
           ],
-      ],
-    );
+    ];
   }
 }

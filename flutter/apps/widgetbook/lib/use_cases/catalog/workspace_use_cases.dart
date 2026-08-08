@@ -37,6 +37,7 @@ Widget workspaceWithDetail(BuildContext context) {
         onCraftChanged: (_) {},
         definitionSocketPlugs: kDefinitionSocketPlugs,
         plugNameByHash: kPlugNameByHash,
+        plugIconByHash: kPlugIconByHash,
         familyMembers: family.members,
         onSelectFamilyMember: (_) {},
       ),

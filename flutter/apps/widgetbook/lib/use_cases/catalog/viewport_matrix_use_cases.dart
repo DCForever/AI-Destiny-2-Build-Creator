@@ -45,6 +45,7 @@ Widget viewportWorkspace(BuildContext context) {
       craftAvailable: false,
       definitionSocketPlugs: kDefinitionSocketPlugs,
       plugNameByHash: kPlugNameByHash,
+      plugIconByHash: kPlugIconByHash,
       familyMembers: family.members,
       onSelectFamilyMember: (_) {},
     ),

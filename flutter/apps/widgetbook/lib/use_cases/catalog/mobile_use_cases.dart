@@ -32,6 +32,7 @@ Widget mobileDetailFull(BuildContext context) {
       onCraftChanged: (_) {},
       definitionSocketPlugs: kDefinitionSocketPlugs,
       plugNameByHash: kPlugNameByHash,
+      plugIconByHash: kPlugIconByHash,
       familyMembers: family.members,
       onSelectFamilyMember: (_) {},
     ),
@@ -80,8 +81,9 @@ class _MobileCatalogShellState extends State<_MobileCatalogShell> {
           return MaterialPageRoute<void>(
             settings: settings,
             builder: (ctx) {
-              if (settings.name == '/detail') {
-                final family = settings.arguments! as WeaponFamily;
+              final args = settings.arguments;
+              if (settings.name == '/detail' && args is WeaponFamily) {
+                final family = args;
                 return Scaffold(
                   appBar: AppBar(
                     title: Text(family.displayName),
@@ -97,6 +99,7 @@ class _MobileCatalogShellState extends State<_MobileCatalogShell> {
                     craftAvailable: false,
                     definitionSocketPlugs: kDefinitionSocketPlugs,
                     plugNameByHash: kPlugNameByHash,
+                    plugIconByHash: kPlugIconByHash,
                     familyMembers: family.members,
                     onSelectFamilyMember: (_) {},
                   ),

@@ -71,6 +71,7 @@ class CatalogInstanceProjection {
     this.rollTags = const [],
     this.statValues,
     this.gearTier,
+    this.specialLabel,
     this.socketPlugs,
     this.plugCards = const [],
     this.armorStats,
@@ -89,6 +90,9 @@ class CatalogInstanceProjection {
   final List<String> rollTags;
   final Map<String, Object?>? statValues;
   final int? gearTier;
+
+  /// Version specialness when known (e.g. Adept, Holofoil) — never invent.
+  final String? specialLabel;
   final List<Map<String, Object?>>? socketPlugs;
 
   /// Human-readable perk/trait cards when resolvable.

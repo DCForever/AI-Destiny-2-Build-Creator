@@ -165,11 +165,17 @@ class NeonFacetChip extends StatelessWidget {
                 ? 'Include $label (tap to cycle)'
                 : 'Filter $label (tap include → exclude → off)');
 
-    return Tooltip(
-      message: tip,
-      child: Semantics(
-        label: label,
-        button: true,
+    // Single semantic owner (Windows AX): do not nest Tooltip → Semantics →
+    // FilterChip. Tooltip show/hide reparents children and thrashs the bridge.
+    return Semantics(
+      label: label,
+      tooltip: tip,
+      button: true,
+      selected: selected,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: tip,
+        excludeFromSemantics: true,
         child: chip,
       ),
     );
@@ -207,26 +213,35 @@ class NeonExoticChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
-    return Tooltip(
-      message: tooltip,
-      child: FilterChip(
-        key: const Key('exotic_chip'),
-        label: Text(
-          label,
-          style: neonMono(
-            color: exotic == false
-                ? palette.danger
-                : exotic == true
-                    ? const Color(kRarityExotic)
-                    : palette.foreground,
-            fontSize: compact ? 10 : 11,
+    // Single semantic owner (Windows AX) — see NeonFacetChip.
+    return Semantics(
+      label: label,
+      tooltip: tooltip,
+      button: true,
+      selected: exotic != null,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: tooltip,
+        excludeFromSemantics: true,
+        child: FilterChip(
+          key: const Key('exotic_chip'),
+          label: Text(
+            label,
+            style: neonMono(
+              color: exotic == false
+                  ? palette.danger
+                  : exotic == true
+                      ? const Color(kRarityExotic)
+                      : palette.foreground,
+              fontSize: compact ? 10 : 11,
+            ),
           ),
+          selected: exotic != null,
+          onSelected: (_) => onCycle(),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: compact ? const EdgeInsets.symmetric(horizontal: 4) : null,
         ),
-        selected: exotic != null,
-        onSelected: (_) => onCycle(),
-        visualDensity: VisualDensity.compact,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: compact ? const EdgeInsets.symmetric(horizontal: 4) : null,
       ),
     );
   }

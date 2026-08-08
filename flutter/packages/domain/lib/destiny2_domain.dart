@@ -27,6 +27,7 @@ export 'src/models/set_bonus.dart';
 export 'src/models/slot_claim.dart';
 export 'src/models/soft_stats.dart';
 export 'src/models/synergy.dart';
+export 'src/models/roll_target.dart';
 
 // Hard evaluators (DART-003)
 export 'src/evaluators/destiny_build_constraints.dart';
@@ -77,3 +78,6 @@ export 'src/evaluators/optimizer_pipeline.dart';
 
 // Pure DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010)
 export 'src/evaluators/dim_builders.dart';
+
+// Catalog weapon roll targets: preferred + avoid score/rank (DART-073 system)
+export 'src/evaluators/roll_target_score.dart';

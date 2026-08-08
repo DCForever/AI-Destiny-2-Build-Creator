@@ -414,6 +414,8 @@ class _LoadoutTile extends StatelessWidget {
                       key: Key('loadout_detail_icon_${loadout.id}'),
                       width: 64,
                       height: 64,
+                      gaplessPlayback: true,
+                      excludeFromSemantics: true,
                       errorBuilder: (_, __, ___) =>
                           const Icon(Icons.sports_esports, size: 48),
                     ),
@@ -453,11 +455,14 @@ class _IconPlate extends StatelessWidget {
         loadout.iconUrl!,
         width: 28,
         height: 28,
+        gaplessPlayback: true,
+        excludeFromSemantics: true,
         errorBuilder: (_, __, ___) => const Icon(Icons.sports_esports, size: 22),
       );
     } else {
       glyph = const Icon(Icons.sports_esports, size: 22);
     }
+    glyph = ExcludeSemantics(child: glyph);
     return Container(
       key: Key('loadout_icon_plate_${loadout.id}'),
       width: 36,

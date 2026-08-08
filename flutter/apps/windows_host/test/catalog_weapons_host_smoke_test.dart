@@ -379,7 +379,7 @@ void main() {
     }
 
     testWidgets(
-      'desktop-enhanced-live: plugEnhancedByHash → gold+E on ① only; no E on ②',
+      'desktop-enhanced-live: plugEnhancedByHash → gold border on ①; no E glyph',
       (tester) async {
         await pumpResidualCatalog(tester);
         await tapItem(tester, kResidualEnhancedWeaponHash);
@@ -389,14 +389,17 @@ void main() {
           find.byKey(const Key('catalog_perk_section_perks')),
           findsOneWidget,
         );
-        // ① Enhanced Frenzy marked.
+        // Enhanced is gold border only — no E glyph or tier corner badge.
         expect(
           find.byKey(
             const Key('perk_enhanced_mark_$kResidualEnhancedPlugHash'),
           ),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('perk_cell_$kResidualEnhancedPlugHash')),
           findsOneWidget,
         );
-        // ② Overflow not enhanced.
         expect(
           find.byKey(const Key('perk_enhanced_mark_$kResidualBasePlugHash')),
           findsNothing,
@@ -423,10 +426,10 @@ void main() {
           isFalse,
         );
         expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
-        // Tier chrome: ① badge + ② chevron on residual HC.
+        // Tier chrome: no corner badge; ② chevron remains.
         expect(
           find.byKey(const Key('perk_tier_badge_$kResidualEnhancedPlugHash')),
-          findsOneWidget,
+          findsNothing,
         );
         expect(
           find.byKey(const Key('perk_chevron_$kResidualBasePlugHash')),
@@ -445,14 +448,13 @@ void main() {
         await _pumpFrames(tester);
         await tester.pump(const Duration(milliseconds: 50));
 
-        // ① still has E.
+        // No E glyph on ① or pool.
         expect(
           find.byKey(
             const Key('perk_enhanced_mark_$kResidualEnhancedPlugHash'),
           ),
-          findsOneWidget,
+          findsNothing,
         );
-        // Pool enhanced identity must not get E cell chrome.
         expect(
           find.byKey(
             const Key('perk_enhanced_mark_$kResidualPoolEnhancedPlugHash'),
@@ -517,7 +519,7 @@ void main() {
         expect(find.textContaining('On this copy'), findsNothing);
         expect(
           find.byKey(const Key('perk_tier_badge_$kResidualEnhancedPlugHash')),
-          findsOneWidget,
+          findsNothing,
         );
         expect(
           find.byKey(const Key('perk_chevron_$kResidualBasePlugHash')),

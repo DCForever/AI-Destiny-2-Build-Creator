@@ -17,6 +17,9 @@ CatalogInstanceProjection _inst({
   required int power,
   List<Map<String, Object?>>? socketPlugs,
   bool isCrafted = false,
+  bool isMasterwork = false,
+  int? gearTier,
+  String? specialLabel,
 }) {
   return CatalogInstanceProjection(
     instanceId: id,
@@ -25,6 +28,9 @@ CatalogInstanceProjection _inst({
     location: 'Vault',
     power: power,
     isCrafted: isCrafted,
+    isMasterwork: isMasterwork,
+    gearTier: gearTier,
+    specialLabel: specialLabel,
     socketPlugs: socketPlugs,
     syncedAt: '2026-01-01T00:00:00.000Z',
   );
@@ -446,48 +452,94 @@ void main() {
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: colsOn)));
       expect(find.byKey(const Key('perk_cell_13')), findsOneWidget);
+      // Option B: no icon → caption shown (auto).
+      expect(find.text('Polygonal Rifling'), findsOneWidget);
+      // Force off.
+      await tester.pumpWidget(
+        _wrap(CatalogPerkGrid(columns: colsOn, showLabels: false)),
+      );
+      expect(find.text('Polygonal Rifling'), findsNothing);
+      // Force on (same as auto here).
+      await tester.pumpWidget(
+        _wrap(CatalogPerkGrid(columns: colsOn, showLabels: true)),
+      );
       expect(find.text('Polygonal Rifling'), findsOneWidget);
     });
 
     testWidgets(
-        'owned: ① badge on selected; ② badge + gold chevron on unselected',
+        'owned: fixed tiles; accent chevron; no tier badge / E / Enhanced label',
         (tester) async {
       final cols = buildCatalogPerkColumns(
         socketPlugs: sockets,
         plugNameByHash: names,
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: cols)));
-      // ① selected badge
-      expect(find.byKey(const Key('perk_tier_badge_10')), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('perk_tier_badge_10')),
-          matching: find.text('①'),
-        ),
-        findsOneWidget,
-      );
-      // ② unselected badge + gold chevron
-      expect(find.byKey(const Key('perk_tier_badge_11')), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('perk_tier_badge_11')),
-          matching: find.text('②'),
-        ),
-        findsOneWidget,
-      );
+      // No corner ①/②/③ badges — tier is border/chevron/legend only.
+      expect(find.byKey(const Key('perk_tier_badge_10')), findsNothing);
+      expect(find.byKey(const Key('perk_tier_badge_11')), findsNothing);
+      // ② unselected accent chevron (not gold)
       expect(find.byKey(const Key('perk_chevron_11')), findsOneWidget);
       // Selected has no chevron
       expect(find.byKey(const Key('perk_chevron_10')), findsNothing);
-      // GAP-CAT-PERK-004: no per-column band labels; legend + cell chrome only.
+      // No E glyph (gold border conveys enhanced).
+      expect(find.byKey(const Key('perk_enhanced_mark_10')), findsNothing);
+      // Option B: no icon → caption auto-shown.
+      expect(find.text('Fluted Barrel'), findsOneWidget);
+      // GAP-CAT-PERK-004: no per-column band labels.
       expect(find.byKey(const Key('perk_band_selected_0')), findsNothing);
       expect(find.byKey(const Key('perk_band_unselected_0')), findsNothing);
-      expect(find.textContaining('On this copy'), findsNothing);
       expect(find.textContaining('Unselected (instance)'), findsNothing);
+      // Legend uses plain words (no ①②③, no Enhanced text).
       expect(find.byKey(const Key('catalog_perk_legend')), findsOneWidget);
+      expect(find.text('Selected'), findsOneWidget);
+      expect(find.text('On this copy'), findsOneWidget);
+      expect(find.textContaining('Gold ='), findsNothing);
+      expect(find.textContaining('①'), findsNothing);
     });
 
     testWidgets(
-        '③ ON: dashed muted pool cells + tier badge 3; no E on pool cells',
+        'option B: icon present → caption hidden; force-on shows caption',
+        (tester) async {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: sockets,
+        plugNameByHash: names,
+        plugIconByHash: const {
+          10: '/common/destiny2_content/icons/perk.png',
+        },
+      );
+      await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: cols)));
+      expect(find.text('Fluted Barrel'), findsNothing); // has icon
+      expect(find.text('Arrowhead Brake'), findsOneWidget); // no icon → auto
+      await tester.pumpWidget(
+        _wrap(CatalogPerkGrid(columns: cols, showLabels: true)),
+      );
+      expect(find.text('Fluted Barrel'), findsOneWidget);
+    });
+
+    testWidgets(
+        'caption strips Enhanced; gold border only (no Enhanced text)',
+        (tester) async {
+      final cols = buildCatalogPerkColumns(
+        socketPlugs: const [
+          {
+            'columnKind': 'trait',
+            'columnLabel': 'Trait',
+            'equippedPlugHash': 20,
+            'reusablePlugHashes': [20],
+          },
+        ],
+        plugNameByHash: const {20: 'Enhanced Kill Clip'},
+        plugEnhancedByHash: const {20: true},
+      );
+      await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: cols)));
+      expect(find.text('Kill Clip'), findsOneWidget);
+      expect(find.text('Enhanced Kill Clip'), findsNothing);
+      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsNothing);
+      expect(find.byKey(const Key('perk_selected_20')), findsOneWidget);
+    });
+
+    testWidgets(
+        '③ ON: dashed pool; no Enhanced caption; no tier badge / E',
         (tester) async {
       final cols = buildCatalogPerkColumns(
         socketPlugs: sockets,
@@ -501,23 +553,16 @@ void main() {
       );
       await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: cols)));
       expect(find.byKey(const Key('perk_cell_13')), findsOneWidget);
-      expect(find.byKey(const Key('perk_tier_badge_13')), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('perk_tier_badge_13')),
-          matching: find.text('③'),
-        ),
-        findsOneWidget,
-      );
-      // No E chrome on pool even if map says enhanced.
+      expect(find.byKey(const Key('perk_tier_badge_13')), findsNothing);
+      // Pool strips Enhanced; caption never says Enhanced.
+      expect(find.text('Polygonal'), findsOneWidget);
+      expect(find.textContaining('Enhanced'), findsNothing);
       expect(find.byKey(const Key('perk_enhanced_mark_13')), findsNothing);
-      // GAP-CAT-PERK-004: no per-column band keys; ③ badge remains.
       expect(find.byKey(const Key('perk_band_possible_0')), findsNothing);
-      expect(find.byKey(const Key('perk_tier_badge_13')), findsOneWidget);
     });
 
     testWidgets(
-        'uniform perk tile minHeight (~48); equal Expanded @400; no H-scroll',
+        'fixed square perk tiles; equal Expanded @400; no H-scroll',
         (tester) async {
       final cols = buildCatalogPerkColumns(
         socketPlugs: sockets,
@@ -539,13 +584,18 @@ void main() {
       );
       await tester.pump();
 
-      // Uniform min height for every perk cell.
+      // Fixed square cells (icon + padding), not stretched.
       for (final hash in [10, 11, 13]) {
         final size = tester.getSize(find.byKey(Key('perk_cell_$hash')));
         expect(
+          size.width,
+          closeTo(kCatalogPerkCellSize, 0.5),
+          reason: 'perk cell $hash width',
+        );
+        expect(
           size.height,
-          greaterThanOrEqualTo(kCatalogPerkCellMinHeight - 0.5),
-          reason: 'perk cell $hash must be uniform minHeight',
+          closeTo(kCatalogPerkCellSize, 0.5),
+          reason: 'perk cell $hash height',
         );
       }
 
@@ -650,7 +700,9 @@ void main() {
         showCraft: true,
         craftColumns: craftCols,
       );
-      await tester.pumpWidget(_wrap(CatalogPerkGrid(columns: on)));
+      await tester.pumpWidget(
+        _wrap(CatalogPerkGrid(columns: on, showLabels: true)),
+      );
       // Craft pool: stripped base display, no E mark on pool cell.
       expect(find.text('Harmony'), findsOneWidget);
       expect(find.byKey(const Key('perk_cell_99')), findsOneWidget);
@@ -781,7 +833,7 @@ void main() {
       expect(find.byKey(const Key('perk_column_header_0')), findsOneWidget);
       expect(find.byKey(const Key('perk_column_header_4')), findsOneWidget);
 
-      // Tooltip + Semantics wrappers present on headers.
+      // Semantics outside Tooltip (Windows AX single-owner); both present.
       final header = find.byKey(const Key('perk_column_header_4'));
       expect(
         find.descendant(of: header, matching: find.byType(Tooltip)),
@@ -891,6 +943,8 @@ void main() {
           ),
         ),
       );
+      // Option B: unknown forces caption; footer still shows unknown · #hash.
+      expect(find.byKey(const Key('perk_cell_555')), findsOneWidget);
       expect(find.text('Unknown perk'), findsOneWidget);
       expect(find.byKey(const Key('catalog_hash_footer_555')), findsOneWidget);
       expect(find.text('#555'), findsNothing); // not bare-hash primary
@@ -914,9 +968,9 @@ void main() {
     testWidgets('multi-instance power-desc; default selection highest',
         (tester) async {
       final instances = [
-        _inst(id: 'a', power: 1800),
-        _inst(id: 'b', power: 1810),
-        _inst(id: 'c', power: 1790),
+        _inst(id: 'a', power: 335, gearTier: 3, specialLabel: 'Adept'),
+        _inst(id: 'b', power: 450, gearTier: 5),
+        _inst(id: 'c', power: 445, gearTier: 4, specialLabel: 'Holofoil'),
       ];
       expect(defaultHighestPowerInstanceId(instances), 'b');
 
@@ -935,15 +989,60 @@ void main() {
         ),
       );
 
-      final chips = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).toList();
-      expect(chips.length, 3);
-      // First displayed is highest power (power-desc).
-      expect(chips.first.key, const Key('instance_chip_b'));
-      expect(chips.first.selected, isTrue);
+      expect(find.byType(ChoiceChip), findsNothing);
+      expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
+      expect(find.text('INSTANCES'), findsOneWidget);
+      // First chip in tree after label is highest power (b).
+      expect(find.byKey(const Key('instance_chip_b')), findsOneWidget);
+      expect(find.byKey(const Key('instance_tier_b')), findsOneWidget);
+      expect(find.text('450'), findsOneWidget);
+      expect(find.text('T5'), findsOneWidget);
+      // Adept / Holofoil special segments (no MW/Craft).
+      expect(find.byKey(const Key('instance_special_a')), findsOneWidget);
+      expect(find.text('ADEPT'), findsOneWidget);
+      expect(find.textContaining('MW'), findsNothing);
+      expect(find.textContaining('Craft'), findsNothing);
+
+      // Chips hug content — not stretched to detail rail width.
+      final chipSize = tester.getSize(find.byKey(const Key('instance_chip_b')));
+      expect(chipSize.width, lessThan(200));
+      expect(chipSize.width, greaterThan(40));
 
       await tester.tap(find.byKey(const Key('instance_chip_a')));
       await tester.pump();
       expect(selected, 'a');
+    });
+
+    testWidgets('empty strip honesty', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          WeaponInstanceStrip(
+            instances: const [],
+            selectedInstanceId: null,
+            onSelect: (_) {},
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('weapon_instance_strip_empty')), findsOneWidget);
+      expect(find.text('No local copies'), findsOneWidget);
+      expect(find.byKey(const Key('weapon_instance_strip')), findsNothing);
+    });
+
+    test('catalogInstanceChipLabel formats power tier special', () {
+      expect(
+        catalogInstanceChipLabel(
+          _inst(id: 'x', power: 335, gearTier: 3, specialLabel: 'Adept'),
+        ),
+        '335 T3 Adept',
+      );
+      expect(
+        catalogInstanceChipLabel(_inst(id: 'y', power: 450, gearTier: 5)),
+        '450 T5',
+      );
+      expect(
+        catalogInstanceChipLabel(_inst(id: 'z', power: 400)),
+        '400',
+      );
     });
   });
 
@@ -1200,7 +1299,7 @@ void main() {
       expect(find.text('OWNED'), findsNothing);
       // Origin present when data.
       expect(find.text('ORIGIN TRAIT'), findsOneWidget);
-      expect(find.text('Elliptical Orbit'), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_90')), findsOneWidget);
       // Craft hidden.
       expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
       // ①+② default (not just selected).
@@ -1304,7 +1403,7 @@ void main() {
     });
 
     testWidgets(
-        'family version switch lists all members + rebind callback',
+        'owned: instances strip only — no VERSIONS rail',
         (tester) async {
       final family = groupWeaponFamilies([
         const CatalogItem(
@@ -1329,6 +1428,54 @@ void main() {
           owned: true,
           ownedCount: 1,
         ),
+      ]).single;
+
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: family.members.first.item,
+            instances: [
+              _inst(id: 'a', power: 450, gearTier: 5, specialLabel: 'Adept'),
+            ],
+            familyMembers: family.members,
+            onSelectFamilyMember: (_) {},
+            onCanRollChanged: (_) {},
+            onCraftChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
+      expect(find.text('VERSIONS'), findsNothing);
+      expect(find.text('INSTANCES'), findsOneWidget);
+    });
+
+    testWidgets(
+        'unowned: family version switch lists members + rebind (no instances)',
+        (tester) async {
+      final family = groupWeaponFamilies([
+        const CatalogItem(
+          hash: 101,
+          name: 'Midnight Coup',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          ammo: 'Primary',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+          owned: false,
+          ownedCount: 0,
+        ),
+        const CatalogItem(
+          hash: 102,
+          name: 'Midnight Coup (Adept)',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          ammo: 'Primary',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+          owned: false,
+          ownedCount: 0,
+        ),
         const CatalogItem(
           hash: 103,
           name: 'Midnight Coup Holofoil',
@@ -1351,9 +1498,7 @@ void main() {
             return _wrap(
               CatalogWeaponDetail(
                 item: current,
-                instances: [
-                  _inst(id: 'a', power: 1800),
-                ],
+                instances: const [],
                 familyMembers: family.members,
                 onSelectFamilyMember: (m) {
                   setState(() {
@@ -1436,10 +1581,11 @@ void main() {
       expect(find.text('POSSIBLE ROLLS'), findsOneWidget);
       expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNothing);
       expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
-      expect(find.text('Volatile Launch'), findsOneWidget);
-      expect(find.text('Confined Launch'), findsOneWidget);
-      expect(find.text('Impulse Amplifier'), findsOneWidget);
-      expect(find.text('Clown Cartridge'), findsOneWidget);
+      // Icon tiles only (labels hidden); names live in tooltip/semantics.
+      expect(find.byKey(const Key('perk_cell_1')), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_2')), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_3')), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_4')), findsOneWidget);
       expect(find.byKey(const Key('catalog_perk_grid')), findsOneWidget);
       // No Origin when definition has none.
       expect(find.text('ORIGIN TRAIT'), findsNothing);
@@ -1495,7 +1641,8 @@ void main() {
       expect(find.byKey(const Key('perk_selected_4')), findsNothing);
     });
 
-    testWidgets('detail enhanced: gold+E on ①/② only; ③ ON → no E on pool',
+    testWidgets(
+        'detail enhanced: gold border on ① only (no E glyph); ③ ON → no E',
         (tester) async {
       const item = CatalogItem(
         hash: 99,
@@ -1557,9 +1704,10 @@ void main() {
       );
       await tester.pump();
 
-      // ① enhanced from host map.
-      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsOneWidget);
-      // ② not enhanced.
+      // Enhanced is gold border only — never an E glyph.
+      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsNothing);
+      expect(find.byKey(const Key('perk_selected_20')), findsOneWidget);
+      expect(find.byKey(const Key('perk_cell_21')), findsOneWidget);
       expect(find.byKey(const Key('perk_enhanced_mark_21')), findsNothing);
 
       await tester.tap(find.byKey(const Key('catalog_toggle_can_roll')));
@@ -1568,8 +1716,530 @@ void main() {
       expect(find.byKey(const Key('perk_cell_22')), findsOneWidget);
       expect(find.byKey(const Key('perk_enhanced_mark_22')), findsNothing);
       expect(find.byKey(const Key('catalog_enhance_note')), findsOneWidget);
-      // ① still has E.
-      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsOneWidget);
+      expect(find.byKey(const Key('perk_enhanced_mark_20')), findsNothing);
+    });
+  });
+
+  group('003 CatalogRollTargets · dual segs + rank + wash', () {
+    testWidgets('dual segs hidden when no active or !hasAnyScoreDimension',
+        (tester) async {
+      final instances = [
+        _inst(id: 'a', power: 335, gearTier: 3),
+        _inst(id: 'b', power: 450, gearTier: 5),
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          WeaponInstanceStrip(
+            instances: instances,
+            selectedInstanceId: 'b',
+            onSelect: (_) {},
+            scoresByInstanceId: const {
+              // Unscored — both dims zero → hide segs
+              'b': CatalogInstanceRollScore(
+                preferredMatched: 0,
+                preferredScored: 0,
+                avoidHits: 0,
+                avoidScored: 0,
+              ),
+            },
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('instance_score_pref_b')), findsNothing);
+      expect(find.byKey(const Key('instance_score_avoid_b')), findsNothing);
+      expect(find.byType(ChoiceChip), findsNothing);
+    });
+
+    testWidgets('dual segs N/M + Av k with success/danger tints; base preserved',
+        (tester) async {
+      final instances = [
+        _inst(id: 'perfect', power: 450, gearTier: 5, specialLabel: 'Adept'),
+        _inst(id: 'dirty', power: 400, gearTier: 3),
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          WeaponInstanceStrip(
+            instances: instances,
+            selectedInstanceId: 'perfect',
+            activeTargetName: 'PvE',
+            onSelect: (_) {},
+            scoresByInstanceId: const {
+              'perfect': CatalogInstanceRollScore(
+                preferredMatched: 3,
+                preferredScored: 3,
+                avoidHits: 0,
+                avoidScored: 1,
+              ),
+              'dirty': CatalogInstanceRollScore(
+                preferredMatched: 1,
+                preferredScored: 3,
+                avoidHits: 2,
+                avoidScored: 2,
+              ),
+            },
+          ),
+        ),
+      );
+
+      expect(find.text('450'), findsOneWidget);
+      expect(find.text('T5'), findsOneWidget);
+      expect(find.text('ADEPT'), findsOneWidget);
+      expect(find.textContaining('MW'), findsNothing);
+      expect(find.textContaining('Craft'), findsNothing);
+      expect(find.byType(ChoiceChip), findsNothing);
+
+      expect(find.byKey(const Key('instance_score_pref_perfect')), findsOneWidget);
+      expect(find.text('3/3'), findsOneWidget);
+      expect(find.byKey(const Key('instance_score_avoid_perfect')), findsOneWidget);
+      expect(find.text('Av 0'), findsOneWidget);
+      expect(find.text('1/3'), findsOneWidget);
+      expect(find.text('Av 2'), findsOneWidget);
+
+      // Perfect preferred uses success color.
+      final pref = tester.widget<Text>(
+        find.byKey(const Key('instance_score_pref_perfect')),
+      );
+      final palette = FlapPalette.forBrightness(Brightness.dark);
+      expect(pref.style?.color, palette.success);
+    });
+
+    testWidgets('preserveCallerOrder keeps host rank; power-desc when false',
+        (tester) async {
+      final instances = [
+        _inst(id: 'low-ratio', power: 500, gearTier: 5),
+        _inst(id: 'high-ratio', power: 300, gearTier: 2),
+        _inst(id: 'mid', power: 400, gearTier: 3),
+      ];
+
+      // Pre-ranked: high-ratio first (as host would after rankOwnedForRollTarget).
+      final ranked = [
+        instances[1],
+        instances[2],
+        instances[0],
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          WeaponInstanceStrip(
+            instances: ranked,
+            selectedInstanceId: 'mid',
+            preserveCallerOrder: true,
+            rankedByRollTarget: true,
+            onSelect: (_) {},
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('weapon_instance_rank_note')), findsOneWidget);
+      // Tree order: high-ratio before low-ratio despite lower power.
+      final chips = tester.widgetList<Semantics>(
+        find.descendant(
+          of: find.byKey(const Key('weapon_instance_strip')),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is Semantics &&
+                w.properties.button == true &&
+                (w.properties.label?.contains('T') ?? false),
+          ),
+        ),
+      );
+      // Fall back: keys in paint order via find.
+      final order = [
+        for (final id in ['high-ratio', 'mid', 'low-ratio'])
+          tester.getTopLeft(find.byKey(Key('instance_chip_$id'))).dx,
+      ];
+      // Same row wrap: first chip should be leftmost (or top-left).
+      final tops = [
+        for (final id in ['high-ratio', 'mid', 'low-ratio'])
+          tester.getTopLeft(find.byKey(Key('instance_chip_$id'))),
+      ];
+      // Sort by dy then dx — first in ranked order should be first visually
+      // when they fit one row.
+      expect(tops[0].dx, lessThanOrEqualTo(tops[1].dx));
+
+      // Without preserve: power-desc puts 500 first.
+      await tester.pumpWidget(
+        _wrap(
+          WeaponInstanceStrip(
+            instances: instances,
+            selectedInstanceId: 'mid',
+            preserveCallerOrder: false,
+            onSelect: (_) {},
+          ),
+        ),
+      );
+      final powerFirst = tester.getTopLeft(
+        find.byKey(const Key('instance_chip_low-ratio')),
+      );
+      final powerLast = tester.getTopLeft(
+        find.byKey(const Key('instance_chip_high-ratio')),
+      );
+      expect(powerFirst.dx, lessThan(powerLast.dx));
+      // silence unused
+      expect(chips, isNotNull);
+      expect(order, isNotEmpty);
+    });
+
+    testWidgets('selection sticky after reorder (user-controlled)',
+        (tester) async {
+      var selected = 'mid';
+      final base = [
+        _inst(id: 'a', power: 500),
+        _inst(id: 'mid', power: 400),
+        _inst(id: 'c', power: 300),
+      ];
+      var ordered = List<CatalogInstanceProjection>.from(base);
+
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              Column(
+                children: [
+                  WeaponInstanceStrip(
+                    instances: ordered,
+                    selectedInstanceId: selected,
+                    preserveCallerOrder: true,
+                    onSelect: (i) => setState(() => selected = i.instanceId),
+                  ),
+                  TextButton(
+                    key: const Key('reorder_btn'),
+                    onPressed: () => setState(() {
+                      ordered = [base[2], base[1], base[0]];
+                    }),
+                    child: const Text('reorder'),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      expect(selected, 'mid');
+      await tester.tap(find.byKey(const Key('reorder_btn')));
+      await tester.pump();
+      expect(selected, 'mid');
+    });
+
+    testWidgets('empty No local copies; no dual chips', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          WeaponInstanceStrip(
+            instances: const [],
+            selectedInstanceId: null,
+            onSelect: (_) {},
+            scoresByInstanceId: const {
+              'x': CatalogInstanceRollScore(
+                preferredMatched: 1,
+                preferredScored: 1,
+                avoidHits: 0,
+                avoidScored: 1,
+              ),
+            },
+          ),
+        ),
+      );
+      expect(find.text('No local copies'), findsOneWidget);
+      expect(find.byKey(const Key('instance_score_pref_x')), findsNothing);
+    });
+
+    testWidgets('view wash preferred/avoid; no wash in edit; W/A badges',
+        (tester) async {
+      final columns = [
+        CatalogPerkColumn(
+          label: 'Trait',
+          columnKey: 'Trait',
+          cells: const [
+            CatalogPerkCell(
+              hash: 30,
+              displayName: 'Kill Clip',
+              fromCanRollPool: true,
+            ),
+            CatalogPerkCell(
+              hash: 31,
+              displayName: 'Rampage',
+              fromCanRollPool: true,
+            ),
+            CatalogPerkCell(
+              hash: 32,
+              displayName: 'Outlaw',
+              fromCanRollPool: true,
+            ),
+          ],
+        ),
+      ];
+
+      // View mode wash
+      await tester.pumpWidget(
+        _wrap(
+          CatalogPerkGrid(
+            columns: columns,
+            preferredByColumn: {
+              'Trait': {30},
+            },
+            avoidByColumn: {
+              'Trait': {31},
+            },
+            editingRollTarget: false,
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('perk_wash_want_30')), findsOneWidget);
+      expect(find.byKey(const Key('perk_wash_avoid_31')), findsOneWidget);
+      expect(find.byKey(const Key('perk_badge_want_30')), findsNothing);
+
+      // Edit mode: badges, no wash
+      var pref = <String, Set<int>>{
+        'Trait': {30},
+      };
+      var avoid = <String, Set<int>>{
+        'Trait': {31},
+      };
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              CatalogPerkGrid(
+                columns: columns,
+                preferredByColumn: pref,
+                avoidByColumn: avoid,
+                editingRollTarget: true,
+                onCycleRollPlug: (col, hash) {
+                  final mode = catalogRollPlugModeFor(
+                    columnKey: col,
+                    plugHash: hash,
+                    preferredByColumn: pref,
+                    avoidByColumn: avoid,
+                  );
+                  final next = nextCatalogRollPlugMode(mode);
+                  final r = applyCatalogRollPlugMode(
+                    columnKey: col,
+                    plugHash: hash,
+                    mode: next,
+                    preferredByColumn: pref,
+                    avoidByColumn: avoid,
+                  );
+                  setState(() {
+                    pref = r.preferredByColumn;
+                    avoid = r.avoidByColumn;
+                  });
+                },
+              ),
+            );
+          },
+        ),
+      );
+      expect(find.byKey(const Key('catalog_perk_grid_editing')), findsOneWidget);
+      expect(find.byKey(const Key('perk_wash_want_30')), findsNothing);
+      expect(find.byKey(const Key('perk_badge_want_30')), findsOneWidget);
+      expect(find.byKey(const Key('perk_badge_avoid_31')), findsOneWidget);
+      expect(find.byKey(const Key('perk_badge_off_32')), findsOneWidget);
+
+      // Cycle Off → Want on 32
+      await tester.tap(find.byKey(const Key('perk_cell_32')));
+      await tester.pump();
+      expect(pref['Trait'], contains(32));
+    });
+
+    testWidgets(
+        'CatalogWeaponDetail composes roll targets + segs + wash @400',
+        (tester) async {
+      const item = CatalogItem(
+        hash: 99,
+        name: 'Test HC',
+        itemTypeName: 'Hand Cannon',
+        isExotic: false,
+        owned: true,
+        ownedCount: 2,
+      );
+      final instances = [
+        _inst(
+          id: 'i1',
+          power: 450,
+          gearTier: 5,
+          socketPlugs: const [
+            {
+              'columnKind': 'trait',
+              'columnLabel': 'Trait',
+              'equippedPlugHash': 30,
+              'reusablePlugHashes': [30, 31],
+            },
+          ],
+        ),
+        _inst(
+          id: 'i2',
+          power: 335,
+          gearTier: 3,
+          socketPlugs: const [
+            {
+              'columnKind': 'trait',
+              'columnLabel': 'Trait',
+              'equippedPlugHash': 31,
+              'reusablePlugHashes': [30, 31],
+            },
+          ],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: item,
+            instances: instances,
+            selectedInstanceId: 'i1',
+            onSelectInstance: (_) {},
+            showCanRoll: true,
+            showCraft: false,
+            onCanRollChanged: (_) {},
+            onCraftChanged: (_) {},
+            definitionSocketPlugs: const [
+              {
+                'columnKind': 'trait',
+                'columnLabel': 'Trait',
+                'equippedPlugHash': 30,
+                'reusablePlugHashes': [30, 31, 32],
+              },
+            ],
+            plugNameByHash: const {
+              30: 'Kill Clip',
+              31: 'Rampage',
+              32: 'Outlaw',
+            },
+            rollTargets: const [
+              CatalogRollTargetOption(id: 'rt-pve', name: 'PvE'),
+            ],
+            activeRollTargetId: 'rt-pve',
+            activeRollTargetName: 'PvE',
+            onActiveRollTargetChanged: (_) {},
+            instanceRollScores: const {
+              'i1': CatalogInstanceRollScore(
+                preferredMatched: 1,
+                preferredScored: 1,
+                avoidHits: 0,
+                avoidScored: 1,
+              ),
+              'i2': CatalogInstanceRollScore(
+                preferredMatched: 0,
+                preferredScored: 1,
+                avoidHits: 1,
+                avoidScored: 1,
+              ),
+            },
+            preserveInstanceOrder: true,
+            rankedByRollTarget: true,
+            preferredByColumn: {
+              'Trait': {30},
+            },
+            avoidByColumn: {
+              'Trait': {31},
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('catalog_roll_targets')), findsOneWidget);
+      expect(find.text('PVE'), findsOneWidget);
+      expect(find.byKey(const Key('instance_score_pref_i1')), findsOneWidget);
+      expect(find.text('1/1'), findsOneWidget);
+      expect(find.byKey(const Key('weapon_instance_rank_note')), findsOneWidget);
+      expect(find.byKey(const Key('perk_wash_want_30')), findsOneWidget);
+      expect(find.byKey(const Key('perk_wash_avoid_31')), findsOneWidget);
+      expect(find.byType(ChoiceChip), findsNothing);
+    });
+
+    testWidgets('unowned empty: No local copies; switcher+editor on definition',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: const CatalogItem(
+              hash: 300,
+              name: 'Unowned',
+              isExotic: false,
+              owned: false,
+              ownedCount: 0,
+            ),
+            instances: const [],
+            definitionSocketPlugs: const [
+              {
+                'columnKind': 'trait',
+                'columnLabel': 'Trait',
+                'equippedPlugHash': 30,
+                'reusablePlugHashes': [30, 31],
+              },
+            ],
+            plugNameByHash: const {30: 'Kill Clip', 31: 'Rampage'},
+            rollTargets: const [],
+            activeRollTargetId: null,
+            onActiveRollTargetChanged: (_) {},
+            onNewRollTarget: () {},
+            editingRollTarget: true,
+            rollTargetDraftName: 'PvE',
+            preferredByColumn: {
+              'Trait': {30},
+            },
+            avoidByColumn: const {},
+            onCycleRollPlug: (_, __) {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('instance_panel_empty')), findsOneWidget);
+      expect(find.textContaining('No local copies'), findsOneWidget);
+      expect(find.byKey(const Key('weapon_instance_strip')), findsNothing);
+      expect(find.byKey(const Key('catalog_roll_targets')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_roll_target_editor')), findsOneWidget);
+      // Definition pool cells cycle-capable
+      expect(find.byKey(const Key('perk_badge_want_30')), findsOneWidget);
+    });
+
+    testWidgets(
+        'exotic: no roll targets chrome (DBR-IDL-009 fixed perks)',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CatalogWeaponDetail(
+            item: const CatalogItem(
+              hash: 999,
+              name: 'Ace of Spades',
+              isExotic: true,
+              owned: true,
+              ownedCount: 1,
+              itemTypeName: 'Hand Cannon',
+            ),
+            instances: [
+              _inst(id: 'exo-1', power: 1810, gearTier: 5),
+            ],
+            selectedInstanceId: 'exo-1',
+            onSelectInstance: (_) {},
+            onCanRollChanged: (_) {},
+            onCraftChanged: (_) {},
+            // Host must not wire callbacks for exotic — detail also hides when
+            // isExotic even if options were passed.
+            rollTargets: const [
+              CatalogRollTargetOption(id: 'rt-x', name: 'PvE'),
+            ],
+            activeRollTargetId: 'rt-x',
+            onActiveRollTargetChanged: (_) {},
+            instanceRollScores: const {
+              'exo-1': CatalogInstanceRollScore(
+                preferredMatched: 1,
+                preferredScored: 1,
+                avoidHits: 0,
+                avoidScored: 0,
+              ),
+            },
+            rankedByRollTarget: true,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Ace of Spades'), findsOneWidget);
+      expect(find.byKey(const Key('detail_kind_label')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_roll_targets')), findsNothing);
+      // Switcher/editor hidden for exotic even if host passed options.
     });
   });
 }

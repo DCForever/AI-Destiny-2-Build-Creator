@@ -171,7 +171,10 @@ class _PrimaryBand extends StatelessWidget {
             horizontal: 10,
             vertical: 8,
           ),
-          prefixIcon: Icon(Icons.search, size: 18, color: palette.muted),
+          // Exclude decorative search glyph (Windows AX thrash with TextField).
+          prefixIcon: ExcludeSemantics(
+            child: Icon(Icons.search, size: 18, color: palette.muted),
+          ),
           prefixIconConstraints: const BoxConstraints(
             minWidth: 36,
             minHeight: 36,
@@ -316,6 +319,7 @@ class _PrimaryBand extends StatelessWidget {
     }
 
     // Narrow: two compact rows (mode+scope+search+actions) then chip strip.
+    // Leading (scope) is Flexible so phone viewports do not overflow ~26px.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -323,11 +327,11 @@ class _PrimaryBand extends StatelessWidget {
         Row(
           children: [
             if (prefix != null) ...[
-              Flexible(child: prefix!),
+              Flexible(flex: 0, child: prefix!),
               const SizedBox(width: kSpace6),
             ],
             if (leading != null) ...[
-              leading!,
+              Flexible(flex: 0, child: leading!),
               const SizedBox(width: kSpace6),
             ],
             Expanded(child: _searchField()),
