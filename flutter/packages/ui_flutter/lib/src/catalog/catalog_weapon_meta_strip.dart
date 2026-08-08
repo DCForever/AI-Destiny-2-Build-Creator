@@ -7,8 +7,8 @@ import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import '../neon_item_card.dart';
 
-/// Fixed meta chip edge (COMPARE residual — compact horizontal, not full-width bars).
-const double kCatalogMetaChipSize = 22;
+/// Fixed meta chip edge (BUG-20260807-004 — was 22; larger for detail scan).
+const double kCatalogMetaChipSize = 28;
 
 /// Pure icon-only weapon meta strip (type · frame · element · slot · ammo + ×N).
 ///
@@ -202,7 +202,7 @@ class _MetaTypeSilhouetteChip extends StatelessWidget {
         ),
         child: DestinyWeaponTypeIcon(
           visual: visual,
-          size: 15,
+          size: 20,
           fallbackMark: fallbackMark,
         ),
       ),
@@ -242,7 +242,7 @@ class _MetaOfficialChip extends StatelessWidget {
         ),
         child: DestinyOfficialIcon(
           visual: visual,
-          size: 15,
+          size: 20,
           fallbackMark: fallbackMark,
         ),
       ),
@@ -250,7 +250,7 @@ class _MetaOfficialChip extends StatelessWidget {
   }
 }
 
-/// Fixed 22×22 letter/glyph chip — never expands to full-width bars.
+/// Fixed letter/glyph chip — never expands to full-width bars.
 class _MetaGlyphChip extends StatelessWidget {
   const _MetaGlyphChip({
     super.key,
@@ -284,7 +284,7 @@ class _MetaGlyphChip extends StatelessWidget {
         ),
         child: Text(
           mark,
-          style: neonMono(color: color, fontSize: 9),
+          style: neonMono(color: color, fontSize: 12),
           maxLines: 1,
           overflow: TextOverflow.clip,
           textAlign: TextAlign.center,
@@ -294,7 +294,7 @@ class _MetaGlyphChip extends StatelessWidget {
   }
 }
 
-/// ×N only — never "OWNED" text pill. Height fixed 22; width hugs content.
+/// ×N only — never "OWNED" text pill. Height matches meta chips; width hugs.
 class _OwnedCountChip extends StatelessWidget {
   const _OwnedCountChip({super.key, required this.count});
 
@@ -325,7 +325,7 @@ class _OwnedCountChip extends StatelessWidget {
         ),
         child: Text(
           '×$count',
-          style: neonMono(color: palette.success, fontSize: 11),
+          style: neonMono(color: palette.success, fontSize: 13),
         ),
       ),
     );

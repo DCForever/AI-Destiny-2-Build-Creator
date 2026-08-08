@@ -104,8 +104,12 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
   bool showCanRoll = false,
   bool showCraft = false,
   List<CatalogPerkColumn> craftColumns = const [],
+  /// Exotic / fixed perks: no can-roll expansion; definition plugs are not
+  /// "possible rolls" pool chrome (BUG-20260807-002).
+  bool fixedPerks = false,
 }) {
   final out = <CatalogPerkColumn>[];
+  final allowCanRoll = showCanRoll && !fixedPerks;
 
   // Prefer instance sockets; fall back to definition (unowned / missing capture).
   // Do not pre-merge definition into instance reusables — instance vs pool must stay distinct.
@@ -122,7 +126,7 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
   // Definition pool hashes by non-meta column order (for owned pool expansion).
   final defPoolByNonMetaIndex = <int, Set<int>>{};
   if (!usingDefinitionOnly &&
-      showCanRoll &&
+      allowCanRoll &&
       definitionSocketPlugs != null &&
       definitionSocketPlugs.isNotEmpty) {
     var defIdx = 0;
@@ -157,9 +161,11 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
         final looksEnh = !unknown &&
             (plugEnhancedByHash[h] == true || looksEnhancedPerkName(rawDisplay));
 
-        // Pool / unowned: no enhanced chrome; one cell per perk identity.
+        // Pool / unowned definition: one cell per perk identity.
+        // Fixed perks (exotic): treat as solid cells, not dashed can-roll pool.
         if (pool || usingDefinitionOnly) {
           if (looksEnh) colCanBeEnhanced = true;
+          final asPool = !fixedPerks;
           final identity = perkIdentityKey(rawDisplay);
           final existingIdx = cells.indexWhere(
             (c) => perkIdentityKey(c.displayName) == identity,
@@ -176,8 +182,8 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
                 hash: h,
                 displayName: rawDisplay,
                 icon: plugIconByHash[h] ?? prev.icon,
-                selected: false,
-                fromCanRollPool: true,
+                selected: fixedPerks && selected,
+                fromCanRollPool: asPool,
                 unknown: unknown,
                 enhanced: false,
               );
@@ -192,8 +198,8 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
               displayName: display,
               icon: plugIconByHash[h] ??
                   (unknown ? null : _frameIconFallback(display)),
-              selected: false,
-              fromCanRollPool: true,
+              selected: fixedPerks && selected,
+              fromCanRollPool: asPool,
               unknown: unknown,
               enhanced: false,
             ),
@@ -221,15 +227,24 @@ List<CatalogPerkColumn> buildCatalogPerkColumns({
           if (equipped != null && equipped != 0) equipped,
           ...instanceReusable,
         };
-        for (final h in pool) {
-          addCell(h, selected: false, pool: true);
+        // Fixed exotic: first equipped as selected; rest unselected instance-like.
+        if (fixedPerks) {
+          var first = true;
+          for (final h in pool) {
+            addCell(h, selected: first && equipped == h, pool: true);
+            if (h == equipped) first = false;
+          }
+        } else {
+          for (final h in pool) {
+            addCell(h, selected: false, pool: true);
+          }
         }
       } else {
         if (equipped != null) addCell(equipped, selected: true, pool: false);
         for (final h in instanceReusable) {
           if (h != equipped) addCell(h, selected: false, pool: false);
         }
-        if (showCanRoll && !_isMetaColumnKind(kindLower)) {
+        if (allowCanRoll && !_isMetaColumnKind(kindLower)) {
           final defPool = defPoolByNonMetaIndex[nonMetaIdx] ?? const <int>{};
           for (final h in defPool) {
             addCell(h, selected: false, pool: true);
@@ -478,7 +493,7 @@ const Color kCatalogPerkEnhancedGold = Color(0xFFF5C542);
 /// gold border for enhanced (no E glyph, no Enhanced caption text).
 ///
 /// 003 roll targets: view diagonal wash (preferred green / avoid red) behind
-/// icon; edit mode W/A badges only (no wash); cycle only on can-roll ③ cells.
+/// icon; edit mode W/A badges only (no wash); cycle instance + can-roll cells.
 class CatalogPerkGrid extends StatelessWidget {
   const CatalogPerkGrid({
     super.key,
@@ -488,6 +503,7 @@ class CatalogPerkGrid extends StatelessWidget {
     this.avoidByColumn = const {},
     this.editingRollTarget = false,
     this.onCycleRollPlug,
+    this.fixedPerks = false,
   });
 
   final List<CatalogPerkColumn> columns;
@@ -504,11 +520,15 @@ class CatalogPerkGrid extends StatelessWidget {
   /// Active (view) or draft (edit) avoid plugs by columnKey.
   final Map<String, Set<int>> avoidByColumn;
 
-  /// When true: W/A badges, no diagonal wash; pool cells cycle via [onCycleRollPlug].
+  /// When true: W/A badges, no diagonal wash; instance + pool cells cycle.
   final bool editingRollTarget;
 
-  /// Called with columnKey + plug hash when a can-roll ③ cell is tapped in edit.
+  /// Called with columnKey + plug hash when a cycleable cell is tapped in edit.
   final void Function(String columnKey, int plugHash)? onCycleRollPlug;
+
+  /// Exotic / fixed-perk weapons: no Selected / On this copy / Possible rolls
+  /// legend (BUG-20260807-003).
+  final bool fixedPerks;
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +565,8 @@ class CatalogPerkGrid extends StatelessWidget {
       key: const Key('catalog_perk_grid_shell'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (hasInstanceTiers || hasPool)
+        // Fixed perks (exotics): omit Selected / On this copy / Possible rolls.
+        if (!fixedPerks && (hasInstanceTiers || hasPool))
           _PerkTierLegend(
             owned: hasInstanceTiers,
             showPossible: hasPool && !hasCraft,
@@ -804,9 +825,14 @@ class _PerkColumnBody extends StatelessWidget {
           column.rollColumnKey: avoidHashes,
         },
       );
-      // Cycle only on can-roll ③ pool cells (BR-CAT-016).
-      final canCycle =
-          editingRollTarget && cell.fromCanRollPool && onCycleRollPlug != null;
+      // BUG-20260807-009: cycle Want|Avoid|Off on owned instance ①/② plugs
+      // and can-roll ③ pool (not pool-only). Craft pool stays non-cycle.
+      final canCycle = editingRollTarget &&
+          onCycleRollPlug != null &&
+          !cell.fromCraftPool &&
+          (cell.fromCanRollPool ||
+              cell.selected ||
+              cell.isInstanceUnselected);
       children.add(
         _PerkCellTile(
           cell: cell,

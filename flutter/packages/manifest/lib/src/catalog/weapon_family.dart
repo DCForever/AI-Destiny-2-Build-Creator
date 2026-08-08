@@ -28,21 +28,34 @@ String weaponVersionLabel(WeaponVersionKind kind) {
 
 /// Detail version-switch label for [m] within [members].
 ///
-/// Unique kinds: `Base` / `Base ×2`. Colliding kinds (multi-hash Base fan-out)
-/// append a short hash tail so ChoiceChips stay distinguishable.
+/// **Base is implied** (BUG-20260807-005): unique base → "Default" / owned ×N
+/// without the word "Base". Adept / Holofoil stay explicit.
+/// **Never append hashes** when kinds collide — use stable `#n` ordinals.
 String weaponVersionSwitchLabel(
   WeaponFamilyMember m,
   List<WeaponFamilyMember> members,
 ) {
-  final owned = m.ownedCount > 0 ? '${m.label} ×${m.ownedCount}' : m.label;
-  var kindCount = 0;
-  for (final other in members) {
-    if (other.kind == m.kind) kindCount++;
+  final sameKind = <WeaponFamilyMember>[
+    for (final other in members)
+      if (other.kind == m.kind) other,
+  ];
+  final kindCount = sameKind.length;
+  final ownedSuffix = m.ownedCount > 0 ? ' ×${m.ownedCount}' : '';
+
+  if (m.kind == WeaponVersionKind.base) {
+    if (kindCount <= 1) {
+      // Base implied — do not print "Base".
+      return m.ownedCount > 0 ? '×${m.ownedCount}' : 'Default';
+    }
+    final index = sameKind.indexWhere((o) => o.hash == m.hash) + 1;
+    return '#$index$ownedSuffix';
   }
-  if (kindCount <= 1) return owned;
-  final hex = m.hash.toRadixString(16);
-  final tail = hex.length <= 4 ? hex : hex.substring(hex.length - 4);
-  return '$owned · $tail';
+
+  // Adept / Holofoil always explicit.
+  final kindLabel = m.label;
+  if (kindCount <= 1) return '$kindLabel$ownedSuffix';
+  final index = sameKind.indexWhere((o) => o.hash == m.hash) + 1;
+  return '$kindLabel #$index$ownedSuffix';
 }
 
 /// Detect Adept / Holofoil from a weapon display name.

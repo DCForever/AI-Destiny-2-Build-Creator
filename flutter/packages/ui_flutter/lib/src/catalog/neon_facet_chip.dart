@@ -81,14 +81,15 @@ class NeonFacetChip extends StatelessWidget {
     Widget? avatar = icon;
     if (avatar == null && official != null) {
       // Chip/Tooltip provide the name; keep CDN icon non-semantic (Windows AX).
+      // BUG-20260807-007: slightly larger primary icon-only filter chips.
       avatar = DestinyOfficialIcon(
         visual: official,
-        size: 14,
+        size: iconOnly ? 18 : 14,
       );
     } else if (avatar == null && weaponType != null) {
       avatar = DestinyWeaponTypeIcon(
         visual: weaponType,
-        size: 14,
+        size: iconOnly ? 18 : 14,
         fallbackMark: typeLetter,
       );
     } else if (avatar == null && iconOnly && slotLetter != null) {
@@ -96,7 +97,7 @@ class NeonFacetChip extends StatelessWidget {
         slotLetter,
         style: neonMono(
           color: accent,
-          fontSize: 12,
+          fontSize: 14,
           letterSpacing: 0,
         ),
       );
@@ -106,7 +107,7 @@ class NeonFacetChip extends StatelessWidget {
         typeLetter,
         style: neonMono(
           color: accent,
-          fontSize: 11,
+          fontSize: 13,
           letterSpacing: 0,
         ),
       );
@@ -144,9 +145,9 @@ class NeonFacetChip extends StatelessWidget {
       onSelected: (_) => onCycle(),
       avatar: iconOnly ? avatar : avatar,
       showCheckmark: !iconOnly && official == null && weaponType == null,
-      padding: iconOnly ? const EdgeInsets.all(4) : null,
+      padding: iconOnly ? const EdgeInsets.all(6) : null,
       labelPadding: iconOnly ? EdgeInsets.zero : null,
-      visualDensity: VisualDensity.compact,
+      visualDensity: iconOnly ? VisualDensity.standard : VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       side: BorderSide(
         color: exclude

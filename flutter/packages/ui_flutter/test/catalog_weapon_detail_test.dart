@@ -1080,7 +1080,8 @@ void main() {
       expect(find.textContaining('Owned ×'), findsNothing);
     });
 
-    testWidgets('chip size == 22×22; strip not full-width bars', (tester) async {
+    testWidgets('chip size == kCatalogMetaChipSize; strip not full-width bars',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: buildFlapThemeBase(),
@@ -1114,9 +1115,9 @@ void main() {
       for (final key in chipKeys) {
         final size = tester.getSize(find.byKey(key));
         expect(size.width, kCatalogMetaChipSize,
-            reason: '$key width must be fixed 22');
+            reason: '$key width must be fixed $kCatalogMetaChipSize');
         expect(size.height, kCatalogMetaChipSize,
-            reason: '$key height must be fixed 22');
+            reason: '$key height must be fixed $kCatalogMetaChipSize');
         // Not full-width bars under 400 parent.
         expect(size.width, lessThan(100));
         rects.add(tester.getRect(find.byKey(key)));
@@ -2034,10 +2035,72 @@ void main() {
       expect(find.byKey(const Key('perk_badge_avoid_31')), findsOneWidget);
       expect(find.byKey(const Key('perk_badge_off_32')), findsOneWidget);
 
-      // Cycle Off → Want on 32
+      // Cycle Off → Want on 32 (pool cell)
       await tester.tap(find.byKey(const Key('perk_cell_32')));
       await tester.pump();
       expect(pref['Trait'], contains(32));
+    });
+
+    testWidgets('BUG-009: edit cycle works on owned instance ① plugs',
+        (tester) async {
+      var pref = <String, Set<int>>{};
+      var avoid = <String, Set<int>>{};
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              CatalogPerkGrid(
+                columns: const [
+                  CatalogPerkColumn(
+                    label: 'Trait',
+                    columnKey: 'Trait',
+                    cells: [
+                      CatalogPerkCell(
+                        hash: 40,
+                        displayName: 'Feeding Frenzy',
+                        selected: true,
+                      ),
+                      CatalogPerkCell(
+                        hash: 41,
+                        displayName: 'Kill Clip',
+                        fromCanRollPool: true,
+                      ),
+                    ],
+                  ),
+                ],
+                preferredByColumn: pref,
+                avoidByColumn: avoid,
+                editingRollTarget: true,
+                onCycleRollPlug: (col, hash) {
+                  final mode = catalogRollPlugModeFor(
+                    columnKey: col,
+                    plugHash: hash,
+                    preferredByColumn: pref,
+                    avoidByColumn: avoid,
+                  );
+                  final next = nextCatalogRollPlugMode(mode);
+                  final r = applyCatalogRollPlugMode(
+                    columnKey: col,
+                    plugHash: hash,
+                    mode: next,
+                    preferredByColumn: pref,
+                    avoidByColumn: avoid,
+                  );
+                  setState(() {
+                    pref = r.preferredByColumn;
+                    avoid = r.avoidByColumn;
+                  });
+                },
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('perk_cell_40')));
+      await tester.pump();
+      expect(pref['Trait']?.contains(40), isTrue);
+      expect(find.byKey(const Key('perk_badge_want_40')), findsOneWidget);
     });
 
     testWidgets(
@@ -2239,6 +2302,14 @@ void main() {
       expect(find.text('Ace of Spades'), findsOneWidget);
       expect(find.byKey(const Key('detail_kind_label')), findsOneWidget);
       expect(find.byKey(const Key('catalog_roll_targets')), findsNothing);
+      // BUG-002 / BUG-003: no Possible rolls toggle; no Selected/On this copy legend.
+      expect(find.byKey(const Key('catalog_detail_toggles')), findsNothing);
+      expect(find.byKey(const Key('catalog_toggle_can_roll')), findsNothing);
+      expect(find.byKey(const Key('catalog_perk_legend')), findsNothing);
+      expect(find.text('Selected'), findsNothing);
+      expect(find.text('On this copy'), findsNothing);
+      expect(find.text('Possible rolls'), findsNothing);
+      expect(find.byKey(const Key('catalog_perk_section_perks')), findsOneWidget);
       // Switcher/editor hidden for exotic even if host passed options.
     });
   });

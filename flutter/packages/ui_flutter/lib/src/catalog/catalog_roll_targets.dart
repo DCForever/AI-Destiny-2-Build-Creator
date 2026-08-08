@@ -301,52 +301,61 @@ class CatalogRollTargets extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Wrap(
-          key: const Key('catalog_roll_target_switcher'),
-          spacing: 4,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _RollTargetOpt(
-              key: const Key('roll_target_opt_off'),
-              label: 'Off',
-              selected: _isOff,
-              isOff: true,
-              onTap: () => onActiveChanged(null),
-            ),
-            for (final t in targets)
+        // One horizontal row (BUG-20260807-006) — content-sized chips, not
+        // full-width stacked bars. Scroll if the rail is too narrow.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            key: const Key('catalog_roll_target_switcher'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
               _RollTargetOpt(
-                key: Key('roll_target_opt_${t.id}'),
-                label: t.name,
-                selected: !_isOff && activeTargetId == t.id,
-                isOff: false,
-                onTap: () => onActiveChanged(t.id),
+                key: const Key('roll_target_opt_off'),
+                label: 'Off',
+                selected: _isOff,
+                isOff: true,
+                onTap: () => onActiveChanged(null),
               ),
-            if (onNew != null || onEdit != null || onDelete != null)
-              const SizedBox(width: 4),
-            if (onNew != null)
-              _RollTargetActionBtn(
-                key: const Key('roll_target_new'),
-                label: 'New',
-                primary: true,
-                onTap: onNew,
-              ),
-            if (onEdit != null)
-              _RollTargetActionBtn(
-                key: const Key('roll_target_edit'),
-                label: editing ? 'Editing' : 'Edit',
-                primary: editing,
-                pressed: editing,
-                onTap: onEdit,
-              ),
-            if (onDelete != null)
-              _RollTargetActionBtn(
-                key: const Key('roll_target_delete'),
-                label: 'Delete',
-                danger: true,
-                onTap: canDelete ? onDelete : null,
-              ),
-          ],
+              for (final t in targets) ...[
+                const SizedBox(width: 4),
+                _RollTargetOpt(
+                  key: Key('roll_target_opt_${t.id}'),
+                  label: t.name,
+                  selected: !_isOff && activeTargetId == t.id,
+                  isOff: false,
+                  onTap: () => onActiveChanged(t.id),
+                ),
+              ],
+              if (onNew != null || onEdit != null || onDelete != null)
+                const SizedBox(width: 8),
+              if (onNew != null)
+                _RollTargetActionBtn(
+                  key: const Key('roll_target_new'),
+                  label: 'New',
+                  primary: true,
+                  onTap: onNew,
+                ),
+              if (onEdit != null) ...[
+                if (onNew != null) const SizedBox(width: 4),
+                _RollTargetActionBtn(
+                  key: const Key('roll_target_edit'),
+                  label: editing ? 'Editing' : 'Edit',
+                  primary: editing,
+                  pressed: editing,
+                  onTap: onEdit,
+                ),
+              ],
+              if (onDelete != null) ...[
+                if (onNew != null || onEdit != null) const SizedBox(width: 4),
+                _RollTargetActionBtn(
+                  key: const Key('roll_target_delete'),
+                  label: 'Delete',
+                  danger: true,
+                  onTap: canDelete ? onDelete : null,
+                ),
+              ],
+            ],
+          ),
         ),
         if (editing) ...[
           const SizedBox(height: 10),
@@ -551,7 +560,7 @@ class _EditorChrome extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Want · Avoid · Off on can-roll pool only',
+                'Want · Avoid · Off on instance and can-roll plugs',
                 style: neonMono(
                   color: palette.muted.withValues(alpha: 0.7),
                   fontSize: 10,

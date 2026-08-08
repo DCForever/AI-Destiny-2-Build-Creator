@@ -119,12 +119,15 @@ void main() {
         ['Base'],
       );
       expect(family.ownedVersionChipMembers.single.hash, 10);
-      // Detail labels disambiguate colliding kinds.
+      // Detail labels disambiguate colliding kinds without hashes (BUG-005).
       final labels = family.members
           .map((m) => family.versionSwitchLabel(m))
           .toList();
       expect(labels.toSet().length, 5);
-      expect(labels.first, startsWith('Base ×1 ·'));
+      // Base implied: multi-base uses #n + owned, never hex tails.
+      expect(labels.first, '#1 ×1');
+      expect(labels.any((l) => RegExp(r'[0-9a-f]{3,}').hasMatch(l)), isFalse);
+      expect(labels.every((l) => !l.contains('Base')), isTrue);
     });
   });
 

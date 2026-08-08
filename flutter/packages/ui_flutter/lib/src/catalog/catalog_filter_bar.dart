@@ -286,40 +286,52 @@ class _PrimaryBand extends StatelessWidget {
       if (showReset) _resetButton(),
     ];
 
+    // BUG-20260807-007: archetype (and all primary icon facets) must not require
+    // horizontal scroll — wrap onto a second line instead of a scroll strip.
+    final chipWrap = Wrap(
+      key: const Key('catalog_primary_filter_chips'),
+      spacing: 0,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: chips,
+    );
+
     if (wide) {
-      // One line: prefix | scope | search | chips… | more | reset
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      // Row 1: prefix | scope | search | more | reset
+      // Row 2: full-width chip wrap (elements · slots · archetypes)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (prefix != null) ...[
-            Flexible(flex: 0, child: prefix!),
-            const SizedBox(width: kSpace8),
-          ],
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: kSpace8),
-          ],
-          Expanded(flex: 2, child: _searchField()),
-          const SizedBox(width: kSpace8),
-          Expanded(
-            flex: 3,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: chips,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (prefix != null) ...[
+                Flexible(flex: 0, child: prefix!),
+                const SizedBox(width: kSpace8),
+              ],
+              if (leading != null) ...[
+                leading!,
+                const SizedBox(width: kSpace8),
+              ],
+              Expanded(child: _searchField()),
+              ...actions.map(
+                (w) => Padding(
+                  padding: const EdgeInsets.only(left: 2),
+                  child: w,
+                ),
               ),
-            ),
+            ],
           ),
-          ...actions.map((w) => Padding(
-                padding: const EdgeInsets.only(left: 2),
-                child: w,
-              )),
+          if (chips.isNotEmpty) ...[
+            const SizedBox(height: kSpace6),
+            chipWrap,
+          ],
         ],
       );
     }
 
-    // Narrow: two compact rows (mode+scope+search+actions) then chip strip.
-    // Leading (scope) is Flexible so phone viewports do not overflow ~26px.
+    // Narrow: mode+scope+search+actions, then wrapping chip strip (no H-scroll).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -340,10 +352,7 @@ class _PrimaryBand extends StatelessWidget {
         ),
         if (chips.isNotEmpty) ...[
           const SizedBox(height: kSpace6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(children: chips),
-          ),
+          chipWrap,
         ],
       ],
     );

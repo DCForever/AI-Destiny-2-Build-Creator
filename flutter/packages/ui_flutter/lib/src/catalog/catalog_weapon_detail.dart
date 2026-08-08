@@ -867,7 +867,12 @@ class CatalogWeaponDetail extends StatelessWidget {
     final palette = FlapPalette.of(context);
     final inst = _selected;
     final hasOwnedCopy = instances.isNotEmpty;
-    // Instance sockets drive ①+②. Unowned → definition ③ possible rolls.
+    // Exotics: no possible-roll pool (BUG-20260807-002). Instance or
+    // definition plugs only — fixed columns, never invent can-roll expansion.
+    final effectiveShowCanRoll = item.isExotic ? false : showCanRoll;
+    final effectiveShowCraft = item.isExotic ? false : showCraft;
+    // Instance sockets drive ①+②. Unowned legendary → definition ③ possible rolls.
+    // Unowned exotic still uses definition plugs as fixed layout (not "possible").
     final columns = buildCatalogPerkColumns(
       socketPlugs: inst?.socketPlugs,
       definitionSocketPlugs:
@@ -876,18 +881,24 @@ class CatalogWeaponDetail extends StatelessWidget {
       plugNameByHash: plugNameByHash,
       plugIconByHash: plugIconByHash,
       plugEnhancedByHash: plugEnhancedByHash,
-      showCanRoll: showCanRoll,
-      showCraft: showCraft,
-      craftColumns: craftColumns,
+      showCanRoll: effectiveShowCanRoll,
+      showCraft: effectiveShowCraft,
+      craftColumns: item.isExotic ? const [] : craftColumns,
+      fixedPerks: item.isExotic,
     );
     final unknowns = unknownPerkHashes(columns);
-    final perkSectionLabel = hasOwnedCopy ? 'PERKS' : 'POSSIBLE ROLLS';
-    final showEnhanceNote = catalogColumnsCanBeEnhanced(columns);
+    final perkSectionLabel = item.isExotic
+        ? 'PERKS'
+        : hasOwnedCopy
+            ? 'PERKS'
+            : 'POSSIBLE ROLLS';
+    final showEnhanceNote =
+        !item.isExotic && catalogColumnsCanBeEnhanced(columns);
     final enhanceContext = !hasOwnedCopy
         ? 'Definition pool'
-        : showCraft && showCanRoll
+        : effectiveShowCraft && effectiveShowCanRoll
             ? 'Possible rolls / crafted'
-            : showCraft
+            : effectiveShowCraft
                 ? 'Possible crafted'
                 : 'Possible rolls';
 
@@ -979,21 +990,24 @@ class CatalogWeaponDetail extends StatelessWidget {
                   ],
                   Text(
                     key: const Key('instance_panel_empty'),
-                    'No local copies — showing possible rolls from definition',
+                    item.isExotic
+                        ? 'No local copies — showing fixed exotic perks'
+                        : 'No local copies — showing possible rolls from definition',
                     style: neonBody(color: palette.muted, fontSize: 12),
                   ),
                   const SizedBox(height: kSpace8),
                 ],
-                // Possible-rolls / craft toggles only for owned copies.
-                // Unowned always shows ③ possible rolls below (no toggle).
+                // Possible-rolls / craft toggles: owned legendaries only.
+                // Exotics never get Possible rolls (BUG-20260807-002).
                 // Hide toggles while editing roll target (editor forces pool).
                 if (hasOwnedCopy &&
+                    !item.isExotic &&
                     !editingRollTarget &&
                     onCanRollChanged != null &&
                     onCraftChanged != null) ...[
                   CatalogDetailToggles(
-                    showCanRoll: showCanRoll,
-                    showCraft: showCraft,
+                    showCanRoll: effectiveShowCanRoll,
+                    showCraft: effectiveShowCraft,
                     onCanRollChanged: onCanRollChanged!,
                     onCraftChanged: onCraftChanged!,
                     craftAvailable: craftAvailable,
@@ -1012,7 +1026,7 @@ class CatalogWeaponDetail extends StatelessWidget {
                 const SizedBox(height: kSpace8),
                 Text(
                   key: Key(
-                    hasOwnedCopy
+                    item.isExotic || hasOwnedCopy
                         ? 'catalog_perk_section_perks'
                         : 'catalog_perk_section_possible_rolls',
                   ),
@@ -1032,6 +1046,7 @@ class CatalogWeaponDetail extends StatelessWidget {
                   avoidByColumn: avoidByColumn,
                   editingRollTarget: editingRollTarget,
                   onCycleRollPlug: onCycleRollPlug,
+                  fixedPerks: item.isExotic,
                 ),
                 CatalogHashFooter(unknownHashes: unknowns),
                 const SizedBox(height: kSpace16),

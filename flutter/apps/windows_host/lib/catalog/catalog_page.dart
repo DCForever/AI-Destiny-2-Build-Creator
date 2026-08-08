@@ -606,7 +606,8 @@ class _CatalogPageState extends State<CatalogPage> {
       _creatingRollTarget = creating;
       _editingRollTarget = true;
       _showCanRollBeforeEdit = _showCanRoll;
-      _showCanRoll = true; // editor needs ③ can-roll pool (BR-CAT-016)
+      // Editor needs can-roll pool for ③ plugs; instance ①/② also cycle (BUG-009).
+      _showCanRoll = true;
       if (creating) {
         _rollDraftName = '';
         _rollDraftPreferred = const {};

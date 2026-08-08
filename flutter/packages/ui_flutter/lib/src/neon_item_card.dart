@@ -505,9 +505,9 @@ class NeonItemCard extends StatelessWidget {
   }
 }
 
-/// Dense meta chip edge (fits ~120px foot with element + 4 icons + ×N).
-const double _kMetaChip = 16;
-const double _kElementDisc = 20;
+/// Meta chip edge on cards (BUG-20260807-001 — was 16; scannable at grid density).
+const double _kMetaChip = 22;
+const double _kElementDisc = 26;
 
 /// Weapon-type silhouette chip (meta row).
 class _TypeSilhouetteIcon extends StatelessWidget {
@@ -543,7 +543,7 @@ class _TypeSilhouetteIcon extends StatelessWidget {
           ),
           child: DestinyWeaponTypeIcon(
             visual: visual,
-            size: 12,
+            size: 16,
             fallbackMark: fallbackMark,
           ),
         ),
@@ -645,7 +645,7 @@ class _OfficialMetaIcon extends StatelessWidget {
           ),
           child: DestinyOfficialIcon(
             visual: visual,
-            size: 12,
+            size: 16,
             fallbackMark: fallbackMark,
           ),
         ),
@@ -709,7 +709,7 @@ class _FallbackGlyphIcon extends StatelessWidget {
           child: Text(
             mark,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               height: 1,
               color: color,
               fontWeight: FontWeight.w600,
