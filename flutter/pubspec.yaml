@@ -75,3 +75,9 @@ melos:
     widgetbook:chrome:
       description: Launch Widgetbook on Chrome (faster cold start)
       run: pwsh -NoProfile -File apps/widgetbook/run-windows.ps1 -SkipPubGet -Device chrome
+
+    perf:catalog:
+      description: >
+        Catalog pure browse performance harness (GAP-PERF-01/02). Soft budgets always;
+        set PERF_ASSERT=1 for strict thresholds.
+      run: dart test packages/manifest/test/catalog_performance_test.dart

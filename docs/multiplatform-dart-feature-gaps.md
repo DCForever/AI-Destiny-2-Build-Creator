@@ -280,12 +280,12 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-DESC-01** | Entity descriptions (model + 1+3 chrome) | **P2** | `partial` | Next EntityHotspot; DIM perk popup | Pure model + Catalog perk L1/L2 chrome landed (2026-08-08); residual polish / dual-truth optional | **sys** DART-071 + **ux** UX-CATALOG-ENTITY-DESC | Not cutover |
 | **GAP-UI-CATALOG-11** | Nested multi-level group-by (tree + chrome) | **P2** | `partial` | Product: Energy → Arc → …; BR-CAT-007 | Pure tree + nested chrome landed (2026-08-08); residual Capture optional | **sys** DART-072 + **ux** UX-CATALOG-NESTED-GROUP | Not cutover |
 | **GAP-UI-ROLL-01** | Weapon roll targets (preferred + avoid + rank owned) | **P2** | `partial` | Product plan: Catalog ideal/anti-ideal | Pure score + chrome shipped; residual polish / dual-truth | **sys** DART-073 + **ux** UX-CATALOG-ROLL-TARGETS | Not cutover; ≠ DBR-ROLL wishlist |
-| **GAP-PERF-01** | Catalog refilter: no debounce; full base scan + page setState every keystroke | **P2** | `open` / `planned` | Next-ish progressive filter UX | `onQueryChanged` → `_refilter` → full `_applyBrowse` / `filterCatalogClient` linear scan | Host debounce + scoped refilter; optional pure index | Not cutover; feel/jank |
-| **GAP-PERF-02** | Nested group tree + outline scroll-spy recompute on every host setState / scroll | **P2** | `open` / `planned` | — | `_buildBody` rebuilds nested tree/outline; scroll-spy probes all group boxes | Memoize tree; selection-only setState; throttle spy | Not cutover; cost rises with multi-dim group-by |
-| **GAP-PERF-03** | Entity store load/project on UI isolate; loadBase always re-reads | **P2** | `open` / `planned` | Next entity caches | `OfflineCatalog.loadBase` / `FileEntityCache` / `projectMvpStores` / family browse | Long-lived cache; Isolate.run for parse/project; pre-warm | Not cutover; cold open / Settings reload |
-| **GAP-PERF-04** | Inventory full-row load + full-replace sync for catalog annotate | **P2** | `open` / `planned` | Next sync depth | `listInventoryItems` full columns; `replaceInventoryBatch` delete-all | Hash-only annotate path; incremental upsert optional | Not cutover; large vaults |
+| **GAP-PERF-01** | Catalog refilter: no debounce; full base scan + page setState every keystroke | **P2** | `open` / `planned` | Next-ish progressive filter UX | `onQueryChanged` → `_refilter` → full `_applyBrowse` / `filterCatalogClient` linear scan | Host debounce + scoped refilter; optional pure index; **tests:** `catalog_performance_test` filter cases | Not cutover; feel/jank |
+| **GAP-PERF-02** | Nested group tree + outline scroll-spy recompute on every host setState / scroll | **P2** | `open` / `planned` | — | `_buildBody` rebuilds nested tree/outline; scroll-spy probes all group boxes | Memoize tree; selection-only setState; throttle spy; **tests:** nested group/flatten cases | Not cutover |
+| **GAP-PERF-03** | Entity store load/project on UI isolate; loadBase always re-reads | **P2** | `open` / `planned` | Next entity caches | `OfflineCatalog.loadBase` / `FileEntityCache` / `projectMvpStores` / family browse | Long-lived cache; Isolate.run for parse/project; pre-warm; **tests planned** | Not cutover |
+| **GAP-PERF-04** | Inventory full-row load + full-replace sync for catalog annotate | **P2** | `open` / `planned` | Next sync depth | `listInventoryItems` full columns; `replaceInventoryBatch` delete-all | Hash-only annotate path; incremental upsert optional; **tests planned** | Not cutover |
 | **GAP-PERF-05** | Bungie HTTP dual clients; no response cache/coalesce; icons uncached network | **P2** | `open` / `planned` | Shared client + cache patterns | Two `BungieHttpClient`s; bare `Image.network` | Shared long-lived client; icon decode size + disk cache | Not cutover |
-| **GAP-PERF-06** | Catalog detail/perk grid eager rebuild; heavy card paint | **P2** | `open` / `planned` | — | Eager ListView + full perk Column; NeonItemCard animation/shadow; no RepaintBoundary | Virtualize detail; boundary cards; cheaper idle paint | Not cutover; density polish |
+| **GAP-PERF-06** | Catalog detail/perk grid eager rebuild; heavy card paint | **P2** | `open` / `planned` | — | Eager ListView + full perk Column; NeonItemCard animation/shadow; no RepaintBoundary | Virtualize detail; boundary cards; cheaper idle paint | Not cutover |
 
 ---
 
@@ -721,6 +721,8 @@ Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no 
 
 **Not cutover.** Soft never auto-applies; no CLIENT_SECRET.
 
+**Tests:** [catalog-performance-tests.md](./catalog-performance-tests.md) · `packages/manifest/test/catalog_performance_test.dart` (filter + scale).
+
 ---
 
 ### GAP-PERF-02 — Nested group rebuild + outline scroll-spy (**P2**) — **open / planned**
@@ -737,6 +739,8 @@ Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no 
 | **System** | Already has pure nested API (DART-072); keep collapse pure | No change required unless new rollup APIs |
 
 **Depends on:** nested group chrome landed (GAP-UI-CATALOG-11 partial). Not cutover.
+
+**Tests:** same harness — nested group + flatten/collapse budgets (does not yet assert host scroll-spy).
 
 ---
 
@@ -830,6 +834,7 @@ Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no 
 | **Next Spec Kit (system)** | Optional formalize DART-071/072/073; **performance:** GAP-PERF-03/04 system tracks (entity cache + inventory lightweight list) when scheduled — **no UI chrome in Spec Kit** |
 | **Next UI/UX** | Catalog residuals / Armor when C6 exit; performance chrome: **GAP-PERF-01** debounce+scoped refilter first — [ux-redesign/REDESIGN-PATH.md](./ux-redesign/REDESIGN-PATH.md) |
 | **Performance backlog** | **GAP-PERF-01** → **02** → **03** → **04** → **05** → **06** (leverage order from 2026-08-08 research) |
+| **Performance tests** | Plan [catalog-performance-tests.md](./catalog-performance-tests.md); always-on: `dart test packages/manifest/test/catalog_performance_test.dart`; strict: `PERF_ASSERT=1` |
 | **Next phase** | Catalog C6 residual + optional PERF-01; Armor after C6 exit |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
 | **Feature inventory** | Aligned + split-lane planned FEATs; PERF gaps are non-cutover P2 |
