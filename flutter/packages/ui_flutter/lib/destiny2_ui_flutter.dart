@@ -6,6 +6,7 @@ library;
 
 export 'src/catalog/catalog_empty_state.dart';
 export 'src/catalog/catalog_filter_bar.dart';
+export 'src/catalog/catalog_filter_collections.dart';
 export 'src/catalog/catalog_group_chrome.dart';
 export 'src/catalog/catalog_perk_grid.dart';
 export 'src/catalog/catalog_roll_targets.dart';

@@ -37,6 +37,7 @@ export 'src/presentation/variant_compose_format.dart';export 'src/set_board_pres
 export 'src/set_library_presentation.dart';
 export 'src/set_use_cases.dart';
 export 'src/roll_target_use_cases.dart';
+export 'src/catalog_filter_collection_use_cases.dart';
 export 'src/synergy_picker_presentation.dart';
 export 'src/synergy_use_cases.dart';
 export 'src/validate_synergy_link.dart';

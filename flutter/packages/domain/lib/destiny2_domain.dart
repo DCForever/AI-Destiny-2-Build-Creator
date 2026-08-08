@@ -29,6 +29,7 @@ export 'src/models/slot_claim.dart';
 export 'src/models/soft_stats.dart';
 export 'src/models/synergy.dart';
 export 'src/models/roll_target.dart';
+export 'src/models/catalog_filter_collection.dart';
 
 // Entity presentation ref + map resolve (DART-071 / GAP-UI-DESC-01 Track A)
 export 'src/models/entity_presentation.dart';

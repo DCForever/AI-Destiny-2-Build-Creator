@@ -22,6 +22,8 @@ import 'package:destiny2_widgetbook/use_cases/catalog/filter_bar_host_parity_use
     as _destiny2_widgetbook_use_cases_catalog_filter_bar_host_parity_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/filter_bar_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_filter_bar_use_cases;
+import 'package:destiny2_widgetbook/use_cases/catalog/filter_collections_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/group_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_group_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/meta_strip_use_cases.dart'
@@ -241,6 +243,28 @@ final directories = <_widgetbook.WidgetbookNode>[
               ),
             ],
           ),
+          _widgetbook.WidgetbookFolder(
+            name: 'RollTargets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'CatalogWeaponDetail',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Roll targets · desktop 400',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .rollTargetsDesktop400,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'Roll targets · mobile 390',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .rollTargetsMobile390,
+                  ),
+                ],
+              )
+            ],
+          ),
           _widgetbook.WidgetbookComponent(
             name: 'WeaponInstanceStrip',
             useCases: [
@@ -350,6 +374,63 @@ final directories = <_widgetbook.WidgetbookNode>[
                     _destiny2_widgetbook_use_cases_catalog_filter_bar_host_parity_use_cases
                         .exoticChipCycle,
               )
+            ],
+          ),
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'FilterCollections',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogFilterBar',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Filter bar + Saved cluster',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterBarWithSaved,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogFilterCollectionsControl',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Saved collections · applied dirty',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterCollectionsDirty,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Saved collections · at-cap',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterCollectionsAtCap,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Saved collections · empty + Save',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterCollectionsEmpty,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Saved collections · list apply',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterCollectionsList,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Saved collections · sheet 390',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterCollectionsSheet,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Saved collections · signed-out',
+                builder:
+                    _destiny2_widgetbook_use_cases_catalog_filter_collections_use_cases
+                        .filterCollectionsSignedOut,
+              ),
             ],
           ),
         ],

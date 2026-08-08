@@ -364,3 +364,35 @@ class WeaponRollTargetActive extends Table {
         'FOREIGN KEY (target_id) REFERENCES weapon_roll_targets (id) ON DELETE CASCADE',
       ];
 }
+
+/// Named Catalog filter collections / presets (FEAT-20260807-004).
+///
+/// Unique per user + browse_mode + name. [filtersJson] holds scope, query,
+/// exotic, facet include/exclude maps, optional sortKeys + groupBy.
+@DataClassName('CatalogFilterCollectionRow')
+@TableIndex(
+  name: 'idx_catalog_filter_collections_user_mode',
+  columns: {#userId, #browseMode},
+)
+@TableIndex(
+  name: 'idx_catalog_filter_collections_user_mode_name',
+  columns: {#userId, #browseMode, #name},
+  unique: true,
+)
+class CatalogFilterCollections extends Table {
+  TextColumn get id => text()();
+  IntColumn get userId => integer()();
+  TextColumn get browseMode => text()();
+  TextColumn get name => text()();
+  TextColumn get filtersJson => text().withDefault(const Constant('{}'))();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+        'FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE',
+      ];
+}

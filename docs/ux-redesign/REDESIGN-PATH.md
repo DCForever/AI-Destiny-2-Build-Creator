@@ -21,10 +21,14 @@ It does **not** replace DBR/DAC/BR wording or product-map surface IDs.
 1. **Depth before breadth.** Finish the active mode/area to an agreed **exit gate** before opening the next full `area-ux-redesign` for a different mode/area.
 2. **Residuals stay on the active track.** Uncommitted polish, dual-truth gaps, and vault residual rows on Weapons do **not** auto-authorize Armor (or any other mode) as the next redesign slice.
 3. **Split lanes (D-LANES).** Pure models / score / persist → Spec Kit `DART-NNN`. Mockups, widgets, Widgetbook, dual-truth → this track. Features that need both: system API first (or contract-first fixtures), then UX.
-4. **Composition aid, not product home.** Catalog redesign never becomes Build-as-home (DBR-PUR-002). Live Set/Synergy outbound uses **shared area lifecycles**, not Catalog-local editors.
-5. **Windows-first.** Mobile push / dual-pane parity is **deferred** per slice unless the brief explicitly gates it. Structure-only mobile is OK when Capture notes it.
-6. **Dual-truth is real.** Structure tests + PNG presence alone do not close a slice while open `blocks_dual_truth` gaps remain (unless human accepts structure-only).
-7. **Update this path when order changes.** Same change: repo path + vault hub + active area residual board.
+4. **UX chrome uses workflows — always for larger work.** Do **not** jump to ad-hoc implement for user-visible Catalog/area chrome. Required loop:
+   - **Full mode/area or multi-surface UX** → `/workflow area-ux-redesign` → human mockup gate → `/workflow area-implement` → Capture  
+   - **One control / residual chrome** (e.g. entity hotspot, instance strip) → `/workflow area-ux-component` → human gate → `/workflow area-implement`  
+   System-only packages (pure domain/manifest, Drift) may land without area-ux workflows; their **paired UX** still must enter a workflow before host chrome ships.
+5. **Composition aid, not product home.** Catalog redesign never becomes Build-as-home (DBR-PUR-002). Live Set/Synergy outbound uses **shared area lifecycles**, not Catalog-local editors.
+6. **Windows-first.** Mobile push / dual-pane parity is **deferred** per slice unless the brief explicitly gates it. Structure-only mobile is OK when Capture notes it.
+7. **Dual-truth is real.** Structure tests + PNG presence alone do not close a slice while open `blocks_dual_truth` gaps remain (unless human accepts structure-only).
+8. **Update this path when order changes.** Same change: repo path + vault hub + active area residual board.
 
 ---
 
@@ -33,7 +37,8 @@ It does **not** replace DBR/DAC/BR wording or product-map surface IDs.
 | Step | Rule |
 | --- | --- |
 | **Stay** | Active slice has open P0/P1 dual-truth gaps, blocking residuals on the vault board, or uncommitted chrome that is still “weapons not good enough” |
-| **Component polish** | Use `area-ux-component` for one control (e.g. instance strip, meta icons) without opening a new mode redesign |
+| **Component polish** | Run **`area-ux-component`** workflow (not freehand implement) for one control (e.g. entity info hotspot, instance strip) |
+| **Paired UX after system** | After DART-071/072/073 (or filter-collections system), open **`area-ux-component`** or **`area-ux-redesign`** for chrome — system commit alone never ships visible Catalog changes |
 | **System interleave** | DART-071/072/073 may land while Catalog weapons is active; their **UX** pairs may run as Catalog sub-slices **without** starting Armor |
 | **Exit → next mode** | Human agrees exit gate (below); residual rows closed or explicitly deferred; then open next brief/mockups |
 | **Exit → next area** | Catalog modes through constrained pick (or human re-scope); then Sets / Synergy / Build order below |
@@ -101,7 +106,7 @@ Stay here until the **Weapons exit gate** is met.
 - Dual-truth residuals (`DUAL-TRUTH-GAPS.md`, `implementation-shots/*/COMPARE.md`)
 - Vault residual / bug rows on [[UX Catalog — Weapons]]
 - Roll-target chrome polish (003 follow-through)
-- Optional: saved filter collections (system + UX; may slip after Armor if product defers)
+- Optional: saved filter collections — **system landed** (`74ce3e4`); UX mockups **approved** (`004-catalog-filter-collections`); next **area-implement** filter-band chrome
 - Optional interleave: C7 after system APIs land
 
 **Out of scope while C6 is open**
@@ -133,7 +138,8 @@ Stay here until the **Weapons exit gate** is met.
 | `001-*` | Early weapons + residual waves (historical) |
 | `002-*` | Component slices (instance strip) |
 | `003-*` | Roll targets |
-| `004-*` (next free) | Prefer **Armor** full redesign when C8 starts |
+| `004-*` | Filter collections component (`004-catalog-filter-collections`) |
+| `005-*` (next free for full mode) | Prefer **Armor** full redesign when C8 starts |
 | `00N-<name>` | Later Universal / pick / outbound |
 
 Briefs live under `docs/ux-redesign/catalog/`. Shots under `implementation-shots/<slice-id>/`.
@@ -161,7 +167,9 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | **Active area** | Catalog |
 | **Active Catalog phase** | **C6 — Weapons finish queue** |
 | **Do not start yet** | C8 Armor full redesign; C9 Universal redesign |
-| **Next full redesign slice** | **C8 Armor** (after C6 exit), unless human inserts C7 system-paired UX first |
+| **Landed (C6 component)** | **CatalogFilterCollections** — system + chrome on main; Capture dual-truth optional |
+| **In flight (C6 / C7)** | Entity info hotspot + nested group-by (parallel worktrees / uncommitted mockups) |
+| **Next full redesign slice** | **C8 Armor** (after C6 exit; brief/mockups prefer `005-*`+), unless human inserts more C7 first |
 | **Open weapons residual board** | Vault `UX/UX Catalog — Weapons.md` · repo `DUAL-TRUTH-GAPS.md` · uncommitted catalog chrome polish |
 | **Next area after Catalog** | Sets (phase 3) |
 
@@ -198,3 +206,5 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | --- | --- |
 | 2026-08-07 | Initial path: global area order; Catalog C0–C12; C6 weapons finish active; Armor blocked until C6 exit |
 | 2026-08-08 | C6 active work: roll-target **plug-level N/M** quality score + column-level perfect tint (Duty Bound-style `3/6`) |
+| 2026-08-08 | C6 optional: filter collections system + chrome landed on main; Armor renumbered to prefer `005-*` when C8 starts |
+| 2026-08-08 | Principle: **larger UX always uses workflows** (`area-ux-redesign` / `area-ux-component` → `area-implement`); no ad-hoc chrome after system APIs |

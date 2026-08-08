@@ -121,6 +121,13 @@ const List<EnsureStepInfo> ensureStepCatalog = [
     description:
         'CREATE weapon_roll_targets + weapon_roll_target_active (DART-073 / DBR-IDL-*)',
   ),
+  EnsureStepInfo(
+    id: 'catalog_filter_collections',
+    productFunction: 'ensureCatalogFilterCollectionsTable',
+    targetTable: 'catalog_filter_collections',
+    description:
+        'CREATE catalog_filter_collections (FEAT-20260807-004 named filter presets)',
+  ),
 ];
 
 /// Expected step ids (for tests / completeness checks).
@@ -138,4 +145,5 @@ const List<String> expectedEnsureStepIds = [
   'synergy_link_required',
   'variant_subclass_kit',
   'weapon_roll_targets',
+  'catalog_filter_collections',
 ];
