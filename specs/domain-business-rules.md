@@ -183,11 +183,11 @@ User-authored **roll targets** on Catalog weapon identities. **Not** DBR-ROLL wi
 | ID | Rule |
 |----|------|
 | DBR-IDL-001 | A user may define **named roll targets** per weapon identity (e.g. PvE / PvP). Multiple names per weapon are allowed. |
-| DBR-IDL-002 | Each target column may list **preferred** plug hashes (multi-accept: any listed plug matches that column for ideal score). |
-| DBR-IDL-003 | Each target column may list **avoid** plug hashes (multi-reject: any listed plug **hits** anti-ideal for that column). |
-| DBR-IDL-004 | Preferred and avoid sets on the **same column must be disjoint**; overlapping writes are rejected. |
-| DBR-IDL-005 | **Preferred score N/M** = matched preferred **columns** / columns with preferred multi-picks (empty preferred columns unscored). Multi-pick is multi-**accept** (any listed preferred on this copy — equipped **or** reusable — matches that column). Alternatives in one column do not inflate M. |
-| DBR-IDL-006 | **Avoid score Av k** = count of **columns** with an avoid multi-pick hit (any listed avoid on this copy). Empty avoid columns unscored. Higher hits = worse. |
+| DBR-IDL-002 | Each target **socket column** may list **preferred** plugs as Destiny **manifest item hashes** (multi-accept: any listed hash on this copy matches that socket for ideal score). Columns are keyed by **weapon socket index** (`socket_N`), not UI labels. |
+| DBR-IDL-003 | Each target socket column may list **avoid** plugs as **manifest item hashes** (multi-reject: any listed hash on this copy **hits** anti-ideal for that socket). |
+| DBR-IDL-004 | Preferred and avoid sets on the **same socket column must be disjoint**; overlapping writes are rejected. |
+| DBR-IDL-005 | **Preferred score N/M** = matched preferred **sockets** / sockets with preferred multi-picks (empty preferred sockets unscored). Match = any preferred **plug hash** present on this copy (equipped or reusable, any socket). Alternatives in one socket do not inflate M. |
+| DBR-IDL-006 | **Avoid score Av k** = count of **sockets** with an avoid multi-pick hit (any listed avoid **plug hash** on this copy). Empty avoid sockets unscored. Higher hits = worse. |
 | DBR-IDL-007 | Owned-instance **rank** for an active target: preferred ratio **desc**, then avoid hits **asc**, then power/tier as product tie-break. Soft display only. |
 | DBR-IDL-008 | Roll-target scores **never** hard-block Set/variant save, equip, or DIM export. Soft never auto-applies. Do not invent can-roll plugs. |
 | DBR-IDL-009 | **Exotic weapons** do **not** support roll targets (ideal/avoid). Exotic perk columns are **fixed** identity; preferred/avoid multi-pick, dual scores, and rank-by-target do not apply. Legendary (and other non-exotic) weapons only. |

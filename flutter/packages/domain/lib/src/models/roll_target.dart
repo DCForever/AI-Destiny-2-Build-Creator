@@ -2,9 +2,15 @@
 ///
 /// Distinct from equip-ready **wishlist** (DBR-ROLL-* desired roll without pin).
 /// Soft display scores only — never hard-blocks save/equip.
+///
+/// **Identity (manifest SSoT):**
+/// - **Plugs** (preferred/avoid) are Destiny inventory item **hashes**
+///   (`DestinyInventoryItemDefinition` for the plug).
+/// - **Columns** are weapon **socket indexes** from the item definition /
+///   instance capture (`socket_N`), never free-form UI labels as the key.
 library;
 
-/// One socket/trait column on a named roll target.
+/// One socket column on a named roll target.
 class RollTargetColumn {
   const RollTargetColumn({
     required this.columnKey,
@@ -13,14 +19,21 @@ class RollTargetColumn {
     this.avoidPlugHashes = const {},
   });
 
-  /// Stable key (socket index string or category key).
+  /// Stable socket key: `socket_{socketIndex}` from Bungie item sockets.
+  ///
+  /// Display names (Barrel, Trait 1) live in [label] only — do not use labels
+  /// as the key (they are not unique across weapons / can drift).
   final String columnKey;
+
+  /// Optional UI label (Barrel, Trait 1) — not used for identity matching.
   final String? label;
 
-  /// Multi-pick ideal plugs; empty → column not scored for preferred.
+  /// Multi-pick ideal plugs — **manifest plug item hashes**.
+  /// Empty → column not scored for preferred.
   final Set<int> preferredPlugHashes;
 
-  /// Multi-pick anti-ideal plugs; empty → column not scored for avoid.
+  /// Multi-pick anti-ideal plugs — **manifest plug item hashes**.
+  /// Empty → column not scored for avoid.
   final Set<int> avoidPlugHashes;
 
   /// Preferred and avoid must be disjoint.

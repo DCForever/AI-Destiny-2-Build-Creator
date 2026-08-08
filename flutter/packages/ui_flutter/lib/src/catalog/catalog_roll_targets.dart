@@ -174,11 +174,16 @@ bool catalogRollTargetHasOverlap({
   return false;
 }
 
-/// Stable column key shared by editor + score inputs (host must match).
+/// Stable **socket** key for roll targets — shared by editor + score.
 ///
-/// Prefers `socketIndex` when present (unique). Otherwise uses
-/// `label@index` / `kind@index` / `col@index` so two "Trait" columns never
-/// collide (BUG-009 score under-count when keys collapsed).
+/// **SSoT:** Bungie `socketIndex` on the weapon item definition / instance
+/// capture → `socket_{n}`. Plug picks themselves are always **manifest item
+/// hashes** (`equippedPlugHash` / preferred / avoid sets).
+///
+/// Labels (`columnLabel`) are display-only and must not be used as keys.
+/// Fallback `kind_{index}` / `col_{index}` only when socketIndex is missing
+/// (incomplete capture); production inventory should always write socketIndex
+/// via [buildStoredSocketPlugs].
 String catalogRollColumnKey(
   Map<String, Object?> raw, {
   int index = 0,
@@ -190,10 +195,9 @@ String catalogRollColumnKey(
     final parsed = int.tryParse('$socket');
     if (parsed != null) return 'socket_$parsed';
   }
-  final label = (raw['columnLabel'] as String?)?.trim();
-  if (label != null && label.isNotEmpty) return '$label@$index';
+  // Incomplete capture — keep unique, never bare label (collides Trait/Trait).
   final kind = (raw['columnKind'] as String?)?.trim();
-  if (kind != null && kind.isNotEmpty) return '$kind@$index';
+  if (kind != null && kind.isNotEmpty) return '${kind}_$index';
   return 'col_$index';
 }
 

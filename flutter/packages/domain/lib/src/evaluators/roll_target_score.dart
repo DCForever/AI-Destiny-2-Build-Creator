@@ -173,18 +173,16 @@ Set<int> resolvePlugsForColumnKey(
 
 /// Score one instance's plugs against a roll target.
 ///
-/// [plugsByColumn]: columnKey → plug hash(es) on that instance for the column.
-/// Accepts a single equipped hash (`int`) or a set of equipped + reusable plugs.
+/// **Identity:** preferred/avoid entries are **manifest plug item hashes**.
+/// Matching is **hash presence on this copy** (equipped + reusables, all
+/// sockets) — not UI labels. Column keys (`socket_N`) only group multi-accept
+/// alternatives for N/M (one credit per socket with preferred set).
 ///
-/// **Dual segs N/M** (DBR-IDL-002/005): **one credit per column** with preferred
-/// multi-picks. Multi-pick is multi-**accept**: any listed preferred **on this
-/// copy** (any socket) matches that ideal slot. M is not inflated by alternatives.
+/// [plugsByColumn]: `socket_N` → plug hashes on that socket (or any key map;
+/// unresolved keys fall back to whole-copy hash set so instances still score).
 ///
-/// **Av k**: one hit per avoid column when any listed avoid is on this copy.
-///
-/// Matching uses column-key resolution with fallbacks, then **whole-copy plug
-/// presence** so scores stay correct when socket keys differ across instances
-/// (e.g. 525 vs 487 → 0/4 false miss).
+/// **N/M:** columns with preferred multi-picks matched / such columns.
+/// **Av k:** columns with avoid multi-picks hit.
 RollTargetMatchResult scoreInstanceAgainstTarget(
   WeaponRollTarget target,
   Map<String, Object?> plugsByColumn, {
@@ -197,10 +195,11 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
   final preferredByColumn = <String, PreferredColumnState>{};
   final avoidByColumn = <String, AvoidColumnState>{};
 
+  // Manifest plug hashes on this copy (any socket) — primary match source.
   final allPlugs = allPlugsOnInstance(plugsByColumn);
 
-  bool anyPlugMatches(Set<int> instancePlugs, Set<int> acceptable) {
-    for (final plug in instancePlugs) {
+  bool anyHashOnCopy(Set<int> acceptable) {
+    for (final plug in allPlugs) {
       if (plugMatchesAcceptable(plug, acceptable, familyOf: familyOf)) {
         return true;
       }
@@ -208,27 +207,15 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
     return false;
   }
 
-  /// Plugs to test for a column: resolved column set, or whole copy if key miss.
-  Set<int> plugsForColumn(RollTargetColumn col) {
-    final resolved = resolvePlugsForColumnKey(
-      plugsByColumn,
-      col.columnKey,
-      label: col.label,
-    );
-    // Key miss or empty socket → still match preferred/avoid by presence on copy.
-    if (resolved.isEmpty && allPlugs.isNotEmpty) return allPlugs;
-    return resolved;
-  }
-
   for (final col in target.columns) {
     final key = col.columnKey;
-    final instancePlugs = plugsForColumn(col);
 
     if (col.preferredPlugHashes.isEmpty) {
       preferredByColumn[key] = PreferredColumnState.unscored;
     } else {
+      // Multi-accept: any preferred hash on this copy fills the column.
       preferredScored++;
-      if (anyPlugMatches(instancePlugs, col.preferredPlugHashes)) {
+      if (anyHashOnCopy(col.preferredPlugHashes)) {
         preferredMatched++;
         preferredByColumn[key] = PreferredColumnState.matched;
       } else {
@@ -240,7 +227,7 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
       avoidByColumn[key] = AvoidColumnState.unscored;
     } else {
       avoidScored++;
-      if (anyPlugMatches(instancePlugs, col.avoidPlugHashes)) {
+      if (anyHashOnCopy(col.avoidPlugHashes)) {
         avoidHits++;
         avoidByColumn[key] = AvoidColumnState.hit;
       } else {

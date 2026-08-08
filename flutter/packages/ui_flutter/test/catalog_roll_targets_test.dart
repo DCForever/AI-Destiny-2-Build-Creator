@@ -13,45 +13,44 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('catalog roll target pure helpers', () {
-    test('columnKey prefers socket; else unique label@index', () {
+    test('columnKey is socketIndex (manifest socket), not labels', () {
       expect(
-        catalogRollColumnKey({'columnLabel': 'Trait 1'}, index: 2),
-        'Trait 1@2',
+        catalogRollColumnKey({'socketIndex': 3, 'columnLabel': 'Trait 1'}),
+        'socket_3',
       );
       expect(
         catalogRollColumnKey({'columnKind': 'barrel'}, index: 1),
-        'barrel@1',
-      );
-      expect(
-        catalogRollColumnKey({'socketIndex': 3}, index: 9),
-        'socket_3',
+        'barrel_1',
       );
       expect(catalogRollColumnKey({}, index: 2), 'col_2');
-      // Two Trait columns must not collide.
+      // Labels alone never become keys (would collide Trait/Trait).
       expect(
         catalogRollColumnKey({'columnLabel': 'Trait'}, index: 4),
         isNot(catalogRollColumnKey({'columnLabel': 'Trait'}, index: 5)),
       );
     });
 
-    test('plugsByColumnFromSockets maps equipped with unique keys', () {
+    test('plugsByColumnFromSockets maps by socketIndex', () {
       final map = catalogRollPlugsByColumnFromSockets(const [
         {
+          'socketIndex': 0,
           'columnLabel': 'Barrel',
           'equippedPlugHash': 10,
         },
         {
+          'socketIndex': 1,
           'columnLabel': 'Trait',
           'equippedPlugHash': 30,
         },
         {
+          'socketIndex': 2,
           'columnLabel': 'Trait',
           'equippedPlugHash': 40,
         },
       ]);
-      expect(map['Barrel@0'], 10);
-      expect(map['Trait@1'], 30);
-      expect(map['Trait@2'], 40);
+      expect(map['socket_0'], 10);
+      expect(map['socket_1'], 30);
+      expect(map['socket_2'], 40);
     });
 
     test('allPlugsByColumn includes reusables for plug-level score', () {
