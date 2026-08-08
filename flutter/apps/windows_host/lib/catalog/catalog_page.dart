@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
@@ -122,6 +124,21 @@ class _CatalogPageState extends State<CatalogPage> {
   final Map<String, GlobalKey> _groupAnchorKeys = {};
   String? _outlineActiveKey;
 
+  /// GAP-PERF-01: debounce free-text refilter (facets/scope stay immediate).
+  static const Duration _queryDebounce = Duration(milliseconds: 200);
+  Timer? _queryDebounceTimer;
+
+  /// GAP-PERF-02: memoize nested trees / outline until browse results, group
+  /// dims, or collapse set change.
+  List<CatalogFamilyGroupNode>? _cachedFamilyTree;
+  Object? _cachedFamilyTreeKey;
+  List<CatalogGroupNode>? _cachedItemTree;
+  Object? _cachedItemTreeKey;
+  List<CatalogGroupOutlineEntry>? _cachedFamilyOutline;
+  Object? _cachedFamilyOutlineKey;
+  List<CatalogGroupOutlineEntry>? _cachedItemOutline;
+  Object? _cachedItemOutlineKey;
+
   OwnedCatalogBridge _createBridge() {
     return widget.bridge ??
         OwnedCatalogBridge(
@@ -212,6 +229,7 @@ class _CatalogPageState extends State<CatalogPage> {
   @override
   void dispose() {
     widget.services.oauthSession.removeListener(_onOAuthSessionChanged);
+    _queryDebounceTimer?.cancel();
     _queryController.dispose();
     super.dispose();
   }
@@ -292,23 +310,78 @@ class _CatalogPageState extends State<CatalogPage> {
         sortKeys: _sortKeys,
       );
     }
+    _invalidateNestedCaches();
   }
 
+  void _invalidateNestedCaches() {
+    _cachedFamilyTree = null;
+    _cachedFamilyTreeKey = null;
+    _cachedItemTree = null;
+    _cachedItemTreeKey = null;
+    _cachedFamilyOutline = null;
+    _cachedFamilyOutlineKey = null;
+    _cachedItemOutline = null;
+    _cachedItemOutlineKey = null;
+  }
+
+  Object _familyTreeCacheKey() => Object.hash(
+        Object.hashAll(_families.map((f) => f.key)),
+        Object.hashAll(_groupBy.map((d) => d.index)),
+        _families.length,
+      );
+
+  Object _itemTreeCacheKey() => Object.hash(
+        Object.hashAll(_results.map((i) => i.hash)),
+        Object.hashAll(_groupBy.map((d) => d.index)),
+        _results.length,
+      );
+
   List<CatalogGroupNode> _nestedResults() {
-    return groupCatalogItemsNested(
+    if (_groupBy.isEmpty) return const [];
+    final key = _itemTreeCacheKey();
+    if (_cachedItemTree != null && _cachedItemTreeKey == key) {
+      return _cachedItemTree!;
+    }
+    final tree = groupCatalogItemsNested(
       _results,
       List<CatalogGroupDimension>.from(_groupBy),
     );
+    _cachedItemTree = tree;
+    _cachedItemTreeKey = key;
+    return tree;
   }
 
   List<CatalogFamilyGroupNode> _nestedFamilies() {
-    return groupWeaponFamilyBrowseNested(
+    if (_groupBy.isEmpty) return const [];
+    final key = _familyTreeCacheKey();
+    if (_cachedFamilyTree != null && _cachedFamilyTreeKey == key) {
+      return _cachedFamilyTree!;
+    }
+    final tree = groupWeaponFamilyBrowseNested(
       _families,
       List<CatalogGroupDimension>.from(_groupBy),
     );
+    _cachedFamilyTree = tree;
+    _cachedFamilyTreeKey = key;
+    return tree;
   }
 
+  /// Immediate refilter (facets, scope, mode, sort, collection apply).
   void _refilter() {
+    _queryDebounceTimer?.cancel();
+    _refilterNow();
+  }
+
+  /// GAP-PERF-01: debounce free-text only (typing should not scan every key).
+  void _onQueryChanged(String _) {
+    _queryDebounceTimer?.cancel();
+    _queryDebounceTimer = Timer(_queryDebounce, () {
+      if (!mounted) return;
+      _refilterNow();
+    });
+  }
+
+  void _refilterNow() {
     setState(() {
       _applyBrowse();
     });
@@ -960,6 +1033,7 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   void _onOutlineScrollSpy(String key) {
+    // Grid already throttles probe rate; skip redundant setState (GAP-PERF-02).
     if (_outlineActiveKey == key) return;
     setState(() => _outlineActiveKey = key);
   }
@@ -970,11 +1044,28 @@ class _CatalogPageState extends State<CatalogPage> {
     }
   }
 
+  Object _familyOutlineCacheKey(List<CatalogFamilyGroupNode> roots) =>
+      Object.hash(
+        _familyTreeCacheKey(),
+        identityHashCode(roots),
+        Object.hashAll(_collapsedGroups),
+      );
+
+  Object _itemOutlineCacheKey(List<CatalogGroupNode> roots) => Object.hash(
+        _itemTreeCacheKey(),
+        identityHashCode(roots),
+        Object.hashAll(_collapsedGroups),
+      );
+
   List<CatalogGroupOutlineEntry> _outlineEntriesForFamilies(
     List<CatalogFamilyGroupNode> roots,
   ) {
-    final dims = List<CatalogGroupDimension>.from(_groupBy);
-    return [
+    final key = _familyOutlineCacheKey(roots);
+    if (_cachedFamilyOutline != null && _cachedFamilyOutlineKey == key) {
+      return _cachedFamilyOutline!;
+    }
+    final dims = _groupBy;
+    final entries = [
       for (final row in flattenAllFamilyGroupNodes(roots))
         CatalogGroupOutlineEntry(
           key: row.node.key,
@@ -985,13 +1076,20 @@ class _CatalogPageState extends State<CatalogPage> {
           collapsedHint: _collapsedGroups.contains(row.node.key),
         ),
     ];
+    _cachedFamilyOutline = entries;
+    _cachedFamilyOutlineKey = key;
+    return entries;
   }
 
   List<CatalogGroupOutlineEntry> _outlineEntriesForItems(
     List<CatalogGroupNode> roots,
   ) {
-    final dims = List<CatalogGroupDimension>.from(_groupBy);
-    return [
+    final key = _itemOutlineCacheKey(roots);
+    if (_cachedItemOutline != null && _cachedItemOutlineKey == key) {
+      return _cachedItemOutline!;
+    }
+    final dims = _groupBy;
+    final entries = [
       for (final row in flattenAllCatalogGroupNodes(roots))
         CatalogGroupOutlineEntry(
           key: row.node.key,
@@ -1002,6 +1100,9 @@ class _CatalogPageState extends State<CatalogPage> {
           collapsedHint: _collapsedGroups.contains(row.node.key),
         ),
     ];
+    _cachedItemOutline = entries;
+    _cachedItemOutlineKey = key;
+    return entries;
   }
 
   void _openSortGroupSheet() {
@@ -1689,7 +1790,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     children: [
                       CatalogFilterBar(
                         queryController: _queryController,
-                        onQueryChanged: (_) => _refilter(),
+                        onQueryChanged: _onQueryChanged,
                         activeFilterCount: _activeFilterCount() +
                             (_queryController.text.trim().isEmpty ? 0 : 1),
                         moreExpanded: _moreFiltersExpanded,
@@ -2004,8 +2105,8 @@ class _CatalogPageState extends State<CatalogPage> {
           size: 36,
         ),
         familyTree: useGroupHeaders ? fTree : null,
-        groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
-        collapsedGroupKeys: Set<String>.from(_collapsedGroups),
+        groupDimensions: _groupBy,
+        collapsedGroupKeys: _collapsedGroups,
         onToggleGroup: _toggleGroupCollapse,
         groupKeys: _groupAnchorKeys,
         onActiveGroupChanged: showOutline ? _onOutlineScrollSpy : null,
@@ -2045,8 +2146,8 @@ class _CatalogPageState extends State<CatalogPage> {
         size: 36,
       ),
       itemTree: useGroupHeaders ? iTree : null,
-      groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
-      collapsedGroupKeys: Set<String>.from(_collapsedGroups),
+      groupDimensions: _groupBy,
+      collapsedGroupKeys: _collapsedGroups,
       onToggleGroup: _toggleGroupCollapse,
       groupKeys: _groupAnchorKeys,
       onActiveGroupChanged: showOutline ? _onOutlineScrollSpy : null,

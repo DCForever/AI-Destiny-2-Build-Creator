@@ -18,7 +18,7 @@ Catch **structural regressions** on Catalog browse hot paths (filter, group, pro
 | GAP | Test focus (today) | Package / file |
 | --- | --- | --- |
 | **GAP-PERF-01** | `filterCatalogClient` on N items; query + facets | `packages/manifest/test/catalog_performance_test.dart` |
-| **GAP-PERF-02** | `groupCatalogItemsNested` + flatten/collapse on N items | same |
+| **GAP-PERF-02** | `groupCatalogItemsNested` + flatten/collapse on N items; scroll-spy throttle unit | same + `packages/ui_flutter/test/catalog_scroll_spy_throttle_test.dart` |
 | **GAP-PERF-03** | (planned) loadBase/project isolate harness | future `offline_catalog_performance_test` / fixture store |
 | **GAP-PERF-04** | (planned) inventory hash-only list | future `packages/db` |
 | **GAP-PERF-05** | (planned) not unit-timed; smoke optional | host / integration later |
@@ -31,6 +31,9 @@ From Melos root `flutter/`:
 ```powershell
 # Always-on (CI-friendly soft budgets)
 dart test packages/manifest/test/catalog_performance_test.dart
+
+# Host scroll-spy throttle (GAP-PERF-02)
+flutter test packages/ui_flutter/test/catalog_scroll_spy_throttle_test.dart
 
 # Strict budgets (local / optional CI job)
 $env:PERF_ASSERT = "1"
