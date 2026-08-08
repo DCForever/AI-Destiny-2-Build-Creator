@@ -27,3 +27,4 @@ export 'src/repos/synergy_repository.dart';
 export 'src/repos/user_repository.dart';
 export 'src/repos/variant_repository.dart';
 export 'src/repos/roll_target_repository.dart';
+export 'src/repos/catalog_filter_collection_repository.dart';

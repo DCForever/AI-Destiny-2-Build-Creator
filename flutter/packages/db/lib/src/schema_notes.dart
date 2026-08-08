@@ -27,6 +27,7 @@ const expectedCoreTables = <String>[
   'variant_set_attachments',
   'weapon_roll_targets',
   'weapon_roll_target_active',
+  'catalog_filter_collections',
 ];
 
 /// Critical unique constraints (logical).
@@ -42,6 +43,7 @@ const expectedCoreTables = <String>[
 /// | inventory_sync_meta | user_id | PRIMARY KEY |
 /// | weapon_roll_targets | user_id, weapon_key, name | named ideals per weapon |
 /// | weapon_roll_target_active | user_id, weapon_key | one active target |
+/// | catalog_filter_collections | user_id, browse_mode, name | named filter presets per mode |
 const criticalUniqueNotes = <String, List<String>>{
   'users': ['bungie_membership_id'],
   'inventory_items': ['user_id', 'instance_id'],
@@ -52,6 +54,7 @@ const criticalUniqueNotes = <String, List<String>>{
   'inventory_sync_meta': ['user_id'],
   'weapon_roll_targets': ['user_id', 'weapon_key', 'name'],
   'weapon_roll_target_active': ['user_id', 'weapon_key'],
+  'catalog_filter_collections': ['user_id', 'browse_mode', 'name'],
 };
 
 /// Supporting non-unique indexes (product names).
