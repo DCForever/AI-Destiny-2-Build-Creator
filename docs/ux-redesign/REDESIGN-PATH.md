@@ -171,6 +171,7 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | **Landed / landing (C6–C7)** | EntityInfoHotspot + CatalogNestedGroupBy (worktree merge to main) |
 | **Next full redesign slice** | **C8 Armor** (after C6 exit), unless human inserts more C7 first |
 | **Open weapons residual board** | Vault `UX/UX Catalog — Weapons.md` · repo `DUAL-TRUTH-GAPS.md` · residual polish |
+| **Performance backlog** | Repo ledger **GAP-PERF-01–06** in [multiplatform-dart-feature-gaps.md](../multiplatform-dart-feature-gaps.md) (debounce refilter first) — **not** Armor gate; not cutover |
 | **Next area after Catalog** | Sets (phase 3) |
 
 ---
