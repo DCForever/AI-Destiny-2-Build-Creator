@@ -105,14 +105,76 @@ void main() {
       );
     });
 
-    test('group labels are alpha-sorted', () {
+    test('group labels use canonical element order (unknowns last)', () {
       final groups = groupCatalogItems(items, const [
         CatalogGroupDimension.element,
       ]);
       final labels = groups.map((g) => g.label).toList();
       final sorted = List<String>.from(labels)
-        ..sort((a, b) => compareDisplayName(a, b));
+        ..sort(
+          (a, b) => compareCatalogDimensionLabels(
+            CatalogGroupDimension.element,
+            a,
+            b,
+          ),
+        );
       expect(labels, sorted);
+      // Known elements before "Unknown element"
+      expect(labels.last, 'Unknown element');
+    });
+  });
+
+  group('path / collapse helpers', () {
+    test('ancestor keys use · separator', () {
+      expect(catalogGroupAncestorKeys('Energy'), isEmpty);
+      expect(catalogGroupAncestorKeys('Energy · Arc'), ['Energy']);
+      expect(
+        catalogGroupAncestorKeys('Energy · Arc · Auto'),
+        ['Energy', 'Energy · Arc'],
+      );
+    });
+
+    test('path fully open respects collapsed ancestors', () {
+      expect(isCatalogGroupPathFullyOpen('Energy · Arc', {}), isTrue);
+      expect(
+        isCatalogGroupPathFullyOpen('Energy · Arc', {'Energy · Arc'}),
+        isFalse,
+      );
+      expect(
+        isCatalogGroupPathFullyOpen('Energy · Arc', {'Energy'}),
+        isFalse,
+      );
+    });
+
+    test('expanded keys from collapsed drops only expandable keys', () {
+      final roots = groupCatalogItemsNested(
+        [
+          const CatalogItem(
+            hash: 1,
+            name: 'A',
+            slot: 'Energy',
+            element: 'Solar',
+            itemTypeName: 'HC',
+            isExotic: false,
+          ),
+          const CatalogItem(
+            hash: 2,
+            name: 'B',
+            slot: 'Energy',
+            element: 'Arc',
+            itemTypeName: 'AR',
+            isExotic: false,
+          ),
+        ],
+        const [CatalogGroupDimension.slot, CatalogGroupDimension.element],
+      );
+      final expandable = expandableCatalogGroupKeys(roots);
+      expect(expandable, contains('Energy'));
+      final expanded = expandedCatalogGroupKeysFromCollapsed(
+        roots,
+        {'Energy'},
+      );
+      expect(expanded.contains('Energy'), isFalse);
     });
   });
 
@@ -159,7 +221,7 @@ void main() {
       ]);
 
       expect(_leafCount(roots), weapons.length);
-      // Sibling roots alpha-sorted: Energy, Power
+      // Sibling roots canonical slot order: Energy, Power (no Kinetic in fixture)
       expect(roots.map((r) => r.label).toList(), ['Energy', 'Power']);
 
       final energy = roots.firstWhere((r) => r.key == 'Energy');
@@ -319,6 +381,7 @@ void main() {
 
     test('expanding Energy reveals its children only', () {
       final visible = flattenVisibleCatalogGroupNodes(tree, {'Energy'});
+      // Element children use canonical order (Solar before Void).
       expect(
         visible.map((e) => (e.node.key, e.depth)).toList(),
         [

@@ -46,12 +46,27 @@ Widget groupOutlineRail(BuildContext context) {
     child: Align(
       alignment: Alignment.centerRight,
       child: CatalogGroupOutlineRail(
-        activeKey: 'kinetic',
+        activeKey: 'Kinetic',
         onJump: (_) {},
         groups: const [
-          (key: 'kinetic', label: 'Kinetic', count: 14),
-          (key: 'energy', label: 'Energy', count: 8),
-          (key: 'power', label: 'Power', count: 5),
+          CatalogGroupOutlineEntry(
+            key: 'Kinetic',
+            label: 'Kinetic',
+            count: 14,
+            dimension: CatalogGroupDimension.slot,
+          ),
+          CatalogGroupOutlineEntry(
+            key: 'Energy',
+            label: 'Energy',
+            count: 8,
+            dimension: CatalogGroupDimension.slot,
+          ),
+          CatalogGroupOutlineEntry(
+            key: 'Power',
+            label: 'Power',
+            count: 5,
+            dimension: CatalogGroupDimension.slot,
+          ),
         ],
       ),
     ),
@@ -77,11 +92,15 @@ class _OutlineJumpExpandDemo extends StatefulWidget {
 
 class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
   late final List<WeaponFamily> _families;
-  late final List<CatalogFamilyGroup> _groups;
+  late final List<CatalogFamilyGroupNode> _tree;
   late final Map<String, GlobalKey> _anchors;
   final _scrollController = ScrollController();
   var _collapsed = <String>{};
   String? _active;
+  static const _dims = [
+    CatalogGroupDimension.slot,
+    CatalogGroupDimension.element,
+  ];
 
   @override
   void initState() {
@@ -101,7 +120,6 @@ class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
         ),
       ]).single,
     ];
-    // Force a few extra rows for scroll by duplicating display with different names.
     _families.addAll([
       groupWeaponFamilies([
         const CatalogItem(
@@ -111,34 +129,6 @@ class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
           element: 'Kinetic',
           ammo: 'Primary',
           frame: 'Adaptive Frame',
-          itemTypeName: 'Auto Rifle',
-          isExotic: false,
-          owned: true,
-          ownedCount: 1,
-        ),
-      ]).single,
-      groupWeaponFamilies([
-        const CatalogItem(
-          hash: 802,
-          name: 'Scathelocke',
-          slot: 'Kinetic',
-          element: 'Kinetic',
-          ammo: 'Primary',
-          frame: 'Adaptive Frame',
-          itemTypeName: 'Auto Rifle',
-          isExotic: false,
-          owned: true,
-          ownedCount: 1,
-        ),
-      ]).single,
-      groupWeaponFamilies([
-        const CatalogItem(
-          hash: 803,
-          name: 'Seventh Seraph Carbine',
-          slot: 'Kinetic',
-          element: 'Kinetic',
-          ammo: 'Primary',
-          frame: 'Precision Frame',
           itemTypeName: 'Auto Rifle',
           isExotic: false,
           owned: true,
@@ -188,18 +178,17 @@ class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
         ),
       ]).single,
     ]);
-    _groups = groupWeaponFamilyBrowse(
-      _families,
-      const [CatalogGroupDimension.slot],
-    );
+    _tree = groupWeaponFamilyBrowseNested(_families, _dims);
     _anchors = {
-      for (final g in _groups) g.key: GlobalKey(),
+      for (final row in flattenAllFamilyGroupNodes(_tree))
+        row.node.key: GlobalKey(),
     };
-    // Start with Energy + Power collapsed so jump must expand.
+    // Collapse Energy (+ children) so JUMP must expand ancestors.
     _collapsed = {
-      for (final g in _groups.skip(1)) g.key,
+      for (final n in _tree)
+        if (n.label != 'Kinetic') n.key,
     };
-    _active = _groups.isNotEmpty ? _groups.first.key : null;
+    _active = _tree.isNotEmpty ? _tree.first.key : null;
   }
 
   @override
@@ -219,10 +208,21 @@ class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
   }
 
   void _jump(String key) {
+    if (isCatalogGroupPathFullyOpen(key, _collapsed)) {
+      setState(() {
+        _collapsed = {..._collapsed, key};
+        _active = key;
+      });
+      return;
+    }
     setState(() {
       _active = key;
-      // Expand-on-jump (view-only; never rewrites filters).
-      _collapsed = {..._collapsed}..remove(key);
+      final next = {..._collapsed};
+      for (final a in catalogGroupAncestorKeys(key)) {
+        next.remove(a);
+      }
+      next.remove(key);
+      _collapsed = next;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ctx = _anchors[key]?.currentContext;
@@ -247,49 +247,31 @@ class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                for (final g in _groups) ...[
-                  SliverToBoxAdapter(
-                    child: KeyedSubtree(
-                      key: _anchors[g.key],
-                      child: CatalogGroupHeader(
-                        groupKey: g.key,
-                        label: g.label,
-                        count: g.families.length,
-                        expanded: !_collapsed.contains(g.key),
-                        onToggle: () => _toggle(g.key),
-                      ),
-                    ),
-                  ),
-                  if (!_collapsed.contains(g.key))
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            CatalogWeaponsGrid.gridDelegate,
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final family = g.families[index];
-                            return CatalogWeaponFamilyCard(
-                              family: family,
-                              showOwned: true,
-                              onTap: () {},
-                            );
-                          },
-                          childCount: g.families.length,
-                        ),
-                      ),
-                    ),
-                ],
-              ],
+            child: CatalogWeaponsGrid(
+              families: _families,
+              familyTree: _tree,
+              groupDimensions: _dims,
+              collapsedGroupKeys: _collapsed,
+              onToggleGroup: _toggle,
+              groupKeys: _anchors,
+              scrollController: _scrollController,
+              onActiveGroupChanged: (k) {
+                if (_active != k) setState(() => _active = k);
+              },
+              onSelectFamily: (_) {},
             ),
           ),
           CatalogGroupOutlineRail(
             groups: [
-              for (final g in _groups)
-                (key: g.key, label: g.label, count: g.families.length),
+              for (final row in flattenAllFamilyGroupNodes(_tree))
+                CatalogGroupOutlineEntry(
+                  key: row.node.key,
+                  label: row.node.label,
+                  count: row.node.count,
+                  depth: row.depth,
+                  dimension: catalogGroupDimensionAt(_dims, row.depth),
+                  collapsedHint: _collapsed.contains(row.node.key),
+                ),
             ],
             activeKey: _active,
             onJump: _jump,
@@ -298,5 +280,44 @@ class _OutlineJumpExpandDemoState extends State<_OutlineJumpExpandDemo> {
       ),
     );
   }
+}
+
+@widgetbook.UseCase(
+  name: 'Nested Slot→Element · icons',
+  type: CatalogGroupHeader,
+  path: '[Catalog]/Group',
+)
+Widget groupNestedHeadersIcons(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      CatalogGroupHeader(
+        groupKey: 'Energy',
+        label: 'Energy',
+        count: 5,
+        dimension: CatalogGroupDimension.slot,
+        expanded: true,
+        onToggle: () {},
+      ),
+      CatalogGroupHeader(
+        groupKey: 'Energy · Solar',
+        label: 'Solar',
+        count: 2,
+        depth: 1,
+        dimension: CatalogGroupDimension.element,
+        expanded: true,
+        onToggle: () {},
+      ),
+      CatalogGroupHeader(
+        groupKey: 'Energy · Arc',
+        label: 'Arc',
+        count: 1,
+        depth: 1,
+        dimension: CatalogGroupDimension.element,
+        expanded: false,
+        onToggle: () {},
+      ),
+    ],
+  );
 }
 

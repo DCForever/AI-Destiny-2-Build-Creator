@@ -233,9 +233,10 @@ class _OwnedVersionChips extends StatelessWidget {
   }
 }
 
-/// Flat or grouped family/item grid for weapons results.
+/// Flat, flat-grouped, or **nested** family/item grid for catalog results.
 ///
-/// Prefer [families] (GAP-CAT-BROWSE-001). Legacy [items] path kept for armor.
+/// Prefer [families] + [familyTree] (GAP-CAT-BROWSE-001 + GAP-UI-CATALOG-11).
+/// Legacy flat [familyGroups] / [groups] remain for single-dim callers.
 class CatalogWeaponsGrid extends StatelessWidget {
   const CatalogWeaponsGrid({
     super.key,
@@ -251,9 +252,14 @@ class CatalogWeaponsGrid extends StatelessWidget {
     this.headerLabel = 'CATALOG NODES · GRID',
     this.groups,
     this.familyGroups,
+    this.familyTree,
+    this.itemTree,
+    this.groupDimensions = const [],
     this.collapsedGroupKeys = const {},
     this.onToggleGroup,
     this.groupKeys = const {},
+    this.scrollController,
+    this.onActiveGroupChanged,
   });
 
   final List<CatalogItem> items;
@@ -273,9 +279,19 @@ class CatalogWeaponsGrid extends StatelessWidget {
   /// Optional pre-grouped item rows (label + items). When null, flat [items].
   final List<({String key, String label, List<CatalogItem> items})>? groups;
 
-  /// Optional pre-grouped family rows.
+  /// Optional pre-grouped flat family rows (legacy / single-dim).
   final List<({String key, String label, List<WeaponFamily> families})>?
       familyGroups;
+
+  /// Nested multi-level family tree (DART-072 / UX-CATALOG-NESTED-GROUP).
+  /// When non-empty, preferred over [familyGroups].
+  final List<CatalogFamilyGroupNode>? familyTree;
+
+  /// Nested multi-level item tree (armor / non-family modes).
+  final List<CatalogGroupNode>? itemTree;
+
+  /// Ordered group dimensions (for per-depth icon resolution).
+  final List<CatalogGroupDimension> groupDimensions;
 
   /// Collapsed group keys (view-only; default all expanded).
   final Set<String> collapsedGroupKeys;
@@ -283,6 +299,11 @@ class CatalogWeaponsGrid extends StatelessWidget {
 
   /// GlobalKeys for outline jump / ensureVisible (group key → key).
   final Map<String, GlobalKey> groupKeys;
+
+  final ScrollController? scrollController;
+
+  /// Scroll-spy: path key of the group nearest the top of the viewport.
+  final ValueChanged<String>? onActiveGroupChanged;
 
   static const gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
     maxCrossAxisExtent: 200,
@@ -293,16 +314,25 @@ class CatalogWeaponsGrid extends StatelessWidget {
 
   bool _isExpanded(String key) => !collapsedGroupKeys.contains(key);
 
+  CatalogGroupDimension? _dimAt(int depth) =>
+      catalogGroupDimensionAt(groupDimensions, depth);
+
   @override
   Widget build(BuildContext context) {
     final fams = families;
     final useFamilies = fams != null;
+    final fTree = familyTree;
+    final iTree = itemTree;
     final fGroups = familyGroups;
     final iGroups = groups;
-    final useFamilyGroups =
-        useFamilies && fGroups != null && fGroups.isNotEmpty;
+    final useFamilyTree = fTree != null && fTree.isNotEmpty;
+    final useItemTree = !useFamilies && iTree != null && iTree.isNotEmpty;
+    final useFamilyGroups = useFamilies &&
+        !useFamilyTree &&
+        fGroups != null &&
+        fGroups.isNotEmpty;
     final useItemGroups =
-        !useFamilies && iGroups != null && iGroups.isNotEmpty;
+        !useFamilies && !useItemTree && iGroups != null && iGroups.isNotEmpty;
 
     // ViewportAddon / device-frame transitions can briefly give 0 cross-axis
     // extent; SliverGrid asserts crossAxisExtent > 0.
@@ -313,92 +343,126 @@ class CatalogWeaponsGrid extends StatelessWidget {
         if (!maxW.isFinite || maxW < 1) {
           return const SizedBox.shrink();
         }
-        return CustomScrollView(
-          slivers: [
-            ..._buildSlivers(
-              context,
-              fams: fams,
-              useFamilies: useFamilies,
-              fGroups: fGroups,
-              iGroups: iGroups,
-              useFamilyGroups: useFamilyGroups,
-              useItemGroups: useItemGroups,
-            ),
-          ],
+        return NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (onActiveGroupChanged == null) return false;
+            if (n is! ScrollUpdateNotification && n is! ScrollEndNotification) {
+              return false;
+            }
+            _emitScrollSpyActive();
+            return false;
+          },
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              ..._buildSlivers(
+                context,
+                fams: fams,
+                useFamilies: useFamilies,
+                fTree: fTree,
+                iTree: iTree,
+                fGroups: fGroups,
+                iGroups: iGroups,
+                useFamilyTree: useFamilyTree,
+                useItemTree: useItemTree,
+                useFamilyGroups: useFamilyGroups,
+                useItemGroups: useItemGroups,
+              ),
+            ],
+          ),
         );
       },
     );
+  }
+
+  void _emitScrollSpyActive() {
+    final cb = onActiveGroupChanged;
+    if (cb == null || groupKeys.isEmpty) return;
+    const threshold = 72.0;
+    String? active;
+    String? firstVisible;
+    var firstTop = double.infinity;
+    for (final e in groupKeys.entries) {
+      final ctx = e.value.currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize || !box.attached) continue;
+      final top = box.localToGlobal(Offset.zero).dy;
+      if (top <= threshold) {
+        // Last section whose header is at/above the band wins (depth-first map order).
+        active = e.key;
+      }
+      if (top < firstTop) {
+        firstTop = top;
+        firstVisible = e.key;
+      }
+    }
+    final key = active ?? firstVisible;
+    if (key != null) cb(key);
   }
 
   List<Widget> _buildSlivers(
     BuildContext context, {
     required List<WeaponFamily>? fams,
     required bool useFamilies,
+    required List<CatalogFamilyGroupNode>? fTree,
+    required List<CatalogGroupNode>? iTree,
     required List<({String key, String label, List<WeaponFamily> families})>?
         fGroups,
     required List<({String key, String label, List<CatalogItem> items})>?
         iGroups,
+    required bool useFamilyTree,
+    required bool useItemTree,
     required bool useFamilyGroups,
     required bool useItemGroups,
   }) {
-    return [
-        SliverToBoxAdapter(
-          child: Padding(
-            key: const Key('catalog_board_header'),
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            child: Text(
-              headerLabel,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+    final slivers = <Widget>[
+      SliverToBoxAdapter(
+        child: Padding(
+          key: const Key('catalog_board_header'),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          child: Text(
+            headerLabel,
+            style: Theme.of(context).textTheme.labelSmall,
           ),
         ),
-        if (useFamilyGroups && fGroups != null)
-          for (final group in fGroups) ...[
-            SliverToBoxAdapter(
-              child: KeyedSubtree(
-                key: groupKeys[group.key],
-                child: CatalogGroupHeader(
-                  groupKey: group.key,
-                  label: group.label,
-                  count: group.families.length,
-                  expanded: _isExpanded(group.key),
-                  onToggle: () => onToggleGroup?.call(group.key),
-                ),
+      ),
+    ];
+
+    if (useFamilyTree && fTree != null) {
+      void walkFamily(CatalogFamilyGroupNode node, int depth) {
+        final expanded = _isExpanded(node.key);
+        slivers.add(
+          SliverToBoxAdapter(
+            child: KeyedSubtree(
+              key: groupKeys[node.key] ?? ValueKey('g_${node.key}'),
+              child: CatalogGroupHeader(
+                groupKey: node.key,
+                label: node.label,
+                count: node.count,
+                depth: depth,
+                dimension: _dimAt(depth),
+                expanded: expanded,
+                onToggle: () => onToggleGroup?.call(node.key),
               ),
             ),
-            if (_isExpanded(group.key))
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                sliver: SliverGrid(
-                  gridDelegate: gridDelegate,
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final family = group.families[index];
-                      return CatalogWeaponFamilyCard(
-                        family: family,
-                        selected: selectedFamilyKey == family.key ||
-                            (selectedHash != null &&
-                                family.memberByHash(selectedHash!) != null),
-                        showOwned: showOwned,
-                        leading: familyLeadingBuilder?.call(family),
-                        onTap: onSelectFamily == null
-                            ? null
-                            : () => onSelectFamily!(family),
-                      );
-                    },
-                    childCount: group.families.length,
-                  ),
-                ),
-              ),
-          ]
-        else if (useFamilies && fams != null)
+          ),
+        );
+        if (!expanded) return;
+        if (node.isExpandable) {
+          for (final child in node.children) {
+            walkFamily(child, depth + 1);
+          }
+          return;
+        }
+        slivers.add(
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             sliver: SliverGrid(
               gridDelegate: gridDelegate,
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final family = fams[index];
+                  final family = node.families[index];
                   return CatalogWeaponFamilyCard(
                     family: family,
                     selected: selectedFamilyKey == family.key ||
@@ -411,18 +475,53 @@ class CatalogWeaponsGrid extends StatelessWidget {
                         : () => onSelectFamily!(family),
                   );
                 },
-                childCount: fams.length,
+                childCount: node.families.length,
               ),
             ),
-          )
-        else if (!useItemGroups)
+          ),
+        );
+      }
+
+      for (final root in fTree) {
+        walkFamily(root, 0);
+      }
+      return slivers;
+    }
+
+    if (useItemTree && iTree != null) {
+      void walkItem(CatalogGroupNode node, int depth) {
+        final expanded = _isExpanded(node.key);
+        slivers.add(
+          SliverToBoxAdapter(
+            child: KeyedSubtree(
+              key: groupKeys[node.key] ?? ValueKey('g_${node.key}'),
+              child: CatalogGroupHeader(
+                groupKey: node.key,
+                label: node.label,
+                count: node.count,
+                depth: depth,
+                dimension: _dimAt(depth),
+                expanded: expanded,
+                onToggle: () => onToggleGroup?.call(node.key),
+              ),
+            ),
+          ),
+        );
+        if (!expanded) return;
+        if (node.isExpandable) {
+          for (final child in node.children) {
+            walkItem(child, depth + 1);
+          }
+          return;
+        }
+        slivers.add(
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             sliver: SliverGrid(
               gridDelegate: gridDelegate,
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final item = items[index];
+                  final item = node.items[index];
                   return CatalogWeaponCard(
                     item: item,
                     selected: selectedHash == item.hash,
@@ -431,46 +530,164 @@ class CatalogWeaponsGrid extends StatelessWidget {
                     onTap: onSelect == null ? null : () => onSelect!(item),
                   );
                 },
-                childCount: items.length,
+                childCount: node.items.length,
               ),
             ),
-          )
-        else if (iGroups != null)
-          for (final group in iGroups) ...[
-            SliverToBoxAdapter(
-              child: KeyedSubtree(
-                key: groupKeys[group.key],
-                child: CatalogGroupHeader(
-                  groupKey: group.key,
-                  label: group.label,
-                  count: group.items.length,
-                  expanded: _isExpanded(group.key),
-                  onToggle: () => onToggleGroup?.call(group.key),
+          ),
+        );
+      }
+
+      for (final root in iTree) {
+        walkItem(root, 0);
+      }
+      return slivers;
+    }
+
+    if (useFamilyGroups && fGroups != null) {
+      for (final group in fGroups) {
+        slivers.add(
+          SliverToBoxAdapter(
+            child: KeyedSubtree(
+              key: groupKeys[group.key] ?? ValueKey('g_${group.key}'),
+              child: CatalogGroupHeader(
+                groupKey: group.key,
+                label: group.label,
+                count: group.families.length,
+                dimension: _dimAt(0),
+                expanded: _isExpanded(group.key),
+                onToggle: () => onToggleGroup?.call(group.key),
+              ),
+            ),
+          ),
+        );
+        if (_isExpanded(group.key)) {
+          slivers.add(
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              sliver: SliverGrid(
+                gridDelegate: gridDelegate,
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final family = group.families[index];
+                    return CatalogWeaponFamilyCard(
+                      family: family,
+                      selected: selectedFamilyKey == family.key ||
+                          (selectedHash != null &&
+                              family.memberByHash(selectedHash!) != null),
+                      showOwned: showOwned,
+                      leading: familyLeadingBuilder?.call(family),
+                      onTap: onSelectFamily == null
+                          ? null
+                          : () => onSelectFamily!(family),
+                    );
+                  },
+                  childCount: group.families.length,
                 ),
               ),
             ),
-            if (_isExpanded(group.key))
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                sliver: SliverGrid(
-                  gridDelegate: gridDelegate,
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final item = group.items[index];
-                      return CatalogWeaponCard(
-                        item: item,
-                        selected: selectedHash == item.hash,
-                        showOwned: showOwned,
-                        leading: leadingBuilder?.call(item),
-                        onTap:
-                            onSelect == null ? null : () => onSelect!(item),
-                      );
-                    },
-                    childCount: group.items.length,
-                  ),
+          );
+        }
+      }
+      return slivers;
+    }
+
+    if (useFamilies && fams != null) {
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          sliver: SliverGrid(
+            gridDelegate: gridDelegate,
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final family = fams[index];
+                return CatalogWeaponFamilyCard(
+                  family: family,
+                  selected: selectedFamilyKey == family.key ||
+                      (selectedHash != null &&
+                          family.memberByHash(selectedHash!) != null),
+                  showOwned: showOwned,
+                  leading: familyLeadingBuilder?.call(family),
+                  onTap: onSelectFamily == null
+                      ? null
+                      : () => onSelectFamily!(family),
+                );
+              },
+              childCount: fams.length,
+            ),
+          ),
+        ),
+      );
+      return slivers;
+    }
+
+    if (!useItemGroups) {
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          sliver: SliverGrid(
+            gridDelegate: gridDelegate,
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final item = items[index];
+                return CatalogWeaponCard(
+                  item: item,
+                  selected: selectedHash == item.hash,
+                  showOwned: showOwned,
+                  leading: leadingBuilder?.call(item),
+                  onTap: onSelect == null ? null : () => onSelect!(item),
+                );
+              },
+              childCount: items.length,
+            ),
+          ),
+        ),
+      );
+      return slivers;
+    }
+
+    if (iGroups != null) {
+      for (final group in iGroups) {
+        slivers.add(
+          SliverToBoxAdapter(
+            child: KeyedSubtree(
+              key: groupKeys[group.key] ?? ValueKey('g_${group.key}'),
+              child: CatalogGroupHeader(
+                groupKey: group.key,
+                label: group.label,
+                count: group.items.length,
+                dimension: _dimAt(0),
+                expanded: _isExpanded(group.key),
+                onToggle: () => onToggleGroup?.call(group.key),
+              ),
+            ),
+          ),
+        );
+        if (_isExpanded(group.key)) {
+          slivers.add(
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              sliver: SliverGrid(
+                gridDelegate: gridDelegate,
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = group.items[index];
+                    return CatalogWeaponCard(
+                      item: item,
+                      selected: selectedHash == item.hash,
+                      showOwned: showOwned,
+                      leading: leadingBuilder?.call(item),
+                      onTap: onSelect == null ? null : () => onSelect!(item),
+                    );
+                  },
+                  childCount: group.items.length,
                 ),
               ),
-          ],
-    ];
+            ),
+          );
+        }
+      }
+    }
+
+    return slivers;
   }
 }
