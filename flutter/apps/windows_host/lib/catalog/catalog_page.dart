@@ -537,6 +537,8 @@ class _CatalogPageState extends State<CatalogPage> {
       preferredScored: m.preferredScored,
       avoidHits: m.avoidHits,
       avoidScored: m.avoidScored,
+      // Column-level perfect (all preferred sockets hit), not plug N==M.
+      allPreferredColumnsMatched: m.isPerfectPreferred,
     );
   }
 

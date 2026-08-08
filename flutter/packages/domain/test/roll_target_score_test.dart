@@ -74,7 +74,8 @@ void main() {
     });
   });
 
-  group('scoreInstanceAgainstTarget', () {
+  group('scoreInstanceAgainstTarget — roll quality on scored sockets', () {
+    // Ideal: 10,11,20,30,31,40  Avoid: 19,29,28,49
     final target = WeaponRollTarget(
       id: '1',
       userId: 'u',
@@ -82,175 +83,108 @@ void main() {
       name: 'PvE',
       columns: const [
         RollTargetColumn(
-          columnKey: 'barrel',
-          preferredPlugHashes: {10, 11},
-          avoidPlugHashes: {19},
+          columnKey: 'socket_1',
+          label: 'Trait 1',
+          preferredPlugHashes: {10, 11, 20},
+          avoidPlugHashes: {19, 29},
         ),
         RollTargetColumn(
-          columnKey: 'trait1',
-          preferredPlugHashes: {20},
-          avoidPlugHashes: {29, 28},
-        ),
-        RollTargetColumn(
-          columnKey: 'trait2',
-          preferredPlugHashes: {30, 31},
-        ),
-        RollTargetColumn(
-          columnKey: 'origin',
-          // unscored preferred + avoid
+          columnKey: 'socket_2',
+          label: 'Trait 2',
+          preferredPlugHashes: {30, 31, 40},
+          avoidPlugHashes: {28, 49},
         ),
       ],
     );
 
-    test('column-level multi-accept: many preferred in one column = 1 credit',
-        () {
-      // barrel has two preferred alternatives; only one column credit.
+    test('Duty Bound style: 525 → 3/6 good + Av 3; columns still perfect', () {
+      // 6 plugs on the two trait columns: 3 ideal, 3 avoid.
       final m = scoreInstanceAgainstTarget(target, {
-        'barrel': {10, 11},
-        'trait1': {20},
-        'trait2': {30, 31},
-        'origin': {99},
+        'socket_1': {10, 19, 11}, // 2 good, 1 bad
+        'socket_2': {30, 28, 49}, // 1 good, 2 bad
       });
       expect(m.preferredMatched, 3);
-      expect(m.preferredScored, 3); // not 5 plug-level
-      expect(m.preferredRatio, 1.0);
+      expect(m.preferredScored, 6);
+      expect(m.avoidHits, 3);
+      expect(m.avoidScored, 1); // segment enabled
+      expect(m.preferredRatio, closeTo(0.5, 0.001));
+      // Both preferred sockets hit → perfect green tint even though N!=M.
       expect(m.isPerfectPreferred, isTrue);
-      expect(m.avoidHits, 0);
-      expect(m.avoidScored, 2); // barrel + trait1 avoid columns
-      expect(m.isCleanAvoid, isTrue);
-      expect(m.preferredByColumn['origin'], PreferredColumnState.unscored);
+      expect(m.isCleanAvoid, isFalse);
+      expect(m.preferredByColumn['socket_1'], PreferredColumnState.matched);
+      expect(m.preferredByColumn['socket_2'], PreferredColumnState.matched);
     });
 
-    test('partial preferred and avoid hits', () {
+    test('Duty Bound style: 487 → 3/4 good + Av 1; columns perfect', () {
+      // 4 plugs: 3 ideal, 1 avoid.
       final m = scoreInstanceAgainstTarget(target, {
-        'barrel': {19}, // avoid hit, preferred miss
-        'trait1': {20}, // preferred match
-        'trait2': {99}, // preferred miss
-      });
-      expect(m.preferredMatched, 1);
-      expect(m.preferredScored, 3);
-      expect(m.avoidHits, 1);
-      expect(m.avoidScored, 2);
-      expect(m.avoidByColumn['barrel'], AvoidColumnState.hit);
-      expect(m.preferredByColumn['barrel'], PreferredColumnState.miss);
-      expect(m.preferredByColumn['trait1'], PreferredColumnState.matched);
-    });
-
-    test('single int plugs still accepted (equipped-only map)', () {
-      final m = scoreInstanceAgainstTarget(target, {
-        'barrel': 10,
-        'trait1': 20,
-        'trait2': 31,
+        'socket_1': {10, 20}, // 2 good
+        'socket_2': {30, 49}, // 1 good, 1 bad
       });
       expect(m.preferredMatched, 3);
-      expect(m.preferredScored, 3);
+      expect(m.preferredScored, 4);
+      expect(m.avoidHits, 1);
+      expect(m.isPerfectPreferred, isTrue);
     });
 
-    test('missing plugs count as preferred miss and avoid clear', () {
-      final m = scoreInstanceAgainstTarget(target, {});
-      expect(m.preferredMatched, 0);
+    test('column miss is not perfect even with some good plugs', () {
+      final m = scoreInstanceAgainstTarget(target, {
+        'socket_1': {10, 11}, // preferred hit
+        'socket_2': {49}, // only avoid — preferred miss
+      });
+      expect(m.preferredMatched, 2);
+      expect(m.preferredScored, 3);
+      expect(m.isPerfectPreferred, isFalse);
+      expect(m.preferredByColumn['socket_2'], PreferredColumnState.miss);
+    });
+
+    test('neutrals count in M but not N or Av', () {
+      final m = scoreInstanceAgainstTarget(target, {
+        'socket_1': {10, 999}, // 1 good, 1 neutral
+        'socket_2': {30}, // 1 good
+      });
+      expect(m.preferredMatched, 2);
       expect(m.preferredScored, 3);
       expect(m.avoidHits, 0);
-      expect(m.avoidScored, 2);
     });
 
-    test('family match counts preferred', () {
+    test('key mismatch still classifies by hash presence on copy', () {
+      // Target uses socket_*; instance map uses Label@i — resolve + classify.
+      final m = scoreInstanceAgainstTarget(target, {
+        'Trait 1@1': {10, 19},
+        'Trait 2@2': {30, 40},
+      });
+      expect(m.preferredMatched, 3); // 10, 30, 40
+      expect(m.preferredScored, 4);
+      expect(m.avoidHits, 1); // 19
+    });
+
+    test('single int plugs still accepted', () {
+      final m = scoreInstanceAgainstTarget(target, {
+        'socket_1': 10,
+        'socket_2': 30,
+      });
+      expect(m.preferredMatched, 2);
+      expect(m.preferredScored, 2);
+      expect(m.avoidHits, 0);
+    });
+
+    test('family match counts as good', () {
       Set<int> familyOf(int h) {
-        if (h == 20 || h == 200) return {20, 200};
+        if (h == 10 || h == 1000) return {10, 1000};
         return {h};
       }
 
       final m = scoreInstanceAgainstTarget(
         target,
         {
-          'barrel': {10},
-          'trait1': {200},
-          'trait2': {30},
+          'socket_1': {1000}, // enhanced of preferred 10
+          'socket_2': {30},
         },
         familyOf: familyOf,
       );
-      expect(m.preferredMatched, 3);
-      expect(m.preferredByColumn['trait1'], PreferredColumnState.matched);
-    });
-
-    test('on-this-copy reusable preferred matches column', () {
-      // Equipped is junk; preferred lives in reusables on the copy.
-      final m = scoreInstanceAgainstTarget(target, {
-        'barrel': {99, 10}, // preferred 10 on copy
-        'trait1': {20},
-        'trait2': {30},
-      });
-      expect(m.preferredMatched, 3);
-      expect(m.preferredScored, 3);
-    });
-
-    test('does not inflate M with multi-pick alternatives (3/6 not 3/16)', () {
-      // Six preferred columns; multi-pick within barrel does not add to M.
-      final wide = WeaponRollTarget(
-        id: '1',
-        userId: 'u',
-        weaponKey: '100',
-        name: 'PvE',
-        columns: [
-          for (var i = 0; i < 6; i++)
-            RollTargetColumn(
-              columnKey: 'c$i',
-              preferredPlugHashes: {100 + i, 200 + i, 300 + i}, // 3 alts each
-            ),
-        ],
-      );
-      final m = scoreInstanceAgainstTarget(wide, {
-        'c0': {100},
-        'c1': {101},
-        'c2': {102},
-        // c3–c5 miss
-      });
-      expect(m.preferredMatched, 3);
-      expect(m.preferredScored, 6);
-      expect(m.preferredRatio, closeTo(0.5, 0.001));
-    });
-
-    test('key mismatch across instances still scores by plug presence', () {
-      // Target saved under socket_* keys (instance A); instance B only has Label@i.
-      final t = WeaponRollTarget(
-        id: '1',
-        userId: 'u',
-        weaponKey: '100',
-        name: 'PvE',
-        columns: const [
-          RollTargetColumn(
-            columnKey: 'socket_0',
-            label: 'Barrel',
-            preferredPlugHashes: {10},
-          ),
-          RollTargetColumn(
-            columnKey: 'socket_1',
-            label: 'Magazine',
-            preferredPlugHashes: {20},
-          ),
-          RollTargetColumn(
-            columnKey: 'socket_2',
-            label: 'Trait 1',
-            preferredPlugHashes: {30},
-          ),
-          RollTargetColumn(
-            columnKey: 'socket_3',
-            label: 'Trait 2',
-            preferredPlugHashes: {40},
-            avoidPlugHashes: {49},
-          ),
-        ],
-      );
-      // Instance B: different key scheme, but has 10,20,30 on copy (not 40).
-      final m = scoreInstanceAgainstTarget(t, {
-        'Barrel@0': {10, 11},
-        'Magazine@1': {20},
-        'Trait 1@2': {30, 31},
-        'Trait 2@3': {41, 49}, // avoid hit; preferred 40 miss
-      });
-      expect(m.preferredScored, 4);
-      expect(m.preferredMatched, 3); // not 0/4 from key miss
-      expect(m.avoidHits, 1);
+      expect(m.preferredMatched, 2);
+      expect(m.preferredScored, 2);
     });
   });
 
@@ -274,14 +208,14 @@ void main() {
       ],
     );
 
-    test('preferred ratio primary; avoid hits break ties', () {
+    test('higher good/total ranks first; avoid hits break ties', () {
       final instances = [
         const RollTargetInstanceInput(
           instanceId: 'a',
           plugsByColumn: {
-            't1': {1},
-            't2': {8},
-          }, // 1/2 preferred, 1 avoid
+            't1': {1, 9}, // 1 good, 1 bad of 2
+            't2': {8}, // 1 bad
+          },
           power: 1800,
         ),
         const RollTargetInstanceInput(
@@ -289,7 +223,7 @@ void main() {
           plugsByColumn: {
             't1': {1},
             't2': {2},
-          }, // 2/2 preferred, 0 avoid
+          }, // 2/2 good
           power: 1700,
         ),
         const RollTargetInstanceInput(
@@ -297,14 +231,19 @@ void main() {
           plugsByColumn: {
             't1': {1},
             't2': {99},
-          }, // 1/2 preferred, 0 avoid
+          }, // 1/2 good, 0 bad
           power: 1900,
         ),
       ];
 
       final ranked = rankOwnedAgainstTarget(target, instances);
-      expect(ranked.map((r) => r.instance.instanceId).toList(), ['b', 'c', 'a']);
-      // b: 1.0 preferred; c: 0.5 clean; a: 0.5 with avoid hit
+      // b: 1.0 clean; c: 0.5 clean; a: 1/3 with avoids
+      expect(
+        ranked.map((r) => r.instance.instanceId).toList(),
+        ['b', 'c', 'a'],
+      );
+      expect(ranked[0].match.isPerfectPreferred, isTrue);
+      expect(ranked[1].match.isPerfectPreferred, isFalse);
     });
 
     test('avoid-only ranks least bad first when preferred empty', () {
@@ -346,6 +285,7 @@ void main() {
         ranked.map((r) => r.instance.instanceId).toList(),
         ['clean', 'one', 'bad'],
       );
+      expect(ranked.first.match.isPerfectPreferred, isFalse);
     });
 
     test('empty owned → empty list', () {

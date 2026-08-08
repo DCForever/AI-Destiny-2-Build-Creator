@@ -29,6 +29,7 @@ class CatalogInstanceRollScore {
     required this.preferredScored,
     required this.avoidHits,
     required this.avoidScored,
+    this.allPreferredColumnsMatched,
   });
 
   final int preferredMatched;
@@ -36,11 +37,18 @@ class CatalogInstanceRollScore {
   final int avoidHits;
   final int avoidScored;
 
+  /// Host sets from domain column-level perfect (all preferred sockets hit).
+  /// When null, falls back to N==M (widget-only fixtures without column state).
+  final bool? allPreferredColumnsMatched;
+
   double get preferredRatio =>
       preferredScored == 0 ? 0.0 : preferredMatched / preferredScored;
 
+  /// Green dual-seg tint: preferred columns all matched when host provided;
+  /// else N==M for pure presentation fixtures.
   bool get isPerfectPreferred =>
-      preferredScored > 0 && preferredMatched == preferredScored;
+      allPreferredColumnsMatched ??
+      (preferredScored > 0 && preferredMatched == preferredScored);
 
   bool get isCleanAvoid => avoidHits == 0;
 
@@ -75,7 +83,8 @@ class CatalogInstanceRollScore {
         other.preferredMatched == preferredMatched &&
         other.preferredScored == preferredScored &&
         other.avoidHits == avoidHits &&
-        other.avoidScored == avoidScored;
+        other.avoidScored == avoidScored &&
+        other.allPreferredColumnsMatched == allPreferredColumnsMatched;
   }
 
   @override
@@ -84,6 +93,7 @@ class CatalogInstanceRollScore {
         preferredScored,
         avoidHits,
         avoidScored,
+        allPreferredColumnsMatched,
       );
 }
 

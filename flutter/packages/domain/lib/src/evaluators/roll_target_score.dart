@@ -174,67 +174,120 @@ Set<int> resolvePlugsForColumnKey(
 /// Score one instance's plugs against a roll target.
 ///
 /// **Identity:** preferred/avoid entries are **manifest plug item hashes**.
-/// Matching is **hash presence on this copy** (equipped + reusables, all
-/// sockets) — not UI labels. Column keys (`socket_N`) only group multi-accept
-/// alternatives for N/M (one credit per socket with preferred set).
+/// Column keys (`socket_N`) select which sockets on the copy are scored.
 ///
-/// [plugsByColumn]: `socket_N` → plug hashes on that socket (or any key map;
-/// unresolved keys fall back to whole-copy hash set so instances still score).
+/// **Roll-quality dual segs** (what the chips show):
+/// - Look at every plug **on this copy** in sockets that have preferred and/or
+///   avoid multi-picks (equipped + reusables).
+/// - **N/M** = how many of those plugs are **ideal** / how many plugs are on
+///   those sockets (e.g. 3/6 = three good of six perks on Trait 1+2).
+/// - **Av k** = how many of those plugs are **avoid**.
 ///
-/// **N/M:** columns with preferred multi-picks matched / such columns.
-/// **Av k:** columns with avoid multi-picks hit.
+/// Neutral plugs (no preference) count in M but not in N or Av.
+/// Example: Duty Bound 525 with 3 ideal + 3 avoid on the two trait columns →
+/// `3/6` and `Av 3`; 487 with 3 ideal + 1 avoid among 4 plugs → `3/4` `Av 1`.
 RollTargetMatchResult scoreInstanceAgainstTarget(
   WeaponRollTarget target,
   Map<String, Object?> plugsByColumn, {
   PlugFamilyLookup? familyOf,
 }) {
-  var preferredMatched = 0;
-  var preferredScored = 0;
-  var avoidHits = 0;
-  var avoidScored = 0;
   final preferredByColumn = <String, PreferredColumnState>{};
   final avoidByColumn = <String, AvoidColumnState>{};
 
-  // Manifest plug hashes on this copy (any socket) — primary match source.
-  final allPlugs = allPlugsOnInstance(plugsByColumn);
+  final allPreferred = <int>{
+    for (final c in target.columns) ...c.preferredPlugHashes,
+  };
+  final allAvoid = <int>{
+    for (final c in target.columns) ...c.avoidPlugHashes,
+  };
+  final hasAvoidInTarget = allAvoid.isNotEmpty;
+  final hasPreferredInTarget = allPreferred.isNotEmpty;
 
-  bool anyHashOnCopy(Set<int> acceptable) {
-    for (final plug in allPlugs) {
-      if (plugMatchesAcceptable(plug, acceptable, familyOf: familyOf)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
+  // Plugs on this copy that sit in scored sockets (preferred and/or avoid set).
+  final scoredPlugs = <int>{};
   for (final col in target.columns) {
     final key = col.columnKey;
-
-    if (col.preferredPlugHashes.isEmpty) {
+    final hasPref = col.preferredPlugHashes.isNotEmpty;
+    final hasAv = col.avoidPlugHashes.isNotEmpty;
+    if (!hasPref && !hasAv) {
       preferredByColumn[key] = PreferredColumnState.unscored;
-    } else {
-      // Multi-accept: any preferred hash on this copy fills the column.
-      preferredScored++;
-      if (anyHashOnCopy(col.preferredPlugHashes)) {
-        preferredMatched++;
-        preferredByColumn[key] = PreferredColumnState.matched;
-      } else {
-        preferredByColumn[key] = PreferredColumnState.miss;
-      }
+      avoidByColumn[key] = AvoidColumnState.unscored;
+      continue;
     }
 
-    if (col.avoidPlugHashes.isEmpty) {
-      avoidByColumn[key] = AvoidColumnState.unscored;
+    var plugs = resolvePlugsForColumnKey(
+      plugsByColumn,
+      col.columnKey,
+      label: col.label,
+    );
+    // Key miss: fall back to whole-copy plugs so we still classify by hash.
+    if (plugs.isEmpty) {
+      plugs = allPlugsOnInstance(plugsByColumn);
+    }
+    scoredPlugs.addAll(plugs);
+
+    // Per-column state for UI (any ideal/avoid on this socket's plugs).
+    if (hasPref) {
+      final hit = plugs.any(
+        (h) => plugMatchesAcceptable(
+          h,
+          col.preferredPlugHashes,
+          familyOf: familyOf,
+        ),
+      );
+      preferredByColumn[key] =
+          hit ? PreferredColumnState.matched : PreferredColumnState.miss;
     } else {
-      avoidScored++;
-      if (anyHashOnCopy(col.avoidPlugHashes)) {
-        avoidHits++;
-        avoidByColumn[key] = AvoidColumnState.hit;
-      } else {
-        avoidByColumn[key] = AvoidColumnState.clear;
-      }
+      preferredByColumn[key] = PreferredColumnState.unscored;
+    }
+    if (hasAv) {
+      final hit = plugs.any(
+        (h) => plugMatchesAcceptable(
+          h,
+          col.avoidPlugHashes,
+          familyOf: familyOf,
+        ),
+      );
+      avoidByColumn[key] =
+          hit ? AvoidColumnState.hit : AvoidColumnState.clear;
+    } else {
+      avoidByColumn[key] = AvoidColumnState.unscored;
     }
   }
+
+  // If every scored socket failed to resolve, use full copy as last resort.
+  final plugsToClassify = scoredPlugs.isNotEmpty
+      ? scoredPlugs
+      : allPlugsOnInstance(plugsByColumn);
+
+  var good = 0;
+  var bad = 0;
+  for (final h in plugsToClassify) {
+    final isGood = plugMatchesAcceptable(
+      h,
+      allPreferred,
+      familyOf: familyOf,
+    );
+    final isBad = plugMatchesAcceptable(
+      h,
+      allAvoid,
+      familyOf: familyOf,
+    );
+    // Prefer avoid if a hash somehow appears in both (invalid target).
+    if (isBad) {
+      bad++;
+    } else if (isGood) {
+      good++;
+    }
+  }
+
+  final preferredMatched = good;
+  // M = perks on the scored sockets for this copy (varies by instance).
+  final preferredScored =
+      hasPreferredInTarget || hasAvoidInTarget ? plugsToClassify.length : 0;
+  final avoidHits = bad;
+  // Enable Av segment whenever the target defines avoids (show Av 0 when clean).
+  final avoidScored = hasAvoidInTarget ? 1 : 0;
 
   return RollTargetMatchResult(
     preferredMatched: preferredMatched,

@@ -167,9 +167,10 @@ void main() {
     expect(find.text('PVE'), findsOneWidget);
     expect(find.byKey(const Key('roll_target_opt_off')), findsOneWidget);
 
-    // Dual segs present when active + scored.
+    // Dual segs: roll quality on scored sockets (equipped + reusables).
+    // Perfect fixture: 3 ideal plugs of 6 on barrel/mag/trait → 3/6.
     expect(find.byKey(const Key('instance_score_pref_rt-perfect')), findsOneWidget);
-    expect(find.text('3/3'), findsOneWidget);
+    expect(find.text('3/6'), findsOneWidget);
     expect(find.byKey(const Key('weapon_instance_rank_note')), findsOneWidget);
 
     // Rank: perfect (ratio 1) before partial (higher power) before dirty.

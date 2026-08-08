@@ -17,7 +17,10 @@
 | `requirements/Projects/Destiny 2 Build Creator/Domains/` | Domain product descriptions (Build, Variant, Set, Synergy, …) |
 | `requirements/Projects/Destiny 2 Build Creator/Areas/` | Area product descriptions (Shell, Build, Catalog, …) |
 | `requirements/Projects/Destiny 2 Build Creator/Destiny Objects/` | Game entity presentation / domain use |
+| `requirements/Projects/Destiny 2 Build Creator/UX/` | Area UX boards + redesign path narrative |
 | `requirements/Projects/Destiny 2 Build Creator.md` | Project note (purpose, success criteria, status) |
+
+**Flutter UX redesign sequence (repo SSoT):** [`docs/ux-redesign/REDESIGN-PATH.md`](../ux-redesign/REDESIGN-PATH.md) — vault mirror `UX/UX Redesign Path.md`.
 
 `requirements/` is a **machine-local junction** (gitignored). If missing, run the link script or open the absolute vault path above.
 

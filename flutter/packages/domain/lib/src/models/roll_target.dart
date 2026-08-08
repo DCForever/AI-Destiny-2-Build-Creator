@@ -149,8 +149,20 @@ class RollTargetMatchResult {
   double get avoidRatio =>
       avoidScored == 0 ? 0.0 : avoidHits / avoidScored;
 
-  bool get isPerfectPreferred =>
-      preferredScored > 0 && preferredMatched == preferredScored;
+  /// True when every preferred multi-pick **column** has a hit on this copy.
+  ///
+  /// Independent of plug-level N/M (e.g. 3 ideals among 6 plugs still perfect
+  /// if all three preferred sockets are satisfied). Green dual-seg tint uses
+  /// this, not N==M.
+  bool get isPerfectPreferred {
+    final scored = preferredByColumn.values
+        .where((s) => s != PreferredColumnState.unscored);
+    if (scored.isEmpty) {
+      // No preferred columns (avoid-only or empty target).
+      return false;
+    }
+    return scored.every((s) => s == PreferredColumnState.matched);
+  }
 
   bool get isCleanAvoid => avoidHits == 0;
 

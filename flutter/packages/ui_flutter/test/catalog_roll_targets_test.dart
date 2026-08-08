@@ -136,6 +136,18 @@ void main() {
       expect(s.preferredSegLabel, '2/3');
       expect(s.avoidSegLabel, 'Av 1');
       expect(s.semanticsScoreLabel, '2 of 3 preferred, 1 avoid hit');
+      // Without host flag, N!=M is not perfect.
+      expect(s.isPerfectPreferred, isFalse);
+      // Host may mark column-level perfect even when N!=M (3/6 plug quality).
+      const withColumns = CatalogInstanceRollScore(
+        preferredMatched: 3,
+        preferredScored: 6,
+        avoidHits: 0,
+        avoidScored: 1,
+        allPreferredColumnsMatched: true,
+      );
+      expect(withColumns.isPerfectPreferred, isTrue);
+      expect(withColumns.preferredSegLabel, '3/6');
       expect(
         const CatalogInstanceRollScore(
           preferredMatched: 0,

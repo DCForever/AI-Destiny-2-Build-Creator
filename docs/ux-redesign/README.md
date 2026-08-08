@@ -21,6 +21,20 @@ When a feature needs both system + chrome (e.g. nested Catalog group-by, entity 
 
 Cross-links: [feature-gaps workstream lanes](../multiplatform-dart-feature-gaps.md#workstream-lanes-going-forward) · [slice roadmap Spec Kit vs UI/UX](../multiplatform-dart-slice-roadmap.md) · port decision **D-LANES**.
 
+## Redesign path (sequence SSoT)
+
+**What to rebuild next, in what order, and when to leave a mode/area:** [**REDESIGN-PATH.md**](./REDESIGN-PATH.md).
+
+That file owns:
+
+- Global area order (Shell → Settings → **Catalog** → Sets → Synergy → Build → Loadouts)
+- Catalog phases C0–C12 (Weapons finish **before** Armor; Universal / pick / outbound later)
+- Exit gates and the **Current pointer**
+
+Vault narrative: ProjectTracker `UX/UX Redesign Path.md` · Catalog board `UX/UX Catalog.md`.
+
+Do **not** open Armor (or another area) as the next full redesign while the path still says Catalog **C6 — Weapons finish** is active.
+
 ## Loop (closed)
 
 ```text
@@ -159,10 +173,10 @@ cd flutter/apps/windows_host
 
 Do **not** invent screenshots. Human OS capture is last resort only.
 
-## First slice
+## First slice (historical)
 
-**Catalog — Weapons browse + detail** (owned + manifest). Armor, Universal, live Set/Synergy outbound, and constrained pick are later.
+**Catalog — Weapons browse + detail** started the area-ux program after Settings-only shell baseline. Armor, Universal, live Set/Synergy outbound, and constrained pick were deliberately later — see full order in [REDESIGN-PATH.md](./REDESIGN-PATH.md).
 
-After the latest implement, drop screenshots under:
+**Active work:** Catalog **C6 weapons finish** (residuals / dual-truth / roll-target polish), not Armor yet.
 
-`docs/ux-redesign/catalog/implementation-shots/001-weapons/`
+Shots live under `docs/ux-redesign/catalog/implementation-shots/<slice-id>/` (e.g. `001-weapons`, `001-browse-chrome`, `003-catalog-roll-targets`).

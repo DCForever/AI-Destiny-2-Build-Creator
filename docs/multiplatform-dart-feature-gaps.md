@@ -13,6 +13,7 @@
 | [multiplatform-dart-ui-fidelity.md](./multiplatform-dart-ui-fidelity.md) | **Host UI fidelity** master (atlas parity, GAP-UI-*, rules matrix, DART-062+) — distinct from cutover |
 | [multiplatform-dart-slice-roadmap.md](./multiplatform-dart-slice-roadmap.md) | Spec Kit (system) backlog + DART-NNN status |
 | [ux-redesign/README.md](./ux-redesign/README.md) | **UI/UX lane** — area-ux-redesign / area-ux-component / area-implement |
+| [ux-redesign/REDESIGN-PATH.md](./ux-redesign/REDESIGN-PATH.md) | **UI redesign sequence** — area/mode order, exit gates, current pointer |
 | [multiplatform-dart-cutover-parity-checklist.md](./multiplatform-dart-cutover-parity-checklist.md) | Program vs production cutover gates (**GO** unchanged by fidelity) |
 | [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md) | Architecture freezes + workstream-lane decision |
 | [ui-polish-tracker.md](./ui-polish-tracker.md) | Pure visual density only (not Spec Kit) |
@@ -711,8 +712,8 @@ Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no 
 | Field | Value |
 | ----- | ----- |
 | **Next Spec Kit (system)** | **DART-073** `weapon-roll-targets` (preferred+avoid pure score; active); also **DART-071/072** pending; **no UI chrome in Spec Kit** |
-| **Next UI/UX** | After system APIs: entity-desc, nested-group, **UX-CATALOG-ROLL-TARGETS** |
-| **Next phase** | P10–P11 **system** + paired UX tracks |
+| **Next UI/UX** | Catalog **C6 weapons finish** (residuals / dual-truth); then **C8 Armor** — full sequence: [ux-redesign/REDESIGN-PATH.md](./ux-redesign/REDESIGN-PATH.md). System-paired chrome (entity-desc, nested-group, roll-targets polish) may interleave; does not authorize Armor early. |
+| **Next phase** | P10–P11 **system** + Catalog weapons finish; Armor redesign after C6 exit |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
 | **Feature inventory** | Aligned + split-lane planned FEATs incl. **FEAT-UI-WEAPON-ROLL-TARGETS** |
 | **unplanned_p0_p1** | *(empty for cutover)* |
