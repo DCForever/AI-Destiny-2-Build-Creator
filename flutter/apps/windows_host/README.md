@@ -59,21 +59,20 @@ Then: **Catalog** (weapons) or Settings → confirm **Redirect URI** shows `http
 
 ### Windows path length (worktrees)
 
-Deep paths under `.grok/worktrees/...` can break MSBuild for plugins (e.g. `flutter_secure_storage_windows` `MSB3491` / missing `.tlog`). Prefer a **short junction** to the Melos root:
+Deep worktree paths break MSBuild for plugins (e.g. `flutter_secure_storage_windows` **MSB3491** / missing `.tlog`) when paths exceed Windows **MAX_PATH 260**.
+
+**Fix:** short junctions via monorepo scripts, then build from the short path:
 
 ```powershell
-# One-time (admin not required for junction)
-cmd /c mklink /J C:\d2f C:\Users\Owner\.grok\worktrees\destiny2buildcreator\flutter-ui-rebuild-2\flutter
-cd C:\d2f\apps\windows_host
-flutter clean
-cd C:\d2f
-dart pub get
-cd C:\d2f\apps\windows_host
-flutter run -d windows
-# or: flutter build windows --debug
+# From monorepo root
+pwsh -File scripts/link-worktree-env.ps1
+pwsh -File scripts/link-worktree-windows-build.ps1 -CleanLongBuilds
+
+cd F:\d2w\entity\apps\windows_host   # or nested / filters
+.\run-windows.ps1
 ```
 
-Building from the long worktree path may fail even when `dart analyze` / `flutter test` pass.
+Do **not** `flutter run` from long `F:\Destiny2Creator-worktrees\...` paths even when `dart test` passes.
 
 ### Flutter Driver / agent screenshots (required for area-implement Verify)
 
