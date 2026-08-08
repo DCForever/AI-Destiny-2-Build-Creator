@@ -515,10 +515,20 @@ class _CatalogPageState extends State<CatalogPage> {
       for (final k in keys)
         RollTargetColumn(
           columnKey: k,
+          // Label helps score resolve socket_N ↔ Label@i across instances.
+          label: _labelFromColumnKey(k),
           preferredPlugHashes: _rollDraftPreferred[k] ?? const {},
           avoidPlugHashes: _rollDraftAvoid[k] ?? const {},
         ),
     ];
+  }
+
+  /// Human label from editor key (`Trait 1@3` → `Trait 1`, `socket_2` → null).
+  String? _labelFromColumnKey(String key) {
+    if (key.startsWith('socket_') || key.startsWith('col_')) return null;
+    final at = key.lastIndexOf('@');
+    if (at > 0) return key.substring(0, at);
+    return key;
   }
 
   CatalogInstanceRollScore _toPresentationScore(RollTargetMatchResult m) {

@@ -82,20 +82,109 @@ bool plugMatchesAcceptable(
   return false;
 }
 
+Set<int> _coercePlugSet(Object? raw) {
+  if (raw == null) return const {};
+  if (raw is int) return raw == 0 ? const {} : {raw};
+  if (raw is Set<int>) return raw.where((h) => h != 0).toSet();
+  if (raw is Iterable) {
+    return {
+      for (final e in raw)
+        if (e is int && e != 0)
+          e
+        else if (e is num && e.toInt() != 0)
+          e.toInt(),
+    };
+  }
+  final p = int.tryParse('$raw');
+  if (p != null && p != 0) return {p};
+  return const {};
+}
+
+/// Union of every plug on the instance (all columns, equipped + reusables).
+Set<int> allPlugsOnInstance(Map<String, Object?> plugsByColumn) {
+  final out = <int>{};
+  for (final raw in plugsByColumn.values) {
+    out.addAll(_coercePlugSet(raw));
+  }
+  return out;
+}
+
+/// Resolve plugs for a target column key, with fallbacks when keys diverge
+/// across instances (socket_N vs Label@i) or are missing.
+Set<int> resolvePlugsForColumnKey(
+  Map<String, Object?> plugsByColumn,
+  String columnKey, {
+  String? label,
+}) {
+  // 1) Exact key
+  if (plugsByColumn.containsKey(columnKey)) {
+    return _coercePlugSet(plugsByColumn[columnKey]);
+  }
+
+  // 2) socket_N ↔ *@N / col_N
+  final socketM = RegExp(r'^socket_(\d+)$').firstMatch(columnKey);
+  if (socketM != null) {
+    final n = socketM.group(1)!;
+    for (final e in plugsByColumn.entries) {
+      if (e.key == 'col_$n' || e.key.endsWith('@$n')) {
+        return _coercePlugSet(e.value);
+      }
+    }
+  }
+
+  // 3) Label@N → socket_N / same base@N
+  final atM = RegExp(r'^(.*)@(\d+)$').firstMatch(columnKey);
+  if (atM != null) {
+    final base = atM.group(1)!;
+    final n = atM.group(2)!;
+    final bySocket = plugsByColumn['socket_$n'];
+    if (bySocket != null) return _coercePlugSet(bySocket);
+    for (final e in plugsByColumn.entries) {
+      if (e.key == 'col_$n') return _coercePlugSet(e.value);
+      if (e.key.toLowerCase() == '${base.toLowerCase()}@$n') {
+        return _coercePlugSet(e.value);
+      }
+    }
+  }
+
+  // 4) Unique label / kind prefix match
+  final candidates = <String>{
+    if (label != null && label.trim().isNotEmpty) label.trim().toLowerCase(),
+    columnKey.toLowerCase(),
+    if (atM != null) atM.group(1)!.toLowerCase(),
+  };
+  final hits = <MapEntry<String, Object?>>[];
+  for (final e in plugsByColumn.entries) {
+    final k = e.key.toLowerCase();
+    final base = k.contains('@') ? k.split('@').first : k;
+    for (final c in candidates) {
+      if (c.isEmpty) continue;
+      if (k == c || base == c || k.startsWith('$c@') || k.startsWith('l:$c')) {
+        hits.add(e);
+        break;
+      }
+    }
+  }
+  if (hits.length == 1) return _coercePlugSet(hits.first.value);
+
+  // 5) Unresolved — empty (caller may fall back to full instance union)
+  return const {};
+}
+
 /// Score one instance's plugs against a roll target.
 ///
 /// [plugsByColumn]: columnKey → plug hash(es) on that instance for the column.
-/// Accepts a single equipped hash (`int`) or a set of equipped + reusable plugs
-/// (`Set<int>` / `Iterable<int>`).
+/// Accepts a single equipped hash (`int`) or a set of equipped + reusable plugs.
 ///
 /// **Dual segs N/M** (DBR-IDL-002/005): **one credit per column** with preferred
-/// multi-picks — any listed preferred on this copy (equipped or reusable)
-/// matches that column. M = columns with preferred; N = matched columns.
-/// Multi-pick alternatives in one column do **not** inflate M (avoids 3/16 when
-/// the user marked 6 columns / 6 ideal slots).
+/// multi-picks. Multi-pick is multi-**accept**: any listed preferred **on this
+/// copy** (any socket) matches that ideal slot. M is not inflated by alternatives.
 ///
-/// **Av k** (DBR-IDL-003/006): one hit per column with avoid multi-picks when
-/// any listed avoid is on this copy.
+/// **Av k**: one hit per avoid column when any listed avoid is on this copy.
+///
+/// Matching uses column-key resolution with fallbacks, then **whole-copy plug
+/// presence** so scores stay correct when socket keys differ across instances
+/// (e.g. 525 vs 487 → 0/4 false miss).
 RollTargetMatchResult scoreInstanceAgainstTarget(
   WeaponRollTarget target,
   Map<String, Object?> plugsByColumn, {
@@ -108,24 +197,7 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
   final preferredByColumn = <String, PreferredColumnState>{};
   final avoidByColumn = <String, AvoidColumnState>{};
 
-  Set<int> plugsIn(String key) {
-    final raw = plugsByColumn[key];
-    if (raw == null) return const {};
-    if (raw is int) return raw == 0 ? const {} : {raw};
-    if (raw is Set<int>) return raw.where((h) => h != 0).toSet();
-    if (raw is Iterable) {
-      return {
-        for (final e in raw)
-          if (e is int && e != 0)
-            e
-          else if (e is num && e.toInt() != 0)
-            e.toInt(),
-      };
-    }
-    final p = int.tryParse('$raw');
-    if (p != null && p != 0) return {p};
-    return const {};
-  }
+  final allPlugs = allPlugsOnInstance(plugsByColumn);
 
   bool anyPlugMatches(Set<int> instancePlugs, Set<int> acceptable) {
     for (final plug in instancePlugs) {
@@ -136,14 +208,25 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
     return false;
   }
 
+  /// Plugs to test for a column: resolved column set, or whole copy if key miss.
+  Set<int> plugsForColumn(RollTargetColumn col) {
+    final resolved = resolvePlugsForColumnKey(
+      plugsByColumn,
+      col.columnKey,
+      label: col.label,
+    );
+    // Key miss or empty socket → still match preferred/avoid by presence on copy.
+    if (resolved.isEmpty && allPlugs.isNotEmpty) return allPlugs;
+    return resolved;
+  }
+
   for (final col in target.columns) {
     final key = col.columnKey;
-    final instancePlugs = plugsIn(key);
+    final instancePlugs = plugsForColumn(col);
 
     if (col.preferredPlugHashes.isEmpty) {
       preferredByColumn[key] = PreferredColumnState.unscored;
     } else {
-      // Column-level multi-accept: any preferred on this copy → match.
       preferredScored++;
       if (anyPlugMatches(instancePlugs, col.preferredPlugHashes)) {
         preferredMatched++;
@@ -156,7 +239,6 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
     if (col.avoidPlugHashes.isEmpty) {
       avoidByColumn[key] = AvoidColumnState.unscored;
     } else {
-      // Column-level multi-reject: any avoid on this copy → hit.
       avoidScored++;
       if (anyPlugMatches(instancePlugs, col.avoidPlugHashes)) {
         avoidHits++;

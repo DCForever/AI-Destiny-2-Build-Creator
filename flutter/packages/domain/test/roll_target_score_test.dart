@@ -209,6 +209,49 @@ void main() {
       expect(m.preferredScored, 6);
       expect(m.preferredRatio, closeTo(0.5, 0.001));
     });
+
+    test('key mismatch across instances still scores by plug presence', () {
+      // Target saved under socket_* keys (instance A); instance B only has Label@i.
+      final t = WeaponRollTarget(
+        id: '1',
+        userId: 'u',
+        weaponKey: '100',
+        name: 'PvE',
+        columns: const [
+          RollTargetColumn(
+            columnKey: 'socket_0',
+            label: 'Barrel',
+            preferredPlugHashes: {10},
+          ),
+          RollTargetColumn(
+            columnKey: 'socket_1',
+            label: 'Magazine',
+            preferredPlugHashes: {20},
+          ),
+          RollTargetColumn(
+            columnKey: 'socket_2',
+            label: 'Trait 1',
+            preferredPlugHashes: {30},
+          ),
+          RollTargetColumn(
+            columnKey: 'socket_3',
+            label: 'Trait 2',
+            preferredPlugHashes: {40},
+            avoidPlugHashes: {49},
+          ),
+        ],
+      );
+      // Instance B: different key scheme, but has 10,20,30 on copy (not 40).
+      final m = scoreInstanceAgainstTarget(t, {
+        'Barrel@0': {10, 11},
+        'Magazine@1': {20},
+        'Trait 1@2': {30, 31},
+        'Trait 2@3': {41, 49}, // avoid hit; preferred 40 miss
+      });
+      expect(m.preferredScored, 4);
+      expect(m.preferredMatched, 3); // not 0/4 from key miss
+      expect(m.avoidHits, 1);
+    });
   });
 
   group('rankOwnedAgainstTarget', () {
