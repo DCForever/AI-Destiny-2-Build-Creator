@@ -8,6 +8,7 @@ library;
 
 export 'src/adapters/hard_constraints_adapters.dart';
 export 'src/adapters/mod_energy.dart';
+export 'src/catalog/canonical_order.dart';
 export 'src/catalog/catalog_browse_mode.dart';
 export 'src/catalog/catalog_item.dart';
 export 'src/catalog/catalog_projector.dart';

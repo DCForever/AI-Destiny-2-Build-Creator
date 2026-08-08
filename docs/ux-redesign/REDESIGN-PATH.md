@@ -90,7 +90,7 @@ Catalog is the **active deep redesign**. Modes are sequential; **weapons residua
 | **C4** | Weapon instance strip | Power chips, multi-copy honesty | **landed** / residual polish as needed | `002-weapon-instance-strip` |
 | **C5** | Weapon roll targets | Preferred + avoid, rank owned, exotic excluded | **landed** / chrome polish active | `003-catalog-roll-targets` · vault [[UX Catalog — Weapon Roll Targets]] |
 | **C6** | **Weapons finish queue** | Residual bugs + optional weapons features | **active** | Vault [[UX Catalog — Weapons]] residuals · uncommitted polish · open dual-truth (e.g. craft ON) |
-| **C7** | Catalog system-paired UX | Nested group chrome, entity 1+3 desc (after DART-072 / DART-071) | **planned** (may interleave in C6) | `UX-CATALOG-NESTED-GROUP`, `UX-CATALOG-ENTITY-DESC` |
+| **C7** | Catalog system-paired UX | Nested group chrome, entity 1+3 desc (after DART-072 / DART-071) | **active interleave** — nested group UX brief locked (005); entity-desc still after DART-071 | `UX-CATALOG-NESTED-GROUP` · `005-catalog-nested-groupby-brief.md`; `UX-CATALOG-ENTITY-DESC` pending |
 | **C8** | **Armor redesign** | Armor grid + detail (stats labeled base/live, energy, mods, set bonus, exotic) | **blocked on C6 exit** | No brief/mockups yet · product [[Destiny Armor]] |
 | **C9** | **Universal redesign** | Mixed-kind search + shared-lifecycle Set/Synergy CTAs (BR-CAT-009*) | **later** | Keep live CTAs; do not stub regress |
 | **C10** | Constrained pick embed | Set/Build fill locks (slot, class, exotic, set type) | **later** | Shared pick chrome; hard domain rules |
@@ -165,12 +165,12 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | Field | Value |
 | --- | --- |
 | **Active area** | Catalog |
-| **Active Catalog phase** | **C6 — Weapons finish queue** |
+| **Active Catalog phase** | **C6 — Weapons finish queue** + **C7 interleave** nested group UX (005 brief locked → area-implement) |
 | **Do not start yet** | C8 Armor full redesign; C9 Universal redesign |
 | **Landed (C6 component)** | **CatalogFilterCollections** — system + chrome on main; Capture dual-truth optional |
-| **In flight (C6 / C7)** | Entity info hotspot + nested group-by (parallel worktrees / uncommitted mockups) |
-| **Next full redesign slice** | **C8 Armor** (after C6 exit; brief/mockups prefer `005-*`+), unless human inserts more C7 first |
-| **Open weapons residual board** | Vault `UX/UX Catalog — Weapons.md` · repo `DUAL-TRUTH-GAPS.md` · uncommitted catalog chrome polish |
+| **Landed / landing (C6–C7)** | EntityInfoHotspot + CatalogNestedGroupBy (worktree merge to main) |
+| **Next full redesign slice** | **C8 Armor** (after C6 exit), unless human inserts more C7 first |
+| **Open weapons residual board** | Vault `UX/UX Catalog — Weapons.md` · repo `DUAL-TRUTH-GAPS.md` · residual polish |
 | **Next area after Catalog** | Sets (phase 3) |
 
 ---
@@ -206,5 +206,6 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | --- | --- |
 | 2026-08-07 | Initial path: global area order; Catalog C0–C12; C6 weapons finish active; Armor blocked until C6 exit |
 | 2026-08-08 | C6 active work: roll-target **plug-level N/M** quality score + column-level perfect tint (Duty Bound-style `3/6`) |
-| 2026-08-08 | C6 optional: filter collections system + chrome landed on main; Armor renumbered to prefer `005-*` when C8 starts |
+| 2026-08-08 | C6 optional: filter collections system + chrome landed on main |
 | 2026-08-08 | Principle: **larger UX always uses workflows** (`area-ux-redesign` / `area-ux-component` → `area-implement`); no ad-hoc chrome after system APIs |
+| 2026-08-08 | C7: DART-072 system + **005 CatalogNestedGroupBy** chrome; EntityInfoHotspot chrome parallel land |

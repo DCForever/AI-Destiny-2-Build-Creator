@@ -294,15 +294,15 @@ class _CatalogPageState extends State<CatalogPage> {
     }
   }
 
-  List<CatalogGroup> _groupedResults() {
-    return groupCatalogItems(
+  List<CatalogGroupNode> _nestedResults() {
+    return groupCatalogItemsNested(
       _results,
       List<CatalogGroupDimension>.from(_groupBy),
     );
   }
 
-  List<CatalogFamilyGroup> _groupedFamilies() {
-    return groupWeaponFamilyBrowse(
+  List<CatalogFamilyGroupNode> _nestedFamilies() {
+    return groupWeaponFamilyBrowseNested(
       _families,
       List<CatalogGroupDimension>.from(_groupBy),
     );
@@ -930,7 +930,18 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   void _jumpToGroup(String key) {
+    // Re-click JUMP on a fully open path → collapse (view-only; BR-CAT-007).
+    if (isCatalogGroupPathFullyOpen(key, _collapsedGroups)) {
+      setState(() {
+        _collapsedGroups.add(key);
+        _outlineActiveKey = key;
+      });
+      return;
+    }
     setState(() {
+      for (final a in catalogGroupAncestorKeys(key)) {
+        _collapsedGroups.remove(a);
+      }
       _collapsedGroups.remove(key);
       _outlineActiveKey = key;
     });
@@ -946,6 +957,51 @@ class _CatalogPageState extends State<CatalogPage> {
         );
       }
     });
+  }
+
+  void _onOutlineScrollSpy(String key) {
+    if (_outlineActiveKey == key) return;
+    setState(() => _outlineActiveKey = key);
+  }
+
+  void _ensureGroupAnchors(Iterable<String> keys) {
+    for (final k in keys) {
+      _groupAnchorKeys.putIfAbsent(k, GlobalKey.new);
+    }
+  }
+
+  List<CatalogGroupOutlineEntry> _outlineEntriesForFamilies(
+    List<CatalogFamilyGroupNode> roots,
+  ) {
+    final dims = List<CatalogGroupDimension>.from(_groupBy);
+    return [
+      for (final row in flattenAllFamilyGroupNodes(roots))
+        CatalogGroupOutlineEntry(
+          key: row.node.key,
+          label: row.node.label,
+          count: row.node.count,
+          depth: row.depth,
+          dimension: catalogGroupDimensionAt(dims, row.depth),
+          collapsedHint: _collapsedGroups.contains(row.node.key),
+        ),
+    ];
+  }
+
+  List<CatalogGroupOutlineEntry> _outlineEntriesForItems(
+    List<CatalogGroupNode> roots,
+  ) {
+    final dims = List<CatalogGroupDimension>.from(_groupBy);
+    return [
+      for (final row in flattenAllCatalogGroupNodes(roots))
+        CatalogGroupOutlineEntry(
+          key: row.node.key,
+          label: row.node.label,
+          count: row.node.count,
+          depth: row.depth,
+          dimension: catalogGroupDimensionAt(dims, row.depth),
+          collapsedHint: _collapsedGroups.contains(row.node.key),
+        ),
+    ];
   }
 
   void _openSortGroupSheet() {
@@ -1926,15 +1982,16 @@ class _CatalogPageState extends State<CatalogPage> {
         hasLocalOwned || widget.services.oauthSession.isSignedIn;
 
     if (isWeapons) {
-      final fGroups = _groupedFamilies();
       final useGroupHeaders = _groupBy.isNotEmpty;
-      // Ensure stable GlobalKeys for outline jump.
+      final fTree =
+          useGroupHeaders ? _nestedFamilies() : const <CatalogFamilyGroupNode>[];
       if (useGroupHeaders) {
-        for (final g in fGroups) {
-          _groupAnchorKeys.putIfAbsent(g.key, GlobalKey.new);
-        }
+        _ensureGroupAnchors([
+          for (final row in flattenAllFamilyGroupNodes(fTree)) row.node.key,
+        ]);
       }
-      final showOutline = useGroupHeaders && fGroups.length >= 2;
+      // Outline when ≥2 top-level groups (same gate as flat).
+      final showOutline = useGroupHeaders && fTree.length >= 2;
       final grid = CatalogWeaponsGrid(
         families: _families,
         selectedHash: _selected?.hash,
@@ -1946,19 +2003,12 @@ class _CatalogPageState extends State<CatalogPage> {
           icon: family.cardItem.icon,
           size: 36,
         ),
-        familyGroups: useGroupHeaders
-            ? [
-                for (final group in fGroups)
-                  (
-                    key: group.key,
-                    label: group.label,
-                    families: group.families,
-                  ),
-              ]
-            : null,
+        familyTree: useGroupHeaders ? fTree : null,
+        groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
         collapsedGroupKeys: Set<String>.from(_collapsedGroups),
         onToggleGroup: _toggleGroupCollapse,
         groupKeys: _groupAnchorKeys,
+        onActiveGroupChanged: showOutline ? _onOutlineScrollSpy : null,
       );
       if (!showOutline) return grid;
       return Row(
@@ -1967,10 +2017,7 @@ class _CatalogPageState extends State<CatalogPage> {
         children: [
           Expanded(child: grid),
           CatalogGroupOutlineRail(
-            groups: [
-              for (final g in fGroups)
-                (key: g.key, label: g.label, count: g.families.length),
-            ],
+            groups: _outlineEntriesForFamilies(fTree),
             activeKey: _outlineActiveKey,
             onJump: _jumpToGroup,
           ),
@@ -1978,14 +2025,16 @@ class _CatalogPageState extends State<CatalogPage> {
       );
     }
 
-    final groups = _groupedResults();
     final useGroupHeaders = _groupBy.isNotEmpty;
+    final iTree =
+        useGroupHeaders ? _nestedResults() : const <CatalogGroupNode>[];
     if (useGroupHeaders) {
-      for (final g in groups) {
-        _groupAnchorKeys.putIfAbsent(g.key, GlobalKey.new);
-      }
+      _ensureGroupAnchors([
+        for (final row in flattenAllCatalogGroupNodes(iTree)) row.node.key,
+      ]);
     }
-    return CatalogWeaponsGrid(
+    final showOutline = useGroupHeaders && iTree.length >= 2;
+    final grid = CatalogWeaponsGrid(
       items: _results,
       selectedHash: _selected?.hash,
       showOwned: showOwned,
@@ -1995,19 +2044,25 @@ class _CatalogPageState extends State<CatalogPage> {
         icon: item.icon,
         size: 36,
       ),
-      groups: useGroupHeaders
-          ? [
-              for (final group in groups)
-                (
-                  key: group.key,
-                  label: group.label,
-                  items: group.items,
-                ),
-            ]
-          : null,
+      itemTree: useGroupHeaders ? iTree : null,
+      groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
       collapsedGroupKeys: Set<String>.from(_collapsedGroups),
       onToggleGroup: _toggleGroupCollapse,
       groupKeys: _groupAnchorKeys,
+      onActiveGroupChanged: showOutline ? _onOutlineScrollSpy : null,
+    );
+    if (!showOutline) return grid;
+    return Row(
+      key: const Key('catalog_grid_with_outline'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: grid),
+        CatalogGroupOutlineRail(
+          groups: _outlineEntriesForItems(iTree),
+          activeKey: _outlineActiveKey,
+          onJump: _jumpToGroup,
+        ),
+      ],
     );
   }
 

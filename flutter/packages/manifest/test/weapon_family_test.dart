@@ -277,6 +277,41 @@ void main() {
     });
   });
 
+  group('groupWeaponFamilyBrowseNested', () {
+    test('nested slot→element uses segment labels + path keys', () {
+      final families = groupWeaponFamilies([
+        const CatalogItem(
+          hash: 1,
+          name: 'A',
+          slot: 'Energy',
+          element: 'Solar',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+        ),
+        const CatalogItem(
+          hash: 2,
+          name: 'B',
+          slot: 'Energy',
+          element: 'Arc',
+          itemTypeName: 'Auto Rifle',
+          isExotic: false,
+        ),
+      ]);
+      final tree = groupWeaponFamilyBrowseNested(
+        families,
+        const [CatalogGroupDimension.slot, CatalogGroupDimension.element],
+      );
+      expect(tree, hasLength(1));
+      expect(tree.single.label, 'Energy');
+      expect(tree.single.count, 2);
+      expect(tree.single.children.map((c) => c.label).toSet(), {'Arc', 'Solar'});
+      expect(
+        tree.single.children.map((c) => c.key).toSet(),
+        {'Energy · Arc', 'Energy · Solar'},
+      );
+    });
+  });
+
   group('filterWeaponFamilies', () {
     test('family visible if any member matches; exclude-all drops', () {
       final families = groupWeaponFamilies([

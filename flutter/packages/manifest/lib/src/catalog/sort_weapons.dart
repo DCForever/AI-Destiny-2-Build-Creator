@@ -1,11 +1,16 @@
+import 'canonical_order.dart';
 import 'catalog_item.dart';
 import 'sort_by_name.dart';
 
 /// Slot order for weapons default sort (Kinetic → Energy → Power, then rest).
-const List<String> kWeaponSlotSortOrder = ['Kinetic', 'Energy', 'Power'];
+///
+/// Alias of [kCatalogSlotOrder] for existing call sites.
+const List<String> kWeaponSlotSortOrder = kCatalogSlotOrder;
 
 /// Ammo order for weapons default sort (Primary → Special → Heavy, then rest).
-const List<String> kWeaponAmmoSortOrder = ['Primary', 'Special', 'Heavy'];
+///
+/// Alias of [kCatalogAmmoOrder] for existing call sites.
+const List<String> kWeaponAmmoSortOrder = kCatalogAmmoOrder;
 
 /// Ordered sort keys for weapons browse (GAP-CAT-BROWSE-003).
 ///
@@ -58,9 +63,14 @@ int _compareBySortKey(CatalogItem a, CatalogItem b, CatalogSortKey key) {
         _indexOrTail(kWeaponAmmoSortOrder, b.ammo),
       );
     case CatalogSortKey.archetype:
-      final archA = (a.itemTypeName ?? a.frame ?? '').toLowerCase();
-      final archB = (b.itemTypeName ?? b.frame ?? '').toLowerCase();
-      final typeCmp = archA.compareTo(archB);
+      // Weapon type (itemTypeName): Rocket Launcher always last among known types.
+      final typeA = a.itemTypeName ?? '';
+      final typeB = b.itemTypeName ?? '';
+      final typeCmp = compareCanonicalLabels(
+        typeA,
+        typeB,
+        kCatalogWeaponArchetypeOrder,
+      );
       if (typeCmp != 0) return typeCmp;
       final frameA = (a.frame ?? '').toLowerCase();
       final frameB = (b.frame ?? '').toLowerCase();

@@ -172,7 +172,7 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | ID | Feature | Product evidence | Dart today | Plan | Slices / GAP |
 | -- | ------- | ---------------- | ---------- | ---- | ------------ |
 | **FEAT-UI-ENTITY-DESC** | Destiny **entity description** capability: shared presentation **model** + **1+3** chrome (L1 hotspot + L2 popover/sheet) | DBR-UI-001/005/006; DIM perk popup; Next `EntityHotspot`/`InfoHotspot` | Sparse inline desc + name tooltips; no shared model or L1→L2 stack | **planned** (split) | **GAP-UI-DESC-01**: **system** **DART-071** (entity presentation ref + resolve); **UX** `UX-CATALOG-ENTITY-DESC` (area-ux 1+3 chrome). Soft never auto-applies; no invent text |
-| **FEAT-UI-CATALOG-NESTED-GROUP** | Catalog **multi-level (nested) group-by**: ordered dims form a **tree** (Energy → Arc → …), not flat `A · B · C` headers | Product UX request 2026-08-06; BR-CAT-007 view-only collapse | Flat composite multi-dim group-by (DART-062) | **planned** (split) | **GAP-UI-CATALOG-11**: **system** **DART-072** (pure nested tree + rollups); **UX** `UX-CATALOG-NESTED-GROUP` (nested headers + hierarchical JUMP). BR-CAT-006 unchanged |
+| **FEAT-UI-CATALOG-NESTED-GROUP** | Catalog **multi-level (nested) group-by**: ordered dims form a **tree** (Energy → Arc → …), not flat `A · B · C` headers | Product UX request 2026-08-06; BR-CAT-007 view-only collapse | Flat composite multi-dim group-by (DART-062) | **in progress** (sys done; UX brief locked) | **GAP-UI-CATALOG-11**: **system** DART-072 **landed**; **UX** `UX-CATALOG-NESTED-GROUP` brief `005-catalog-nested-groupby-brief.md` → area-implement. BR-CAT-006 unchanged |
 | **FEAT-UI-WEAPON-ROLL-TARGETS** | Catalog **weapon roll targets**: named multi-profiles with **preferred** + **avoid** multi-pick; rank owned by preferred then avoid hits; **exotics excluded** (fixed perks, DBR-IDL-009) | Product plan 2026-08-07 (Catalog-first; not equip-ready “wishlist”) | Pure score/persist + Catalog chrome shipped (003); exotic detail hides roll-target UI | **planned** (split) | **GAP-UI-ROLL-01** / **DART-073** + **UX-CATALOG-ROLL-TARGETS**. Soft display only; soft never auto-applies |
 
 ### Inventory planning coverage check
@@ -648,23 +648,25 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 
 **Evidence:** live flat headers + JUMP; `group_catalog.dart` `parts.join(' · ')`.
 
-#### Track A — **System / Spec Kit: DART-072** `catalog-nested-group-tree` (pending)
+#### Track A — **System / Spec Kit: DART-072** `catalog-nested-group-tree` (**landed** `e711190`)
 
-| Deliverable | Exit criteria |
-| ----------- | ------------- |
-| Pure nested group tree API (path segments, rollup counts, children / leaf items or families) from ordered `CatalogGroupDimension` | Pure tests: nest by slot→element; reorder re-parents; single dim ≡ flat list; filters applied **before** group only |
-| Collapse **state helpers** pure if useful (path keys expanded set); no widgets | Parent path collapse semantics unit-tested without Flutter |
-| Armor dims share same pure API | No weapons-only fork of tree logic |
-| Keep or wrap existing flat API until UX migrates | Compatibility note; no silent break of current callers without follow-up UX |
+| Deliverable | Exit criteria | Status |
+| ----------- | ------------- | ------ |
+| Pure nested group tree API (path segments, rollup counts, children / leaf items or families) from ordered `CatalogGroupDimension` | Pure tests: nest by slot→element; reorder re-parents; single dim ≡ flat list; filters applied **before** group only | **done** |
+| Collapse **state helpers** pure if useful (path keys expanded set); no widgets | Parent path collapse semantics unit-tested without Flutter | **done** |
+| Armor dims share same pure API | No weapons-only fork of tree logic | **done** |
+| Keep or wrap existing flat API until UX migrates | Compatibility note; no silent break of current callers without follow-up UX | **done** (flat retained) |
 
 **Not in DART-072:** nested header chrome, outline JUMP UI, Widgetbook density, host layout.
 
-#### Track B — **UI/UX: UX-CATALOG-NESTED-GROUP** (after Track A)
+#### Track B — **UI/UX: UX-CATALOG-NESTED-GROUP** (**structure landed** 2026-08-08 → Capture pending)
 
-| Process | `area-ux-component` / redesign → brief → implement → Capture |
+| Process | `area-ux-component` → mockups approved → brief → implement → Capture |
 | ------- | ------------------------------------------------------------ |
-| Scope | Nested headers (indent/weight); per-level chevrons; hierarchical outline JUMP; leaf grids reuse cards; consume pure tree |
-| Exit | Energy collapses all Energy subtrees; Arc under Energy collapses Arc only; JUMP never filters; dual-truth vs brief |
+| Scope | Nested headers (indent/weight); per-level chevrons; hierarchical outline JUMP; scroll-spy active; JUMP re-click collapse; icons when dim has official art; leaf grids reuse cards; consume pure tree |
+| Artifacts | `005-*.html` · brief · MOCKUP-APPROVED · `005-catalog-nested-groupby-implement-report.md` |
+| Structure | Host + ui_flutter nested tree; tests green |
+| Exit remaining | Dual-truth Capture vs mock; Energy/Arc collapse + JUMP never filters in live PNGs |
 
 **Related:** **FEAT-UI-CATALOG-NESTED-GROUP**; predecessor GAP-UI-CATALOG-02 (flat multi-dim closed); BR-CAT-006/007.
 

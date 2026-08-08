@@ -467,8 +467,18 @@ void main() {
             height: 300,
             child: CatalogGroupOutlineRail(
               groups: const [
-                (key: 'Kinetic', label: 'Kinetic', count: 2),
-                (key: 'Energy', label: 'Energy', count: 1),
+                CatalogGroupOutlineEntry(
+                  key: 'Kinetic',
+                  label: 'Kinetic',
+                  count: 2,
+                  dimension: CatalogGroupDimension.slot,
+                ),
+                CatalogGroupOutlineEntry(
+                  key: 'Energy',
+                  label: 'Energy',
+                  count: 1,
+                  dimension: CatalogGroupDimension.slot,
+                ),
               ],
               onJump: (k) => jumped = k,
             ),
@@ -479,6 +489,144 @@ void main() {
       await tester.tap(find.byKey(const Key('catalog_outline_jump_Energy')));
       await tester.pump();
       expect(jumped, 'Energy');
+    });
+
+    testWidgets('nested Slot→Element headers + parent collapse hides subtree',
+        (tester) async {
+      final families = groupWeaponFamilies([
+        const CatalogItem(
+          hash: 1,
+          name: 'A',
+          slot: 'Energy',
+          element: 'Solar',
+          itemTypeName: 'Hand Cannon',
+          isExotic: false,
+        ),
+        const CatalogItem(
+          hash: 2,
+          name: 'B',
+          slot: 'Energy',
+          element: 'Arc',
+          itemTypeName: 'Auto Rifle',
+          isExotic: false,
+        ),
+        const CatalogItem(
+          hash: 3,
+          name: 'C',
+          slot: 'Kinetic',
+          element: 'Kinetic',
+          itemTypeName: 'Pulse Rifle',
+          isExotic: false,
+        ),
+      ]);
+      const dims = [
+        CatalogGroupDimension.slot,
+        CatalogGroupDimension.element,
+      ];
+      final tree = groupWeaponFamilyBrowseNested(families, dims);
+      expect(tree.length, greaterThanOrEqualTo(2));
+
+      // Energy parent key is segment-only at root.
+      final energy = tree.firstWhere((n) => n.label == 'Energy');
+      expect(energy.key, 'Energy');
+      expect(energy.isExpandable, isTrue);
+      expect(energy.children, isNotEmpty);
+      // Child segment label is element only, path uses · separator.
+      final solar = energy.children.firstWhere((n) => n.label == 'Solar');
+      expect(solar.key, 'Energy · Solar');
+      expect(solar.label, 'Solar');
+
+      var collapsed = <String>{};
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _wrap(
+              SizedBox(
+                width: 700,
+                height: 560,
+                child: CatalogWeaponsGrid(
+                  families: families,
+                  familyTree: tree,
+                  groupDimensions: dims,
+                  collapsedGroupKeys: collapsed,
+                  onToggleGroup: (k) {
+                    setState(() {
+                      if (collapsed.contains(k)) {
+                        collapsed = {...collapsed}..remove(k);
+                      } else {
+                        collapsed = {...collapsed, k};
+                      }
+                    });
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('catalog_group_header_Energy')), findsOneWidget);
+      expect(
+        find.byKey(const Key('catalog_group_header_Energy · Solar')),
+        findsOneWidget,
+      );
+      // Segment labels (not composite ENERGY · SOLAR as sole chrome).
+      expect(find.textContaining('SOLAR'), findsWidgets);
+      expect(find.byKey(Key('catalog_family_${solar.families.first.key}')),
+          findsOneWidget);
+
+      // Collapse parent Energy — child headers + leaf cards hidden.
+      await tester.tap(find.byKey(const Key('catalog_group_header_Energy')));
+      await tester.pump();
+      expect(
+        find.byKey(const Key('catalog_group_header_Energy · Solar')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(Key('catalog_family_${solar.families.first.key}')),
+        findsNothing,
+      );
+      // Kinetic sibling still visible when not collapsed.
+      expect(
+        find.byKey(const Key('catalog_group_header_Kinetic')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('slot/element headers expose dim icons when mapped',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          Column(
+            children: [
+              CatalogGroupHeader(
+                groupKey: 'Energy',
+                label: 'Energy',
+                count: 3,
+                dimension: CatalogGroupDimension.slot,
+                expanded: true,
+                onToggle: () {},
+              ),
+              CatalogGroupHeader(
+                groupKey: 'Energy · Solar',
+                label: 'Solar',
+                count: 2,
+                depth: 1,
+                dimension: CatalogGroupDimension.element,
+                expanded: true,
+                onToggle: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('catalog_group_icon_Energy')), findsOneWidget);
+      expect(
+        find.byKey(const Key('catalog_group_icon_Energy · Solar')),
+        findsOneWidget,
+      );
     });
   });
 

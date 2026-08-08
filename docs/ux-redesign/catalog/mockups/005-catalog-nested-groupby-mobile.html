@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catalog · CatalogNestedGroupBy — Mobile mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --rarity-exotic: #ceae33;
+      --rarity-legendary-edge: #c49ad4;
+      --el-kinetic: #ffffff;
+      --el-arc: #85c5ec;
+      --el-solar: #f2721b;
+      --el-void: #8b7cf0;
+      --el-stasis: #4d88ff;
+      --el-strand: #35e366;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --card-h: 112px;
+      --depth-indent: 12px;
+      --phone-w: 390px;
+      --slot-power: #d4b06a;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #03030a;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      width: 100%;
+      max-width: 480px;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .pill.ok { border-color: rgba(46, 230, 166, 0.4); color: var(--success); }
+    .pill.gap { border-color: rgba(0, 229, 255, 0.35); color: var(--accent); }
+
+    .gap-banner {
+      width: 100%;
+      max-width: 480px;
+      flex: 0 0 auto;
+      padding: 6px 12px;
+      background: rgba(0, 229, 255, 0.05);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .gap-banner strong {
+      color: var(--accent);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* Phone frame */
+    .phone-wrap {
+      flex: 1;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 24px;
+      min-height: 0;
+    }
+    .phone {
+      width: min(100%, var(--phone-w));
+      height: min(720px, calc(100vh - 200px));
+      min-height: 520px;
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 16px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    .frame-bar {
+      flex: 0 0 auto;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .frame-caption {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .frame-caption strong { color: var(--muted); font-weight: 500; }
+    .results-meta {
+      margin-top: 4px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .results-meta strong { color: var(--fg); font-weight: 500; }
+    .match-note {
+      margin-top: 2px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--success);
+    }
+    .match-note.muted { color: var(--muted-dim); }
+
+    /* Sticky outline strip — mobile expression of hierarchical JUMP */
+    .outline-strip {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 6px 8px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .outline-chip {
+      flex-shrink: 0;
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--bg);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .outline-chip:hover { color: var(--fg); border-color: rgba(0, 229, 255, 0.3); }
+    .outline-chip[aria-current="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.35);
+    }
+    .outline-chip .depth-prefix {
+      color: var(--muted-dim);
+      letter-spacing: 0;
+      margin-right: 1px;
+    }
+    .outline-chip .n {
+      color: var(--muted-dim);
+      margin-left: 3px;
+    }
+    .outline-chip.is-collapsed-hint { opacity: 0.72; }
+
+    /* Dimension icons (element/ammo CDN · type silhouette · slot glyph) */
+    .dim-icon {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+    }
+    .dim-icon img {
+      width: 13px;
+      height: 13px;
+      object-fit: contain;
+      display: block;
+    }
+    .dim-icon.glyph {
+      font-family: var(--font-d);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+    .dim-icon.type-ico {
+      width: 16px;
+      height: 9px;
+      background: var(--muted);
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+    }
+    .group-header .dim-icon { width: 16px; height: 16px; }
+    .group-header .dim-icon img { width: 15px; height: 15px; }
+    .group-header .dim-icon.type-ico { width: 20px; height: 10px; }
+    .group-header .dim-icon.glyph { font-size: 10px; }
+
+    .board-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 8px;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* Nested group headers — residual chrome + depth indent */
+    .group-section { margin-bottom: 4px; }
+    .group-section.depth-0 { margin-bottom: 8px; }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      text-align: left;
+      padding: 8px 4px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: linear-gradient(var(--bg) 75%, transparent);
+      min-height: 36px; /* touch target */
+    }
+    .group-header:hover,
+    .group-header:active { color: var(--fg); }
+    .group-header .chev {
+      width: 12px;
+      color: var(--accent);
+      transition: transform 0.12s ease;
+      flex-shrink: 0;
+      display: inline-flex;
+      justify-content: center;
+    }
+    .group-header[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+    .group-header .g-label { min-width: 0; flex: 1; }
+    .group-header .g-count {
+      margin-left: auto;
+      font-family: var(--font-m);
+      font-size: 10px;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--muted-dim);
+      flex-shrink: 0;
+    }
+    .group-header[data-partial="true"] .chev { opacity: 0.85; }
+    .group-header[data-partial="true"] .chev::after {
+      content: "·";
+      color: var(--warn);
+      margin-left: 2px;
+    }
+
+    .group-children[hidden] { display: none !important; }
+    .group-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .group-body[hidden] { display: none !important; }
+
+    .group-header[data-depth="0"] { padding-left: 4px; }
+    .group-header[data-depth="1"] { padding-left: calc(4px + var(--depth-indent)); }
+    .group-header[data-depth="2"] { padding-left: calc(4px + 2 * var(--depth-indent)); }
+    .group-header[data-depth="3"] { padding-left: calc(4px + 3 * var(--depth-indent)); }
+
+    .weapon-card {
+      position: relative;
+      text-align: left;
+      padding: 8px;
+      height: var(--card-h);
+      min-height: var(--card-h);
+      max-height: var(--card-h);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+    .weapon-card.rarity-exotic { border-color: rgba(206, 174, 51, 0.35); }
+    .weapon-card.rarity-legendary { border-left: 2px solid var(--rarity-legendary-edge); }
+    .el-bloom {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--el) 28%, transparent), transparent 70%);
+      pointer-events: none;
+    }
+    .card-top { display: flex; gap: 6px; min-width: 0; }
+    .entity-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 14px;
+    }
+    .card-text { flex: 1; min-width: 0; }
+    .card-name {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-type {
+      display: block;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      margin-top: 1px;
+    }
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: auto;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .slot-letter {
+      width: 16px;
+      height: 16px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 8px;
+    }
+
+    .board-empty,
+    .board-loading {
+      padding: 28px 12px;
+      text-align: center;
+      color: var(--muted);
+      font-family: var(--font-m);
+      font-size: 11px;
+    }
+    .board-empty strong,
+    .board-loading strong {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg);
+      margin-bottom: 8px;
+    }
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .skeleton-card {
+      height: var(--card-h);
+      background: linear-gradient(90deg, var(--surface), var(--raised), var(--surface));
+      background-size: 200% 100%;
+      animation: sk 1.2s ease infinite;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    @keyframes sk {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .notes-panel {
+      width: 100%;
+      max-width: 480px;
+      padding: 0 12px 24px;
+    }
+    .notes-panel h3 {
+      margin: 12px 0 6px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .notes-panel p, .notes-panel li {
+      margin: 0 0 4px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+    .notes-panel ul { margin: 0; padding-left: 14px; }
+    .log {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      max-height: 100px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px;
+      background: var(--surface);
+      white-space: pre-wrap;
+    }
+    .log .ok { color: var(--success); }
+    .log .warn { color: var(--warn); }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-bar">
+    <h1>CatalogNestedGroupBy · Mobile</h1>
+    <span class="meta">Nested headers · path collapse · sticky outline-strip JUMP · BR-CAT-007 view-only</span>
+    <label class="scenario-label" for="scenario">Scenario</label>
+    <select id="scenario" class="scenario-select" aria-label="Demo scenario">
+      <option value="flat-1dim">1 · 1-dim Slot — glyphs + strip JUMP</option>
+      <option value="nested-2dim" selected>2 · 2-dim nested + icons</option>
+      <option value="type-icons">2b · 1-dim Type — silhouettes</option>
+      <option value="parent-collapsed">3 · Parent Energy collapsed</option>
+      <option value="child-collapsed">4 · Child Arc only collapsed</option>
+      <option value="jump-hier">5 · JUMP hierarchical expand+scroll</option>
+      <option value="active-outline">6 · Active strip chip wash</option>
+      <option value="single-group">7 · Single group — no strip</option>
+      <option value="empty">8a · Empty — no group chrome</option>
+      <option value="loading">8b · Loading — skeleton only</option>
+    </select>
+    <div class="pills">
+      <span class="pill gap">GAP-UI-CATALOG-11</span>
+      <span class="pill ok">BR-CAT-006/007</span>
+    </div>
+  </div>
+
+  <div class="gap-banner" role="note">
+    <strong>Mobile</strong> hierarchical JUMP strip · icons when dim applies ·
+    scroll updates active chip · re-click JUMP collapses if open · never filters
+  </div>
+
+  <div class="phone-wrap">
+    <div class="phone" role="application" aria-label="Catalog nested group-by mobile mock">
+      <div class="frame-bar">
+        <div class="frame-caption">Catalog · <strong id="group-dims-label">Slot → Element</strong></div>
+        <div class="results-meta" id="results-meta"><strong>0</strong> families</div>
+        <div class="match-note" id="match-note">match set stable · collapse view-only</div>
+      </div>
+      <nav class="outline-strip" id="outline-strip" hidden aria-label="Group outline jump strip (scroll only — does not filter)"></nav>
+      <div class="board-scroll" id="board" tabindex="-1" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="notes-panel">
+    <h3>Collapsed paths</h3>
+    <p id="collapsed-display"><code>(none — all expanded)</code></p>
+    <h3>Event log</h3>
+    <div class="log" id="event-log">Ready.</div>
+    <h3>Rules</h3>
+    <ul>
+      <li><code>BR-CAT-006</code> collapse never rewrites match set</li>
+      <li><code>BR-CAT-007</code> view-only body visibility</li>
+      <li>Outline gate: ≥2 top-level groups</li>
+      <li>Scroll board → strip highlight follows visible group</li>
+      <li>JUMP open path → collapse again; closed → expand+scroll</li>
+      <li>Icons when dim has art: element/ammo CDN, type silhouette, slot K/E/P</li>
+      <li>Consume DART-072 tree + path helpers (landed)</li>
+    </ul>
+  </div>
+
+  <div class="sr-only" id="announce" aria-live="polite"></div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const FAMILIES = [
+    { id: "hc-sunshot", name: "Sunshot", type: "Hand Cannon", slot: "Energy", element: "Solar", rarity: "exotic", icon: "☀" },
+    { id: "hc-austringer", name: "Austringer", type: "Hand Cannon", slot: "Kinetic", element: "Kinetic", rarity: "legendary", icon: "◈" },
+    { id: "smg-riskrunner", name: "Riskrunner", type: "SMG", slot: "Energy", element: "Arc", rarity: "exotic", icon: "⚡" },
+    { id: "smg-funnelweb", name: "Funnelweb", type: "SMG", slot: "Energy", element: "Void", rarity: "legendary", icon: "◆" },
+    { id: "pulse-outbreak", name: "Outbreak Perfected", type: "Pulse", slot: "Kinetic", element: "Kinetic", rarity: "exotic", icon: "✦" },
+    { id: "pulse-messenger", name: "The Messenger", type: "Pulse", slot: "Kinetic", element: "Kinetic", rarity: "legendary", icon: "◇" },
+    { id: "scout-dead-mans", name: "Dead Man's Tale", type: "Scout", slot: "Kinetic", element: "Kinetic", rarity: "exotic", icon: "◎" },
+    { id: "ar-tarrabah", name: "Tarrabah", type: "Auto Rifle", slot: "Energy", element: "Solar", rarity: "exotic", icon: "▲" },
+    { id: "ar-ammit", name: "Ammit AR2", type: "Auto Rifle", slot: "Energy", element: "Solar", rarity: "legendary", icon: "△" },
+    { id: "gl-witherhoard", name: "Witherhoard", type: "Grenade Launcher", slot: "Kinetic", element: "Kinetic", rarity: "exotic", icon: "☣" },
+    { id: "rl-gjallarhorn", name: "Gjallarhorn", type: "Rocket Launcher", slot: "Power", element: "Solar", rarity: "exotic", icon: "🚀" },
+    { id: "rl-palmyra", name: "Palmyra-B", type: "Rocket Launcher", slot: "Power", element: "Stasis", rarity: "legendary", icon: "▣" },
+    { id: "mg-thunderlord", name: "Thunderlord", type: "Machine Gun", slot: "Power", element: "Arc", rarity: "exotic", icon: "ϟ" },
+    { id: "mg-corrective", name: "Corrective Measure", type: "Machine Gun", slot: "Power", element: "Void", rarity: "legendary", icon: "☰" },
+    { id: "sword-lament", name: "The Lament", type: "Sword", slot: "Power", element: "Solar", rarity: "exotic", icon: "⚔" },
+    { id: "fusion-cartesian", name: "Cartesian Coordinate", type: "Fusion", slot: "Energy", element: "Void", rarity: "legendary", icon: "⬢" },
+    { id: "bow-trinity", name: "Trinity Ghoul", type: "Bow", slot: "Energy", element: "Arc", rarity: "exotic", icon: "🏹" },
+    { id: "trace-divinity", name: "Divinity", type: "Trace Rifle", slot: "Energy", element: "Arc", rarity: "exotic", icon: "◎" },
+  ];
+
+  const EL_CSS = {
+    Kinetic: "var(--el-kinetic)",
+    Arc: "var(--el-arc)",
+    Solar: "var(--el-solar)",
+    Void: "var(--el-void)",
+    Stasis: "var(--el-stasis)",
+    Strand: "var(--el-strand)",
+  };
+
+  const BUNGIE = "https://www.bungie.net/common/destiny2_content/icons/";
+  const TYPE_SVG = "https://cdn.jsdelivr.net/gh/justrealmilk/destiny-icons@master/weapons/";
+
+  const DIM_ICONS = {
+    element: {
+      Kinetic: { kind: "img", src: BUNGIE + "DestinyDamageTypeDefinition_3385a924fd3ccb92c343ade19f19a370.png" },
+      Arc: { kind: "img", src: BUNGIE + "DestinyDamageTypeDefinition_092d066688b879c807c3b460afdd61e6.png" },
+      Solar: { kind: "img", src: BUNGIE + "DestinyDamageTypeDefinition_2a1773e10968f2d088b97c22b22bba9e.png" },
+      Void: { kind: "img", src: BUNGIE + "DestinyDamageTypeDefinition_ceb2f6197dccf3958bb31cc783eb97a0.png" },
+      Stasis: { kind: "img", src: BUNGIE + "DestinyDamageTypeDefinition_530c4c3e7981dc2aefd24fd3293482bf.png" },
+      Strand: { kind: "img", src: BUNGIE + "DestinyDamageTypeDefinition_b2fe51a94f3533f97079dfa0d27a4096.png" },
+    },
+    ammo: {
+      Primary: { kind: "img", src: BUNGIE + "56761c8361e33a367c6fa94f397d8692.png" },
+      Special: { kind: "img", src: BUNGIE + "35e9d5635599be5c0fc306732f881459.png" },
+      Heavy: { kind: "img", src: BUNGIE + "fdcbb78db8f38cec62ec7ca2dbab12cc.png" },
+    },
+    slot: {
+      Kinetic: { kind: "glyph", text: "K", color: "var(--el-kinetic)" },
+      Energy: { kind: "glyph", text: "E", color: "var(--el-solar)" },
+      Power: { kind: "glyph", text: "P", color: "var(--slot-power)" },
+    },
+    type: {
+      "Hand Cannon": { kind: "type", file: "hand_cannon.svg" },
+      "Auto Rifle": { kind: "type", file: "auto_rifle.svg" },
+      Pulse: { kind: "type", file: "pulse_rifle.svg" },
+      "Pulse Rifle": { kind: "type", file: "pulse_rifle.svg" },
+      Scout: { kind: "type", file: "scout_rifle.svg" },
+      "Scout Rifle": { kind: "type", file: "scout_rifle.svg" },
+      SMG: { kind: "type", file: "smg.svg" },
+      "Submachine Gun": { kind: "type", file: "smg.svg" },
+      Bow: { kind: "type", file: "bow.svg" },
+      Shotgun: { kind: "type", file: "shotgun.svg" },
+      "Sniper Rifle": { kind: "type", file: "sniper_rifle.svg" },
+      Fusion: { kind: "type", file: "fusion_rifle.svg" },
+      "Fusion Rifle": { kind: "type", file: "fusion_rifle.svg" },
+      "Trace Rifle": { kind: "type", file: "beam_weapon.svg" },
+      "Grenade Launcher": { kind: "type", file: "grenade_launcher.svg" },
+      "Rocket Launcher": { kind: "type", file: "rocket_launcher.svg" },
+      "Machine Gun": { kind: "type", file: "machinegun.svg" },
+      Sword: { kind: "type", file: "sword_heavy.svg" },
+    },
+  };
+
+  function dimIconHtml(dim, label) {
+    const map = DIM_ICONS[dim];
+    if (!map) return "";
+    const spec = map[label];
+    if (!spec) return "";
+    if (spec.kind === "img") {
+      return `<span class="dim-icon" aria-hidden="true"><img src="${spec.src}" alt="" /></span>`;
+    }
+    if (spec.kind === "glyph") {
+      return `<span class="dim-icon glyph" style="color:${spec.color}" aria-hidden="true">${spec.text}</span>`;
+    }
+    if (spec.kind === "type") {
+      const url = TYPE_SVG + spec.file;
+      return `<span class="dim-icon type-ico" style="-webkit-mask-image:url(${url});mask-image:url(${url})" aria-hidden="true"></span>`;
+    }
+    return "";
+  }
+
+  function pathKey(parts) { return parts.join(" › "); }
+  function parentPath(key) {
+    const i = key.lastIndexOf(" › ");
+    return i === -1 ? null : key.slice(0, i);
+  }
+  function segmentLabel(key) {
+    const parts = key.split(" › ");
+    return parts[parts.length - 1];
+  }
+  function ancestorsOf(key) {
+    const out = [];
+    let p = parentPath(key);
+    while (p) { out.unshift(p); p = parentPath(p); }
+    return out;
+  }
+  function depthPrefix(depth) {
+    if (depth <= 0) return "";
+    return "·".repeat(depth) + " ";
+  }
+
+  function groupCatalogItemsNested(items, dims) {
+    if (!dims.length) return [];
+    function nest(list, dimIndex, pathParts) {
+      if (dimIndex >= dims.length) return [];
+      const field = dims[dimIndex];
+      const buckets = new Map();
+      for (const it of list) {
+        const seg = it[field];
+        if (!buckets.has(seg)) buckets.set(seg, []);
+        buckets.get(seg).push(it);
+      }
+      const order = field === "slot"
+        ? ["Kinetic", "Energy", "Power"]
+        : field === "element"
+          ? ["Kinetic", "Arc", "Solar", "Void", "Stasis", "Strand"]
+          : field === "ammo"
+            ? ["Primary", "Special", "Heavy"]
+            : null;
+      const keys = [...buckets.keys()].sort((a, b) => {
+        if (!order) return a.localeCompare(b);
+        const ia = order.indexOf(a), ib = order.indexOf(b);
+        if (ia === -1 && ib === -1) return a.localeCompare(b);
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+      return keys.map((seg) => {
+        const bucket = buckets.get(seg);
+        const parts = [...pathParts, seg];
+        const key = pathKey(parts);
+        const isLeafDim = dimIndex === dims.length - 1;
+        const children = isLeafDim ? [] : nest(bucket, dimIndex + 1, parts);
+        return {
+          key, label: seg, dim: field, depth: dimIndex, count: bucket.length,
+          items: isLeafDim ? bucket : [], children,
+        };
+      });
+    }
+    return nest(items, 0, []);
+  }
+
+  const state = {
+    scenario: "nested-2dim",
+    dims: ["slot", "element"],
+    matchSet: FAMILIES.slice(),
+    collapsedPaths: new Set(),
+    activeJumpKey: null,
+    view: "results",
+    matchCountSnapshot: FAMILIES.length,
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+
+  function log(msg, kind) {
+    const el = $("#event-log");
+    const t = new Date().toLocaleTimeString();
+    const line = document.createElement("div");
+    if (kind) line.className = kind;
+    line.textContent = `[${t}] ${msg}`;
+    el.prepend(line);
+  }
+  function announce(msg) { $("#announce").textContent = msg; }
+
+  function updateCollapsedDisplay() {
+    const el = $("#collapsed-display");
+    if (!state.collapsedPaths.size) {
+      el.innerHTML = "<code>(none — all expanded)</code>";
+    } else {
+      el.innerHTML = [...state.collapsedPaths].map((k) => `<code>${k}</code>`).join("<br>");
+    }
+  }
+
+  function isExpanded(key) { return !state.collapsedPaths.has(key); }
+
+  function hasCollapsedDescendant(node) {
+    if (!node.children?.length) return false;
+    for (const c of node.children) {
+      if (state.collapsedPaths.has(c.key) || hasCollapsedDescendant(c)) return true;
+    }
+    return false;
+  }
+
+  function togglePath(key) {
+    if (state.collapsedPaths.has(key)) {
+      state.collapsedPaths.delete(key);
+      log(`Expand «${key}» (view-only)`, "ok");
+      announce(`${segmentLabel(key)} expanded`);
+    } else {
+      state.collapsedPaths.add(key);
+      log(`Collapse «${key}» · match set still ${state.matchSet.length}`, "ok");
+      announce(`${segmentLabel(key)} collapsed`);
+    }
+    render();
+  }
+
+  /** Path is open when this node and all ancestors are expanded (visible on board). */
+  function isPathFullyOpen(key) {
+    if (state.collapsedPaths.has(key)) return false;
+    for (const a of ancestorsOf(key)) {
+      if (state.collapsedPaths.has(a)) return false;
+    }
+    return true;
+  }
+
+  let suppressScrollSpyUntil = 0;
+  let scrollSpyRaf = 0;
+
+  function paintOutlineActive() {
+    const strip = $("#outline-strip");
+    if (!strip || strip.hidden) return;
+    let activeBtn = null;
+    strip.querySelectorAll("[data-jump]").forEach((btn) => {
+      const on = btn.getAttribute("data-jump") === state.activeJumpKey;
+      if (on) {
+        btn.setAttribute("aria-current", "true");
+        activeBtn = btn;
+      } else {
+        btn.removeAttribute("aria-current");
+      }
+    });
+    // Keep active chip in the horizontal strip only (do not scroll the board).
+    if (activeBtn) {
+      const target =
+        activeBtn.offsetLeft - strip.clientWidth / 2 + activeBtn.clientWidth / 2;
+      strip.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+    }
+  }
+
+  function updateActiveFromScroll(board) {
+    if (Date.now() < suppressScrollSpyUntil) return;
+    if (state.view !== "results") return;
+    const sections = [...board.querySelectorAll("[data-group-key]")];
+    if (!sections.length) return;
+    const rootTop = board.getBoundingClientRect().top;
+    const threshold = 48;
+    let active = sections[0].getAttribute("data-group-key");
+    for (const sec of sections) {
+      const top = sec.getBoundingClientRect().top - rootTop;
+      if (top <= threshold) active = sec.getAttribute("data-group-key");
+      else break;
+    }
+    if (active !== state.activeJumpKey) {
+      state.activeJumpKey = active;
+      paintOutlineActive();
+    }
+  }
+
+  function bindScrollSpy(board) {
+    board.onscroll = () => {
+      if (scrollSpyRaf) cancelAnimationFrame(scrollSpyRaf);
+      scrollSpyRaf = requestAnimationFrame(() => {
+        scrollSpyRaf = 0;
+        updateActiveFromScroll(board);
+      });
+    };
+  }
+
+  function jumpTo(key) {
+    // Re-click JUMP on an already-open path → collapse (view-only; does not filter).
+    if (isPathFullyOpen(key)) {
+      state.collapsedPaths.add(key);
+      state.activeJumpKey = key;
+      log(`JUMP «${key}» — already open → collapse (no filter)`, "ok");
+      announce(`${segmentLabel(key)} collapsed`);
+      render();
+      return;
+    }
+
+    for (const p of [...ancestorsOf(key), key]) state.collapsedPaths.delete(p);
+    state.activeJumpKey = key;
+    suppressScrollSpyUntil = Date.now() + 700;
+    log(`JUMP «${key}» — expand + scroll (no filter)`, "ok");
+    announce(`Jumped to ${segmentLabel(key)}`);
+    render();
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-group-key="${CSS.escape(key)}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      paintOutlineActive();
+      setTimeout(() => {
+        suppressScrollSpyUntil = 0;
+        const board = $("#board");
+        if (board) updateActiveFromScroll(board);
+      }, 750);
+    });
+  }
+
+  function renderCard(f) {
+    const el = EL_CSS[f.element] || EL_CSS.Kinetic;
+    return `
+      <div class="weapon-card rarity-${f.rarity}" role="listitem" aria-label="${f.name}, ${f.type}">
+        <span class="el-bloom" style="--el:${el}"></span>
+        <div class="card-top">
+          <span class="entity-icon" aria-hidden="true">${f.icon}</span>
+          <div class="card-text">
+            <span class="card-name">${f.name}</span>
+            <span class="card-type">${f.type}</span>
+          </div>
+        </div>
+        <div class="card-meta-row">
+          <span class="slot-letter">${f.slot[0]}</span>
+          ${dimIconHtml("element", f.element)}
+          <span>${f.element}</span>
+        </div>
+      </div>`;
+  }
+
+  function renderNode(node) {
+    const expanded = isExpanded(node.key);
+    const partial = expanded && hasCollapsedDescendant(node);
+    const hasKids = node.children && node.children.length > 0;
+    const icon = dimIconHtml(node.dim, node.label);
+    let body = "";
+    if (!hasKids) {
+      body = `<div class="group-body" ${expanded ? "" : "hidden"} role="list" aria-label="${node.label}">
+        ${node.items.map(renderCard).join("")}
+      </div>`;
+    } else {
+      body = `<div class="group-children" ${expanded ? "" : "hidden"}>
+        ${node.children.map(renderNode).join("")}
+      </div>`;
+    }
+    return `
+      <section class="group-section depth-${node.depth}" data-group-key="${node.key}">
+        <button type="button" class="group-header"
+          data-depth="${node.depth}"
+          data-path="${node.key}"
+          data-dim="${node.dim || ""}"
+          data-partial="${partial ? "true" : "false"}"
+          aria-expanded="${expanded}"
+          aria-label="${expanded ? "Collapse" : "Expand"} ${node.label}, ${node.count} items">
+          <span class="chev" aria-hidden="true">▾</span>
+          ${icon}
+          <span class="g-label">${node.label}</span>
+          <span class="g-count">${node.count}</span>
+        </button>
+        ${body}
+      </section>`;
+  }
+
+  function renderOutline(tree) {
+    const strip = $("#outline-strip");
+    if (tree.length < 2 || state.view !== "results") {
+      strip.hidden = true;
+      strip.innerHTML = "";
+      return;
+    }
+    strip.hidden = false;
+    const allRows = [];
+    (function walk(nodes) {
+      for (const n of nodes) {
+        allRows.push(n);
+        if (n.children?.length) walk(n.children);
+      }
+    })(tree);
+
+    strip.innerHTML = allRows.map((n) => {
+      const active = state.activeJumpKey === n.key;
+      const collapsed = state.collapsedPaths.has(n.key);
+      const open = isPathFullyOpen(n.key);
+      const icon = dimIconHtml(n.dim, n.label);
+      return `<button type="button" class="outline-chip${collapsed ? " is-collapsed-hint" : ""}"
+        data-jump="${n.key}"
+        ${active ? 'aria-current="true"' : ""}
+        title="${open ? "Collapse " + n.label : "Expand & scroll to " + n.label} (does not filter)"
+        aria-label="${open ? "Collapse" : "Jump to"} ${n.label}, ${n.count} items">
+        <span class="depth-prefix" aria-hidden="true">${depthPrefix(n.depth)}</span>${icon}${n.label}<span class="n">${n.count}</span>
+      </button>`;
+    }).join("");
+
+    strip.querySelectorAll("[data-jump]").forEach((btn) => {
+      btn.addEventListener("click", () => jumpTo(btn.getAttribute("data-jump")));
+    });
+  }
+
+  function render() {
+    const board = $("#board");
+    const meta = $("#results-meta");
+    const dimsLabel = $("#group-dims-label");
+    const matchNote = $("#match-note");
+
+    dimsLabel.textContent = state.dims.length
+      ? state.dims.map((d) => d[0].toUpperCase() + d.slice(1)).join(" → ")
+      : "group off";
+
+    if (state.view === "loading") {
+      $("#outline-strip").hidden = true;
+      $("#outline-strip").innerHTML = "";
+      meta.innerHTML = `<strong>—</strong> loading`;
+      matchNote.textContent = "manifest loading…";
+      matchNote.classList.add("muted");
+      board.innerHTML = `<div class="board-loading">
+        <strong>Loading</strong>Skeleton only — no group chrome
+        <div class="skeleton-grid">${Array.from({ length: 4 }, () => `<div class="skeleton-card"></div>`).join("")}</div>
+      </div>`;
+      updateCollapsedDisplay();
+      return;
+    }
+
+    if (state.view === "empty") {
+      $("#outline-strip").hidden = true;
+      $("#outline-strip").innerHTML = "";
+      meta.innerHTML = `<strong>0</strong> families`;
+      matchNote.textContent = "zero match · no group chrome";
+      matchNote.classList.add("muted");
+      board.innerHTML = `<div class="board-empty">
+        <strong>No weapons match</strong>
+        Group collapse never rewrites filters (BR-CAT-006/007).
+      </div>`;
+      updateCollapsedDisplay();
+      return;
+    }
+
+    matchNote.classList.remove("muted");
+    matchNote.textContent = `match set ${state.matchSet.length} · collapse view-only`;
+    meta.innerHTML = `<strong>${state.matchSet.length}</strong> families`;
+
+    const tree = groupCatalogItemsNested(state.matchSet, state.dims);
+    renderOutline(tree);
+
+    if (!tree.length) {
+      board.innerHTML = `<div class="board-empty"><strong>No groups</strong></div>`;
+      bindScrollSpy(board);
+    } else {
+      board.innerHTML = tree.map(renderNode).join("");
+      board.querySelectorAll(".group-header").forEach((btn) => {
+        btn.addEventListener("click", () => togglePath(btn.getAttribute("data-path")));
+      });
+      bindScrollSpy(board);
+      requestAnimationFrame(() => updateActiveFromScroll(board));
+    }
+    updateCollapsedDisplay();
+  }
+
+  const SCENARIOS = {
+    "flat-1dim": () => {
+      state.view = "results";
+      state.dims = ["slot"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = null;
+      log("1-dim Slot — flat headers + strip JUMP ≥2");
+    },
+    "nested-2dim": () => {
+      state.view = "results";
+      state.dims = ["slot", "element"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = null;
+      log("2-dim nested — slot glyphs + element icons · rollups");
+    },
+    "type-icons": () => {
+      state.view = "results";
+      state.dims = ["type"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = null;
+      log("1-dim Type — weapon silhouettes on headers + strip");
+    },
+    "parent-collapsed": () => {
+      state.view = "results";
+      state.dims = ["slot", "element"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set(["Energy"]);
+      state.activeJumpKey = null;
+      log("Parent Energy collapsed — full subtree hidden");
+    },
+    "child-collapsed": () => {
+      state.view = "results";
+      state.dims = ["slot", "element"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set(["Energy › Arc"]);
+      state.activeJumpKey = null;
+      log("Child Arc collapsed · Solar/Void still visible");
+    },
+    "jump-hier": () => {
+      state.view = "results";
+      state.dims = ["slot", "element"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set(["Energy", "Energy › Arc"]);
+      state.activeJumpKey = null;
+      log("Energy+Arc collapsed — auto JUMP Arc", "warn");
+      render();
+      setTimeout(() => jumpTo("Energy › Arc"), 400);
+      return true;
+    },
+    "active-outline": () => {
+      state.view = "results";
+      state.dims = ["slot", "element"];
+      state.matchSet = FAMILIES.slice();
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = "Energy › Solar";
+      log("Active strip chip: Energy › Solar");
+      render();
+      requestAnimationFrame(() => {
+        const el = document.querySelector('[data-group-key="Energy › Solar"]');
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return true;
+    },
+    "single-group": () => {
+      state.view = "results";
+      state.dims = ["slot", "element"];
+      state.matchSet = FAMILIES.filter((f) => f.slot === "Energy");
+      state.matchCountSnapshot = state.matchSet.length;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = null;
+      log("Single top-level — outline strip hidden");
+    },
+    empty: () => {
+      state.view = "empty";
+      state.dims = ["slot", "element"];
+      state.matchSet = [];
+      state.matchCountSnapshot = 0;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = null;
+      log("Empty board — no group chrome");
+    },
+    loading: () => {
+      state.view = "loading";
+      state.dims = ["slot", "element"];
+      state.matchSet = [];
+      state.matchCountSnapshot = 0;
+      state.collapsedPaths = new Set();
+      state.activeJumpKey = null;
+      log("Loading — skeleton only");
+    },
+  };
+
+  function applyScenario(id) {
+    state.scenario = id;
+    const fn = SCENARIOS[id];
+    if (!fn) return;
+    if (!fn()) render();
+  }
+
+  $("#scenario").addEventListener("change", (e) => applyScenario(e.target.value));
+  applyScenario("nested-2dim");
+})();
+  </script>
+</body>
+</html>

@@ -2,49 +2,25 @@
 
 import 'catalog_browse_mode.dart';
 
-const catalogElements = <String>[
-  'Kinetic',
-  'Arc',
-  'Solar',
-  'Void',
-  'Stasis',
-  'Strand',
-  'Prismatic',
-];
+import 'canonical_order.dart';
 
-const catalogAmmoTypes = <String>['Primary', 'Special', 'Heavy'];
+/// Element filter chips — canonical order; **Prismatic is not a filter**.
+const List<String> catalogElements = kCatalogElementOrder;
 
-const catalogWeaponSlots = <String>['Kinetic', 'Energy', 'Power'];
+/// Ammo filter chips — Primary → Special → Heavy.
+const List<String> catalogAmmoTypes = kCatalogAmmoOrder;
 
-const catalogArmorSlots = <String>[
-  'Helmet',
-  'Gauntlets',
-  'Chest',
-  'Legs',
-  'ClassItem',
-];
+/// Weapon slot filter chips — Kinetic → Energy → Power.
+const List<String> catalogWeaponSlots = kCatalogSlotOrder;
 
-const catalogClassNames = <String>['Titan', 'Hunter', 'Warlock'];
+/// Armor slot filter chips.
+const List<String> catalogArmorSlots = kCatalogArmorSlotOrder;
 
-const catalogWeaponArchetypes = <String>[
-  'Auto Rifle',
-  'Pulse Rifle',
-  'Scout Rifle',
-  'Hand Cannon',
-  'Sidearm',
-  'Submachine Gun',
-  'Bow',
-  'Fusion Rifle',
-  'Glaive',
-  'Sniper Rifle',
-  'Shotgun',
-  'Trace Rifle',
-  'Grenade Launcher',
-  'Rocket Launcher',
-  'Linear Fusion Rifle',
-  'Machine Gun',
-  'Sword',
-];
+/// Class filter chips — Titan → Hunter → Warlock.
+const List<String> catalogClassNames = kCatalogClassOrder;
+
+/// Weapon type (archetype) filter chips — **Rocket Launcher last**.
+const List<String> catalogWeaponArchetypes = kCatalogWeaponArchetypeOrder;
 
 const catalogArmorArchetypes = <String>[
   'Bulwark',

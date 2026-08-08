@@ -1,6 +1,7 @@
 import '../normalize.dart';
 import 'catalog_item.dart';
 import 'filter_catalog.dart';
+import 'canonical_order.dart';
 import 'group_catalog.dart';
 import 'sort_by_name.dart';
 import 'sort_weapons.dart';
@@ -389,6 +390,9 @@ class CatalogFamilyGroup {
 ///
 /// Uses [WeaponFamily.cardItem] for dimension values. Empty dimensions → one
 /// "All results" group preserving input order.
+///
+/// Prefer [groupWeaponFamilyBrowseNested] for multi-level trees; this flat API
+/// remains for single-dim / migration callers.
 List<CatalogFamilyGroup> groupWeaponFamilyBrowse(
   List<WeaponFamily> families,
   List<CatalogGroupDimension> dimensions,
@@ -407,7 +411,7 @@ List<CatalogFamilyGroup> groupWeaponFamilyBrowse(
   for (final family in families) {
     final parts =
         dimensions.map((d) => dimensionValue(family.cardItem, d)).toList();
-    final key = parts.join(' · ');
+    final key = catalogGroupPathKey(parts);
     (buckets[key] ??= <WeaponFamily>[]).add(family);
   }
 
@@ -420,6 +424,160 @@ List<CatalogFamilyGroup> groupWeaponFamilyBrowse(
         ),
       )
       .toList();
-  groups.sort((a, b) => compareDisplayName(a.label, b.label));
+  groups.sort(
+    (a, b) => compareCatalogGroupPathKeys(a.key, b.key, dimensions),
+  );
   return groups;
+}
+
+/// One node in a nested multi-level family group-by tree (DART-072 / UX nested).
+///
+/// Mirrors [CatalogGroupNode] with [WeaponFamily] leaves. Path keys and collapse
+/// helpers are shared with the item tree API.
+class CatalogFamilyGroupNode {
+  const CatalogFamilyGroupNode({
+    required this.key,
+    required this.label,
+    required this.count,
+    this.children = const [],
+    this.families = const [],
+  });
+
+  final String key;
+  final String label;
+  final int count;
+  final List<CatalogFamilyGroupNode> children;
+  final List<WeaponFamily> families;
+
+  bool get isExpandable => children.isNotEmpty;
+}
+
+/// Nested multi-level family group-by tree from ordered [dimensions].
+///
+/// Same contracts as [groupCatalogItemsNested]: filters applied before group;
+/// collapse is view-only (BR-CAT-007); labels are segment-only.
+List<CatalogFamilyGroupNode> groupWeaponFamilyBrowseNested(
+  List<WeaponFamily> families,
+  List<CatalogGroupDimension> dimensions,
+) {
+  if (dimensions.isEmpty) {
+    return [
+      CatalogFamilyGroupNode(
+        key: '__all__',
+        label: 'All results',
+        count: families.length,
+        families: List<WeaponFamily>.from(families),
+      ),
+    ];
+  }
+  return _partitionFamilyNested(families, dimensions, const []);
+}
+
+List<CatalogFamilyGroupNode> _partitionFamilyNested(
+  List<WeaponFamily> families,
+  List<CatalogGroupDimension> dimensions,
+  List<String> pathPrefix,
+) {
+  final dim = dimensions.first;
+  final rest = dimensions.sublist(1);
+  final buckets = <String, List<WeaponFamily>>{};
+  for (final family in families) {
+    final segment = dimensionValue(family.cardItem, dim);
+    (buckets[segment] ??= <WeaponFamily>[]).add(family);
+  }
+
+  final segments = buckets.keys.toList()
+    ..sort((a, b) => compareCatalogDimensionLabels(dim, a, b));
+
+  return [
+    for (final segment in segments)
+      _familyNodeForBucket(
+        segment: segment,
+        bucket: buckets[segment]!,
+        pathPrefix: pathPrefix,
+        rest: rest,
+      ),
+  ];
+}
+
+CatalogFamilyGroupNode _familyNodeForBucket({
+  required String segment,
+  required List<WeaponFamily> bucket,
+  required List<String> pathPrefix,
+  required List<CatalogGroupDimension> rest,
+}) {
+  final path = [...pathPrefix, segment];
+  final key = catalogGroupPathKey(path);
+  if (rest.isEmpty) {
+    return CatalogFamilyGroupNode(
+      key: key,
+      label: segment,
+      count: bucket.length,
+      families: List<WeaponFamily>.from(bucket),
+    );
+  }
+  final children = _partitionFamilyNested(bucket, rest, path);
+  final count = children.fold<int>(0, (n, c) => n + c.count);
+  return CatalogFamilyGroupNode(
+    key: key,
+    label: segment,
+    count: count,
+    children: children,
+  );
+}
+
+/// Expandable path keys under family nested roots.
+Set<String> expandableFamilyGroupKeys(Iterable<CatalogFamilyGroupNode> roots) {
+  final keys = <String>{};
+  void walk(CatalogFamilyGroupNode node) {
+    if (node.isExpandable) {
+      keys.add(node.key);
+      for (final child in node.children) {
+        walk(child);
+      }
+    }
+  }
+
+  for (final root in roots) {
+    walk(root);
+  }
+  return keys;
+}
+
+/// Depth-first flatten of all family nodes (for JUMP outline; ignores collapse).
+List<({CatalogFamilyGroupNode node, int depth})> flattenAllFamilyGroupNodes(
+  Iterable<CatalogFamilyGroupNode> roots,
+) {
+  final out = <({CatalogFamilyGroupNode node, int depth})>[];
+  void walk(CatalogFamilyGroupNode node, int depth) {
+    out.add((node: node, depth: depth));
+    for (final c in node.children) {
+      walk(c, depth + 1);
+    }
+  }
+
+  for (final r in roots) {
+    walk(r, 0);
+  }
+  return out;
+}
+
+/// Visible family nodes under a **collapsed** set (roots always visited).
+void visitVisibleFamilyGroupNodes(
+  Iterable<CatalogFamilyGroupNode> roots,
+  Set<String> collapsedKeys,
+  void Function(CatalogFamilyGroupNode node, int depth) visit,
+) {
+  void walk(CatalogFamilyGroupNode node, int depth) {
+    visit(node, depth);
+    if (!node.isExpandable) return;
+    if (collapsedKeys.contains(node.key)) return;
+    for (final child in node.children) {
+      walk(child, depth + 1);
+    }
+  }
+
+  for (final root in roots) {
+    walk(root, 0);
+  }
 }
