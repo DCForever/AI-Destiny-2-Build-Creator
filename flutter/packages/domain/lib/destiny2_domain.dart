@@ -28,6 +28,7 @@ export 'src/models/slot_claim.dart';
 export 'src/models/soft_stats.dart';
 export 'src/models/synergy.dart';
 export 'src/models/roll_target.dart';
+export 'src/models/catalog_filter_collection.dart';
 
 // Hard evaluators (DART-003)
 export 'src/evaluators/destiny_build_constraints.dart';

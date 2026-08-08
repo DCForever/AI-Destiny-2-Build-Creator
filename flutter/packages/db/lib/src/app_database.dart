@@ -36,6 +36,7 @@ part 'app_database.g.dart';
     VariantSetAttachments,
     WeaponRollTargets,
     WeaponRollTargetActive,
+    CatalogFilterCollections,
   ],
 )
 class AppDatabase extends _$AppDatabase {

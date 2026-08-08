@@ -105,6 +105,13 @@ class _CatalogPageState extends State<CatalogPage> {
   /// Primary line (scope + free-text + element/slot/type icon chips) is always on.
   bool _moreFiltersExpanded = false;
 
+  // --- 004 CatalogFilterCollections (soft apply; host binds) ---
+  List<CatalogFilterCollection> _filterCollections = const [];
+  String? _activeFilterCollectionId;
+  String? _activeFilterCollectionName;
+  /// Snapshot of applied collection criteria for dirty compare.
+  CatalogFilterCollection? _appliedFilterCollection;
+
   /// Session-only sort priority (GAP-CAT-BROWSE-003).
   List<CatalogSortKey> _sortKeys = List<CatalogSortKey>.from(
     kDefaultWeaponSortKeys,
@@ -187,6 +194,7 @@ class _CatalogPageState extends State<CatalogPage> {
         _version = load?.version;
         _applyBrowse();
       });
+      await _reloadFilterCollections();
       await _syncSelection();
     } catch (e) {
       if (!mounted) return;
@@ -814,8 +822,10 @@ class _CatalogPageState extends State<CatalogPage> {
       _groupBy.clear();
       _collapsedGroups.clear();
       _selectedFamily = null;
+      _clearActiveFilterCollection(notify: false);
       _applyBrowse();
     });
+    _reloadFilterCollections();
     _syncSelection();
   }
 
@@ -1004,9 +1014,307 @@ class _CatalogPageState extends State<CatalogPage> {
       _exotic = null;
       _groupBy.clear();
       _collapsedGroups.clear();
+      _clearActiveFilterCollection(notify: false);
       _applyBrowse();
     });
     _syncSelection();
+  }
+
+  // --- Filter collections (004) ------------------------------------------------
+
+  String get _browseModeWire => _mode.name;
+
+  CatalogFacetSelection _facetToSelection(FacetFilter f) =>
+      CatalogFacetSelection(
+        include: List<String>.from(f.include),
+        exclude: List<String>.from(f.exclude),
+      );
+
+  void _clearActiveFilterCollection({bool notify = true}) {
+    _activeFilterCollectionId = null;
+    _activeFilterCollectionName = null;
+    _appliedFilterCollection = null;
+    if (notify && mounted) setState(() {});
+  }
+
+  Future<void> _reloadFilterCollections() async {
+    final uid = _bridge.userId;
+    if (uid == null) {
+      if (!mounted) return;
+      setState(() => _filterCollections = const []);
+      return;
+    }
+    try {
+      final list = await listCatalogFilterCollectionsUseCase(
+        widget.services.db,
+        userId: uid,
+        browseMode: _browseModeWire,
+      );
+      if (!mounted) return;
+      setState(() => _filterCollections = list);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _filterCollections = const []);
+    }
+  }
+
+  bool _listEqStr(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  bool _facetsEq(CatalogFacetSelection a, FacetFilter b) {
+    return _listEqStr(a.include, b.include) &&
+        _listEqStr(a.exclude, b.exclude);
+  }
+
+  bool get _filterCollectionDirty {
+    final snap = _appliedFilterCollection;
+    if (_activeFilterCollectionId == null || snap == null) return false;
+    final q = _queryController.text.trim();
+    final snapQ = (snap.query ?? '').trim();
+    if (snap.scope !=
+        (_scope == CatalogScope.owned
+            ? kCatalogScopeOwned
+            : kCatalogScopeAll)) {
+      return true;
+    }
+    if (q != snapQ) return true;
+    if (snap.exotic != _exotic) return true;
+    if (!_facetsEq(snap.elements, _elements)) return true;
+    if (!_facetsEq(snap.ammos, _ammos)) return true;
+    if (!_facetsEq(snap.slots, _slots)) return true;
+    if (!_facetsEq(snap.archetypes, _archetypes)) return true;
+    if (!_facetsEq(snap.classNames, _classNames)) return true;
+    if (!_facetsEq(snap.synergies, _synergies)) return true;
+    final liveSort = _sortKeys.map((k) => k.name).toList();
+    final expectedSort = snap.sortKeys.isEmpty
+        ? kDefaultWeaponSortKeys.map((k) => k.name).toList()
+        : snap.sortKeys;
+    if (!_listEqStr(liveSort, expectedSort)) return true;
+    final liveGroup = _groupBy.map((d) => d.name).toList();
+    if (!_listEqStr(liveGroup, snap.groupBy)) return true;
+    return false;
+  }
+
+  bool get _canSaveFilterCollection {
+    final defaultSort = kDefaultWeaponSortKeys.map((k) => k.name).toList();
+    final liveSort = _sortKeys.map((k) => k.name).toList();
+    final customSort = !_listEqStr(liveSort, defaultSort);
+    return catalogFilterCollectionsCanSave(
+      hasNonDefaultScope: _scope == CatalogScope.owned,
+      hasQuery: _queryController.text.trim().isNotEmpty,
+      hasExoticConstraint: _exotic != null,
+      hasFacetCriteria: !isFacetEmpty(_elements) ||
+          !isFacetEmpty(_ammos) ||
+          !isFacetEmpty(_slots) ||
+          !isFacetEmpty(_classNames) ||
+          !isFacetEmpty(_archetypes) ||
+          !isFacetEmpty(_synergies),
+      hasGroupBy: _groupBy.isNotEmpty,
+      hasCustomSort: customSort,
+    );
+  }
+
+  String _summarizeFilterCollection(CatalogFilterCollection c) {
+    final parts = <String>[];
+    if (c.scope == kCatalogScopeOwned) parts.add('owned');
+    final q = (c.query ?? '').trim();
+    if (q.isNotEmpty) parts.add('q:$q');
+    if (c.exotic == true) parts.add('exotic');
+    if (c.exotic == false) parts.add('−exotic');
+    void addFacet(String label, CatalogFacetSelection s) {
+      for (final v in s.include) {
+        parts.add('$label:$v');
+      }
+      for (final v in s.exclude) {
+        parts.add('−$label:$v');
+      }
+    }
+
+    addFacet('element', c.elements);
+    addFacet('ammo', c.ammos);
+    addFacet('slot', c.slots);
+    addFacet('type', c.archetypes);
+    addFacet('class', c.classNames);
+    addFacet('synergy', c.synergies);
+    if (c.sortKeys.isNotEmpty) parts.add('sort:${c.sortKeys.join(',')}');
+    if (c.groupBy.isNotEmpty) parts.add('group:${c.groupBy.join(',')}');
+    return parts.isEmpty ? 'no criteria' : parts.join(' · ');
+  }
+
+  List<CatalogFilterCollectionItem> get _filterCollectionItems {
+    return [
+      for (final c in _filterCollections)
+        CatalogFilterCollectionItem(
+          id: c.id,
+          name: c.name,
+          summary: _summarizeFilterCollection(c),
+        ),
+    ];
+  }
+
+  void _bindFilterCollection(CatalogFilterCollection c) {
+    final client = catalogClientFiltersFromCollection(c);
+    final sortKeys = catalogSortKeysFromCollection(c);
+    final groupBy = catalogGroupByFromCollection(c);
+
+    _queryController.text = client.query ?? '';
+    _scope = client.scope;
+    _exotic = client.exotic;
+    _elements = normalizeFacet(client.elements);
+    _ammos = normalizeFacet(client.ammos);
+    _slots = normalizeFacet(client.slots);
+    _classNames = normalizeFacet(client.classNames);
+    _archetypes = normalizeFacet(client.archetypes);
+    _synergies = normalizeFacet(client.synergies);
+    _sortKeys = sortKeys.isEmpty
+        ? List<CatalogSortKey>.from(kDefaultWeaponSortKeys)
+        : sortKeys;
+    _groupBy
+      ..clear()
+      ..addAll(groupBy);
+    _collapsedGroups.clear();
+    _activeFilterCollectionId = c.id;
+    _activeFilterCollectionName = c.name;
+    _appliedFilterCollection = c;
+    _applyBrowse();
+  }
+
+  Future<void> _applyFilterCollection(String id) async {
+    final uid = _bridge.userId;
+    if (uid == null) {
+      setState(() {
+        _actionMessage = 'Sign in to apply saved filters.';
+      });
+      return;
+    }
+    try {
+      final c = await applyCatalogFilterCollection(
+        widget.services.db,
+        userId: uid,
+        id: id,
+      );
+      if (!mounted) return;
+      if (c == null) {
+        setState(() {
+          _actionMessage = 'Saved filter not found.';
+        });
+        return;
+      }
+      setState(() {
+        _bindFilterCollection(c);
+        _actionMessage = 'Applied “${c.name}” — criteria only';
+      });
+      await _syncSelection();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionMessage = 'Apply failed: $e';
+      });
+    }
+  }
+
+  Future<String?> _saveFilterCollection(String name) async {
+    final uid = _bridge.userId;
+    if (uid == null) return 'Sign in to save filter collections.';
+    try {
+      final saved = await createCatalogFilterCollectionUseCase(
+        widget.services.db,
+        userId: uid,
+        name: name,
+        browseMode: _browseModeWire,
+        scope: _scope == CatalogScope.owned
+            ? kCatalogScopeOwned
+            : kCatalogScopeAll,
+        query: _queryController.text.trim().isEmpty
+            ? null
+            : _queryController.text.trim(),
+        exotic: _exotic,
+        elements: _facetToSelection(_elements),
+        ammos: _facetToSelection(_ammos),
+        slots: _facetToSelection(_slots),
+        archetypes: _facetToSelection(_archetypes),
+        classNames: _facetToSelection(_classNames),
+        synergies: _facetToSelection(_synergies),
+        sortKeys: _sortKeys.map((k) => k.name).toList(),
+        groupBy: _groupBy.map((d) => d.name).toList(),
+      );
+      if (!mounted) return null;
+      setState(() {
+        _activeFilterCollectionId = saved.id;
+        _activeFilterCollectionName = saved.name;
+        _appliedFilterCollection = saved;
+        _actionMessage = 'Saved “${saved.name}”';
+      });
+      await _reloadFilterCollections();
+      return null;
+    } on CatalogFilterCollectionValidationException catch (e) {
+      return e.message;
+    } on CatalogFilterCollectionPersistException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> _renameFilterCollection(String id, String name) async {
+    final uid = _bridge.userId;
+    if (uid == null) return 'Sign in to rename.';
+    try {
+      final renamed = await renameCatalogFilterCollection(
+        widget.services.db,
+        userId: uid,
+        id: id,
+        name: name,
+      );
+      if (renamed == null) return 'Collection not found.';
+      if (!mounted) return null;
+      setState(() {
+        if (_activeFilterCollectionId == id) {
+          _activeFilterCollectionName = renamed.name;
+          _appliedFilterCollection = renamed;
+        }
+        _actionMessage = 'Renamed to “${renamed.name}”';
+      });
+      await _reloadFilterCollections();
+      return null;
+    } on CatalogFilterCollectionValidationException catch (e) {
+      return e.message;
+    } on CatalogFilterCollectionPersistException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> _deleteFilterCollection(String id) async {
+    final uid = _bridge.userId;
+    if (uid == null) return 'Sign in to delete.';
+    try {
+      final ok = await deleteCatalogFilterCollectionUseCase(
+        widget.services.db,
+        userId: uid,
+        id: id,
+      );
+      if (!ok) return 'Collection not found.';
+      if (!mounted) return null;
+      setState(() {
+        if (_activeFilterCollectionId == id) {
+          _clearActiveFilterCollection(notify: false);
+        }
+        _actionMessage = 'Deleted saved filter';
+      });
+      await _reloadFilterCollections();
+      return null;
+    } on CatalogFilterCollectionPersistException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
   }
 
   Future<void> _syncInventory() async {
@@ -1372,6 +1680,24 @@ class _CatalogPageState extends State<CatalogPage> {
                           scope: _scope,
                           ownedLabel: _ownedChipLabel(),
                           onChanged: _setScope,
+                        ),
+                        trailing: CatalogFilterCollectionsControl(
+                          key: const Key('catalog_filter_collections_control'),
+                          items: _filterCollectionItems,
+                          browseModeLabel: _browseModeWire,
+                          activeId: _activeFilterCollectionId,
+                          activeName: _activeFilterCollectionName,
+                          dirty: _filterCollectionDirty,
+                          signedIn: _bridge.userId != null,
+                          canSave: _canSaveFilterCollection,
+                          atCap: _filterCollections.length >=
+                              kMaxCatalogFilterCollectionsPerUserMode,
+                          preferSheet:
+                              MediaQuery.sizeOf(context).width < 520,
+                          onApply: _applyFilterCollection,
+                          onSave: _saveFilterCollection,
+                          onRename: _renameFilterCollection,
+                          onDelete: _deleteFilterCollection,
                         ),
                         primaryGroups: _primaryFacetGroups(),
                         secondaryGroups: _secondaryFacetGroups(),

@@ -29,8 +29,10 @@ class CatalogFacetGroup {
   final bool iconOnly;
 }
 
-/// Single primary filter band: [prefix] · scope · search · chips · exotic · More · RESET.
+/// Single primary filter band: [prefix] · scope · search · chips · exotic ·
+/// **[trailing]** · More · RESET.
 ///
+/// [trailing] sits **left of** More/Reset (Saved collections, etc.).
 /// Secondary facets expand under **More** only. Presentation only — host owns state.
 class CatalogFilterBar extends StatelessWidget {
   const CatalogFilterBar({
@@ -65,6 +67,9 @@ class CatalogFilterBar extends StatelessWidget {
 
   /// Scope control (All / Owned) on the primary line.
   final Widget? leading;
+
+  /// Pre-More action cluster (e.g. [CatalogFilterCollectionsControl]).
+  /// Placed **before** More/Reset on the primary band.
   final Widget? trailing;
   final bool? exotic;
   final VoidCallback? onCycleExotic;
@@ -115,7 +120,6 @@ class CatalogFilterBar extends StatelessWidget {
             ),
             const SizedBox(height: 4),
           ],
-          if (trailing != null) trailing!,
         ],
       ],
     );
@@ -278,13 +282,19 @@ class _PrimaryBand extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final chips = _chipCluster();
-    final actions = <Widget>[
+  /// Action cluster order (mock 004): **trailing (Saved) → More → Reset**.
+  List<Widget> _actionCluster() {
+    return <Widget>[
+      if (trailing != null) trailing!,
       if (onToggleMore != null) _moreButton(),
       if (showReset) _resetButton(),
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = _chipCluster();
+    final actions = _actionCluster();
 
     // BUG-20260807-007: archetype (and all primary icon facets) must not require
     // horizontal scroll — wrap onto a second line instead of a scroll strip.
@@ -297,7 +307,7 @@ class _PrimaryBand extends StatelessWidget {
     );
 
     if (wide) {
-      // Row 1: prefix | scope | search | more | reset
+      // Row 1: prefix | scope | search | Saved | more | reset
       // Row 2: full-width chip wrap (elements · slots · archetypes)
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -163,6 +163,7 @@ Future<void> applyEnsureUpgrades(EnsureUpgradeExecutor ex) async {
   await _ensureSynergyLinkRequiredColumn(ex);
   await _ensureVariantSubclassKitColumn(ex);
   await _ensureWeaponRollTargetsTables(ex);
+  await _ensureCatalogFilterCollectionsTable(ex);
 }
 
 Future<void> _addColumnIfMissing(
@@ -418,6 +419,29 @@ CREATE TABLE weapon_roll_target_active (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (user_id, weapon_key)
 );
+''');
+  }
+}
+
+/// FEAT-20260807-004: named Catalog filter collections / presets.
+Future<void> _ensureCatalogFilterCollectionsTable(
+  EnsureUpgradeExecutor ex,
+) async {
+  if (!await ex.tableExists('catalog_filter_collections')) {
+    await ex.exec('''
+CREATE TABLE catalog_filter_collections (
+  id TEXT NOT NULL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  browse_mode TEXT NOT NULL,
+  name TEXT NOT NULL,
+  filters_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX idx_catalog_filter_collections_user_mode_name
+  ON catalog_filter_collections (user_id, browse_mode, name);
+CREATE INDEX idx_catalog_filter_collections_user_mode
+  ON catalog_filter_collections (user_id, browse_mode);
 ''');
   }
 }

@@ -7028,6 +7028,398 @@ class WeaponRollTargetActiveCompanion
   }
 }
 
+class $CatalogFilterCollectionsTable extends CatalogFilterCollections
+    with TableInfo<$CatalogFilterCollectionsTable, CatalogFilterCollectionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CatalogFilterCollectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _browseModeMeta =
+      const VerificationMeta('browseMode');
+  @override
+  late final GeneratedColumn<String> browseMode = GeneratedColumn<String>(
+      'browse_mode', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _filtersJsonMeta =
+      const VerificationMeta('filtersJson');
+  @override
+  late final GeneratedColumn<String> filtersJson = GeneratedColumn<String>(
+      'filters_json', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('{}'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, userId, browseMode, name, filtersJson, createdAt, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'catalog_filter_collections';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CatalogFilterCollectionRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('browse_mode')) {
+      context.handle(
+          _browseModeMeta,
+          browseMode.isAcceptableOrUnknown(
+              data['browse_mode']!, _browseModeMeta));
+    } else if (isInserting) {
+      context.missing(_browseModeMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('filters_json')) {
+      context.handle(
+          _filtersJsonMeta,
+          filtersJson.isAcceptableOrUnknown(
+              data['filters_json']!, _filtersJsonMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CatalogFilterCollectionRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CatalogFilterCollectionRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}user_id'])!,
+      browseMode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}browse_mode'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      filtersJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}filters_json'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $CatalogFilterCollectionsTable createAlias(String alias) {
+    return $CatalogFilterCollectionsTable(attachedDatabase, alias);
+  }
+}
+
+class CatalogFilterCollectionRow extends DataClass
+    implements Insertable<CatalogFilterCollectionRow> {
+  final String id;
+  final int userId;
+  final String browseMode;
+  final String name;
+  final String filtersJson;
+  final String createdAt;
+  final String updatedAt;
+  const CatalogFilterCollectionRow(
+      {required this.id,
+      required this.userId,
+      required this.browseMode,
+      required this.name,
+      required this.filtersJson,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<int>(userId);
+    map['browse_mode'] = Variable<String>(browseMode);
+    map['name'] = Variable<String>(name);
+    map['filters_json'] = Variable<String>(filtersJson);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  CatalogFilterCollectionsCompanion toCompanion(bool nullToAbsent) {
+    return CatalogFilterCollectionsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      browseMode: Value(browseMode),
+      name: Value(name),
+      filtersJson: Value(filtersJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CatalogFilterCollectionRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CatalogFilterCollectionRow(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<int>(json['userId']),
+      browseMode: serializer.fromJson<String>(json['browseMode']),
+      name: serializer.fromJson<String>(json['name']),
+      filtersJson: serializer.fromJson<String>(json['filtersJson']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<int>(userId),
+      'browseMode': serializer.toJson<String>(browseMode),
+      'name': serializer.toJson<String>(name),
+      'filtersJson': serializer.toJson<String>(filtersJson),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  CatalogFilterCollectionRow copyWith(
+          {String? id,
+          int? userId,
+          String? browseMode,
+          String? name,
+          String? filtersJson,
+          String? createdAt,
+          String? updatedAt}) =>
+      CatalogFilterCollectionRow(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        browseMode: browseMode ?? this.browseMode,
+        name: name ?? this.name,
+        filtersJson: filtersJson ?? this.filtersJson,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  CatalogFilterCollectionRow copyWithCompanion(
+      CatalogFilterCollectionsCompanion data) {
+    return CatalogFilterCollectionRow(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      browseMode:
+          data.browseMode.present ? data.browseMode.value : this.browseMode,
+      name: data.name.present ? data.name.value : this.name,
+      filtersJson:
+          data.filtersJson.present ? data.filtersJson.value : this.filtersJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogFilterCollectionRow(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('browseMode: $browseMode, ')
+          ..write('name: $name, ')
+          ..write('filtersJson: $filtersJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, userId, browseMode, name, filtersJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CatalogFilterCollectionRow &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.browseMode == this.browseMode &&
+          other.name == this.name &&
+          other.filtersJson == this.filtersJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CatalogFilterCollectionsCompanion
+    extends UpdateCompanion<CatalogFilterCollectionRow> {
+  final Value<String> id;
+  final Value<int> userId;
+  final Value<String> browseMode;
+  final Value<String> name;
+  final Value<String> filtersJson;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const CatalogFilterCollectionsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.browseMode = const Value.absent(),
+    this.name = const Value.absent(),
+    this.filtersJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CatalogFilterCollectionsCompanion.insert({
+    required String id,
+    required int userId,
+    required String browseMode,
+    required String name,
+    this.filtersJson = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        userId = Value(userId),
+        browseMode = Value(browseMode),
+        name = Value(name),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<CatalogFilterCollectionRow> custom({
+    Expression<String>? id,
+    Expression<int>? userId,
+    Expression<String>? browseMode,
+    Expression<String>? name,
+    Expression<String>? filtersJson,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (browseMode != null) 'browse_mode': browseMode,
+      if (name != null) 'name': name,
+      if (filtersJson != null) 'filters_json': filtersJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CatalogFilterCollectionsCompanion copyWith(
+      {Value<String>? id,
+      Value<int>? userId,
+      Value<String>? browseMode,
+      Value<String>? name,
+      Value<String>? filtersJson,
+      Value<String>? createdAt,
+      Value<String>? updatedAt,
+      Value<int>? rowid}) {
+    return CatalogFilterCollectionsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      browseMode: browseMode ?? this.browseMode,
+      name: name ?? this.name,
+      filtersJson: filtersJson ?? this.filtersJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<int>(userId.value);
+    }
+    if (browseMode.present) {
+      map['browse_mode'] = Variable<String>(browseMode.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (filtersJson.present) {
+      map['filters_json'] = Variable<String>(filtersJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogFilterCollectionsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('browseMode: $browseMode, ')
+          ..write('name: $name, ')
+          ..write('filtersJson: $filtersJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7052,6 +7444,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WeaponRollTargetsTable(this);
   late final $WeaponRollTargetActiveTable weaponRollTargetActive =
       $WeaponRollTargetActiveTable(this);
+  late final $CatalogFilterCollectionsTable catalogFilterCollections =
+      $CatalogFilterCollectionsTable(this);
   late final Index idxInventoryUserHash = Index('idx_inventory_user_hash',
       'CREATE INDEX idx_inventory_user_hash ON inventory_items (user_id, item_hash)');
   late final Index idxInventoryUserBucket = Index('idx_inventory_user_bucket',
@@ -7078,6 +7472,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxWeaponRollTargetsUserWeaponName = Index(
       'idx_weapon_roll_targets_user_weapon_name',
       'CREATE UNIQUE INDEX idx_weapon_roll_targets_user_weapon_name ON weapon_roll_targets (user_id, weapon_key, name)');
+  late final Index idxCatalogFilterCollectionsUserMode = Index(
+      'idx_catalog_filter_collections_user_mode',
+      'CREATE INDEX idx_catalog_filter_collections_user_mode ON catalog_filter_collections (user_id, browse_mode)');
+  late final Index idxCatalogFilterCollectionsUserModeName = Index(
+      'idx_catalog_filter_collections_user_mode_name',
+      'CREATE UNIQUE INDEX idx_catalog_filter_collections_user_mode_name ON catalog_filter_collections (user_id, browse_mode, name)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7099,6 +7499,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         variantSetAttachments,
         weaponRollTargets,
         weaponRollTargetActive,
+        catalogFilterCollections,
         idxInventoryUserHash,
         idxInventoryUserBucket,
         idxInventoryUserLocation,
@@ -7109,7 +7510,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxSynergyLinksSynergy,
         idxVariantAttachmentsSet,
         idxWeaponRollTargetsUserWeapon,
-        idxWeaponRollTargetsUserWeaponName
+        idxWeaponRollTargetsUserWeaponName,
+        idxCatalogFilterCollectionsUserMode,
+        idxCatalogFilterCollectionsUserModeName
       ];
 }
 
@@ -10574,6 +10977,216 @@ typedef $$WeaponRollTargetActiveTableProcessedTableManager
         ),
         WeaponRollTargetActiveRow,
         PrefetchHooks Function()>;
+typedef $$CatalogFilterCollectionsTableCreateCompanionBuilder
+    = CatalogFilterCollectionsCompanion Function({
+  required String id,
+  required int userId,
+  required String browseMode,
+  required String name,
+  Value<String> filtersJson,
+  required String createdAt,
+  required String updatedAt,
+  Value<int> rowid,
+});
+typedef $$CatalogFilterCollectionsTableUpdateCompanionBuilder
+    = CatalogFilterCollectionsCompanion Function({
+  Value<String> id,
+  Value<int> userId,
+  Value<String> browseMode,
+  Value<String> name,
+  Value<String> filtersJson,
+  Value<String> createdAt,
+  Value<String> updatedAt,
+  Value<int> rowid,
+});
+
+class $$CatalogFilterCollectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogFilterCollectionsTable> {
+  $$CatalogFilterCollectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get browseMode => $composableBuilder(
+      column: $table.browseMode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get filtersJson => $composableBuilder(
+      column: $table.filtersJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CatalogFilterCollectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogFilterCollectionsTable> {
+  $$CatalogFilterCollectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get browseMode => $composableBuilder(
+      column: $table.browseMode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get filtersJson => $composableBuilder(
+      column: $table.filtersJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CatalogFilterCollectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogFilterCollectionsTable> {
+  $$CatalogFilterCollectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get browseMode => $composableBuilder(
+      column: $table.browseMode, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get filtersJson => $composableBuilder(
+      column: $table.filtersJson, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CatalogFilterCollectionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CatalogFilterCollectionsTable,
+    CatalogFilterCollectionRow,
+    $$CatalogFilterCollectionsTableFilterComposer,
+    $$CatalogFilterCollectionsTableOrderingComposer,
+    $$CatalogFilterCollectionsTableAnnotationComposer,
+    $$CatalogFilterCollectionsTableCreateCompanionBuilder,
+    $$CatalogFilterCollectionsTableUpdateCompanionBuilder,
+    (
+      CatalogFilterCollectionRow,
+      BaseReferences<_$AppDatabase, $CatalogFilterCollectionsTable,
+          CatalogFilterCollectionRow>
+    ),
+    CatalogFilterCollectionRow,
+    PrefetchHooks Function()> {
+  $$CatalogFilterCollectionsTableTableManager(
+      _$AppDatabase db, $CatalogFilterCollectionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CatalogFilterCollectionsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CatalogFilterCollectionsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CatalogFilterCollectionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<int> userId = const Value.absent(),
+            Value<String> browseMode = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> filtersJson = const Value.absent(),
+            Value<String> createdAt = const Value.absent(),
+            Value<String> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CatalogFilterCollectionsCompanion(
+            id: id,
+            userId: userId,
+            browseMode: browseMode,
+            name: name,
+            filtersJson: filtersJson,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required int userId,
+            required String browseMode,
+            required String name,
+            Value<String> filtersJson = const Value.absent(),
+            required String createdAt,
+            required String updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CatalogFilterCollectionsCompanion.insert(
+            id: id,
+            userId: userId,
+            browseMode: browseMode,
+            name: name,
+            filtersJson: filtersJson,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CatalogFilterCollectionsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $CatalogFilterCollectionsTable,
+        CatalogFilterCollectionRow,
+        $$CatalogFilterCollectionsTableFilterComposer,
+        $$CatalogFilterCollectionsTableOrderingComposer,
+        $$CatalogFilterCollectionsTableAnnotationComposer,
+        $$CatalogFilterCollectionsTableCreateCompanionBuilder,
+        $$CatalogFilterCollectionsTableUpdateCompanionBuilder,
+        (
+          CatalogFilterCollectionRow,
+          BaseReferences<_$AppDatabase, $CatalogFilterCollectionsTable,
+              CatalogFilterCollectionRow>
+        ),
+        CatalogFilterCollectionRow,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10610,4 +11223,7 @@ class $AppDatabaseManager {
   $$WeaponRollTargetActiveTableTableManager get weaponRollTargetActive =>
       $$WeaponRollTargetActiveTableTableManager(
           _db, _db.weaponRollTargetActive);
+  $$CatalogFilterCollectionsTableTableManager get catalogFilterCollections =>
+      $$CatalogFilterCollectionsTableTableManager(
+          _db, _db.catalogFilterCollections);
 }
