@@ -493,26 +493,32 @@ class _CatalogPageState extends State<CatalogPage> {
   PlugFamilyLookup get _plugFamilyOf =>
       buildPlugFamilyLookup(_bridge.plugNameByHash);
 
-  Map<String, Set<int>> _preferredMapFromTarget(WeaponRollTarget? t) {
-    if (t == null) return const {};
+  /// Expand each column's plug set with display-name siblings (wash + score).
+  Map<String, Set<int>> _expandColumnHashMap(Map<String, Set<int>> raw) {
+    if (raw.isEmpty) return raw;
     final familyOf = _plugFamilyOf;
     return {
+      for (final e in raw.entries)
+        if (e.value.isNotEmpty) e.key: expandHashesWithFamily(e.value, familyOf),
+    };
+  }
+
+  Map<String, Set<int>> _preferredMapFromTarget(WeaponRollTarget? t) {
+    if (t == null) return const {};
+    return _expandColumnHashMap({
       for (final c in t.columns)
         if (c.preferredPlugHashes.isNotEmpty)
-          // Expand siblings so wash marks every on-copy hash of that perk.
-          c.columnKey:
-              expandHashesWithFamily(c.preferredPlugHashes, familyOf),
-    };
+          c.columnKey: Set<int>.from(c.preferredPlugHashes),
+    });
   }
 
   Map<String, Set<int>> _avoidMapFromTarget(WeaponRollTarget? t) {
     if (t == null) return const {};
-    final familyOf = _plugFamilyOf;
-    return {
+    return _expandColumnHashMap({
       for (final c in t.columns)
         if (c.avoidPlugHashes.isNotEmpty)
-          c.columnKey: expandHashesWithFamily(c.avoidPlugHashes, familyOf),
-    };
+          c.columnKey: Set<int>.from(c.avoidPlugHashes),
+    });
   }
 
   List<RollTargetColumn> _columnsFromDraftMaps() {
@@ -589,11 +595,10 @@ class _CatalogPageState extends State<CatalogPage> {
     ];
     // Same display name (e.g. multiple Stopping Power hashes) counts as one
     // perk family so preferred/avoid still match across roll variants.
-    final familyOf = buildPlugFamilyLookup(_bridge.plugNameByHash);
     final ranked = rankOwnedForRollTarget(
       scoreTarget,
       inputs,
-      familyOf: familyOf,
+      familyOf: _plugFamilyOf,
     );
     final byId = {for (final i in _instances) i.instanceId: i};
     final ordered = <CatalogInstanceProjection>[
@@ -1715,12 +1720,12 @@ class _CatalogPageState extends State<CatalogPage> {
       final viewPreferred = !allowsRollTargets
           ? const <String, Set<int>>{}
           : (_editingRollTarget
-              ? _rollDraftPreferred
+              ? _expandColumnHashMap(_rollDraftPreferred)
               : _preferredMapFromTarget(active));
       final viewAvoid = !allowsRollTargets
           ? const <String, Set<int>>{}
           : (_editingRollTarget
-              ? _rollDraftAvoid
+              ? _expandColumnHashMap(_rollDraftAvoid)
               : _avoidMapFromTarget(active));
       final hasOverlap = catalogRollTargetHasOverlap(
         preferredByColumn: _rollDraftPreferred,
