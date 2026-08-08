@@ -1,6 +1,26 @@
 # Mockup approvals — Catalog UX
 
-## CatalogRollTargets (003) — current gate
+## CatalogFilterCollections (004) — current gate
+
+**continue with workflow**
+
+- Desktop: `docs/ux-redesign/catalog/mockups/004-catalog-filter-collections-desktop.html`
+- Mobile: `docs/ux-redesign/catalog/mockups/004-catalog-filter-collections-mobile.html`
+- Approved: 2026-08-08 (“continue with workflow”)
+- System landed: `74ce3e4` model + Drift + app use cases (soft apply · per mode · replace-by-name · cap 20)
+
+### Locked visual / product notes
+- Filter-band trailing cluster: **Saved → More → Reset** (28px height language, 1px line, r2, Orbitron/mono labels).
+- Desktop: dropdown menu under Saved. Mobile: bottom sheet (structure-first; not Windows exit gate).
+- Soft apply only: host binds `CatalogClientFilters` (+ sort/group via separate host state); **never invent catalog rows** (BR-CAT-006).
+- Collections listed **per browse mode**; replace-by-name; soft max **20** per user+mode.
+- Dirty: cyan dot when live criteria diverge from active collection.
+- Applied: trigger may show collection name; empty/signed-out honesty.
+- Save only when criteria ≠ empty defaults (scope all + empty query/facets/exotic/sort/group).
+
+---
+
+## CatalogRollTargets (003) — prior
 
 **continue with workflow**
 

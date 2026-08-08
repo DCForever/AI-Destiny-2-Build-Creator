@@ -101,7 +101,7 @@ Stay here until the **Weapons exit gate** is met.
 - Dual-truth residuals (`DUAL-TRUTH-GAPS.md`, `implementation-shots/*/COMPARE.md`)
 - Vault residual / bug rows on [[UX Catalog — Weapons]]
 - Roll-target chrome polish (003 follow-through)
-- Optional: saved filter collections (system + UX; may slip after Armor if product defers)
+- Optional: saved filter collections — **system landed** (`74ce3e4`); UX mockups **approved** (`004-catalog-filter-collections`); next **area-implement** filter-band chrome
 - Optional interleave: C7 after system APIs land
 
 **Out of scope while C6 is open**
@@ -133,7 +133,8 @@ Stay here until the **Weapons exit gate** is met.
 | `001-*` | Early weapons + residual waves (historical) |
 | `002-*` | Component slices (instance strip) |
 | `003-*` | Roll targets |
-| `004-*` (next free) | Prefer **Armor** full redesign when C8 starts |
+| `004-*` | Filter collections component (`004-catalog-filter-collections`) |
+| `005-*` (next free for full mode) | Prefer **Armor** full redesign when C8 starts |
 | `00N-<name>` | Later Universal / pick / outbound |
 
 Briefs live under `docs/ux-redesign/catalog/`. Shots under `implementation-shots/<slice-id>/`.
@@ -161,7 +162,8 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | **Active area** | Catalog |
 | **Active Catalog phase** | **C6 — Weapons finish queue** |
 | **Do not start yet** | C8 Armor full redesign; C9 Universal redesign |
-| **Next full redesign slice** | **C8 Armor** (after C6 exit), unless human inserts C7 system-paired UX first |
+| **In flight (C6 component)** | **CatalogFilterCollections** — chrome **structure landed**; Capture dual-truth optional (`004-…-implement-report.md`) |
+| **Next full redesign slice** | **C8 Armor** (after C6 exit; brief/mockups prefer `005-*`), unless human inserts C7 system-paired UX first |
 | **Open weapons residual board** | Vault `UX/UX Catalog — Weapons.md` · repo `DUAL-TRUTH-GAPS.md` · uncommitted catalog chrome polish |
 | **Next area after Catalog** | Sets (phase 3) |
 
@@ -198,3 +200,4 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | --- | --- |
 | 2026-08-07 | Initial path: global area order; Catalog C0–C12; C6 weapons finish active; Armor blocked until C6 exit |
 | 2026-08-08 | C6 active work: roll-target **plug-level N/M** quality score + column-level perfect tint (Duty Bound-style `3/6`) |
+| 2026-08-08 | C6 optional: filter collections system landed; `004` component mockups approved → brief locked; Armor renumbered to prefer `005-*` when C8 starts |
