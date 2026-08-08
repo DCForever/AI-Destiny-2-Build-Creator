@@ -6,8 +6,8 @@ description: >
   equip-ready wishlist/pin gates (DART-006), pure equip step planner
   (DART-037), finishGaps/next-slot (DART-007), optimizer enumerate/prune/score
   core (DART-008), pure optimize pipeline + combination DTOs (DART-035), pure
-  DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010); later
-  slices land next.
+  DIM loadout JSON builders + equipReady-gated jsonOnly (DART-010), entity
+  presentation resolve from host maps (DART-071); later slices land next.
 version: 0.0.1
 publish_to: none
 resolution: workspace

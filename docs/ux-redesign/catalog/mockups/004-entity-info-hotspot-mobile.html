@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catalog · EntityInfoHotspot — Mobile mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --enhanced: #ceae33;
+      --enhanced-border: rgba(206, 174, 51, 0.85);
+      --rarity-legendary-edge: #c49ad4;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --phone-w: 390px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #03030a;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      width: 100%;
+      max-width: 480px;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 12px;
+    }
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .pill.ok { border-color: rgba(46, 230, 166, 0.4); color: var(--success); }
+    .pill.warn { border-color: rgba(245, 197, 66, 0.4); color: var(--warn); }
+
+    .banner {
+      width: 100%;
+      max-width: 480px;
+      padding: 6px 12px;
+      background: rgba(0, 229, 255, 0.05);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .banner strong { color: var(--accent); font-weight: 500; }
+
+    .phone-wrap {
+      flex: 1;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 12px 24px;
+      gap: 10px;
+    }
+    .phone {
+      width: min(100%, var(--phone-w));
+      min-height: 640px;
+      max-height: min(780px, calc(100vh - 200px));
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-status {
+      flex: 0 0 auto;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .phone-nav {
+      flex: 0 0 auto;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      font-family: var(--font-d);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .phone-nav .back {
+      color: var(--accent);
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 6px;
+    }
+    .phone-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .hero {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .hero-icon {
+      width: 48px; height: 48px;
+      display: grid; place-items: center;
+      background: var(--raised);
+      border: 1px solid var(--rarity-legendary-edge);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .hero-name {
+      margin: 0 0 4px;
+      font-family: var(--font-d);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .hero-sub {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .section-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin: 0 0 6px;
+    }
+    .scenario-hint {
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.45;
+      border: 1px solid rgba(0, 229, 255, 0.18);
+      background: rgba(0, 229, 255, 0.04);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+    }
+    .scenario-hint strong { color: var(--accent); font-weight: 500; }
+    .scenario-hint kbd {
+      font-family: var(--font-m);
+      font-size: 10px;
+      padding: 1px 4px;
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      color: var(--muted);
+    }
+
+    /* Residual perk cells — same locks as desktop */
+    .perk-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin-bottom: 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .perk-legend .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .perk-legend .swatch i {
+      width: 10px; height: 10px;
+      border-radius: 1px;
+      display: inline-block;
+    }
+    .perk-legend .t1 i { background: rgba(80, 160, 255, 0.7); border: 1px solid rgba(80, 160, 255, 0.9); }
+    .perk-legend .t2 i { background: var(--raised); border: 1px solid var(--line-strong); }
+    .perk-legend .t3 i { background: transparent; border: 1px dashed var(--line); }
+    .perk-legend .enh i { background: var(--enhanced); border: 1px solid var(--enhanced-border); }
+
+    .perk-grid {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .perk-col {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 2px;
+      width: 100%;
+      min-height: 52px;
+      margin-bottom: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 9px;
+      cursor: pointer;
+      position: relative;
+      color: inherit;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .perk-cell .ico {
+      width: 30px; height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .perk-cell .cap {
+      max-width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.2;
+    }
+    .perk-cell.selected {
+      background: rgba(0, 120, 212, 0.18);
+      border-color: rgba(80, 160, 255, 0.65);
+    }
+    .perk-cell.selected .ico {
+      border-color: rgba(80, 160, 255, 0.55);
+      background: rgba(0, 100, 200, 0.25);
+    }
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: #9fd0ff;
+      background: rgba(0, 80, 180, 0.55);
+      border-radius: 1px;
+    }
+    .perk-cell.unselected { border-color: var(--line-strong); }
+    .perk-cell.unselected::before {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      border: 4px solid transparent;
+      border-top-color: var(--enhanced);
+      border-left-color: var(--enhanced);
+      opacity: 0.85;
+    }
+    .perk-cell.unselected::after {
+      content: "2";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--raised);
+      border-radius: 1px;
+    }
+    .perk-cell.possible,
+    .perk-cell.craft {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-cell.possible .cap,
+    .perk-cell.craft .cap { color: var(--muted-dim); }
+    .perk-cell.possible .ico,
+    .perk-cell.craft .ico { opacity: 0.45; }
+    .perk-cell.possible::after,
+    .perk-cell.craft::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px dashed var(--line);
+      border-radius: 1px;
+    }
+    .perk-cell.enhanced .ico {
+      border-color: var(--enhanced-border);
+      box-shadow: 0 0 0 1px rgba(206, 174, 51, 0.35);
+    }
+    .perk-cell.enhanced .cap { color: var(--enhanced); }
+    .perk-cell.enhanced .enh-mark {
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      font-weight: 600;
+      line-height: 12px;
+      text-align: center;
+      color: #1a1400;
+      background: var(--enhanced);
+      border-radius: 1px;
+    }
+    .perk-cell.selected.enhanced { border-color: var(--enhanced-border); }
+    .perk-cell.unknown .ico { opacity: 0.5; }
+    .perk-cell.want { box-shadow: inset 0 0 0 1px rgba(46, 230, 166, 0.55); }
+    .perk-cell.avoid { box-shadow: inset 0 0 0 1px rgba(255, 0, 60, 0.45); }
+    .perk-cell .rt-badge {
+      position: absolute;
+      bottom: 2px; left: 2px;
+      font-family: var(--font-m);
+      font-size: 7px;
+      font-weight: 600;
+      line-height: 11px;
+      height: 11px;
+      padding: 0 3px;
+      border-radius: 1px;
+    }
+    .perk-cell.want .rt-badge { color: #062018; background: var(--success); }
+    .perk-cell.avoid .rt-badge { color: #fff; background: var(--danger); }
+    .perk-cell.pressing {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .perk-cell[aria-expanded="true"] {
+      border-color: rgba(0, 229, 255, 0.55);
+      box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.25);
+    }
+
+    .perk-enhance-note {
+      margin: 10px 0 0;
+      padding: 8px;
+      border: 1px dashed rgba(206, 174, 51, 0.35);
+      border-radius: var(--radius);
+      background: rgba(206, 174, 51, 0.06);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .perk-enhance-note strong { color: var(--enhanced); }
+    .perk-enhance-note .future {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted-dim);
+      font-size: 9px;
+    }
+    .plug-note {
+      margin: 10px 0 0;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+
+    /* Optional L1 toast (legacy); primary path uses info sheet via long-press / Alt+tap */
+    .l1-toast {
+      position: absolute;
+      left: 50%;
+      bottom: 88px;
+      transform: translateX(-50%);
+      z-index: 40;
+      max-width: calc(100% - 24px);
+      padding: 6px 10px;
+      background: #12122a;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+
+    /* L2 modal bottom sheet */
+    .sheet-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.55);
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+    .sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      z-index: 60;
+      max-height: min(72%, 420px);
+      overflow: auto;
+      background: var(--raised);
+      border-top: 1px solid var(--accent);
+      border-radius: 10px 10px 0 0;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
+      padding: 10px 14px 20px;
+      animation: sheet-up 0.18s ease-out;
+    }
+    @keyframes sheet-up {
+      from { transform: translateY(12%); opacity: 0.6; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      margin: 0 auto 10px;
+      border-radius: 2px;
+      background: rgba(232, 238, 242, 0.25);
+    }
+    .sheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .sheet-head-main {
+      display: flex;
+      gap: 10px;
+      min-width: 0;
+    }
+    .sheet-icon {
+      width: 40px; height: 40px;
+      flex-shrink: 0;
+      display: grid; place-items: center;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .sheet-icon.has-accent {
+      border-color: var(--accent-ring, var(--line));
+      box-shadow: 0 0 0 1px var(--accent-ring, transparent);
+    }
+    .sheet-kind {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin: 0 0 2px;
+    }
+    .sheet-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .sheet-close {
+      flex-shrink: 0;
+      height: 32px;
+      padding: 0 10px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      border-radius: var(--radius);
+      background: var(--accent-wash);
+    }
+    .sheet-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 0 0 10px;
+    }
+    .sheet-meta span {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      background: var(--bg);
+    }
+    .sheet-body {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .sheet-body.empty {
+      font-family: var(--font-m);
+      font-size: 12px;
+      color: var(--muted-dim);
+    }
+    .sheet-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .sheet-compare .col {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px;
+      background: var(--bg);
+    }
+    .sheet-compare .col.enh { border-color: rgba(206, 174, 51, 0.4); }
+    .sheet-compare .tag {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+    }
+    .sheet-compare .col.enh .tag { color: var(--enhanced); }
+    .sheet-compare .txt {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .sheet-hash {
+      margin-top: 10px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+
+    .live-log {
+      width: min(100%, var(--phone-w));
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--accent);
+      line-height: 1.4;
+      min-height: 36px;
+    }
+    .knobs {
+      width: min(100%, var(--phone-w));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .knobs h3 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .knob-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .toggle-btn {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .toggle-btn[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.35);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .rules {
+      width: min(100%, var(--phone-w));
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.45;
+    }
+    .rules code { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header class="mock-bar" role="banner">
+    <h1>EntityInfoHotspot · Mobile</h1>
+    <span class="meta">Tap = select (primary) · long-press / Alt+tap = info sheet · never invent text</span>
+    <span class="scenario-label" id="sc-label">Scenario</span>
+    <select class="scenario-select" id="scenario" aria-labelledby="sc-label">
+      <option value="l1-only">L1 only · desc null · no invented body</option>
+      <option value="l2-present" selected>L2 sheet · description present</option>
+      <option value="l2-empty">L2 honest empty · “No catalog description”</option>
+      <option value="unknown">Unknown perk · empty desc · no invent</option>
+      <option value="enhanced-selected">① selected enhanced · gold+E · L1/L2</option>
+      <option value="enhance-note">③ pool · Can be enhanced note · no E</option>
+      <option value="enhance-compare">L2 compare · baseDesc + enhancedDesc</option>
+      <option value="single-open">Single-open · open B closes A</option>
+      <option value="sheet-dismiss">Sheet · scrim / Close / Esc dismiss</option>
+      <option value="roll-target">Roll-target · tap cycles W/A · long-press info</option>
+      <option value="missing-icon">Missing icon · letter fallback</option>
+      <option value="knobs">Widgetbook knobs · live</option>
+    </select>
+    <div class="pills">
+      <span class="pill ok">DBR-UI-005/006</span>
+      <span class="pill warn">GAP-UI-DESC-01</span>
+      <span class="pill">long-press / Alt+tap = info</span>
+    </div>
+  </header>
+
+  <div class="banner" role="note">
+    <strong>Narrow / mobile:</strong> <strong>tap = primary select</strong>; long-press (≥450ms) or Alt+tap → modal info sheet (same content as desktop hover info). No double-tap for info. Catalog push not an exit gate.
+  </div>
+
+  <div class="phone-wrap">
+    <div class="phone" id="phone" aria-label="Mobile Catalog detail frame">
+      <div class="phone-status" aria-hidden="true"><span>9:41</span><span>LTE</span></div>
+      <div class="phone-nav">
+        <button type="button" class="back" aria-label="Back" tabindex="-1">‹</button>
+        <span>Weapon detail</span>
+      </div>
+      <div class="phone-body" id="main"></div>
+      <div class="l1-toast" id="l1-toast" role="status" hidden></div>
+      <button type="button" class="sheet-scrim" id="sheet-scrim" hidden aria-label="Dismiss description"></button>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden></div>
+    </div>
+
+    <div class="live-log" id="live-log">Tap selects · long-press or Alt+tap opens info sheet</div>
+
+    <div class="knobs" id="knobs-panel" hidden>
+      <h3>Widgetbook knobs</h3>
+      <div class="knob-row">
+        <span>description</span>
+        <button type="button" class="toggle-btn" data-knob="desc" data-v="present" aria-pressed="true">present</button>
+        <button type="button" class="toggle-btn" data-knob="desc" data-v="empty" aria-pressed="false">empty</button>
+        <button type="button" class="toggle-btn" data-knob="desc" data-v="null" aria-pressed="false">null</button>
+      </div>
+      <div class="knob-row">
+        <span>tier</span>
+        <button type="button" class="toggle-btn" data-knob="tier" data-v="selected" aria-pressed="true">①</button>
+        <button type="button" class="toggle-btn" data-knob="tier" data-v="unselected" aria-pressed="false">②</button>
+        <button type="button" class="toggle-btn" data-knob="tier" data-v="possible" aria-pressed="false">③</button>
+        <button type="button" class="toggle-btn" data-knob="tier" data-v="craft" aria-pressed="false">craft</button>
+      </div>
+      <div class="knob-row">
+        <span>flags</span>
+        <button type="button" class="toggle-btn" id="k-enh" aria-pressed="false">enhanced</button>
+        <button type="button" class="toggle-btn" id="k-note" aria-pressed="false">note</button>
+        <button type="button" class="toggle-btn" id="k-compare" aria-pressed="false">compare</button>
+      </div>
+    </div>
+
+    <p class="rules">
+      Must match: <strong>tap = primary select</strong> · long-press / Alt+tap = info sheet from <code>EntityPresentation</code> · empty = <code>No catalog description</code> · E only ①/② ·
+      single-open · no invent text (DBR-UI-005/006) · residual cell chrome unchanged · no detail widen / perk H-scroll.
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const $ = (s, el = document) => el.querySelector(s);
+      const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+      const main = $("#main");
+      const liveLog = $("#live-log");
+      const scenarioEl = $("#scenario");
+      const knobsPanel = $("#knobs-panel");
+      const l1 = $("#l1-toast");
+      const sheet = $("#sheet");
+      const scrim = $("#sheet-scrim");
+
+      const FIXTURE_DESC = {
+        frenzy:
+          "Being in combat for an extended time increases damage, handling, and reload for you and nearby allies until you are out of combat.",
+        frenzyBase:
+          "Being in combat for an extended time increases damage, handling, and reload until you are out of combat.",
+        frenzyEnh:
+          "Being in combat for an extended time increases damage, handling, and reload for you and nearby allies until you are out of combat. Enhanced: improved timer and ally radius (fixture pair for L2 compare).",
+        incandescent:
+          "Defeating a target spreads scorch to those nearby. More powerful combatants and opposing Guardians cause scorch in a larger radius.",
+        overflow:
+          "Picking up Special or Heavy ammo automatically loads this weapon beyond normal capacity.",
+      };
+
+      const LONG_MS = 450;
+      const knobs = {
+        desc: "present",
+        tier: "selected",
+        enhanced: false,
+        canNote: false,
+        compare: false,
+      };
+
+      /** @type {{ activeId: string|null }} */
+      let hotspot = { activeId: null };
+      /** @type {Map<string, any>} */
+      let perkMap = new Map();
+      let scenario = "l2-present";
+      let l1Timer = null;
+      let lpTimer = null;
+      let lpFired = false;
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function log(msg) {
+        liveLog.textContent = msg;
+      }
+
+      function tierTip(tier, enhanced) {
+        const base =
+          tier === "selected"
+            ? " · ① on this copy"
+            : tier === "unselected"
+              ? " · ② unselected (this instance)"
+              : tier === "craft"
+                ? " · ③ possible crafted (definition)"
+                : " · ③ possible roll (definition)";
+        return base + (enhanced ? " · Enhanced (this copy)" : "");
+      }
+
+      function l1Message(p) {
+        let tip = p.name + tierTip(p.tier, !!p.enhanced);
+        if (p.rollTarget === "want") tip += " · roll-target want";
+        if (p.rollTarget === "avoid") tip += " · roll-target avoid";
+        return tip;
+      }
+
+      function captionFor(p) {
+        if (p.unknown) return "Unknown perk";
+        return p.caption || p.name;
+      }
+
+      function letterFor(p) {
+        if (p.letter) return p.letter;
+        if (p.unknown) return "?";
+        return (p.name || "?")[0].toUpperCase();
+      }
+
+      function cellClasses(p) {
+        const parts = ["perk-cell", p.tier];
+        if (p.enhanced && (p.tier === "selected" || p.tier === "unselected")) {
+          parts.push("enhanced");
+        }
+        if (p.unknown) parts.push("unknown");
+        if (p.rollTarget === "want") parts.push("want");
+        if (p.rollTarget === "avoid") parts.push("avoid");
+        return parts.join(" ");
+      }
+
+      function renderCell(p) {
+        const tip = escapeHtml(l1Message(p));
+        const showE =
+          !!p.enhanced && (p.tier === "selected" || p.tier === "unselected");
+        const rt =
+          p.rollTarget === "want"
+            ? `<span class="rt-badge" aria-hidden="true">W</span>`
+            : p.rollTarget === "avoid"
+              ? `<span class="rt-badge" aria-hidden="true">A</span>`
+              : "";
+        return `<button type="button"
+          class="${cellClasses(p)}"
+          data-perk="${escapeHtml(p.id)}"
+          title="${tip}"
+          aria-label="${tip}"
+          aria-expanded="false"
+          aria-haspopup="dialog">
+          <span class="ico" aria-hidden="true">${escapeHtml(letterFor(p))}</span>
+          <span class="cap">${escapeHtml(captionFor(p))}</span>
+          ${showE ? `<span class="enh-mark" aria-hidden="true">E</span>` : ""}
+          ${rt}
+        </button>`;
+      }
+
+      function enhanceNoteHtml(ctx) {
+        return `<p class="perk-enhance-note" role="note">
+          <strong>Can be enhanced</strong> — ${escapeHtml(ctx)} perks that support Enhanced show once (no second cell).
+          <span class="future">Info compare only when host supplies baseDesc + enhancedDesc — not cell chrome.</span>
+        </p>`;
+      }
+
+      function gridFromColumns(cols, note) {
+        const legend = `<div class="perk-legend" aria-hidden="true">
+          <span class="swatch t1"><i></i>①</span>
+          <span class="swatch t2"><i></i>②</span>
+          <span class="swatch t3"><i></i>③</span>
+          <span class="swatch enh"><i></i>E ①/②</span>
+        </div>`;
+        const colHtml = cols
+          .map((c) => {
+            const cells = c.perks.map(renderCell).join("");
+            return `<div class="perk-col">
+              <div class="perk-col-label" title="${escapeHtml(c.label)}">${escapeHtml(c.label)}</div>
+              ${cells}
+            </div>`;
+          })
+          .join("");
+        return `
+          <div class="hero">
+            <div class="hero-icon" aria-hidden="true">◆</div>
+            <div>
+              <h2 class="hero-name">Fixture Auto Rifle</h2>
+              <div class="hero-sub">Legendary · Kinetic · detail</div>
+            </div>
+          </div>
+          ${legend}
+          <p class="section-label">Perks</p>
+          <div class="perk-grid" role="list" aria-label="Weapon perks">${colHtml}</div>
+          ${note || ""}
+          <p class="plug-note">Tap → select (primary). Long-press (~450ms) or Alt+tap → info sheet. One sheet only.</p>`;
+      }
+
+      function register(perks) {
+        perkMap = new Map(perks.map((p) => [p.id, p]));
+      }
+
+      function hideL1() {
+        l1.hidden = true;
+        l1.textContent = "";
+        if (l1Timer) {
+          clearTimeout(l1Timer);
+          l1Timer = null;
+        }
+      }
+
+      function showL1(p) {
+        l1.textContent = l1Message(p);
+        l1.hidden = false;
+        if (l1Timer) clearTimeout(l1Timer);
+        l1Timer = setTimeout(hideL1, 1400);
+      }
+
+      function resolveDescription(p) {
+        if (p.description === null || p.description === undefined) {
+          return { text: null, empty: true, reason: "null" };
+        }
+        const t = String(p.description).trim();
+        if (!t) return { text: null, empty: true, reason: "blank" };
+        return { text: t, empty: false, reason: "present" };
+      }
+
+      function renderSheetContent(p) {
+        const d = resolveDescription(p);
+        const showCompare =
+          p.baseDesc &&
+          p.enhancedDesc &&
+          String(p.baseDesc).trim() &&
+          String(p.enhancedDesc).trim();
+
+        const meta = (p.meta || [])
+          .filter(Boolean)
+          .map((m) => `<span>${escapeHtml(m)}</span>`)
+          .join("");
+
+        const ring = p.accentColor
+          ? `style="--accent-ring:${escapeHtml(p.accentColor)}"`
+          : "";
+        const iconCls = p.accentColor ? "sheet-icon has-accent" : "sheet-icon";
+
+        let body = "";
+        if (showCompare) {
+          body = `<div class="sheet-compare">
+            <div class="col">
+              <div class="tag">Base</div>
+              <div class="txt">${escapeHtml(p.baseDesc)}</div>
+            </div>
+            <div class="col enh">
+              <div class="tag">Enhanced</div>
+              <div class="txt">${escapeHtml(p.enhancedDesc)}</div>
+            </div>
+          </div>`;
+        } else if (d.empty) {
+          body = `<div class="sheet-body empty">No catalog description</div>`;
+        } else {
+          body = `<div class="sheet-body">${escapeHtml(d.text)}</div>`;
+        }
+
+        const hash =
+          p.showHashFooter && p.hash
+            ? `<div class="sheet-hash" aria-hidden="true">hash ${escapeHtml(p.hash)}</div>`
+            : "";
+
+        const tierLine = escapeHtml(l1Message(p));
+
+        return `
+          <div class="sheet-handle" aria-hidden="true"></div>
+          <div class="sheet-head">
+            <div class="sheet-head-main">
+              <div class="${iconCls}" ${ring} aria-hidden="true">${escapeHtml(letterFor(p))}</div>
+              <div>
+                ${p.kind ? `<p class="sheet-kind">${escapeHtml(p.kind)}</p>` : ""}
+                <p class="sheet-title" id="sheet-title">${escapeHtml(p.name)}</p>
+              </div>
+            </div>
+            <button type="button" class="sheet-close" data-close-sheet>Close</button>
+          </div>
+          <div class="sheet-meta"><span>${tierLine}</span>${meta}</div>
+          ${body}
+          ${hash}`;
+      }
+
+      function closeSheet() {
+        hotspot.activeId = null;
+        sheet.hidden = true;
+        scrim.hidden = true;
+        sheet.innerHTML = "";
+        $$(".perk-cell[aria-expanded='true']").forEach((el) =>
+          el.setAttribute("aria-expanded", "false")
+        );
+      }
+
+      function openSheet(p) {
+        if (hotspot.activeId && hotspot.activeId !== p.id) {
+          log(
+            `Single-open: closed sheet for “${perkMap.get(hotspot.activeId)?.name || hotspot.activeId}” → “${p.name}”`
+          );
+        }
+        hotspot.activeId = p.id;
+        hideL1();
+        sheet.innerHTML = renderSheetContent(p);
+        sheet.hidden = false;
+        scrim.hidden = false;
+        sheet.setAttribute("aria-labelledby", "sheet-title");
+        $$(".perk-cell").forEach((el) => {
+          el.setAttribute(
+            "aria-expanded",
+            el.getAttribute("data-perk") === p.id ? "true" : "false"
+          );
+        });
+        const d = resolveDescription(p);
+        if (!liveLog.textContent.startsWith("Single-open") && !liveLog.textContent.startsWith("Primary")) {
+          log(
+            `Info sheet · ${p.name} · desc=${d.empty ? "empty→“No catalog description”" : "present"}`
+          );
+        }
+        const closeBtn = sheet.querySelector("[data-close-sheet]");
+        if (closeBtn) closeBtn.focus();
+      }
+
+      function clearLp(btn) {
+        if (lpTimer) {
+          clearTimeout(lpTimer);
+          lpTimer = null;
+        }
+        if (btn) btn.classList.remove("pressing");
+      }
+
+      function refreshCellDom(btn, p) {
+        btn.className = cellClasses(p);
+        btn.title = l1Message(p);
+        btn.setAttribute("aria-label", l1Message(p));
+        const badge = btn.querySelector(".rt-badge");
+        if (badge) badge.remove();
+        if (p.rollTarget === "want") {
+          btn.insertAdjacentHTML(
+            "beforeend",
+            `<span class="rt-badge" aria-hidden="true">W</span>`
+          );
+        } else if (p.rollTarget === "avoid") {
+          btn.insertAdjacentHTML(
+            "beforeend",
+            `<span class="rt-badge" aria-hidden="true">A</span>`
+          );
+        }
+        const enh = btn.querySelector(".enh-mark");
+        const showE =
+          !!p.enhanced && (p.tier === "selected" || p.tier === "unselected");
+        if (showE && !enh) {
+          btn.insertAdjacentHTML(
+            "beforeend",
+            `<span class="enh-mark" aria-hidden="true">E</span>`
+          );
+        } else if (!showE && enh) {
+          enh.remove();
+        }
+      }
+
+      /** Primary action: select (or roll-target cycle). Never opens info sheet. */
+      function performPrimaryAction(p, btn) {
+        if (scenario === "roll-target") {
+          const order = [null, "want", "avoid"];
+          const cur = p.rollTarget || null;
+          const next = order[(order.indexOf(cur) + 1) % order.length];
+          p.rollTarget = next;
+          refreshCellDom(btn, p);
+          log(
+            `Primary · roll-target cycle · ${p.name} → ${next || "none"} · long-press/Alt+tap for info`
+          );
+          return;
+        }
+        if (p.tier === "possible" || p.tier === "craft") {
+          log(
+            `Primary · “${p.name}” is ${p.tier === "craft" ? "craft pool" : "③ pool"} — no instance select`
+          );
+          return;
+        }
+        const col = btn.closest(".perk-col");
+        const siblings = col
+          ? $$(".perk-cell", col)
+          : $$(".perk-cell", main);
+        siblings.forEach((sib) => {
+          const sid = sib.getAttribute("data-perk");
+          const sp = perkMap.get(sid);
+          if (!sp) return;
+          if (sp.tier === "possible" || sp.tier === "craft") return;
+          if (sp.id === p.id) {
+            sp.tier = "selected";
+          } else if (sp.tier === "selected") {
+            sp.tier = "unselected";
+          }
+          refreshCellDom(sib, sp);
+        });
+        log(`Primary · select “${p.name}” · tap does not open info`);
+      }
+
+      function bindCells() {
+        $$(".perk-cell", main).forEach((btn) => {
+          btn.addEventListener("pointerdown", (e) => {
+            if (e.button != null && e.button !== 0) return;
+            // Alt+pointer = info (explicit secondary), not primary
+            if (e.altKey) {
+              const id = btn.getAttribute("data-perk");
+              const p = perkMap.get(id);
+              if (!p) return;
+              lpFired = true; // suppress following click primary
+              e.preventDefault();
+              openSheet(p);
+              log(`Alt+tap · info sheet for “${p.name}”`);
+              return;
+            }
+            const id = btn.getAttribute("data-perk");
+            const p = perkMap.get(id);
+            if (!p) return;
+            lpFired = false;
+            btn.classList.add("pressing");
+            clearLp();
+            lpTimer = setTimeout(() => {
+              lpFired = true;
+              btn.classList.remove("pressing");
+              openSheet(p);
+              log(`Long-press · info sheet for “${p.name}”`);
+            }, LONG_MS);
+          });
+
+          const endPress = () => clearLp(btn);
+          btn.addEventListener("pointerup", endPress);
+          btn.addEventListener("pointerleave", endPress);
+          btn.addEventListener("pointercancel", endPress);
+
+          btn.addEventListener("click", (e) => {
+            const id = btn.getAttribute("data-perk");
+            const p = perkMap.get(id);
+            if (!p) return;
+
+            // Long-press or Alt already opened info — suppress primary
+            if (lpFired) {
+              e.preventDefault();
+              lpFired = false;
+              return;
+            }
+
+            if (e.altKey) {
+              e.preventDefault();
+              openSheet(p);
+              log(`Alt+tap · info sheet for “${p.name}”`);
+              return;
+            }
+
+            // Tap = primary select only
+            performPrimaryAction(p, btn);
+          });
+
+          btn.addEventListener("keydown", (e) => {
+            const id = btn.getAttribute("data-perk");
+            const p = perkMap.get(id);
+            if (!p) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (e.altKey) {
+                openSheet(p);
+                log(`Alt+Enter · info sheet for “${p.name}”`);
+              } else {
+                performPrimaryAction(p, btn);
+              }
+            }
+          });
+        });
+      }
+
+      scrim.addEventListener("click", () => {
+        closeSheet();
+        log("Scrim · dismissed info sheet");
+      });
+
+      sheet.addEventListener("click", (e) => {
+        if (e.target.closest && e.target.closest("[data-close-sheet]")) {
+          closeSheet();
+          log("Close · dismissed info sheet");
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && hotspot.activeId) {
+          closeSheet();
+          log("Esc · dismissed info sheet");
+        }
+      });
+
+      // ── Scenarios ──
+      // ── Scenarios ──
+
+      function fill(hint, cols, note) {
+        main.innerHTML = `<p class="scenario-hint">${hint}</p>` + gridFromColumns(cols, note);
+      }
+
+      function scenarioL1Only() {
+        const perks = [
+          { id: "p1", name: "Frenzy", tier: "selected", kind: "Trait", description: null },
+          { id: "p2", name: "Overflow", tier: "unselected", kind: "Trait", description: null },
+        ];
+        register(perks);
+        fill(
+          `<strong>No description</strong> — description null. Tap selects; long-press / Alt+tap opens honest empty sheet (never invents body).`,
+          [{ label: "Trait", perks }]
+        );
+        log("Scenario · desc=null · tap selects · long-press/Alt+tap honest empty info");
+      }
+
+      function scenarioL2Present() {
+        const perks = [
+          {
+            id: "frenzy",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+            meta: ["Column 3 · Trait"],
+          },
+          {
+            id: "inc",
+            name: "Incandescent",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+          },
+          {
+            id: "ov",
+            name: "Overflow",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>Info present</strong> — fixture description supplied. Long-press or Alt+tap Frenzy for full sheet. Tap = select (primary).`,
+          [{ label: "Trait", perks }]
+        );
+        log("Scenario · info present · long-press/Alt+tap Frenzy · tap selects");
+        requestAnimationFrame(() => openSheet(perkMap.get("frenzy")));
+      }
+
+      function scenarioL2Empty() {
+        const perks = [
+          { id: "e1", name: "Frenzy", tier: "selected", kind: "Trait", description: "", meta: ["blank"] },
+          { id: "e2", name: "Overflow", tier: "unselected", kind: "Trait", description: null, meta: ["null"] },
+        ];
+        register(perks);
+        fill(
+          `<strong>Honest empty</strong> — blank/null → fixed “No catalog description”. Name remains primary (DBR-UI-005/006).`,
+          [{ label: "Trait", perks }]
+        );
+        requestAnimationFrame(() => openSheet(perkMap.get("e1")));
+      }
+
+      function scenarioUnknown() {
+        const perks = [
+          {
+            id: "u1",
+            name: "Unknown perk",
+            tier: "selected",
+            kind: "Trait",
+            unknown: true,
+            description: null,
+            hash: "3913600132",
+            showHashFooter: true,
+          },
+          {
+            id: "u2",
+            name: "Frenzy",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>Unknown perk</strong> — label “Unknown perk”; no invent desc; hash footer only, never primary label.`,
+          [{ label: "Trait", perks }]
+        );
+        requestAnimationFrame(() => openSheet(perkMap.get("u1")));
+      }
+
+      function scenarioEnhancedSelected() {
+        const perks = [
+          {
+            id: "en1",
+            name: "Frenzy",
+            caption: "Frenzy",
+            tier: "selected",
+            enhanced: true,
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyEnh,
+            meta: ["① Enhanced (this copy)"],
+            accentColor: "rgba(206, 174, 51, 0.85)",
+          },
+          {
+            id: "en2",
+            name: "Incandescent",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>① selected enhanced</strong> — gold+E on ①. Caption strips Enhanced wording. L1 includes Enhanced meta; L2 uses presentation.`,
+          [{ label: "Trait", perks }]
+        );
+        requestAnimationFrame(() => openSheet(perkMap.get("en1")));
+      }
+
+      function scenarioEnhanceNote() {
+        const perks = [
+          {
+            id: "n1",
+            name: "Frenzy",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyBase,
+          },
+          {
+            id: "n2",
+            name: "Overflow",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+          },
+          {
+            id: "n3",
+            name: "Frenzy",
+            tier: "craft",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyBase,
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>③ / craft canBeEnhanced</strong> — one identity cell, no E. Note-only. No second cell.`,
+          [
+            { label: "Trait · ③", perks: [perks[0], perks[1]] },
+            { label: "Craft", perks: [perks[2]] },
+          ],
+          enhanceNoteHtml("Possible rolls / crafted pool")
+        );
+        log("Scenario · enhance note · no E on ③/craft");
+      }
+
+      function scenarioEnhanceCompare() {
+        const perks = [
+          {
+            id: "c1",
+            name: "Frenzy",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyBase,
+            baseDesc: FIXTURE_DESC.frenzyBase,
+            enhancedDesc: FIXTURE_DESC.frenzyEnh,
+            meta: ["both descs supplied"],
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>L2 compare</strong> — baseDesc + enhancedDesc in sheet only. Never second cell / never E on ③.`,
+          [{ label: "Trait · ③", perks }],
+          enhanceNoteHtml("Possible rolls")
+        );
+        requestAnimationFrame(() => openSheet(perkMap.get("c1")));
+      }
+
+      function scenarioSingleOpen() {
+        const perks = [
+          { id: "a", name: "Frenzy", tier: "selected", kind: "Trait", description: FIXTURE_DESC.frenzy },
+          { id: "b", name: "Incandescent", tier: "unselected", kind: "Trait", description: FIXTURE_DESC.incandescent },
+          { id: "c", name: "Overflow", tier: "possible", kind: "Trait", description: FIXTURE_DESC.overflow },
+        ];
+        register(perks);
+        fill(
+          `<strong>Single-open</strong> — open A sheet, then long-press B: A closes, B opens. Tap always selects. Only one info sheet.`,
+          [{ label: "Trait", perks }]
+        );
+        requestAnimationFrame(() => openSheet(perkMap.get("a")));
+      }
+
+      function scenarioSheetDismiss() {
+        const perks = [
+          { id: "pin1", name: "Frenzy", tier: "selected", kind: "Trait", description: FIXTURE_DESC.frenzy },
+        ];
+        register(perks);
+        fill(
+          `<strong>Sheet dismiss</strong> — Close button, scrim tap, or Esc. Same content model as desktop hover info.`,
+          [{ label: "Trait", perks }]
+        );
+        requestAnimationFrame(() => openSheet(perkMap.get("pin1")));
+        log("Scenario · dismiss via scrim / Close / Esc");
+      }
+
+      function scenarioRollTarget() {
+        const perks = [
+          {
+            id: "rt1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+            rollTarget: "want",
+          },
+          {
+            id: "rt2",
+            name: "Overflow",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+            rollTarget: "avoid",
+          },
+          {
+            id: "rt3",
+            name: "Incandescent",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+            rollTarget: null,
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>Roll-target edit</strong> — W/A wash/badges residual. <strong>Tap</strong> cycles want/avoid/none (primary). Long-press or Alt+tap opens info without blocking edit chrome.`,
+          [{ label: "Trait", perks }]
+        );
+        log("Scenario · roll-target · tap cycles W/A · long-press/Alt+tap info");
+      }
+
+      function scenarioMissingIcon() {
+        const perks = [
+          {
+            id: "m1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+            missingIcon: true,
+            letter: "F",
+          },
+          {
+            id: "m2",
+            name: "Unknown perk",
+            tier: "unselected",
+            kind: "Trait",
+            unknown: true,
+            description: null,
+            letter: "?",
+          },
+        ];
+        register(perks);
+        fill(
+          `<strong>Missing icon</strong> — letter fallback still hotspots. A11y name = displayName (not hash).`,
+          [{ label: "Trait", perks }]
+        );
+        log("Scenario · letter fallback");
+      }
+
+      function applyKnobs() {
+        const descVal =
+          knobs.desc === "present"
+            ? FIXTURE_DESC.frenzy
+            : knobs.desc === "empty"
+              ? ""
+              : null;
+        const allowE =
+          knobs.enhanced &&
+          (knobs.tier === "selected" || knobs.tier === "unselected");
+        const p = {
+          id: "knob",
+          name: "Frenzy",
+          caption: "Frenzy",
+          tier: knobs.tier,
+          enhanced: allowE,
+          kind: "Trait",
+          description: descVal,
+          meta: ["knob fixture", knobs.tier],
+        };
+        if (knobs.compare) {
+          p.baseDesc = FIXTURE_DESC.frenzyBase;
+          p.enhancedDesc = FIXTURE_DESC.frenzyEnh;
+        }
+        register([p]);
+        const note = knobs.canNote
+          ? enhanceNoteHtml(
+              knobs.tier === "craft" ? "Possible crafted pool" : "Possible rolls"
+            )
+          : "";
+        fill(
+          `<strong>Widgetbook knobs</strong> — description present|empty|null · tier · enhanced · note · compare.`,
+          [{ label: "Trait", perks: [p] }],
+          note
+        );
+        bindCells();
+        closeSheet();
+        hideL1();
+        log(
+          `Knobs · desc=${knobs.desc} tier=${knobs.tier} enhanced=${allowE} note=${knobs.canNote} compare=${knobs.compare}`
+        );
+      }
+
+      function scenarioKnobs() {
+        knobsPanel.hidden = false;
+        applyKnobs();
+      }
+
+      const SCENARIOS = {
+        "l1-only": scenarioL1Only,
+        "l2-present": scenarioL2Present,
+        "l2-empty": scenarioL2Empty,
+        unknown: scenarioUnknown,
+        "enhanced-selected": scenarioEnhancedSelected,
+        "enhance-note": scenarioEnhanceNote,
+        "enhance-compare": scenarioEnhanceCompare,
+        "single-open": scenarioSingleOpen,
+        "sheet-dismiss": scenarioSheetDismiss,
+        "roll-target": scenarioRollTarget,
+        "missing-icon": scenarioMissingIcon,
+        knobs: scenarioKnobs,
+      };
+
+      function runScenario(id) {
+        scenario = id;
+        knobsPanel.hidden = id !== "knobs";
+        closeSheet();
+        hideL1();
+        const fn = SCENARIOS[id] || scenarioL2Present;
+        fn();
+        if (id !== "knobs") bindCells();
+      }
+
+      scenarioEl.addEventListener("change", () => runScenario(scenarioEl.value));
+
+      $$('[data-knob="desc"]').forEach((btn) => {
+        btn.addEventListener("click", () => {
+          knobs.desc = btn.getAttribute("data-v");
+          $$('[data-knob="desc"]').forEach((b) =>
+            b.setAttribute(
+              "aria-pressed",
+              b.getAttribute("data-v") === knobs.desc ? "true" : "false"
+            )
+          );
+          applyKnobs();
+        });
+      });
+      $$('[data-knob="tier"]').forEach((btn) => {
+        btn.addEventListener("click", () => {
+          knobs.tier = btn.getAttribute("data-v");
+          $$('[data-knob="tier"]').forEach((b) =>
+            b.setAttribute(
+              "aria-pressed",
+              b.getAttribute("data-v") === knobs.tier ? "true" : "false"
+            )
+          );
+          if (knobs.tier !== "selected" && knobs.tier !== "unselected") {
+            knobs.enhanced = false;
+            $("#k-enh").setAttribute("aria-pressed", "false");
+          }
+          applyKnobs();
+        });
+      });
+      $("#k-enh").addEventListener("click", () => {
+        if (knobs.tier !== "selected" && knobs.tier !== "unselected") {
+          log("Enhanced E only on ①/② — residual lock");
+          return;
+        }
+        knobs.enhanced = !knobs.enhanced;
+        $("#k-enh").setAttribute("aria-pressed", knobs.enhanced ? "true" : "false");
+        applyKnobs();
+      });
+      $("#k-note").addEventListener("click", () => {
+        knobs.canNote = !knobs.canNote;
+        $("#k-note").setAttribute("aria-pressed", knobs.canNote ? "true" : "false");
+        applyKnobs();
+      });
+      $("#k-compare").addEventListener("click", () => {
+        knobs.compare = !knobs.compare;
+        $("#k-compare").setAttribute("aria-pressed", knobs.compare ? "true" : "false");
+        applyKnobs();
+      });
+
+      runScenario(scenarioEl.value);
+    })();
+  </script>
+</body>
+</html>

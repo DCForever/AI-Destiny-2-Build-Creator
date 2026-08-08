@@ -7,6 +7,7 @@ import '../destiny_official_icons.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'catalog_roll_targets.dart';
+import 'entity_info_hotspot.dart';
 
 // ---------------------------------------------------------------------------
 // Presentation models (host supplies data; widgets never invent pools)
@@ -504,6 +505,8 @@ class CatalogPerkGrid extends StatelessWidget {
     this.editingRollTarget = false,
     this.onCycleRollPlug,
     this.fixedPerks = false,
+    this.entityInfoByHash = const {},
+    this.enableEntityInfo = true,
   });
 
   final List<CatalogPerkColumn> columns;
@@ -529,6 +532,13 @@ class CatalogPerkGrid extends StatelessWidget {
   /// Exotic / fixed-perk weapons: no Selected / On this copy / Possible rolls
   /// legend (BUG-20260807-003).
   final bool fixedPerks;
+
+  /// Host-resolved entity info by plug hash (DART-071 maps → chrome DTO).
+  /// Missing hash still opens info with cell name + honest empty description.
+  final Map<int, EntityInfoData> entityInfoByHash;
+
+  /// When false, cells keep residual chrome without info hotspot (tests).
+  final bool enableEntityInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -630,6 +640,8 @@ class CatalogPerkGrid extends StatelessWidget {
                               columns[i].rollColumnKey,
                               hash,
                             ),
+                    entityInfoByHash: entityInfoByHash,
+                    enableEntityInfo: enableEntityInfo,
                   ),
                 ),
               ),
@@ -792,6 +804,8 @@ class _PerkColumnBody extends StatelessWidget {
     this.avoidHashes = const {},
     this.editingRollTarget = false,
     this.onCycleRollPlug,
+    this.entityInfoByHash = const {},
+    this.enableEntityInfo = true,
   });
 
   final int columnIndex;
@@ -801,6 +815,41 @@ class _PerkColumnBody extends StatelessWidget {
   final Set<int> avoidHashes;
   final bool editingRollTarget;
   final ValueChanged<int>? onCycleRollPlug;
+  final Map<int, EntityInfoData> entityInfoByHash;
+  final bool enableEntityInfo;
+
+  List<String> _tierMeta(CatalogPerkCell cell, CatalogRollPlugTargetMode mode) {
+    final meta = <String>[];
+    if (cell.selected) {
+      meta.add('① on this copy');
+    } else if (cell.isInstanceUnselected) {
+      meta.add('② unselected (this instance)');
+    } else if (cell.fromCraftPool) {
+      meta.add('③ possible crafted (definition)');
+    } else if (cell.fromCanRollPool) {
+      meta.add('③ possible roll (definition)');
+    }
+    if (cell.enhanced &&
+        (cell.selected || cell.isInstanceUnselected) &&
+        !cell.fromCanRollPool &&
+        !cell.fromCraftPool) {
+      meta.add('Enhanced (this copy)');
+    }
+    if (editingRollTarget) {
+      switch (mode) {
+        case CatalogRollPlugTargetMode.want:
+          meta.add('roll-target want');
+        case CatalogRollPlugTargetMode.avoid:
+          meta.add('roll-target avoid');
+        case CatalogRollPlugTargetMode.off:
+          break;
+      }
+    } else {
+      if (mode == CatalogRollPlugTargetMode.want) meta.add('preferred');
+      if (mode == CatalogRollPlugTargetMode.avoid) meta.add('avoid target');
+    }
+    return meta;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -833,6 +882,17 @@ class _PerkColumnBody extends StatelessWidget {
           (cell.fromCanRollPool ||
               cell.selected ||
               cell.isInstanceUnselected);
+      final info = enableEntityInfo
+          ? entityInfoFromPerkCell(
+              hash: cell.hash,
+              displayName: cell.captionName,
+              iconPath: cell.icon,
+              unknown: cell.unknown,
+              host: entityInfoByHash[cell.hash],
+              tierMeta: _tierMeta(cell, mode),
+              kind: column.kind ?? column.label,
+            )
+          : null;
       children.add(
         _PerkCellTile(
           cell: cell,
@@ -843,6 +903,7 @@ class _PerkColumnBody extends StatelessWidget {
               preferredHashes.contains(cell.hash) &&
               avoidHashes.contains(cell.hash),
           onCycle: canCycle ? () => onCycleRollPlug!(cell.hash) : null,
+          entityInfo: info,
         ),
       );
     }
@@ -944,6 +1005,7 @@ class _PerkCellTile extends StatelessWidget {
     this.editingRollTarget = false,
     this.overlap = false,
     this.onCycle,
+    this.entityInfo,
   });
 
   final CatalogPerkCell cell;
@@ -952,6 +1014,9 @@ class _PerkCellTile extends StatelessWidget {
   final bool editingRollTarget;
   final bool overlap;
   final VoidCallback? onCycle;
+
+  /// When set, hover/long-press shows entity info; tap stays primary ([onCycle]).
+  final EntityInfoData? entityInfo;
 
   /// Option B: caption when forced, or when no icon / unknown.
   bool get _showCaption {
@@ -1218,23 +1283,46 @@ class _PerkCellTile extends StatelessWidget {
     );
 
     final tipMsg = tip.toString();
-    final withTip = Tooltip(
-      message: tipMsg,
-      excludeFromSemantics: true,
-      child: onCycle == null
-          ? padded
-          : Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onCycle,
-                borderRadius: BorderRadius.circular(kRadiusMax),
-                child: padded,
-              ),
-            ),
-    );
 
-    if (onCycle == null) {
+    // EntityInfoHotspot: hover/focus = info; tap = primary (onCycle when edit).
+    // Residual name-only Tooltip only when info chrome is off.
+    Widget interactive = padded;
+    if (entityInfo != null) {
+      interactive = EntityInfoHotspot(
+        key: Key('entity_info_hotspot_${cell.hash}'),
+        data: entityInfo!,
+        onPrimary: onCycle,
+        child: Material(
+          color: Colors.transparent,
+          child: padded,
+        ),
+      );
+    } else if (onCycle != null) {
+      interactive = Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onCycle,
+          borderRadius: BorderRadius.circular(kRadiusMax),
+          child: padded,
+        ),
+      );
+    }
+
+    final withTip = entityInfo != null
+        ? interactive
+        : Tooltip(
+            message: tipMsg,
+            excludeFromSemantics: true,
+            child: interactive,
+          );
+
+    if (onCycle == null && entityInfo == null) {
       // Parent grid ExcludeSemantics owns view a11y; avoid N× label thrash.
+      return ExcludeSemantics(child: withTip);
+    }
+
+    if (onCycle == null && entityInfo != null) {
+      // Info-capable view cells: still collapse under grid Semantics.
       return ExcludeSemantics(child: withTip);
     }
 

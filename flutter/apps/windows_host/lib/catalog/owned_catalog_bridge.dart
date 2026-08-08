@@ -23,12 +23,15 @@ class OwnedCatalogBridge {
     required this.inventorySync,
     Map<int, String> plugNameByHash = const {},
     Map<int, String> plugIconByHash = const {},
+    Map<int, String> plugDescriptionByHash = const {},
     Map<int, bool> plugEnhancedByHash = const {},
     this.plugNameMapBuilder,
     this.plugIconMapBuilder,
+    this.plugDescriptionMapBuilder,
     this.plugEnhancedMapBuilder,
   })  : _plugNameByHash = Map<int, String>.from(plugNameByHash),
         _plugIconByHash = Map<int, String>.from(plugIconByHash),
+        _plugDescriptionByHash = Map<int, String>.from(plugDescriptionByHash),
         _plugEnhancedByHash = Map<int, bool>.from(plugEnhancedByHash);
 
   final AppDatabase db;
@@ -42,6 +45,9 @@ class OwnedCatalogBridge {
   /// Production builder: plug hashes → Bungie icon paths.
   final PerkNameMapBuilder? plugIconMapBuilder;
 
+  /// Production builder: plug hashes → definition descriptions (never invent).
+  final PerkNameMapBuilder? plugDescriptionMapBuilder;
+
   /// Optional builder: plug hashes → enhanced flags (category path).
   ///
   /// When null, falls back to [InventorySyncController.plugEnhancedMapBuilder]
@@ -51,6 +57,7 @@ class OwnedCatalogBridge {
 
   Map<int, String> _plugNameByHash;
   Map<int, String> _plugIconByHash;
+  Map<int, String> _plugDescriptionByHash;
   final Map<int, bool> _plugEnhancedByHash;
 
   List<CatalogItem> _annotatedBase = const [];
@@ -76,6 +83,10 @@ class OwnedCatalogBridge {
   /// Resolved plug hash → Bungie icon path (grows with [ensurePlugNames]).
   Map<int, String> get plugIconByHash =>
       Map<int, String>.unmodifiable(_plugIconByHash);
+
+  /// Resolved plug hash → definition description (honest empty when missing).
+  Map<int, String> get plugDescriptionByHash =>
+      Map<int, String>.unmodifiable(_plugDescriptionByHash);
 
   /// Plug hash → enhanced (instance ①/② gold/E). Only true entries retained.
   ///
@@ -164,6 +175,13 @@ class OwnedCatalogBridge {
       setMap: (m) => _plugIconByHash = m,
       explicit: null,
       builder: plugIconMapBuilder ?? inventorySync.perkIconMapBuilder,
+    );
+    await _resolveInto(
+      list,
+      map: _plugDescriptionByHash,
+      setMap: (m) => _plugDescriptionByHash = m,
+      explicit: null,
+      builder: plugDescriptionMapBuilder ?? inventorySync.perkDescriptionMapBuilder,
     );
     await _resolveEnhancedFlags(list);
   }

@@ -6,8 +6,9 @@
 /// soft-stat helpers (DART-004), pure resolveVariant merge/conflict/completeness
 /// (DART-005), equip-ready / wishlist vs owned-pin gates (DART-006), pure equip
 /// step planner (DART-037), finishGaps / next-slot helpers (DART-007), optimizer
-/// enumerate/prune/score core (DART-008), and pure DIM loadout JSON builders +
-/// equipReady-gated jsonOnly (DART-010) live here; later slices land next.
+/// enumerate/prune/score core (DART-008), pure DIM loadout JSON builders +
+/// equipReady-gated jsonOnly (DART-010), and entity presentation resolve from
+/// host maps (DART-071) live here; later slices land next.
 library;
 
 export 'src/smoke.dart';
@@ -29,6 +30,9 @@ export 'src/models/soft_stats.dart';
 export 'src/models/synergy.dart';
 export 'src/models/roll_target.dart';
 export 'src/models/catalog_filter_collection.dart';
+
+// Entity presentation ref + map resolve (DART-071 / GAP-UI-DESC-01 Track A)
+export 'src/models/entity_presentation.dart';
 
 // Hard evaluators (DART-003)
 export 'src/evaluators/destiny_build_constraints.dart';

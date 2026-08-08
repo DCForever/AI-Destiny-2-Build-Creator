@@ -7,18 +7,20 @@
 - Desktop: `docs/ux-redesign/catalog/mockups/004-entity-info-hotspot-desktop.html`
 - Mobile: `docs/ux-redesign/catalog/mockups/004-entity-info-hotspot-mobile.html`
 - Brief: `docs/ux-redesign/catalog/004-entity-info-hotspot-brief.md` (locked 2026-08-08)
-- Approved: 2026-08-08 (plan-approved implement)
+- Approved: 2026-08-08 (human review + plan-approved implement)
 
-### Locked visual notes
+### Locked interaction / visual notes
 - Residual **CatalogPerkCell** hosts 1+3 info; detail width ~400 unchanged.
 - **Desktop:** hover/focus → portaled L2 Flap (~280px) above detail clip; leave / Esc dismisses.
-- **Mobile:** long-press → modal sheet + scrim; tap = primary only.
+- **Mobile:** long-press (≥450ms) or Alt+tap → modal sheet + scrim; **tap = primary** only.
 - **Click/tap never opens info** (no pin-on-click); primary = select / roll-target cycle.
-- Body only from host/fixture presentation map; null/blank → fixed **No catalog description**.
+- Body only from host `EntityPresentation` / fixture maps (DART-071); never invent Destiny text.
+- Honest empty: fixed **`No catalog description`**.
 - Hash never primary label; optional hash footer only.
 - Residual perk chrome locked (①/②/③ · gold/E · enhance note · equal @400 · no H-scroll).
 - Base vs enhanced compare in L2 only when both descs supplied; no E on ③/craft.
 - Single-open stack (open B closes A).
+- **Out of this gate:** stationary multi-perk inspect sheet on mobile (browse-while-inspect residual).
 
 ---
 
