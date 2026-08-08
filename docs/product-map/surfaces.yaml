@@ -1316,8 +1316,11 @@ surfaces:
       - 011:SC-001
       - 011:SC-002
       - BR-ROLL-002
+      - DBR-UI-001
+      - DBR-UI-005
       - DBR-UI-006
       - DBR-UI-007
+      - FEAT-UI-ENTITY-DESC
     status: active
     platforms:
       flutter-windows:
