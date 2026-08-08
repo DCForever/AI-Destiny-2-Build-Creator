@@ -9,6 +9,7 @@ import '../neon_item_detail.dart';
 import 'catalog_perk_grid.dart';
 import 'catalog_roll_targets.dart';
 import 'catalog_weapon_meta_strip.dart';
+import 'entity_info_hotspot.dart';
 
 // ---------------------------------------------------------------------------
 // Widgets
@@ -786,6 +787,8 @@ class CatalogWeaponDetail extends StatelessWidget {
     this.preferredByColumn = const {},
     this.avoidByColumn = const {},
     this.onCycleRollPlug,
+    // 004 EntityInfoHotspot
+    this.entityInfoByHash = const {},
   });
 
   final CatalogItem item;
@@ -852,6 +855,9 @@ class CatalogWeaponDetail extends StatelessWidget {
 
   /// Editor: cycle Want|Avoid|Off on can-roll ③ cells only.
   final void Function(String columnKey, int plugHash)? onCycleRollPlug;
+
+  /// Host-resolved entity info by plug hash (004 EntityInfoHotspot).
+  final Map<int, EntityInfoData> entityInfoByHash;
 
   CatalogInstanceProjection? get _selected {
     if (instances.isEmpty) return null;
@@ -1047,6 +1053,7 @@ class CatalogWeaponDetail extends StatelessWidget {
                   editingRollTarget: editingRollTarget,
                   onCycleRollPlug: onCycleRollPlug,
                   fixedPerks: item.isExotic,
+                  entityInfoByHash: entityInfoByHash,
                 ),
                 CatalogHashFooter(unknownHashes: unknowns),
                 const SizedBox(height: kSpace16),

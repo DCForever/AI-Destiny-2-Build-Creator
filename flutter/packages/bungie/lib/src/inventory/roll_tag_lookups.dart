@@ -49,6 +49,31 @@ Map<int, String> buildPerkIconMapFromItemDefs(
   return map;
 }
 
+/// Build plugHash → definition description from DestinyInventoryItemDefinition.
+///
+/// Reads `displayProperties.description` only — never invents Destiny copy
+/// (DBR-UI-005 / DART-071 host map contract). Empty/missing omitted from map
+/// so resolve yields honest empty description.
+Map<int, String> buildPerkDescriptionMapFromItemDefs(
+  Map<dynamic, dynamic> inventoryItemDefinitionTable,
+  Iterable<int> plugHashes,
+) {
+  if (plugHashes.isEmpty) return const {};
+
+  final map = <int, String>{};
+  for (final hash in plugHashes.toSet()) {
+    final raw = _tableEntry(inventoryItemDefinitionTable, hash);
+    if (raw is! Map) continue;
+    final display = raw['displayProperties'];
+    if (display is! Map) continue;
+    final desc = display['description'];
+    if (desc is String && desc.trim().isNotEmpty) {
+      map[hash] = desc.trim();
+    }
+  }
+  return map;
+}
+
 /// Build plugHash → enhanced flag from DestinyInventoryItemDefinition.
 ///
 /// Primary enhanced path for catalog gold/E (GAP-CAT-PERK-002): uses

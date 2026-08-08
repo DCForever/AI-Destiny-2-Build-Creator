@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catalog · EntityInfoHotspot — Desktop mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --enhanced: #ceae33;
+      --enhanced-border: rgba(206, 174, 51, 0.85);
+      --rarity-legendary-edge: #c49ad4;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --detail-w: 400px;
+      --radius: 2px;
+      --l2-w: 280px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    /* ── Mock chrome ── */
+    .mock-bar {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      padding: 8px 12px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+      z-index: 50;
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      max-width: 460px;
+    }
+    .mock-bar .spacer { flex: 1; min-width: 8px; }
+    .scenario-label {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scenario-select {
+      height: 28px;
+      padding: 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      min-width: 320px;
+      max-width: 100%;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .pill.ok { border-color: rgba(46, 230, 166, 0.4); color: var(--success); }
+    .pill.warn { border-color: rgba(245, 197, 66, 0.4); color: var(--warn); }
+
+    .banner {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding: 6px 12px;
+      background: rgba(0, 229, 255, 0.05);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .banner strong {
+      color: var(--accent);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .banner .lock::before { content: "✓ "; color: var(--success); }
+    .banner .open { color: var(--warn); }
+    .banner .open::before { content: "→ "; }
+
+    /* ── Stage ── */
+    .stage {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 0;
+    }
+    .stage-main {
+      min-width: 0;
+      overflow: auto;
+      padding: 20px 24px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 0%, rgba(0, 229, 255, 0.04), transparent 60%),
+        var(--bg);
+    }
+    .stage-side {
+      border-left: 1px solid var(--line);
+      background: var(--surface);
+      overflow: auto;
+      padding: 14px 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .frame-caption {
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .frame-caption strong { color: var(--muted); font-weight: 500; }
+
+    /* Thin 400 detail frame — residual locks held */
+    .detail-frame {
+      width: var(--detail-w);
+      max-width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.35);
+      overflow: hidden; /* clip body; L2 is portaled outside */
+    }
+    .detail-header {
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .header-row { display: flex; gap: 10px; align-items: flex-start; }
+    .header-icon {
+      width: 44px; height: 44px;
+      flex-shrink: 0;
+      display: grid; place-items: center;
+      background: var(--raised);
+      border: 1px solid var(--rarity-legendary-edge);
+      border-radius: var(--radius);
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .header-stack { min-width: 0; flex: 1; }
+    .hero-name {
+      margin: 0 0 4px;
+      font-family: var(--font-d);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .hero-sub {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+    }
+    .detail-body {
+      padding: 10px 10px 14px;
+      overflow: hidden; /* never H-scroll from perk grid */
+    }
+
+    .section-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin: 0 0 6px;
+    }
+
+    /* ── Residual perk grid chrome (locked) ── */
+    .perk-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin-bottom: 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .perk-legend .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .perk-legend .swatch i {
+      width: 10px; height: 10px;
+      border-radius: 1px;
+      display: inline-block;
+    }
+    .perk-legend .t1 i { background: rgba(80, 160, 255, 0.7); border: 1px solid rgba(80, 160, 255, 0.9); }
+    .perk-legend .t2 i { background: var(--raised); border: 1px solid var(--line-strong); }
+    .perk-legend .t3 i { background: transparent; border: 1px dashed var(--line); }
+    .perk-legend .enh i { background: var(--enhanced); border: 1px solid var(--enhanced-border); }
+
+    .perk-grid {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden; /* residual: no H-scroll @400 */
+    }
+    .perk-col {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .perk-col-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
+      max-width: 100%;
+    }
+    .perk-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 2px;
+      width: 100%;
+      min-height: 48px;
+      margin-bottom: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 9px;
+      cursor: pointer;
+      position: relative;
+      color: inherit;
+    }
+    .perk-cell .ico {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      overflow: hidden;
+      letter-spacing: 0;
+    }
+    .perk-cell .cap {
+      max-width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      line-height: 1.2;
+      font-size: 8px;
+    }
+    .perk-cell.selected {
+      background: rgba(0, 120, 212, 0.18);
+      border-color: rgba(80, 160, 255, 0.65);
+    }
+    .perk-cell.selected .ico {
+      border-color: rgba(80, 160, 255, 0.55);
+      background: rgba(0, 100, 200, 0.25);
+    }
+    .perk-cell.selected::after {
+      content: "1";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: #9fd0ff;
+      background: rgba(0, 80, 180, 0.55);
+      border-radius: 1px;
+    }
+    .perk-cell.unselected { border-color: var(--line-strong); }
+    .perk-cell.unselected .ico { opacity: 0.9; }
+    .perk-cell.unselected::before {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      border: 4px solid transparent;
+      border-top-color: var(--enhanced);
+      border-left-color: var(--enhanced);
+      opacity: 0.85;
+    }
+    .perk-cell.unselected::after {
+      content: "2";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--raised);
+      border-radius: 1px;
+    }
+    .perk-cell.possible {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-cell.possible .cap { color: var(--muted-dim); }
+    .perk-cell.possible .ico { opacity: 0.45; }
+    .perk-cell.possible::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px dashed var(--line);
+      border-radius: 1px;
+    }
+    .perk-cell.craft {
+      border-style: dashed;
+      border-color: rgba(232, 238, 242, 0.18);
+      background: transparent;
+    }
+    .perk-cell.craft .cap { color: var(--muted-dim); }
+    .perk-cell.craft .ico { opacity: 0.45; }
+    .perk-cell.craft::after {
+      content: "3";
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      line-height: 12px;
+      text-align: center;
+      color: var(--muted-dim);
+      background: transparent;
+      border: 1px dashed var(--line);
+      border-radius: 1px;
+    }
+    .perk-cell.enhanced .ico {
+      border-color: var(--enhanced-border);
+      box-shadow: 0 0 0 1px rgba(206, 174, 51, 0.35);
+    }
+    .perk-cell.enhanced .cap { color: var(--enhanced); }
+    .perk-cell.enhanced .enh-mark {
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 12px; height: 12px;
+      font-family: var(--font-m);
+      font-size: 8px;
+      font-weight: 600;
+      line-height: 12px;
+      text-align: center;
+      color: #1a1400;
+      background: var(--enhanced);
+      border-radius: 1px;
+    }
+    .perk-cell.selected.enhanced { border-color: var(--enhanced-border); }
+    .perk-cell.unknown .ico { opacity: 0.5; }
+    .perk-cell.want {
+      box-shadow: inset 0 0 0 1px rgba(46, 230, 166, 0.55);
+    }
+    .perk-cell.avoid {
+      box-shadow: inset 0 0 0 1px rgba(255, 0, 60, 0.45);
+    }
+    .perk-cell .rt-badge {
+      position: absolute;
+      bottom: 2px; left: 2px;
+      font-family: var(--font-m);
+      font-size: 7px;
+      font-weight: 600;
+      line-height: 11px;
+      height: 11px;
+      padding: 0 3px;
+      border-radius: 1px;
+    }
+    .perk-cell.want .rt-badge {
+      color: #062018;
+      background: var(--success);
+    }
+    .perk-cell.avoid .rt-badge {
+      color: #fff;
+      background: var(--danger);
+    }
+    .perk-cell:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .perk-cell[aria-expanded="true"] {
+      border-color: rgba(0, 229, 255, 0.55);
+      box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.25);
+    }
+
+    .perk-enhance-note {
+      margin: 8px 0 0;
+      padding: 6px 8px;
+      border: 1px dashed rgba(206, 174, 51, 0.35);
+      border-radius: var(--radius);
+      background: rgba(206, 174, 51, 0.06);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .perk-enhance-note strong { color: var(--enhanced); font-weight: 600; }
+    .perk-enhance-note .future {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted-dim);
+      font-size: 9px;
+    }
+
+    .plug-note {
+      margin: 8px 0 0;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      line-height: 1.4;
+    }
+
+    /* ── L1 tooltip (name + tier only) ── */
+    .l1-tip {
+      position: fixed;
+      z-index: 200;
+      max-width: 240px;
+      padding: 5px 8px;
+      background: #12122a;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--fg);
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .l1-tip[hidden] { display: none !important; }
+
+    /* ── L2 portaled popover (Flap raised) ── */
+    .l2-popover {
+      position: fixed;
+      z-index: 210;
+      width: var(--l2-w);
+      max-width: calc(100vw - 16px);
+      max-height: min(320px, calc(100vh - 24px));
+      overflow: auto;
+      padding: 10px;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 16px 40px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(0, 229, 255, 0.06);
+    }
+    .l2-popover.pinned {
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px rgba(0, 229, 255, 0.25),
+        0 16px 40px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(0, 229, 255, 0.1);
+    }
+    .l2-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .l2-head-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+    .l2-icon {
+      width: 36px; height: 36px;
+      flex-shrink: 0;
+      display: grid; place-items: center;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .l2-icon.has-accent {
+      box-shadow: 0 0 0 1px var(--accent-ring, transparent);
+      border-color: var(--accent-ring, var(--line));
+    }
+    .l2-kind {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin: 0 0 2px;
+    }
+    .l2-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg);
+      line-height: 1.25;
+    }
+    .l2-pin-affordance {
+      flex-shrink: 0;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      padding: 2px 0;
+    }
+    .l2-pin-affordance.close-btn {
+      color: var(--accent);
+      cursor: pointer;
+      border: 0;
+      background: transparent;
+      padding: 2px 4px;
+    }
+    .l2-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 0 0 8px;
+    }
+    .l2-meta span {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      padding: 1px 6px;
+      border: 1px solid var(--line);
+      border-radius: 1px;
+      background: var(--bg);
+    }
+    .l2-body {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .l2-body.empty {
+      color: var(--muted-dim);
+      font-style: normal;
+      font-family: var(--font-m);
+      font-size: 11px;
+    }
+    .l2-compare {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .l2-compare .col {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 6px;
+      background: var(--bg);
+    }
+    .l2-compare .col.enh {
+      border-color: rgba(206, 174, 51, 0.4);
+    }
+    .l2-compare .tag {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+    }
+    .l2-compare .col.enh .tag { color: var(--enhanced); }
+    .l2-compare .txt {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .l2-hash {
+      margin-top: 8px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+
+    /* Side panels */
+    .panel h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .compare-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      background: var(--bg);
+      margin-bottom: 8px;
+    }
+    .compare-card .tag {
+      display: inline-block;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .compare-card.ship .tag { color: var(--warn); }
+    .compare-card.target .tag { color: var(--success); }
+    .compare-card p {
+      margin: 0;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.45;
+    }
+    .compare-card code {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .rules-panel ul {
+      margin: 0;
+      padding-left: 16px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      line-height: 1.5;
+    }
+    .rules-panel li { margin-bottom: 4px; }
+    .rules-panel code { color: var(--muted); }
+    .state-log pre {
+      margin: 0;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .state-log .live { color: var(--accent); }
+    .knobs-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: var(--bg);
+    }
+    .knob-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 10px;
+      margin-bottom: 8px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .knob-row:last-child { margin-bottom: 0; }
+    .knob-row label { flex: 1 1 100%; color: var(--muted-dim); }
+    .toggle-btn {
+      height: 24px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .toggle-btn[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.35);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .a11y-hint {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      border-left: 2px solid var(--accent);
+      padding: 4px 0 4px 10px;
+    }
+    .scenario-hint {
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+      max-width: var(--detail-w);
+      line-height: 1.45;
+      border: 1px solid rgba(0, 229, 255, 0.18);
+      background: rgba(0, 229, 255, 0.04);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+    }
+    .scenario-hint strong { color: var(--accent); font-weight: 500; }
+
+    @media (max-width: 960px) {
+      .stage { grid-template-columns: 1fr; }
+      .stage-side { border-left: 0; border-top: 1px solid var(--line); max-height: 36vh; }
+    }
+  </style>
+</head>
+<body>
+  <header class="mock-bar" role="banner">
+    <h1>EntityInfoHotspot</h1>
+    <span class="meta">Hover/focus → entity info · click → primary (select) · never invent text · DART-071 consume</span>
+    <span class="spacer"></span>
+    <span class="scenario-label" id="sc-label">Scenario</span>
+    <select class="scenario-select" id="scenario" aria-labelledby="sc-label">
+      <option value="l1-only">L1 only · desc null · no invented body</option>
+      <option value="l2-present" selected>L2 open · description present</option>
+      <option value="l2-empty">L2 honest empty · “No catalog description”</option>
+      <option value="unknown">Unknown perk · empty desc · no invent</option>
+      <option value="enhanced-selected">① selected enhanced · gold+E · L1/L2</option>
+      <option value="enhance-note">③ pool · Can be enhanced note · no E · single cell</option>
+      <option value="enhance-compare">L2 compare · baseDesc + enhancedDesc both supplied</option>
+      <option value="single-open">Single-open · open B closes A</option>
+      <option value="hover-leave">Hover info · leave dismiss · click selects</option>
+      <option value="roll-target">Roll-target · click cycles W/A · hover still info</option>
+      <option value="missing-icon">Missing icon · letter fallback · a11y name</option>
+      <option value="knobs">Widgetbook knobs · live dual-truth</option>
+    </select>
+    <span class="pill ok" title="DBR-UI-005 / 006">DBR-UI-005/006</span>
+    <span class="pill warn" title="GAP-UI-DESC-01">GAP-UI-DESC-01</span>
+  </header>
+
+  <div class="banner" role="note">
+    <span><strong>Track</strong> UX-CATALOG-ENTITY-DESC</span>
+    <span class="lock">Residual cell chrome locked (①/②/③ · gold/E · equal @400 · no H-scroll)</span>
+    <span class="lock">Hover/focus = info hotspot (name · meta · description)</span>
+    <span class="lock">Click = primary action (select) — never opens info</span>
+    <span class="open">DART-071 landed — fixtures inject maps in mock</span>
+  </div>
+
+  <div class="stage">
+    <main class="stage-main" id="main"></main>
+    <aside class="stage-side" aria-label="Spec &amp; live state">
+      <section class="panel" id="compare-block">
+        <h3>Dual-truth residual</h3>
+        <div class="compare-card ship">
+          <span class="tag">Ship today</span>
+          <p>
+            Material <code>Tooltip</code> on perk cells = <code>name · tier</code> only.
+            No description popover · click already selects/edits · no hover info stack.
+            Enhance note promises future popup (not cell chrome).
+          </p>
+        </div>
+        <div class="compare-card target">
+          <span class="tag">Target (this mock)</span>
+          <p>
+            Icon-first hotspot hosts residual <code>CatalogPerkCell</code> chrome.
+            <strong>Hover/focus</strong> opens portaled info Flap (~280px) from <code>EntityPresentation</code>.
+            <strong>Click</strong> = primary (select / roll-target). Empty fixed: <code>No catalog description</code>.
+          </p>
+        </div>
+      </section>
+
+      <section class="knobs-panel" id="knobs-panel" hidden>
+        <h3>Widgetbook knobs</h3>
+        <div class="knob-row">
+          <label>description</label>
+          <button type="button" class="toggle-btn" data-knob="desc" data-v="present" aria-pressed="true">present</button>
+          <button type="button" class="toggle-btn" data-knob="desc" data-v="empty" aria-pressed="false">empty</button>
+          <button type="button" class="toggle-btn" data-knob="desc" data-v="null" aria-pressed="false">null</button>
+        </div>
+        <div class="knob-row">
+          <label>tier</label>
+          <button type="button" class="toggle-btn" data-knob="tier" data-v="selected" aria-pressed="true">① selected</button>
+          <button type="button" class="toggle-btn" data-knob="tier" data-v="unselected" aria-pressed="false">② unselected</button>
+          <button type="button" class="toggle-btn" data-knob="tier" data-v="possible" aria-pressed="false">③ pool</button>
+          <button type="button" class="toggle-btn" data-knob="tier" data-v="craft" aria-pressed="false">craft</button>
+        </div>
+        <div class="knob-row">
+          <label>flags</label>
+          <button type="button" class="toggle-btn" id="k-enh" aria-pressed="false">enhanced</button>
+          <button type="button" class="toggle-btn" id="k-note" aria-pressed="false">canBeEnhanced note</button>
+          <button type="button" class="toggle-btn" id="k-compare" aria-pressed="false">base+enh descs</button>
+        </div>
+      </section>
+
+      <section class="panel state-log">
+        <h3>Live interaction</h3>
+        <pre id="live-log" class="live">Hover a perk cell for info · click selects · leave dismisses info</pre>
+      </section>
+
+      <section class="panel rules-panel">
+        <h3>Must match</h3>
+        <ul>
+          <li><strong>Hover/focus</strong> = full entity info (name · meta · description)</li>
+          <li><strong>Click</strong> = primary action (select) — does not open info</li>
+          <li>Info body only from <code>EntityPresentation.description</code> — never invent</li>
+          <li>Honest empty: fixed <code>No catalog description</code></li>
+          <li>Hash never primary label (DBR-UI-006)</li>
+          <li>Hosts residual perk cell chrome — no redesign of badges/dashed/gold E</li>
+          <li>E only on ①/②; ③/craft = note + single identity cell</li>
+          <li>Base vs enhanced compare = info-only when both descs supplied</li>
+          <li>Single-open hover stack · leave / Esc dismisses</li>
+          <li>Portal above detail clip · no 400 widen · no perk H-scroll</li>
+        </ul>
+      </section>
+
+      <p class="a11y-hint">
+        Trigger a11y name = displayName (+ tier in edit). Info role=dialog · Esc dismiss ·
+        focus shows info · Enter/Space = primary select. Keyboard focus-visible 2px accent.
+      </p>
+    </aside>
+  </div>
+
+  <!-- Portaled layers -->
+  <div class="l1-tip" id="l1-tip" role="tooltip" hidden></div>
+  <div class="l2-popover" id="l2-pop" role="dialog" aria-modal="false" hidden></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const $ = (s, el = document) => el.querySelector(s);
+      const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+      const main = $("#main");
+      const liveLog = $("#live-log");
+      const scenarioEl = $("#scenario");
+      const knobsPanel = $("#knobs-panel");
+      const l1 = $("#l1-tip");
+      const l2 = $("#l2-pop");
+
+      /** Host-supplied fixture maps only — never invent at render time.
+       *  Strings below are explicit Widgetbook/fixture payloads for dual-truth. */
+      const FIXTURE_DESC = {
+        frenzy:
+          "Being in combat for an extended time increases damage, handling, and reload for you and nearby allies until you are out of combat.",
+        frenzyBase:
+          "Being in combat for an extended time increases damage, handling, and reload until you are out of combat.",
+        frenzyEnh:
+          "Being in combat for an extended time increases damage, handling, and reload for you and nearby allies until you are out of combat. Enhanced: improved timer and ally radius (fixture pair for L2 compare).",
+        incandescent:
+          "Defeating a target spreads scorch to those nearby. More powerful combatants and opposing Guardians cause scorch in a larger radius.",
+        overflow:
+          "Picking up Special or Heavy ammo automatically loads this weapon beyond normal capacity.",
+      };
+
+      /**
+       * @typedef {{
+       *   id: string,
+       *   name: string,
+       *   caption?: string,
+       *   tier: 'selected'|'unselected'|'possible'|'craft',
+       *   enhanced?: boolean,
+       *   unknown?: boolean,
+       *   letter?: string,
+       *   kind?: string,
+       *   description?: string|null,
+       *   baseDesc?: string|null,
+       *   enhancedDesc?: string|null,
+       *   meta?: string[],
+       *   accentColor?: string|null,
+       *   hash?: string|null,
+       *   showHashFooter?: boolean,
+       *   missingIcon?: boolean,
+       *   rollTarget?: 'want'|'avoid'|null
+       * }} Perk
+       */
+
+      const knobs = {
+        desc: "present",
+        tier: "selected",
+        enhanced: false,
+        canNote: false,
+        compare: false,
+      };
+
+      /** @type {{ activeId: string|null, hoverId: string|null }} */
+      let hotspot = { activeId: null, hoverId: null };
+      /** @type {Map<string, Perk>} */
+      let perkMap = new Map();
+      let scenario = "l2-present";
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function log(msg) {
+        liveLog.textContent = msg;
+      }
+
+      function tierTip(tier, enhanced) {
+        const base =
+          tier === "selected"
+            ? " · ① on this copy"
+            : tier === "unselected"
+              ? " · ② unselected (this instance)"
+              : tier === "craft"
+                ? " · ③ possible crafted (definition)"
+                : " · ③ possible roll (definition)";
+        return base + (enhanced ? " · Enhanced (this copy)" : "");
+      }
+
+      /** Compact a11y/title: name + tier only — never description body */
+      function l1Message(p) {
+        let tip = p.name + tierTip(p.tier, !!p.enhanced);
+        if (p.rollTarget === "want") tip += " · roll-target want";
+        if (p.rollTarget === "avoid") tip += " · roll-target avoid";
+        return tip;
+      }
+
+      function captionFor(p) {
+        if (p.unknown) return "Unknown perk";
+        return p.caption || p.name;
+      }
+
+      function letterFor(p) {
+        if (p.letter) return p.letter;
+        if (p.unknown) return "?";
+        const n = p.name || "?";
+        return n[0].toUpperCase();
+      }
+
+      function cellClasses(p) {
+        const parts = ["perk-cell", p.tier];
+        if (p.enhanced && (p.tier === "selected" || p.tier === "unselected")) {
+          parts.push("enhanced");
+        }
+        if (p.unknown) parts.push("unknown");
+        if (p.rollTarget === "want") parts.push("want");
+        if (p.rollTarget === "avoid") parts.push("avoid");
+        return parts.join(" ");
+      }
+
+      function renderCell(p) {
+        const tip = escapeHtml(l1Message(p));
+        const a11y = escapeHtml(l1Message(p));
+        const showE =
+          !!p.enhanced && (p.tier === "selected" || p.tier === "unselected");
+        const rt =
+          p.rollTarget === "want"
+            ? `<span class="rt-badge" aria-hidden="true">W</span>`
+            : p.rollTarget === "avoid"
+              ? `<span class="rt-badge" aria-hidden="true">A</span>`
+              : "";
+        return `<button type="button"
+          class="${cellClasses(p)}"
+          data-perk="${escapeHtml(p.id)}"
+          title="${tip}"
+          aria-label="${a11y}"
+          aria-expanded="false"
+          aria-haspopup="dialog">
+          <span class="ico" aria-hidden="true">${escapeHtml(letterFor(p))}</span>
+          <span class="cap">${escapeHtml(captionFor(p))}</span>
+          ${showE ? `<span class="enh-mark" aria-hidden="true">E</span>` : ""}
+          ${rt}
+        </button>`;
+      }
+
+      function enhanceNoteHtml(ctx) {
+        return `<p class="perk-enhance-note" role="note">
+          <strong>Can be enhanced</strong> — ${escapeHtml(ctx)} perks that support Enhanced show once (no second cell).
+          <span class="future">Info compare only when host supplies baseDesc + enhancedDesc — not cell chrome; residual note stays note-only.</span>
+        </p>`;
+      }
+
+      function thinFrame(bodyInner, opts = {}) {
+        const weapon = opts.weapon || "Fixture Auto Rifle";
+        const sub = opts.sub || "Legendary · Kinetic · Auto Rifle · detail w=400";
+        return `
+          <p class="frame-caption">Thin Catalog weapons detail frame · <strong>perk grid first wire</strong> · EntityInfoHotspot on cells</p>
+          <div class="detail-frame" id="detail-frame">
+            <div class="detail-header">
+              <div class="header-row">
+                <div class="header-icon" aria-hidden="true">◆</div>
+                <div class="header-stack">
+                  <h2 class="hero-name">${escapeHtml(weapon)}</h2>
+                  <div class="hero-sub">${escapeHtml(sub)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-body">
+              ${bodyInner}
+            </div>
+          </div>`;
+      }
+
+      function gridFromColumns(cols, note) {
+        const legend = `<div class="perk-legend" aria-hidden="true">
+          <span class="swatch t1"><i></i>① selected</span>
+          <span class="swatch t2"><i></i>② unselected</span>
+          <span class="swatch t3"><i></i>③ pool</span>
+          <span class="swatch enh"><i></i>E ①/② only</span>
+        </div>`;
+        const colHtml = cols
+          .map((c) => {
+            const cells = c.perks.map(renderCell).join("");
+            return `<div class="perk-col">
+              <div class="perk-col-label" title="${escapeHtml(c.label)}" aria-label="${escapeHtml(c.label)}">${escapeHtml(c.label)}</div>
+              ${cells}
+            </div>`;
+          })
+          .join("");
+        return `${legend}
+          <p class="section-label">Perks</p>
+          <div class="perk-grid" role="list" aria-label="Weapon perks">${colHtml}</div>
+          ${note || ""}
+          <p class="plug-note">Hover/focus → entity info. Click → select (primary). Leave / Esc dismisses info. Single-open hover stack.</p>`;
+      }
+
+      function register(perks) {
+        perkMap = new Map(perks.map((p) => [p.id, p]));
+      }
+
+      function closeInfo() {
+        hotspot.activeId = null;
+        l2.hidden = true;
+        l2.innerHTML = "";
+        l2.classList.remove("pinned");
+        $$(".perk-cell[aria-expanded='true']").forEach((el) =>
+          el.setAttribute("aria-expanded", "false")
+        );
+      }
+
+      function hideL1() {
+        l1.hidden = true;
+        l1.textContent = "";
+        hotspot.hoverId = null;
+      }
+
+      function resolveDescription(p) {
+        if (p.description === null || p.description === undefined) {
+          return { text: null, empty: true, reason: "null" };
+        }
+        const t = String(p.description).trim();
+        if (!t) return { text: null, empty: true, reason: "blank" };
+        return { text: t, empty: false, reason: "present" };
+      }
+
+      function renderInfoContent(p) {
+        const d = resolveDescription(p);
+        const showCompare =
+          p.baseDesc &&
+          p.enhancedDesc &&
+          String(p.baseDesc).trim() &&
+          String(p.enhancedDesc).trim();
+
+        const meta = (p.meta || [])
+          .filter(Boolean)
+          .map((m) => `<span>${escapeHtml(m)}</span>`)
+          .join("");
+
+        const ring = p.accentColor
+          ? `style="--accent-ring:${escapeHtml(p.accentColor)}"`
+          : "";
+        const iconCls = p.accentColor ? "l2-icon has-accent" : "l2-icon";
+
+        let body = "";
+        if (showCompare) {
+          body = `<div class="l2-compare">
+            <div class="col">
+              <div class="tag">Base</div>
+              <div class="txt">${escapeHtml(p.baseDesc)}</div>
+            </div>
+            <div class="col enh">
+              <div class="tag">Enhanced</div>
+              <div class="txt">${escapeHtml(p.enhancedDesc)}</div>
+            </div>
+          </div>`;
+        } else if (d.empty) {
+          body = `<div class="l2-body empty">No catalog description</div>`;
+        } else {
+          body = `<div class="l2-body">${escapeHtml(d.text)}</div>`;
+        }
+
+        const hash =
+          p.showHashFooter && p.hash
+            ? `<div class="l2-hash" aria-hidden="true">hash ${escapeHtml(p.hash)}</div>`
+            : "";
+
+        const tierLine = escapeHtml(l1Message(p));
+
+        return `
+          <div class="l2-head">
+            <div class="l2-head-main">
+              <div class="${iconCls}" ${ring} aria-hidden="true">${escapeHtml(letterFor(p))}</div>
+              <div>
+                ${p.kind ? `<p class="l2-kind">${escapeHtml(p.kind)}</p>` : ""}
+                <p class="l2-title" id="l2-title">${escapeHtml(p.name)}</p>
+              </div>
+            </div>
+            <span class="l2-pin-affordance">Hover info · click selects</span>
+          </div>
+          <div class="l2-meta"><span>${tierLine}</span>${meta}</div>
+          ${body}
+          ${hash}`;
+      }
+
+      function positionInfo(trigger) {
+        const rect = trigger.getBoundingClientRect();
+        const pad = 8;
+        const width = 280;
+        let left = rect.left;
+        if (left + width > window.innerWidth - pad) {
+          left = Math.max(pad, window.innerWidth - width - pad);
+        }
+        let top = rect.bottom + 6;
+        l2.style.left = left + "px";
+        l2.style.top = top + "px";
+        requestAnimationFrame(() => {
+          const ph = l2.offsetHeight || 160;
+          if (top + ph > window.innerHeight - pad && rect.top > ph + 12) {
+            l2.style.top = Math.max(pad, rect.top - ph - 6) + "px";
+          }
+        });
+      }
+
+      function openInfo(p, trigger) {
+        if (hotspot.activeId && hotspot.activeId !== p.id) {
+          log(
+            `Single-open: closed info for “${perkMap.get(hotspot.activeId)?.name || hotspot.activeId}” → “${p.name}”`
+          );
+        }
+        hotspot.activeId = p.id;
+        hotspot.hoverId = p.id;
+        hideL1();
+        l2.innerHTML = renderInfoContent(p);
+        l2.hidden = false;
+        l2.classList.remove("pinned");
+        l2.setAttribute("aria-labelledby", "l2-title");
+        $$(".perk-cell").forEach((el) => {
+          el.setAttribute(
+            "aria-expanded",
+            el.getAttribute("data-perk") === p.id ? "true" : "false"
+          );
+        });
+        positionInfo(trigger);
+        const d = resolveDescription(p);
+        if (!liveLog.textContent.startsWith("Single-open") && !liveLog.textContent.startsWith("Primary")) {
+          log(
+            `Info (hover) · ${p.name} · desc=${d.empty ? "empty→“No catalog description”" : "present"} · kind=${p.kind || "—"}`
+          );
+        }
+      }
+
+      function refreshCellDom(btn, p) {
+        btn.className = cellClasses(p);
+        btn.title = l1Message(p);
+        btn.setAttribute("aria-label", l1Message(p));
+        const badge = btn.querySelector(".rt-badge");
+        if (badge) badge.remove();
+        if (p.rollTarget === "want") {
+          btn.insertAdjacentHTML(
+            "beforeend",
+            `<span class="rt-badge" aria-hidden="true">W</span>`
+          );
+        } else if (p.rollTarget === "avoid") {
+          btn.insertAdjacentHTML(
+            "beforeend",
+            `<span class="rt-badge" aria-hidden="true">A</span>`
+          );
+        }
+        const enh = btn.querySelector(".enh-mark");
+        const showE =
+          !!p.enhanced && (p.tier === "selected" || p.tier === "unselected");
+        if (showE && !enh) {
+          btn.insertAdjacentHTML(
+            "beforeend",
+            `<span class="enh-mark" aria-hidden="true">E</span>`
+          );
+        } else if (!showE && enh) {
+          enh.remove();
+        }
+      }
+
+      /** Primary action: select perk (or cycle roll-target in edit scenario). Never opens info. */
+      function performPrimaryAction(p, btn) {
+        if (scenario === "roll-target") {
+          const order = [null, "want", "avoid"];
+          const cur = p.rollTarget || null;
+          const next = order[(order.indexOf(cur) + 1) % order.length];
+          p.rollTarget = next;
+          refreshCellDom(btn, p);
+          log(
+            `Primary · roll-target cycle · ${p.name} → ${next || "none"} · info stays hover-only`
+          );
+          if (hotspot.activeId === p.id) openInfo(p, btn);
+          return;
+        }
+
+        // Select: promote this cell to ①; demote sibling ① in same column to ②
+        if (p.tier === "possible" || p.tier === "craft") {
+          log(
+            `Primary · “${p.name}” is ${p.tier === "craft" ? "craft pool" : "③ pool"} — no instance select (definition only)`
+          );
+          return;
+        }
+        const col = btn.closest(".perk-col");
+        const siblings = col
+          ? $$(".perk-cell", col)
+          : $$(".perk-cell", main);
+        siblings.forEach((sib) => {
+          const sid = sib.getAttribute("data-perk");
+          const sp = perkMap.get(sid);
+          if (!sp) return;
+          if (sp.tier === "possible" || sp.tier === "craft") return;
+          if (sp.id === p.id) {
+            sp.tier = "selected";
+          } else if (sp.tier === "selected") {
+            sp.tier = "unselected";
+          }
+          refreshCellDom(sib, sp);
+        });
+        log(`Primary · select “${p.name}” · click does not open info`);
+        if (hotspot.activeId === p.id) openInfo(p, btn);
+      }
+
+      function onCellEnter(e) {
+        const btn = e.currentTarget;
+        const id = btn.getAttribute("data-perk");
+        const p = perkMap.get(id);
+        if (!p) return;
+        openInfo(p, btn);
+      }
+
+      function onCellLeave(e) {
+        const btn = e.currentTarget;
+        const id = btn.getAttribute("data-perk");
+        // If pointer moved into the info popover, keep open
+        const related = e.relatedTarget;
+        if (related && (l2.contains(related) || btn.contains(related))) return;
+        if (hotspot.activeId === id) {
+          closeInfo();
+          log(`Hover leave · dismissed info for “${perkMap.get(id)?.name || id}”`);
+        }
+        hideL1();
+      }
+
+      function onCellClick(e) {
+        e.preventDefault();
+        const btn = e.currentTarget;
+        const id = btn.getAttribute("data-perk");
+        const p = perkMap.get(id);
+        if (!p) return;
+        performPrimaryAction(p, btn);
+      }
+
+      function onCellKey(e) {
+        const btn = e.currentTarget;
+        const id = btn.getAttribute("data-perk");
+        const p = perkMap.get(id);
+        if (!p) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          performPrimaryAction(p, btn);
+        } else if (e.key === "Escape") {
+          if (hotspot.activeId) {
+            closeInfo();
+            log("Esc · dismissed info");
+            btn.focus();
+          }
+        }
+      }
+
+      function onCellFocus(e) {
+        const btn = e.currentTarget;
+        const id = btn.getAttribute("data-perk");
+        const p = perkMap.get(id);
+        if (!p) return;
+        openInfo(p, btn);
+      }
+
+      function bindCells() {
+        $$(".perk-cell", main).forEach((btn) => {
+          btn.addEventListener("mouseenter", onCellEnter);
+          btn.addEventListener("mouseleave", onCellLeave);
+          btn.addEventListener("click", onCellClick);
+          btn.addEventListener("keydown", onCellKey);
+          btn.addEventListener("focus", onCellFocus);
+          btn.addEventListener("blur", (e) => {
+            const related = e.relatedTarget;
+            if (related && l2.contains(related)) return;
+            // delay so focus can move to another cell
+            requestAnimationFrame(() => {
+              if (!main.contains(document.activeElement)) {
+                closeInfo();
+                hideL1();
+              }
+            });
+          });
+        });
+      }
+
+      // Keep info open while pointer is over the popover (read desc without click)
+      l2.addEventListener("mouseenter", () => {});
+      l2.addEventListener("mouseleave", (e) => {
+        const related = e.relatedTarget;
+        if (related && related.closest && related.closest(".perk-cell")) return;
+        if (hotspot.activeId) {
+          const name = perkMap.get(hotspot.activeId)?.name || hotspot.activeId;
+          closeInfo();
+          log(`Info leave · dismissed “${name}”`);
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && hotspot.activeId) {
+          closeInfo();
+          log("Esc · dismissed info");
+        }
+      });
+
+      // ── Scenarios ──
+      // ── Scenarios ──
+
+      function scenarioL1Only() {
+        const perks = [
+          {
+            id: "p1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: null,
+            meta: ["Column 3"],
+          },
+          {
+            id: "p2",
+            name: "Overflow",
+            tier: "unselected",
+            kind: "Trait",
+            description: null,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>No description</strong> — presentation.description is null. Hover shows honest empty info; click still selects.</p>` +
+          thinFrame(
+            gridFromColumns([
+              { label: "Trait", perks: [perks[0], perks[1]] },
+              {
+                label: "Barrel",
+                perks: [
+                  {
+                    id: "b1",
+                    name: "Arrowhead Brake",
+                    tier: "selected",
+                    kind: "Barrel",
+                    description: null,
+                  },
+                ],
+              },
+            ])
+          );
+        register([
+          ...perks,
+          {
+            id: "b1",
+            name: "Arrowhead Brake",
+            tier: "selected",
+            kind: "Barrel",
+            description: null,
+          },
+        ]);
+        // re-render with full register — fix barrel in map then rebind
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>No description</strong> — presentation.description is null. Hover shows honest empty info; click still selects.</p>` +
+          thinFrame(
+            gridFromColumns([
+              {
+                label: "Trait",
+                perks: [
+                  perkMap.get("p1"),
+                  perkMap.get("p2"),
+                ],
+              },
+              { label: "Barrel", perks: [perkMap.get("b1")] },
+            ])
+          );
+        log("Scenario · desc=null · hover for honest empty info · click selects");
+      }
+
+      function scenarioL2Present() {
+        const perks = [
+          {
+            id: "frenzy",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+            meta: ["Column 3 · Trait"],
+          },
+          {
+            id: "inc",
+            name: "Incandescent",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+            meta: ["Column 4 · Trait"],
+          },
+          {
+            id: "ov",
+            name: "Overflow",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+            meta: ["③ possible roll"],
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Info present</strong> — fixture EntityPresentation.description supplied. Hover Frenzy for full description. Click = select (primary).</p>` +
+          thinFrame(
+            gridFromColumns([
+              { label: "Trait", perks: [perks[0], perks[1], perks[2]] },
+              {
+                label: "Magazine",
+                perks: [
+                  {
+                    id: "mag",
+                    name: "Appended Mag",
+                    tier: "selected",
+                    kind: "Magazine",
+                    description: null,
+                  },
+                ],
+              },
+            ])
+          );
+        register([
+          ...perks,
+          {
+            id: "mag",
+            name: "Appended Mag",
+            tier: "selected",
+            kind: "Magazine",
+            description: null,
+          },
+        ]);
+        // rebuild once with full map
+        const all = Array.from(perkMap.values());
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Info present</strong> — fixture EntityPresentation.description supplied. Hover Frenzy for full description. Click = select (primary).</p>` +
+          thinFrame(
+            gridFromColumns([
+              {
+                label: "Trait",
+                perks: all.filter((p) =>
+                  ["frenzy", "inc", "ov"].includes(p.id)
+                ),
+              },
+              {
+                label: "Magazine",
+                perks: all.filter((p) => p.id === "mag"),
+              },
+            ])
+          );
+        log("Scenario · info present · hover Frenzy (desc) or Appended Mag (null → honest empty) · click selects");
+      }
+
+      function scenarioL2Empty() {
+        const perks = [
+          {
+            id: "e1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: "",
+            meta: ["blank string"],
+          },
+          {
+            id: "e2",
+            name: "Overflow",
+            tier: "unselected",
+            kind: "Trait",
+            description: null,
+            meta: ["null field"],
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Honest empty</strong> — blank or null description → fixed line “No catalog description”. Name+icon remain primary; never synthesize lore (DBR-UI-005/006).</p>` +
+          thinFrame(
+            gridFromColumns([{ label: "Trait", perks }])
+          );
+        log("Scenario · honest empty · hover either cell · click selects");
+      }
+
+      function scenarioUnknown() {
+        const perks = [
+          {
+            id: "u1",
+            name: "Unknown perk",
+            tier: "selected",
+            kind: "Trait",
+            unknown: true,
+            description: null,
+            hash: "3913600132",
+            showHashFooter: true,
+          },
+          {
+            id: "u2",
+            name: "Frenzy",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Unknown perk</strong> — label “Unknown perk”; empty/no invent desc; hash footer only (detail policy), never primary label.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks }]));
+        log("Scenario · unknown perk · hover for empty + optional hash footer · click selects");
+      }
+
+      function scenarioEnhancedSelected() {
+        const perks = [
+          {
+            id: "en1",
+            name: "Frenzy",
+            caption: "Frenzy",
+            tier: "selected",
+            enhanced: true,
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyEnh,
+            meta: ["① Enhanced (this copy)"],
+            accentColor: "rgba(206, 174, 51, 0.85)",
+          },
+          {
+            id: "en2",
+            name: "Incandescent",
+            tier: "unselected",
+            enhanced: false,
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>① selected enhanced</strong> — gold chrome + E on ① only. Caption strips “Enhanced” wording. L1 includes “Enhanced (this copy)”; L2 uses presentation desc.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks }]));
+        log("Scenario · enhanced ① · gold+E · hover for info · click selects");
+      }
+
+      function scenarioEnhanceNote() {
+        const perks = [
+          {
+            id: "n1",
+            name: "Frenzy",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyBase,
+            meta: ["③ pool · can enhance"],
+          },
+          {
+            id: "n2",
+            name: "Overflow",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+          },
+          {
+            id: "n3",
+            name: "Frenzy",
+            tier: "craft",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyBase,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>③ / craft canBeEnhanced</strong> — one identity cell, no E mark. Note-only residual language. L2 single desc only (no compare unless both descs supplied — see compare scenario).</p>` +
+          thinFrame(
+            gridFromColumns(
+              [
+                { label: "Trait · ③", perks: [perks[0], perks[1]] },
+                { label: "Craft", perks: [perks[2]] },
+              ],
+              enhanceNoteHtml("Possible rolls / crafted pool")
+            )
+          );
+        log("Scenario · enhance note · no E on ③/craft · single cell identity");
+      }
+
+      function scenarioEnhanceCompare() {
+        const perks = [
+          {
+            id: "c1",
+            name: "Frenzy",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzyBase,
+            baseDesc: FIXTURE_DESC.frenzyBase,
+            enhancedDesc: FIXTURE_DESC.frenzyEnh,
+            meta: ["L2 compare when both descs supplied"],
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Info compare</strong> — baseDesc + enhancedDesc both from host presentation. Never a second cell / never E on ③. Compare lives only inside hover info.</p>` +
+          thinFrame(
+            gridFromColumns(
+              [{ label: "Trait · ③", perks }],
+              enhanceNoteHtml("Possible rolls")
+            )
+          );
+        log("Scenario · info base vs enhanced compare · hover cell");
+      }
+
+      function scenarioSingleOpen() {
+        const perks = [
+          {
+            id: "a",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+          },
+          {
+            id: "b",
+            name: "Incandescent",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+          },
+          {
+            id: "c",
+            name: "Overflow",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Single-open stack</strong> — hover cell A, then hover cell B: A closes, B opens. Only one info at a time. Click always selects.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks }]));
+        log("Scenario · single-open · hover Frenzy then Incandescent · click selects");
+      }
+
+      function scenarioHoverLeave() {
+        const perks = [
+          {
+            id: "hv1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+          },
+          {
+            id: "hv2",
+            name: "Overflow",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Hover info</strong> — move onto a cell for full entity info; leave cell (or Esc) dismisses. Click selects (①/②) and never pins info.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks }]));
+        log("Scenario · hover info · leave dismiss · click selects");
+      }
+
+      function scenarioRollTarget() {
+        const perks = [
+          {
+            id: "rt1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+            rollTarget: "want",
+          },
+          {
+            id: "rt2",
+            name: "Overflow",
+            tier: "unselected",
+            kind: "Trait",
+            description: FIXTURE_DESC.overflow,
+            rollTarget: "avoid",
+          },
+          {
+            id: "rt3",
+            name: "Incandescent",
+            tier: "possible",
+            kind: "Trait",
+            description: FIXTURE_DESC.incandescent,
+            rollTarget: null,
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Roll-target edit</strong> — W/A badges stay residual. <strong>Click</strong> cycles want/avoid/none (primary). <strong>Hover</strong> still shows entity info — never blocked by edit.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks }]));
+        log("Scenario · roll-target · click cycles W/A · hover shows info");
+      }
+
+      function scenarioMissingIcon() {
+        const perks = [
+          {
+            id: "m1",
+            name: "Frenzy",
+            tier: "selected",
+            kind: "Trait",
+            description: FIXTURE_DESC.frenzy,
+            missingIcon: true,
+            letter: "F",
+          },
+          {
+            id: "m2",
+            name: "Unknown perk",
+            tier: "unselected",
+            kind: "Trait",
+            unknown: true,
+            description: null,
+            missingIcon: true,
+            letter: "?",
+          },
+        ];
+        register(perks);
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Missing icon</strong> — letter/fallback trigger still hotspots. Accessible name = displayName (not hash). L2 header uses same letter fallback.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks }]));
+        log("Scenario · letter fallback · a11y name = displayName");
+      }
+
+      function scenarioKnobs() {
+        knobsPanel.hidden = false;
+        applyKnobs();
+      }
+
+      function applyKnobs() {
+        const descVal =
+          knobs.desc === "present"
+            ? FIXTURE_DESC.frenzy
+            : knobs.desc === "empty"
+              ? ""
+              : null;
+        const allowE =
+          knobs.enhanced &&
+          (knobs.tier === "selected" || knobs.tier === "unselected");
+        /** @type {Perk} */
+        const p = {
+          id: "knob",
+          name: "Frenzy",
+          caption: "Frenzy",
+          tier: knobs.tier,
+          enhanced: allowE,
+          kind: "Trait",
+          description: descVal,
+          meta: [
+            "knob fixture",
+            knobs.tier === "craft" ? "craft pool" : knobs.tier,
+          ],
+        };
+        if (knobs.compare) {
+          p.baseDesc = FIXTURE_DESC.frenzyBase;
+          p.enhancedDesc = FIXTURE_DESC.frenzyEnh;
+        }
+        register([p]);
+        const note = knobs.canNote
+          ? enhanceNoteHtml(
+              knobs.tier === "craft" ? "Possible crafted pool" : "Possible rolls"
+            )
+          : "";
+        main.innerHTML =
+          `<p class="scenario-hint"><strong>Widgetbook knobs</strong> — description present|empty|null · tier · enhanced · canBeEnhanced note · base+enh compare. Ship path never invents when map empty.</p>` +
+          thinFrame(gridFromColumns([{ label: "Trait", perks: [p] }], note));
+        bindCells();
+        closeInfo();
+        hideL1();
+        log(
+          `Knobs · desc=${knobs.desc} tier=${knobs.tier} enhanced=${allowE} note=${knobs.canNote} compare=${knobs.compare}`
+        );
+      }
+
+      const SCENARIOS = {
+        "l1-only": scenarioL1Only,
+        "l2-present": scenarioL2Present,
+        "l2-empty": scenarioL2Empty,
+        unknown: scenarioUnknown,
+        "enhanced-selected": scenarioEnhancedSelected,
+        "enhance-note": scenarioEnhanceNote,
+        "enhance-compare": scenarioEnhanceCompare,
+        "single-open": scenarioSingleOpen,
+        "hover-leave": scenarioHoverLeave,
+        "roll-target": scenarioRollTarget,
+        "missing-icon": scenarioMissingIcon,
+        knobs: scenarioKnobs,
+      };
+
+      function runScenario(id) {
+        scenario = id;
+        knobsPanel.hidden = id !== "knobs";
+        closeInfo();
+        hideL1();
+        const fn = SCENARIOS[id] || scenarioL2Present;
+        fn();
+        if (id !== "knobs") bindCells();
+        else bindCells();
+      }
+
+      scenarioEl.addEventListener("change", () => {
+        runScenario(scenarioEl.value);
+      });
+
+      // Knobs
+      $$('[data-knob="desc"]').forEach((btn) => {
+        btn.addEventListener("click", () => {
+          knobs.desc = btn.getAttribute("data-v");
+          $$('[data-knob="desc"]').forEach((b) =>
+            b.setAttribute(
+              "aria-pressed",
+              b.getAttribute("data-v") === knobs.desc ? "true" : "false"
+            )
+          );
+          applyKnobs();
+        });
+      });
+      $$('[data-knob="tier"]').forEach((btn) => {
+        btn.addEventListener("click", () => {
+          knobs.tier = btn.getAttribute("data-v");
+          $$('[data-knob="tier"]').forEach((b) =>
+            b.setAttribute(
+              "aria-pressed",
+              b.getAttribute("data-v") === knobs.tier ? "true" : "false"
+            )
+          );
+          // auto-off enhanced if not ①/②
+          if (knobs.tier !== "selected" && knobs.tier !== "unselected") {
+            knobs.enhanced = false;
+            $("#k-enh").setAttribute("aria-pressed", "false");
+          }
+          applyKnobs();
+        });
+      });
+      $("#k-enh").addEventListener("click", () => {
+        if (knobs.tier !== "selected" && knobs.tier !== "unselected") {
+          log("Enhanced E only on ①/② — residual lock; ignored for ③/craft");
+          return;
+        }
+        knobs.enhanced = !knobs.enhanced;
+        $("#k-enh").setAttribute(
+          "aria-pressed",
+          knobs.enhanced ? "true" : "false"
+        );
+        applyKnobs();
+      });
+      $("#k-note").addEventListener("click", () => {
+        knobs.canNote = !knobs.canNote;
+        $("#k-note").setAttribute(
+          "aria-pressed",
+          knobs.canNote ? "true" : "false"
+        );
+        applyKnobs();
+      });
+      $("#k-compare").addEventListener("click", () => {
+        knobs.compare = !knobs.compare;
+        $("#k-compare").setAttribute(
+          "aria-pressed",
+          knobs.compare ? "true" : "false"
+        );
+        applyKnobs();
+      });
+
+      // Init
+      runScenario(scenarioEl.value);
+    })();
+  </script>
+</body>
+</html>

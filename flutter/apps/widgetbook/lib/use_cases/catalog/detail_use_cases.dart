@@ -119,6 +119,58 @@ Widget perkGridMixed(BuildContext context) {
 }
 
 @widgetbook.UseCase(
+  name: 'EntityInfoHotspot · knobs',
+  type: EntityInfoHotspot,
+  path: '[Catalog]/Detail/Knobs',
+)
+Widget knobsEntityInfoHotspot(BuildContext context) {
+  final descMode = context.knobs.object.dropdown(
+    label: 'description',
+    options: const ['present', 'empty', 'null'],
+    initialOption: 'present',
+    labelBuilder: (v) => v,
+  );
+  final useSheet = context.knobs.boolean(label: 'force sheet', initialValue: false);
+  final name = context.knobs.string(label: 'name', initialValue: 'Frenzy');
+  final body = switch (descMode) {
+    'present' =>
+      'Being in combat for an extended time increases damage, handling, and reload.',
+    'empty' => '',
+    _ => '',
+  };
+  final data = EntityInfoData(
+    id: 'knob',
+    name: name,
+    kind: 'Trait',
+    description: descMode == 'null' ? '' : body,
+    metaLines: const ['① on this copy'],
+    nameUnknown: name == 'Unknown perk',
+    hashFooter: name == 'Unknown perk' ? '#3913600132' : null,
+  );
+  return Padding(
+    padding: const EdgeInsets.all(24),
+    child: EntityInfoHotspot(
+      data: data,
+      forceSheet: useSheet,
+      onPrimary: () {},
+      child: Container(
+        width: 56,
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Text(
+          name.isNotEmpty ? name[0] : '?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+      ),
+    ),
+  );
+}
+
+@widgetbook.UseCase(
   name: 'Detail toggles craft hidden',
   type: CatalogDetailToggles,
   path: '[Catalog]/Detail',

@@ -9,6 +9,7 @@ export 'src/catalog/catalog_filter_bar.dart';
 export 'src/catalog/catalog_group_chrome.dart';
 export 'src/catalog/catalog_perk_grid.dart';
 export 'src/catalog/catalog_roll_targets.dart';
+export 'src/catalog/entity_info_hotspot.dart';
 export 'src/catalog/catalog_scope_control.dart';
 export 'src/catalog/catalog_sort_group_sheet.dart';
 export 'src/catalog/catalog_weapon_detail.dart';

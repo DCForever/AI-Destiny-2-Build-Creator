@@ -101,6 +101,30 @@ void main() {
     });
   });
 
+  group('buildPerkDescriptionMapFromItemDefs', () {
+    test('reads displayProperties.description; omits empty', () {
+      final table = <String, dynamic>{
+        '5': {
+          'hash': 5,
+          'displayProperties': {
+            'name': 'Frenzy',
+            'description': 'Being in combat increases damage.',
+          },
+        },
+        '6': {
+          'hash': 6,
+          'displayProperties': {'name': 'X', 'description': '  '},
+        },
+        '7': {
+          'hash': 7,
+          'displayProperties': {'name': 'Y'},
+        },
+      };
+      final map = buildPerkDescriptionMapFromItemDefs(table, [5, 6, 7, 99]);
+      expect(map, {5: 'Being in combat increases damage.'});
+    });
+  });
+
   group('buildPlugEnhancedMapFromItemDefs', () {
     test('name without Enhanced + category enhancements.v2 → true', () {
       final table = <String, dynamic>{

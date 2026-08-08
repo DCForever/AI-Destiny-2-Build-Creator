@@ -122,7 +122,56 @@ class _CatalogPageState extends State<CatalogPage> {
           offlineCatalog: widget.services.offlineCatalog,
           session: widget.services.oauthSession,
           inventorySync: widget.services.inventorySync,
+          plugNameMapBuilder:
+              widget.services.inventorySync.perkNameMapBuilder,
+          plugIconMapBuilder:
+              widget.services.inventorySync.perkIconMapBuilder,
+          plugDescriptionMapBuilder:
+              widget.services.inventorySync.perkDescriptionMapBuilder,
+          plugEnhancedMapBuilder:
+              widget.services.inventorySync.plugEnhancedMapBuilder,
         );
+  }
+
+  /// Resolve chrome DTOs for visible plugs (DART-071; never invent text).
+  Map<int, EntityInfoData> _entityInfoByHashForDetail() {
+    final names = _bridge.plugNameByHash;
+    final icons = _bridge.plugIconByHash;
+    final descs = _bridge.plugDescriptionByHash;
+    final hashes = <int>{
+      ...names.keys,
+      ...icons.keys,
+      ...descs.keys,
+      ..._bridge.plugEnhancedByHash.keys,
+    };
+    if (hashes.isEmpty) return const {};
+    final maps = EntityPresentationMaps(
+      nameByHash: names,
+      iconByHash: icons,
+      descriptionByHash: descs,
+      kindByHash: {
+        for (final h in hashes)
+          if (names.containsKey(h)) h: 'Weapon perk',
+      },
+    );
+    final batch = resolveEntityPresentations(
+      hashes,
+      maps: maps,
+      labelKind: EntityLabelKind.plug,
+    );
+    return {
+      for (final e in batch.entries)
+        e.key: EntityInfoData(
+          id: '${e.key}',
+          name: e.value.name,
+          kind: e.value.kind,
+          iconPath: e.value.iconPath,
+          description: e.value.description,
+          metaLines: e.value.metaLines,
+          nameUnknown: e.value.nameUnknown,
+          hashFooter: e.value.hashFooter,
+        ),
+    };
   }
 
   int _loadSeq = 0;
@@ -1757,6 +1806,7 @@ class _CatalogPageState extends State<CatalogPage> {
         plugNameByHash: _bridge.plugNameByHash,
         plugIconByHash: _bridge.plugIconByHash,
         plugEnhancedByHash: _bridge.plugEnhancedByHash,
+        entityInfoByHash: _entityInfoByHashForDetail(),
         intrinsicName: item.isExotic ? item.intrinsicName : null,
         intrinsicDescription: item.isExotic
             ? (item.description ?? item.intrinsicName)

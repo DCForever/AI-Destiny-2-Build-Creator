@@ -45,6 +45,7 @@ class InventorySyncController extends ChangeNotifier {
     this.perkNameMap,
     this.perkNameMapBuilder,
     this.perkIconMapBuilder,
+    this.perkDescriptionMapBuilder,
     this.plugEnhancedMapBuilder,
     this.weaponRollMetaLookup,
     this.weaponRollMetaLookupBuilder,
@@ -77,6 +78,9 @@ class InventorySyncController extends ChangeNotifier {
 
   /// Production builder: plug hashes → Bungie icon paths (displayProperties.icon).
   final PerkNameMapBuilder? perkIconMapBuilder;
+
+  /// Production builder: plug hashes → definition descriptions (never invent).
+  final PerkNameMapBuilder? perkDescriptionMapBuilder;
 
   /// Production builder: plug hashes → enhanced flags via plug category + name
   /// ([buildPlugEnhancedMapFromItemDefs] / GAP-CAT-PERK-002). Consumed by

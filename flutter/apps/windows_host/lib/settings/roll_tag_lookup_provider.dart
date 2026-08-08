@@ -12,12 +12,16 @@ class WindowsRollTagEnrichment {
   const WindowsRollTagEnrichment({
     required this.perkNameMapBuilder,
     required this.perkIconMapBuilder,
+    required this.perkDescriptionMapBuilder,
     required this.weaponRollMetaLookupBuilder,
     required this.plugEnhancedMapBuilder,
   });
 
   final PerkNameMapBuilder perkNameMapBuilder;
   final PerkNameMapBuilder perkIconMapBuilder;
+
+  /// Plug hash → definition description (never invents empty keys).
+  final PerkNameMapBuilder perkDescriptionMapBuilder;
   final WeaponRollMetaLookupBuilder weaponRollMetaLookupBuilder;
   final PlugEnhancedMapBuilder plugEnhancedMapBuilder;
 }
@@ -75,6 +79,18 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
     }
   }
 
+  Future<Map<int, String>> perkDescriptionBuilder(List<int> plugHashes) async {
+    final empty = <int, String>{};
+    if (plugHashes.isEmpty) return empty;
+    try {
+      final table = await loadItemDefs();
+      if (table == null) return empty;
+      return buildPerkDescriptionMapFromItemDefs(table, plugHashes);
+    } catch (_) {
+      return empty;
+    }
+  }
+
   Future<Map<int, bool>> plugEnhancedBuilder(List<int> plugHashes) async {
     final empty = <int, bool>{};
     if (plugHashes.isEmpty) return empty;
@@ -111,6 +127,7 @@ WindowsRollTagEnrichment createWindowsRollTagEnrichment({
   return WindowsRollTagEnrichment(
     perkNameMapBuilder: perkNameBuilder,
     perkIconMapBuilder: perkIconBuilder,
+    perkDescriptionMapBuilder: perkDescriptionBuilder,
     weaponRollMetaLookupBuilder: weaponBuilder,
     plugEnhancedMapBuilder: plugEnhancedBuilder,
   );
