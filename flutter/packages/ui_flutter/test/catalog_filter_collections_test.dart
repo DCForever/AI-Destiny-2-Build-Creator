@@ -136,6 +136,55 @@ void main() {
       expect(applied, 'wc-1');
     });
 
+    testWidgets('menu stays on-screen when trigger is trailing-right',
+        (tester) async {
+      // 800×600 default surface; pin trigger to top-right like host filter band.
+      await tester.pumpWidget(
+        _wrap(
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12, right: 8),
+              child: CatalogFilterCollectionsControl(
+                items: const [
+                  CatalogFilterCollectionItem(
+                    id: 'wc-1',
+                    name: 'Solar Autorifles',
+                    summary: 'element:Solar · type:Auto Rifle · sort:slot',
+                  ),
+                ],
+                browseModeLabel: 'weapons',
+                activeId: 'wc-1',
+                activeName: 'Solar Autorifles',
+                canSave: true,
+                signedIn: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('catalog_filter_collections_saved')));
+      await tester.pumpAndSettle();
+
+      final menu = tester.getRect(
+        find.byKey(const Key('catalog_filter_collections_menu')),
+      );
+      expect(menu.left, greaterThanOrEqualTo(0));
+      expect(menu.right, lessThanOrEqualTo(800));
+      expect(menu.top, greaterThanOrEqualTo(0));
+      expect(menu.bottom, lessThanOrEqualTo(600));
+      // Fully visible row (not clipped off the right edge).
+      expect(
+        find.byKey(const Key('catalog_filter_collection_row_wc-1')),
+        findsOneWidget,
+      );
+      final row = tester.getRect(
+        find.byKey(const Key('catalog_filter_collection_row_wc-1')),
+      );
+      expect(row.right, lessThanOrEqualTo(800));
+    });
+
     testWidgets('dirty dot and active name on trigger', (tester) async {
       await tester.pumpWidget(
         _wrap(

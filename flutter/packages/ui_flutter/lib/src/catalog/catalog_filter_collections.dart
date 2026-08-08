@@ -111,7 +111,6 @@ class CatalogFilterCollectionsControl extends StatefulWidget {
 
 class _CatalogFilterCollectionsControlState
     extends State<CatalogFilterCollectionsControl> {
-  final LayerLink _link = LayerLink();
   OverlayEntry? _overlay;
   bool _menuOpen = false;
 
@@ -170,7 +169,47 @@ class _CatalogFilterCollectionsControlState
       return;
     }
 
-    final overlay = Overlay.of(context);
+    // Position from the Saved trigger box and clamp to the overlay viewport.
+    // Trailing-right control: prefer open leftward so the panel is not clipped
+    // off the right edge of the window (bug from Image #1 dual-truth).
+    final box = context.findRenderObject() as RenderBox?;
+    final overlayState = Overlay.of(context);
+    final overlayBox = overlayState.context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize || overlayBox == null || !overlayBox.hasSize) {
+      return;
+    }
+
+    const menuMinW = 280.0;
+    const menuMaxW = 340.0;
+    const menuMaxH = 420.0;
+    const gap = 4.0;
+    const pad = 8.0;
+
+    final triggerTopLeft = box.localToGlobal(Offset.zero, ancestor: overlayBox);
+    final triggerSize = box.size;
+    final overlaySize = overlayBox.size;
+
+    final menuW = menuMaxW.clamp(menuMinW, overlaySize.width - pad * 2);
+    // Prefer right-align under the trigger (menu right edge ≈ trigger right edge).
+    var left = triggerTopLeft.dx + triggerSize.width - menuW;
+    // Fall back: left-align under trigger if that keeps more of the panel on-screen.
+    if (left < pad) {
+      left = triggerTopLeft.dx;
+    }
+    left = left.clamp(pad, (overlaySize.width - menuW - pad).clamp(pad, overlaySize.width));
+
+    var top = triggerTopLeft.dy + triggerSize.height + gap;
+    final spaceBelow = overlaySize.height - top - pad;
+    final spaceAbove = triggerTopLeft.dy - pad;
+    var maxH = menuMaxH;
+    if (spaceBelow < 160 && spaceAbove > spaceBelow) {
+      // Open upward when not enough room below.
+      maxH = spaceAbove.clamp(120.0, menuMaxH);
+      top = (triggerTopLeft.dy - gap - maxH).clamp(pad, overlaySize.height - pad);
+    } else {
+      maxH = spaceBelow.clamp(120.0, menuMaxH);
+    }
+
     _overlay = OverlayEntry(
       builder: (ctx) {
         return Stack(
@@ -182,19 +221,17 @@ class _CatalogFilterCollectionsControlState
                 child: const ColoredBox(color: Color(0x00000000)),
               ),
             ),
-            CompositedTransformFollower(
-              link: _link,
-              showWhenUnlinked: false,
-              offset: const Offset(0, 4),
-              targetAnchor: Alignment.bottomLeft,
-              followerAnchor: Alignment.topLeft,
+            Positioned(
+              left: left,
+              top: top,
+              width: menuW,
               child: Material(
                 color: Colors.transparent,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 280,
-                    maxWidth: 340,
-                    maxHeight: 420,
+                  constraints: BoxConstraints(
+                    minWidth: menuMinW,
+                    maxWidth: menuW,
+                    maxHeight: maxH,
                   ),
                   child: _CollectionsPanel(
                     key: const Key('catalog_filter_collections_menu'),
@@ -230,7 +267,7 @@ class _CatalogFilterCollectionsControlState
         );
       },
     );
-    overlay.insert(_overlay!);
+    overlayState.insert(_overlay!);
     setState(() => _menuOpen = true);
   }
 
@@ -346,54 +383,51 @@ class _CatalogFilterCollectionsControlState
     final active = widget.activeId != null;
     final label = _triggerLabel;
 
-    return CompositedTransformTarget(
-      link: _link,
-      child: Semantics(
-        button: true,
-        expanded: _menuOpen,
-        label: active
-            ? 'Saved filters, active $label${widget.dirty ? ', modified' : ''}'
-            : 'Saved filters',
-        child: TextButton(
-          key: const Key('catalog_filter_collections_saved'),
-          onPressed: _toggleMenu,
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            minimumSize: const Size(0, 32),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            foregroundColor: active ? palette.accent : palette.muted,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.dirty)
-                Container(
-                  key: const Key('catalog_filter_collections_dirty_dot'),
-                  width: 6,
-                  height: 6,
-                  margin: const EdgeInsets.only(right: 5),
-                  decoration: BoxDecoration(
-                    color: palette.accent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              Text(
-                label.toUpperCase(),
-                style: neonMono(
-                  color: active ? palette.accent : palette.muted,
-                  fontSize: 10,
-                  letterSpacing: 0.8,
+    return Semantics(
+      button: true,
+      expanded: _menuOpen,
+      label: active
+          ? 'Saved filters, active $label${widget.dirty ? ', modified' : ''}'
+          : 'Saved filters',
+      child: TextButton(
+        key: const Key('catalog_filter_collections_saved'),
+        onPressed: _toggleMenu,
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          minimumSize: const Size(0, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          foregroundColor: active ? palette.accent : palette.muted,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.dirty)
+              Container(
+                key: const Key('catalog_filter_collections_dirty_dot'),
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 5),
+                decoration: BoxDecoration(
+                  color: palette.accent,
+                  shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 2),
-              Icon(
-                _menuOpen ? Icons.expand_less : Icons.expand_more,
-                size: 14,
+            Text(
+              label.toUpperCase(),
+              style: neonMono(
                 color: active ? palette.accent : palette.muted,
+                fontSize: 10,
+                letterSpacing: 0.8,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              _menuOpen ? Icons.expand_less : Icons.expand_more,
+              size: 14,
+              color: active ? palette.accent : palette.muted,
+            ),
+          ],
         ),
       ),
     );
