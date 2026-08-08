@@ -176,24 +176,39 @@ bool catalogRollTargetHasOverlap({
 
 /// Stable column key shared by editor + score inputs (host must match).
 ///
-/// Prefers `columnLabel`, then `columnKind`, then `socketIndex`, else index.
+/// Prefers `socketIndex` when present (unique). Otherwise uses
+/// `label@index` / `kind@index` / `col@index` so two "Trait" columns never
+/// collide (BUG-009 score under-count when keys collapsed).
 String catalogRollColumnKey(
   Map<String, Object?> raw, {
   int index = 0,
 }) {
-  final label = (raw['columnLabel'] as String?)?.trim();
-  if (label != null && label.isNotEmpty) return label;
-  final kind = (raw['columnKind'] as String?)?.trim();
-  if (kind != null && kind.isNotEmpty) return kind;
   final socket = raw['socketIndex'];
   if (socket is int) return 'socket_$socket';
   if (socket is num) return 'socket_${socket.toInt()}';
-  final parsed = int.tryParse('$socket');
-  if (parsed != null) return 'socket_$parsed';
+  if (socket != null) {
+    final parsed = int.tryParse('$socket');
+    if (parsed != null) return 'socket_$parsed';
+  }
+  final label = (raw['columnLabel'] as String?)?.trim();
+  if (label != null && label.isNotEmpty) return '$label@$index';
+  final kind = (raw['columnKind'] as String?)?.trim();
+  if (kind != null && kind.isNotEmpty) return '$kind@$index';
   return 'col_$index';
 }
 
-/// Equipped plug map for scoring: columnKey → equipped hash.
+int? _parsePlugHash(Object? raw) {
+  if (raw is int) return raw == 0 ? null : raw;
+  if (raw is num) {
+    final v = raw.toInt();
+    return v == 0 ? null : v;
+  }
+  final h = int.tryParse('$raw');
+  if (h == null || h == 0) return null;
+  return h;
+}
+
+/// Equipped-only plug map: columnKey → equipped hash.
 Map<String, int> catalogRollPlugsByColumnFromSockets(
   List<Map<String, Object?>>? sockets,
 ) {
@@ -202,18 +217,33 @@ Map<String, int> catalogRollPlugsByColumnFromSockets(
   for (var i = 0; i < sockets.length; i++) {
     final raw = sockets[i];
     final key = catalogRollColumnKey(raw, index: i);
-    final equipped = raw['equippedPlugHash'];
-    int? h;
-    if (equipped is int) {
-      h = equipped == 0 ? null : equipped;
-    } else if (equipped is num) {
-      final v = equipped.toInt();
-      h = v == 0 ? null : v;
-    } else {
-      h = int.tryParse('$equipped');
-      if (h == 0) h = null;
-    }
+    final h = _parsePlugHash(raw['equippedPlugHash']);
     if (h != null) out[key] = h;
+  }
+  return out;
+}
+
+/// All plugs on the instance per column (equipped + reusables) for plug-level
+/// preferred/avoid scoring — "on this copy" counts, not equipped-only.
+Map<String, Set<int>> catalogRollAllPlugsByColumnFromSockets(
+  List<Map<String, Object?>>? sockets,
+) {
+  final out = <String, Set<int>>{};
+  if (sockets == null) return out;
+  for (var i = 0; i < sockets.length; i++) {
+    final raw = sockets[i];
+    final key = catalogRollColumnKey(raw, index: i);
+    final plugs = <int>{};
+    final equipped = _parsePlugHash(raw['equippedPlugHash']);
+    if (equipped != null) plugs.add(equipped);
+    final reusable = raw['reusablePlugHashes'];
+    if (reusable is List) {
+      for (final e in reusable) {
+        final h = _parsePlugHash(e);
+        if (h != null) plugs.add(h);
+      }
+    }
+    if (plugs.isNotEmpty) out[key] = plugs;
   }
   return out;
 }

@@ -545,17 +545,28 @@ class _CatalogPageState extends State<CatalogPage> {
         ranked: false,
       );
     }
+    // Prefer draft while editing so dual segs track live Want/Avoid (BUG-009).
+    final scoreTarget = _editingRollTarget
+        ? WeaponRollTarget(
+            id: active.id,
+            userId: active.userId,
+            weaponKey: active.weaponKey,
+            name: _rollDraftName.trim().isEmpty ? active.name : _rollDraftName,
+            columns: _columnsFromDraftMaps(),
+          )
+        : active;
     final inputs = <RollTargetInstanceInput>[
       for (final inst in _instances)
         RollTargetInstanceInput(
           instanceId: inst.instanceId,
+          // Equipped + reusables so multi-pick preferred/avoid on this copy score.
           plugsByColumn:
-              catalogRollPlugsByColumnFromSockets(inst.socketPlugs),
+              catalogRollAllPlugsByColumnFromSockets(inst.socketPlugs),
           power: inst.power,
           gearTier: inst.gearTier,
         ),
     ];
-    final ranked = rankOwnedForRollTarget(active, inputs);
+    final ranked = rankOwnedForRollTarget(scoreTarget, inputs);
     final byId = {for (final i in _instances) i.instanceId: i};
     final ordered = <CatalogInstanceProjection>[
       for (final r in ranked)

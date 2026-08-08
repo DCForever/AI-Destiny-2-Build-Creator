@@ -84,12 +84,17 @@ bool plugMatchesAcceptable(
 
 /// Score one instance's plugs against a roll target.
 ///
-/// [plugsByColumn]: columnKey → selected plug hash.
+/// [plugsByColumn]: columnKey → plug hash(es) on that instance for the column.
+/// Accepts a single equipped hash (`int`) or a set of equipped + reusable plugs
+/// (`Set<int>` / `Iterable<int>`). Multi-pick preferred/avoid are counted
+/// **per plug** (not per column): N/M = matched preferred plugs / total
+/// preferred plugs; Av k = avoid plugs present on the instance.
+///
 /// Columns with empty preferred are unscored for preferred; empty avoid
 /// unscored for avoid.
 RollTargetMatchResult scoreInstanceAgainstTarget(
   WeaponRollTarget target,
-  Map<String, int> plugsByColumn, {
+  Map<String, Object?> plugsByColumn, {
   PlugFamilyLookup? familyOf,
 }) {
   var preferredMatched = 0;
@@ -99,42 +104,68 @@ RollTargetMatchResult scoreInstanceAgainstTarget(
   final preferredByColumn = <String, PreferredColumnState>{};
   final avoidByColumn = <String, AvoidColumnState>{};
 
+  Set<int> plugsIn(String key) {
+    final raw = plugsByColumn[key];
+    if (raw == null) return const {};
+    if (raw is int) return raw == 0 ? const {} : {raw};
+    if (raw is Set<int>) return raw.where((h) => h != 0).toSet();
+    if (raw is Iterable) {
+      return {
+        for (final e in raw)
+          if (e is int && e != 0)
+            e
+          else if (e is num && e.toInt() != 0)
+            e.toInt(),
+      };
+    }
+    final p = int.tryParse('$raw');
+    if (p != null && p != 0) return {p};
+    return const {};
+  }
+
+  bool anyPlugMatches(Set<int> instancePlugs, Set<int> acceptable) {
+    for (final plug in instancePlugs) {
+      if (plugMatchesAcceptable(plug, acceptable, familyOf: familyOf)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   for (final col in target.columns) {
     final key = col.columnKey;
-    final plug = plugsByColumn[key];
+    final instancePlugs = plugsIn(key);
 
     if (col.preferredPlugHashes.isEmpty) {
       preferredByColumn[key] = PreferredColumnState.unscored;
     } else {
-      preferredScored++;
-      if (plug != null &&
-          plugMatchesAcceptable(
-            plug,
-            col.preferredPlugHashes,
-            familyOf: familyOf,
-          )) {
-        preferredMatched++;
-        preferredByColumn[key] = PreferredColumnState.matched;
-      } else {
-        preferredByColumn[key] = PreferredColumnState.miss;
+      // Plug-level multi-pick: each preferred hash is one score unit.
+      var colMatched = 0;
+      for (final want in col.preferredPlugHashes) {
+        preferredScored++;
+        if (anyPlugMatches(instancePlugs, {want})) {
+          preferredMatched++;
+          colMatched++;
+        }
       }
+      preferredByColumn[key] = colMatched > 0
+          ? PreferredColumnState.matched
+          : PreferredColumnState.miss;
     }
 
     if (col.avoidPlugHashes.isEmpty) {
       avoidByColumn[key] = AvoidColumnState.unscored;
     } else {
-      avoidScored++;
-      if (plug != null &&
-          plugMatchesAcceptable(
-            plug,
-            col.avoidPlugHashes,
-            familyOf: familyOf,
-          )) {
-        avoidHits++;
-        avoidByColumn[key] = AvoidColumnState.hit;
-      } else {
-        avoidByColumn[key] = AvoidColumnState.clear;
+      var colHits = 0;
+      for (final bad in col.avoidPlugHashes) {
+        avoidScored++;
+        if (anyPlugMatches(instancePlugs, {bad})) {
+          avoidHits++;
+          colHits++;
+        }
       }
+      avoidByColumn[key] =
+          colHits > 0 ? AvoidColumnState.hit : AvoidColumnState.clear;
     }
   }
 

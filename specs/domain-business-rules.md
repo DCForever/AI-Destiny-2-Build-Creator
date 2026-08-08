@@ -186,8 +186,8 @@ User-authored **roll targets** on Catalog weapon identities. **Not** DBR-ROLL wi
 | DBR-IDL-002 | Each target column may list **preferred** plug hashes (multi-accept: any listed plug matches that column for ideal score). |
 | DBR-IDL-003 | Each target column may list **avoid** plug hashes (multi-reject: any listed plug **hits** anti-ideal for that column). |
 | DBR-IDL-004 | Preferred and avoid sets on the **same column must be disjoint**; overlapping writes are rejected. |
-| DBR-IDL-005 | **Preferred score** = matched preferred columns / scored preferred columns (empty preferred columns are unscored). |
-| DBR-IDL-006 | **Avoid score** = avoid hits among avoid-scored columns (empty avoid columns are unscored). Higher hits = worse. |
+| DBR-IDL-005 | **Preferred score** = matched preferred **plugs** / total preferred plugs (multi-pick per column; empty preferred columns unscored). A preferred plug matches if it is on the instance column (equipped **or** reusable “on this copy”). |
+| DBR-IDL-006 | **Avoid score** = count of avoid **plugs** present on the instance column (equipped or reusable). Empty avoid columns unscored. Higher hits = worse. |
 | DBR-IDL-007 | Owned-instance **rank** for an active target: preferred ratio **desc**, then avoid hits **asc**, then power/tier as product tie-break. Soft display only. |
 | DBR-IDL-008 | Roll-target scores **never** hard-block Set/variant save, equip, or DIM export. Soft never auto-applies. Do not invent can-roll plugs. |
 | DBR-IDL-009 | **Exotic weapons** do **not** support roll targets (ideal/avoid). Exotic perk columns are **fixed** identity; preferred/avoid multi-pick, dual scores, and rank-by-target do not apply. Legendary (and other non-exotic) weapons only. |

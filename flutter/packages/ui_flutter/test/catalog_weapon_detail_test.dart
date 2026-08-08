@@ -2190,10 +2190,11 @@ void main() {
             preserveInstanceOrder: true,
             rankedByRollTarget: true,
             preferredByColumn: {
-              'Trait': {30},
+              // Instance sockets use index 0 for Trait (no socketIndex in map → Trait@0).
+              'Trait@0': {30},
             },
             avoidByColumn: {
-              'Trait': {31},
+              'Trait@0': {31},
             },
           ),
         ),
@@ -2239,7 +2240,7 @@ void main() {
             editingRollTarget: true,
             rollTargetDraftName: 'PvE',
             preferredByColumn: {
-              'Trait': {30},
+              'Trait@0': {30},
             },
             avoidByColumn: const {},
             onCycleRollPlug: (_, __) {},

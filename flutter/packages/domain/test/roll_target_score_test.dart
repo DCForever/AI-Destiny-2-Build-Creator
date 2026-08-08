@@ -102,43 +102,57 @@ void main() {
       ],
     );
 
-    test('perfect preferred and clean avoid', () {
+    test('perfect preferred and clean avoid (plug-level multi-pick)', () {
+      // barrel preferred {10,11} both on copy; trait1 {20}; trait2 {30,31} both on copy
       final m = scoreInstanceAgainstTarget(target, {
-        'barrel': 10,
-        'trait1': 20,
-        'trait2': 31,
-        'origin': 99,
+        'barrel': {10, 11},
+        'trait1': {20},
+        'trait2': {30, 31},
+        'origin': {99},
       });
-      expect(m.preferredMatched, 3);
-      expect(m.preferredScored, 3);
+      // preferred plugs: 10,11,20,30,31 = 5
+      expect(m.preferredMatched, 5);
+      expect(m.preferredScored, 5);
       expect(m.preferredRatio, 1.0);
       expect(m.isPerfectPreferred, isTrue);
       expect(m.avoidHits, 0);
-      expect(m.avoidScored, 2);
+      // avoid plugs: 19, 29, 28 = 3
+      expect(m.avoidScored, 3);
       expect(m.isCleanAvoid, isTrue);
       expect(m.preferredByColumn['origin'], PreferredColumnState.unscored);
     });
 
-    test('partial preferred and avoid hits', () {
+    test('partial preferred and avoid hits (plug-level)', () {
       final m = scoreInstanceAgainstTarget(target, {
-        'barrel': 19, // avoid hit, preferred miss
-        'trait1': 20, // preferred match
-        'trait2': 99, // preferred miss
+        'barrel': {19}, // avoid hit 19; preferred 10/11 miss
+        'trait1': {20}, // preferred match
+        'trait2': {99}, // preferred 30/31 miss
       });
       expect(m.preferredMatched, 1);
-      expect(m.preferredScored, 3);
+      expect(m.preferredScored, 5); // 2+1+2 preferred plugs
       expect(m.avoidHits, 1);
+      expect(m.avoidScored, 3);
       expect(m.avoidByColumn['barrel'], AvoidColumnState.hit);
       expect(m.preferredByColumn['barrel'], PreferredColumnState.miss);
       expect(m.preferredByColumn['trait1'], PreferredColumnState.matched);
     });
 
+    test('single int plugs still accepted (equipped-only map)', () {
+      final m = scoreInstanceAgainstTarget(target, {
+        'barrel': 10,
+        'trait1': 20,
+        'trait2': 31,
+      });
+      expect(m.preferredMatched, 3);
+      expect(m.preferredScored, 5);
+    });
+
     test('missing plugs count as preferred miss and avoid clear', () {
       final m = scoreInstanceAgainstTarget(target, {});
       expect(m.preferredMatched, 0);
-      expect(m.preferredScored, 3);
+      expect(m.preferredScored, 5);
       expect(m.avoidHits, 0);
-      expect(m.avoidScored, 2);
+      expect(m.avoidScored, 3);
     });
 
     test('family match counts preferred', () {
@@ -149,11 +163,26 @@ void main() {
 
       final m = scoreInstanceAgainstTarget(
         target,
-        {'barrel': 10, 'trait1': 200, 'trait2': 30},
+        {
+          'barrel': {10},
+          'trait1': {200},
+          'trait2': {30},
+        },
         familyOf: familyOf,
       );
       expect(m.preferredMatched, 3);
       expect(m.preferredByColumn['trait1'], PreferredColumnState.matched);
+    });
+
+    test('on-this-copy reusable preferred and avoid count', () {
+      // Equipped is junk; preferred/avoid live in reusables on the copy.
+      final m = scoreInstanceAgainstTarget(target, {
+        'barrel': {99, 10, 19}, // preferred 10 + avoid 19 on copy
+        'trait1': {20, 29}, // preferred 20 + avoid 29
+        'trait2': {30},
+      });
+      expect(m.preferredMatched, 3); // 10, 20, 30
+      expect(m.avoidHits, 2); // 19, 29
     });
   });
 
@@ -181,17 +210,26 @@ void main() {
       final instances = [
         const RollTargetInstanceInput(
           instanceId: 'a',
-          plugsByColumn: {'t1': 1, 't2': 8}, // 1/2 preferred, 1 avoid
+          plugsByColumn: {
+            't1': {1},
+            't2': {8},
+          }, // 1/2 preferred, 1 avoid
           power: 1800,
         ),
         const RollTargetInstanceInput(
           instanceId: 'b',
-          plugsByColumn: {'t1': 1, 't2': 2}, // 2/2 preferred, 0 avoid
+          plugsByColumn: {
+            't1': {1},
+            't2': {2},
+          }, // 2/2 preferred, 0 avoid
           power: 1700,
         ),
         const RollTargetInstanceInput(
           instanceId: 'c',
-          plugsByColumn: {'t1': 1, 't2': 99}, // 1/2 preferred, 0 avoid
+          plugsByColumn: {
+            't1': {1},
+            't2': {99},
+          }, // 1/2 preferred, 0 avoid
           power: 1900,
         ),
       ];

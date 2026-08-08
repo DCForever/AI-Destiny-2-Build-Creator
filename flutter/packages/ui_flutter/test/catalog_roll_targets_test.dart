@@ -13,23 +13,28 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('catalog roll target pure helpers', () {
-    test('columnKey prefers label then kind then socket', () {
+    test('columnKey prefers socket; else unique label@index', () {
       expect(
-        catalogRollColumnKey({'columnLabel': 'Trait 1'}),
-        'Trait 1',
+        catalogRollColumnKey({'columnLabel': 'Trait 1'}, index: 2),
+        'Trait 1@2',
       );
       expect(
-        catalogRollColumnKey({'columnKind': 'barrel'}),
-        'barrel',
+        catalogRollColumnKey({'columnKind': 'barrel'}, index: 1),
+        'barrel@1',
       );
       expect(
         catalogRollColumnKey({'socketIndex': 3}, index: 9),
         'socket_3',
       );
       expect(catalogRollColumnKey({}, index: 2), 'col_2');
+      // Two Trait columns must not collide.
+      expect(
+        catalogRollColumnKey({'columnLabel': 'Trait'}, index: 4),
+        isNot(catalogRollColumnKey({'columnLabel': 'Trait'}, index: 5)),
+      );
     });
 
-    test('plugsByColumnFromSockets maps equipped', () {
+    test('plugsByColumnFromSockets maps equipped with unique keys', () {
       final map = catalogRollPlugsByColumnFromSockets(const [
         {
           'columnLabel': 'Barrel',
@@ -39,8 +44,26 @@ void main() {
           'columnLabel': 'Trait',
           'equippedPlugHash': 30,
         },
+        {
+          'columnLabel': 'Trait',
+          'equippedPlugHash': 40,
+        },
       ]);
-      expect(map, {'Barrel': 10, 'Trait': 30});
+      expect(map['Barrel@0'], 10);
+      expect(map['Trait@1'], 30);
+      expect(map['Trait@2'], 40);
+    });
+
+    test('allPlugsByColumn includes reusables for plug-level score', () {
+      final map = catalogRollAllPlugsByColumnFromSockets(const [
+        {
+          'socketIndex': 1,
+          'columnLabel': 'Trait',
+          'equippedPlugHash': 30,
+          'reusablePlugHashes': [30, 31, 32],
+        },
+      ]);
+      expect(map['socket_1'], {30, 31, 32});
     });
 
     test('Want|Avoid|Off cycle and apply', () {

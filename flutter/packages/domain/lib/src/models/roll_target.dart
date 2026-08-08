@@ -173,8 +173,11 @@ class RollTargetInstanceInput {
 
   final String instanceId;
 
-  /// columnKey → selected plug hash on that instance.
-  final Map<String, int> plugsByColumn;
+  /// columnKey → plug hash(es) on that instance for scoring.
+  ///
+  /// Values may be a single equipped [int] or a [Set]/[Iterable] of equipped +
+  /// reusable plugs (plug-level multi-pick preferred/avoid).
+  final Map<String, Object?> plugsByColumn;
   final int? power;
   final int? gearTier;
 }

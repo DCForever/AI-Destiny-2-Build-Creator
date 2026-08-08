@@ -101,18 +101,21 @@ List<InventoryItemRecord> rollTargetInventoryItems({
         gearTier: 3,
         socketPlugs: const [
           {
+            'socketIndex': 0,
             'columnKind': 'barrel',
             'columnLabel': 'Barrel',
             'equippedPlugHash': kRtBarrelArrow,
             'reusablePlugHashes': [kRtBarrelArrow, kRtBarrelChamber],
           },
           {
+            'socketIndex': 1,
             'columnKind': 'magazine',
             'columnLabel': 'Magazine',
             'equippedPlugHash': kRtMagAcc,
             'reusablePlugHashes': [kRtMagAcc, kRtMagApp],
           },
           {
+            'socketIndex': 2,
             'columnKind': 'trait',
             'columnLabel': 'Trait',
             'equippedPlugHash': kRtTraitKill,
@@ -131,27 +134,33 @@ List<InventoryItemRecord> rollTargetInventoryItems({
         gearTier: 5,
         socketPlugs: const [
           {
+            'socketIndex': 0,
             'columnKind': 'barrel',
             'columnLabel': 'Barrel',
             'equippedPlugHash': kRtBarrelArrow,
-            'reusablePlugHashes': [kRtBarrelArrow, kRtBarrelChamber],
+            // No Chamber preferred alternate — only Arrow on this copy for barrel.
+            'reusablePlugHashes': [kRtBarrelArrow],
           },
           {
+            'socketIndex': 1,
             'columnKind': 'magazine',
             'columnLabel': 'Magazine',
+            // Miss Accurized preferred — only Appended on this copy.
             'equippedPlugHash': kRtMagApp,
-            'reusablePlugHashes': [kRtMagAcc, kRtMagApp],
+            'reusablePlugHashes': [kRtMagApp],
           },
           {
+            'socketIndex': 2,
             'columnKind': 'trait',
             'columnLabel': 'Trait',
+            // Miss Kill Clip preferred — only Rampage on this copy.
             'equippedPlugHash': kRtTraitRampage,
-            'reusablePlugHashes': [kRtTraitKill, kRtTraitRampage],
+            'reusablePlugHashes': [kRtTraitRampage],
           },
         ],
         syncedAt: syncedAt,
       ),
-      // Bad roll: miss preferred + avoid hit
+      // Bad roll: miss preferred + avoid hit (Outlaw equipped; no preferred plugs).
       InventoryItemRecord(
         instanceId: 'rt-dirty',
         itemHash: kRollTargetWeaponHash,
@@ -161,22 +170,25 @@ List<InventoryItemRecord> rollTargetInventoryItems({
         gearTier: 4,
         socketPlugs: const [
           {
+            'socketIndex': 0,
             'columnKind': 'barrel',
             'columnLabel': 'Barrel',
             'equippedPlugHash': kRtBarrelChamber,
-            'reusablePlugHashes': [kRtBarrelArrow, kRtBarrelChamber],
+            'reusablePlugHashes': [kRtBarrelChamber],
           },
           {
+            'socketIndex': 1,
             'columnKind': 'magazine',
             'columnLabel': 'Magazine',
             'equippedPlugHash': kRtMagApp,
-            'reusablePlugHashes': [kRtMagAcc, kRtMagApp],
+            'reusablePlugHashes': [kRtMagApp],
           },
           {
+            'socketIndex': 2,
             'columnKind': 'trait',
             'columnLabel': 'Trait',
             'equippedPlugHash': kRtTraitOutlaw,
-            'reusablePlugHashes': [kRtTraitKill, kRtTraitRampage, kRtTraitOutlaw],
+            'reusablePlugHashes': [kRtTraitOutlaw],
           },
         ],
         syncedAt: syncedAt,
@@ -184,6 +196,7 @@ List<InventoryItemRecord> rollTargetInventoryItems({
     ];
 
 /// PvE target: prefer Arrow+Acc+Kill; avoid Outlaw.
+/// Column keys match [catalogRollColumnKey] (socketIndex → socket_N).
 WeaponRollTarget rollTargetPveProfile({
   required int userId,
   String id = 'rt-pve-fixture',
@@ -193,36 +206,25 @@ WeaponRollTarget rollTargetPveProfile({
     userId: userId.toString(),
     weaponKey: '$kRollTargetWeaponHash',
     name: 'PvE',
-    columns: const [
-      RollTargetColumn(
-        columnKey: 'Barrel',
-        preferredPlugHashes: {kRtBarrelArrow},
-      ),
-      RollTargetColumn(
-        columnKey: 'Magazine',
-        preferredPlugHashes: {kRtMagAcc},
-      ),
-      RollTargetColumn(
-        columnKey: 'Trait',
-        preferredPlugHashes: {kRtTraitKill},
-        avoidPlugHashes: {kRtTraitOutlaw},
-      ),
-    ],
+    columns: rollTargetPveColumns(),
   );
 }
 
 /// Seed DB rows for [rollTargetPveProfile] via app use cases (caller).
 List<RollTargetColumn> rollTargetPveColumns() => const [
       RollTargetColumn(
-        columnKey: 'Barrel',
+        columnKey: 'socket_0',
+        label: 'Barrel',
         preferredPlugHashes: {kRtBarrelArrow},
       ),
       RollTargetColumn(
-        columnKey: 'Magazine',
+        columnKey: 'socket_1',
+        label: 'Magazine',
         preferredPlugHashes: {kRtMagAcc},
       ),
       RollTargetColumn(
-        columnKey: 'Trait',
+        columnKey: 'socket_2',
+        label: 'Trait',
         preferredPlugHashes: {kRtTraitKill},
         avoidPlugHashes: {kRtTraitOutlaw},
       ),
