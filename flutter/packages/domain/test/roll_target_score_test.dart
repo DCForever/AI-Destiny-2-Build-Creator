@@ -186,6 +186,78 @@ void main() {
       expect(m.preferredMatched, 2);
       expect(m.preferredScored, 2);
     });
+
+    test('Duty Bound 487: alternate hashes same display name → 3/4 Av 1', () {
+      // Real D2 issue: Stopping Power / All-Star / Onslaught each have multiple
+      // plug item hashes. Target stores the hash the user tapped in the pool;
+      // the owned copy may roll a different hash with the same name.
+      const stopA = 1517798362;
+      const stopB = 1011551830; // on 487
+      const allStarA = 1226351311;
+      const allStarB = 3251326479; // on 487
+      const onslaughtA = 95528736;
+      const onslaughtB = 956288240; // on 487
+      const loneWolf = 2073244114;
+
+      final names = {
+        stopA: 'Stopping Power',
+        stopB: 'Stopping Power',
+        allStarA: 'All-Star',
+        allStarB: 'All-Star',
+        onslaughtA: 'Onslaught',
+        onslaughtB: 'Onslaught',
+        loneWolf: 'Lone Wolf',
+      };
+      final familyOf = buildPlugFamilyLookup(names);
+
+      final t = WeaponRollTarget(
+        id: '1',
+        userId: 'u',
+        weaponKey: '260532765',
+        name: 'PvE',
+        columns: const [
+          RollTargetColumn(
+            columnKey: 'socket_3',
+            preferredPlugHashes: {stopA},
+            avoidPlugHashes: {loneWolf},
+          ),
+          RollTargetColumn(
+            columnKey: 'socket_4',
+            preferredPlugHashes: {allStarA, onslaughtA},
+          ),
+        ],
+      );
+
+      final m = scoreInstanceAgainstTarget(
+        t,
+        {
+          'socket_3': {stopB, loneWolf},
+          'socket_4': {allStarB, onslaughtB},
+        },
+        familyOf: familyOf,
+      );
+      expect(m.preferredMatched, 3);
+      expect(m.preferredScored, 4);
+      expect(m.avoidHits, 1);
+    });
+  });
+
+  group('plug family by display name', () {
+    test('normalize strips enhanced and punctuation', () {
+      expect(normalizePlugFamilyName('All-Star'), 'all star');
+      expect(normalizePlugFamilyName('Enhanced Rampage'), 'rampage');
+      expect(normalizePlugFamilyName('Rampage (Enhanced)'), 'rampage');
+    });
+
+    test('expandHashesWithFamily unions siblings', () {
+      final familyOf = buildPlugFamilyLookup({
+        1: 'Stopping Power',
+        2: 'Stopping Power',
+        3: 'Lone Wolf',
+      });
+      expect(expandHashesWithFamily({1}, familyOf), {1, 2});
+      expect(familyOf(2), {1, 2});
+    });
   });
 
   group('rankOwnedAgainstTarget', () {

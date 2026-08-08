@@ -6,8 +6,62 @@ library;
 import '../models/roll_target.dart';
 
 /// Optional plug-family expansion: hash → other hashes that count as the same
-/// perk family (e.g. base ↔ enhanced). When null/empty, match is hash-only.
+/// perk family (e.g. base ↔ enhanced, or multiple manifest plugs with the same
+/// display name). When null/empty, match is hash-only.
 typedef PlugFamilyLookup = Set<int> Function(int plugHash);
+
+/// Normalize a plug display name for family matching.
+///
+/// Strips enhanced labels and collapses punctuation so "All-Star",
+/// "All Star", and "Enhanced All-Star" share a family key.
+String normalizePlugFamilyName(String raw) {
+  var s = raw.trim().toLowerCase();
+  if (s.isEmpty) return s;
+  s = s.replaceAll(RegExp(r'\s*\(enhanced\)\s*$'), '');
+  s = s.replaceAll(RegExp(r'^enhanced\s+'), '');
+  s = s.replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  s = s.replaceAll(RegExp(r'\s+'), ' ');
+  return s;
+}
+
+/// Build [PlugFamilyLookup] grouping plug hashes by normalized display name.
+///
+/// Destiny often ships multiple item hashes for the same perk (random-roll
+/// variants, enhanced tiers). Roll targets store the hash the user tapped;
+/// scoring must still match other hashes that share that perk name.
+PlugFamilyLookup buildPlugFamilyLookup(Map<int, String> nameByHash) {
+  final byNorm = <String, Set<int>>{};
+  final familyByHash = <int, Set<int>>{};
+  for (final e in nameByHash.entries) {
+    if (e.key == 0) continue;
+    final norm = normalizePlugFamilyName(e.value);
+    if (norm.isEmpty) {
+      familyByHash.putIfAbsent(e.key, () => {e.key});
+      continue;
+    }
+    byNorm.putIfAbsent(norm, () => <int>{}).add(e.key);
+  }
+  for (final members in byNorm.values) {
+    final frozen = Set<int>.from(members);
+    for (final h in frozen) {
+      familyByHash[h] = frozen;
+    }
+  }
+  return (int plugHash) => familyByHash[plugHash] ?? {plugHash};
+}
+
+/// Expand [hashes] with every family member known to [familyOf].
+Set<int> expandHashesWithFamily(
+  Set<int> hashes,
+  PlugFamilyLookup familyOf,
+) {
+  if (hashes.isEmpty) return const {};
+  final out = <int>{};
+  for (final h in hashes) {
+    out.addAll(familyOf(h));
+  }
+  return out;
+}
 
 /// Domain failure for invalid roll targets.
 class RollTargetValidationException implements Exception {

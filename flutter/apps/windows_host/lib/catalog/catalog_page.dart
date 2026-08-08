@@ -488,21 +488,30 @@ class _CatalogPageState extends State<CatalogPage> {
     return null;
   }
 
+  /// Plug-family lookup from resolved display names (base ↔ enhanced /
+  /// multi-hash same perk). Empty names map → hash-only match.
+  PlugFamilyLookup get _plugFamilyOf =>
+      buildPlugFamilyLookup(_bridge.plugNameByHash);
+
   Map<String, Set<int>> _preferredMapFromTarget(WeaponRollTarget? t) {
     if (t == null) return const {};
+    final familyOf = _plugFamilyOf;
     return {
       for (final c in t.columns)
         if (c.preferredPlugHashes.isNotEmpty)
-          c.columnKey: Set<int>.from(c.preferredPlugHashes),
+          // Expand siblings so wash marks every on-copy hash of that perk.
+          c.columnKey:
+              expandHashesWithFamily(c.preferredPlugHashes, familyOf),
     };
   }
 
   Map<String, Set<int>> _avoidMapFromTarget(WeaponRollTarget? t) {
     if (t == null) return const {};
+    final familyOf = _plugFamilyOf;
     return {
       for (final c in t.columns)
         if (c.avoidPlugHashes.isNotEmpty)
-          c.columnKey: Set<int>.from(c.avoidPlugHashes),
+          c.columnKey: expandHashesWithFamily(c.avoidPlugHashes, familyOf),
     };
   }
 
@@ -578,7 +587,14 @@ class _CatalogPageState extends State<CatalogPage> {
           gearTier: inst.gearTier,
         ),
     ];
-    final ranked = rankOwnedForRollTarget(scoreTarget, inputs);
+    // Same display name (e.g. multiple Stopping Power hashes) counts as one
+    // perk family so preferred/avoid still match across roll variants.
+    final familyOf = buildPlugFamilyLookup(_bridge.plugNameByHash);
+    final ranked = rankOwnedForRollTarget(
+      scoreTarget,
+      inputs,
+      familyOf: familyOf,
+    );
     final byId = {for (final i in _instances) i.instanceId: i};
     final ordered = <CatalogInstanceProjection>[
       for (final r in ranked)
