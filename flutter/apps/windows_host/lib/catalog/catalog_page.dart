@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
 import '../widgets/entity_icon.dart';
+import 'armor_detail_projection.dart';
 import 'owned_catalog_bridge.dart';
 
 /// Catalog board columns: NAME · IDENTITY · TYPE · OWNED
@@ -106,6 +107,10 @@ class _CatalogPageState extends State<CatalogPage> {
   /// Secondary facets (ammo, class, synergy) behind "More".
   /// Primary line (scope + free-text + element/slot/type icon chips) is always on.
   bool _moreFiltersExpanded = false;
+
+  /// Soft error banner (dismissible) — e.g. partial instance resolve.
+  String? _softError;
+  bool _softErrorDismissed = false;
 
   // --- 004 CatalogFilterCollections (soft apply; host binds) ---
   List<CatalogFilterCollection> _filterCollections = const [];
@@ -465,7 +470,9 @@ class _CatalogPageState extends State<CatalogPage> {
     if (!mounted) return;
     setState(() {
       _instances = quick;
-      _selectedInstanceId = defaultHighestPowerInstanceId(quick);
+      _selectedInstanceId = treatArmor
+          ? _defaultArmorInstanceId(quick)
+          : defaultHighestPowerInstanceId(quick);
     });
 
     // Resolve plug names/icons + reverse tags; re-project when names land.
@@ -486,11 +493,23 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _instances = instances;
       _reverseTags = tags;
-      _selectedInstanceId =
-          _selectedInstanceId ?? defaultHighestPowerInstanceId(instances);
+      _selectedInstanceId = _selectedInstanceId ??
+          (treatArmor
+              ? _defaultArmorInstanceId(instances)
+              : defaultHighestPowerInstanceId(instances));
     });
     // Keep roll-target profiles aligned after async instance resolve.
-    await _loadRollTargetsForSelection();
+    if (!treatArmor) {
+      await _loadRollTargetsForSelection();
+    }
+  }
+
+  /// Default owned armor copy: highest base total (then power).
+  String? _defaultArmorInstanceId(List<CatalogInstanceProjection> instances) {
+    if (instances.isEmpty) return null;
+    final projected = projectArmorInstances(instances);
+    if (projected.isEmpty) return defaultHighestPowerInstanceId(instances);
+    return projected.first.instanceId;
   }
 
   Future<void> _selectItem(CatalogItem item) async {
@@ -506,7 +525,9 @@ class _CatalogPageState extends State<CatalogPage> {
       _moreFiltersExpanded = false;
     });
     await _syncSelection();
-    await _loadRollTargetsForSelection();
+    if (_mode == CatalogBrowseMode.weapons) {
+      await _loadRollTargetsForSelection();
+    }
   }
 
   Future<void> _selectFamily(WeaponFamily family) async {
@@ -941,9 +962,16 @@ class _CatalogPageState extends State<CatalogPage> {
       _ammos = emptyFacet();
       _classNames = emptyFacet();
       _archetypes = emptyFacet();
+      _elements = mode == CatalogBrowseMode.armor ? emptyFacet() : _elements;
       _groupBy.clear();
       _collapsedGroups.clear();
       _selectedFamily = null;
+      _selected = null;
+      _instances = const [];
+      _selectedInstanceId = null;
+      _showCanRoll = false;
+      _showCraft = false;
+      _resetRollTargetUi();
       _clearActiveFilterCollection(notify: false);
       _applyBrowse();
     });
@@ -1589,6 +1617,14 @@ class _CatalogPageState extends State<CatalogPage> {
 
   List<CatalogFacetGroup> _primaryFacetGroups() {
     return [
+      // Armor brief: class on primary line (not buried under More).
+      if (catalogShowsClassFacetPrimary(_mode))
+        CatalogFacetGroup(
+          id: 'class',
+          values: catalogClassNames,
+          facet: _classNames,
+          onCycle: _cycleClass,
+        ),
       if (catalogShowsElementFacet(_mode))
         CatalogFacetGroup(
           id: 'element',
@@ -1604,6 +1640,7 @@ class _CatalogPageState extends State<CatalogPage> {
         facet: _slots,
         onCycle: _cycleSlot,
         // K / E / P icon-only (mock density); labels via tooltip.
+        // Armor slots also use letter marks via the same chip path.
         iconOnly: true,
       ),
       // GAP-CAT-BROWSE-004: weapon type silhouettes on primary line.
@@ -1628,7 +1665,9 @@ class _CatalogPageState extends State<CatalogPage> {
           onCycle: _cycleAmmo,
           iconOnly: true,
         ),
-      if (catalogShowsClassFacet(_mode))
+      // Class on primary for armor; keep under More for universal only.
+      if (catalogShowsClassFacet(_mode) &&
+          !catalogShowsClassFacetPrimary(_mode))
         CatalogFacetGroup(
           id: 'class',
           values: catalogClassNames,
@@ -1636,7 +1675,8 @@ class _CatalogPageState extends State<CatalogPage> {
           onCycle: _cycleClass,
         ),
       // Weapons: archetype is primary iconOnly — do not repeat as text under More.
-      if (_mode != CatalogBrowseMode.weapons)
+      // Armor v1: no archetype facet (class + slot + exotic + free-text).
+      if (_mode == CatalogBrowseMode.universal)
         CatalogFacetGroup(
           id: 'archetype',
           values: catalogArchetypesForMode(_mode),
@@ -1852,6 +1892,7 @@ class _CatalogPageState extends State<CatalogPage> {
                         primaryGroups: _primaryFacetGroups(),
                         secondaryGroups: _secondaryFacetGroups(),
                       ),
+                      // Sort & Group is weapons chrome only — not armor mode.
                       if (_mode == CatalogBrowseMode.weapons) ...[
                         const SizedBox(height: 4),
                         Align(
@@ -1877,7 +1918,9 @@ class _CatalogPageState extends State<CatalogPage> {
                           ),
                         ),
                       ],
-                      if (_moreFiltersExpanded) ...[
+                      // Group-by under More for weapons/universal; skip armor v1.
+                      if (_moreFiltersExpanded &&
+                          _mode != CatalogBrowseMode.armor) ...[
                         const SizedBox(height: 4),
                         _groupByRow(),
                       ],
@@ -1887,6 +1930,18 @@ class _CatalogPageState extends State<CatalogPage> {
               ),
             ),
           ),
+          // Soft error banner (dismissible) — armor / shared load soft faults.
+          if (_softError != null && !_softErrorDismissed) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kSpace12, 0, kSpace12, kSpace6),
+              child: CatalogSoftErrorBanner(
+                message: _softError!,
+                onDismiss: () {
+                  setState(() => _softErrorDismissed = true);
+                },
+              ),
+            ),
+          ],
           // Incomplete entity cache (e.g. missing exotic-weapons.json).
           if (_missingExoticWeaponsStore) ...[
             Padding(
@@ -2073,6 +2128,7 @@ class _CatalogPageState extends State<CatalogPage> {
       );
     }
     final isWeapons = _mode == CatalogBrowseMode.weapons;
+    final isArmor = _mode == CatalogBrowseMode.armor;
     final empty = isWeapons ? _families.isEmpty : _results.isEmpty;
     if (empty) {
       return _buildEmptyState();
@@ -2081,6 +2137,21 @@ class _CatalogPageState extends State<CatalogPage> {
         _bridge.userId != null && _bridge.inventory.isNotEmpty;
     final showOwned =
         hasLocalOwned || widget.services.oauthSession.isSignedIn;
+
+    // Armor: identity icon grid (no family merge, no row stats).
+    if (isArmor) {
+      return CatalogArmorGrid(
+        items: _results,
+        selectedHash: _selected?.hash,
+        showOwned: showOwned,
+        onSelect: _selectItem,
+        leadingBuilder: (item) => EntityIcon(
+          key: Key('catalog_item_icon_${item.hash}'),
+          icon: item.icon,
+          size: 36,
+        ),
+      );
+    }
 
     if (isWeapons) {
       final useGroupHeaders = _groupBy.isNotEmpty;
@@ -2227,8 +2298,62 @@ class _CatalogPageState extends State<CatalogPage> {
     return 'No items match the current filters.';
   }
 
+  /// Armor detail: dual boards, instance strip, mods/energy, set/exotic, stubs.
+  Widget _buildArmorDetailPanel(CatalogItem item) {
+    final projected = projectArmorInstances(
+      _instances,
+      plugNameByHash: _bridge.plugNameByHash,
+    );
+    // Sticky selection; default highest base-total when unset.
+    var selectedId = _selectedInstanceId;
+    if (selectedId == null && projected.isNotEmpty) {
+      selectedId = projected.first.instanceId;
+    }
+    final setBonus = armorSetBonusFromDefinition();
+    final exotic = armorExoticPerkFromItem(
+      isExotic: item.isExotic,
+      intrinsicName: item.intrinsicName,
+      description: item.description,
+    );
+
+    return CatalogArmorDetail(
+      key: ValueKey<String>('catalog_armor_detail_${item.hash}'),
+      item: item,
+      instances: projected,
+      selectedInstanceId: selectedId,
+      onSelectInstance: (inst) {
+        setState(() => _selectedInstanceId = inst.instanceId);
+      },
+      setBonus: setBonus,
+      exoticPerk: exotic,
+      showOwnedMeta: widget.services.oauthSession.isSignedIn ||
+          (_bridge.userId != null && _bridge.inventory.isNotEmpty),
+      headerTrailing: _reverseTags.isEmpty
+          ? null
+          : Wrap(
+              key: const Key('linked_synergy_badges'),
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final badge in _reverseTags)
+                  Chip(
+                    key: Key('synergy_badge_${badge.id}'),
+                    label: Text(badge.name),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+              ],
+            ),
+    );
+  }
+
   Widget _buildDetailPanel() {
     final item = _selected!;
+
+    // Armor path: labeled Base|Live dossier (no weapon roll/can-roll chrome).
+    if (_mode == CatalogBrowseMode.armor) {
+      return _buildArmorDetailPanel(item);
+    }
 
     // Weapons path: composition-aid detail with disabled Set/Synergy stubs.
     if (_mode == CatalogBrowseMode.weapons) {

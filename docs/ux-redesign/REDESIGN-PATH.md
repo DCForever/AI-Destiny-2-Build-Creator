@@ -91,7 +91,7 @@ Catalog is the **active deep redesign**. Modes are sequential; weapons stay open
 | **C5** | Weapon roll targets | Preferred + avoid, rank owned, exotic excluded | **landed** / residual dual-truth optional | `003-catalog-roll-targets` · vault [[UX Catalog — Weapon Roll Targets]] |
 | **C6** | **Weapons finish queue** | Residual bugs + optional weapons features | **exited** (2026-08-08 human) | Parked residuals below · not blocking C8 |
 | **C7** | Catalog system-paired UX | Nested group chrome, entity 1+3 desc (after DART-072 / DART-071) | **partial landed** — chrome on main; Capture dual-truth optional later | `UX-CATALOG-NESTED-GROUP` · entity-desc residual |
-| **C8** | **Armor redesign** | Armor grid + detail (stats labeled base/live, energy, mods, set bonus, exotic) | **next** (unblocked) | Start with `area-ux-redesign` brief · product [[Destiny Armor]] |
+| **C8** | **Armor redesign** | Armor grid + detail (stats labeled base/live, energy, mods, set bonus, exotic) | **landed** (structure + Capture 2026-08-08/09) | brief `001-armor` · shots `implementation-shots/001-armor/` · residuals: set-bonus host map, class/slot icons |
 | **C9** | **Universal redesign** | Mixed-kind search + shared-lifecycle Set/Synergy CTAs (BR-CAT-009*) | **later** | Keep live CTAs; do not stub regress |
 | **C10** | Constrained pick embed | Set/Build fill locks (slot, class, exotic, set type) | **later** | Shared pick chrome; hard domain rules |
 | **C11** | Live Set/Synergy outbound | Replace weapons disabled stubs with shared lifecycles | **later** | After Sets/Synergy area chrome exists **or** thin wire to existing host flows |
@@ -166,14 +166,14 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | Field | Value |
 | --- | --- |
 | **Active area** | Catalog |
-| **Active Catalog phase** | **C8 — Armor redesign** (next) |
-| **Exited** | **C6 Weapons finish** (2026-08-08 human) · C7 chrome partial on main |
-| **Do not start yet** | C9 Universal redesign |
-| **Landed (weapons track)** | Browse/detail, family cards, instance strip, roll targets, filter collections, nested group, entity hotspot; PERF-01/02 host partial (may be uncommitted) |
-| **Next full redesign slice** | **C8 Armor** — open `area-ux-redesign` (brief + mockups first) |
+| **Active Catalog phase** | **C8 Armor landed** · next Catalog full mode **C9 Universal** (when scheduled) |
+| **Exited** | **C6 Weapons** · **C8 Armor** structure+Capture MVP (2026-08-08/09) · C7 chrome partial |
+| **Do not start yet** | C10 constrained pick embeds (after Universal or explicit re-scope) |
+| **Landed (Catalog)** | Weapons track + Armor C8 (grid/detail/honesty/Capture must-rows); filter collections / nested group / entity hotspot |
+| **Next full redesign slice** | **C9 Universal** — or residual Armor polish (set-bonus map, official class/slot icons) |
 | **Parked weapons board** | §4.2 parked table · vault `UX/UX Catalog — Weapons.md` · `DUAL-TRUTH-GAPS.md` |
-| **Performance backlog** | GAP-PERF-01/02 partial · **03–06** open — **not** Armor gate; not cutover |
-| **Next area after Catalog** | Sets (phase 3) |
+| **Performance backlog** | GAP-PERF-01/02 partial · **03–06** open — not cutover |
+| **Next area after Catalog** | Sets (phase 3) after Catalog modes complete or re-scoped |
 
 ---
 

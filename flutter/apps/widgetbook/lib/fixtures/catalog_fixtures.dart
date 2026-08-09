@@ -145,6 +145,122 @@ const kUnsworn = CatalogItem(
 );
 
 // ---------------------------------------------------------------------------
+// Armor identities (C8 structure demos)
+// ---------------------------------------------------------------------------
+
+const kArmorSynthoceps = CatalogItem(
+  hash: 91001,
+  name: 'Synthoceps',
+  slot: 'Gauntlets',
+  classType: 'Titan',
+  isExotic: true,
+  owned: true,
+  ownedCount: 2,
+  intrinsicName: 'Biotic Enhancements',
+  description: 'Increased melee lunge range.',
+);
+
+const kArmorUnownedPlate = CatalogItem(
+  hash: 91003,
+  name: 'Field-Tested Plate',
+  slot: 'Chest',
+  classType: 'Hunter',
+  isExotic: false,
+  owned: false,
+  ownedCount: 0,
+);
+
+const kArmorStridehunt = CatalogItem(
+  hash: 91004,
+  name: 'Stridehunt Greaves',
+  slot: 'Legs',
+  classType: 'Warlock',
+  isExotic: false,
+  owned: true,
+  ownedCount: 1,
+);
+
+const kArmorDemoItems = <CatalogItem>[
+  kArmorSynthoceps,
+  kArmorUnownedPlate,
+  kArmorStridehunt,
+];
+
+const kArmorDemoSetBonus = ArmorSetBonusData(
+  setName: 'Techsec',
+  twoPiece: 'Faster reload after ability kill',
+  fourPiece: 'Orbs on multi-kill',
+);
+
+const kArmorDemoExoticPerk = ArmorExoticPerkData(
+  name: 'Biotic Enhancements',
+  description: 'Increased melee lunge range.',
+);
+
+ArmorStatBoardData _armorBoard(Map<String, int> stats) {
+  final total = stats.values.fold<int>(0, (a, b) => a + b);
+  return ArmorStatBoardData(stats: stats, total: total);
+}
+
+/// Multi-copy owned strip for armor detail structure demos.
+List<ArmorInstanceStripItem> kArmorOwnedCopies() {
+  return ArmorInstanceStrip.sortByBaseTotal([
+    ArmorInstanceStripItem(
+      instanceId: 'a-high',
+      power: 1995,
+      baseTotal: 138,
+      gearTier: 5,
+      baseBoard: _armorBoard(const {
+        'Health': 30,
+        'Melee': 40,
+        'Grenade': 15,
+        'Super': 20,
+        'Class': 18,
+        'Weapons': 15,
+      }),
+      liveBoard: _armorBoard(const {
+        'Health': 40,
+        'Melee': 50,
+        'Grenade': 20,
+        'Super': 25,
+        'Class': 22,
+        'Weapons': 18,
+      }),
+      mods: const [
+        ArmorModPlugData(hash: 1, displayName: 'Heavy Handed', energyCost: 3),
+      ],
+      energy: const ArmorEnergyData(used: 5, capacity: 10),
+    ),
+    ArmorInstanceStripItem(
+      instanceId: 'a-low',
+      power: 2000,
+      baseTotal: 66,
+      gearTier: 3,
+      baseBoard: _armorBoard(const {
+        'Health': 12,
+        'Melee': 18,
+        'Grenade': 8,
+        'Super': 10,
+        'Class': 10,
+        'Weapons': 8,
+      }),
+      liveBoard: _armorBoard(const {
+        'Health': 15,
+        'Melee': 20,
+        'Grenade': 10,
+        'Super': 12,
+        'Class': 12,
+        'Weapons': 10,
+      }),
+      mods: const [
+        ArmorModPlugData(hash: 1, displayName: 'Heavy Handed', energyCost: 3),
+      ],
+      energy: const ArmorEnergyData(used: 3, capacity: 10),
+    ),
+  ]);
+}
+
+// ---------------------------------------------------------------------------
 // Families
 // ---------------------------------------------------------------------------
 

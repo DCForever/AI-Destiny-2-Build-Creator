@@ -821,8 +821,19 @@ pages:
         auth: signed-in
         rules:
           - BR-CAT-006
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
           - DAC-NME-004
           - DBR-STAT-001
+          - DBR-STAT-008
+          - DBR-UI-008
+          - DO-ARM-008
+          - DO-ARM-009
+          - DO-ARM-011
+          - DO-EXO-010
+          - DO-ASB-015
         atlas:
           - catalog-armor-detail
       - id: catalog.armor.manifest
@@ -833,6 +844,10 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-PUR-002
+          - BR-CAT-006
+          - BR-CAT-017
+          - DO-ARM-001
         atlas:
           - catalog-armor-manifest
       - id: catalog.armor.owned
@@ -843,24 +858,44 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-UI-001
+          - DBR-UI-005
+          - DBR-UI-006
+          - DBR-UI-008
           - BR-CAT-001
+          - BR-CAT-003
+          - BR-CAT-004
+          - BR-CAT-010
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
+          - BR-CAT-017
+          - BR-CAT-031
           - 003:SC-001
         atlas:
           - catalog-armor-owned
         children:
           - id: catalog.armor.filters
             kind: surface
-            title: Armor facets (class, slot, exotic, tier…)
+            title: Armor facets (class, slot, exotic, free-text)
             rules:
               - DAC-NME-003
               - DBR-ROLL-010
+              - BR-CAT-003
+              - BR-CAT-004
+              - BR-CAT-010
+              - BR-CAT-010d
           - id: catalog.armor.stats-panel
             kind: field
             title: Armor stats panel
             rules:
               - DBR-STAT-001
               - DBR-STAT-008
+              - DBR-UI-008
               - BR-SET-011
+              - DO-ARM-008
+              - DO-ARM-009
       - id: catalog.composition-aid
         kind: surface
         title: Catalog as composition aid (not primary job)
@@ -1089,8 +1124,11 @@ pages:
                       - 011:SC-001
                       - 011:SC-002
                       - BR-ROLL-002
+                      - DBR-UI-001
+                      - DBR-UI-005
                       - DBR-UI-006
                       - DBR-UI-007
+                      - FEAT-UI-ENTITY-DESC
   - id: sets
     label: Sets
     description: |
@@ -4331,7 +4369,20 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-UI-001
+          - DBR-UI-005
+          - DBR-UI-006
+          - DBR-UI-008
           - BR-CAT-001
+          - BR-CAT-003
+          - BR-CAT-004
+          - BR-CAT-010
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
+          - BR-CAT-017
+          - BR-CAT-031
           - 003:SC-001
         path: /catalog
         auth: signed-in
@@ -4343,6 +4394,10 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-PUR-002
+          - BR-CAT-006
+          - BR-CAT-017
+          - DO-ARM-001
         path: /catalog
         auth: signed-in
         atlas:
@@ -4352,8 +4407,19 @@ pages:
         title: Armor detail
         rules:
           - BR-CAT-006
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
           - DAC-NME-004
           - DBR-STAT-001
+          - DBR-STAT-008
+          - DBR-UI-008
+          - DO-ARM-008
+          - DO-ARM-009
+          - DO-ARM-011
+          - DO-EXO-010
+          - DO-ASB-015
         path: /catalog
         auth: signed-in
         atlas:

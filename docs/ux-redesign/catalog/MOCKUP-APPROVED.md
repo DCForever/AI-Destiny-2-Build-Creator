@@ -1,6 +1,20 @@
 # Mockup approvals — Catalog UX
 
-## CatalogNestedGroupBy (005) — current gate
+## Catalog Armor (C8 / 001-armor) — current gate
+
+**continue with workflow**
+
+- Desktop: `docs/ux-redesign/catalog/mockups/001-armor-desktop.html`
+- Mobile: `docs/ux-redesign/catalog/mockups/001-armor-mobile.html`
+- Approved: 2026-08-08 (human mockup gate — continue with workflow)
+- Brief: `docs/ux-redesign/catalog/001-armor-brief.md` (locked; verify residuals open)
+- Vault: `UX/UX Catalog — Armor.md`
+- Track: C8 Armor redesign · product [[Destiny Armor]]
+- Next: `area-implement` with `brief_path` above
+
+---
+
+## CatalogNestedGroupBy (005) — prior
 
 **continue with workflow**
 

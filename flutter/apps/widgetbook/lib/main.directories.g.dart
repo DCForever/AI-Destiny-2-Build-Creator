@@ -10,6 +10,8 @@
 // **************************************************************************
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:destiny2_widgetbook/use_cases/catalog/armor_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_armor_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/cards_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_cards_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/detail_use_cases.dart'
@@ -44,6 +46,66 @@ final directories = <_widgetbook.WidgetbookNode>[
   _widgetbook.WidgetbookCategory(
     name: 'Catalog',
     children: [
+      _widgetbook.WidgetbookFolder(
+        name: 'Armor',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'ArmorInstanceStrip',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor instance strip rebind',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorInstanceStrip,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogArmorDetail',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor detail unowned',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorDesktopUnowned,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor grid + 400 detail (owned)',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorDesktopOwned,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogArmorGrid',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor mobile structure grid (390)',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorMobileStructure,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogEmptyState',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor signed-out owned empty',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorSignedOutOwned,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogSoftErrorBanner',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor soft error banner',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorSoftError,
+              )
+            ],
+          ),
+        ],
+      ),
       _widgetbook.WidgetbookFolder(
         name: 'Cards',
         children: [
@@ -227,6 +289,17 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _destiny2_widgetbook_use_cases_catalog_detail_use_cases
                             .knobsWeaponDetail,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'EntityInfoHotspot',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'EntityInfoHotspot · knobs',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .knobsEntityInfoHotspot,
                   )
                 ],
               ),
@@ -450,6 +523,11 @@ final directories = <_widgetbook.WidgetbookNode>[
                 name: 'Expanded header',
                 builder: _destiny2_widgetbook_use_cases_catalog_group_use_cases
                     .groupHeaderExpanded,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Nested Slot→Element · icons',
+                builder: _destiny2_widgetbook_use_cases_catalog_group_use_cases
+                    .groupNestedHeadersIcons,
               ),
             ],
           ),
