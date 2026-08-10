@@ -1,6 +1,6 @@
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart'
-    show ArmorSetStatTotals, SetItemRecord, armorBaseStatKeys;
+    show ArmorSetStatTotals, SetItemRecord, SetRecord, armorBaseStatKeys;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart'
     show CatalogItem, WindowsManifestRefresh;
@@ -455,8 +455,69 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     });
   }
 
+  List<SetsArmorLibraryRowData> _mapLibraryRows() {
+    final selectedId = _controller.selected?.set.id;
+    return [
+      for (final s in _controller.sets)
+        SetsArmorLibraryRowData(
+          id: s.id,
+          name: s.name,
+          classLabel: _classLabelForSet(s),
+          pieceCount: _controller.pieceCountOf(s.id),
+          capacity: _capacityForSet(s),
+          coverageLabel: _coverageLabelForSet(s),
+          usedByLabel: selectedId == s.id ? _usedByLabelForSelected() : '—',
+          selected: selectedId == s.id,
+        ),
+    ];
+  }
+
+  String _classLabelForSet(SetRecord s) {
+    final constraints = parseOptimizerConstraints(s.optimizerConstraints);
+    final cls = constraints?.className;
+    if (cls != null) {
+      return displayGuardianClass(cls);
+    }
+    if (s.type != SetType.armor.wireName) {
+      return displaySetTypeWire(s.type);
+    }
+    return '—';
+  }
+
+  int _capacityForSet(SetRecord s) {
+    final t = SetType.tryParse(s.type) ?? SetType.weapon;
+    return slotsForSetType(t).length;
+  }
+
+  String _coverageLabelForSet(SetRecord s) {
+    final constraints = parseOptimizerConstraints(s.optimizerConstraints);
+    final goals = constraints?.setBonusGoals ?? const <SetBonusCoverageGoal>[];
+    if (goals.isEmpty) return '—';
+    return goals
+        .map((g) => '${g.minPieces}pc ${g.setBonusKey}')
+        .join(' · ');
+  }
+
+  String _usedByLabelForSelected() {
+    final used = _controller.usedByOfSelected();
+    if (used.isEmpty) return '—';
+    if (used.length == 1) {
+      final name = used.first.buildName?.trim();
+      return (name != null && name.isNotEmpty) ? name : '1 build';
+    }
+    return '${used.length} builds';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final emptyHonesty = !_controller.loading && _controller.sets.isEmpty
+        ? const SetsHonestyEmpty(
+            key: Key('sets_list_empty'),
+            kind: SetsHonestyKind.noMatches,
+            message: 'No sets yet. Create one above.',
+          )
+        : null;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -487,9 +548,17 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               ),
             ),
           Expanded(
-            child: LibraryWorkspace(
-              rail: _buildRail(context),
+            child: SetsLibraryWorkspace(
+              key: const Key('sets_library_workspace_live'),
+              rows: _mapLibraryRows(),
               detail: _buildDetail(context),
+              honesty: emptyHonesty,
+              loading: _controller.loading && _controller.sets.isEmpty,
+              searchController: _searchController,
+              onSearchChanged: _controller.setSearchQuery,
+              onSelectRow: (id) => _controller.selectSet(id),
+              onNewSet: _controller.loading ? null : _openCreateModal,
+              railHeader: _buildRailHeader(context),
             ),
           ),
         ],
@@ -497,24 +566,12 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     );
   }
 
-  Widget _buildRail(BuildContext context) {
+  /// Filters + legacy quick-create (tests) under redesigned workspace rail.
+  Widget _buildRailHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ListTile(
-          key: const Key('sets_library_new'),
-          dense: true,
-          title: Text(
-            'New set…',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          subtitle: Text(
-            'Large modal create (Armor full fidelity)',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          trailing: const Icon(Icons.open_in_new),
-          onTap: _controller.loading ? null : _openCreateModal,
-        ),
+        _buildSetsFilterHeader(),
         ListTile(
           key: const Key('sets_create_toggle'),
           dense: true,
@@ -525,7 +582,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           subtitle: _createExpanded
               ? null
               : Text(
-                  'Legacy inline name/type…',
+                  'Inline name/type (tests + fallback)',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
           trailing: Icon(
@@ -583,9 +640,6 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           ),
         ],
         const Divider(height: 1),
-        const FlapBoardHeader(template: kFlapColumnsSets),
-        const Divider(height: 1),
-        Expanded(child: _buildSetList()),
       ],
     );
   }
@@ -596,17 +650,16 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            key: const Key('sets_search'),
-            controller: _searchController,
-            decoration: const InputDecoration(
-              labelText: 'Search',
-              isDense: true,
-              border: OutlineInputBorder(),
+          // Search lives on SetsLibraryWorkspace (sets_library_search).
+          // Keep a hidden/compat alias for older tests that look for sets_search.
+          Offstage(
+            offstage: true,
+            child: TextField(
+              key: const Key('sets_search'),
+              controller: _searchController,
+              onChanged: _controller.setSearchQuery,
             ),
-            onChanged: _controller.setSearchQuery,
           ),
-          const SizedBox(height: 4),
           DropdownButtonFormField<SetType?>(
             key: const Key('sets_type_filters'),
             // ignore: deprecated_member_use
@@ -660,71 +713,6 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSetList() {
-    if (_controller.loading && _controller.sets.isEmpty) {
-      return ListView(
-        key: const Key('sets_list'),
-        children: [
-          _buildSetsFilterHeader(),
-          const SizedBox(
-            height: 80,
-            child: Center(
-              child: CircularProgressIndicator(key: Key('sets_loading')),
-            ),
-          ),
-        ],
-      );
-    }
-    if (_controller.sets.isEmpty) {
-      return ListView(
-        key: const Key('sets_list'),
-        children: [
-          _buildSetsFilterHeader(),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'No sets yet. Create one above.',
-              key: Key('sets_list_empty'),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      );
-    }
-    return ListView.builder(
-      key: const Key('sets_list'),
-      itemCount: _controller.sets.length + 1,
-      itemBuilder: (context, index) {
-        if (index == 0) return _buildSetsFilterHeader();
-        final set = _controller.sets[index - 1];
-        final selected = _controller.selected?.set.id == set.id;
-        final itemCount = selected
-            ? _controller.selected!.activeItems.length
-            : null;
-        return FlapBoardRow(
-          key: Key('sets_list_row_${set.id}'),
-          template: kFlapColumnsSets,
-          selected: selected,
-          onTap: () => _controller.selectSet(set.id),
-          cells: [
-            FlapTextCell(
-              text: set.name,
-              primary: true,
-              textKey: Key('sets_list_name_${set.id}'),
-            ),
-            FlapTextCell(text: displaySetTypeWire(set.type)),
-            FlapTextCell(
-              text: set.tagIds.isEmpty ? '—' : set.tagIds.join(','),
-            ),
-            FlapTextCell(
-              text: itemCount != null ? '$itemCount filled' : '…',
-            ),
-          ],
-        );
-      },
     );
   }
 

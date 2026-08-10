@@ -64,9 +64,10 @@ Ground truth for Sets Armor redesign: mockup dual-pane library + create lock + b
 
 ## Deferred / next redesign
 
-- Host cutover: mount `SetsLibraryWorkspace` / board / optimize shell on live `SetsLibraryPage` (god-page extract).
+- ~~Host cutover: mount `SetsLibraryWorkspace` on live `SetsLibraryPage`~~ **partial (2026-08-10 pass 1)** — live library uses `SetsLibraryWorkspace` + Armor columns Name·class·pcs·cover·used-by; detail/board still residual god-page; Optimize primary shell residual.
 - Owned inventory projection → compare rows (empty fill residual).
-- Product-map flutter-windows create/detail/fill/optimize stub→done after host cutover.
+- Optimize primary sole `SetsOptimizeConfirmShell` (retire dual OptimizerWorkspace).
+- Product-map flutter-windows create/detail/fill/optimize stub→done after full host cutover.
 - Rail column density (truncate vs wider default rail).
 - DBR-ROLL-001 wishlist must not ship as default fill.
 - Mobile structure-only sheets (not Capture gate).

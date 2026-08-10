@@ -175,7 +175,7 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | **Parked weapons board** | §4.2 parked table · vault `UX/UX Catalog — Weapons.md` · `DUAL-TRUTH-GAPS.md` |
 | **Performance backlog** | GAP-PERF-01/02 partial · **03–06** open — not cutover |
 | **Next area after Catalog** | **Sets** (phase 3) — **planning now** (parallel Catalog residual OK) |
-| **Sets Armor MVP** | **Landed** 2026-08-10 (structure + Capture must-rows) · residuals: god-page cutover, live owned inventory fill, Optimize primary shell, Armor library columns · report [`sets/001-armor-implement-report.md`](./sets/001-armor-implement-report.md) |
+| **Sets Armor MVP** | **Landed** 2026-08-10 + **pass 1** live `SetsLibraryWorkspace` / Armor columns · remaining: detail/board extract, owned inventory fill, Optimize primary shell · report [`sets/001-armor-implement-report.md`](./sets/001-armor-implement-report.md) |
 
 ---
 

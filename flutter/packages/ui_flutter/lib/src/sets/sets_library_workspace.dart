@@ -97,11 +97,13 @@ class SetsLibraryWorkspace extends StatelessWidget {
                           message: 'No sets match filters',
                         )
                       : ListView.builder(
-                          key: const Key('sets_armor_library_list'),
+                          // sets_list kept for host smokes; armor id for redesign matrix.
+                          key: const Key('sets_list'),
                           itemCount: rows.length,
                           itemBuilder: (context, i) {
                             final r = rows[i];
                             return SetsArmorLibraryRow(
+                              key: Key('sets_list_row_${r.id}'),
                               data: r,
                               onTap: onSelectRow == null
                                   ? null
