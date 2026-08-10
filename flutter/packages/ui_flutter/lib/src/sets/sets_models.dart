@@ -79,6 +79,7 @@ class SetsBonusFamilyOption {
     this.twoPcDescription = '',
     this.fourPcName = '',
     this.fourPcDescription = '',
+    this.extraSearchText = '',
   });
 
   /// Name-only fixture (tests / offline) — no perk body.
@@ -93,11 +94,42 @@ class SetsBonusFamilyOption {
   final String fourPcName;
   final String fourPcDescription;
 
+  /// Additional searchable catalog text (other tier perks, combined blob).
+  final String extraSearchText;
+
   bool get hasAnyDescription =>
       twoPcDescription.trim().isNotEmpty ||
       fourPcDescription.trim().isNotEmpty ||
       twoPcName.trim().isNotEmpty ||
       fourPcName.trim().isNotEmpty;
+
+  /// Lowercased haystack for name + perk titles + descriptions (search).
+  String get searchHaystack {
+    final parts = <String>[
+      name,
+      twoPcName,
+      twoPcDescription,
+      fourPcName,
+      fourPcDescription,
+      extraSearchText,
+    ];
+    return parts
+        .map((s) => s.trim().toLowerCase())
+        .where((s) => s.isNotEmpty)
+        .join(' ');
+  }
+
+  /// True when every whitespace-separated query token appears in [searchHaystack].
+  bool matchesSearch(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    final hay = searchHaystack;
+    final tokens = q.split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+    for (final t in tokens) {
+      if (!hay.contains(t)) return false;
+    }
+    return true;
+  }
 }
 
 /// One board slot row (layout A).

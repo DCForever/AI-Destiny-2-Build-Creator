@@ -65,34 +65,30 @@ List<SetsBonusFamilyOption> _mapCatalog(List<SetBonusCatalogRecord> rows) {
     String twoDesc = '';
     String fourName = '';
     String fourDesc = '';
+    final extra = StringBuffer();
     for (final p in r.perks) {
-      if (p.requiredCount <= 2 && twoName.isEmpty && twoDesc.isEmpty) {
+      // Index every tier for search (name + description).
+      if (p.name.trim().isNotEmpty) extra.writeln(p.name.trim());
+      if (p.description.trim().isNotEmpty) extra.writeln(p.description.trim());
+
+      if (p.requiredCount == 2) {
         twoName = p.name;
         twoDesc = p.description;
-      } else if (p.requiredCount >= 3 && p.requiredCount <= 4) {
+      } else if (p.requiredCount == 4) {
+        fourName = p.name;
+        fourDesc = p.description;
+      } else if (p.requiredCount <= 2 && twoName.isEmpty && twoDesc.isEmpty) {
+        twoName = p.name;
+        twoDesc = p.description;
+      } else if (p.requiredCount >= 3 &&
+          p.requiredCount <= 4 &&
+          fourName.isEmpty &&
+          fourDesc.isEmpty) {
         fourName = p.name;
         fourDesc = p.description;
       } else if (p.requiredCount > 4 && fourName.isEmpty) {
-        // Prefer 4pc when multiple thresholds; keep higher as 4pc label if no 4.
         fourName = p.name;
         fourDesc = p.description;
-      }
-    }
-    // If only one perk tier, map by requiredCount more carefully.
-    if (twoName.isEmpty && twoDesc.isEmpty) {
-      for (final p in r.perks) {
-        if (p.requiredCount == 2) {
-          twoName = p.name;
-          twoDesc = p.description;
-        }
-      }
-    }
-    if (fourName.isEmpty && fourDesc.isEmpty) {
-      for (final p in r.perks) {
-        if (p.requiredCount == 4) {
-          fourName = p.name;
-          fourDesc = p.description;
-        }
       }
     }
     out.add(
@@ -104,6 +100,7 @@ List<SetsBonusFamilyOption> _mapCatalog(List<SetBonusCatalogRecord> rows) {
         twoPcDescription: twoDesc,
         fourPcName: fourName,
         fourPcDescription: fourDesc,
+        extraSearchText: extra.toString(),
       ),
     );
   }

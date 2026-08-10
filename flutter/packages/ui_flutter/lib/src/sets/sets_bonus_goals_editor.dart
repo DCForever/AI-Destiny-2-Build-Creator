@@ -132,17 +132,10 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
 
   List<SetsBonusFamilyOption> get _filtered {
     final all = widget.resolvedFamilies;
-    final q = _query.trim().toLowerCase();
+    final q = _query.trim();
     if (q.isEmpty) return all;
-    return [
-      for (final f in all)
-        if (f.name.toLowerCase().contains(q) ||
-            f.twoPcName.toLowerCase().contains(q) ||
-            f.fourPcName.toLowerCase().contains(q) ||
-            f.twoPcDescription.toLowerCase().contains(q) ||
-            f.fourPcDescription.toLowerCase().contains(q))
-          f,
-    ];
+    // Multi-token AND over name + perk titles + full descriptions.
+    return [for (final f in all) if (f.matchesSearch(q)) f];
   }
 
   Widget _tierChip({
@@ -248,7 +241,7 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
           enabled: widget.enabled && !widget.loading,
           decoration: const InputDecoration(
             isDense: true,
-            hintText: 'Search set bonuses…',
+            hintText: 'Search name or perk description…',
             prefixIcon: Icon(Icons.search, size: 18),
             border: OutlineInputBorder(),
           ),

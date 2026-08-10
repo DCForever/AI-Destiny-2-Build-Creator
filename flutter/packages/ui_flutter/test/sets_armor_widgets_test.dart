@@ -155,6 +155,44 @@ void main() {
       // Subtitle shows 2pc description snippet in list.
       expect(find.textContaining('Increases melee damage'), findsOneWidget);
     });
+
+    testWidgets('search matches perk description text', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SetsBonusGoalsEditor(
+            goals: const [],
+            families: const [
+              SetsBonusFamilyOption(
+                name: 'Bushido',
+                twoPcDescription: 'Increases melee damage after a kill.',
+              ),
+              SetsBonusFamilyOption(
+                name: 'AION Adapter',
+                twoPcDescription: 'Grenade energy on orb pickup.',
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(find.text('Bushido'), findsOneWidget);
+      expect(find.text('AION Adapter'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('sets_bonus_goals_search')),
+        'melee damage',
+      );
+      await tester.pump();
+      expect(find.text('Bushido'), findsOneWidget);
+      expect(find.text('AION Adapter'), findsNothing);
+
+      await tester.enterText(
+        find.byKey(const Key('sets_bonus_goals_search')),
+        'grenade energy',
+      );
+      await tester.pump();
+      expect(find.text('AION Adapter'), findsOneWidget);
+      expect(find.text('Bushido'), findsNothing);
+    });
   });
 
   group('Empty board', () {
