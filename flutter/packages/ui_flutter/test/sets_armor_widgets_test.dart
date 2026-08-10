@@ -115,11 +115,11 @@ void main() {
       expect(goals, hasLength(1));
       expect(goals.first.minPieces, 2);
 
-      await tester.tap(find.byKey(const Key('sets_bonus_goal_2x2_A_B')));
+      // Second different 2pc → dual 2×2pc (G-SET-013).
+      await tester.tap(find.byKey(const Key('sets_bonus_goal_2pc_B')));
       await tester.pump();
       expect(goals, hasLength(2));
 
-      // Illegal path: isLegalCombo rejects → state unchanged if we try empty invalid
       // Selecting none is legal.
       await tester.tap(find.byKey(const Key('sets_bonus_goal_none')));
       await tester.pump();

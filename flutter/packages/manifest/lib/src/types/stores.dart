@@ -9,7 +9,8 @@ enum MvpStoreName {
   aspects('aspects'),
   fragments('fragments'),
   abilities('abilities'),
-  mods('mods');
+  mods('mods'),
+  setBonuses('set-bonuses');
 
   const MvpStoreName(this.fileStem);
   final String fileStem;
@@ -79,6 +80,7 @@ List<dynamic> encodeStoreRecords(MvpStoreName store, List<Object> records) {
     if (r is FragmentRecord) return r.toJson();
     if (r is AbilityRecord) return r.toJson();
     if (r is ModRecord) return r.toJson();
+    if (r is SetBonusCatalogRecord) return r.toJson();
     throw ArgumentError('Unknown record type for $store: ${r.runtimeType}');
   }).toList();
 }

@@ -38,6 +38,7 @@ export 'src/extractors/fragments.dart';
 export 'src/extractors/legendary_armor.dart';
 export 'src/extractors/mods.dart';
 export 'src/extractors/registry.dart';
+export 'src/extractors/set_bonuses.dart';
 export 'src/extractors/weapons.dart';
 export 'src/http_client.dart';
 export 'src/isolate_rebuild.dart';

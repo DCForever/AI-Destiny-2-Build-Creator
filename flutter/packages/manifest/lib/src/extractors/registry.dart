@@ -6,6 +6,7 @@ import 'exotic_weapons.dart';
 import 'fragments.dart';
 import 'legendary_armor.dart';
 import 'mods.dart';
+import 'set_bonuses.dart';
 import 'weapons.dart';
 
 /// Ordered registry of MVP entity extractors (DART-017 / DART-062).
@@ -18,4 +19,5 @@ final List<EntityExtractor> mvpExtractors = [
   FragmentsExtractor(),
   AbilitiesExtractor(),
   ModsExtractor(),
+  SetBonusesExtractor(),
 ];

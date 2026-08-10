@@ -678,3 +678,83 @@ class ModRecord implements EntityRecordBase {
     );
   }
 }
+
+/// One threshold perk on an equipable armor set (2pc / 4pc, …).
+class SetBonusCatalogPerk {
+  const SetBonusCatalogPerk({
+    required this.requiredCount,
+    required this.name,
+    this.description = '',
+  });
+
+  final int requiredCount;
+  final String name;
+  final String description;
+
+  Map<String, dynamic> toJson() => {
+        'requiredCount': requiredCount,
+        'name': name,
+        'description': description,
+      };
+
+  factory SetBonusCatalogPerk.fromJson(Map<String, dynamic> json) {
+    return SetBonusCatalogPerk(
+      requiredCount: (json['requiredCount'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+    );
+  }
+}
+
+/// Armor set-bonus catalog row (store `set-bonuses` / DestinyEquipableItemSetDefinition).
+class SetBonusCatalogRecord implements EntityRecordBase {
+  const SetBonusCatalogRecord({
+    required this.hash,
+    required this.name,
+    required this.searchName,
+    this.icon,
+    this.perks = const [],
+    this.itemHashes = const [],
+  });
+
+  @override
+  final Hash hash;
+  @override
+  final String name;
+  @override
+  final String searchName;
+  @override
+  final String? icon;
+  final List<SetBonusCatalogPerk> perks;
+  final List<int> itemHashes;
+
+  Map<String, dynamic> toJson() => {
+        'hash': hash,
+        'name': name,
+        'searchName': searchName,
+        'icon': icon,
+        'perks': perks.map((p) => p.toJson()).toList(),
+        'itemHashes': itemHashes,
+      };
+
+  factory SetBonusCatalogRecord.fromJson(Map<String, dynamic> json) {
+    final perks = (json['perks'] as List? ?? const [])
+        .map(
+          (e) => SetBonusCatalogPerk.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+    final items = (json['itemHashes'] as List? ?? const [])
+        .map((e) => (e as num).toInt())
+        .toList();
+    return SetBonusCatalogRecord(
+      hash: (json['hash'] as num).toInt(),
+      name: json['name'] as String? ?? '',
+      searchName: json['searchName'] as String? ?? '',
+      icon: json['icon'] as String?,
+      perks: perks,
+      itemHashes: items,
+    );
+  }
+}

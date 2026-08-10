@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart'
     show ArmorSetStatTotals, SetItemRecord, SetRecord, armorBaseStatKeys;
@@ -14,6 +16,7 @@ import '../labels/product_labels.dart';
 import '../optimizer/optimizer_controller.dart';
 import '../optimizer/optimizer_workspace.dart';
 import '../widgets/entity_icon.dart';
+import 'set_bonus_families.dart';
 import 'set_catalog_picker.dart';
 import 'set_item_enrichment.dart';
 import 'set_owned_compare_bridge.dart';
@@ -63,6 +66,9 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   String? _boundOptimizerSetId;
   SetDetailPresentation? _presentation;
   bool _enriching = false;
+  List<String> _setBonusFamilies = const [];
+  bool _setBonusFamiliesLoading = false;
+  bool _setBonusFamiliesLoaded = false;
 
   @override
   void initState() {
@@ -96,6 +102,30 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     _lifecycle = SetsLifecycleController();
     _controller.addListener(_onController);
     _controller.refresh();
+    // Prefetch set-bonus catalog for create goals (raw table or entity store).
+    unawaited(_ensureSetBonusFamilies());
+  }
+
+  Future<void> _ensureSetBonusFamilies({bool force = false}) async {
+    if (_setBonusFamiliesLoaded && !force) return;
+    if (_setBonusFamiliesLoading) return;
+    setState(() => _setBonusFamiliesLoading = true);
+    try {
+      final names = await loadArmorSetBonusFamilyNames(widget.services);
+      if (!mounted) return;
+      setState(() {
+        _setBonusFamilies = names;
+        _setBonusFamiliesLoaded = true;
+        _setBonusFamiliesLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _setBonusFamilies = const [];
+        _setBonusFamiliesLoaded = true;
+        _setBonusFamiliesLoading = false;
+      });
+    }
   }
 
   @override
@@ -220,6 +250,8 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   /// Large-modal Armor create (G-SET-001); falls back to inline for non-Armor.
   Future<void> _openCreateModal() async {
     _lifecycle.openCreate();
+    await _ensureSetBonusFamilies();
+    if (!mounted) return;
     var draftType = SetType.armor;
     String? draftClass;
     var draftGoals = <SetsBonusGoalData>[];
@@ -249,7 +281,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               setType: draftType.wireName,
               guardianClass: draftClass,
               goals: draftGoals,
-              availableFamilies: const ['TechSec', 'Twofer'],
+              availableFamilies: _setBonusFamilies,
               namePreview: preview,
               nameController: nameCtrl,
               onTypeChanged: (t) => setModal(() {
