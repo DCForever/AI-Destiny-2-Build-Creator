@@ -1,0 +1,13 @@
+[
+  { "shot": "desktop-library-armor" },
+  { "tapKey": "capture_scenario_desktop-signed-out-honesty", "shot": "desktop-signed-out-honesty" },
+  { "tapKey": "capture_scenario_desktop-create-type-class", "shot": "desktop-create-type-class" },
+  { "tapKey": "capture_scenario_desktop-empty-board", "shot": "desktop-empty-board" },
+  { "tapKey": "capture_scenario_desktop-filled-board-coverage", "shot": "desktop-filled-board-coverage" },
+  { "tapKey": "capture_scenario_desktop-owned-compare", "shot": "desktop-owned-compare" },
+  { "tapKey": "capture_scenario_desktop-optimize-confirm", "shot": "desktop-optimize-confirm" },
+  { "tapKey": "capture_scenario_desktop-delete-set-in-use", "shot": "desktop-delete-set-in-use" },
+  { "tapKey": "capture_scenario_desktop-tags-blocked", "shot": "desktop-tags-blocked" },
+  { "tapKey": "capture_scenario_desktop-need-sync", "shot": "desktop-need-sync" },
+  { "tapKey": "capture_scenario_desktop-non-armor-thin", "shot": "desktop-non-armor-thin" }
+]

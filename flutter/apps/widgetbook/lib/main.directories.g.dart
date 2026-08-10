@@ -40,6 +40,8 @@ import 'package:destiny2_widgetbook/use_cases/catalog/workspace_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_workspace_use_cases;
 import 'package:destiny2_widgetbook/use_cases/neon/board_atmosphere_use_cases.dart'
     as _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases;
+import 'package:destiny2_widgetbook/use_cases/sets/armor_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_sets_armor_use_cases;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
 
 final directories = <_widgetbook.WidgetbookNode>[
@@ -797,6 +799,81 @@ final directories = <_widgetbook.WidgetbookNode>[
           )
         ],
       ),
+    ],
+  ),
+  _widgetbook.WidgetbookCategory(
+    name: 'Sets',
+    children: [
+      _widgetbook.WidgetbookFolder(
+        name: 'Armor',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsArmorBoard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Empty board layout A',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsEmptyBoard,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Filled board + coverage',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsFilledBoard,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsCreateWizard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create Type+Class lock',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateLock,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsHonestyEmpty',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Signed-out honesty',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsSignedOut,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsLibraryWorkspace',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Library dual-pane Armor',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsLibraryArmor,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsOptimizeConfirmShell',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Optimize confirm shell',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOptimizeConfirm,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsOwnedCompareTable',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Owned compare table',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOwnedCompare,
+              )
+            ],
+          ),
+        ],
+      )
     ],
   ),
 ];

@@ -78,8 +78,9 @@ surfaces:
       nextjs:
         path: /sets
       flutter-windows:
-        status: stub
+        status: done
         route: /sets
+        notes: "Catalog · Sets · Settings shell; Sets Armor MVP library page"
   - id: shell.nav.catalog
     title: Nav → Catalog
     kind: field
@@ -102,8 +103,9 @@ surfaces:
       nextjs:
         path: /settings
       flutter-windows:
-        status: stub
+        status: done
         route: /settings
+        notes: "Settings page mounted in shell rail"
   - id: shell.auth
     title: Bungie auth control
     kind: surface
@@ -1689,13 +1691,16 @@ surfaces:
       - BR-TAG-004
       - BR-TAG-005
       - 001:SC-001
+      - G-SET-013
+      - DBR-SETB-003
+      - BR-SET-050
     status: active
     platforms:
       nextjs:
         path: /sets
         captureId: sets-create
       flutter-windows:
-        status: stub
+        status: partial
         route: /sets
         captureId: sets-create
   - id: sets.create.name
@@ -1877,7 +1882,7 @@ surfaces:
       - DAC-DST-009
     status: active
   - id: sets.fill-slot
-    title: Fill slot (embedded Catalog)
+    title: Fill slot (owned compare pick)
     kind: screen
     area: sets
     auth: signed-in
@@ -1889,22 +1894,26 @@ surfaces:
       - BR-SLOT-008
       - BR-SLOT-009
       - BR-UI-001
+      - G-SET-002
+      - DBR-CMP-001
+      - DBR-CMP-005
     status: active
     platforms:
       nextjs:
         path: /sets
         captureId: sets-fill-slot
       flutter-windows:
-        status: stub
+        status: partial
         route: /sets
         captureId: sets-fill-slot
   - id: sets.fill-slot.catalog
-    title: Constrained catalog pick
+    title: Owned compare pick (not Catalog embed)
     kind: surface
     area: sets
     parent: sets.fill-slot
     rules:
       - DAC-NME-003
+      - G-SET-002
     status: active
   - id: sets.fill-slot.exotic-block
     title: Second exotic blocked in set
@@ -1919,7 +1928,7 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: stub
+        status: partial
         route: /sets
   - id: sets.pair
     title: Pair set exotic constraints
@@ -1951,8 +1960,16 @@ surfaces:
     rules:
       - BR-OPT-001
       - BR-OPT-002
+      - BR-OPT-004
       - 026:SC-001
+      - G-SET-013
+      - DBR-SETB-003
     status: active
+    platforms:
+      flutter-windows:
+        status: partial
+        route: /sets
+        captureId: sets-optimize
   - id: synergy.signed-out
     title: Synergy — signed-out gate
     kind: gate

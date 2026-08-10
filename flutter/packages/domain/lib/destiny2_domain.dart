@@ -43,6 +43,9 @@ export 'src/evaluators/destiny_set_constraints.dart';
 // Set package minimum occupancy (DBR-CMP-008–010 / BR-SLOT-011–014)
 export 'src/evaluators/set_minimum_occupancy.dart';
 
+// Armor set-bonus multi-goal legality + hard satisfaction (G-SET-013 / DBR-SETB-003)
+export 'src/evaluators/set_bonus_goals.dart';
+
 // Soft coverage + soft-stat helpers (DART-004)
 export 'src/evaluators/soft_coverage.dart';
 export 'src/evaluators/soft_stat_targets.dart';

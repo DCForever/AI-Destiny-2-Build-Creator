@@ -234,7 +234,7 @@ void main() {
     expect(find.byKey(const Key('set_picker_empty')), findsOneWidget);
   });
 
-  // UX rebuild: Sets stripped from shell nav; page tests above still cover SetsLibraryPage.
+  // Sets is mounted on shell nav (Catalog · Sets · Settings); page tests cover SetsLibraryPage.
   testWidgets(
     'US3 Sets nav destination shows library page',
     skip: true,

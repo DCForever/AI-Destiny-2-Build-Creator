@@ -80,28 +80,36 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels are Catalog + Settings during UX rebuild', () {
-    expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Settings']);
+  test('navLabels are Catalog + Sets + Settings', () {
+    expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Sets', 'Settings']);
     expect(Destiny2WindowsApp.catalogNavIndex, 0);
-    expect(Destiny2WindowsApp.settingsNavIndex, 1);
+    expect(Destiny2WindowsApp.setsNavIndex, 1);
+    expect(Destiny2WindowsApp.settingsNavIndex, 2);
   });
 
-  testWidgets('NavigationRail shows Catalog and Settings', (tester) async {
+  testWidgets('NavigationRail shows Catalog, Sets, and Settings', (tester) async {
+    // Wide surface avoids Catalog filter-bar overflow when Catalog is on stage.
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(Destiny2WindowsApp(services: services));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('host_nav_rail')), findsOneWidget);
     expect(find.text('Catalog'), findsWidgets);
+    expect(find.text('Sets'), findsWidgets);
     expect(find.text('Settings'), findsWidgets);
     expect(
       find.byKey(const Key('catalog_page'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('sets_library_page'), skipOffstage: false),
       findsOneWidget,
     );
 
     expect(find.text('Loadouts'), findsNothing);
     expect(find.text('Build'), findsNothing);
     expect(find.text('Synergy'), findsNothing);
-    expect(find.text('Sets'), findsNothing);
   });
 }

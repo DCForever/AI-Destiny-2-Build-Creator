@@ -63,7 +63,7 @@ Rebuild **one primary area at a time**. Order balances dependency (auth → brow
 | **0** | **Shell** (nav, theme, signed-out gates) | **partial** — Settings-only baseline + Catalog/Settings reachability | Shared frame for every area | Stable primary nav + auth indicator; no fake private data |
 | **1** | **Settings** | **partial** — OAuth, manifest/entity refresh, inventory sync | Unblocks Owned Catalog and compose | Sign-in, refresh, sync CTAs honest; empty states actionable |
 | **2** | **Catalog** | **active** — Weapons deep; Armor/Universal not redesigned | Composition aid with densest Destiny chrome; reused by fill pickers | See §4 Catalog path — all planned Catalog phases or explicit re-scope |
-| **3** | **Sets** | **planned** | Library + fill-slot depends on Catalog pick patterns | Board, fill, base-roll honesty, attach gates usable under Neon/Flap |
+| **3** | **Sets** | **Armor MVP landed** (structure + Capture 2026-08-10) — residual host cutover open | Library + optimize/compare fill | brief [`sets/001-armor-brief.md`](./sets/001-armor-brief.md) · report [`sets/001-armor-implement-report.md`](./sets/001-armor-implement-report.md) · shots `sets/implementation-shots/001-armor/` |
 | **4** | **Synergy** | **planned** | Library + reverse tags on Catalog targets | Create/edit/link lifecycle; no Catalog-local fork |
 | **5** | **Build** | **planned** | **Primary product spine** (DBR-PUR-002) | Identity, variant areas, soft guidance, finish — composition-first |
 | **6** | **Loadouts** | **planned** | Export / equip-adjacent supporting surface | DIM export honesty; no vault-as-home |
@@ -71,7 +71,7 @@ Rebuild **one primary area at a time**. Order balances dependency (auth → brow
 
 **Shell polish** may run as small `area-ux-component` slices any time (nav labels, gates) without jumping the area queue.
 
-**Do not** start Sets/Synergy/Build full redesign while Catalog is still the active deep area, unless Catalog is explicitly paused and the path pointer is updated.
+**Do not** start Sets/Synergy/Build **full implement redesign** while Catalog is the only active deep area, unless Catalog is paused or the path pointer allows parallel work. **Sets domain grill + planning** may run in parallel with small Catalog residuals (see §6 Sets update plan).
 
 ---
 
@@ -171,9 +171,11 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | **Do not start yet** | C10 constrained pick embeds (after Universal or explicit re-scope) |
 | **Landed (Catalog)** | Weapons track + Armor C8 (grid/detail/honesty/Capture must-rows); filter collections / nested group / entity hotspot |
 | **Next full redesign slice** | **C9 Universal** — or residual Armor polish (set-bonus map, official class/slot icons) |
+| **Armor residual plan** | Group-by + highest-stat rank: [`catalog/006-catalog-armor-groupby-plan.md`](./catalog/006-catalog-armor-groupby-plan.md) (planned; not brief-locked) |
 | **Parked weapons board** | §4.2 parked table · vault `UX/UX Catalog — Weapons.md` · `DUAL-TRUTH-GAPS.md` |
 | **Performance backlog** | GAP-PERF-01/02 partial · **03–06** open — not cutover |
-| **Next area after Catalog** | Sets (phase 3) after Catalog modes complete or re-scoped |
+| **Next area after Catalog** | **Sets** (phase 3) — **planning now** (parallel Catalog residual OK) |
+| **Sets Armor MVP** | **Landed** 2026-08-10 (structure + Capture must-rows) · residuals: god-page cutover, live owned inventory fill, Optimize primary shell, Armor library columns · report [`sets/001-armor-implement-report.md`](./sets/001-armor-implement-report.md) |
 
 ---
 

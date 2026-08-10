@@ -16,8 +16,10 @@ import '../optimizer/optimizer_workspace.dart';
 import '../widgets/entity_icon.dart';
 import 'set_catalog_picker.dart';
 import 'set_item_enrichment.dart';
+import 'set_owned_compare_bridge.dart';
 import 'set_slot_mapping.dart';
 import 'sets_library_controller.dart';
+import 'sets_lifecycle_controller.dart';
 
 /// Sets library dual-pane (list + detail/slots) — DART-030/036 + dense board (DART-065).
 class SetsLibraryPage extends StatefulWidget {
@@ -48,6 +50,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   late final SetsLibraryController _controller;
   late final OptimizerController _optimizer;
   late final OwnedCatalogBridge _bridge;
+  late final SetsLifecycleController _lifecycle;
   final _nameController = TextEditingController();
   final _editNameController = TextEditingController();
   final _searchController = TextEditingController();
@@ -90,6 +93,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
           session: widget.services.oauthSession,
           inventorySync: widget.services.inventorySync,
         );
+    _lifecycle = SetsLifecycleController();
     _controller.addListener(_onController);
     _controller.refresh();
   }
@@ -103,6 +107,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     if (_ownOptimizer) {
       _optimizer.dispose();
     }
+    _lifecycle.dispose();
     _nameController.dispose();
     _editNameController.dispose();
     _searchController.dispose();
@@ -212,6 +217,117 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     });
   }
 
+  /// Large-modal Armor create (G-SET-001); falls back to inline for non-Armor.
+  Future<void> _openCreateModal() async {
+    _lifecycle.openCreate();
+    var draftType = SetType.armor;
+    String? draftClass;
+    var draftGoals = <SetsBonusGoalData>[];
+    final nameCtrl = TextEditingController();
+    final created = await showSetsLifecycleModal<bool>(
+      context: context,
+      title: 'Create set',
+      child: StatefulBuilder(
+        builder: (ctx, setModal) {
+          final preview = draftType == SetType.armor && draftClass != null
+              ? resolveArmorSetName(
+                  guardianClass:
+                      GuardianClass.tryParse(draftClass!) ?? GuardianClass.titan,
+                  goals: [
+                    for (final g in draftGoals)
+                      SetBonusCoverageGoal(
+                        setBonusKey: g.familyKey,
+                        minPieces: g.minPieces,
+                      ),
+                  ],
+                  preferredName: nameCtrl.text,
+                  existingNames: _controller.allSets.map((s) => s.name),
+                )
+              : nameCtrl.text;
+          return SingleChildScrollView(
+            child: SetsCreateWizard(
+              setType: draftType.wireName,
+              guardianClass: draftClass,
+              goals: draftGoals,
+              availableFamilies: const ['TechSec', 'Twofer'],
+              namePreview: preview,
+              nameController: nameCtrl,
+              onTypeChanged: (t) => setModal(() {
+                draftType = SetType.tryParse(t) ?? SetType.armor;
+                if (draftType != SetType.armor) {
+                  draftClass = null;
+                  draftGoals = [];
+                }
+              }),
+              onClassChanged: (c) => setModal(() => draftClass = c),
+              onGoalsChanged: (g) => setModal(() => draftGoals = g),
+              isLegalCombo: (goals) => isLegalSetBonusGoalCombo([
+                for (final g in goals)
+                  SetBonusCoverageGoal(
+                    setBonusKey: g.familyKey,
+                    minPieces: g.minPieces,
+                  ),
+              ]),
+              onCreate: () => Navigator.of(ctx).pop(true),
+            ),
+          );
+        },
+      ),
+    );
+    final nameText = nameCtrl.text;
+    final type = draftType;
+    final gClass = draftClass;
+    final goals = draftGoals;
+    nameCtrl.dispose();
+    _lifecycle.close();
+    if (created != true || !mounted) return;
+
+    if (type == SetType.armor && gClass == null) {
+      setState(() => _statusMessage = 'Class required for Armor sets');
+      return;
+    }
+    final cmd = type == SetType.armor
+        ? CreateSetCommand(
+            name: resolveArmorSetName(
+              guardianClass: GuardianClass.tryParse(gClass!) ?? GuardianClass.titan,
+              goals: [
+                for (final g in goals)
+                  SetBonusCoverageGoal(
+                    setBonusKey: g.familyKey,
+                    minPieces: g.minPieces,
+                  ),
+              ],
+              preferredName: nameText,
+              existingNames: _controller.allSets.map((s) => s.name),
+            ),
+            type: type,
+            guardianClass: GuardianClass.tryParse(gClass),
+            setBonusGoals: [
+              for (final g in goals)
+                SetBonusCoverageGoal(
+                  setBonusKey: g.familyKey,
+                  minPieces: g.minPieces,
+                ),
+            ],
+          )
+        : CreateSetCommand(
+            name: nameText.trim().isEmpty
+                ? 'New ${type.wireName} set'
+                : nameText.trim(),
+            type: type,
+          );
+    try {
+      final uid = await _controller.resolveLibraryUserId();
+      await createUserSet(widget.services.db, uid, cmd);
+      await _controller.refresh();
+      if (!mounted) return;
+      setState(() => _statusMessage = 'Created ${cmd.name}');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _statusMessage = e.toString());
+    }
+  }
+
   Future<void> _saveName() async {
     final err = await _controller.updateSelected(name: _editNameController.text);
     if (!mounted) return;
@@ -243,20 +359,45 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
 
   Future<void> _fillSlot(String slot) async {
     final setType = SetType.tryParse(_controller.selected?.set.type ?? '');
-    final catalogKind = setType == SetType.armor || setType == SetType.mod
-        ? 'armor'
-        : 'weapons';
     final excludeExotic =
         _controller.excludeExoticForSlot(slot, _metaForHash);
 
-    final pick = await showSetCatalogPicker(
-      context: context,
-      services: widget.services,
-      targetSlot: slot,
-      bridge: _bridge,
-      excludeExotic: excludeExotic,
-      catalogKind: catalogKind,
-    );
+    // Armor fill: owned-only compare (G-SET-002) — not Catalog page embed.
+    final SetSlotPickResult? pick;
+    if (setType == SetType.armor) {
+      final signedOut = !widget.services.oauthSession.isSignedIn;
+      final other = <({String slot, bool isExotic, String? name})>[
+        for (final row in _controller.selected?.activeItems ?? const [])
+          if (row.slot != slot)
+            (
+              slot: row.slot,
+              isExotic: _metaForHash(row.itemHash, row.itemName).isExotic == true,
+              name: row.itemName,
+            ),
+      ];
+      // Host maps owned inventory → compare rows when bridge has instances;
+      // honesty empty when signed-out / no owned copies (no fake catalog).
+      final ownedRows = <OwnedArmorCompareRow>[];
+      pick = await showOwnedComparePicker(
+        context: context,
+        targetSlot: slot,
+        ownedRows: ownedRows,
+        signedOut: signedOut,
+        excludeExotic: excludeExotic,
+        otherOccupied: other,
+      );
+    } else {
+      final catalogKind =
+          setType == SetType.mod ? 'armor' : 'weapons';
+      pick = await showSetCatalogPicker(
+        context: context,
+        services: widget.services,
+        targetSlot: slot,
+        bridge: _bridge,
+        excludeExotic: excludeExotic,
+        catalogKind: catalogKind,
+      );
+    }
     if (pick == null || !mounted) return;
 
     if (_controller.needsReplaceConfirm(slot)) {
@@ -361,16 +502,30 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ListTile(
+          key: const Key('sets_library_new'),
+          dense: true,
+          title: Text(
+            'New set…',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          subtitle: Text(
+            'Large modal create (Armor full fidelity)',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          trailing: const Icon(Icons.open_in_new),
+          onTap: _controller.loading ? null : _openCreateModal,
+        ),
+        ListTile(
           key: const Key('sets_create_toggle'),
           dense: true,
           title: Text(
-            _createExpanded ? 'Hide create' : 'New set',
+            _createExpanded ? 'Hide quick create' : 'Quick create',
             style: Theme.of(context).textTheme.titleSmall,
           ),
           subtitle: _createExpanded
               ? null
               : Text(
-                  'Name and type…',
+                  'Legacy inline name/type…',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
           trailing: Icon(

@@ -413,23 +413,33 @@ flows:
       - BR-SET-002
       - BR-TAG-004
       - 001:SC-001
+      - G-SET-013
+      - DBR-SETB-003
     phases:
       - id: open
         title: New Set
         surface: sets.library.new
       - id: form
-        title: Name / type / tags
+        title: Type / class / goals / name
         surface: sets.create
         rules:
           - BR-TAG-002
           - BR-TAG-005
+          - G-SET-013
+      - id: board
+        title: Empty board (layout A)
+        surface: sets.detail
+        rules:
+          - G-SET-001
       - id: fill
-        title: Fill required slots
+        title: Fill via compare or optimize
         surface: sets.fill-slot
         loop: until-required-slots
         rules:
           - DAC-NME-003
           - DAC-DST-009
+          - G-SET-002
+          - BR-OPT-004
       - id: detail
         title: Review detail
         surface: sets.detail
@@ -442,13 +452,19 @@ flows:
       - BR-SET-001
       - BR-SLOT-008
       - DAC-DST-009
+      - G-SET-002
     phases:
       - id: edit
         title: Edit form
         surface: sets.edit
-      - id: fill
-        title: Fill slot (catalog embed)
+      - id: fill-compare
+        title: Fill slot (owned compare)
         surface: sets.fill-slot
+      - id: fill-optimize
+        title: Optimize confirm-only
+        surface: sets.optimize
+        rules:
+          - BR-OPT-004
       - id: exotic-block
         title: Second exotic blocked
         surface: sets.fill-slot.exotic-block

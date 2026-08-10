@@ -1147,6 +1147,9 @@ pages:
           - BR-TAG-004
           - BR-TAG-005
           - 001:SC-001
+          - G-SET-013
+          - DBR-SETB-003
+          - BR-SET-050
         atlas:
           - sets-create
         children:
@@ -1287,7 +1290,7 @@ pages:
           - DBR-FASH-001
       - id: sets.fill-slot
         kind: screen
-        title: Fill slot (embedded Catalog)
+        title: Fill slot (owned compare pick)
         path: /sets
         auth: signed-in
         rules:
@@ -1297,14 +1300,18 @@ pages:
           - BR-SLOT-008
           - BR-SLOT-009
           - BR-UI-001
+          - G-SET-002
+          - DBR-CMP-001
+          - DBR-CMP-005
         atlas:
           - sets-fill-slot
         children:
           - id: sets.fill-slot.catalog
             kind: surface
-            title: Constrained catalog pick
+            title: Owned compare pick (not Catalog embed)
             rules:
               - DAC-NME-003
+              - G-SET-002
           - id: sets.fill-slot.exotic-block
             kind: gate
             title: Second exotic blocked in set
@@ -1357,7 +1364,10 @@ pages:
         rules:
           - BR-OPT-001
           - BR-OPT-002
+          - BR-OPT-004
           - 026:SC-001
+          - G-SET-013
+          - DBR-SETB-003
       - id: sets.pair
         kind: surface
         title: Pair set exotic constraints
@@ -2631,6 +2641,8 @@ pages:
               - BR-SET-002
               - BR-TAG-004
               - 001:SC-001
+              - G-SET-013
+              - DBR-SETB-003
             notes: "include: flow.sets.create"
             children:
               - id: journey.p2.library.sets.create.open
@@ -2641,10 +2653,11 @@ pages:
                   - sets-library-new
               - id: journey.p2.library.sets.create.form
                 kind: surface
-                title: Name / type / tags
+                title: Type / class / goals / name
                 rules:
                   - BR-TAG-002
                   - BR-TAG-005
+                  - G-SET-013
                   - BR-SET-001
                   - BR-SET-002
                   - BR-SET-004
@@ -2652,22 +2665,54 @@ pages:
                   - BR-TAG-004
                   - BR-TAG-005
                   - 001:SC-001
+                  - G-SET-013
+                  - DBR-SETB-003
+                  - BR-SET-050
                 path: /sets
                 auth: signed-in
                 atlas:
                   - sets-create
+              - id: journey.p2.library.sets.create.board
+                kind: surface
+                title: Empty board (layout A)
+                rules:
+                  - G-SET-001
+                  - BR-SET-001
+                  - BR-SET-010
+                  - BR-SET-011
+                  - BR-SLOT-011
+                  - BR-SLOT-012
+                  - BR-SLOT-014
+                  - DAC-NME-004
+                  - DAC-DST-010
+                  - DAC-DST-011
+                  - DAC-SET-002
+                  - DBR-STAT-001
+                  - DBR-CMP-001
+                  - DBR-CMP-008
+                  - DBR-CMP-009
+                  - DBR-CMP-010
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-detail
               - id: journey.p2.library.sets.create.fill
                 kind: surface
-                title: ↻ Fill required slots
+                title: ↻ Fill via compare or optimize
                 rules:
                   - DAC-NME-003
                   - DAC-DST-009
+                  - G-SET-002
+                  - BR-OPT-004
                   - DAC-NME-003
                   - DBR-ROLL-010
                   - DAC-DST-009
                   - BR-SLOT-008
                   - BR-SLOT-009
                   - BR-UI-001
+                  - G-SET-002
+                  - DBR-CMP-001
+                  - DBR-CMP-005
                 path: /sets
                 auth: signed-in
                 atlas:
@@ -2728,6 +2773,7 @@ pages:
               - BR-SET-001
               - BR-SLOT-008
               - DAC-DST-009
+              - G-SET-002
             notes: "include: flow.sets.edit-fill"
             children:
               - id: journey.p2.library.sets.edit-fill.edit
@@ -2741,9 +2787,9 @@ pages:
                 auth: signed-in
                 atlas:
                   - sets-edit
-              - id: journey.p2.library.sets.edit-fill.fill
+              - id: journey.p2.library.sets.edit-fill.fill-compare
                 kind: surface
-                title: Fill slot (catalog embed)
+                title: Fill slot (owned compare)
                 rules:
                   - DAC-NME-003
                   - DBR-ROLL-010
@@ -2751,10 +2797,26 @@ pages:
                   - BR-SLOT-008
                   - BR-SLOT-009
                   - BR-UI-001
+                  - G-SET-002
+                  - DBR-CMP-001
+                  - DBR-CMP-005
                 path: /sets
                 auth: signed-in
                 atlas:
                   - sets-fill-slot
+              - id: journey.p2.library.sets.edit-fill.fill-optimize
+                kind: surface
+                title: Optimize confirm-only
+                rules:
+                  - BR-OPT-004
+                  - BR-OPT-001
+                  - BR-OPT-002
+                  - BR-OPT-004
+                  - 026:SC-001
+                  - G-SET-013
+                  - DBR-SETB-003
+                atlas:
+                  - sets-optimize
               - id: journey.p2.library.sets.edit-fill.exotic-block
                 kind: gate
                 title: Second exotic blocked
@@ -3806,6 +3868,8 @@ pages:
           - BR-SET-002
           - BR-TAG-004
           - 001:SC-001
+          - G-SET-013
+          - DBR-SETB-003
         notes: "include: flow.sets.create"
         children:
           - id: flow.sets.library.create.open
@@ -3816,10 +3880,11 @@ pages:
               - sets-library-new
           - id: flow.sets.library.create.form
             kind: surface
-            title: Name / type / tags
+            title: Type / class / goals / name
             rules:
               - BR-TAG-002
               - BR-TAG-005
+              - G-SET-013
               - BR-SET-001
               - BR-SET-002
               - BR-SET-004
@@ -3827,22 +3892,54 @@ pages:
               - BR-TAG-004
               - BR-TAG-005
               - 001:SC-001
+              - G-SET-013
+              - DBR-SETB-003
+              - BR-SET-050
             path: /sets
             auth: signed-in
             atlas:
               - sets-create
+          - id: flow.sets.library.create.board
+            kind: surface
+            title: Empty board (layout A)
+            rules:
+              - G-SET-001
+              - BR-SET-001
+              - BR-SET-010
+              - BR-SET-011
+              - BR-SLOT-011
+              - BR-SLOT-012
+              - BR-SLOT-014
+              - DAC-NME-004
+              - DAC-DST-010
+              - DAC-DST-011
+              - DAC-SET-002
+              - DBR-STAT-001
+              - DBR-CMP-001
+              - DBR-CMP-008
+              - DBR-CMP-009
+              - DBR-CMP-010
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-detail
           - id: flow.sets.library.create.fill
             kind: surface
-            title: ↻ Fill required slots
+            title: ↻ Fill via compare or optimize
             rules:
               - DAC-NME-003
               - DAC-DST-009
+              - G-SET-002
+              - BR-OPT-004
               - DAC-NME-003
               - DBR-ROLL-010
               - DAC-DST-009
               - BR-SLOT-008
               - BR-SLOT-009
               - BR-UI-001
+              - G-SET-002
+              - DBR-CMP-001
+              - DBR-CMP-005
             path: /sets
             auth: signed-in
             atlas:
@@ -3903,6 +4000,7 @@ pages:
           - BR-SET-001
           - BR-SLOT-008
           - DAC-DST-009
+          - G-SET-002
         notes: "include: flow.sets.edit-fill"
         children:
           - id: flow.sets.library.edit-fill.edit
@@ -3916,9 +4014,9 @@ pages:
             auth: signed-in
             atlas:
               - sets-edit
-          - id: flow.sets.library.edit-fill.fill
+          - id: flow.sets.library.edit-fill.fill-compare
             kind: surface
-            title: Fill slot (catalog embed)
+            title: Fill slot (owned compare)
             rules:
               - DAC-NME-003
               - DBR-ROLL-010
@@ -3926,10 +4024,26 @@ pages:
               - BR-SLOT-008
               - BR-SLOT-009
               - BR-UI-001
+              - G-SET-002
+              - DBR-CMP-001
+              - DBR-CMP-005
             path: /sets
             auth: signed-in
             atlas:
               - sets-fill-slot
+          - id: flow.sets.library.edit-fill.fill-optimize
+            kind: surface
+            title: Optimize confirm-only
+            rules:
+              - BR-OPT-004
+              - BR-OPT-001
+              - BR-OPT-002
+              - BR-OPT-004
+              - 026:SC-001
+              - G-SET-013
+              - DBR-SETB-003
+            atlas:
+              - sets-optimize
           - id: flow.sets.library.edit-fill.exotic-block
             kind: gate
             title: Second exotic blocked
@@ -3955,10 +4069,11 @@ pages:
           - sets-library-new
       - id: flow.sets.create.form
         kind: surface
-        title: Name / type / tags
+        title: Type / class / goals / name
         rules:
           - BR-TAG-002
           - BR-TAG-005
+          - G-SET-013
           - BR-SET-001
           - BR-SET-002
           - BR-SET-004
@@ -3966,22 +4081,54 @@ pages:
           - BR-TAG-004
           - BR-TAG-005
           - 001:SC-001
+          - G-SET-013
+          - DBR-SETB-003
+          - BR-SET-050
         path: /sets
         auth: signed-in
         atlas:
           - sets-create
+      - id: flow.sets.create.board
+        kind: surface
+        title: Empty board (layout A)
+        rules:
+          - G-SET-001
+          - BR-SET-001
+          - BR-SET-010
+          - BR-SET-011
+          - BR-SLOT-011
+          - BR-SLOT-012
+          - BR-SLOT-014
+          - DAC-NME-004
+          - DAC-DST-010
+          - DAC-DST-011
+          - DAC-SET-002
+          - DBR-STAT-001
+          - DBR-CMP-001
+          - DBR-CMP-008
+          - DBR-CMP-009
+          - DBR-CMP-010
+        path: /sets
+        auth: signed-in
+        atlas:
+          - sets-detail
       - id: flow.sets.create.fill
         kind: surface
-        title: ↻ Fill required slots
+        title: ↻ Fill via compare or optimize
         rules:
           - DAC-NME-003
           - DAC-DST-009
+          - G-SET-002
+          - BR-OPT-004
           - DAC-NME-003
           - DBR-ROLL-010
           - DAC-DST-009
           - BR-SLOT-008
           - BR-SLOT-009
           - BR-UI-001
+          - G-SET-002
+          - DBR-CMP-001
+          - DBR-CMP-005
         path: /sets
         auth: signed-in
         atlas:
@@ -4025,9 +4172,9 @@ pages:
         auth: signed-in
         atlas:
           - sets-edit
-      - id: flow.sets.edit-fill.fill
+      - id: flow.sets.edit-fill.fill-compare
         kind: surface
-        title: Fill slot (catalog embed)
+        title: Fill slot (owned compare)
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -4035,10 +4182,26 @@ pages:
           - BR-SLOT-008
           - BR-SLOT-009
           - BR-UI-001
+          - G-SET-002
+          - DBR-CMP-001
+          - DBR-CMP-005
         path: /sets
         auth: signed-in
         atlas:
           - sets-fill-slot
+      - id: flow.sets.edit-fill.fill-optimize
+        kind: surface
+        title: Optimize confirm-only
+        rules:
+          - BR-OPT-004
+          - BR-OPT-001
+          - BR-OPT-002
+          - BR-OPT-004
+          - 026:SC-001
+          - G-SET-013
+          - DBR-SETB-003
+        atlas:
+          - sets-optimize
       - id: flow.sets.edit-fill.exotic-block
         kind: gate
         title: Second exotic blocked

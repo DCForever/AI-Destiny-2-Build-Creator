@@ -11,6 +11,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 /// Persisted on Armor Sets (`sets.optimizer_constraints`).
 class ArmorSetOptimizerConstraints {
   const ArmorSetOptimizerConstraints({
+    this.className,
     this.lockedExoticItemHash,
     this.requireExotic = false,
     this.setBonusGoals = const [],
@@ -21,6 +22,8 @@ class ArmorSetOptimizerConstraints {
     this.preferReuse = false,
   });
 
+  /// Guardian class lock for Armor Sets (editable only while zero pins).
+  final GuardianClass? className;
   final int? lockedExoticItemHash;
   final bool requireExotic;
   final List<SetBonusCoverageGoal> setBonusGoals;
@@ -33,6 +36,36 @@ class ArmorSetOptimizerConstraints {
   /// Empty default payload (still counts as constrained when stored).
   factory ArmorSetOptimizerConstraints.empty() =>
       const ArmorSetOptimizerConstraints();
+
+  ArmorSetOptimizerConstraints copyWith({
+    GuardianClass? className,
+    bool clearClassName = false,
+    int? lockedExoticItemHash,
+    bool clearLockedExotic = false,
+    bool? requireExotic,
+    List<SetBonusCoverageGoal>? setBonusGoals,
+    List<ArmorStatName>? statPriorities,
+    Map<ArmorStatName, int>? statThresholds,
+    bool clearThresholds = false,
+    bool? requireThresholds,
+    bool? includeModEstimates,
+    bool? preferReuse,
+  }) {
+    return ArmorSetOptimizerConstraints(
+      className: clearClassName ? null : (className ?? this.className),
+      lockedExoticItemHash: clearLockedExotic
+          ? null
+          : (lockedExoticItemHash ?? this.lockedExoticItemHash),
+      requireExotic: requireExotic ?? this.requireExotic,
+      setBonusGoals: setBonusGoals ?? this.setBonusGoals,
+      statPriorities: statPriorities ?? this.statPriorities,
+      statThresholds:
+          clearThresholds ? null : (statThresholds ?? this.statThresholds),
+      requireThresholds: requireThresholds ?? this.requireThresholds,
+      includeModEstimates: includeModEstimates ?? this.includeModEstimates,
+      preferReuse: preferReuse ?? this.preferReuse,
+    );
+  }
 }
 
 /// True when a non-null payload is stored (even partial) — improvement eligibility.
@@ -104,7 +137,14 @@ ArmorSetOptimizerConstraints? parseOptimizerConstraints(String? raw) {
       if (out.isNotEmpty) thresholds = out;
     }
 
+    GuardianClass? className;
+    final classRaw = map['className']?.toString();
+    if (classRaw != null && classRaw.isNotEmpty) {
+      className = GuardianClass.tryParse(classRaw);
+    }
+
     return ArmorSetOptimizerConstraints(
+      className: className,
       lockedExoticItemHash: locked,
       requireExotic: map['requireExotic'] == true,
       setBonusGoals: goals,
@@ -129,6 +169,9 @@ String serializeOptimizerConstraints(ArmorSetOptimizerConstraints c) {
     'preferReuse': c.preferReuse,
     'includeModEstimates': c.includeModEstimates,
   };
+  if (c.className != null) {
+    map['className'] = c.className!.wireName;
+  }
   if (c.lockedExoticItemHash != null) {
     map['lockedExoticItemHash'] = c.lockedExoticItemHash;
   }

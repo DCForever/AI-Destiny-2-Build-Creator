@@ -244,13 +244,14 @@ void main() {
   });
 
   group('shell.nav primary destinations', () {
-    test('navLabels are Catalog + Settings during UX rebuild', () {
-      expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Settings']);
+    test('navLabels are Catalog + Sets + Settings', () {
+      expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Sets', 'Settings']);
       expect(Destiny2WindowsApp.catalogNavIndex, 0);
-      expect(Destiny2WindowsApp.settingsNavIndex, 1);
+      expect(Destiny2WindowsApp.setsNavIndex, 1);
+      expect(Destiny2WindowsApp.settingsNavIndex, 2);
     });
 
-    testWidgets('rail mounts Catalog and Settings', (tester) async {
+    testWidgets('rail mounts Catalog, Sets, and Settings', (tester) async {
       await _surface(tester);
       await tester.pumpWidget(Destiny2WindowsApp(services: services));
       await _pump(tester);
@@ -262,6 +263,10 @@ void main() {
 
       expect(
         find.byKey(const Key('catalog_page'), skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('sets_library_page'), skipOffstage: false),
         findsOneWidget,
       );
       expect(
@@ -575,13 +580,12 @@ void main() {
     });
   });
 
-  group('sets primary create/list/detail (shell-mounted)',
-      skip: true, () {
+  group('sets primary create/list/detail (shell-mounted)', () {
     testWidgets('create set shows detail type and empty slots', (tester) async {
       await _surface(tester);
       await tester.pumpWidget(Destiny2WindowsApp(services: services));
       await _pump(tester);
-      await _selectNav(tester, 3);
+      await _selectNav(tester, Destiny2WindowsApp.setsNavIndex);
 
       expect(find.byKey(const Key('sets_search')), findsOneWidget);
       expect(find.byKey(const Key('sets_type_filters')), findsOneWidget);

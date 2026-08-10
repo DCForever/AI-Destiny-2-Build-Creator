@@ -33,8 +33,11 @@ export 'src/equip/equip_session.dart';export 'src/presentation/dim_export_format
 export 'src/presentation/finish_gaps_format.dart';
 export 'src/presentation/soft_guidance_format.dart';
 export 'src/presentation/three_gate_readiness.dart';
-export 'src/presentation/variant_compose_format.dart';export 'src/set_board_presentation.dart';
+export 'src/presentation/variant_compose_format.dart';export 'src/set_auto_name.dart';
+export 'src/set_board_presentation.dart';
 export 'src/set_library_presentation.dart';
+export 'src/set_owned_compare.dart';
+export 'src/set_tag_rules.dart';
 export 'src/set_use_cases.dart';
 export 'src/roll_target_use_cases.dart';
 export 'src/catalog_filter_collection_use_cases.dart';

@@ -243,8 +243,8 @@ User-authored **roll targets** on Catalog weapon identities. **Not** DBR-ROLL wi
 |----|------|
 | DBR-SETB-001 | Variants show **soft coverage** for active 2pc/4pc and which designated synergies they support. |
 | DBR-SETB-002 | If a designated synergy has a **required** set-bonus link, the **default variant** cannot save until that bonus is satisfied (AND with other required links). Satisfaction uses DBR-SYN-014b (count ≥ link target tier) and DBR-SYN-010a (equip-ready path). |
-| DBR-SETB-003 | An **Armor Set** may declare **zero or one** optional **armor set bonus constraint**: bonus family + target tier (2 or 4). Only Armor Sets may use this constraint. |
-| DBR-SETB-004 | When a constraint is set: every **non-exotic** filled piece must be a **member** of that family; contributing member count must meet the target tier on **save and attach**. |
+| DBR-SETB-003 | An **Armor Set** may declare **zero or a legal multi-goal set-bonus constraint combo** (G-SET-013): **none · 1×2pc · 2×2pc (different families) · 1×4pc** (a 4pc goal includes that family’s 2pc). Only Armor Sets may use this constraint. *(Supersedes singular-family wording 2026-08-10.)* |
+| DBR-SETB-004 | When goals are set: every **non-exotic** filled piece must be a **member** of the **union** of goal families; each goal’s minPieces must be met on **save and attach**. |
 | DBR-SETB-005 | **Exotic armor does not count** toward the contributing tier. Soft-warn when an exotic likely blocks the target. |
 | DBR-SETB-006 | Without a constraint, no family is required on Armor Set save; UI may still show detected 2pc/4pc coverage (soft). |
 | DBR-SETB-007 | Armor Set **constraint** and Synergy `armor_set_bonus` **link** share family+tier vocabulary but are **independent** — setting one does not auto-create the other. |

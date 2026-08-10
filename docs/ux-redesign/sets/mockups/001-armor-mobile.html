@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- G-SET-013: bonus goals 0 | 1x2pc | 2x2pc | 1x4pc (4pc includes 2pc). Desktop is SSoT. -->
+<title>Sets · Armor MVP — Mobile structure mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050f;
+      --surface: #0a0a18;
+      --raised: #101028;
+      --line: rgba(232, 238, 242, 0.22);
+      --line-strong: rgba(232, 238, 242, 0.38);
+      --fg: #f0fdff;
+      --muted: #7dd3e0;
+      --muted-dim: rgba(125, 211, 224, 0.45);
+      --accent: #00e5ff;
+      --accent-wash: rgba(0, 229, 255, 0.14);
+      --danger: #ff003c;
+      --success: #2ee6a6;
+      --warn: #f5c542;
+      --rarity-exotic: #ceae33;
+      --class-titan: #e35a3d;
+      --class-hunter: #5aa8e0;
+      --class-warlock: #c9a24d;
+      --font-d: "Orbitron", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+      --font-m: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --nav-h: 52px;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --phone-w: 390px;
+      --phone-h: 780px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #030308;
+      color: var(--fg);
+      font-family: var(--font-b);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; padding: 0; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    .mock-bar {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 430px;
+      padding: 8px 10px;
+      background: #080812;
+      border-bottom: 1px solid var(--line-strong);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mock-bar h1 {
+      margin: 0;
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .mock-bar .meta {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+    }
+    .mock-bar-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .scenario-select {
+      flex: 1;
+      min-width: 0;
+      height: 28px;
+      padding: 0 6px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+    }
+    .auth-toggle {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .auth-toggle button {
+      height: 28px;
+      padding: 0 8px;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+    .auth-toggle button:last-child { border-right: 0; }
+    .auth-toggle button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .structure-banner {
+      width: 100%;
+      max-width: 430px;
+      padding: 6px 10px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--warn);
+      background: rgba(245, 197, 66, 0.08);
+      border-bottom: 1px solid rgba(245, 197, 66, 0.25);
+      text-align: center;
+    }
+
+    .phone-frame {
+      flex: 1;
+      min-height: 0;
+      width: min(var(--phone-w), 100%);
+      max-height: var(--phone-h);
+      margin: 8px auto 12px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .app-top {
+      flex: 0 0 auto;
+      height: 44px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .app-top .title {
+      font-family: var(--font-d);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      flex: 1;
+    }
+    .btn {
+      height: 30px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+    }
+    .btn-primary {
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.45);
+      color: var(--accent);
+    }
+    .btn-danger {
+      border-color: rgba(255, 0, 60, 0.4);
+      color: var(--danger);
+    }
+    .btn-sm { height: 26px; padding: 0 8px; font-size: 8px; }
+    .btn-lg { height: 36px; padding: 0 14px; }
+    .btn-block { width: 100%; }
+
+    .filters {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .search-wrap input {
+      flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 13px;
+    }
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+    .facet-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      width: 100%;
+    }
+    .chip {
+      height: 26px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .chip[data-state="include"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+    .chip[data-state="exclude"] {
+      color: var(--warn);
+      border-color: rgba(245, 197, 66, 0.45);
+      text-decoration: line-through;
+    }
+    .chip .mark {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--accent);
+    }
+    .chip[data-state="exclude"] .mark { color: var(--warn); }
+    .reset-btn {
+      height: 26px;
+      padding: 0 8px;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--danger);
+      border: 1px solid rgba(255, 0, 60, 0.35);
+      border-radius: var(--radius);
+    }
+
+    .list {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .list-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(232, 238, 242, 0.08);
+      width: 100%;
+      text-align: left;
+      color: inherit;
+      background: transparent;
+    }
+    .list-row:active, .list-row[aria-selected="true"] {
+      background: var(--accent-wash);
+    }
+    .list-row .name {
+      font-size: 13px;
+      font-weight: 500;
+      grid-column: 1 / -1;
+    }
+    .list-row .meta {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      grid-column: 1 / -1;
+    }
+    .class-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-right: 3px;
+      vertical-align: middle;
+    }
+    .class-dot.titan { background: var(--class-titan); }
+    .class-dot.hunter { background: var(--class-hunter); }
+    .class-dot.warlock { background: var(--class-warlock); }
+    .cov-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 16px;
+      padding: 0 5px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .cov-chip.hard { color: var(--warn); border-color: rgba(245, 197, 66, 0.45); }
+    .cov-chip.ok { color: var(--success); border-color: rgba(46, 230, 166, 0.35); }
+    .cov-chip.soft { color: var(--muted-dim); border-color: transparent; background: rgba(125,211,224,0.06); }
+    .type-pill {
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted-dim);
+      text-transform: uppercase;
+    }
+
+    .empty, .honesty {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty h3, .honesty h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-d);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .empty p, .honesty p {
+      margin: 0 0 14px;
+      font-size: 12px;
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .skeleton-row {
+      height: 56px;
+      margin: 0;
+      border-bottom: 1px solid rgba(232,238,242,0.06);
+      background: linear-gradient(90deg, var(--raised) 25%, rgba(255,255,255,0.04) 50%, var(--raised) 75%);
+      background-size: 200% 100%;
+      animation: sk 1.2s ease-in-out infinite;
+    }
+    @keyframes sk {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .tab-bar {
+      flex: 0 0 auto;
+      height: calc(var(--nav-h) + var(--safe-b));
+      padding-bottom: var(--safe-b);
+      display: flex;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+    }
+    .tab-bar button {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .tab-bar button[aria-current="page"] { color: var(--accent); }
+    .tab-bar button.is-stub { opacity: 0.5; }
+    .tab-bar .ico { font-size: 14px; line-height: 1; }
+
+    /* sheets */
+    .sheet-root {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: rgba(2, 2, 8, 0.65);
+    }
+    .sheet {
+      max-height: 92%;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border-top: 1px solid var(--line-strong);
+      border-radius: 4px 4px 0 0;
+      overflow: hidden;
+    }
+    .sheet.sheet-full {
+      max-height: 100%;
+      height: 100%;
+      border-radius: 0;
+    }
+    .sheet-bar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--raised);
+    }
+    .sheet-bar h2 {
+      margin: 0;
+      flex: 1;
+      font-family: var(--font-d);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .sheet-bar .crumb {
+      display: block;
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      letter-spacing: 0;
+      text-transform: none;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+    .sheet-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sheet-foot {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 12px calc(10px + var(--safe-b));
+      border-top: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .sheet-foot .grow { flex: 1; min-width: 8px; }
+
+    .wizard-steps {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+    .wizard-steps .step {
+      flex: 1;
+      height: 3px;
+      background: var(--line);
+      border-radius: 1px;
+    }
+    .wizard-steps .step.on { background: var(--accent); }
+    .wizard-steps .step.done { background: rgba(0,229,255,0.45); }
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field .hint {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted-dim);
+      margin-top: 4px;
+    }
+    .field input[type="text"] {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      outline: none;
+    }
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .choice {
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+      font-family: var(--font-d);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .choice[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0,229,255,0.45);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .auto-name-preview {
+      margin-top: 6px;
+      padding: 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted-dim);
+    }
+    .auto-name-preview strong { color: var(--muted); font-weight: 500; }
+    .tag-pool { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-chip {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .tag-chip[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      border-color: rgba(0,229,255,0.4);
+    }
+    .tag-chip.blocked {
+      opacity: 0.4;
+      text-decoration: line-through;
+    }
+    .inline-warn {
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255,0,60,0.35);
+      background: rgba(255,0,60,0.06);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--danger);
+    }
+    .inline-info {
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .board-Σ {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+    .board-Σ .Σ-label {
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .stat-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px 4px;
+      font-family: var(--font-m);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-strip .s {
+      min-width: 28px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .stat-strip .s .k {
+      display: block;
+      font-size: 7px;
+      color: var(--muted-dim);
+    }
+    .stat-strip .s .v { color: var(--fg); font-weight: 500; }
+    .stat-strip .total {
+      color: var(--accent);
+      font-weight: 600;
+      padding-left: 4px;
+      border-left: 1px solid var(--line);
+      margin-left: 2px;
+      align-self: center;
+    }
+    .soft-band, .hard-band {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      border-radius: var(--radius);
+    }
+    .soft-band {
+      color: var(--muted-dim);
+      background: rgba(125, 211, 224, 0.05);
+    }
+    .hard-band {
+      color: var(--warn);
+      background: rgba(245, 197, 66, 0.06);
+      border: 1px solid rgba(245, 197, 66, 0.3);
+    }
+    .hard-band.ok {
+      color: var(--success);
+      border-color: rgba(46, 230, 166, 0.3);
+      background: rgba(46, 230, 166, 0.06);
+    }
+    .slot-rows {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .slot-row {
+      display: grid;
+      grid-template-columns: 28px 30px 1fr auto;
+      gap: 6px;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid rgba(232,238,242,0.1);
+      background: var(--bg);
+    }
+    .slot-row:last-child { border-bottom: 0; }
+    .slot-label {
+      font-family: var(--font-d);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+    }
+    .slot-icon {
+      width: 28px; height: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--raised);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      position: relative;
+    }
+    .slot-icon.exotic { border-color: rgba(206, 174, 51, 0.55); }
+    .slot-icon .exo-seal {
+      position: absolute;
+      top: -2px; right: -2px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--rarity-exotic);
+    }
+    .slot-name {
+      min-width: 0;
+      font-size: 12px;
+    }
+    .slot-name .ph { color: var(--muted-dim); font-style: italic; }
+    .slot-name .strip {
+      display: flex;
+      gap: 3px;
+      font-family: var(--font-m);
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .slot-name .strip .t { color: var(--accent); font-weight: 600; }
+
+    .compare-card {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      gap: 8px;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(232,238,242,0.1);
+      width: 100%;
+      text-align: left;
+      color: inherit;
+      background: var(--bg);
+    }
+    .compare-card:active { background: var(--accent-wash); }
+    .compare-card .ico {
+      width: 32px; height: 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--raised);
+    }
+    .compare-card .ico.exotic { border-color: rgba(206,174,51,0.5); }
+    .compare-card .nm { font-size: 12px; font-weight: 500; }
+    .compare-card .sub {
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .compare-card .tot {
+      font-family: var(--font-m);
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+      align-self: center;
+    }
+    .sort-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .sort-row button {
+      height: 26px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .sort-row button[aria-pressed="true"] {
+      color: var(--accent);
+      background: var(--accent-wash);
+      border-color: rgba(0,229,255,0.4);
+    }
+
+    .opt-seed {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+      padding: 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-m);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .opt-seed .k { color: var(--muted-dim); }
+
+    .toast {
+      position: absolute;
+      bottom: calc(var(--nav-h) + 12px + var(--safe-b));
+      left: 12px;
+      right: 12px;
+      z-index: 40;
+      padding: 10px 12px;
+      background: var(--raised);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .toast.err { border-color: rgba(255,0,60,0.45); color: var(--danger); }
+
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .seg button {
+      height: 32px;
+      padding: 0 12px;
+      font-family: var(--font-d);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+    .seg button:last-child { border-right: 0; }
+    .seg button[aria-pressed="true"] {
+      color: var(--fg);
+      background: var(--accent-wash);
+      box-shadow: inset 0 -1px 0 var(--accent);
+    }
+    .thin-note {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .thin-note strong {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted-dim);
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-bar">
+    <h1>Sets · Armor MVP · Mobile</h1>
+    <span class="meta">Structure-only · not Capture exit · G-SET lifecycle stack</span>
+    <div class="mock-bar-row">
+      <select id="scenario" class="scenario-select" aria-label="Scenario">
+        <option value="library">Library list</option>
+        <option value="signed-out">Signed-out honesty</option>
+        <option value="need-sync">Need inventory sync</option>
+        <option value="loading">Loading skeleton</option>
+        <option value="no-matches">No filter matches</option>
+        <option value="create">Create wizard sheet</option>
+        <option value="empty-board">Empty board sheet</option>
+        <option value="filled-board">Filled board + coverage</option>
+        <option value="compare">Owned compare pick</option>
+        <option value="compare-empty">Compare · no matches</option>
+        <option value="optimize">Optimize confirm-only</option>
+        <option value="delete">Delete confirm</option>
+        <option value="set-in-use">SET_IN_USE block</option>
+      </select>
+      <div class="auth-toggle" role="group" aria-label="Auth">
+        <button type="button" id="authOut" aria-pressed="false">Out</button>
+        <button type="button" id="authIn" aria-pressed="true">In</button>
+      </div>
+    </div>
+  </div>
+  <div class="structure-banner">Mobile = structure-only for Sets MVP (no dual-truth Capture exit). Desktop is Capture host.</div>
+
+  <div class="phone-frame" id="phone">
+    <header class="app-top">
+      <div class="title">Sets</div>
+      <button type="button" class="btn btn-primary btn-sm" id="btnNew">+ New</button>
+    </header>
+
+    <div class="filters">
+      <div class="search-wrap">
+        <span aria-hidden="true">⌕</span>
+        <input id="search" type="search" placeholder="Search sets…" autocomplete="off" />
+      </div>
+      <div class="chip-row">
+        <span class="facet-label">Type · tap cycles off / include / exclude</span>
+        <button type="button" class="chip" data-facet="type" data-value="Armor" data-state="include"><span class="mark"></span>Armor</button>
+        <button type="button" class="chip" data-facet="type" data-value="Weapon" data-state="off"><span class="mark"></span>Weapon</button>
+        <button type="button" class="chip" data-facet="type" data-value="Mod" data-state="off"><span class="mark"></span>Mod</button>
+        <button type="button" class="chip" data-facet="type" data-value="Pair" data-state="off"><span class="mark"></span>Pair</button>
+        <button type="button" class="chip" data-facet="type" data-value="Fashion" data-state="off"><span class="mark"></span>Fashion</button>
+      </div>
+      <div class="chip-row">
+        <span class="facet-label">Tags</span>
+        <button type="button" class="chip" data-facet="tag" data-value="PvE" data-state="off"><span class="mark"></span>PvE</button>
+        <button type="button" class="chip" data-facet="tag" data-value="Raid" data-state="off"><span class="mark"></span>Raid</button>
+        <button type="button" class="chip" data-facet="tag" data-value="GMs" data-state="off"><span class="mark"></span>GMs</button>
+        <button type="button" class="reset-btn" id="btnClear" hidden>Clear</button>
+      </div>
+    </div>
+
+    <div class="list" id="list" role="list"></div>
+
+    <nav class="tab-bar" aria-label="Primary">
+      <button type="button" class="is-stub" data-stub="Builds area (outbound stub)."><span class="ico" aria-hidden="true">▣</span>Builds</button>
+      <button type="button" class="is-stub" data-stub="Catalog is not Set fill (G-SET-002)."><span class="ico" aria-hidden="true">▦</span>Catalog</button>
+      <button type="button" aria-current="page"><span class="ico" aria-hidden="true">◫</span>Sets</button>
+      <button type="button" class="is-stub" data-stub="Settings / sign-in (outbound stub)."><span class="ico" aria-hidden="true">⚙</span>Settings</button>
+    </nav>
+
+    <div class="sheet-root" id="sheetRoot" hidden>
+      <div class="sheet sheet-full" id="sheetMain" role="dialog" aria-modal="true"></div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+  </div>
+
+  <script>
+(function () {
+  // Post–Edge of Fate armor board
+  const STATS = ['Health', 'Melee', 'Grenade', 'Super', 'Class', 'Weapons'];
+  const SLOTS = [
+    { id: 'helmet', label: 'Helm', glyph: '⬡' },
+    { id: 'arms', label: 'Arms', glyph: '◈' },
+    { id: 'chest', label: 'Chest', glyph: '▣' },
+    { id: 'legs', label: 'Legs', glyph: '◇' },
+    { id: 'class', label: 'Class', glyph: '◎' },
+  ];
+  const SYNERGY_VOCAB = new Set(['Melee', 'Grenade', 'Super', 'Class Ability', 'Orb', 'Ammo']);
+  const TAG_OPTIONS = ['PvE', 'Raid', 'GMs', 'Solo', 'Melee', 'Grenade', 'Farm'];
+
+  const SETS = [
+    {
+      id: 'a1', type: 'Armor', name: 'Hunter · 4pc · Terminal · Raid',
+      class: 'Hunter', pieces: 4,
+      cover: { n: 4, t: 4, family: 'Terminal Excess', hard: true },
+      usedBy: 2, tags: ['Raid', 'PvE'],
+      bonuses: [{ family: 'Terminal Excess', tier: 4 }],
+      slots: {
+        helmet: { name: 'Mask of Bakris', exotic: true, power: 2005, base: [2, 16, 14, 10, 20, 6], family: null },
+        arms: { name: 'Terminal Grips', exotic: false, power: 2004, base: [10, 12, 14, 16, 8, 8], family: 'Terminal Excess' },
+        chest: { name: 'Terminal Plate', exotic: false, power: 2006, base: [8, 20, 10, 14, 10, 6], family: 'Terminal Excess' },
+        legs: { name: 'Terminal Strides', exotic: false, power: 2003, base: [14, 10, 12, 12, 8, 12], family: 'Terminal Excess' },
+        class: { name: 'Terminal Cloak', exotic: false, power: 2005, base: [12, 10, 10, 18, 6, 12], family: 'Terminal Excess' },
+      },
+    },
+    {
+      id: 'a2', type: 'Armor', name: 'Warlock · 2pc · — · GMs',
+      class: 'Warlock', pieces: 2,
+      cover: { n: 2, t: null, family: 'Brazen Eclipse', hard: false },
+      usedBy: 0, tags: ['GMs'], bonuses: [],
+      slots: {
+        helmet: { name: 'Nezarec\'s Sin', exotic: true, power: 2002, base: [6, 10, 16, 20, 14, 2], family: null },
+        arms: null, chest: null,
+        legs: { name: 'Brazen Boots', exotic: false, power: 1998, base: [10, 14, 12, 12, 10, 10], family: 'Brazen Eclipse' },
+        class: { name: 'Brazen Bond', exotic: false, power: 2000, base: [8, 12, 14, 14, 10, 10], family: 'Brazen Eclipse' },
+      },
+    },
+    {
+      id: 'a3', type: 'Armor', name: 'Titan · 0pc · —',
+      class: 'Titan', pieces: 0,
+      cover: { n: 0, t: 2, family: 'Iron Forerunner', hard: true },
+      usedBy: 0, tags: [],
+      bonuses: [{ family: 'Iron Forerunner', tier: 2 }],
+      slots: { helmet: null, arms: null, chest: null, legs: null, class: null },
+    },
+    { id: 'w1', type: 'Weapon', name: 'Strand kinetic trio', class: null, pieces: 3, cover: null, usedBy: 1, tags: ['PvE'], bonuses: [], slots: null },
+    { id: 'm1', type: 'Mod', name: 'Resist stack kit', class: null, pieces: 5, cover: null, usedBy: 0, tags: ['GMs'], bonuses: [], slots: null },
+  ];
+
+  const OWNED = {
+    helmet: [
+      { id: 'h1', name: 'Mask of Bakris', exotic: true, power: 2005, base: [2, 16, 14, 10, 20, 6], family: null, total: 68 },
+      { id: 'h2', name: 'Terminal Mask', exotic: false, power: 2004, base: [12, 14, 10, 14, 10, 10], family: 'Terminal Excess', total: 70 },
+      { id: 'h3', name: 'Iron Helm', exotic: false, power: 1990, base: [8, 18, 12, 10, 12, 8], family: 'Iron Forerunner', total: 68 },
+    ],
+    arms: [
+      { id: 'a1', name: 'Terminal Grips', exotic: false, power: 2004, base: [10, 12, 14, 16, 8, 8], family: 'Terminal Excess', total: 68 },
+      { id: 'a2', name: 'Synthoceps', exotic: true, power: 2006, base: [14, 10, 16, 6, 8, 20], family: null, total: 74 },
+    ],
+    chest: [
+      { id: 'c1', name: 'Terminal Plate', exotic: false, power: 2006, base: [8, 20, 10, 14, 10, 6], family: 'Terminal Excess', total: 68 },
+      { id: 'c2', name: 'Cuirass of the Falling Star', exotic: true, power: 2003, base: [6, 22, 12, 8, 10, 10], family: null, total: 68 },
+    ],
+    legs: [
+      { id: 'l1', name: 'Terminal Strides', exotic: false, power: 2003, base: [14, 10, 12, 12, 8, 12], family: 'Terminal Excess', total: 68 },
+      { id: 'l3', name: 'Brazen Boots', exotic: false, power: 1998, base: [10, 14, 12, 12, 10, 10], family: 'Brazen Eclipse', total: 68 },
+    ],
+    class: [
+      { id: 'cl1', name: 'Terminal Cloak', exotic: false, power: 2005, base: [12, 10, 10, 18, 6, 12], family: 'Terminal Excess', total: 68 },
+      { id: 'cl3', name: 'Iron Mark', exotic: false, power: 1991, base: [10, 14, 12, 10, 12, 10], family: 'Iron Forerunner', total: 68 },
+    ],
+  };
+
+  const state = {
+    auth: 'in',
+    loading: false,
+    forceNoMatches: false,
+    search: '',
+    facets: { type: { Armor: 'include' }, tag: {} },
+    sheet: null, // create | board | compare | optimize | confirm | thin
+    createStep: 0,
+    createType: 'Armor',
+    createClass: null,
+    createBonuses: [],
+    createName: '',
+    createTags: [],
+    boardDraft: null,
+    pickSlot: null,
+    compareSort: 'total',
+    compareEmpty: false,
+    confirmKind: null,
+    confirmPayload: null,
+  };
+
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+
+  function toast(msg, err) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.toggle('err', !!err);
+    t.hidden = false;
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(() => { t.hidden = true; }, 2800);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[c]);
+  }
+
+  function sumBase(b) { return b ? b.reduce((a, x) => a + x, 0) : 0; }
+  function aggregateSlots(slots) {
+    const totals = [0, 0, 0, 0, 0, 0];
+    let n = 0;
+    if (!slots) return { totals, n, sum: 0 };
+    for (const s of Object.values(slots)) {
+      if (!s?.base) continue;
+      n++;
+      s.base.forEach((v, i) => { totals[i] += v; });
+    }
+    return { totals, n, sum: totals.reduce((a, b) => a + b, 0) };
+  }
+  function familyCoverage(slots, family) {
+    if (!slots || !family) return 0;
+    return Object.values(slots).filter((s) => s && !s.exotic && s.family === family).length;
+  }
+
+  const BONUS_FAMILIES = ['Terminal Excess', 'Brazen Eclipse', 'Iron Forerunner'];
+  function getBonuses(s) {
+    if (!s) return [];
+    if (Array.isArray(s.bonuses)) return s.bonuses;
+    if (s.constraint && s.constraint.family) return [{ family: s.constraint.family, tier: s.constraint.tier || 2 }];
+    return [];
+  }
+  function isLegalBonuses(bonuses) {
+    if (!bonuses || !bonuses.length) return true;
+    if (bonuses.length === 1) return bonuses[0].tier === 2 || bonuses[0].tier === 4;
+    if (bonuses.length === 2) return bonuses.every(g => g.tier === 2) && bonuses[0].family !== bonuses[1].family;
+    return false;
+  }
+  function goalsSatisfied(slots, bonuses) {
+    const b = bonuses || [];
+    return !b.length || b.every(g => familyCoverage(slots, g.family) >= g.tier);
+  }
+  function allowedBonusFamilies(bonuses) {
+    return new Set((bonuses || []).map(g => g.family));
+  }
+  function pieceFitsBonuses(row, bonuses) {
+    if (!bonuses || !bonuses.length) return true;
+    if (row.exotic) return true;
+    return allowedBonusFamilies(bonuses).has(row.family);
+  }
+  function bonusLabel(bonuses) {
+    const b = bonuses || [];
+    if (!b.length) return 'none';
+    if (b.length === 1 && b[0].tier === 4) return '4pc ' + b[0].family.split(' ')[0] + ' (incl 2pc)';
+    return b.map(g => g.tier + 'pc ' + g.family.split(' ')[0]).join(' + ');
+  }
+  function coverFromBonuses(slots, bonuses) {
+    const b = bonuses || [];
+    if (!b.length) return null;
+    return b.map(g => ({ n: familyCoverage(slots, g.family), t: g.tier, family: g.family, hard: true }));
+  }
+  function softDetectFamily(slots) {
+    if (!slots) return null;
+    const counts = {};
+    for (const s of Object.values(slots)) {
+      if (s && !s.exotic && s.family) counts[s.family] = (counts[s.family] || 0) + 1;
+    }
+    let best = null;
+    for (const [f, c] of Object.entries(counts)) {
+      if (c >= 2 && (!best || c > best.n)) best = { family: f, n: c };
+    }
+    return best;
+  }
+  function autoNamePreview() {
+    const cls = state.createClass || '—';
+    const c = (state.createBonuses && state.createBonuses[0] ? state.createBonuses[0] : null);
+    const pc = c ? `${c.tier}pc` : '—pc';
+    const fam = c ? c.family.split(' ')[0] : '—';
+    const tags = state.createTags.filter((t) => !SYNERGY_VOCAB.has(t)).join(' · ');
+    return `${cls} · ${pc} · ${fam}${tags ? ' · ' + tags : ''}`;
+  }
+
+  function cycleFacet(btn) {
+    const order = ['off', 'include', 'exclude'];
+    const next = order[(order.indexOf(btn.dataset.state || 'off') + 1) % 3];
+    btn.dataset.state = next;
+    const facet = btn.dataset.facet;
+    const val = btn.dataset.value;
+    if (!state.facets[facet]) state.facets[facet] = {};
+    if (next === 'off') delete state.facets[facet][val];
+    else state.facets[facet][val] = next;
+    updateChips();
+    renderList();
+  }
+  function updateChips() {
+    $$('.chip[data-facet]').forEach((btn) => {
+      const st = btn.dataset.state || 'off';
+      btn.querySelector('.mark').textContent = st === 'include' ? '+' : st === 'exclude' ? '−' : '';
+    });
+    const has = Object.values(state.facets).some((m) => Object.keys(m).length) || state.search.trim();
+    $('#btnClear').hidden = !has;
+  }
+  function clearFilters() {
+    state.search = '';
+    state.facets = { type: {}, tag: {} };
+    state.forceNoMatches = false;
+    $('#search').value = '';
+    $$('.chip[data-facet]').forEach((c) => { c.dataset.state = 'off'; });
+    updateChips();
+    renderList();
+  }
+  function filterSets() {
+    if (state.loading) return [];
+    let list = SETS.slice();
+    const q = state.search.trim().toLowerCase();
+    if (q) list = list.filter((s) => s.name.toLowerCase().includes(q));
+    const typeMap = state.facets.type || {};
+    const inc = Object.entries(typeMap).filter(([, v]) => v === 'include').map(([k]) => k);
+    const exc = Object.entries(typeMap).filter(([, v]) => v === 'exclude').map(([k]) => k);
+    if (inc.length) list = list.filter((s) => inc.includes(s.type));
+    if (exc.length) list = list.filter((s) => !exc.includes(s.type));
+    const tagMap = state.facets.tag || {};
+    const ti = Object.entries(tagMap).filter(([, v]) => v === 'include').map(([k]) => k);
+    const te = Object.entries(tagMap).filter(([, v]) => v === 'exclude').map(([k]) => k);
+    if (ti.length) list = list.filter((s) => ti.every((t) => (s.tags || []).includes(t)));
+    if (te.length) list = list.filter((s) => !te.some((t) => (s.tags || []).includes(t)));
+    if (state.forceNoMatches) list = [];
+    return list;
+  }
+
+  function renderList() {
+    const el = $('#list');
+    if (state.auth === 'out') {
+      el.innerHTML = `
+        <div class="honesty">
+          <h3>Sign in required</h3>
+          <p>No fake owned armor while signed out (G-SET-041). Create/fill prompt sign-in + sync.</p>
+          <button type="button" class="btn btn-primary" data-stub="Settings → Sign in (Public + PKCE).">Sign in…</button>
+        </div>`;
+      bindStubs(el);
+      return;
+    }
+    if (state.loading) {
+      el.innerHTML = Array.from({ length: 5 }, () => '<div class="skeleton-row"></div>').join('');
+      return;
+    }
+    if (state.auth === 'need-sync') {
+      el.innerHTML = `
+        <div class="honesty">
+          <h3>Inventory not synced</h3>
+          <p>Optimize / Pick gated until inventory sync (structure-only mobile).</p>
+          <button type="button" class="btn btn-primary" data-stub="Settings → Sync inventory.">Sync…</button>
+        </div>`;
+      bindStubs(el);
+      return;
+    }
+    const list = filterSets();
+    if (!list.length) {
+      el.innerHTML = `
+        <div class="empty">
+          <h3>No sets match</h3>
+          <p>Clear filters or create an Armor Set.</p>
+          <button type="button" class="btn" id="emptyClear">Clear filters</button>
+        </div>`;
+      $('#emptyClear')?.addEventListener('click', clearFilters);
+      return;
+    }
+    el.innerHTML = list.map((s) => {
+      if (s.type === 'Armor') {
+        const cov = s.cover
+          ? `<span class="cov-chip ${s.cover.hard ? (s.cover.n >= (s.cover.t || 0) ? 'ok' : 'hard') : 'soft'}">${s.cover.n}${s.cover.t != null ? '/' + s.cover.t : ''} · ${(s.cover.family || '—').split(' ')[0]}</span>`
+          : '';
+        return `
+          <button type="button" class="list-row" data-id="${s.id}">
+            <span class="name">${escapeHtml(s.name)}</span>
+            <span class="meta">
+              <span><span class="class-dot ${s.class.toLowerCase()}"></span>${s.class}</span>
+              <span>${s.pieces}pc</span>
+              ${cov}
+              <span>used ${s.usedBy || 0}</span>
+            </span>
+          </button>`;
+      }
+      return `
+        <button type="button" class="list-row" data-id="${s.id}">
+          <span class="name">${escapeHtml(s.name)}</span>
+          <span class="meta">
+            <span class="type-pill">${s.type}</span>
+            <span>${s.pieces}pc</span>
+            <span>${(s.tags || []).join(', ') || '—'}</span>
+          </span>
+        </button>`;
+    }).join('');
+    $$('.list-row', el).forEach((row) => row.addEventListener('click', () => openSet(row.dataset.id)));
+  }
+
+  function openSet(id) {
+    const s = SETS.find((x) => x.id === id);
+    if (!s) return;
+    if (s.type !== 'Armor') {
+      openThin(s);
+      return;
+    }
+    state.boardDraft = JSON.parse(JSON.stringify(s));
+    state.sheet = 'board';
+    renderSheet();
+  }
+
+  function openThin(s) {
+    state.sheet = 'thin';
+    state.boardDraft = s;
+    renderSheet();
+  }
+
+  /* sheets */
+  function showSheet() {
+    $('#sheetRoot').hidden = false;
+  }
+  function hideSheet() {
+    $('#sheetRoot').hidden = true;
+    state.sheet = null;
+    state.confirmKind = null;
+  }
+
+  function renderSheet() {
+    if (!state.sheet) {
+      hideSheet();
+      return;
+    }
+    showSheet();
+    const root = $('#sheetMain');
+    if (state.sheet === 'create') renderCreateSheet(root);
+    else if (state.sheet === 'board') renderBoardSheet(root);
+    else if (state.sheet === 'compare') renderCompareSheet(root);
+    else if (state.sheet === 'optimize') renderOptimizeSheet(root);
+    else if (state.sheet === 'confirm') renderConfirmSheet(root);
+    else if (state.sheet === 'thin') renderThinSheet(root);
+  }
+
+  function renderCreateSheet(root) {
+    const steps = ['Type', 'Class', 'Bonus', 'Name'];
+    let body = '';
+    let footNext = 'Continue';
+    let nextDisabled = false;
+
+    if (state.createStep === 0) {
+      nextDisabled = !state.createType;
+      body = `
+        <div class="wizard-steps">${steps.map((_, i) => `<div class="step ${i === 0 ? 'on' : ''}"></div>`).join('')}</div>
+        <div class="field">
+          <label>Set type (locked after create)</label>
+          <div class="choice-grid">
+            ${['Armor', 'Weapon', 'Mod', 'Pair', 'Fashion'].map((t) =>
+              `<button type="button" class="choice" data-type="${t}" aria-pressed="${state.createType === t}">${t}</button>`).join('')}
+          </div>
+          <p class="hint">Armor-first · other types thin shell only</p>
+        </div>`;
+    } else if (state.createStep === 1) {
+      if (state.createType !== 'Armor') {
+        footNext = 'Create shell';
+        body = `
+          <div class="inline-info">Non-Armor → thin detail only in this MVP.</div>
+          <div class="field">
+            <label>Optional name</label>
+            <input type="text" id="nm" value="${escapeHtml(state.createName)}" placeholder="Optional" />
+          </div>`;
+      } else {
+        nextDisabled = !state.createClass;
+        body = `
+          <div class="wizard-steps">${steps.map((_, i) => `<div class="step ${i < 1 ? 'done' : i === 1 ? 'on' : ''}"></div>`).join('')}</div>
+          <div class="field">
+            <label>Class (before any piece)</label>
+            <div class="choice-grid">
+              ${['Titan', 'Hunter', 'Warlock'].map((c) =>
+                `<button type="button" class="choice" data-class="${c}" aria-pressed="${state.createClass === c}">${c}</button>`).join('')}
+            </div>
+            <p class="hint">G-SET-004</p>
+          </div>`;
+      }
+    } else if (state.createStep === 2) {
+      const families = ['Terminal Excess', 'Brazen Eclipse', 'Iron Forerunner'];
+      body = `
+        <div class="wizard-steps">${steps.map((_, i) => `<div class="step ${i < 2 ? 'done' : i === 2 ? 'on' : ''}"></div>`).join('')}</div>
+        <div class="field">
+          <label>Set-bonus goals (0 · 1×2pc · 2×2pc · 1×4pc)</label>
+          <div class="choice-grid">
+            <button type="button" class="choice" data-fam="" aria-pressed="${!(state.createBonuses || []).length}">Skip</button>
+            ${families.map((f) =>
+              `<button type="button" class="choice" data-fam="${f}" aria-pressed="${(state.createBonuses || [])[0]?.family === f}">${f.split(' ')[0]}</button>`).join('')}
+          </div>
+        </div>
+        ${(state.createBonuses && state.createBonuses[0] ? state.createBonuses[0] : null) ? `
+          <div class="field">
+            <label>Tier</label>
+            <div class="seg">
+              <button type="button" data-tier="2" aria-pressed="${(state.createBonuses || [])[0]?.tier === 2}">2pc</button>
+              <button type="button" data-tier="4" aria-pressed="${(state.createBonuses || [])[0]?.tier === 4}">4pc</button>
+            </div>
+          </div>` : ''}`;
+    } else {
+      footNext = 'Open board';
+      const blocked = state.createTags.filter((t) => SYNERGY_VOCAB.has(t));
+      nextDisabled = blocked.length > 0;
+      body = `
+        <div class="wizard-steps">${steps.map((_, i) => `<div class="step ${i < 3 ? 'done' : 'on'}"></div>`).join('')}</div>
+        <div class="field">
+          <label>Name (optional)</label>
+          <input type="text" id="nm" value="${escapeHtml(state.createName)}" placeholder="Auto-name if blank" />
+          <div class="auto-name-preview">Preview · <strong>${escapeHtml(autoNamePreview())}</strong></div>
+        </div>
+        <div class="field">
+          <label>Tags</label>
+          <div class="tag-pool">
+            ${TAG_OPTIONS.map((t) => {
+              const isBlock = SYNERGY_VOCAB.has(t);
+              const on = state.createTags.includes(t);
+              return `<button type="button" class="tag-chip ${isBlock ? 'blocked' : ''}" data-tag="${t}" aria-pressed="${on}">${t}${isBlock ? ' ⊘' : ''}</button>`;
+            }).join('')}
+          </div>
+          ${blocked.length ? `<div class="inline-warn">Hard block vs Synergy Type vocab: ${blocked.join(', ')}</div>` : ''}
+        </div>`;
+    }
+
+    root.innerHTML = `
+      <div class="sheet-bar">
+        <div style="flex:1">
+          <h2>New set</h2>
+          <span class="crumb">${steps[Math.min(state.createStep, 3)]}</span>
+        </div>
+        <button type="button" class="btn btn-sm" data-close>Close</button>
+      </div>
+      <div class="sheet-body">${body}</div>
+      <div class="sheet-foot">
+        <button type="button" class="btn" id="back" ${state.createStep === 0 ? 'hidden' : ''}>Back</button>
+        <span class="grow"></span>
+        <button type="button" class="btn btn-primary" id="next" ${nextDisabled ? 'disabled' : ''}>${footNext}</button>
+      </div>`;
+
+    root.querySelector('[data-close]')?.addEventListener('click', hideSheet);
+    $('#back', root)?.addEventListener('click', () => {
+      if (state.createStep > 0) { state.createStep--; renderSheet(); }
+    });
+    $('#next', root)?.addEventListener('click', createNext);
+    $$('[data-type]', root).forEach((b) => b.addEventListener('click', () => {
+      state.createType = b.dataset.type; renderSheet();
+    }));
+    $$('[data-class]', root).forEach((b) => b.addEventListener('click', () => {
+      state.createClass = b.dataset.class; renderSheet();
+    }));
+    $$('[data-fam]', root).forEach((b) => b.addEventListener('click', () => {
+      const f = b.dataset.fam;
+      state.createBonuses = f ? [{ family: f, tier: 2 }] : [];
+      renderSheet();
+    }));
+    $$('[data-tier]', root).forEach((b) => b.addEventListener('click', () => {
+      if (state.createBonuses && state.createBonuses[0]) { state.createBonuses = [{ family: state.createBonuses[0].family, tier: Number(b.dataset.tier) }];
+        renderSheet();
+      }
+    }));
+    $$('[data-tag]', root).forEach((b) => b.addEventListener('click', () => {
+      const t = b.dataset.tag;
+      if (state.createTags.includes(t)) state.createTags = state.createTags.filter((x) => x !== t);
+      else state.createTags = [...state.createTags, t];
+      if (SYNERGY_VOCAB.has(t)) toast('Hard block: Synergy Type vocabulary (G-SET-033).', true);
+      renderSheet();
+    }));
+    $('#nm', root)?.addEventListener('input', (e) => {
+      state.createName = e.target.value;
+      const prev = root.querySelector('.auto-name-preview strong');
+      if (prev) prev.textContent = autoNamePreview();
+    });
+  }
+
+  function createNext() {
+    if (state.createStep === 0) { state.createStep = 1; renderSheet(); return; }
+    if (state.createStep === 1) {
+      if (state.createType !== 'Armor') {
+        hideSheet();
+        toast(`Thin ${state.createType} shell created (structure-only).`);
+        return;
+      }
+      if (!state.createClass) return;
+      state.createStep = 2; renderSheet(); return;
+    }
+    if (state.createStep === 2) { state.createStep = 3; renderSheet(); return; }
+    if (state.createTags.some((t) => SYNERGY_VOCAB.has(t))) return;
+    const id = 'new-' + Date.now();
+    const draft = {
+      id, type: 'Armor',
+      name: state.createName.trim() || autoNamePreview(),
+      class: state.createClass, pieces: 0,
+      cover: (state.createBonuses && state.createBonuses[0] ? state.createBonuses[0] : null)
+        ? { n: 0, t: (state.createBonuses && state.createBonuses[0] ? state.createBonuses[0] : null).tier, family: (state.createBonuses && state.createBonuses[0] ? state.createBonuses[0] : null).family, hard: true } : null,
+      usedBy: 0,
+      tags: state.createTags.filter((t) => !SYNERGY_VOCAB.has(t)),
+      bonuses: JSON.parse(JSON.stringify(state.createBonuses || [])),
+      slots: { helmet: null, arms: null, chest: null, legs: null, class: null },
+    };
+    SETS.unshift(draft);
+    state.boardDraft = draft;
+    state.sheet = 'board';
+    renderList();
+    renderSheet();
+  }
+
+  function renderBoardSheet(root) {
+    const d = state.boardDraft;
+    const agg = aggregateSlots(d.slots);
+    const bonuses = getBonuses(d);
+    const soft = !bonuses.length ? softDetectFamily(d.slots) : null;
+    const pinned = Object.values(d.slots || {}).filter(Boolean).length;
+    const goalsOk = goalsSatisfied(d.slots, bonuses);
+    const gateOk = pinned >= 2 && goalsOk;
+
+    root.innerHTML = `
+      <div class="sheet-bar">
+        <div style="flex:1">
+          <h2>${escapeHtml(d.name)}</h2>
+          <span class="crumb">${d.class} · layout A · base-roll only</span>
+        </div>
+        <button type="button" class="btn btn-sm" data-close>Close</button>
+      </div>
+      <div class="sheet-body">
+        <button type="button" class="btn btn-primary btn-lg btn-block" id="opt" ${state.auth !== 'in' ? 'disabled' : ''} style="margin-bottom:10px">Optimize…</button>
+        <div class="board-Σ">
+          <span class="Σ-label">Σ base · ${pinned}/5 owned pins</span>
+          <div class="stat-strip">
+            ${STATS.map((k, i) => `<span class="s"><span class="k">${k}</span><span class="v">${agg.totals[i]}</span></span>`).join('')}
+            <span class="total">${agg.sum}</span>
+          </div>
+        </div>
+        ${bonuses.length ? `
+          <div class="hard-band ${goalsOk ? 'ok' : ''}">
+            Goals · ${escapeHtml(bonusLabel(bonuses))}
+          </div>` : soft ? `
+          <div class="soft-band">Soft detect ${soft.n} · ${escapeHtml(soft.family.split(' ')[0])}</div>` : ''}
+        <div class="slot-rows">
+          ${SLOTS.map((slot) => {
+            const p = d.slots[slot.id];
+            return `
+              <div class="slot-row">
+                <span class="slot-label">${slot.label}</span>
+                <div class="slot-icon ${p?.exotic ? 'exotic' : ''}">${p ? slot.glyph : '·'}${p?.exotic ? '<span class="exo-seal"></span>' : ''}</div>
+                <div class="slot-name">
+                  ${p ? escapeHtml(p.name) : '<span class="ph">empty</span>'}
+                  ${p ? `<div class="strip">${p.base.join(' · ')} <span class="t">Σ${sumBase(p.base)}</span></div>` : ''}
+                </div>
+                <button type="button" class="btn btn-sm" data-pick="${slot.id}" ${state.auth !== 'in' ? 'disabled' : ''}>${p ? 'Chg' : 'Pick'}</button>
+              </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+          <button type="button" class="btn" data-stub="Deep link → Mod Set (no inline mod edit).">Mod Set…</button>
+          <span style="font-family:var(--font-m);font-size:10px;color:var(--muted-dim)">Energy/mods hidden if unknown · G-SET-050/051</span>
+        </div>
+      </div>
+      <div class="sheet-foot">
+        <button type="button" class="btn btn-danger" id="del">Delete…</button>
+        <span class="grow"></span>
+        <button type="button" class="btn btn-primary" id="save" ${gateOk ? '' : 'disabled'}>Save</button>
+      </div>`;
+
+    root.querySelector('[data-close]')?.addEventListener('click', hideSheet);
+    $('#opt', root)?.addEventListener('click', () => {
+      if (state.auth !== 'in') { toast('Sign-in + sync required', true); return; }
+      state.sheet = 'optimize';
+      renderSheet();
+    });
+    $$('[data-pick]', root).forEach((b) => b.addEventListener('click', () => {
+      if (state.auth !== 'in') { toast('Sign-in + sync required', true); return; }
+      state.pickSlot = b.dataset.pick;
+      state.sheet = 'compare';
+      renderSheet();
+    }));
+    $('#del', root)?.addEventListener('click', () => openDelete(d));
+    $('#save', root)?.addEventListener('click', () => {
+      if (!gateOk) return;
+      const idx = SETS.findIndex((x) => x.id === d.id);
+      const saved = JSON.parse(JSON.stringify(d));
+      saved.pieces = pinned;
+      if (idx >= 0) SETS[idx] = saved;
+      hideSheet();
+      renderList();
+      toast('Saved (structure mock).');
+    });
+    bindStubs(root);
+  }
+
+  function renderCompareSheet(root) {
+    const d = state.boardDraft;
+    const slot = state.pickSlot;
+    let rows = (OWNED[slot] || []).slice();
+    const _b = getBonuses(d); if (_b.length) rows = rows.filter((r) => pieceFitsBonuses(r, _b));
+    if (state.compareEmpty) rows = [];
+    const key = state.compareSort;
+    rows.sort((a, b) => {
+      if (key === 'total') return b.total - a.total;
+      if (key === 'power') return b.power - a.power;
+      const i = STATS.indexOf(key);
+      return i >= 0 ? b.base[i] - a.base[i] : b.total - a.total;
+    });
+
+    root.innerHTML = `
+      <div class="sheet-bar">
+        <div style="flex:1">
+          <h2>Pick · ${slot}</h2>
+          <span class="crumb">Owned compare · not Catalog embed</span>
+        </div>
+        <button type="button" class="btn btn-sm" id="backBoard">Back</button>
+      </div>
+      <div class="sheet-body">
+        <div class="sort-row">
+          ${['total', 'power', ...STATS].map((k) =>
+            `<button type="button" data-sort="${k}" aria-pressed="${state.compareSort === k}">${k === 'total' ? 'Σ' : k}</button>`).join('')}
+        </div>
+        ${bonuses.length ? `<div class="inline-info">Hard filter · goal families · exotic ok · ${escapeHtml(bonusLabel(bonuses))}</div>` : ''}
+        ${!rows.length ? `
+          <div class="empty">
+            <h3>No owned matches</h3>
+            <p>Wishlist / unowned pins out of Armor MVP.</p>
+          </div>` : rows.map((r) => `
+          <button type="button" class="compare-card" data-id="${r.id}">
+            <span class="ico ${r.exotic ? 'exotic' : ''}">${r.exotic ? '★' : '●'}</span>
+            <span>
+              <div class="nm">${escapeHtml(r.name)}</div>
+              <div class="sub">✧${r.power} · ${r.base.join(' · ')} · ${r.exotic ? 'exotic' : (r.family ? r.family.split(' ')[0] : '—')}</div>
+            </span>
+            <span class="tot">${r.total}</span>
+          </button>`).join('')}
+      </div>`;
+
+    $('#backBoard', root)?.addEventListener('click', () => {
+      state.sheet = 'board';
+      renderSheet();
+    });
+    $$('[data-sort]', root).forEach((b) => b.addEventListener('click', () => {
+      state.compareSort = b.dataset.sort;
+      renderSheet();
+    }));
+    $$('.compare-card', root).forEach((card) => card.addEventListener('click', () => {
+      const row = rows.find((r) => r.id === card.dataset.id);
+      if (!row) return;
+      const occupied = !!d.slots[slot];
+      if (occupied) {
+        state.confirmKind = 'replace-slot';
+        state.confirmPayload = row;
+        state.sheet = 'confirm';
+        renderSheet();
+        return;
+      }
+      applyPin(row);
+    }));
+  }
+
+  function applyPin(row) {
+    const slot = state.pickSlot;
+    state.boardDraft.slots[slot] = {
+      name: row.name, exotic: row.exotic, power: row.power,
+      base: row.base.slice(), family: row.family,
+    };
+    state.boardDraft.pieces = Object.values(state.boardDraft.slots).filter(Boolean).length;
+    state.sheet = 'board';
+    renderSheet();
+  }
+
+  function renderOptimizeSheet(root) {
+    const d = state.boardDraft;
+    const pinned = Object.values(d.slots || {}).filter(Boolean).length;
+    const proposal = {};
+    SLOTS.forEach((slot) => {
+      let cand = (OWNED[slot.id] || []).slice();
+      const _ob = getBonuses(d); if (_ob.length) cand = cand.filter((r) => pieceFitsBonuses(r, _ob));
+      cand.sort((a, b) => b.total - a.total);
+      proposal[slot.id] = cand[0] || null;
+    });
+
+    root.innerHTML = `
+      <div class="sheet-bar">
+        <div style="flex:1">
+          <h2>Optimize</h2>
+          <span class="crumb">Confirm-only · never silent apply</span>
+        </div>
+        <button type="button" class="btn btn-sm" id="backBoard">Back</button>
+      </div>
+      <div class="sheet-body">
+        <div class="opt-seed">
+          <span><span class="k">class</span> · ${d.class}</span>
+          <span><span class="k">exotic</span> · ${Object.values(d.slots).find((x) => x?.exotic)?.name || 'none'}</span>
+          <span><span class="k">bonus</span> · ${escapeHtml(bonusLabel(getBonuses(d)))}</span>
+        </div>
+        <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">Shares compare language with manual pick. Structure-only mobile — solver residual on desktop Capture.</p>
+        ${SLOTS.map((slot) => {
+          const r = proposal[slot.id];
+          if (!r) return `<div class="compare-card" style="opacity:.5"><span class="ico">·</span><span><div class="nm">${slot.label}</div><div class="sub">no candidate</div></span><span></span></div>`;
+          return `
+            <div class="compare-card">
+              <span class="ico ${r.exotic ? 'exotic' : ''}">${r.exotic ? '★' : '●'}</span>
+              <span>
+                <div class="nm">${slot.label} · ${escapeHtml(r.name)}</div>
+                <div class="sub">✧${r.power} · ${r.base.join(' · ')}</div>
+              </span>
+              <span class="tot">${r.total}</span>
+            </div>`;
+        }).join('')}
+      </div>
+      <div class="sheet-foot">
+        <button type="button" class="btn" id="backBoard2">Cancel</button>
+        <span class="grow"></span>
+        <button type="button" class="btn btn-primary" id="apply">${pinned >= 1 ? 'Replace all…' : 'Apply…'}</button>
+      </div>`;
+
+    const back = () => { state.sheet = 'board'; renderSheet(); };
+    $('#backBoard', root)?.addEventListener('click', back);
+    $('#backBoard2', root)?.addEventListener('click', back);
+    $('#apply', root)?.addEventListener('click', () => {
+      state.confirmKind = pinned >= 1 ? 'opt-replace-all' : 'opt-apply';
+      state.confirmPayload = proposal;
+      state.sheet = 'confirm';
+      renderSheet();
+    });
+  }
+
+  function applyOptimizer(proposal) {
+    SLOTS.forEach((slot) => {
+      const r = proposal[slot.id];
+      state.boardDraft.slots[slot.id] = r
+        ? { name: r.name, exotic: r.exotic, power: r.power, base: r.base.slice(), family: r.family }
+        : null;
+    });
+    state.boardDraft.pieces = Object.values(state.boardDraft.slots).filter(Boolean).length;
+    state.sheet = 'board';
+    toast('Optimizer applied (confirm).');
+    renderSheet();
+  }
+
+  function openDelete(s) {
+    if ((s.usedBy || 0) > 0) {
+      state.confirmKind = 'set-in-use';
+      state.confirmPayload = s;
+    } else {
+      state.confirmKind = 'delete';
+      state.confirmPayload = s;
+    }
+    state.sheet = 'confirm';
+    renderSheet();
+  }
+
+  function renderConfirmSheet(root) {
+    const kind = state.confirmKind;
+    const p = state.confirmPayload;
+    let title = 'Confirm';
+    let body = '';
+    let ok = 'Confirm';
+    let danger = false;
+
+    if (kind === 'set-in-use') {
+      title = 'SET_IN_USE';
+      body = `Cannot delete <strong>${escapeHtml(p.name)}</strong> — used by <strong>${p.usedBy}</strong> build(s). Detach first (G-SET-042).`;
+      ok = 'Understood';
+    } else if (kind === 'delete') {
+      title = 'Delete set?';
+      body = `Permanently delete <strong>${escapeHtml(p.name)}</strong>? Always confirm.`;
+      ok = 'Delete';
+      danger = true;
+    } else if (kind === 'replace-slot') {
+      title = 'Replace pin?';
+      body = `Replace current ${state.pickSlot} with <strong>${escapeHtml(p.name)}</strong>?`;
+      ok = 'Replace';
+    } else if (kind === 'opt-replace-all') {
+      title = 'Replace all pins?';
+      body = 'Optimizer will replace all existing pins. Confirm-only (G-SET-026).';
+      ok = 'Replace all';
+    } else if (kind === 'opt-apply') {
+      title = 'Apply proposal?';
+      body = 'Write proposed owned pins to this Armor Set?';
+      ok = 'Apply';
+    }
+
+    root.innerHTML = `
+      <div class="sheet-bar">
+        <h2>${title}</h2>
+        <button type="button" class="btn btn-sm" id="cancel">Cancel</button>
+      </div>
+      <div class="sheet-body"><p style="margin:0;line-height:1.45">${body}</p></div>
+      <div class="sheet-foot">
+        <button type="button" class="btn" id="cancel2">Cancel</button>
+        <span class="grow"></span>
+        <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="ok">${ok}</button>
+      </div>`;
+
+    const cancel = () => {
+      if (kind === 'set-in-use' || kind === 'delete') {
+        // return to board if we had draft
+        state.sheet = state.boardDraft?.type === 'Armor' ? 'board' : null;
+        if (!state.sheet) hideSheet();
+        else renderSheet();
+      } else {
+        state.sheet = kind?.startsWith('opt') ? 'optimize' : 'compare';
+        renderSheet();
+      }
+    };
+    $('#cancel', root)?.addEventListener('click', cancel);
+    $('#cancel2', root)?.addEventListener('click', cancel);
+    $('#ok', root)?.addEventListener('click', () => {
+      if (kind === 'set-in-use') { cancel(); return; }
+      if (kind === 'delete') {
+        const i = SETS.findIndex((x) => x.id === p.id);
+        if (i >= 0) SETS.splice(i, 1);
+        hideSheet();
+        renderList();
+        toast('Deleted.');
+        return;
+      }
+      if (kind === 'replace-slot') { applyPin(p); return; }
+      if (kind === 'opt-replace-all' || kind === 'opt-apply') {
+        applyOptimizer(p);
+      }
+    });
+  }
+
+  function renderThinSheet(root) {
+    const s = state.boardDraft;
+    root.innerHTML = `
+      <div class="sheet-bar">
+        <div style="flex:1">
+          <h2>${escapeHtml(s.name)}</h2>
+          <span class="crumb">${s.type} · thin detail</span>
+        </div>
+        <button type="button" class="btn btn-sm" data-close>Close</button>
+      </div>
+      <div class="sheet-body">
+        <div class="thin-note">
+          <strong>Other set type · MVP shell</strong>
+          Full Neon boards for Weapon / Mod / Pair / Fashion are out of Armor MVP. Structure-only mobile mirrors desktop shell.
+        </div>
+        <p style="margin:12px 0 0;font-family:var(--font-m);font-size:11px;color:var(--muted)">
+          pieces ${s.pieces} · used-by ${s.usedBy || 0} · tags ${(s.tags || []).join(', ') || '—'}
+        </p>
+      </div>
+      <div class="sheet-foot">
+        <button type="button" class="btn btn-danger" id="del">Delete…</button>
+        <span class="grow"></span>
+        <button type="button" class="btn" data-close>Close</button>
+      </div>`;
+    root.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', hideSheet));
+    $('#del', root)?.addEventListener('click', () => openDelete(s));
+  }
+
+  function bindStubs(root) {
+    $$('[data-stub]', root).forEach((el) => {
+      el.addEventListener('click', () => toast(el.dataset.stub || 'Stub'));
+    });
+  }
+
+  function setAuth(mode) {
+    state.auth = mode;
+    $('#authOut').setAttribute('aria-pressed', mode === 'out' ? 'true' : 'false');
+    $('#authIn').setAttribute('aria-pressed', mode !== 'out' ? 'true' : 'false');
+    renderList();
+  }
+
+  function openCreate() {
+    if (state.auth === 'out') {
+      toast('Sign in required (G-SET-041).', true);
+      return;
+    }
+    state.createStep = 0;
+    state.createType = 'Armor';
+    state.createClass = null;
+    state.createBonuses = [];
+    state.createName = '';
+    state.createTags = [];
+    state.sheet = 'create';
+    renderSheet();
+  }
+
+  function applyScenario(key) {
+    hideSheet();
+    state.loading = false;
+    state.forceNoMatches = false;
+    state.compareEmpty = false;
+
+    switch (key) {
+      case 'signed-out':
+        setAuth('out'); break;
+      case 'need-sync':
+        setAuth('need-sync'); break;
+      case 'loading':
+        setAuth('in');
+        state.loading = true;
+        renderList();
+        break;
+      case 'no-matches':
+        setAuth('in');
+        state.forceNoMatches = true;
+        state.search = 'zzzz';
+        $('#search').value = state.search;
+        renderList();
+        break;
+      case 'create':
+        setAuth('in');
+        renderList();
+        openCreate();
+        break;
+      case 'empty-board':
+        setAuth('in');
+        renderList();
+        openSet('a3');
+        break;
+      case 'filled-board':
+        setAuth('in');
+        renderList();
+        openSet('a1');
+        break;
+      case 'compare':
+        setAuth('in');
+        openSet('a3');
+        state.pickSlot = 'helmet';
+        state.sheet = 'compare';
+        renderSheet();
+        break;
+      case 'compare-empty':
+        setAuth('in');
+        state.compareEmpty = true;
+        openSet('a3');
+        state.pickSlot = 'helmet';
+        state.sheet = 'compare';
+        renderSheet();
+        break;
+      case 'optimize':
+        setAuth('in');
+        openSet('a2');
+        state.sheet = 'optimize';
+        renderSheet();
+        break;
+      case 'delete':
+        setAuth('in');
+        openSet('a3');
+        openDelete(SETS.find((s) => s.id === 'a3'));
+        break;
+      case 'set-in-use':
+        setAuth('in');
+        openSet('a1');
+        openDelete(SETS.find((s) => s.id === 'a1'));
+        break;
+      default:
+        setAuth('in');
+        state.facets = { type: { Armor: 'include' }, tag: {} };
+        $$('.chip[data-facet="type"]').forEach((c) => {
+          c.dataset.state = c.dataset.value === 'Armor' ? 'include' : 'off';
+        });
+        updateChips();
+        renderList();
+    }
+  }
+
+  $('#btnNew').addEventListener('click', openCreate);
+  $('#search').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    state.forceNoMatches = false;
+    updateChips();
+    renderList();
+  });
+  $$('.chip[data-facet]').forEach((c) => c.addEventListener('click', () => cycleFacet(c)));
+  $('#btnClear').addEventListener('click', clearFilters);
+  $('#scenario').addEventListener('change', (e) => applyScenario(e.target.value));
+  $('#authOut').addEventListener('click', () => setAuth('out'));
+  $('#authIn').addEventListener('click', () => setAuth('in'));
+  $$('.tab-bar .is-stub').forEach((b) => b.addEventListener('click', () => toast(b.dataset.stub || 'Stub')));
+
+  updateChips();
+  applyScenario('library');
+})();
+  </script>
+</body>
+</html>
