@@ -66,7 +66,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   String? _boundOptimizerSetId;
   SetDetailPresentation? _presentation;
   bool _enriching = false;
-  List<String> _setBonusFamilies = const [];
+  List<SetsBonusFamilyOption> _setBonusFamilies = const [];
   bool _setBonusFamiliesLoading = false;
   bool _setBonusFamiliesLoaded = false;
 
@@ -111,10 +111,10 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     if (_setBonusFamiliesLoading) return;
     setState(() => _setBonusFamiliesLoading = true);
     try {
-      final names = await loadArmorSetBonusFamilyNames(widget.services);
+      final families = await loadArmorSetBonusFamilies(widget.services);
       if (!mounted) return;
       setState(() {
-        _setBonusFamilies = names;
+        _setBonusFamilies = families;
         _setBonusFamiliesLoaded = true;
         _setBonusFamiliesLoading = false;
       });
@@ -281,7 +281,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               setType: draftType.wireName,
               guardianClass: draftClass,
               goals: draftGoals,
-              availableFamilies: _setBonusFamilies,
+              families: _setBonusFamilies,
               namePreview: preview,
               nameController: nameCtrl,
               onTypeChanged: (t) => setModal(() {

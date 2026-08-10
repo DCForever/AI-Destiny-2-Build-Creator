@@ -125,6 +125,36 @@ void main() {
       await tester.pump();
       expect(goals, isEmpty);
     });
+
+    testWidgets('family and selected chips expose EntityInfoHotspot', (tester) async {
+      final family = SetsBonusFamilyOption(
+        name: 'Bushido',
+        hash: 42,
+        twoPcName: 'Melee loop',
+        twoPcDescription: 'Increases melee damage after a kill.',
+        fourPcName: 'Combo finish',
+        fourPcDescription: 'Finishers grant ability energy.',
+      );
+      var goals = <SetsBonusGoalData>[
+        const SetsBonusGoalData(familyKey: 'Bushido', minPieces: 2),
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          SetsBonusGoalsEditor(
+            goals: goals,
+            families: [family],
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_bonus_family_info_Bushido')), findsOneWidget);
+      expect(
+        find.byKey(const Key('sets_bonus_selected_info_Bushido_2')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('sets_bonus_goal_2pc_Bushido')), findsOneWidget);
+      // Subtitle shows 2pc description snippet in list.
+      expect(find.textContaining('Increases melee damage'), findsOneWidget);
+    });
   });
 
   group('Empty board', () {

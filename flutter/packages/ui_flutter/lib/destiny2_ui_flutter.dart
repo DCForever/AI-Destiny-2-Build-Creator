@@ -43,6 +43,7 @@ export 'src/neon_segmented.dart';
 export 'src/sets/sets_models.dart';
 export 'src/sets/sets_honesty_empty.dart';
 export 'src/sets/sets_tag_multi_select.dart';
+export 'src/sets/sets_bonus_family_info.dart';
 export 'src/sets/sets_bonus_goals_editor.dart';
 export 'src/sets/sets_armor_library_row.dart';
 export 'src/sets/sets_coverage_band.dart';

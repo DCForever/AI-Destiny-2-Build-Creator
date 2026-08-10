@@ -113,13 +113,51 @@ _RawItemSet? _parseItemSet(Object? v) {
 
 /// Family display names from a raw set-bonus table (picker without entity store).
 List<String> setBonusFamilyNamesFromRawTable(RawTable setTable) {
-  final names = <String>{};
+  return setBonusCatalogFromRawTables(setTable, const {})
+      .map((r) => r.name)
+      .toList();
+}
+
+/// Full set-bonus catalog from raw tables (includes 2pc/4pc perk names + descriptions).
+List<SetBonusCatalogRecord> setBonusCatalogFromRawTables(
+  RawTable setTable,
+  RawTable sandboxPerks,
+) {
+  final result = <SetBonusCatalogRecord>[];
   for (final v in setTable.values) {
     final set = _parseItemSet(v);
     if (set == null || set.redacted) continue;
     final name = set.displayProperties.name.trim();
-    if (name.isNotEmpty) names.add(name);
+    if (name.isEmpty) continue;
+
+    final perks = <SetBonusCatalogPerk>[];
+    for (final p in set.setPerks) {
+      final sp = getRaw(sandboxPerks, p.sandboxPerkHash);
+      Object? dpRaw;
+      if (sp is Map) {
+        dpRaw = Map<String, dynamic>.from(sp)['displayProperties'];
+      }
+      final spDp = RawDisplayProperties.from(dpRaw);
+      perks.add(
+        SetBonusCatalogPerk(
+          requiredCount: p.requiredSetCount,
+          name: spDp?.name ?? '',
+          description: spDp?.description ?? '',
+        ),
+      );
+    }
+
+    result.add(
+      SetBonusCatalogRecord(
+        hash: set.hash,
+        name: name,
+        searchName: normalizeName(name),
+        icon: set.displayProperties.icon,
+        perks: perks,
+        itemHashes: set.setItems,
+      ),
+    );
   }
-  final list = names.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-  return list;
+  result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  return result;
 }

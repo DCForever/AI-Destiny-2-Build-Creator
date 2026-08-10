@@ -15,6 +15,7 @@ class SetsCreateWizard extends StatelessWidget {
     required this.setType,
     this.guardianClass,
     this.goals = const [],
+    this.families = const [],
     this.availableFamilies = const [],
     this.namePreview = '',
     this.nameController,
@@ -30,6 +31,11 @@ class SetsCreateWizard extends StatelessWidget {
   final String setType;
   final String? guardianClass;
   final List<SetsBonusGoalData> goals;
+
+  /// Full set-bonus catalog (name + perk descriptions) for goals editor.
+  final List<SetsBonusFamilyOption> families;
+
+  /// Name-only fallback when [families] is empty (tests).
   final List<String> availableFamilies;
   final String namePreview;
   final TextEditingController? nameController;
@@ -121,6 +127,7 @@ class SetsCreateWizard extends StatelessWidget {
             const SizedBox(height: kSpace16),
             SetsBonusGoalsEditor(
               goals: goals,
+              families: families,
               availableFamilies: availableFamilies,
               onChanged: onGoalsChanged,
               isLegalCombo: isLegalCombo,

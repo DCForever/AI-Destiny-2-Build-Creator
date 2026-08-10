@@ -1,13 +1,16 @@
 import 'package:destiny2_manifest/destiny2_manifest.dart';
+import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 
 import '../host_bootstrap.dart';
 
-/// Load armor set-bonus family display names for Sets create / goals (G-SET-013).
+/// Load armor set-bonus families (name + 2pc/4pc perk text) for Sets goals UI.
 ///
-/// Prefers entity store `set-bonuses` after manifest rebuild; falls back to a
-/// raw `DestinyEquipableItemSetDefinition` read so the picker works before a
-/// full re-extract when tables are already on disk.
-Future<List<String>> loadArmorSetBonusFamilyNames(AppServices services) async {
+/// Prefers entity store `set-bonuses`; falls back to raw
+/// `DestinyEquipableItemSetDefinition` + sandbox perks so descriptions work
+/// even before a full entity rebuild.
+Future<List<SetsBonusFamilyOption>> loadArmorSetBonusFamilies(
+  AppServices services,
+) async {
   final refresh = services.manifestRefresh;
   if (refresh is! WindowsManifestRefresh) {
     return const [];
@@ -18,7 +21,7 @@ Future<List<String>> loadArmorSetBonusFamilyNames(AppServices services) async {
     return const [];
   }
 
-  // 1) Entity cache store (after Settings refresh that rebuilds extractors).
+  // 1) Entity cache store.
   try {
     final cache = FileEntityCache(
       storageRoot: services.storageRoot,
@@ -26,26 +29,84 @@ Future<List<String>> loadArmorSetBonusFamilyNames(AppServices services) async {
     );
     final rows =
         await cache.getStore<SetBonusCatalogRecord>(MvpStoreName.setBonuses);
-    final names = <String>{
-      for (final r in rows)
-        if (r.name.trim().isNotEmpty) r.name.trim(),
-    };
-    if (names.isNotEmpty) {
-      return names.toList()
-        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    }
+    final mapped = _mapCatalog(rows);
+    if (mapped.isNotEmpty) return mapped;
   } catch (_) {
-    // Store missing or stale — try raw table.
+    // Store missing or stale — try raw tables.
   }
 
-  // 2) Raw table (no rebuild required if manifest tables already downloaded).
+  // 2) Raw tables (names + perk descriptions from sandbox perks).
   try {
-    final table = await refresh.service.loadRawTable(
+    final setTable = await refresh.service.loadRawTable(
       version,
       'DestinyEquipableItemSetDefinition',
     );
-    return setBonusFamilyNamesFromRawTable(table);
+    final sandbox = await refresh.service.loadRawTable(
+      version,
+      'DestinySandboxPerkDefinition',
+    );
+    return _mapCatalog(setBonusCatalogFromRawTables(setTable, sandbox));
   } catch (_) {
     return const [];
   }
+}
+
+/// @nodoc — kept for call sites that only need names.
+Future<List<String>> loadArmorSetBonusFamilyNames(AppServices services) async {
+  final families = await loadArmorSetBonusFamilies(services);
+  return [for (final f in families) f.name];
+}
+
+List<SetsBonusFamilyOption> _mapCatalog(List<SetBonusCatalogRecord> rows) {
+  final out = <SetsBonusFamilyOption>[];
+  for (final r in rows) {
+    if (r.name.trim().isEmpty) continue;
+    String twoName = '';
+    String twoDesc = '';
+    String fourName = '';
+    String fourDesc = '';
+    for (final p in r.perks) {
+      if (p.requiredCount <= 2 && twoName.isEmpty && twoDesc.isEmpty) {
+        twoName = p.name;
+        twoDesc = p.description;
+      } else if (p.requiredCount >= 3 && p.requiredCount <= 4) {
+        fourName = p.name;
+        fourDesc = p.description;
+      } else if (p.requiredCount > 4 && fourName.isEmpty) {
+        // Prefer 4pc when multiple thresholds; keep higher as 4pc label if no 4.
+        fourName = p.name;
+        fourDesc = p.description;
+      }
+    }
+    // If only one perk tier, map by requiredCount more carefully.
+    if (twoName.isEmpty && twoDesc.isEmpty) {
+      for (final p in r.perks) {
+        if (p.requiredCount == 2) {
+          twoName = p.name;
+          twoDesc = p.description;
+        }
+      }
+    }
+    if (fourName.isEmpty && fourDesc.isEmpty) {
+      for (final p in r.perks) {
+        if (p.requiredCount == 4) {
+          fourName = p.name;
+          fourDesc = p.description;
+        }
+      }
+    }
+    out.add(
+      SetsBonusFamilyOption(
+        name: r.name.trim(),
+        hash: r.hash,
+        iconPath: r.icon,
+        twoPcName: twoName,
+        twoPcDescription: twoDesc,
+        fourPcName: fourName,
+        fourPcDescription: fourDesc,
+      ),
+    );
+  }
+  out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  return out;
 }

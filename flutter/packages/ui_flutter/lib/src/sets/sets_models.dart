@@ -66,6 +66,40 @@ class SetsBonusGoalData {
       '${familyLabel ?? familyKey} · ${minPieces}pc';
 }
 
+/// One catalog set-bonus family for the goals picker (name + 2pc/4pc perk text).
+///
+/// Host maps [SetBonusCatalogRecord] / raw extract. Description fields may be
+/// empty when data is missing — UI uses honest empty (never invent).
+class SetsBonusFamilyOption {
+  const SetsBonusFamilyOption({
+    required this.name,
+    this.hash,
+    this.iconPath,
+    this.twoPcName = '',
+    this.twoPcDescription = '',
+    this.fourPcName = '',
+    this.fourPcDescription = '',
+  });
+
+  /// Name-only fixture (tests / offline) — no perk body.
+  factory SetsBonusFamilyOption.nameOnly(String name) =>
+      SetsBonusFamilyOption(name: name);
+
+  final String name;
+  final int? hash;
+  final String? iconPath;
+  final String twoPcName;
+  final String twoPcDescription;
+  final String fourPcName;
+  final String fourPcDescription;
+
+  bool get hasAnyDescription =>
+      twoPcDescription.trim().isNotEmpty ||
+      fourPcDescription.trim().isNotEmpty ||
+      twoPcName.trim().isNotEmpty ||
+      fourPcName.trim().isNotEmpty;
+}
+
 /// One board slot row (layout A).
 class SetsArmorSlotData {
   const SetsArmorSlotData({

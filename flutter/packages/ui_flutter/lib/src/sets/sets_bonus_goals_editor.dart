@@ -1,19 +1,23 @@
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../catalog/entity_info_hotspot.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
+import 'sets_bonus_family_info.dart';
 import 'sets_models.dart';
 
 /// G-SET-013 bonus goals editor: none · 1×2pc · 2×2pc · 1×4pc.
 ///
-/// Browse **all** [availableFamilies] via search + per-family 2pc/4pc controls.
-/// [isLegalCombo] is provided by the host (domain pure helper).
+/// Browse **all** families via search + per-family 2pc/4pc. Hover/focus the
+/// name or selected chips for [EntityInfoHotspot] perk descriptions (same
+/// Catalog entity-info popup stack).
 class SetsBonusGoalsEditor extends StatefulWidget {
   const SetsBonusGoalsEditor({
     super.key,
     required this.goals,
-    required this.availableFamilies,
+    this.families = const [],
+    @Deprecated('Use families (SetsBonusFamilyOption)') this.availableFamilies = const [],
     this.onChanged,
     this.isLegalCombo,
     this.enabled = true,
@@ -22,16 +26,25 @@ class SetsBonusGoalsEditor extends StatefulWidget {
   });
 
   final List<SetsBonusGoalData> goals;
-  final List<String> availableFamilies;
-  final ValueChanged<List<SetsBonusGoalData>>? onChanged;
 
-  /// Return false to reject illegal multi-goal combos.
+  /// Full catalog options (name + 2pc/4pc perk text). Preferred.
+  final List<SetsBonusFamilyOption> families;
+
+  /// Name-only fallback for tests / legacy call sites.
+  final List<String> availableFamilies;
+
+  final ValueChanged<List<SetsBonusGoalData>>? onChanged;
   final bool Function(List<SetsBonusGoalData> next)? isLegalCombo;
   final bool enabled;
   final bool loading;
-
-  /// Shown when [availableFamilies] is empty and not [loading].
   final String? emptyMessage;
+
+  List<SetsBonusFamilyOption> get resolvedFamilies {
+    if (families.isNotEmpty) return families;
+    return [
+      for (final n in availableFamilies) SetsBonusFamilyOption.nameOnly(n),
+    ];
+  }
 
   @override
   State<SetsBonusGoalsEditor> createState() => _SetsBonusGoalsEditorState();
@@ -61,12 +74,18 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
     return null;
   }
 
+  SetsBonusFamilyOption? _optionFor(String familyKey) {
+    for (final f in widget.resolvedFamilies) {
+      if (f.name == familyKey) return f;
+    }
+    return SetsBonusFamilyOption.nameOnly(familyKey);
+  }
+
   void _selectNone() => _emit(const []);
 
   void _selectTier(String family, int tier) {
     final current = _tierFor(family);
     if (current == tier) {
-      // Toggle off this family.
       final next = [
         for (final g in widget.goals)
           if (g.familyKey != family) g,
@@ -86,7 +105,6 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
       return;
     }
 
-    // 2pc selection.
     final others = [
       for (final g in widget.goals)
         if (g.familyKey != family) g,
@@ -112,19 +130,52 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
     ]);
   }
 
-  List<String> get _filtered {
+  List<SetsBonusFamilyOption> get _filtered {
+    final all = widget.resolvedFamilies;
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return widget.availableFamilies;
+    if (q.isEmpty) return all;
     return [
-      for (final f in widget.availableFamilies)
-        if (f.toLowerCase().contains(q)) f,
+      for (final f in all)
+        if (f.name.toLowerCase().contains(q) ||
+            f.twoPcName.toLowerCase().contains(q) ||
+            f.fourPcName.toLowerCase().contains(q) ||
+            f.twoPcDescription.toLowerCase().contains(q) ||
+            f.fourPcDescription.toLowerCase().contains(q))
+          f,
     ];
+  }
+
+  Widget _tierChip({
+    required SetsBonusFamilyOption family,
+    required int tier,
+    required bool selected,
+  }) {
+    final label = tier == 2 ? '2pc' : '4pc';
+    // Key on hotspot so tests/taps hit the interactive layer (not IgnorePointer chip).
+    return EntityInfoHotspot(
+      key: Key('sets_bonus_goal_${tier}pc_${family.name}'),
+      data: entityInfoForSetBonusTier(family, tier),
+      enabled: widget.enabled,
+      onPrimary: !widget.enabled ? null : () => _selectTier(family.name, tier),
+      child: IgnorePointer(
+        child: FilterChip(
+          key: Key('sets_bonus_info_${tier}pc_${family.name}'),
+          label: Text(label),
+          selected: selected,
+          // Visual only — hotspot owns hover/info + primary select.
+          onSelected: (_) {},
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
     final families = _filtered;
+    final all = widget.resolvedFamilies;
     final emptyMsg = widget.emptyMessage ??
         'No set bonuses loaded. Refresh the Destiny manifest in Settings, then reopen Create.';
 
@@ -142,13 +193,15 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
         ),
         const SizedBox(height: kSpace4),
         Text(
-          'None · one 2pc · two 2pc (different families) · one 4pc. Search the full catalog.',
+          'None · one 2pc · two 2pc (different families) · one 4pc. '
+          'Hover a name or chip for perk details (info popup).',
           style: neonBody(color: palette.muted, fontSize: 11),
         ),
         const SizedBox(height: kSpace8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             ChoiceChip(
               key: const Key('sets_bonus_goal_none'),
@@ -158,20 +211,33 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
             ),
             if (widget.goals.isNotEmpty)
               for (final g in widget.goals)
-                Chip(
-                  key: Key('sets_bonus_goal_active_${g.familyKey}_${g.minPieces}'),
-                  label: Text(g.display),
-                  onDeleted: !widget.enabled
-                      ? null
-                      : () {
-                          final next = [
-                            for (final x in widget.goals)
-                              if (!(x.familyKey == g.familyKey &&
-                                  x.minPieces == g.minPieces))
-                                x,
-                          ];
-                          _emit(next);
-                        },
+                EntityInfoHotspot(
+                  key: Key(
+                    'sets_bonus_selected_info_${g.familyKey}_${g.minPieces}',
+                  ),
+                  data: entityInfoForSetBonusTier(
+                    _optionFor(g.familyKey)!,
+                    g.minPieces,
+                  ),
+                  enabled: true,
+                  child: InputChip(
+                    key: Key(
+                      'sets_bonus_goal_active_${g.familyKey}_${g.minPieces}',
+                    ),
+                    label: Text(g.display),
+                    avatar: const Icon(Icons.info_outline, size: 16),
+                    onDeleted: !widget.enabled
+                        ? null
+                        : () {
+                            final next = [
+                              for (final x in widget.goals)
+                                if (!(x.familyKey == g.familyKey &&
+                                    x.minPieces == g.minPieces))
+                                  x,
+                            ];
+                            _emit(next);
+                          },
+                  ),
                 ),
           ],
         ),
@@ -198,7 +264,7 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
               ),
             ),
           )
-        else if (widget.availableFamilies.isEmpty)
+        else if (all.isEmpty)
           Padding(
             padding: const EdgeInsets.all(kSpace12),
             child: Text(
@@ -209,7 +275,7 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
           )
         else
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
+            constraints: const BoxConstraints(maxHeight: 320),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 border: Border.all(color: palette.line),
@@ -225,44 +291,65 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
                 ),
                 itemBuilder: (context, i) {
                   final family = families[i];
-                  final tier = _tierFor(family);
+                  final tier = _tierFor(family.name);
+                  final familyInfo = entityInfoForSetBonusFamily(family);
+                  final twoPreview = family.twoPcDescription.trim().isNotEmpty
+                      ? family.twoPcDescription.trim()
+                      : family.twoPcName.trim();
                   return ListTile(
-                    key: Key('sets_bonus_family_row_$family'),
+                    key: Key('sets_bonus_family_row_${family.name}'),
                     dense: true,
-                    title: Text(
-                      family,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: neonBody(
-                        color: palette.foreground,
-                        fontSize: 13,
+                    isThreeLine: twoPreview.isNotEmpty,
+                    title: EntityInfoHotspot(
+                      key: Key('sets_bonus_family_info_${family.name}'),
+                      data: familyInfo,
+                      enabled: true,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              family.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: neonBody(
+                                color: palette.foreground,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: palette.muted,
+                          ),
+                        ],
                       ),
                     ),
+                    subtitle: twoPreview.isEmpty
+                        ? null
+                        : Text(
+                            twoPreview,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: neonBody(
+                              color: palette.muted,
+                              fontSize: 11,
+                            ),
+                          ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        FilterChip(
-                          key: Key('sets_bonus_goal_2pc_$family'),
-                          label: const Text('2pc'),
+                        _tierChip(
+                          family: family,
+                          tier: 2,
                           selected: tier == 2,
-                          onSelected: !widget.enabled
-                              ? null
-                              : (_) => _selectTier(family, 2),
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
                         ),
                         const SizedBox(width: 6),
-                        FilterChip(
-                          key: Key('sets_bonus_goal_4pc_$family'),
-                          label: const Text('4pc'),
+                        _tierChip(
+                          family: family,
+                          tier: 4,
                           selected: tier == 4,
-                          onSelected: !widget.enabled
-                              ? null
-                              : (_) => _selectTier(family, 4),
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
                         ),
                       ],
                     ),
@@ -271,9 +358,7 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
               ),
             ),
           ),
-        if (_query.isNotEmpty &&
-            families.isEmpty &&
-            widget.availableFamilies.isNotEmpty)
+        if (_query.isNotEmpty && families.isEmpty && all.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: kSpace8),
             child: Text(
@@ -285,7 +370,7 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
         const SizedBox(height: kSpace8),
         Text(
           'Illegal combos are rejected (same family twice, 2pc+4pc, >2 goals). '
-          '${widget.availableFamilies.isEmpty ? '' : '${widget.availableFamilies.length} bonuses available.'}',
+          '${all.isEmpty ? '' : '${all.length} bonuses available. Hover for perk text.'}',
           key: const Key('sets_bonus_goals_hint'),
           style: neonBody(color: palette.muted, fontSize: 11),
         ),
