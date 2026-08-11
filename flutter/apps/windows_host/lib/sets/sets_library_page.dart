@@ -391,33 +391,260 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     setState(() => _statusMessage = 'Created ${cmd.name}');
 
     if (createdType == SetType.armor && setId != null) {
-      _lifecycle.openBoard(setId);
       if (!mounted) return;
-      await showSetsLifecycleModal<void>(
-        context: context,
-        title: 'Armor board',
-        width: 960,
-        height: 720,
-        child: SingleChildScrollView(
-          child: SetsArmorBoard(
-            slots: _emptyArmorBoardSlots(),
-            onOptimize: () {},
-            onPickSlot: (_) {},
-          ),
-        ),
-      );
+      await _openArmorBoardModal(setId);
     }
     _lifecycle.close();
   }
 
-  List<SetsArmorSlotData> _emptyArmorBoardSlots() {
+  List<SetsArmorSlotData> _armorBoardSlotsFromSelected() {
+    final sel = _controller.selected;
+    final bySlot = <String, SetItemRecord>{};
+    if (sel != null) {
+      for (final item in sel.activeItems) {
+        final wire = item.slot.contains(':')
+            ? item.slot.split(':').first
+            : item.slot;
+        bySlot.putIfAbsent(wire, () => item);
+      }
+    }
     return [
       for (var i = 0; i < kArmorBoardSlotWires.length; i++)
-        SetsArmorSlotData(
-          slotWire: kArmorBoardSlotWires[i],
-          slotLabel: kArmorBoardSlotLabels[i],
-        ),
+        () {
+          final wire = kArmorBoardSlotWires[i];
+          final item = bySlot[wire];
+          return SetsArmorSlotData(
+            slotWire: wire,
+            slotLabel: kArmorBoardSlotLabels[i],
+            itemName: item?.itemName,
+            instanceId: item?.instanceId,
+            isExotic: item != null
+                ? (_metaForHash(item.itemHash, item.itemName).isExotic == true)
+                : false,
+          );
+        }(),
     ];
+  }
+
+  /// Interactive armor board modal (Optimize + per-slot Pick).
+  Future<void> _openArmorBoardModal(String setId) async {
+    await _controller.selectSet(setId);
+    if (!mounted) return;
+    _lifecycle.openBoard(setId);
+    _optimizer.bindTargetSet(
+      setId: setId,
+      setName: _controller.selected?.set.name ?? setId,
+    );
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setModal) {
+            final slots = _armorBoardSlotsFromSelected();
+            return SetsLifecycleModal(
+              title: 'Armor board',
+              width: 960,
+              height: 720,
+              onClose: () => Navigator.of(dialogCtx).pop(),
+              child: SingleChildScrollView(
+                child: SetsArmorBoard(
+                  key: const Key('sets_armor_board_modal'),
+                  slots: slots,
+                  onOptimize: () async {
+                    await _openOptimizeFromBoard(dialogCtx);
+                    if (!dialogCtx.mounted) return;
+                    await _controller.refresh(keepSelection: true);
+                    if (dialogCtx.mounted) setModal(() {});
+                  },
+                  onPickSlot: (slot) async {
+                    await _fillSlot(slot);
+                    if (!dialogCtx.mounted) return;
+                    await _controller.refresh(keepSelection: true);
+                    if (dialogCtx.mounted) setModal(() {});
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    _lifecycle.close();
+  }
+
+  List<SetsOptimizeKitRowData> _kitsFromOptimizerCombinations() {
+    final combos = _optimizer.visibleCombinations;
+    return [
+      for (var i = 0; i < combos.length; i++)
+        () {
+          final c = combos[i];
+          final stats = <String, int>{
+            for (final e in c.estimatedStats.entries) e.key.wireName: e.value,
+          };
+          final total = stats.values.fold<int>(0, (a, b) => a + b);
+          final goals = c.setBonusSummary.isEmpty
+              ? '—'
+              : c.setBonusSummary
+                  .map((s) {
+                    final tier = s.active4pc
+                        ? '4pc'
+                        : (s.active2pc ? '2pc' : '${s.pieceCount}pc');
+                    return '${s.setBonusKey} $tier';
+                  })
+                  .join(' · ');
+          return SetsOptimizeKitRowData(
+            id: '$i',
+            total: total,
+            stats: stats,
+            slotNames: {
+              for (final p in c.pieces)
+                p.slot.wireName: (p.itemName?.trim().isNotEmpty == true)
+                    ? p.itemName!.trim()
+                    : '#${p.itemHash}',
+            },
+            goalsLabel: goals,
+          );
+        }(),
+    ];
+  }
+
+  Future<void> _openOptimizeFromBoard(BuildContext boardContext) async {
+    final sel = _controller.selected;
+    if (sel == null) return;
+
+    if (!widget.services.oauthSession.isSignedIn) {
+      if (mounted) {
+        setState(() {
+          _statusMessage =
+              'Sign in and sync inventory before Optimize (owned candidates only).';
+        });
+      }
+      // Still open shell with empty honesty so the button is never a no-op.
+    }
+
+    _optimizer.bindTargetSet(
+      setId: sel.set.id,
+      setName: sel.set.name,
+    );
+
+    var kits = <SetsOptimizeKitRowData>[];
+    String? selectedKitId;
+    var started = false;
+
+    await showDialog<void>(
+      context: boardContext,
+      barrierDismissible: false,
+      builder: (optCtx) {
+        return StatefulBuilder(
+          builder: (optCtx, setOpt) {
+            if (!started) {
+              started = true;
+              // Kick off kit search after first frame so shell shows "running".
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                await _optimizer.findKits();
+                if (!optCtx.mounted) return;
+                kits = _kitsFromOptimizerCombinations();
+                selectedKitId = kits.isNotEmpty ? kits.first.id : null;
+                setOpt(() {});
+              });
+            }
+
+            final constraints =
+                parseOptimizerConstraints(sel.set.optimizerConstraints);
+            final classLabel = constraints?.className != null
+                ? displayGuardianClass(constraints!.className!)
+                : null;
+            final bonusLabel = (constraints?.setBonusGoals.isNotEmpty ?? false)
+                ? constraints!.setBonusGoals
+                    .map((g) => '${g.setBonusKey} ${g.minPieces}pc')
+                    .join(' · ')
+                : null;
+
+            return SetsLifecycleModal(
+              title: 'Optimize',
+              width: 960,
+              height: 720,
+              onClose: () {
+                _optimizer.cancelPending();
+                Navigator.of(optCtx).pop();
+              },
+              child: ListenableBuilder(
+                listenable: _optimizer,
+                builder: (context, _) {
+                  // Keep kits in sync when findKits completes via listenable.
+                  if (!_optimizer.running &&
+                      kits.isEmpty &&
+                      _optimizer.combinations.isNotEmpty) {
+                    kits = _kitsFromOptimizerCombinations();
+                    selectedKitId ??= kits.isNotEmpty ? kits.first.id : null;
+                  }
+                  final emptyMsg = _optimizer.running
+                      ? 'Finding kits…'
+                      : (_optimizer.error ??
+                          (_optimizer.status?.isNotEmpty == true
+                              ? _optimizer.status
+                              : 'No kits found. Sync owned armor and try again.'));
+                  // Shell uses Expanded for kit matrix — must not wrap in ScrollView.
+                  return SetsOptimizeConfirmShell(
+                    key: const Key('sets_board_optimize_shell'),
+                    kits: [
+                      for (final k in kits)
+                        SetsOptimizeKitRowData(
+                          id: k.id,
+                          total: k.total,
+                          stats: k.stats,
+                          slotNames: k.slotNames,
+                          goalsLabel: k.goalsLabel,
+                          selected: k.id == selectedKitId,
+                        ),
+                    ],
+                    selectedKitId: selectedKitId,
+                    running: _optimizer.running,
+                    hasPins: sel.activeItems.isNotEmpty,
+                    classLabel: classLabel,
+                    bonusGoalsLabel: bonusLabel,
+                    emptyMessage: emptyMsg,
+                    onSelectKit: (id) => setOpt(() => selectedKitId = id),
+                    onCancel: () {
+                      _optimizer.cancelPending();
+                      Navigator.of(optCtx).pop();
+                    },
+                    onConfirmApply: selectedKitId == null ||
+                            _optimizer.running ||
+                            _optimizer.confirming
+                        ? null
+                        : () async {
+                            final idx = int.tryParse(selectedKitId!);
+                            if (idx == null) return;
+                            final stageErr =
+                                _optimizer.requestApplyInPlace(idx);
+                            if (stageErr != null) {
+                              if (mounted) {
+                                setState(() => _statusMessage = stageErr);
+                              }
+                              return;
+                            }
+                            final applyErr = await _optimizer.confirmPending();
+                            if (!optCtx.mounted) return;
+                            Navigator.of(optCtx).pop();
+                            await _controller.refresh(keepSelection: true);
+                            if (mounted) {
+                              setState(() {
+                                _statusMessage = applyErr ??
+                                    (_optimizer.status ?? 'Kit applied');
+                              });
+                            }
+                          },
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _saveName() async {
@@ -870,6 +1097,12 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                 onPressed: _saveName,
                 child: const Text('Save name'),
               ),
+              if (setType == SetType.armor)
+                FilledButton.tonal(
+                  key: const Key('sets_open_board'),
+                  onPressed: () => _openArmorBoardModal(sel.set.id),
+                  child: const Text('Open board…'),
+                ),
               OutlinedButton(
                 key: const Key('sets_delete_button'),
                 onPressed: _deleteSelected,
