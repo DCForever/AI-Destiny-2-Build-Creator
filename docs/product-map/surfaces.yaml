@@ -1691,7 +1691,11 @@ surfaces:
       - BR-TAG-004
       - BR-TAG-005
       - 001:SC-001
+      - G-SET-001
+      - G-SET-004
       - G-SET-013
+      - G-SET-033
+      - G-SET-040
       - DBR-SETB-003
       - BR-SET-050
     status: active
@@ -1700,7 +1704,7 @@ surfaces:
         path: /sets
         captureId: sets-create
       flutter-windows:
-        status: partial
+        status: done
         route: /sets
         captureId: sets-create
   - id: sets.create.name

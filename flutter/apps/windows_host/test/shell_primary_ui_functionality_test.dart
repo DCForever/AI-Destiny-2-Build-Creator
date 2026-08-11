@@ -587,25 +587,41 @@ void main() {
       await _pump(tester);
       await _selectNav(tester, Destiny2WindowsApp.setsNavIndex);
 
-      expect(find.byKey(const Key('sets_search')), findsOneWidget);
+      // Product search is sets_library_search; sets_search is Offstage compat alias.
+      expect(
+        find.byKey(const Key('sets_library_search')).evaluate().isNotEmpty ||
+            find
+                .byKey(const Key('sets_search'), skipOffstage: false)
+                .evaluate()
+                .isNotEmpty,
+        isTrue,
+      );
       expect(find.byKey(const Key('sets_type_filters')), findsOneWidget);
       expect(find.byKey(const Key('sets_type_chip_all')), findsOneWidget);
       expect(find.byKey(const Key('sets_list_empty')), findsOneWidget);
 
-      if (find.byKey(const Key('sets_create_button')).evaluate().isEmpty) {
-        await tester.tap(find.byKey(const Key('sets_create_toggle')));
-        await _pump(tester);
-      }
-      expect(find.byKey(const Key('sets_create_button')), findsOneWidget);
-      expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
+      // Product path: New set stepped wizard (no Quick create rail).
+      expect(find.byKey(const Key('sets_create_toggle')), findsNothing);
+      await tester.tap(find.byKey(const Key('sets_library_new')));
+      await _pump(tester);
+      expect(find.byKey(const Key('sets_create_wizard')), findsOneWidget);
       expect(find.byKey(const Key('sets_create_type')), findsOneWidget);
 
+      await tester.tap(find.byKey(const Key('sets_create_type_weapon')));
+      await _pump(tester);
+      await tester.tap(find.byKey(const Key('sets_create_continue')));
+      await _pump(tester);
+
+      expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('sets_create_name')),
         'Shell Kinetic Set',
       );
       await tester.tap(find.byKey(const Key('sets_create_button')));
-      await _pump(tester);
+      // Dialog route + async create — pump frames (avoid pumpAndSettle infinite anim).
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
 
       expect(find.byKey(const Key('sets_list')), findsOneWidget);
       expect(find.text('Shell Kinetic Set'), findsWidgets);

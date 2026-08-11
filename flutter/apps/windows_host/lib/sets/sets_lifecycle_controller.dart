@@ -9,7 +9,8 @@ import 'package:flutter/foundation.dart';
 class SetsLifecycleController extends ChangeNotifier {
   SetsLifecyclePhase phase = SetsLifecyclePhase.closed;
 
-  // Create wizard draft
+  // Create wizard draft + step machine
+  int createStep = 0;
   SetType createType = SetType.armor;
   GuardianClass? createClass;
   List<SetBonusCoverageGoal> createGoals = const [];
@@ -29,6 +30,33 @@ class SetsLifecycleController extends ChangeNotifier {
     return createClass != null;
   }
 
+  /// Max step index (inclusive): Armor 3 (Type→Class→Bonus→Name); else 1.
+  int get createMaxStep =>
+      createType == SetType.armor ? 3 : 1;
+
+  bool get isCreateFinalStep => createStep >= createMaxStep;
+
+  bool get canContinueCreate {
+    if (createStep == 0) {
+      // Type always selected on open (default Armor); empty wire blocks.
+      return createType.wireName.isNotEmpty;
+    }
+    if (createType == SetType.armor && createStep == 1) {
+      return createClass != null;
+    }
+    // Bonus optional; Name optional; non-Armor name always allowed.
+    return true;
+  }
+
+  String get createStepLabel {
+    final labels = setsCreateStepLabelsForType(createType.wireName);
+    final i = createStep.clamp(0, labels.length - 1);
+    return labels[i];
+  }
+
+  String get createCrumb =>
+      setsCreateCrumb(setType: createType.wireName, step: createStep);
+
   String get namePreview {
     if (createType != SetType.armor || createClass == null) {
       return createName.trim();
@@ -43,6 +71,7 @@ class SetsLifecycleController extends ChangeNotifier {
 
   void openCreate() {
     phase = SetsLifecyclePhase.create;
+    createStep = 0;
     createType = SetType.armor;
     createClass = null;
     createGoals = const [];
@@ -95,6 +124,7 @@ class SetsLifecycleController extends ChangeNotifier {
     if (type != SetType.armor) {
       createClass = null;
       createGoals = const [];
+      if (createStep > createMaxStep) createStep = createMaxStep;
     }
     notifyListeners();
   }
@@ -115,6 +145,23 @@ class SetsLifecycleController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCreateTags(List<String> tags) {
+    createTags = List.unmodifiable(tags);
+    notifyListeners();
+  }
+
+  void continueCreate() {
+    if (!canContinueCreate || isCreateFinalStep) return;
+    createStep += 1;
+    notifyListeners();
+  }
+
+  void backCreate() {
+    if (createStep <= 0) return;
+    createStep -= 1;
+    notifyListeners();
+  }
+
   void selectKit(String id) {
     selectedKitId = id;
     notifyListeners();
@@ -132,7 +179,9 @@ class SetsLifecycleController extends ChangeNotifier {
             preferredName: createName,
             existingNames: existingNames,
           )
-        : (createName.trim().isEmpty ? 'New ${createType.wireName} set' : createName.trim());
+        : (createName.trim().isEmpty
+            ? 'New ${createType.wireName} set'
+            : createName.trim());
     return CreateSetCommand(
       name: name,
       type: createType,

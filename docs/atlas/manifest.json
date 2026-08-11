@@ -1522,7 +1522,11 @@
                 "BR-SET-002",
                 "BR-TAG-004",
                 "001:SC-001",
+                "G-SET-001",
+                "G-SET-004",
                 "G-SET-013",
+                "G-SET-033",
+                "G-SET-040",
                 "DBR-SETB-003"
               ],
               "children": [
@@ -1542,7 +1546,11 @@
                   "rules": [
                     "BR-TAG-002",
                     "BR-TAG-005",
-                    "G-SET-013"
+                    "G-SET-001",
+                    "G-SET-004",
+                    "G-SET-013",
+                    "G-SET-033",
+                    "G-SET-040"
                   ]
                 },
                 {
@@ -1552,7 +1560,8 @@
                   "surfaceId": "sets.detail",
                   "screenId": "sets-detail",
                   "rules": [
-                    "G-SET-001"
+                    "G-SET-001",
+                    "G-SET-040"
                   ]
                 },
                 {
@@ -3135,7 +3144,11 @@
             "BR-SET-002",
             "BR-TAG-004",
             "001:SC-001",
+            "G-SET-001",
+            "G-SET-004",
             "G-SET-013",
+            "G-SET-033",
+            "G-SET-040",
             "DBR-SETB-003"
           ],
           "children": [
@@ -3155,7 +3168,11 @@
               "rules": [
                 "BR-TAG-002",
                 "BR-TAG-005",
-                "G-SET-013"
+                "G-SET-001",
+                "G-SET-004",
+                "G-SET-013",
+                "G-SET-033",
+                "G-SET-040"
               ]
             },
             {
@@ -3165,7 +3182,8 @@
               "surfaceId": "sets.detail",
               "screenId": "sets-detail",
               "rules": [
-                "G-SET-001"
+                "G-SET-001",
+                "G-SET-040"
               ]
             },
             {
@@ -3310,7 +3328,11 @@
           "rules": [
             "BR-TAG-002",
             "BR-TAG-005",
-            "G-SET-013"
+            "G-SET-001",
+            "G-SET-004",
+            "G-SET-013",
+            "G-SET-033",
+            "G-SET-040"
           ]
         },
         {
@@ -3320,7 +3342,8 @@
           "surfaceId": "sets.detail",
           "screenId": "sets-detail",
           "rules": [
-            "G-SET-001"
+            "G-SET-001",
+            "G-SET-040"
           ]
         },
         {
@@ -3351,7 +3374,11 @@
         "BR-SET-002",
         "BR-TAG-004",
         "001:SC-001",
+        "G-SET-001",
+        "G-SET-004",
         "G-SET-013",
+        "G-SET-033",
+        "G-SET-040",
         "DBR-SETB-003"
       ]
     },

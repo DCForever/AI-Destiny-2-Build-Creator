@@ -826,10 +826,35 @@ final directories = <_widgetbook.WidgetbookNode>[
             name: 'SetsCreateWizard',
             useCases: [
               _widgetbook.WidgetbookUseCase(
+                name: 'Create step Type',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepType,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Class',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepClass,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Bonus',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepBonus,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Name',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepName,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create non-Armor thin',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateNonArmorThin,
+              ),
+              _widgetbook.WidgetbookUseCase(
                 name: 'Create Type+Class lock',
                 builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
                     .setsCreateLock,
-              )
+              ),
             ],
           ),
           _widgetbook.WidgetbookComponent(

@@ -5,10 +5,12 @@ import 'package:flutter_driver/driver_extension.dart';
 import 'sets/sets_armor_capture_fixtures.dart';
 import 'theme/flap_theme.dart';
 
-/// Sets Armor dual-truth Capture entrypoint (`drive: host-fixture`).
+/// Sets Armor + Create wizard dual-truth Capture entrypoint (`drive: host-fixture`).
 ///
 /// Scenario rail keys: `capture_scenario_<matrix-id>` — tap then screenshot.
-/// Writes under `docs/ux-redesign/sets/implementation-shots/001-armor/`.
+/// Writes under:
+/// - `docs/ux-redesign/sets/implementation-shots/001-armor/`
+/// - `docs/ux-redesign/sets/implementation-shots/002-create-wizard/`
 ///
 /// ```text
 /// flutter run -d windows -t lib/main_sets_armor_capture.dart
@@ -133,23 +135,79 @@ class _SetsArmorCaptureHomeState extends State<SetsArmorCaptureHome> {
               'Sign in to manage owned armor sets. Owned scope never invents inventory.',
         );
       case 'desktop-create-type-class':
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520, maxHeight: 640),
-            child: Material(
-              color: FlapPalette.of(context).surface,
-              child: const Padding(
-                padding: EdgeInsets.all(16),
-                // Type locked to armor, class null → pieces hidden.
-                child: SetsCreateWizard(
-                  setType: 'armor',
-                  guardianClass: null,
-                  availableFamilies: ['TechSec', 'Twofer'],
-                  namePreview: '',
-                ),
-              ),
+        // Legacy 001 id: step 0 type chrome (pieces hidden sentinel).
+        return _createStepShell(
+          context,
+          step: 0,
+          setType: 'armor',
+          guardianClass: null,
+        );
+      case 'desktop-create-step-type':
+        return _createStepShell(
+          context,
+          step: 0,
+          setType: 'armor',
+          guardianClass: null,
+        );
+      case 'desktop-create-step-class':
+        return _createStepShell(
+          context,
+          step: 1,
+          setType: 'armor',
+          guardianClass: null,
+        );
+      case 'desktop-create-step-bonus':
+        return _createStepShell(
+          context,
+          step: 2,
+          setType: 'armor',
+          guardianClass: 'Titan',
+          families: const [
+            SetsBonusFamilyOption(
+              name: 'TechSec',
+              twoPcDescription: 'Weapon damage after ability kill.',
+              fourPcDescription: 'Ability energy on orb pickup.',
             ),
+            SetsBonusFamilyOption(
+              name: 'Twofer',
+              twoPcDescription: 'Reload speed after kill.',
+            ),
+          ],
+        );
+      case 'desktop-create-step-name':
+        return _createStepShell(
+          context,
+          step: 3,
+          setType: 'armor',
+          guardianClass: 'Titan',
+          namePreview: 'Titan · — · —',
+        );
+      case 'desktop-create-post-board':
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: SetsArmorBoard(
+            slots: fixtureEmptyBoardSlots(),
+            onOptimize: () {},
+            onPickSlot: (_) {},
           ),
+        );
+      case 'desktop-create-no-quick-create':
+        // Library New only — no Quick create rail chrome.
+        return SetsLibraryWorkspace(
+          rows: fixtureLibraryArmorRows(),
+          onNewSet: () {},
+          onSelectRow: (_) {},
+          detail: const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Product path: New set opens stepped wizard (no Quick create).'),
+          ),
+        );
+      case 'desktop-create-non-armor-thin':
+        return _createStepShell(
+          context,
+          step: 1,
+          setType: 'weapon',
+          guardianClass: null,
         );
       case 'desktop-empty-board':
         return SingleChildScrollView(
@@ -250,5 +308,77 @@ class _SetsArmorCaptureHomeState extends State<SetsArmorCaptureHome> {
       default:
         return Center(child: Text('Unknown scenario: $_scenario'));
     }
+  }
+
+  /// Create wizard step shell for Capture (modal-like chrome + one step).
+  ///
+  /// Not a [Dialog] — host-fixture body must stay in-tree for Driver shots.
+  Widget _createStepShell(
+    BuildContext context, {
+    required int step,
+    required String setType,
+    String? guardianClass,
+    String namePreview = '',
+    List<SetsBonusFamilyOption> families = const [],
+  }) {
+    final palette = FlapPalette.of(context);
+    final maxStep = setsCreateMaxStep(setType);
+    final isFinal = step >= maxStep;
+    final canContinue = setType == 'armor' && step == 1
+        ? guardianClass != null && guardianClass.isNotEmpty
+        : setType.isNotEmpty;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 640),
+        child: Material(
+          key: const Key('sets_lifecycle_modal'),
+          color: palette.surface,
+          elevation: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                child: Text(
+                  setsCreateCrumb(setType: setType, step: step),
+                  key: const Key('sets_lifecycle_modal_title'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              Divider(height: 1, color: palette.line),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SetsCreateWizard(
+                    step: step,
+                    setType: setType,
+                    guardianClass: guardianClass,
+                    families: families,
+                    availableFamilies: families.isEmpty
+                        ? const ['TechSec', 'Twofer']
+                        : const [],
+                    namePreview: namePreview,
+                  ),
+                ),
+              ),
+              Divider(height: 1, color: palette.line),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: SetsCreateWizardFooter(
+                  step: step,
+                  isFinalStep: isFinal,
+                  canContinue: canContinue,
+                  onBack: step > 0 ? () {} : null,
+                  onCancel: () {},
+                  onContinue: isFinal ? null : () {},
+                  onCreate: isFinal ? () {} : null,
+                  createLabel: setType == 'armor' ? 'Create' : 'Create shell',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

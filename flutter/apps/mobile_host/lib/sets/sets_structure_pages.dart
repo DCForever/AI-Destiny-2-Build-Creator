@@ -50,20 +50,68 @@ class _SetsStructurePageState extends State<SetsStructurePage> {
   }
 
   Future<void> _openCreate(BuildContext context) async {
+    var step = 0;
+    var setType = 'armor';
+    String? guardianClass;
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
-        return Padding(
-          key: const Key('sets_mobile_create_sheet'),
-          padding: const EdgeInsets.all(kSpace16),
-          child: SetsCreateWizard(
-            setType: 'armor',
-            guardianClass: null,
-            availableFamilies: const ['TechSec'],
-            onClassChanged: (_) {},
-            onCreate: () => Navigator.of(ctx).pop(),
-          ),
+        return StatefulBuilder(
+          builder: (context, setModal) {
+            final maxStep = setsCreateMaxStep(setType);
+            final isFinal = step >= maxStep;
+            final canContinue = setType == 'armor' && step == 1
+                ? guardianClass != null
+                : setType.isNotEmpty;
+            return SafeArea(
+              child: Padding(
+                key: const Key('sets_mobile_create_sheet'),
+                padding: const EdgeInsets.all(kSpace16),
+                child: SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.75,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: SetsCreateWizard(
+                          step: step,
+                          setType: setType,
+                          guardianClass: guardianClass,
+                          availableFamilies: const ['TechSec'],
+                          onTypeChanged: (t) => setModal(() {
+                            setType = t;
+                            if (t != 'armor') guardianClass = null;
+                          }),
+                          onClassChanged: (c) =>
+                              setModal(() => guardianClass = c),
+                        ),
+                      ),
+                      SetsCreateWizardFooter(
+                        step: step,
+                        isFinalStep: isFinal,
+                        canContinue: canContinue,
+                        onBack: step == 0
+                            ? null
+                            : () => setModal(() => step -= 1),
+                        onCancel: () => Navigator.of(ctx).pop(),
+                        onContinue: isFinal
+                            ? null
+                            : () {
+                                if (!canContinue) return;
+                                setModal(() => step += 1);
+                              },
+                        onCreate: isFinal
+                            ? () => Navigator.of(ctx).pop()
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

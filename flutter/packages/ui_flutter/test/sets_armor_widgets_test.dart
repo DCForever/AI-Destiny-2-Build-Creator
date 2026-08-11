@@ -60,35 +60,281 @@ bool _legalGoals(List<SetsBonusGoalData> goals) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Create wizard', () {
-    testWidgets('piece/compare UI hidden until Type+Class locked', (tester) async {
+  group('Create wizard step machine', () {
+    testWidgets('Armor step 0 Type only; Continue disabled until type',
+        (tester) async {
       await tester.pumpWidget(
         _wrap(
           SetsCreateWizard(
-            setType: 'armor',
-            guardianClass: null,
+            setType: '',
+            step: 0,
+            showEmbeddedFooter: true,
+            canContinue: false,
             availableFamilies: const ['TechSec'],
           ),
         ),
       );
-      expect(find.byKey(const Key('sets_create_pieces_hidden')), findsOneWidget);
-      expect(find.byKey(const Key('sets_create_button')), findsNothing);
+      expect(find.byKey(const Key('sets_create_wizard')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_step_dots')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_type')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_class')), findsNothing);
       expect(find.byKey(const Key('sets_bonus_goals_editor')), findsNothing);
-      expect(find.byKey(const Key('sets_owned_compare_table')), findsNothing);
+      expect(find.byKey(const Key('sets_create_name')), findsNothing);
+      expect(find.byKey(const Key('sets_create_button')), findsNothing);
+      expect(find.byKey(const Key('sets_create_continue')), findsOneWidget);
+      final cont = tester.widget<FilledButton>(
+        find.byKey(const Key('sets_create_continue')),
+      );
+      expect(cont.onPressed, isNull);
+      expect(find.byKey(const Key('sets_create_back')), findsNothing);
+      expect(find.byKey(const Key('sets_create_pieces_hidden')), findsOneWidget);
+    });
+
+    testWidgets('Armor step 1 Class only; Continue until class; Back works',
+        (tester) async {
+      var step = 1;
+      String? className;
+      await tester.pumpWidget(
+        _wrap(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return SetsCreateWizard(
+                setType: 'armor',
+                step: step,
+                guardianClass: className,
+                showEmbeddedFooter: true,
+                canContinue: className != null,
+                onClassChanged: (c) => setState(() => className = c),
+                onBack: () => setState(() => step = 0),
+                onContinue: () => setState(() => step = 2),
+                availableFamilies: const ['TechSec'],
+              );
+            },
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_class')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_type')), findsNothing);
+      expect(find.byKey(const Key('sets_bonus_goals_editor')), findsNothing);
+      expect(find.byKey(const Key('sets_create_back')), findsOneWidget);
+      var cont = tester.widget<FilledButton>(
+        find.byKey(const Key('sets_create_continue')),
+      );
+      expect(cont.onPressed, isNull);
+
+      await tester.tap(find.byKey(const Key('sets_create_class_Titan')));
+      await tester.pump();
+      cont = tester.widget<FilledButton>(
+        find.byKey(const Key('sets_create_continue')),
+      );
+      expect(cont.onPressed, isNotNull);
+
+      await tester.tap(find.byKey(const Key('sets_create_back')));
+      await tester.pump();
+      expect(step, 0);
+      expect(find.byKey(const Key('sets_create_type')), findsOneWidget);
+    });
+
+    testWidgets('Armor step 2 Bonus optional; Continue always; illegal blocked',
+        (tester) async {
+      var goals = <SetsBonusGoalData>[];
+      await tester.pumpWidget(
+        _wrap(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return SetsCreateWizard(
+                setType: 'armor',
+                step: 2,
+                guardianClass: 'Titan',
+                goals: goals,
+                availableFamilies: const ['A', 'B'],
+                showEmbeddedFooter: true,
+                canContinue: true,
+                onContinue: () {},
+                isLegalCombo: _legalGoals,
+                onGoalsChanged: (next) => setState(() => goals = next),
+              );
+            },
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_bonus_goals_editor')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_name')), findsNothing);
+      expect(find.byKey(const Key('sets_create_type')), findsNothing);
+      final cont = tester.widget<FilledButton>(
+        find.byKey(const Key('sets_create_continue')),
+      );
+      expect(cont.onPressed, isNotNull);
+
+      await tester.tap(find.byKey(const Key('sets_bonus_goal_2pc_A')));
+      await tester.pump();
+      expect(goals, hasLength(1));
+    });
+
+    testWidgets('Armor step 3 Name + auto-name preview; Create only final',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SetsCreateWizard(
+            setType: 'armor',
+            step: 3,
+            guardianClass: 'Titan',
+            namePreview: 'Titan · — · —',
+            showEmbeddedFooter: true,
+            onCreate: () {},
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_name_preview')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_button')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_continue')), findsNothing);
+      expect(find.byKey(const Key('sets_bonus_goals_editor')), findsNothing);
+      expect(find.byKey(const Key('sets_create_class')), findsNothing);
+    });
+
+    testWidgets('Non-Armor skips Class/Bonus; thin shell create', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SetsCreateWizard(
+            setType: 'weapon',
+            step: 1,
+            showEmbeddedFooter: true,
+            onCreate: () {},
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_thin_shell_hint')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_class')), findsNothing);
+      expect(find.byKey(const Key('sets_bonus_goals_editor')), findsNothing);
+      expect(find.byKey(const Key('sets_create_button')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_step_dot_0')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_step_dot_1')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_step_dot_2')), findsNothing);
+    });
+
+    testWidgets('pieces/compare never shown during any create step',
+        (tester) async {
+      for (final step in [0, 1, 2, 3]) {
+        await tester.pumpWidget(
+          _wrap(
+            SetsCreateWizard(
+              setType: 'armor',
+              step: step,
+              guardianClass: step >= 1 ? 'Titan' : null,
+              availableFamilies: const ['TechSec'],
+              namePreview: 'Titan · — · —',
+            ),
+          ),
+        );
+        expect(find.byKey(const Key('sets_create_pieces_hidden')), findsOneWidget);
+        expect(find.byKey(const Key('sets_owned_compare_table')), findsNothing);
+        expect(find.byKey(const Key('sets_armor_board')), findsNothing);
+        expect(find.byKey(const Key('catalog_weapons_workspace')), findsNothing);
+      }
+    });
+
+    testWidgets('step dots + crumb reflect active step', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SetsCreateWizard(
+            setType: 'armor',
+            step: 2,
+            guardianClass: 'Hunter',
+            availableFamilies: ['TechSec'],
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_crumb')), findsOneWidget);
+      expect(find.text('New set · bonus'), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_step_dots')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_step_dot_3')), findsOneWidget);
+    });
+
+    testWidgets('footer Back hidden on step 0; Create only final',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SetsCreateWizard(
+            setType: 'armor',
+            step: 0,
+            showEmbeddedFooter: true,
+            canContinue: true,
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_back')), findsNothing);
+      expect(find.byKey(const Key('sets_create_cancel')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_continue')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_button')), findsNothing);
 
       await tester.pumpWidget(
         _wrap(
           SetsCreateWizard(
             setType: 'armor',
+            step: 3,
             guardianClass: 'Titan',
-            availableFamilies: const ['TechSec'],
-            namePreview: 'Titan · — · —',
+            showEmbeddedFooter: true,
+            onCreate: () {},
           ),
         ),
       );
-      expect(find.byKey(const Key('sets_create_pieces_hidden')), findsNothing);
+      expect(find.byKey(const Key('sets_create_back')), findsOneWidget);
       expect(find.byKey(const Key('sets_create_button')), findsOneWidget);
-      expect(find.byKey(const Key('sets_bonus_goals_editor')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_continue')), findsNothing);
+    });
+
+    testWidgets('tags hard-block on Name step (G-SET-033)', (tester) async {
+      var tags = <SetsTagData>[];
+      await tester.pumpWidget(
+        _wrap(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return SetsCreateWizard(
+                setType: 'armor',
+                step: 3,
+                guardianClass: 'Titan',
+                tags: tags,
+                isTagBlocked: (label) {
+                  final t = label.toLowerCase();
+                  return t == 'verb' || t == 'melee' || t == 'element';
+                },
+                onTagsChanged: (next) => setState(() => tags = next),
+              );
+            },
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_tags')), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('sets_tag_input')), 'verb');
+      await tester.tap(find.byKey(const Key('sets_tag_add')));
+      await tester.pump();
+      expect(find.byKey(const Key('sets_tag_blocked_message')), findsOneWidget);
+      expect(tags.map((t) => t.label), isNot(contains('verb')));
+    });
+
+    testWidgets('Choice chips only for active type or class step',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SetsCreateWizard(setType: 'armor', step: 0),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_type_armor')), findsOneWidget);
+      expect(find.byKey(const Key('sets_create_class_Titan')), findsNothing);
+
+      await tester.pumpWidget(
+        _wrap(
+          const SetsCreateWizard(
+            setType: 'armor',
+            step: 1,
+            guardianClass: null,
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('sets_create_type_armor')), findsNothing);
+      expect(find.byKey(const Key('sets_create_class_Titan')), findsOneWidget);
     });
   });
 

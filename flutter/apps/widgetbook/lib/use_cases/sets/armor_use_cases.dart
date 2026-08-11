@@ -71,21 +71,109 @@ Widget setsLibraryArmor(BuildContext context) {
 }
 
 @widgetbook.UseCase(
-  name: 'Create Type+Class lock',
+  name: 'Create step Type',
   type: SetsCreateWizard,
   path: '[Sets]/Armor',
 )
-Widget setsCreateLock(BuildContext context) {
+Widget setsCreateStepType(BuildContext context) {
   return const SizedBox(
-    width: 480,
-    height: 520,
+    width: 520,
+    height: 560,
     child: SetsCreateWizard(
       setType: 'armor',
-      guardianClass: null,
+      step: 0,
+      showEmbeddedFooter: true,
+      canContinue: true,
       availableFamilies: ['TechSec', 'Twofer'],
     ),
   );
 }
+
+@widgetbook.UseCase(
+  name: 'Create step Class',
+  type: SetsCreateWizard,
+  path: '[Sets]/Armor',
+)
+Widget setsCreateStepClass(BuildContext context) {
+  return const SizedBox(
+    width: 520,
+    height: 560,
+    child: SetsCreateWizard(
+      setType: 'armor',
+      step: 1,
+      guardianClass: null,
+      showEmbeddedFooter: true,
+      canContinue: false,
+      availableFamilies: ['TechSec', 'Twofer'],
+    ),
+  );
+}
+
+@widgetbook.UseCase(
+  name: 'Create step Bonus',
+  type: SetsCreateWizard,
+  path: '[Sets]/Armor',
+)
+Widget setsCreateStepBonus(BuildContext context) {
+  return const SizedBox(
+    width: 520,
+    height: 640,
+    child: SetsCreateWizard(
+      setType: 'armor',
+      step: 2,
+      guardianClass: 'Titan',
+      showEmbeddedFooter: true,
+      canContinue: true,
+      availableFamilies: ['TechSec', 'Twofer'],
+    ),
+  );
+}
+
+@widgetbook.UseCase(
+  name: 'Create step Name',
+  type: SetsCreateWizard,
+  path: '[Sets]/Armor',
+)
+Widget setsCreateStepName(BuildContext context) {
+  return const SizedBox(
+    width: 520,
+    height: 560,
+    child: SetsCreateWizard(
+      setType: 'armor',
+      step: 3,
+      guardianClass: 'Titan',
+      namePreview: 'Titan · — · —',
+      showEmbeddedFooter: true,
+      onCreate: null,
+    ),
+  );
+}
+
+@widgetbook.UseCase(
+  name: 'Create non-Armor thin',
+  type: SetsCreateWizard,
+  path: '[Sets]/Armor',
+)
+Widget setsCreateNonArmorThin(BuildContext context) {
+  return const SizedBox(
+    width: 520,
+    height: 480,
+    child: SetsCreateWizard(
+      setType: 'weapon',
+      step: 1,
+      showEmbeddedFooter: true,
+      onCreate: null,
+    ),
+  );
+}
+
+/// Legacy alias name kept for directories regen compatibility.
+@widgetbook.UseCase(
+  name: 'Create Type+Class lock',
+  type: SetsCreateWizard,
+  path: '[Sets]/Armor',
+)
+Widget setsCreateLock(BuildContext context) => setsCreateStepType(context);
 
 @widgetbook.UseCase(
   name: 'Empty board layout A',

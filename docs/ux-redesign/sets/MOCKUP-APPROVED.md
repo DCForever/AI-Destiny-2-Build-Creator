@@ -33,3 +33,15 @@
 - Synthesis: lock brief under `docs/ux-redesign/sets/` (e.g. `001-armor-brief.md`)
 - Architect notes + vault UX Sets note
 - Then `area-implement` with `brief_path` when ready
+
+---
+
+## RES-SET-CREATE-01 Create wizard dual-truth — residual implement
+
+**continue with workflow**
+
+- Residual brief: `docs/ux-redesign/sets/002-create-wizard-brief.md`
+- Mockups: same `001-armor-desktop.html` / `001-armor-mobile.html` (create wizard steps Type→Class→Bonus→Name)
+- Approved: 2026-08-10 (human residual plan — stepped create flow + chrome vs single-scroll wizard)
+- Scope: step machine, Back/Continue, hide quick create, post-create board
+- Out of scope: owned fill, Optimize primary shell

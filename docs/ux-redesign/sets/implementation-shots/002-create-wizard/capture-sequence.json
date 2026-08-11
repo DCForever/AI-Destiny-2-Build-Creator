@@ -1,0 +1,9 @@
+[
+  { "tapKey": "capture_scenario_desktop-create-step-type", "shot": "desktop-create-step-type" },
+  { "tapKey": "capture_scenario_desktop-create-step-class", "shot": "desktop-create-step-class" },
+  { "tapKey": "capture_scenario_desktop-create-step-bonus", "shot": "desktop-create-step-bonus" },
+  { "tapKey": "capture_scenario_desktop-create-step-name", "shot": "desktop-create-step-name" },
+  { "tapKey": "capture_scenario_desktop-create-post-board", "shot": "desktop-create-post-board" },
+  { "tapKey": "capture_scenario_desktop-create-no-quick-create", "shot": "desktop-create-no-quick-create" },
+  { "tapKey": "capture_scenario_desktop-create-non-armor-thin", "shot": "desktop-create-non-armor-thin" }
+]

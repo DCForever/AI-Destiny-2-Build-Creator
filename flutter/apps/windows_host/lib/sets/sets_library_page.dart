@@ -32,6 +32,7 @@ class SetsLibraryPage extends StatefulWidget {
     this.controller,
     this.optimizerController,
     this.bridge,
+    this.showLegacyQuickCreate = false,
   });
 
   final AppServices services;
@@ -44,6 +45,9 @@ class SetsLibraryPage extends StatefulWidget {
 
   /// Optional catalog bridge for enrichment (tests).
   final OwnedCatalogBridge? bridge;
+
+  /// Test-only: show collapsed inline quick-create rail (not product path).
+  final bool showLegacyQuickCreate;
 
   @override
   State<SetsLibraryPage> createState() => _SetsLibraryPageState();
@@ -59,7 +63,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   final _searchController = TextEditingController();
   SetType _createType = SetType.weapon;
   String? _statusMessage;
-  /// Create form collapsed so board owns the rail (BUG-20260726-008).
+  /// Legacy quick-create expanded (only when [showLegacyQuickCreate]).
   bool _createExpanded = false;
   bool _ownController = false;
   bool _ownOptimizer = false;
@@ -235,7 +239,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     _optimizer.bindTargetSet(setId: sel.set.id, setName: sel.set.name);
   }
 
-  Future<void> _create() async {
+  Future<void> _createLegacyQuick() async {
     final err = await _controller.createSet(
       name: _nameController.text,
       type: _createType,
@@ -247,117 +251,173 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     });
   }
 
-  /// Large-modal Armor create (G-SET-001); falls back to inline for non-Armor.
+  /// Multi-step create wizard (G-SET-001): Type → Class → Bonus → Name.
   Future<void> _openCreateModal() async {
     _lifecycle.openCreate();
     await _ensureSetBonusFamilies();
     if (!mounted) return;
-    var draftType = SetType.armor;
-    String? draftClass;
-    var draftGoals = <SetsBonusGoalData>[];
-    final nameCtrl = TextEditingController();
-    final created = await showSetsLifecycleModal<bool>(
-      context: context,
-      title: 'Create set',
-      child: StatefulBuilder(
-        builder: (ctx, setModal) {
-          final preview = draftType == SetType.armor && draftClass != null
-              ? resolveArmorSetName(
-                  guardianClass:
-                      GuardianClass.tryParse(draftClass!) ?? GuardianClass.titan,
-                  goals: [
-                    for (final g in draftGoals)
-                      SetBonusCoverageGoal(
-                        setBonusKey: g.familyKey,
-                        minPieces: g.minPieces,
-                      ),
-                  ],
-                  preferredName: nameCtrl.text,
-                  existingNames: _controller.allSets.map((s) => s.name),
-                )
-              : nameCtrl.text;
-          return SingleChildScrollView(
-            child: SetsCreateWizard(
-              setType: draftType.wireName,
-              guardianClass: draftClass,
-              goals: draftGoals,
-              families: _setBonusFamilies,
-              namePreview: preview,
-              nameController: nameCtrl,
-              onTypeChanged: (t) => setModal(() {
-                draftType = SetType.tryParse(t) ?? SetType.armor;
-                if (draftType != SetType.armor) {
-                  draftClass = null;
-                  draftGoals = [];
-                }
-              }),
-              onClassChanged: (c) => setModal(() => draftClass = c),
-              onGoalsChanged: (g) => setModal(() => draftGoals = g),
-              isLegalCombo: (goals) => isLegalSetBonusGoalCombo([
-                for (final g in goals)
-                  SetBonusCoverageGoal(
-                    setBonusKey: g.familyKey,
-                    minPieces: g.minPieces,
-                  ),
-              ]),
-              onCreate: () => Navigator.of(ctx).pop(true),
-            ),
-          );
-        },
-      ),
-    );
-    final nameText = nameCtrl.text;
-    final type = draftType;
-    final gClass = draftClass;
-    final goals = draftGoals;
-    nameCtrl.dispose();
-    _lifecycle.close();
-    if (created != true || !mounted) return;
+    final nameCtrl = TextEditingController(text: _lifecycle.createName);
+    var tagData = <SetsTagData>[
+      for (final t in _lifecycle.createTags)
+        SetsTagData(id: t.toLowerCase(), label: t),
+    ];
 
-    if (type == SetType.armor && gClass == null) {
+    final created = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return ListenableBuilder(
+          listenable: _lifecycle,
+          builder: (context, _) {
+            final goalsUi = [
+              for (final g in _lifecycle.createGoals)
+                SetsBonusGoalData(
+                  familyKey: g.setBonusKey,
+                  minPieces: g.minPieces,
+                ),
+            ];
+            return SetsLifecycleModal(
+              title: _lifecycle.createCrumb,
+              width: 720,
+              height: 640,
+              onClose: () => Navigator.of(ctx).pop(false),
+              footer: SetsCreateWizardFooter(
+                step: _lifecycle.createStep,
+                isFinalStep: _lifecycle.isCreateFinalStep,
+                canContinue: _lifecycle.canContinueCreate,
+                onBack: _lifecycle.createStep == 0
+                    ? null
+                    : _lifecycle.backCreate,
+                onCancel: () => Navigator.of(ctx).pop(false),
+                onContinue: _lifecycle.isCreateFinalStep
+                    ? null
+                    : () {
+                        if (_lifecycle.canContinueCreate) {
+                          _lifecycle.continueCreate();
+                        }
+                      },
+                onCreate: _lifecycle.isCreateFinalStep
+                    ? () {
+                        // Flush field before pop so dispose cannot race route out.
+                        _lifecycle.setCreateName(nameCtrl.text);
+                        Navigator.of(ctx).pop(true);
+                      }
+                    : null,
+                createLabel: _lifecycle.createType == SetType.armor
+                    ? 'Create'
+                    : 'Create shell',
+              ),
+              child: SetsCreateWizard(
+                step: _lifecycle.createStep,
+                setType: _lifecycle.createType.wireName,
+                guardianClass: _lifecycle.createClass?.wireName,
+                goals: goalsUi,
+                families: _setBonusFamilies,
+                namePreview: _lifecycle.namePreview,
+                nameController: nameCtrl,
+                tags: tagData,
+                onTypeChanged: (t) {
+                  _lifecycle.setCreateType(SetType.tryParse(t) ?? SetType.armor);
+                },
+                onClassChanged: (c) {
+                  _lifecycle.setCreateClass(GuardianClass.tryParse(c));
+                },
+                onGoalsChanged: (g) {
+                  _lifecycle.setCreateGoals([
+                    for (final goal in g)
+                      SetBonusCoverageGoal(
+                        setBonusKey: goal.familyKey,
+                        minPieces: goal.minPieces,
+                      ),
+                  ]);
+                },
+                onNameChanged: (v) {
+                  _lifecycle.setCreateName(v);
+                },
+                onTagsChanged: (next) {
+                  tagData = next;
+                  _lifecycle.setCreateTags([for (final t in next) t.label]);
+                },
+                isLegalCombo: (goals) => isLegalSetBonusGoalCombo([
+                  for (final g in goals)
+                    SetBonusCoverageGoal(
+                      setBonusKey: g.familyKey,
+                      minPieces: g.minPieces,
+                    ),
+                ]),
+                isTagBlocked: isTagBlockedBySynergyTypeVocab,
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // Capture draft before disposing controller (dialog route may still paint
+    // one frame while unmounting TextField listeners).
+    _lifecycle.setCreateName(nameCtrl.text);
+    final shouldCreate = created == true;
+    final createdType = _lifecycle.createType;
+    final cmd = shouldCreate
+        ? _lifecycle.buildCreateCommand(
+            existingNames: _controller.allSets.map((s) => s.name),
+          )
+        : null;
+    // Defer dispose until after dialog tree detaches.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      nameCtrl.dispose();
+    });
+
+    if (!shouldCreate || !mounted || cmd == null) {
+      _lifecycle.close();
+      return;
+    }
+
+    if (createdType == SetType.armor && _lifecycle.createClass == null) {
+      _lifecycle.close();
       setState(() => _statusMessage = 'Class required for Armor sets');
       return;
     }
-    final cmd = type == SetType.armor
-        ? CreateSetCommand(
-            name: resolveArmorSetName(
-              guardianClass: GuardianClass.tryParse(gClass!) ?? GuardianClass.titan,
-              goals: [
-                for (final g in goals)
-                  SetBonusCoverageGoal(
-                    setBonusKey: g.familyKey,
-                    minPieces: g.minPieces,
-                  ),
-              ],
-              preferredName: nameText,
-              existingNames: _controller.allSets.map((s) => s.name),
-            ),
-            type: type,
-            guardianClass: GuardianClass.tryParse(gClass),
-            setBonusGoals: [
-              for (final g in goals)
-                SetBonusCoverageGoal(
-                  setBonusKey: g.familyKey,
-                  minPieces: g.minPieces,
-                ),
-            ],
-          )
-        : CreateSetCommand(
-            name: nameText.trim().isEmpty
-                ? 'New ${type.wireName} set'
-                : nameText.trim(),
-            type: type,
-          );
-    try {
-      final uid = await _controller.resolveLibraryUserId();
-      await createUserSet(widget.services.db, uid, cmd);
-      await _controller.refresh();
-      if (!mounted) return;
-      setState(() => _statusMessage = 'Created ${cmd.name}');
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _statusMessage = e.toString());
+
+    final err = await _controller.createSetFromCommand(cmd);
+    if (!mounted) return;
+    if (err != null) {
+      _lifecycle.close();
+      setState(() => _statusMessage = err);
+      return;
     }
+
+    final setId = _controller.selected?.set.id;
+    setState(() => _statusMessage = 'Created ${cmd.name}');
+
+    if (createdType == SetType.armor && setId != null) {
+      _lifecycle.openBoard(setId);
+      if (!mounted) return;
+      await showSetsLifecycleModal<void>(
+        context: context,
+        title: 'Armor board',
+        width: 960,
+        height: 720,
+        child: SingleChildScrollView(
+          child: SetsArmorBoard(
+            slots: _emptyArmorBoardSlots(),
+            onOptimize: () {},
+            onPickSlot: (_) {},
+          ),
+        ),
+      );
+    }
+    _lifecycle.close();
+  }
+
+  List<SetsArmorSlotData> _emptyArmorBoardSlots() {
+    return [
+      for (var i = 0; i < kArmorBoardSlotWires.length; i++)
+        SetsArmorSlotData(
+          slotWire: kArmorBoardSlotWires[i],
+          slotLabel: kArmorBoardSlotLabels[i],
+        ),
+    ];
   }
 
   Future<void> _saveName() async {
@@ -598,78 +658,80 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     );
   }
 
-  /// Filters + legacy quick-create (tests) under redesigned workspace rail.
+  /// Filters (+ optional test-only legacy quick-create). Product path: New set only.
   Widget _buildRailHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildSetsFilterHeader(),
-        ListTile(
-          key: const Key('sets_create_toggle'),
-          dense: true,
-          title: Text(
-            _createExpanded ? 'Hide quick create' : 'Quick create',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          subtitle: _createExpanded
-              ? null
-              : Text(
-                  'Inline name/type (tests + fallback)',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-          trailing: Icon(
-            _createExpanded ? Icons.expand_less : Icons.expand_more,
-          ),
-          onTap: () {
-            setState(() => _createExpanded = !_createExpanded);
-          },
-        ),
-        if (_createExpanded) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextField(
-              key: const Key('sets_create_name'),
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'New set name',
-                isDense: true,
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (_) => _create(),
+        if (widget.showLegacyQuickCreate) ...[
+          ListTile(
+            key: const Key('sets_create_toggle'),
+            dense: true,
+            title: Text(
+              _createExpanded ? 'Hide quick create' : 'Quick create',
+              style: Theme.of(context).textTheme.titleSmall,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: DropdownButtonFormField<SetType>(
-              key: const Key('sets_create_type'),
-              // ignore: deprecated_member_use
-              value: _createType,
-              decoration: const InputDecoration(
-                labelText: 'Type',
-                isDense: true,
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                for (final t in SetType.values)
-                  DropdownMenuItem(
-                    value: t,
-                    child: Text(displaySetType(t)),
+            subtitle: _createExpanded
+                ? null
+                : Text(
+                    'Test-only inline create (not product path)',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _createType = v);
-              },
+            trailing: Icon(
+              _createExpanded ? Icons.expand_less : Icons.expand_more,
             ),
+            onTap: () {
+              setState(() => _createExpanded = !_createExpanded);
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: FilledButton(
-              key: const Key('sets_create_button'),
-              onPressed: _controller.loading ? null : _create,
-              child: const Text('Create set'),
+          if (_createExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextField(
+                key: const Key('sets_create_name'),
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'New set name',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _createLegacyQuick(),
+              ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: DropdownButtonFormField<SetType>(
+                key: const Key('sets_create_type'),
+                // ignore: deprecated_member_use
+                value: _createType,
+                decoration: const InputDecoration(
+                  labelText: 'Type',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final t in SetType.values)
+                    DropdownMenuItem(
+                      value: t,
+                      child: Text(displaySetType(t)),
+                    ),
+                ],
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _createType = v);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+              child: FilledButton(
+                key: const Key('sets_create_button'),
+                onPressed: _controller.loading ? null : _createLegacyQuick,
+                child: const Text('Create set'),
+              ),
+            ),
+          ],
         ],
         const Divider(height: 1),
       ],

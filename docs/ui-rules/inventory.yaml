@@ -1147,7 +1147,11 @@ pages:
           - BR-TAG-004
           - BR-TAG-005
           - 001:SC-001
+          - G-SET-001
+          - G-SET-004
           - G-SET-013
+          - G-SET-033
+          - G-SET-040
           - DBR-SETB-003
           - BR-SET-050
         atlas:
@@ -2641,7 +2645,11 @@ pages:
               - BR-SET-002
               - BR-TAG-004
               - 001:SC-001
+              - G-SET-001
+              - G-SET-004
               - G-SET-013
+              - G-SET-033
+              - G-SET-040
               - DBR-SETB-003
             notes: "include: flow.sets.create"
             children:
@@ -2657,7 +2665,11 @@ pages:
                 rules:
                   - BR-TAG-002
                   - BR-TAG-005
+                  - G-SET-001
+                  - G-SET-004
                   - G-SET-013
+                  - G-SET-033
+                  - G-SET-040
                   - BR-SET-001
                   - BR-SET-002
                   - BR-SET-004
@@ -2665,7 +2677,11 @@ pages:
                   - BR-TAG-004
                   - BR-TAG-005
                   - 001:SC-001
+                  - G-SET-001
+                  - G-SET-004
                   - G-SET-013
+                  - G-SET-033
+                  - G-SET-040
                   - DBR-SETB-003
                   - BR-SET-050
                 path: /sets
@@ -2677,6 +2693,7 @@ pages:
                 title: Empty board (layout A)
                 rules:
                   - G-SET-001
+                  - G-SET-040
                   - BR-SET-001
                   - BR-SET-010
                   - BR-SET-011
@@ -3868,7 +3885,11 @@ pages:
           - BR-SET-002
           - BR-TAG-004
           - 001:SC-001
+          - G-SET-001
+          - G-SET-004
           - G-SET-013
+          - G-SET-033
+          - G-SET-040
           - DBR-SETB-003
         notes: "include: flow.sets.create"
         children:
@@ -3884,7 +3905,11 @@ pages:
             rules:
               - BR-TAG-002
               - BR-TAG-005
+              - G-SET-001
+              - G-SET-004
               - G-SET-013
+              - G-SET-033
+              - G-SET-040
               - BR-SET-001
               - BR-SET-002
               - BR-SET-004
@@ -3892,7 +3917,11 @@ pages:
               - BR-TAG-004
               - BR-TAG-005
               - 001:SC-001
+              - G-SET-001
+              - G-SET-004
               - G-SET-013
+              - G-SET-033
+              - G-SET-040
               - DBR-SETB-003
               - BR-SET-050
             path: /sets
@@ -3904,6 +3933,7 @@ pages:
             title: Empty board (layout A)
             rules:
               - G-SET-001
+              - G-SET-040
               - BR-SET-001
               - BR-SET-010
               - BR-SET-011
@@ -4073,7 +4103,11 @@ pages:
         rules:
           - BR-TAG-002
           - BR-TAG-005
+          - G-SET-001
+          - G-SET-004
           - G-SET-013
+          - G-SET-033
+          - G-SET-040
           - BR-SET-001
           - BR-SET-002
           - BR-SET-004
@@ -4081,7 +4115,11 @@ pages:
           - BR-TAG-004
           - BR-TAG-005
           - 001:SC-001
+          - G-SET-001
+          - G-SET-004
           - G-SET-013
+          - G-SET-033
+          - G-SET-040
           - DBR-SETB-003
           - BR-SET-050
         path: /sets
@@ -4093,6 +4131,7 @@ pages:
         title: Empty board (layout A)
         rules:
           - G-SET-001
+          - G-SET-040
           - BR-SET-001
           - BR-SET-010
           - BR-SET-011

@@ -1,4 +1,4 @@
-/// Host-fixture seeds for Sets Armor Capture shot_matrix (001-armor).
+/// Host-fixture seeds for Sets Armor Capture shot_matrix (001-armor + 002-create-wizard).
 ///
 /// Drive ids match plan shot_matrix `drive: host-fixture` rows.
 library;
@@ -8,7 +8,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 
-/// Shot matrix ids that Capture must exercise (must=true).
+/// Shot matrix ids that Capture must exercise (must=true) — 001-armor.
 const kSetsArmorMustShotIds = <String>[
   'desktop-library-armor',
   'desktop-signed-out-honesty',
@@ -27,10 +27,27 @@ const kSetsArmorOptionalShotIds = <String>[
   'desktop-non-armor-thin',
 ];
 
-/// Full Capture rail order (must first, then optional).
+/// 002-create-wizard must-shot ids (step chrome dual-truth).
+const kSetsCreateWizardMustShotIds = <String>[
+  'desktop-create-step-type',
+  'desktop-create-step-class',
+  'desktop-create-step-bonus',
+  'desktop-create-step-name',
+  'desktop-create-post-board',
+  'desktop-create-no-quick-create',
+];
+
+/// 002 optional.
+const kSetsCreateWizardOptionalShotIds = <String>[
+  'desktop-create-non-armor-thin',
+];
+
+/// Full Capture rail order (001 must/optional then 002 must/optional).
 const kSetsArmorCaptureMatrixIds = <String>[
   ...kSetsArmorMustShotIds,
   ...kSetsArmorOptionalShotIds,
+  ...kSetsCreateWizardMustShotIds,
+  ...kSetsCreateWizardOptionalShotIds,
 ];
 
 /// Optional Capture surface keys hosts should expose for dual-truth.
@@ -52,6 +69,28 @@ const kSetsArmorCaptureSurfaceKeys = <String>[
   'sets_delete_set_in_use',
   'sets_honesty_signedOut',
   'sets_mod_set_deep_link',
+];
+
+/// 002 create-wizard surface keys (step chrome + footer).
+const kSetsCreateWizardCaptureSurfaceKeys = <String>[
+  'sets_create_wizard',
+  'sets_create_step_dots',
+  'sets_create_crumb',
+  'sets_create_type',
+  'sets_create_class',
+  'sets_create_pieces_hidden',
+  'sets_bonus_goals_editor',
+  'sets_create_name',
+  'sets_create_name_preview',
+  'sets_create_back',
+  'sets_create_cancel',
+  'sets_create_continue',
+  'sets_create_button',
+  'sets_create_footer',
+  'sets_armor_board',
+  'sets_optimize_primary',
+  'sets_library_new',
+  'sets_library_workspace',
 ];
 
 /// Fixture Armor library rows (dual-pane + used-by).

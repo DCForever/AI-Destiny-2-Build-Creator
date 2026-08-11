@@ -413,7 +413,11 @@ flows:
       - BR-SET-002
       - BR-TAG-004
       - 001:SC-001
+      - G-SET-001
+      - G-SET-004
       - G-SET-013
+      - G-SET-033
+      - G-SET-040
       - DBR-SETB-003
     phases:
       - id: open
@@ -425,12 +429,17 @@ flows:
         rules:
           - BR-TAG-002
           - BR-TAG-005
+          - G-SET-001
+          - G-SET-004
           - G-SET-013
+          - G-SET-033
+          - G-SET-040
       - id: board
         title: Empty board (layout A)
         surface: sets.detail
         rules:
           - G-SET-001
+          - G-SET-040
       - id: fill
         title: Fill via compare or optimize
         surface: sets.fill-slot
