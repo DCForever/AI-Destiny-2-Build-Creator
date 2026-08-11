@@ -41,6 +41,7 @@ export 'src/neon_item_detail.dart';
 export 'src/neon_segmented.dart';
 // Sets Armor lifecycle (UX 001-armor)
 export 'src/sets/sets_models.dart';
+export 'src/sets/sets_neon_chrome.dart';
 export 'src/sets/sets_honesty_empty.dart';
 export 'src/sets/sets_tag_multi_select.dart';
 export 'src/sets/sets_bonus_family_info.dart';

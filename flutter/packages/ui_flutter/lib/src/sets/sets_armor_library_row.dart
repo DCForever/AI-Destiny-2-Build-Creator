@@ -123,11 +123,11 @@ class SetsArmorLibraryHeader extends StatelessWidget {
               flex: const [15, 5, 4, 9, 8][i],
               child: Text(
                 labels[i].toUpperCase(),
-                style: neonBody(
+                style: neonDisplay(
                   color: palette.muted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.8,
                 ),
               ),
             ),

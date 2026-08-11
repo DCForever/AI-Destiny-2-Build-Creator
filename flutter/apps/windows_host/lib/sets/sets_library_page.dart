@@ -265,6 +265,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     final created = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
+      barrierColor: const Color(0xB8020208),
       builder: (ctx) {
         return ListenableBuilder(
           listenable: _lifecycle,
@@ -276,8 +277,15 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                   minPieces: g.minPieces,
                 ),
             ];
+            final stepLabel = setsCreateStepLabelsForType(
+              _lifecycle.createType.wireName,
+            )[_lifecycle.createStep.clamp(
+              0,
+              setsCreateMaxStep(_lifecycle.createType.wireName),
+            )];
             return SetsLifecycleModal(
-              title: _lifecycle.createCrumb,
+              title: 'New set',
+              crumb: '· $stepLabel',
               width: 720,
               height: 640,
               onClose: () => Navigator.of(ctx).pop(false),
@@ -311,6 +319,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                 step: _lifecycle.createStep,
                 setType: _lifecycle.createType.wireName,
                 guardianClass: _lifecycle.createClass?.wireName,
+                showBodyCrumb: false,
                 goals: goalsUi,
                 families: _setBonusFamilies,
                 namePreview: _lifecycle.namePreview,
@@ -439,12 +448,15 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
+      barrierColor: const Color(0xB8020208),
       builder: (dialogCtx) {
         return StatefulBuilder(
           builder: (dialogCtx, setModal) {
             final slots = _armorBoardSlotsFromSelected();
+            final setName = _controller.selected?.set.name;
             return SetsLifecycleModal(
-              title: 'Armor board',
+              title: 'Armor set',
+              crumb: setName != null && setName.isNotEmpty ? '· $setName' : null,
               width: 960,
               height: 720,
               onClose: () => Navigator.of(dialogCtx).pop(),
@@ -536,6 +548,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     await showDialog<void>(
       context: boardContext,
       barrierDismissible: false,
+      barrierColor: const Color(0xB8020208),
       builder: (optCtx) {
         return StatefulBuilder(
           builder: (optCtx, setOpt) {
@@ -564,6 +577,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
 
             return SetsLifecycleModal(
               title: 'Optimize',
+              crumb: '· confirm-only',
               width: 960,
               height: 720,
               onClose: () {

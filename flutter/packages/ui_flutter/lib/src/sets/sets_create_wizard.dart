@@ -5,6 +5,7 @@ import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_bonus_goals_editor.dart';
 import 'sets_models.dart';
+import 'sets_neon_chrome.dart';
 import 'sets_tag_multi_select.dart';
 
 /// Armor create path: Type → Class → Bonus → Name.
@@ -57,6 +58,7 @@ class SetsCreateWizard extends StatelessWidget {
     this.types = const ['armor', 'weapon', 'mod', 'pair', 'fashion'],
     this.classes = const ['Titan', 'Hunter', 'Warlock'],
     this.showEmbeddedFooter = false,
+    this.showBodyCrumb = true,
     this.onBack,
     this.onContinue,
     this.onCancel,
@@ -92,6 +94,9 @@ class SetsCreateWizard extends StatelessWidget {
 
   /// When true, render [SetsCreateWizardFooter] under the step body (tests).
   final bool showEmbeddedFooter;
+
+  /// When false, crumb is only in [SetsLifecycleModal] bar (product dual-truth).
+  final bool showBodyCrumb;
   final VoidCallback? onBack;
   final VoidCallback? onContinue;
   final VoidCallback? onCancel;
@@ -124,16 +129,24 @@ class SetsCreateWizard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              crumb,
-              key: const Key('sets_create_crumb'),
-              style: neonBody(
-                color: palette.foreground,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            // Crumb for body-only embeds; product modal uses bar title + crumb.
+            if (showBodyCrumb) ...[
+              Text(
+                crumb,
+                key: const Key('sets_create_crumb'),
+                style: neonDisplay(
+                  color: palette.foreground,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
               ),
-            ),
-            const SizedBox(height: kSpace12),
+              const SizedBox(height: kSpace12),
+            ] else
+              // Key retained for structure tests when body crumb is suppressed.
+              Offstage(
+                child: Text(crumb, key: const Key('sets_create_crumb')),
+              ),
             _StepDots(
               key: const Key('sets_create_step_dots'),
               labels: stepLabels,
@@ -191,29 +204,25 @@ class SetsCreateWizard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Set type (locked after create)',
-          style: neonBody(color: palette.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
+        const SetsFieldLabel('Set type (locked after create)'),
+        const SizedBox(height: 6),
+        SetsChoiceGrid(
           key: const Key('sets_create_type'),
-          spacing: 8,
-          runSpacing: 8,
-          children: [
+          selectedId: setType,
+          onSelected: onTypeChanged,
+          options: [
             for (final t in types)
-              ChoiceChip(
+              SetsChoiceOption(
+                id: t,
+                label: _titleCase(t),
                 key: Key('sets_create_type_$t'),
-                label: Text(_titleCase(t)),
-                selected: setType == t,
-                onSelected: onTypeChanged == null ? null : (_) => onTypeChanged!(t),
               ),
           ],
         ),
         const SizedBox(height: kSpace12),
         Text(
           'Armor-first: full board for Armor only. Other types open a thin detail shell.',
-          style: neonBody(color: palette.muted, fontSize: 12),
+          style: neonBody(color: palette.muted, fontSize: 11),
         ),
       ],
     );
@@ -223,30 +232,27 @@ class SetsCreateWizard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Class (locked before any piece pick)',
-          style: neonBody(color: palette.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
+        const SetsFieldLabel('Class (locked before any piece pick)'),
+        const SizedBox(height: 6),
+        SetsChoiceGrid(
           key: const Key('sets_create_class'),
-          spacing: 8,
-          runSpacing: 8,
-          children: [
+          selectedId: guardianClass,
+          onSelected: onClassChanged,
+          minCellWidth: 120,
+          options: [
             for (final c in classes)
-              ChoiceChip(
+              SetsChoiceOption(
+                id: c,
+                label: c,
                 key: Key('sets_create_class_$c'),
-                label: Text(c),
-                selected: guardianClass == c,
-                onSelected:
-                    onClassChanged == null ? null : (_) => onClassChanged!(c),
+                leading: SetsClassDot(c),
               ),
           ],
         ),
         const SizedBox(height: kSpace12),
         Text(
           'G-SET-004 · Type and Class locked before pieces are shown or chosen.',
-          style: neonBody(color: palette.muted, fontSize: 12),
+          style: neonBody(color: palette.muted, fontSize: 11),
         ),
       ],
     );
@@ -275,27 +281,30 @@ class SetsCreateWizard extends StatelessWidget {
           ),
           const SizedBox(height: kSpace16),
         ],
+        SetsFieldLabel(thinShell ? 'Optional name' : 'Name (blank → auto)'),
+        const SizedBox(height: 6),
         TextField(
           key: const Key('sets_create_name'),
           controller: nameController,
           onChanged: onNameChanged,
+          style: neonBody(color: palette.foreground, fontSize: 13),
           decoration: InputDecoration(
-            labelText: thinShell ? 'Optional name' : 'Name (blank → auto)',
-            helperText: namePreview.isEmpty ? null : 'Preview: $namePreview',
-            helperMaxLines: 2,
+            isDense: true,
+            hintText: thinShell ? 'Leave blank for default' : 'Leave blank for auto-name',
+            hintStyle: neonBody(color: palette.muted, fontSize: 12),
           ),
         ),
-        if (namePreview.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: kSpace4),
-            child: Text(
-              namePreview,
-              key: const Key('sets_create_name_preview'),
-              style: neonBody(color: palette.muted, fontSize: 12),
-            ),
+        if (namePreview.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          SetsAutoNamePreview(
+            namePreview,
+            key: const Key('sets_create_name_preview'),
           ),
+        ],
         if (!thinShell && (onTagsChanged != null || tags.isNotEmpty)) ...[
           const SizedBox(height: kSpace16),
+          const SetsFieldLabel('Tags'),
+          const SizedBox(height: 6),
           SetsTagMultiSelect(
             key: const Key('sets_create_tags'),
             selected: tags,
@@ -338,35 +347,53 @@ class SetsCreateWizardFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final primaryStyle = setsNeonPrimaryStyle(palette);
+    final ghostStyle = setsNeonGhostStyle(palette);
+
     return Row(
       key: const Key('sets_create_footer'),
       children: [
         if (step > 0)
           TextButton(
             key: const Key('sets_create_back'),
+            style: ghostStyle,
             onPressed: onBack,
-            child: const Text('Back'),
+            child: Text('Back', style: setsNeonBtnLabel(palette.muted)),
           )
         else
           const SizedBox(width: 8, key: Key('sets_create_back_hidden')),
         const Spacer(),
         TextButton(
           key: const Key('sets_create_cancel'),
+          style: ghostStyle,
           onPressed: onCancel,
-          child: const Text('Cancel'),
+          child: Text('Cancel', style: setsNeonBtnLabel(palette.muted)),
         ),
         const SizedBox(width: 8),
         if (isFinalStep)
           FilledButton(
             key: const Key('sets_create_button'),
+            style: primaryStyle,
             onPressed: onCreate,
-            child: Text(createLabel),
+            child: Text(
+              createLabel.toUpperCase(),
+              style: setsNeonBtnLabel(palette.accent),
+            ),
           )
         else
           FilledButton(
             key: const Key('sets_create_continue'),
+            style: primaryStyle,
             onPressed: canContinue ? onContinue : null,
-            child: const Text('Continue'),
+            child: Text(
+              'Continue'.toUpperCase(),
+              style: setsNeonBtnLabel(
+                canContinue
+                    ? palette.accent
+                    : palette.accent.withValues(alpha: 0.35),
+              ),
+            ),
           ),
       ],
     );

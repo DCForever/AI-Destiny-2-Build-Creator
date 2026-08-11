@@ -49,9 +49,10 @@
 5. **Post-create board A** — Optimize primary; five Pick; Σ zeros. **closed**.
 6. **No Quick create** — library New only. **closed**.
 7. **Capture harness chrome** — scenario chip rail + DEBUG banner are **not** product Sets chrome (same class as other host-fixture Captures).
-8. **Visual polish residuals (next redesign, non-blocking):**
-   - Type/Class use `ChoiceChip` / compact chips vs mockup larger choice-grid buttons (structure-equivalent).
-   - Bonus chrome is `SetsBonusGoalsEditor` (None + search + family rows) vs mockup mode-seg (brief: reuse editor).
+8. **Visual polish residuals:**
+   - ~~Type/Class ChoiceChip vs choice-grid~~ **closed (2026-08-10 aesthetic pass)** — `SetsChoiceGrid` + Orbitron caps + cyan wash/selected bar.
+   - ~~Modal / CTA Material chrome~~ **closed** — `SetsLifecycleModal` raised bar + Orbitron title; neon primary/ghost buttons; hero Optimize.
+   - Bonus chrome is still `SetsBonusGoalsEditor` (None + search + family rows) vs mockup mode-seg (brief: reuse editor) — **structure residual, non-blocking**.
    - Rail column density on library shot (NAME/CLASS/PCS truncate at narrow default rail) — shared with 001-armor residual.
 
 ## Checklist
@@ -70,10 +71,10 @@
 
 ## Deferred / next redesign
 
-- Choice-grid visual density (larger type/class cards) if product wants mockup pixel match beyond structure.
 - Bonus mode-seg chrome vs catalog editor (only if product rejects editor reuse).
 - product-map parity report lag vs `surfaces.yaml` `sets.create` done (re-run `product-map:parity` after hub sync if needed).
 - Mobile structure-only sheets (not Capture gate).
+- Optional re-Capture PNGs after aesthetic pass for shot gallery freshness (structure keys unchanged).
 
 ## Next
 

@@ -17,73 +17,117 @@ class SetsCoverageBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
+    final hardOk = data.hardMet && data.hardGoals.isNotEmpty;
+    final hardTone = hardOk
+        ? palette.success
+        : data.hardGoals.isEmpty
+            ? palette.muted
+            : palette.warning;
+    final hardBg = hardOk
+        ? palette.success.withValues(alpha: 0.06)
+        : data.hardGoals.isEmpty
+            ? palette.background
+            : palette.warning.withValues(alpha: 0.06);
+    final hardBorder = hardOk
+        ? palette.success.withValues(alpha: 0.3)
+        : data.hardGoals.isEmpty
+            ? palette.line
+            : palette.warning.withValues(alpha: 0.3);
+
+    return Column(
       key: const Key('sets_coverage_band'),
-      padding: const EdgeInsets.all(kSpace8),
-      decoration: BoxDecoration(
-        border: Border.all(color: palette.line, width: kFlapRuleThickness),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (data.hardGoals.isEmpty)
-            Text(
-              'No hard set-bonus goals',
-              key: const Key('sets_coverage_hard_none'),
-              style: neonBody(color: palette.muted, fontSize: 12),
-            )
-          else
-            Wrap(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Mockup .hard-band
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: hardBg,
+            border: Border.all(color: hardBorder, width: kFlapRuleThickness),
+            borderRadius: BorderRadius.circular(kFlapRadius),
+          ),
+          child: data.hardGoals.isEmpty
+              ? Text(
+                  'No hard set-bonus goals',
+                  key: const Key('sets_coverage_hard_none'),
+                  style: neonBody(color: palette.muted, fontSize: 11),
+                )
+              : Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Bonus goals',
+                      style: neonBody(color: hardTone, fontSize: 11),
+                    ),
+                    for (final g in data.hardGoals)
+                      Container(
+                        key: Key(
+                          'sets_coverage_hard_${g.familyKey}_${g.minPieces}',
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: hardTone.withValues(alpha: 0.4),
+                            width: kFlapRuleThickness,
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(kFlapRadius),
+                        ),
+                        child: Text(
+                          g.display,
+                          style: neonMono(color: hardTone, fontSize: 11),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+        if (data.softTwoPiece.isNotEmpty || data.softFourPiece.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          // Mockup .soft-band
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: palette.accent.withValues(alpha: 0.05),
+              border: Border.all(
+                color: Colors.transparent,
+                width: kFlapRuleThickness,
+              ),
+              borderRadius: BorderRadius.circular(kFlapRadius),
+            ),
+            child: Wrap(
               spacing: 6,
               runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                for (final g in data.hardGoals)
-                  Chip(
-                    key: Key(
-                      'sets_coverage_hard_${g.familyKey}_${g.minPieces}',
-                    ),
-                    label: Text(g.display),
-                    backgroundColor: data.hardMet
-                        ? scheme.primaryContainer
-                        : scheme.errorContainer,
+                Text(
+                  'Soft detect · ≥2 matching non-exotic family',
+                  style: neonBody(
+                    color: palette.muted.withValues(alpha: 0.85),
+                    fontSize: 11,
                   ),
-              ],
-            ),
-          if (data.softTwoPiece.isNotEmpty || data.softFourPiece.isNotEmpty) ...[
-            const SizedBox(height: kSpace8),
-            Text(
-              'Soft coverage',
-              style: neonBody(color: palette.muted, fontSize: 11),
-            ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
+                ),
                 for (final f in data.softTwoPiece)
-                  Chip(
+                  Text(
+                    '$f ≥2pc',
                     key: Key('sets_coverage_soft_2pc_$f'),
-                    label: Text(
-                      '$f ≥2pc',
-                      style: neonBody(color: palette.muted, fontSize: 11),
-                    ),
-                    visualDensity: VisualDensity.compact,
+                    style: neonMono(color: palette.muted, fontSize: 11),
                   ),
                 for (final f in data.softFourPiece)
-                  Chip(
+                  Text(
+                    '$f ≥4pc',
                     key: Key('sets_coverage_soft_4pc_$f'),
-                    label: Text(
-                      '$f ≥4pc',
-                      style: neonBody(color: palette.muted, fontSize: 11),
-                    ),
-                    visualDensity: VisualDensity.compact,
+                    style: neonMono(color: palette.muted, fontSize: 11),
                   ),
               ],
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

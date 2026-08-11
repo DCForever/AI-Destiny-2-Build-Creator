@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_models.dart';
+import 'sets_neon_chrome.dart';
 
 /// Delete confirm content: always confirm; SET_IN_USE + used-by when attached.
 class SetsDeleteConfirm extends StatelessWidget {
@@ -25,10 +26,31 @@ class SetsDeleteConfirm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final dangerStyle = setsNeonGhostStyle(palette).copyWith(
+      foregroundColor: WidgetStatePropertyAll(palette.danger),
+      side: WidgetStatePropertyAll(
+        BorderSide(
+          color: palette.danger.withValues(alpha: 0.4),
+          width: kFlapRuleThickness,
+        ),
+      ),
+    );
     return AlertDialog(
       key: const Key('sets_delete_confirm_dialog'),
-      title: Text(isInUse ? 'Set in use' : 'Delete set?'),
+      backgroundColor: palette.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kFlapRadius),
+        side: BorderSide(color: palette.lineStrong, width: kFlapRuleThickness),
+      ),
+      title: Text(
+        (isInUse ? 'Set in use' : 'Delete set?').toUpperCase(),
+        style: neonDisplay(
+          color: palette.foreground,
+          fontSize: 12,
+          letterSpacing: 1.0,
+        ),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +68,7 @@ class SetsDeleteConfirm extends StatelessWidget {
               'SET_IN_USE',
               key: const Key('sets_delete_set_in_use'),
               style: neonMono(
-                color: scheme.error,
+                color: palette.danger,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -64,14 +86,19 @@ class SetsDeleteConfirm extends StatelessWidget {
       actions: [
         TextButton(
           key: const Key('sets_delete_cancel'),
+          style: setsNeonGhostStyle(palette),
           onPressed: onCancel,
-          child: const Text('Cancel'),
+          child: Text('Cancel', style: setsNeonBtnLabel(palette.muted)),
         ),
         if (!isInUse)
           FilledButton(
             key: const Key('sets_delete_confirm'),
+            style: dangerStyle,
             onPressed: onConfirm,
-            child: const Text('Delete'),
+            child: Text(
+              'Delete'.toUpperCase(),
+              style: setsNeonBtnLabel(palette.danger),
+            ),
           ),
       ],
     );

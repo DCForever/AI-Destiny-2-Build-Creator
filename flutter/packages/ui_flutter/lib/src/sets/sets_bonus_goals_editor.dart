@@ -6,6 +6,7 @@ import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_bonus_family_info.dart';
 import 'sets_models.dart';
+import 'sets_neon_chrome.dart';
 
 /// G-SET-013 bonus goals editor: none · 1×2pc · 2×2pc · 1×4pc.
 ///
@@ -176,14 +177,7 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
       key: const Key('sets_bonus_goals_editor'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Set-bonus goals (optional)',
-          style: neonBody(
-            color: palette.muted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        const SetsFieldLabel('Armor set-bonus goals (optional)'),
         const SizedBox(height: kSpace4),
         Text(
           'None · one 2pc · two 2pc (different families) · one 4pc. '
@@ -196,11 +190,11 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            ChoiceChip(
-              key: const Key('sets_bonus_goal_none'),
-              label: const Text('None'),
+            // Compact “None” choice — keeps catalog-editor residual vs mockup mode-seg.
+            _NoneChoice(
               selected: widget.goals.isEmpty,
-              onSelected: !widget.enabled ? null : (_) => _selectNone(),
+              enabled: widget.enabled,
+              onTap: !widget.enabled ? null : _selectNone,
             ),
             if (widget.goals.isNotEmpty)
               for (final g in widget.goals)
@@ -368,6 +362,58 @@ class _SetsBonusGoalsEditorState extends State<SetsBonusGoalsEditor> {
           style: neonBody(color: palette.muted, fontSize: 11),
         ),
       ],
+    );
+  }
+}
+
+/// Compact neon “None” control (replaces Material ChoiceChip).
+class _NoneChoice extends StatelessWidget {
+  const _NoneChoice({
+    required this.selected,
+    required this.enabled,
+    this.onTap,
+  });
+
+  final bool selected;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FlapPalette.of(context);
+    final borderColor = selected
+        ? palette.accent.withValues(alpha: 0.45)
+        : palette.line;
+    final bg = selected
+        ? palette.accent.withValues(alpha: kFlapChannelWashAlpha)
+        : palette.background;
+    final fg = selected ? palette.foreground : palette.muted;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const Key('sets_bonus_goal_none'),
+        onTap: enabled ? onTap : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border.all(color: borderColor, width: kFlapRuleThickness),
+            borderRadius: BorderRadius.circular(kFlapRadius),
+          ),
+          child: Text(
+            'None'.toUpperCase(),
+            style: neonDisplay(
+              color: fg,
+              fontSize: 9,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

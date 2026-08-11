@@ -5,6 +5,7 @@ import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_coverage_band.dart';
 import 'sets_models.dart';
+import 'sets_neon_chrome.dart';
 import 'sets_save_gate_banner.dart';
 
 /// Board layout A: totals row above five piece slots; base-roll only.
@@ -41,77 +42,132 @@ class SetsArmorBoard extends StatelessWidget {
     final palette = FlapPalette.of(context);
     final resolvedTotals =
         totals ?? SetsArmorBoardTotals.fromSlots(slots);
-    final statLabels = kArmorBoardEofStatLabels;
+    const statLabels = kArmorBoardEofStatLabels;
 
     return Column(
       key: const Key('sets_armor_board'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Primary fill CTA
-        FilledButton.icon(
-          key: const Key('sets_optimize_primary'),
-          onPressed: onOptimize,
-          icon: const Icon(Icons.auto_awesome),
-          label: const Text('Optimize…'),
+        // board-header-actions — hero Optimize (mockup .btn-primary.btn-lg.hero)
+        Row(
+          children: [
+            FilledButton.icon(
+              key: const Key('sets_optimize_primary'),
+              style: setsNeonHeroStyle(palette),
+              onPressed: onOptimize,
+              icon: Icon(
+                Icons.auto_awesome,
+                size: 14,
+                color: onOptimize == null
+                    ? palette.accent.withValues(alpha: 0.35)
+                    : palette.accent,
+              ),
+              label: Text(
+                'Optimize…'.toUpperCase(),
+                style: setsNeonBtnLabel(
+                  onOptimize == null
+                      ? palette.accent.withValues(alpha: 0.35)
+                      : palette.accent,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+            const Spacer(),
+          ],
         ),
-        const SizedBox(height: kSpace12),
+        const SizedBox(height: 10),
         if (coverage != null) ...[
           SetsCoverageBand(data: coverage!),
           const SizedBox(height: kSpace12),
         ],
-        // Totals above pieces
+        // Totals above pieces — table chrome
         Container(
           key: const Key('sets_board_totals_row'),
-          padding: const EdgeInsets.all(kSpace8),
           decoration: BoxDecoration(
+            color: palette.background,
             border: Border.all(color: palette.line, width: kFlapRuleThickness),
+            borderRadius: BorderRadius.circular(kFlapRadius),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Totals (base roll)',
-                style: neonBody(color: palette.muted, fontSize: 11),
-              ),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 12,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    'Σ ${resolvedTotals.sigma}',
-                    key: const Key('sets_board_sigma'),
-                    style: neonMono(
-                      color: palette.foreground,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 7,
+                ),
+                color: palette.surfaceRaised,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Totals (base roll)'.toUpperCase(),
+                        style: neonDisplay(
+                          color: palette.muted.withValues(alpha: 0.85),
+                          fontSize: 9,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
                     ),
-                  ),
-                  for (final label in statLabels)
                     Text(
-                      '$label ${resolvedTotals.stats[label] ?? 0}',
-                      key: Key('sets_board_total_$label'),
-                      style: neonMono(color: palette.muted, fontSize: 12),
+                      'Σ ${resolvedTotals.sigma}',
+                      key: const Key('sets_board_sigma'),
+                      style: neonMono(
+                        color: palette.foreground,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                ],
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 8,
+                ),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    for (final label in statLabels)
+                      Text(
+                        '$label ${resolvedTotals.stats[label] ?? 0}',
+                        key: Key('sets_board_total_$label'),
+                        style: neonMono(color: palette.muted, fontSize: 12),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: kSpace8),
-        // Five slots
-        for (final slot in slots) ...[
-          _SlotRow(
-            slot: slot,
-            statLabels: statLabels,
-            showEnergyMods: showEnergyMods,
-            onPick: onPickSlot == null ? null : () => onPickSlot!(slot.slotWire),
-            onClear: onClearSlot == null || !slot.isFilled
-                ? null
-                : () => onClearSlot!(slot.slotWire),
+        // Five slots — table rows
+        Container(
+          decoration: BoxDecoration(
+            color: palette.background,
+            border: Border.all(color: palette.line, width: kFlapRuleThickness),
+            borderRadius: BorderRadius.circular(kFlapRadius),
           ),
-          const SizedBox(height: kSpace4),
-        ],
+          child: Column(
+            children: [
+              for (var i = 0; i < slots.length; i++)
+                _SlotRow(
+                  slot: slots[i],
+                  statLabels: statLabels,
+                  showEnergyMods: showEnergyMods,
+                  isLast: i == slots.length - 1,
+                  onPick: onPickSlot == null
+                      ? null
+                      : () => onPickSlot!(slots[i].slotWire),
+                  onClear: onClearSlot == null || !slots[i].isFilled
+                      ? null
+                      : () => onClearSlot!(slots[i].slotWire),
+                ),
+            ],
+          ),
+        ),
         if (tagsSlot != null) ...[
           const SizedBox(height: kSpace12),
           tagsSlot!,
@@ -133,6 +189,7 @@ class _SlotRow extends StatelessWidget {
     required this.slot,
     required this.statLabels,
     required this.showEnergyMods,
+    required this.isLast,
     this.onPick,
     this.onClear,
   });
@@ -140,6 +197,7 @@ class _SlotRow extends StatelessWidget {
   final SetsArmorSlotData slot;
   final List<String> statLabels;
   final bool showEnergyMods;
+  final bool isLast;
   final VoidCallback? onPick;
   final VoidCallback? onClear;
 
@@ -148,11 +206,16 @@ class _SlotRow extends StatelessWidget {
     final palette = FlapPalette.of(context);
     return Container(
       key: Key('sets_board_slot_${slot.slotWire}'),
-      padding: const EdgeInsets.all(kSpace8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: palette.line, width: kFlapRuleThickness),
-        ),
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(
+                  color: palette.line.withValues(alpha: 0.55),
+                  width: kFlapRuleThickness,
+                ),
+              ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,13 +223,13 @@ class _SlotRow extends StatelessWidget {
           Row(
             children: [
               SizedBox(
-                width: 88,
+                width: 72,
                 child: Text(
-                  slot.slotLabel,
-                  style: neonBody(
+                  slot.slotLabel.toUpperCase(),
+                  style: neonDisplay(
                     color: palette.muted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 9,
+                    letterSpacing: 0.6,
                   ),
                 ),
               ),
@@ -195,14 +258,26 @@ class _SlotRow extends StatelessWidget {
                 ),
               OutlinedButton(
                 key: Key('sets_board_pick_${slot.slotWire}'),
+                style: setsNeonGhostStyle(
+                  palette,
+                  height: 26,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  fontSize: 8,
+                ),
                 onPressed: onPick,
-                child: Text(slot.isFilled ? 'Replace' : 'Pick'),
+                child: Text(
+                  (slot.isFilled ? 'Replace' : 'Pick').toUpperCase(),
+                  style: setsNeonBtnLabel(palette.muted, fontSize: 8),
+                ),
               ),
               if (onClear != null)
                 IconButton(
                   key: Key('sets_board_clear_${slot.slotWire}'),
                   onPressed: onClear,
-                  icon: const Icon(Icons.clear, size: 18),
+                  iconSize: 16,
+                  visualDensity: VisualDensity.compact,
+                  color: palette.muted,
+                  icon: const Icon(Icons.clear, size: 16),
                 ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_models.dart';
+import 'sets_neon_chrome.dart';
 
 /// Optimizer confirm-only shell: kit matrix + single apply (BR-OPT-004).
 ///
@@ -48,12 +49,13 @@ class SetsOptimizeConfirmShell extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Optimize (confirm-only)',
+          'Optimizer · DIM-style · confirm-only'.toUpperCase(),
           key: const Key('sets_optimize_title'),
-          style: neonBody(
-            color: palette.foreground,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
+          style: neonDisplay(
+            color: palette.accent,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.0,
           ),
         ),
         const SizedBox(height: kSpace8),
@@ -86,14 +88,17 @@ class SetsOptimizeConfirmShell extends StatelessWidget {
           Container(
             key: const Key('sets_optimize_replace_all_warning'),
             padding: const EdgeInsets.all(kSpace8),
-            color: Theme.of(context)
-                .colorScheme
-                .errorContainer
-                .withValues(alpha: 0.45),
+            decoration: BoxDecoration(
+              color: palette.warning.withValues(alpha: 0.08),
+              border: Border.all(
+                color: palette.warning.withValues(alpha: 0.35),
+                width: kFlapRuleThickness,
+              ),
+            ),
             child: Text(
               'Applying a kit will replace all current pins.',
               style: neonBody(
-                color: Theme.of(context).colorScheme.onErrorContainer,
+                color: palette.warning,
                 fontSize: 12,
               ),
             ),
@@ -175,15 +180,22 @@ class SetsOptimizeConfirmShell extends StatelessWidget {
           children: [
             TextButton(
               key: const Key('sets_optimize_cancel'),
+              style: setsNeonGhostStyle(palette),
               onPressed: onCancel,
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: setsNeonBtnLabel(palette.muted)),
             ),
             const Spacer(),
             FilledButton(
               key: const Key('sets_optimize_confirm_apply'),
+              style: setsNeonPrimaryStyle(palette),
               onPressed: canApply ? onConfirmApply : null,
               child: Text(
-                hasPins ? 'Replace all with kit' : 'Apply kit',
+                (hasPins ? 'Replace all with kit' : 'Apply kit').toUpperCase(),
+                style: setsNeonBtnLabel(
+                  canApply
+                      ? palette.accent
+                      : palette.accent.withValues(alpha: 0.35),
+                ),
               ),
             ),
           ],

@@ -7,6 +7,7 @@ import '../neon_fonts.dart';
 import 'sets_armor_library_row.dart';
 import 'sets_honesty_empty.dart';
 import 'sets_models.dart';
+import 'sets_neon_chrome.dart';
 
 /// Dual-pane Sets library: Armor flap rail + detail rail.
 class SetsLibraryWorkspace extends StatelessWidget {
@@ -45,24 +46,34 @@ class SetsLibraryWorkspace extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.all(kSpace8),
+          padding: const EdgeInsets.fromLTRB(kSpace8, kSpace8, 4, kSpace8),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  'Sets',
-                  style: neonBody(
+                  'Sets'.toUpperCase(),
+                  style: neonDisplay(
                     color: palette.foreground,
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ),
-              IconButton(
+              // Mockup "+ New" primary — compact neon CTA
+              FilledButton(
                 key: const Key('sets_library_new'),
-                tooltip: 'New set',
+                style: setsNeonPrimaryStyle(
+                  palette,
+                  height: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  fontSize: 9,
+                ),
                 onPressed: onNewSet,
-                icon: const Icon(Icons.add),
+                child: Text(
+                  '+ New'.toUpperCase(),
+                  style: setsNeonBtnLabel(palette.accent, fontSize: 9),
+                ),
               ),
             ],
           ),
@@ -73,10 +84,14 @@ class SetsLibraryWorkspace extends StatelessWidget {
           child: TextField(
             key: const Key('sets_library_search'),
             controller: searchController,
-            decoration: const InputDecoration(
+            style: neonBody(color: palette.foreground, fontSize: 12),
+            decoration: InputDecoration(
               isDense: true,
               hintText: 'Search sets…',
-              prefixIcon: Icon(Icons.search, size: 18),
+              hintStyle: neonBody(color: palette.muted, fontSize: 12),
+              prefixIcon: Icon(Icons.search, size: 18, color: palette.muted),
+              filled: true,
+              fillColor: palette.background,
             ),
             onChanged: onSearchChanged,
           ),
