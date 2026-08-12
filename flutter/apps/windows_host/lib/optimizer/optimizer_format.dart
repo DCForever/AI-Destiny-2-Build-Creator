@@ -10,11 +10,14 @@ const String kOptimizerAdvisoryCaption =
     'Suggestions are not applied until you confirm. '
     'Find kits never writes sets. Soft thresholds never auto-apply kits.';
 
-/// Default number of kits shown in the compact compare window.
+/// Default number of kits shown in the **legacy** OptimizerWorkspace top strip.
+///
+/// Sets board Optimize shell always uses the full [OptimizerController.combinations]
+/// list (not this window). Keep 3 only for the old dual workspace strip.
 const int kOptimizerTopCompareCount = 3;
 
-/// Default maxResults for Find kits requests.
-const int kOptimizerDefaultMaxResults = 25;
+/// Default maxResults for Find kits requests (engine clamp 1..50).
+const int kOptimizerDefaultMaxResults = 50;
 
 /// Human label for empty-reason codes.
 String formatOptimizerEmptyReason(ArmorOptimizeEmptyReason reason) {

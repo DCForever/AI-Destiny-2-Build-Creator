@@ -1,6 +1,8 @@
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../bungie_content_icon.dart';
+import '../catalog/entity_info_hotspot.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_coverage_band.dart';
@@ -49,33 +51,29 @@ class SetsArmorBoard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // board-header-actions — hero Optimize (mockup .btn-primary.btn-lg.hero)
-        Row(
-          children: [
-            FilledButton.icon(
-              key: const Key('sets_optimize_primary'),
-              style: setsNeonHeroStyle(palette),
-              onPressed: onOptimize,
-              icon: Icon(
-                Icons.auto_awesome,
-                size: 14,
-                color: onOptimize == null
-                    ? palette.accent.withValues(alpha: 0.35)
-                    : palette.accent,
-              ),
-              label: Text(
-                'Optimize…'.toUpperCase(),
-                style: setsNeonBtnLabel(
-                  onOptimize == null
-                      ? palette.accent.withValues(alpha: 0.35)
-                      : palette.accent,
-                  fontSize: 10,
+        // Omitted when [onOptimize] is null (detail preview / structure-only).
+        if (onOptimize != null) ...[
+          Row(
+            children: [
+              FilledButton.icon(
+                key: const Key('sets_optimize_primary'),
+                style: setsNeonHeroStyle(palette),
+                onPressed: onOptimize,
+                icon: Icon(
+                  Icons.auto_awesome,
+                  size: 14,
+                  color: palette.accent,
+                ),
+                label: Text(
+                  'Optimize…'.toUpperCase(),
+                  style: setsNeonBtnLabel(palette.accent, fontSize: 10),
                 ),
               ),
-            ),
-            const Spacer(),
-          ],
-        ),
-        const SizedBox(height: 10),
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
         if (coverage != null) ...[
           SetsCoverageBand(data: coverage!),
           const SizedBox(height: kSpace12),
@@ -233,19 +231,12 @@ class _SlotRow extends StatelessWidget {
                   ),
                 ),
               ),
+              if (slot.isFilled) ...[
+                _slotIcon(slot, palette),
+                const SizedBox(width: 8),
+              ],
               Expanded(
-                child: Text(
-                  slot.isFilled
-                      ? '${slot.isExotic ? '★ ' : ''}${slot.itemName}'
-                      : 'Empty',
-                  key: Key('sets_board_slot_name_${slot.slotWire}'),
-                  style: neonBody(
-                    color: slot.isFilled
-                        ? palette.foreground
-                        : palette.muted,
-                    fontSize: 13,
-                  ),
-                ),
+                child: _slotName(slot, palette),
               ),
               if (slot.instanceId != null && slot.instanceId!.isNotEmpty)
                 Padding(
@@ -256,20 +247,21 @@ class _SlotRow extends StatelessWidget {
                     style: neonMono(color: palette.muted, fontSize: 10),
                   ),
                 ),
-              OutlinedButton(
-                key: Key('sets_board_pick_${slot.slotWire}'),
-                style: setsNeonGhostStyle(
-                  palette,
-                  height: 26,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  fontSize: 8,
+              if (onPick != null)
+                OutlinedButton(
+                  key: Key('sets_board_pick_${slot.slotWire}'),
+                  style: setsNeonGhostStyle(
+                    palette,
+                    height: 26,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    fontSize: 8,
+                  ),
+                  onPressed: onPick,
+                  child: Text(
+                    (slot.isFilled ? 'Replace' : 'Pick').toUpperCase(),
+                    style: setsNeonBtnLabel(palette.muted, fontSize: 8),
+                  ),
                 ),
-                onPressed: onPick,
-                child: Text(
-                  (slot.isFilled ? 'Replace' : 'Pick').toUpperCase(),
-                  style: setsNeonBtnLabel(palette.muted, fontSize: 8),
-                ),
-              ),
               if (onClear != null)
                 IconButton(
                   key: Key('sets_board_clear_${slot.slotWire}'),
@@ -313,6 +305,66 @@ class _SlotRow extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _slotIcon(SetsArmorSlotData slot, FlapPalette palette) {
+    final icon = Container(
+      key: Key('sets_board_slot_icon_${slot.slotWire}'),
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: palette.surfaceRaised,
+        border: Border.all(
+          color: slot.isExotic
+              ? const Color(0xFFE5C35A).withValues(alpha: 0.7)
+              : palette.line,
+          width: kFlapRuleThickness,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: slot.iconPath != null && slot.iconPath!.trim().isNotEmpty
+          ? BungieContentIcon(
+              pathOrUrl: slot.iconPath,
+              size: 32,
+              fallback: Icon(
+                Icons.shield_outlined,
+                size: 18,
+                color: palette.muted,
+              ),
+            )
+          : Icon(Icons.shield_outlined, size: 18, color: palette.muted),
+    );
+    final info = slot.entityInfo;
+    if (info == null) return icon;
+    return EntityInfoHotspot(
+      key: Key('sets_board_slot_info_${slot.slotWire}'),
+      data: info,
+      child: icon,
+    );
+  }
+
+  Widget _slotName(SetsArmorSlotData slot, FlapPalette palette) {
+    final label = Text(
+      slot.isFilled
+          ? '${slot.isExotic ? '★ ' : ''}${slot.itemName}'
+          : 'Empty',
+      key: Key('sets_board_slot_name_${slot.slotWire}'),
+      style: neonBody(
+        color: slot.isFilled
+            ? (slot.isExotic
+                ? const Color(0xFFE5C35A)
+                : palette.foreground)
+            : palette.muted,
+        fontSize: 13,
+      ),
+    );
+    final info = slot.entityInfo;
+    if (!slot.isFilled || info == null) return label;
+    return EntityInfoHotspot(
+      key: Key('sets_board_slot_name_info_${slot.slotWire}'),
+      data: info,
+      child: label,
     );
   }
 }

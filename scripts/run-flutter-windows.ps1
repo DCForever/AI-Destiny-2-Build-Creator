@@ -170,16 +170,22 @@ if (-not (Test-Path -LiteralPath $runScript)) {
   throw "Missing run-windows.ps1 at $runScript"
 }
 
-$args = @()
-if ($driver) { $args += "-EnableFlutterDriver" }
-if ($SkipPubGet) { $args += "-SkipPubGet" }
-if ($Clean) { $args += "-Clean" }
-if ($Gen -and $Target -eq "widgetbook") { $args += "-Gen" }
+# Hashtable splat only — string-array splat can bind "-SkipPubGet" into [string]
+# params (ClientId) on windows_host run-windows.ps1 and poison OAuth.
+$hostArgs = @{}
+if ($driver) { $hostArgs["EnableFlutterDriver"] = $true }
+if ($SkipPubGet) { $hostArgs["SkipPubGet"] = $true }
+if ($Clean) { $hostArgs["Clean"] = $true }
+if ($Gen -and $Target -eq "widgetbook") { $hostArgs["Gen"] = $true }
 if ($Device -ne "windows" -and $Target -eq "widgetbook") {
-  $args += @("-Device", $Device)
+  $hostArgs["Device"] = $Device
 }
 
-Write-Host "Launch: $runScript $($args -join ' ')"
+$argSummary = ($hostArgs.GetEnumerator() | ForEach-Object {
+  if ($_.Value -is [bool] -and $_.Value) { "-$($_.Key)" }
+  else { "-$($_.Key) $($_.Value)" }
+}) -join " "
+Write-Host "Launch: $runScript $argSummary"
 Set-Location $HostRoot
-& $runScript @args
+& $runScript @hostArgs
 exit $LASTEXITCODE

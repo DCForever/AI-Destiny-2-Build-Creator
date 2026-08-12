@@ -11,6 +11,21 @@ import '../host_bootstrap.dart';
 Future<List<SetsBonusFamilyOption>> loadArmorSetBonusFamilies(
   AppServices services,
 ) async {
+  final rows = await loadArmorSetBonusCatalogRecords(services);
+  return mapSetBonusFamiliesFromCatalog(rows);
+}
+
+/// Map catalog rows → UI family options (name + 2pc/4pc perk text).
+List<SetsBonusFamilyOption> mapSetBonusFamiliesFromCatalog(
+  List<SetBonusCatalogRecord> rows,
+) =>
+    _mapCatalog(rows);
+
+/// Catalog rows including [SetBonusCatalogRecord.itemHashes] for optimizer
+/// candidate annotation (item hash → family name).
+Future<List<SetBonusCatalogRecord>> loadArmorSetBonusCatalogRecords(
+  AppServices services,
+) async {
   final refresh = services.manifestRefresh;
   if (refresh is! WindowsManifestRefresh) {
     return const [];
@@ -29,8 +44,7 @@ Future<List<SetsBonusFamilyOption>> loadArmorSetBonusFamilies(
     );
     final rows =
         await cache.getStore<SetBonusCatalogRecord>(MvpStoreName.setBonuses);
-    final mapped = _mapCatalog(rows);
-    if (mapped.isNotEmpty) return mapped;
+    if (rows.isNotEmpty) return rows;
   } catch (_) {
     // Store missing or stale — try raw tables.
   }
@@ -45,10 +59,28 @@ Future<List<SetsBonusFamilyOption>> loadArmorSetBonusFamilies(
       version,
       'DestinySandboxPerkDefinition',
     );
-    return _mapCatalog(setBonusCatalogFromRawTables(setTable, sandbox));
+    return setBonusCatalogFromRawTables(setTable, sandbox);
   } catch (_) {
     return const [];
   }
+}
+
+/// Item definition hash → set-bonus family **display name** (goal key).
+///
+/// Used to stamp [CandidatePiece.setBonusKey] so hard goals can match inventory.
+Map<int, String> setBonusKeyByItemHashFromCatalog(
+  List<SetBonusCatalogRecord> rows,
+) {
+  final out = <int, String>{};
+  for (final r in rows) {
+    final name = r.name.trim();
+    if (name.isEmpty) continue;
+    for (final h in r.itemHashes) {
+      // First family wins if a definition appears in multiple sets (rare).
+      out.putIfAbsent(h, () => name);
+    }
+  }
+  return out;
 }
 
 /// @nodoc — kept for call sites that only need names.

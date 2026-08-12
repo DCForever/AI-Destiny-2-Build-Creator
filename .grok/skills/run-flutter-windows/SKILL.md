@@ -126,4 +126,5 @@ Widgetbook: no OAuth/secrets. Host: requires `.env.windows.local` (gitignored); 
 - `scripts/link-worktree-env.ps1` — env/cert symlinks into worktrees  
 - `scripts/link-worktree-windows-build.ps1` — bulk short junctions  
 - `flutter/apps/windows_host/run-windows.ps1` · `flutter/apps/widgetbook/run-windows.ps1`  
+- Skill **`flutter-windows-debug-driver`** — DTD + Driver + hot reload/tap/screenshot loop after launch  
 - Skill `impeccable-flutter` for design passes on a **running** debug host  

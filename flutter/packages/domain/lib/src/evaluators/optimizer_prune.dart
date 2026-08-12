@@ -46,8 +46,11 @@ List<CandidatePiece> prunePiecesForSlot(
   }
 
   for (final goal in options.setBonusGoals ?? const <SetBonusCoverageGoal>[]) {
-    final family =
-        pieces.where((p) => p.setBonusKey == goal.setBonusKey).toList();
+    final want = goal.setBonusKey.trim().toLowerCase();
+    final family = pieces.where((p) {
+      final key = p.setBonusKey?.trim().toLowerCase();
+      return key != null && key.isNotEmpty && key == want;
+    }).toList();
     retain(_topK(family, options.priorities, k));
   }
 
@@ -63,4 +66,22 @@ Map<EquipmentSlot, List<CandidatePiece>> prunePiecesBySlot(
     result[slot] = prunePiecesForSlot(bySlot[slot] ?? const [], options);
   }
   return result;
+}
+
+/// After prune: for [lockedHash], replace that piece's slot list with only
+/// matching copies so enumeration always includes the lock.
+///
+/// Mutates [bySlot] in place. No-op when hash is null or not present.
+void pinLockedExoticSlot(
+  Map<EquipmentSlot, List<CandidatePiece>> bySlot,
+  int? lockedHash,
+) {
+  if (lockedHash == null) return;
+  for (final slot in armorOptimizerSlots) {
+    final list = bySlot[slot] ?? const <CandidatePiece>[];
+    final hits = list.where((p) => p.itemHash == lockedHash).toList();
+    if (hits.isEmpty) continue;
+    bySlot[slot] = hits;
+    return;
+  }
 }

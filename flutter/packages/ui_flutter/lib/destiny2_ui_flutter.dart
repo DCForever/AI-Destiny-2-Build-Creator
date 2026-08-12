@@ -51,6 +51,7 @@ export 'src/sets/sets_coverage_band.dart';
 export 'src/sets/sets_save_gate_banner.dart';
 export 'src/sets/sets_armor_board.dart';
 export 'src/sets/sets_owned_compare_table.dart';
+export 'src/sets/sets_optimize_dual_range.dart';
 export 'src/sets/sets_optimize_confirm_shell.dart';
 export 'src/sets/sets_create_wizard.dart';
 export 'src/sets/sets_delete_confirm.dart';

@@ -83,14 +83,22 @@ ArmorOptimizeEmptyReason explainEmpty(EmptyReasonInput input) {
 }
 
 /// Whether set-bonus goals can still be met by distinct slots in [candidates].
+///
+/// Matching is case-insensitive on family keys. Exotics still count toward
+/// *reachability* slot diversity here (pipeline satisfaction excludes them
+/// from tier counts separately).
 bool goalsReachable(
   List<CandidatePiece> candidates,
   List<SetBonusCoverageGoal> goals,
 ) {
   return goals.every((goal) {
+    final want = goal.setBonusKey.trim().toLowerCase();
+    if (want.isEmpty) return false;
     final slots = <Object>{};
     for (final c in candidates) {
-      if (c.setBonusKey == goal.setBonusKey) slots.add(c.slot);
+      final key = c.setBonusKey?.trim().toLowerCase();
+      if (key == null || key.isEmpty) continue;
+      if (key == want) slots.add(c.slot);
     }
     return slots.length >= goal.minPieces;
   });

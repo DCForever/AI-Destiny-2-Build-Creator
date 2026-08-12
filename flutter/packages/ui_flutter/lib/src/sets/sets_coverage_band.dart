@@ -1,6 +1,7 @@
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../catalog/entity_info_hotspot.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import 'sets_models.dart';
@@ -62,26 +63,11 @@ class SetsCoverageBand extends StatelessWidget {
                       style: neonBody(color: hardTone, fontSize: 11),
                     ),
                     for (final g in data.hardGoals)
-                      Container(
-                        key: Key(
-                          'sets_coverage_hard_${g.familyKey}_${g.minPieces}',
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: hardTone.withValues(alpha: 0.4),
-                            width: kFlapRuleThickness,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(kFlapRadius),
-                        ),
-                        child: Text(
-                          g.display,
-                          style: neonMono(color: hardTone, fontSize: 11),
-                        ),
+                      _goalChip(
+                        chipKey: 'sets_coverage_hard_${g.familyKey}_${g.minPieces}',
+                        label: g.display,
+                        tone: hardTone,
+                        entityInfo: g.entityInfo,
                       ),
                   ],
                 ),
@@ -112,22 +98,49 @@ class SetsCoverageBand extends StatelessWidget {
                   ),
                 ),
                 for (final f in data.softTwoPiece)
-                  Text(
-                    '$f ≥2pc',
-                    key: Key('sets_coverage_soft_2pc_$f'),
-                    style: neonMono(color: palette.muted, fontSize: 11),
+                  _goalChip(
+                    chipKey: 'sets_coverage_soft_2pc_$f',
+                    label: '$f ≥2pc',
+                    tone: palette.muted,
+                    entityInfo: data.softEntityInfoByFamily[f],
+                    mono: true,
                   ),
                 for (final f in data.softFourPiece)
-                  Text(
-                    '$f ≥4pc',
-                    key: Key('sets_coverage_soft_4pc_$f'),
-                    style: neonMono(color: palette.muted, fontSize: 11),
+                  _goalChip(
+                    chipKey: 'sets_coverage_soft_4pc_$f',
+                    label: '$f ≥4pc',
+                    tone: palette.muted,
+                    entityInfo: data.softEntityInfoByFamily[f],
+                    mono: true,
                   ),
               ],
             ),
           ),
         ],
       ],
+    );
+  }
+
+  /// Goal / family chip; wraps [EntityInfoHotspot] when [entityInfo] is set.
+  Widget _goalChip({
+    required String chipKey,
+    required String label,
+    required Color tone,
+    EntityInfoData? entityInfo,
+    bool mono = false,
+  }) {
+    final text = Text(
+      label,
+      key: Key(chipKey),
+      style: mono
+          ? neonMono(color: tone, fontSize: 11)
+          : neonBody(color: tone, fontSize: 11),
+    );
+    if (entityInfo == null) return text;
+    return EntityInfoHotspot(
+      key: Key('${chipKey}_info'),
+      data: entityInfo,
+      child: text,
     );
   }
 }

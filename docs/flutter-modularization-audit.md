@@ -4,6 +4,8 @@
 **Workspace:** `flutter/` Melos packages + `apps/{windows,mobile,web}_host`  
 **Layering constraints (do not violate):** pure packages stay pure (`domain`, `sandbox_data`); no Flutter/Jaspr in pure code; `ui_tokens` pure; `ui_flutter` Flutter-only (not imported by Jaspr web_host).
 
+**Living ranked backlog (post-audit):** [ranked-refactor-backlog.md](./ranked-refactor-backlog.md) — god-page splits, GAP-PERF, owned-bridge unify, what not to re-open.
+
 ### Implemented homes
 
 | Audit item | New home |

@@ -66,6 +66,7 @@ Ground truth for Sets Armor redesign: mockup dual-pane library + create lock + b
 
 - ~~Host cutover: mount `SetsLibraryWorkspace` on live `SetsLibraryPage`~~ **partial (2026-08-10 pass 1)** — live library uses `SetsLibraryWorkspace` + Armor columns Name·class·pcs·cover·used-by; detail/board still residual god-page; Optimize primary shell residual.
 - ~~Neon aesthetic dual-truth (Orbitron labels, choice-grid, modal bar, hero Optimize)~~ **closed 2026-08-10** — `sets_neon_chrome.dart` + board/library/modal/optimize/delete chrome pass.
+- ~~Optimize DIM matrix + constraints (G-SET-027/036)~~ **closed 2026-08-11** — exotic/sort/current-row + dual-range stat bands + kit matrix (Σ · EoF · slots · goals · green/red deltas); host seeds current board + exotic options.
 - Owned inventory projection → compare rows (empty fill residual).
 - Optimize primary sole `SetsOptimizeConfirmShell` (retire dual OptimizerWorkspace on god-detail).
 - Product-map flutter-windows create/detail/fill/optimize stub→done after full host cutover.

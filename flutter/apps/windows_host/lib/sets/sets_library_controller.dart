@@ -364,6 +364,45 @@ class SetsLibraryController extends ChangeNotifier {
     }
   }
 
+  /// Persist optimizer constraints JSON on the selected set (class, bonus goals, …).
+  Future<String?> updateSelectedConstraints(
+    ArmorSetOptimizerConstraints constraints,
+  ) async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null) {
+      return 'No set selected';
+    }
+    try {
+      final updated = await updateUserSet(
+        db,
+        uid,
+        sel.set.id,
+        UpdateSetCommand(
+          setOptimizerConstraints: true,
+          optimizerConstraints: serializeOptimizerConstraints(constraints),
+        ),
+      );
+      if (updated == null) {
+        return 'Set not found';
+      }
+      _selected = updated;
+      _allSets = await listUserSets(db, uid);
+      _reapplyFilters();
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
   /// Fill [slot] from a catalog pick.
   ///
   /// Pass [knownItemMeta] (hash → meta) for active items so set-wide exotic

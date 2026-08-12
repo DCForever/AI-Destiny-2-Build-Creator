@@ -2,10 +2,16 @@ import 'dart:async';
 
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart'
-    show ArmorSetStatTotals, SetItemRecord, SetRecord, armorBaseStatKeys;
+    show
+        ArmorSetStatTotals,
+        InventoryItemRecord,
+        SetItemRecord,
+        SetRecord,
+        armorBaseStatKeys,
+        listInventoryItems;
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart'
-    show CatalogItem, WindowsManifestRefresh;
+    show CatalogClientFilters, CatalogItem, WindowsManifestRefresh;
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +19,8 @@ import 'package:flutter/material.dart';
 import '../catalog/owned_catalog_bridge.dart';
 import '../host_bootstrap.dart';
 import '../labels/product_labels.dart';
+import '../optimizer/optimizer_candidate_map.dart';
 import '../optimizer/optimizer_controller.dart';
-import '../optimizer/optimizer_workspace.dart';
 import '../widgets/entity_icon.dart';
 import 'set_bonus_families.dart';
 import 'set_catalog_picker.dart';
@@ -69,8 +75,11 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   bool _ownOptimizer = false;
   String? _boundOptimizerSetId;
   SetDetailPresentation? _presentation;
-  bool _enriching = false;
+  /// Monotonic gen so late enrichment results don't clobber newer selection.
+  int _enrichGen = 0;
   List<SetsBonusFamilyOption> _setBonusFamilies = const [];
+  /// Item hash → set-bonus family name (optimizer candidate stamp).
+  Map<int, String> _setBonusKeyByItemHash = const {};
   bool _setBonusFamiliesLoading = false;
   bool _setBonusFamiliesLoaded = false;
 
@@ -115,10 +124,12 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     if (_setBonusFamiliesLoading) return;
     setState(() => _setBonusFamiliesLoading = true);
     try {
-      final families = await loadArmorSetBonusFamilies(widget.services);
+      // One catalog load drives UI families + itemHash→family for optimizer.
+      final rows = await loadArmorSetBonusCatalogRecords(widget.services);
       if (!mounted) return;
       setState(() {
-        _setBonusFamilies = families;
+        _setBonusFamilies = mapSetBonusFamiliesFromCatalog(rows);
+        _setBonusKeyByItemHash = setBonusKeyByItemHashFromCatalog(rows);
         _setBonusFamiliesLoaded = true;
         _setBonusFamiliesLoading = false;
       });
@@ -126,6 +137,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       if (!mounted) return;
       setState(() {
         _setBonusFamilies = const [];
+        _setBonusKeyByItemHash = const {};
         _setBonusFamiliesLoaded = true;
         _setBonusFamiliesLoading = false;
       });
@@ -193,37 +205,43 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
   }
 
   void _scheduleEnrichment() {
+    unawaited(_awaitEnrichment());
+  }
+
+  /// Load base-roll presentation for the selected set (names + EoF stats).
+  ///
+  /// Await this after fill/optimize apply so the board modal can rebuild with
+  /// non-zero totals (dialog [StatefulBuilder] does not rebuild on page setState).
+  Future<void> _awaitEnrichment() async {
     final sel = _controller.selected;
     if (sel == null) {
-      _presentation = null;
+      if (mounted) {
+        setState(() => _presentation = null);
+      } else {
+        _presentation = null;
+      }
       return;
     }
-    if (_enriching) return;
-    _enriching = true;
+    final gen = ++_enrichGen;
     final setType = SetType.tryParse(sel.set.type) ?? SetType.weapon;
     final slots = slotsForSetType(setType);
     final manifestService = widget.services.manifestRefresh is WindowsManifestRefresh
         ? (widget.services.manifestRefresh as WindowsManifestRefresh).service
         : null;
-    enrichSetDetailPresentation(
-      detail: sel,
-      bridge: _bridge,
-      boardSlots: slots,
-      userId: _controller.userId,
-      manifestService: manifestService,
-    ).then((p) {
-      if (!mounted) return;
-      setState(() {
-        _presentation = p;
-        _enriching = false;
-      });
-    }).catchError((_) {
-      if (!mounted) return;
-      setState(() {
-        _presentation = null;
-        _enriching = false;
-      });
-    });
+    try {
+      final p = await enrichSetDetailPresentation(
+        detail: sel,
+        bridge: _bridge,
+        boardSlots: slots,
+        userId: _controller.userId,
+        manifestService: manifestService,
+      );
+      if (!mounted || gen != _enrichGen) return;
+      setState(() => _presentation = p);
+    } catch (_) {
+      if (!mounted || gen != _enrichGen) return;
+      setState(() => _presentation = null);
+    }
   }
 
   void _syncOptimizerTarget(SetDetail? sel) {
@@ -406,8 +424,22 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     _lifecycle.close();
   }
 
+  /// Presentation row for a board wire (exact or `slot:…` occupant key).
+  SetItemRowPresentation? _presentationRowForWire(String wire) {
+    final map = _presentation?.rowsBySlot;
+    if (map == null) return null;
+    final direct = map[wire];
+    if (direct != null) return direct;
+    for (final e in map.entries) {
+      if (e.key.startsWith('$wire:')) return e.value;
+    }
+    return null;
+  }
+
+  /// Board layout A slots with base-roll stats from enrichment when available.
   List<SetsArmorSlotData> _armorBoardSlotsFromSelected() {
     final sel = _controller.selected;
+    final catalog = _catalogByHash();
     final bySlot = <String, SetItemRecord>{};
     if (sel != null) {
       for (final item in sel.activeItems) {
@@ -422,17 +454,147 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
         () {
           final wire = kArmorBoardSlotWires[i];
           final item = bySlot[wire];
+          final row = _presentationRowForWire(wire);
+          final board = row?.armorStats;
+          final stats = <String, int>{
+            if (board != null)
+              for (final label in kArmorBoardEofStatLabels)
+                if (board.stats[label] != null) label: board.stats[label]!,
+          };
+          final itemName = item?.itemName;
+          final rowName = row?.itemName;
+          final name = (itemName != null && itemName.trim().isNotEmpty)
+              ? itemName
+              : (rowName != null && rowName.trim().isNotEmpty ? rowName : null);
+          final instanceId = item?.instanceId ?? row?.instanceId;
+          final itemHash = item?.itemHash ?? row?.itemHash;
+          final cat = itemHash != null ? catalog[itemHash] : null;
+          final iconPath = (row?.icon != null && row!.icon!.trim().isNotEmpty)
+              ? row.icon
+              : cat?.icon;
+          final isExotic = item != null
+              ? (_metaForHash(item.itemHash, item.itemName).isExotic == true)
+              : (cat?.isExotic ??
+                  (row?.metaChips.any(
+                        (c) => c.toLowerCase().contains('exotic'),
+                      ) ??
+                      false));
+          final filledName = name;
+          final EntityInfoData? entityInfo = (itemHash != null &&
+                  filledName != null &&
+                  filledName.trim().isNotEmpty)
+              ? _entityInfoForArmorPiece(
+                  itemHash: itemHash,
+                  name: filledName.trim(),
+                  isExotic: isExotic,
+                  catalog: cat,
+                  metaChips: row?.metaChips ?? const [],
+                  iconPath: iconPath,
+                )
+              : null;
           return SetsArmorSlotData(
             slotWire: wire,
             slotLabel: kArmorBoardSlotLabels[i],
-            itemName: item?.itemName,
-            instanceId: item?.instanceId,
-            isExotic: item != null
-                ? (_metaForHash(item.itemHash, item.itemName).isExotic == true)
-                : false,
+            itemName: name,
+            instanceId: instanceId,
+            itemHash: itemHash,
+            iconPath: iconPath,
+            isExotic: isExotic,
+            stats: stats,
+            entityInfo: entityInfo,
           );
         }(),
     ];
+  }
+
+  /// Catalog-backed armor piece popup (never invents description).
+  EntityInfoData _entityInfoForArmorPiece({
+    required int itemHash,
+    required String name,
+    required bool isExotic,
+    CatalogItem? catalog,
+    List<String> metaChips = const [],
+    String? iconPath,
+  }) {
+    final meta = <String>[
+      if (isExotic) 'Exotic',
+      ...metaChips.where((c) => c.trim().isNotEmpty),
+    ];
+    // Dedupe while preserving order.
+    final seen = <String>{};
+    final uniqueMeta = <String>[];
+    for (final m in meta) {
+      final k = m.toLowerCase();
+      if (seen.add(k)) uniqueMeta.add(m);
+    }
+    final intrinsic = catalog?.intrinsicName?.trim();
+    final desc = (catalog?.description ?? '').trim();
+    final body = StringBuffer();
+    if (desc.isNotEmpty) {
+      body.writeln(desc);
+    }
+    if (intrinsic != null && intrinsic.isNotEmpty) {
+      if (body.isNotEmpty) body.writeln();
+      body.writeln('Intrinsic · $intrinsic');
+    }
+    return EntityInfoData(
+      id: 'armor_$itemHash',
+      name: name,
+      kind: isExotic ? 'Exotic armor' : 'Armor',
+      iconPath: iconPath ?? catalog?.icon,
+      description: body.toString().trim(),
+      metaLines: uniqueMeta,
+      hashFooter: '#$itemHash',
+    );
+  }
+
+  /// Resolve set-bonus family option by display name / key (case-insensitive).
+  SetsBonusFamilyOption? _bonusFamilyOption(String key) {
+    final k = key.trim().toLowerCase();
+    if (k.isEmpty) return null;
+    for (final f in _setBonusFamilies) {
+      if (f.name.toLowerCase() == k) return f;
+    }
+    return null;
+  }
+
+  /// Hard goals + soft family info for coverage band (detail + board).
+  SetsCoverageBandData? _coverageBandFromSelected() {
+    final sel = _controller.selected;
+    if (sel == null) return null;
+    final constraints = parseOptimizerConstraints(sel.set.optimizerConstraints);
+    final goals = constraints?.setBonusGoals ?? const [];
+    if (goals.isEmpty) return null;
+    return SetsCoverageBandData(
+      hardGoals: [
+        for (final g in goals)
+          () {
+            final fam = _bonusFamilyOption(g.setBonusKey);
+            return SetsBonusGoalData(
+              familyKey: g.setBonusKey,
+              minPieces: g.minPieces,
+              familyLabel: fam?.name ?? g.setBonusKey,
+              entityInfo: fam != null
+                  ? entityInfoForSetBonusTier(fam, g.minPieces)
+                  : null,
+            );
+          }(),
+      ],
+      hardMet: false,
+    );
+  }
+
+  /// Totals row from enrichment; null falls back to [SetsArmorBoardTotals.fromSlots].
+  SetsArmorBoardTotals? _boardTotalsFromPresentation() {
+    final t = _presentation?.armorTotals;
+    if (t == null || !t.hasAny) return null;
+    return SetsArmorBoardTotals(
+      stats: {
+        for (final label in kArmorBoardEofStatLabels)
+          label: t.statValues[label] ?? 0,
+      },
+      incomplete: t.incomplete,
+    );
   }
 
   /// Interactive armor board modal (Optimize + per-slot Pick).
@@ -453,6 +615,8 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
         return StatefulBuilder(
           builder: (dialogCtx, setModal) {
             final slots = _armorBoardSlotsFromSelected();
+            final totals = _boardTotalsFromPresentation();
+            final coverage = _coverageBandFromSelected();
             final setName = _controller.selected?.set.name;
             return SetsLifecycleModal(
               title: 'Armor set',
@@ -464,16 +628,20 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                 child: SetsArmorBoard(
                   key: const Key('sets_armor_board_modal'),
                   slots: slots,
+                  totals: totals,
+                  coverage: coverage,
                   onOptimize: () async {
                     await _openOptimizeFromBoard(dialogCtx);
                     if (!dialogCtx.mounted) return;
                     await _controller.refresh(keepSelection: true);
+                    await _awaitEnrichment();
                     if (dialogCtx.mounted) setModal(() {});
                   },
                   onPickSlot: (slot) async {
                     await _fillSlot(slot);
                     if (!dialogCtx.mounted) return;
                     await _controller.refresh(keepSelection: true);
+                    await _awaitEnrichment();
                     if (dialogCtx.mounted) setModal(() {});
                   },
                 ),
@@ -486,8 +654,31 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     _lifecycle.close();
   }
 
+  /// Catalog hash → item for names / icons (offline base + bridge browse).
+  Map<int, CatalogItem> _catalogByHash() {
+    final map = <int, CatalogItem>{
+      for (final i in _bridge.offlineCatalog.baseItems) i.hash: i,
+    };
+    for (final i in _bridge.browse(const CatalogClientFilters())) {
+      map.putIfAbsent(i.hash, () => i);
+    }
+    return map;
+  }
+
+  /// Power by instance from last inventory snapshot on the bridge.
+  Map<String, int> _powerByInstance() {
+    final out = <String, int>{};
+    for (final r in _bridge.inventory) {
+      if (r.power > 0) out[r.instanceId] = r.power;
+    }
+    return out;
+  }
+
   List<SetsOptimizeKitRowData> _kitsFromOptimizerCombinations() {
-    final combos = _optimizer.visibleCombinations;
+    // Sets board path always shows the full ranked pool (not legacy top-3).
+    final combos = _optimizer.combinations;
+    final catalog = _catalogByHash();
+    final powerByInst = _powerByInstance();
     return [
       for (var i = 0; i < combos.length; i++)
         () {
@@ -506,17 +697,261 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                     return '${s.setBonusKey} $tier';
                   })
                   .join(' · ');
+          String? exoticName;
+          int? exoticHash;
+          for (final p in c.pieces) {
+            final cat = catalog[p.itemHash];
+            final isExo = p.isExotic || (cat?.isExotic ?? false);
+            if (!isExo) continue;
+            final n = (p.itemName ?? cat?.name)?.trim();
+            exoticName =
+                (n != null && n.isNotEmpty) ? n : '#${p.itemHash}';
+            exoticHash = p.itemHash;
+            break;
+          }
+          final slotNames = <String, String>{};
+          final slotPieces = <String, SetsOptimizeSlotPiece>{};
+          for (final p in c.pieces) {
+            final wire = p.slot.wireName;
+            final cat = catalog[p.itemHash];
+            final name = (p.itemName?.trim().isNotEmpty == true)
+                ? p.itemName!.trim()
+                : (cat?.name.trim().isNotEmpty == true
+                    ? cat!.name.trim()
+                    : '#${p.itemHash}');
+            slotNames[wire] = name;
+            final pieceTotal =
+                p.statValues.values.fold<int>(0, (a, b) => a + b);
+            final baseLine = ArmorStatName.all
+                .map((s) => '${p.statValues[s] ?? 0}')
+                .join('/');
+            final power = powerByInst[p.instanceId];
+            final fam = p.setBonusKey?.trim();
+            final subParts = <String>[
+              if (pieceTotal > 0) 'Σ $pieceTotal',
+              if (power != null && power > 0) '✧$power',
+              if (fam != null && fam.isNotEmpty)
+                fam.split(RegExp(r'\s+')).first,
+            ];
+            slotPieces[wire] = SetsOptimizeSlotPiece(
+              name: name,
+              isExotic: p.isExotic || (cat?.isExotic ?? false),
+              iconPath: cat?.icon,
+              power: power,
+              pieceTotal: pieceTotal > 0 ? pieceTotal : null,
+              familyKey: fam,
+              baseStatsLine: baseLine,
+              subtitle: subParts.isEmpty ? null : subParts.join(' · '),
+            );
+          }
           return SetsOptimizeKitRowData(
             id: '$i',
             total: total,
             stats: stats,
-            slotNames: {
-              for (final p in c.pieces)
-                p.slot.wireName: (p.itemName?.trim().isNotEmpty == true)
-                    ? p.itemName!.trim()
-                    : '#${p.itemHash}',
-            },
+            slotNames: slotNames,
+            slotPieces: slotPieces,
             goalsLabel: goals,
+            goalsOk: c.setBonusSummary.isEmpty ||
+                c.setBonusSummary.every((s) => s.active2pc || s.active4pc),
+            exoticName: exoticName,
+            exoticItemHash: exoticHash,
+            rank: i + 1,
+            label: 'Kit ${i + 1}',
+          );
+        }(),
+    ];
+  }
+
+  /// Inject catalog-enriched candidates, then find kits (full result list).
+  ///
+  /// [exoticFilter]: `any` · `none` · itemHash decimal string.
+  /// Concrete hashes are locked into the engine so results are re-ranked for
+  /// that exotic (client-only filter over the global top-50 was empty for most
+  /// exotic choices). `none` clears the lock; legendary-only is client-filtered.
+  Future<void> _runFindKitsForBoard({String exoticFilter = 'any'}) async {
+    _optimizer.setShowAllSuggestions(true);
+    _optimizer.setMaxResults(50);
+    final hash = int.tryParse(exoticFilter.trim());
+    if (hash != null && exoticFilter != 'any' && exoticFilter != 'none') {
+      _optimizer.setLockedExoticText('$hash');
+    } else {
+      _optimizer.setLockedExoticText('');
+    }
+    try {
+      await _bridge.refresh(reloadEntities: false);
+      final userId = _controller.userId;
+      if (userId != null) {
+        final items = await listInventoryItems(_bridge.db, userId);
+        final catalog = _catalogByHash();
+        // Ensure item→family index is warm before stamping candidates.
+        if (_setBonusKeyByItemHash.isEmpty) {
+          await _ensureSetBonusFamilies();
+        }
+        final candidates = candidatesFromInventory(
+          items: items,
+          catalogByHash: catalog,
+          setBonusKeyByItemHash: _setBonusKeyByItemHash,
+        );
+        _optimizer.setInjectedCandidates(
+          candidates,
+          hasInventory: candidates.isNotEmpty || items.isNotEmpty,
+        );
+      }
+      await _optimizer.findKits();
+    } finally {
+      _optimizer.setInjectedCandidates(null);
+    }
+  }
+
+  /// Current board as a non-selectable kit row for optimizer compare (G-SET-036).
+  SetsOptimizeKitRowData? _currentBoardAsOptimizeKit() {
+    final slots = _armorBoardSlotsFromSelected();
+    final filled = slots.where((s) => s.isFilled).toList();
+    if (filled.isEmpty) return null;
+
+    final totals = _presentation?.armorTotals;
+    final stats = <String, int>{};
+    if (totals != null) {
+      for (final key in kArmorBoardEofStatLabels) {
+        final v = totals.statValues[key];
+        if (v != null) stats[key] = v;
+      }
+    }
+    final total = stats.values.fold<int>(0, (a, b) => a + b);
+    String? exoticName;
+    int? exoticHash;
+    final sel = _controller.selected;
+    if (sel != null) {
+      for (final item in sel.activeItems) {
+        final meta = _metaForHash(item.itemHash, item.itemName);
+        if (meta.isExotic == true) {
+          final raw = item.itemName.trim();
+          final fallback = meta.name?.trim() ?? '';
+          exoticName = raw.isNotEmpty
+              ? raw
+              : (fallback.isNotEmpty ? fallback : null);
+          exoticHash = item.itemHash;
+          break;
+        }
+      }
+    }
+    for (final s in filled) {
+      if (s.isExotic && exoticName == null) {
+        exoticName = s.itemName;
+        break;
+      }
+    }
+    return SetsOptimizeKitRowData(
+      id: 'current',
+      total: total,
+      stats: stats,
+      slotNames: {
+        for (final s in slots)
+          if (s.isFilled) s.slotWire: s.itemName ?? s.instanceId ?? '—',
+      },
+      slotPieces: {
+        for (final s in slots)
+          if (s.isFilled)
+            s.slotWire: SetsOptimizeSlotPiece(
+              name: s.itemName ?? s.instanceId ?? '—',
+              isExotic: s.isExotic,
+            ),
+      },
+      goalsLabel: 'current',
+      isCurrent: true,
+      exoticName: exoticName,
+      exoticItemHash: exoticHash,
+      label: 'Current board',
+    );
+  }
+
+  /// Full owned exotic armor list for the Exotic dropdown (not just kit results).
+  ///
+  /// Groups by definition hash; class-scoped when the set has a class seed.
+  List<SetsOptimizeExoticOption> _exoticOptionsFromInventory({
+    String? classLabel,
+    List<InventoryItemRecord>? inventoryOverride,
+  }) {
+    final catalog = _catalogByHash();
+    final inv = inventoryOverride ??
+        (_bridge.inventory.isNotEmpty
+            ? _bridge.inventory
+            : const <InventoryItemRecord>[]);
+
+    // hash → aggregates
+    final bestPower = <int, int>{};
+    final counts = <int, int>{};
+    final slots = <int, String>{};
+    for (final item in inv) {
+      final equipSlot = armorSlotFromInventoryBucket(item.bucket);
+      if (equipSlot == null) continue;
+      final cat = catalog[item.itemHash];
+      // Prefer catalog exotic flag; fall back to rarity-less skip.
+      final isExo = cat?.isExotic == true;
+      if (!isExo) continue;
+      // Class scope when known (Titan/Hunter/Warlock); keep class-agnostic.
+      if (classLabel != null && classLabel.isNotEmpty) {
+        final ct = cat?.classType?.trim();
+        if (ct != null &&
+            ct.isNotEmpty &&
+            ct.toLowerCase() != classLabel.toLowerCase()) {
+          continue;
+        }
+      }
+      counts[item.itemHash] = (counts[item.itemHash] ?? 0) + 1;
+      final p = item.power;
+      if (p > (bestPower[item.itemHash] ?? 0)) {
+        bestPower[item.itemHash] = p;
+      }
+      slots.putIfAbsent(item.itemHash, () {
+        final i = kArmorBoardSlotWires.indexOf(equipSlot.wireName);
+        return i >= 0 ? kArmorBoardSlotLabels[i] : equipSlot.wireName;
+      });
+    }
+
+    final hashes = counts.keys.toList()
+      ..sort((a, b) {
+        final na = catalog[a]?.name ?? '#$a';
+        final nb = catalog[b]?.name ?? '#$b';
+        return na.toLowerCase().compareTo(nb.toLowerCase());
+      });
+
+    return [
+      const SetsOptimizeExoticOption(
+        id: 'any',
+        label: 'Any exotic',
+        subtitle: 'All kits (no exotic lock)',
+      ),
+      const SetsOptimizeExoticOption(
+        id: 'none',
+        label: 'No exotic',
+        subtitle: 'Legendary-only kits',
+      ),
+      for (final h in hashes)
+        () {
+          final cat = catalog[h];
+          final name = (cat?.name.trim().isNotEmpty == true)
+              ? cat!.name.trim()
+              : '#$h';
+          final slot = slots[h] ?? 'Armor';
+          final power = bestPower[h];
+          final n = counts[h] ?? 1;
+          final classType = cat?.classType?.trim();
+          final parts = <String>[
+            slot,
+            if (power != null && power > 0) '✧$power',
+            if (n > 1) '×$n',
+            if (classType != null && classType.isNotEmpty) classType,
+          ];
+          return SetsOptimizeExoticOption(
+            id: '$h',
+            label: '★ $name',
+            iconPath: cat?.icon,
+            subtitle: parts.join(' · '),
+            itemHash: h,
+            slotLabel: slot,
+            power: power,
+            copyCount: n,
           );
         }(),
     ];
@@ -541,10 +976,117 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       setName: sel.set.name,
     );
 
+    // Seed bar can show current exotic; filter defaults to Any so re-opt shows
+    // the full ranked pool (auto-locking exotic/none was collapsing to ~3 rows).
+    final current = _currentBoardAsOptimizeKit();
+    final boardExo = current?.exoticName?.trim();
+    _optimizer.setLockedExoticText('');
+
+    // Prefetch inventory for exotic dropdown + kits (complete owned exotic list).
+    await _bridge.refresh(reloadEntities: false);
+    var invSnapshot = _bridge.inventory;
+    final uid = _controller.userId;
+    if (invSnapshot.isEmpty && uid != null) {
+      invSnapshot = await listInventoryItems(_bridge.db, uid);
+    }
+
+    final constraints0 =
+        parseOptimizerConstraints(sel.set.optimizerConstraints);
+    final classLabel0 = constraints0?.className != null
+        ? displayGuardianClass(constraints0!.className!)
+        : (_lifecycle.createClass != null
+            ? displayGuardianClass(_lifecycle.createClass!)
+            : null);
+
+    // Live draft of hard goals — editable in the shell; persisted on Apply.
+    var liveGoals = List<SetBonusCoverageGoal>.from(
+      constraints0?.setBonusGoals ?? const [],
+    );
+    _optimizer.setSetBonusGoals(liveGoals);
+    await _ensureSetBonusFamilies();
+
     var kits = <SetsOptimizeKitRowData>[];
     String? selectedKitId;
     var started = false;
+    // Always start unfiltered; user can lock exotic in the dropdown.
+    const initialExotic = 'any';
+    /// Last exotic filter sent to the engine (re-run only when this changes).
+    var engineExoticFilter = 'any';
+    var exoticOptions = _exoticOptionsFromInventory(
+      classLabel: classLabel0,
+      inventoryOverride: invSnapshot,
+    );
 
+    List<SetsBonusGoalData> goalsUiFrom(List<SetBonusCoverageGoal> goals) {
+      return [
+        for (final g in goals)
+          () {
+            final fam = _bonusFamilyOption(g.setBonusKey);
+            return SetsBonusGoalData(
+              familyKey: g.setBonusKey,
+              minPieces: g.minPieces,
+              familyLabel: fam?.name ?? g.setBonusKey,
+              entityInfo: fam != null
+                  ? entityInfoForSetBonusTier(fam, g.minPieces)
+                  : null,
+            );
+          }(),
+      ];
+    }
+
+    Future<void> rerunFindKits({
+      required String exoticFilter,
+      Map<String, int> statMin = const {},
+      required void Function(void Function()) setOpt,
+    }) async {
+      engineExoticFilter = exoticFilter;
+      _optimizer.setSetBonusGoals(liveGoals);
+      // Engine-side floors + priorities (not post-filter only).
+      _optimizer.applyStatMins(statMin);
+      setOpt(() {
+        kits = [];
+        selectedKitId = null;
+      });
+      await _runFindKitsForBoard(exoticFilter: exoticFilter);
+      if (!boardContext.mounted) return;
+      kits = _kitsFromOptimizerCombinations();
+      selectedKitId = kits.isNotEmpty ? kits.first.id : null;
+      setOpt(() {});
+    }
+
+    Future<void> applyBonusGoals(
+      List<SetsBonusGoalData> next,
+      void Function(void Function()) setOpt,
+    ) async {
+      final domainGoals = [
+        for (final g in next)
+          SetBonusCoverageGoal(
+            setBonusKey: g.familyKey,
+            minPieces: g.minPieces,
+          ),
+      ];
+      if (!isLegalSetBonusGoalCombo(domainGoals)) return;
+      liveGoals = domainGoals;
+      _optimizer.setSetBonusGoals(liveGoals);
+
+      // Persist onto the set (merge with existing class / exotic lock / etc.).
+      final cur = parseOptimizerConstraints(
+            _controller.selected?.set.optimizerConstraints,
+          ) ??
+          ArmorSetOptimizerConstraints.empty();
+      final merged = cur.copyWith(setBonusGoals: liveGoals);
+      final err = await _controller.updateSelectedConstraints(merged);
+      if (!boardContext.mounted) return;
+      if (err != null) {
+        setState(() => _statusMessage = err);
+      }
+      await rerunFindKits(
+        exoticFilter: engineExoticFilter,
+        setOpt: setOpt,
+      );
+    }
+
+    if (!boardContext.mounted) return;
     await showDialog<void>(
       context: boardContext,
       barrierDismissible: false,
@@ -556,10 +1098,17 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               started = true;
               // Kick off kit search after first frame so shell shows "running".
               WidgetsBinding.instance.addPostFrameCallback((_) async {
-                await _optimizer.findKits();
+                await _runFindKitsForBoard();
                 if (!optCtx.mounted) return;
                 kits = _kitsFromOptimizerCombinations();
                 selectedKitId = kits.isNotEmpty ? kits.first.id : null;
+                // Refresh exotic list after bridge/catalog settle.
+                exoticOptions = _exoticOptionsFromInventory(
+                  classLabel: classLabel0,
+                  inventoryOverride: _bridge.inventory.isNotEmpty
+                      ? _bridge.inventory
+                      : invSnapshot,
+                );
                 setOpt(() {});
               });
             }
@@ -568,18 +1117,33 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                 parseOptimizerConstraints(sel.set.optimizerConstraints);
             final classLabel = constraints?.className != null
                 ? displayGuardianClass(constraints!.className!)
-                : null;
-            final bonusLabel = (constraints?.setBonusGoals.isNotEmpty ?? false)
-                ? constraints!.setBonusGoals
-                    .map((g) => '${g.setBonusKey} ${g.minPieces}pc')
-                    .join(' · ')
-                : null;
+                : (_lifecycle.createClass != null
+                    ? displayGuardianClass(_lifecycle.createClass!)
+                    : null);
+            // Prefer class from set constraints JSON; fall back to presentation.
+            final classFromSet = sel.set.optimizerConstraints;
+            final parsedClass = classLabel ??
+                (() {
+                  final c = parseOptimizerConstraints(classFromSet);
+                  return c?.className != null
+                      ? displayGuardianClass(c!.className!)
+                      : null;
+                })();
+            final goalsUi = goalsUiFrom(liveGoals);
+            final bonusLabel = goalsUi.isEmpty
+                ? null
+                : goalsUi
+                    .map((g) =>
+                        '${g.familyLabel ?? g.familyKey} ${g.minPieces}pc')
+                    .join(' · ');
+
+            final liveCurrent = _currentBoardAsOptimizeKit();
 
             return SetsLifecycleModal(
               title: 'Optimize',
               crumb: '· confirm-only',
-              width: 960,
-              height: 720,
+              width: 1040,
+              height: 820,
               onClose: () {
                 _optimizer.cancelPending();
                 Navigator.of(optCtx).pop();
@@ -587,12 +1151,22 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
               child: ListenableBuilder(
                 listenable: _optimizer,
                 builder: (context, _) {
-                  // Keep kits in sync when findKits completes via listenable.
+                  // Always refresh mapped kits when the optimizer finishes a run.
                   if (!_optimizer.running &&
-                      kits.isEmpty &&
                       _optimizer.combinations.isNotEmpty) {
-                    kits = _kitsFromOptimizerCombinations();
-                    selectedKitId ??= kits.isNotEmpty ? kits.first.id : null;
+                    final next = _kitsFromOptimizerCombinations();
+                    if (next.length != kits.length ||
+                        (next.isNotEmpty &&
+                            kits.isNotEmpty &&
+                            next.first.id != kits.first.id) ||
+                        kits.isEmpty) {
+                      kits = next;
+                      if (selectedKitId == null ||
+                          !kits.any((k) => k.id == selectedKitId)) {
+                        selectedKitId =
+                            kits.isNotEmpty ? kits.first.id : null;
+                      }
+                    }
                   }
                   final emptyMsg = _optimizer.running
                       ? 'Finding kits…'
@@ -603,28 +1177,76 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                   // Shell uses Expanded for kit matrix — must not wrap in ScrollView.
                   return SetsOptimizeConfirmShell(
                     key: const Key('sets_board_optimize_shell'),
-                    kits: [
-                      for (final k in kits)
-                        SetsOptimizeKitRowData(
-                          id: k.id,
-                          total: k.total,
-                          stats: k.stats,
-                          slotNames: k.slotNames,
-                          goalsLabel: k.goalsLabel,
-                          selected: k.id == selectedKitId,
-                        ),
-                    ],
+                    kits: kits,
                     selectedKitId: selectedKitId,
                     running: _optimizer.running,
                     hasPins: sel.activeItems.isNotEmpty,
-                    classLabel: classLabel,
+                    classLabel: parsedClass,
+                    exoticLabel: boardExo,
                     bonusGoalsLabel: bonusLabel,
+                    initialBonusGoals: goalsUi,
+                    bonusFamilies: _setBonusFamilies,
+                    bonusFamiliesLoading: _setBonusFamiliesLoading,
+                    isLegalBonusCombo: (goals) => isLegalSetBonusGoalCombo([
+                      for (final g in goals)
+                        SetBonusCoverageGoal(
+                          setBonusKey: g.familyKey,
+                          minPieces: g.minPieces,
+                        ),
+                    ]),
+                    onBonusGoalsChanged: (next) {
+                      if (_optimizer.running) return;
+                      unawaited(applyBonusGoals(next, setOpt));
+                    },
                     emptyMessage: emptyMsg,
+                    engineKitCount: kits.length,
+                    currentBoard: liveCurrent,
+                    exoticOptions: exoticOptions,
+                    initialExoticFilter: initialExotic,
+                    initialIncludeCurrent: sel.activeItems.isNotEmpty,
                     onSelectKit: (id) => setOpt(() => selectedKitId = id),
+                    onBack: () {
+                      _optimizer.cancelPending();
+                      Navigator.of(optCtx).pop();
+                    },
                     onCancel: () {
                       _optimizer.cancelPending();
                       Navigator.of(optCtx).pop();
                     },
+                    onConstraintsChanged: ({
+                      required exoticFilter,
+                      required sort,
+                      required statMin,
+                      required statMax,
+                    }) {
+                      // Dual-range drag is client-side only (avoid re-run thrash).
+                      // Exotic lock change re-runs with current mins.
+                      if (exoticFilter == engineExoticFilter) return;
+                      if (_optimizer.running) return;
+                      unawaited(
+                        rerunFindKits(
+                          exoticFilter: exoticFilter,
+                          statMin: {
+                            for (final e in statMin.entries)
+                              if (e.value > 0) e.key: e.value,
+                          },
+                          setOpt: setOpt,
+                        ),
+                      );
+                    },
+                    onReoptimize: _optimizer.running
+                        ? null
+                        : ({
+                            required exoticFilter,
+                            required statMin,
+                            required statMax,
+                          }) async {
+                            await rerunFindKits(
+                              exoticFilter: exoticFilter,
+                              statMin: statMin,
+                              setOpt: setOpt,
+                            );
+                          },
                     onConfirmApply: selectedKitId == null ||
                             _optimizer.running ||
                             _optimizer.confirming
@@ -644,6 +1266,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
                             if (!optCtx.mounted) return;
                             Navigator.of(optCtx).pop();
                             await _controller.refresh(keepSelection: true);
+                            await _awaitEnrichment();
                             if (mounted) {
                               setState(() {
                                 _statusMessage = applyErr ??
@@ -1065,11 +1688,34 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     }
 
     final setType = SetType.tryParse(sel.set.type) ?? SetType.weapon;
-    final slots = slotsForSetType(setType);
-    final presentation = _presentation;
-    final armorTotals = presentation?.armorTotals;
-    final readiness = _controller.readinessOfSelected();
     final usedBy = _controller.usedByOfSelected();
+    final usedByCount = usedBy.length;
+    final palette = FlapPalette.of(context);
+
+    // Non-Armor: thin shell only (mockup).
+    if (setType != SetType.armor) {
+      return SetsNonArmorThinDetail(
+        key: const Key('sets_detail'),
+        data: SetsNonArmorThinData(
+          id: sel.set.id,
+          name: sel.set.name,
+          typeLabel: 'Type · ${sel.set.type}',
+          pieceSummary:
+              'Pieces · ${sel.activeItems.length} · Used-by · $usedByCount',
+          tags: sel.set.tagIds,
+        ),
+        onDelete: _deleteSelected,
+      );
+    }
+
+    final boardSlots = _armorBoardSlotsFromSelected();
+    final filled = boardSlots.where((s) => s.isFilled).length;
+    final totals = _boardTotalsFromPresentation();
+    final constraints = parseOptimizerConstraints(sel.set.optimizerConstraints);
+    final classLabel = constraints?.className != null
+        ? displayGuardianClass(constraints!.className!)
+        : null;
+    final coverage = _coverageBandFromSelected();
 
     return SingleChildScrollView(
       key: const Key('sets_detail'),
@@ -1077,130 +1723,147 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Edit set',
-            style: Theme.of(context).textTheme.titleMedium,
+          // detail-head (mockup)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sel.set.name,
+                      key: const Key('sets_detail_name'),
+                      style: neonDisplay(
+                        color: palette.foreground,
+                        fontSize: 16,
+                        letterSpacing: 0.06,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 4,
+                      children: [
+                        Text(
+                          classLabel ?? 'Class · —',
+                          key: const Key('sets_detail_class'),
+                          style: neonMono(color: palette.muted, fontSize: 11),
+                        ),
+                        Text(
+                          '$filled / 5 pieces',
+                          key: const Key('sets_detail_pieces'),
+                          style: neonMono(color: palette.muted, fontSize: 11),
+                        ),
+                        Text(
+                          'Used-by · $usedByCount build${usedByCount == 1 ? '' : 's'}',
+                          key: const Key('sets_detail_used_by'),
+                          style: neonMono(color: palette.muted, fontSize: 11),
+                        ),
+                        Chip(
+                          key: const Key('sets_detail_type'),
+                          label: Text(sel.set.type),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  FilledButton(
+                    key: const Key('sets_open_board'),
+                    style: setsNeonHeroStyle(palette),
+                    onPressed: () => _openArmorBoardModal(sel.set.id),
+                    child: Text(
+                      'Open board…'.toUpperCase(),
+                      style: setsNeonBtnLabel(palette.accent, fontSize: 9),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextButton(
+                    key: const Key('sets_delete_button'),
+                    onPressed: _deleteSelected,
+                    child: Text(
+                      'Delete…',
+                      style: neonBody(color: palette.danger, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('sets_edit_name'),
-            controller: _editNameController,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Chip(
-                key: const Key('sets_detail_type'),
-                label: Text(sel.set.type),
-              ),
-              if (sel.set.tagIds.isNotEmpty)
+          // Tags (display; free tags editable on board MVP path)
+          if (sel.set.tagIds.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
                 for (final t in sel.set.tagIds)
                   Chip(
                     key: Key('sets_detail_tag_$t'),
                     label: Text(t),
+                    visualDensity: VisualDensity.compact,
                   ),
-              FilledButton(
-                key: const Key('sets_save_name'),
-                onPressed: _saveName,
-                child: const Text('Save name'),
-              ),
-              if (setType == SetType.armor)
-                FilledButton.tonal(
-                  key: const Key('sets_open_board'),
-                  onPressed: () => _openArmorBoardModal(sel.set.id),
-                  child: const Text('Open board…'),
-                ),
-              OutlinedButton(
-                key: const Key('sets_delete_button'),
-                onPressed: _deleteSelected,
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-          if (readiness != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              key: const Key('sets_readiness_strip'),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Chip(
-                    key: const Key('sets_readiness_badge'),
-                    label: Text(readiness.badgeLabel),
-                  ),
-                  if (!readiness.meetsPackageMinimum &&
-                      readiness.packageMinimumMessage != null)
-                    Text(
-                      readiness.packageMinimumMessage!,
-                      key: const Key('sets_occupancy_hint'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                    ),
-                  if (usedBy.isEmpty)
-                    const Chip(
-                      key: Key('sets_used_by_unused'),
-                      label: Text('Unused'),
-                    )
-                  else
-                    for (final u in usedBy)
-                      Chip(
-                        key: Key('sets_used_by_${u.buildId}_${u.variantId}'),
-                        label: Text(u.label),
-                      ),
-                  if (readiness.nextEmptySlot != null)
-                    FilledButton.tonal(
-                      key: const Key('sets_fill_next'),
-                      onPressed: () => _fillSlot(readiness.nextEmptySlot!),
-                      child: Text(
-                        'Fill next · ${setSlotDisplayLabel(readiness.nextEmptySlot!)}',
-                      ),
-                    ),
-                ],
-              ),
+              ],
+            )
+          else
+            Text(
+              'No tags',
+              style: neonBody(color: palette.muted, fontSize: 11),
             ),
-          ],
-          if (setType == SetType.armor && armorTotals != null) ...[
-            const SizedBox(height: 16),
-            _buildArmorTotalsBoard(context, armorTotals),
-          ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Text(
-            'Slots',
-            style: Theme.of(context).textTheme.titleSmall,
+            'Base-roll board only (DBR-STAT-008). Kit totals sit above pieces. '
+            'Open board for Optimize / Pick.',
+            style: neonBody(color: palette.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          // Preview board (layout A) — no Optimize/Pick; board modal is primary fill.
+          // Coverage + piece icons/info live on the board (mockup layout A).
+          SetsArmorBoard(
+            key: const Key('sets_detail_board_preview'),
+            slots: boardSlots,
+            totals: totals,
+            coverage: coverage,
+            showEnergyMods: false,
+          ),
+          const SizedBox(height: 12),
+          SetsModSetDeepLink(
+            key: const Key('sets_detail_mod_set'),
+            onLink: () {
+              setState(() {
+                _statusMessage =
+                    'Mod Set deep link — create/open from board (G-SET-050).';
+              });
+            },
+          ),
+          // Keep name field for tests / rename without god-page slot editor
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('sets_edit_name'),
+            controller: _editNameController,
+            decoration: const InputDecoration(
+              labelText: 'Rename set',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 8),
-          for (final slot in slots)
-            _buildSlotRow(
-              sel,
-              slot,
-              presentation?.rowsBySlot[slot],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: const Key('sets_save_name'),
+              onPressed: _saveName,
+              child: const Text('Save name'),
             ),
-          if (setType == SetType.armor)
-            OptimizerWorkspace(
-              key: const Key('sets_optimizer_workspace'),
-              controller: _optimizer,
-              onApplied: () async {
-                await _controller.refresh(keepSelection: true);
-                if (!mounted) return;
-                setState(() {
-                  _statusMessage = _optimizer.status ?? 'Optimizer applied';
-                });
-              },
-            ),
+          ),
         ],
       ),
     );
