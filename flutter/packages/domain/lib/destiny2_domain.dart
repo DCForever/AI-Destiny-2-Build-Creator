@@ -89,3 +89,9 @@ export 'src/evaluators/dim_builders.dart';
 
 // Catalog weapon roll targets: preferred + avoid score/rank (DART-073 system)
 export 'src/evaluators/roll_target_score.dart';
+
+// Read-only Warlock community matrix (parse, exotic filter, Solipsism flag)
+export 'src/warlock_matrix/filter_warlock_builds.dart';
+export 'src/warlock_matrix/parse_warlock_matrix.dart';
+export 'src/warlock_matrix/solipsism_flag.dart';
+export 'src/warlock_matrix/warlock_matrix_build.dart';

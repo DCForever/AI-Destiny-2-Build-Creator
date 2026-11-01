@@ -91,3 +91,8 @@ docs/atlas/screenshots/*.png
 
 # Graphify skill generated knowledge graphs / caches (any cwd)
 graphify-out/
+
+# Local Warlock community matrix. Load at runtime via WARLOCK_MATRIX_PATH.
+# Do not commit the full file. Tests use a trimmed fixture instead.
+warlock-matrix.json
+**/warlock-matrix.json

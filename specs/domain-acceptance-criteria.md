@@ -381,6 +381,15 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **And** hashes may appear only in a detail footer addendum  
 **Refs**: DBR-UI-006
 
+### DAC-DST-016 — Solipsism requires Prismatic
+
+**Given** a read-only Warlock community build whose exotic is Solipsism and whose subclass is not Prismatic  
+**When** the build appears in the matrix list  
+**Then** the row is flagged that Solipsism only works with Prismatic  
+**And** a Prismatic Solipsism build is not flagged  
+**And** loading the matrix does not modify the source file  
+**Refs**: DBR-SUB-011
+
 ---
 
 ## Naming & browsing

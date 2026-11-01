@@ -614,6 +614,28 @@ flows:
         rules:
           - 027:SC-001
 
+  - id: flow.catalog.warlock-matrix
+    title: Warlock community build list
+    type: catalog
+    priority: P2
+    description: Load a local matrix file, filter by exotic, flag Solipsism off Prismatic.
+    rules:
+      - DBR-SUB-011
+      - DAC-DST-016
+      - BR-WXM-001
+    phases:
+      - id: open
+        title: Open the list
+        surface: catalog.warlock-matrix
+      - id: filter
+        title: Filter by exotic
+        surface: catalog.warlock-matrix
+      - id: flag
+        title: Flag Solipsism off Prismatic
+        surface: catalog.warlock-matrix
+        rules:
+          - DAC-DST-016
+
   # ─── Loadouts ─────────────────────────────────────────────
   - id: flow.loadouts
     title: In-game loadouts
