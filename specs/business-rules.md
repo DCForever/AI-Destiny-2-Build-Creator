@@ -321,7 +321,7 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 
 | ID | Rule | FR |
 |----|------|-----|
-| BR-WXM-001 | The Warlock community matrix is a read-only list loaded from a local file path. The exotic filter offers only exotic names present in that file. Builds that use Solipsism on a subclass other than Prismatic are flagged. The list does not equip, move, or delete items and does not start Bungie OAuth. | [DBR-SUB-011](./domain-business-rules.md), [DAC-DST-016](./domain-acceptance-criteria.md) |
+| BR-WXM-001 | The Warlock community matrix is a read-only list loaded from a local file path. Rows are exotic-armor builds (including overflow), weapon-cell builds, and Solipsism perk-combo builds. Removed rows are not listed. The exotic filter offers only exotic names present in that file. Builds that use Solipsism on a subclass other than Prismatic are flagged. The list does not equip, move, or delete items and does not start Bungie OAuth. | [DBR-SUB-011](./domain-business-rules.md), [DAC-DST-016](./domain-acceptance-criteria.md) |
 
 ---
 

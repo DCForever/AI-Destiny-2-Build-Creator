@@ -59,19 +59,31 @@ void main() {
         'Aeon Soul',
         'Necrotic Grip',
         'Solipsism',
+        'Sunshot',
       ]);
     });
 
     test('Solipsism on Solar is flagged and Prismatic is not', () {
       final rows = filterWarlockBuildsByExotic(builds, 'Solipsism');
-      expect(rows, hasLength(2));
-      final solar = rows.singleWhere((build) => build.subclassKey == 'solar');
-      final prismatic = rows.singleWhere(
-        (build) => build.subclassKey == 'prismatic',
+      final flagged = rows.where((build) => build.solipsismNotPrismatic);
+      expect(flagged.map((build) => build.name), ['Solipsism solar mismatch']);
+      expect(
+        rows.where((build) => build.name == 'Solipsism prismatic sample').single
+            .solipsismNotPrismatic,
+        isFalse,
       );
-      expect(solar.solipsismNotPrismatic, isTrue);
-      expect(prismatic.solipsismNotPrismatic, isFalse);
-      expect(warlockSubclassLabel(solar.subclassKey), 'Solar');
+      expect(
+        rows.where((build) => build.name == 'Solipsism combo sample').single
+            .subclassKey,
+        'prismatic',
+      );
+      expect(warlockSubclassLabel('solar'), 'Solar');
+    });
+
+    test('weapon cells are listed under the weapon exotic', () {
+      final sunshot = filterWarlockBuildsByExotic(builds, 'Sunshot');
+      expect(sunshot.map((build) => build.name), ['Sunshot solar sample']);
+      expect(sunshot.single.subclassKey, 'solar');
     });
   });
 
@@ -91,15 +103,38 @@ void main() {
             {'name': 'Removed'},
           ],
           'combos': {
-            'item': 'Solipsism',
+            'combos': {
+              'Inmost + Synthoceps': {
+                'builds': [
+                  {'name': 'Combo', 'subclass': 'Solar'},
+                ],
+              },
+              'Empty': {'status': 'none found'},
+            },
+          },
+        },
+      },
+      'weapons': {
+        'cells': {
+          'Sunshot': {
+            'solar': [
+              {'name': 'Weapon row', 'creator': 'Author'},
+            ],
           },
         },
       },
     });
 
-    expect(parsed.map((build) => build.name), ['Main', 'Overflow']);
+    expect(parsed.map((build) => build.name), [
+      'Main',
+      'Overflow',
+      'Combo',
+      'Weapon row',
+    ]);
+    expect(parsed[2].subclassKey, 'solar');
+    expect(parsed[2].solipsismNotPrismatic, isTrue);
     expect(parsed.last.creator, 'Author');
-    expect(parsed.every((build) => !build.solipsismNotPrismatic), isTrue);
+    expect(parsed.map((build) => build.name), isNot(contains('Removed')));
   });
 }
 

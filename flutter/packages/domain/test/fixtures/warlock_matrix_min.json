@@ -66,7 +66,36 @@
           "name": "Not a Solipsism build",
           "removed_reason": "Excluded from the read-only list."
         }
-      ]
+      ],
+      "combos": {
+        "combos": {
+          "Inmost Light + Synthoceps": {
+            "status": "filled",
+            "builds": [
+              {
+                "name": "Solipsism combo sample",
+                "creator": "Fixture"
+              }
+            ]
+          },
+          "Empty combo": {
+            "status": "none found"
+          }
+        }
+      }
+    }
+  },
+  "weapons": {
+    "cells": {
+      "Sunshot": {
+        "solar": [
+          {
+            "name": "Sunshot solar sample",
+            "creator": "Fixture"
+          }
+        ],
+        "arc": []
+      }
     }
   }
 }
