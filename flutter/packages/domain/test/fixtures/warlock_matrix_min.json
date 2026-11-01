@@ -1,0 +1,72 @@
+{
+  "updated": "2026-10-31",
+  "exotics": {
+    "Aeon Soul": {
+      "solar": {
+        "status": "builds",
+        "builds": [
+          {
+            "name": "Aeon solar sample",
+            "creator": "Fixture"
+          }
+        ]
+      },
+      "void": {
+        "status": "builds",
+        "builds": [
+          {
+            "name": "Aeon void sample",
+            "creator": "Fixture"
+          }
+        ]
+      }
+    },
+    "Necrotic Grip": {
+      "arc": {
+        "status": "none found",
+        "queries": ["not a build"]
+      },
+      "strand": {
+        "status": "builds",
+        "builds": [
+          {
+            "name": "Necrotic strand sample",
+            "creator": "Fixture"
+          }
+        ]
+      }
+    },
+    "Solipsism": {
+      "solar": {
+        "status": "n/a (Solipsism is Prismatic-only)",
+        "builds": [
+          {
+            "name": "Solipsism solar mismatch",
+            "creator": "Fixture",
+            "note": "Fixture-only row so the Prismatic flag can be tested."
+          }
+        ]
+      },
+      "strand": {
+        "status": "n/a (Solipsism is Prismatic-only)"
+      },
+      "prismatic": {
+        "status": "builds",
+        "builds": [
+          {
+            "name": "Solipsism prismatic sample",
+            "creator": "Fixture",
+            "class_item_perk1": "Inmost Light",
+            "class_item_perk2": "Synthoceps"
+          }
+        ]
+      },
+      "removed_builds": [
+        {
+          "name": "Not a Solipsism build",
+          "removed_reason": "Excluded from the read-only list."
+        }
+      ]
+    }
+  }
+}

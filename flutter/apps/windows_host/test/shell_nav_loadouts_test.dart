@@ -80,19 +80,27 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels are Catalog + Settings during UX rebuild', () {
-    expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Settings']);
+  test('navLabels are Catalog, Warlocks, and Settings', () {
+    expect(
+      Destiny2WindowsApp.navLabels,
+      ['Catalog', 'Warlocks', 'Settings'],
+    );
     expect(Destiny2WindowsApp.catalogNavIndex, 0);
-    expect(Destiny2WindowsApp.settingsNavIndex, 1);
+    expect(Destiny2WindowsApp.warlockBuildsNavIndex, 1);
+    expect(Destiny2WindowsApp.settingsNavIndex, 2);
   });
 
-  testWidgets('NavigationRail shows Catalog and Settings', (tester) async {
+  testWidgets('NavigationRail shows Catalog, Warlocks, and Settings',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(Destiny2WindowsApp(services: services));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('host_nav_rail')), findsOneWidget);
     expect(find.text('Catalog'), findsWidgets);
+    expect(find.text('Warlocks'), findsWidgets);
     expect(find.text('Settings'), findsWidgets);
     expect(
       find.byKey(const Key('catalog_page'), skipOffstage: false),

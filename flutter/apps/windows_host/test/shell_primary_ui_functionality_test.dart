@@ -244,13 +244,18 @@ void main() {
   });
 
   group('shell.nav primary destinations', () {
-    test('navLabels are Catalog + Settings during UX rebuild', () {
-      expect(Destiny2WindowsApp.navLabels, ['Catalog', 'Settings']);
+    test('navLabels are Catalog, Warlocks, and Settings', () {
+      expect(
+        Destiny2WindowsApp.navLabels,
+        ['Catalog', 'Warlocks', 'Settings'],
+      );
       expect(Destiny2WindowsApp.catalogNavIndex, 0);
-      expect(Destiny2WindowsApp.settingsNavIndex, 1);
+      expect(Destiny2WindowsApp.warlockBuildsNavIndex, 1);
+      expect(Destiny2WindowsApp.settingsNavIndex, 2);
     });
 
-    testWidgets('rail mounts Catalog and Settings', (tester) async {
+    testWidgets('rail mounts Catalog, Warlocks, and Settings',
+        (tester) async {
       await _surface(tester);
       await tester.pumpWidget(Destiny2WindowsApp(services: services));
       await _pump(tester);
@@ -262,6 +267,10 @@ void main() {
 
       expect(
         find.byKey(const Key('catalog_page'), skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('warlock_builds_page'), skipOffstage: false),
         findsOneWidget,
       );
       expect(

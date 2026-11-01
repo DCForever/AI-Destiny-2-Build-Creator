@@ -45,7 +45,7 @@ pages:
           - id: shell.nav
             kind: surface
             title: Main navigation
-            notes: Loadouts · Build · Synergy · Sets · Catalog · Settings
+            notes: Loadouts · Build · Synergy · Sets · Catalog · Warlocks · Settings
             rules:
               - DBR-PUR-003
             children:
@@ -79,6 +79,14 @@ pages:
                 title: Nav → Synergy
                 path: /synergy
                 rules: []
+              - id: shell.nav.warlock-builds
+                kind: field
+                title: Nav → Warlock builds
+                notes: Read-only community matrix. No equip, move, or OAuth.
+                rules:
+                  - DBR-SUB-011
+                  - DAC-DST-016
+                  - BR-WXM-001
           - id: shell.signed-out-gate
             kind: gate
             title: SignedOutGate (shared)
@@ -930,6 +938,15 @@ pages:
               - DBR-SYN-001
               - DAC-P2-001
               - DAC-P2-005
+      - id: catalog.warlock-matrix
+        kind: screen
+        title: Warlock community builds
+        auth: any
+        notes: Read-only list loaded from a local matrix file. Filter by exotic. Flag Solipsism off Prismatic.
+        rules:
+          - DBR-SUB-011
+          - DAC-DST-016
+          - BR-WXM-001
       - id: catalog.weapon.detail
         kind: subscreen
         title: Weapon detail pane
@@ -1089,8 +1106,11 @@ pages:
                       - 011:SC-001
                       - 011:SC-002
                       - BR-ROLL-002
+                      - DBR-UI-001
+                      - DBR-UI-005
                       - DBR-UI-006
                       - DBR-UI-007
+                      - FEAT-UI-ENTITY-DESC
   - id: sets
     label: Sets
     description: |
@@ -4371,6 +4391,41 @@ pages:
         auth: signed-in
         atlas:
           - catalog-universal
+  - id: flow-flow-catalog-warlock-matrix
+    label: Warlock community build list
+    description: Load a local matrix file, filter by exotic, flag Solipsism off Prismatic.
+    nodes:
+      - id: flow.catalog.warlock-matrix.open
+        kind: surface
+        title: Open the list
+        rules:
+          - DBR-SUB-011
+          - DAC-DST-016
+          - BR-WXM-001
+        auth: any
+        atlas:
+          - catalog-warlock-matrix
+      - id: flow.catalog.warlock-matrix.filter
+        kind: surface
+        title: Filter by exotic
+        rules:
+          - DBR-SUB-011
+          - DAC-DST-016
+          - BR-WXM-001
+        auth: any
+        atlas:
+          - catalog-warlock-matrix
+      - id: flow.catalog.warlock-matrix.flag
+        kind: surface
+        title: Flag Solipsism off Prismatic
+        rules:
+          - DAC-DST-016
+          - DBR-SUB-011
+          - DAC-DST-016
+          - BR-WXM-001
+        auth: any
+        atlas:
+          - catalog-warlock-matrix
   - id: flow-flow-loadouts
     label: In-game loadouts
     description: Flow flow.loadouts

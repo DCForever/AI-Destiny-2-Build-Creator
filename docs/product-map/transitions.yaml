@@ -109,3 +109,8 @@ transitions:
     action: Expand slot
     fromCaptureId: loadouts-signed-in
     toCaptureId: loadouts-slot-expanded
+  - from: shell
+    to: catalog.warlock-matrix
+    action: Nav → Warlock builds
+    fromCaptureId: shell
+    toCaptureId: catalog-warlock-matrix
