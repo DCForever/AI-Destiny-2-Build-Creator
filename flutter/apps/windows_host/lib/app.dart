@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -5,28 +8,35 @@ import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
 import 'settings/settings_page.dart';
 import 'theme/flap_theme.dart';
+import 'warlock/warlock_builds_page.dart';
 
 /// Root Flutter app for the Windows host.
 ///
-/// **UX rebuild:** Catalog (weapons) + Settings. Other product areas return via
-/// the area UX redesign loop. Appearance: **Neon void** dark + **Cool technical**
-/// light ([ThemeMode]). Design system tokens unchanged.
+/// **UX rebuild:** Catalog, read-only Warlock builds, and Settings. Other
+/// product areas return via the area UX redesign loop. Appearance: **Neon void**
+/// dark + **Cool technical** light ([ThemeMode]). Design system tokens unchanged.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
     required this.services,
+    this.warlockMatrixPath,
   });
 
   final AppServices services;
 
+  /// Overrides [warlockMatrixPathEnv]. Null reads the process environment.
+  final String? warlockMatrixPath;
+
   /// Nav labels while other areas are still stripped.
   static const List<String> navLabels = [
     'Catalog',
+    'Warlocks',
     'Settings',
   ];
 
   static const int catalogNavIndex = 0;
-  static const int settingsNavIndex = 1;
+  static const int warlockBuildsNavIndex = 1;
+  static const int settingsNavIndex = 2;
 
   @override
   State<Destiny2WindowsApp> createState() => _Destiny2WindowsAppState();
@@ -47,6 +57,12 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
       }
       _index = i;
     });
+  }
+
+  String? get _matrixPath {
+    final override = widget.warlockMatrixPath;
+    if (override != null) return override;
+    return warlockMatrixPathFromEnvironment(Platform.environment);
   }
 
   @override
@@ -74,6 +90,11 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                     label: Text('Catalog'),
                   ),
                   NavigationRailDestination(
+                    icon: Icon(Icons.auto_awesome_outlined),
+                    selectedIcon: Icon(Icons.auto_awesome),
+                    label: Text('Warlocks'),
+                  ),
+                  NavigationRailDestination(
                     icon: Icon(Icons.settings_outlined),
                     selectedIcon: Icon(Icons.settings),
                     label: Text('Settings'),
@@ -92,6 +113,10 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                       onOpenSettings: () => _onDestinationSelected(
                         Destiny2WindowsApp.settingsNavIndex,
                       ),
+                    ),
+                    WarlockBuildsPage(
+                      key: const Key('warlock_builds_page'),
+                      initialPath: _matrixPath,
                     ),
                     SettingsPage(
                       key: const Key('settings_page'),

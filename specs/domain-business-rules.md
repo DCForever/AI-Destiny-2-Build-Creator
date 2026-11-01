@@ -1,7 +1,7 @@
 # Domain Business Rules — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-08-07 (DBR-IDL-001–009 Catalog roll targets; exotics disallowed)  
+**Updated**: 2026-10-31 (DBR-SUB-011 Solipsism is Prismatic-only on the read-only Warlock matrix)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; presentation North Star 2026-07-27; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29** (Domains + Destiny Objects in ProjectTracker vault)
 
@@ -102,6 +102,7 @@ Identity is what makes two loadouts the “same build” vs a different build.
 | DBR-SUB-008 | Fragment capacity is the **sum** of capacity granted by selected aspects (when known). Zero aspects ⇒ zero fragment capacity. |
 | DBR-SUB-009 | When aspect change reduces fragment capacity, **trim excess** fragments so the kit stays legal (do not leave a silently illegal kit). |
 | DBR-SUB-010 | Abilities and aspects/fragments must match Build **class + tree**; illegal options are not selectable when known. |
+| DBR-SUB-011 | The Warlock exotic class item **Solipsism** works only on the **Prismatic** subclass. A read-only community-matrix build that pairs Solipsism with any other subclass is **flagged** in the list. The flag does not rewrite the source file, change inventory, or equip gear. |
 
 ---
 
@@ -347,6 +348,10 @@ Full Domain + Destiny Object product definitions authored in ProjectTracker vaul
 - Required links satisfied by equip-ready pins only
 
 Working copy remains the vault; this file is enforceable domain SSoT after re-sync.
+
+### Solipsism subclass flag 2026-10-31
+
+The read-only Warlock community matrix flags Solipsism builds whose subclass is not Prismatic (DBR-SUB-011). The list loads from a local file and does not write that file.
 
 ---
 

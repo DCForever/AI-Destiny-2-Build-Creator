@@ -9,6 +9,7 @@ library;
 export 'src/bungie_envelope.dart';
 export 'src/bungie_errors.dart';
 export 'src/bungie_http_client.dart';
+export 'src/get_only_http_client.dart';
 export 'src/http_transport.dart';
 export 'src/rate_limit.dart';
 export 'src/oauth/bungie_oauth_client.dart';

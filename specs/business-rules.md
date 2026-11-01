@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-08-04 (catalog residual polish: BR-CAT-016 / 016a / 016b; 016c craft enhance note)
+**Updated**: 2026-10-31 (BR-WXM-001 read-only Warlock matrix list)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -314,6 +314,14 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | BR-OPT-002 | Armor Sets MAY store **`optimizerConstraints`** (JSON): exotic lock, set-bonus goals, ordered stat priorities/thresholds, mod-aware flag, **`preferReuse`** (default false). Create-from-build **seeds** exotic + soft-stat fields (empty set-bonus goals). First materialize **persists** search constraints; refresh **updates items in place** without changing constraints unless the user edits/saves or **clears** them (clear opts out of improvement checks). | [026 FR-001a](026-armor-set-optimizer/spec.md#functional-requirements), [FR-010](026-armor-set-optimizer/spec.md#functional-requirements)–[FR-010d](026-armor-set-optimizer/spec.md#functional-requirements) |
 | BR-OPT-003 | Optimize results **annotate** pieces with other Armor Sets that already use the instance (active items only; self excluded). Optional **prefer-reuse** is a **soft tie-break** after lexicographic stats (+ prioritized-stat sum); never ranks a worse-stat kit above a better one. | [026 FR-005](026-armor-set-optimizer/spec.md#functional-requirements), [FR-005a](026-armor-set-optimizer/spec.md#functional-requirements) |
 | BR-OPT-004 | After inventory sync, soft-**suggest** better complete kits for constrained Armor Sets **attached to ≥1 Build**; opening an unattached constrained Set also checks. **Suggest-then-confirm** — never silent auto-apply. Manual refresh remains available. | [026 FR-010c](026-armor-set-optimizer/spec.md#functional-requirements), [FR-010a](026-armor-set-optimizer/spec.md#functional-requirements) |
+
+---
+
+## 20. Warlock community matrix (read-only)
+
+| ID | Rule | FR |
+|----|------|-----|
+| BR-WXM-001 | The Warlock community matrix is a read-only list loaded from a local file path. Rows are exotic-armor builds (including overflow), weapon-cell builds, and Solipsism perk-combo builds. Removed rows are not listed. The exotic filter offers only exotic names present in that file. Builds that use Solipsism on a subclass other than Prismatic are flagged. The list does not equip, move, or delete items and does not start Bungie OAuth. | [DBR-SUB-011](./domain-business-rules.md), [DAC-DST-016](./domain-acceptance-criteria.md) |
 
 ---
 

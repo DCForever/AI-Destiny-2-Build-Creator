@@ -1,7 +1,7 @@
 {
   "app": "Destiny 2 Build Creator",
   "version": 4,
-  "generatedAt": "2026-07-27",
+  "generatedAt": "2026-10-31",
   "generatedFrom": "docs/product-map",
   "baseUrlDefault": "https://127.0.0.1:3000",
   "description": "Structure SSoT for surfaces, flows, and rule attachments across platforms. Rule wording lives in specs/domain-*.md and business-rules.md.\n",
@@ -3809,6 +3809,62 @@
       ]
     },
     {
+      "id": "flow-catalog-warlock-matrix",
+      "title": "Warlock community build list",
+      "priority": "P2",
+      "type": "catalog",
+      "description": "Load a local matrix file, filter by exotic, flag Solipsism off Prismatic.",
+      "steps": [
+        {
+          "screenId": "catalog-warlock-matrix",
+          "label": "Open the list",
+          "kind": "step"
+        },
+        {
+          "screenId": "catalog-warlock-matrix",
+          "label": "Filter by exotic",
+          "kind": "step"
+        },
+        {
+          "screenId": "catalog-warlock-matrix",
+          "label": "Flag Solipsism off Prismatic",
+          "kind": "step"
+        }
+      ],
+      "phases": [
+        {
+          "id": "open",
+          "title": "Open the list",
+          "kind": "step",
+          "surfaceId": "catalog.warlock-matrix",
+          "screenId": "catalog-warlock-matrix"
+        },
+        {
+          "id": "filter",
+          "title": "Filter by exotic",
+          "kind": "step",
+          "surfaceId": "catalog.warlock-matrix",
+          "screenId": "catalog-warlock-matrix"
+        },
+        {
+          "id": "flag",
+          "title": "Flag Solipsism off Prismatic",
+          "kind": "step",
+          "surfaceId": "catalog.warlock-matrix",
+          "screenId": "catalog-warlock-matrix",
+          "rules": [
+            "DAC-DST-016"
+          ]
+        }
+      ],
+      "surfaceFlowId": "flow.catalog.warlock-matrix",
+      "rules": [
+        "DBR-SUB-011",
+        "DAC-DST-016",
+        "BR-WXM-001"
+      ]
+    },
+    {
       "id": "flow-loadouts",
       "title": "In-game loadouts",
       "priority": "P2",
@@ -4171,6 +4227,11 @@
       "from": "loadouts-signed-in",
       "to": "loadouts-slot-expanded",
       "action": "Expand slot"
+    },
+    {
+      "from": "shell",
+      "to": "catalog-warlock-matrix",
+      "action": "Nav → Warlock builds"
     }
   ]
 }

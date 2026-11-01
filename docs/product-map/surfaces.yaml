@@ -28,7 +28,7 @@ surfaces:
     kind: surface
     area: shell
     parent: shell
-    notes: Loadouts · Build · Synergy · Sets · Catalog · Settings
+    notes: Loadouts · Build · Synergy · Sets · Catalog · Warlocks · Settings
     rules:
       - DBR-PUR-003
     status: active
@@ -92,6 +92,21 @@ surfaces:
       flutter-windows:
         status: done
         route: /catalog
+  - id: shell.nav.warlock-builds
+    title: Nav → Warlock builds
+    kind: field
+    area: shell
+    parent: shell.nav
+    notes: Read-only community matrix. No equip, move, or OAuth.
+    rules:
+      - DBR-SUB-011
+      - DAC-DST-016
+      - BR-WXM-001
+    status: active
+    platforms:
+      flutter-windows:
+        status: done
+        route: /warlock-builds
   - id: shell.nav.settings
     title: Nav → Settings
     kind: field
@@ -1148,6 +1163,22 @@ surfaces:
       flutter-windows:
         status: stub
         route: /build
+  - id: catalog.warlock-matrix
+    title: Warlock community builds
+    kind: screen
+    area: catalog
+    auth: any
+    parent: null
+    notes: Read-only list loaded from a local matrix file. Filter by exotic. Flag Solipsism off Prismatic.
+    rules:
+      - DBR-SUB-011
+      - DAC-DST-016
+      - BR-WXM-001
+    status: active
+    platforms:
+      flutter-windows:
+        status: done
+        route: /warlock-builds
   - id: catalog.signed-out.weapons
     title: Catalog weapons (signed-out / Manifest)
     kind: screen
