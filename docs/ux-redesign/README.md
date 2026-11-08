@@ -2,7 +2,7 @@
 
 Reusable process for rebuilding Flutter product areas one at a time after the **Settings-only** shell baseline.
 
-Design system (`packages/ui_tokens`, `packages/ui_flutter`) stays. Product intent comes from ProjectTracker vault notes + repo DBR/DAC/BR + product-map.
+Design system (`packages/ui_tokens`, `packages/ui_flutter`) stays. Product intent comes from ProjectTracker vault **PRDs** (Domain/Area notes) + repo DBR/DAC/BR + product-map. Docs map: [`../README.md`](../README.md).
 
 ## Lane: UI/UX (not Spec Kit)
 

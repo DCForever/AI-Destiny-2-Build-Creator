@@ -238,15 +238,6 @@ class _SlotRow extends StatelessWidget {
               Expanded(
                 child: _slotName(slot, palette),
               ),
-              if (slot.instanceId != null && slot.instanceId!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Text(
-                    slot.instanceId!,
-                    key: Key('sets_board_slot_instance_${slot.slotWire}'),
-                    style: neonMono(color: palette.muted, fontSize: 10),
-                  ),
-                ),
               if (onPick != null)
                 OutlinedButton(
                   key: Key('sets_board_pick_${slot.slotWire}'),

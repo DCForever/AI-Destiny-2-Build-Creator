@@ -77,6 +77,38 @@ void main() {
       );
       expect(find.byKey(const Key('owned_badge_101')), findsNothing);
     });
+
+    testWidgets('long titles do not wrap mid-word', (tester) async {
+      const long = CatalogItem(
+        hash: 999,
+        name: 'An Insurmountable Skullfort',
+        slot: 'Helmet',
+        classType: 'Titan',
+        isExotic: true,
+      );
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 160,
+            child: CatalogArmorCard(item: long),
+          ),
+        ),
+      );
+      final label = tester.widget<UnbrokenLabel>(
+        find.byKey(const Key('catalog_item_name_999')),
+      );
+      expect(label.maxLines, 2);
+      expect(label.text, 'An Insurmountable Skullfort');
+      final painted = tester.widget<Text>(
+        find.descendant(
+          of: find.byKey(const Key('catalog_item_name_999')),
+          matching: find.byType(Text),
+        ),
+      );
+      expect(painted.semanticsLabel, 'An Insurmountable Skullfort');
+      expect(painted.data, isNot(contains('Insurm\nountable')));
+      expect(painted.data, contains('An'));
+    });
   });
 
   group('CatalogArmorGrid', () {

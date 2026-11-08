@@ -259,15 +259,23 @@ export function loadAllRules() {
   }
 
   if (fs.existsSync(SPECS_DIR)) {
-    for (const ent of fs.readdirSync(SPECS_DIR, { withFileTypes: true })) {
-      if (!ent.isDirectory()) continue;
-      const sliceId = ent.name;
-      // only numbered feature slices
-      if (!/^\d{3}-/.test(sliceId) && !/^\d{3}$/.test(sliceId)) continue;
-      const specPath = path.join(SPECS_DIR, sliceId, "spec.md");
-      if (!fs.existsSync(specPath)) continue;
-      const text = fs.readFileSync(specPath, "utf8");
-      rules.push(...parseSliceSpec(text, rel(specPath), sliceId));
+    const sliceParents = [
+      SPECS_DIR,
+      path.join(SPECS_DIR, "_archive", "product"),
+      path.join(SPECS_DIR, "_archive"),
+    ];
+    for (const parent of sliceParents) {
+      if (!fs.existsSync(parent)) continue;
+      for (const ent of fs.readdirSync(parent, { withFileTypes: true })) {
+        if (!ent.isDirectory()) continue;
+        const sliceId = ent.name;
+        // only numbered product slices (not dart-NNN)
+        if (!/^\d{3}-/.test(sliceId) && !/^\d{3}$/.test(sliceId)) continue;
+        const specPath = path.join(parent, sliceId, "spec.md");
+        if (!fs.existsSync(specPath)) continue;
+        const text = fs.readFileSync(specPath, "utf8");
+        rules.push(...parseSliceSpec(text, rel(specPath), sliceId));
+      }
     }
   }
 

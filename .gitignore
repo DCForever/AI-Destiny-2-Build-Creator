@@ -1,5 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# curated doc site
+docs-site/node_modules/
+docs-site/dist/
+docs-site/.astro/
+
 # monorepo / Next app (web/NextJS)
 web/NextJS/node_modules/
 web/NextJS/.next/

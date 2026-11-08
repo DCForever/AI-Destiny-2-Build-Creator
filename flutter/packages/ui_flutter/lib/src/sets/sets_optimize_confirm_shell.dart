@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../bungie_content_icon.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
+import '../unbroken_label.dart';
 import 'sets_bonus_goals_editor.dart';
 import 'sets_models.dart';
 import 'sets_neon_chrome.dart';
@@ -44,6 +45,8 @@ class SetsOptimizeConfirmShell extends StatefulWidget {
     this.initialExoticFilter = 'any',
     this.initialSort = SetsOptimizeSortMode.total,
     this.initialIncludeCurrent = true,
+    this.initialStatMin = const {},
+    this.initialStatMax = const {},
     this.onConstraintsChanged,
   });
 
@@ -94,6 +97,10 @@ class SetsOptimizeConfirmShell extends StatefulWidget {
   final SetsOptimizeSortMode initialSort;
   final bool initialIncludeCurrent;
 
+  /// Optional seeded floors / caps (Widgetbook mins story + tests).
+  final Map<String, int> initialStatMin;
+  final Map<String, int> initialStatMax;
+
   /// Fires when exotic / sort / stat bands change (host may re-run findKits).
   final void Function({
     required String exoticFilter,
@@ -132,10 +139,12 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
     _includeCurrent = widget.initialIncludeCurrent && widget.hasPins;
     _bonusGoals = List<SetsBonusGoalData>.from(widget.initialBonusGoals);
     _statMin = {
-      for (final s in kArmorBoardEofStatLabels) s: 0,
+      for (final s in kArmorBoardEofStatLabels)
+        s: widget.initialStatMin[s] ?? 0,
     };
     _statMax = {
-      for (final s in kArmorBoardEofStatLabels) s: kSetsOptimizeStatSliderMax,
+      for (final s in kArmorBoardEofStatLabels)
+        s: widget.initialStatMax[s] ?? kSetsOptimizeStatSliderMax,
     };
   }
 
@@ -223,12 +232,14 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
     }
     final parts = <String>[
       exoLabel,
-      'bonus $_bonusGoalsDisplay',
-      _sort.label,
-      if (activeStats.isEmpty) 'stats any' else activeStats.join(' · '),
+      _bonusGoalsDisplay,
+      if (activeStats.isNotEmpty) activeStats.join(' · '),
     ];
     return parts.join(' · ');
   }
+
+  bool get _anyStatLimit =>
+      _activeStatMin.isNotEmpty || _activeStatMax.isNotEmpty;
 
   Future<void> _openBonusGoalsEditor() async {
     if (widget.onBonusGoalsChanged == null) return;
@@ -264,8 +275,8 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'G-SET-013 · none · 1×2pc · 2×2pc · 1×4pc. Saved on Apply; '
-                        'Re-optimize runs with the new goals.',
+                        'None · 1×2pc · 2×2pc · 1×4pc. Apply saves; '
+                        'Re-optimize uses the new goals.',
                         style: neonBody(color: palette.muted, fontSize: 12),
                       ),
                       const SizedBox(height: 12),
@@ -433,7 +444,6 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
       key: const Key('sets_optimize_confirm_shell'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Compact chrome stays pinned; constraints + matrix scroll.
         Row(
           children: [
             TextButton(
@@ -449,51 +459,23 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
                 style: setsNeonBtnLabel(palette.muted, fontSize: 9),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Optimizer · DIM-style · confirm-only'.toUpperCase(),
-                key: const Key('sets_optimize_title'),
-                style: neonDisplay(
-                  color: palette.accent,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.0,
+            const Spacer(),
+            if (widget.hasPins && widget.currentBoard != null)
+              FilterChip(
+                key: const Key('sets_optimize_include_current'),
+                visualDensity: VisualDensity.compact,
+                label: Text(
+                  'cur',
+                  style: neonBody(color: palette.foreground, fontSize: 11),
                 ),
+                selected: _includeCurrent,
+                onSelected: (v) => setState(() => _includeCurrent = v),
               ),
-            ),
+            const SizedBox(width: 8),
             Text(
-              'G-SET-027 / 036–037',
+              matchLabel,
+              key: const Key('sets_optimize_match_count'),
               style: neonMono(color: palette.muted, fontSize: 10),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        // Seed chips stay visible (compact).
-        Wrap(
-          spacing: 14,
-          runSpacing: 4,
-          children: [
-            if (widget.classLabel != null)
-              _seedChip(
-                key: const Key('sets_optimize_seed_class'),
-                k: 'class',
-                v: widget.classLabel!,
-                palette: palette,
-              ),
-            _seedBonusChip(palette),
-            if (widget.exoticLabel != null)
-              _seedChip(
-                key: const Key('sets_optimize_seed_exotic'),
-                k: 'exotic seed',
-                v: widget.exoticLabel!,
-                palette: palette,
-              ),
-            _seedChip(
-              key: const Key('sets_optimize_seed_count'),
-              k: 'matching kits',
-              v: '${filtered.length}',
-              palette: palette,
             ),
           ],
         ),
@@ -510,7 +492,7 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
               ),
             ),
             child: Text(
-              'Applying a kit will replace all current pins (confirm-only).',
+              'Applying a kit replaces all pins.',
               style: neonBody(
                 color: palette.warning,
                 fontSize: 12,
@@ -534,12 +516,6 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
                     child: _buildConstraints(palette),
                   ),
                 ),
-              const SizedBox(height: 6),
-              Text(
-                matchLabel,
-                key: const Key('sets_optimize_match_count'),
-                style: neonMono(color: palette.muted, fontSize: 10),
-              ),
               const SizedBox(height: kSpace8),
               Expanded(
                 child: widget.running
@@ -575,6 +551,11 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
                               selectedKitId: widget.selectedKitId,
                               statMin: _statMin,
                               statMax: _statMax,
+                              sort: _sort,
+                              onSort: (m) {
+                                setState(() => _sort = m);
+                                _emitConstraints();
+                              },
                               onSelect: widget.onSelectKit,
                             ),
                           ),
@@ -592,16 +573,14 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
               child: Text('Cancel', style: setsNeonBtnLabel(palette.muted)),
             ),
             const Spacer(),
-            Flexible(
-              child: Text(
-                selected == null
-                    ? 'Selected · none'
-                    : 'Selected · ${selected.displayLabel} · Σ ${selected.total}',
-                style: neonMono(color: palette.muted, fontSize: 10),
-                overflow: TextOverflow.ellipsis,
+            if (selected != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  'Σ ${selected.total}',
+                  style: neonMono(color: palette.muted, fontSize: 10),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
             FilledButton(
               key: const Key('sets_optimize_confirm_apply'),
               style: setsNeonPrimaryStyle(palette),
@@ -620,74 +599,6 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _seedChip({
-    required Key key,
-    required String k,
-    required String v,
-    required FlapPalette palette,
-  }) {
-    return Text.rich(
-      key: key,
-      TextSpan(
-        children: [
-          TextSpan(
-            text: k,
-            style: neonMono(color: palette.muted.withValues(alpha: 0.7), fontSize: 11),
-          ),
-          TextSpan(
-            text: ' · $v',
-            style: neonBody(color: palette.foreground, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Seed + optional Change control for hard set-bonus goals.
-  Widget _seedBonusChip(FlapPalette palette) {
-    final canEdit = widget.onBonusGoalsChanged != null;
-    return Row(
-      key: const Key('sets_optimize_seed_bonus'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: 'bonus goals',
-                style: neonMono(
-                  color: palette.muted.withValues(alpha: 0.7),
-                  fontSize: 11,
-                ),
-              ),
-              TextSpan(
-                text: ' · $_bonusGoalsDisplay',
-                style: neonBody(color: palette.foreground, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        if (canEdit) ...[
-          const SizedBox(width: 6),
-          TextButton(
-            key: const Key('sets_optimize_bonus_change'),
-            style: setsNeonGhostStyle(
-              palette,
-              height: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              fontSize: 8,
-            ),
-            onPressed: widget.running ? null : _openBonusGoalsEditor,
-            child: Text(
-              'CHANGE',
-              style: setsNeonBtnLabel(palette.accent, fontSize: 8),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -779,53 +690,21 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
               _exoticDropdown(palette),
               if (widget.onBonusGoalsChanged != null)
                 _bonusGoalsConstraintControl(palette),
-              _labeledDropdown(
-                key: const Key('sets_optimize_sort'),
-                label: 'Sort results',
-                value: _sort.wireName,
-                palette: palette,
-                width: 160,
-                items: [
-                  for (final m in SetsOptimizeSortMode.values)
-                    DropdownMenuItem(
-                      value: m.wireName,
-                      child: Text(m.label),
-                    ),
-                ],
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sort = SetsOptimizeSortModeX.parse(v));
-                  _emitConstraints();
-                },
-              ),
-              FilterChip(
-                key: const Key('sets_optimize_include_current'),
-                label: Text(
-                  'Show current board row',
-                  style: neonBody(
-                    color: palette.foreground,
-                    fontSize: 11,
+              if (_anyStatLimit)
+                TextButton(
+                  key: const Key('sets_optimize_clear_stats'),
+                  style: setsNeonGhostStyle(
+                    palette,
+                    height: 28,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    fontSize: 8,
+                  ),
+                  onPressed: _clearStats,
+                  child: Text(
+                    'Clear limits'.toUpperCase(),
+                    style: setsNeonBtnLabel(palette.muted, fontSize: 8),
                   ),
                 ),
-                selected: _includeCurrent,
-                onSelected: !widget.hasPins || widget.currentBoard == null
-                    ? null
-                    : (v) => setState(() => _includeCurrent = v),
-              ),
-              TextButton(
-                key: const Key('sets_optimize_clear_stats'),
-                style: setsNeonGhostStyle(
-                  palette,
-                  height: 28,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  fontSize: 8,
-                ),
-                onPressed: _clearStats,
-                child: Text(
-                  'Clear stat limits'.toUpperCase(),
-                  style: setsNeonBtnLabel(palette.muted, fontSize: 8),
-                ),
-              ),
               if (widget.onReoptimize != null)
                 TextButton.icon(
                   key: const Key('sets_optimize_rerun'),
@@ -856,16 +735,6 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            'Kit stat totals · range band (base roll · thumbs at ends = any · 0–$kSetsOptimizeStatSliderMax)'
-                .toUpperCase(),
-            style: neonDisplay(
-              color: palette.muted,
-              fontSize: 9,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
@@ -898,12 +767,6 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
                 ],
               );
             },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Each kit is one row; columns = Σ · EoF stats · Helm–Class pieces · goals. '
-            'Vs current: green/red ±delta. Click row · Apply confirm-only.',
-            style: neonBody(color: palette.muted, fontSize: 11),
           ),
         ],
       ),
@@ -969,11 +832,7 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SetsFieldLabel(
-            options.length > 2
-                ? 'Exotic (${options.length - 2} owned)'
-                : 'Exotic',
-          ),
+          const SetsFieldLabel('Exotic'),
           const SizedBox(height: 4),
           DropdownButtonFormField<String>(
             key: const Key('sets_optimize_exotic'),
@@ -1129,52 +988,6 @@ class _SetsOptimizeConfirmShellState extends State<SetsOptimizeConfirmShell> {
     );
   }
 
-  Widget _labeledDropdown({
-    required Key key,
-    required String label,
-    required String value,
-    required FlapPalette palette,
-    required List<DropdownMenuItem<String>> items,
-    required ValueChanged<String?> onChanged,
-    double width = 200,
-  }) {
-    final resolved =
-        items.any((i) => i.value == value) ? value : items.first.value;
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SetsFieldLabel(label),
-          const SizedBox(height: 4),
-          DropdownButtonFormField<String>(
-            key: key,
-            // ignore: deprecated_member_use — value is the stable form across Flutter channels
-            value: resolved,
-            isDense: true,
-            isExpanded: true,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
-              filled: true,
-              fillColor: palette.background,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kFlapRadius),
-                borderSide: BorderSide(color: palette.line),
-              ),
-            ),
-            style: neonBody(color: palette.foreground, fontSize: 12),
-            dropdownColor: palette.surfaceRaised,
-            items: items,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _KitMatrix extends StatelessWidget {
@@ -1184,8 +997,10 @@ class _KitMatrix extends StatelessWidget {
     required this.selectedKitId,
     required this.statMin,
     required this.statMax,
+    required this.sort,
     this.pinnedCurrent,
     this.onSelect,
+    this.onSort,
   });
 
   /// Scrollable proposal kits (not including [pinnedCurrent]).
@@ -1197,9 +1012,11 @@ class _KitMatrix extends StatelessWidget {
   final String? selectedKitId;
   final Map<String, int> statMin;
   final Map<String, int> statMax;
+  final SetsOptimizeSortMode sort;
   final ValueChanged<String>? onSelect;
+  final ValueChanged<SetsOptimizeSortMode>? onSort;
 
-  static const double _minTableWidth = 960;
+  static const double _minTableWidth = 1300;
 
   Map<int, TableColumnWidth> get _columnWidths {
     const stats = kArmorBoardEofStatLabels;
@@ -1207,7 +1024,7 @@ class _KitMatrix extends StatelessWidget {
     return {
       0: const FixedColumnWidth(40),
       1: const FixedColumnWidth(48),
-      for (var i = 0; i < stats.length; i++) 2 + i: const FixedColumnWidth(56),
+      for (var i = 0; i < stats.length; i++) 2 + i: const FixedColumnWidth(72),
       for (var i = 0; i < slots.length; i++)
         2 + stats.length + i: const FixedColumnWidth(132),
       2 + stats.length + slots.length: const FixedColumnWidth(120),
@@ -1229,10 +1046,32 @@ class _KitMatrix extends StatelessWidget {
               decoration: BoxDecoration(color: palette.surfaceRaised),
               children: [
                 _th('#', palette),
-                _th('Σ', palette, num: true),
-                for (final s in stats) _th(s, palette, num: true),
+                _th(
+                  'Σ',
+                  palette,
+                  num: true,
+                  sortMode: SetsOptimizeSortMode.total,
+                  headerKey: 'total',
+                ),
+                for (final s in stats)
+                  _th(
+                    s,
+                    palette,
+                    num: true,
+                    sortMode: SetsOptimizeSortModeX.parse(s.toLowerCase()),
+                    headerKey: s,
+                    wash: _statWash(s, palette),
+                    highlightKey: (statMin[s] ?? 0) > 0
+                        ? 'sets_optimize_col_highlight_$s'
+                        : null,
+                  ),
                 for (final l in slotLabels) _th(l, palette),
-                _th('Goals', palette),
+                _th(
+                  'Goals',
+                  palette,
+                  sortMode: SetsOptimizeSortMode.goals,
+                  headerKey: 'Goals',
+                ),
               ],
             ),
           ],
@@ -1250,17 +1089,17 @@ class _KitMatrix extends StatelessWidget {
         border: Border.all(color: palette.line, width: kFlapRuleThickness),
         color: palette.surface,
       ),
-      // Header + current stay outside the vertical scroll so "cur" is always
-      // visible. Both bands use the same min table width for column alignment.
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SingleChildScrollView(
+      // One horizontal viewport for header + current + kits so columns stay
+      // locked. Only the proposal list scrolls vertically.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            key: const Key('sets_optimize_kit_matrix_hscroll'),
             scrollDirection: Axis.horizontal,
             child: SizedBox(
               width: _minTableWidth,
+              height: constraints.maxHeight,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   headerTable(),
@@ -1272,32 +1111,30 @@ class _KitMatrix extends StatelessWidget {
                       color: palette.accent.withValues(alpha: 0.45),
                     ),
                   ],
+                  Expanded(
+                    child: _AttachedVerticalScrollbar(
+                      builder: (context, controller) => Scrollbar(
+                        controller: controller,
+                        child: SingleChildScrollView(
+                          controller: controller,
+                          child: Table(
+                            defaultVerticalAlignment:
+                                TableCellVerticalAlignment.middle,
+                            columnWidths: widths,
+                            children: [
+                              for (final kit in kits)
+                                _kitRow(kit, palette, sticky: false),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Expanded(
-            child: Scrollbar(
-              child: SingleChildScrollView(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: _minTableWidth,
-                    child: Table(
-                      defaultVerticalAlignment:
-                          TableCellVerticalAlignment.middle,
-                      columnWidths: widths,
-                      children: [
-                        for (final kit in kits)
-                          _kitRow(kit, palette, sticky: false),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -1365,6 +1202,7 @@ class _KitMatrix extends StatelessWidget {
             showDelta: baseline != null && !kit.isCurrent,
             palette: palette,
             fail: _fail(s, kit.stats[s] ?? 0),
+            wash: _statWash(s, palette),
             onTap: kit.isCurrent || onSelect == null
                 ? null
                 : () => onSelect!(kit.id),
@@ -1401,19 +1239,54 @@ class _KitMatrix extends StatelessWidget {
     return false;
   }
 
-  Widget _th(String t, FlapPalette palette, {bool num = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      child: Text(
-        t.toUpperCase(),
+  Color? _statWash(String stat, FlapPalette palette) {
+    final mn = statMin[stat] ?? 0;
+    final mx = statMax[stat] ?? kSetsOptimizeStatSliderMax;
+    if (mn > 0) return palette.accent.withValues(alpha: 0.14);
+    if (mx < kSetsOptimizeStatSliderMax) {
+      return palette.muted.withValues(alpha: 0.08);
+    }
+    return null;
+  }
+
+  Widget _th(
+    String t,
+    FlapPalette palette, {
+    bool num = false,
+    SetsOptimizeSortMode? sortMode,
+    String? headerKey,
+    Color? wash,
+    String? highlightKey,
+  }) {
+    final active = sortMode != null && sort == sortMode;
+    final label = active ? '${t.toUpperCase()} ▼' : t.toUpperCase();
+    final child = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: UnbrokenLabel(
+        label,
+        fit: true,
         textAlign: num ? TextAlign.right : TextAlign.left,
         style: neonDisplay(
-          color: palette.muted.withValues(alpha: 0.85),
+          color: active
+              ? palette.accent
+              : palette.muted.withValues(alpha: 0.85),
           fontSize: 8,
-          letterSpacing: 0.6,
+          letterSpacing: 0.2,
         ),
       ),
     );
+    final boxed = DecoratedBox(
+      key: highlightKey != null ? Key(highlightKey) : null,
+      decoration: BoxDecoration(color: wash),
+      child: sortMode == null || onSort == null
+          ? child
+          : InkWell(
+              key: Key('sets_optimize_th_$headerKey'),
+              onTap: () => onSort!(sortMode),
+              child: child,
+            ),
+    );
+    return boxed;
   }
 
   Widget _numCell(
@@ -1424,6 +1297,7 @@ class _KitMatrix extends StatelessWidget {
     required FlapPalette palette,
     bool hi = false,
     bool fail = false,
+    Color? wash,
     Key? deltaKey,
     VoidCallback? onTap,
   }) {
@@ -1439,7 +1313,9 @@ class _KitMatrix extends StatelessWidget {
     }
     return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: wash),
+        child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1468,6 +1344,7 @@ class _KitMatrix extends StatelessWidget {
                 style: neonMono(color: palette.muted, fontSize: 9),
               ),
           ],
+        ),
         ),
       ),
     );
@@ -1526,16 +1403,21 @@ class _KitMatrix extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    exo && !name.startsWith('★') ? '★ $name' : name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: neonBody(
-                      color: exo
-                          ? const Color(0xFFE5C35A)
-                          : palette.foreground,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                  Tooltip(
+                    message: exo && !name.startsWith('★') ? '★ $name' : name,
+                    waitDuration: const Duration(milliseconds: 400),
+                    child: Text(
+                      exo && !name.startsWith('★') ? '★ $name' : name,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: neonBody(
+                        color: exo
+                            ? const Color(0xFFE5C35A)
+                            : palette.foreground,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   if (sub != null && sub.isNotEmpty)
@@ -1602,4 +1484,30 @@ class _KitMatrix extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Scrollbar + viewport share one [ScrollController] (PrimaryScrollController
+/// is often detached on this nested matrix).
+class _AttachedVerticalScrollbar extends StatefulWidget {
+  const _AttachedVerticalScrollbar({required this.builder});
+
+  final Widget Function(BuildContext context, ScrollController controller)
+      builder;
+
+  @override
+  State<_AttachedVerticalScrollbar> createState() =>
+      _AttachedVerticalScrollbarState();
+}
+
+class _AttachedVerticalScrollbarState extends State<_AttachedVerticalScrollbar> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _controller);
 }

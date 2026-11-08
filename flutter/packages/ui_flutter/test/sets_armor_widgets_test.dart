@@ -516,11 +516,22 @@ void main() {
       expect(find.byKey(const Key('sets_optimize_confirm_shell')), findsOneWidget);
       expect(find.byKey(const Key('sets_optimize_kit_matrix')), findsOneWidget);
       expect(find.byKey(const Key('sets_optimize_replace_all_warning')), findsOneWidget);
-      expect(find.byKey(const Key('sets_optimize_seed_class')), findsOneWidget);
+      expect(find.byKey(const Key('sets_optimize_seed_class')), findsNothing);
+      expect(find.byKey(const Key('sets_optimize_seed_exotic')), findsNothing);
+      expect(find.byKey(const Key('sets_optimize_sort')), findsNothing);
       expect(find.byKey(const Key('sets_optimize_exotic')), findsOneWidget);
-      expect(find.byKey(const Key('sets_optimize_sort')), findsOneWidget);
+      expect(find.byKey(const Key('sets_optimize_th_total')), findsOneWidget);
       expect(find.byKey(const Key('sets_optimize_stat_min_Health')), findsOneWidget);
-      expect(find.textContaining('0–$kSetsOptimizeStatSliderMax'), findsOneWidget);
+      // BUG-20260812-001 / 004: stat labels stay one token (no mid-word wrap).
+      for (final label in ['GRENADE', 'WEAPONS', 'HEALTH']) {
+        final texts = tester.widgetList<Text>(find.text(label));
+        expect(texts, isNotEmpty, reason: label);
+        for (final t in texts) {
+          expect(t.softWrap, isFalse, reason: label);
+          expect(t.maxLines, 1, reason: label);
+        }
+      }
+      expect(find.byType(Tooltip), findsWidgets);
       expect(applied, isFalse);
       await tester.tap(find.byKey(const Key('sets_optimize_confirm_apply')));
       await tester.pump();
@@ -680,11 +691,11 @@ void main() {
           ),
         ),
       );
-      expect(find.byKey(const Key('sets_optimize_bonus_change')), findsOneWidget);
+      expect(find.byKey(const Key('sets_optimize_bonus_change')), findsNothing);
       expect(find.byKey(const Key('sets_optimize_bonus_open')), findsOneWidget);
       expect(find.textContaining('CODA 4pc'), findsWidgets);
 
-      await tester.tap(find.byKey(const Key('sets_optimize_bonus_change')));
+      await tester.tap(find.byKey(const Key('sets_optimize_bonus_open')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('sets_optimize_bonus_dialog_title')), findsOneWidget);
       expect(find.byKey(const Key('sets_optimize_bonus_editor')), findsOneWidget);
@@ -750,6 +761,9 @@ void main() {
       expect(find.byKey(const Key('sets_optimize_stat_readout_Health')), findsOneWidget);
       expect(find.text('any'), findsOneWidget);
       expect(find.byType(RangeSlider), findsOneWidget);
+      final health = tester.widget<Text>(find.text('HEALTH'));
+      expect(health.softWrap, isFalse);
+      expect(health.maxLines, 1);
 
       // Drag start thumb from left end toward mid track (must not be stolen by max).
       final box = tester.getRect(find.byType(RangeSlider));
@@ -898,6 +912,131 @@ void main() {
       expect(find.byKey(const ValueKey('sets_optimize_kit_current')), findsOneWidget);
       expect(find.text('CurH'), findsOneWidget);
     });
+
+    testWidgets('header, current, and kits share one horizontal scroll',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 640,
+            height: 700,
+            child: SetsOptimizeConfirmShell(
+              hasPins: true,
+              currentBoard: const SetsOptimizeKitRowData(
+                id: 'current',
+                total: 300,
+                isCurrent: true,
+                label: 'Current board',
+                stats: {'Health': 50},
+                slotNames: {
+                  'helmet': 'CurH',
+                  'arms': 'CurA',
+                  'chest': 'CurC',
+                  'legs': 'CurL',
+                  'class_item': 'CurCI',
+                },
+              ),
+              kits: [
+                for (var i = 0; i < 8; i++)
+                  SetsOptimizeKitRowData(
+                    id: 'k$i',
+                    total: 400 - i,
+                    rank: i + 1,
+                    stats: const {'Health': 60},
+                    slotNames: const {
+                      'helmet': 'H',
+                      'arms': 'A',
+                      'chest': 'C',
+                      'legs': 'L',
+                      'class_item': 'CI',
+                    },
+                  ),
+              ],
+              selectedKitId: 'k0',
+              initialIncludeCurrent: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      double dx(Finder f) => tester.getTopLeft(f).dx;
+      final hash = find.text('#');
+      final cur = find.byKey(const ValueKey('sets_optimize_kit_current'));
+      final rank = find.text('#1');
+      expect(hash, findsOneWidget);
+      expect(cur, findsOneWidget);
+      expect(rank, findsOneWidget);
+
+      final hash0 = dx(hash);
+      final cur0 = dx(cur);
+      final rank0 = dx(rank);
+      expect(cur0, closeTo(hash0, 2));
+      expect(rank0, closeTo(hash0, 2));
+
+      await tester.drag(
+        find.byKey(const Key('sets_optimize_kit_matrix_hscroll')),
+        const Offset(-280, 0),
+      );
+      await tester.pumpAndSettle();
+
+      final hash1 = dx(hash);
+      final cur1 = dx(cur);
+      final rank1 = dx(rank);
+      expect(hash0 - hash1, greaterThan(50));
+      expect(cur1, closeTo(hash1, 2));
+      expect(rank1, closeTo(hash1, 2));
+    });
+
+    testWidgets('table header sort; no seed chips; min column highlight',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 1100,
+            height: 800,
+            child: SetsOptimizeConfirmShell(
+              hasPins: true,
+              currentBoard: const SetsOptimizeKitRowData(
+                id: 'current',
+                total: 100,
+                isCurrent: true,
+              ),
+              initialIncludeCurrent: true,
+              initialStatMin: const {'Melee': 82},
+              kits: const [
+                SetsOptimizeKitRowData(
+                  id: 'low',
+                  total: 180,
+                  rank: 2,
+                  stats: {'Health': 40, 'Melee': 90},
+                ),
+                SetsOptimizeKitRowData(
+                  id: 'high',
+                  total: 160,
+                  rank: 1,
+                  stats: {'Health': 80, 'Melee': 95},
+                ),
+              ],
+              selectedKitId: 'low',
+              onSelectKit: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('sets_optimize_seed_class')), findsNothing);
+      expect(find.byKey(const Key('sets_optimize_sort')), findsNothing);
+      expect(find.byKey(const Key('sets_optimize_th_Health')), findsOneWidget);
+      expect(find.byKey(const Key('sets_optimize_col_highlight_Melee')), findsOneWidget);
+      expect(find.byKey(const Key('sets_optimize_stat_highlight_Melee')), findsOneWidget);
+      expect(find.textContaining('≥82'), findsWidgets);
+      expect(find.byKey(const Key('sets_optimize_include_current')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('sets_optimize_th_Health')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('HEALTH ▼'), findsWidgets);
+    });
   });
 
   group('Owned compare', () {
@@ -963,6 +1102,12 @@ void main() {
         ),
       );
       expect(find.byKey(const Key('sets_board_totals_row')), findsOneWidget);
+      expect(find.text('inst-0'), findsNothing);
+      expect(find.text('inst-1'), findsNothing);
+      expect(
+        find.byKey(const Key('sets_board_slot_instance_helmet')),
+        findsNothing,
+      );
       expect(find.byKey(const Key('sets_coverage_hard_TechSec_2')), findsOneWidget);
       expect(find.byKey(const Key('sets_coverage_soft_2pc_TechSec')), findsOneWidget);
       // No energy/mods labels when fields null.
@@ -1158,6 +1303,9 @@ void main() {
       expect(find.byKey(const Key('sets_library_workspace')), findsOneWidget);
       expect(find.byKey(const Key('sets_armor_library_header')), findsOneWidget);
       expect(find.byKey(const Key('sets_armor_row_s1')), findsOneWidget);
+      final classHeader = tester.widget<Text>(find.text('CLASS'));
+      expect(classHeader.softWrap, isFalse);
+      expect(classHeader.maxLines, 1);
       expect(find.byKey(const Key('sets_armor_row_class_s1')), findsOneWidget);
       expect(find.byKey(const Key('sets_armor_row_pieces_s1')), findsOneWidget);
       expect(find.byKey(const Key('sets_armor_row_coverage_s1')), findsOneWidget);

@@ -256,38 +256,107 @@ Widget setsOwnedCompare(BuildContext context) {
   );
 }
 
+const _wbOptimizeKits = [
+  SetsOptimizeKitRowData(
+    id: 'kit-1',
+    total: 210,
+    rank: 1,
+    deltaVsCurrent: 12,
+    goalsLabel: 'TechSec 2pc',
+    stats: {'Health': 40, 'Melee': 90},
+    slotNames: {
+      'helmet': 'H',
+      'arms': 'A',
+      'chest': 'C',
+      'legs': 'L',
+      'class_item': 'CI',
+    },
+  ),
+  SetsOptimizeKitRowData(
+    id: 'kit-2',
+    total: 200,
+    rank: 2,
+    deltaVsCurrent: 2,
+    goalsLabel: 'TechSec 2pc',
+    stats: {'Health': 80, 'Melee': 95},
+    slotNames: {
+      'helmet': 'H2',
+      'arms': 'A2',
+      'chest': 'C2',
+      'legs': 'L2',
+      'class_item': 'CI2',
+    },
+  ),
+];
+
+const _wbCurrent = SetsOptimizeKitRowData(
+  id: 'current',
+  total: 198,
+  isCurrent: true,
+  stats: {'Health': 38, 'Melee': 70},
+  slotNames: {
+    'helmet': 'CurH',
+    'arms': 'CurA',
+    'chest': 'CurC',
+    'legs': 'CurL',
+    'class_item': 'CurCI',
+  },
+);
+
 @widgetbook.UseCase(
-  name: 'Optimize confirm shell',
+  name: 'Optimize · default',
   type: SetsOptimizeConfirmShell,
   path: '[Sets]/Armor',
 )
 Widget setsOptimizeConfirm(BuildContext context) {
-  return SizedBox(
-    width: 800,
-    height: 520,
+  return const SizedBox(
+    width: 1100,
+    height: 640,
     child: SetsOptimizeConfirmShell(
       hasPins: true,
-      classLabel: 'Titan',
-      exoticLabel: 'Cuirass',
       bonusGoalsLabel: 'TechSec 2pc',
       selectedKitId: 'kit-1',
-      kits: const [
-        SetsOptimizeKitRowData(
-          id: 'kit-1',
-          total: 210,
-          deltaVsCurrent: 12,
-          goalsLabel: 'TechSec 2pc',
-        ),
-        SetsOptimizeKitRowData(
-          id: 'kit-2',
-          total: 200,
-          deltaVsCurrent: 2,
-          goalsLabel: 'TechSec 2pc',
-        ),
-      ],
-      onSelectKit: (_) {},
-      onConfirmApply: () {},
-      onCancel: () {},
+      currentBoard: _wbCurrent,
+      initialIncludeCurrent: true,
+      kits: _wbOptimizeKits,
+    ),
+  );
+}
+
+@widgetbook.UseCase(
+  name: 'Optimize · mins active',
+  type: SetsOptimizeConfirmShell,
+  path: '[Sets]/Armor',
+)
+Widget setsOptimizeMins(BuildContext context) {
+  return const SizedBox(
+    width: 1100,
+    height: 640,
+    child: SetsOptimizeConfirmShell(
+      hasPins: true,
+      bonusGoalsLabel: 'TechSec 2pc',
+      selectedKitId: 'kit-1',
+      currentBoard: _wbCurrent,
+      initialIncludeCurrent: true,
+      initialStatMin: {'Melee': 82},
+      kits: _wbOptimizeKits,
+    ),
+  );
+}
+
+@widgetbook.UseCase(
+  name: 'Optimize · empty board',
+  type: SetsOptimizeConfirmShell,
+  path: '[Sets]/Armor',
+)
+Widget setsOptimizeEmptyBoard(BuildContext context) {
+  return const SizedBox(
+    width: 1100,
+    height: 640,
+    child: SetsOptimizeConfirmShell(
+      hasPins: false,
+      kits: _wbOptimizeKits,
+      selectedKitId: 'kit-1',
     ),
   );
 }

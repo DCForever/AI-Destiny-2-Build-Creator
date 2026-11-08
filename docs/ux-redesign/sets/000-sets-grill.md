@@ -51,7 +51,7 @@
 | **G-SET-024** | **Optimizer is the primary way to fill Armor Set slots** in the redesigned lifecycle. Manual per-slot compare pick remains available (secondary), not the default hero path. |
 | **G-SET-025** | Optimizer and manual pick **share compare components**. Optimizer remains **confirm-only** apply (never silent auto-write). |
 | **G-SET-026** | Optimize with existing pieces: **seed constraints** from Set (class, exotic lock if any, bonus goals) and **replace-all with confirm**. |
-| **G-SET-027** | Optimizer returns a **ranked list of many proposals** (kits), not a single kit. User can sort (Σ base, key stats, goal fit). |
+| **G-SET-027** | Optimizer returns a **ranked list of many proposals** (kits), not a single kit. User can sort (Σ base, key stats, goal fit). **Chrome (2026-08-12):** sort is table column headers, not a constraints dropdown. |
 | **G-SET-028** | *(superseded for chrome)* Prefer **DIM-style result matrix**: each kit is a **row**; columns = Helm · Arms · Chest · Legs · Class (+ Σ / per-stat totals). Click row to select. |
 | **G-SET-029** | **Apply** always targets **exactly one** selected row after confirm. |
 | **G-SET-035** | Optional **Current board** as a result **row** when slots already filled. |

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
+import '../unbroken_label.dart';
 import 'sets_models.dart';
 
 /// Dual-thumb range for kit stat totals (mockup `.dual-range`, G-SET-036).
@@ -41,18 +42,44 @@ class SetsOptimizeDualRange extends StatelessWidget {
     final start = lo <= hi ? lo : hi;
     final end = lo <= hi ? hi : lo;
 
-    return Column(
+    final minActive = minValue > 0;
+    final maxOnly = !minActive && maxValue < max;
+    final wash = minActive
+        ? palette.accent.withValues(alpha: 0.14)
+        : maxOnly
+            ? palette.muted.withValues(alpha: 0.08)
+            : Colors.transparent;
+    final labelColor = minActive
+        ? palette.accent
+        : maxOnly
+            ? palette.foreground
+            : palette.muted;
+
+    return Container(
+      key: minActive ? Key('sets_optimize_stat_highlight_$statLabel') : null,
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 2),
+      decoration: BoxDecoration(
+        color: wash,
+        border: Border.all(
+          color: minActive
+              ? palette.accent.withValues(alpha: 0.45)
+              : palette.line.withValues(alpha: 0.0),
+          width: 1,
+        ),
+      ),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: UnbrokenLabel(
                 statLabel.toUpperCase(),
+                fit: true,
                 style: neonDisplay(
-                  color: palette.muted,
+                  color: labelColor,
                   fontSize: 9,
-                  letterSpacing: 0.8,
+                  letterSpacing: 0.4,
                 ),
               ),
             ),
@@ -60,7 +87,9 @@ class SetsOptimizeDualRange extends StatelessWidget {
               _readout,
               key: Key('sets_optimize_stat_readout_$statLabel'),
               style: neonMono(
-                color: _active ? palette.foreground : palette.muted,
+                color: minActive
+                    ? palette.accent
+                    : (_active ? palette.foreground : palette.muted),
                 fontSize: 10,
               ),
             ),
@@ -108,6 +137,7 @@ class SetsOptimizeDualRange extends StatelessWidget {
           ],
         ),
       ],
+      ),
     );
   }
 }

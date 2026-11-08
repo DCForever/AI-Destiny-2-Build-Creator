@@ -9,9 +9,11 @@ Platform-agnostic **surfaces**, **flows**, **transitions**, and **rule attachmen
 | **Projections** | generated | Draw.io, Atlas manifest/paths, inventory.yaml — **do not hand-edit** |
 
 Root project overview: [../../README.md](../../README.md).  
+Documentation layers: [`../README.md`](../README.md).  
 Whole-product framing: [../../PRODUCT.md](../../PRODUCT.md).  
-**Product descriptions** (domain concepts + UI areas): **Obsidian** `Projects/Destiny 2 Build Creator/Products.md` — git pointer [`../products/`](../products/).  
-Agent rules: [../../AGENTS.md](../../AGENTS.md).
+**PRDs** (domain concepts + UI areas): **Obsidian** `Projects/Destiny 2 Build Creator/Products.md` — git pointer [`../products/`](../products/).  
+Agent rules: [../../AGENTS.md](../../AGENTS.md).  
+Curated review site: `npm run docs:dev`.
 
 ## Files
 

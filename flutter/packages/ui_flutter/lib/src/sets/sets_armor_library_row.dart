@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
+import '../unbroken_label.dart';
 import 'sets_models.dart';
 
 /// Armor library flap row: Name · class · pieces · coverage · used-by.
@@ -40,11 +41,12 @@ class SetsArmorLibraryRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 15,
+                flex: 14,
                 child: Text(
                   data.name,
                   key: Key('sets_armor_row_name_${data.id}'),
                   maxLines: 1,
+                  softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: neonBody(
                     color: palette.foreground,
@@ -54,8 +56,8 @@ class SetsArmorLibraryRow extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 5,
-                child: Text(
+                flex: 7,
+                child: UnbrokenLabel(
                   data.classLabel,
                   key: Key('sets_armor_row_class_${data.id}'),
                   style: neonBody(color: palette.muted, fontSize: 12),
@@ -66,6 +68,9 @@ class SetsArmorLibraryRow extends StatelessWidget {
                 child: Text(
                   data.piecesLabel,
                   key: Key('sets_armor_row_pieces_${data.id}'),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
                   style: neonMono(color: palette.foreground, fontSize: 12),
                 ),
               ),
@@ -120,14 +125,15 @@ class SetsArmorLibraryHeader extends StatelessWidget {
         children: [
           for (var i = 0; i < labels.length; i++)
             Expanded(
-              flex: const [15, 5, 4, 9, 8][i],
-              child: Text(
+              flex: const [14, 7, 4, 9, 8][i],
+              child: UnbrokenLabel(
                 labels[i].toUpperCase(),
+                fit: true,
                 style: neonDisplay(
                   color: palette.muted,
                   fontSize: 9,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: 0.8,
+                  letterSpacing: 0.4,
                 ),
               ),
             ),

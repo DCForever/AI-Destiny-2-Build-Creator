@@ -39,6 +39,7 @@ export 'src/neon_fonts.dart';
 export 'src/neon_item_card.dart';
 export 'src/neon_item_detail.dart';
 export 'src/neon_segmented.dart';
+export 'src/unbroken_label.dart';
 // Sets Armor lifecycle (UX 001-armor)
 export 'src/sets/sets_models.dart';
 export 'src/sets/sets_neon_chrome.dart';

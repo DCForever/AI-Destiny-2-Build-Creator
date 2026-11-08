@@ -8,7 +8,7 @@ You designate play-pattern intent (synergy types), compose a class-bound **Build
 
 Optional LLM tooling exists for propose-for-confirm discovery and legacy generation paths. It is **not required** for core compose, and is not the primary product surface.
 
-Product framing: [`PRODUCT.md`](./PRODUCT.md). High-level product requirements: local soft link [`requirements/`](./requirements/) → Obsidian ProjectTracker vault (`Projects/Destiny 2 Build Creator/`); recreate with `pwsh -File scripts/link-projecttracker-requirements.ps1`; git pointer [`docs/products/`](./docs/products/). Domain rules: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md).
+Product framing: [`PRODUCT.md`](./PRODUCT.md). **Docs map:** [`docs/README.md`](./docs/README.md). High-level **PRDs** live in Obsidian (`requirements/` junction → ProjectTracker `Projects/Destiny 2 Build Creator/`); recreate with `pwsh -File scripts/link-projecttracker-requirements.ps1`; git pointer [`docs/products/`](./docs/products/). Domain **law**: [`specs/domain-business-rules.md`](./specs/domain-business-rules.md), [`specs/domain-acceptance-criteria.md`](./specs/domain-acceptance-criteria.md), [`specs/business-rules.md`](./specs/business-rules.md). Historical Spec Kit: [`specs/_archive/`](./specs/_archive/). Review site: `npm run docs:dev`.
 
 **Product map / App Atlas** (UI structure, flows, Draw.io, screenshots, multi-platform stubs): [`docs/product-map/README.md`](./docs/product-map/README.md). Open the unified viewer with `npm run product-map:view`.
 
@@ -180,15 +180,19 @@ Generator-style multi-pass LLM is **not** restored as a primary nav tab. Prefer 
 
 | Doc | Contents |
 | --- | --- |
+| [`docs/README.md`](./docs/README.md) | **Start here** — documentation layers, CRs, what is live |
 | [`PRODUCT.md`](./PRODUCT.md) | Purpose, positioning, capabilities, constraints |
+| [`docs/products/README.md`](./docs/products/README.md) | Git pointer to Obsidian PRDs |
+| [`docs/architecture/README.md`](./docs/architecture/README.md) | Port / ops index |
 | [`docs/product-map/README.md`](./docs/product-map/README.md) | Product map hub, viewer, sync, CI |
 | [`docs/product-map/CHECKLIST.md`](./docs/product-map/CHECKLIST.md) | Same-change checklist for UI work |
 | [`docs/product-map/FLUTTER.md`](./docs/product-map/FLUTTER.md) | Flutter Windows platform stubs / parity |
 | [`docs/ui-rules/README.md`](./docs/ui-rules/README.md) | Draw.io + companion (projections of the hub) |
 | [`docs/atlas/README.md`](./docs/atlas/README.md) | Screenshot capture and Atlas-only browse |
+| [`docs-site/README.md`](./docs-site/README.md) | Curated doc site (`npm run docs:dev`) |
 | [`DEBUG.md`](./DEBUG.md) | `/debug/*` setup and API verification flows |
-| [`DESIGN.md`](./DESIGN.md) | Design notes |
+| [`DESIGN.md`](./DESIGN.md) | Visual language (Neon Network) |
 | [`AGENTS.md`](./AGENTS.md) | Monorepo agent rules (domain + product-map); points at stack guides |
 | [`web/NextJS/AGENTS.md`](./web/NextJS/AGENTS.md) | Next.js app agent rules |
 | [`flutter/AGENTS.md`](./flutter/AGENTS.md) | Dart / Flutter / Jaspr agent rules |
-| [`specs/`](./specs/) | Domain and feature specifications |
+| [`specs/README.md`](./specs/README.md) | Live domain law vs `_archive/` Spec Kit |

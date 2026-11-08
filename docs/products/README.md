@@ -34,7 +34,7 @@ Open in Obsidian: vault `ProjectTracker` → project [[Destiny 2 Build Creator]]
 | Whole product | [`PRODUCT.md`](../../PRODUCT.md) | Purpose, positioning, principles |
 | Structure | [`docs/product-map/`](../product-map/) | Surfaces, flows, rule *attachments* |
 | Rule wording | [`specs/domain-*.md`](../../specs/), [`business-rules.md`](../../specs/business-rules.md) | Enforceable `DBR` / `DAC` / `BR` text |
-| Feature slices | `specs/00N-*/` | Implementation scope |
+| Feature slices | new `specs/dart-*` / `specs/046-*` (history: `specs/_archive/`) | Implementation scope |
 
 **Precedence:** Domain rules in `specs/` win on conflict. Product prose is edited in the vault; when meaning changes, update **vault description and** domain rules in the same change.
 

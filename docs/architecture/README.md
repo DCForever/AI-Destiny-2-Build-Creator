@@ -1,0 +1,17 @@
+# Architecture and port ops
+
+Living engineering docs for the multiplatform Dart port. **Not** product law.
+
+Start here instead of opening every `docs/multiplatform-dart-*.md` file.
+
+| Read | File |
+| --- | --- |
+| Locked architecture choices (incl. D-LANES) | [`../multiplatform-dart-port-decisions.md`](../multiplatform-dart-port-decisions.md) |
+| Branch / worktree | [`../multiplatform-dart-branching.md`](../multiplatform-dart-branching.md) |
+| System slice list | [`../multiplatform-dart-slice-roadmap.md`](../multiplatform-dart-slice-roadmap.md) |
+| Residuals vs product | [`../multiplatform-dart-feature-gaps.md`](../multiplatform-dart-feature-gaps.md) |
+| Cutover gate | [`../multiplatform-dart-cutover-parity-checklist.md`](../multiplatform-dart-cutover-parity-checklist.md) |
+
+Supporting runbooks (keep until cutover ops are done): OAuth matrix, dual-run, entity bundles, OPFS, legacy DB import, inventory harness, UI fidelity — same `docs/multiplatform-dart-*.md` prefix.
+
+UI chrome work: [`../ux-redesign/README.md`](../ux-redesign/README.md), not Spec Kit.

@@ -6,7 +6,7 @@ This repository is a **multi-stack monorepo**. Read the stack-specific guide for
 | --- | --- | --- |
 | Next.js web app | [`web/NextJS/`](web/NextJS/) | [`web/NextJS/AGENTS.md`](web/NextJS/AGENTS.md) |
 | Dart / Flutter / Jaspr | [`flutter/`](flutter/) | [`flutter/AGENTS.md`](flutter/AGENTS.md) |
-| Shared product / domain | [`specs/`](specs/), [`docs/`](docs/) | this file |
+| Shared product / domain | [`specs/`](specs/), [`docs/`](docs/) | this file + [`docs/README.md`](docs/README.md) |
 
 `CLAUDE.md` at repo root is `@AGENTS.md` (this file).
 
@@ -15,9 +15,10 @@ This repository is a **multi-stack monorepo**. Read the stack-specific guide for
 ```text
 web/NextJS/     # Next.js app root (package.json, src/, scripts/)
 flutter/        # Melos/pub workspace (packages/, apps/, tool/)
-docs/           # product-map hub, atlas, multiplatform docs
-specs/          # DBR/DAC/BR + Spec Kit feature slices
-package.json    # thin npm proxy into web/NextJS only
+docs/           # product-map hub, atlas, architecture index, ux-redesign
+docs-site/      # curated Starlight doc site (read / review / propose CRs)
+specs/          # LIVE: DBR/DAC/BR + new Spec Kit only; history in specs/_archive/
+package.json    # thin npm proxy (Next + product-map + docs-site)
 ```
 
 - **Do not** put Next app source back at monorepo root.
@@ -37,6 +38,8 @@ Working product descriptions live in the **ProjectTracker** vault, not as duplic
 
 When planning product behavior, check that folder for high-level requirements, then enforce via domain specs below.
 
+**Documentation layers (read first):** [`docs/README.md`](docs/README.md). PRDs are vault product notes. Law is the three `specs/domain-*.md` / `business-rules.md` files. Shipped Spec Kit lives in [`specs/_archive/`](specs/_archive/) — do not extend. Curated site: `npm run docs:dev`.
+
 ## Domain & feature rules (always consult + keep current)
 
 When **planning** or **implementing** product behavior (any stack):
@@ -51,7 +54,7 @@ When **planning** or **implementing** product behavior (any stack):
 
 3. **Pure UI polish** (density, chrome collapse, viewport lock) stays out of domain P1/P2 gates unless it encodes product semantics — note trackers under `docs/` if needed.
 
-4. Feature specs under `specs/00N-*/` and `specs/dart-*/` remain slice-level; still align them with domain when they contradict DBR/DAC.
+4. **New** feature specs under `specs/dart-*` (system) or `specs/046-*` remain slice-level; still align them with domain when they contradict DBR/DAC. Historical slices: [`specs/_archive/`](specs/_archive/). Index: [`specs/README.md`](specs/README.md).
 
 ## Product map / App Atlas (UI structure SSoT)
 
@@ -79,13 +82,14 @@ Root [`package.json`](package.json) **proxies** into `web/NextJS` (no Next deps 
 | --- | --- |
 | `npm run dev` / `build` / `test` / `lint` / `typecheck` / `gate` | `npm --prefix web/NextJS run …` |
 | `npm run product-map:*` | product-map / atlas scripts under `web/NextJS/scripts/` |
+| `npm run docs:dev` / `docs:sync` / `docs:build` | curated Starlight site (`docs-site/`) |
 
 Dart / Flutter commands: **cwd must be `flutter/`** (see [`flutter/AGENTS.md`](flutter/AGENTS.md)).
 
 ## Spec Kit
 
 - Config: [`.specify/`](.specify/)
-- Feature slices: [`specs/`](specs/) (`00N-*` product, `dart-*` multiplatform, layout slices as needed)
+- Feature slices: live [`specs/`](specs/) for **new** system work; shipped history in [`specs/_archive/`](specs/_archive/). Index: [`specs/README.md`](specs/README.md). Numbering: [`specs/_numbering.json`](specs/_numbering.json) (next product **046**, dart **070+**).
 - Default git base branch for new features: see `.specify/extensions/git/git-config.yml` (`base_branch`)
 - **Going forward (D-LANES):** Spec Kit is for **non-UI / system** work (domain, data, models, IO). **UI/UX** (mockups, chrome, dual-truth) uses [`docs/ux-redesign/`](docs/ux-redesign/README.md) — not Spec Kit. Split features that need both. See [`docs/multiplatform-dart-port-decisions.md`](docs/multiplatform-dart-port-decisions.md) **D-LANES**.
 

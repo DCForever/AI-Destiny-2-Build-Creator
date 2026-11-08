@@ -3067,13 +3067,7 @@
     body.innerHTML = `
       <div class="compare-toolbar">
         <button type="button" class="btn" id="optBack">← Board</button>
-        <span style="font-family:var(--font-d);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)">Optimizer · DIM-style · confirm-only</span>
-        <span class="meta" style="margin-left:auto;font-family:var(--font-m);font-size:10px;color:var(--muted-dim)">G-SET-027 / 036–037</span>
-      </div>
-      <div class="opt-seed">
-        <span><span class="k">class</span> · ${d.class}</span>
-        <span><span class="k">bonus goals</span> · ${escapeHtml(bonusLabel(bonuses))}</span>
-        <span><span class="k">matching kits</span> · ${list.length}</span>
+        <span class="meta" style="margin-left:auto;font-family:var(--font-m);font-size:10px;color:var(--muted)">${list.length} kit${list.length === 1 ? '' : 's'}</span>
       </div>
 
       <div class="opt-constraints">
@@ -3085,21 +3079,7 @@
               ${exoOptions.map((n) => `<option value="${escapeHtml(n)}" ${state.optExotic === n ? 'selected' : ''}>★ ${escapeHtml(n)}</option>`).join('')}
             </select>
           </label>
-          <label class="field-l">Sort results
-            <select id="optSort">
-              <option value="total" ${state.optSort === 'total' ? 'selected' : ''}>Σ base</option>
-              <option value="health" ${state.optSort === 'health' ? 'selected' : ''}>Health total</option>
-              <option value="melee" ${state.optSort === 'melee' ? 'selected' : ''}>Melee total</option>
-              <option value="grenade" ${state.optSort === 'grenade' ? 'selected' : ''}>Grenade total</option>
-              <option value="super" ${state.optSort === 'super' ? 'selected' : ''}>Super total</option>
-              <option value="goals" ${state.optSort === 'goals' ? 'selected' : ''}>Bonus goal fit</option>
-            </select>
-          </label>
-          <label class="field-l" style="flex-direction:row;align-items:center;gap:6px;margin-top:14px;text-transform:none;font-family:var(--font-m);font-size:11px;letter-spacing:0;color:var(--muted)">
-            <input type="checkbox" id="optIncludeCurrent" ${state.optIncludeCurrent ? 'checked' : ''} ${pinned ? '' : 'disabled'} />
-            Show current board row
-          </label>
-          <button type="button" class="btn btn-sm" id="optClearStats" style="margin-top:14px">Clear stat limits</button>
+          <button type="button" class="btn btn-sm" id="optClearStats" style="margin-top:14px">Clear limits</button>
         </div>
         <div>
           <div style="font-family:var(--font-d);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Kit stat totals · range band (base roll · thumbs at ends = any · 0–${STAT_SLIDER_MAX})</div>

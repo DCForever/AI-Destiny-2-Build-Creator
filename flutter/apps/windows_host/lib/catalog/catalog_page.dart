@@ -1742,47 +1742,35 @@ class _CatalogPageState extends State<CatalogPage> {
     // soft zones, dense filters inside modules, air between regions, cyan ≤2 hits.
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'CATALOG',
-          style: neonDisplay(
-            color: palette.foreground,
-            fontSize: 16,
-            letterSpacing: 1.0,
-          ),
-        ),
-        actions: [
-          // Single semantic owner (Windows AX) — IconButton tooltip + icon
-          // otherwise nest nodes that thrash on loading state flips.
-          Semantics(
-            button: true,
-            enabled: !_loading,
-            label: 'Sync catalog channel',
-            excludeSemantics: true,
-            child: IconButton(
-              key: const Key('catalog_reload'),
-              tooltip: 'Sync catalog channel',
-              onPressed: _loading ? null : _load,
-              icon: const Icon(Icons.refresh),
-            ),
-          ),
-        ],
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Thin header: title + live pulse only (no multi-line subtitle block).
+          // Thin header: one title + sync + live pulse (no AppBar duplicate).
           NeonPageHeader(
             kicker: 'Module · Build Creator',
             title: 'Catalog',
-            trailing: Tooltip(
-              message: _version ?? 'No entity channel version',
-              excludeFromSemantics: true,
-              child: NeonLivePulse(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  button: true,
+                  enabled: !_loading,
+                  label: 'Sync catalog channel',
+                  excludeSemantics: true,
+                  child: IconButton(
+                    key: const Key('catalog_reload'),
+                    tooltip: 'Sync catalog channel',
+                    onPressed: _loading ? null : _load,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ),
+                Tooltip(
+                  message: _version ?? 'No entity channel version',
+                  excludeFromSemantics: true,
+                  child: NeonLivePulse(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     Container(
                       width: 8,
                       height: 8,
@@ -1809,6 +1797,8 @@ class _CatalogPageState extends State<CatalogPage> {
                   ],
                 ),
               ),
+            ),
+              ],
             ),
           ),
           // --- Single primary filter band (mode · scope · search · chips) ---

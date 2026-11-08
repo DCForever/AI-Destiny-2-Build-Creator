@@ -881,10 +881,20 @@ final directories = <_widgetbook.WidgetbookNode>[
             name: 'SetsOptimizeConfirmShell',
             useCases: [
               _widgetbook.WidgetbookUseCase(
-                name: 'Optimize confirm shell',
+                name: 'Optimize · default',
                 builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
                     .setsOptimizeConfirm,
-              )
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Optimize · mins active',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOptimizeMins,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Optimize · empty board',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOptimizeEmptyBoard,
+              ),
             ],
           ),
           _widgetbook.WidgetbookComponent(

@@ -270,4 +270,39 @@ void main() {
     expect(find.byKey(const Key('sets_list')), findsOneWidget);
     expect(find.byKey(const Key('sets_detail')), findsOneWidget);
   });
+
+  test('signed-in hides stale Optimize sign-in banner', () {
+    expect(
+      shouldShowSetsStatusLine(
+        error: null,
+        statusMessage: kSetsOptimizeSignInBanner,
+        isSignedIn: false,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldShowSetsStatusLine(
+        error: null,
+        statusMessage: kSetsOptimizeSignInBanner,
+        isSignedIn: true,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldShowSetsStatusLine(
+        error: 'boom',
+        statusMessage: kSetsOptimizeSignInBanner,
+        isSignedIn: true,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldShowSetsStatusLine(
+        error: null,
+        statusMessage: 'Set deleted',
+        isSignedIn: true,
+      ),
+      isTrue,
+    );
+  });
 }

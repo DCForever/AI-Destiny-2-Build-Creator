@@ -1,0 +1,47 @@
+name: Docs change request
+description: Propose a modification to a PRD, domain law, product map, UX brief, or ops doc
+title: "[docs-cr] "
+labels: ["docs-cr"]
+body:
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      description: PRD meaning should also be filed as a vault CR-YYYYMMDD-### (Obsidian Change Requests). Use this issue as the queue for git-side law/ops/map, or as a pointer for PRDs.
+      options:
+        - prd
+        - law
+        - map
+        - ux
+        - ops
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Page or path
+      description: Doc site path (e.g. /prd/domains/domain-build/) or repo path (e.g. specs/domain-business-rules.md)
+      placeholder: /prd/domains/domain-build/
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text
+      description: Quote the paragraph, table row, or rule as it stands.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed text
+      description: Replacement wording (full paragraph or table row).
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What is wrong or incomplete, and what becomes true if this lands.
+    validations:
+      required: true

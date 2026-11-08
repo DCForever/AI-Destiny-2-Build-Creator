@@ -30,6 +30,23 @@ import 'set_slot_mapping.dart';
 import 'sets_library_controller.dart';
 import 'sets_lifecycle_controller.dart';
 
+/// Shown when Optimize is opened without a Bungie session.
+const String kSetsOptimizeSignInBanner =
+    'Sign in and sync inventory before Optimize (owned candidates only).';
+
+/// Hide the Optimize sign-in nag once the session is live (BUG-20260812-010).
+bool shouldShowSetsStatusLine({
+  required String? error,
+  required String? statusMessage,
+  required bool isSignedIn,
+}) {
+  if (error != null && error.isNotEmpty) return true;
+  final msg = statusMessage;
+  if (msg == null || msg.isEmpty) return false;
+  if (isSignedIn && msg == kSetsOptimizeSignInBanner) return false;
+  return true;
+}
+
 /// Sets library dual-pane (list + detail/slots) — DART-030/036 + dense board (DART-065).
 class SetsLibraryPage extends StatefulWidget {
   const SetsLibraryPage({
@@ -114,6 +131,7 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
         );
     _lifecycle = SetsLifecycleController();
     _controller.addListener(_onController);
+    widget.services.oauthSession.addListener(_onOauthSession);
     _controller.refresh();
     // Prefetch set-bonus catalog for create goals (raw table or entity store).
     unawaited(_ensureSetBonusFamilies());
@@ -144,8 +162,19 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
     }
   }
 
+  void _onOauthSession() {
+    if (!mounted) return;
+    if (widget.services.oauthSession.isSignedIn &&
+        _statusMessage == kSetsOptimizeSignInBanner) {
+      setState(() => _statusMessage = null);
+    } else {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    widget.services.oauthSession.removeListener(_onOauthSession);
     _controller.removeListener(_onController);
     if (_ownController) {
       _controller.dispose();
@@ -963,12 +992,11 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
 
     if (!widget.services.oauthSession.isSignedIn) {
       if (mounted) {
-        setState(() {
-          _statusMessage =
-              'Sign in and sync inventory before Optimize (owned candidates only).';
-        });
+        setState(() => _statusMessage = kSetsOptimizeSignInBanner);
       }
       // Still open shell with empty honesty so the button is never a no-op.
+    } else if (_statusMessage == kSetsOptimizeSignInBanner) {
+      if (mounted) setState(() => _statusMessage = null);
     }
 
     _optimizer.bindTargetSet(
@@ -1490,7 +1518,11 @@ class _SetsLibraryPageState extends State<SetsLibraryPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_statusMessage != null || _controller.error != null)
+          if (shouldShowSetsStatusLine(
+            error: _controller.error,
+            statusMessage: _statusMessage,
+            isSignedIn: widget.services.oauthSession.isSignedIn,
+          ))
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(

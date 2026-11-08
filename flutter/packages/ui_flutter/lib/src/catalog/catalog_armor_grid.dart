@@ -6,6 +6,7 @@ import '../bungie_content_icon.dart';
 import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import '../neon_item_card.dart';
+import '../unbroken_label.dart';
 
 // ---------------------------------------------------------------------------
 // Glyph helpers (residual until official class/slot maps ship)
@@ -244,36 +245,40 @@ class CatalogArmorCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Tooltip(
+                          message: item.name,
+                          waitDuration: const Duration(milliseconds: 400),
+                          child: UnbrokenLabel(
+                            item.name,
+                            key: Key('catalog_item_name_${item.hash}'),
+                            maxLines: 2,
+                            style: neonDisplay(
+                              color: item.isExotic
+                                  ? const Color(kRarityExotic)
+                                  : palette.foreground,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
                         Row(
                           children: [
-                            Expanded(
-                              child: Text(
-                                item.name,
-                                key: Key('catalog_item_name_${item.hash}'),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: neonDisplay(
-                                  color: item.isExotic
-                                      ? const Color(kRarityExotic)
-                                      : palette.foreground,
-                                  fontSize: 11,
+                            if (typeLine.isNotEmpty)
+                              Expanded(
+                                child: Text(
+                                  typeLine,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: neonBody(
+                                    color: palette.muted,
+                                    fontSize: 10,
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
+                              )
+                            else
+                              const Spacer(),
                             _RarityMark(rarity: rarity),
                           ],
                         ),
-                        if (typeLine.isNotEmpty)
-                          Text(
-                            typeLine,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: neonBody(
-                              color: palette.muted,
-                              fontSize: 10,
-                            ),
-                          ),
                       ],
                     ),
                   ),
