@@ -1,7 +1,7 @@
 # Domain Acceptance Criteria — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-08-03 (DAC-SET-002 Pair complete; DAC-SET-003 under-min not attachable — dart-070)  
+**Updated**: 2026-11-08 (DAC-PLT-001–003 offline contrasting-build pilot)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29**
 
@@ -389,6 +389,30 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 **And** a Prismatic Solipsism build is not flagged  
 **And** loading the matrix does not modify the source file  
 **Refs**: DBR-SUB-011
+
+### DAC-PLT-001 — Pilot rows keep source text
+
+**Given** a selected community row in the offline pilot  
+**When** the review is shown  
+**Then** the original DIM link, Does, Loop, stated perk fields, and set proposal are the source strings, including blanks  
+**And** the title is not copied into a blank Does or Loop  
+**Refs**: DBR-PLT-001
+
+### DAC-PLT-002 — Unknowns and conflicts stay open
+
+**Given** a row with `perk not specified`, a blank loop, or two set proposals for the same identity  
+**When** proposals are calculated  
+**Then** those fields stay unresolved and no personal DIM document is produced  
+**And** synthetic armor results are labeled synthetic and are not equipped  
+**Refs**: DBR-PLT-002, DBR-PLT-004
+
+### DAC-PLT-003 — Solipsism off Prismatic is invalid
+
+**Given** a pilot row whose exotic is Solipsism and whose stated subclass is solar  
+**When** the row is reviewed  
+**Then** it is invalid and has no personal DIM output  
+**And** a perk match requires the exotic name and the exact perk strings, not the name alone  
+**Refs**: DBR-PLT-003
 
 ---
 

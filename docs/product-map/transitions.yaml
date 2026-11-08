@@ -114,3 +114,8 @@ transitions:
     action: Nav → Warlock builds
     fromCaptureId: shell
     toCaptureId: catalog-warlock-matrix
+  - from: catalog.warlock-matrix
+    to: catalog.warlock-pilot
+    action: Offline pilot
+    fromCaptureId: catalog-warlock-matrix
+    toCaptureId: catalog-warlock-pilot

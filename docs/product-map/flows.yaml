@@ -610,6 +610,14 @@ flows:
         surface: catalog.warlock-matrix
         rules:
           - DAC-DST-016
+      - id: pilot
+        title: Open the offline contrasting-build pilot
+        surface: catalog.warlock-pilot
+        rules:
+          - DBR-PLT-001
+          - DBR-PLT-002
+          - DBR-PLT-003
+          - DAC-PLT-001
 
   # ─── Loadouts ─────────────────────────────────────────────
   - id: flow.loadouts

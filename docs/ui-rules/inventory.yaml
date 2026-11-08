@@ -947,6 +947,22 @@ pages:
           - DBR-SUB-011
           - DAC-DST-016
           - BR-WXM-001
+        children:
+          - id: catalog.warlock-pilot
+            kind: screen
+            title: Offline contrasting-build pilot
+            auth: any
+            notes: |
+              Local review of five trimmed community rows. Preserves source links and blanks. Synthetic inventory and DIM JSON are labeled and are not ownership.
+            rules:
+              - DBR-PLT-001
+              - DBR-PLT-002
+              - DBR-PLT-003
+              - DBR-PLT-004
+              - DAC-PLT-001
+              - DAC-PLT-002
+              - DAC-PLT-003
+              - BR-WXM-002
       - id: catalog.weapon.detail
         kind: subscreen
         title: Weapon detail pane
@@ -4426,6 +4442,25 @@ pages:
         auth: any
         atlas:
           - catalog-warlock-matrix
+      - id: flow.catalog.warlock-matrix.pilot
+        kind: surface
+        title: Open the offline contrasting-build pilot
+        rules:
+          - DBR-PLT-001
+          - DBR-PLT-002
+          - DBR-PLT-003
+          - DAC-PLT-001
+          - DBR-PLT-001
+          - DBR-PLT-002
+          - DBR-PLT-003
+          - DBR-PLT-004
+          - DAC-PLT-001
+          - DAC-PLT-002
+          - DAC-PLT-003
+          - BR-WXM-002
+        auth: any
+        atlas:
+          - catalog-warlock-pilot
   - id: flow-flow-loadouts
     label: In-game loadouts
     description: Flow flow.loadouts

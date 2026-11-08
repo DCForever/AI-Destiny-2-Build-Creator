@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" agent="d2bc-ui-rules" version="22.1.0" type="device" compressed="false">
   <diagram id="overview" name="Overview">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1928" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1917" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -114,8 +114,7 @@ the matrix list **Then** the row is flagged
 that Solipsism only works with Prismatic
 **And** a Prismatic Solipsism build is not
 flagged **And** loading the matrix does not
-modify the source file --- ## Naming &amp;
-browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1301" width="300" height="124" as="geometry"/></mxCell>
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1301" width="300" height="113" as="geometry"/></mxCell>
         <mxCell id="41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="40"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="42" value="BR-WXM-001 — BR-WXM-001 The Warlock community
 matrix is a read-only list loaded from a local
@@ -127,25 +126,25 @@ exotic names present in that file. Builds that
 use Solipsism on a subclass other than
 Prismatic are flagged. The list does not
 equip, move, or delete items and does not
-start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1433" width="300" height="135" as="geometry"/></mxCell>
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1422" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="42"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="44" value="SignedOutGate (shared)
-[signed-out]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3d0000;fontColor=#ffcccc;strokeColor=#ff6b6b;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="1604" width="220" height="42" as="geometry"/></mxCell>
+[signed-out]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3d0000;fontColor=#ffcccc;strokeColor=#ff6b6b;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="1593" width="220" height="42" as="geometry"/></mxCell>
         <mxCell id="45" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
-Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1604" width="300" height="36" as="geometry"/></mxCell>
+Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1593" width="300" height="36" as="geometry"/></mxCell>
         <mxCell id="46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="44" target="45"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="47" value="003:SC-005 — 003-owned-inventory-instances
 SC-005 Unauthenticated or never-synced users
 receive a clear, actionable response (auth
 error or sync prompt) with zero instance data
 leaked in 100% of unauthorized or empty-state
-test cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1648" width="300" height="80" as="geometry"/></mxCell>
+test cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1637" width="300" height="80" as="geometry"/></mxCell>
         <mxCell id="48" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="44" target="47"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="49" value="Theme toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="1764" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="50" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1848" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="51" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1848" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="52" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1848" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="53" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1848" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="49" value="Theme toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="1753" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="50" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1837" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="51" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1837" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="52" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1837" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="53" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1837" width="140" height="32" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
@@ -1903,7 +1902,7 @@ equippable composer slice." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e
     </mxGraphModel>
   </diagram>
   <diagram id="catalog" name="Catalog">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="9336" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="9694" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -2250,8 +2249,7 @@ the matrix list **Then** the row is flagged
 that Solipsism only works with Prismatic
 **And** a Prismatic Solipsism build is not
 flagged **And** loading the matrix does not
-modify the source file --- ## Naming &amp;
-browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4211" width="300" height="124" as="geometry"/></mxCell>
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4211" width="300" height="113" as="geometry"/></mxCell>
         <mxCell id="86" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="82" target="85"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="87" value="BR-WXM-001 — BR-WXM-001 The Warlock community
 matrix is a read-only list loaded from a local
@@ -2263,26 +2261,97 @@ exotic names present in that file. Builds that
 use Solipsism on a subclass other than
 Prismatic are flagged. The list does not
 equip, move, or delete items and does not
-start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4343" width="300" height="135" as="geometry"/></mxCell>
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4332" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="88" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="82" target="87"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="89" value="Weapon detail pane
+        <mxCell id="89" value="Offline contrasting-build pilot
+[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;fontColor=#e8e8e8;strokeColor=#0f9b8e;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="80" y="4503" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="90" value="DBR-PLT-001 — DBR-PLT-001 The offline pilot
+keeps each selected source row&apos;s original DIM
+link, Does text, Loop text, Solipsism perk
+pair, Ergo Sum trait/element/frame, set
+proposal, blanks, and creator/title. A title
+is a label. It is not copied into a blank Does
+or Loop." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="4503" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="91" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="90"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="92" value="DBR-PLT-002 — DBR-PLT-002 Unknown perk text
+(`perk not specified`), a missing element, a
+blank loop, and disagreements between source
+rows stay unresolved. The pilot does not
+invent a default and does not let an optimizer
+result fill those fields." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="4602" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="93" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="92"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="94" value="DBR-PLT-003 — DBR-PLT-003 A pilot row whose
+exotic is Solipsism and whose stated subclass
+is not Prismatic is **invalid**. An unstated
+subclass is not treated as Prismatic. Perk
+labels that differ (`Spirit of Apotheosis`
+versus `Apotheosis`) are not aliased." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="4690" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="95" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="94"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="96" value="DBR-PLT-004 — DBR-PLT-004 Armor proposals and
+DIM JSON in the pilot use **synthetic**
+fixtures. They are labeled synthetic in the UI
+and in JSON notes. They are not an
+account-verified loadout. An invalid or
+unresolved case produces no personal DIM
+output. Parsing a row or showing a proposal
+does not write the source file or equip gear.
+Round-trip of the JSON shape is not DIM
+acceptance." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="4778" width="300" height="124" as="geometry"/></mxCell>
+        <mxCell id="97" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="96"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="98" value="DAC-PLT-001 — Pilot rows keep source text
+**Given** a selected community row in the
+offline pilot **When** the review is shown
+**Then** the original DIM link, Does, Loop,
+stated perk fields, and set proposal are the
+source strings, including blanks **And** the
+title is not copied into a blank Does or Loop" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="4910" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="99" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="98"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="100" value="DAC-PLT-002 — Unknowns and conflicts stay open
+**Given** a row with `perk not specified`, a
+blank loop, or two set proposals for the same
+identity **When** proposals are calculated
+**Then** those fields stay unresolved and no
+personal DIM document is produced **And**
+synthetic armor results are labeled synthetic
+and are not equipped" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="4503" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="101" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="100"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="102" value="DAC-PLT-003 — Solipsism off Prismatic is
+invalid **Given** a pilot row whose exotic is
+Solipsism and whose stated subclass is solar
+**When** the row is reviewed **Then** it is
+invalid and has no personal DIM output **And**
+a perk match requires the exotic name and the
+exact perk strings, not the name alone --- ##
+Naming &amp; browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="4613" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="103" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="102"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="104" value="BR-WXM-002 — BR-WXM-002 The offline pilot
+reviews five trimmed community rows from local
+files. It preserves source links and blanks,
+rejects Solipsism off Prismatic, and shows
+synthetic stat/set/reuse proposals without
+writing sources or equipping gear. Unresolved
+rows get no personal DIM output. DIM JSON
+shape checks are labeled synthetic and are not
+DIM acceptance." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="4723" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="105" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="104"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="106" value="Weapon detail pane
 [signed-in]
 /catalog
-📷 catalog-weapon-detail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#e8e8e8;strokeColor=#533483;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="4514" width="220" height="68" as="geometry"/></mxCell>
-        <mxCell id="90" value="BR-CAT-006 — BR-CAT-006 Multi-value facets
+📷 catalog-weapon-detail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#e8e8e8;strokeColor=#533483;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="4872" width="220" height="68" as="geometry"/></mxCell>
+        <mxCell id="107" value="BR-CAT-006 — BR-CAT-006 Multi-value facets
 support **include OR within dimension**, **AND
 across dimensions**, and **exclude** (any
 exclude match drops). Free-text further ANDs.
 Affirmed by
-[DBR-ROLL-010](./domain-business-rules.md)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4514" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="91" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="90"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="92" value="BR-CAT-007 — BR-CAT-007 Catalog results may
+[DBR-ROLL-010](./domain-business-rules.md)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4872" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="108" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="107"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="109" value="BR-CAT-007 — BR-CAT-007 Catalog results may
 **group by** one or more dimensions (element,
 ammo, archetype, frame, slot, class) for
 browse; group-by does not replace filter
-semantics." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4602" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="93" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="92"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="94" value="DAC-DST-008 — Catalyst / deepsight display
+semantics." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4960" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="110" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="109"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="111" value="DAC-DST-008 — Catalyst / deepsight display
 **Given** an exotic weapon with a catalyst in
 data (and/or an instance with catalyst socket)
 **When** viewed on Catalog/Set **detail** or a
@@ -2295,9 +2364,9 @@ column when the socket exists **And**
 incomplete/missing catalyst does **not** block
 Set save, variant save, or equip **And**
 deepsight/pattern remain display-only and do
-not gate save/equip" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4679" width="300" height="168" as="geometry"/></mxCell>
-        <mxCell id="95" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="94"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="96" value="DBR-ROLL-007 — DBR-ROLL-007 **Exotic
+not gate save/equip" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="5037" width="300" height="168" as="geometry"/></mxCell>
+        <mxCell id="112" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="111"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="113" value="DBR-ROLL-007 — DBR-ROLL-007 **Exotic
 catalysts**: first-class on weapon detail when
 the exotic has a catalyst in data. Display
 status — equipped/inserted;
@@ -2306,17 +2375,17 @@ complete-but-unequipped (warn); unfinished
 on the instance perk grid when present. Soft
 only — **do not** gate Set save, variant save,
 or equip. Do not invent progress/sources. See
-vault [[Destiny Weapon]] DO-WPN-040–051." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4855" width="300" height="124" as="geometry"/></mxCell>
-        <mxCell id="97" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="96"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="98" value="BR-CAT-016 — BR-CAT-016 Weapon detail perk
+vault [[Destiny Weapon]] DO-WPN-040–051." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="5213" width="300" height="124" as="geometry"/></mxCell>
+        <mxCell id="114" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="113"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="115" value="BR-CAT-016 — BR-CAT-016 Weapon detail perk
 tiers: **①** selected on this owned instance,
 **②** other plugs on this instance, **③**
 definition possible-roll pool. Owned default
 shows ①+② only with **Possible rolls OFF**;
 unowned shows ③-only (no fake selected). Never
-invent plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="4987" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="99" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="98"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="100" value="BR-CAT-016a — BR-CAT-016a **Enhanced** chrome
+invent plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="5345" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="116" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="115"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="117" value="BR-CAT-016a — BR-CAT-016a **Enhanced** chrome
 (gold border + **E**) only on **①/②** when
 this copy’s plug is enhanced
 (`plugEnhancedByHash` / host map; name
@@ -2324,9 +2393,9 @@ heuristic fallback). **③ / unowned / Possible
 crafted** show **one cell per perk identity**
 and a **“Can be enhanced”** note when the pool
 supports Enhanced — never base+enhanced as two
-cells, never E on pool cells." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="4514" width="300" height="113" as="geometry"/></mxCell>
-        <mxCell id="101" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="100"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="102" value="BR-CAT-016b — BR-CAT-016b Weapon detail chrome
+cells, never E on pool cells." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="4872" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="118" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="117"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="119" value="BR-CAT-016b — BR-CAT-016b Weapon detail chrome
 honesty: icon-only meta strip (type silhouette
 or letter last-resort · frame · element · slot
 · ammo + ×N when owned); equal-width perk
@@ -2334,9 +2403,9 @@ columns with header ellipsis+Tooltip+Semantics
 at ~400px detail width (no perk-grid
 H-scroll); Origin column only when data
 exists; soft catalyst omit-when-empty /
-display-only when present." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="4635" width="300" height="113" as="geometry"/></mxCell>
-        <mxCell id="103" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="102"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="104" value="BR-CAT-016c — BR-CAT-016c When craftable
+display-only when present." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="4993" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="120" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="119"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="121" value="BR-CAT-016c — BR-CAT-016c When craftable
 (**including craftable exotics**), weapon
 detail offers **possible crafted** options
 when data exists; current craft is selected
@@ -2346,23 +2415,23 @@ independent when both apply. Possible crafted
 uses the same toggle OFF-default + ③-style
 columns as Possible rolls; hide until craft
 data exists. Same enhance rules as ③ (note
-only)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="4756" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="105" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="104"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="106" value="DBR-UI-006 — DBR-UI-006 **No bare hashes in
+only)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="5114" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="122" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="121"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="123" value="DBR-UI-006 — DBR-UI-006 **No bare hashes in
 primary UI.** Item/plug hashes are never row
 labels, perk titles, or main detail headlines.
 Readable name + icon first. Hashes only as a
 **footer addendum** on detail (support/debug).
 Search may match hash; result row still shows
-name." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="4899" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="107" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="106"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="108" value="GAP-CAT-BROWSE-001
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="952" y="4514" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="109" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="108"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="110" value="GAP-CAT-PERK-004
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="952" y="4558" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="111" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="110"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="112" value="DBR-UI-007 — DBR-UI-007 Weapon **detail**
+name." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="5257" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="124" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="123"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="125" value="GAP-CAT-BROWSE-001
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="952" y="4872" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="126" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="125"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="127" value="GAP-CAT-PERK-004
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="952" y="4916" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="128" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="127"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="129" value="DBR-UI-007 — DBR-UI-007 Weapon **detail**
 shows selected plugs, **can-roll** pool, and
 **possible crafted options** when craftable
 (when data exists)—**including craftable
@@ -2371,32 +2440,32 @@ Exotic catalyst (DBR-ROLL-007) remains
 independent when both craft and catalyst
 exist. Do not invent pool/craft options. Set
 **slot rows** stay icon-only (no full perk
-grid)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="4602" width="300" height="124" as="geometry"/></mxCell>
-        <mxCell id="113" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="112"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="114" value="DBR-IDL-001 — DBR-IDL-001 A user may define
+grid)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="4960" width="300" height="124" as="geometry"/></mxCell>
+        <mxCell id="130" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="129"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="131" value="DBR-IDL-001 — DBR-IDL-001 A user may define
 **named roll targets** per weapon identity
 (e.g. PvE / PvP). Multiple names per weapon
-are allowed." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="4734" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="115" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="114"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="116" value="DBR-IDL-002 — DBR-IDL-002 Each target **socket
+are allowed." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="5092" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="132" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="131"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="133" value="DBR-IDL-002 — DBR-IDL-002 Each target **socket
 column** may list **preferred** plugs as
 Destiny **manifest item hashes**
 (multi-accept: any listed hash on this copy
 matches that socket for ideal score). Columns
 are keyed by **weapon socket index**
-(`socket_N`), not UI labels." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="4800" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="117" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="116"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="118" value="DBR-IDL-003 — DBR-IDL-003 Each target socket
+(`socket_N`), not UI labels." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="5158" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="134" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="133"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="135" value="DBR-IDL-003 — DBR-IDL-003 Each target socket
 column may list **avoid** plugs as **manifest
 item hashes** (multi-reject: any listed hash
 on this copy **hits** anti-ideal for that
-socket)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="4899" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="119" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="118"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="120" value="DBR-IDL-004 — DBR-IDL-004 Preferred and avoid
+socket)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="5257" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="136" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="135"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="137" value="DBR-IDL-004 — DBR-IDL-004 Preferred and avoid
 sets on the **same socket column must be
-disjoint**; overlapping writes are rejected." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="4976" width="300" height="47" as="geometry"/></mxCell>
-        <mxCell id="121" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="120"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="122" value="DBR-IDL-005 — DBR-IDL-005 **Preferred score
+disjoint**; overlapping writes are rejected." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="952" y="5334" width="300" height="47" as="geometry"/></mxCell>
+        <mxCell id="138" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="137"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="139" value="DBR-IDL-005 — DBR-IDL-005 **Preferred score
 N/M** (roll quality): among plugs **on this
 copy** in sockets that have preferred and/or
 avoid multi-picks (equipped + reusables), N =
@@ -2406,50 +2475,50 @@ siblings / enhanced), M = count of those
 plugs. Example: 6 perks on Trait 1+2 with 3
 ideal → `3/6`. **Perfect / success tint** =
 every preferred multi-pick **column** has a
-hit (multi-accept), not N==M." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="4514" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="123" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="122"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="124" value="DBR-IDL-006 — DBR-IDL-006 **Avoid score Av
+hit (multi-accept), not N==M." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="4872" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="140" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="139"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="141" value="DBR-IDL-006 — DBR-IDL-006 **Avoid score Av
 k**: among the same on-copy plugs, k = plugs
 that match any avoid **manifest hash** (or
-same perk family). Higher hits = worse." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="4657" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="125" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="124"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="126" value="DBR-IDL-007 — DBR-IDL-007 Owned-instance
+same perk family). Higher hits = worse." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="5015" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="142" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="141"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="143" value="DBR-IDL-007 — DBR-IDL-007 Owned-instance
 **rank** for an active target: preferred ratio
 **desc**, then avoid hits **asc**, then
 power/tier as product tie-break. Soft display
-only." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="4723" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="127" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="126"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="128" value="DBR-IDL-008 — DBR-IDL-008 Roll-target scores
+only." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="5081" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="144" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="143"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="145" value="DBR-IDL-008 — DBR-IDL-008 Roll-target scores
 **never** hard-block Set/variant save, equip,
 or DIM export. Soft never auto-applies. Do not
-invent can-roll plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="4800" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="129" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="128"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="130" value="FEAT-UI-WEAPON-ROLL-TARGETS
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="1268" y="4866" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="131" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="130"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="132" value="GAP-UI-ROLL-01
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="1268" y="4910" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="133" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="89" target="132"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="134" value="Perk options / desired roll" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="5422" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="135" value="DBR-ROLL-002 — DBR-ROLL-002 A wishlist/unowned
+invent can-roll plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1268" y="5158" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="146" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="145"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="147" value="FEAT-UI-WEAPON-ROLL-TARGETS
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="1268" y="5224" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="148" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="147"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="149" value="GAP-UI-ROLL-01
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="1268" y="5268" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="150" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="106" target="149"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="151" value="Perk options / desired roll" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="5780" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="152" value="DBR-ROLL-002 — DBR-ROLL-002 A wishlist/unowned
 slot stores **desired roll data**: item hash +
 perk/plug selections (including origin trait,
 masterwork, crafted/enhanced plugs as
-applicable) — not an instance id." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5422" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="136" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="135"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="137" value="BR-ROLL-001 — BR-ROLL-001 Weapon SetItems
+applicable) — not an instance id." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5780" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="153" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="152"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="154" value="BR-ROLL-001 — BR-ROLL-001 Weapon SetItems
 store **full roll data** (perks, barrels,
-traits, masterwork, etc.)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5499" width="300" height="47" as="geometry"/></mxCell>
-        <mxCell id="138" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="137"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="139" value="BR-CAT-016 — BR-CAT-016 Weapon detail perk
+traits, masterwork, etc.)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5857" width="300" height="47" as="geometry"/></mxCell>
+        <mxCell id="155" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="154"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="156" value="BR-CAT-016 — BR-CAT-016 Weapon detail perk
 tiers: **①** selected on this owned instance,
 **②** other plugs on this instance, **③**
 definition possible-roll pool. Owned default
 shows ①+② only with **Possible rolls OFF**;
 unowned shows ③-only (no fake selected). Never
-invent plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5554" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="140" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="139"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="141" value="BR-CAT-016a — BR-CAT-016a **Enhanced** chrome
+invent plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5912" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="157" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="156"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="158" value="BR-CAT-016a — BR-CAT-016a **Enhanced** chrome
 (gold border + **E**) only on **①/②** when
 this copy’s plug is enhanced
 (`plugEnhancedByHash` / host map; name
@@ -2457,9 +2526,9 @@ heuristic fallback). **③ / unowned / Possible
 crafted** show **one cell per perk identity**
 and a **“Can be enhanced”** note when the pool
 supports Enhanced — never base+enhanced as two
-cells, never E on pool cells." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5653" width="300" height="113" as="geometry"/></mxCell>
-        <mxCell id="142" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="141"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="143" value="BR-CAT-016b — BR-CAT-016b Weapon detail chrome
+cells, never E on pool cells." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6011" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="159" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="158"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="160" value="BR-CAT-016b — BR-CAT-016b Weapon detail chrome
 honesty: icon-only meta strip (type silhouette
 or letter last-resort · frame · element · slot
 · ammo + ×N when owned); equal-width perk
@@ -2467,9 +2536,9 @@ columns with header ellipsis+Tooltip+Semantics
 at ~400px detail width (no perk-grid
 H-scroll); Origin column only when data
 exists; soft catalyst omit-when-empty /
-display-only when present." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5774" width="300" height="113" as="geometry"/></mxCell>
-        <mxCell id="144" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="143"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="145" value="BR-CAT-016c — BR-CAT-016c When craftable
+display-only when present." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6132" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="161" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="160"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="162" value="BR-CAT-016c — BR-CAT-016c When craftable
 (**including craftable exotics**), weapon
 detail offers **possible crafted** options
 when data exists; current craft is selected
@@ -2479,17 +2548,17 @@ independent when both apply. Possible crafted
 uses the same toggle OFF-default + ③-style
 columns as Possible rolls; hide until craft
 data exists. Same enhance rules as ③ (note
-only)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="5895" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="146" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="145"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="147" value="DBR-UI-006 — DBR-UI-006 **No bare hashes in
+only)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6253" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="163" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="162"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="164" value="DBR-UI-006 — DBR-UI-006 **No bare hashes in
 primary UI.** Item/plug hashes are never row
 labels, perk titles, or main detail headlines.
 Readable name + icon first. Hashes only as a
 **footer addendum** on detail (support/debug).
 Search may match hash; result row still shows
-name." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5422" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="148" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="147"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="149" value="DBR-UI-007 — DBR-UI-007 Weapon **detail**
+name." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5780" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="165" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="164"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="166" value="DBR-UI-007 — DBR-UI-007 Weapon **detail**
 shows selected plugs, **can-roll** pool, and
 **possible crafted options** when craftable
 (when data exists)—**including craftable
@@ -2498,32 +2567,32 @@ Exotic catalyst (DBR-ROLL-007) remains
 independent when both craft and catalyst
 exist. Do not invent pool/craft options. Set
 **slot rows** stay icon-only (no full perk
-grid)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5521" width="300" height="124" as="geometry"/></mxCell>
-        <mxCell id="150" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="149"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="151" value="DBR-IDL-001 — DBR-IDL-001 A user may define
+grid)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5879" width="300" height="124" as="geometry"/></mxCell>
+        <mxCell id="167" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="166"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="168" value="DBR-IDL-001 — DBR-IDL-001 A user may define
 **named roll targets** per weapon identity
 (e.g. PvE / PvP). Multiple names per weapon
-are allowed." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5653" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="152" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="151"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="153" value="DBR-IDL-002 — DBR-IDL-002 Each target **socket
+are allowed." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="6011" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="169" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="168"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="170" value="DBR-IDL-002 — DBR-IDL-002 Each target **socket
 column** may list **preferred** plugs as
 Destiny **manifest item hashes**
 (multi-accept: any listed hash on this copy
 matches that socket for ideal score). Columns
 are keyed by **weapon socket index**
-(`socket_N`), not UI labels." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5719" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="154" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="153"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="155" value="DBR-IDL-003 — DBR-IDL-003 Each target socket
+(`socket_N`), not UI labels." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="6077" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="171" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="170"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="172" value="DBR-IDL-003 — DBR-IDL-003 Each target socket
 column may list **avoid** plugs as **manifest
 item hashes** (multi-reject: any listed hash
 on this copy **hits** anti-ideal for that
-socket)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5818" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="156" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="155"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="157" value="DBR-IDL-004 — DBR-IDL-004 Preferred and avoid
+socket)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="6176" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="173" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="172"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="174" value="DBR-IDL-004 — DBR-IDL-004 Preferred and avoid
 sets on the **same socket column must be
-disjoint**; overlapping writes are rejected." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="5895" width="300" height="47" as="geometry"/></mxCell>
-        <mxCell id="158" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="157"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="159" value="DBR-IDL-005 — DBR-IDL-005 **Preferred score
+disjoint**; overlapping writes are rejected." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="666" y="6253" width="300" height="47" as="geometry"/></mxCell>
+        <mxCell id="175" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="174"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="176" value="DBR-IDL-005 — DBR-IDL-005 **Preferred score
 N/M** (roll quality): among plugs **on this
 copy** in sockets that have preferred and/or
 avoid multi-picks (equipped + reusables), N =
@@ -2533,53 +2602,53 @@ siblings / enhanced), M = count of those
 plugs. Example: 6 perks on Trait 1+2 with 3
 ideal → `3/6`. **Perfect / success tint** =
 every preferred multi-pick **column** has a
-hit (multi-accept), not N==M." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5422" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="160" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="159"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="161" value="DBR-IDL-006 — DBR-IDL-006 **Avoid score Av
+hit (multi-accept), not N==M." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5780" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="177" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="176"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="178" value="DBR-IDL-006 — DBR-IDL-006 **Avoid score Av
 k**: among the same on-copy plugs, k = plugs
 that match any avoid **manifest hash** (or
-same perk family). Higher hits = worse." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5565" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="161"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="163" value="DBR-IDL-007 — DBR-IDL-007 Owned-instance
+same perk family). Higher hits = worse." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5923" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="179" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="178"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="180" value="DBR-IDL-007 — DBR-IDL-007 Owned-instance
 **rank** for an active target: preferred ratio
 **desc**, then avoid hits **asc**, then
 power/tier as product tie-break. Soft display
-only." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5631" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="164" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="163"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="165" value="DBR-IDL-008 — DBR-IDL-008 Roll-target scores
+only." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5989" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="181" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="180"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="182" value="DBR-IDL-008 — DBR-IDL-008 Roll-target scores
 **never** hard-block Set/variant save, equip,
 or DIM export. Soft never auto-applies. Do not
-invent can-roll plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="5708" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="166" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="165"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="167" value="FEAT-UI-WEAPON-ROLL-TARGETS
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="982" y="5774" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="168" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="167"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="169" value="GAP-UI-ROLL-01
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="982" y="5818" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="170" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="134" target="169"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="171" value="Weapon stats panel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="6170" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="172" value="Linked library synergies" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="6234" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="173" value="DBR-SYN-001 — DBR-SYN-001 A Synergy is **Type
+invent can-roll plugs." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="982" y="6066" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="183" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="182"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="184" value="FEAT-UI-WEAPON-ROLL-TARGETS
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="982" y="6132" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="185" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="184"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="186" value="GAP-UI-ROLL-01
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="982" y="6176" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="187" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="151" target="186"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="188" value="Weapon stats panel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="6528" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="189" value="Linked library synergies" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="6592" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="190" value="DBR-SYN-001 — DBR-SYN-001 A Synergy is **Type
 linked with an Object**: a curated
 play-pattern (`type` + optional `subType`)
 with linked gear evidence (Objects: weapon,
 perk, origin trait, armor set bonus, exotic
 armor, artifact perk, aspect, fragment, armor
-mod, melee/grenade/super abilities, etc.)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6234" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="174" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="172" target="173"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="175" value="DBR-SYN-014 — DBR-SYN-014 **Weapon perk**
+mod, melee/grenade/super abilities, etc.)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6592" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="191" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="189" target="190"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="192" value="DBR-SYN-014 — DBR-SYN-014 **Weapon perk**
 evidence includes **exotic weapon trait
 plugs** (and other exotic WEAPON PERKS
 sockets), not only legendary perk rolls — e.g.
 Lodestar **Arc Alignment** is a valid
 `weapon_perk` target for a Verb: Jolt library
-synergy." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6333" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="176" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="172" target="175"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="177" value="Weapons — Manifest (all)
+synergy." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="6691" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="193" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="189" target="192"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="194" value="Weapons — Manifest (all)
 [signed-in]
 /catalog
-📷 catalog-weapons-manifest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;fontColor=#e8e8e8;strokeColor=#0f9b8e;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="6460" width="220" height="68" as="geometry"/></mxCell>
-        <mxCell id="178" value="DAC-NME-003 — Catalog multi-facet browse
+📷 catalog-weapons-manifest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;fontColor=#e8e8e8;strokeColor=#0f9b8e;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="6818" width="220" height="68" as="geometry"/></mxCell>
+        <mxCell id="195" value="DAC-NME-003 — Catalog multi-facet browse
 **Given** a user browsing weapons or armor in
 Catalog (including set-fill constrained pick)
 **When** they combine free-text with
@@ -2589,44 +2658,13 @@ archetype) including include and exclude
 AND-across-facets, and exclude-drop semantics
 **And** optional group-by dimensions partition
 the result list without changing filter
-semantics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6460" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="179" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="177" target="178"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="180" value="DBR-ROLL-001 — DBR-ROLL-001 Planning may
+semantics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6818" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="196" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="194" target="195"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="197" value="DBR-ROLL-001 — DBR-ROLL-001 Planning may
 reference **catalog** items and **desired
-rolls** not yet owned." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6603" width="300" height="47" as="geometry"/></mxCell>
-        <mxCell id="181" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="177" target="180"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="182" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
-for composition supports multi-dimension
-filtering (e.g. element, ammo,
-archetype/frame, slot, class, exotic
-constraint, free-text, optional synergy
-membership) with **include OR within a
-facet**, **AND across facets**, and
-**exclude** drops; optional **group-by** one
-or more dimensions for browse. Catalog is a
-composition aid, not a separate product job
-(see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6658" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="183" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="177" target="182"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="184" value="BR-CAT-001 — BR-CAT-001 Fast filter/search for
-full weapon catalog (manifest)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6801" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="185" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="177" target="184"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="186" value="Weapons — Owned
-[signed-in]
-/catalog
-📷 catalog-weapons-owned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;fontColor=#e8e8e8;strokeColor=#0f9b8e;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="6873" width="220" height="68" as="geometry"/></mxCell>
-        <mxCell id="187" value="DAC-NME-003 — Catalog multi-facet browse
-**Given** a user browsing weapons or armor in
-Catalog (including set-fill constrained pick)
-**When** they combine free-text with
-multi-value facets (e.g. element, ammo,
-archetype) including include and exclude
-**Then** results respect OR-within-facet,
-AND-across-facets, and exclude-drop semantics
-**And** optional group-by dimensions partition
-the result list without changing filter
-semantics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6873" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="188" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="186" target="187"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="189" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
+rolls** not yet owned." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="6961" width="300" height="47" as="geometry"/></mxCell>
+        <mxCell id="198" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="194" target="197"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="199" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
 for composition supports multi-dimension
 filtering (e.g. element, ammo,
 archetype/frame, slot, class, exotic
@@ -2637,31 +2675,15 @@ facet**, **AND across facets**, and
 or more dimensions for browse. Catalog is a
 composition aid, not a separate product job
 (see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7016" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="190" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="186" target="189"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="191" value="BR-CAT-001 — BR-CAT-001 Fast filter/search for
+        <mxCell id="200" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="194" target="199"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="201" value="BR-CAT-001 — BR-CAT-001 Fast filter/search for
 full weapon catalog (manifest)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7159" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="192" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="186" target="191"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="193" value="BR-CAT-002 — BR-CAT-002 Fast filter/search for
-user-owned weapons (inventory sync)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7203" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="194" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="186" target="193"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="195" value="003:SC-001 — 003-owned-inventory-instances
-SC-001 When a signed-in user with synced
-inventory searches for a weapon they own in
-multiple copies **via owned catalog by name**,
-they can view each copy as a separate entry
-with power, location, and perk names within
-one interaction flow (catalog search → select
-row → auto-fetched instance list)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7247" width="300" height="102" as="geometry"/></mxCell>
-        <mxCell id="196" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="186" target="195"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="197" value="003:SC-002 — 003-owned-inventory-instances
-SC-002 In 95% of test cases with current
-manifest loaded, equipped plugs on owned
-weapons display as readable perk or trait
-names rather than raw identifiers only." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="6873" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="198" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="186" target="197"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="199" value="Multi-facet filters
-📷 catalog-filters-open" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="7141" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="200" value="DAC-NME-003 — Catalog multi-facet browse
+        <mxCell id="202" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="194" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="203" value="Weapons — Owned
+[signed-in]
+/catalog
+📷 catalog-weapons-owned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;fontColor=#e8e8e8;strokeColor=#0f9b8e;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="7231" width="220" height="68" as="geometry"/></mxCell>
+        <mxCell id="204" value="DAC-NME-003 — Catalog multi-facet browse
 **Given** a user browsing weapons or armor in
 Catalog (including set-fill constrained pick)
 **When** they combine free-text with
@@ -2671,9 +2693,9 @@ archetype) including include and exclude
 AND-across-facets, and exclude-drop semantics
 **And** optional group-by dimensions partition
 the result list without changing filter
-semantics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7141" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="201" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="199" target="200"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="202" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
+semantics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7231" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="205" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="203" target="204"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="206" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
 for composition supports multi-dimension
 filtering (e.g. element, ammo,
 archetype/frame, slot, class, exotic
@@ -2683,121 +2705,168 @@ facet**, **AND across facets**, and
 **exclude** drops; optional **group-by** one
 or more dimensions for browse. Catalog is a
 composition aid, not a separate product job
-(see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7284" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="203" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="199" target="202"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="204" value="BR-CAT-003 — BR-CAT-003 Equivalent filtering
-for all armor and my armor." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7427" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="205" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="199" target="204"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="206" value="BR-CAT-004 — BR-CAT-004 Unsigned users browse
-manifest with not-owned indication." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7471" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="207" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="199" target="206"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="208" value="Ammo type facet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7543" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="209" value="Archetype / frame facet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7607" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="210" value="Element facet (OR within)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7671" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="211" value="Exclude drops" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7735" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="212" value="Group-by dimension" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7799" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="213" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
-for composition supports multi-dimension
-filtering (e.g. element, ammo,
-archetype/frame, slot, class, exotic
-constraint, free-text, optional synergy
-membership) with **include OR within a
-facet**, **AND across facets**, and
-**exclude** drops; optional **group-by** one
-or more dimensions for browse. Catalog is a
-composition aid, not a separate product job
-(see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="7799" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="214" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="212" target="213"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="215" value="BR-CAT-007 — BR-CAT-007 Catalog results may
-**group by** one or more dimensions (element,
-ammo, archetype, frame, slot, class) for
-browse; group-by does not replace filter
-semantics." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="7942" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="216" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="212" target="215"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="217" value="Slot facet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8047" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="218" value="Free-text search" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8111" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="219" value="BR-CAT-005 — BR-CAT-005 Filter/search
-completes in &lt;5 seconds." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8111" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="220" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="218" target="219"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="221" value="009:SC-001 — 009-description-search SC-001
-Users can find a perk by an effect keyword
-that appears only in its description (not its
-name) in under 30 seconds using picker search
-alone." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8155" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="222" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="218" target="221"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="223" value="Result list / instance cards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="8260" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="224" value="003:SC-001 — 003-owned-inventory-instances
+(see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7374" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="207" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="203" target="206"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="208" value="BR-CAT-001 — BR-CAT-001 Fast filter/search for
+full weapon catalog (manifest)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7517" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="209" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="203" target="208"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="210" value="BR-CAT-002 — BR-CAT-002 Fast filter/search for
+user-owned weapons (inventory sync)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7561" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="211" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="203" target="210"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="212" value="003:SC-001 — 003-owned-inventory-instances
 SC-001 When a signed-in user with synced
 inventory searches for a weapon they own in
 multiple copies **via owned catalog by name**,
 they can view each copy as a separate entry
 with power, location, and perk names within
 one interaction flow (catalog search → select
-row → auto-fetched instance list)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="8260" width="300" height="102" as="geometry"/></mxCell>
-        <mxCell id="225" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="223" target="224"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="226" value="003:SC-004 — 003-owned-inventory-instances
+row → auto-fetched instance list)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="7605" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="213" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="203" target="212"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="214" value="003:SC-002 — 003-owned-inventory-instances
+SC-002 In 95% of test cases with current
+manifest loaded, equipped plugs on owned
+weapons display as readable perk or trait
+names rather than raw identifiers only." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="7231" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="215" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="203" target="214"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="216" value="Multi-facet filters
+📷 catalog-filters-open" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="7499" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="217" value="DAC-NME-003 — Catalog multi-facet browse
+**Given** a user browsing weapons or armor in
+Catalog (including set-fill constrained pick)
+**When** they combine free-text with
+multi-value facets (e.g. element, ammo,
+archetype) including include and exclude
+**Then** results respect OR-within-facet,
+AND-across-facets, and exclude-drop semantics
+**And** optional group-by dimensions partition
+the result list without changing filter
+semantics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7499" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="218" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="216" target="217"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="219" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
+for composition supports multi-dimension
+filtering (e.g. element, ammo,
+archetype/frame, slot, class, exotic
+constraint, free-text, optional synergy
+membership) with **include OR within a
+facet**, **AND across facets**, and
+**exclude** drops; optional **group-by** one
+or more dimensions for browse. Catalog is a
+composition aid, not a separate product job
+(see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7642" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="220" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="216" target="219"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="221" value="BR-CAT-003 — BR-CAT-003 Equivalent filtering
+for all armor and my armor." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7785" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="222" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="216" target="221"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="223" value="BR-CAT-004 — BR-CAT-004 Unsigned users browse
+manifest with not-owned indication." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="7829" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="224" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="216" target="223"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="225" value="Ammo type facet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7901" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="226" value="Archetype / frame facet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="7965" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="227" value="Element facet (OR within)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8029" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="228" value="Exclude drops" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8093" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="229" value="Group-by dimension" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8157" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="230" value="DBR-ROLL-010 — DBR-ROLL-010 Catalog **browse**
+for composition supports multi-dimension
+filtering (e.g. element, ammo,
+archetype/frame, slot, class, exotic
+constraint, free-text, optional synergy
+membership) with **include OR within a
+facet**, **AND across facets**, and
+**exclude** drops; optional **group-by** one
+or more dimensions for browse. Catalog is a
+composition aid, not a separate product job
+(see DBR-PUR-002)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8157" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="231" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="229" target="230"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="232" value="BR-CAT-007 — BR-CAT-007 Catalog results may
+**group by** one or more dimensions (element,
+ammo, archetype, frame, slot, class) for
+browse; group-by does not replace filter
+semantics." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8300" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="233" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="229" target="232"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="234" value="Slot facet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8405" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="235" value="Free-text search" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="8469" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="236" value="BR-CAT-005 — BR-CAT-005 Filter/search
+completes in &lt;5 seconds." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8469" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="237" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="235" target="236"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="238" value="009:SC-001 — 009-description-search SC-001
+Users can find a perk by an effect keyword
+that appears only in its description (not its
+name) in under 30 seconds using picker search
+alone." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8513" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="239" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="235" target="238"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="240" value="Result list / instance cards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="8618" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="241" value="003:SC-001 — 003-owned-inventory-instances
+SC-001 When a signed-in user with synced
+inventory searches for a weapon they own in
+multiple copies **via owned catalog by name**,
+they can view each copy as a separate entry
+with power, location, and perk names within
+one interaction flow (catalog search → select
+row → auto-fetched instance list)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="8618" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="242" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="240" target="241"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="243" value="003:SC-004 — 003-owned-inventory-instances
 SC-004 A user can identify which owned copy
 has two specified perks (for example, by name)
 without using an external inventory manager,
 in under 30 seconds for items with fewer than
-10 copies." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="8370" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="227" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="223" target="226"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="228" value="010:SC-001 — 010-instance-disambiguation
+10 copies." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="8728" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="244" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="240" target="243"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="245" value="010:SC-001 — 010-instance-disambiguation
 SC-001 Given several owned copies of the same
 item (e.g. five copies), a user can identify
 and select the correct copy for a set in under
-60 seconds without an external inventory tool." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="8458" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="229" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="223" target="228"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="230" value="GAP-CAT-BROWSE-001
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="350" y="8535" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="231" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="223" target="230"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="232" value="Owned instance card" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="120" y="8607" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="233" value="BR-CAT-006 — BR-CAT-006 Multi-value facets
+60 seconds without an external inventory tool." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="8816" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="246" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="240" target="245"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="247" value="GAP-CAT-BROWSE-001
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="350" y="8893" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="248" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="240" target="247"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="249" value="Owned instance card" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="120" y="8965" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="250" value="BR-CAT-006 — BR-CAT-006 Multi-value facets
 support **include OR within dimension**, **AND
 across dimensions**, and **exclude** (any
 exclude match drops). Free-text further ANDs.
 Affirmed by
-[DBR-ROLL-010](./domain-business-rules.md)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8607" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="234" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="232" target="233"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="235" value="010:SC-001 — 010-instance-disambiguation
+[DBR-ROLL-010](./domain-business-rules.md)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8965" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="251" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="249" target="250"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="252" value="010:SC-001 — 010-instance-disambiguation
 SC-001 Given several owned copies of the same
 item (e.g. five copies), a user can identify
 and select the correct copy for a set in under
-60 seconds without an external inventory tool." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8695" width="300" height="69" as="geometry"/></mxCell>
-        <mxCell id="236" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="232" target="235"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="237" value="011:SC-001 — 011-per-copy-perk-grid SC-001 For
+60 seconds without an external inventory tool." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="9053" width="300" height="69" as="geometry"/></mxCell>
+        <mxCell id="253" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="249" target="252"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="254" value="011:SC-001 — 011-per-copy-perk-grid SC-001 For
 a selected weapon copy, 100% of the copy&apos;s
 perk columns display the perks that copy can
 actually slot (equipped plus alternates),
 verified against both a crafted/multi-perk
-example and a static-roll example." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="8772" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="238" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="232" target="237"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="239" value="Per-copy perk grid" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="160" y="8888" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="240" value="011:SC-001 — 011-per-copy-perk-grid SC-001 For
+example and a static-roll example." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="9130" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="255" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="249" target="254"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="256" value="Per-copy perk grid" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="160" y="9246" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="257" value="011:SC-001 — 011-per-copy-perk-grid SC-001 For
 a selected weapon copy, 100% of the copy&apos;s
 perk columns display the perks that copy can
 actually slot (equipped plus alternates),
 verified against both a crafted/multi-perk
-example and a static-roll example." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="8888" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="241" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="240"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="242" value="011:SC-002 — 011-per-copy-perk-grid SC-002 Two
+example and a static-roll example." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9246" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="258" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="257"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="259" value="011:SC-002 — 011-per-copy-perk-grid SC-002 Two
 copies of the same weapon with different rolls
 produce visibly different grids in 100% of
-verification cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="8976" width="300" height="58" as="geometry"/></mxCell>
-        <mxCell id="243" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="242"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="244" value="BR-ROLL-002 — BR-ROLL-002 Removed SetItems
-retain roll history for display (soft-remove)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9042" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="245" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="244"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="246" value="DBR-UI-001 — DBR-UI-001 **Destiny Item Manager
+verification cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9334" width="300" height="58" as="geometry"/></mxCell>
+        <mxCell id="260" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="259"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="261" value="BR-ROLL-002 — BR-ROLL-002 Removed SetItems
+retain roll history for display (soft-remove)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9400" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="262" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="261"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="263" value="DBR-UI-001 — DBR-UI-001 **Destiny Item Manager
 (DIM)** is the **North Star** for presenting
 Destiny data in general: item/armor/weapon
 detail, perk grids, stat bars, mod placement
 chrome, loadout readouts, and similar
 inventory-like surfaces. Prefer DIM-familiar
 density, labeling, and affordances unless a
-product rule explicitly diverges." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9086" width="300" height="102" as="geometry"/></mxCell>
-        <mxCell id="247" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="246"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="248" value="DBR-UI-005 — DBR-UI-005 **Icon-first
+product rule explicitly diverges." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9444" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="264" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="263"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="265" value="DBR-UI-005 — DBR-UI-005 **Icon-first
 presentation.** Destiny entities should
 surface primarily via **icons and assets**
 (item/perk/mod icons,
@@ -2807,17 +2876,17 @@ labels. Text is secondary: tooltips/hotspots,
 accessible names, search results, and fallback
 when art is missing. Prefer dense icon
 grids/strips over text-heavy tables for
-inventory-like readouts." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9196" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="249" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="248"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="250" value="DBR-UI-006 — DBR-UI-006 **No bare hashes in
+inventory-like readouts." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9554" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="266" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="265"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="267" value="DBR-UI-006 — DBR-UI-006 **No bare hashes in
 primary UI.** Item/plug hashes are never row
 labels, perk titles, or main detail headlines.
 Readable name + icon first. Hashes only as a
 **footer addendum** on detail (support/debug).
 Search may match hash; result row still shows
-name." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9339" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="251" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="250"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="252" value="DBR-UI-007 — DBR-UI-007 Weapon **detail**
+name." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="9697" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="268" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="267"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="269" value="DBR-UI-007 — DBR-UI-007 Weapon **detail**
 shows selected plugs, **can-roll** pool, and
 **possible crafted options** when craftable
 (when data exists)—**including craftable
@@ -2826,15 +2895,15 @@ Exotic catalyst (DBR-ROLL-007) remains
 independent when both craft and catalyst
 exist. Do not invent pool/craft options. Set
 **slot rows** stay icon-only (no full perk
-grid)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="726" y="8888" width="300" height="124" as="geometry"/></mxCell>
-        <mxCell id="253" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="252"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="254" value="FEAT-UI-ENTITY-DESC
-(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="726" y="9020" width="300" height="36" as="geometry"/></mxCell>
-        <mxCell id="255" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="239" target="254"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="256" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="9256" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="257" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="9256" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="258" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="9256" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="259" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="9256" width="140" height="32" as="geometry"/></mxCell>
+grid)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="726" y="9246" width="300" height="124" as="geometry"/></mxCell>
+        <mxCell id="270" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="269"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="271" value="FEAT-UI-ENTITY-DESC
+(missing from docs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;fontColor=#b71c1c;strokeColor=#c62828;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;dashed=1;" vertex="1" parent="1"><mxGeometry x="726" y="9378" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="272" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="256" target="271"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="273" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="9614" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="274" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="9614" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="275" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="9614" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="276" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="9614" width="140" height="32" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
@@ -10794,7 +10863,7 @@ only—not Build kit attach." style="rounded=0;whiteSpace=wrap;html=1;fillColor=
     </mxGraphModel>
   </diagram>
   <diagram id="flow-flow-catalog-warlock-matrix" name="Warlock community build list">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1406" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1742" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -10818,8 +10887,7 @@ the matrix list **Then** the row is flagged
 that Solipsism only works with Prismatic
 **And** a Prismatic Solipsism build is not
 flagged **And** loading the matrix does not
-modify the source file --- ## Naming &amp;
-browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="199" width="300" height="124" as="geometry"/></mxCell>
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="199" width="300" height="113" as="geometry"/></mxCell>
         <mxCell id="8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="4" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="9" value="BR-WXM-001 — BR-WXM-001 The Warlock community
 matrix is a read-only list loaded from a local
@@ -10831,17 +10899,17 @@ exotic names present in that file. Builds that
 use Solipsism on a subclass other than
 Prismatic are flagged. The list does not
 equip, move, or delete items and does not
-start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="331" width="300" height="135" as="geometry"/></mxCell>
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="320" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="4" target="9"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="11" value="Filter by exotic
-[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="502" width="220" height="42" as="geometry"/></mxCell>
+[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="491" width="220" height="42" as="geometry"/></mxCell>
         <mxCell id="12" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
 class item **Solipsism** works only on the
 **Prismatic** subclass. A read-only
 community-matrix build that pairs Solipsism
 with any other subclass is **flagged** in the
 list. The flag does not rewrite the source
-file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="502" width="300" height="91" as="geometry"/></mxCell>
+file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="491" width="300" height="91" as="geometry"/></mxCell>
         <mxCell id="13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="11" target="12"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="14" value="DAC-DST-016 — Solipsism requires Prismatic
 **Given** a read-only Warlock community build
@@ -10851,8 +10919,7 @@ the matrix list **Then** the row is flagged
 that Solipsism only works with Prismatic
 **And** a Prismatic Solipsism build is not
 flagged **And** loading the matrix does not
-modify the source file --- ## Naming &amp;
-browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="601" width="300" height="124" as="geometry"/></mxCell>
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="590" width="300" height="113" as="geometry"/></mxCell>
         <mxCell id="15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="11" target="14"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="16" value="BR-WXM-001 — BR-WXM-001 The Warlock community
 matrix is a read-only list loaded from a local
@@ -10864,10 +10931,10 @@ exotic names present in that file. Builds that
 use Solipsism on a subclass other than
 Prismatic are flagged. The list does not
 equip, move, or delete items and does not
-start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="733" width="300" height="135" as="geometry"/></mxCell>
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="711" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="11" target="16"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="18" value="Flag Solipsism off Prismatic
-[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="904" width="220" height="42" as="geometry"/></mxCell>
+[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="882" width="220" height="42" as="geometry"/></mxCell>
         <mxCell id="19" value="DAC-DST-016 — Solipsism requires Prismatic
 **Given** a read-only Warlock community build
 whose exotic is Solipsism and whose subclass
@@ -10876,8 +10943,7 @@ the matrix list **Then** the row is flagged
 that Solipsism only works with Prismatic
 **And** a Prismatic Solipsism build is not
 flagged **And** loading the matrix does not
-modify the source file --- ## Naming &amp;
-browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="904" width="300" height="124" as="geometry"/></mxCell>
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="882" width="300" height="113" as="geometry"/></mxCell>
         <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="18" target="19"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="21" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
 class item **Solipsism** works only on the
@@ -10885,7 +10951,7 @@ class item **Solipsism** works only on the
 community-matrix build that pairs Solipsism
 with any other subclass is **flagged** in the
 list. The flag does not rewrite the source
-file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1036" width="300" height="91" as="geometry"/></mxCell>
+file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1003" width="300" height="91" as="geometry"/></mxCell>
         <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="18" target="21"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="23" value="BR-WXM-001 — BR-WXM-001 The Warlock community
 matrix is a read-only list loaded from a local
@@ -10897,12 +10963,83 @@ exotic names present in that file. Builds that
 use Solipsism on a subclass other than
 Prismatic are flagged. The list does not
 equip, move, or delete items and does not
-start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1135" width="300" height="135" as="geometry"/></mxCell>
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1102" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="18" target="23"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="25" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1326" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="26" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1326" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="27" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1326" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="28" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1326" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="25" value="Open the offline contrasting-build pilot
+[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="1273" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="26" value="DBR-PLT-001 — DBR-PLT-001 The offline pilot
+keeps each selected source row&apos;s original DIM
+link, Does text, Loop text, Solipsism perk
+pair, Ergo Sum trait/element/frame, set
+proposal, blanks, and creator/title. A title
+is a label. It is not copied into a blank Does
+or Loop." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1273" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="26"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="28" value="DBR-PLT-002 — DBR-PLT-002 Unknown perk text
+(`perk not specified`), a missing element, a
+blank loop, and disagreements between source
+rows stay unresolved. The pilot does not
+invent a default and does not let an optimizer
+result fill those fields." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1372" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="28"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="30" value="DBR-PLT-003 — DBR-PLT-003 A pilot row whose
+exotic is Solipsism and whose stated subclass
+is not Prismatic is **invalid**. An unstated
+subclass is not treated as Prismatic. Perk
+labels that differ (`Spirit of Apotheosis`
+versus `Apotheosis`) are not aliased." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1460" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="30"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="32" value="DAC-PLT-001 — Pilot rows keep source text
+**Given** a selected community row in the
+offline pilot **When** the review is shown
+**Then** the original DIM link, Does, Loop,
+stated perk fields, and set proposal are the
+source strings, including blanks **And** the
+title is not copied into a blank Does or Loop" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1548" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="32"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="34" value="DBR-PLT-004 — DBR-PLT-004 Armor proposals and
+DIM JSON in the pilot use **synthetic**
+fixtures. They are labeled synthetic in the UI
+and in JSON notes. They are not an
+account-verified loadout. An invalid or
+unresolved case produces no personal DIM
+output. Parsing a row or showing a proposal
+does not write the source file or equip gear.
+Round-trip of the JSON shape is not DIM
+acceptance." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1647" width="300" height="124" as="geometry"/></mxCell>
+        <mxCell id="35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="34"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="36" value="DAC-PLT-002 — Unknowns and conflicts stay open
+**Given** a row with `perk not specified`, a
+blank loop, or two set proposals for the same
+identity **When** proposals are calculated
+**Then** those fields stay unresolved and no
+personal DIM document is produced **And**
+synthetic armor results are labeled synthetic
+and are not equipped" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="1273" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="36"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="38" value="DAC-PLT-003 — Solipsism off Prismatic is
+invalid **Given** a pilot row whose exotic is
+Solipsism and whose stated subclass is solar
+**When** the row is reviewed **Then** it is
+invalid and has no personal DIM output **And**
+a perk match requires the exotic name and the
+exact perk strings, not the name alone --- ##
+Naming &amp; browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="1383" width="300" height="102" as="geometry"/></mxCell>
+        <mxCell id="39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="38"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="40" value="BR-WXM-002 — BR-WXM-002 The offline pilot
+reviews five trimmed community rows from local
+files. It preserves source links and blanks,
+rejects Solipsism off Prismatic, and shows
+synthetic stat/set/reuse proposals without
+writing sources or equipping gear. Unresolved
+rows get no personal DIM output. DIM JSON
+shape checks are labeled synthetic and are not
+DIM acceptance." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="1493" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="40"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="42" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1662" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="43" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1662" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="44" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1662" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="45" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1662" width="140" height="32" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>

@@ -3829,6 +3829,11 @@
           "screenId": "catalog-warlock-matrix",
           "label": "Flag Solipsism off Prismatic",
           "kind": "step"
+        },
+        {
+          "screenId": "catalog-warlock-pilot",
+          "label": "Open the offline contrasting-build pilot",
+          "kind": "step"
         }
       ],
       "phases": [
@@ -3854,6 +3859,19 @@
           "screenId": "catalog-warlock-matrix",
           "rules": [
             "DAC-DST-016"
+          ]
+        },
+        {
+          "id": "pilot",
+          "title": "Open the offline contrasting-build pilot",
+          "kind": "step",
+          "surfaceId": "catalog.warlock-pilot",
+          "screenId": "catalog-warlock-pilot",
+          "rules": [
+            "DBR-PLT-001",
+            "DBR-PLT-002",
+            "DBR-PLT-003",
+            "DAC-PLT-001"
           ]
         }
       ],
@@ -4232,6 +4250,11 @@
       "from": "shell",
       "to": "catalog-warlock-matrix",
       "action": "Nav → Warlock builds"
+    },
+    {
+      "from": "catalog-warlock-matrix",
+      "to": "catalog-warlock-pilot",
+      "action": "Offline pilot"
     }
   ]
 }

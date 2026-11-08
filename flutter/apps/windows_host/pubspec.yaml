@@ -52,3 +52,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/pilot/contrast_matrix.json
+    - assets/pilot/contrast_queue.csv

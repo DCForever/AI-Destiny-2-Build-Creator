@@ -1179,6 +1179,29 @@ surfaces:
       flutter-windows:
         status: done
         route: /warlock-builds
+  - id: catalog.warlock-pilot
+    title: Offline contrasting-build pilot
+    kind: screen
+    area: catalog
+    auth: any
+    parent: catalog.warlock-matrix
+    notes: >
+      Local review of five trimmed community rows. Preserves source links and
+      blanks. Synthetic inventory and DIM JSON are labeled and are not ownership.
+    rules:
+      - DBR-PLT-001
+      - DBR-PLT-002
+      - DBR-PLT-003
+      - DBR-PLT-004
+      - DAC-PLT-001
+      - DAC-PLT-002
+      - DAC-PLT-003
+      - BR-WXM-002
+    status: active
+    platforms:
+      flutter-windows:
+        status: done
+        route: /warlock-builds
   - id: catalog.signed-out.weapons
     title: Catalog weapons (signed-out / Manifest)
     kind: screen
