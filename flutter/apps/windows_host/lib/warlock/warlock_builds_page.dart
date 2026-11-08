@@ -1,6 +1,7 @@
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:flutter/material.dart';
 
+import 'pilot_review_page.dart';
 import 'warlock_build_row.dart';
 import 'warlock_builds_controller.dart';
 
@@ -68,7 +69,12 @@ class _WarlockBuildsPageState extends State<WarlockBuildsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Warlock builds')),
+      appBar: AppBar(
+        title: const Text('Warlock builds'),
+        actions: const [
+          _OpenPilotButton(),
+        ],
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -77,6 +83,25 @@ class _WarlockBuildsPageState extends State<WarlockBuildsPage> {
           Expanded(child: _BuildList(controller: _controller)),
         ],
       ),
+    );
+  }
+}
+
+class _OpenPilotButton extends StatelessWidget {
+  const _OpenPilotButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      key: const Key('open_offline_pilot'),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => const PilotReviewLoader(),
+          ),
+        );
+      },
+      child: const Text('Offline pilot'),
     );
   }
 }
@@ -135,7 +160,8 @@ class _ExoticFilter extends StatelessWidget {
         isExpanded: true,
         value: controller.selectedExotic ?? '',
         items: _items(),
-        onChanged: controller.exoticNames.isEmpty ? null : controller.selectExotic,
+        onChanged:
+            controller.exoticNames.isEmpty ? null : controller.selectExotic,
       ),
     );
   }
@@ -164,7 +190,8 @@ class _BuildList extends StatelessWidget {
       return _message(error, const Key('warlock_matrix_error'));
     }
     if (controller.visibleBuilds.isEmpty) {
-      return _message('No builds for this exotic.', const Key('warlock_builds_empty'));
+      return _message(
+          'No builds for this exotic.', const Key('warlock_builds_empty'));
     }
     return ListView(
       key: const Key('warlock_build_list'),

@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-10-31 (BR-WXM-001 read-only Warlock matrix list)
+**Updated**: 2026-11-08 (BR-WXM-002 offline contrasting-build pilot)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -322,6 +322,7 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | ID | Rule | FR |
 |----|------|-----|
 | BR-WXM-001 | The Warlock community matrix is a read-only list loaded from a local file path. Rows are exotic-armor builds (including overflow), weapon-cell builds, and Solipsism perk-combo builds. Removed rows are not listed. The exotic filter offers only exotic names present in that file. Builds that use Solipsism on a subclass other than Prismatic are flagged. The list does not equip, move, or delete items and does not start Bungie OAuth. | [DBR-SUB-011](./domain-business-rules.md), [DAC-DST-016](./domain-acceptance-criteria.md) |
+| BR-WXM-002 | The offline pilot reviews five trimmed community rows from local files. It preserves source links and blanks, rejects Solipsism off Prismatic, and shows synthetic stat/set/reuse proposals without writing sources or equipping gear. Unresolved rows get no personal DIM output. DIM JSON shape checks are labeled synthetic and are not DIM acceptance. | [DBR-PLT-001](./domain-business-rules.md), [DBR-PLT-002](./domain-business-rules.md), [DBR-PLT-003](./domain-business-rules.md), [DBR-PLT-004](./domain-business-rules.md), [DAC-PLT-001](./domain-acceptance-criteria.md), [DAC-PLT-002](./domain-acceptance-criteria.md), [DAC-PLT-003](./domain-acceptance-criteria.md) |
 
 ---
 

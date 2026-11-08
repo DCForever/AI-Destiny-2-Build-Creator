@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-10",
+  "generatedAt": "2026-11-08",
   "companionHint": "http://127.0.0.1:4174/?node=<inventory-node-id>",
   "byScreen": {
     "build-create-draft-general": {
@@ -268,13 +268,10 @@
       "title": "Set detail",
       "nodes": [
         "sets.detail",
-        "flow.sets.create.board",
         "flow.sets.create.detail",
         "flow.sets.library.detail",
-        "flow.sets.library.create.board",
         "journey.p2.library.sets.detail",
         "flow.sets.library.create.detail",
-        "journey.p2.library.sets.create.board",
         "journey.p2.library.sets.create.detail"
       ]
     },
@@ -292,15 +289,15 @@
     "sets-fill-slot": {
       "primary": "sets.fill-slot",
       "page": "sets",
-      "title": "Fill slot (owned compare pick)",
+      "title": "Fill slot (embedded Catalog)",
       "nodes": [
         "sets.fill-slot",
         "flow.sets.create.fill",
+        "flow.sets.edit-fill.fill",
         "flow.sets.library.create.fill",
-        "flow.sets.edit-fill.fill-compare",
+        "flow.sets.library.edit-fill.fill",
         "journey.p2.library.sets.create.fill",
-        "flow.sets.library.edit-fill.fill-compare",
-        "journey.p2.library.sets.edit-fill.fill-compare"
+        "journey.p2.library.sets.edit-fill.fill"
       ]
     },
     "sets-library": {
@@ -635,9 +632,6 @@
     "journey.p2.library.sets.create.form": [
       "sets-create"
     ],
-    "journey.p2.library.sets.create.board": [
-      "sets-detail"
-    ],
     "journey.p2.library.sets.create.fill": [
       "sets-fill-slot"
     ],
@@ -650,7 +644,7 @@
     "journey.p2.library.sets.edit-fill.edit": [
       "sets-edit"
     ],
-    "journey.p2.library.sets.edit-fill.fill-compare": [
+    "journey.p2.library.sets.edit-fill.fill": [
       "sets-fill-slot"
     ],
     "journey.p2.library.in-flow": [
@@ -734,9 +728,6 @@
     "flow.sets.library.create.form": [
       "sets-create"
     ],
-    "flow.sets.library.create.board": [
-      "sets-detail"
-    ],
     "flow.sets.library.create.fill": [
       "sets-fill-slot"
     ],
@@ -749,14 +740,11 @@
     "flow.sets.library.edit-fill.edit": [
       "sets-edit"
     ],
-    "flow.sets.library.edit-fill.fill-compare": [
+    "flow.sets.library.edit-fill.fill": [
       "sets-fill-slot"
     ],
     "flow.sets.create.form": [
       "sets-create"
-    ],
-    "flow.sets.create.board": [
-      "sets-detail"
     ],
     "flow.sets.create.fill": [
       "sets-fill-slot"
@@ -767,7 +755,7 @@
     "flow.sets.edit-fill.edit": [
       "sets-edit"
     ],
-    "flow.sets.edit-fill.fill-compare": [
+    "flow.sets.edit-fill.fill": [
       "sets-fill-slot"
     ],
     "flow.synergy.library.browse": [

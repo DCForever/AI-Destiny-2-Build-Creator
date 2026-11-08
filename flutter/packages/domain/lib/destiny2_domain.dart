@@ -95,3 +95,17 @@ export 'src/warlock_matrix/filter_warlock_builds.dart';
 export 'src/warlock_matrix/parse_warlock_matrix.dart';
 export 'src/warlock_matrix/solipsism_flag.dart';
 export 'src/warlock_matrix/warlock_matrix_build.dart';
+
+// Offline contrasting-build pilot (local fixture, synthetic proposals)
+export 'src/pilot_review/pilot_board.dart';
+export 'src/pilot_review/pilot_catalog.dart';
+export 'src/pilot_review/pilot_csv.dart';
+export 'src/pilot_review/pilot_dim_gate.dart';
+export 'src/pilot_review/pilot_identity.dart';
+export 'src/pilot_review/pilot_matrix.dart';
+export 'src/pilot_review/pilot_perk_requirement.dart';
+export 'src/pilot_review/pilot_proposals.dart';
+export 'src/pilot_review/pilot_reasons.dart';
+export 'src/pilot_review/pilot_review.dart';
+export 'src/pilot_review/pilot_source_record.dart';
+export 'src/pilot_review/pilot_text.dart';
