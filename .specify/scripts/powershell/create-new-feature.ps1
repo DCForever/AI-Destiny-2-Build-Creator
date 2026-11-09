@@ -53,8 +53,14 @@ function Get-HighestNumberFromSpecs {
     param([string]$SpecsDir)
 
     [long]$highest = 0
-    if (Test-Path $SpecsDir) {
-        Get-ChildItem -Path $SpecsDir -Directory | ForEach-Object {
+    $roots = @($SpecsDir)
+    foreach ($rel in @('_archive\product', '_archive', '_archive\other')) {
+        $p = Join-Path $SpecsDir $rel
+        if (Test-Path $p) { $roots += $p }
+    }
+    foreach ($root in $roots) {
+        if (-not (Test-Path $root)) { continue }
+        Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | ForEach-Object {
             # Match sequential prefixes (>=3 digits), but skip timestamp dirs.
             if ($_.Name -match '^(\d{3,})-' -and $_.Name -notmatch '^\d{8}-\d{6}-') {
                 [long]$num = 0
@@ -62,6 +68,15 @@ function Get-HighestNumberFromSpecs {
                     $highest = $num
                 }
             }
+        }
+    }
+    $numFile = Join-Path $SpecsDir '_numbering.json'
+    if (Test-Path $numFile) {
+        try {
+            $n = Get-Content -Raw -Path $numFile | ConvertFrom-Json
+            if ($n.product_prefix_max -gt $highest) { $highest = [long]$n.product_prefix_max }
+        } catch {
+            Write-Verbose "[specify] Could not read specs/_numbering.json: $_"
         }
     }
     return $highest

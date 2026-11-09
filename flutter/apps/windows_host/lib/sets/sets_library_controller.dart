@@ -61,6 +61,8 @@ class SetsLibraryController extends ChangeNotifier {
   SetType? _typeFilter;
   String _searchQuery = '';
   List<String> _tagFilters = const [];
+  /// Active pin counts per set id (library Armor columns / G-SET-032).
+  Map<String, int> _pieceCounts = const {};
 
   int? get userId => _userId;
   List<SetRecord> get sets => _sets;
@@ -71,6 +73,18 @@ class SetsLibraryController extends ChangeNotifier {
   SetType? get typeFilter => _typeFilter;
   String get searchQuery => _searchQuery;
   List<String> get tagFilters => List.unmodifiable(_tagFilters);
+  Map<String, int> get pieceCounts => Map.unmodifiable(_pieceCounts);
+
+  int pieceCountOf(String setId) => _pieceCounts[setId] ?? 0;
+
+  Future<void> _reloadPieceCounts(Iterable<SetRecord> sets) async {
+    final next = <String, int>{};
+    for (final s in sets) {
+      final items = await listActiveSetItems(db, s.id);
+      next[s.id] = items.length;
+    }
+    _pieceCounts = next;
+  }
 
   void _reapplyFilters() {
     final rows = [
@@ -105,6 +119,7 @@ class SetsLibraryController extends ChangeNotifier {
     try {
       _userId = await resolveLibraryUserId();
       _allSets = await listUserSets(db, _userId!);
+      await _reloadPieceCounts(_allSets);
       _reapplyFilters();
       if (keepSelection && _selected != null) {
         final id = _selected!.set.id;
@@ -191,6 +206,7 @@ class SetsLibraryController extends ChangeNotifier {
       if (!ok) return 'Set not found';
       _selected = null;
       _allSets = await listUserSets(db, uid);
+      await _reloadPieceCounts(_allSets);
       _reapplyFilters();
       _error = null;
       notifyListeners();
@@ -270,6 +286,31 @@ class SetsLibraryController extends ChangeNotifier {
         CreateSetCommand(name: name, type: type),
       );
       _allSets = await listUserSets(db, uid);
+      await _reloadPieceCounts(_allSets);
+      _reapplyFilters();
+      _selected = detail;
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// Create set from a full [CreateSetCommand] (Armor modal path).
+  Future<String?> createSetFromCommand(CreateSetCommand command) async {
+    try {
+      final uid = _userId ?? await resolveLibraryUserId();
+      _userId = uid;
+      final detail = await createUserSet(db, uid, command);
+      _allSets = await listUserSets(db, uid);
+      await _reloadPieceCounts(_allSets);
       _reapplyFilters();
       _selected = detail;
       _error = null;
@@ -302,6 +343,45 @@ class SetsLibraryController extends ChangeNotifier {
         uid,
         sel.set.id,
         UpdateSetCommand(name: name, type: type),
+      );
+      if (updated == null) {
+        return 'Set not found';
+      }
+      _selected = updated;
+      _allSets = await listUserSets(db, uid);
+      _reapplyFilters();
+      _error = null;
+      notifyListeners();
+      return null;
+    } on UseCaseException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// Persist optimizer constraints JSON on the selected set (class, bonus goals, …).
+  Future<String?> updateSelectedConstraints(
+    ArmorSetOptimizerConstraints constraints,
+  ) async {
+    final sel = _selected;
+    final uid = _userId;
+    if (sel == null || uid == null) {
+      return 'No set selected';
+    }
+    try {
+      final updated = await updateUserSet(
+        db,
+        uid,
+        sel.set.id,
+        UpdateSetCommand(
+          setOptimizerConstraints: true,
+          optimizerConstraints: serializeOptimizerConstraints(constraints),
+        ),
       );
       if (updated == null) {
         return 'Set not found';
@@ -381,6 +461,10 @@ class SetsLibraryController extends ChangeNotifier {
         return 'Set not found';
       }
       _selected = updated;
+      _pieceCounts = {
+        ..._pieceCounts,
+        sel.set.id: updated.activeItems.length,
+      };
       _error = null;
       notifyListeners();
       return null;
@@ -443,6 +527,12 @@ class SetsLibraryController extends ChangeNotifier {
         updated = await removeUserSetItem(db, uid, sel.set.id, item.id);
       }
       _selected = updated;
+      if (updated != null) {
+        _pieceCounts = {
+          ..._pieceCounts,
+          sel.set.id: updated.activeItems.length,
+        };
+      }
       _error = null;
       notifyListeners();
       return null;

@@ -117,7 +117,7 @@ GET /api/catalog/armor?scope=owned&q=<name>
 
 **Page:** `/debug/catalog` (owned scope)  
 **Needs:** manifest + sign-in + inventory sync  
-**Spec:** `specs/003-owned-inventory-instances/quickstart.md`
+**Spec:** `specs/_archive/product/003-owned-inventory-instances/quickstart.md`
 
 ### Via catalog row (recommended)
 
@@ -138,7 +138,7 @@ On `/debug/catalog`, **Instance API (direct)** section:
 
 Instance APIs build a **hybrid plug name map** per request: entity stores (`weapon-perks`, `mods`, `origin-traits`) plus manifest `DestinyInventoryItemDefinition` fallback for plug hashes on the user's equipment rows. No sync or API shape changes.
 
-**Fixture weapon:** The Ringing Nail (`itemHash` `4206550094`) — see [`specs/004-full-plug-resolution/quickstart.md`](specs/004-full-plug-resolution/quickstart.md) for expected named plugs (Precision Frame, Synergy, Default Shader, etc.).
+**Fixture weapon:** The Ringing Nail (`itemHash` `4206550094`) — see [`specs/_archive/product/004-full-plug-resolution/quickstart.md`](specs/_archive/product/004-full-plug-resolution/quickstart.md) for expected named plugs (Precision Frame, Synergy, Default Shader, etc.).
 
 **Search examples:**
 
@@ -186,7 +186,7 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 3. Invalid concept tags → `INVALID_TAG`.
 4. Fashion sets excluded from build attach on `/debug/builds`.
 
-**Checklist:** `specs/001-build-sets-synergies/quickstart.md` Scenario 1
+**Checklist:** `specs/_archive/product/001-build-sets-synergies/quickstart.md` Scenario 1
 
 ---
 
@@ -224,7 +224,7 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 | Enhanced perk in column | base and enhanced as separate options; enhanced labeled `(Enhanced)` |
 | All candidates removed | empty state with reset |
 
-**Checklist:** `specs/010-instance-disambiguation/quickstart.md` Scenarios A & B; `specs/011-per-copy-perk-grid/quickstart.md` Scenarios A–D
+**Checklist:** `specs/_archive/product/010-instance-disambiguation/quickstart.md` Scenarios A & B; `specs/_archive/product/011-per-copy-perk-grid/quickstart.md` Scenarios A–D
 
 ---
 
@@ -242,7 +242,7 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 7. Attach sets through `SetAttachPicker` with type + tag filters, choosing live or snapshot mode. Attach is additive; Remove detaches one set and sends the remaining full attachment list.
 8. Edit synergy designations after create with the same multi-select, then resolve, compare, export, or request set/synergy/roll suggestions using the selected variant.
 
-**Checklist:** `specs/012-build-pipeline-consistency/quickstart.md`
+**Checklist:** `specs/_archive/product/012-build-pipeline-consistency/quickstart.md`
 
 ---
 
@@ -259,7 +259,7 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 6. **On-open improvement check**: selecting an Armor Set with stored constraints on `/debug/sets` auto-calls `POST /api/user/sets/:id/optimize`; a soft banner (Confirm / Dismiss) appears when a better kit exists. Never auto-applies.
 7. **Post-sync soft suggestions**: Settings → **Sync inventory** success calls `GET /api/user/armor/improvement-suggestions?afterSync=1`; a **"Better armor kits found"** banner lists constrained Armor Sets attached to a Build with a better kit (Confirm applies in place; Dismiss only clears the banner). Same endpoint is available as a manual **Fetch improvement suggestions** button on `/debug/builds`.
 
-**Checklist:** `specs/026-armor-set-optimizer/quickstart.md`
+**Checklist:** `specs/_archive/product/026-armor-set-optimizer/quickstart.md`
 
 ---
 
@@ -277,7 +277,7 @@ Item **name** search stays on catalog (`q` on catalog API). Instance API uses `i
 6. Reverse lookup on `/debug/synergies`: origin trait / perk / armor by name, or weapon by `itemHash`.
 7. On `/debug/catalog`, select a weapon row — violet badges list **all** synergies linked to that `itemHash`. JSON panel still supports `GET /api/user/synergies/by-target?kind=origin_trait&name=…`.
 
-**Checklist:** `specs/006-synergy-refinement/quickstart.md` Scenarios 1–6; Scenario 4 in 001 quickstart for origin-trait lookup.
+**Checklist:** `specs/_archive/product/006-synergy-refinement/quickstart.md` Scenarios 1–6; Scenario 4 in 001 quickstart for origin-trait lookup.
 
 ---
 
@@ -304,7 +304,7 @@ GET /api/user/loadouts?armorMode=slot&armorSlot=Helmet
 GET /api/user/loadouts?weaponMode=slot&weaponSlot=Power
 ```
 
-**Checklist:** `specs/002-exotic-loadouts-by-type/quickstart.md`
+**Checklist:** `specs/_archive/product/002-exotic-loadouts-by-type/quickstart.md`
 
 ---
 
@@ -332,13 +332,13 @@ Feature-specific scenario checklists:
 
 | Feature | Quickstart |
 |---------|------------|
-| Sets, catalog, builds, synergies (platform) | [`specs/001-build-sets-synergies/quickstart.md`](specs/001-build-sets-synergies/quickstart.md) |
-| Exotic loadout filters | [`specs/002-exotic-loadouts-by-type/quickstart.md`](specs/002-exotic-loadouts-by-type/quickstart.md) |
-| Owned inventory instances | [`specs/003-owned-inventory-instances/quickstart.md`](specs/003-owned-inventory-instances/quickstart.md) |
-| Full plug resolution | [`specs/004-full-plug-resolution/quickstart.md`](specs/004-full-plug-resolution/quickstart.md) |
-| Armor Set Optimizer | [`specs/026-armor-set-optimizer/quickstart.md`](specs/026-armor-set-optimizer/quickstart.md) |
+| Sets, catalog, builds, synergies (platform) | [`specs/_archive/product/001-build-sets-synergies/quickstart.md`](specs/_archive/product/001-build-sets-synergies/quickstart.md) |
+| Exotic loadout filters | [`specs/_archive/product/002-exotic-loadouts-by-type/quickstart.md`](specs/_archive/product/002-exotic-loadouts-by-type/quickstart.md) |
+| Owned inventory instances | [`specs/_archive/product/003-owned-inventory-instances/quickstart.md`](specs/_archive/product/003-owned-inventory-instances/quickstart.md) |
+| Full plug resolution | [`specs/_archive/product/004-full-plug-resolution/quickstart.md`](specs/_archive/product/004-full-plug-resolution/quickstart.md) |
+| Armor Set Optimizer | [`specs/_archive/product/026-armor-set-optimizer/quickstart.md`](specs/_archive/product/026-armor-set-optimizer/quickstart.md) |
 
-Contract reference: [`specs/001-build-sets-synergies/contracts/debug-service-contract.md`](specs/001-build-sets-synergies/contracts/debug-service-contract.md)
+Contract reference: [`specs/_archive/product/001-build-sets-synergies/contracts/debug-service-contract.md`](specs/_archive/product/001-build-sets-synergies/contracts/debug-service-contract.md)
 
 ---
 

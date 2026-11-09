@@ -23,10 +23,14 @@ void main() {
 
   test('blank path is rejected and a missing file is not created', () async {
     expect(() => readOnlyFileBytes('   '), throwsArgumentError);
-    final missing = '${Directory.systemTemp.path}/missing-warlock-matrix.json';
-    final file = File(missing);
-    if (await file.exists()) await file.delete();
-    expect(() => readOnlyFileBytes(missing), throwsA(isA<ReadOnlyFileException>()));
+    final dir = await Directory.systemTemp.createTemp('warlock-matrix-missing-');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/missing-warlock-matrix.json');
+    expect(await file.exists(), isFalse);
+    expect(
+      () => readOnlyFileBytes(file.path),
+      throwsA(isA<ReadOnlyFileException>()),
+    );
     expect(await file.exists(), isFalse);
   });
 

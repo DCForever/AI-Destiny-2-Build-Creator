@@ -1,0 +1,8 @@
+{
+  "product_prefix_max": 45,
+  "dart_prefix_max": 69,
+  "next_product": 46,
+  "next_dart": 70,
+  "reserved_dart": [71, 72, 73],
+  "note": "Archive must not reset Spec Kit numbering. Product 044 unused historically; max used prefix is 045. DART-071–073 reserved for Catalog system slices in ProjectTracker."
+}

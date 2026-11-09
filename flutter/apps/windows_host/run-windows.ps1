@@ -9,8 +9,10 @@ param(
   [string]$RedirectUri = "https://127.0.0.1:8765/callback",
   [string]$EnvFile = "$PSScriptRoot\.env.windows.local",
   # Enables Flutter Driver for Dart MCP / impeccable-flutter screenshots + taps.
-  # Real keyboard typing may be emulated while this is on.
-  [switch]$EnableFlutterDriver
+  # Uses -t lib/main_mcp.dart. Real keyboard typing may be emulated while on.
+  [switch]$EnableFlutterDriver,
+  # Skip flutter pub get (parent monorepo launcher may already have run pub get).
+  [switch]$SkipPubGet
 )
 
 $ErrorActionPreference = "Stop"
@@ -213,11 +215,18 @@ if ($RedirectUri.StartsWith("https://", [System.StringComparison]::OrdinalIgnore
   Write-Host "HTTP loopback redirect — skipping TLS cert generation."
 }
 
+# Guard: never allow launcher flags to leak into OAuth client id.
+if ($ClientId -match '^-' -or $ClientId -match 'SkipPubGet|EnableFlutterDriver') {
+  Write-Error "BUNGIE_CLIENT_ID looks like a script switch ('$ClientId'). Check run-flutter-windows.ps1 args — do not pass -SkipPubGet into ClientId."
+  exit 1
+}
+
 Write-Host "Launching windows_host"
 Write-Host "  CLIENT_ID set: $([bool]$ClientId) (len $($ClientId.Length)) value=$ClientId"
 Write-Host "  API_KEY set:   $([bool]$ApiKey) (len $($ApiKey.Length))"
 Write-Host "  REDIRECT:      $RedirectUri"
 Write-Host "  FLUTTER_DRIVER: $EnableFlutterDriver"
+Write-Host "  SKIP_PUB_GET:  $SkipPubGet"
 Write-Host "  ENV_FILE:      $EnvFile"
 
 $defines = @(
@@ -225,10 +234,21 @@ $defines = @(
   "--dart-define=BUNGIE_CLIENT_ID=$ClientId",
   "--dart-define=BUNGIE_REDIRECT_URI=$RedirectUri"
 )
+
+# Driver path: main_mcp.dart already calls enableFlutterDriverExtension().
+# Do NOT also pass ENABLE_FLUTTER_DRIVER — host main.dart would enable twice
+# and crash with Binding is already initialized to _DriverBinding.
+$flutterArgs = @("run", "-d", "windows")
 if ($EnableFlutterDriver) {
-  $defines += "--dart-define=ENABLE_FLUTTER_DRIVER=true"
+  $flutterArgs += @("-t", "lib/main_mcp.dart")
+  Write-Host "  TARGET:        lib/main_mcp.dart (Driver via entrypoint)"
+} else {
+  Write-Host "  TARGET:        lib/main.dart (default)"
 }
+$flutterArgs += $defines
 
 Set-Location $PSScriptRoot
-flutter pub get
-flutter run -d windows @defines
+if (-not $SkipPubGet) {
+  flutter pub get
+}
+flutter @flutterArgs

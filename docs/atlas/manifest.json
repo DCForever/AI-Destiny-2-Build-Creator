@@ -248,7 +248,7 @@
     },
     {
       "id": "sets-fill-slot",
-      "title": "Fill slot (embedded Catalog)",
+      "title": "Fill slot (owned compare pick)",
       "area": "sets",
       "path": "/sets",
       "auth": "signed-in",
@@ -1316,12 +1316,17 @@
         },
         {
           "screenId": "sets-create",
-          "label": "Sets library › Create set › Name / type / tags",
+          "label": "Sets library › Create set › Type / class / goals / name",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Sets library › Create set › Empty board (layout A)",
           "kind": "step"
         },
         {
           "screenId": "sets-fill-slot",
-          "label": "Sets library › Create set › Fill required slots (loop)",
+          "label": "Sets library › Create set › Fill via compare or optimize (loop)",
           "kind": "loop"
         },
         {
@@ -1341,7 +1346,12 @@
         },
         {
           "screenId": "sets-fill-slot",
-          "label": "Sets library › Edit / fill slots › Fill slot (catalog embed)",
+          "label": "Sets library › Edit / fill slots › Fill slot (owned compare)",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-optimize",
+          "label": "Sets library › Edit / fill slots › Optimize confirm-only",
           "kind": "step"
         },
         {
@@ -1511,7 +1521,13 @@
                 "BR-SET-001",
                 "BR-SET-002",
                 "BR-TAG-004",
-                "001:SC-001"
+                "001:SC-001",
+                "G-SET-001",
+                "G-SET-004",
+                "G-SET-013",
+                "G-SET-033",
+                "G-SET-040",
+                "DBR-SETB-003"
               ],
               "children": [
                 {
@@ -1523,24 +1539,42 @@
                 },
                 {
                   "id": "form",
-                  "title": "Name / type / tags",
+                  "title": "Type / class / goals / name",
                   "kind": "step",
                   "surfaceId": "sets.create",
                   "screenId": "sets-create",
                   "rules": [
                     "BR-TAG-002",
-                    "BR-TAG-005"
+                    "BR-TAG-005",
+                    "G-SET-001",
+                    "G-SET-004",
+                    "G-SET-013",
+                    "G-SET-033",
+                    "G-SET-040"
+                  ]
+                },
+                {
+                  "id": "board",
+                  "title": "Empty board (layout A)",
+                  "kind": "step",
+                  "surfaceId": "sets.detail",
+                  "screenId": "sets-detail",
+                  "rules": [
+                    "G-SET-001",
+                    "G-SET-040"
                   ]
                 },
                 {
                   "id": "fill",
-                  "title": "Fill required slots",
+                  "title": "Fill via compare or optimize",
                   "kind": "loop",
                   "surfaceId": "sets.fill-slot",
                   "screenId": "sets-fill-slot",
                   "rules": [
                     "DAC-NME-003",
-                    "DAC-DST-009"
+                    "DAC-DST-009",
+                    "G-SET-002",
+                    "BR-OPT-004"
                   ],
                   "loop": "until-required-slots"
                 },
@@ -1572,7 +1606,8 @@
               "rules": [
                 "BR-SET-001",
                 "BR-SLOT-008",
-                "DAC-DST-009"
+                "DAC-DST-009",
+                "G-SET-002"
               ],
               "children": [
                 {
@@ -1583,11 +1618,21 @@
                   "screenId": "sets-edit"
                 },
                 {
-                  "id": "fill",
-                  "title": "Fill slot (catalog embed)",
+                  "id": "fill-compare",
+                  "title": "Fill slot (owned compare)",
                   "kind": "step",
                   "surfaceId": "sets.fill-slot",
                   "screenId": "sets-fill-slot"
+                },
+                {
+                  "id": "fill-optimize",
+                  "title": "Optimize confirm-only",
+                  "kind": "step",
+                  "surfaceId": "sets.optimize",
+                  "screenId": "sets-optimize",
+                  "rules": [
+                    "BR-OPT-004"
+                  ]
                 },
                 {
                   "id": "exotic-block",
@@ -3037,12 +3082,17 @@
         },
         {
           "screenId": "sets-create",
-          "label": "Create set › Name / type / tags",
+          "label": "Create set › Type / class / goals / name",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Create set › Empty board (layout A)",
           "kind": "step"
         },
         {
           "screenId": "sets-fill-slot",
-          "label": "Create set › Fill required slots (loop)",
+          "label": "Create set › Fill via compare or optimize (loop)",
           "kind": "loop"
         },
         {
@@ -3062,7 +3112,12 @@
         },
         {
           "screenId": "sets-fill-slot",
-          "label": "Edit / fill slots › Fill slot (catalog embed)",
+          "label": "Edit / fill slots › Fill slot (owned compare)",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-optimize",
+          "label": "Edit / fill slots › Optimize confirm-only",
           "kind": "step"
         },
         {
@@ -3088,7 +3143,13 @@
             "BR-SET-001",
             "BR-SET-002",
             "BR-TAG-004",
-            "001:SC-001"
+            "001:SC-001",
+            "G-SET-001",
+            "G-SET-004",
+            "G-SET-013",
+            "G-SET-033",
+            "G-SET-040",
+            "DBR-SETB-003"
           ],
           "children": [
             {
@@ -3100,24 +3161,42 @@
             },
             {
               "id": "form",
-              "title": "Name / type / tags",
+              "title": "Type / class / goals / name",
               "kind": "step",
               "surfaceId": "sets.create",
               "screenId": "sets-create",
               "rules": [
                 "BR-TAG-002",
-                "BR-TAG-005"
+                "BR-TAG-005",
+                "G-SET-001",
+                "G-SET-004",
+                "G-SET-013",
+                "G-SET-033",
+                "G-SET-040"
+              ]
+            },
+            {
+              "id": "board",
+              "title": "Empty board (layout A)",
+              "kind": "step",
+              "surfaceId": "sets.detail",
+              "screenId": "sets-detail",
+              "rules": [
+                "G-SET-001",
+                "G-SET-040"
               ]
             },
             {
               "id": "fill",
-              "title": "Fill required slots",
+              "title": "Fill via compare or optimize",
               "kind": "loop",
               "surfaceId": "sets.fill-slot",
               "screenId": "sets-fill-slot",
               "rules": [
                 "DAC-NME-003",
-                "DAC-DST-009"
+                "DAC-DST-009",
+                "G-SET-002",
+                "BR-OPT-004"
               ],
               "loop": "until-required-slots"
             },
@@ -3149,7 +3228,8 @@
           "rules": [
             "BR-SET-001",
             "BR-SLOT-008",
-            "DAC-DST-009"
+            "DAC-DST-009",
+            "G-SET-002"
           ],
           "children": [
             {
@@ -3160,11 +3240,21 @@
               "screenId": "sets-edit"
             },
             {
-              "id": "fill",
-              "title": "Fill slot (catalog embed)",
+              "id": "fill-compare",
+              "title": "Fill slot (owned compare)",
               "kind": "step",
               "surfaceId": "sets.fill-slot",
               "screenId": "sets-fill-slot"
+            },
+            {
+              "id": "fill-optimize",
+              "title": "Optimize confirm-only",
+              "kind": "step",
+              "surfaceId": "sets.optimize",
+              "screenId": "sets-optimize",
+              "rules": [
+                "BR-OPT-004"
+              ]
             },
             {
               "id": "exotic-block",
@@ -3202,12 +3292,17 @@
         },
         {
           "screenId": "sets-create",
-          "label": "Name / type / tags",
+          "label": "Type / class / goals / name",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-detail",
+          "label": "Empty board (layout A)",
           "kind": "step"
         },
         {
           "screenId": "sets-fill-slot",
-          "label": "Fill required slots (loop)",
+          "label": "Fill via compare or optimize (loop)",
           "kind": "loop"
         },
         {
@@ -3226,24 +3321,42 @@
         },
         {
           "id": "form",
-          "title": "Name / type / tags",
+          "title": "Type / class / goals / name",
           "kind": "step",
           "surfaceId": "sets.create",
           "screenId": "sets-create",
           "rules": [
             "BR-TAG-002",
-            "BR-TAG-005"
+            "BR-TAG-005",
+            "G-SET-001",
+            "G-SET-004",
+            "G-SET-013",
+            "G-SET-033",
+            "G-SET-040"
+          ]
+        },
+        {
+          "id": "board",
+          "title": "Empty board (layout A)",
+          "kind": "step",
+          "surfaceId": "sets.detail",
+          "screenId": "sets-detail",
+          "rules": [
+            "G-SET-001",
+            "G-SET-040"
           ]
         },
         {
           "id": "fill",
-          "title": "Fill required slots",
+          "title": "Fill via compare or optimize",
           "kind": "loop",
           "surfaceId": "sets.fill-slot",
           "screenId": "sets-fill-slot",
           "rules": [
             "DAC-NME-003",
-            "DAC-DST-009"
+            "DAC-DST-009",
+            "G-SET-002",
+            "BR-OPT-004"
           ],
           "loop": "until-required-slots"
         },
@@ -3260,7 +3373,13 @@
         "BR-SET-001",
         "BR-SET-002",
         "BR-TAG-004",
-        "001:SC-001"
+        "001:SC-001",
+        "G-SET-001",
+        "G-SET-004",
+        "G-SET-013",
+        "G-SET-033",
+        "G-SET-040",
+        "DBR-SETB-003"
       ]
     },
     {
@@ -3277,7 +3396,12 @@
         },
         {
           "screenId": "sets-fill-slot",
-          "label": "Fill slot (catalog embed)",
+          "label": "Fill slot (owned compare)",
+          "kind": "step"
+        },
+        {
+          "screenId": "sets-optimize",
+          "label": "Optimize confirm-only",
           "kind": "step"
         },
         {
@@ -3295,11 +3419,21 @@
           "screenId": "sets-edit"
         },
         {
-          "id": "fill",
-          "title": "Fill slot (catalog embed)",
+          "id": "fill-compare",
+          "title": "Fill slot (owned compare)",
           "kind": "step",
           "surfaceId": "sets.fill-slot",
           "screenId": "sets-fill-slot"
+        },
+        {
+          "id": "fill-optimize",
+          "title": "Optimize confirm-only",
+          "kind": "step",
+          "surfaceId": "sets.optimize",
+          "screenId": "sets-optimize",
+          "rules": [
+            "BR-OPT-004"
+          ]
         },
         {
           "id": "exotic-block",
@@ -3318,7 +3452,8 @@
       "rules": [
         "BR-SET-001",
         "BR-SLOT-008",
-        "DAC-DST-009"
+        "DAC-DST-009",
+        "G-SET-002"
       ]
     },
     {
@@ -3829,6 +3964,11 @@
           "screenId": "catalog-warlock-matrix",
           "label": "Flag Solipsism off Prismatic",
           "kind": "step"
+        },
+        {
+          "screenId": "catalog-warlock-pilot",
+          "label": "Open the offline contrasting-build pilot",
+          "kind": "step"
         }
       ],
       "phases": [
@@ -3854,6 +3994,19 @@
           "screenId": "catalog-warlock-matrix",
           "rules": [
             "DAC-DST-016"
+          ]
+        },
+        {
+          "id": "pilot",
+          "title": "Open the offline contrasting-build pilot",
+          "kind": "step",
+          "surfaceId": "catalog.warlock-pilot",
+          "screenId": "catalog-warlock-pilot",
+          "rules": [
+            "DBR-PLT-001",
+            "DBR-PLT-002",
+            "DBR-PLT-003",
+            "DAC-PLT-001"
           ]
         }
       ],
@@ -4232,6 +4385,11 @@
       "from": "shell",
       "to": "catalog-warlock-matrix",
       "action": "Nav → Warlock builds"
+    },
+    {
+      "from": "catalog-warlock-matrix",
+      "to": "catalog-warlock-pilot",
+      "action": "Offline pilot"
     }
   ]
 }

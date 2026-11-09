@@ -1,6 +1,6 @@
 # Business Rules
 
-**Updated**: 2026-10-31 (BR-WXM-001 read-only Warlock matrix list)
+**Updated**: 2026-11-08 (BR-WXM-002 offline contrasting-build pilot)
 
 Consolidated business rules derived from feature specs, contracts, data model, and tasks. Each rule has a stable **BR-** ID and links to the functional requirements (**FR-**) that justify it.
 
@@ -57,9 +57,9 @@ Consolidated business rules derived from feature specs, contracts, data model, a
 | BR-SET-010 | **Armor** set detail shows EoF six-stat **totals** and **per-piece** stats when owned instances are pinned (wishlist has no rolls). Item rows show catalog identity (element, type/frame, **tier**, **origin trait**), **selected trait perks** (not barrel/magazine/stock), **available trait names**, and **linked library synergies**. | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md) |
 | BR-SET-011 | **Armor** set per-piece stats and set totals use the piece’s **base roll** only: sum of equipped `armor_stats` plug investments (DIM white base). Equipped armor mods, masterwork, and tuning are excluded. Catalog instance cards and inventory sort continue to use live ItemStats. Distinct from full-loadout soft-target coverage ([DBR-STAT-005](./domain-business-rules.md)). | [DBR-STAT-001](./domain-business-rules.md), [DBR-CMP-001](./domain-business-rules.md), [DBR-STAT-008](./domain-business-rules.md) |
 | BR-SET-030 | Weapon, Armor, Mod, and Pair Sets may designate zero or more **Synergy Types** (same vocabulary as Builds). Fashion Sets must not. Optional on save (soft nudge). | Vault Domain Set; [DBR-SYN-002](./domain-business-rules.md) |
-| BR-SET-050 | An Armor Set may declare **zero or one** armor set bonus constraint (family + target tier 2 or 4). Only Armor Sets. | [DBR-SETB-003](./domain-business-rules.md) |
-| BR-SET-054 | When constrained, each **non-exotic** filled piece must be a member of the bonus family. | [DBR-SETB-004](./domain-business-rules.md) |
-| BR-SET-055 | When constrained, contributing member count must meet target tier on **save and attach**. Codes: `ARMOR_SET_BONUS_MISMATCH`, `ARMOR_SET_BONUS_INCOMPLETE`. | [DBR-SETB-004](./domain-business-rules.md) |
+| BR-SET-050 | An Armor Set may declare **zero or a legal multi-goal set-bonus combo** (G-SET-013): none · 1×2pc · 2×2pc (diff families) · 1×4pc. Only Armor Sets. *(Supersedes singular-family 2026-08-10; aligns DBR-SETB-003.)* | [DBR-SETB-003](./domain-business-rules.md) |
+| BR-SET-054 | When constrained, each **non-exotic** filled piece must be a member of the **union** of goal families. | [DBR-SETB-004](./domain-business-rules.md) |
+| BR-SET-055 | When constrained, each goal’s contributing member count must meet its target tier on **save and attach**. Codes: `ARMOR_SET_BONUS_MISMATCH`, `ARMOR_SET_BONUS_INCOMPLETE`. | [DBR-SETB-004](./domain-business-rules.md) |
 | BR-SET-056 | Exotic armor does **not** count toward the set-bonus tier; soft-warn if exotic blocks target. | [DBR-SETB-005](./domain-business-rules.md) |
 
 ---
@@ -322,6 +322,7 @@ Note: Feature 002 "category" refers to **exotic slot type**, not concept tags.
 | ID | Rule | FR |
 |----|------|-----|
 | BR-WXM-001 | The Warlock community matrix is a read-only list loaded from a local file path. Rows are exotic-armor builds (including overflow), weapon-cell builds, and Solipsism perk-combo builds. Removed rows are not listed. The exotic filter offers only exotic names present in that file. Builds that use Solipsism on a subclass other than Prismatic are flagged. The list does not equip, move, or delete items and does not start Bungie OAuth. | [DBR-SUB-011](./domain-business-rules.md), [DAC-DST-016](./domain-acceptance-criteria.md) |
+| BR-WXM-002 | The offline pilot reviews five trimmed community rows from local files. It preserves source links and blanks, rejects Solipsism off Prismatic, and shows synthetic stat/set/reuse proposals without writing sources or equipping gear. Unresolved rows get no personal DIM output. DIM JSON shape checks are labeled synthetic and are not DIM acceptance. | [DBR-PLT-001](./domain-business-rules.md), [DBR-PLT-002](./domain-business-rules.md), [DBR-PLT-003](./domain-business-rules.md), [DBR-PLT-004](./domain-business-rules.md), [DAC-PLT-001](./domain-acceptance-criteria.md), [DAC-PLT-002](./domain-acceptance-criteria.md), [DAC-PLT-003](./domain-acceptance-criteria.md) |
 
 ---
 

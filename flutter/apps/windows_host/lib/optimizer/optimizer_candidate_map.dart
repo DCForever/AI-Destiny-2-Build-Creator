@@ -61,15 +61,22 @@ Map<ArmorStatName, int> parseArmorStatValues(Map<String, Object?>? raw) {
 /// Build candidates from inventory rows + optional catalog annotations.
 ///
 /// Non-armor buckets are skipped. Missing catalog entry → non-exotic, hash name.
+///
+/// Pass [setBonusKeyByItemHash] (item definition hash → family display name)
+/// so hard goals (G-SET-013) can reach inventory pieces. Without it every
+/// piece has null [CandidatePiece.setBonusKey] and set-bonus goals are always
+/// unsatisfiable.
 List<CandidatePiece> candidatesFromInventory({
   required List<InventoryItemRecord> items,
   Map<int, CatalogItem>? catalogByHash,
+  Map<int, String>? setBonusKeyByItemHash,
 }) {
   final out = <CandidatePiece>[];
   for (final item in items) {
     final slot = armorSlotFromInventoryBucket(item.bucket);
     if (slot == null) continue;
     final cat = catalogByHash?[item.itemHash];
+    final bonus = setBonusKeyByItemHash?[item.itemHash]?.trim();
     out.add(
       CandidatePiece(
         slot: slot,
@@ -77,6 +84,7 @@ List<CandidatePiece> candidatesFromInventory({
         instanceId: item.instanceId,
         itemName: cat?.name,
         isExotic: cat?.isExotic ?? false,
+        setBonusKey: (bonus != null && bonus.isNotEmpty) ? bonus : null,
         statValues: parseArmorStatValues(item.statValues),
       ),
     );

@@ -1,0 +1,21 @@
+{
+  "name": "d2bc-docs-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "engines": {
+    "node": ">=20 <25"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.41.7",
+    "astro": "^7.2.4"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

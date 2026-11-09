@@ -34,6 +34,10 @@
     "product-map:seed-flutter": "npm --prefix web/NextJS run product-map:seed-flutter",
     "product-map:capture-stub": "npm --prefix web/NextJS run product-map:capture-stub",
     "product-map:add-surface": "npm --prefix web/NextJS run product-map:add-surface",
-    "product-map:add-flow": "npm --prefix web/NextJS run product-map:add-flow"
+    "product-map:add-flow": "npm --prefix web/NextJS run product-map:add-flow",
+    "docs:sync": "npm --prefix docs-site run sync",
+    "docs:dev": "npm --prefix docs-site run sync && npm --prefix docs-site run dev",
+    "docs:build": "npm --prefix docs-site run sync && npm --prefix docs-site run build",
+    "docs:preview": "npm --prefix docs-site run preview"
   }
 }

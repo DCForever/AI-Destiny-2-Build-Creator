@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' show Value;
 import 'clock_ids.dart';
 import 'errors.dart';
 import 'mappers.dart';
+import 'optimizer_constraints_json.dart';
 
 /// Set row + items + attachment usage for library detail.
 class SetDetail {
@@ -32,6 +33,8 @@ class CreateSetCommand {
     this.tagIds = const [],
     this.optimizerConstraints,
     this.linkedModSetId,
+    this.guardianClass,
+    this.setBonusGoals = const [],
   });
 
   final String? id;
@@ -40,6 +43,12 @@ class CreateSetCommand {
   final List<String> tagIds;
   final String? optimizerConstraints;
   final String? linkedModSetId;
+
+  /// Armor Set class lock (serialized into optimizer constraints when set).
+  final GuardianClass? guardianClass;
+
+  /// Armor Set hard bonus goals (G-SET-013); validated on create.
+  final List<SetBonusCoverageGoal> setBonusGoals;
 }
 
 /// Partial update for a library set.
@@ -157,6 +166,9 @@ Future<SetDetail?> getSetDetail(
 }
 
 /// Create a user set; throws on duplicate name or invalid name.
+///
+/// Armor Sets may pass [CreateSetCommand.guardianClass] + legal G-SET-013
+/// [CreateSetCommand.setBonusGoals]; goals are validated before persist.
 Future<SetDetail> createUserSet(
   AppDatabase db,
   int userId,
@@ -166,6 +178,17 @@ Future<SetDetail> createUserSet(
 }) async {
   final name = _requireNonEmptyName(command.name);
   final typeWire = command.type.wireName;
+
+  if (command.type == SetType.armor && command.setBonusGoals.isNotEmpty) {
+    final legality = validateSetBonusGoalCombo(command.setBonusGoals);
+    if (!legality.ok) {
+      throw UseCaseException(
+        UseCaseErrorCode.invalidArgument,
+        legality.message ?? 'Illegal set-bonus goal combination',
+        details: {'code': legality.code},
+      );
+    }
+  }
 
   if (await findDuplicateSetName(
     db,
@@ -180,6 +203,19 @@ Future<SetDetail> createUserSet(
     );
   }
 
+  String? constraints = command.optimizerConstraints;
+  if (command.type == SetType.armor &&
+      (command.guardianClass != null || command.setBonusGoals.isNotEmpty)) {
+    final existing = parseOptimizerConstraints(constraints) ??
+        ArmorSetOptimizerConstraints.empty();
+    constraints = serializeOptimizerConstraints(
+      existing.copyWith(
+        className: command.guardianClass,
+        setBonusGoals: command.setBonusGoals,
+      ),
+    );
+  }
+
   final id = command.id ?? newId();
   final ts = now();
   await createSetRecord(
@@ -189,11 +225,69 @@ Future<SetDetail> createUserSet(
     name: name,
     type: typeWire,
     tagIds: command.tagIds,
-    optimizerConstraints: command.optimizerConstraints,
+    optimizerConstraints: constraints,
     linkedModSetId: command.linkedModSetId,
     now: ts,
   );
   return (await getSetDetail(db, userId, id))!;
+}
+
+/// Whether an Armor Set may be saved under package + hard bonus goal gates.
+///
+/// Soft ≥2pc detect never blocks. Under-min occupancy or incomplete hard goals
+/// return false with a reason code for UI banners.
+class ArmorSetSaveGateResult {
+  const ArmorSetSaveGateResult({
+    required this.canSave,
+    this.code,
+    this.message,
+  });
+
+  final bool canSave;
+  final String? code;
+  final String? message;
+}
+
+/// Evaluate Armor Set save readiness (occupancy + hard bonus goals).
+ArmorSetSaveGateResult evaluateArmorSetSaveGate({
+  required int filledPieceCount,
+  required int packageMinimum,
+  List<SetBonusCoverageGoal> goals = const [],
+  Iterable<SetBonusPieceInput> pieces = const [],
+}) {
+  if (filledPieceCount < packageMinimum) {
+    return ArmorSetSaveGateResult(
+      canSave: false,
+      code: DomainFailureCodes.setMinItems,
+      message:
+          'Need at least $packageMinimum pieces (have $filledPieceCount)',
+    );
+  }
+  if (goals.isNotEmpty) {
+    final legality = validateSetBonusGoalCombo(goals);
+    if (!legality.ok) {
+      return ArmorSetSaveGateResult(
+        canSave: false,
+        code: legality.code,
+        message: legality.message,
+      );
+    }
+    if (!satisfiesHardSetBonusGoals(goals: goals, pieces: pieces)) {
+      return const ArmorSetSaveGateResult(
+        canSave: false,
+        code: 'ARMOR_SET_BONUS_INCOMPLETE',
+        message: 'Hard set-bonus goals are not yet met',
+      );
+    }
+    if (!nonExoticPiecesMatchGoalFamilies(goals: goals, pieces: pieces)) {
+      return const ArmorSetSaveGateResult(
+        canSave: false,
+        code: 'ARMOR_SET_BONUS_MISMATCH',
+        message: 'Non-exotic pieces must belong to goal families',
+      );
+    }
+  }
+  return const ArmorSetSaveGateResult(canSave: true);
 }
 
 /// Update a user set; null if not found.

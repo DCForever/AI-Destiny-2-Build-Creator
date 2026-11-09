@@ -1,7 +1,7 @@
 # Domain Business Rules — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-10-31 (DBR-SUB-011 Solipsism is Prismatic-only on the read-only Warlock matrix)  
+**Updated**: 2026-11-08 (DBR-PLT-001–004 offline contrasting-build pilot)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; presentation North Star 2026-07-27; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29** (Domains + Destiny Objects in ProjectTracker vault)
 
@@ -103,6 +103,17 @@ Identity is what makes two loadouts the “same build” vs a different build.
 | DBR-SUB-009 | When aspect change reduces fragment capacity, **trim excess** fragments so the kit stays legal (do not leave a silently illegal kit). |
 | DBR-SUB-010 | Abilities and aspects/fragments must match Build **class + tree**; illegal options are not selectable when known. |
 | DBR-SUB-011 | The Warlock exotic class item **Solipsism** works only on the **Prismatic** subclass. A read-only community-matrix build that pairs Solipsism with any other subclass is **flagged** in the list. The flag does not rewrite the source file, change inventory, or equip gear. |
+
+---
+
+## 5b. Offline contrasting-build pilot
+
+| ID | Rule |
+|----|------|
+| DBR-PLT-001 | The offline pilot keeps each selected source row's original DIM link, Does text, Loop text, Solipsism perk pair, Ergo Sum trait/element/frame, set proposal, blanks, and creator/title. A title is a label. It is not copied into a blank Does or Loop. |
+| DBR-PLT-002 | Unknown perk text (`perk not specified`), a missing element, a blank loop, and disagreements between source rows stay unresolved. The pilot does not invent a default and does not let an optimizer result fill those fields. |
+| DBR-PLT-003 | A pilot row whose exotic is Solipsism and whose stated subclass is not Prismatic is **invalid**. An unstated subclass is not treated as Prismatic. Perk labels that differ (`Spirit of Apotheosis` versus `Apotheosis`) are not aliased. |
+| DBR-PLT-004 | Armor proposals and DIM JSON in the pilot use **synthetic** fixtures. They are labeled synthetic in the UI and in JSON notes. They are not an account-verified loadout. An invalid or unresolved case produces no personal DIM output. Parsing a row or showing a proposal does not write the source file or equip gear. Round-trip of the JSON shape is not DIM acceptance. |
 
 ---
 
@@ -244,8 +255,8 @@ User-authored **roll targets** on Catalog weapon identities. **Not** DBR-ROLL wi
 |----|------|
 | DBR-SETB-001 | Variants show **soft coverage** for active 2pc/4pc and which designated synergies they support. |
 | DBR-SETB-002 | If a designated synergy has a **required** set-bonus link, the **default variant** cannot save until that bonus is satisfied (AND with other required links). Satisfaction uses DBR-SYN-014b (count ≥ link target tier) and DBR-SYN-010a (equip-ready path). |
-| DBR-SETB-003 | An **Armor Set** may declare **zero or one** optional **armor set bonus constraint**: bonus family + target tier (2 or 4). Only Armor Sets may use this constraint. |
-| DBR-SETB-004 | When a constraint is set: every **non-exotic** filled piece must be a **member** of that family; contributing member count must meet the target tier on **save and attach**. |
+| DBR-SETB-003 | An **Armor Set** may declare **zero or a legal multi-goal set-bonus constraint combo** (G-SET-013): **none · 1×2pc · 2×2pc (different families) · 1×4pc** (a 4pc goal includes that family’s 2pc). Only Armor Sets may use this constraint. *(Supersedes singular-family wording 2026-08-10.)* |
+| DBR-SETB-004 | When goals are set: every **non-exotic** filled piece must be a **member** of the **union** of goal families; each goal’s minPieces must be met on **save and attach**. |
 | DBR-SETB-005 | **Exotic armor does not count** toward the contributing tier. Soft-warn when an exotic likely blocks the target. |
 | DBR-SETB-006 | Without a constraint, no family is required on Armor Set save; UI may still show detected 2pc/4pc coverage (soft). |
 | DBR-SETB-007 | Armor Set **constraint** and Synergy `armor_set_bonus` **link** share family+tier vocabulary but are **independent** — setting one does not auto-create the other. |
@@ -352,6 +363,10 @@ Working copy remains the vault; this file is enforceable domain SSoT after re-sy
 ### Solipsism subclass flag 2026-10-31
 
 The read-only Warlock community matrix flags Solipsism builds whose subclass is not Prismatic (DBR-SUB-011). The list loads from a local file and does not write that file.
+
+### Offline contrasting pilot 2026-11-08
+
+Five named community rows can be reviewed offline from a trimmed fixture (DBR-PLT-001–004). The list flag in DBR-SUB-011 is unchanged. The pilot additionally rejects a stated non-Prismatic Solipsism row and refuses to export unresolved rows.
 
 ---
 

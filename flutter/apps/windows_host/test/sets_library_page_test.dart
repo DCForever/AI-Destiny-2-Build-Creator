@@ -48,12 +48,30 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
-/// Expand collapsible create form (BUG-20260726-008).
-Future<void> _expandSetsCreate(WidgetTester tester) async {
-  if (find.byKey(const Key('sets_create_button')).evaluate().isEmpty) {
-    await tester.tap(find.byKey(const Key('sets_create_toggle')));
-    await _pumpFrames(tester);
-  }
+/// Drive stepped create wizard for a non-Armor (weapon) set with [name].
+///
+/// Product path: New set → Type weapon → Continue → Name → Create shell.
+Future<void> _createWeaponSetViaWizard(
+  WidgetTester tester,
+  String name,
+) async {
+  await tester.tap(find.byKey(const Key('sets_library_new')));
+  await _pumpFrames(tester);
+  expect(find.byKey(const Key('sets_create_wizard')), findsOneWidget);
+
+  // Type step: pick weapon
+  await tester.tap(find.byKey(const Key('sets_create_type_weapon')));
+  await _pumpFrames(tester);
+  await tester.tap(find.byKey(const Key('sets_create_continue')));
+  await _pumpFrames(tester);
+
+  // Name (thin shell) step
+  expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
+  await tester.enterText(find.byKey(const Key('sets_create_name')), name);
+  await _pumpFrames(tester);
+  await tester.tap(find.byKey(const Key('sets_create_button')));
+  await tester.pumpAndSettle();
+  await _pumpFrames(tester);
 }
 
 void main() {
@@ -141,11 +159,10 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('sets_list_empty')), findsOneWidget);
+    // Product path: no Quick create rail.
+    expect(find.byKey(const Key('sets_create_toggle')), findsNothing);
 
-    await _expandSetsCreate(tester);
-    await tester.enterText(find.byKey(const Key('sets_create_name')), 'Kinetic Core');
-    await tester.tap(find.byKey(const Key('sets_create_button')));
-    await _pumpFrames(tester);
+    await _createWeaponSetViaWizard(tester, 'Kinetic Core');
 
     expect(find.byKey(const Key('sets_list')), findsOneWidget);
     expect(find.text('Kinetic Core'), findsWidgets);
@@ -163,10 +180,7 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await _expandSetsCreate(tester);
-    await tester.enterText(find.byKey(const Key('sets_create_name')), 'Old Name');
-    await tester.tap(find.byKey(const Key('sets_create_button')));
-    await _pumpFrames(tester);
+    await _createWeaponSetViaWizard(tester, 'Old Name');
 
     await tester.enterText(find.byKey(const Key('sets_edit_name')), 'New Name');
     await tester.tap(find.byKey(const Key('sets_save_name')));
@@ -185,10 +199,7 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await _expandSetsCreate(tester);
-    await tester.enterText(find.byKey(const Key('sets_create_name')), 'Weapons');
-    await tester.tap(find.byKey(const Key('sets_create_button')));
-    await _pumpFrames(tester);
+    await _createWeaponSetViaWizard(tester, 'Weapons');
 
     await tester.tap(find.byKey(const Key('sets_slot_fill_primary')));
     await _pumpFrames(tester);
@@ -220,10 +231,7 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await _expandSetsCreate(tester);
-    await tester.enterText(find.byKey(const Key('sets_create_name')), 'W');
-    await tester.tap(find.byKey(const Key('sets_create_button')));
-    await _pumpFrames(tester);
+    await _createWeaponSetViaWizard(tester, 'W');
 
     await tester.tap(find.byKey(const Key('sets_slot_fill_primary')));
     await _pumpFrames(tester);
@@ -234,7 +242,7 @@ void main() {
     expect(find.byKey(const Key('set_picker_empty')), findsOneWidget);
   });
 
-  // UX rebuild: Sets stripped from shell nav; page tests above still cover SetsLibraryPage.
+  // Sets is mounted on shell nav (Catalog · Sets · Settings); page tests cover SetsLibraryPage.
   testWidgets(
     'US3 Sets nav destination shows library page',
     skip: true,
@@ -257,12 +265,44 @@ void main() {
     await _pumpFrames(tester);
 
     // Create a set so detail appears beside rail
-    await _expandSetsCreate(tester);
-    await tester.enterText(find.byKey(const Key('sets_create_name')), 'Pane');
-    await tester.tap(find.byKey(const Key('sets_create_button')));
-    await _pumpFrames(tester);
+    await _createWeaponSetViaWizard(tester, 'Pane');
 
     expect(find.byKey(const Key('sets_list')), findsOneWidget);
     expect(find.byKey(const Key('sets_detail')), findsOneWidget);
+  });
+
+  test('signed-in hides stale Optimize sign-in banner', () {
+    expect(
+      shouldShowSetsStatusLine(
+        error: null,
+        statusMessage: kSetsOptimizeSignInBanner,
+        isSignedIn: false,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldShowSetsStatusLine(
+        error: null,
+        statusMessage: kSetsOptimizeSignInBanner,
+        isSignedIn: true,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldShowSetsStatusLine(
+        error: 'boom',
+        statusMessage: kSetsOptimizeSignInBanner,
+        isSignedIn: true,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldShowSetsStatusLine(
+        error: null,
+        statusMessage: 'Set deleted',
+        isSignedIn: true,
+      ),
+      isTrue,
+    );
   });
 }

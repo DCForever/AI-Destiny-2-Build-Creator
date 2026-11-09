@@ -116,7 +116,7 @@ class _InventorySyncCardState extends State<InventorySyncCard> {
                 const SizedBox(height: 8),
                 Text(
                   'Local copies: ${c.itemCount}'
-                  '${c.lastFullSyncAt != null ? ' · last sync ${c.lastFullSyncAt}' : ''}',
+                  '${c.lastFullSyncAt != null ? ' · last sync ${formatLastSyncLabel(lastFullSyncAt: c.lastFullSyncAt)}' : ''}',
                   key: const Key('inventory_sync_local_only_meta'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

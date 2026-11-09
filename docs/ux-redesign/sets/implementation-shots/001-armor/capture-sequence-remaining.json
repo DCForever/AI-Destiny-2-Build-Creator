@@ -1,0 +1,7 @@
+[
+  { "tapKey": "capture_scenario_desktop-optimize-confirm", "shot": "desktop-optimize-confirm" },
+  { "tapKey": "capture_scenario_desktop-delete-set-in-use", "shot": "desktop-delete-set-in-use" },
+  { "tapKey": "capture_scenario_desktop-tags-blocked", "shot": "desktop-tags-blocked" },
+  { "tapKey": "capture_scenario_desktop-need-sync", "shot": "desktop-need-sync" },
+  { "tapKey": "capture_scenario_desktop-non-armor-thin", "shot": "desktop-non-armor-thin" }
+]

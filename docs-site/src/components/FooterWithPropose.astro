@@ -1,0 +1,21 @@
+---
+import Default from "@astrojs/starlight/components/Footer.astro";
+
+const repo = "DCForever/AI-Destiny-2-Build-Creator";
+const page = Astro.url.pathname;
+const title = encodeURIComponent(`[docs-cr] ${page}`);
+const ghForm = `https://github.com/${repo}/issues/new?template=docs-cr.yml&title=${title}`;
+---
+
+<div class="propose-bar">
+  <strong>Review</strong>
+  <a href={ghForm}>Propose a change (GitHub)</a>
+  <span>
+    PRD meaning also belongs in Obsidian as <code>CR-YYYYMMDD-###</code> (vault
+    <code>Change Requests/</code>). Do not edit generated <code>prd/</code> pages
+    by hand.
+  </span>
+</div>
+<Default>
+  <slot />
+</Default>

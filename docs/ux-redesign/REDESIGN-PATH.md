@@ -63,7 +63,7 @@ Rebuild **one primary area at a time**. Order balances dependency (auth → brow
 | **0** | **Shell** (nav, theme, signed-out gates) | **partial** — Settings-only baseline + Catalog/Settings reachability | Shared frame for every area | Stable primary nav + auth indicator; no fake private data |
 | **1** | **Settings** | **partial** — OAuth, manifest/entity refresh, inventory sync | Unblocks Owned Catalog and compose | Sign-in, refresh, sync CTAs honest; empty states actionable |
 | **2** | **Catalog** | **active** — Weapons deep; Armor/Universal not redesigned | Composition aid with densest Destiny chrome; reused by fill pickers | See §4 Catalog path — all planned Catalog phases or explicit re-scope |
-| **3** | **Sets** | **planned** | Library + fill-slot depends on Catalog pick patterns | Board, fill, base-roll honesty, attach gates usable under Neon/Flap |
+| **3** | **Sets** | **Armor MVP landed** (structure + Capture 2026-08-10) — residual host cutover open | Library + optimize/compare fill | brief [`sets/001-armor-brief.md`](./sets/001-armor-brief.md) · report [`sets/001-armor-implement-report.md`](./sets/001-armor-implement-report.md) · shots `sets/implementation-shots/001-armor/` |
 | **4** | **Synergy** | **planned** | Library + reverse tags on Catalog targets | Create/edit/link lifecycle; no Catalog-local fork |
 | **5** | **Build** | **planned** | **Primary product spine** (DBR-PUR-002) | Identity, variant areas, soft guidance, finish — composition-first |
 | **6** | **Loadouts** | **planned** | Export / equip-adjacent supporting surface | DIM export honesty; no vault-as-home |
@@ -71,13 +71,13 @@ Rebuild **one primary area at a time**. Order balances dependency (auth → brow
 
 **Shell polish** may run as small `area-ux-component` slices any time (nav labels, gates) without jumping the area queue.
 
-**Do not** start Sets/Synergy/Build full redesign while Catalog is still the active deep area, unless Catalog is explicitly paused and the path pointer is updated.
+**Do not** start Sets/Synergy/Build **full implement redesign** while Catalog is the only active deep area, unless Catalog is paused or the path pointer allows parallel work. **Sets domain grill + planning** may run in parallel with small Catalog residuals (see §6 Sets update plan).
 
 ---
 
 ## 4. Catalog path (modes and sub-slices)
 
-Catalog is the **active deep redesign**. Modes are sequential; **weapons residual work is not “done enough” to start Armor** until Phase C exit is met (or human overrides this path).
+Catalog is the **active deep redesign**. Modes are sequential; weapons stay open only until the **Weapons exit gate** is met (or the human parks weapons and advances).
 
 ### 4.1 Catalog phase board
 
@@ -88,41 +88,42 @@ Catalog is the **active deep redesign**. Modes are sequential; **weapons residua
 | **C2** | Weapons residuals / dual-truth | Meta, origin, equal-width perks, enhanced, catalyst honesty | **done** → residual follow-ups | `001-full`, `001-residual-polish` |
 | **C3** | Weapons browse chrome | Family cards, group collapse, sort priority, type icons | **done** (dual-truth closed for browse gaps) | `001-browse-chrome` |
 | **C4** | Weapon instance strip | Power chips, multi-copy honesty | **landed** / residual polish as needed | `002-weapon-instance-strip` |
-| **C5** | Weapon roll targets | Preferred + avoid, rank owned, exotic excluded | **landed** / chrome polish active | `003-catalog-roll-targets` · vault [[UX Catalog — Weapon Roll Targets]] |
-| **C6** | **Weapons finish queue** | Residual bugs + optional weapons features | **active** | Vault [[UX Catalog — Weapons]] residuals · uncommitted polish · open dual-truth (e.g. craft ON) |
-| **C7** | Catalog system-paired UX | Nested group chrome, entity 1+3 desc (after DART-072 / DART-071) | **active interleave** — nested group UX brief locked (005); entity-desc still after DART-071 | `UX-CATALOG-NESTED-GROUP` · `005-catalog-nested-groupby-brief.md`; `UX-CATALOG-ENTITY-DESC` pending |
-| **C8** | **Armor redesign** | Armor grid + detail (stats labeled base/live, energy, mods, set bonus, exotic) | **blocked on C6 exit** | No brief/mockups yet · product [[Destiny Armor]] |
+| **C5** | Weapon roll targets | Preferred + avoid, rank owned, exotic excluded | **landed** / residual dual-truth optional | `003-catalog-roll-targets` · vault [[UX Catalog — Weapon Roll Targets]] |
+| **C6** | **Weapons finish queue** | Residual bugs + optional weapons features | **exited** (2026-08-08 human) | Parked residuals below · not blocking C8 |
+| **C7** | Catalog system-paired UX | Nested group chrome, entity 1+3 desc (after DART-072 / DART-071) | **partial landed** — chrome on main; Capture dual-truth optional later | `UX-CATALOG-NESTED-GROUP` · entity-desc residual |
+| **C8** | **Armor redesign** | Armor grid + detail (stats labeled base/live, energy, mods, set bonus, exotic) | **landed** (structure + Capture 2026-08-08/09) | brief `001-armor` · shots `implementation-shots/001-armor/` · residuals: set-bonus host map, class/slot icons |
 | **C9** | **Universal redesign** | Mixed-kind search + shared-lifecycle Set/Synergy CTAs (BR-CAT-009*) | **later** | Keep live CTAs; do not stub regress |
 | **C10** | Constrained pick embed | Set/Build fill locks (slot, class, exotic, set type) | **later** | Shared pick chrome; hard domain rules |
 | **C11** | Live Set/Synergy outbound | Replace weapons disabled stubs with shared lifecycles | **later** | After Sets/Synergy area chrome exists **or** thin wire to existing host flows |
 | **C12** | Mobile Catalog push | Single-pane detail push | **deferred** | Not a Windows exit gate |
 
-### 4.2 Phase C6 — Weapons finish (current)
+### 4.2 Phase C6 — Weapons finish (**exited** 2026-08-08)
 
-Stay here until the **Weapons exit gate** is met.
-
-**In scope while active**
-
-- Dual-truth residuals (`DUAL-TRUTH-GAPS.md`, `implementation-shots/*/COMPARE.md`)
-- Vault residual / bug rows on [[UX Catalog — Weapons]]
-- Roll-target chrome polish (003 follow-through)
-- Optional: saved filter collections — **system landed** (`74ce3e4`); UX mockups **approved** (`004-catalog-filter-collections`); next **area-implement** filter-band chrome
-- Optional interleave: C7 after system APIs land
-
-**Out of scope while C6 is open**
-
-- Full **Armor** `area-ux-redesign` (C8)
-- Universal redesign (C9)
-- Treating host armor mode as “redesigned” without C8
+Human decision: **done with weapons for now** → leave weapons track; open **C8 Armor**.
 
 **Weapons exit gate (C6 → C8)**
 
-- [ ] Human agrees weapons chrome is good enough to leave the weapons track
-- [ ] Blocking dual-truth gaps for weapons closed or explicitly deferred non-blocking
-- [ ] Uncommitted weapons polish landed or parked with a clear residual list
-- [ ] Vault Weapons residual table updated; open rows either fixed, deferred with owner, or moved to a named next weapons component slice
-- [ ] This path’s **Current pointer** set to C8 (or C7 if system-paired UX is next)
+- [x] Human agrees weapons chrome is good enough to leave the weapons track (2026-08-08)
+- [x] Blocking dual-truth gaps for weapons closed or **explicitly deferred non-blocking** (parked list)
+- [x] Uncommitted weapons polish landed or **parked** with a clear residual list (below)
+- [ ] Vault Weapons residual table — update when vault is next open (non-blocking for C8)
+- [x] This path’s **Current pointer** set to **C8**
 
+**Parked weapons residuals** (do **not** block Armor; resume only if human re-opens weapons)
+
+| Residual | Where | Note |
+| --- | --- | --- |
+| Craft ON / dual-truth Capture polish | `DUAL-TRUTH-GAPS.md`, vault Weapons | Deferred non-blocking |
+| Filter collections Capture dual-truth | `004-*` shots | Chrome landed; Capture optional |
+| Nested group / entity-desc Capture | GAP-UI-CATALOG-11 / DESC-01 partial | System + chrome landed; dual-truth optional |
+| Roll-target residual polish | GAP-UI-ROLL-01 partial | Functional; dual-truth optional |
+| **GAP-PERF-01/02** host (debounce, tree memo, scroll-spy) | Working tree / uncommitted | Land commit when convenient; not Armor gate |
+| **GAP-PERF-03–06** | feature-gaps ledger | Separate performance backlog |
+
+**Out of scope until C8 armor exit**
+
+- Treating host armor mode as “redesigned” without C8 brief → implement → Capture
+- Universal redesign (C9)
 **Armor exit gate (C8 → C9)** — summary; detail in future armor brief
 
 - Armor identity grid (no list-row stats v1) + detail with stats/energy/mods/set bonus/exotic callout
@@ -165,13 +166,16 @@ Update [feature-gaps current pointer](../multiplatform-dart-feature-gaps.md#curr
 | Field | Value |
 | --- | --- |
 | **Active area** | Catalog |
-| **Active Catalog phase** | **C6 — Weapons finish queue** + **C7 interleave** nested group UX (005 brief locked → area-implement) |
-| **Do not start yet** | C8 Armor full redesign; C9 Universal redesign |
-| **Landed (C6 component)** | **CatalogFilterCollections** — system + chrome on main; Capture dual-truth optional |
-| **Landed / landing (C6–C7)** | EntityInfoHotspot + CatalogNestedGroupBy (worktree merge to main) |
-| **Next full redesign slice** | **C8 Armor** (after C6 exit), unless human inserts more C7 first |
-| **Open weapons residual board** | Vault `UX/UX Catalog — Weapons.md` · repo `DUAL-TRUTH-GAPS.md` · residual polish |
-| **Next area after Catalog** | Sets (phase 3) |
+| **Active Catalog phase** | **C8 Armor landed** · next Catalog full mode **C9 Universal** (when scheduled) |
+| **Exited** | **C6 Weapons** · **C8 Armor** structure+Capture MVP (2026-08-08/09) · C7 chrome partial |
+| **Do not start yet** | C10 constrained pick embeds (after Universal or explicit re-scope) |
+| **Landed (Catalog)** | Weapons track + Armor C8 (grid/detail/honesty/Capture must-rows); filter collections / nested group / entity hotspot |
+| **Next full redesign slice** | **C9 Universal** — or residual Armor polish (set-bonus map, official class/slot icons) |
+| **Armor residual plan** | Group-by + highest-stat rank: [`catalog/006-catalog-armor-groupby-plan.md`](./catalog/006-catalog-armor-groupby-plan.md) (planned; not brief-locked) |
+| **Parked weapons board** | §4.2 parked table · vault `UX/UX Catalog — Weapons.md` · `DUAL-TRUTH-GAPS.md` |
+| **Performance backlog** | GAP-PERF-01/02 partial · **03–06** open — not cutover |
+| **Next area after Catalog** | **Sets** (phase 3) — **planning now** (parallel Catalog residual OK) |
+| **Sets Armor MVP** | **Landed** 2026-08-10 + library pass 1 · **RES-SET-CREATE-01** stepped create wizard dual-truth closed (structure + Capture) · remaining: owned inventory fill, Optimize primary shell, ChoiceChip vs choice-grid visual polish · reports [`sets/001-armor-implement-report.md`](./sets/001-armor-implement-report.md), [`sets/002-create-wizard-implement-report.md`](./sets/002-create-wizard-implement-report.md) |
 
 ---
 

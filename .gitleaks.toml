@@ -1,0 +1,12 @@
+title = "AI Destiny 2 Build Creator"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "generic-api-key FP in PRD prose"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^docs-site/src/content/docs/prd/area-build\.md$''']
+regexTarget = "match"
+regexes = ['''Catalog/Sets/Synergy''']

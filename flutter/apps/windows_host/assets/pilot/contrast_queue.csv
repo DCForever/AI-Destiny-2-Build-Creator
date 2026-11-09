@@ -1,0 +1,50 @@
+type,exotic,subclass_or_combo,build_name,creator,season,date,original_dim_link,armor_set_proposal,personal_dim_link,dim_name,dim_notes
+armor,Dawn Chorus,solar,Witness dps,zirak,Monument of Triumph - S28,2026-10-24,https://dim.gg/fprkvvy/Witness-dps,4pc Seventh Seraph,, Dawn Chorus + One Thousand Voices,"Does: 
+Loop: 
+Uses: 󰄙 Dawn Chorus, One Thousand Voices, 󰅓 Well of Radiance,  Healing Grenade,  Celestial Fire
+Set: 4pc Seventh Seraph (proposal)
+Best for: Solo
+Source: zirak — Witness dps
+#solar #helmet #solo"
+armor,Solipsism,prismatic,Kahoona's HexBugs N Supers!,KahoonaBahoona,Monument of Triumph - S28,2026-10-24,https://dim.gg/lxggu2a/Kahoona's-HexBugs-N-Supers!,4pc CODA,,󰅖 Solipsism Apoth/Harm · Supers,"Does: Prismatic Solipsism super-spam build built on the Apotheosis + Harmony class item.
+Loop: Harmony gives super energy on kills, Elemental Supercharger tops it off, and you cast your super again.
+Uses: 󰅓 Song of Flame, 󰄊 Phoenix Dive,  Incinerator Snap,  Threadling Grenade, 󰄉 Solipsism (Spirit of Apotheosis + Spirit of Harmony)
+Set: 4pc CODA (proposal)
+Best for: 
+Source: KahoonaBahoona — HexBugs N Supers!
+#prismatic #classitem"
+weapon:One Thousand Voices,Dawn Chorus,solar,Witness dps,zirak,S28,2026-10-24,https://dim.gg/fprkvvy,4pc Iron Battalion Set,, Dawn Chorus + One Thousand Voices,"Does: 
+Loop: 
+Uses: One Thousand Voices, 󰄙 Dawn Chorus, Uncivil Discourse, Vulpecula, 󰅓 Well of Radiance
+Set: 4pc Iron Battalion Set (proposal)
+Best for: Solo
+Source: zirak — Witness dps
+#solar #heavy #helmet #solo"
+weapon:Ergo Sum,Eunoia,solar,My favourite Warlock  Ignition Build by debs,Debs Vault,S28,2026-07-30,https://dim.gg/thxdq4y,no strong fit,, Eunoia + Ergo (Perfect) · Ignitions,"Does: Solar build with infinite ignitions using Skyburner's Oath.
+Loop: Scorch targets to get your class ability back quickly and keep causing ignitions.
+Uses: Eunoia, Sullen Claw, Forced Memorializer, 󰅓 Song of Flame, Ergo Sum (trait: Perfect Fifth, perk2: Caster Frame)
+Set: 
+Best for: 
+Source: Debs Vault — My favourite Warlock Ignition Build by debs
+#solar #energy #arms"
+weapon:Salvation's Grip,Solipsism,solar,Solar,Suutekk,old,2025-05-30,https://dim.gg/he6yssi,no strong fit,, Solipsism + Salvation's Grip,"Does: 
+Loop: 
+Uses: Salvation's Grip, Solipsism, Truthteller, The Mountaintop, 󰅓 Well of Radiance
+Set: 
+Best for: 
+Source: Suutekk — Solar
+#solar #heavy #classitem"
+weapon:Ergo Sum,Starfire Protocol,solar,Gambit,Tipsy,old,2025-05-18,https://dim.gg/qpoh7hy,4pc Seventh Seraph,, Starfire Protocol + Ergo Sum,"Does: 
+Loop: 
+Uses: 󰄇 Starfire Protocol, The Slammer (Adept), The Mountaintop, 󰅓 Well of Radiance
+Set: 4pc Seventh Seraph (proposal)
+Best for: GM, Raid, Dungeon
+Source: Tipsy — Gambit
+#solar #energy #chest #gm #raid #dungeon"
+solipsism combo,Solipsism,Apotheosis + Harmony,Kahoona's HexBugs N Supers!,KahoonaBahoona,,,https://dim.gg/lxggu2a/Kahoona's-HexBugs-N-Supers!,no strong fit,,󰅖 Solipsism Apoth/Harm · Supers,"Does: Prismatic Solipsism super-spam build built on the Apotheosis + Harmony class item.
+Loop: Harmony gives super energy on kills, Elemental Supercharger tops it off, and you cast your super again.
+Uses: 󰅓 Song of Flame, 󰄊 Phoenix Dive,  Incinerator Snap,  Threadling Grenade, 󰄉 Solipsism (Spirit of Apotheosis + Spirit of Harmony)
+Set: 
+Best for: 
+Source: KahoonaBahoona — HexBugs N Supers!
+#prismatic #classitem"

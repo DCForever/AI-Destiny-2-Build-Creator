@@ -2,7 +2,7 @@
 
 Reusable process for rebuilding Flutter product areas one at a time after the **Settings-only** shell baseline.
 
-Design system (`packages/ui_tokens`, `packages/ui_flutter`) stays. Product intent comes from ProjectTracker vault notes + repo DBR/DAC/BR + product-map.
+Design system (`packages/ui_tokens`, `packages/ui_flutter`) stays. Product intent comes from ProjectTracker vault **PRDs** (Domain/Area notes) + repo DBR/DAC/BR + product-map. Docs map: [`../README.md`](../README.md).
 
 ## Lane: UI/UX (not Spec Kit)
 
@@ -33,7 +33,7 @@ That file owns:
 
 Vault narrative: ProjectTracker `UX/UX Redesign Path.md` · Catalog board `UX/UX Catalog.md`.
 
-Do **not** open Armor (or another area) as the next full redesign while the path still says Catalog **C6 — Weapons finish** is active.
+**Current pointer:** Catalog **C8 — Armor redesign** (C6 weapons exited 2026-08-08). See [REDESIGN-PATH.md](./REDESIGN-PATH.md) §6.
 
 ## Loop (closed)
 

@@ -1,16 +1,6 @@
 import 'solipsism_flag.dart';
 import 'warlock_matrix_build.dart';
 
-/// Subclass buckets that hold builds.
-const Set<String> warlockMatrixSubclassKeys = <String>{
-  'arc',
-  'prismatic',
-  'solar',
-  'stasis',
-  'strand',
-  'void',
-};
-
 /// Parses a decoded matrix object into read-only build rows.
 ///
 /// Includes exotic-armor `builds` and `overflow_builds`, weapon-cell lists, and
@@ -97,11 +87,12 @@ void _appendComboList(
 
 String _comboSubclass(Map<dynamic, dynamic> item) {
   final raw = item['subclass'];
-  if (raw is String) {
-    final key = raw.trim().toLowerCase();
-    if (warlockMatrixSubclassKeys.contains(key)) return key;
-  }
-  return prismaticSubclassKey;
+  if (raw is! String) return '';
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return '';
+  final key = trimmed.toLowerCase();
+  if (warlockMatrixSubclassKeys.contains(key)) return key;
+  return trimmed;
 }
 
 void _appendSubclass(

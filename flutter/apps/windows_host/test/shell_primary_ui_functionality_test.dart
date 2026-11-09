@@ -244,18 +244,22 @@ void main() {
   });
 
   group('shell.nav primary destinations', () {
-    test('navLabels are Catalog, Warlocks, and Settings', () {
-      expect(
-        Destiny2WindowsApp.navLabels,
-        ['Catalog', 'Warlocks', 'Settings'],
-      );
+    test('navLabels are Catalog, Sets, Warlocks, and Settings', () {
+      expect(Destiny2WindowsApp.navLabels, [
+        'Catalog',
+        'Sets',
+        'Warlocks',
+        'Settings',
+      ]);
       expect(Destiny2WindowsApp.catalogNavIndex, 0);
-      expect(Destiny2WindowsApp.warlockBuildsNavIndex, 1);
-      expect(Destiny2WindowsApp.settingsNavIndex, 2);
+      expect(Destiny2WindowsApp.setsNavIndex, 1);
+      expect(Destiny2WindowsApp.warlockBuildsNavIndex, 2);
+      expect(Destiny2WindowsApp.settingsNavIndex, 3);
     });
 
-    testWidgets('rail mounts Catalog, Warlocks, and Settings',
-        (tester) async {
+    testWidgets('rail mounts Catalog, Sets, Warlocks, and Settings', (
+      tester,
+    ) async {
       await _surface(tester);
       await tester.pumpWidget(Destiny2WindowsApp(services: services));
       await _pump(tester);
@@ -267,6 +271,10 @@ void main() {
 
       expect(
         find.byKey(const Key('catalog_page'), skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('sets_library_page'), skipOffstage: false),
         findsOneWidget,
       );
       expect(
@@ -584,77 +592,73 @@ void main() {
     });
   });
 
-  group('sets primary create/list/detail (shell-mounted)',
-      skip: true, () {
-    testWidgets('create set shows detail type and empty slots', (tester) async {
+  group('sets primary create/list/detail (shell-mounted)', () {
+    testWidgets('weapon set shows non-armor thin detail', (tester) async {
       await _surface(tester);
       await tester.pumpWidget(Destiny2WindowsApp(services: services));
       await _pump(tester);
-      await _selectNav(tester, 3);
+      await _selectNav(tester, Destiny2WindowsApp.setsNavIndex);
 
-      expect(find.byKey(const Key('sets_search')), findsOneWidget);
+      // Product search is sets_library_search; sets_search is Offstage compat alias.
+      expect(
+        find.byKey(const Key('sets_library_search')).evaluate().isNotEmpty ||
+            find
+                .byKey(const Key('sets_search'), skipOffstage: false)
+                .evaluate()
+                .isNotEmpty,
+        isTrue,
+      );
       expect(find.byKey(const Key('sets_type_filters')), findsOneWidget);
       expect(find.byKey(const Key('sets_type_chip_all')), findsOneWidget);
       expect(find.byKey(const Key('sets_list_empty')), findsOneWidget);
 
-      if (find.byKey(const Key('sets_create_button')).evaluate().isEmpty) {
-        await tester.tap(find.byKey(const Key('sets_create_toggle')));
-        await _pump(tester);
-      }
-      expect(find.byKey(const Key('sets_create_button')), findsOneWidget);
-      expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
+      // Product path: New set stepped wizard (no Quick create rail).
+      expect(find.byKey(const Key('sets_create_toggle')), findsNothing);
+      await tester.tap(find.byKey(const Key('sets_library_new')));
+      await _pump(tester);
+      expect(find.byKey(const Key('sets_create_wizard')), findsOneWidget);
       expect(find.byKey(const Key('sets_create_type')), findsOneWidget);
 
+      await tester.tap(find.byKey(const Key('sets_create_type_weapon')));
+      await _pump(tester);
+      await tester.tap(find.byKey(const Key('sets_create_continue')));
+      await _pump(tester);
+
+      expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('sets_create_name')),
         'Shell Kinetic Set',
       );
       await tester.tap(find.byKey(const Key('sets_create_button')));
-      await _pump(tester);
+      // Dialog route + async create — pump frames (avoid pumpAndSettle infinite anim).
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
 
       expect(find.byKey(const Key('sets_list')), findsOneWidget);
       expect(find.text('Shell Kinetic Set'), findsWidgets);
       expect(find.byKey(const Key('sets_detail')), findsOneWidget);
-      expect(find.byKey(const Key('sets_detail_type')), findsOneWidget);
-      expect(find.byKey(const Key('sets_edit_name')), findsOneWidget);
-      expect(find.byKey(const Key('sets_save_name')), findsOneWidget);
-      expect(find.byKey(const Key('sets_readiness_strip')), findsOneWidget);
-      expect(find.byKey(const Key('sets_slot_empty_primary')), findsOneWidget);
-      expect(find.byKey(const Key('sets_slot_fill_primary')), findsOneWidget);
-
-      // Fill primary from catalog picker (offline fixtures).
-      await tester.tap(find.byKey(const Key('sets_slot_fill_primary')));
-      await _pump(tester);
-      expect(find.byKey(const Key('set_catalog_picker')), findsOneWidget);
-      final pick = find.byKey(const Key('set_picker_item_101'));
-      if (pick.evaluate().isNotEmpty) {
-        await tester.tap(pick);
-        await _pump(tester);
-        final confirm = find.byKey(const Key('set_picker_confirm'));
-        final confirmWish =
-            find.byKey(const Key('set_picker_confirm_wishlist'));
-        if (confirm.evaluate().isNotEmpty) {
-          await tester.tap(confirm);
-          await _pump(tester);
-        } else if (confirmWish.evaluate().isNotEmpty) {
-          await tester.tap(confirmWish);
-          await _pump(tester);
-        }
-        expect(
-          find.byKey(const Key('sets_slot_filled_primary')).evaluate().isNotEmpty ||
-              find.byKey(const Key('sets_slot_empty_primary')).evaluate().isNotEmpty,
-          isTrue,
-          reason: 'slot should fill or remain empty with status',
-        );
-      } else {
-        // Catalog picker empty for weapons set type without matching fixtures.
-        expect(
-          find.byKey(const Key('set_picker_empty')).evaluate().isNotEmpty ||
-              find.byKey(const Key('set_picker_list')).evaluate().isNotEmpty,
-          isTrue,
-          reason: 'ISSUE-SET-PICKER: no items and no empty state in set picker',
-        );
-      }
+      // Weapon sets use the non-armor thin shell, not the armor board.
+      expect(
+        find.byKey(const Key('sets_non_armor_thin_detail')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('sets_non_armor_name')), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(const Key('sets_non_armor_type'))).data,
+        contains('weapon'),
+      );
+      expect(find.byKey(const Key('sets_non_armor_pieces')), findsOneWidget);
+      expect(
+        find.byKey(const Key('sets_non_armor_scope_note')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('sets_non_armor_delete')), findsOneWidget);
+      expect(find.byKey(const Key('sets_detail_type')), findsNothing);
+      expect(find.byKey(const Key('sets_edit_name')), findsNothing);
+      expect(find.byKey(const Key('sets_slot_empty_primary')), findsNothing);
+      expect(find.byKey(const Key('sets_slot_fill_primary')), findsNothing);
+      expect(find.byKey(const Key('sets_armor_board')), findsNothing);
     });
   });
 

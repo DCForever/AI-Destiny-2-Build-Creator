@@ -4,13 +4,29 @@ const String solipsismExoticName = 'Solipsism';
 /// Subclass key used by the community matrix for Prismatic.
 const String prismaticSubclassKey = 'prismatic';
 
-/// True when [exoticName] is Solipsism and [subclassKey] is not Prismatic.
+/// Subclass keys the matrix treats as known.
+const Set<String> warlockMatrixSubclassKeys = <String>{
+  'arc',
+  'prismatic',
+  'solar',
+  'stasis',
+  'strand',
+  'void',
+};
+
+/// True only for a recognized subclass key, compared case-insensitively.
+bool isKnownWarlockSubclass(String subclassKey) {
+  return warlockMatrixSubclassKeys.contains(subclassKey.trim().toLowerCase());
+}
+
+/// True when Solipsism is paired with a known subclass other than Prismatic.
 ///
-/// Comparison is case-insensitive. Empty strings are not a match.
+/// An empty or unrecognized subclass is not this mismatch.
 bool isSolipsismNotPrismatic({
   required String exoticName,
   required String subclassKey,
 }) {
+  if (!isKnownWarlockSubclass(subclassKey)) return false;
   if (!_sameName(exoticName, solipsismExoticName)) return false;
   return !_sameName(subclassKey, prismaticSubclassKey);
 }

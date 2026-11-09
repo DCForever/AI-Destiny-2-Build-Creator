@@ -1,0 +1,134 @@
+{
+  "pilot_fixture": "trimmed contrasting rows only",
+  "exotics": {
+    "Solipsism": {
+      "prismatic": {
+        "status": "builds",
+        "builds": [
+          {
+            "name": "Kahoona's HexBugs N Supers!",
+            "dim": "https://dim.gg/lxggu2a/Kahoona's-HexBugs-N-Supers!",
+            "builders": "https://builders.gg/destiny/dim-builds/lxggu2a/kahoona-s-hexbugs-n-supers",
+            "youtube": "https://www.youtube.com/watch?v=FCy5reThTVo",
+            "creator": "KahoonaBahoona",
+            "date": "2026-10-24",
+            "season": "Monument of Triumph - S28",
+            "note": "Uses Song of Flame, Phoenix Dive, Incinerator Snap, Threadling Grenade",
+            "old": false,
+            "class_item_perk1": "Spirit of Apotheosis",
+            "class_item_perk2": "Spirit of Harmony",
+            "enrich_source": "transcript 00:01:23 \"Exotic armor is the class item with Spirit of Apotheosis ... and Spirit of Harmony\" (transcript: /home/box/shared/mario/transcripts/FCy5reThTVo.txt)",
+            "armor_set_proposal": "4pc CODA",
+            "armor_set_reason": "Between Poles + So Very Thin: Final blows with Light weapons grants additional grenade energy. Final blows with Dark or Kinetic weapons gran (fits grenade, light_dark, melee)",
+            "dim_name": "󰅖 Solipsism Apoth/Harm · Supers",
+            "dim_notes": "Does: Prismatic Solipsism super-spam build built on the Apotheosis + Harmony class item.\nLoop: Harmony gives super energy on kills, Elemental Supercharger tops it off, and you cast your super again.\nUses: 󰅓 Song of Flame, 󰄊 Phoenix Dive,  Incinerator Snap,  Threadling Grenade, 󰄉 Solipsism (Spirit of Apotheosis + Spirit of Harmony)\nSet: \nBest for: \nSource: KahoonaBahoona — HexBugs N Supers!\n#prismatic #classitem",
+            "does": "Prismatic Solipsism super-spam build built on the Apotheosis + Harmony class item.",
+            "loop": "Harmony gives super energy on kills, Elemental Supercharger tops it off, and you cast your super again."
+          }
+        ]
+      },
+      "combos": {
+        "combos": {
+          "Apotheosis + Harmony": {
+            "builds": [
+              {
+                "combo": [
+                  "Apotheosis",
+                  "Harmony"
+                ],
+                "subclass": "Prismatic",
+                "name": "Kahoona's HexBugs N Supers!",
+                "creator": "KahoonaBahoona",
+                "youtube": "https://www.youtube.com/watch?v=FCy5reThTVo",
+                "dim": "https://dim.gg/lxggu2a/Kahoona's-HexBugs-N-Supers!",
+                "evidence_source": "transcript",
+                "evidence": [
+                  "transcript 00:01:23"
+                ],
+                "source": "warlock-matrix.json seed (builders.gg)",
+                "armor_set_proposal": "no strong fit",
+                "armor_set_reason": "No set bonus lines up with this build's super/transcend focus beyond generic stats; leave armor to stats/tuning."
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Dawn Chorus": {
+      "solar": {
+        "status": "builds",
+        "builds": [
+          {
+            "name": "Witness dps",
+            "dim": "https://dim.gg/fprkvvy/Witness-dps",
+            "builders": "https://builders.gg/destiny/dim-builds/fprkvvy/witness-dps",
+            "youtube": "https://www.youtube.com/watch?v=XlamnpcuvbM",
+            "creator": "zirak",
+            "date": "2026-10-24",
+            "season": "Monument of Triumph - S28",
+            "note": "Uses One Thousand Voices, Well of Radiance, Healing Grenade, Celestial Fire",
+            "old": false,
+            "armor_set_proposal": "4pc Seventh Seraph",
+            "armor_set_reason": "Rasputin's Wrath + Rasputin's Reprisal: While you have Warmind Charges, defeating powerful combatants, destroying a construct, or destroying a Tangle  (fits boss, grenade, healing, solar)",
+            "dim_name": " Dawn Chorus + One Thousand Voices",
+            "dim_notes": "Does: \nLoop: \nUses: 󰄙 Dawn Chorus, One Thousand Voices, 󰅓 Well of Radiance,  Healing Grenade,  Celestial Fire\nSet: 4pc Seventh Seraph (proposal)\nBest for: Solo\nSource: zirak — Witness dps\n#solar #helmet #solo",
+            "does": "",
+            "loop": ""
+          }
+        ]
+      }
+    }
+  },
+  "weapons": {
+    "cells": {
+      "Ergo Sum": {
+        "solar": [
+          {
+            "id": "thxdq4y",
+            "name": "My favourite Warlock  Ignition Build by debs",
+            "dim": "https://dim.gg/thxdq4y",
+            "youtube": "https://www.youtube.com/watch?v=BJmnY4GY5XE",
+            "date": "2026-07-30",
+            "season": "S28",
+            "builders": "https://builders.gg/destiny/dim-builds/thxdq4y",
+            "creator": "Debs Vault",
+            "note": "Uses Eunoia, Sullen Claw, Forced Memorializer, Song of Flame",
+            "reddit": null,
+            "ergo_trait": "Perfect Fifth",
+            "ergo_element": "perk not specified",
+            "ergo_perk2": "Caster Frame",
+            "enrich_source": "transcript 00:04:29 \"Caster frame, the perfect fifth, every hit five hits\"; 00:19:39 \"using Ego Sum with perfect fifth\" (transcript: /home/box/shared/mario/transcripts/BJmnY4GY5XE.txt)",
+            "armor_set_proposal": "no strong fit",
+            "armor_set_reason": "No set bonus lines up with this build's solar/super focus beyond generic stats; leave armor to stats/tuning.",
+            "dim_name": " Eunoia + Ergo (Perfect) · Ignitions",
+            "dim_notes": "Does: Solar build with infinite ignitions using Skyburner's Oath.\nLoop: Scorch targets to get your class ability back quickly and keep causing ignitions.\nUses: Eunoia, Sullen Claw, Forced Memorializer, 󰅓 Song of Flame, Ergo Sum (trait: Perfect Fifth, perk2: Caster Frame)\nSet: \nBest for: \nSource: Debs Vault — My favourite Warlock Ignition Build by debs\n#solar #energy #arms",
+            "does": "Solar build with infinite ignitions using Skyburner's Oath.",
+            "loop": "Scorch targets to get your class ability back quickly and keep causing ignitions."
+          },
+          {
+            "id": "qpoh7hy",
+            "name": "Gambit",
+            "dim": "https://dim.gg/qpoh7hy",
+            "youtube": "https://www.youtube.com/watch?v=s0jurM-rDP0",
+            "date": "2025-05-18",
+            "season": "old",
+            "builders": "https://builders.gg/destiny/dim-builds/qpoh7hy",
+            "creator": "Tipsy",
+            "note": "Uses Starfire Protocol, The Slammer (Adept), The Mountaintop, Well of Radiance",
+            "reddit": null,
+            "ergo_trait": "perk not specified",
+            "ergo_element": "perk not specified",
+            "ergo_perk2": "perk not specified",
+            "enrich_source": "Checked: no captions on YouTube; builders.gg page shows only Ergo base frame (Vortex Frame listed is another sword)",
+            "armor_set_proposal": "4pc Seventh Seraph",
+            "armor_set_reason": "Rasputin's Wrath + Rasputin's Reprisal: While you have Warmind Charges, defeating powerful combatants, destroying a construct, or destroying a Tangle  (fits grenade, solar)",
+            "dim_name": " Starfire Protocol + Ergo Sum",
+            "dim_notes": "Does: \nLoop: \nUses: 󰄇 Starfire Protocol, The Slammer (Adept), The Mountaintop, 󰅓 Well of Radiance\nSet: 4pc Seventh Seraph (proposal)\nBest for: GM, Raid, Dungeon\nSource: Tipsy — Gambit\n#solar #energy #chest #gm #raid #dungeon",
+            "does": "",
+            "loop": ""
+          }
+        ]
+      }
+    }
+  }
+}

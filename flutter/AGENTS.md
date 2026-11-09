@@ -16,6 +16,16 @@ dart analyze   # or melos scripts from pubspec.yaml
 
 - Hosts: `cd apps/windows_host` | `apps/mobile_host` | `apps/web_host` as needed.
 - Jaspr `apps/web_host` is **not** a root pub workspace member (analyzer pin); resolve with `dart pub get` inside `apps/web_host`.
+- **Quick launch (any worktree):** monorepo skill `run-flutter-windows` — say **run app** / **debug app** / **run widgetbook** / **debug widgetbook**, or:
+
+```powershell
+# from monorepo root (or pass -StartDir to a worktree)
+pwsh -File scripts/run-flutter-windows.ps1 -Target app -Mode run
+pwsh -File scripts/run-flutter-windows.ps1 -Target app -Mode debug      # main_mcp + Driver
+pwsh -File scripts/run-flutter-windows.ps1 -Target widgetbook -Mode run -SkipPubGet
+```
+
+`debug` enables Flutter Driver for agent observe (MCP). Long worktree paths auto-junction under `F:\d2w\`.
 
 ## Layout
 

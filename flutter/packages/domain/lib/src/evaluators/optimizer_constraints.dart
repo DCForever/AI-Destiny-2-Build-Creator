@@ -11,14 +11,31 @@ int countExotics(List<CandidatePiece> pieces) {
   return total;
 }
 
+/// Counts per family for set-bonus tier (non-exotic only — DBR-SETB-005).
+///
+/// Keys are stored with the first-seen casing; lookup should use
+/// [setBonusCountFor] for case-insensitive access.
 Map<String, int> setBonusPieceCounts(List<CandidatePiece> pieces) {
   final counts = <String, int>{};
+  final canon = <String, String>{}; // lower → first-seen key
   for (final piece in pieces) {
-    final key = piece.setBonusKey;
-    if (key == null || key.isEmpty) continue;
+    if (piece.isExotic) continue;
+    final raw = piece.setBonusKey?.trim();
+    if (raw == null || raw.isEmpty) continue;
+    final lower = raw.toLowerCase();
+    final key = canon.putIfAbsent(lower, () => raw);
     counts[key] = (counts[key] ?? 0) + 1;
   }
   return counts;
+}
+
+int setBonusCountFor(Map<String, int> counts, String setBonusKey) {
+  final want = setBonusKey.trim().toLowerCase();
+  if (want.isEmpty) return 0;
+  for (final e in counts.entries) {
+    if (e.key.toLowerCase() == want) return e.value;
+  }
+  return 0;
 }
 
 bool satisfiesSetBonusGoals(
@@ -28,7 +45,9 @@ bool satisfiesSetBonusGoals(
   if (goals == null || goals.isEmpty) return true;
   final counts = setBonusPieceCounts(pieces);
   for (final goal in goals) {
-    if ((counts[goal.setBonusKey] ?? 0) < goal.minPieces) return false;
+    if (setBonusCountFor(counts, goal.setBonusKey) < goal.minPieces) {
+      return false;
+    }
   }
   return true;
 }

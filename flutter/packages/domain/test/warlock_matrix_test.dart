@@ -26,6 +26,17 @@ void main() {
         isSolipsismNotPrismatic(exoticName: 'Aeon Soul', subclassKey: 'solar'),
         isFalse,
       );
+      expect(
+        isSolipsismNotPrismatic(
+          exoticName: 'Solipsism',
+          subclassKey: 'not-a-subclass',
+        ),
+        isFalse,
+      );
+      expect(
+        isSolipsismNotPrismatic(exoticName: 'Solipsism', subclassKey: ''),
+        isFalse,
+      );
     });
   });
 
@@ -72,11 +83,11 @@ void main() {
             .solipsismNotPrismatic,
         isFalse,
       );
-      expect(
-        rows.where((build) => build.name == 'Solipsism combo sample').single
-            .subclassKey,
-        'prismatic',
-      );
+      final combo =
+          rows.where((build) => build.name == 'Solipsism combo sample').single;
+      expect(combo.subclassKey, '');
+      expect(combo.subclassRecognized, isFalse);
+      expect(combo.solipsismNotPrismatic, isFalse);
       expect(warlockSubclassLabel('solar'), 'Solar');
     });
 
@@ -132,9 +143,43 @@ void main() {
       'Weapon row',
     ]);
     expect(parsed[2].subclassKey, 'solar');
+    expect(parsed[2].subclassRecognized, isTrue);
     expect(parsed[2].solipsismNotPrismatic, isTrue);
     expect(parsed.last.creator, 'Author');
     expect(parsed.map((build) => build.name), isNot(contains('Removed')));
+  });
+
+  test('missing and unrecognized combo subclasses stay unresolved', () {
+    final parsed = parseWarlockMatrix({
+      'exotics': {
+        'Solipsism': {
+          'combos': {
+            'combos': {
+              'Missing': {
+                'builds': [
+                  {'name': 'Missing subclass'},
+                ],
+              },
+              'Unknown': {
+                'builds': [
+                  {'name': 'Unknown subclass', 'subclass': 'Not Stated'},
+                ],
+              },
+            },
+          },
+        },
+      },
+    });
+    final missing = parsed.singleWhere((b) => b.name == 'Missing subclass');
+    final unknown = parsed.singleWhere((b) => b.name == 'Unknown subclass');
+    expect(missing.subclassKey, '');
+    expect(missing.subclassRecognized, isFalse);
+    expect(missing.solipsismNotPrismatic, isFalse);
+    expect(unknown.subclassKey, 'Not Stated');
+    expect(unknown.subclassKey, isNot('prismatic'));
+    expect(unknown.subclassKey, isNot('solar'));
+    expect(unknown.subclassRecognized, isFalse);
+    expect(unknown.solipsismNotPrismatic, isFalse);
   });
 }
 

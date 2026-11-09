@@ -14,7 +14,10 @@ import 'set_slot_mapping.dart';
 import 'sets_library_controller.dart';
 
 
-/// Modal catalog pick for filling a set slot (All | Owned) — DART-030.
+/// Modal catalog pick for filling a **non-Armor** set slot (All | Owned).
+///
+/// Armor Sets MVP fill uses [showOwnedComparePicker] (owned-only compare) —
+/// not this Catalog embed (G-SET-002). Kept for weapon/mod/pair legacy paths.
 class SetCatalogPicker extends StatefulWidget {
   const SetCatalogPicker({
     super.key,

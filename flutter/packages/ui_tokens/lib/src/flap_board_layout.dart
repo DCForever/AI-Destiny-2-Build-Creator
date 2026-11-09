@@ -63,7 +63,7 @@ class FlapColumnTemplate {
   final List<String> headerLabels;
 }
 
-/// Sets library: NAME · TYPE · TAGS · STATUS
+/// Sets library (generic / multi-type shell): NAME · TYPE · TAGS · STATUS
 const FlapColumnTemplate kFlapColumnsSets = FlapColumnTemplate(
   id: 'sets',
   columnsCss: 'minmax(0, 1.4fr) minmax(72px, 0.5fr) minmax(0, 1fr) minmax(72px, 0.45fr)',
@@ -76,6 +76,49 @@ const FlapColumnTemplate kFlapColumnsSets = FlapColumnTemplate(
   // Short headers fit default library rail (BUG-20260726-009).
   headerLabels: ['Name', 'Type', 'Tags', 'Stat'],
 );
+
+/// Armor Sets library flap: NAME · CLASS · PIECES · COVERAGE · USED-BY (G-SET).
+const FlapColumnTemplate kFlapColumnsSetsArmor = FlapColumnTemplate(
+  id: 'sets-armor',
+  columnsCss:
+      'minmax(0, 1.5fr) minmax(56px, 0.45fr) minmax(48px, 0.4fr) minmax(0, 0.9fr) minmax(0, 0.85fr)',
+  cellRoles: [
+    FlapCellRole.name,
+    FlapCellRole.identity,
+    FlapCellRole.tally,
+    FlapCellRole.meta,
+    FlapCellRole.status,
+  ],
+  headerLabels: ['Name', 'Class', 'Pcs', 'Cover', 'Used'],
+);
+
+/// Board layout A EoF six-stat header labels (base-roll only; DBR-STAT-008).
+const List<String> kArmorBoardEofStatLabels = [
+  'Health',
+  'Melee',
+  'Grenade',
+  'Super',
+  'Class',
+  'Weapons',
+];
+
+/// Five armor piece slots in board layout A order.
+const List<String> kArmorBoardSlotLabels = [
+  'Helmet',
+  'Gauntlets',
+  'Chest',
+  'Legs',
+  'Class Item',
+];
+
+/// Wire keys matching product equipment slots for the five armor pieces.
+const List<String> kArmorBoardSlotWires = [
+  'helmet',
+  'arms',
+  'chest',
+  'legs',
+  'class_item',
+];
 
 /// Synergy library: NAME · DESIGNATION · EVIDENCE · STATUS
 const FlapColumnTemplate kFlapColumnsSynergy = FlapColumnTemplate(
@@ -108,9 +151,10 @@ const FlapColumnTemplate kFlapColumnsBuilds = FlapColumnTemplate(
   headerLabels: ['Name', 'Cls', 'Exo', 'Syn', 'Ok'],
 );
 
-/// All first-class library templates (Sets / Synergy / Builds).
+/// All first-class library templates (Sets / Armor Sets / Synergy / Builds).
 const List<FlapColumnTemplate> kFlapLibraryColumnTemplates = [
   kFlapColumnsSets,
+  kFlapColumnsSetsArmor,
   kFlapColumnsSynergy,
   kFlapColumnsBuilds,
 ];
@@ -136,6 +180,7 @@ class FlapBoardLayout {
   static const double badgeWashAlpha = kFlapBadgeWashAlpha;
 
   static const FlapColumnTemplate sets = kFlapColumnsSets;
+  static const FlapColumnTemplate setsArmor = kFlapColumnsSetsArmor;
   static const FlapColumnTemplate synergy = kFlapColumnsSynergy;
   static const FlapColumnTemplate builds = kFlapColumnsBuilds;
 }

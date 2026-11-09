@@ -71,4 +71,13 @@ bool catalogShowsClassFacet(CatalogBrowseMode mode) =>
     mode == CatalogBrowseMode.armor || mode == CatalogBrowseMode.universal;
 
 /// Whether element facet is primary for [mode].
-bool catalogShowsElementFacet(CatalogBrowseMode mode) => true;
+///
+/// Armor v1: no element facet (class + slot + exotic + free-text only).
+bool catalogShowsElementFacet(CatalogBrowseMode mode) =>
+    mode != CatalogBrowseMode.armor;
+
+/// Whether class facet is on the **primary** filter line for [mode].
+///
+/// Armor brief: class sits with slot (not buried under More).
+bool catalogShowsClassFacetPrimary(CatalogBrowseMode mode) =>
+    mode == CatalogBrowseMode.armor;

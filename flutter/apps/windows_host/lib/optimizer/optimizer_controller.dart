@@ -66,10 +66,12 @@ class OptimizerController extends ChangeNotifier {
   String _lockedExoticText = '';
   bool _preferReuse = false;
   bool _requireThresholds = false;
+  List<SetBonusCoverageGoal> _setBonusGoals = const [];
+  List<ArmorStatName> _statPriorities = const [];
   final Map<ArmorStatName, String> _thresholdFields = {
     for (final s in ArmorStatName.all) s: '',
   };
-  int _maxResults = kOptimizerDefaultMaxResults;
+  int _maxResults = kOptimizerDefaultMaxResults; // 50 — full Sets matrix pool
 
   bool _running = false;
   bool _confirming = false;
@@ -84,6 +86,8 @@ class OptimizerController extends ChangeNotifier {
   String get lockedExoticText => _lockedExoticText;
   bool get preferReuse => _preferReuse;
   bool get requireThresholds => _requireThresholds;
+  List<SetBonusCoverageGoal> get setBonusGoals =>
+      List<SetBonusCoverageGoal>.unmodifiable(_setBonusGoals);
   Map<ArmorStatName, String> get thresholdFields =>
       Map<ArmorStatName, String>.unmodifiable(_thresholdFields);
   int get maxResults => _maxResults;
@@ -139,6 +143,25 @@ class OptimizerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Hard set-bonus goals for the next [findKits] run (G-SET-013).
+  void setSetBonusGoals(List<SetBonusCoverageGoal> goals) {
+    if (_goalsEqual(_setBonusGoals, goals)) return;
+    _setBonusGoals = List<SetBonusCoverageGoal>.unmodifiable(goals);
+    notifyListeners();
+  }
+
+  static bool _goalsEqual(
+    List<SetBonusCoverageGoal> a,
+    List<SetBonusCoverageGoal> b,
+  ) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   void setPreferReuse(bool value) {
     if (_preferReuse == value) return;
     _preferReuse = value;
@@ -154,6 +177,50 @@ class OptimizerController extends ChangeNotifier {
   void setThresholdField(ArmorStatName stat, String value) {
     if (_thresholdFields[stat] == value) return;
     _thresholdFields[stat] = value;
+    notifyListeners();
+  }
+
+  /// Apply kit-total stat floors for the next [findKits] (Sets dual-range mins).
+  ///
+  /// [minsByWire] keys are EoF labels (`Health`, `Melee`, …). Values ≤0 clear.
+  /// Non-empty mins enable [requireThresholds] and rank/prune priorities for
+  /// those stats so dual spikes are not buried under total-Σ top-K.
+  void applyStatMins(Map<String, int> minsByWire) {
+    final nextFields = <ArmorStatName, String>{
+      for (final s in ArmorStatName.all) s: '',
+    };
+    final priorities = <ArmorStatName>[];
+    for (final s in ArmorStatName.all) {
+      final v = minsByWire[s.wireName] ?? 0;
+      if (v > 0) {
+        nextFields[s] = '$v';
+        priorities.add(s);
+      }
+    }
+    var changed = _requireThresholds != priorities.isNotEmpty;
+    if (!changed) {
+      for (final s in ArmorStatName.all) {
+        if (_thresholdFields[s] != nextFields[s]) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed &&
+        _statPriorities.length == priorities.length &&
+        () {
+          for (var i = 0; i < priorities.length; i++) {
+            if (_statPriorities[i] != priorities[i]) return false;
+          }
+          return true;
+        }()) {
+      return;
+    }
+    for (final s in ArmorStatName.all) {
+      _thresholdFields[s] = nextFields[s]!;
+    }
+    _statPriorities = List<ArmorStatName>.unmodifiable(priorities);
+    _requireThresholds = priorities.isNotEmpty;
     notifyListeners();
   }
 
@@ -197,10 +264,12 @@ class OptimizerController extends ChangeNotifier {
       candidates: candidates,
       constraints: KitConstraints(
         lockedExoticItemHash: lockedHash,
+        setBonusGoals:
+            _setBonusGoals.isEmpty ? null : List.of(_setBonusGoals),
       ),
-      statPriorities: const [],
+      statPriorities: List<ArmorStatName>.from(_statPriorities),
       statThresholds: thresholds.isEmpty ? null : thresholds,
-      requireThresholds: _requireThresholds,
+      requireThresholds: _requireThresholds && thresholds.isNotEmpty,
       preferReuse: _preferReuse,
       maxResults: _maxResults,
       hasInventory: hasInventory,

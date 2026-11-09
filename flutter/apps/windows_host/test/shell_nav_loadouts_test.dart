@@ -80,19 +80,24 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels are Catalog, Warlocks, and Settings', () {
-    expect(
-      Destiny2WindowsApp.navLabels,
-      ['Catalog', 'Warlocks', 'Settings'],
-    );
+  test('navLabels are Catalog, Sets, Warlocks, and Settings', () {
+    expect(Destiny2WindowsApp.navLabels, [
+      'Catalog',
+      'Sets',
+      'Warlocks',
+      'Settings',
+    ]);
     expect(Destiny2WindowsApp.catalogNavIndex, 0);
-    expect(Destiny2WindowsApp.warlockBuildsNavIndex, 1);
-    expect(Destiny2WindowsApp.settingsNavIndex, 2);
+    expect(Destiny2WindowsApp.setsNavIndex, 1);
+    expect(Destiny2WindowsApp.warlockBuildsNavIndex, 2);
+    expect(Destiny2WindowsApp.settingsNavIndex, 3);
   });
 
-  testWidgets('NavigationRail shows Catalog, Warlocks, and Settings',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+  testWidgets('NavigationRail shows Catalog, Sets, Warlocks, and Settings', (
+    tester,
+  ) async {
+    // Wide surface avoids Catalog filter-bar overflow when Catalog is on stage.
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(Destiny2WindowsApp(services: services));
     await tester.pump();
@@ -100,16 +105,24 @@ void main() {
 
     expect(find.byKey(const Key('host_nav_rail')), findsOneWidget);
     expect(find.text('Catalog'), findsWidgets);
+    expect(find.text('Sets'), findsWidgets);
     expect(find.text('Warlocks'), findsWidgets);
     expect(find.text('Settings'), findsWidgets);
     expect(
       find.byKey(const Key('catalog_page'), skipOffstage: false),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('sets_library_page'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('warlock_builds_page'), skipOffstage: false),
+      findsOneWidget,
+    );
 
     expect(find.text('Loadouts'), findsNothing);
     expect(find.text('Build'), findsNothing);
     expect(find.text('Synergy'), findsNothing);
-    expect(find.text('Sets'), findsNothing);
   });
 }

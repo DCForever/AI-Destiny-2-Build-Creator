@@ -32,20 +32,31 @@ Future<void> main(List<String> args) async {
 
   final driver = await FlutterDriver.connect(dartVmServiceUrl: url);
   try {
-    for (final step in steps) {
-      final m = Map<String, dynamic>.from(step as Map);
-      final tapKey = m['tapKey'] as String?;
-      final shot = m['shot'] as String;
-      if (tapKey != null && tapKey.isNotEmpty) {
-        await driver.waitFor(find.byValueKey(tapKey), timeout: const Duration(seconds: 12));
-        await driver.tap(find.byValueKey(tapKey));
-        await Future<void>.delayed(const Duration(milliseconds: 500));
+    // CAPTURE.md: frame_sync off for the whole sequence (runUnsynchronized
+    // re-enables after). Also scrollIntoView so off-screen scenario chips
+    // in a horizontal rail are hittable.
+    await driver.runUnsynchronized(() async {
+      for (final step in steps) {
+        final m = Map<String, dynamic>.from(step as Map);
+        final tapKey = m['tapKey'] as String?;
+        final shot = m['shot'] as String;
+        if (tapKey != null && tapKey.isNotEmpty) {
+          final finder = find.byValueKey(tapKey);
+          await driver.waitFor(
+            finder,
+            timeout: const Duration(seconds: 12),
+          );
+          await driver.scrollIntoView(finder);
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          await driver.tap(finder);
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+        }
+        final bytes = await driver.screenshot();
+        final file = File('${outDir.path}${Platform.pathSeparator}$shot.png');
+        await file.writeAsBytes(bytes, flush: true);
+        stdout.writeln('wrote ${file.path} (${bytes.length} bytes)');
       }
-      final bytes = await driver.screenshot();
-      final file = File('${outDir.path}${Platform.pathSeparator}$shot.png');
-      await file.writeAsBytes(bytes, flush: true);
-      stdout.writeln('wrote ${file.path} (${bytes.length} bytes)');
-    }
+    });
   } finally {
     await driver.close();
   }

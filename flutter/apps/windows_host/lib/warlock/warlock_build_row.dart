@@ -13,8 +13,14 @@ class WarlockBuildRow extends StatelessWidget {
       key: ValueKey(_rowKey),
       title: Text(entry.name),
       subtitle: Text(_subtitle),
-      trailing: entry.solipsismNotPrismatic ? const _SolipsismFlag() : null,
+      trailing: _trailing,
     );
+  }
+
+  Widget? get _trailing {
+    if (!entry.subclassRecognized) return const _UnresolvedSubclass();
+    if (entry.solipsismNotPrismatic) return const _SolipsismFlag();
+    return null;
   }
 
   String get _rowKey =>
@@ -23,8 +29,29 @@ class WarlockBuildRow extends StatelessWidget {
   String get _subtitle {
     final creator = entry.creator;
     final who = creator == null ? '' : ' · $creator';
-    final label = warlockSubclassLabel(entry.subclassKey);
-    return '${entry.exoticName} · $label$who';
+    return '${entry.exoticName} · ${_subclassLabel}$who';
+  }
+
+  String get _subclassLabel {
+    if (entry.subclassRecognized) {
+      return warlockSubclassLabel(entry.subclassKey);
+    }
+    final raw = entry.subclassKey.trim();
+    if (raw.isEmpty) return 'Subclass unresolved';
+    return '$raw · unresolved';
+  }
+}
+
+class _UnresolvedSubclass extends StatelessWidget {
+  const _UnresolvedSubclass();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.error;
+    return Text(
+      'Subclass unresolved',
+      style: TextStyle(color: color),
+    );
   }
 }
 

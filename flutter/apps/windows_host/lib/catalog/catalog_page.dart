@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
@@ -9,6 +11,7 @@ import 'package:flutter/services.dart';
 
 import '../host_bootstrap.dart';
 import '../widgets/entity_icon.dart';
+import 'armor_detail_projection.dart';
 import 'owned_catalog_bridge.dart';
 
 /// Catalog board columns: NAME · IDENTITY · TYPE · OWNED
@@ -105,6 +108,10 @@ class _CatalogPageState extends State<CatalogPage> {
   /// Primary line (scope + free-text + element/slot/type icon chips) is always on.
   bool _moreFiltersExpanded = false;
 
+  /// Soft error banner (dismissible) — e.g. partial instance resolve.
+  String? _softError;
+  bool _softErrorDismissed = false;
+
   // --- 004 CatalogFilterCollections (soft apply; host binds) ---
   List<CatalogFilterCollection> _filterCollections = const [];
   String? _activeFilterCollectionId;
@@ -121,6 +128,21 @@ class _CatalogPageState extends State<CatalogPage> {
   final Set<String> _collapsedGroups = {};
   final Map<String, GlobalKey> _groupAnchorKeys = {};
   String? _outlineActiveKey;
+
+  /// GAP-PERF-01: debounce free-text refilter (facets/scope stay immediate).
+  static const Duration _queryDebounce = Duration(milliseconds: 200);
+  Timer? _queryDebounceTimer;
+
+  /// GAP-PERF-02: memoize nested trees / outline until browse results, group
+  /// dims, or collapse set change.
+  List<CatalogFamilyGroupNode>? _cachedFamilyTree;
+  Object? _cachedFamilyTreeKey;
+  List<CatalogGroupNode>? _cachedItemTree;
+  Object? _cachedItemTreeKey;
+  List<CatalogGroupOutlineEntry>? _cachedFamilyOutline;
+  Object? _cachedFamilyOutlineKey;
+  List<CatalogGroupOutlineEntry>? _cachedItemOutline;
+  Object? _cachedItemOutlineKey;
 
   OwnedCatalogBridge _createBridge() {
     return widget.bridge ??
@@ -212,6 +234,7 @@ class _CatalogPageState extends State<CatalogPage> {
   @override
   void dispose() {
     widget.services.oauthSession.removeListener(_onOAuthSessionChanged);
+    _queryDebounceTimer?.cancel();
     _queryController.dispose();
     super.dispose();
   }
@@ -292,23 +315,78 @@ class _CatalogPageState extends State<CatalogPage> {
         sortKeys: _sortKeys,
       );
     }
+    _invalidateNestedCaches();
   }
 
+  void _invalidateNestedCaches() {
+    _cachedFamilyTree = null;
+    _cachedFamilyTreeKey = null;
+    _cachedItemTree = null;
+    _cachedItemTreeKey = null;
+    _cachedFamilyOutline = null;
+    _cachedFamilyOutlineKey = null;
+    _cachedItemOutline = null;
+    _cachedItemOutlineKey = null;
+  }
+
+  Object _familyTreeCacheKey() => Object.hash(
+        Object.hashAll(_families.map((f) => f.key)),
+        Object.hashAll(_groupBy.map((d) => d.index)),
+        _families.length,
+      );
+
+  Object _itemTreeCacheKey() => Object.hash(
+        Object.hashAll(_results.map((i) => i.hash)),
+        Object.hashAll(_groupBy.map((d) => d.index)),
+        _results.length,
+      );
+
   List<CatalogGroupNode> _nestedResults() {
-    return groupCatalogItemsNested(
+    if (_groupBy.isEmpty) return const [];
+    final key = _itemTreeCacheKey();
+    if (_cachedItemTree != null && _cachedItemTreeKey == key) {
+      return _cachedItemTree!;
+    }
+    final tree = groupCatalogItemsNested(
       _results,
       List<CatalogGroupDimension>.from(_groupBy),
     );
+    _cachedItemTree = tree;
+    _cachedItemTreeKey = key;
+    return tree;
   }
 
   List<CatalogFamilyGroupNode> _nestedFamilies() {
-    return groupWeaponFamilyBrowseNested(
+    if (_groupBy.isEmpty) return const [];
+    final key = _familyTreeCacheKey();
+    if (_cachedFamilyTree != null && _cachedFamilyTreeKey == key) {
+      return _cachedFamilyTree!;
+    }
+    final tree = groupWeaponFamilyBrowseNested(
       _families,
       List<CatalogGroupDimension>.from(_groupBy),
     );
+    _cachedFamilyTree = tree;
+    _cachedFamilyTreeKey = key;
+    return tree;
   }
 
+  /// Immediate refilter (facets, scope, mode, sort, collection apply).
   void _refilter() {
+    _queryDebounceTimer?.cancel();
+    _refilterNow();
+  }
+
+  /// GAP-PERF-01: debounce free-text only (typing should not scan every key).
+  void _onQueryChanged(String _) {
+    _queryDebounceTimer?.cancel();
+    _queryDebounceTimer = Timer(_queryDebounce, () {
+      if (!mounted) return;
+      _refilterNow();
+    });
+  }
+
+  void _refilterNow() {
     setState(() {
       _applyBrowse();
     });
@@ -392,7 +470,9 @@ class _CatalogPageState extends State<CatalogPage> {
     if (!mounted) return;
     setState(() {
       _instances = quick;
-      _selectedInstanceId = defaultHighestPowerInstanceId(quick);
+      _selectedInstanceId = treatArmor
+          ? _defaultArmorInstanceId(quick)
+          : defaultHighestPowerInstanceId(quick);
     });
 
     // Resolve plug names/icons + reverse tags; re-project when names land.
@@ -413,11 +493,23 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() {
       _instances = instances;
       _reverseTags = tags;
-      _selectedInstanceId =
-          _selectedInstanceId ?? defaultHighestPowerInstanceId(instances);
+      _selectedInstanceId = _selectedInstanceId ??
+          (treatArmor
+              ? _defaultArmorInstanceId(instances)
+              : defaultHighestPowerInstanceId(instances));
     });
     // Keep roll-target profiles aligned after async instance resolve.
-    await _loadRollTargetsForSelection();
+    if (!treatArmor) {
+      await _loadRollTargetsForSelection();
+    }
+  }
+
+  /// Default owned armor copy: highest base total (then power).
+  String? _defaultArmorInstanceId(List<CatalogInstanceProjection> instances) {
+    if (instances.isEmpty) return null;
+    final projected = projectArmorInstances(instances);
+    if (projected.isEmpty) return defaultHighestPowerInstanceId(instances);
+    return projected.first.instanceId;
   }
 
   Future<void> _selectItem(CatalogItem item) async {
@@ -433,7 +525,9 @@ class _CatalogPageState extends State<CatalogPage> {
       _moreFiltersExpanded = false;
     });
     await _syncSelection();
-    await _loadRollTargetsForSelection();
+    if (_mode == CatalogBrowseMode.weapons) {
+      await _loadRollTargetsForSelection();
+    }
   }
 
   Future<void> _selectFamily(WeaponFamily family) async {
@@ -868,9 +962,16 @@ class _CatalogPageState extends State<CatalogPage> {
       _ammos = emptyFacet();
       _classNames = emptyFacet();
       _archetypes = emptyFacet();
+      _elements = mode == CatalogBrowseMode.armor ? emptyFacet() : _elements;
       _groupBy.clear();
       _collapsedGroups.clear();
       _selectedFamily = null;
+      _selected = null;
+      _instances = const [];
+      _selectedInstanceId = null;
+      _showCanRoll = false;
+      _showCraft = false;
+      _resetRollTargetUi();
       _clearActiveFilterCollection(notify: false);
       _applyBrowse();
     });
@@ -960,6 +1061,7 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   void _onOutlineScrollSpy(String key) {
+    // Grid already throttles probe rate; skip redundant setState (GAP-PERF-02).
     if (_outlineActiveKey == key) return;
     setState(() => _outlineActiveKey = key);
   }
@@ -970,11 +1072,28 @@ class _CatalogPageState extends State<CatalogPage> {
     }
   }
 
+  Object _familyOutlineCacheKey(List<CatalogFamilyGroupNode> roots) =>
+      Object.hash(
+        _familyTreeCacheKey(),
+        identityHashCode(roots),
+        Object.hashAll(_collapsedGroups),
+      );
+
+  Object _itemOutlineCacheKey(List<CatalogGroupNode> roots) => Object.hash(
+        _itemTreeCacheKey(),
+        identityHashCode(roots),
+        Object.hashAll(_collapsedGroups),
+      );
+
   List<CatalogGroupOutlineEntry> _outlineEntriesForFamilies(
     List<CatalogFamilyGroupNode> roots,
   ) {
-    final dims = List<CatalogGroupDimension>.from(_groupBy);
-    return [
+    final key = _familyOutlineCacheKey(roots);
+    if (_cachedFamilyOutline != null && _cachedFamilyOutlineKey == key) {
+      return _cachedFamilyOutline!;
+    }
+    final dims = _groupBy;
+    final entries = [
       for (final row in flattenAllFamilyGroupNodes(roots))
         CatalogGroupOutlineEntry(
           key: row.node.key,
@@ -985,13 +1104,20 @@ class _CatalogPageState extends State<CatalogPage> {
           collapsedHint: _collapsedGroups.contains(row.node.key),
         ),
     ];
+    _cachedFamilyOutline = entries;
+    _cachedFamilyOutlineKey = key;
+    return entries;
   }
 
   List<CatalogGroupOutlineEntry> _outlineEntriesForItems(
     List<CatalogGroupNode> roots,
   ) {
-    final dims = List<CatalogGroupDimension>.from(_groupBy);
-    return [
+    final key = _itemOutlineCacheKey(roots);
+    if (_cachedItemOutline != null && _cachedItemOutlineKey == key) {
+      return _cachedItemOutline!;
+    }
+    final dims = _groupBy;
+    final entries = [
       for (final row in flattenAllCatalogGroupNodes(roots))
         CatalogGroupOutlineEntry(
           key: row.node.key,
@@ -1002,6 +1128,9 @@ class _CatalogPageState extends State<CatalogPage> {
           collapsedHint: _collapsedGroups.contains(row.node.key),
         ),
     ];
+    _cachedItemOutline = entries;
+    _cachedItemOutlineKey = key;
+    return entries;
   }
 
   void _openSortGroupSheet() {
@@ -1488,6 +1617,14 @@ class _CatalogPageState extends State<CatalogPage> {
 
   List<CatalogFacetGroup> _primaryFacetGroups() {
     return [
+      // Armor brief: class on primary line (not buried under More).
+      if (catalogShowsClassFacetPrimary(_mode))
+        CatalogFacetGroup(
+          id: 'class',
+          values: catalogClassNames,
+          facet: _classNames,
+          onCycle: _cycleClass,
+        ),
       if (catalogShowsElementFacet(_mode))
         CatalogFacetGroup(
           id: 'element',
@@ -1503,6 +1640,7 @@ class _CatalogPageState extends State<CatalogPage> {
         facet: _slots,
         onCycle: _cycleSlot,
         // K / E / P icon-only (mock density); labels via tooltip.
+        // Armor slots also use letter marks via the same chip path.
         iconOnly: true,
       ),
       // GAP-CAT-BROWSE-004: weapon type silhouettes on primary line.
@@ -1527,7 +1665,9 @@ class _CatalogPageState extends State<CatalogPage> {
           onCycle: _cycleAmmo,
           iconOnly: true,
         ),
-      if (catalogShowsClassFacet(_mode))
+      // Class on primary for armor; keep under More for universal only.
+      if (catalogShowsClassFacet(_mode) &&
+          !catalogShowsClassFacetPrimary(_mode))
         CatalogFacetGroup(
           id: 'class',
           values: catalogClassNames,
@@ -1535,7 +1675,8 @@ class _CatalogPageState extends State<CatalogPage> {
           onCycle: _cycleClass,
         ),
       // Weapons: archetype is primary iconOnly — do not repeat as text under More.
-      if (_mode != CatalogBrowseMode.weapons)
+      // Armor v1: no archetype facet (class + slot + exotic + free-text).
+      if (_mode == CatalogBrowseMode.universal)
         CatalogFacetGroup(
           id: 'archetype',
           values: catalogArchetypesForMode(_mode),
@@ -1601,47 +1742,35 @@ class _CatalogPageState extends State<CatalogPage> {
     // soft zones, dense filters inside modules, air between regions, cyan ≤2 hits.
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'CATALOG',
-          style: neonDisplay(
-            color: palette.foreground,
-            fontSize: 16,
-            letterSpacing: 1.0,
-          ),
-        ),
-        actions: [
-          // Single semantic owner (Windows AX) — IconButton tooltip + icon
-          // otherwise nest nodes that thrash on loading state flips.
-          Semantics(
-            button: true,
-            enabled: !_loading,
-            label: 'Sync catalog channel',
-            excludeSemantics: true,
-            child: IconButton(
-              key: const Key('catalog_reload'),
-              tooltip: 'Sync catalog channel',
-              onPressed: _loading ? null : _load,
-              icon: const Icon(Icons.refresh),
-            ),
-          ),
-        ],
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Thin header: title + live pulse only (no multi-line subtitle block).
+          // Thin header: one title + sync + live pulse (no AppBar duplicate).
           NeonPageHeader(
             kicker: 'Module · Build Creator',
             title: 'Catalog',
-            trailing: Tooltip(
-              message: _version ?? 'No entity channel version',
-              excludeFromSemantics: true,
-              child: NeonLivePulse(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  button: true,
+                  enabled: !_loading,
+                  label: 'Sync catalog channel',
+                  excludeSemantics: true,
+                  child: IconButton(
+                    key: const Key('catalog_reload'),
+                    tooltip: 'Sync catalog channel',
+                    onPressed: _loading ? null : _load,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ),
+                Tooltip(
+                  message: _version ?? 'No entity channel version',
+                  excludeFromSemantics: true,
+                  child: NeonLivePulse(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     Container(
                       width: 8,
                       height: 8,
@@ -1669,6 +1798,8 @@ class _CatalogPageState extends State<CatalogPage> {
                 ),
               ),
             ),
+              ],
+            ),
           ),
           // --- Single primary filter band (mode · scope · search · chips) ---
           Padding(
@@ -1689,7 +1820,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     children: [
                       CatalogFilterBar(
                         queryController: _queryController,
-                        onQueryChanged: (_) => _refilter(),
+                        onQueryChanged: _onQueryChanged,
                         activeFilterCount: _activeFilterCount() +
                             (_queryController.text.trim().isEmpty ? 0 : 1),
                         moreExpanded: _moreFiltersExpanded,
@@ -1751,6 +1882,7 @@ class _CatalogPageState extends State<CatalogPage> {
                         primaryGroups: _primaryFacetGroups(),
                         secondaryGroups: _secondaryFacetGroups(),
                       ),
+                      // Sort & Group is weapons chrome only — not armor mode.
                       if (_mode == CatalogBrowseMode.weapons) ...[
                         const SizedBox(height: 4),
                         Align(
@@ -1776,7 +1908,9 @@ class _CatalogPageState extends State<CatalogPage> {
                           ),
                         ),
                       ],
-                      if (_moreFiltersExpanded) ...[
+                      // Group-by under More for weapons/universal; skip armor v1.
+                      if (_moreFiltersExpanded &&
+                          _mode != CatalogBrowseMode.armor) ...[
                         const SizedBox(height: 4),
                         _groupByRow(),
                       ],
@@ -1786,6 +1920,18 @@ class _CatalogPageState extends State<CatalogPage> {
               ),
             ),
           ),
+          // Soft error banner (dismissible) — armor / shared load soft faults.
+          if (_softError != null && !_softErrorDismissed) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kSpace12, 0, kSpace12, kSpace6),
+              child: CatalogSoftErrorBanner(
+                message: _softError!,
+                onDismiss: () {
+                  setState(() => _softErrorDismissed = true);
+                },
+              ),
+            ),
+          ],
           // Incomplete entity cache (e.g. missing exotic-weapons.json).
           if (_missingExoticWeaponsStore) ...[
             Padding(
@@ -1972,6 +2118,7 @@ class _CatalogPageState extends State<CatalogPage> {
       );
     }
     final isWeapons = _mode == CatalogBrowseMode.weapons;
+    final isArmor = _mode == CatalogBrowseMode.armor;
     final empty = isWeapons ? _families.isEmpty : _results.isEmpty;
     if (empty) {
       return _buildEmptyState();
@@ -1980,6 +2127,21 @@ class _CatalogPageState extends State<CatalogPage> {
         _bridge.userId != null && _bridge.inventory.isNotEmpty;
     final showOwned =
         hasLocalOwned || widget.services.oauthSession.isSignedIn;
+
+    // Armor: identity icon grid (no family merge, no row stats).
+    if (isArmor) {
+      return CatalogArmorGrid(
+        items: _results,
+        selectedHash: _selected?.hash,
+        showOwned: showOwned,
+        onSelect: _selectItem,
+        leadingBuilder: (item) => EntityIcon(
+          key: Key('catalog_item_icon_${item.hash}'),
+          icon: item.icon,
+          size: 36,
+        ),
+      );
+    }
 
     if (isWeapons) {
       final useGroupHeaders = _groupBy.isNotEmpty;
@@ -2004,8 +2166,8 @@ class _CatalogPageState extends State<CatalogPage> {
           size: 36,
         ),
         familyTree: useGroupHeaders ? fTree : null,
-        groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
-        collapsedGroupKeys: Set<String>.from(_collapsedGroups),
+        groupDimensions: _groupBy,
+        collapsedGroupKeys: _collapsedGroups,
         onToggleGroup: _toggleGroupCollapse,
         groupKeys: _groupAnchorKeys,
         onActiveGroupChanged: showOutline ? _onOutlineScrollSpy : null,
@@ -2045,8 +2207,8 @@ class _CatalogPageState extends State<CatalogPage> {
         size: 36,
       ),
       itemTree: useGroupHeaders ? iTree : null,
-      groupDimensions: List<CatalogGroupDimension>.from(_groupBy),
-      collapsedGroupKeys: Set<String>.from(_collapsedGroups),
+      groupDimensions: _groupBy,
+      collapsedGroupKeys: _collapsedGroups,
       onToggleGroup: _toggleGroupCollapse,
       groupKeys: _groupAnchorKeys,
       onActiveGroupChanged: showOutline ? _onOutlineScrollSpy : null,
@@ -2126,8 +2288,62 @@ class _CatalogPageState extends State<CatalogPage> {
     return 'No items match the current filters.';
   }
 
+  /// Armor detail: dual boards, instance strip, mods/energy, set/exotic, stubs.
+  Widget _buildArmorDetailPanel(CatalogItem item) {
+    final projected = projectArmorInstances(
+      _instances,
+      plugNameByHash: _bridge.plugNameByHash,
+    );
+    // Sticky selection; default highest base-total when unset.
+    var selectedId = _selectedInstanceId;
+    if (selectedId == null && projected.isNotEmpty) {
+      selectedId = projected.first.instanceId;
+    }
+    final setBonus = armorSetBonusFromDefinition();
+    final exotic = armorExoticPerkFromItem(
+      isExotic: item.isExotic,
+      intrinsicName: item.intrinsicName,
+      description: item.description,
+    );
+
+    return CatalogArmorDetail(
+      key: ValueKey<String>('catalog_armor_detail_${item.hash}'),
+      item: item,
+      instances: projected,
+      selectedInstanceId: selectedId,
+      onSelectInstance: (inst) {
+        setState(() => _selectedInstanceId = inst.instanceId);
+      },
+      setBonus: setBonus,
+      exoticPerk: exotic,
+      showOwnedMeta: widget.services.oauthSession.isSignedIn ||
+          (_bridge.userId != null && _bridge.inventory.isNotEmpty),
+      headerTrailing: _reverseTags.isEmpty
+          ? null
+          : Wrap(
+              key: const Key('linked_synergy_badges'),
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final badge in _reverseTags)
+                  Chip(
+                    key: Key('synergy_badge_${badge.id}'),
+                    label: Text(badge.name),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+              ],
+            ),
+    );
+  }
+
   Widget _buildDetailPanel() {
     final item = _selected!;
+
+    // Armor path: labeled Base|Live dossier (no weapon roll/can-roll chrome).
+    if (_mode == CatalogBrowseMode.armor) {
+      return _buildArmorDetailPanel(item);
+    }
 
     // Weapons path: composition-aid detail with disabled Set/Synergy stubs.
     if (_mode == CatalogBrowseMode.weapons) {

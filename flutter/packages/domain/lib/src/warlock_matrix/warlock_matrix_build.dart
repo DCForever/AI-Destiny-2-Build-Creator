@@ -21,8 +21,15 @@ class WarlockMatrixBuild {
   /// Optional author label.
   final String? creator;
 
-  /// Solipsism paired with a subclass other than Prismatic.
-  bool get solipsismNotPrismatic => isSolipsismNotPrismatic(
+  /// False when [subclassKey] is empty or not one of the six known keys.
+  bool get subclassRecognized => isKnownWarlockSubclass(subclassKey);
+
+  /// Solipsism paired with a known subclass other than Prismatic.
+  ///
+  /// Unresolved subclasses are not reported as this mismatch.
+  bool get solipsismNotPrismatic =>
+      subclassRecognized &&
+      isSolipsismNotPrismatic(
         exoticName: exoticName,
         subclassKey: subclassKey,
       );

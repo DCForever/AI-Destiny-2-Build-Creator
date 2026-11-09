@@ -130,5 +130,13 @@ List<Object> decodeMvpStoreRecords(MvpStoreName store, List<dynamic> list) {
       return list
           .map((e) => ModRecord.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
+    case MvpStoreName.setBonuses:
+      return list
+          .map(
+            (e) => SetBonusCatalogRecord.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList();
   }
 }

@@ -1,7 +1,7 @@
 # Multiplatform Dart — Feature Gap Catalog vs Next.js
 
 **Status:** active planning artifact  
-**Updated:** 2026-08-07 (FEAT-UI-WEAPON-ROLL-TARGETS / GAP-UI-ROLL-01 + DART-073 pure score; D-LANES; PRODUCTION_CUTOVER GO **unchanged**)  
+**Updated:** 2026-08-08 (GAP-PERF-01/02 host partial: debounce + tree memo + scroll-spy throttle; PERF-03–06 still open; PRODUCTION_CUTOVER GO **unchanged**)  
 **Workstream:** DART (parallel to product Spec Kit `0NN`)  
 **Integration base:** `feature/multiplatform-dart`  
 **Worktree:** `F:\Destiny2BuildCreator-multiplatform-dart`
@@ -277,9 +277,15 @@ Shell columns: **cutover** spine (destination present) vs **fidelity** host dens
 | **GAP-UI-SETTINGS-02** | Inventory sync card presentation | **P2** | `closed` (DART-068) | ONLINE chip + human last sync + Refresh | ONLINE + human last sync + Refresh | **DART-068** | **BUG-20260725-003** |
 | **GAP-UI-SETTINGS-04** | Post-sync soft armor kit banner | **P2** | `closed` (DART-067) | Confirm/Dismiss better-kit Callout | Windows afterSync Confirm/Dismiss only | **DART-067** done | Soft never auto-apply |
 | **GAP-UI-SHELL-01** | AppShell nav labels/order | **P2** | `closed` (DART-068) | Loadouts, Build, Synergy, Sets, Catalog, Settings | Product short labels + order | **DART-068** | Not cutover; fidelity |
-| **GAP-UI-DESC-01** | Entity descriptions (model + 1+3 chrome) | **P2** | `open` / `planned` | Next EntityHotspot; DIM perk popup; DBR-UI-001/005/006 | No shared presentation model or L1→L2 stack | **sys** DART-071 + **ux** UX-CATALOG-ENTITY-DESC | Not cutover; split lanes |
-| **GAP-UI-CATALOG-11** | Nested multi-level group-by (tree + chrome) | **P2** | `open` / `planned` | Product: Energy → Arc → …; BR-CAT-007 | Flat `parts.join(' · ')` groups (DART-062) | **sys** DART-072 + **ux** UX-CATALOG-NESTED-GROUP | Not cutover; split lanes |
-| **GAP-UI-ROLL-01** | Weapon roll targets (preferred + avoid + rank owned) | **P2** | `open` / `planned` | Product plan: Catalog ideal/anti-ideal | No user targets; plugs without score | **sys** DART-073 + **ux** UX-CATALOG-ROLL-TARGETS | Not cutover; ≠ DBR-ROLL wishlist |
+| **GAP-UI-DESC-01** | Entity descriptions (model + 1+3 chrome) | **P2** | `partial` | Next EntityHotspot; DIM perk popup | Pure model + Catalog perk L1/L2 chrome landed (2026-08-08); residual polish / dual-truth optional | **sys** DART-071 + **ux** UX-CATALOG-ENTITY-DESC | Not cutover |
+| **GAP-UI-CATALOG-11** | Nested multi-level group-by (tree + chrome) | **P2** | `partial` | Product: Energy → Arc → …; BR-CAT-007 | Pure tree + nested chrome landed (2026-08-08); residual Capture optional | **sys** DART-072 + **ux** UX-CATALOG-NESTED-GROUP | Not cutover |
+| **GAP-UI-ROLL-01** | Weapon roll targets (preferred + avoid + rank owned) | **P2** | `partial` | Product plan: Catalog ideal/anti-ideal | Pure score + chrome shipped; residual polish / dual-truth | **sys** DART-073 + **ux** UX-CATALOG-ROLL-TARGETS | Not cutover; ≠ DBR-ROLL wishlist |
+| **GAP-PERF-01** | Catalog refilter: no debounce; full base scan + page setState every keystroke | **P2** | `partial` | Next-ish progressive filter UX | Free-text 200 ms debounce landed host; facets still immediate full browse | Optional pure index / progressive filter; **tests:** filter perf harness | Not cutover; feel/jank |
+| **GAP-PERF-02** | Nested group tree + outline scroll-spy recompute on every host setState / scroll | **P2** | `partial` | — | Nested tree + outline memoized; scroll-spy 80 ms throttle + ScrollEnd flush | Optional selection-only setState isolation; **tests:** nested perf + `CatalogScrollSpyThrottle` | Not cutover |
+| **GAP-PERF-03** | Entity store load/project on UI isolate; loadBase always re-reads | **P2** | `open` / `planned` | Next entity caches | `OfflineCatalog.loadBase` / `FileEntityCache` / `projectMvpStores` / family browse | Long-lived cache; Isolate.run for parse/project; pre-warm; **tests planned** | Not cutover |
+| **GAP-PERF-04** | Inventory full-row load + full-replace sync for catalog annotate | **P2** | `open` / `planned` | Next sync depth | `listInventoryItems` full columns; `replaceInventoryBatch` delete-all | Hash-only annotate path; incremental upsert optional; **tests planned** | Not cutover |
+| **GAP-PERF-05** | Bungie HTTP dual clients; no response cache/coalesce; icons uncached network | **P2** | `open` / `planned` | Shared client + cache patterns | Two `BungieHttpClient`s; bare `Image.network` | Shared long-lived client; icon decode size + disk cache | Not cutover |
+| **GAP-PERF-06** | Catalog detail/perk grid eager rebuild; heavy card paint | **P2** | `open` / `planned` | — | Eager ListView + full perk Column; NeonItemCard animation/shadow; no RepaintBoundary | Virtualize detail; boundary cards; cheaper idle paint | Not cutover |
 
 ---
 
@@ -697,11 +703,131 @@ Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no 
 
 ---
 
+### GAP-PERF-01 — Catalog refilter / full-base scan / page setState (**P2**) — **partial**
+
+**Problem:** Free-text and facet changes rebuild the entire Catalog page after a full linear browse of the annotated base. No debounce on query; no intermediate search index.
+
+**Evidence (2026-08-08 deep-research structural scan):**
+- `CatalogPage` `_refilter` / `_applyBrowse` via filter bar `onQueryChanged` (no debounce).
+- `filterCatalogClient` linear scan: facets AND query haystack + display-name sort.
+- Sources: `apps/windows_host/lib/catalog/catalog_page.dart`, `packages/manifest/.../filter_catalog.dart`.
+
+**Landed (2026-08-08):**
+- Free-text path uses `_onQueryChanged` with **200 ms** debounce; facets/scope/sort still call immediate `_refilter`.
+- Nested tree caches invalidated only on browse apply (not every selection paint alone for tree rebuild cost).
+
+**Tracks**
+
+| Lane | Work | Exit |
+| ---- | ---- | ---- |
+| **Host / UX** | ~~Debounce free-text (e.g. 150–300 ms)~~ **done**; do not re-run full browse on selection-only `setState` (remaining) | Typing stays smooth on large manifests; selection does not re-scan base |
+| **System (optional)** | Memoized browse result keyed by filters; optional pure search index / inverted text map | Package tests for filter equivalence + stable sort |
+
+**Not cutover.** Soft never auto-applies; no CLIENT_SECRET.
+
+**Tests:** [catalog-performance-tests.md](./catalog-performance-tests.md) · `packages/manifest/test/catalog_performance_test.dart` (filter + scale).
+
+---
+
+### GAP-PERF-02 — Nested group rebuild + outline scroll-spy (**P2**) — **partial**
+
+**Problem:** With multi-dim group-by, every host rebuild recomputes nested tree, flatten, outline entries, and copies collapsed sets. Scroll-spy walks all group `RenderBox`es on scroll updates and may `setState` the host.
+
+**Evidence:** `_buildBody` / nested group path in `catalog_page.dart`; `CatalogWeaponsGrid` multi-sliver + scroll-spy.
+
+**Landed (2026-08-08):**
+- Host memoizes nested family/item trees + outline entries until results / group dims / collapse set change.
+- `CatalogScrollSpyThrottle` (80 ms leading+trailing) on `CatalogWeaponsGrid`; ScrollEnd flush; skip duplicate active key before host `setState`.
+
+**Tracks**
+
+| Lane | Work | Exit |
+| ---- | ---- | ---- |
+| **Host / UX** | ~~Memoize nested tree + outline~~ **done**; ~~throttle scroll-spy~~ **done**; selection-only setState isolation optional residual | Group-by on does not recompute tree on selection-only rebuild; spy ≤1 probe burst |
+| **System** | Already has pure nested API (DART-072); keep collapse pure | No change required unless new rollup APIs |
+
+**Depends on:** nested group chrome landed (GAP-UI-CATALOG-11 partial). Not cutover.
+
+**Tests:** nested group + flatten budgets · `packages/ui_flutter/test/catalog_scroll_spy_throttle_test.dart`.
+
+---
+
+### GAP-PERF-03 — Entity load / project on UI isolate (**P2**) — **open / planned**
+
+**Problem:** `OfflineCatalog.loadBase` re-reads and re-projects all MVP stores with no skip-if-already-loaded; first store access does full `jsonDecode` + `fromJson` on the calling isolate. Family browse and bundle parse also UI-isolate.
+
+**Evidence:** `offline_catalog.dart`, `entity_cache.dart`, `catalog_projector.dart`, `weapon_family.dart`, `entity_bundle.dart`; only `rebuildEntityCacheInIsolate` uses `Isolate.run`.
+
+**Tracks**
+
+| Lane | Work | Exit |
+| ---- | ---- | ---- |
+| **System** | Long-lived `OfflineCatalog` / entity cache instance; skip reload when version unchanged; `Isolate.run` for parse + `projectMvpStores` | Cold open + Settings reload package tests; UI isolate not blocked by full re-project in unit harness |
+| **Host** | Pre-warm `loadBase` at bootstrap optional | Catalog first paint after open does not re-decode stores |
+
+**Not cutover.** Peak ~190 MB inventory item def load remains a documented hazard (enrichment paths).
+
+---
+
+### GAP-PERF-04 — Inventory full-row + full-replace for catalog annotate (**P2**) — **open / planned**
+
+**Problem:** Owned catalog annotate loads every inventory column (plugs, tags, stats, sockets JSON) for the user. Sync always full-replaces all rows. No lightweight hash-only projection for owned counts.
+
+**Evidence:** `listInventoryItems` / `replaceInventoryBatch` in `inventory_repository.dart`; `OwnedCatalogBridge.refresh`.
+
+**Tracks**
+
+| Lane | Work | Exit |
+| ---- | ---- | ---- |
+| **System** | Hash-only / count list API for annotate; optional incremental upsert for sync | Catalog owned ×N path tests without full plug decode; sync path documented |
+| **Host** | Call lightweight path for browse annotate; full projection only for instance detail | Owned chip counts do not require full plug map |
+
+**Not cutover.** Soft never auto-applies.
+
+---
+
+### GAP-PERF-05 — Bungie HTTP dual clients + uncached icons (**P2**) — **open / planned**
+
+**Problem:** Profile and write clients each own an `HttpClient`; no response cache or request coalescing. Entity/content icons use bare `Image.network` without decode size or disk cache.
+
+**Evidence:** `host_bootstrap.dart`, `bungie_http_client.dart`, `entity_icon.dart` / `bungie_content_icon.dart`.
+
+**Tracks**
+
+| Lane | Work | Exit |
+| ---- | ---- | ---- |
+| **System / host** | Single long-lived shared `HttpClient` / transport | Bootstrap uses one pool for profile + write |
+| **Host / UX** | `cacheWidth`/`cacheHeight` + optional disk/CDN cache for bungie.net | Repeat icon paints do not re-fetch full resolution each grid rebuild |
+
+**Not cutover.** No CLIENT_SECRET in clients.
+
+---
+
+### GAP-PERF-06 — Catalog detail/perk eager rebuild + heavy cards (**P2**) — **open / planned**
+
+**Problem:** Weapon detail uses eager `ListView(children:)` and perk grid builds full columns each rebuild. Grid cards use animated containers, gradients, shadows without `RepaintBoundary`.
+
+**Evidence:** `catalog_weapon_detail.dart`, `catalog_perk_grid.dart`, `neon_item_card.dart`.
+
+**Tracks**
+
+| Lane | Work | Exit |
+| ---- | ---- | ---- |
+| **UX** | Virtualize or scope detail rebuilds; `RepaintBoundary` on cards; reduce idle animation cost | Detail selection does not rebuild entire perk tree; profile optional |
+
+**Not cutover.** Prefer area-ux residual polish when dual-truth required.
+
+---
+
+**Source note:** 2026-08-08 Grok deep-research workflow (structural catalog/inventory/network scan). No DevTools frame timings in-repo — treat severities as structural P2 feel/scale risks, not P0 cutover.
+
+---
+
 ## Update checklist (after gaps analysis or finish-spec)
 
-- [x] Touch **Updated** date (2026-08-06 — workstream lanes + split open FEATs; cutover GO unchanged)
+- [x] Touch **Updated** date (2026-08-08 — GAP-PERF-01–06; cutover GO unchanged)
 - [x] Refresh **Product feature inventory** — section **F** planned with **system + UX** tracks
-- [x] Set gap **Status** — DESC-01 / CATALOG-11 open split; prior GAP-UI-* closed (DART-062–068); cutover gaps remain closed
+- [x] Set gap **Status** — DESC-01 / CATALOG-11 / ROLL-01 partial; **GAP-PERF-01–06** open planned; prior GAP-UI-* closed (DART-062–068); cutover gaps remain closed
 - [x] Document **Spec Kit = system only**; UI/UX via [ux-redesign](./ux-redesign/README.md)
 - [x] **PROC-06** closed via thinning checklist + gate
 - [x] Cutover checklist **not** re-gated (PRODUCTION_CUTOVER GO stands)
@@ -713,13 +839,15 @@ Want \| Avoid \| Off pool editor; dual chips on owned; rank list; Neon/Flap; no 
 
 | Field | Value |
 | ----- | ----- |
-| **Next Spec Kit (system)** | **DART-073** `weapon-roll-targets` (preferred+avoid pure score; active); also **DART-071/072** pending; **no UI chrome in Spec Kit** |
-| **Next UI/UX** | Catalog **C6 weapons finish** (residuals / dual-truth); then **C8 Armor** — full sequence: [ux-redesign/REDESIGN-PATH.md](./ux-redesign/REDESIGN-PATH.md). System-paired chrome (entity-desc, nested-group, roll-targets polish) may interleave; does not authorize Armor early. |
-| **Next phase** | P10–P11 **system** + Catalog weapons finish; Armor redesign after C6 exit |
+| **Next Spec Kit (system)** | Optional formalize DART-071/072/073; **performance:** GAP-PERF-03/04 system tracks (entity cache + inventory lightweight list) when scheduled — **no UI chrome in Spec Kit** |
+| **Next UI/UX** | **C8 Armor redesign** (C6 weapons exited 2026-08-08) — [ux-redesign/REDESIGN-PATH.md](./ux-redesign/REDESIGN-PATH.md); weapons residuals parked non-blocking |
+| **Performance backlog** | **GAP-PERF-01/02 partial** → **03** → **04** → **05** → **06** (not Armor gate) |
+| **Performance tests** | Plan [catalog-performance-tests.md](./catalog-performance-tests.md); always-on filter/group harness + scroll-spy throttle unit; strict: `PERF_ASSERT=1` |
+| **Next phase** | **C8 Armor** `area-ux-redesign`; optional land uncommitted PERF-01/02 commit; PERF-03/04 system when scheduled |
 | **Blocker for cutover** | **None** — PRODUCTION_CUTOVER **GO** (2026-07-25); RC-BRANCH **PASS**; GAP-CUT-01 **closed** |
-| **Feature inventory** | Aligned + split-lane planned FEATs incl. **FEAT-UI-WEAPON-ROLL-TARGETS** |
+| **Feature inventory** | Aligned + split-lane planned FEATs; PERF gaps are non-cutover P2 |
 | **unplanned_p0_p1** | *(empty for cutover)* |
-| **Open GAP-UI count** | **3** open P2 residuals (DESC-01, CATALOG-11, **ROLL-01**); DART-062–068 remain closed |
+| **Open GAP-UI / PERF count** | UI partial: DESC-01, CATALOG-11, ROLL-01; **PERF partial: 01–02**; **PERF open: 03–06**; DART-062–068 closed |
 | **Process** | **PROC-01–06 closed**; Spec Kit ≠ UI/UX lane |
 | **Non-goal residual** | **GAP-FEAT-01** web/mobile optimizer deferred; **GAP-FEAT-02** dim.gg deferred (jsonOnly sufficient) |
 | **Bug crosswalk** | **BUG-20260725-003** → **GAP-UI-SETTINGS-02** (closed DART-068) |

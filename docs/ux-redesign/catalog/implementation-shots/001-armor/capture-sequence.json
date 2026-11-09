@@ -1,0 +1,13 @@
+[
+  { "shot": "desktop-grid" },
+  { "tapKey": "capture_scenario_desktop-detail-owned", "shot": "desktop-detail-owned" },
+  { "tapKey": "capture_scenario_desktop-instance-strip", "shot": "desktop-instance-strip" },
+  { "tapKey": "capture_scenario_desktop-detail-unowned", "shot": "desktop-detail-unowned" },
+  { "tapKey": "capture_scenario_desktop-set-bonus", "shot": "desktop-set-bonus" },
+  { "tapKey": "capture_scenario_desktop-mods-energy", "shot": "desktop-mods-energy" },
+  { "tapKey": "capture_scenario_desktop-exotic-callout", "shot": "desktop-exotic-callout" },
+  { "tapKey": "capture_scenario_desktop-owned-empty", "shot": "desktop-owned-empty" },
+  { "tapKey": "capture_scenario_desktop-signed-out-owned", "shot": "desktop-signed-out-owned" },
+  { "tapKey": "capture_scenario_desktop-live-null-copy", "shot": "desktop-live-null-copy" },
+  { "tapKey": "capture_scenario_desktop-soft-error", "shot": "desktop-soft-error" }
+]

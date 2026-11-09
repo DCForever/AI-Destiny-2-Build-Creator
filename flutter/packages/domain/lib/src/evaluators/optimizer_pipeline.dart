@@ -66,6 +66,11 @@ ArmorOptimizeResponse optimizeArmorCore(ArmorOptimizeRequest request) {
     ),
   );
 
+  // Pin the locked exotic's slot to only that definition's copies. Otherwise
+  // Cartesian search wastes the 250k budget on kits that omit the lock and
+  // returns NO_VALID_KITS for most concrete exotic choices.
+  pinLockedExoticSlot(pruned, constraints.lockedExoticItemHash);
+
   final enumeration = enumerateKits(
     pruned,
     EnumerateOptions(

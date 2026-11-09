@@ -43,6 +43,9 @@ export 'src/evaluators/destiny_set_constraints.dart';
 // Set package minimum occupancy (DBR-CMP-008–010 / BR-SLOT-011–014)
 export 'src/evaluators/set_minimum_occupancy.dart';
 
+// Armor set-bonus multi-goal legality + hard satisfaction (G-SET-013 / DBR-SETB-003)
+export 'src/evaluators/set_bonus_goals.dart';
+
 // Soft coverage + soft-stat helpers (DART-004)
 export 'src/evaluators/soft_coverage.dart';
 export 'src/evaluators/soft_stat_targets.dart';
@@ -92,3 +95,17 @@ export 'src/warlock_matrix/filter_warlock_builds.dart';
 export 'src/warlock_matrix/parse_warlock_matrix.dart';
 export 'src/warlock_matrix/solipsism_flag.dart';
 export 'src/warlock_matrix/warlock_matrix_build.dart';
+
+// Offline contrasting-build pilot (local fixture, synthetic proposals)
+export 'src/pilot_review/pilot_board.dart';
+export 'src/pilot_review/pilot_catalog.dart';
+export 'src/pilot_review/pilot_csv.dart';
+export 'src/pilot_review/pilot_dim_gate.dart';
+export 'src/pilot_review/pilot_identity.dart';
+export 'src/pilot_review/pilot_matrix.dart';
+export 'src/pilot_review/pilot_perk_requirement.dart';
+export 'src/pilot_review/pilot_proposals.dart';
+export 'src/pilot_review/pilot_reasons.dart';
+export 'src/pilot_review/pilot_review.dart';
+export 'src/pilot_review/pilot_source_record.dart';
+export 'src/pilot_review/pilot_text.dart';

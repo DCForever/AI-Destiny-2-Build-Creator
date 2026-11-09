@@ -32,16 +32,20 @@ void main() {
     expect(find.text('Aeon solar sample'), findsOneWidget);
     expect(find.text('Necrotic strand sample'), findsOneWidget);
     expect(find.text('Solipsism only works with Prismatic'), findsOneWidget);
+    expect(find.text('Subclass unresolved'), findsOneWidget);
 
     await _selectExotic(tester, 'Aeon Soul');
     expect(find.text('Aeon solar sample'), findsOneWidget);
     expect(find.text('Aeon void sample'), findsOneWidget);
     expect(find.text('Solipsism prismatic sample'), findsNothing);
     expect(find.text('Solipsism only works with Prismatic'), findsNothing);
+    expect(find.text('Subclass unresolved'), findsNothing);
 
     await _selectExotic(tester, 'Solipsism');
     expect(find.text('Solipsism prismatic sample'), findsOneWidget);
     expect(find.text('Solipsism solar mismatch'), findsOneWidget);
+    expect(find.text('Solipsism combo sample'), findsOneWidget);
+    expect(find.text('Subclass unresolved'), findsOneWidget);
     expect(find.text('Solipsism only works with Prismatic'), findsOneWidget);
     expect(find.text('Aeon solar sample'), findsNothing);
   });

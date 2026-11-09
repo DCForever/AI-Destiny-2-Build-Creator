@@ -8,6 +8,7 @@ import '../flap_palette.dart';
 import '../neon_fonts.dart';
 import '../neon_item_card.dart';
 import 'catalog_group_chrome.dart';
+import 'catalog_scroll_spy_throttle.dart';
 
 /// Top-left weapon plate: CDN [CatalogItem.icon], else type silhouette.
 ///
@@ -237,7 +238,7 @@ class _OwnedVersionChips extends StatelessWidget {
 ///
 /// Prefer [families] + [familyTree] (GAP-CAT-BROWSE-001 + GAP-UI-CATALOG-11).
 /// Legacy flat [familyGroups] / [groups] remain for single-dim callers.
-class CatalogWeaponsGrid extends StatelessWidget {
+class CatalogWeaponsGrid extends StatefulWidget {
   const CatalogWeaponsGrid({
     super.key,
     this.items = const [],
@@ -312,19 +313,39 @@ class CatalogWeaponsGrid extends StatelessWidget {
     crossAxisSpacing: kSpace8,
   );
 
-  bool _isExpanded(String key) => !collapsedGroupKeys.contains(key);
+  @override
+  State<CatalogWeaponsGrid> createState() => _CatalogWeaponsGridState();
+}
+
+class _CatalogWeaponsGridState extends State<CatalogWeaponsGrid> {
+  late final CatalogScrollSpyThrottle _scrollSpyThrottle;
+  String? _lastEmittedActiveKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollSpyThrottle = CatalogScrollSpyThrottle(onProbe: _emitScrollSpyActive);
+  }
+
+  @override
+  void dispose() {
+    _scrollSpyThrottle.dispose();
+    super.dispose();
+  }
+
+  bool _isExpanded(String key) => !widget.collapsedGroupKeys.contains(key);
 
   CatalogGroupDimension? _dimAt(int depth) =>
-      catalogGroupDimensionAt(groupDimensions, depth);
+      catalogGroupDimensionAt(widget.groupDimensions, depth);
 
   @override
   Widget build(BuildContext context) {
-    final fams = families;
+    final fams = widget.families;
     final useFamilies = fams != null;
-    final fTree = familyTree;
-    final iTree = itemTree;
-    final fGroups = familyGroups;
-    final iGroups = groups;
+    final fTree = widget.familyTree;
+    final iTree = widget.itemTree;
+    final fGroups = widget.familyGroups;
+    final iGroups = widget.groups;
     final useFamilyTree = fTree != null && fTree.isNotEmpty;
     final useItemTree = !useFamilies && iTree != null && iTree.isNotEmpty;
     final useFamilyGroups = useFamilies &&
@@ -345,15 +366,18 @@ class CatalogWeaponsGrid extends StatelessWidget {
         }
         return NotificationListener<ScrollNotification>(
           onNotification: (n) {
-            if (onActiveGroupChanged == null) return false;
-            if (n is! ScrollUpdateNotification && n is! ScrollEndNotification) {
+            if (widget.onActiveGroupChanged == null) return false;
+            if (n is ScrollEndNotification) {
+              _scrollSpyThrottle.flush();
               return false;
             }
-            _emitScrollSpyActive();
+            if (n is ScrollUpdateNotification) {
+              _scrollSpyThrottle.onScrollUpdate();
+            }
             return false;
           },
           child: CustomScrollView(
-            controller: scrollController,
+            controller: widget.scrollController,
             slivers: [
               ..._buildSlivers(
                 context,
@@ -376,13 +400,13 @@ class CatalogWeaponsGrid extends StatelessWidget {
   }
 
   void _emitScrollSpyActive() {
-    final cb = onActiveGroupChanged;
-    if (cb == null || groupKeys.isEmpty) return;
+    final cb = widget.onActiveGroupChanged;
+    if (cb == null || widget.groupKeys.isEmpty) return;
     const threshold = 72.0;
     String? active;
     String? firstVisible;
     var firstTop = double.infinity;
-    for (final e in groupKeys.entries) {
+    for (final e in widget.groupKeys.entries) {
       final ctx = e.value.currentContext;
       if (ctx == null) continue;
       final box = ctx.findRenderObject() as RenderBox?;
@@ -398,7 +422,9 @@ class CatalogWeaponsGrid extends StatelessWidget {
       }
     }
     final key = active ?? firstVisible;
-    if (key != null) cb(key);
+    if (key == null || key == _lastEmittedActiveKey) return;
+    _lastEmittedActiveKey = key;
+    cb(key);
   }
 
   List<Widget> _buildSlivers(
@@ -422,7 +448,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
           key: const Key('catalog_board_header'),
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
           child: Text(
-            headerLabel,
+            widget.headerLabel,
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ),
@@ -435,7 +461,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
         slivers.add(
           SliverToBoxAdapter(
             child: KeyedSubtree(
-              key: groupKeys[node.key] ?? ValueKey('g_${node.key}'),
+              key: widget.groupKeys[node.key] ?? ValueKey('g_${node.key}'),
               child: CatalogGroupHeader(
                 groupKey: node.key,
                 label: node.label,
@@ -443,7 +469,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
                 depth: depth,
                 dimension: _dimAt(depth),
                 expanded: expanded,
-                onToggle: () => onToggleGroup?.call(node.key),
+                onToggle: () => widget.onToggleGroup?.call(node.key),
               ),
             ),
           ),
@@ -459,20 +485,20 @@ class CatalogWeaponsGrid extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             sliver: SliverGrid(
-              gridDelegate: gridDelegate,
+              gridDelegate: CatalogWeaponsGrid.gridDelegate,
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final family = node.families[index];
                   return CatalogWeaponFamilyCard(
                     family: family,
-                    selected: selectedFamilyKey == family.key ||
-                        (selectedHash != null &&
-                            family.memberByHash(selectedHash!) != null),
-                    showOwned: showOwned,
-                    leading: familyLeadingBuilder?.call(family),
-                    onTap: onSelectFamily == null
+                    selected: widget.selectedFamilyKey == family.key ||
+                        (widget.selectedHash != null &&
+                            family.memberByHash(widget.selectedHash!) != null),
+                    showOwned: widget.showOwned,
+                    leading: widget.familyLeadingBuilder?.call(family),
+                    onTap: widget.onSelectFamily == null
                         ? null
-                        : () => onSelectFamily!(family),
+                        : () => widget.onSelectFamily!(family),
                   );
                 },
                 childCount: node.families.length,
@@ -494,7 +520,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
         slivers.add(
           SliverToBoxAdapter(
             child: KeyedSubtree(
-              key: groupKeys[node.key] ?? ValueKey('g_${node.key}'),
+              key: widget.groupKeys[node.key] ?? ValueKey('g_${node.key}'),
               child: CatalogGroupHeader(
                 groupKey: node.key,
                 label: node.label,
@@ -502,7 +528,7 @@ class CatalogWeaponsGrid extends StatelessWidget {
                 depth: depth,
                 dimension: _dimAt(depth),
                 expanded: expanded,
-                onToggle: () => onToggleGroup?.call(node.key),
+                onToggle: () => widget.onToggleGroup?.call(node.key),
               ),
             ),
           ),
@@ -518,16 +544,18 @@ class CatalogWeaponsGrid extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             sliver: SliverGrid(
-              gridDelegate: gridDelegate,
+              gridDelegate: CatalogWeaponsGrid.gridDelegate,
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final item = node.items[index];
                   return CatalogWeaponCard(
                     item: item,
-                    selected: selectedHash == item.hash,
-                    showOwned: showOwned,
-                    leading: leadingBuilder?.call(item),
-                    onTap: onSelect == null ? null : () => onSelect!(item),
+                    selected: widget.selectedHash == item.hash,
+                    showOwned: widget.showOwned,
+                    leading: widget.leadingBuilder?.call(item),
+                    onTap: widget.onSelect == null
+                        ? null
+                        : () => widget.onSelect!(item),
                   );
                 },
                 childCount: node.items.length,
@@ -548,14 +576,14 @@ class CatalogWeaponsGrid extends StatelessWidget {
         slivers.add(
           SliverToBoxAdapter(
             child: KeyedSubtree(
-              key: groupKeys[group.key] ?? ValueKey('g_${group.key}'),
+              key: widget.groupKeys[group.key] ?? ValueKey('g_${group.key}'),
               child: CatalogGroupHeader(
                 groupKey: group.key,
                 label: group.label,
                 count: group.families.length,
                 dimension: _dimAt(0),
                 expanded: _isExpanded(group.key),
-                onToggle: () => onToggleGroup?.call(group.key),
+                onToggle: () => widget.onToggleGroup?.call(group.key),
               ),
             ),
           ),
@@ -565,20 +593,21 @@ class CatalogWeaponsGrid extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               sliver: SliverGrid(
-                gridDelegate: gridDelegate,
+                gridDelegate: CatalogWeaponsGrid.gridDelegate,
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final family = group.families[index];
                     return CatalogWeaponFamilyCard(
                       family: family,
-                      selected: selectedFamilyKey == family.key ||
-                          (selectedHash != null &&
-                              family.memberByHash(selectedHash!) != null),
-                      showOwned: showOwned,
-                      leading: familyLeadingBuilder?.call(family),
-                      onTap: onSelectFamily == null
+                      selected: widget.selectedFamilyKey == family.key ||
+                          (widget.selectedHash != null &&
+                              family.memberByHash(widget.selectedHash!) !=
+                                  null),
+                      showOwned: widget.showOwned,
+                      leading: widget.familyLeadingBuilder?.call(family),
+                      onTap: widget.onSelectFamily == null
                           ? null
-                          : () => onSelectFamily!(family),
+                          : () => widget.onSelectFamily!(family),
                     );
                   },
                   childCount: group.families.length,
@@ -596,20 +625,20 @@ class CatalogWeaponsGrid extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           sliver: SliverGrid(
-            gridDelegate: gridDelegate,
+            gridDelegate: CatalogWeaponsGrid.gridDelegate,
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final family = fams[index];
                 return CatalogWeaponFamilyCard(
                   family: family,
-                  selected: selectedFamilyKey == family.key ||
-                      (selectedHash != null &&
-                          family.memberByHash(selectedHash!) != null),
-                  showOwned: showOwned,
-                  leading: familyLeadingBuilder?.call(family),
-                  onTap: onSelectFamily == null
+                  selected: widget.selectedFamilyKey == family.key ||
+                      (widget.selectedHash != null &&
+                          family.memberByHash(widget.selectedHash!) != null),
+                  showOwned: widget.showOwned,
+                  leading: widget.familyLeadingBuilder?.call(family),
+                  onTap: widget.onSelectFamily == null
                       ? null
-                      : () => onSelectFamily!(family),
+                      : () => widget.onSelectFamily!(family),
                 );
               },
               childCount: fams.length,
@@ -625,19 +654,21 @@ class CatalogWeaponsGrid extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           sliver: SliverGrid(
-            gridDelegate: gridDelegate,
+            gridDelegate: CatalogWeaponsGrid.gridDelegate,
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final item = items[index];
+                final item = widget.items[index];
                 return CatalogWeaponCard(
                   item: item,
-                  selected: selectedHash == item.hash,
-                  showOwned: showOwned,
-                  leading: leadingBuilder?.call(item),
-                  onTap: onSelect == null ? null : () => onSelect!(item),
+                  selected: widget.selectedHash == item.hash,
+                  showOwned: widget.showOwned,
+                  leading: widget.leadingBuilder?.call(item),
+                  onTap: widget.onSelect == null
+                      ? null
+                      : () => widget.onSelect!(item),
                 );
               },
-              childCount: items.length,
+              childCount: widget.items.length,
             ),
           ),
         ),
@@ -650,14 +681,14 @@ class CatalogWeaponsGrid extends StatelessWidget {
         slivers.add(
           SliverToBoxAdapter(
             child: KeyedSubtree(
-              key: groupKeys[group.key] ?? ValueKey('g_${group.key}'),
+              key: widget.groupKeys[group.key] ?? ValueKey('g_${group.key}'),
               child: CatalogGroupHeader(
                 groupKey: group.key,
                 label: group.label,
                 count: group.items.length,
                 dimension: _dimAt(0),
                 expanded: _isExpanded(group.key),
-                onToggle: () => onToggleGroup?.call(group.key),
+                onToggle: () => widget.onToggleGroup?.call(group.key),
               ),
             ),
           ),
@@ -667,16 +698,18 @@ class CatalogWeaponsGrid extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               sliver: SliverGrid(
-                gridDelegate: gridDelegate,
+                gridDelegate: CatalogWeaponsGrid.gridDelegate,
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final item = group.items[index];
                     return CatalogWeaponCard(
                       item: item,
-                      selected: selectedHash == item.hash,
-                      showOwned: showOwned,
-                      leading: leadingBuilder?.call(item),
-                      onTap: onSelect == null ? null : () => onSelect!(item),
+                      selected: widget.selectedHash == item.hash,
+                      showOwned: widget.showOwned,
+                      leading: widget.leadingBuilder?.call(item),
+                      onTap: widget.onSelect == null
+                          ? null
+                          : () => widget.onSelect!(item),
                     );
                   },
                   childCount: group.items.length,

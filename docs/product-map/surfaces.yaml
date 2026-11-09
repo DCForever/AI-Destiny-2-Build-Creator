@@ -78,8 +78,9 @@ surfaces:
       nextjs:
         path: /sets
       flutter-windows:
-        status: stub
+        status: done
         route: /sets
+        notes: "Catalog · Sets · Settings shell; Sets Armor MVP library page"
   - id: shell.nav.catalog
     title: Nav → Catalog
     kind: field
@@ -117,8 +118,9 @@ surfaces:
       nextjs:
         path: /settings
       flutter-windows:
-        status: stub
+        status: done
         route: /settings
+        notes: "Settings page mounted in shell rail"
   - id: shell.auth
     title: Bungie auth control
     kind: surface
@@ -1179,6 +1181,29 @@ surfaces:
       flutter-windows:
         status: done
         route: /warlock-builds
+  - id: catalog.warlock-pilot
+    title: Offline contrasting-build pilot
+    kind: screen
+    area: catalog
+    auth: any
+    parent: catalog.warlock-matrix
+    notes: >
+      Local review of five trimmed community rows. Preserves source links and
+      blanks. Synthetic inventory and DIM JSON are labeled and are not ownership.
+    rules:
+      - DBR-PLT-001
+      - DBR-PLT-002
+      - DBR-PLT-003
+      - DBR-PLT-004
+      - DAC-PLT-001
+      - DAC-PLT-002
+      - DAC-PLT-003
+      - BR-WXM-002
+    status: active
+    platforms:
+      flutter-windows:
+        status: done
+        route: /warlock-builds
   - id: catalog.signed-out.weapons
     title: Catalog weapons (signed-out / Manifest)
     kind: screen
@@ -1466,7 +1491,20 @@ surfaces:
     rules:
       - DAC-NME-003
       - DBR-ROLL-010
+      - DBR-UI-001
+      - DBR-UI-005
+      - DBR-UI-006
+      - DBR-UI-008
       - BR-CAT-001
+      - BR-CAT-003
+      - BR-CAT-004
+      - BR-CAT-010
+      - BR-CAT-011
+      - BR-CAT-011b
+      - BR-CAT-011c
+      - BR-CAT-012
+      - BR-CAT-017
+      - BR-CAT-031
       - 003:SC-001
     status: active
     platforms:
@@ -1474,17 +1512,22 @@ surfaces:
         path: /catalog
         captureId: catalog-armor-owned
       flutter-windows:
-        status: stub
+        # Implement complete; dual-truth Capture must-rows still open (001-armor COMPARE).
+        status: capturing
         route: /catalog
         captureId: catalog-armor-owned
   - id: catalog.armor.filters
-    title: Armor facets (class, slot, exotic, tier…)
+    title: Armor facets (class, slot, exotic, free-text)
     kind: surface
     area: catalog
     parent: catalog.armor.owned
     rules:
       - DAC-NME-003
       - DBR-ROLL-010
+      - BR-CAT-003
+      - BR-CAT-004
+      - BR-CAT-010
+      - BR-CAT-010d
     status: active
   - id: catalog.armor.stats-panel
     title: Armor stats panel
@@ -1494,7 +1537,10 @@ surfaces:
     rules:
       - DBR-STAT-001
       - DBR-STAT-008
+      - DBR-UI-008
       - BR-SET-011
+      - DO-ARM-008
+      - DO-ARM-009
     status: active
   - id: catalog.armor.manifest
     title: Armor — Manifest
@@ -1505,13 +1551,17 @@ surfaces:
     rules:
       - DAC-NME-003
       - DBR-ROLL-010
+      - DBR-PUR-002
+      - BR-CAT-006
+      - BR-CAT-017
+      - DO-ARM-001
     status: active
     platforms:
       nextjs:
         path: /catalog
         captureId: catalog-armor-manifest
       flutter-windows:
-        status: stub
+        status: capturing
         route: /catalog
         captureId: catalog-armor-manifest
   - id: catalog.armor.detail
@@ -1522,15 +1572,26 @@ surfaces:
     parent: null
     rules:
       - BR-CAT-006
+      - BR-CAT-011
+      - BR-CAT-011b
+      - BR-CAT-011c
+      - BR-CAT-012
       - DAC-NME-004
       - DBR-STAT-001
+      - DBR-STAT-008
+      - DBR-UI-008
+      - DO-ARM-008
+      - DO-ARM-009
+      - DO-ARM-011
+      - DO-EXO-010
+      - DO-ASB-015
     status: active
     platforms:
       nextjs:
         path: /catalog
         captureId: catalog-armor-detail
       flutter-windows:
-        status: stub
+        status: capturing
         route: /catalog
         captureId: catalog-armor-detail
   - id: catalog.universal
@@ -1684,13 +1745,20 @@ surfaces:
       - BR-TAG-004
       - BR-TAG-005
       - 001:SC-001
+      - G-SET-001
+      - G-SET-004
+      - G-SET-013
+      - G-SET-033
+      - G-SET-040
+      - DBR-SETB-003
+      - BR-SET-050
     status: active
     platforms:
       nextjs:
         path: /sets
         captureId: sets-create
       flutter-windows:
-        status: stub
+        status: done
         route: /sets
         captureId: sets-create
   - id: sets.create.name
@@ -1872,7 +1940,7 @@ surfaces:
       - DAC-DST-009
     status: active
   - id: sets.fill-slot
-    title: Fill slot (embedded Catalog)
+    title: Fill slot (owned compare pick)
     kind: screen
     area: sets
     auth: signed-in
@@ -1884,22 +1952,26 @@ surfaces:
       - BR-SLOT-008
       - BR-SLOT-009
       - BR-UI-001
+      - G-SET-002
+      - DBR-CMP-001
+      - DBR-CMP-005
     status: active
     platforms:
       nextjs:
         path: /sets
         captureId: sets-fill-slot
       flutter-windows:
-        status: stub
+        status: partial
         route: /sets
         captureId: sets-fill-slot
   - id: sets.fill-slot.catalog
-    title: Constrained catalog pick
+    title: Owned compare pick (not Catalog embed)
     kind: surface
     area: sets
     parent: sets.fill-slot
     rules:
       - DAC-NME-003
+      - G-SET-002
     status: active
   - id: sets.fill-slot.exotic-block
     title: Second exotic blocked in set
@@ -1914,7 +1986,7 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: stub
+        status: partial
         route: /sets
   - id: sets.pair
     title: Pair set exotic constraints
@@ -1946,8 +2018,16 @@ surfaces:
     rules:
       - BR-OPT-001
       - BR-OPT-002
+      - BR-OPT-004
       - 026:SC-001
+      - G-SET-013
+      - DBR-SETB-003
     status: active
+    platforms:
+      flutter-windows:
+        status: partial
+        route: /sets
+        captureId: sets-optimize
   - id: synergy.signed-out
     title: Synergy — signed-out gate
     kind: gate

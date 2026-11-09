@@ -10,6 +10,8 @@
 // **************************************************************************
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:destiny2_widgetbook/use_cases/catalog/armor_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_catalog_armor_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/cards_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_cards_use_cases;
 import 'package:destiny2_widgetbook/use_cases/catalog/detail_use_cases.dart'
@@ -38,12 +40,74 @@ import 'package:destiny2_widgetbook/use_cases/catalog/workspace_use_cases.dart'
     as _destiny2_widgetbook_use_cases_catalog_workspace_use_cases;
 import 'package:destiny2_widgetbook/use_cases/neon/board_atmosphere_use_cases.dart'
     as _destiny2_widgetbook_use_cases_neon_board_atmosphere_use_cases;
+import 'package:destiny2_widgetbook/use_cases/sets/armor_use_cases.dart'
+    as _destiny2_widgetbook_use_cases_sets_armor_use_cases;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
 
 final directories = <_widgetbook.WidgetbookNode>[
   _widgetbook.WidgetbookCategory(
     name: 'Catalog',
     children: [
+      _widgetbook.WidgetbookFolder(
+        name: 'Armor',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'ArmorInstanceStrip',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor instance strip rebind',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorInstanceStrip,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogArmorDetail',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor detail unowned',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorDesktopUnowned,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor grid + 400 detail (owned)',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorDesktopOwned,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogArmorGrid',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor mobile structure grid (390)',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorMobileStructure,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogEmptyState',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor signed-out owned empty',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorSignedOutOwned,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'CatalogSoftErrorBanner',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Armor soft error banner',
+                builder: _destiny2_widgetbook_use_cases_catalog_armor_use_cases
+                    .armorSoftError,
+              )
+            ],
+          ),
+        ],
+      ),
       _widgetbook.WidgetbookFolder(
         name: 'Cards',
         children: [
@@ -227,6 +291,17 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _destiny2_widgetbook_use_cases_catalog_detail_use_cases
                             .knobsWeaponDetail,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'EntityInfoHotspot',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'EntityInfoHotspot · knobs',
+                    builder:
+                        _destiny2_widgetbook_use_cases_catalog_detail_use_cases
+                            .knobsEntityInfoHotspot,
                   )
                 ],
               ),
@@ -450,6 +525,11 @@ final directories = <_widgetbook.WidgetbookNode>[
                 name: 'Expanded header',
                 builder: _destiny2_widgetbook_use_cases_catalog_group_use_cases
                     .groupHeaderExpanded,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Nested Slot→Element · icons',
+                builder: _destiny2_widgetbook_use_cases_catalog_group_use_cases
+                    .groupNestedHeadersIcons,
               ),
             ],
           ),
@@ -719,6 +799,116 @@ final directories = <_widgetbook.WidgetbookNode>[
           )
         ],
       ),
+    ],
+  ),
+  _widgetbook.WidgetbookCategory(
+    name: 'Sets',
+    children: [
+      _widgetbook.WidgetbookFolder(
+        name: 'Armor',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsArmorBoard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Empty board layout A',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsEmptyBoard,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Filled board + coverage',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsFilledBoard,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsCreateWizard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Type',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepType,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Class',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepClass,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Bonus',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepBonus,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create step Name',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateStepName,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create non-Armor thin',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateNonArmorThin,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Create Type+Class lock',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsCreateLock,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsHonestyEmpty',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Signed-out honesty',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsSignedOut,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsLibraryWorkspace',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Library dual-pane Armor',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsLibraryArmor,
+              )
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsOptimizeConfirmShell',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Optimize · default',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOptimizeConfirm,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Optimize · mins active',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOptimizeMins,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'Optimize · empty board',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOptimizeEmptyBoard,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'SetsOwnedCompareTable',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Owned compare table',
+                builder: _destiny2_widgetbook_use_cases_sets_armor_use_cases
+                    .setsOwnedCompare,
+              )
+            ],
+          ),
+        ],
+      )
     ],
   ),
 ];

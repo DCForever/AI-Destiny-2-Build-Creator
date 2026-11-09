@@ -231,4 +231,71 @@ void main() {
 
     controller.dispose();
   });
+
+  testWidgets('signed-out local copies use human last-sync (not raw ISO)',
+      (tester) async {
+    const iso = '2026-08-12T15:25:00.748643Z';
+    final userId = await insertUser(
+      db,
+      bungieMembershipId: 'destiny-local',
+      membershipType: 3,
+      displayName: 'Guardian',
+      lastSyncAt: iso,
+    );
+    await replaceInventoryBatch(
+      db,
+      userId,
+      items: const [
+        InventoryItemRecord(
+          instanceId: 'i1',
+          itemHash: 1,
+          bucket: 'kinetic',
+          location: 'vault',
+          power: 1800,
+          syncedAt: iso,
+        ),
+      ],
+      now: iso,
+    );
+
+    final session = WindowsOAuthSession(
+      clientId: 'test-client',
+      redirectUri: kDefaultWindowsRedirectUri,
+      tokenStore: MemoryTokenStore(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
+      ),
+      browserLauncher: FakeBrowserLauncher(),
+    );
+    await session.restore();
+    final controller = InventorySyncController(
+      db: db,
+      session: session,
+      profileClient: FakeProfileClient(),
+      lock: lock,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: Scaffold(
+          body: InventorySyncCard(controller: controller, session: session),
+        ),
+      ),
+    );
+    await _pumpFrames(tester);
+    await tester.pump(const Duration(milliseconds: 50));
+    await _pumpFrames(tester);
+
+    expect(find.byKey(const Key('inventory_sync_local_only_meta')), findsOneWidget);
+    expect(find.textContaining(iso), findsNothing);
+    expect(
+      find.textContaining(formatLastSyncLabel(lastFullSyncAt: iso)),
+      findsOneWidget,
+    );
+
+    controller.dispose();
+  });
 }

@@ -829,8 +829,19 @@ pages:
         auth: signed-in
         rules:
           - BR-CAT-006
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
           - DAC-NME-004
           - DBR-STAT-001
+          - DBR-STAT-008
+          - DBR-UI-008
+          - DO-ARM-008
+          - DO-ARM-009
+          - DO-ARM-011
+          - DO-EXO-010
+          - DO-ASB-015
         atlas:
           - catalog-armor-detail
       - id: catalog.armor.manifest
@@ -841,6 +852,10 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-PUR-002
+          - BR-CAT-006
+          - BR-CAT-017
+          - DO-ARM-001
         atlas:
           - catalog-armor-manifest
       - id: catalog.armor.owned
@@ -851,24 +866,44 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-UI-001
+          - DBR-UI-005
+          - DBR-UI-006
+          - DBR-UI-008
           - BR-CAT-001
+          - BR-CAT-003
+          - BR-CAT-004
+          - BR-CAT-010
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
+          - BR-CAT-017
+          - BR-CAT-031
           - 003:SC-001
         atlas:
           - catalog-armor-owned
         children:
           - id: catalog.armor.filters
             kind: surface
-            title: Armor facets (class, slot, exotic, tier…)
+            title: Armor facets (class, slot, exotic, free-text)
             rules:
               - DAC-NME-003
               - DBR-ROLL-010
+              - BR-CAT-003
+              - BR-CAT-004
+              - BR-CAT-010
+              - BR-CAT-010d
           - id: catalog.armor.stats-panel
             kind: field
             title: Armor stats panel
             rules:
               - DBR-STAT-001
               - DBR-STAT-008
+              - DBR-UI-008
               - BR-SET-011
+              - DO-ARM-008
+              - DO-ARM-009
       - id: catalog.composition-aid
         kind: surface
         title: Catalog as composition aid (not primary job)
@@ -947,6 +982,22 @@ pages:
           - DBR-SUB-011
           - DAC-DST-016
           - BR-WXM-001
+        children:
+          - id: catalog.warlock-pilot
+            kind: screen
+            title: Offline contrasting-build pilot
+            auth: any
+            notes: |
+              Local review of five trimmed community rows. Preserves source links and blanks. Synthetic inventory and DIM JSON are labeled and are not ownership.
+            rules:
+              - DBR-PLT-001
+              - DBR-PLT-002
+              - DBR-PLT-003
+              - DBR-PLT-004
+              - DAC-PLT-001
+              - DAC-PLT-002
+              - DAC-PLT-003
+              - BR-WXM-002
       - id: catalog.weapon.detail
         kind: subscreen
         title: Weapon detail pane
@@ -1129,6 +1180,13 @@ pages:
           - BR-TAG-004
           - BR-TAG-005
           - 001:SC-001
+          - G-SET-001
+          - G-SET-004
+          - G-SET-013
+          - G-SET-033
+          - G-SET-040
+          - DBR-SETB-003
+          - BR-SET-050
         atlas:
           - sets-create
         children:
@@ -1269,7 +1327,7 @@ pages:
           - DBR-FASH-001
       - id: sets.fill-slot
         kind: screen
-        title: Fill slot (embedded Catalog)
+        title: Fill slot (owned compare pick)
         path: /sets
         auth: signed-in
         rules:
@@ -1279,14 +1337,18 @@ pages:
           - BR-SLOT-008
           - BR-SLOT-009
           - BR-UI-001
+          - G-SET-002
+          - DBR-CMP-001
+          - DBR-CMP-005
         atlas:
           - sets-fill-slot
         children:
           - id: sets.fill-slot.catalog
             kind: surface
-            title: Constrained catalog pick
+            title: Owned compare pick (not Catalog embed)
             rules:
               - DAC-NME-003
+              - G-SET-002
           - id: sets.fill-slot.exotic-block
             kind: gate
             title: Second exotic blocked in set
@@ -1339,7 +1401,10 @@ pages:
         rules:
           - BR-OPT-001
           - BR-OPT-002
+          - BR-OPT-004
           - 026:SC-001
+          - G-SET-013
+          - DBR-SETB-003
       - id: sets.pair
         kind: surface
         title: Pair set exotic constraints
@@ -2613,6 +2678,12 @@ pages:
               - BR-SET-002
               - BR-TAG-004
               - 001:SC-001
+              - G-SET-001
+              - G-SET-004
+              - G-SET-013
+              - G-SET-033
+              - G-SET-040
+              - DBR-SETB-003
             notes: "include: flow.sets.create"
             children:
               - id: journey.p2.library.sets.create.open
@@ -2623,10 +2694,15 @@ pages:
                   - sets-library-new
               - id: journey.p2.library.sets.create.form
                 kind: surface
-                title: Name / type / tags
+                title: Type / class / goals / name
                 rules:
                   - BR-TAG-002
                   - BR-TAG-005
+                  - G-SET-001
+                  - G-SET-004
+                  - G-SET-013
+                  - G-SET-033
+                  - G-SET-040
                   - BR-SET-001
                   - BR-SET-002
                   - BR-SET-004
@@ -2634,22 +2710,59 @@ pages:
                   - BR-TAG-004
                   - BR-TAG-005
                   - 001:SC-001
+                  - G-SET-001
+                  - G-SET-004
+                  - G-SET-013
+                  - G-SET-033
+                  - G-SET-040
+                  - DBR-SETB-003
+                  - BR-SET-050
                 path: /sets
                 auth: signed-in
                 atlas:
                   - sets-create
+              - id: journey.p2.library.sets.create.board
+                kind: surface
+                title: Empty board (layout A)
+                rules:
+                  - G-SET-001
+                  - G-SET-040
+                  - BR-SET-001
+                  - BR-SET-010
+                  - BR-SET-011
+                  - BR-SLOT-011
+                  - BR-SLOT-012
+                  - BR-SLOT-014
+                  - DAC-NME-004
+                  - DAC-DST-010
+                  - DAC-DST-011
+                  - DAC-SET-002
+                  - DBR-STAT-001
+                  - DBR-CMP-001
+                  - DBR-CMP-008
+                  - DBR-CMP-009
+                  - DBR-CMP-010
+                path: /sets
+                auth: signed-in
+                atlas:
+                  - sets-detail
               - id: journey.p2.library.sets.create.fill
                 kind: surface
-                title: ↻ Fill required slots
+                title: ↻ Fill via compare or optimize
                 rules:
                   - DAC-NME-003
                   - DAC-DST-009
+                  - G-SET-002
+                  - BR-OPT-004
                   - DAC-NME-003
                   - DBR-ROLL-010
                   - DAC-DST-009
                   - BR-SLOT-008
                   - BR-SLOT-009
                   - BR-UI-001
+                  - G-SET-002
+                  - DBR-CMP-001
+                  - DBR-CMP-005
                 path: /sets
                 auth: signed-in
                 atlas:
@@ -2710,6 +2823,7 @@ pages:
               - BR-SET-001
               - BR-SLOT-008
               - DAC-DST-009
+              - G-SET-002
             notes: "include: flow.sets.edit-fill"
             children:
               - id: journey.p2.library.sets.edit-fill.edit
@@ -2723,9 +2837,9 @@ pages:
                 auth: signed-in
                 atlas:
                   - sets-edit
-              - id: journey.p2.library.sets.edit-fill.fill
+              - id: journey.p2.library.sets.edit-fill.fill-compare
                 kind: surface
-                title: Fill slot (catalog embed)
+                title: Fill slot (owned compare)
                 rules:
                   - DAC-NME-003
                   - DBR-ROLL-010
@@ -2733,10 +2847,26 @@ pages:
                   - BR-SLOT-008
                   - BR-SLOT-009
                   - BR-UI-001
+                  - G-SET-002
+                  - DBR-CMP-001
+                  - DBR-CMP-005
                 path: /sets
                 auth: signed-in
                 atlas:
                   - sets-fill-slot
+              - id: journey.p2.library.sets.edit-fill.fill-optimize
+                kind: surface
+                title: Optimize confirm-only
+                rules:
+                  - BR-OPT-004
+                  - BR-OPT-001
+                  - BR-OPT-002
+                  - BR-OPT-004
+                  - 026:SC-001
+                  - G-SET-013
+                  - DBR-SETB-003
+                atlas:
+                  - sets-optimize
               - id: journey.p2.library.sets.edit-fill.exotic-block
                 kind: gate
                 title: Second exotic blocked
@@ -3788,6 +3918,12 @@ pages:
           - BR-SET-002
           - BR-TAG-004
           - 001:SC-001
+          - G-SET-001
+          - G-SET-004
+          - G-SET-013
+          - G-SET-033
+          - G-SET-040
+          - DBR-SETB-003
         notes: "include: flow.sets.create"
         children:
           - id: flow.sets.library.create.open
@@ -3798,10 +3934,15 @@ pages:
               - sets-library-new
           - id: flow.sets.library.create.form
             kind: surface
-            title: Name / type / tags
+            title: Type / class / goals / name
             rules:
               - BR-TAG-002
               - BR-TAG-005
+              - G-SET-001
+              - G-SET-004
+              - G-SET-013
+              - G-SET-033
+              - G-SET-040
               - BR-SET-001
               - BR-SET-002
               - BR-SET-004
@@ -3809,22 +3950,59 @@ pages:
               - BR-TAG-004
               - BR-TAG-005
               - 001:SC-001
+              - G-SET-001
+              - G-SET-004
+              - G-SET-013
+              - G-SET-033
+              - G-SET-040
+              - DBR-SETB-003
+              - BR-SET-050
             path: /sets
             auth: signed-in
             atlas:
               - sets-create
+          - id: flow.sets.library.create.board
+            kind: surface
+            title: Empty board (layout A)
+            rules:
+              - G-SET-001
+              - G-SET-040
+              - BR-SET-001
+              - BR-SET-010
+              - BR-SET-011
+              - BR-SLOT-011
+              - BR-SLOT-012
+              - BR-SLOT-014
+              - DAC-NME-004
+              - DAC-DST-010
+              - DAC-DST-011
+              - DAC-SET-002
+              - DBR-STAT-001
+              - DBR-CMP-001
+              - DBR-CMP-008
+              - DBR-CMP-009
+              - DBR-CMP-010
+            path: /sets
+            auth: signed-in
+            atlas:
+              - sets-detail
           - id: flow.sets.library.create.fill
             kind: surface
-            title: ↻ Fill required slots
+            title: ↻ Fill via compare or optimize
             rules:
               - DAC-NME-003
               - DAC-DST-009
+              - G-SET-002
+              - BR-OPT-004
               - DAC-NME-003
               - DBR-ROLL-010
               - DAC-DST-009
               - BR-SLOT-008
               - BR-SLOT-009
               - BR-UI-001
+              - G-SET-002
+              - DBR-CMP-001
+              - DBR-CMP-005
             path: /sets
             auth: signed-in
             atlas:
@@ -3885,6 +4063,7 @@ pages:
           - BR-SET-001
           - BR-SLOT-008
           - DAC-DST-009
+          - G-SET-002
         notes: "include: flow.sets.edit-fill"
         children:
           - id: flow.sets.library.edit-fill.edit
@@ -3898,9 +4077,9 @@ pages:
             auth: signed-in
             atlas:
               - sets-edit
-          - id: flow.sets.library.edit-fill.fill
+          - id: flow.sets.library.edit-fill.fill-compare
             kind: surface
-            title: Fill slot (catalog embed)
+            title: Fill slot (owned compare)
             rules:
               - DAC-NME-003
               - DBR-ROLL-010
@@ -3908,10 +4087,26 @@ pages:
               - BR-SLOT-008
               - BR-SLOT-009
               - BR-UI-001
+              - G-SET-002
+              - DBR-CMP-001
+              - DBR-CMP-005
             path: /sets
             auth: signed-in
             atlas:
               - sets-fill-slot
+          - id: flow.sets.library.edit-fill.fill-optimize
+            kind: surface
+            title: Optimize confirm-only
+            rules:
+              - BR-OPT-004
+              - BR-OPT-001
+              - BR-OPT-002
+              - BR-OPT-004
+              - 026:SC-001
+              - G-SET-013
+              - DBR-SETB-003
+            atlas:
+              - sets-optimize
           - id: flow.sets.library.edit-fill.exotic-block
             kind: gate
             title: Second exotic blocked
@@ -3937,10 +4132,15 @@ pages:
           - sets-library-new
       - id: flow.sets.create.form
         kind: surface
-        title: Name / type / tags
+        title: Type / class / goals / name
         rules:
           - BR-TAG-002
           - BR-TAG-005
+          - G-SET-001
+          - G-SET-004
+          - G-SET-013
+          - G-SET-033
+          - G-SET-040
           - BR-SET-001
           - BR-SET-002
           - BR-SET-004
@@ -3948,22 +4148,59 @@ pages:
           - BR-TAG-004
           - BR-TAG-005
           - 001:SC-001
+          - G-SET-001
+          - G-SET-004
+          - G-SET-013
+          - G-SET-033
+          - G-SET-040
+          - DBR-SETB-003
+          - BR-SET-050
         path: /sets
         auth: signed-in
         atlas:
           - sets-create
+      - id: flow.sets.create.board
+        kind: surface
+        title: Empty board (layout A)
+        rules:
+          - G-SET-001
+          - G-SET-040
+          - BR-SET-001
+          - BR-SET-010
+          - BR-SET-011
+          - BR-SLOT-011
+          - BR-SLOT-012
+          - BR-SLOT-014
+          - DAC-NME-004
+          - DAC-DST-010
+          - DAC-DST-011
+          - DAC-SET-002
+          - DBR-STAT-001
+          - DBR-CMP-001
+          - DBR-CMP-008
+          - DBR-CMP-009
+          - DBR-CMP-010
+        path: /sets
+        auth: signed-in
+        atlas:
+          - sets-detail
       - id: flow.sets.create.fill
         kind: surface
-        title: ↻ Fill required slots
+        title: ↻ Fill via compare or optimize
         rules:
           - DAC-NME-003
           - DAC-DST-009
+          - G-SET-002
+          - BR-OPT-004
           - DAC-NME-003
           - DBR-ROLL-010
           - DAC-DST-009
           - BR-SLOT-008
           - BR-SLOT-009
           - BR-UI-001
+          - G-SET-002
+          - DBR-CMP-001
+          - DBR-CMP-005
         path: /sets
         auth: signed-in
         atlas:
@@ -4007,9 +4244,9 @@ pages:
         auth: signed-in
         atlas:
           - sets-edit
-      - id: flow.sets.edit-fill.fill
+      - id: flow.sets.edit-fill.fill-compare
         kind: surface
-        title: Fill slot (catalog embed)
+        title: Fill slot (owned compare)
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
@@ -4017,10 +4254,26 @@ pages:
           - BR-SLOT-008
           - BR-SLOT-009
           - BR-UI-001
+          - G-SET-002
+          - DBR-CMP-001
+          - DBR-CMP-005
         path: /sets
         auth: signed-in
         atlas:
           - sets-fill-slot
+      - id: flow.sets.edit-fill.fill-optimize
+        kind: surface
+        title: Optimize confirm-only
+        rules:
+          - BR-OPT-004
+          - BR-OPT-001
+          - BR-OPT-002
+          - BR-OPT-004
+          - 026:SC-001
+          - G-SET-013
+          - DBR-SETB-003
+        atlas:
+          - sets-optimize
       - id: flow.sets.edit-fill.exotic-block
         kind: gate
         title: Second exotic blocked
@@ -4351,7 +4604,20 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-UI-001
+          - DBR-UI-005
+          - DBR-UI-006
+          - DBR-UI-008
           - BR-CAT-001
+          - BR-CAT-003
+          - BR-CAT-004
+          - BR-CAT-010
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
+          - BR-CAT-017
+          - BR-CAT-031
           - 003:SC-001
         path: /catalog
         auth: signed-in
@@ -4363,6 +4629,10 @@ pages:
         rules:
           - DAC-NME-003
           - DBR-ROLL-010
+          - DBR-PUR-002
+          - BR-CAT-006
+          - BR-CAT-017
+          - DO-ARM-001
         path: /catalog
         auth: signed-in
         atlas:
@@ -4372,8 +4642,19 @@ pages:
         title: Armor detail
         rules:
           - BR-CAT-006
+          - BR-CAT-011
+          - BR-CAT-011b
+          - BR-CAT-011c
+          - BR-CAT-012
           - DAC-NME-004
           - DBR-STAT-001
+          - DBR-STAT-008
+          - DBR-UI-008
+          - DO-ARM-008
+          - DO-ARM-009
+          - DO-ARM-011
+          - DO-EXO-010
+          - DO-ASB-015
         path: /catalog
         auth: signed-in
         atlas:
@@ -4426,6 +4707,25 @@ pages:
         auth: any
         atlas:
           - catalog-warlock-matrix
+      - id: flow.catalog.warlock-matrix.pilot
+        kind: surface
+        title: Open the offline contrasting-build pilot
+        rules:
+          - DBR-PLT-001
+          - DBR-PLT-002
+          - DBR-PLT-003
+          - DAC-PLT-001
+          - DBR-PLT-001
+          - DBR-PLT-002
+          - DBR-PLT-003
+          - DBR-PLT-004
+          - DAC-PLT-001
+          - DAC-PLT-002
+          - DAC-PLT-003
+          - BR-WXM-002
+        auth: any
+        atlas:
+          - catalog-warlock-pilot
   - id: flow-flow-loadouts
     label: In-game loadouts
     description: Flow flow.loadouts
