@@ -1,0 +1,16 @@
+title = "AI Destiny 2 Build Creator"
+
+[extend]
+useDefault = true
+
+# False positive: gitleaks v8.30.1 rule generic-api-key on synced PRD prose
+# (product area names "Catalog/Sets/Synergy", not a credential).
+[allowlist]
+description = "generic-api-key on docs-site/src/content/docs/prd/area-build.md"
+paths = [
+  '''docs-site/src/content/docs/prd/area-build\.md''',
+]
+regexTarget = "match"
+regexes = [
+  '''Catalog/Sets/Synergy''',
+]
