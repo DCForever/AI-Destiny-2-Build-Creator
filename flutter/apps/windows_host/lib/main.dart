@@ -4,6 +4,7 @@ import 'package:flutter_driver/driver_extension.dart';
 import 'app.dart';
 import 'config/local_env.dart';
 import 'host_bootstrap.dart';
+import 'theme/bundled_font_licenses.dart';
 import 'theme/flap_theme.dart';
 
 /// Public Bungie API key only (optional). Never CLIENT_SECRET.
@@ -36,6 +37,7 @@ Future<void> main() async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+  registerBundledFontLicenses();
 
   // sqlite3 3.x registers native SQLite via Dart build hooks (no flutter_libs).
 

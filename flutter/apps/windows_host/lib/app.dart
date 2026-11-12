@@ -4,6 +4,7 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:flutter/material.dart';
 
+import 'builds_mock/builds_mock_page.dart';
 import 'catalog/catalog_page.dart';
 import 'host_bootstrap.dart';
 import 'sets/sets_library_page.dart';
@@ -14,7 +15,7 @@ import 'warlock/warlock_builds_page.dart';
 /// Root Flutter app for the Windows host.
 ///
 /// **UX rebuild shell:** Catalog + **Sets** (Armor MVP implement) + read-only
-/// Warlock builds + Settings.
+/// Warlock builds + Builds (mockup) + Settings.
 /// Loadouts / Build / Synergy return via the area UX redesign loop.
 /// Appearance: **Neon void** dark + **Cool technical** light ([ThemeMode]).
 /// Design system tokens unchanged.
@@ -35,13 +36,15 @@ class Destiny2WindowsApp extends StatefulWidget {
     'Catalog',
     'Sets',
     'Warlocks',
+    'Builds (mockup)',
     'Settings',
   ];
 
   static const int catalogNavIndex = 0;
   static const int setsNavIndex = 1;
   static const int warlockBuildsNavIndex = 2;
-  static const int settingsNavIndex = 3;
+  static const int buildsMockNavIndex = 3;
+  static const int settingsNavIndex = 4;
 
   @override
   State<Destiny2WindowsApp> createState() => _Destiny2WindowsAppState();
@@ -105,6 +108,11 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                     label: Text('Warlocks'),
                   ),
                   NavigationRailDestination(
+                    icon: Icon(Icons.construction_outlined),
+                    selectedIcon: Icon(Icons.construction),
+                    label: Text('Builds (mockup)'),
+                  ),
+                  NavigationRailDestination(
                     icon: Icon(Icons.settings_outlined),
                     selectedIcon: Icon(Icons.settings),
                     label: Text('Settings'),
@@ -131,6 +139,9 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                     WarlockBuildsPage(
                       key: const Key('warlock_builds_page'),
                       initialPath: _matrixPath,
+                    ),
+                    const BuildsMockPage(
+                      key: Key('builds_mock_page_host'),
                     ),
                     SettingsPage(
                       key: const Key('settings_page'),
