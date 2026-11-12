@@ -80,13 +80,12 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels are Catalog, Sets, Warlocks, Builds (mockup), and Settings',
-      () {
+  test('navLabels are Catalog, Sets, Warlocks, Builds, and Settings', () {
     expect(Destiny2WindowsApp.navLabels, [
       'Catalog',
       'Sets',
       'Warlocks',
-      'Builds (mockup)',
+      'Builds',
       'Settings',
     ]);
     expect(Destiny2WindowsApp.catalogNavIndex, 0);
@@ -97,7 +96,7 @@ void main() {
   });
 
   testWidgets(
-      'NavigationRail shows Catalog, Sets, Warlocks, Builds (mockup), Settings',
+      'NavigationRail shows Catalog, Sets, Warlocks, Builds, Settings',
       (
     tester,
   ) async {
@@ -112,7 +111,7 @@ void main() {
     expect(find.text('Catalog'), findsWidgets);
     expect(find.text('Sets'), findsWidgets);
     expect(find.text('Warlocks'), findsWidgets);
-    expect(find.text('Builds (mockup)'), findsWidgets);
+    expect(find.text('Builds'), findsWidgets);
     expect(find.text('Settings'), findsWidgets);
     expect(
       find.byKey(const Key('catalog_page'), skipOffstage: false),

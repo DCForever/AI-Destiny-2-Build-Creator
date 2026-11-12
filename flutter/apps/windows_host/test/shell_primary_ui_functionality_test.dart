@@ -244,14 +244,12 @@ void main() {
   });
 
   group('shell.nav primary destinations', () {
-    test(
-        'navLabels are Catalog, Sets, Warlocks, Builds (mockup), and Settings',
-        () {
+    test('navLabels are Catalog, Sets, Warlocks, Builds, and Settings', () {
       expect(Destiny2WindowsApp.navLabels, [
         'Catalog',
         'Sets',
         'Warlocks',
-        'Builds (mockup)',
+        'Builds',
         'Settings',
       ]);
       expect(Destiny2WindowsApp.catalogNavIndex, 0);
@@ -262,7 +260,7 @@ void main() {
     });
 
     testWidgets(
-        'rail mounts Catalog, Sets, Warlocks, Builds (mockup), and Settings', (
+        'rail mounts Catalog, Sets, Warlocks, Builds, and Settings', (
       tester,
     ) async {
       await _surface(tester);

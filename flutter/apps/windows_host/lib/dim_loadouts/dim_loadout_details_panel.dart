@@ -53,6 +53,13 @@ class DimLoadoutDetailsPanel extends StatelessWidget {
         style: TextStyle(color: palette.muted, fontSize: 12),
       );
     }
+    if (status == DimLoadoutsPanelStatus.unreadable) {
+      return Text(
+        'DIM link details unreadable',
+        key: const Key('dim_loadout_details_unreadable'),
+        style: TextStyle(color: palette.muted, fontSize: 12),
+      );
+    }
     if (status != DimLoadoutsPanelStatus.loaded || loadout == null) {
       return Text(
         'DIM link details not loaded',

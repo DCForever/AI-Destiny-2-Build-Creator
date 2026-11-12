@@ -104,7 +104,10 @@ void main() {
         'Solipsism': {
           'prismatic': {
             'builds': [
-              {'name': 'Main'},
+              {
+                'name': 'Main',
+                'dim': 'https://dim.gg/syn-main/Main',
+              },
             ],
             'overflow_builds': [
               {'name': 'Overflow', 'creator': 'Author'},
@@ -129,7 +132,11 @@ void main() {
         'cells': {
           'Sunshot': {
             'solar': [
-              {'name': 'Weapon row', 'creator': 'Author'},
+              {
+                'name': 'Weapon row',
+                'creator': 'Author',
+                'dim': 'https://dim.gg/syn-weapon/Weapon-row',
+              },
             ],
           },
         },
@@ -147,6 +154,17 @@ void main() {
     expect(parsed[2].solipsismNotPrismatic, isTrue);
     expect(parsed.last.creator, 'Author');
     expect(parsed.map((build) => build.name), isNot(contains('Removed')));
+    expect(parsed.first.dimLink, 'https://dim.gg/syn-main/Main');
+    expect(parsed.first.isWeaponExotic, isFalse);
+    expect(parsed.last.isWeaponExotic, isTrue);
+    expect(parsed.last.dimLink, 'https://dim.gg/syn-weapon/Weapon-row');
+  });
+
+  test('fixture Aeon solar sample keeps a synthetic dim link', () {
+    final builds = _loadFixture();
+    final aeon = builds.firstWhere((b) => b.name == 'Aeon solar sample');
+    expect(aeon.dimLink, contains('dim.gg/syn-aeon-solar'));
+    expect(aeon.isWeaponExotic, isFalse);
   });
 
   test('missing and unrecognized combo subclasses stay unresolved', () {

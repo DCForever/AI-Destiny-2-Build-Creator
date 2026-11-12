@@ -4,19 +4,26 @@ import 'package:flutter/foundation.dart';
 import '../dim_loadouts/dim_loadout_details_panel.dart';
 import 'builds_mock_fixture.dart';
 import 'builds_mock_logic.dart';
+import 'builds_mock_matrix.dart';
 import 'builds_mock_models.dart';
 
 enum BuildsMockTab { detail, pool, reoptimize }
 
-/// In-memory UI state for the Builds mock-up (no IO).
+/// In-memory UI state for the Builds page (no writes).
+///
+/// Defaults to the synthetic [loadBuildsMockFixture] for tests / previews.
+/// Production loads the Warlock matrix via [adoptFixture] after a read-only
+/// file parse (never the sample fixture).
 class BuildsMockController extends ChangeNotifier {
   BuildsMockController({
     BuildsMockFixture? fixture,
     DimLoadoutsPanelStatus dimStatus = DimLoadoutsPanelStatus.notLoaded,
     List<CachedDimLoadout> dimLoadouts = const [],
+    bool showMockBanner = true,
   })  : _fixture = fixture ?? loadBuildsMockFixture(),
         _dimStatus = dimStatus,
-        _dimLoadouts = List<CachedDimLoadout>.unmodifiable(dimLoadouts) {
+        _dimLoadouts = List<CachedDimLoadout>.unmodifiable(dimLoadouts),
+        _showMockBanner = showMockBanner {
     _readiness = computeAllReadiness(_fixture);
     if (_fixture.builds.isNotEmpty) {
       _selectedId = _fixture.builds.first.id;
@@ -26,10 +33,19 @@ class BuildsMockController extends ChangeNotifier {
     }
   }
 
-  final BuildsMockFixture _fixture;
+  /// Production starting point: empty list until matrix load finishes.
+  factory BuildsMockController.forMatrixLoad() {
+    return BuildsMockController(
+      fixture: emptyBuildsMockFixture(),
+      showMockBanner: false,
+    );
+  }
+
+  BuildsMockFixture _fixture;
   late List<MockSetReadiness> _readiness;
   DimLoadoutsPanelStatus _dimStatus;
   List<CachedDimLoadout> _dimLoadouts;
+  bool _showMockBanner;
 
   String _query = '';
   String? _filterExoticArmor;
@@ -42,6 +58,9 @@ class BuildsMockController extends ChangeNotifier {
   BuildsMockTab _tab = BuildsMockTab.detail;
   BuildsMockCardLayout _cardLayout = BuildsMockCardLayout.detail;
   final Map<String, MockSwapDecision> _swapDecisions = {};
+
+  String? _matrixError;
+  bool _matrixLoading = false;
 
   BuildsMockFixture get fixture => _fixture;
   List<MockSetReadiness> get readiness => _readiness;
@@ -56,6 +75,51 @@ class BuildsMockController extends ChangeNotifier {
   BuildsMockCardLayout get cardLayout => _cardLayout;
   String? get selectedId => _selectedId;
   DimLoadoutsPanelStatus get dimStatus => _dimStatus;
+  bool get showMockBanner => _showMockBanner;
+  String? get matrixError => _matrixError;
+  bool get matrixLoading => _matrixLoading;
+
+  /// Replace the build list after a read-only matrix parse (display only).
+  void adoptFixture(
+    BuildsMockFixture fixture, {
+    bool showMockBanner = false,
+  }) {
+    _fixture = fixture;
+    _showMockBanner = showMockBanner;
+    _matrixError = null;
+    _matrixLoading = false;
+    _readiness = computeAllReadiness(_fixture);
+    _swapDecisions.clear();
+    for (final s in _fixture.swaps) {
+      _swapDecisions[s.id] = MockSwapDecision.pending;
+    }
+    if (_fixture.builds.isEmpty) {
+      _selectedId = null;
+    } else if (_selectedId == null ||
+        _fixture.builds.every((b) => b.id != _selectedId)) {
+      _selectedId = _fixture.builds.first.id;
+    }
+    _pruneFilters();
+    notifyListeners();
+  }
+
+  void beginMatrixLoad() {
+    _matrixLoading = true;
+    _matrixError = null;
+    notifyListeners();
+  }
+
+  void failMatrixLoad(String message) {
+    _fixture = emptyBuildsMockFixture();
+    _showMockBanner = false;
+    _matrixLoading = false;
+    _matrixError = message;
+    _readiness = const [];
+    _selectedId = null;
+    _swapDecisions.clear();
+    _pruneFilters();
+    notifyListeners();
+  }
 
   /// Adopt a read-only compiled DIM catalog snapshot (display only; no writes).
   void adoptDimLoadouts({
@@ -67,8 +131,11 @@ class BuildsMockController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Resolve DIM link details for a mock card (shareId → exact name → never exotic).
+  /// Resolve DIM link details for a card (shareId → exact name → never exotic).
   DimLoadoutCardBinding dimBindingFor(MockBuild build) {
+    if (_dimStatus == DimLoadoutsPanelStatus.unreadable) {
+      return const DimLoadoutCardBinding.unreadable();
+    }
     if (_dimStatus != DimLoadoutsPanelStatus.loaded) {
       return const DimLoadoutCardBinding.notLoaded();
     }
@@ -76,7 +143,9 @@ class BuildsMockController extends ChangeNotifier {
       loadouts: _dimLoadouts,
       dimLink: build.dimLink,
       buildName: build.name,
-      exoticName: build.exoticArmor,
+      exoticName: build.exoticArmor.isNotEmpty
+          ? build.exoticArmor
+          : build.exoticWeapon,
     );
     switch (match.kind) {
       case CachedDimLoadoutMatchKind.matched:
@@ -117,15 +186,24 @@ class BuildsMockController extends ChangeNotifier {
       _swapDecisions[id] ?? MockSwapDecision.pending;
 
   List<String> get exoticArmorOptions => _unique(
-        [for (final b in _fixture.builds) b.exoticArmor],
+        [
+          for (final b in _fixture.builds)
+            if (b.exoticArmor.isNotEmpty) b.exoticArmor,
+        ],
       );
 
   List<String> get exoticWeaponOptions => _unique(
-        [for (final b in _fixture.builds) b.exoticWeapon],
+        [
+          for (final b in _fixture.builds)
+            if (b.exoticWeapon.isNotEmpty) b.exoticWeapon,
+        ],
       );
 
   List<String> get subclassOptions => _unique(
-        [for (final b in _fixture.builds) b.subclass],
+        [
+          for (final b in _fixture.builds)
+            if (b.subclass.isNotEmpty) b.subclass,
+        ],
       );
 
   void setQuery(String value) {
@@ -187,6 +265,25 @@ class BuildsMockController extends ChangeNotifier {
   void rejectSwap(String id) {
     _swapDecisions[id] = MockSwapDecision.rejected;
     notifyListeners();
+  }
+
+  void _pruneFilters() {
+    if (_filterExoticArmor != null &&
+        !exoticArmorOptions.contains(_filterExoticArmor)) {
+      _filterExoticArmor = null;
+    }
+    if (_filterExoticWeapon != null &&
+        !exoticWeaponOptions.contains(_filterExoticWeapon)) {
+      _filterExoticWeapon = null;
+    }
+    if (_filterSubclass != null &&
+        !subclassOptions.contains(_filterSubclass)) {
+      _filterSubclass = null;
+    }
+    if (_filterSetId != null &&
+        _fixture.sets.every((s) => s.id != _filterSetId)) {
+      _filterSetId = null;
+    }
   }
 
   String? _emptyToNull(String? value) {
