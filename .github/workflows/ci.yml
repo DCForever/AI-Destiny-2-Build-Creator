@@ -112,11 +112,13 @@ jobs:
           )
           flutter test "${files[@]}"
 
-      # windows_host: 20 pre-existing failures on main (UI key/chrome drift).
-      # Listed in PR body — not gated here until genuine fixes land. Do not
-      # skip/delete those tests; a follow-up should add:
-      #   working-directory: flutter/apps/windows_host
-      #   run: flutter test
+      # Headless flutter_tester on ubuntu (same as local agent). Existing
+      # skip: true cases (~9) stay in-source; do not add skips here.
+      - name: Flutter windows_host tests
+        working-directory: flutter/apps/windows_host
+        run: |
+          set -euo pipefail
+          flutter test
 
   gitleaks:
     name: gitleaks
