@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: product-map · typecheck · lint · test · build
@@ -43,6 +46,77 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  flutter-test:
+    name: flutter · dart test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # No .fvm pin in repo — pin matches cloud agent Flutter (measured 3.44.9 stable).
+      - name: Setup Flutter
+        # subosito/flutter-action@v2 (pinned to v2.23.0)
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: "3.44.9"
+          channel: stable
+          cache: true
+
+      # Drift/sqlite3 FFI needs system SQLite on Linux flutter_tester.
+      - name: Install libsqlite3-dev
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libsqlite3-dev
+        working-directory: .
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # Package-local cwd so package assets resolve (ui_flutter bungie icons).
+      - name: Dart package tests
+        run: |
+          set -euo pipefail
+          for pkg in \
+            packages/domain \
+            packages/sandbox_data \
+            packages/storage \
+            packages/db \
+            packages/manifest \
+            packages/bungie \
+            packages/app \
+            packages/ui_tokens
+          do
+            echo "=== dart test $pkg ==="
+            (cd "$pkg" && dart test)
+          done
+
+      - name: Flutter ui_flutter tests
+        working-directory: flutter/packages/ui_flutter
+        run: |
+          set -euo pipefail
+          # These two capture suites hang writing dual-truth PNGs (measured 10m+
+          # timeout on desktop-info-desc-present). List them by name so new
+          # test files are not silently dropped from the gate.
+          mapfile -t files < <(
+            find test -name '*.dart' \
+              ! -name 'entity_info_capture_canvas_test.dart' \
+              ! -name 'entity_info_capture_shots_test.dart' \
+              | sort
+          )
+          flutter test "${files[@]}"
+
+      # windows_host: 20 pre-existing failures on main (UI key/chrome drift).
+      # Listed in PR body — not gated here until genuine fixes land. Do not
+      # skip/delete those tests; a follow-up should add:
+      #   working-directory: flutter/apps/windows_host
+      #   run: flutter test
 
   gitleaks:
     name: gitleaks

@@ -11,7 +11,7 @@
   - Public+PKCE **OAuth** (loopback; tokens in secure storage — not SQLite)
   - **Inventory sync** card: Sync now → full-replace into Drift; busy/error UX; 60s freshness label
   - Manifest status (cached / remote / stale / entity cache)
-  - Theme (Neon void / Cool technical)
+  - Theme (Neutral light default / Neutral dark)
 - Design system: `destiny2_ui_tokens` + `destiny2_ui_flutter` (unchanged during strip)
 - Legacy area page code may still exist under `lib/` for rebuild reference / direct page tests; it is **not** mounted in the shell
 - **No CLIENT_SECRET**

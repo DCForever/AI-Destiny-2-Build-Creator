@@ -1,7 +1,7 @@
-/// Neon Network shell atmosphere — void blooms, horizon floor, soft zones.
+/// Shell atmosphere — soft blooms, horizon floor, soft zones.
 ///
-/// Layout preference (DESIGN.md): gap → tonal step → gradient fade → hairline →
-/// outline (exception). Cyan is signal only; structure is white/grey hairline.
+/// Layout preference: gap → tonal step → gradient fade → hairline →
+/// outline (exception). Accent is signal only; structure is white/grey hairline.
 library;
 
 import 'dart:ui' show ImageFilter;
@@ -15,7 +15,7 @@ import 'flap_palette.dart';
 // Decoration (pure helpers)
 // ---------------------------------------------------------------------------
 
-/// Soft zone fill matching Neon `--grad-zone` (surface → void with faint cyan).
+/// Soft zone fill (surface → canvas with faint accent wash).
 BoxDecoration neonZoneDecoration(FlapPalette palette) {
   return BoxDecoration(
     borderRadius: BorderRadius.circular(kFlapRadius),
@@ -63,7 +63,7 @@ BoxDecoration neonPanelDecoration(
 // Shell background
 // ---------------------------------------------------------------------------
 
-/// Full-viewport Neon void: radial shell blooms + optional Tron horizon floor.
+/// Full-viewport shell: radial blooms + optional horizon floor.
 ///
 /// Place as the [Scaffold] body wrapper (scaffold background transparent or void).
 /// Content sits above the atmosphere (`Stack` with [child] last).

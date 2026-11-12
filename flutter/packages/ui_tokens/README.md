@@ -1,14 +1,13 @@
 # destiny2_ui_tokens (DART-029)
 
-Shared **Neon Network** design tokens and **FlapBoard layout contracts** for the multiplatform Dart port.
+Shared **neutral readable** design tokens and **FlapBoard layout contracts** for the multiplatform Dart port.
 
 | Property | Value |
 | -------- | ----- |
 | Pub name | `destiny2_ui_tokens` |
 | Path | `packages/ui_tokens` |
 | Runtime deps | **SDK only** (no Flutter / Jaspr / IO) |
-| Source of truth (product design) | repo root [`DESIGN.md`](../../DESIGN.md) |
-| Open Design system id | `user:neon-network-design-system` |
+| Source of truth (product design) | repo root [`DESIGN.md`](../../DESIGN.md) (palette values live here) |
 
 ## Why pure Dart?
 
@@ -20,28 +19,29 @@ Port architecture ([docs/multiplatform-dart-port-decisions.md](../../docs/multip
 
 | Face | Mode | Character |
 | ---- | ---- | --------- |
-| **Neon void** | dark (default) | Void canvas `#05050f`, cyan-neon signal `#00e5ff` |
-| **Cool technical** | light | Cool greys, cyan signal chrome only (`#00c4db`) |
+| **Neutral stage** | light (**default**) | Whites / greys / black ink; charcoal CTA `#1a1a1a` |
+| **Neutral charcoal** | dark | Blacks / greys; light-grey CTA `#e0e0e0` |
 
-| Token | Dark (Neon void) | Light (Cool technical) | Role |
-| ----- | ---------------- | ---------------------- | ---- |
-| `background` | `#05050f` | `#f4f7fb` | Void / stage |
-| `surface` | `#0a0a18` | `#ffffff` | Elevated zone |
-| `surfaceRaised` | `#101028` | `#eef2f7` | Nested / inset |
-| `line` / `lineStrong` | white/grey hairline @22%/38% | ink hairline @14%/22% | Structure (not cyan cages) |
-| `foreground` / `muted` | `#f0fdff` / `#7dd3e0` | `#0a0a18` / `#4a5a68` | Lettering |
-| `accent` | `#00e5ff` | `#00c4db` | Signal / selection / focus |
-| `danger` / `success` / `warning` | `#ff003c` / `#2ee6a6` / `#f5c542` | same status set | Status (≠ primary) |
+| Token | Dark (Neutral charcoal) | Light (Neutral stage) | Role |
+| ----- | ----------------------- | --------------------- | ---- |
+| `background` | `#121212` | `#f5f5f5` | Canvas / stage |
+| `surface` | `#1e1e1e` | `#ffffff` | Elevated zone |
+| `surfaceRaised` | `#2a2a2a` | `#eeeeee` | Nested / inset |
+| `line` / `lineStrong` | white hairline @22%/38% | black hairline @16%/28% | Structure |
+| `foreground` / `muted` | `#f5f5f5` / `#a3a3a3` | `#111111` / `#595959` | Lettering (AA body) |
+| `accent` | `#e0e0e0` | `#1a1a1a` | Selection / focus / CTA |
+| `danger` / `success` / `warning` | `#ff003c` / `#2ee6a6` / `#f5c542` | same status set | Status (≠ primary); warn = cap |
 | Element ink | kinetic…prismatic | contrast set | Identity cells only |
+| Exotic gold | `#ceae33` | same | Rarity wash |
 
 ```dart
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 
-final voidBg = FlapColorTokens.dark.background; // 0xFF05050F
-final css = argbToCssHex(kFlapAccentDark);      // #00e5ff
+final stage = FlapColorTokens.light.background; // 0xFFF5F5F5
+final css = argbToCssHex(kFlapAccentLight);    // #1a1a1a
 ```
 
-API names (`kFlap*`, `FlapColorTokens`) remain for host compatibility; values are Neon Network.
+API names (`kFlap*`, `FlapColorTokens`) remain for host compatibility.
 
 ## Spacing & radii
 
@@ -72,18 +72,19 @@ Not widgets — constants for library boards (unchanged structure):
 
 ### Board anti-rules (do not regress)
 
-- **No cyan cages** — structure is white/grey hairline; cyan is signal only  
+- **No colored cages** — structure is white/grey hairline; accent is chrome only  
 - **Board not cards** — no nested elevated panels per library row  
-- **One strong signal** — cyan for selection/focus/CTA, not every border  
+- **One strong signal** — accent for selection/focus/CTA, not every border  
 - **Element ink** — Destiny colors on identity/seals only  
+- **Semantic color** — exotic gold, element ink, cap warning stay meaningful  
 - **No soft consumer chrome** — radius ≤ 2px (cap 4px)  
 
 ## Flutter host themes
 
 Hosts map tokens via `destiny2_ui_flutter` / `buildFlapThemeBase`:
 
-- `theme` = cool technical (light), `darkTheme` = Neon void (dark)
-- `ThemeMode` system | dark | light; Settings **Appearance** cycles faces
+- `theme` = Neutral stage (light, **default**), `darkTheme` = Neutral charcoal
+- `ThemeMode` defaults to **light**; Settings **Appearance** cycles faces
 - Explicit `ColorScheme` from tokens (not `ColorScheme.fromSeed`)
 - `FlapPalette` ThemeExtension carries success/warning/element roles
 

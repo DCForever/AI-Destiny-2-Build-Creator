@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// Windows host Matte Flap Ledger theme (shared base + NavigationRail).
 ///
 /// Colors and [FlapPalette] come from [buildFlapThemeBase] / pure tokens.
-ThemeData buildFlapTheme({Brightness brightness = Brightness.dark}) {
+ThemeData buildFlapTheme({Brightness brightness = Brightness.light}) {
   return buildFlapThemeBase(
     brightness: brightness,
     customize: (theme, tokens, palette) {
