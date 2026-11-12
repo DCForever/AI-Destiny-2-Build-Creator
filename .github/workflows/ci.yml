@@ -56,10 +56,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       # No .fvm pin in repo — pin matches cloud agent Flutter (measured 3.44.9 stable).
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        # subosito/flutter-action@v2 (pinned to v2.23.0)
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
           flutter-version: "3.44.9"
           channel: stable
@@ -98,9 +101,15 @@ jobs:
         working-directory: flutter/packages/ui_flutter
         run: |
           set -euo pipefail
-          # entity_info_capture_* hangs writing dual-truth PNGs (measured 10m+
-          # timeout on desktop-info-desc-present). Gate widget tests only.
-          mapfile -t files < <(find test -name '*.dart' ! -name '*capture*' | sort)
+          # These two capture suites hang writing dual-truth PNGs (measured 10m+
+          # timeout on desktop-info-desc-present). List them by name so new
+          # test files are not silently dropped from the gate.
+          mapfile -t files < <(
+            find test -name '*.dart' \
+              ! -name 'entity_info_capture_canvas_test.dart' \
+              ! -name 'entity_info_capture_shots_test.dart' \
+              | sort
+          )
           flutter test "${files[@]}"
 
       # windows_host: 20 pre-existing failures on main (UI key/chrome drift).
