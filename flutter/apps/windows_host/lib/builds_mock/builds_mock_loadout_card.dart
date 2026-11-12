@@ -9,7 +9,7 @@ enum BuildsMockCardDensity { tile, list, detail }
 
 /// Hybrid loadout card: B highlights on top, E armor list + icon stats below.
 ///
-/// Includes disabled mock actions "Open in DIM" and "Propose swap".
+/// Includes disabled mock actions "Fill In" and "Optimize".
 class BuildsMockLoadoutCard extends StatelessWidget {
   const BuildsMockLoadoutCard({
     super.key,
@@ -666,30 +666,30 @@ class _CardActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dim = FilledButton.tonal(
-      key: Key('builds_mock_open_dim_$buildId'),
+    final fillIn = FilledButton.tonal(
+      key: Key('builds_mock_fill_in_$buildId'),
       onPressed: null,
-      child: Text(compact ? 'DIM' : 'Open in DIM'),
+      child: const Text('Fill In'),
     );
-    final swap = OutlinedButton(
-      key: Key('builds_mock_propose_swap_$buildId'),
+    final optimize = OutlinedButton(
+      key: Key('builds_mock_optimize_$buildId'),
       onPressed: null,
-      child: Text(compact ? 'Swap' : 'Propose swap'),
+      child: const Text('Optimize'),
     );
     if (compact) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          dim,
+          fillIn,
           const SizedBox(height: 4),
-          swap,
+          optimize,
         ],
       );
     }
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: [dim, swap],
+      children: [fillIn, optimize],
     );
   }
 }

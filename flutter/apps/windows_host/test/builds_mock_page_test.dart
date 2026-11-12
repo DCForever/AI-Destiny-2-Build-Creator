@@ -44,17 +44,19 @@ void main() {
 
     // Default layout is detail hybrid card for the selected build.
     expect(find.byKey(const Key('builds_mock_card_b01')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_open_dim_b01')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_propose_swap_b01')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_fill_in_b01')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_optimize_b01')), findsOneWidget);
+    expect(find.text('Fill In'), findsOneWidget);
+    expect(find.text('Optimize'), findsOneWidget);
 
-    final dim = tester.widget<FilledButton>(
-      find.byKey(const Key('builds_mock_open_dim_b01')),
+    final fillIn = tester.widget<FilledButton>(
+      find.byKey(const Key('builds_mock_fill_in_b01')),
     );
-    final swap = tester.widget<OutlinedButton>(
-      find.byKey(const Key('builds_mock_propose_swap_b01')),
+    final optimize = tester.widget<OutlinedButton>(
+      find.byKey(const Key('builds_mock_optimize_b01')),
     );
-    expect(dim.onPressed, isNull);
-    expect(swap.onPressed, isNull);
+    expect(fillIn.onPressed, isNull);
+    expect(optimize.onPressed, isNull);
 
     // Hybrid card content from B + E.
     expect(find.text('EXOTIC ARMOR'), findsOneWidget);
@@ -81,7 +83,7 @@ void main() {
     expect(
       tester
           .widget<FilledButton>(
-            find.byKey(const Key('builds_mock_open_dim_b01')).first,
+            find.byKey(const Key('builds_mock_fill_in_b01')).first,
           )
           .onPressed,
       isNull,
@@ -89,7 +91,7 @@ void main() {
     expect(
       tester
           .widget<OutlinedButton>(
-            find.byKey(const Key('builds_mock_propose_swap_b01')).first,
+            find.byKey(const Key('builds_mock_optimize_b01')).first,
           )
           .onPressed,
       isNull,
@@ -102,7 +104,15 @@ void main() {
     expect(
       tester
           .widget<FilledButton>(
-            find.byKey(const Key('builds_mock_open_dim_b01')),
+            find.byKey(const Key('builds_mock_fill_in_b01')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.byKey(const Key('builds_mock_optimize_b01')),
           )
           .onPressed,
       isNull,
