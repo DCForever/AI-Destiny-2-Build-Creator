@@ -244,20 +244,25 @@ void main() {
   });
 
   group('shell.nav primary destinations', () {
-    test('navLabels are Catalog, Sets, Warlocks, and Settings', () {
+    test(
+        'navLabels are Catalog, Sets, Warlocks, Builds (mockup), and Settings',
+        () {
       expect(Destiny2WindowsApp.navLabels, [
         'Catalog',
         'Sets',
         'Warlocks',
+        'Builds (mockup)',
         'Settings',
       ]);
       expect(Destiny2WindowsApp.catalogNavIndex, 0);
       expect(Destiny2WindowsApp.setsNavIndex, 1);
       expect(Destiny2WindowsApp.warlockBuildsNavIndex, 2);
-      expect(Destiny2WindowsApp.settingsNavIndex, 3);
+      expect(Destiny2WindowsApp.buildsMockNavIndex, 3);
+      expect(Destiny2WindowsApp.settingsNavIndex, 4);
     });
 
-    testWidgets('rail mounts Catalog, Sets, Warlocks, and Settings', (
+    testWidgets(
+        'rail mounts Catalog, Sets, Warlocks, Builds (mockup), and Settings', (
       tester,
     ) async {
       await _surface(tester);
@@ -275,6 +280,10 @@ void main() {
       );
       expect(
         find.byKey(const Key('sets_library_page'), skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('builds_mock_page_host'), skipOffstage: false),
         findsOneWidget,
       );
       expect(
