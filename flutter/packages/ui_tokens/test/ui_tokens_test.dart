@@ -111,7 +111,8 @@ void main() {
       expect(FlapBoardLayout.rowGap, 0);
     });
 
-    test('named column templates for sets / synergy / builds', () {
+    test('named column templates for sets / armor / synergy / builds', () {
+      // Measured: kFlapLibraryColumnTemplates includes sets-armor (G-SET flap).
       expect(kFlapLibraryColumnTemplates, hasLength(4));
 
       final sets = flapColumnTemplateById('sets');
@@ -121,6 +122,14 @@ void main() {
 
       final setsArmor = flapColumnTemplateById('sets-armor');
       expect(setsArmor.columnsCss, isNotEmpty);
+      expect(setsArmor.cellRoles, [
+        FlapCellRole.name,
+        FlapCellRole.identity,
+        FlapCellRole.tally,
+        FlapCellRole.meta,
+        FlapCellRole.status,
+      ]);
+      expect(setsArmor.headerLabels, ['Name', 'Class', 'Pcs', 'Cover', 'Used']);
 
       final synergy = flapColumnTemplateById('synergy');
       expect(synergy.cellRoles, contains(FlapCellRole.identity));
