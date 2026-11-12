@@ -31,6 +31,7 @@ class BuildsMockController extends ChangeNotifier {
   String? _selectedId;
   int _inventoryCap = kMockDefaultInventoryCap;
   BuildsMockTab _tab = BuildsMockTab.detail;
+  BuildsMockCardLayout _cardLayout = BuildsMockCardLayout.detail;
   final Map<String, MockSwapDecision> _swapDecisions = {};
 
   BuildsMockFixture get fixture => _fixture;
@@ -43,6 +44,7 @@ class BuildsMockController extends ChangeNotifier {
   MockReadiness? get filterReadiness => _filterReadiness;
   int get inventoryCap => _inventoryCap;
   BuildsMockTab get tab => _tab;
+  BuildsMockCardLayout get cardLayout => _cardLayout;
   String? get selectedId => _selectedId;
 
   List<MockBuild> get visibleBuilds => filterMockBuilds(
@@ -123,6 +125,11 @@ class BuildsMockController extends ChangeNotifier {
 
   void setTab(BuildsMockTab tab) {
     _tab = tab;
+    notifyListeners();
+  }
+
+  void setCardLayout(BuildsMockCardLayout layout) {
+    _cardLayout = layout;
     notifyListeners();
   }
 

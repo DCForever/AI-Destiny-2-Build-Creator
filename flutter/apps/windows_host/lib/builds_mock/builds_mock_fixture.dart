@@ -21,6 +21,10 @@ BuildsMockFixture loadBuildsMockFixture() {
       b: 'set_brazen',
       exoticSlot: 'class_item',
       why: '2pc Aion + 2pc Brazen around Solipsism class item.',
+      loop:
+          'Solipsism class item without Prismatic — flagged; 2pc Aion / 2pc Brazen.',
+      artifact: _defaultArtifact,
+      stats: _statsForSeed(11),
     ),
     _build(
       id: 'b12',
@@ -32,6 +36,17 @@ BuildsMockFixture loadBuildsMockFixture() {
       b: 'set_techsec',
       exoticSlot: 'class_item',
       why: '2pc Aion + 2pc Techsec; exotic locks class item.',
+      loop:
+          'Solipsism class item + Prismatic weave · 2pc Aion / 2pc Techsec around exotic.',
+      artifact: _defaultArtifact,
+      stats: const [
+        MockStatTotal(id: MockStatId.health, value: 70),
+        MockStatTotal(id: MockStatId.melee, value: 55),
+        MockStatTotal(id: MockStatId.grenade, value: 80),
+        MockStatTotal(id: MockStatId.superAbility, value: 90),
+        MockStatTotal(id: MockStatId.classAbility, value: 100),
+        MockStatTotal(id: MockStatId.weapons, value: 40),
+      ],
     ),
     _build(
       id: 'b13',
@@ -43,6 +58,17 @@ BuildsMockFixture loadBuildsMockFixture() {
       b: 'set_walk',
       exoticSlot: 'chest',
       why: '2pc Brazen + 2pc Walker around Starfire chest.',
+      loop:
+          'Starfire grenade battery · 2pc Brazen / 2pc Walker around chest exotic.',
+      artifact: _defaultArtifact,
+      stats: const [
+        MockStatTotal(id: MockStatId.health, value: 60),
+        MockStatTotal(id: MockStatId.melee, value: 30),
+        MockStatTotal(id: MockStatId.grenade, value: 100),
+        MockStatTotal(id: MockStatId.superAbility, value: 70),
+        MockStatTotal(id: MockStatId.classAbility, value: 85),
+        MockStatTotal(id: MockStatId.weapons, value: 50),
+      ],
     ),
     _build(
       id: 'b14',
@@ -54,6 +80,9 @@ BuildsMockFixture loadBuildsMockFixture() {
       b: 'set_walk',
       exoticSlot: 'helmet',
       why: '2pc Aion + 2pc Walker around Nezarec helmet.',
+      loop: 'Void ability leech via Nezarec · 2pc Aion / 2pc Walker.',
+      artifact: _defaultArtifact,
+      stats: _statsForSeed(14),
     ),
     _build(
       id: 'b15',
@@ -65,6 +94,9 @@ BuildsMockFixture loadBuildsMockFixture() {
       b: 'set_brazen',
       exoticSlot: 'arms',
       why: '2pc Techsec + 2pc Brazen around Getaway gauntlets.',
+      loop: 'Getaway Arc soul · 2pc Techsec / 2pc Brazen around gauntlets.',
+      artifact: _defaultArtifact,
+      stats: _statsForSeed(15),
     ),
   ];
 
@@ -123,9 +155,25 @@ BuildsMockFixture loadBuildsMockFixture() {
   );
 }
 
+const MockArtifact _defaultArtifact = MockArtifact(
+  name: 'Heretical Path',
+  season: 'Episode: Heresy',
+  perks: [
+    'Grenade energy on kills',
+    'Melee refund on Transcend',
+    'Weapon reload on ability',
+  ],
+);
+
+const Map<String, String> _kSetBonusText = {
+  'set_techsec': '+10 Mobility / Weapons handling on ability hit',
+  'set_walk': 'Class ability energy on kills',
+  'set_aion': 'Ability energy on orb pickup',
+  'set_brazen': 'Solar ability damage after grenade',
+};
+
 List<MockBuild> _techsecReadyBuilds() {
   // Ten builds; Techsec pair slots rotate so every slot is used ≥3 times.
-  // exoticSlot must match the exotic armor piece.
   final specs = <(String, String, String, String, String, String, List<String>)>[
     (
       'b01',
@@ -246,29 +294,37 @@ MockBuild _buildWithTechsecPair({
       if (slot != exoticSlot && !techsecSlots.contains(slot)) slot,
   ];
   final otherSet = id.hashCode.isEven ? 'set_aion' : 'set_brazen';
+  final seed = int.tryParse(id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
   final slots = <MockSlotAssignment>[
     for (final slot in techsecSlots)
       MockSlotAssignment(
         slot: slot,
         setId: 'set_techsec',
         pieceName: 'Techsec ${kMockArmorSlotLabels[slot]}',
+        statTotal: _pieceTotal(seed, slot),
       ),
     for (final slot in otherSlots)
       MockSlotAssignment(
         slot: slot,
         setId: otherSet,
         pieceName: '${_setShort(otherSet)} ${kMockArmorSlotLabels[slot]}',
+        statTotal: _pieceTotal(seed, slot),
       ),
     MockSlotAssignment(
       slot: exoticSlot,
       setId: 'exotic',
       pieceName: exoticArmor,
       isExoticSlot: true,
+      statTotal: _pieceTotal(seed, exoticSlot) + 4,
     ),
   ]..sort(
       (x, y) =>
           kMockArmorSlots.indexOf(x.slot) - kMockArmorSlots.indexOf(y.slot),
     );
+
+  final why =
+      '2pc Techsec (${techsecSlots.map((s) => kMockArmorSlotLabels[s]).join('+')}) '
+      '+ 2pc ${_setShort(otherSet)} around ${kMockArmorSlotLabels[exoticSlot]} exotic.';
 
   return MockBuild(
     id: id,
@@ -277,9 +333,25 @@ MockBuild _buildWithTechsecPair({
     exoticArmor: exoticArmor,
     exoticWeapon: exoticWeapon,
     slots: slots,
-    splitWhy:
-        '2pc Techsec (${techsecSlots.map((s) => kMockArmorSlotLabels[s]).join('+')}) '
-        '+ 2pc ${_setShort(otherSet)} around ${kMockArmorSlotLabels[exoticSlot]} exotic.',
+    splitWhy: why,
+    loop: id == 'b01'
+        ? 'Osmiomancy grenade regen → melee/grenade spill into Transcendence → clear + ability uptime.'
+        : why,
+    artifact: _defaultArtifact,
+    setBonuses: [
+      _bonus('set_techsec', pieces: 2),
+      _bonus(otherSet, pieces: 2),
+    ],
+    stats: id == 'b01'
+        ? const [
+            MockStatTotal(id: MockStatId.health, value: 78),
+            MockStatTotal(id: MockStatId.melee, value: 42),
+            MockStatTotal(id: MockStatId.grenade, value: 100),
+            MockStatTotal(id: MockStatId.superAbility, value: 56),
+            MockStatTotal(id: MockStatId.classAbility, value: 88),
+            MockStatTotal(id: MockStatId.weapons, value: 34),
+          ]
+        : _statsForSeed(seed),
     creator: 'mock',
   );
 }
@@ -294,26 +366,35 @@ MockBuild _build({
   required String b,
   required String exoticSlot,
   required String why,
+  required String loop,
+  required MockArtifact artifact,
+  required List<MockStatTotal> stats,
 }) {
   final nonExotic = [
     for (final slot in kMockArmorSlots)
       if (slot != exoticSlot) slot,
   ];
-  // First two non-exotic → set A, last two → set B (2pc+2pc).
+  final seed = int.tryParse(id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
   final slots = <MockSlotAssignment>[
     for (var i = 0; i < nonExotic.length; i++)
       MockSlotAssignment(
         slot: nonExotic[i],
         setId: i < 2 ? a : b,
-        pieceName: '${_setShort(i < 2 ? a : b)} ${kMockArmorSlotLabels[nonExotic[i]]}',
+        pieceName:
+            '${_setShort(i < 2 ? a : b)} ${kMockArmorSlotLabels[nonExotic[i]]}',
+        statTotal: _pieceTotal(seed, nonExotic[i]),
       ),
     MockSlotAssignment(
       slot: exoticSlot,
       setId: 'exotic',
       pieceName: exoticArmor,
       isExoticSlot: true,
+      statTotal: _pieceTotal(seed, exoticSlot) + 4,
     ),
-  ]..sort((x, y) => kMockArmorSlots.indexOf(x.slot) - kMockArmorSlots.indexOf(y.slot));
+  ]..sort(
+      (x, y) =>
+          kMockArmorSlots.indexOf(x.slot) - kMockArmorSlots.indexOf(y.slot),
+    );
 
   return MockBuild(
     id: id,
@@ -323,8 +404,42 @@ MockBuild _build({
     exoticWeapon: exoticWeapon,
     slots: slots,
     splitWhy: why,
+    loop: loop,
+    artifact: artifact,
+    setBonuses: [
+      _bonus(a, pieces: 2),
+      _bonus(b, pieces: 2),
+    ],
+    stats: stats,
     creator: 'mock',
   );
+}
+
+MockSetBonus _bonus(String setId, {required int pieces}) {
+  return MockSetBonus(
+    setId: setId,
+    setName: _setFull(setId),
+    pieces: pieces,
+    tier: '${pieces}pc',
+    text: _kSetBonusText[setId] ?? 'Mock set bonus',
+  );
+}
+
+List<MockStatTotal> _statsForSeed(int seed) {
+  final base = 40 + (seed * 7) % 40;
+  return [
+    MockStatTotal(id: MockStatId.health, value: 50 + (base % 40)),
+    MockStatTotal(id: MockStatId.melee, value: 30 + ((base + 11) % 50)),
+    MockStatTotal(id: MockStatId.grenade, value: 60 + ((base + 3) % 41)),
+    MockStatTotal(id: MockStatId.superAbility, value: 40 + ((base + 17) % 50)),
+    MockStatTotal(id: MockStatId.classAbility, value: 55 + ((base + 5) % 45)),
+    MockStatTotal(id: MockStatId.weapons, value: 25 + ((base + 23) % 50)),
+  ];
+}
+
+int _pieceTotal(int seed, String slot) {
+  final idx = kMockArmorSlots.indexOf(slot);
+  return 62 + ((seed + idx * 3) % 12);
 }
 
 String _setShort(String id) {
@@ -337,6 +452,21 @@ String _setShort(String id) {
       return 'Aion';
     case 'set_brazen':
       return 'Brazen';
+    default:
+      return id;
+  }
+}
+
+String _setFull(String id) {
+  switch (id) {
+    case 'set_techsec':
+      return 'Techsec';
+    case 'set_walk':
+      return "Walker's Bond";
+    case 'set_aion':
+      return 'Aion Renewal';
+    case 'set_brazen':
+      return 'Brazen Gambit';
     default:
       return id;
   }

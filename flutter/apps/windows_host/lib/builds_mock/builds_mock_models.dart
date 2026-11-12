@@ -28,6 +28,35 @@ const int kMockReadyBuildCount = 10;
 /// Per-slot uses required across those builds.
 const int kMockReadySlotUses = 3;
 
+/// EoF armor stats shown on the hybrid loadout card.
+enum MockStatId { health, melee, grenade, superAbility, classAbility, weapons }
+
+const List<MockStatId> kMockStatOrder = [
+  MockStatId.health,
+  MockStatId.melee,
+  MockStatId.grenade,
+  MockStatId.superAbility,
+  MockStatId.classAbility,
+  MockStatId.weapons,
+];
+
+String mockStatLabel(MockStatId id) {
+  switch (id) {
+    case MockStatId.health:
+      return 'Health';
+    case MockStatId.melee:
+      return 'Melee';
+    case MockStatId.grenade:
+      return 'Grenade';
+    case MockStatId.superAbility:
+      return 'Super';
+    case MockStatId.classAbility:
+      return 'Class';
+    case MockStatId.weapons:
+      return 'Weapons';
+  }
+}
+
 class MockArmorSet {
   const MockArmorSet({required this.id, required this.name});
 
@@ -42,6 +71,7 @@ class MockSlotAssignment {
     required this.pieceName,
     this.heldCopies = 1,
     this.isExoticSlot = false,
+    this.statTotal = 64,
   });
 
   final String slot;
@@ -49,6 +79,49 @@ class MockSlotAssignment {
   final String pieceName;
   final int heldCopies;
   final bool isExoticSlot;
+
+  /// Sum of the six armor stats on this piece (fake fixture value).
+  final int statTotal;
+}
+
+class MockSetBonus {
+  const MockSetBonus({
+    required this.setId,
+    required this.setName,
+    required this.pieces,
+    required this.tier,
+    required this.text,
+  });
+
+  final String setId;
+  final String setName;
+  final int pieces;
+  final String tier;
+  final String text;
+}
+
+class MockArtifact {
+  const MockArtifact({
+    required this.name,
+    required this.season,
+    this.perks = const [],
+  });
+
+  final String name;
+  final String season;
+  final List<String> perks;
+}
+
+class MockStatTotal {
+  const MockStatTotal({
+    required this.id,
+    required this.value,
+  });
+
+  final MockStatId id;
+  final int value;
+
+  String get label => mockStatLabel(id);
 }
 
 class MockBuild {
@@ -59,6 +132,10 @@ class MockBuild {
     required this.exoticArmor,
     required this.exoticWeapon,
     required this.slots,
+    required this.loop,
+    required this.artifact,
+    required this.setBonuses,
+    required this.stats,
     this.splitWhy,
     this.creator,
   });
@@ -69,6 +146,14 @@ class MockBuild {
   final String exoticArmor;
   final String exoticWeapon;
   final List<MockSlotAssignment> slots;
+
+  /// One-line build loop / description (hybrid card top).
+  final String loop;
+
+  final MockArtifact artifact;
+  final List<MockSetBonus> setBonuses;
+  final List<MockStatTotal> stats;
+
   final String? splitWhy;
   final String? creator;
 
@@ -79,7 +164,10 @@ class MockBuild {
   bool get solipsismNotPrismatic =>
       usesSolipsism && subclass.toLowerCase() != 'prismatic';
 
-  Set<String> get setIds => {for (final s in slots) s.setId};
+  Set<String> get setIds => {
+        for (final s in slots)
+          if (!s.isExoticSlot) s.setId,
+      };
 }
 
 class MockHeldCell {
@@ -113,6 +201,9 @@ class MockSwapProposal {
 enum MockSwapDecision { pending, accepted, rejected }
 
 enum MockReadiness { ready, notReady }
+
+/// How hybrid loadout cards are laid out in the Detail tab.
+enum BuildsMockCardLayout { grid, list, detail }
 
 class MockSetReadiness {
   const MockSetReadiness({

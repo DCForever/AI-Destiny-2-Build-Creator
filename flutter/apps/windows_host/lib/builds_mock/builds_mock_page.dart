@@ -3,6 +3,7 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
 import 'builds_mock_controller.dart';
+import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
 import 'builds_mock_models.dart';
 

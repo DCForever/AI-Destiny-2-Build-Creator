@@ -58,7 +58,17 @@ extension _BuildsMockRail on _BuildsMockPageState {
           ),
         ),
         const SizedBox(height: kSpace4),
-        const FlapBoardHeader(template: kFlapColumnsBuilds),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: kPanelPadMd),
+          child: Text(
+            'BUILDS',
+            style: neonDisplay(
+              color: FlapPalette.of(context).muted,
+              fontSize: 9,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
         Expanded(
           child: ListView.builder(
             key: const Key('builds_mock_list'),
@@ -71,25 +81,51 @@ extension _BuildsMockRail on _BuildsMockPageState {
   }
 
   Widget _row(MockBuild build) {
+    final palette = FlapPalette.of(context);
     final selected = build.id == _controller.selectedId;
-    final flag = build.solipsismNotPrismatic
-        ? 'Solipsism only works with Prismatic'
-        : null;
-    return FlapBoardRow(
+    final flag = build.solipsismNotPrismatic;
+    return Material(
       key: Key('builds_mock_row_${build.id}'),
-      template: kFlapColumnsBuilds,
-      selected: selected,
-      onTap: () => _controller.selectBuild(build.id),
-      cells: [
-        FlapTextCell(text: build.name, primary: true),
-        FlapTextCell(text: build.subclass),
-        FlapTextCell(text: build.exoticArmor),
-        FlapTextCell(text: build.exoticWeapon),
-        FlapTextCell(
-          text: flag ?? 'ok',
-          color: flag == null ? null : Theme.of(context).colorScheme.error,
+      color: selected ? palette.accentDim : Colors.transparent,
+      child: InkWell(
+        onTap: () => _controller.selectBuild(build.id),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: palette.line, width: kFlapRuleThickness),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                build.name,
+                style: TextStyle(
+                  color: palette.foreground,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${build.subclass} · ${build.exoticArmor}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: neonMono(color: palette.muted, fontSize: 11),
+              ),
+              if (flag)
+                Text(
+                  'Solipsism only works with Prismatic',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 11,
+                  ),
+                ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
