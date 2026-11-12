@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "generatedAtPt": "2026-11-12T14:41:00-08:00",
+  "manifestVersion": "test-manifest-1",
+  "loadouts": [
+    {
+      "shareId": "syn-share-contraverse-001",
+      "name": "Contraverse Grenade Core",
+      "classType": 2,
+      "subclass": { "hash": 900001, "name": "Void" },
+      "exotic": {
+        "hash": 800001,
+        "name": "Contraverse Hold",
+        "description": "Grants grenade energy when you get a charged void melee kill."
+      },
+      "items": [
+        {
+          "hash": 800001,
+          "name": "Contraverse Hold",
+          "itemType": "Gauntlets",
+          "tier": "Exotic"
+        }
+      ],
+      "subclassPlugs": [
+        {
+          "hash": 910001,
+          "name": "Vortex Grenade",
+          "description": "A grenade that pulls enemies inward."
+        }
+      ],
+      "mods": [
+        {
+          "hash": 920001,
+          "name": "Ashes to Assets",
+          "description": "Grenade final blows grant Super energy."
+        }
+      ],
+      "artifactSeason": 27,
+      "artifactPerks": [
+        {
+          "hash": 930001,
+          "name": "Void Siphon",
+          "description": "Void weapon final blows create orbs."
+        }
+      ],
+      "statConstraints": null,
+      "notes": "Stack grenade uptime; melee is secondary."
+    },
+    {
+      "shareId": "syn-share-linked-stats-002",
+      "name": "Linked Priority Build",
+      "classType": 0,
+      "subclass": { "hash": 900002, "name": "Solar" },
+      "exotic": {
+        "hash": 800002,
+        "name": "Synthoceps",
+        "description": "Improved melee damage when surrounded."
+      },
+      "items": [],
+      "subclassPlugs": [
+        {
+          "hash": 910002,
+          "name": "Hammer Strike",
+          "description": "A heavy melee attack."
+        }
+      ],
+      "mods": [
+        {
+          "hash": 920002,
+          "name": "Grenade Kickstart",
+          "description": "Grants grenade energy."
+        }
+      ],
+      "artifactSeason": null,
+      "artifactPerks": [],
+      "statConstraints": [
+        {
+          "statHash": 4244567218,
+          "name": "Melee",
+          "minTier": 10,
+          "maxTier": null,
+          "minStat": null,
+          "maxStat": null
+        },
+        {
+          "statHash": 392767087,
+          "name": "Health",
+          "minTier": 7,
+          "maxTier": null,
+          "minStat": null,
+          "maxStat": null
+        },
+        {
+          "statHash": 1735777505,
+          "name": "Grenade",
+          "minTier": 5,
+          "maxTier": null,
+          "minStat": null,
+          "maxStat": null
+        }
+      ],
+      "notes": "Ignore keyword grenade noise when link priorities exist."
+    },
+    {
+      "shareId": "syn-share-unknown-003",
+      "name": "Quiet Aesthetic Loadout",
+      "classType": 1,
+      "subclass": null,
+      "exotic": null,
+      "items": [],
+      "subclassPlugs": [],
+      "mods": [
+        {
+          "hash": 920003,
+          "name": "Powerful Friends",
+          "description": "Provides a bonus to nearby allies."
+        }
+      ],
+      "artifactSeason": null,
+      "artifactPerks": [],
+      "statConstraints": null,
+      "notes": "Fashion first; no ability focus called out."
+    }
+  ]
+}

@@ -1,5 +1,7 @@
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:flutter/foundation.dart';
 
+import '../dim_loadouts/dim_loadout_details_panel.dart';
 import 'builds_mock_fixture.dart';
 import 'builds_mock_logic.dart';
 import 'builds_mock_models.dart';
@@ -8,8 +10,13 @@ enum BuildsMockTab { detail, pool, reoptimize }
 
 /// In-memory UI state for the Builds mock-up (no IO).
 class BuildsMockController extends ChangeNotifier {
-  BuildsMockController({BuildsMockFixture? fixture})
-      : _fixture = fixture ?? loadBuildsMockFixture() {
+  BuildsMockController({
+    BuildsMockFixture? fixture,
+    DimLoadoutsPanelStatus dimStatus = DimLoadoutsPanelStatus.notLoaded,
+    List<CachedDimLoadout> dimLoadouts = const [],
+  })  : _fixture = fixture ?? loadBuildsMockFixture(),
+        _dimStatus = dimStatus,
+        _dimLoadouts = List<CachedDimLoadout>.unmodifiable(dimLoadouts) {
     _readiness = computeAllReadiness(_fixture);
     if (_fixture.builds.isNotEmpty) {
       _selectedId = _fixture.builds.first.id;
@@ -21,6 +28,8 @@ class BuildsMockController extends ChangeNotifier {
 
   final BuildsMockFixture _fixture;
   late List<MockSetReadiness> _readiness;
+  DimLoadoutsPanelStatus _dimStatus;
+  List<CachedDimLoadout> _dimLoadouts;
 
   String _query = '';
   String? _filterExoticArmor;
@@ -46,6 +55,34 @@ class BuildsMockController extends ChangeNotifier {
   BuildsMockTab get tab => _tab;
   BuildsMockCardLayout get cardLayout => _cardLayout;
   String? get selectedId => _selectedId;
+  DimLoadoutsPanelStatus get dimStatus => _dimStatus;
+
+  /// Adopt a read-only compiled DIM catalog snapshot (display only; no writes).
+  void adoptDimLoadouts({
+    required DimLoadoutsPanelStatus status,
+    List<CachedDimLoadout> loadouts = const [],
+  }) {
+    _dimStatus = status;
+    _dimLoadouts = List<CachedDimLoadout>.unmodifiable(loadouts);
+    notifyListeners();
+  }
+
+  /// Match a mock card to a compiled loadout by exotic armor name (casefold).
+  CachedDimLoadout? dimLoadoutFor(MockBuild build) {
+    if (_dimStatus != DimLoadoutsPanelStatus.loaded) return null;
+    final needle = build.exoticArmor.trim().toLowerCase();
+    if (needle.isEmpty) return null;
+    for (final row in _dimLoadouts) {
+      final exotic = row.exotic?.name.trim().toLowerCase() ?? '';
+      if (exotic == needle) return row;
+    }
+    for (final row in _dimLoadouts) {
+      if (row.name.trim().toLowerCase() == build.name.trim().toLowerCase()) {
+        return row;
+      }
+    }
+    return null;
+  }
 
   List<MockBuild> get visibleBuilds => filterMockBuilds(
         builds: _fixture.builds,

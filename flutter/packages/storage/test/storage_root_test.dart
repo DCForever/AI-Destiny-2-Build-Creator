@@ -47,6 +47,11 @@ void main() {
         root.dimWeaponsInventoryCachePath,
         p.join(fakeBase, 'fill_in', 'dim_weapons_inventory.csv'),
       );
+      expect(root.dimLoadoutsDir, p.join(fakeBase, 'dim_loadouts'));
+      expect(
+        root.dimLoadoutsCachePath,
+        p.join(fakeBase, 'dim_loadouts', 'dim-loadouts.json'),
+      );
     });
 
     test('rawTablePath uses sanitized version', () {

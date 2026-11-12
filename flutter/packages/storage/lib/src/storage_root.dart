@@ -21,6 +21,7 @@ import 'version_dir.dart';
 /// users/<membershipId>/preferences.json
 /// fill_in/dim_armor_inventory.csv
 /// fill_in/dim_weapons_inventory.csv
+/// dim_loadouts/dim-loadouts.json
 /// ```
 class StorageRoot {
   /// Absolute or root-relative base directory for all app storage.
@@ -85,6 +86,18 @@ class StorageRoot {
   /// Exact path: `{basePath}/fill_in/dim_weapons_inventory.csv`
   String get dimWeaponsInventoryCachePath =>
       p.join(fillInCacheDir, 'dim_weapons_inventory.csv');
+
+  /// Directory for the compiled DIM share-link loadouts cache (read-only).
+  ///
+  /// Path only — readers must not create this folder. Fetch/compile stays
+  /// outside the app until a later PR.
+  String get dimLoadoutsDir => p.join(basePath, 'dim_loadouts');
+
+  /// Compiled DIM loadouts JSON.
+  ///
+  /// Exact path: `{basePath}/dim_loadouts/dim-loadouts.json`
+  String get dimLoadoutsCachePath =>
+      p.join(dimLoadoutsDir, 'dim-loadouts.json');
 
   /// Raw table JSON path: `manifest/<versionDir>/<table>.json`.
   String rawTablePath(String version, String table) {
