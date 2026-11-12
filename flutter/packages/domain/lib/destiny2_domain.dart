@@ -98,6 +98,7 @@ export 'src/warlock_matrix/warlock_matrix_build.dart';
 
 // Read-only Fill In matcher (inventory snapshot → held slots; no writes)
 export 'src/fill_in/fill_in_cap.dart';
+export 'src/fill_in/fill_in_dim_armor_csv.dart';
 export 'src/fill_in/fill_in_inventory.dart';
 export 'src/fill_in/fill_in_match.dart';
 export 'src/fill_in/fill_in_requirement.dart';

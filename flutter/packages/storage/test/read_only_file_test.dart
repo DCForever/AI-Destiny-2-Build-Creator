@@ -29,9 +29,32 @@ void main() {
     expect(await file.exists(), isFalse);
     expect(
       () => readOnlyFileBytes(file.path),
-      throwsA(isA<ReadOnlyFileException>()),
+      throwsA(
+        isA<ReadOnlyFileException>().having(
+          (e) => e.message,
+          'message',
+          'File not found.',
+        ),
+      ),
     );
     expect(await file.exists(), isFalse);
+  });
+
+  test('maxBytes rejects by length before reading contents', () async {
+    final dir = await Directory.systemTemp.createTemp('readonly-cap-');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/big.bin');
+    await file.writeAsBytes(List<int>.filled(64, 7), flush: true);
+    expect(
+      () => readOnlyFileBytes(file.path, maxBytes: 8),
+      throwsA(
+        isA<ReadOnlyFileException>().having(
+          (e) => e.message,
+          'message',
+          contains('size limit'),
+        ),
+      ),
+    );
   });
 
   test('matrix path is read from WARLOCK_MATRIX_PATH', () {

@@ -2,11 +2,12 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// Banned symbols for any Fill In surface (matcher, later parser, later UI).
+/// Banned symbols for any Fill In surface (matcher, parser, later UI).
 ///
 /// Structural read-only gate: Fill In must never import or construct Bungie
-/// write clients, transfer, or equip. Extends automatically to any
-/// `**/fill_in/**/*.dart` under the Flutter workspace.
+/// write clients, transfer, or equip, and must stay free of `dart:io` /
+/// `package:http`. Extends automatically to any `**/fill_in/**/*.dart`
+/// under the Flutter workspace (excluding tests).
 const List<String> kFillInBannedPatterns = <String>[
   'BungieWriteClient',
   'HttpBungieWriteClient',
@@ -18,15 +19,25 @@ const List<String> kFillInBannedPatterns = <String>[
   'dismantleItem',
   'DismantleItem',
   'package:destiny2_bungie',
+  'dart:io',
+  'package:http',
 ];
 
+/// Exact count of production Fill In Dart sources under `**/fill_in/`.
+///
+/// Bump when adding a real fill_in library file (not tests).
+const int kExpectedFillInSourceFileCount = 6;
+
 void main() {
-  test('Fill In sources never import or construct write/transfer/equip', () {
+  test('Fill In sources never import write/transfer/equip/io/http', () {
     final roots = _fillInDartFiles();
     expect(
       roots,
-      isNotEmpty,
-      reason: 'expected at least one fill_in Dart source under flutter/',
+      hasLength(kExpectedFillInSourceFileCount),
+      reason:
+          'expected exactly $kExpectedFillInSourceFileCount fill_in Dart '
+          'sources under flutter/ (got ${roots.length}: '
+          '${roots.map((f) => f.path).join(', ')})',
     );
 
     final violations = <String>[];
