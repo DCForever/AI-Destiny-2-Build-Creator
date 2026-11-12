@@ -7,6 +7,8 @@ class WarlockMatrixBuild {
     required this.subclassKey,
     required this.name,
     this.creator,
+    this.dimLink,
+    this.isWeaponExotic = false,
   });
 
   /// Exotic key the build is filed under.
@@ -20,6 +22,12 @@ class WarlockMatrixBuild {
 
   /// Optional author label.
   final String? creator;
+
+  /// Optional `dim.gg/…` share URL from the matrix `dim` field.
+  final String? dimLink;
+
+  /// True when the row came from `weapons.cells` (exotic weapon filing).
+  final bool isWeaponExotic;
 
   /// False when [subclassKey] is empty or not one of the six known keys.
   bool get subclassRecognized => isKnownWarlockSubclass(subclassKey);

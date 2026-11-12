@@ -24,7 +24,10 @@ void main() {
         home: RepaintBoundary(
           key: const Key('builds_mock_shot_root'),
           child: Scaffold(
-            body: BuildsMockPage(controller: controller),
+            body: BuildsMockPage(
+              // Synthetic fixture for widget previews / existing mock tests.
+              controller: controller ?? BuildsMockController(),
+            ),
           ),
         ),
       ),

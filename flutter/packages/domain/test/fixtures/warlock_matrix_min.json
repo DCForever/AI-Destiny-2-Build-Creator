@@ -7,7 +7,8 @@
         "builds": [
           {
             "name": "Aeon solar sample",
-            "creator": "Fixture"
+            "creator": "Fixture",
+            "dim": "https://dim.gg/syn-aeon-solar/Aeon-solar-sample"
           }
         ]
       },
@@ -43,6 +44,7 @@
           {
             "name": "Solipsism solar mismatch",
             "creator": "Fixture",
+            "dim": "https://dim.gg/syn-sol-solar/Solipsism-solar-mismatch",
             "note": "Fixture-only row so the Prismatic flag can be tested."
           }
         ]

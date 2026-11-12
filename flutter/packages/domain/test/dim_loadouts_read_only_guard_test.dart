@@ -27,18 +27,21 @@ const List<String> kDimLoadoutsBannedPatterns = <String>[
 /// Exact count of guarded production Dart sources.
 ///
 /// - `**/dim_loadouts/**/*.dart` (domain:4 + storage:1 + windows_host panel:1)
-/// - builds_mock reader-callers: page + controller + detail (=3)
+/// - builds_mock reader-callers / DIM-link pipeline:
+///   page + controller + detail + matrix mapper (=4)
 ///
-/// Bump when adding a real library file (not tests). Skeptic fix expanded the
-/// scan to include builds_mock callers (was 5 → now 9).
-const int kExpectedDimLoadoutsSourceFileCount = 9;
+/// Bump when adding a real library file (not tests). Was 5 → 9 (PR #21
+/// Skeptic), then 9 → 10 when Builds started mapping real matrix `dim` links.
+const int kExpectedDimLoadoutsSourceFileCount = 10;
 
 /// Relative paths (posix) of builds_mock files that call the DIM loadouts
-/// reader / matcher / panel — included in the exact-count guard.
+/// reader / matcher / panel / supply dim links — included in the exact-count
+/// guard.
 const List<String> kDimLoadoutsBuildsMockCallerRelativePaths = <String>[
   'apps/windows_host/lib/builds_mock/builds_mock_page.dart',
   'apps/windows_host/lib/builds_mock/builds_mock_controller.dart',
   'apps/windows_host/lib/builds_mock/builds_mock_page_detail.dart',
+  'apps/windows_host/lib/builds_mock/builds_mock_matrix.dart',
 ];
 
 void main() {

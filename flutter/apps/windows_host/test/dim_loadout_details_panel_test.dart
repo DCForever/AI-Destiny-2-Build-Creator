@@ -26,6 +26,24 @@ void main() {
     expect(find.byType(SelectableText), findsNothing);
   });
 
+  testWidgets('unreadable file status shows unreadable, not not-loaded', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFlapTheme(brightness: Brightness.light),
+        home: const Scaffold(
+          body: DimLoadoutDetailsPanel(
+            status: DimLoadoutsPanelStatus.unreadable,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('DIM link details unreadable'), findsOneWidget);
+    expect(find.text('DIM link details not loaded'), findsNothing);
+    expect(find.byKey(const Key('dim_loadout_details_unreadable')), findsOneWidget);
+  });
+
   testWidgets('loaded loadout shows plain-text ranking and notes', (
     tester,
   ) async {

@@ -15,7 +15,7 @@ import 'warlock/warlock_builds_page.dart';
 /// Root Flutter app for the Windows host.
 ///
 /// **UX rebuild shell:** Catalog + **Sets** (Armor MVP implement) + read-only
-/// Warlock builds + Builds (mockup) + Settings.
+/// Warlock builds + Builds (Warlock matrix list) + Settings.
 /// Loadouts / Build / Synergy return via the area UX redesign loop.
 /// Appearance: **Neutral stage** light (default) + **Neutral charcoal** dark.
 class Destiny2WindowsApp extends StatefulWidget {
@@ -35,7 +35,7 @@ class Destiny2WindowsApp extends StatefulWidget {
     'Catalog',
     'Sets',
     'Warlocks',
-    'Builds (mockup)',
+    'Builds',
     'Settings',
   ];
 
@@ -109,7 +109,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                   NavigationRailDestination(
                     icon: Icon(Icons.construction_outlined),
                     selectedIcon: Icon(Icons.construction),
-                    label: Text('Builds (mockup)'),
+                    label: Text('Builds'),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.settings_outlined),
@@ -142,6 +142,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                     BuildsMockPage(
                       key: const Key('builds_mock_page_host'),
                       storageRoot: widget.services.storageRoot,
+                      warlockMatrixPath: _matrixPath,
                     ),
                     SettingsPage(
                       key: const Key('settings_page'),

@@ -53,7 +53,13 @@ void _appendWeapon(
   for (final entry in node.entries) {
     final subclassKey = '${entry.key}';
     if (!warlockMatrixSubclassKeys.contains(subclassKey)) continue;
-    _appendList(builds, exoticName, subclassKey, entry.value);
+    _appendList(
+      builds,
+      exoticName,
+      subclassKey,
+      entry.value,
+      isWeaponExotic: true,
+    );
   }
 }
 
@@ -80,7 +86,11 @@ void _appendComboList(
   if (raw is! List) return;
   for (final item in raw) {
     if (item is! Map) continue;
-    final build = _buildFromMap(exoticName, _comboSubclass(item), item);
+    final build = _buildFromMap(
+      exoticName,
+      _comboSubclass(item),
+      item,
+    );
     if (build != null) builds.add(build);
   }
 }
@@ -110,11 +120,17 @@ void _appendList(
   List<WarlockMatrixBuild> builds,
   String exoticName,
   String subclassKey,
-  Object? raw,
-) {
+  Object? raw, {
+  bool isWeaponExotic = false,
+}) {
   if (raw is! List) return;
   for (final item in raw) {
-    final build = _buildFromMap(exoticName, subclassKey, item);
+    final build = _buildFromMap(
+      exoticName,
+      subclassKey,
+      item,
+      isWeaponExotic: isWeaponExotic,
+    );
     if (build != null) builds.add(build);
   }
 }
@@ -122,17 +138,22 @@ void _appendList(
 WarlockMatrixBuild? _buildFromMap(
   String exoticName,
   String subclassKey,
-  Object? item,
-) {
+  Object? item, {
+  bool isWeaponExotic = false,
+}) {
   if (item is! Map) return null;
   final name = item['name'];
   final creator = item['creator'];
+  final dim = item['dim'];
   final title = name is String ? name.trim() : '';
   final author = creator is String ? creator.trim() : '';
+  final dimLink = dim is String ? dim.trim() : '';
   return WarlockMatrixBuild(
     exoticName: exoticName,
     subclassKey: subclassKey,
     name: title.isEmpty ? 'Untitled build' : title,
     creator: author.isEmpty ? null : author,
+    dimLink: dimLink.isEmpty ? null : dimLink,
+    isWeaponExotic: isWeaponExotic,
   );
 }

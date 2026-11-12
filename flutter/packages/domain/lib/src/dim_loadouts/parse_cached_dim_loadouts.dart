@@ -120,6 +120,7 @@ CachedDimLoadoutsParseResult parseCachedDimLoadouts(
   }
 
   final loadouts = <CachedDimLoadout>[];
+  final seenShareIds = <String>{};
   for (var i = 0; i < rawLoadouts.length; i++) {
     final row = rawLoadouts[i];
     if (row is! Map) {
@@ -131,7 +132,13 @@ CachedDimLoadoutsParseResult parseCachedDimLoadouts(
     if (parsed.error != null) {
       return CachedDimLoadoutsParseResult.unreadable(parsed.error!);
     }
-    loadouts.add(parsed.loadout!);
+    final loadout = parsed.loadout!;
+    if (!seenShareIds.add(loadout.shareId)) {
+      return CachedDimLoadoutsParseResult.unreadable(
+        'duplicate shareId "${loadout.shareId}"',
+      );
+    }
+    loadouts.add(loadout);
   }
 
   return CachedDimLoadoutsParseResult.ok(

@@ -45,6 +45,19 @@ void main() {
       expect(result.detail, contains('size limit'));
       expect(result.loadouts, isEmpty);
     });
+
+    test('duplicate shareId is unreadable with empty loadouts', () {
+      final duplicated = fixtureText.replaceFirst(
+        '"shareId": "syn-share-linked-stats-002"',
+        '"shareId": "syn-share-contraverse-001"',
+      );
+      final result = parseCachedDimLoadouts(duplicated);
+      expect(result.status, CachedDimLoadoutsParseStatus.unreadable);
+      expect(result.loadouts, isEmpty);
+      expect(result.catalog, isNull);
+      expect(result.detail, contains('duplicate shareId'));
+      expect(result.detail, contains('syn-share-contraverse-001'));
+    });
   });
 
   group('rankDimLoadoutStats', () {

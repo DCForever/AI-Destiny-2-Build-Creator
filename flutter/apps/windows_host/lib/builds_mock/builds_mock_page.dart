@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -7,6 +10,7 @@ import '../dim_loadouts/dim_loadout_details_panel.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
+import 'builds_mock_matrix.dart';
 import 'builds_mock_models.dart';
 
 part 'builds_mock_page_rail.dart';
@@ -14,15 +18,25 @@ part 'builds_mock_page_detail.dart';
 part 'builds_mock_page_pool.dart';
 part 'builds_mock_page_reoptimize.dart';
 
-/// Clickable Builds UI mock-up driven only by in-repo fake data.
+/// Builds list page — production feeds the Warlock matrix; tests inject a
+/// controller with the synthetic fixture.
 class BuildsMockPage extends StatefulWidget {
-  const BuildsMockPage({super.key, this.controller, this.storageRoot});
+  const BuildsMockPage({
+    super.key,
+    this.controller,
+    this.storageRoot,
+    this.warlockMatrixPath,
+  });
 
-  /// Injectable for tests. Page does not dispose an injected controller.
+  /// Injectable for tests / widget previews. Page does not dispose it.
   final BuildsMockController? controller;
 
   /// When set, read-only load of `{StorageRoot}/dim_loadouts/dim-loadouts.json`.
   final StorageRoot? storageRoot;
+
+  /// Same path source as Warlocks ([warlockMatrixPath] / `WARLOCK_MATRIX_PATH`).
+  /// Ignored when [controller] is injected.
+  final String? warlockMatrixPath;
 
   @override
   State<BuildsMockPage> createState() => _BuildsMockPageState();
@@ -38,12 +52,45 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     super.initState();
     final injected = widget.controller;
     _ownsController = injected == null;
-    _controller = injected ?? BuildsMockController();
+    _controller = injected ?? BuildsMockController.forMatrixLoad();
     _controller.addListener(_onController);
     _search = TextEditingController(text: _controller.query);
+    if (_ownsController) {
+      _loadMatrix(widget.warlockMatrixPath);
+    }
     final root = widget.storageRoot;
     if (root != null) {
       _loadDimLoadouts(root);
+    }
+  }
+
+  Future<void> _loadMatrix(String? path) async {
+    final trimmed = path?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      _controller.failMatrixLoad(
+        'No matrix file path. Set WARLOCK_MATRIX_PATH '
+        '(same path the Warlocks page uses).',
+      );
+      return;
+    }
+    _controller.beginMatrixLoad();
+    try {
+      final bytes = await readOnlyFileBytes(trimmed);
+      final decoded = jsonDecode(utf8.decode(bytes));
+      final rows = parseWarlockMatrix(decoded);
+      if (!mounted) return;
+      _controller.adoptFixture(buildsMockFixtureFromMatrix(rows));
+    } on ReadOnlyFileException catch (error) {
+      if (!mounted) return;
+      _controller.failMatrixLoad(error.message);
+    } on FormatException catch (error) {
+      if (!mounted) return;
+      _controller.failMatrixLoad(
+        'Matrix file is not valid JSON (${error.message}).',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      _controller.failMatrixLoad('Could not read matrix: $error');
     }
   }
 
@@ -81,7 +128,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       key: const Key('builds_mock_page'),
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Builds (mockup)'),
+        title: const Text('Builds'),
         actions: [
           _CapControl(controller: _controller),
         ],
@@ -89,15 +136,37 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _MockBanner(),
-          Expanded(
-            child: LibraryWorkspace(
-              rail: _buildRail(context),
-              detail: _buildDetailPane(context),
-            ),
-          ),
+          if (_controller.showMockBanner) const _MockBanner(),
+          Expanded(child: _body(context)),
         ],
       ),
+    );
+  }
+
+  Widget _body(BuildContext context) {
+    if (_controller.matrixLoading && _controller.fixture.builds.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(
+          key: Key('builds_mock_matrix_loading'),
+        ),
+      );
+    }
+    final error = _controller.matrixError;
+    if (error != null && _controller.fixture.builds.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            error,
+            key: const Key('builds_mock_matrix_error'),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    return LibraryWorkspace(
+      rail: _buildRail(context),
+      detail: _buildDetailPane(context),
     );
   }
 
