@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 ///
 /// Focus Swap shell — not dual-pane. Status lamps live on [FlapPalette], not
 /// [ColorScheme.primary] (One Lamp rule).
-ThemeData buildFlapTheme({Brightness brightness = Brightness.dark}) {
+ThemeData buildFlapTheme({Brightness brightness = Brightness.light}) {
   return buildFlapThemeBase(
     brightness: brightness,
     customize: (theme, tokens, palette) {

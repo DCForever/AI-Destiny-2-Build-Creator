@@ -12,7 +12,7 @@ class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
     required this.services,
-    this.themeMode = ThemeMode.system,
+    this.themeMode = ThemeMode.light,
     this.onThemeModeChanged,
   });
 

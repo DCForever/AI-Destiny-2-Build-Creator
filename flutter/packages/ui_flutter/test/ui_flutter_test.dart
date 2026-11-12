@@ -31,11 +31,11 @@ void main() {
       final theme = buildFlapThemeBase();
       final palette = theme.extension<FlapPalette>();
       expect(palette, isNotNull);
-      expect(palette!.success.toARGB32(), kFlapSuccessDark);
+      expect(palette!.success.toARGB32(), kFlapSuccessLight);
       expect(theme.cardTheme.elevation, 0);
-      expect(theme.colorScheme.primary.toARGB32(), kFlapAccentDark);
-      // Neon Network cyan-neon primary
-      expect(kFlapAccentDark, 0xFF00E5FF);
+      expect(theme.colorScheme.primary.toARGB32(), kFlapAccentLight);
+      // Neutral charcoal primary (light default)
+      expect(kFlapAccentLight, 0xFF1A1A1A);
       // google_fonts registers Orbitron / Inter faces on the theme.
       expect(theme.textTheme.titleLarge?.fontFamily, isNotNull);
       expect(
@@ -53,14 +53,14 @@ void main() {
           home: Builder(
             builder: (context) {
               final tone = flapToneColor(context, kFlapToneSuccess);
-              expect(tone.toARGB32(), kFlapSuccessDark);
-              // One Lamp: success must not equal readiness primary (teal/amber).
+              expect(tone.toARGB32(), kFlapSuccessLight);
+              // One Lamp: success must not equal readiness primary.
               expect(
                 tone.toARGB32(),
                 isNot(Theme.of(context).colorScheme.primary.toARGB32()),
               );
               final arc = flapElementColor(context, 'arc');
-              expect(arc!.toARGB32(), kElementArcDark);
+              expect(arc!.toARGB32(), kElementArcLight);
               return const SizedBox.shrink();
             },
           ),

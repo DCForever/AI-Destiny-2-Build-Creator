@@ -17,7 +17,7 @@ class SettingsPage extends StatefulWidget {
     super.key,
     required this.services,
     this.legacyImportController,
-    this.themeMode = ThemeMode.system,
+    this.themeMode = ThemeMode.light,
     this.onThemeModeChanged,
   });
 

@@ -98,7 +98,7 @@ class _BootstrapErrorApp extends StatelessWidget {
       title: 'Destiny 2 Build Creator',
       theme: buildFlapTheme(brightness: Brightness.light),
       darkTheme: buildFlapTheme(brightness: Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: Scaffold(
         body: Center(
           child: Padding(
