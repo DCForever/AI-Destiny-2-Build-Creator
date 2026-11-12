@@ -1,0 +1,6 @@
+Name,Hash,Id,Tag,Rarity,Tier,Type,Source,Category,Element,Ammo,Power,Owner,Locked,Equipped,Notes
+Sunshot,3118677280,"""2000000000000000001""",,Exotic,5,Hand Cannon,exotic,Energy,Solar,Primary,1800,Warlock(1823),false,false,
+Riskrunner,4124980726,"""2000000000000000002""",,Exotic,5,Submachine Gun,exotic,Energy,Arc,Primary,1800,Warlock(1823),false,false,
+Legendary HC,111,"""2000000000000000003""",,Legendary,2,Hand Cannon,legendaryengram,KineticSlot,Kinetic,Primary,1800,Warlock(1823),false,false,
+Sunshot Dup,3118677280,"""2000000000000000001""",,Exotic,5,Hand Cannon,exotic,Energy,Solar,Primary,1800,Warlock(1823),false,false,
+Heavy Exotic,999001,"""2000000000000000004""",,Exotic,5,Rocket Launcher,exotic,Power,Solar,Heavy,1800,Warlock(1823),false,false,

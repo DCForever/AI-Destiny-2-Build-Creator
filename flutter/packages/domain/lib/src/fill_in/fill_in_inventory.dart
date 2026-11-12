@@ -1,17 +1,18 @@
 import '../models/equipment.dart';
 
-/// One physical armor copy held in inventory.
+/// One physical inventory copy held for Fill In matching.
 ///
-/// Shaped so a DIM Armor CSV parser (PR2) can map columns directly:
+/// Shaped so DIM Armor / Weapons CSV parsers can map columns directly:
 /// `Id` → [instanceId], `Hash` → [itemHash], Equippable/Class →
-/// [guardianClass], Type/slot → [slot], set membership → [armorSetHash].
+/// [guardianClass] (armor only; weapons leave this null), Type/Category →
+/// [slot], set membership → [armorSetHash] (armor legendaries only).
 class FillInInventoryItem {
   const FillInInventoryItem({
     required this.instanceId,
     required this.itemHash,
-    required this.guardianClass,
     required this.slot,
     required this.isExotic,
+    this.guardianClass,
     this.armorSetHash,
   });
 
@@ -21,15 +22,15 @@ class FillInInventoryItem {
   /// Destiny inventory item hash (DIM `Hash`).
   final int itemHash;
 
-  /// Class that can equip this piece.
-  final GuardianClass guardianClass;
+  /// Class that can equip this piece. Null for weapons (no class).
+  final GuardianClass? guardianClass;
 
-  /// Armor equipment slot for this copy.
+  /// Equipment slot for this copy (armor or weapon).
   final EquipmentSlot slot;
 
-  /// True when this copy is exotic armor.
+  /// True when this copy is exotic.
   final bool isExotic;
 
-  /// Legendary armor set hash; null for exotic or non-set pieces.
+  /// Legendary armor set hash; null for exotic, weapons, or non-set pieces.
   final int? armorSetHash;
 }
