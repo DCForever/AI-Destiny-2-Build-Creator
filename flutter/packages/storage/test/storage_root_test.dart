@@ -43,6 +43,10 @@ void main() {
         root.dimArmorInventoryCachePath,
         p.join(fakeBase, 'fill_in', 'dim_armor_inventory.csv'),
       );
+      expect(
+        root.dimWeaponsInventoryCachePath,
+        p.join(fakeBase, 'fill_in', 'dim_weapons_inventory.csv'),
+      );
     });
 
     test('rawTablePath uses sanitized version', () {

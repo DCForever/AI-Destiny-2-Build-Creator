@@ -102,7 +102,7 @@ class DimArmorCsvImporter {
       await _writeCacheAtomic(bytes);
     } catch (e) {
       return DimArmorCsvImportResult.couldNotRead(
-        "Couldn't read file: cache write failed ($e)",
+        "Couldn't write cache: $e",
       );
     }
     return DimArmorCsvImportResult.ok(parsed.items!);
