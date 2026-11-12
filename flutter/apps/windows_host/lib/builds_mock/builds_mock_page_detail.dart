@@ -138,13 +138,21 @@ extension _BuildsMockDetail on _BuildsMockPageState {
         ),
       );
     }
+    final binding = _controller.dimBindingFor(build);
     return SingleChildScrollView(
       key: const Key('builds_mock_card_detail'),
       padding: const EdgeInsets.all(kPanelPadMd),
-      child: BuildsMockLoadoutCard(
-        loadout: build,
-        selected: true,
-        density: BuildsMockCardDensity.detail,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BuildsMockLoadoutCard(
+            loadout: build,
+            selected: true,
+            density: BuildsMockCardDensity.detail,
+          ),
+          const SizedBox(height: 12),
+          DimLoadoutDetailsPanel.fromBinding(binding),
+        ],
       ),
     );
   }

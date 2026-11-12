@@ -68,6 +68,7 @@ void main() {
     expect(find.text('Heretical Path'), findsOneWidget);
     expect(find.text('ARMOR'), findsOneWidget);
     expect(find.text('STATS'), findsOneWidget);
+    expect(find.text('DIM link details not loaded'), findsOneWidget);
   });
 
   testWidgets('grid and list layouts show cards with disabled actions', (

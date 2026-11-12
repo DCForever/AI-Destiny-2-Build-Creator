@@ -96,6 +96,12 @@ export 'src/warlock_matrix/parse_warlock_matrix.dart';
 export 'src/warlock_matrix/solipsism_flag.dart';
 export 'src/warlock_matrix/warlock_matrix_build.dart';
 
+// Read-only compiled DIM loadouts cache (parse + display-only stat rank)
+export 'src/dim_loadouts/cached_dim_loadout.dart';
+export 'src/dim_loadouts/match_cached_dim_loadout.dart';
+export 'src/dim_loadouts/parse_cached_dim_loadouts.dart';
+export 'src/dim_loadouts/rank_dim_loadout_stats.dart';
+
 // Read-only Fill In matcher (inventory snapshot → held slots; no writes)
 export 'src/fill_in/fill_in_cap.dart';
 export 'src/fill_in/fill_in_dim_armor_csv.dart';

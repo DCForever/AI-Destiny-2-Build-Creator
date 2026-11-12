@@ -1,5 +1,7 @@
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:flutter/foundation.dart';
 
+import '../dim_loadouts/dim_loadout_details_panel.dart';
 import 'builds_mock_fixture.dart';
 import 'builds_mock_logic.dart';
 import 'builds_mock_models.dart';
@@ -8,8 +10,13 @@ enum BuildsMockTab { detail, pool, reoptimize }
 
 /// In-memory UI state for the Builds mock-up (no IO).
 class BuildsMockController extends ChangeNotifier {
-  BuildsMockController({BuildsMockFixture? fixture})
-      : _fixture = fixture ?? loadBuildsMockFixture() {
+  BuildsMockController({
+    BuildsMockFixture? fixture,
+    DimLoadoutsPanelStatus dimStatus = DimLoadoutsPanelStatus.notLoaded,
+    List<CachedDimLoadout> dimLoadouts = const [],
+  })  : _fixture = fixture ?? loadBuildsMockFixture(),
+        _dimStatus = dimStatus,
+        _dimLoadouts = List<CachedDimLoadout>.unmodifiable(dimLoadouts) {
     _readiness = computeAllReadiness(_fixture);
     if (_fixture.builds.isNotEmpty) {
       _selectedId = _fixture.builds.first.id;
@@ -21,6 +28,8 @@ class BuildsMockController extends ChangeNotifier {
 
   final BuildsMockFixture _fixture;
   late List<MockSetReadiness> _readiness;
+  DimLoadoutsPanelStatus _dimStatus;
+  List<CachedDimLoadout> _dimLoadouts;
 
   String _query = '';
   String? _filterExoticArmor;
@@ -46,6 +55,43 @@ class BuildsMockController extends ChangeNotifier {
   BuildsMockTab get tab => _tab;
   BuildsMockCardLayout get cardLayout => _cardLayout;
   String? get selectedId => _selectedId;
+  DimLoadoutsPanelStatus get dimStatus => _dimStatus;
+
+  /// Adopt a read-only compiled DIM catalog snapshot (display only; no writes).
+  void adoptDimLoadouts({
+    required DimLoadoutsPanelStatus status,
+    List<CachedDimLoadout> loadouts = const [],
+  }) {
+    _dimStatus = status;
+    _dimLoadouts = List<CachedDimLoadout>.unmodifiable(loadouts);
+    notifyListeners();
+  }
+
+  /// Resolve DIM link details for a mock card (shareId → exact name → never exotic).
+  DimLoadoutCardBinding dimBindingFor(MockBuild build) {
+    if (_dimStatus != DimLoadoutsPanelStatus.loaded) {
+      return const DimLoadoutCardBinding.notLoaded();
+    }
+    final match = matchCachedDimLoadout(
+      loadouts: _dimLoadouts,
+      dimLink: build.dimLink,
+      buildName: build.name,
+      exoticName: build.exoticArmor,
+    );
+    switch (match.kind) {
+      case CachedDimLoadoutMatchKind.matched:
+        return DimLoadoutCardBinding.matched(match.loadout!);
+      case CachedDimLoadoutMatchKind.ambiguous:
+        return DimLoadoutCardBinding.ambiguous(match.ambiguousCount);
+      case CachedDimLoadoutMatchKind.none:
+        return const DimLoadoutCardBinding.notLoaded();
+    }
+  }
+
+  /// Prefer [dimBindingFor]; kept for call sites that only need a matched row.
+  CachedDimLoadout? dimLoadoutFor(MockBuild build) {
+    return dimBindingFor(build).loadout;
+  }
 
   List<MockBuild> get visibleBuilds => filterMockBuilds(
         builds: _fixture.builds,

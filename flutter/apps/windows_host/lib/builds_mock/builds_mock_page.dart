@@ -1,7 +1,9 @@
+import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../dim_loadouts/dim_loadout_details_panel.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
@@ -14,10 +16,13 @@ part 'builds_mock_page_reoptimize.dart';
 
 /// Clickable Builds UI mock-up driven only by in-repo fake data.
 class BuildsMockPage extends StatefulWidget {
-  const BuildsMockPage({super.key, this.controller});
+  const BuildsMockPage({super.key, this.controller, this.storageRoot});
 
   /// Injectable for tests. Page does not dispose an injected controller.
   final BuildsMockController? controller;
+
+  /// When set, read-only load of `{StorageRoot}/dim_loadouts/dim-loadouts.json`.
+  final StorageRoot? storageRoot;
 
   @override
   State<BuildsMockPage> createState() => _BuildsMockPageState();
@@ -36,6 +41,26 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     _controller = injected ?? BuildsMockController();
     _controller.addListener(_onController);
     _search = TextEditingController(text: _controller.query);
+    final root = widget.storageRoot;
+    if (root != null) {
+      _loadDimLoadouts(root);
+    }
+  }
+
+  Future<void> _loadDimLoadouts(StorageRoot root) async {
+    final result = await DimLoadoutsReader(root: root).load();
+    if (!mounted) return;
+    switch (result.status) {
+      case DimLoadoutsReadStatus.notLoaded:
+        _controller.adoptDimLoadouts(status: DimLoadoutsPanelStatus.notLoaded);
+      case DimLoadoutsReadStatus.unreadable:
+        _controller.adoptDimLoadouts(status: DimLoadoutsPanelStatus.unreadable);
+      case DimLoadoutsReadStatus.loaded:
+        _controller.adoptDimLoadouts(
+          status: DimLoadoutsPanelStatus.loaded,
+          loadouts: result.loadouts,
+        );
+    }
   }
 
   @override
