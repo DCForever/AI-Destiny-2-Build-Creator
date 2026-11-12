@@ -7,12 +7,9 @@ import 'package:destiny2_windows_host/theme/flap_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  // Prefer bundled assets/google_fonts/*.ttf over network (blocked in tests).
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   Future<void> pumpMock(
     WidgetTester tester, {
@@ -126,14 +123,24 @@ void main() {
     );
   });
 
-  testWidgets('writes desktop screenshots for list/detail, pool, reoptimize', (
-    tester,
-  ) async {
+  testWidgets('optional desktop screenshots when env dir is set', (tester) async {
     final controller = BuildsMockController();
     await pumpMock(tester, controller: controller);
 
-    final outDir = Directory('/opt/cursor/artifacts');
-    outDir.createSync(recursive: true);
+    final configured = Platform.environment['BUILDS_MOCK_SCREENSHOT_DIR']?.trim();
+    if (configured == null || configured.isEmpty) {
+      // Off by default: no filesystem writes. Still visit each main state.
+      expect(find.byKey(const Key('builds_mock_detail')), findsOneWidget);
+      await tester.tap(find.text('Armor pool'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('builds_mock_pool')), findsOneWidget);
+      await tester.tap(find.text('Re-optimize'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('builds_mock_reoptimize')), findsOneWidget);
+      return;
+    }
+
+    final outDir = Directory(configured)..createSync(recursive: true);
 
     Future<void> shot(String name) async {
       await tester.pump();
@@ -161,17 +168,8 @@ void main() {
     await tester.pumpAndSettle();
     await shot('builds_mock_reoptimize');
 
-    expect(
-      File('${outDir.path}/builds_mock_list_detail.png').existsSync(),
-      isTrue,
-    );
-    expect(
-      File('${outDir.path}/builds_mock_pool_grid.png').existsSync(),
-      isTrue,
-    );
-    expect(
-      File('${outDir.path}/builds_mock_reoptimize.png').existsSync(),
-      isTrue,
-    );
+    expect(File('${outDir.path}/builds_mock_list_detail.png').existsSync(), isTrue);
+    expect(File('${outDir.path}/builds_mock_pool_grid.png').existsSync(), isTrue);
+    expect(File('${outDir.path}/builds_mock_reoptimize.png').existsSync(), isTrue);
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

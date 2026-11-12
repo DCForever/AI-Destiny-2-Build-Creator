@@ -132,6 +132,7 @@ void main() {
     );
 
     expect(find.text('Loadouts'), findsNothing);
+    expect(find.text('Build'), findsNothing);
     expect(find.text('Synergy'), findsNothing);
   });
 }
