@@ -234,6 +234,8 @@ void main() {
     await _pumpFrames(tester);
 
     await tester.enterText(find.byKey(const Key('catalog_query')), 'arc');
+    // Host debounces free-text refilter by 200ms (facets stay immediate).
+    await tester.pump(const Duration(milliseconds: 250));
     await _pumpFrames(tester);
 
     expect(itemKey(3), findsOneWidget);

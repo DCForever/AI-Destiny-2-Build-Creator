@@ -149,6 +149,9 @@ void main() {
   });
 
   testWidgets('facet refilter + RESET + zero empty Clear', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       MaterialApp(
         theme: testMaterialTheme(),
@@ -163,12 +166,16 @@ void main() {
     expect(itemKey(2), findsOneWidget);
     expect(itemKey(1), findsNothing);
 
-    await tester.tap(find.byKey(const Key('catalog_clear_filters')));
+    final clear = find.byKey(const Key('catalog_clear_filters'));
+    await tester.ensureVisible(clear);
+    await tester.tap(clear, warnIfMissed: false);
     await _pumpFrames(tester);
     expect(itemKey(1), findsOneWidget);
     expect(itemKey(3), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('catalog_query')), 'zzzz-none');
+    // Host debounces free-text refilter by 200ms.
+    await tester.pump(const Duration(milliseconds: 250));
     await _pumpFrames(tester);
     expect(find.byKey(const Key('catalog_empty')), findsOneWidget);
     expect(find.byKey(const Key('catalog_empty_clear_filters')), findsOneWidget);
@@ -191,15 +198,16 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await tester.tap(itemKey(2));
+    // Legendary unowned → POSSIBLE ROLLS. Exotic (hash 2) uses PERKS instead.
+    await tester.tap(itemKey(1));
     await _pumpFrames(tester);
 
     expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
     final detail = tester.getSize(find.byKey(const Key('catalog_detail_pane')));
     expect(detail.width, 400);
 
-    // Unowned: full definition pools as POSSIBLE ROLLS — can-roll/craft toggles
-    // are owned-only (selected-until-can-roll does not apply without a copy).
+    // Unowned legendary: full definition pools as POSSIBLE ROLLS — can-roll/craft
+    // toggles are owned-only (selected-until-can-roll does not apply without a copy).
     expect(
       find.byKey(const Key('catalog_perk_section_possible_rolls')),
       findsOneWidget,
@@ -360,6 +368,7 @@ void main() {
     Future<void> tapItem(WidgetTester tester, int hash) async {
       final finder = itemKey(hash);
       expect(finder, findsOneWidget);
+      // catalog_list CustomScrollView + per-card horizontal scrollables → .first.
       final listScrollable = find.descendant(
         of: find.byKey(const Key('catalog_list')),
         matching: find.byType(Scrollable),
@@ -368,7 +377,7 @@ void main() {
         await tester.scrollUntilVisible(
           finder,
           64,
-          scrollable: listScrollable,
+          scrollable: listScrollable.first,
         );
         await _pumpFrames(tester);
       }
@@ -516,7 +525,8 @@ void main() {
 
         expect(find.byKey(const Key('perk_band_selected_0')), findsNothing);
         expect(find.byKey(const Key('perk_band_unselected_0')), findsNothing);
-        expect(find.textContaining('On this copy'), findsNothing);
+        // PERK-004: band keys gone; legend may still show "On this copy".
+        expect(find.textContaining('On this copy'), findsOneWidget);
         expect(
           find.byKey(const Key('perk_tier_badge_$kResidualEnhancedPlugHash')),
           findsNothing,
@@ -631,16 +641,25 @@ void main() {
           browseChromeCatalogItems().firstWhere((i) => i.hash == kBrowseBaseHash),
         );
         expect(find.byKey(Key('family_version_chips_$coupKey')), findsOneWidget);
+        // Chip keys include definition hash: family_version_chip_${kind}_${hash}_$key
         expect(
-          find.byKey(Key('family_version_chip_base_$coupKey')),
+          find.byKey(
+            Key('family_version_chip_base_${kBrowseBaseHash}_$coupKey'),
+          ),
           findsOneWidget,
         );
         expect(
-          find.byKey(Key('family_version_chip_adept_$coupKey')),
+          find.byKey(
+            Key('family_version_chip_adept_${kBrowseAdeptHash}_$coupKey'),
+          ),
           findsOneWidget,
         );
         expect(
-          find.byKey(Key('family_version_chip_holofoil_$coupKey')),
+          find.byKey(
+            Key(
+              'family_version_chip_holofoil_${kBrowseHolofoilHash}_$coupKey',
+            ),
+          ),
           findsNothing,
         );
         // ×N = 2 base + 1 adept.
@@ -660,12 +679,60 @@ void main() {
       (tester) async {
         await pumpBrowseCatalog(tester);
 
+        // Owned family → instance strip only (no VERSIONS rail).
         await tester.tap(find.byKey(const Key('catalog_item_$kBrowseBaseHash')));
         await _pumpFrames(tester);
         await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
-        // openVersion prefers owned max-power (adept 1810 > base 1805).
+        expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
+        expect(
+          find.byKey(const Key('family_version_select_$kBrowseAdeptHash')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('family_version_select_$kBrowseBaseHash')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('family_version_select_$kBrowseHolofoilHash')),
+          findsNothing,
+        );
+
+        // Unowned family (cleared inventory) → VERSIONS rail + sticky rebind.
+        final user = await ensureUser(
+          browseDb,
+          bungieMembershipId: 'bungie-browse',
+          membershipType: 3,
+          displayName: 'Browse Guardian',
+        );
+        await replaceInventoryBatch(
+          browseDb,
+          user.id,
+          now: '2026-08-05T13:00:00.000Z',
+          items: const [],
+        );
+        await browseBridge.refresh(reloadEntities: false);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: testMaterialTheme(),
+            home: CatalogPage(
+              services: browseServices,
+              bridge: browseBridge,
+            ),
+          ),
+        );
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await tester.tap(find.byKey(const Key('catalog_item_$kBrowseBaseHash')));
+        await _pumpFrames(tester);
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.byKey(const Key('catalog_detail_pane')), findsOneWidget);
+        expect(find.byKey(const Key('instance_panel_empty')), findsOneWidget);
         expect(
           find.byKey(const Key('family_version_select_$kBrowseAdeptHash')),
           findsOneWidget,
@@ -679,9 +746,8 @@ void main() {
           findsOneWidget,
         );
 
-        // Switch to base — full rebind.
         await tester.tap(
-          find.byKey(const Key('family_version_select_$kBrowseBaseHash')),
+          find.byKey(const Key('family_version_select_$kBrowseAdeptHash')),
         );
         await _pumpFrames(tester);
         await tester.pump(const Duration(milliseconds: 100));
@@ -889,7 +955,8 @@ void main() {
         expect(find.byKey(const Key('perk_band_selected_0')), findsNothing);
         expect(find.byKey(const Key('perk_band_unselected_0')), findsNothing);
         expect(find.byKey(const Key('perk_band_possible_0')), findsNothing);
-        expect(find.textContaining('On this copy'), findsNothing);
+        // PERK-004: band keys gone; legend may still show "On this copy".
+        expect(find.textContaining('On this copy'), findsOneWidget);
         expect(find.textContaining('Unselected (instance)'), findsNothing);
       },
     );

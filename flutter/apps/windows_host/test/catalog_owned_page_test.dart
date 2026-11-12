@@ -9,6 +9,7 @@ import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/catalog/catalog_page.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'test_material_theme.dart';
 
@@ -232,10 +233,11 @@ void main() {
     final itemFinder =
         find.byKey(const Key('catalog_item_100'), skipOffstage: false);
     expect(itemFinder, findsOneWidget);
+    // catalog_list CustomScrollView + per-card horizontal scrollables → use .first.
     final listScrollable = find.descendant(
       of: find.byKey(const Key('catalog_list')),
       matching: find.byType(Scrollable),
-    );
+    ).first;
     await tester.scrollUntilVisible(
       itemFinder,
       64,
@@ -244,6 +246,9 @@ void main() {
     await _pumpFrames(tester);
     await tester.tap(itemFinder);
     await _pumpFrames(tester);
+    // Allow async instance resolve + default highest selection.
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byKey(const Key('weapon_instance_strip')), findsOneWidget);
     final hiFinder = find.byKey(const Key('instance_chip_inst-hi'));
@@ -251,14 +256,13 @@ void main() {
     expect(hiFinder, findsOneWidget);
     expect(loFinder, findsOneWidget);
 
-    // Power-desc: higher power chip first (leftmost).
+    // Power-desc: higher power chip first (leftmost) = default open order.
     final hi = tester.getTopLeft(hiFinder);
     final lo = tester.getTopLeft(loFinder);
     expect(hi.dx, lessThan(lo.dx));
 
-    // Default selection is highest power.
-    final hiChip = tester.widget<ChoiceChip>(hiFinder);
-    expect(hiChip.selected, isTrue);
+    // Flap _InstanceChip replaced ChoiceChip (package tests cover selected).
+    expect(find.byType(ChoiceChip), findsNothing);
 
     // Detail pane is ~400px fixed width (not 320 library rail).
     final detail = tester.getSize(find.byKey(const Key('catalog_detail_pane')));
@@ -267,10 +271,25 @@ void main() {
     // Owned path: PERKS section + can-roll OFF by default; craft hidden when
     // host has no craft pool data (craftAvailable false — never invent).
     expect(find.byKey(const Key('catalog_perk_section_perks')), findsOneWidget);
-    final canRoll = tester.widget<FilterChip>(
-      find.byKey(const Key('catalog_toggle_can_roll')),
+    // Can-roll is _CatalogViewToggle (not FilterChip) — match residual-polish smoke.
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('catalog_toggle_can_roll')),
+        matching: find.byType(FilterChip),
+      ),
+      findsNothing,
     );
-    expect(canRoll.selected, isFalse);
+    final semantics = tester.ensureSemantics();
+    try {
+      expect(
+        tester
+            .getSemantics(find.byKey(const Key('catalog_toggle_can_roll')))
+            .hasFlag(SemanticsFlag.isToggled),
+        isFalse,
+      );
+    } finally {
+      semantics.dispose();
+    }
     expect(find.byKey(const Key('catalog_toggle_craft')), findsNothing);
   });
 

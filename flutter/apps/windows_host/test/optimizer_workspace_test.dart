@@ -181,16 +181,40 @@ void main() {
       await pair.sets.selectSet('armor-1');
       await _pumpFrames(tester);
 
-      expect(find.byKey(const Key('optimizer_workspace')), findsOneWidget);
-      expect(find.byKey(const Key('optimizer_advisory')), findsOneWidget);
-      expect(find.textContaining('never'), findsWidgets);
-      expect(find.text(kOptimizerAdvisoryCaption), findsOneWidget);
+      // Armor Sets MVP: optimizer is board-modal only (not inline workspace).
+      expect(find.byKey(const Key('optimizer_workspace')), findsNothing);
+      expect(find.byKey(const Key('sets_open_board')), findsOneWidget);
+      expect(
+        find.textContaining('Open board for Optimize'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('sets_open_board')));
+      await _pumpFrames(tester);
+      expect(find.byKey(const Key('sets_armor_board_modal')), findsOneWidget);
+      expect(find.byKey(const Key('sets_optimize_primary')), findsOneWidget);
     });
 
     testWidgets('Find kits shows suggestions without writing set items',
         (tester) async {
-      final pair = await pumpSetsWithOptimizer(tester);
-      final uid = await pair.sets.resolveLibraryUserId();
+      // Legacy OptimizerWorkspace still used by Finish embed; drive it
+      // directly with injectable candidates (board path overwrites inject).
+      await tester.binding.setSurfaceSize(const Size(1200, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final sets = SetsLibraryController(
+        db: services.db,
+        session: services.oauthSession,
+        inventorySync: services.inventorySync,
+      );
+      final optimizer = OptimizerController(
+        db: services.db,
+        resolveUserId: () => sets.resolveLibraryUserId(),
+        optimizeRunner: (req) async => optimizeArmorLocal(req),
+        initialCandidates: fixtureBoard(),
+        initialHasInventory: true,
+      );
+      final uid = await sets.resolveLibraryUserId();
       await createUserSet(
         services.db,
         uid,
@@ -200,11 +224,24 @@ void main() {
           type: SetType.armor,
         ),
       );
-      await pair.sets.refresh(keepSelection: false);
-      await pair.sets.selectSet('armor-empty');
+      optimizer.bindTargetSet(setId: 'armor-empty', setName: 'Empty Armor');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapTheme(),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: OptimizerWorkspace(controller: optimizer),
+            ),
+          ),
+        ),
+      );
       await _pumpFrames(tester);
 
-      // Scroll dual-pane detail so Find kits is hittable.
+      expect(find.byKey(const Key('optimizer_workspace')), findsOneWidget);
+      expect(find.byKey(const Key('optimizer_advisory')), findsOneWidget);
+      expect(find.text(kOptimizerAdvisoryCaption), findsOneWidget);
+
       await tester.ensureVisible(find.byKey(const Key('optimizer_find_kits')));
       await _pumpFrames(tester);
       await tester.tap(find.byKey(const Key('optimizer_find_kits')));
@@ -212,7 +249,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       await _pumpFrames(tester);
 
-      expect(pair.optimizer.combinations, isNotEmpty);
+      expect(optimizer.combinations, isNotEmpty);
       await tester.ensureVisible(
         find.byKey(const Key('optimizer_suggestion_0')),
       );
@@ -221,9 +258,12 @@ void main() {
       final detail = await getSetDetail(services.db, uid, 'armor-empty');
       expect(detail!.activeItems, isEmpty);
       expect(
-        pair.optimizer.status,
+        optimizer.status,
         contains('nothing written yet'),
       );
+
+      optimizer.dispose();
+      sets.dispose();
     });
 
     testWidgets('weapon set hides optimizer workspace', (tester) async {
@@ -248,8 +288,22 @@ void main() {
 
   group('US2 confirm apply / cancel', () {
     testWidgets('cancel confirm leaves set unchanged', (tester) async {
-      final pair = await pumpSetsWithOptimizer(tester);
-      final uid = await pair.sets.resolveLibraryUserId();
+      await tester.binding.setSurfaceSize(const Size(1200, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final sets = SetsLibraryController(
+        db: services.db,
+        session: services.oauthSession,
+        inventorySync: services.inventorySync,
+      );
+      final optimizer = OptimizerController(
+        db: services.db,
+        resolveUserId: () => sets.resolveLibraryUserId(),
+        optimizeRunner: (req) async => optimizeArmorLocal(req),
+        initialCandidates: fixtureBoard(),
+        initialHasInventory: true,
+      );
+      final uid = await sets.resolveLibraryUserId();
       await createUserSet(
         services.db,
         uid,
@@ -259,14 +313,23 @@ void main() {
           type: SetType.armor,
         ),
       );
-      await pair.sets.refresh(keepSelection: false);
-      await pair.sets.selectSet('armor-cancel');
+      optimizer.bindTargetSet(setId: 'armor-cancel', setName: 'Cancel Armor');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapTheme(),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: OptimizerWorkspace(controller: optimizer),
+            ),
+          ),
+        ),
+      );
       await _pumpFrames(tester);
 
-      // Drive find via controller (no write), then confirm UI path.
-      await pair.optimizer.findKits();
+      await optimizer.findKits();
       await _pumpFrames(tester);
-      expect(pair.optimizer.combinations, isNotEmpty);
+      expect(optimizer.combinations, isNotEmpty);
 
       final detailBefore =
           await getSetDetail(services.db, uid, 'armor-cancel');
@@ -282,13 +345,30 @@ void main() {
 
       final detail = await getSetDetail(services.db, uid, 'armor-cancel');
       expect(detail!.activeItems, isEmpty);
-      expect(pair.optimizer.pending, isNull);
-      expect(pair.optimizer.status, contains('unchanged'));
+      expect(optimizer.pending, isNull);
+      expect(optimizer.status, contains('unchanged'));
+
+      optimizer.dispose();
+      sets.dispose();
     });
 
     testWidgets('confirm apply writes five armor slots', (tester) async {
-      final pair = await pumpSetsWithOptimizer(tester);
-      final uid = await pair.sets.resolveLibraryUserId();
+      await tester.binding.setSurfaceSize(const Size(1200, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final sets = SetsLibraryController(
+        db: services.db,
+        session: services.oauthSession,
+        inventorySync: services.inventorySync,
+      );
+      final optimizer = OptimizerController(
+        db: services.db,
+        resolveUserId: () => sets.resolveLibraryUserId(),
+        optimizeRunner: (req) async => optimizeArmorLocal(req),
+        initialCandidates: fixtureBoard(),
+        initialHasInventory: true,
+      );
+      final uid = await sets.resolveLibraryUserId();
       await createUserSet(
         services.db,
         uid,
@@ -298,11 +378,21 @@ void main() {
           type: SetType.armor,
         ),
       );
-      await pair.sets.refresh(keepSelection: false);
-      await pair.sets.selectSet('armor-apply');
+      optimizer.bindTargetSet(setId: 'armor-apply', setName: 'Apply Armor');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFlapTheme(),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: OptimizerWorkspace(controller: optimizer),
+            ),
+          ),
+        ),
+      );
       await _pumpFrames(tester);
 
-      await pair.optimizer.findKits();
+      await optimizer.findKits();
       await _pumpFrames(tester);
 
       // Pre-confirm: still empty
@@ -328,7 +418,10 @@ void main() {
         'legs',
         'class_item',
       });
-      expect(pair.optimizer.status, contains('Applied'));
+      expect(optimizer.status, contains('Applied'));
+
+      optimizer.dispose();
+      sets.dispose();
     });
 
     test('controller confirm-only: findKits does not write; confirm does',
