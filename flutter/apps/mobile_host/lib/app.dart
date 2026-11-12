@@ -9,7 +9,7 @@ import 'theme/flap_theme.dart';
 ///
 /// **UX rebuild baseline:** Settings only (full body). No bottom nav until a
 /// second area (e.g. Catalog) returns — Material [NavigationBar] requires ≥2
-/// destinations. Appearance: Neon void / Cool technical.
+/// destinations. Appearance: Neutral stage (light default) / Neutral charcoal.
 class Destiny2MobileApp extends StatefulWidget {
   const Destiny2MobileApp({
     super.key,
@@ -23,7 +23,7 @@ class Destiny2MobileApp extends StatefulWidget {
 }
 
 class _Destiny2MobileAppState extends State<Destiny2MobileApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   @override
   Widget build(BuildContext context) {

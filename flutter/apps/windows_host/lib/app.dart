@@ -17,8 +17,7 @@ import 'warlock/warlock_builds_page.dart';
 /// **UX rebuild shell:** Catalog + **Sets** (Armor MVP implement) + read-only
 /// Warlock builds + Builds (mockup) + Settings.
 /// Loadouts / Build / Synergy return via the area UX redesign loop.
-/// Appearance: **Neon void** dark + **Cool technical** light ([ThemeMode]).
-/// Design system tokens unchanged.
+/// Appearance: **Neutral stage** light (default) + **Neutral charcoal** dark.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
     super.key,
@@ -52,7 +51,7 @@ class Destiny2WindowsApp extends StatefulWidget {
 
 class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   int _index = Destiny2WindowsApp.catalogNavIndex;
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   /// Bumped when Catalog is re-selected so IndexedStack reloads after Settings sync.
   int _catalogReloadToken = 0;

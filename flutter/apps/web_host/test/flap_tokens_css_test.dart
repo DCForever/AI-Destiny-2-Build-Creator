@@ -6,15 +6,17 @@ import 'package:test/test.dart';
 
 void main() {
   group('flapDarkCssVariables', () {
-    test('maps dark Neon Network hexes from destiny2_ui_tokens', () {
+    test('maps dark neutral charcoal hexes from destiny2_ui_tokens', () {
       final vars = flapDarkCssVariables();
-      expect(vars['--flap-background'], '#05050f');
-      expect(vars['--flap-surface'], '#0a0a18');
-      expect(vars['--flap-accent'], '#00e5ff');
-      expect(vars['--flap-foreground'], '#f0fdff');
-      expect(vars['--flap-muted'], '#7dd3e0');
-      expect(vars['--flap-danger'], '#ff003c');
-      expect(vars['--flap-success'], '#2ee6a6');
+      expect(vars['--flap-background'], argbToCssHex(kFlapBackgroundDark));
+      expect(vars['--flap-surface'], argbToCssHex(kFlapSurfaceDark));
+      expect(vars['--flap-accent'], argbToCssHex(kFlapAccentDark));
+      expect(vars['--flap-foreground'], argbToCssHex(kFlapForegroundDark));
+      expect(vars['--flap-muted'], argbToCssHex(kFlapMutedDark));
+      expect(vars['--flap-danger'], argbToCssHex(kFlapDangerDark));
+      expect(vars['--flap-success'], argbToCssHex(kFlapSuccessDark));
+      expect(vars['--flap-background'], '#121212');
+      expect(vars['--flap-accent'], '#e0e0e0');
     });
 
     test('square board radius is 0px', () {
@@ -28,9 +30,9 @@ void main() {
     });
 
     test('FlapCssTokens convenience matches map', () {
-      expect(FlapCssTokens.background, '#05050f');
-      expect(FlapCssTokens.surface, '#0a0a18');
-      expect(FlapCssTokens.accent, '#00e5ff');
+      expect(FlapCssTokens.background, argbToCssHex(kFlapBackgroundDark));
+      expect(FlapCssTokens.surface, argbToCssHex(kFlapSurfaceDark));
+      expect(FlapCssTokens.accent, argbToCssHex(kFlapAccentDark));
       expect(FlapCssTokens.radius, '0px');
     });
 
@@ -43,12 +45,18 @@ void main() {
     test('root block serializes custom properties', () {
       final block = flapDarkCssRootBlock();
       expect(block, startsWith(':root {'));
-      expect(block, contains('--flap-background: #05050f;'));
-      expect(block, contains('--flap-accent: #00e5ff;'));
+      expect(
+        block,
+        contains('--flap-background: ${argbToCssHex(kFlapBackgroundDark)};'),
+      );
+      expect(
+        block,
+        contains('--flap-accent: ${argbToCssHex(kFlapAccentDark)};'),
+      );
       expect(block, contains('--flap-radius: 0px;'));
     });
 
-    test('font stacks use Neon Network families', () {
+    test('font stacks use display/body/mono families', () {
       final vars = flapDarkCssVariables();
       expect(vars['--flap-font-display'], contains('Orbitron'));
       expect(vars['--flap-font-body'], contains('Inter'));

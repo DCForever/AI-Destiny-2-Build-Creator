@@ -1,98 +1,98 @@
-/// Neon Network / Vex Network Interface color tokens as ARGB ints (0xAARRGGBB).
+/// Neutral readable color tokens as ARGB ints (0xAARRGGBB).
 ///
 /// **Flutter dual-face (product choice):**
-/// - Dark default = **Neon void** (deep void canvas, cyan-neon signal accent)
-/// - Light = **Cool technical stage** (cool greys, cyan signal chrome only)
+/// - Light default = **Neutral stage** (whites / greys / black ink, high contrast)
+/// - Dark = **Neutral charcoal** (blacks / greys, high contrast)
 ///
-/// Values match Open Design package `user:neon-network-design-system` and
-/// repo root [DESIGN.md](../../../DESIGN.md). Hosts map with Flutter
-/// `Color(value)` or CSS `#RRGGBB` via [argbToCssHex].
+/// Hosts map with Flutter `Color(value)` or CSS `#RRGGBB` via [argbToCssHex].
 ///
 /// **Rules:** Soft spatial zoning (gap → tone → fade). White/grey structural
-/// hairlines — not cyan cages. Cyan accent ≤ ~2 strong hits per region.
-/// Destiny element hexes stay sandbox-true on identity cells only.
-/// Status success never aliases ColorScheme.primary.
+/// hairlines. Chrome accent is charcoal/near-black (light) or light grey (dark)
+/// for selection/focus/CTA only — not body text decoration.
+/// Keep semantic color only where it carries meaning: exotic gold, Destiny
+/// element ink, and status warning (cap warn). Status success never aliases
+/// ColorScheme.primary.
 library;
 
 // ---------------------------------------------------------------------------
-// Dark — Neon Network void (default product / Windows + mobile + web)
+// Dark — Neutral charcoal
 // ---------------------------------------------------------------------------
 
-/// Void canvas `#05050f`.
-const int kFlapBackgroundDark = 0xFF05050F;
+/// Charcoal canvas `#121212`.
+const int kFlapBackgroundDark = 0xFF121212;
 
-/// Elevated content zone `#0a0a18`.
-const int kFlapSurfaceDark = 0xFF0A0A18;
+/// Elevated content zone `#1e1e1e`.
+const int kFlapSurfaceDark = 0xFF1E1E1E;
 
-/// Nested / inset zone `#101028`.
-const int kFlapSurfaceRaisedDark = 0xFF101028;
+/// Nested / inset zone `#2a2a2a`.
+const int kFlapSurfaceRaisedDark = 0xFF2A2A2A;
 
-/// Structural hairline — white/grey @ ~22% (`rgba(232,238,242,0.22)`).
-const int kFlapLineDark = 0x38E8EEF2;
+/// Structural hairline — white @ ~22%.
+const int kFlapLineDark = 0x38FFFFFF;
 
-/// Emphasized hairline @ ~38% (`rgba(232,238,242,0.38)`).
-const int kFlapLineStrongDark = 0x61E8EEF2;
+/// Emphasized hairline @ ~38%.
+const int kFlapLineStrongDark = 0x61FFFFFF;
 
-/// Signal white text `#f0fdff`.
-const int kFlapForegroundDark = 0xFFF0FDFF;
+/// Near-white text `#f5f5f5`.
+const int kFlapForegroundDark = 0xFFF5F5F5;
 
-/// Secondary cyan text `#7dd3e0`.
-const int kFlapMutedDark = 0xFF7DD3E0;
+/// Secondary grey text `#a3a3a3` (AA on charcoal).
+const int kFlapMutedDark = 0xFFA3A3A3;
 
-/// Primary cyan-neon signal `#00e5ff` (CTA / selection / focus only).
-const int kFlapAccentDark = 0xFF00E5FF;
+/// Light grey signal `#e0e0e0` (CTA / selection / focus only).
+const int kFlapAccentDark = 0xFFE0E0E0;
 
-/// Deep accent / pressed face `#00b8d4`.
-const int kFlapAccentStrongDark = 0xFF00B8D4;
+/// Strong accent / pressed face `#ffffff`.
+const int kFlapAccentStrongDark = 0xFFFFFFFF;
 
-/// Soft accent wash `#00e5ff` @ ~15% (`primary-soft`).
-const int kFlapAccentDimDark = 0x2600E5FF;
+/// Soft accent wash `#e0e0e0` @ ~15%.
+const int kFlapAccentDimDark = 0x26E0E0E0;
 
 /// Critical / destructive only `#ff003c`.
 const int kFlapDangerDark = 0xFFFF003C;
 
-/// Status success `#2ee6a6` (distinct from cyan accent).
+/// Status success `#2ee6a6` (distinct from accent).
 const int kFlapSuccessDark = 0xFF2EE6A6;
 
-/// Status warn `#f5c542`.
+/// Status warn `#f5c542` (cap warning).
 const int kFlapWarningDark = 0xFFF5C542;
 
-/// Sparse magenta energy (secondary accent — charts, rare emphasis only).
-const int kFlapAccentSecondaryDark = 0xFFFF1A8C;
+/// Secondary chrome (charts / rare emphasis) — neutral mid grey.
+const int kFlapAccentSecondaryDark = 0xFF8A8A8A;
 
 // ---------------------------------------------------------------------------
-// Light — Cool technical stage (ThemeMode.light / ThemeToggle)
+// Light — Neutral stage (ThemeMode.light default)
 // ---------------------------------------------------------------------------
 
-/// Cool technical stage `#f4f7fb`.
-const int kFlapBackgroundLight = 0xFFF4F7FB;
+/// Neutral stage `#f5f5f5`.
+const int kFlapBackgroundLight = 0xFFF5F5F5;
 
 /// Elevated white zone `#ffffff`.
 const int kFlapSurfaceLight = 0xFFFFFFFF;
 
-/// Inset zone `#eef2f7`.
-const int kFlapSurfaceRaisedLight = 0xFFEEF2F7;
+/// Inset zone `#eeeeee`.
+const int kFlapSurfaceRaisedLight = 0xFFEEEEEE;
 
-/// Grey structure hairline @ ~14% on near-void ink.
-const int kFlapLineLight = 0x240A0A18;
+/// Grey structure hairline @ ~16% on black.
+const int kFlapLineLight = 0x29000000;
 
-/// Strong structure hairline @ ~22%.
-const int kFlapLineStrongLight = 0x380A0A18;
+/// Strong structure hairline @ ~28%.
+const int kFlapLineStrongLight = 0x47000000;
 
-/// Near-void ink `#0a0a18`.
-const int kFlapForegroundLight = 0xFF0A0A18;
+/// Near-black ink `#111111` (AA+ on white/stage).
+const int kFlapForegroundLight = 0xFF111111;
 
-/// Deepened cool muted for AA small text `#4a5a68`.
-const int kFlapMutedLight = 0xFF4A5A68;
+/// Mid grey muted for AA body/secondary `#595959`.
+const int kFlapMutedLight = 0xFF595959;
 
-/// Signal chrome only `#00c4db` — not body text on white.
-const int kFlapAccentLight = 0xFF00C4DB;
+/// Charcoal chrome `#1a1a1a` — selection / focus / CTA (not body wash).
+const int kFlapAccentLight = 0xFF1A1A1A;
 
-/// Prefer for text-on-white CTA if needed `#00a8bc`.
-const int kFlapAccentStrongLight = 0xFF00A8BC;
+/// Strong charcoal / pressed face `#000000`.
+const int kFlapAccentStrongLight = 0xFF000000;
 
 /// Soft accent wash on light @ ~12%.
-const int kFlapAccentDimLight = 0x1F00C4DB;
+const int kFlapAccentDimLight = 0x1F1A1A1A;
 
 /// Critical on light (same danger signal).
 const int kFlapDangerLight = 0xFFFF003C;
@@ -100,14 +100,14 @@ const int kFlapDangerLight = 0xFFFF003C;
 /// Success on light (same status green).
 const int kFlapSuccessLight = 0xFF2EE6A6;
 
-/// Warn on light.
+/// Warn on light (cap warning).
 const int kFlapWarningLight = 0xFFF5C542;
 
-/// Sparse magenta (shared).
-const int kFlapAccentSecondaryLight = 0xFFFF1A8C;
+/// Secondary chrome — neutral mid grey.
+const int kFlapAccentSecondaryLight = 0xFF6B6B6B;
 
 // ---------------------------------------------------------------------------
-// Rarity wash (Neon catalog cards — OD Vex Network kit)
+// Rarity wash (catalog cards)
 // ---------------------------------------------------------------------------
 
 /// Exotic gold wash `#ceae33`.
@@ -145,7 +145,7 @@ const int kElementStrandDark = 0xFF35E366;
 const int kElementPrismaticDark = 0xFFD67EE2;
 
 // ---------------------------------------------------------------------------
-// Destiny element ink (light board — higher contrast on technical stage)
+// Destiny element ink (light board — higher contrast on neutral stage)
 // ---------------------------------------------------------------------------
 
 const int kElementKineticLight = 0xFF2A2D36;
@@ -160,10 +160,9 @@ const int kElementPrismaticLight = 0xFF9A3FB0;
 // Grouped views
 // ---------------------------------------------------------------------------
 
-/// Neon void (dark) / cool technical (light) palettes.
+/// Neutral charcoal (dark) / neutral stage (light) palettes.
 ///
-/// API name [FlapColorTokens] retained for host compatibility; values are
-/// Neon Network.
+/// API name [FlapColorTokens] retained for host compatibility.
 class FlapColorTokens {
   const FlapColorTokens._({
     required this.background,
@@ -211,7 +210,7 @@ class FlapColorTokens {
   final int elementStrand;
   final int elementPrismatic;
 
-  /// Neon Network void — product dark default.
+  /// Neutral charcoal — dark ThemeMode face.
   static const dark = FlapColorTokens._(
     background: kFlapBackgroundDark,
     surface: kFlapSurfaceDark,
@@ -236,7 +235,7 @@ class FlapColorTokens {
     elementPrismatic: kElementPrismaticDark,
   );
 
-  /// Cool technical stage — light ThemeMode face.
+  /// Neutral stage — light ThemeMode face (product default).
   static const light = FlapColorTokens._(
     background: kFlapBackgroundLight,
     surface: kFlapSurfaceLight,

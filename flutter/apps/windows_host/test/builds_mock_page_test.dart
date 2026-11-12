@@ -20,7 +20,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildFlapTheme(brightness: Brightness.dark),
+        theme: buildFlapTheme(brightness: Brightness.light),
         home: RepaintBoundary(
           key: const Key('builds_mock_shot_root'),
           child: Scaffold(
