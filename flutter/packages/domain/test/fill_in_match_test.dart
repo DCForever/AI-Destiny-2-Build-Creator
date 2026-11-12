@@ -26,6 +26,7 @@ void main() {
   group('matchFillIn', () {
     const techsec = 1001;
     const solipsismHash = 9001;
+    const sunshotHash = 3118677280;
 
     FillInInventoryItem legendary({
       required String id,
@@ -44,7 +45,7 @@ void main() {
       );
     }
 
-    FillInInventoryItem exotic({
+    FillInInventoryItem exoticArmor({
       required String id,
       required int hash,
       required GuardianClass cls,
@@ -59,12 +60,26 @@ void main() {
       );
     }
 
+    FillInInventoryItem exoticWeapon({
+      required String id,
+      required int hash,
+      EquipmentSlot slot = EquipmentSlot.special,
+    }) {
+      return FillInInventoryItem(
+        instanceId: id,
+        itemHash: hash,
+        guardianClass: null,
+        slot: slot,
+        isExotic: true,
+      );
+    }
+
     FillInBuildRequirement build({
       required String id,
       required GuardianClass cls,
       required List<FillInSlotRequirement> slots,
       String subclass = 'prismatic',
-      String? exoticName,
+      String? exoticName = 'Aeon Soul',
     }) {
       return FillInBuildRequirement(
         buildId: id,
@@ -104,6 +119,7 @@ void main() {
         expect(slot.poolHeldCount, 1);
         expect(slot.exceedsCap, isFalse);
         expect(slot.overCapLabel, isNull);
+        expect(result.solipsismNotPrismatic, isFalse);
       }
     });
 
@@ -134,6 +150,94 @@ void main() {
       final slot = report.builds.single.slots.single;
       expect(slot.isHeld, isFalse);
       expect(slot.poolHeldCount, 0);
+    });
+
+    test('exotic armor held on another class does not count', () {
+      final report = matchFillIn(
+        inventory: [
+          exoticArmor(
+            id: 'exo-titan',
+            hash: solipsismHash,
+            cls: GuardianClass.titan,
+            slot: EquipmentSlot.classItem,
+          ),
+        ],
+        builds: [
+          build(
+            id: 'warlock',
+            cls: GuardianClass.warlock,
+            exoticName: 'Solipsism',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.classItem,
+                isExotic: true,
+                exoticItemHash: solipsismHash,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final slot = report.builds.single.slots.single;
+      expect(slot.isHeld, isFalse);
+      expect(slot.poolHeldCount, 0);
+    });
+
+    test('exotic armor same class + hash counts', () {
+      final report = matchFillIn(
+        inventory: [
+          exoticArmor(
+            id: 'exo-1',
+            hash: solipsismHash,
+            cls: GuardianClass.warlock,
+            slot: EquipmentSlot.classItem,
+          ),
+        ],
+        builds: [
+          build(
+            id: 'b',
+            cls: GuardianClass.warlock,
+            exoticName: 'Solipsism',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.classItem,
+                isExotic: true,
+                exoticItemHash: solipsismHash,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final slot = report.builds.single.slots.single;
+      expect(slot.isHeld, isTrue);
+      expect(slot.poolHeldCount, 1);
+    });
+
+    test('exotic weapon matches by hash with no class', () {
+      final report = matchFillIn(
+        inventory: [
+          exoticWeapon(id: 'gun-1', hash: sunshotHash),
+        ],
+        builds: [
+          build(
+            id: 'b',
+            cls: GuardianClass.hunter,
+            exoticName: 'Lucky Pants',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.special,
+                isExotic: true,
+                exoticItemHash: sunshotHash,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final slot = report.builds.single.slots.single;
+      expect(slot.isHeld, isTrue);
+      expect(slot.poolHeldCount, 1);
     });
 
     test('one physical item is never counted in two slots', () {
@@ -177,37 +281,6 @@ void main() {
       expect(slots[1].poolHeldCount, 0);
       expect(slots[0].isHeld, isTrue);
       expect(slots[1].isHeld, isFalse);
-    });
-
-    test('exotics match by item hash only', () {
-      final report = matchFillIn(
-        inventory: [
-          exotic(
-            id: 'exo-1',
-            hash: solipsismHash,
-            cls: GuardianClass.warlock,
-            slot: EquipmentSlot.classItem,
-          ),
-        ],
-        builds: [
-          build(
-            id: 'b',
-            cls: GuardianClass.hunter,
-            exoticName: 'Solipsism',
-            slots: const [
-              FillInSlotRequirement(
-                slot: EquipmentSlot.classItem,
-                isExotic: true,
-                exoticItemHash: solipsismHash,
-              ),
-            ],
-          ),
-        ],
-      );
-
-      final slot = report.builds.single.slots.single;
-      expect(slot.isHeld, isTrue);
-      expect(slot.poolHeldCount, 1);
     });
 
     test('over-cap yields label only (no action field)', () {
@@ -280,7 +353,7 @@ void main() {
     test('Solipsism outside Prismatic is flagged, never silent OK', () {
       final report = matchFillIn(
         inventory: [
-          exotic(
+          exoticArmor(
             id: 'sol',
             hash: solipsismHash,
             cls: GuardianClass.warlock,
@@ -322,6 +395,56 @@ void main() {
       expect(ok.solipsismNotPrismatic, isFalse);
       expect(bad.slots.single.isHeld, isTrue);
       expect(ok.slots.single.isHeld, isTrue);
+    });
+
+    test('null exotic name is flagged instead of silent OK', () {
+      final report = matchFillIn(
+        inventory: const [],
+        builds: [
+          build(
+            id: 'null-exo',
+            cls: GuardianClass.warlock,
+            subclass: 'prismatic',
+            exoticName: null,
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.helmet,
+                isExotic: false,
+                armorSetHash: techsec,
+              ),
+            ],
+          ),
+        ],
+      );
+      expect(report.builds.single.solipsismNotPrismatic, isTrue);
+    });
+
+    test('unknown subclass is flagged instead of silent OK', () {
+      final report = matchFillIn(
+        inventory: [
+          exoticArmor(
+            id: 'sol',
+            hash: solipsismHash,
+            cls: GuardianClass.warlock,
+          ),
+        ],
+        builds: [
+          build(
+            id: 'unknown-sub',
+            cls: GuardianClass.warlock,
+            subclass: 'not-a-subclass',
+            exoticName: 'Solipsism',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.classItem,
+                isExotic: true,
+                exoticItemHash: solipsismHash,
+              ),
+            ],
+          ),
+        ],
+      );
+      expect(report.builds.single.solipsismNotPrismatic, isTrue);
     });
   });
 }

@@ -140,7 +140,8 @@ void main() {
     // Re-import same bytes but force failure after .tmp flush, before rename.
     final second = await failing.importFromPath(source.path);
     expect(second.isOk, isFalse);
-    expect(second.error, contains("Couldn't read file"));
+    expect(second.error, contains("Couldn't write cache"));
+    expect(second.error, isNot(contains("Couldn't read file")));
 
     final after = await File(importer.cachePath).readAsBytes();
     expect(sha256.convert(after).toString(), beforeHash.toString());

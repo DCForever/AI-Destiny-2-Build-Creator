@@ -196,8 +196,62 @@ void main() {
       expect(result.items, hasLength(1));
       expect(result.items!.single.instanceId, '1003');
     });
+
+    test(
+      'parses one synthetic row on the exact measured DIM Armor header '
+      '(48 cols; unused columns ignored; Equippable Warlock/Titan/Hunter)',
+      () {
+        // Measured from Daniel's export, Nov 12, 2026 — synthetic values only.
+        expect(_kMeasuredArmorHeader.split(','), hasLength(48));
+        expect(_kMeasuredArmorHeader.split(','), contains('Equippable'));
+
+        final cells = List<String>.filled(48, '');
+        void set(String name, String value) {
+          final i = _kMeasuredArmorHeader.split(',').indexOf(name);
+          expect(i, greaterThanOrEqualTo(0), reason: name);
+          cells[i] = value;
+        }
+
+        set('Name', 'Synthetic Techsec Helm');
+        set('Hash', '111001');
+        set('Id', '"1000000000000000099"');
+        set('Rarity', 'Legendary');
+        set('Tier', '2');
+        set('Type', 'Helmet');
+        set('Equippable', 'Warlock');
+        set('Power', '1800');
+        set('Energy Capacity', '3');
+        // Unused columns stay blank — must not fail when width matches.
+
+        final csv = '$_kMeasuredArmorHeader\n${cells.join(',')}\n';
+        final result = parseDimArmorCsv(
+          csv,
+          armorSetHashByItemHash: const {111001: 555001},
+        );
+        expect(result.isOk, isTrue, reason: result.error);
+        expect(result.items, hasLength(1));
+        final item = result.items!.single;
+        expect(item.itemHash, 111001);
+        expect(item.instanceId, '1000000000000000099');
+        expect(item.isExotic, isFalse);
+        expect(item.slot, EquipmentSlot.helmet);
+        expect(item.guardianClass, GuardianClass.warlock);
+        expect(item.armorSetHash, 555001);
+      },
+    );
   });
 }
+
+/// Exact Armor CSV header measured from Daniel's DIM export, Nov 12, 2026
+/// (48 columns, 826 rows). Synthetic fixtures only.
+const String _kMeasuredArmorHeader =
+    'Name,Hash,Id,Tag,Rarity,Tier,Type,Source,Equippable,Power,'
+    'Energy Capacity,Archetype,Tertiary Stat,Tuning Stat,Masterwork Tier,'
+    'Owner,Locked,Equipped,Holofoil,Year,Season,Event,Weapons,Health,Class,'
+    'Grenade,Super,Melee,Total,Weapons (Base),Health (Base),Class (Base),'
+    'Grenade (Base),Super (Base),Melee (Base),Total (Base),Seasonal Mod,'
+    'Loadouts,Notes,Perks 0,Perks 1,Perks 2,Perks 3,Perks 4,Perks 5,Perks 6,'
+    'Perks 7,Perks 8';
 
 String _fixtureText() => File(_fixturePath()).readAsStringSync();
 

@@ -26,7 +26,8 @@ const List<String> kFillInBannedPatterns = <String>[
 /// Exact count of production Fill In Dart sources under `**/fill_in/`.
 ///
 /// Bump when adding a real fill_in library file (not tests).
-const int kExpectedFillInSourceFileCount = 6;
+/// PR2b added `fill_in_dim_weapons_csv.dart` (was 6 → now 7).
+const int kExpectedFillInSourceFileCount = 7;
 
 void main() {
   test('Fill In sources never import write/transfer/equip/io/http', () {

@@ -14,6 +14,10 @@ const int kDimArmorCsvMaxBytes = 8 * 1024 * 1024;
 /// Source: DestinyItemManager/DIM `src/app/organizer/Columns.tsx`
 /// (`csv: 'Name'|'Hash'|'Id'|'Equippable'|'Type'|'Rarity'`) driven by
 /// `src/app/inventory/spreadsheets.ts` `generateCSVExportData('armor', …)`.
+///
+/// Measured from Daniel's export, Nov 12, 2026: 48-column Armor CSV;
+/// `Equippable` values are Warlock / Titan / Hunter. Unused columns are
+/// ignored when row width matches the header.
 const List<String> kDimArmorCsvRequiredColumns = <String>[
   'Name',
   'Hash',

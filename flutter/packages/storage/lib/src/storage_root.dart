@@ -20,6 +20,7 @@ import 'version_dir.dart';
 /// entities/<versionDir>/perk-weapon-index.json
 /// users/<membershipId>/preferences.json
 /// fill_in/dim_armor_inventory.csv
+/// fill_in/dim_weapons_inventory.csv
 /// ```
 class StorageRoot {
   /// Absolute or root-relative base directory for all app storage.
@@ -67,7 +68,7 @@ class StorageRoot {
   /// Directory for per-user files.
   String get usersDir => p.join(basePath, 'users');
 
-  /// App-private Fill In cache directory (DIM Armor CSV snapshot).
+  /// App-private Fill In cache directory (DIM Armor / Weapons CSV snapshots).
   ///
   /// Not Mario's files and not the SQLite/preferences schema — a new folder
   /// under the existing [StorageRoot] layout.
@@ -78,6 +79,12 @@ class StorageRoot {
   /// Exact path: `{basePath}/fill_in/dim_armor_inventory.csv`
   String get dimArmorInventoryCachePath =>
       p.join(fillInCacheDir, 'dim_armor_inventory.csv');
+
+  /// Cached DIM Weapons CSV bytes kept until the next successful import.
+  ///
+  /// Exact path: `{basePath}/fill_in/dim_weapons_inventory.csv`
+  String get dimWeaponsInventoryCachePath =>
+      p.join(fillInCacheDir, 'dim_weapons_inventory.csv');
 
   /// Raw table JSON path: `manifest/<versionDir>/<table>.json`.
   String rawTablePath(String version, String table) {
