@@ -74,6 +74,37 @@ Future<void> _createWeaponSetViaWizard(
   await _pumpFrames(tester);
 }
 
+/// Drive stepped create wizard for an Armor set with [name].
+///
+/// Product path: New set → Type armor → Class → Bonus → Name → Create
+/// (opens board modal after create).
+Future<void> _createArmorSetViaWizard(
+  WidgetTester tester,
+  String name,
+) async {
+  await tester.tap(find.byKey(const Key('sets_library_new')));
+  await _pumpFrames(tester);
+  expect(find.byKey(const Key('sets_create_wizard')), findsOneWidget);
+
+  // Type defaults to armor; Continue → Class.
+  await tester.tap(find.byKey(const Key('sets_create_continue')));
+  await _pumpFrames(tester);
+  await tester.tap(find.byKey(const Key('sets_create_class_Titan')));
+  await _pumpFrames(tester);
+  await tester.tap(find.byKey(const Key('sets_create_continue')));
+  await _pumpFrames(tester);
+  // Bonus step (optional) → Continue
+  await tester.tap(find.byKey(const Key('sets_create_continue')));
+  await _pumpFrames(tester);
+
+  expect(find.byKey(const Key('sets_create_name')), findsOneWidget);
+  await tester.enterText(find.byKey(const Key('sets_create_name')), name);
+  await _pumpFrames(tester);
+  await tester.tap(find.byKey(const Key('sets_create_button')));
+  await tester.pumpAndSettle();
+  await _pumpFrames(tester);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -167,11 +198,19 @@ void main() {
     expect(find.byKey(const Key('sets_list')), findsOneWidget);
     expect(find.text('Kinetic Core'), findsWidgets);
     expect(find.byKey(const Key('sets_detail')), findsOneWidget);
-    expect(find.byKey(const Key('sets_detail_type')), findsOneWidget);
-    expect(find.byKey(const Key('sets_slot_empty_primary')), findsOneWidget);
+    // Weapon sets use non-armor thin detail (Armor MVP) — not armor type chip /
+    // empty primary slot chrome.
+    expect(find.byKey(const Key('sets_non_armor_thin_detail')), findsOneWidget);
+    expect(find.byKey(const Key('sets_non_armor_type')), findsOneWidget);
+    expect(find.byKey(const Key('sets_non_armor_scope_note')), findsOneWidget);
+    expect(find.byKey(const Key('sets_detail_type')), findsNothing);
+    expect(find.byKey(const Key('sets_slot_empty_primary')), findsNothing);
   });
 
   testWidgets('US1 rename set updates list', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       MaterialApp(
         theme: buildFlapTheme(),
@@ -180,10 +219,21 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await _createWeaponSetViaWizard(tester, 'Old Name');
+    // Rename field lives on armor detail (weapon thin shell has no rename).
+    await _createArmorSetViaWizard(tester, 'Old Name');
+    // Armor create opens board modal — close it to reach detail rename.
+    if (find.byKey(const Key('sets_armor_board_modal')).evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(const Key('sets_lifecycle_modal_close')));
+      await _pumpFrames(tester);
+    }
 
-    await tester.enterText(find.byKey(const Key('sets_edit_name')), 'New Name');
-    await tester.tap(find.byKey(const Key('sets_save_name')));
+    final rename = find.byKey(const Key('sets_edit_name'));
+    await tester.ensureVisible(rename);
+    await _pumpFrames(tester);
+    await tester.enterText(rename, 'New Name');
+    final save = find.byKey(const Key('sets_save_name'));
+    await tester.ensureVisible(save);
+    await tester.tap(save);
     await _pumpFrames(tester);
 
     expect(find.text('New Name'), findsWidgets);
@@ -199,27 +249,13 @@ void main() {
     );
     await _pumpFrames(tester);
 
+    // Weapon thin shell intentionally has no slot fill (Armor MVP scope).
     await _createWeaponSetViaWizard(tester, 'Weapons');
 
-    await tester.tap(find.byKey(const Key('sets_slot_fill_primary')));
-    await _pumpFrames(tester);
-
-    expect(find.byKey(const Key('set_catalog_picker')), findsOneWidget);
-    expect(find.byKey(const Key('set_picker_item_1001')), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('set_picker_item_1001')));
-    await _pumpFrames(tester);
-
-    // Wishlist path (no owned instances): definition-only confirm.
-    final confirm = find.byKey(const Key('set_picker_confirm_wishlist'));
-    expect(confirm, findsOneWidget);
-    await tester.ensureVisible(confirm);
-    await tester.tap(confirm);
-    await tester.pumpAndSettle();
-
+    expect(find.byKey(const Key('sets_non_armor_thin_detail')), findsOneWidget);
+    expect(find.byKey(const Key('sets_non_armor_scope_note')), findsOneWidget);
+    expect(find.byKey(const Key('sets_slot_fill_primary')), findsNothing);
     expect(find.byKey(const Key('set_catalog_picker')), findsNothing);
-    expect(find.byKey(const Key('sets_slot_filled_primary')), findsOneWidget);
-    expect(find.textContaining('Test Kinetic HC'), findsWidgets);
   });
 
   testWidgets('US2 owned empty guidance in picker', (tester) async {
@@ -231,15 +267,16 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    await _createWeaponSetViaWizard(tester, 'W');
-
-    await tester.tap(find.byKey(const Key('sets_slot_fill_primary')));
+    // Armor fill uses owned-compare (not catalog picker). Open board → Pick
+    // with signed-out / empty owned → honesty empty.
+    await _createArmorSetViaWizard(tester, 'Armor Empty');
+    // Create already opens the board modal with pick actions.
+    expect(find.byKey(const Key('sets_armor_board_modal')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('sets_board_pick_helmet')));
     await _pumpFrames(tester);
 
-    await tester.tap(find.byKey(const Key('set_picker_scope_owned')));
-    await _pumpFrames(tester);
-
-    expect(find.byKey(const Key('set_picker_empty')), findsOneWidget);
+    expect(find.byKey(const Key('sets_owned_compare_dialog')), findsOneWidget);
+    expect(find.byKey(const Key('sets_owned_compare_signed_out')), findsOneWidget);
   });
 
   // Sets is mounted on shell nav (Catalog · Sets · Settings); page tests cover SetsLibraryPage.
