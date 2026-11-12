@@ -50,7 +50,7 @@ class FlapColumnTemplate {
     required this.headerLabels,
   });
 
-  /// Stable id: `sets` | `synergy` | `builds`.
+  /// Stable id: `sets` | `sets-armor` | `synergy` | `builds`.
   final String id;
 
   /// CSS `grid-template-columns` value (also a guide for Flutter flex factors).
