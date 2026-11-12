@@ -98,6 +98,7 @@ export 'src/warlock_matrix/warlock_matrix_build.dart';
 
 // Read-only compiled DIM loadouts cache (parse + display-only stat rank)
 export 'src/dim_loadouts/cached_dim_loadout.dart';
+export 'src/dim_loadouts/match_cached_dim_loadout.dart';
 export 'src/dim_loadouts/parse_cached_dim_loadouts.dart';
 export 'src/dim_loadouts/rank_dim_loadout_stats.dart';
 

@@ -138,6 +138,7 @@ class MockBuild {
     required this.stats,
     this.splitWhy,
     this.creator,
+    this.dimLink,
   });
 
   final String id;
@@ -156,6 +157,9 @@ class MockBuild {
 
   final String? splitWhy;
   final String? creator;
+
+  /// Optional dim.gg share URL (`dim.gg/<shareId>` or `dim.gg/<shareId>/…`).
+  final String? dimLink;
 
   bool get usesSolipsism =>
       exoticArmor.toLowerCase().contains('solipsism') ||

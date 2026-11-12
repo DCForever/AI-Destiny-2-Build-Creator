@@ -67,21 +67,30 @@ class BuildsMockController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Match a mock card to a compiled loadout by exotic armor name (casefold).
+  /// Resolve DIM link details for a mock card (shareId → exact name → never exotic).
+  DimLoadoutCardBinding dimBindingFor(MockBuild build) {
+    if (_dimStatus != DimLoadoutsPanelStatus.loaded) {
+      return const DimLoadoutCardBinding.notLoaded();
+    }
+    final match = matchCachedDimLoadout(
+      loadouts: _dimLoadouts,
+      dimLink: build.dimLink,
+      buildName: build.name,
+      exoticName: build.exoticArmor,
+    );
+    switch (match.kind) {
+      case CachedDimLoadoutMatchKind.matched:
+        return DimLoadoutCardBinding.matched(match.loadout!);
+      case CachedDimLoadoutMatchKind.ambiguous:
+        return DimLoadoutCardBinding.ambiguous(match.ambiguousCount);
+      case CachedDimLoadoutMatchKind.none:
+        return const DimLoadoutCardBinding.notLoaded();
+    }
+  }
+
+  /// Prefer [dimBindingFor]; kept for call sites that only need a matched row.
   CachedDimLoadout? dimLoadoutFor(MockBuild build) {
-    if (_dimStatus != DimLoadoutsPanelStatus.loaded) return null;
-    final needle = build.exoticArmor.trim().toLowerCase();
-    if (needle.isEmpty) return null;
-    for (final row in _dimLoadouts) {
-      final exotic = row.exotic?.name.trim().toLowerCase() ?? '';
-      if (exotic == needle) return row;
-    }
-    for (final row in _dimLoadouts) {
-      if (row.name.trim().toLowerCase() == build.name.trim().toLowerCase()) {
-        return row;
-      }
-    }
-    return null;
+    return dimBindingFor(build).loadout;
   }
 
   List<MockBuild> get visibleBuilds => filterMockBuilds(

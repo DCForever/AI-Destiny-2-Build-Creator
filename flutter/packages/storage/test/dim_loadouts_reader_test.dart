@@ -70,6 +70,35 @@ void main() {
     expect(result.loadouts, isEmpty);
   });
 
+  test('path is a directory → unreadable (not a partial catalog)', () async {
+    // File.exists() is false for directories on this host; type check fail-closes.
+    await Directory(root.dimLoadoutsCachePath).create(recursive: true);
+    final result = await reader.load();
+    expect(result.status, DimLoadoutsReadStatus.unreadable);
+    expect(result.loadouts, isEmpty);
+    expect(result.catalog, isNull);
+    expect(result.detail, contains('not a regular file'));
+  });
+
+  test('FileSystemException during read → unreadable', () async {
+    await Directory(root.dimLoadoutsDir).create(recursive: true);
+    await File(root.dimLoadoutsCachePath).writeAsString(
+      '{"schemaVersion":1}',
+      flush: true,
+    );
+    final broken = DimLoadoutsReader(
+      root: root,
+      readBytes: (path, {int? maxBytes}) async {
+        throw const FileSystemException('Permission denied', '');
+      },
+    );
+    final result = await broken.load();
+    expect(result.status, DimLoadoutsReadStatus.unreadable);
+    expect(result.loadouts, isEmpty);
+    expect(result.catalog, isNull);
+    expect(result.detail, contains('Permission denied'));
+  });
+
   test('StorageRoot documents dim_loadouts path segments', () {
     expect(root.dimLoadoutsDir, p.join(tempDir.path, 'dim_loadouts'));
     expect(

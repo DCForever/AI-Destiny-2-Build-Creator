@@ -12,13 +12,25 @@ class DimLoadoutDetailsPanel extends StatelessWidget {
     super.key,
     required this.status,
     this.loadout,
+    this.ambiguousCount = 0,
   });
 
-  /// Reader status: missing file → notLoaded; corrupt → unreadable.
+  /// Reader / match status for this card.
   final DimLoadoutsPanelStatus status;
 
   /// Matched compiled loadout when [status] is [DimLoadoutsPanelStatus.loaded].
   final CachedDimLoadout? loadout;
+
+  /// Exotic-only (or multi-name) collision count when [status] is ambiguous.
+  final int ambiguousCount;
+
+  factory DimLoadoutDetailsPanel.fromBinding(DimLoadoutCardBinding binding) {
+    return DimLoadoutDetailsPanel(
+      status: binding.status,
+      loadout: binding.loadout,
+      ambiguousCount: binding.ambiguousCount,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +46,13 @@ class DimLoadoutDetailsPanel extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, FlapPalette palette) {
+    if (status == DimLoadoutsPanelStatus.ambiguous) {
+      return Text(
+        'ambiguous ($ambiguousCount loadouts)',
+        key: const Key('dim_loadout_details_ambiguous'),
+        style: TextStyle(color: palette.muted, fontSize: 12),
+      );
+    }
     if (status != DimLoadoutsPanelStatus.loaded || loadout == null) {
       return Text(
         'DIM link details not loaded',
@@ -163,4 +182,29 @@ class DimLoadoutDetailsPanel extends StatelessWidget {
 ///
 /// Mirrors storage [DimLoadoutsReadStatus] without importing storage here so
 /// the panel stays a thin view over domain models.
-enum DimLoadoutsPanelStatus { notLoaded, unreadable, loaded }
+enum DimLoadoutsPanelStatus { notLoaded, unreadable, loaded, ambiguous }
+
+/// Card-level binding from [matchCachedDimLoadout] + reader status.
+class DimLoadoutCardBinding {
+  const DimLoadoutCardBinding._({
+    required this.status,
+    this.loadout,
+    this.ambiguousCount = 0,
+  });
+
+  const DimLoadoutCardBinding.notLoaded()
+      : this._(status: DimLoadoutsPanelStatus.notLoaded);
+
+  const DimLoadoutCardBinding.unreadable()
+      : this._(status: DimLoadoutsPanelStatus.unreadable);
+
+  const DimLoadoutCardBinding.matched(CachedDimLoadout loadout)
+      : this._(status: DimLoadoutsPanelStatus.loaded, loadout: loadout);
+
+  const DimLoadoutCardBinding.ambiguous(int count)
+      : this._(status: DimLoadoutsPanelStatus.ambiguous, ambiguousCount: count);
+
+  final DimLoadoutsPanelStatus status;
+  final CachedDimLoadout? loadout;
+  final int ambiguousCount;
+}

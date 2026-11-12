@@ -138,7 +138,7 @@ extension _BuildsMockDetail on _BuildsMockPageState {
         ),
       );
     }
-    final dim = _controller.dimLoadoutFor(build);
+    final binding = _controller.dimBindingFor(build);
     return SingleChildScrollView(
       key: const Key('builds_mock_card_detail'),
       padding: const EdgeInsets.all(kPanelPadMd),
@@ -151,12 +151,7 @@ extension _BuildsMockDetail on _BuildsMockPageState {
             density: BuildsMockCardDensity.detail,
           ),
           const SizedBox(height: 12),
-          DimLoadoutDetailsPanel(
-            status: dim == null
-                ? DimLoadoutsPanelStatus.notLoaded
-                : _controller.dimStatus,
-            loadout: dim,
-          ),
+          DimLoadoutDetailsPanel.fromBinding(binding),
         ],
       ),
     );

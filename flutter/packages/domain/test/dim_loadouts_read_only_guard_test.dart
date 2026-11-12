@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// Banned symbols across every production `**/dim_loadouts/**/*.dart` file
-/// (domain, storage, windows_host). Networking + writes stay out; fetch lands
-/// in a later PR.
+/// Banned symbols across every production dim_loadouts source **and** the
+/// builds_mock reader-caller files that adopt / match / render the catalog.
+/// Networking + writes stay out; fetch lands in a later PR.
 const List<String> kDimLoadoutsBannedPatterns = <String>[
   'HttpClient',
   'Socket',
@@ -24,21 +24,33 @@ const List<String> kDimLoadoutsBannedPatterns = <String>[
   'createSync',
 ];
 
-/// Exact count of production dim_loadouts Dart sources under flutter/.
+/// Exact count of guarded production Dart sources.
 ///
-/// Bump when adding a real dim_loadouts library file (not tests).
-/// domain:3 + storage:1 + windows_host:1 = 5.
-const int kExpectedDimLoadoutsSourceFileCount = 5;
+/// - `**/dim_loadouts/**/*.dart` (domain:4 + storage:1 + windows_host panel:1)
+/// - builds_mock reader-callers: page + controller + detail (=3)
+///
+/// Bump when adding a real library file (not tests). Skeptic fix expanded the
+/// scan to include builds_mock callers (was 5 → now 9).
+const int kExpectedDimLoadoutsSourceFileCount = 9;
+
+/// Relative paths (posix) of builds_mock files that call the DIM loadouts
+/// reader / matcher / panel — included in the exact-count guard.
+const List<String> kDimLoadoutsBuildsMockCallerRelativePaths = <String>[
+  'apps/windows_host/lib/builds_mock/builds_mock_page.dart',
+  'apps/windows_host/lib/builds_mock/builds_mock_controller.dart',
+  'apps/windows_host/lib/builds_mock/builds_mock_page_detail.dart',
+];
 
 void main() {
   test('dim_loadouts sources stay read-only (exact file count)', () {
-    final roots = _dimLoadoutsDartFiles();
+    final roots = _guardedDartFiles();
     expect(
       roots,
       hasLength(kExpectedDimLoadoutsSourceFileCount),
       reason:
           'expected exactly $kExpectedDimLoadoutsSourceFileCount '
-          'dim_loadouts Dart sources under flutter/ (got ${roots.length}: '
+          'dim_loadouts + builds_mock caller Dart sources under flutter/ '
+          '(got ${roots.length}: '
           '${roots.map((f) => f.path).join(', ')})',
     );
 
@@ -62,17 +74,33 @@ void main() {
   });
 }
 
-List<File> _dimLoadoutsDartFiles() {
+List<File> _guardedDartFiles() {
   final flutterRoot = _findFlutterRoot();
   final files = <File>[];
+  final seen = <String>{};
+
+  void add(File file) {
+    final key = file.path.replaceAll('\\', '/');
+    if (seen.add(key)) files.add(file);
+  }
+
   for (final entity in flutterRoot.listSync(recursive: true)) {
     if (entity is! File) continue;
     if (!entity.path.endsWith('.dart')) continue;
     final normalized = entity.path.replaceAll('\\', '/');
     if (!normalized.contains('/dim_loadouts/')) continue;
     if (normalized.contains('/test/')) continue;
-    files.add(entity);
+    add(entity);
   }
+
+  for (final relative in kDimLoadoutsBuildsMockCallerRelativePaths) {
+    final file = File('${flutterRoot.path}/$relative');
+    if (!file.existsSync()) {
+      throw StateError('missing builds_mock caller: ${file.path}');
+    }
+    add(file);
+  }
+
   files.sort((a, b) => a.path.compareTo(b.path));
   return files;
 }
