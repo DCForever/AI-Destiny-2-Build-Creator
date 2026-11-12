@@ -105,6 +105,51 @@ void main() {
       p.join(tempDir.path, 'fill_in', 'dim_armor_inventory.csv'),
     );
   });
+
+  test('rejects oversize before reading the full source into memory', () async {
+    final source = File(p.join(tempDir.path, 'big.csv'));
+    // 64 bytes on disk; cap at 8 so length check must fire before a full read
+    // would be useful — importer returns the size-limit error.
+    await source.writeAsBytes(List<int>.filled(64, 0x41), flush: true);
+    final capped = DimArmorCsvImporter(root: root, maxBytes: 8);
+    final result = await capped.importFromPath(source.path);
+    expect(result.isOk, isFalse);
+    expect(result.error, contains('size limit'));
+  });
+
+  test('loadCache returns an error result when cache is missing', () async {
+    final result = await importer.loadCache();
+    expect(result.isOk, isFalse);
+    expect(result.error, contains('no cached inventory yet'));
+    expect(result.error, isNot(contains('Matrix')));
+  });
+
+  test('failed cache write leaves the previous cache intact', () async {
+    final source = await _copyFixture(tempDir, 'destiny-armor.csv');
+    final first = await importer.importFromPath(source.path);
+    expect(first.isOk, isTrue, reason: first.error);
+    final before = await File(importer.cachePath).readAsBytes();
+    final beforeHash = sha256.convert(before);
+
+    final failing = DimArmorCsvImporter(
+      root: root,
+      beforeCacheRename: () async {
+        throw StateError('simulated write failure');
+      },
+    );
+    // Re-import same bytes but force failure after .tmp flush, before rename.
+    final second = await failing.importFromPath(source.path);
+    expect(second.isOk, isFalse);
+    expect(second.error, contains("Couldn't read file"));
+
+    final after = await File(importer.cachePath).readAsBytes();
+    expect(sha256.convert(after).toString(), beforeHash.toString());
+    expect(after, before);
+
+    final reloaded = await importer.loadCache();
+    expect(reloaded.isOk, isTrue, reason: reloaded.error);
+    expect(reloaded.items!.length, first.items!.length);
+  });
 }
 
 Future<File> _copyFixture(Directory dir, String name) async {

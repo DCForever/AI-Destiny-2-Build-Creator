@@ -148,6 +148,54 @@ void main() {
       expect(result.isOk, isFalse);
       expect(result.error, contains('size limit'));
     });
+
+    test('fails closed on a short data row (width mismatch)', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
+          'Short,1\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isFalse);
+      expect(result.error, startsWith("Couldn't read file:"));
+      expect(result.error, contains('width'));
+      expect(result.items, isNull);
+    });
+
+    test('fails closed on an unparseable Hash', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
+          'X,not-a-hash,"1",Warlock,Helmet,Legendary\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isFalse);
+      expect(result.error, startsWith("Couldn't read file:"));
+      expect(result.error, contains('unparseable Hash'));
+      expect(result.items, isNull);
+    });
+
+    test('accepts a quoted comma inside a field', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
+          '"Helm, Techsec",111001,"1001",Warlock,Helmet,Legendary\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isTrue, reason: result.error);
+      expect(result.items, hasLength(1));
+      expect(result.items!.single.instanceId, '1001');
+      expect(result.items!.single.itemHash, 111001);
+    });
+
+    test('accepts a quoted newline inside a field', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
+          '"Helm\nTechsec",111001,"1002",Warlock,Helmet,Legendary\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isTrue, reason: result.error);
+      expect(result.items, hasLength(1));
+      expect(result.items!.single.instanceId, '1002');
+    });
+
+    test('accepts CRLF line endings', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\r\n'
+          'Helm,111001,"1003",Warlock,Helmet,Legendary\r\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isTrue, reason: result.error);
+      expect(result.items, hasLength(1));
+      expect(result.items!.single.instanceId, '1003');
+    });
   });
 }
 

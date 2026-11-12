@@ -29,22 +29,33 @@ class DimArmorCsvImportResult {
 
 /// Read-only import of a DIM Armor CSV into an app-private cache.
 ///
+/// - Checks file length against [maxBytes] **before** reading bytes.
 /// - Reads [sourcePath] with [FileMode.read] only (never writes/moves/deletes
 ///   the source).
-/// - On success, replaces `{StorageRoot.basePath}/fill_in/dim_armor_inventory.csv`.
+/// - On success, atomically replaces
+///   `{StorageRoot.basePath}/fill_in/dim_armor_inventory.csv` via a `.tmp`
+///   sibling + rename.
 /// - Never touches Mario paths (`warlock-matrix.json`, `personalize-queue.csv`,
 ///   `dim-icons.json`) or Daniel's per-build SQLite/preferences store.
 class DimArmorCsvImporter {
   DimArmorCsvImporter({
     required StorageRoot root,
     this.maxBytes = kDimArmorCsvMaxBytes,
+    this.beforeCacheRename,
   }) : _root = root;
 
   final StorageRoot _root;
   final int maxBytes;
 
+  /// Test hook: invoked after the `.tmp` is flushed, before rename.
+  /// Throw to simulate a mid-write failure without truncating the old cache.
+  final Future<void> Function()? beforeCacheRename;
+
   /// Exact cache file path kept until the next successful import.
   String get cachePath => _root.dimArmorInventoryCachePath;
+
+  /// Staging path used for atomic replace.
+  String get cacheTempPath => '$cachePath.tmp';
 
   /// Import [sourcePath], parse, and refresh the app-private cache.
   Future<DimArmorCsvImportResult> importFromPath(
@@ -65,7 +76,7 @@ class DimArmorCsvImporter {
 
     final Uint8List bytes;
     try {
-      bytes = await readOnlyFileBytes(trimmed);
+      bytes = await readOnlyFileBytes(trimmed, maxBytes: maxBytes);
     } on ReadOnlyFileException catch (e) {
       return DimArmorCsvImportResult.couldNotRead(
         "Couldn't read file: ${e.message}",
@@ -87,38 +98,78 @@ class DimArmorCsvImporter {
       );
     }
 
-    await _writeCache(bytes);
+    try {
+      await _writeCacheAtomic(bytes);
+    } catch (e) {
+      return DimArmorCsvImportResult.couldNotRead(
+        "Couldn't read file: cache write failed ($e)",
+      );
+    }
     return DimArmorCsvImportResult.ok(parsed.items!);
   }
 
   /// Load the last successful import from the app-private cache, if present.
+  ///
+  /// Always returns a [DimArmorCsvImportResult] — never throws to callers.
   Future<DimArmorCsvImportResult> loadCache({
     Map<int, int> armorSetHashByItemHash = const <int, int>{},
   }) async {
-    final file = File(cachePath);
-    if (!await file.exists()) {
+    try {
+      final file = File(cachePath);
+      if (!await file.exists()) {
+        return DimArmorCsvImportResult.couldNotRead(
+          "Couldn't read file: no cached inventory yet",
+        );
+      }
+      final bytes = await readOnlyFileBytes(cachePath, maxBytes: maxBytes);
+      final parsed = parseDimArmorCsvBytes(
+        bytes,
+        armorSetHashByItemHash: armorSetHashByItemHash,
+        maxBytes: maxBytes,
+      );
+      if (!parsed.isOk) {
+        return DimArmorCsvImportResult.couldNotRead(
+          parsed.error ?? "Couldn't read file",
+        );
+      }
+      return DimArmorCsvImportResult.ok(parsed.items!);
+    } on ReadOnlyFileException catch (e) {
       return DimArmorCsvImportResult.couldNotRead(
-        "Couldn't read file: no cached inventory yet",
+        "Couldn't read file: ${e.message}",
+      );
+    } on ArgumentError catch (e) {
+      return DimArmorCsvImportResult.couldNotRead(
+        "Couldn't read file: ${e.message}",
+      );
+    } catch (e) {
+      return DimArmorCsvImportResult.couldNotRead(
+        "Couldn't read file: $e",
       );
     }
-    final bytes = await readOnlyFileBytes(cachePath);
-    final parsed = parseDimArmorCsvBytes(
-      bytes,
-      armorSetHashByItemHash: armorSetHashByItemHash,
-      maxBytes: maxBytes,
-    );
-    if (!parsed.isOk) {
-      return DimArmorCsvImportResult.couldNotRead(
-        parsed.error ?? "Couldn't read file",
-      );
-    }
-    return DimArmorCsvImportResult.ok(parsed.items!);
   }
 
-  Future<void> _writeCache(Uint8List bytes) async {
+  Future<void> _writeCacheAtomic(Uint8List bytes) async {
     await Directory(_root.fillInCacheDir).create(recursive: true);
-    final cache = File(cachePath);
-    await cache.writeAsBytes(bytes, flush: true);
+    final tmp = File(cacheTempPath);
+    final handle = await tmp.open(mode: FileMode.write);
+    try {
+      await handle.writeFrom(bytes);
+      await handle.flush();
+    } finally {
+      await handle.close();
+    }
+    try {
+      final hook = beforeCacheRename;
+      if (hook != null) {
+        await hook();
+      }
+      await tmp.rename(cachePath);
+    } catch (_) {
+      if (await tmp.exists()) {
+        await tmp.delete();
+      }
+      rethrow;
+    }
   }
 }
 

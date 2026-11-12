@@ -48,6 +48,10 @@ class DimArmorCsvParseResult {
 /// Pure: no filesystem or network access, no path following. Cell values that
 /// look like paths or URLs are ignored as data only — never opened.
 ///
+/// Fail closed: any data row shorter/longer than the header, or with an
+/// unparseable `Id`/`Hash`, rejects the **whole** import (no partial held
+/// inventory). Rows whose class/slot cannot be mapped are skipped (not held).
+///
 /// [armorSetHashByItemHash] supplies legendary set hashes. DIM's armor CSV
 /// has no set-hash column; hosts with manifest data pass this map. Without it,
 /// legendary rows keep `armorSetHash == null`.
@@ -103,16 +107,28 @@ DimArmorCsvParseResult parseDimArmorCsv(
     }
   }
 
+  final headerWidth = header.length;
   final seenIds = <String>{};
   final items = <FillInInventoryItem>[];
   for (var r = 1; r < rows.length; r++) {
     final row = rows[r];
     if (_rowIsBlank(row)) continue;
-    final item = _itemFromRow(
+    if (row.length != headerWidth) {
+      return DimArmorCsvParseResult.couldNotRead(
+        'row ${r + 1} width ${row.length} does not match header width '
+        '$headerWidth',
+      );
+    }
+    final parsed = _itemFromRow(
       row: row,
+      rowNumber: r + 1,
       indexByName: indexByName,
       armorSetHashByItemHash: armorSetHashByItemHash,
     );
+    if (parsed.error != null) {
+      return DimArmorCsvParseResult.couldNotRead(parsed.error!);
+    }
+    final item = parsed.item;
     if (item == null) continue;
     if (!seenIds.add(item.instanceId)) continue;
     items.add(item);
@@ -145,8 +161,16 @@ DimArmorCsvParseResult parseDimArmorCsvBytes(
   );
 }
 
-FillInInventoryItem? _itemFromRow({
+class _RowParse {
+  const _RowParse({this.item, this.error});
+
+  final FillInInventoryItem? item;
+  final String? error;
+}
+
+_RowParse _itemFromRow({
   required List<String> row,
+  required int rowNumber,
   required Map<String, int> indexByName,
   required Map<int, int> armorSetHashByItemHash,
 }) {
@@ -155,36 +179,43 @@ FillInInventoryItem? _itemFromRow({
   final equippable = _cell(row, indexByName, 'Equippable');
   final typeName = _cell(row, indexByName, 'Type');
   final rarity = _cell(row, indexByName, 'Rarity');
+  // Width already checked; missing map index would be a programmer error.
   if (idRaw == null ||
       hashRaw == null ||
       equippable == null ||
       typeName == null ||
       rarity == null) {
-    return null;
+    return _RowParse(error: 'row $rowNumber is missing a required field');
   }
 
   final instanceId = _normalizeInstanceId(idRaw);
-  if (instanceId.isEmpty) return null;
+  if (instanceId.isEmpty) {
+    return _RowParse(error: 'row $rowNumber has an unparseable Id');
+  }
 
   final itemHash = int.tryParse(hashRaw.trim());
-  if (itemHash == null || itemHash <= 0) return null;
+  if (itemHash == null || itemHash <= 0) {
+    return _RowParse(error: 'row $rowNumber has an unparseable Hash');
+  }
 
   final guardianClass = _parseClass(equippable);
-  if (guardianClass == null) return null;
+  if (guardianClass == null) return const _RowParse();
 
   final slot = _parseSlot(typeName);
-  if (slot == null) return null;
+  if (slot == null) return const _RowParse();
 
   final isExotic = rarity.trim().toLowerCase() == 'exotic';
   final setHash = isExotic ? null : armorSetHashByItemHash[itemHash];
 
-  return FillInInventoryItem(
-    instanceId: instanceId,
-    itemHash: itemHash,
-    guardianClass: guardianClass,
-    slot: slot,
-    isExotic: isExotic,
-    armorSetHash: setHash,
+  return _RowParse(
+    item: FillInInventoryItem(
+      instanceId: instanceId,
+      itemHash: itemHash,
+      guardianClass: guardianClass,
+      slot: slot,
+      isExotic: isExotic,
+      armorSetHash: setHash,
+    ),
   );
 }
 
