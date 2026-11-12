@@ -766,7 +766,7 @@ class _ArmorStatsBody extends StatelessWidget {
                   '${board.total}',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontFamily: 'IBM Plex Mono',
-                    color: const Color(0xFF6FD4CD),
+                    color: FlapPalette.of(context).accent,
                   ),
                 ),
               ],
@@ -833,57 +833,65 @@ class _PerkGrid extends StatelessWidget {
                       ),
                       Divider(height: 1, color: theme.dividerColor),
                       for (final opt in col.options)
-                        Container(
-                          key: Key(
-                            'item_richness_perk_${col.label}_${opt.hash}',
-                          ),
-                          decoration: BoxDecoration(
-                            color: opt.equipped
-                                ? const Color(0x244EC4BC)
-                                : null,
-                            border: Border(
-                              left: BorderSide(
+                        Builder(
+                          builder: (context) {
+                            final accent = FlapPalette.of(context).accent;
+                            return Container(
+                              key: Key(
+                                'item_richness_perk_${col.label}_${opt.hash}',
+                              ),
+                              decoration: BoxDecoration(
                                 color: opt.equipped
-                                    ? const Color(0xFF4EC4BC)
-                                    : Colors.transparent,
-                                width: 2,
-                              ),
-                              bottom: BorderSide(
-                                color: theme.dividerColor,
-                                width: kFlapRuleThickness,
-                              ),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 7,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  opt.displayName,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    fontWeight: opt.equipped
-                                        ? FontWeight.w500
-                                        : FontWeight.w400,
+                                    ? accent.withValues(alpha: 0.14)
+                                    : null,
+                                border: Border(
+                                  left: BorderSide(
                                     color: opt.equipped
-                                        ? null
-                                        : theme.colorScheme.onSurfaceVariant,
+                                        ? accent
+                                        : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                  bottom: BorderSide(
+                                    color: theme.dividerColor,
+                                    width: kFlapRuleThickness,
                                   ),
                                 ),
                               ),
-                              if (opt.equipped)
-                                Text(
-                                  'EQ',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    fontSize: 9,
-                                    color: const Color(0xFF4EC4BC),
-                                    letterSpacing: 0.8,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 7,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      opt.displayName,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                        fontWeight: opt.equipped
+                                            ? FontWeight.w500
+                                            : FontWeight.w400,
+                                        color: opt.equipped
+                                            ? null
+                                            : theme
+                                                .colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                            ],
-                          ),
+                                  if (opt.equipped)
+                                    Text(
+                                      'EQ',
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                        fontSize: 9,
+                                        color: accent,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                     ],
                   ),

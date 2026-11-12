@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('buildFlapTheme (DART-029)', () {
-    test('uses void background and flap surface from tokens', () {
+  group('buildFlapTheme (neutral readable)', () {
+    test('defaults to light neutral stage from tokens', () {
       final theme = buildFlapTheme();
-      expect(theme.scaffoldBackgroundColor, Color(kFlapBackgroundDark));
-      expect(theme.cardColor, Color(kFlapSurfaceDark));
-      expect(theme.colorScheme.primary, Color(kFlapAccentDark));
-      expect(theme.colorScheme.error, Color(kFlapDangerDark));
-      expect(theme.colorScheme.surface, Color(kFlapSurfaceDark));
-      expect(theme.brightness, Brightness.dark);
+      expect(theme.scaffoldBackgroundColor, Color(kFlapBackgroundLight));
+      expect(theme.cardColor, Color(kFlapSurfaceLight));
+      expect(theme.colorScheme.primary, Color(kFlapAccentLight));
+      expect(theme.colorScheme.error, Color(kFlapDangerLight));
+      expect(theme.colorScheme.surface, Color(kFlapSurfaceLight));
+      expect(theme.brightness, Brightness.light);
     });
 
     test('card theme is square, elevation 0 (no Material-card default)', () {
@@ -20,7 +20,7 @@ void main() {
       final card = theme.cardTheme;
 
       expect(card.elevation, 0);
-      expect(card.color, Color(kFlapSurfaceDark));
+      expect(card.color, Color(kFlapSurfaceLight));
       expect(card.shadowColor, Colors.transparent);
       expect(card.surfaceTintColor, Colors.transparent);
 
@@ -31,11 +31,19 @@ void main() {
       expect(kFlapRadius, 0);
     });
 
-    test('does not use seed-blue ColorScheme primary', () {
+    test('does not use seed-blue or cyan-neon ColorScheme primary', () {
       final theme = buildFlapTheme();
-      // Old host used ColorScheme.fromSeed(seedColor: 0xFF1B4F72).
+      // Old hosts used ColorScheme.fromSeed(seedColor: 0xFF1B4F72) / cyan neon.
       expect(theme.colorScheme.primary, isNot(const Color(0xFF1B4F72)));
+      expect(theme.colorScheme.primary, isNot(const Color(0xFF00E5FF)));
+      expect(theme.colorScheme.primary, Color(kFlapAccentLight));
+    });
+
+    test('dark face is neutral charcoal', () {
+      final theme = buildFlapTheme(brightness: Brightness.dark);
+      expect(theme.scaffoldBackgroundColor, Color(kFlapBackgroundDark));
       expect(theme.colorScheme.primary, Color(kFlapAccentDark));
+      expect(theme.brightness, Brightness.dark);
     });
 
     testWidgets('Card under flap theme inherits flat square shape', (tester) async {

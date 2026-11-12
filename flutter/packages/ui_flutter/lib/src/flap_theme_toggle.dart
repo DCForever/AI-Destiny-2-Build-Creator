@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Cycles [ThemeMode]: system → dark (Neon void) → light (cool technical) → system.
+/// Cycles [ThemeMode]: system → dark (Neutral charcoal) → light (Neutral) → system.
 ThemeMode nextFlapThemeMode(ThemeMode mode) {
   switch (mode) {
     case ThemeMode.system:
@@ -18,9 +18,9 @@ String flapThemeModeLabel(ThemeMode mode) {
     case ThemeMode.system:
       return 'System';
     case ThemeMode.dark:
-      return 'Neon void';
+      return 'Neutral dark';
     case ThemeMode.light:
-      return 'Cool technical';
+      return 'Neutral light';
   }
 }
 
@@ -54,7 +54,7 @@ class FlapThemeModeTile extends StatelessWidget {
       leading: Icon(flapThemeModeIcon(mode)),
       title: const Text('Appearance'),
       subtitle: Text(
-        '${flapThemeModeLabel(mode)} · dark=Neon void, light=Cool technical',
+        '${flapThemeModeLabel(mode)} · dark=Neutral charcoal, light=Neutral stage',
         key: const Key('flap_theme_mode_label'),
       ),
       trailing: OutlinedButton(

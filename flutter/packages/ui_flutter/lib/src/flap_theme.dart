@@ -11,14 +11,14 @@ typedef FlapThemeCustomize = ThemeData Function(
   FlapPalette palette,
 );
 
-/// Shared Neon Network [ThemeData] for Flutter hosts (Flap board structure).
+/// Shared neutral [ThemeData] for Flutter hosts (Flap board structure).
 ///
-/// - Colors from pure [FlapColorTokens] / Neon Network (not `ColorScheme.fromSeed`).
+/// - Colors from pure [FlapColorTokens] (not `ColorScheme.fromSeed`).
 /// - Full roles on [FlapPalette] extension (status lamps, element ink).
 /// - Orbitron · Inter · JetBrains Mono via [google_fonts] ([neonTextTheme]).
-/// - Square elevation-0 cards; grey hairline structure; cyan signal for focus/CTA.
+/// - Square elevation-0 cards; grey hairline structure; charcoal/grey for focus/CTA.
 ThemeData buildFlapThemeBase({
-  Brightness brightness = Brightness.dark,
+  Brightness brightness = Brightness.light,
   FlapThemeCustomize? customize,
 }) {
   final tokens =
@@ -91,7 +91,7 @@ ThemeData buildFlapThemeBase({
       thickness: kFlapRuleThickness,
       space: kFlapRuleThickness,
     ),
-    // Primary CTA: soft cyan wash + solid cyan type (≤2 strong cyan hits / region).
+    // Primary CTA: soft accent wash + solid accent type (≤2 strong hits / region).
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 0,
