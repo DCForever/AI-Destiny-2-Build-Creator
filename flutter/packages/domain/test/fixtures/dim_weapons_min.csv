@@ -1,6 +1,6 @@
-Name,Hash,Id,Tag,Rarity,Tier,Type,Source,Category,Element,Ammo,Power,Owner,Locked,Equipped,Notes
-Sunshot,3118677280,"""2000000000000000001""",,Exotic,5,Hand Cannon,exotic,Energy,Solar,Primary,1800,Warlock(1823),false,false,
-Riskrunner,4124980726,"""2000000000000000002""",,Exotic,5,Submachine Gun,exotic,Energy,Arc,Primary,1800,Warlock(1823),false,false,
-Legendary HC,111,"""2000000000000000003""",,Legendary,2,Hand Cannon,legendaryengram,KineticSlot,Kinetic,Primary,1800,Warlock(1823),false,false,
-Sunshot Dup,3118677280,"""2000000000000000001""",,Exotic,5,Hand Cannon,exotic,Energy,Solar,Primary,1800,Warlock(1823),false,false,
-Heavy Exotic,999001,"""2000000000000000004""",,Exotic,5,Rocket Launcher,exotic,Power,Solar,Heavy,1800,Warlock(1823),false,false,
+Name,Hash,Id,Tag,Rarity,Tier,Type,Source,Category,Element,Ammo,Power,Archetype,Masterwork Type,Masterwork Tier,Owner,Locked,Equipped,Holofoil,Year,Season,Event,Recoil,AA,Impact,Range,Zoom,Blast Radius,Velocity,Persistence,Stability,ROF,Reload,Mag,Handling,Charge Time,Draw Time,Accuracy,Charge Rate,Guard Resistance,Guard Endurance,Swing Speed,Shield Duration,Airborne Effectiveness,Ammo Generation,Heat Generated,Cooling Efficiency,Crafted,Crafted Level,Kill Tracker,Foundry,Loadouts,Notes,Perks 0,Perks 1,Perks 2,Perks 3,Perks 4,Perks 5,Perks 6,Perks 7,Perks 8,Perks 9,Perks 10,Perks 11,Perks 12,Perks 13,Perks 14,Perks 15,Perks 16,Perks 17,Perks 18
+Sunshot,3118677280,"""2000000000000000001""",,Exotic,5,Hand Cannon,exotic,Energy,Solar,Primary,1800,,,,Warlock(1823),false,false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Riskrunner,4124980726,"""2000000000000000002""",,Exotic,5,Submachine Gun,exotic,Energy,Arc,Primary,1800,,,,Warlock(1823),false,false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Legendary HC,111,"""2000000000000000003""",,Legendary,2,Hand Cannon,legendaryengram,KineticSlot,Kinetic,Primary,1800,,,,Warlock(1823),false,false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Sunshot Dup,3118677280,"""2000000000000000001""",,Exotic,5,Hand Cannon,exotic,Energy,Solar,Primary,1800,,,,Warlock(1823),false,false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Heavy Exotic,999001,"""2000000000000000004""",,Exotic,5,Rocket Launcher,exotic,Power,Solar,Heavy,1800,,,,Warlock(1823),false,false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

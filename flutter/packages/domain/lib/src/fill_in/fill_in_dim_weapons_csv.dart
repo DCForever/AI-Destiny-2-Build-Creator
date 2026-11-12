@@ -15,8 +15,10 @@ const int kDimWeaponsCsvMaxBytes = 8 * 1024 * 1024;
 /// (`csv: 'Name'|'Hash'|'Id'|'Type'|'Rarity'|'Category'`) driven by
 /// `src/app/inventory/spreadsheets.ts` `generateCSVExportData('weapon', …)`.
 ///
-/// Note: `Equippable` is armor-only in Columns.tsx (`isArmor && isSpreadsheet`);
-/// weapons use `Category` (KineticSlot / Energy / Power) for slot instead.
+/// Measured from Daniel's export, Nov 12, 2026: 72-column Weapons CSV has
+/// **no** `Equippable` column (weapons are class-agnostic). Slot comes from
+/// `Category` (KineticSlot / Energy / Power). Unused columns are ignored when
+/// row width matches the header.
 const List<String> kDimWeaponsCsvRequiredColumns = <String>[
   'Name',
   'Hash',

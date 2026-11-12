@@ -162,8 +162,62 @@ void main() {
       expect(result.items, hasLength(1));
       expect(result.items!.single.instanceId, '2003');
     });
+
+    test(
+      'parses one synthetic row on the exact measured DIM Weapons header '
+      '(72 cols; unused columns ignored; no Equippable)',
+      () {
+        // Measured from Daniel's export, Nov 12, 2026 — synthetic values only.
+        expect(_kMeasuredWeaponsHeader.split(','), hasLength(72));
+        expect(_kMeasuredWeaponsHeader.split(','), isNot(contains('Equippable')));
+
+        final cells = List<String>.filled(72, '');
+        void set(String name, String value) {
+          final i = _kMeasuredWeaponsHeader.split(',').indexOf(name);
+          expect(i, greaterThanOrEqualTo(0), reason: name);
+          cells[i] = value;
+        }
+
+        set('Name', 'Synthetic Sunshot');
+        set('Hash', '3118677280');
+        set('Id', '"2000000000000000099"');
+        set('Rarity', 'Exotic');
+        set('Tier', '5');
+        set('Type', 'Hand Cannon');
+        set('Category', 'Energy');
+        set('Element', 'Solar');
+        set('Ammo', 'Primary');
+        set('Power', '1800');
+        // Unused columns stay blank — must not fail when width matches.
+
+        final csv = '$_kMeasuredWeaponsHeader\n${cells.join(',')}\n';
+        final result = parseDimWeaponsCsv(csv);
+        expect(result.isOk, isTrue, reason: result.error);
+        expect(result.items, hasLength(1));
+        final item = result.items!.single;
+        expect(item.itemHash, 3118677280);
+        expect(item.instanceId, '2000000000000000099');
+        expect(item.isExotic, isTrue);
+        expect(item.slot, EquipmentSlot.special);
+        expect(item.guardianClass, isNull);
+      },
+    );
   });
 }
+
+/// Exact Weapons CSV header measured from Daniel's DIM export, Nov 12, 2026
+/// (72 columns, 552 rows, no width mismatches). Synthetic fixtures only.
+const String _kMeasuredWeaponsHeader =
+    'Name,Hash,Id,Tag,Rarity,Tier,Type,Source,Category,Element,Ammo,Power,'
+    'Archetype,Masterwork Type,Masterwork Tier,Owner,Locked,Equipped,Holofoil,'
+    'Year,Season,Event,Recoil,AA,Impact,Range,Zoom,Blast Radius,Velocity,'
+    'Persistence,Stability,ROF,Reload,Mag,Handling,Charge Time,Draw Time,'
+    'Accuracy,Charge Rate,Guard Resistance,Guard Endurance,Swing Speed,'
+    'Shield Duration,Airborne Effectiveness,Ammo Generation,Heat Generated,'
+    'Cooling Efficiency,Crafted,Crafted Level,Kill Tracker,Foundry,Loadouts,'
+    'Notes,Perks 0,Perks 1,Perks 2,Perks 3,Perks 4,Perks 5,Perks 6,Perks 7,'
+    'Perks 8,Perks 9,Perks 10,Perks 11,Perks 12,Perks 13,Perks 14,Perks 15,'
+    'Perks 16,Perks 17,Perks 18';
 
 String _fixtureText() => File(_fixturePath()).readAsStringSync();
 
