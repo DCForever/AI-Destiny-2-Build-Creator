@@ -11,6 +11,8 @@ environment:
   sdk: ^3.5.0
 
 dependencies:
+  destiny2_domain:
+    path: ../domain
   path: ^1.9.0
 
 dev_dependencies:

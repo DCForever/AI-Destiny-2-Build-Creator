@@ -38,6 +38,11 @@ void main() {
       expect(root.manifestDir, p.join(fakeBase, 'manifest'));
       expect(root.entitiesDir, p.join(fakeBase, 'entities'));
       expect(root.usersDir, p.join(fakeBase, 'users'));
+      expect(root.fillInCacheDir, p.join(fakeBase, 'fill_in'));
+      expect(
+        root.dimArmorInventoryCachePath,
+        p.join(fakeBase, 'fill_in', 'dim_armor_inventory.csv'),
+      );
     });
 
     test('rawTablePath uses sanitized version', () {
@@ -124,6 +129,7 @@ void main() {
       expect(Directory(root.manifestDir).existsSync(), isTrue);
       expect(Directory(root.entitiesDir).existsSync(), isTrue);
       expect(Directory(root.usersDir).existsSync(), isTrue);
+      expect(Directory(root.fillInCacheDir).existsSync(), isTrue);
     });
   });
 }
