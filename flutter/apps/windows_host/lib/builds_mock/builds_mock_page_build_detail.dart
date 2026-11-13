@@ -71,6 +71,10 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               ),
               const SizedBox(height: 12),
               DimLoadoutDetailsPanel.fromBinding(binding),
+              if (_savedFillInPlans[build.id] != null) ...[
+                const SizedBox(height: 12),
+                _SavedFillInPlan(plan: _savedFillInPlans[build.id]!),
+              ],
               const SizedBox(height: 16),
               Text(
                 'Armor pool',
@@ -105,10 +109,56 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               'DIM Armor/Weapons inventory cache is missing or unreadable. '
               'Import both CSVs in Settings, then try Fill In again.',
             );
+    final store =
+        root == null ? null : FillInMissingListStore(root: root);
     await showFillInDialog(
       context: context,
       build: build,
       loadCaches: loader,
+      saveMissingList:
+          store == null ? null : (plan) => store.saveBuildPlan(plan),
+      onMissingListSaved: root == null ? null : () => _loadFillInPlans(root),
+    );
+  }
+}
+
+class _SavedFillInPlan extends StatelessWidget {
+  const _SavedFillInPlan({required this.plan});
+
+  final FillInSavedBuildPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: Key('fill_in_saved_plan_${plan.buildId}'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Saved missing list',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 6),
+            if (plan.missing.isEmpty)
+              const Text('None', key: Key('fill_in_saved_missing_empty'))
+            else
+              Text(
+                plan.missing.join('\n'),
+                key: const Key('fill_in_saved_missing_list'),
+              ),
+            if (plan.similarWeaponName != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Similar: ${plan.similarWeaponName}'
+                '${plan.similarForName == null ? '' : ' (for ${plan.similarForName})'}',
+                key: const Key('fill_in_saved_similar'),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

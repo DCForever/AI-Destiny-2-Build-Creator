@@ -175,6 +175,7 @@ _RowParse _itemFromRow({
   final typeName = _cell(row, indexByName, 'Type');
   final rarity = _cell(row, indexByName, 'Rarity');
   final category = _cell(row, indexByName, 'Category');
+  final elementRaw = _cell(row, indexByName, 'Element');
   // Width already checked; missing map index would be a programmer error.
   if (idRaw == null ||
       hashRaw == null ||
@@ -196,7 +197,8 @@ _RowParse _itemFromRow({
   }
 
   // Type must be present (non-blank); Category maps the equipment slot.
-  if (typeName.trim().isEmpty) {
+  final weaponType = typeName.trim();
+  if (weaponType.isEmpty) {
     return _RowParse(error: 'row $rowNumber is missing a needed field');
   }
 
@@ -205,6 +207,7 @@ _RowParse _itemFromRow({
 
   final isExotic = rarity.trim().toLowerCase() == 'exotic';
   final displayName = nameRaw.trim();
+  final damageType = (elementRaw ?? '').trim();
 
   return _RowParse(
     item: FillInInventoryItem(
@@ -214,6 +217,8 @@ _RowParse _itemFromRow({
       guardianClass: null,
       slot: slot,
       isExotic: isExotic,
+      weaponType: weaponType,
+      damageType: damageType.isEmpty ? null : damageType,
     ),
   );
 }

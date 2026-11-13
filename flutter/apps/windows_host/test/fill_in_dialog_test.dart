@@ -1,4 +1,5 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:destiny2_windows_host/fill_in/fill_in_cache_loader.dart';
 import 'package:destiny2_windows_host/fill_in/fill_in_dialog.dart';
@@ -14,6 +15,9 @@ MockBuild _build({
   String exoticArmor = 'Solipsism',
   String exoticWeapon = 'Sunshot',
   List<MockSlotAssignment> slots = const [],
+  String? exoticWeaponType = 'Hand Cannon',
+  String? exoticWeaponDamageType = 'Solar',
+  String? exoticWeaponSlot = 'special',
 }) {
   return MockBuild(
     id: id,
@@ -26,6 +30,9 @@ MockBuild _build({
     artifact: const MockArtifact(name: '—', season: '—'),
     setBonuses: const [],
     stats: const [],
+    exoticWeaponType: exoticWeaponType,
+    exoticWeaponDamageType: exoticWeaponDamageType,
+    exoticWeaponSlot: exoticWeaponSlot,
   );
 }
 
@@ -54,14 +61,19 @@ FillInInventoryItem _weapon({
   required int hash,
   required String name,
   EquipmentSlot slot = EquipmentSlot.special,
+  String? weaponType,
+  String? damageType,
+  bool exotic = true,
 }) {
   return FillInInventoryItem(
     instanceId: id,
     itemHash: hash,
     name: name,
     slot: slot,
-    isExotic: true,
+    isExotic: exotic,
     guardianClass: null,
+    weaponType: weaponType,
+    damageType: damageType,
   );
 }
 
@@ -70,6 +82,8 @@ Future<void> _pumpDialog(
   required MockBuild build,
   required FillInCacheLoader loadCaches,
   FillInClipboardWriter? clipboardWriter,
+  FillInMissingListSaver? saveMissingList,
+  VoidCallback? onMissingListSaved,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -85,6 +99,8 @@ Future<void> _pumpDialog(
                   build: build,
                   loadCaches: loadCaches,
                   clipboardWriter: clipboardWriter,
+                  saveMissingList: saveMissingList,
+                  onMissingListSaved: onMissingListSaved,
                 );
               },
               child: const Text('Open'),
@@ -293,5 +309,75 @@ void main() {
     await tester.tap(find.byKey(const Key('fill_in_close')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('fill_in_dialog_b01')), findsNothing);
+  });
+
+  testWidgets('missing weapon shows Similar suggestion from held CSV',
+      (tester) async {
+    final build = _build(
+      exoticArmor: '',
+      exoticWeapon: 'Sunshot',
+      slots: const [],
+    );
+    final inventory = [
+      _weapon(
+        id: 'alt',
+        hash: 55,
+        name: "Zaouli's Bane",
+        slot: EquipmentSlot.special,
+        weaponType: 'Hand Cannon',
+        damageType: 'Solar',
+        exotic: false,
+      ),
+    ];
+
+    await _pumpDialog(
+      tester,
+      build: build,
+      loadCaches: () async => FillInCacheLoadResult.ok(inventory),
+    );
+
+    expect(find.byKey(const Key('fill_in_chip_special_missing')), findsOneWidget);
+    expect(find.byKey(const Key('fill_in_similar_weapon')), findsOneWidget);
+    expect(find.textContaining("Zaouli's Bane"), findsOneWidget);
+  });
+
+  testWidgets('Save missing list calls saver with missing labels',
+      (tester) async {
+    FillInSavedBuildPlan? savedPlan;
+    var savedCallbacks = 0;
+
+    final build = _build(
+      exoticArmor: '',
+      exoticWeapon: 'Sunshot',
+      slots: const [
+        MockSlotAssignment(
+          slot: 'helmet',
+          setId: 'set_techsec',
+          pieceName: 'Techsec Helmet',
+        ),
+      ],
+    );
+
+    await _pumpDialog(
+      tester,
+      build: build,
+      loadCaches: () async => FillInCacheLoadResult.ok(const []),
+      saveMissingList: (plan) async {
+        savedPlan = plan;
+      },
+      onMissingListSaved: () => savedCallbacks += 1,
+    );
+
+    expect(find.byKey(const Key('fill_in_save_missing')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('fill_in_save_missing')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(savedCallbacks, 1);
+    expect(find.byKey(const Key('fill_in_save_status')), findsOneWidget);
+    expect(savedPlan, isNotNull);
+    expect(savedPlan!.buildId, 'b01');
+    expect(savedPlan!.missing, contains('Helmet'));
+    expect(savedPlan!.missing, contains('Exotic weapon (energy)'));
   });
 }

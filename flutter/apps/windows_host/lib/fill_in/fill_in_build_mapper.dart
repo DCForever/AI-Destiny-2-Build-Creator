@@ -15,6 +15,44 @@ class FillInMappedBuild {
   final List<FillInInventoryItem> inventory;
 }
 
+/// Build-data (+ optional inventory) profile for similar-weapon suggestion.
+FillInWeaponNeed? fillInWeaponNeedForBuild({
+  required MockBuild build,
+  required List<FillInInventoryItem> inventory,
+}) {
+  final name = build.exoticWeapon.trim();
+  if (name.isEmpty) return null;
+
+  // Prefer attributes from a held CSV row with the same name (exact).
+  for (final item in inventory) {
+    if (!item.isExotic) continue;
+    if (!_isWeaponSlot(item.slot)) continue;
+    if ((item.name ?? '').trim().toLowerCase() != name.toLowerCase()) continue;
+    final type = item.weaponType?.trim() ?? '';
+    final damage = item.damageType?.trim() ?? '';
+    if (type.isEmpty || damage.isEmpty) break;
+    return FillInWeaponNeed(
+      name: name,
+      slot: item.slot,
+      weaponType: type,
+      damageType: damage,
+    );
+  }
+
+  final type = build.exoticWeaponType?.trim() ?? '';
+  final damage = build.exoticWeaponDamageType?.trim() ?? '';
+  final slotWire = build.exoticWeaponSlot?.trim() ?? '';
+  if (type.isEmpty || damage.isEmpty || slotWire.isEmpty) return null;
+  final slot = EquipmentSlot.tryParse(slotWire);
+  if (slot == null || !_isWeaponSlot(slot)) return null;
+  return FillInWeaponNeed(
+    name: name,
+    slot: slot,
+    weaponType: type,
+    damageType: damage,
+  );
+}
+
 /// Resolve exotic armor/weapons by display name and stamp legendary set hashes
 /// from the mock build's slot assignments.
 FillInMappedBuild mapMockBuildForFillIn({

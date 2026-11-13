@@ -110,6 +110,7 @@ export 'src/fill_in/fill_in_inventory.dart';
 export 'src/fill_in/fill_in_match.dart';
 export 'src/fill_in/fill_in_requirement.dart';
 export 'src/fill_in/fill_in_result.dart';
+export 'src/fill_in/fill_in_similar_weapon.dart';
 
 // Offline contrasting-build pilot (local fixture, synthetic proposals)
 export 'src/pilot_review/pilot_board.dart';

@@ -326,6 +326,7 @@ MockBuild _buildWithTechsecPair({
       '2pc Techsec (${techsecSlots.map((s) => kMockArmorSlotLabels[s]).join('+')}) '
       '+ 2pc ${_setShort(otherSet)} around ${kMockArmorSlotLabels[exoticSlot]} exotic.';
 
+  final weaponMeta = _exoticWeaponMeta(exoticWeapon);
   return MockBuild(
     id: id,
     name: name,
@@ -353,6 +354,9 @@ MockBuild _buildWithTechsecPair({
           ]
         : _statsForSeed(seed),
     creator: 'mock',
+    exoticWeaponType: weaponMeta?.type,
+    exoticWeaponDamageType: weaponMeta?.damage,
+    exoticWeaponSlot: weaponMeta?.slot,
   );
 }
 
@@ -396,6 +400,7 @@ MockBuild _build({
           kMockArmorSlots.indexOf(x.slot) - kMockArmorSlots.indexOf(y.slot),
     );
 
+  final weaponMeta = _exoticWeaponMeta(exoticWeapon);
   return MockBuild(
     id: id,
     name: name,
@@ -412,6 +417,9 @@ MockBuild _build({
     ],
     stats: stats,
     creator: 'mock',
+    exoticWeaponType: weaponMeta?.type,
+    exoticWeaponDamageType: weaponMeta?.damage,
+    exoticWeaponSlot: weaponMeta?.slot,
   );
 }
 
@@ -469,5 +477,33 @@ String _setFull(String id) {
       return 'Brazen Gambit';
     default:
       return id;
+  }
+}
+
+/// Build-data profiles for fixture exotic weapons (similar-weapon ranking).
+({String type, String damage, String slot})? _exoticWeaponMeta(String name) {
+  switch (name.trim().toLowerCase()) {
+    case 'sunshot':
+      return (type: 'Hand Cannon', damage: 'Solar', slot: 'special');
+    case 'riskrunner':
+      return (type: 'Submachine Gun', damage: 'Arc', slot: 'special');
+    case 'osteo striga':
+      return (type: 'Submachine Gun', damage: 'Kinetic', slot: 'primary');
+    case 'conditional finality':
+      return (type: 'Shotgun', damage: 'Stasis', slot: 'special');
+    case 'graviton lance':
+      return (type: 'Pulse Rifle', damage: 'Void', slot: 'special');
+    case 'dead messenger':
+      return (type: 'Grenade Launcher', damage: 'Void', slot: 'special');
+    case 'polaris lance':
+      return (type: 'Scout Rifle', damage: 'Solar', slot: 'primary');
+    case 'trinity ghoul':
+      return (type: 'Combat Bow', damage: 'Arc', slot: 'primary');
+    case 'edge of intent':
+      return (type: 'Glaive', damage: 'Solar', slot: 'special');
+    case 'vexcalibur':
+      return (type: 'Glaive', damage: 'Void', slot: 'special');
+    default:
+      return null;
   }
 }
