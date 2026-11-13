@@ -84,6 +84,7 @@ Future<void> _pumpDialog(
   FillInClipboardWriter? clipboardWriter,
   FillInMissingListSaver? saveMissingList,
   VoidCallback? onMissingListSaved,
+  FillInBuildMutator? onBuildUpdated,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -101,6 +102,7 @@ Future<void> _pumpDialog(
                   clipboardWriter: clipboardWriter,
                   saveMissingList: saveMissingList,
                   onMissingListSaved: onMissingListSaved,
+                  onBuildUpdated: onBuildUpdated,
                 );
               },
               child: const Text('Open'),
@@ -518,6 +520,69 @@ void main() {
 
       expect(find.byKey(const Key('fill_in_dialog_b01')), findsNothing);
       expect(saveCalls, 0);
+    },
+  );
+
+  testWidgets(
+    'Filled in badge label color differs from its background',
+    (tester) async {
+      final inventory = [
+        _armor(
+          id: 'h1',
+          hash: 1,
+          name: 'Techsec Helmet',
+          slot: EquipmentSlot.helmet,
+          cls: GuardianClass.warlock,
+          setHash: 10,
+        ),
+      ];
+      final build = _build(
+        exoticArmor: 'Sunbracers',
+        exoticWeapon: 'Sunshot',
+        slots: const [
+          MockSlotAssignment(
+            slot: 'helmet',
+            setId: 'set_techsec',
+            pieceName: 'Techsec Helmet',
+            filledIn: true,
+          ),
+        ],
+      );
+
+      await _pumpDialog(
+        tester,
+        build: build,
+        loadCaches: () async => FillInCacheLoadResult.ok(inventory),
+      );
+
+      final badge = find.byKey(const Key('fill_in_filled_badge_helmet'));
+      expect(badge, findsOneWidget);
+      expect(
+        find.descendant(of: badge, matching: find.text('Filled in')),
+        findsOneWidget,
+      );
+
+      void expectChipContrasts(Finder chipFinder, String label) {
+        final chip = tester.widget<Chip>(chipFinder);
+        final labelText = tester.widget<Text>(
+          find.descendant(of: chipFinder, matching: find.text(label)),
+        );
+        final bg = chip.backgroundColor;
+        final fg = labelText.style?.color ?? chip.labelStyle?.color;
+        expect(bg, isNotNull, reason: '$label bg');
+        expect(fg, isNotNull, reason: '$label fg');
+        expect(
+          fg,
+          isNot(bg),
+          reason: '$label must contrast its chip fill (fg=$fg bg=$bg)',
+        );
+      }
+
+      // Emphasized "Filled in" (enabled-looking) + plain status chip.
+      expectChipContrasts(badge, 'Filled in');
+      final status = find.byKey(const Key('fill_in_chip_special_missing'));
+      expect(status, findsOneWidget);
+      expectChipContrasts(status, 'missing');
     },
   );
 }

@@ -215,17 +215,27 @@ class _FillInDialogState extends State<FillInDialog> {
           if (d.isExotic) d.slot,
       };
       final exoticName = _build.exoticArmor.trim();
+      // Substitutes are filled picks — omit them from the flat missing list.
       final missingLabels = [
         for (final slot in _missing)
-          fillInMissingSlotLabel(
-            slot: slot.slot,
-            isExotic: exoticSlots.contains(slot.slot),
-            exoticArmorName: exoticName,
-          ),
+          if (!_diffs.any(
+            (d) =>
+                d.slot == slot.slot && (d.wouldSubstitute || d.isHeld),
+          ))
+            fillInMissingSlotLabel(
+              slot: slot.slot,
+              isExotic: exoticSlots.contains(slot.slot),
+              exoticArmorName: exoticName,
+            ),
       ].where((s) => s.trim().isNotEmpty).toList();
       final filledWires = {
         for (final a in (_plan?.applied ?? const <FillInAppliedSlot>[]))
           if (a.label.trim().isNotEmpty) a.slotWire,
+        // Persist proposed substitutes as filled even before Apply.
+        for (final d in _diffs)
+          if (d.wouldSubstitute &&
+              (d.substituteLabel?.trim().isNotEmpty ?? false))
+            d.slot.wireName,
       };
       final plan = FillInSavedBuildPlan(
         buildId: _build.id,
@@ -314,15 +324,18 @@ class _FillInDialogState extends State<FillInDialog> {
           );
         }
         final existingWeapon = slotByWire[diff.slot.wireName];
+        final pieceName = realLabel
+            ? label.trim()
+            : (existingWeapon?.pieceName ?? '').trim();
+        // Never mark filled-in with an empty/whitespace name.
+        final markFilled = filled && pieceName.isNotEmpty;
         slotByWire[diff.slot.wireName] = MockSlotAssignment(
           slot: diff.slot.wireName,
           setId: existingWeapon?.setId ??
               (diff.isExotic ? 'exotic_weapon' : 'weapon'),
-          pieceName: realLabel
-              ? label
-              : (existingWeapon?.pieceName ?? ''),
+          pieceName: pieceName,
           isExoticSlot: diff.isExotic,
-          filledIn: filled,
+          filledIn: markFilled,
         );
         continue;
       }
@@ -342,12 +355,15 @@ class _FillInDialogState extends State<FillInDialog> {
               next.exoticArmor.trim().isNotEmpty &&
               label.trim().toLowerCase() ==
                   next.exoticArmor.trim().toLowerCase());
+      final pieceName =
+          realLabel ? label.trim() : (existing?.pieceName ?? '').trim();
+      final markFilled = filled && pieceName.isNotEmpty;
       slotByWire[diff.slot.wireName] = MockSlotAssignment(
         slot: diff.slot.wireName,
         setId: existing?.setId ?? (isExotic ? 'exotic' : 'fill_in'),
-        pieceName: realLabel ? label : (existing?.pieceName ?? ''),
+        pieceName: pieceName,
         isExoticSlot: isExotic,
-        filledIn: filled,
+        filledIn: markFilled,
       );
 
       if (isExotic && realLabel) {
@@ -712,20 +728,17 @@ class _DiffRow extends StatelessWidget {
             ),
           ),
         if (filledIn)
-          Chip(
-            key: Key('fill_in_filled_badge_${diff.slot.wireName}'),
-            label: const Text('Filled in'),
-            visualDensity: VisualDensity.compact,
-            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          _FillInStatusChip(
+            chipKey: Key('fill_in_filled_badge_${diff.slot.wireName}'),
+            label: 'Filled in',
+            emphasized: true,
           )
         else
-          Chip(
-            key: Key('fill_in_chip_${diff.slot.wireName}_$chipState'),
-            label: Text(chipState),
-            visualDensity: VisualDensity.compact,
-            backgroundColor: overCap
-                ? Theme.of(context).colorScheme.errorContainer
-                : null,
+          _FillInStatusChip(
+            chipKey: Key('fill_in_chip_${diff.slot.wireName}_$chipState'),
+            label: chipState,
+            emphasized: false,
+            error: overCap,
           ),
       ],
     );
@@ -772,13 +785,71 @@ class _SlotRow extends StatelessWidget {
                   ),
             ),
           ),
-        Chip(
-          key: Key('fill_in_chip_${match.slot.wireName}_$state'),
-          label: Text(state),
-          visualDensity: VisualDensity.compact,
+        _FillInStatusChip(
+          chipKey: Key('fill_in_chip_${match.slot.wireName}_$state'),
+          label: state,
+          emphasized: match.isHeld && !match.exceedsCap,
+          error: match.exceedsCap,
           backgroundColor: chipColor,
         ),
       ],
+    );
+  }
+}
+
+/// Per-row status chip with theme foreground that contrasts the fill.
+///
+/// Avoids undefined ColorScheme container roles (secondaryContainer /
+/// errorContainer default to black on this host theme) which made "Filled in"
+/// unreadable. Uses chipTheme / onSurface / error ink instead.
+class _FillInStatusChip extends StatelessWidget {
+  const _FillInStatusChip({
+    required this.chipKey,
+    required this.label,
+    this.emphasized = false,
+    this.error = false,
+    this.backgroundColor,
+  });
+
+  final Key chipKey;
+  final String label;
+  final bool emphasized;
+  final bool error;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final chipTheme = theme.chipTheme;
+    final Color bg;
+    final Color fg;
+    if (error) {
+      bg = backgroundColor ?? scheme.error.withValues(alpha: 0.14);
+      fg = scheme.error;
+    } else if (emphasized) {
+      bg = backgroundColor ??
+          chipTheme.selectedColor ??
+          scheme.primary.withValues(alpha: 0.18);
+      fg = chipTheme.labelStyle?.color ?? scheme.onSurface;
+    } else {
+      bg = backgroundColor ??
+          chipTheme.backgroundColor ??
+          scheme.surface;
+      fg = chipTheme.labelStyle?.color ?? scheme.onSurface;
+    }
+    // Explicit fg/bg (not unset ColorScheme containers) so the label stays
+    // readable for both the emphasized "Filled in" state and plain status chips.
+    return Chip(
+      key: chipKey,
+      label: Text(
+        label,
+        style: TextStyle(color: fg),
+      ),
+      visualDensity: VisualDensity.compact,
+      backgroundColor: bg,
+      side: chipTheme.side,
+      labelStyle: TextStyle(color: fg),
     );
   }
 }
@@ -940,7 +1011,10 @@ String _stateLabel(FillInSlotMatch match) {
 
 Color? _chipColor(BuildContext context, FillInSlotMatch match) {
   final scheme = Theme.of(context).colorScheme;
-  if (match.exceedsCap) return scheme.errorContainer;
-  if (match.isHeld) return scheme.secondaryContainer;
-  return scheme.surfaceContainerHighest;
+  final chipTheme = Theme.of(context).chipTheme;
+  // Do not use secondaryContainer / errorContainer / surfaceContainerHighest —
+  // this host ColorScheme leaves them unset (black), which hides label text.
+  if (match.exceedsCap) return scheme.error.withValues(alpha: 0.14);
+  if (match.isHeld) return chipTheme.selectedColor;
+  return chipTheme.backgroundColor;
 }

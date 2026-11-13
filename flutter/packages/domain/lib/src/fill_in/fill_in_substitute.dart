@@ -68,8 +68,8 @@ class FillInSlotDiff {
 ///   pin the held instance for equip.
 /// - Missing weapon slots: pick a similar held weapon in the **same** bucket
 ///   for every empty/unowned row (damage + type when known; bucket-only when
-///   the row is blank / "No weapon in DIM link"). Never pick an exotic when
-///   the build already names a different exotic weapon.
+///   the row is blank / "No weapon in DIM link"). At most one exotic weapon
+///   across all picks (zero extra when the build already has one).
 /// - Missing armor slots: pick a held copy in the same slot + class
 ///   (prefer same [FillInSlotRequirement.armorSetHash] when set).
 ///
@@ -91,6 +91,17 @@ List<FillInSlotDiff> planFillInSubstitutes({
     for (final s in requirement.slots)
       if (s.isExotic && _isWeaponSlot(s.slot)) s.slot,
   };
+  // Bungie allows one exotic weapon. Track held/picked exotics so empty
+  // builds cannot fill multiple weapon buckets with exotics.
+  var usedExoticWeapon = false;
+  for (final slotMatch in match.slots) {
+    if (!slotMatch.isHeld) continue;
+    final need = needBySlot[slotMatch.slot];
+    if (need != null && need.isExotic && _isWeaponSlot(need.slot)) {
+      usedExoticWeapon = true;
+      break;
+    }
+  }
   final diffs = <FillInSlotDiff>[];
 
   for (final slotMatch in match.slots) {
@@ -111,6 +122,9 @@ List<FillInSlotDiff> planFillInSubstitutes({
       final label = displayCurrent.isNotEmpty
           ? displayCurrent
           : (heldName.isNotEmpty ? heldName : displayCurrent);
+      if (_isWeaponSlot(slot) && (held?.isExotic ?? isExotic)) {
+        usedExoticWeapon = true;
+      }
       diffs.add(
         FillInSlotDiff(
           slot: slot,
@@ -129,6 +143,7 @@ List<FillInSlotDiff> planFillInSubstitutes({
       final excludeExotic = _shouldExcludeExoticWeapon(
         forSlot: slot,
         exoticWeaponSlots: exoticWeaponSlots,
+        alreadyUsedExoticWeapon: usedExoticWeapon,
       );
       final similar = _suggestWeaponForMissingSlot(
         slot: slot,
@@ -138,6 +153,9 @@ List<FillInSlotDiff> planFillInSubstitutes({
         excludeExotic: excludeExotic,
       );
       final item = similar?.item;
+      if (item != null && item.isExotic) {
+        usedExoticWeapon = true;
+      }
       diffs.add(
         FillInSlotDiff(
           slot: slot,
@@ -174,15 +192,20 @@ List<FillInSlotDiff> planFillInSubstitutes({
   return List<FillInSlotDiff>.unmodifiable(diffs);
 }
 
-/// Never pick an exotic for a non-exotic weapon row when the build already
-/// names a different exotic weapon (one exotic weapon per build).
+/// At most one exotic weapon across the whole plan.
+///
+/// - Build already names an exotic on a *different* slot → exclude.
+/// - An exotic is already held or picked for another weapon row → exclude.
+/// - This row is the build's exotic weapon slot and none used yet → allow.
 bool _shouldExcludeExoticWeapon({
   required EquipmentSlot forSlot,
   required Set<EquipmentSlot> exoticWeaponSlots,
+  required bool alreadyUsedExoticWeapon,
 }) {
   for (final exoticSlot in exoticWeaponSlots) {
     if (exoticSlot != forSlot) return true;
   }
+  if (alreadyUsedExoticWeapon) return true;
   return false;
 }
 

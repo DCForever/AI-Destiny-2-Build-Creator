@@ -100,13 +100,18 @@ List<FillInSavedSlotRow> buildFillInSavedSlotRows({
       state = 'held';
       itemName = diff.currentLabel.trim();
       if (!_realItemName(itemName)) return;
-    } else if (filled) {
+    } else if (filled || diff.wouldSubstitute) {
+      // Proposed or applied substitute → filled with the pick's name, never
+      // "missing" with a blank item (e.g. empty Exotic Kinetic + Similar pick).
       state = 'filled';
       final sub = (diff.substituteLabel ?? '').trim();
       final cur = diff.currentLabel.trim();
+      final apply = diff.applyLabel.trim();
       itemName = _realItemName(sub)
           ? sub
-          : (_realItemName(cur) ? cur : '');
+          : (_realItemName(apply)
+              ? apply
+              : (_realItemName(cur) ? cur : ''));
       if (itemName.isEmpty) return;
     } else {
       state = 'missing';
