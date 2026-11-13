@@ -59,7 +59,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               Expanded(
                 child: BuildsMockDerivedTitle(
                   name: derived,
-                  iconSize: 16,
+                  iconSize: 19,
                   fontSize: 14,
                   superIconPath: icons.superIconPath,
                   exoticArmorIconPath: icons.exoticArmorIconPath,

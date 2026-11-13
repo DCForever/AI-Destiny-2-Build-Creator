@@ -97,8 +97,9 @@ const int kFlapAccentDimLight = 0x1F1A1A1A;
 /// Critical on light (same danger signal).
 const int kFlapDangerLight = 0xFFFF003C;
 
-/// Success on light (same status green).
-const int kFlapSuccessLight = 0xFF2EE6A6;
+/// Success on light — darker green for WCAG AA (≥4.5:1) on stage/surface.
+/// Dark face keeps `#2ee6a6`; light uses `#166534` (Held / ready ink).
+const int kFlapSuccessLight = 0xFF166534;
 
 /// Warn on light (cap warning).
 const int kFlapWarningLight = 0xFFF5C542;
