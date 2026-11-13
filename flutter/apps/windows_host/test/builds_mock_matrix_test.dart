@@ -70,6 +70,81 @@ void main() {
     expect(find.byKey(const Key('builds_mock_list')), findsNothing);
   });
 
+  testWidgets(
+      'unresolved setting shows loading, not No matrix file path flash',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFlapTheme(brightness: Brightness.light),
+        home: const Scaffold(
+          body: BuildsMockPage(
+            warlockMatrixPath: null,
+            matrixPathSettingResolved: false,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('builds_mock_matrix_loading')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_matrix_error')), findsNothing);
+    expect(find.textContaining('No matrix file path'), findsNothing);
+  });
+
+  testWidgets(
+      'didUpdateWidget reloads when warlockMatrixPath arrives after startup',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final harnessKey = GlobalKey<_MatrixPathHarnessState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFlapTheme(brightness: Brightness.light),
+        home: Scaffold(
+          body: _MatrixPathHarness(
+            key: harnessKey,
+            fixturePath: _fixturePath(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('builds_mock_matrix_loading')), findsOneWidget);
+    expect(find.textContaining('No matrix file path'), findsNothing);
+
+    harnessKey.currentState!.resolveWithFixture();
+    await tester.pump();
+    // Real file IO completes outside fake async — poll until list or error.
+    var sawList = false;
+    for (var i = 0; i < 40; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 25)),
+      );
+      await tester.pump();
+      if (find.byKey(const Key('builds_mock_card_grid_3')).evaluate().isNotEmpty ||
+          find.byKey(const Key('builds_mock_matrix_error')).evaluate().isNotEmpty) {
+        sawList = find
+            .byKey(const Key('builds_mock_card_grid_3'))
+            .evaluate()
+            .isNotEmpty;
+        break;
+      }
+    }
+
+    expect(
+      find.byKey(const Key('builds_mock_matrix_error')),
+      findsNothing,
+      reason: 'matrix error: ${find.byKey(const Key('builds_mock_matrix_error')).evaluate().isEmpty ? '(none)' : tester.widget<Text>(find.byKey(const Key('builds_mock_matrix_error'))).data}',
+    );
+    expect(find.textContaining('No matrix file path'), findsNothing);
+    expect(sawList, isTrue, reason: 'timed out waiting for matrix grid');
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
+    expect(find.text('Aeon solar sample'), findsWidgets);
+  });
+
   testWidgets('matrix-backed controller fills the lazy build list', (
     tester,
   ) async {
@@ -205,4 +280,34 @@ String _fixturePath() {
   throw StateError(
     'warlock_matrix_min.json not found from ${Directory.current.path}',
   );
+}
+
+/// Drives [BuildsMockPage] props in place so [State.didUpdateWidget] runs.
+class _MatrixPathHarness extends StatefulWidget {
+  const _MatrixPathHarness({super.key, required this.fixturePath});
+
+  final String fixturePath;
+
+  @override
+  State<_MatrixPathHarness> createState() => _MatrixPathHarnessState();
+}
+
+class _MatrixPathHarnessState extends State<_MatrixPathHarness> {
+  String? _path;
+  bool _resolved = false;
+
+  void resolveWithFixture() {
+    setState(() {
+      _path = widget.fixturePath;
+      _resolved = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BuildsMockPage(
+      warlockMatrixPath: _path,
+      matrixPathSettingResolved: _resolved,
+    );
+  }
 }

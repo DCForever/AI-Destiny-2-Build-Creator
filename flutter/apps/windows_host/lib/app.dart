@@ -60,10 +60,18 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   /// Path from `{StorageRoot}/settings/warlock_matrix_path.txt`, if any.
   String? _savedMatrixPath;
 
+  /// False until the async preference read finishes (or test inject skips it).
+  bool _savedMatrixPathResolved = false;
+
   @override
   void initState() {
     super.initState();
-    _loadSavedMatrixPath();
+    if (widget.warlockMatrixPath != null) {
+      // Test inject: skip saved-file wait; Builds loads the override immediately.
+      _savedMatrixPathResolved = true;
+    } else {
+      _loadSavedMatrixPath();
+    }
   }
 
   Future<void> _loadSavedMatrixPath() async {
@@ -72,17 +80,24 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
         root: widget.services.storageRoot,
       ).load();
       if (!mounted) return;
-      setState(() => _savedMatrixPath = saved);
+      setState(() {
+        _savedMatrixPath = saved;
+        _savedMatrixPathResolved = true;
+      });
     } catch (_) {
       // Prefer env / none when the preference file is unreadable.
       if (!mounted) return;
-      setState(() => _savedMatrixPath = null);
+      setState(() {
+        _savedMatrixPath = null;
+        _savedMatrixPathResolved = true;
+      });
     }
   }
 
   void _onMatrixPathSaved(String? path) {
     setState(() {
       _savedMatrixPath = path;
+      _savedMatrixPathResolved = true;
       _matrixReloadToken++;
     });
   }
@@ -98,14 +113,11 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   }
 
   /// Precedence: test inject → saved Settings path → WARLOCK_MATRIX_PATH → none.
-  String? get _matrixPath {
-    final override = widget.warlockMatrixPath;
-    if (override != null) return override;
-    return resolveWarlockMatrixPath(
-      savedSetting: _savedMatrixPath,
-      environment: Platform.environment,
-    );
-  }
+  String? get _matrixPath => resolveWarlockMatrixPath(
+        testInject: widget.warlockMatrixPath,
+        savedSetting: _savedMatrixPath,
+        environment: Platform.environment,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +185,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                         key: const Key('builds_mock_page_host'),
                         storageRoot: widget.services.storageRoot,
                         warlockMatrixPath: _matrixPath,
+                        matrixPathSettingResolved: _savedMatrixPathResolved,
                         services: widget.services,
                       ),
                     ),

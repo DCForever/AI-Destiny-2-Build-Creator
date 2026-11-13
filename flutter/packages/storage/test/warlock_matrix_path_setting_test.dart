@@ -7,6 +7,17 @@ import 'package:test/test.dart';
 
 void main() {
   group('resolveWarlockMatrixPath precedence', () {
+    test('test inject wins over saved and env', () {
+      expect(
+        resolveWarlockMatrixPath(
+          testInject: r'D:\matrix\inject.json',
+          savedSetting: r'D:\matrix\saved.json',
+          environment: {warlockMatrixPathEnv: r'D:\matrix\env.json'},
+        ),
+        r'D:\matrix\inject.json',
+      );
+    });
+
     test('saved setting wins over env', () {
       expect(
         resolveWarlockMatrixPath(
