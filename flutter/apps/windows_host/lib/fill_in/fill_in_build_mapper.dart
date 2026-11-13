@@ -85,10 +85,37 @@ FillInMappedBuild mapMockBuildForFillIn({
       exoticWeaponName: build.exoticWeapon,
     );
   } else {
-    for (final assignment in build.slots) {
-      final slot = _slotFromWire(assignment.slot);
-      if (slot == null) continue;
-      if (assignment.isExoticSlot) {
+    final twoPlusTwo = _twoPlusTwoSetIds(build.slots);
+    if (twoPlusTwo != null) {
+      final firstHash = setHashBySetId.putIfAbsent(
+        twoPlusTwo.$1,
+        () => _stableSetHash(twoPlusTwo.$1),
+      );
+      final secondHash = setHashBySetId.putIfAbsent(
+        twoPlusTwo.$2,
+        () => _stableSetHash(twoPlusTwo.$2),
+      );
+      _stampLegendarySetsForTwoPlusTwo(
+        build: build,
+        stampedById: stampedById,
+        guardianClass: guardianClass,
+        setHashBySetId: <String, int>{
+          twoPlusTwo.$1: firstHash,
+          twoPlusTwo.$2: secondHash,
+        },
+      );
+      slots.addAll(
+        assignFillInTwoPlusTwoSlots(
+          firstSetHash: firstHash,
+          secondSetHash: secondHash,
+          guardianClass: guardianClass,
+          inventory: stampedById.values,
+        ),
+      );
+      for (final assignment in build.slots) {
+        if (!assignment.isExoticSlot) continue;
+        final slot = _slotFromWire(assignment.slot);
+        if (slot == null) continue;
         final hash = _exoticArmorHash(
           inventory: inventory,
           guardianClass: guardianClass,
@@ -101,25 +128,44 @@ FillInMappedBuild mapMockBuildForFillIn({
             exoticItemHash: hash,
           ),
         );
-      } else {
-        final setHash = setHashBySetId.putIfAbsent(
-          assignment.setId,
-          () => _stableSetHash(assignment.setId),
-        );
-        _stampLegendaryByName(
-          stampedById: stampedById,
-          guardianClass: guardianClass,
-          slot: slot,
-          pieceName: assignment.pieceName,
-          setHash: setHash,
-        );
-        slots.add(
-          FillInSlotRequirement(
+      }
+    } else {
+      for (final assignment in build.slots) {
+        final slot = _slotFromWire(assignment.slot);
+        if (slot == null) continue;
+        if (assignment.isExoticSlot) {
+          final hash = _exoticArmorHash(
+            inventory: inventory,
+            guardianClass: guardianClass,
+            name: assignment.pieceName,
+          );
+          slots.add(
+            FillInSlotRequirement(
+              slot: slot,
+              isExotic: true,
+              exoticItemHash: hash,
+            ),
+          );
+        } else {
+          final setHash = setHashBySetId.putIfAbsent(
+            assignment.setId,
+            () => _stableSetHash(assignment.setId),
+          );
+          _stampLegendaryByName(
+            stampedById: stampedById,
+            guardianClass: guardianClass,
             slot: slot,
-            isExotic: false,
-            armorSetHash: setHash,
-          ),
-        );
+            pieceName: assignment.pieceName,
+            setHash: setHash,
+          );
+          slots.add(
+            FillInSlotRequirement(
+              slot: slot,
+              isExotic: false,
+              armorSetHash: setHash,
+            ),
+          );
+        }
       }
     }
     _addExoticWeaponNeed(
@@ -197,6 +243,70 @@ void _stampLegendaryByName({
     if (itemName != want) continue;
     stampedById[entry.key] = item.copyWith(armorSetHash: setHash);
   }
+}
+
+/// Detect ordered (firstSetId, secondSetId) for a 2+2 legendary layout.
+(String, String)? _twoPlusTwoSetIds(List<MockSlotAssignment> slots) {
+  final legendary = [
+    for (final s in slots)
+      if (!s.isExoticSlot) s,
+  ];
+  final order = <String>[];
+  final counts = <String, int>{};
+  for (final s in legendary) {
+    counts[s.setId] = (counts[s.setId] ?? 0) + 1;
+    if (!order.contains(s.setId)) order.add(s.setId);
+  }
+  if (order.length != 2) return null;
+  if (counts[order[0]] != 2 || counts[order[1]] != 2) return null;
+  return (order[0], order[1]);
+}
+
+/// Stamp legendary inventory for both 2+2 sets across helmet/arms/chest/legs
+/// so the walk can see holds in slots the build had assigned to the other set.
+void _stampLegendarySetsForTwoPlusTwo({
+  required MockBuild build,
+  required Map<String, FillInInventoryItem> stampedById,
+  required GuardianClass guardianClass,
+  required Map<String, int> setHashBySetId,
+}) {
+  final prefixes = <String, String>{};
+  for (final assignment in build.slots) {
+    if (assignment.isExoticSlot) continue;
+    final setHash = setHashBySetId[assignment.setId];
+    if (setHash == null) continue;
+    final prefix = prefixes.putIfAbsent(
+      assignment.setId,
+      () => _pieceNamePrefix(assignment.pieceName),
+    );
+    if (prefix.isEmpty) {
+      _stampLegendaryByName(
+        stampedById: stampedById,
+        guardianClass: guardianClass,
+        slot: _slotFromWire(assignment.slot) ?? EquipmentSlot.helmet,
+        pieceName: assignment.pieceName,
+        setHash: setHash,
+      );
+      continue;
+    }
+    for (final entry in stampedById.entries.toList()) {
+      final item = entry.value;
+      if (item.isExotic) continue;
+      if (item.guardianClass != guardianClass) continue;
+      if (!kFillInTwoPlusTwoSlotOrder.contains(item.slot)) continue;
+      final itemName = item.name?.trim().toLowerCase() ?? '';
+      if (!itemName.startsWith(prefix)) continue;
+      stampedById[entry.key] = item.copyWith(armorSetHash: setHash);
+    }
+  }
+}
+
+String _pieceNamePrefix(String pieceName) {
+  final trimmed = pieceName.trim().toLowerCase();
+  if (trimmed.isEmpty) return '';
+  final space = trimmed.indexOf(' ');
+  if (space <= 0) return trimmed;
+  return trimmed.substring(0, space);
 }
 
 FillInInventoryItem? _findExoticArmor({
