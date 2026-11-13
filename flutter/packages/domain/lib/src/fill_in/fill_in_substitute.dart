@@ -152,19 +152,21 @@ List<FillInSlotDiff> planFillInSubstitutes({
   return List<FillInSlotDiff>.unmodifiable(diffs);
 }
 
-/// Never surface equipment wire names (`primary` / `special` / `heavy`) as
-/// item labels. Empty weapon rows use [kFillInNoWeaponInDimLink].
+/// Never surface equipment wire names (`primary` / `helmet` / …) as item
+/// labels. Empty weapon rows use [kFillInNoWeaponInDimLink]; empty armor rows
+/// stay blank (display-only — never saved as pieceName).
 String _displayCurrentLabel(EquipmentSlot slot, String current) {
   if (current.isNotEmpty) {
     final lower = current.toLowerCase();
-    if (_isWeaponSlot(slot) &&
-        EquipmentSlot.weaponSlots.any((s) => s.wireName == lower)) {
-      return kFillInNoWeaponInDimLink;
+    if (EquipmentSlot.values.any((s) => s.wireName == lower)) {
+      if (_isWeaponSlot(slot)) return kFillInNoWeaponInDimLink;
+      return '';
     }
+    if (current == kFillInNoWeaponInDimLink) return current;
     return current;
   }
   if (_isWeaponSlot(slot)) return kFillInNoWeaponInDimLink;
-  return slot.wireName;
+  return '';
 }
 
 FillInInventoryItem? _findHeldMatch({
@@ -197,6 +199,21 @@ FillInInventoryItem? _suggestArmorSubstitute({
   required FillInSlotRequirement? need,
   required EquipmentSlot slot,
 }) {
+  // Exotic needs never fall back to a legendary cover.
+  if (need != null && need.isExotic) {
+    final wantHash = need.exoticItemHash;
+    if (wantHash == null) return null;
+    for (final item in inventory) {
+      if (!item.isExotic) continue;
+      if (item.guardianClass != guardianClass) continue;
+      if (item.itemHash != wantHash) continue;
+      if (slot == EquipmentSlot.exoticArmor || item.slot == slot) {
+        return item;
+      }
+    }
+    return null;
+  }
+
   FillInInventoryItem? sameSet;
   FillInInventoryItem? anySlot;
 
@@ -204,20 +221,13 @@ FillInInventoryItem? _suggestArmorSubstitute({
     if (item.slot != slot) continue;
     if (item.guardianClass != guardianClass) continue;
     if (_isWeaponSlot(item.slot)) continue;
+    if (item.isExotic) continue;
 
     anySlot ??= item;
     if (need != null &&
-        !need.isExotic &&
         need.armorSetHash != null &&
         item.armorSetHash == need.armorSetHash) {
       sameSet ??= item;
-    }
-    if (need != null &&
-        need.isExotic &&
-        need.exoticItemHash != null &&
-        item.isExotic &&
-        item.itemHash == need.exoticItemHash) {
-      return item;
     }
   }
   return sameSet ?? anySlot;

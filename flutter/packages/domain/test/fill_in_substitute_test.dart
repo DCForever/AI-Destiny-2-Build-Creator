@@ -194,6 +194,73 @@ void main() {
       expect(energy.currentLabel, kFillInNoWeaponInDimLink);
     });
 
+    test('empty armor current label is blank not helmet wire name', () {
+      final requirement = const FillInBuildRequirement(
+        buildId: 'b1',
+        guardianClass: GuardianClass.warlock,
+        subclassKey: 'strand',
+        slots: [
+          FillInSlotRequirement(
+            slot: EquipmentSlot.helmet,
+            isExotic: false,
+          ),
+        ],
+      );
+      final match = matchFillIn(
+        inventory: const [],
+        builds: [requirement],
+      ).builds.single;
+      final diffs = planFillInSubstitutes(
+        match: match,
+        requirement: requirement,
+        inventory: const [],
+        currentLabels: const {},
+      );
+      expect(diffs.single.currentLabel, isEmpty);
+      expect(diffs.single.currentLabel.toLowerCase(), isNot('helmet'));
+    });
+
+    test('exotic armor never substitutes a legendary cover', () {
+      final inventory = [
+        const FillInInventoryItem(
+          instanceId: 'legs-leg',
+          itemHash: 9999,
+          name: 'Per Audacia Boots',
+          slot: EquipmentSlot.legs,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          armorSetHash: 1,
+        ),
+      ];
+      final requirement = const FillInBuildRequirement(
+        buildId: 'b1',
+        guardianClass: GuardianClass.warlock,
+        subclassKey: 'strand',
+        exoticArmorName: 'Swarmers',
+        slots: [
+          FillInSlotRequirement(
+            slot: EquipmentSlot.legs,
+            isExotic: true,
+            exoticItemHash: 7001,
+          ),
+        ],
+      );
+      final match = matchFillIn(
+        inventory: inventory,
+        builds: [requirement],
+      ).builds.single;
+      expect(match.slots.single.isHeld, isFalse);
+
+      final diffs = planFillInSubstitutes(
+        match: match,
+        requirement: requirement,
+        inventory: inventory,
+        currentLabels: const {EquipmentSlot.legs: 'Swarmers'},
+      );
+      expect(diffs.single.substituteLabel, isNull);
+      expect(diffs.single.wouldSubstitute, isFalse);
+    });
+
     test('missing armor proposes same-slot held substitute', () {
       final inventory = [
         const FillInInventoryItem(

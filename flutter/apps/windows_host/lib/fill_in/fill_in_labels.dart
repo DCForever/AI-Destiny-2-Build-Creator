@@ -28,3 +28,20 @@ String fillInSlotLabel(EquipmentSlot slot, {bool isExotic = false}) {
       return 'Exotic armor';
   }
 }
+
+/// Missing-list / row label for a Fill In slot, including unnamed exotic armor.
+///
+/// Summary-only exotic armor (no known combat bucket) must stay visible as
+/// `Exotic armor (slot unknown): {name}` — never Class Item, never silent.
+String fillInMissingSlotLabel({
+  required EquipmentSlot slot,
+  bool isExotic = false,
+  String? exoticArmorName,
+}) {
+  if (slot == EquipmentSlot.exoticArmor) {
+    final name = exoticArmorName?.trim() ?? '';
+    if (name.isEmpty) return 'Exotic armor (slot unknown)';
+    return 'Exotic armor (slot unknown): $name';
+  }
+  return fillInSlotLabel(slot, isExotic: isExotic);
+}

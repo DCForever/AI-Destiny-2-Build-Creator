@@ -268,6 +268,172 @@ void main() {
       fillInSlotLabel(EquipmentSlot.heavy, isExotic: true),
       'Exotic Power',
     );
+    expect(
+      fillInMissingSlotLabel(
+        slot: EquipmentSlot.exoticArmor,
+        exoticArmorName: 'Swarmers',
+      ),
+      'Exotic armor (slot unknown): Swarmers',
+    );
+  });
+
+  test('unowned summary-only Swarmers is missing; build not complete', () {
+    const loadout = CachedDimLoadout(
+      shareId: 'syn-swarmers-summary',
+      name: 'Summary only',
+      classType: 2,
+      items: [],
+      subclassPlugs: [],
+      mods: [],
+      artifactPerks: [],
+      exotic: CachedDimExotic(
+        hash: 7001,
+        name: 'Swarmers',
+        description: '',
+      ),
+    );
+    final mapped = mapMockBuildForFillIn(
+      build: const MockBuild(
+        id: 'matrix_summary',
+        name: 'Summary Swarmers',
+        subclass: 'Strand',
+        exoticArmor: '',
+        exoticWeapon: '',
+        slots: [],
+        loop: 'loop',
+        artifact: MockArtifact(name: '—', season: '—'),
+        setBonuses: [],
+        stats: [],
+        dimLink: 'https://dim.gg/syn-swarmers-summary',
+      ),
+      inventory: const [],
+      dimLoadout: loadout,
+    );
+
+    expect(mapped.requirement.exoticArmorName, 'Swarmers');
+    final exoticNeed = mapped.requirement.slots.singleWhere(
+      (s) => s.isExotic && s.slot == EquipmentSlot.exoticArmor,
+    );
+    expect(exoticNeed.exoticItemHash, 7001);
+    expect(
+      mapped.requirement.slots.any(
+        (s) => s.isExotic && s.slot == EquipmentSlot.classItem,
+      ),
+      isFalse,
+    );
+
+    final report = matchFillIn(
+      inventory: mapped.inventory,
+      builds: [mapped.requirement],
+    );
+    final result = report.builds.single;
+    final exoticMatch = result.slots.singleWhere(
+      (s) => s.slot == EquipmentSlot.exoticArmor,
+    );
+    expect(exoticMatch.isHeld, isFalse);
+    expect(result.slots.every((s) => s.isHeld), isFalse);
+
+    final diffs = planFillInSubstitutes(
+      match: result,
+      requirement: mapped.requirement,
+      inventory: mapped.inventory,
+      currentLabels: const {EquipmentSlot.exoticArmor: 'Swarmers'},
+    );
+    final exoticDiff = diffs.singleWhere(
+      (d) => d.slot == EquipmentSlot.exoticArmor,
+    );
+    expect(exoticDiff.isHeld, isFalse);
+    expect(exoticDiff.wouldSubstitute, isFalse);
+    expect(exoticDiff.substituteLabel, isNull);
+    expect(
+      fillInMissingSlotLabel(
+        slot: EquipmentSlot.exoticArmor,
+        exoticArmorName: 'Swarmers',
+      ),
+      'Exotic armor (slot unknown): Swarmers',
+    );
+  });
+
+  test('unowned Swarmers with known legs slot is missing on Legs', () {
+    const loadout = CachedDimLoadout(
+      shareId: 'syn-swarmers-legs',
+      name: 'Legs Swarmers',
+      classType: 2,
+      items: [
+        CachedDimItem(
+          hash: 7001,
+          name: 'Swarmers',
+          itemType: 'Leg Armor',
+          tier: 'Exotic',
+        ),
+      ],
+      subclassPlugs: [],
+      mods: [],
+      artifactPerks: [],
+      exotic: CachedDimExotic(
+        hash: 7001,
+        name: 'Swarmers',
+        description: '',
+      ),
+    );
+    final mapped = mapMockBuildForFillIn(
+      build: const MockBuild(
+        id: 'matrix_legs',
+        name: 'Legs Swarmers',
+        subclass: 'Strand',
+        exoticArmor: '',
+        exoticWeapon: '',
+        slots: [],
+        loop: 'loop',
+        artifact: MockArtifact(name: '—', season: '—'),
+        setBonuses: [],
+        stats: [],
+        dimLink: 'https://dim.gg/syn-swarmers-legs',
+      ),
+      // Legendary legs only — must never cover the exotic Swarmers need.
+      inventory: const [
+        FillInInventoryItem(
+          instanceId: 'legs-leg',
+          itemHash: 9999,
+          name: 'Per Audacia Boots',
+          slot: EquipmentSlot.legs,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          armorSetHash: 1,
+        ),
+      ],
+      dimLoadout: loadout,
+    );
+
+    final legsNeed = mapped.requirement.slots.singleWhere(
+      (s) => s.slot == EquipmentSlot.legs,
+    );
+    expect(legsNeed.isExotic, isTrue);
+    expect(legsNeed.exoticItemHash, 7001);
+    expect(
+      mapped.requirement.slots.any((s) => s.slot == EquipmentSlot.exoticArmor),
+      isFalse,
+    );
+
+    final report = matchFillIn(
+      inventory: mapped.inventory,
+      builds: [mapped.requirement],
+    );
+    final legsMatch = report.builds.single.slots.singleWhere(
+      (s) => s.slot == EquipmentSlot.legs,
+    );
+    expect(legsMatch.isHeld, isFalse);
+
+    final diffs = planFillInSubstitutes(
+      match: report.builds.single,
+      requirement: mapped.requirement,
+      inventory: mapped.inventory,
+      currentLabels: const {EquipmentSlot.legs: 'Swarmers'},
+    );
+    final legsDiff = diffs.singleWhere((d) => d.slot == EquipmentSlot.legs);
+    expect(legsDiff.isHeld, isFalse);
+    expect(legsDiff.substituteLabel, isNull);
+    expect(legsDiff.wouldSubstitute, isFalse);
   });
 
   testWidgets('Apply to build stores all 8 total-fill slots', (tester) async {
@@ -391,5 +557,109 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.hasAppliedSubstitutes, isFalse);
     expect(saved!.applied, isEmpty);
+  });
+
+  testWidgets('placeholders never reach saved applied labels or pieceName',
+      (tester) async {
+    FillInSavedBuildPlan? saved;
+    MockBuild? updated;
+    // Summary-only exotic + no weapon items → weapon rows display
+    // "No weapon in DIM link"; Apply must not persist that or wire names.
+    const loadout = CachedDimLoadout(
+      shareId: 'syn-placeholder',
+      name: 'Placeholder guard',
+      classType: 2,
+      items: [],
+      subclassPlugs: [],
+      mods: [],
+      artifactPerks: [],
+      exotic: CachedDimExotic(
+        hash: 7001,
+        name: 'Swarmers',
+        description: '',
+      ),
+    );
+    const build = MockBuild(
+      id: 'matrix_ph',
+      name: 'Placeholder',
+      subclass: 'Strand',
+      exoticArmor: '',
+      exoticWeapon: 'Barrow-Dyad',
+      slots: [],
+      loop: 'loop',
+      artifact: MockArtifact(name: '—', season: '—'),
+      setBonuses: [],
+      stats: [],
+      dimLink: 'https://dim.gg/syn-placeholder',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return TextButton(
+                key: const Key('open_fill_in'),
+                onPressed: () {
+                  showFillInDialog(
+                    context: context,
+                    build: build,
+                    dimLoadout: loadout,
+                    loadCaches: () async => FillInCacheLoadResult.ok(const []),
+                    saveMissingList: (plan) async => saved = plan,
+                    onBuildUpdated: (b) => updated = b,
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('open_fill_in')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.textContaining(kFillInNoWeaponInDimLink), findsWidgets);
+    expect(
+      find.textContaining('Exotic armor (slot unknown): Swarmers'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('fill_in_apply_to_build')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(saved, isNotNull);
+    final banned = {
+      kFillInNoWeaponInDimLink,
+      'primary',
+      'special',
+      'heavy',
+      'helmet',
+      'arms',
+      'chest',
+      'legs',
+      'class_item',
+      'exotic_armor',
+    };
+    for (final row in saved!.applied) {
+      expect(banned.contains(row.label.toLowerCase()), isFalse,
+          reason: 'applied.label=${row.label}');
+      expect(banned.contains(row.originalLabel.toLowerCase()), isFalse,
+          reason: 'applied.originalLabel=${row.originalLabel}');
+    }
+    expect(updated, isNotNull);
+    for (final slot in updated!.slots) {
+      expect(banned.contains(slot.pieceName.toLowerCase()), isFalse,
+          reason: 'pieceName=${slot.pieceName}');
+      expect(slot.pieceName, isNot(kFillInNoWeaponInDimLink));
+    }
+    expect(updated!.exoticWeapon.toLowerCase(), isNot('primary'));
+    expect(updated!.exoticWeapon.toLowerCase(), isNot('special'));
+    expect(updated!.exoticWeapon.toLowerCase(), isNot('heavy'));
+    expect(updated!.exoticWeapon, isNot(kFillInNoWeaponInDimLink));
   });
 }
