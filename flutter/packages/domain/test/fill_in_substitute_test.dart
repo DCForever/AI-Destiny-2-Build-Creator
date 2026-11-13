@@ -418,6 +418,85 @@ void main() {
       },
     );
 
+    test(
+      'pre-scan treats held inventory exotic as used even when need is not',
+      () {
+        // Skeptic: a legendary weapon need can still resolve a held exotic
+        // via exoticItemHash (name→hash stamp). need.isExotic alone misses
+        // that — a second exotic must not slip into Energy.
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'kin-ex',
+            itemHash: 501,
+            name: 'Riskrunner',
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Arc',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'ene-ex',
+            itemHash: 502,
+            name: 'Qua Nilus II',
+            slot: EquipmentSlot.special,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'ene-leg',
+            itemHash: 503,
+            name: 'Funnelweb',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Void',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'arc',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.primary,
+              isExotic: false,
+              exoticItemHash: 501,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.special,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {
+            EquipmentSlot.primary: 'Riskrunner',
+          },
+        );
+
+        final kinetic =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.primary);
+        final energy =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.special);
+        expect(kinetic.isHeld, isTrue);
+        expect(energy.wouldSubstitute, isTrue);
+        expect(energy.substituteLabel, 'Funnelweb');
+        expect(energy.substituteLabel, isNot('Qua Nilus II'));
+      },
+    );
+
     test('exotic armor never substitutes a legendary cover', () {
       final inventory = [
         const FillInInventoryItem(

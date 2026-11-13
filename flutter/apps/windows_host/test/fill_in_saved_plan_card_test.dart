@@ -63,8 +63,8 @@ void main() {
         find.byKey(const Key('fill_in_saved_section_weapons')),
         findsOneWidget,
       );
-      expect(find.textContaining('Barrow-Dyad · held'), findsOneWidget);
-      expect(find.textContaining('Energy · missing'), findsOneWidget);
+      expect(find.textContaining('Barrow-Dyad · Held'), findsOneWidget);
+      expect(find.textContaining('Energy · Missing'), findsOneWidget);
       // No blank name entries.
       expect(find.textContaining('·  ·'), findsNothing);
 

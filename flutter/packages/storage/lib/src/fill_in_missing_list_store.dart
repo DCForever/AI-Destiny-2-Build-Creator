@@ -64,8 +64,10 @@ class FillInAppliedSlot {
 
 /// One Armor/Weapons row on a saved Fill In plan (detail card).
 ///
-/// [state] is `held`, `filled`, or `missing`. [itemName] is never blank for
-/// held/filled; missing rows may omit a name (UI shows slot + missing only).
+/// [state] is `held`, `filled`, `proposed`, or `missing`. [itemName] is never
+/// blank for held/filled/proposed; missing rows may omit a name (UI shows
+/// slot + missing only). `proposed` is additive on schema v2 — older readers
+/// that only expect held/filled/missing still tolerate the unknown string.
 class FillInSavedSlotRow {
   const FillInSavedSlotRow({
     required this.slotWire,
@@ -77,7 +79,7 @@ class FillInSavedSlotRow {
   final String slotWire;
   final String slotLabel;
 
-  /// `held` | `filled` | `missing`
+  /// `held` | `filled` | `proposed` | `missing`
   final String state;
   final String itemName;
 

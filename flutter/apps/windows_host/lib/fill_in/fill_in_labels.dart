@@ -74,7 +74,8 @@ bool fillInIsWeaponSectionSlot(EquipmentSlot slot) {
 }
 
 /// Build structured saved rows from diffs (never includes blank item names for
-/// held/filled). [filledSlotWires] marks slots already written by Apply.
+/// held/filled/proposed). [filledSlotWires] marks slots already written by
+/// Apply (`filled`); substitutes that are not yet applied stay `proposed`.
 List<FillInSavedSlotRow> buildFillInSavedSlotRows({
   required List<FillInSlotDiff> diffs,
   required String exoticArmorName,
@@ -100,9 +101,8 @@ List<FillInSavedSlotRow> buildFillInSavedSlotRows({
       state = 'held';
       itemName = diff.currentLabel.trim();
       if (!_realItemName(itemName)) return;
-    } else if (filled || diff.wouldSubstitute) {
-      // Proposed or applied substitute → filled with the pick's name, never
-      // "missing" with a blank item (e.g. empty Exotic Kinetic + Similar pick).
+    } else if (filled) {
+      // Applied substitute → filled with the pick's name.
       state = 'filled';
       final sub = (diff.substituteLabel ?? '').trim();
       final cur = diff.currentLabel.trim();
@@ -112,6 +112,16 @@ List<FillInSavedSlotRow> buildFillInSavedSlotRows({
           : (_realItemName(apply)
               ? apply
               : (_realItemName(cur) ? cur : ''));
+      if (itemName.isEmpty) return;
+    } else if (diff.wouldSubstitute) {
+      // Saved before Apply — additive `proposed` (schema v2; older readers
+      // that only know held/filled/missing still tolerate the string).
+      state = 'proposed';
+      final sub = (diff.substituteLabel ?? '').trim();
+      final apply = diff.applyLabel.trim();
+      itemName = _realItemName(sub)
+          ? sub
+          : (_realItemName(apply) ? apply : '');
       if (itemName.isEmpty) return;
     } else {
       state = 'missing';
