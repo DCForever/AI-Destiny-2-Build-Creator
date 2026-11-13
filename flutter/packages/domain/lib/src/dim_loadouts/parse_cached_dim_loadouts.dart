@@ -249,7 +249,29 @@ _OptSubclass _parseSubclass(Object? raw, int index) {
       error: 'loadouts[$index].subclass needs hash:int and name:string',
     );
   }
-  return _OptSubclass(value: CachedDimSubclass(hash: hash, name: name));
+  final superName = map['superName'];
+  if (superName != null && superName is! String) {
+    return _OptSubclass(
+      error: 'loadouts[$index].subclass.superName must be string or null',
+    );
+  }
+  final superIconPath = map['superIconPath'];
+  if (superIconPath != null && superIconPath is! String) {
+    return _OptSubclass(
+      error:
+          'loadouts[$index].subclass.superIconPath must be string or null',
+    );
+  }
+  final superTrim = (superName as String?)?.trim();
+  final iconTrim = (superIconPath as String?)?.trim();
+  return _OptSubclass(
+    value: CachedDimSubclass(
+      hash: hash,
+      name: name,
+      superName: (superTrim == null || superTrim.isEmpty) ? null : superTrim,
+      superIconPath: (iconTrim == null || iconTrim.isEmpty) ? null : iconTrim,
+    ),
+  );
 }
 
 class _OptExotic {

@@ -1,3 +1,4 @@
+import 'package:destiny2_windows_host/builds_mock/builds_mock_derived_name.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_loadout_card.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:flutter/material.dart';
@@ -42,13 +43,15 @@ void main() {
       setBonuses: [],
       stats: [],
     );
+    final derived = deriveBuildsMockName(build: build);
 
     await tester.pumpWidget(
       MaterialApp(
         theme: testMaterialTheme(),
-        home: const Scaffold(
+        home: Scaffold(
           body: BuildsMockLoadoutCard(
             loadout: build,
+            derivedName: derived,
             density: BuildsMockCardDensity.detail,
           ),
         ),
@@ -60,7 +63,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Filled in · Qua Nilus II'), findsOneWidget);
-    // Empty / whitespace names must never render a chip.
+    // Empty / whitespace Energy + Power must never render a chip.
     expect(find.textContaining('Filled in ·'), findsOneWidget);
     expect(
       find.byKey(const Key('builds_mock_filled_in_chip_filter_special')),

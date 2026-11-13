@@ -124,10 +124,8 @@ void main() {
       expect(find.text('NOTES_FOR_SHARE_BBB'), findsOneWidget);
       expect(find.text('NOTES_FOR_SHARE_AAA'), findsNothing);
       expect(find.textContaining('ambiguous'), findsNothing);
-      expect(
-        find.byKey(const Key('dim_loadout_details_share-bbb')),
-        findsOneWidget,
-      );
+      // Flat DIM LINK DETAILS panel is gone; notes render in the detail card.
+      expect(find.text('DIM LINK DETAILS'), findsNothing);
     },
   );
 

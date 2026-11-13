@@ -93,11 +93,24 @@ List<FillInSlotDiff> planFillInSubstitutes({
   };
   // Bungie allows one exotic weapon. Track held/picked exotics so empty
   // builds cannot fill multiple weapon buckets with exotics.
+  // Pre-scan every held weapon: the requirement *or* the held inventory
+  // match itself may be exotic (a legendary need can still hold an exotic).
   var usedExoticWeapon = false;
   for (final slotMatch in match.slots) {
     if (!slotMatch.isHeld) continue;
+    if (!_isWeaponSlot(slotMatch.slot)) continue;
     final need = needBySlot[slotMatch.slot];
-    if (need != null && need.isExotic && _isWeaponSlot(need.slot)) {
+    if (need != null && need.isExotic) {
+      usedExoticWeapon = true;
+      break;
+    }
+    final held = _findHeldMatch(
+      inventory: inv,
+      guardianClass: requirement.guardianClass,
+      need: need,
+      currentLabel: (currentLabels[slotMatch.slot] ?? '').trim(),
+    );
+    if (held?.isExotic ?? false) {
       usedExoticWeapon = true;
       break;
     }

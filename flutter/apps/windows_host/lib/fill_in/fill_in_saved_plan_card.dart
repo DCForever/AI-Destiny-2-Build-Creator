@@ -92,9 +92,10 @@ class FillInSavedPlanCard extends StatelessWidget {
 
   Widget _rowLine(BuildContext context, FillInSavedSlotRow row) {
     final name = row.itemName.trim();
+    final stateLabel = fillInSavedRowStateLabel(row.state);
     final text = name.isEmpty
-        ? '${row.slotLabel} · ${row.state}'
-        : '${row.slotLabel} · $name · ${row.state}';
+        ? '${row.slotLabel} · $stateLabel'
+        : '${row.slotLabel} · $name · $stateLabel';
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Text(
@@ -103,6 +104,22 @@ class FillInSavedPlanCard extends StatelessWidget {
         style: Theme.of(context).textTheme.bodySmall,
       ),
     );
+  }
+}
+
+/// Human label for a saved Fill In row state wire.
+String fillInSavedRowStateLabel(String state) {
+  switch (state.trim().toLowerCase()) {
+    case 'held':
+      return 'Held';
+    case 'filled':
+      return 'Filled in';
+    case 'proposed':
+      return 'Proposed';
+    case 'missing':
+      return 'Missing';
+    default:
+      return state;
   }
 }
 

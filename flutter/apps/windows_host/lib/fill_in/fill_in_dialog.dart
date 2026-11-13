@@ -228,14 +228,10 @@ class _FillInDialogState extends State<FillInDialog> {
               exoticArmorName: exoticName,
             ),
       ].where((s) => s.trim().isNotEmpty).toList();
+      // Only Apply pins count as filled; wouldSubstitute rows stay proposed.
       final filledWires = {
         for (final a in (_plan?.applied ?? const <FillInAppliedSlot>[]))
           if (a.label.trim().isNotEmpty) a.slotWire,
-        // Persist proposed substitutes as filled even before Apply.
-        for (final d in _diffs)
-          if (d.wouldSubstitute &&
-              (d.substituteLabel?.trim().isNotEmpty ?? false))
-            d.slot.wireName,
       };
       final plan = FillInSavedBuildPlan(
         buildId: _build.id,

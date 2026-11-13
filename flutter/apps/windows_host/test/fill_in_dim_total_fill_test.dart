@@ -810,7 +810,7 @@ void main() {
   );
 
   testWidgets(
-    'empty exotic Kinetic substitute saves as filled with name; Apply chips named',
+    'empty exotic Kinetic substitute saves as proposed; Apply fills; Undo restores',
     (tester) async {
       FillInSavedBuildPlan? saved;
       MockBuild? updated;
@@ -921,7 +921,7 @@ void main() {
 
       expect(saved, isNotNull);
       final kinRow = saved!.rows.singleWhere((r) => r.slotWire == 'primary');
-      expect(kinRow.state, 'filled');
+      expect(kinRow.state, 'proposed');
       expect(kinRow.itemName, 'Qua Nilus II');
       expect(kinRow.slotLabel, 'Exotic Kinetic');
       expect(
@@ -933,6 +933,8 @@ void main() {
         ),
         isFalse,
       );
+
+      final beforeApply = enrichMockBuildFromDimLoadout(build, loadout: loadout);
 
       await tester.tap(find.byKey(const Key('fill_in_apply_to_build')));
       await tester.pump();
@@ -949,6 +951,26 @@ void main() {
             .every((s) => s.pieceName.trim().isNotEmpty),
         isTrue,
       );
+      final appliedRow =
+          saved!.rows.singleWhere((r) => r.slotWire == 'primary');
+      expect(appliedRow.state, 'filled');
+      expect(saved!.hasAppliedSubstitutes, isTrue);
+
+      await tester.tap(find.byKey(const Key('fill_in_undo')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+
+      expect(updated, isNotNull);
+      expect(
+        updated!.slots.map((s) => '${s.slot}:${s.pieceName}').toList()..sort(),
+        beforeApply.slots.map((s) => '${s.slot}:${s.pieceName}').toList()
+          ..sort(),
+      );
+      expect(saved!.hasAppliedSubstitutes, isFalse);
+      final undoneRow =
+          saved!.rows.singleWhere((r) => r.slotWire == 'primary');
+      expect(undoneRow.state, 'proposed');
+      expect(undoneRow.itemName, 'Qua Nilus II');
     },
   );
 
