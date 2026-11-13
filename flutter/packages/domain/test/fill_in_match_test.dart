@@ -611,5 +611,48 @@ void main() {
       expect(slot.exceedsCap, isFalse);
       expect(slot.overCapLabel, isNull);
     });
+
+    test(
+      'exotic armor never gets over-cap even with 3 held copies (Briarbinds)',
+      () {
+        // Regression: Gauntlets Briarbinds showed "3/2 More than 2 held, over
+        // cap" because the legendary-set farming cap was applied to exotic
+        // armor (and/or a duplicate legendary need for the same slot).
+        const briarbindsHash = 991001;
+        final inventory = [
+          for (var i = 0; i < 3; i++)
+            exoticArmor(
+              id: 'briar-$i',
+              hash: briarbindsHash,
+              cls: GuardianClass.warlock,
+              slot: EquipmentSlot.arms,
+            ),
+        ];
+        final report = matchFillIn(
+          inventory: inventory,
+          inventoryCap: 2,
+          builds: [
+            build(
+              id: 'b',
+              cls: GuardianClass.warlock,
+              exoticName: 'Briarbinds',
+              slots: const [
+                FillInSlotRequirement(
+                  slot: EquipmentSlot.arms,
+                  isExotic: true,
+                  exoticItemHash: briarbindsHash,
+                ),
+              ],
+            ),
+          ],
+        );
+
+        final slot = report.builds.single.slots.single;
+        expect(slot.poolHeldCount, 3);
+        expect(slot.isHeld, isTrue);
+        expect(slot.exceedsCap, isFalse);
+        expect(slot.overCapLabel, isNull);
+      },
+    );
   });
 }

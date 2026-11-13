@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:test/test.dart';
 
@@ -663,11 +665,299 @@ void main() {
         requirement: requirement,
         inventory: inventory,
         currentLabels: const {EquipmentSlot.arms: 'Needed Arms'},
+        random: Random(1),
       );
 
       expect(diffs.single.wouldSubstitute, isTrue);
       expect(diffs.single.substituteLabel, 'Spare Arms');
       expect(diffs.single.substituteInstanceId, 'a1');
+    });
+
+    test(
+      'weapon substitutes filter by subclass element and note on fallback',
+      () {
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'solar-hc',
+            itemHash: 1,
+            name: 'Zaouli\'s Bane',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Hand Cannon',
+            damageType: 'Solar',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'void-smg',
+            itemHash: 2,
+            name: 'Funnelweb',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Void',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'solar',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.special,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {},
+          random: Random(7),
+        );
+        expect(diffs.single.substituteLabel, "Zaouli's Bane");
+        expect(diffs.single.note, isNull);
+
+        final voidOnly = [
+          inventory[1],
+        ];
+        final fallback = planFillInSubstitutes(
+          match: matchFillIn(inventory: voidOnly, builds: [requirement])
+              .builds
+              .single,
+          requirement: requirement,
+          inventory: voidOnly,
+          currentLabels: const {},
+          random: Random(7),
+        );
+        expect(fallback.single.substituteLabel, 'Funnelweb');
+        expect(fallback.single.note, kFillInWeaponElementFallbackNote);
+      },
+    );
+
+    test(
+      'weapon substitutes prefer opposite range and never share exotic type',
+      () {
+        // Exotic is short-range Sidearm → prefer long-range in Energy.
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'ex',
+            itemHash: 8001,
+            name: 'Barrow-Dyad',
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'short',
+            itemHash: 9001,
+            name: 'Funnelweb',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'long',
+            itemHash: 9002,
+            name: 'Zaouli\'s Bane',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Hand Cannon',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'same-type',
+            itemHash: 9003,
+            name: 'Drang',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'strand',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.primary,
+              isExotic: true,
+              exoticItemHash: 8001,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.special,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        // Many seeds — always Hand Cannon (long), never Sidearm / SMG.
+        for (var seed = 0; seed < 20; seed++) {
+          final diffs = planFillInSubstitutes(
+            match: match,
+            requirement: requirement,
+            inventory: inventory,
+            currentLabels: const {EquipmentSlot.primary: 'Barrow-Dyad'},
+            weaponNeed: const FillInWeaponNeed(
+              name: 'Barrow-Dyad',
+              slot: EquipmentSlot.primary,
+              weaponType: 'Sidearm',
+              damageType: 'Strand',
+            ),
+            random: Random(seed),
+          );
+          final energy =
+              diffs.singleWhere((d) => d.slot == EquipmentSlot.special);
+          expect(energy.substituteLabel, "Zaouli's Bane");
+        }
+      },
+    );
+
+    test(
+      'armor substitutes form 2+2 among four free legendary slots',
+      () {
+        FillInInventoryItem piece({
+          required String id,
+          required EquipmentSlot slot,
+          required int setHash,
+        }) {
+          return FillInInventoryItem(
+            instanceId: id,
+            itemHash: setHash + slot.index,
+            name: 'P-$id',
+            slot: slot,
+            isExotic: false,
+            guardianClass: GuardianClass.warlock,
+            armorSetHash: setHash,
+          );
+        }
+
+        const setA = 100;
+        const setB = 200;
+        final inventory = [
+          piece(id: 'a-h', slot: EquipmentSlot.helmet, setHash: setA),
+          piece(id: 'b-h', slot: EquipmentSlot.helmet, setHash: setB),
+          piece(id: 'a-a', slot: EquipmentSlot.arms, setHash: setA),
+          piece(id: 'b-a', slot: EquipmentSlot.arms, setHash: setB),
+          piece(id: 'a-c', slot: EquipmentSlot.chest, setHash: setA),
+          piece(id: 'b-c', slot: EquipmentSlot.chest, setHash: setB),
+          piece(id: 'a-l', slot: EquipmentSlot.legs, setHash: setA),
+          piece(id: 'b-l', slot: EquipmentSlot.legs, setHash: setB),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'void',
+          slots: [
+            FillInSlotRequirement(slot: EquipmentSlot.helmet, isExotic: false),
+            FillInSlotRequirement(slot: EquipmentSlot.arms, isExotic: false),
+            FillInSlotRequirement(slot: EquipmentSlot.chest, isExotic: false),
+            FillInSlotRequirement(slot: EquipmentSlot.legs, isExotic: false),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {},
+          random: Random(3),
+        );
+        final hashes = <int?>[
+          for (final slot in kFillInTwoPlusTwoSlotOrder)
+            inventory
+                .firstWhere(
+                  (i) =>
+                      i.instanceId ==
+                      diffs
+                          .singleWhere((d) => d.slot == slot)
+                          .substituteInstanceId,
+                )
+                .armorSetHash,
+        ];
+        final counts = <int, int>{};
+        for (final h in hashes) {
+          if (h == null) continue;
+          counts[h] = (counts[h] ?? 0) + 1;
+        }
+        // Either one 4-piece or two 2-piece sets.
+        final values = counts.values.toList()..sort();
+        expect(
+          values,
+          anyOf(equals([4]), equals([2, 2])),
+          reason: 'armor set counts were $counts',
+        );
+      },
+    );
+
+    test('seeded Random is deterministic across calls', () {
+      final inventory = [
+        const FillInInventoryItem(
+          instanceId: 'a',
+          itemHash: 1,
+          name: 'Alpha HC',
+          slot: EquipmentSlot.special,
+          isExotic: false,
+          guardianClass: null,
+          weaponType: 'Hand Cannon',
+          damageType: 'Solar',
+        ),
+        const FillInInventoryItem(
+          instanceId: 'b',
+          itemHash: 2,
+          name: 'Beta Pulse',
+          slot: EquipmentSlot.special,
+          isExotic: false,
+          guardianClass: null,
+          weaponType: 'Pulse Rifle',
+          damageType: 'Solar',
+        ),
+      ];
+      final requirement = const FillInBuildRequirement(
+        buildId: 'b1',
+        guardianClass: GuardianClass.warlock,
+        subclassKey: 'solar',
+        slots: [
+          FillInSlotRequirement(slot: EquipmentSlot.special, isExotic: false),
+        ],
+      );
+      final match = matchFillIn(
+        inventory: inventory,
+        builds: [requirement],
+      ).builds.single;
+
+      String pick(int seed) => planFillInSubstitutes(
+            match: match,
+            requirement: requirement,
+            inventory: inventory,
+            currentLabels: const {},
+            random: Random(seed),
+          ).single.substituteLabel!;
+
+      expect(pick(11), pick(11));
+      final labels = {for (var s = 0; s < 40; s++) pick(s)};
+      expect(labels.length, greaterThan(1), reason: 'seeds should re-roll');
     });
   });
 }

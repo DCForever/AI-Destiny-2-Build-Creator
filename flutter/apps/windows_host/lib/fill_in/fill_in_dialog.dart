@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:flutter/material.dart';
@@ -166,12 +168,20 @@ class _FillInDialogState extends State<FillInDialog> {
       dimLoadout: widget.dimLoadout,
     );
 
-    final diffs = planFillInSubstitutes(
+    var diffs = planFillInSubstitutes(
       match: result,
       requirement: mapped.requirement,
       inventory: mapped.inventory,
       currentLabels: currentLabels,
       weaponNeed: weaponNeed,
+      // Fresh RNG each open → re-roll when there is no saved/applied plan.
+      random: Random(),
+    );
+    // Saved / applied picks stay stable until the user re-runs Fill In.
+    diffs = _stabilizeDiffsFromPlan(
+      diffs: diffs,
+      plan: _plan,
+      inventory: mapped.inventory,
     );
 
     if (!mounted) return;
@@ -700,6 +710,12 @@ class _DiffRow extends StatelessWidget {
                   key: Key('fill_in_similar_pick_${diff.slot.wireName}'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+              if (diff.note != null && diff.note!.trim().isNotEmpty)
+                Text(
+                  diff.note!,
+                  key: Key('fill_in_note_${diff.slot.wireName}'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
             ],
           ),
         ),
@@ -943,6 +959,87 @@ bool _isWirePlaceholderName(String name) {
     if (slot.wireName == lower) return true;
   }
   return false;
+}
+
+/// When a saved/applied plan already names substitutes, keep those picks
+/// instead of the fresh random roll from [planFillInSubstitutes].
+List<FillInSlotDiff> _stabilizeDiffsFromPlan({
+  required List<FillInSlotDiff> diffs,
+  required FillInSavedBuildPlan? plan,
+  required List<FillInInventoryItem> inventory,
+}) {
+  if (plan == null) return diffs;
+  final byWire = <String, ({String label, String? instanceId, int? itemHash})>{};
+  for (final row in plan.rows) {
+    if (row.state != 'proposed' && row.state != 'filled') continue;
+    final name = row.itemName.trim();
+    if (name.isEmpty) continue;
+    byWire[row.slotWire] = (label: name, instanceId: null, itemHash: null);
+  }
+  for (final applied in plan.applied) {
+    final name = applied.label.trim();
+    if (name.isEmpty &&
+        (applied.instanceId == null || applied.instanceId!.trim().isEmpty)) {
+      continue;
+    }
+    byWire[applied.slotWire] = (
+      label: name.isNotEmpty
+          ? name
+          : (byWire[applied.slotWire]?.label ?? ''),
+      instanceId: applied.instanceId,
+      itemHash: applied.itemHash,
+    );
+  }
+  if (byWire.isEmpty) return diffs;
+
+  final out = <FillInSlotDiff>[];
+  for (final diff in diffs) {
+    final saved = byWire[diff.slot.wireName];
+    if (diff.isHeld || saved == null) {
+      out.add(diff);
+      continue;
+    }
+    final label = saved.label.trim().isNotEmpty
+        ? saved.label.trim()
+        : (diff.substituteLabel ?? '');
+    if (label.isEmpty && saved.instanceId == null) {
+      out.add(diff);
+      continue;
+    }
+    FillInInventoryItem? invMatch;
+    final savedId = saved.instanceId?.trim() ?? '';
+    if (savedId.isNotEmpty) {
+      for (final item in inventory) {
+        if (item.instanceId == savedId) {
+          invMatch = item;
+          break;
+        }
+      }
+    }
+    if (invMatch == null && label.isNotEmpty) {
+      final want = label.toLowerCase();
+      for (final item in inventory) {
+        if (item.slot != diff.slot) continue;
+        if ((item.name ?? '').trim().toLowerCase() == want) {
+          invMatch = item;
+          break;
+        }
+      }
+    }
+    out.add(
+      FillInSlotDiff(
+        slot: diff.slot,
+        currentLabel: diff.currentLabel,
+        isHeld: false,
+        isExotic: diff.isExotic,
+        substituteLabel: label.isNotEmpty ? label : invMatch?.name,
+        substituteInstanceId: saved.instanceId ?? invMatch?.instanceId,
+        substituteItemHash: saved.itemHash ?? invMatch?.itemHash,
+        note: diff.note,
+      ),
+    );
+  }
+  return List<FillInSlotDiff>.unmodifiable(out);
 }
 
 /// Deep-ish copy used for Apply/Undo baselines (exact row list restore).

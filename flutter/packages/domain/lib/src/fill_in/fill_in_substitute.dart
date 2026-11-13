@@ -1,11 +1,18 @@
+import 'dart:math';
+
 import '../models/equipment.dart';
 import 'fill_in_inventory.dart';
 import 'fill_in_requirement.dart';
 import 'fill_in_result.dart';
 import 'fill_in_similar_weapon.dart';
+import 'fill_in_two_plus_two.dart';
 
 /// Display when a weapon combat slot has no known piece from the DIM link.
 const String kFillInNoWeaponInDimLink = 'No weapon in DIM link';
+
+/// Note when no held weapon matched the subclass element filter.
+const String kFillInWeaponElementFallbackNote =
+    'No subclass-element match; any held in bucket';
 
 /// One slot's Fill In preview: current build label → proposed substitute.
 ///
@@ -22,6 +29,7 @@ class FillInSlotDiff {
     this.substituteItemHash,
     this.heldInstanceId,
     this.heldItemHash,
+    this.note,
   });
 
   final EquipmentSlot slot;
@@ -45,6 +53,9 @@ class FillInSlotDiff {
   final String? heldInstanceId;
   final int? heldItemHash;
 
+  /// Optional review note (e.g. element-filter fallback).
+  final String? note;
+
   /// True when Apply to build would change the slot label.
   bool get wouldSubstitute =>
       substituteLabel != null &&
@@ -64,25 +75,27 @@ class FillInSlotDiff {
 
 /// Build current→substitute diffs from a Fill In match + inventory.
 ///
-/// - Held slots: keep current label (or held item name when current is blank);
-///   pin the held instance for equip.
-/// - Missing weapon slots: pick a similar held weapon in the **same** bucket
-///   for every empty/unowned row (damage + type when known; bucket-only when
-///   the row is blank / "No weapon in DIM link"). At most one exotic weapon
-///   across all picks (zero extra when the build already has one).
-/// - Missing armor slots: pick a held copy in the same slot + class
-///   (prefer same [FillInSlotRequirement.armorSetHash] when set).
+/// - Held / DIM-owned slots: keep current label; never replace.
+/// - Missing weapon slots: random held pick in the same bucket, filtered by
+///   subclass element (any for Prismatic/unknown), excluding the exotic
+///   weapon's type and duplicate substitute types, preferring the opposite
+///   range class. At most one exotic weapon across all picks.
+/// - Missing armor (helmet/arms/chest/legs): random legendary picks that form
+///   a 4-piece set or two 2-piece sets (exotic slot is set-neutral). Class
+///   Item is independent; exotic armor never lands on Class Item.
 ///
-/// [weaponNeed] supplies damage/type for the exotic weapon's own slot when the
-/// host knows them; other weapon rows derive a need from inventory name match
-/// or fall back to slot-only.
+/// Pass a seeded [random] for deterministic tests. Production hosts should
+/// pass a fresh [Random] each dialog open so picks re-roll when there is no
+/// saved plan.
 List<FillInSlotDiff> planFillInSubstitutes({
   required FillInBuildResult match,
   required FillInBuildRequirement requirement,
   required Iterable<FillInInventoryItem> inventory,
   required Map<EquipmentSlot, String> currentLabels,
   FillInWeaponNeed? weaponNeed,
+  Random? random,
 }) {
+  final rng = random ?? Random();
   final inv = inventory.toList(growable: false);
   final needBySlot = <EquipmentSlot, FillInSlotRequirement>{
     for (final s in requirement.slots) s.slot: s,
@@ -91,10 +104,7 @@ List<FillInSlotDiff> planFillInSubstitutes({
     for (final s in requirement.slots)
       if (s.isExotic && _isWeaponSlot(s.slot)) s.slot,
   };
-  // Bungie allows one exotic weapon. Track held/picked exotics so empty
-  // builds cannot fill multiple weapon buckets with exotics.
-  // Pre-scan every held weapon: the requirement *or* the held inventory
-  // match itself may be exotic (a legendary need can still hold an exotic).
+
   var usedExoticWeapon = false;
   for (final slotMatch in match.slots) {
     if (!slotMatch.isHeld) continue;
@@ -115,12 +125,37 @@ List<FillInSlotDiff> planFillInSubstitutes({
       break;
     }
   }
-  final diffs = <FillInSlotDiff>[];
 
-  for (final slotMatch in match.slots) {
+  final exoticWeaponType = _resolveExoticWeaponType(
+    requirement: requirement,
+    inventory: inv,
+    currentLabels: currentLabels,
+    weaponNeed: weaponNeed,
+  );
+  final preferredRange = fillInOppositeWeaponRange(
+    fillInWeaponRangeClass(exoticWeaponType),
+  );
+  final subclassDamage = fillInDamageTypeForSubclass(requirement.subclassKey);
+  final usedWeaponTypes = <String>{
+    if (exoticWeaponType != null && exoticWeaponType.trim().isNotEmpty)
+      exoticWeaponType.trim().toLowerCase(),
+  };
+
+  final armorPicks = _planArmorSetSubstitutes(
+    match: match,
+    requirement: requirement,
+    inventory: inv,
+    needBySlot: needBySlot,
+    random: rng,
+  );
+
+  final diffs = <FillInSlotDiff>[];
+  final orderedMatches = _dedupeSlotMatches(match, requirement);
+
+  for (final slotMatch in orderedMatches) {
     final slot = slotMatch.slot;
     final current = (currentLabels[slot] ?? '').trim();
-    final need = needBySlot[slot];
+    final need = _preferredNeed(needBySlot, requirement.slots, slot);
     final isExotic = need?.isExotic ?? false;
     final displayCurrent = _displayCurrentLabel(slot, current);
 
@@ -138,6 +173,10 @@ List<FillInSlotDiff> planFillInSubstitutes({
       if (_isWeaponSlot(slot) && (held?.isExotic ?? isExotic)) {
         usedExoticWeapon = true;
       }
+      final heldType = (held?.weaponType ?? '').trim().toLowerCase();
+      if (_isWeaponSlot(slot) && heldType.isNotEmpty) {
+        usedWeaponTypes.add(heldType);
+      }
       diffs.add(
         FillInSlotDiff(
           slot: slot,
@@ -151,24 +190,27 @@ List<FillInSlotDiff> planFillInSubstitutes({
       continue;
     }
 
-    // Missing — propose a substitute when possible.
     if (_isWeaponSlot(slot)) {
       final excludeExotic = _shouldExcludeExoticWeapon(
         forSlot: slot,
         exoticWeaponSlots: exoticWeaponSlots,
         alreadyUsedExoticWeapon: usedExoticWeapon,
       );
-      final similar = _suggestWeaponForMissingSlot(
+      final pick = _pickWeaponSubstitute(
         slot: slot,
-        currentLabel: current,
         inventory: inv,
-        weaponNeed: weaponNeed,
+        subclassDamage: subclassDamage,
+        usedWeaponTypes: usedWeaponTypes,
+        preferredRange: preferredRange,
         excludeExotic: excludeExotic,
+        random: rng,
       );
-      final item = similar?.item;
+      final item = pick.item;
       if (item != null && item.isExotic) {
         usedExoticWeapon = true;
       }
+      final type = (item?.weaponType ?? '').trim().toLowerCase();
+      if (type.isNotEmpty) usedWeaponTypes.add(type);
       diffs.add(
         FillInSlotDiff(
           slot: slot,
@@ -178,16 +220,35 @@ List<FillInSlotDiff> planFillInSubstitutes({
           substituteLabel: item?.name,
           substituteInstanceId: item?.instanceId,
           substituteItemHash: item?.itemHash,
+          note: pick.note,
         ),
       );
       continue;
     }
 
-    final armorSub = _suggestArmorSubstitute(
+    if (kFillInTwoPlusTwoSlotOrder.contains(slot)) {
+      final armor = armorPicks[slot];
+      diffs.add(
+        FillInSlotDiff(
+          slot: slot,
+          currentLabel: displayCurrent,
+          isHeld: false,
+          isExotic: isExotic,
+          substituteLabel: armor?.name,
+          substituteInstanceId: armor?.instanceId,
+          substituteItemHash: armor?.itemHash,
+        ),
+      );
+      continue;
+    }
+
+    // Class Item / exoticArmor pad — independent of set rule.
+    final armorSub = _suggestClassItemOrExoticArmor(
       inventory: inv,
       guardianClass: requirement.guardianClass,
       need: need,
       slot: slot,
+      random: rng,
     );
     diffs.add(
       FillInSlotDiff(
@@ -205,11 +266,54 @@ List<FillInSlotDiff> planFillInSubstitutes({
   return List<FillInSlotDiff>.unmodifiable(diffs);
 }
 
-/// At most one exotic weapon across the whole plan.
+/// One row per equipment slot; when duplicates exist prefer the exotic need's
+/// match (guards against 2+2 + exotic race until the mapper drops the legend).
 ///
-/// - Build already names an exotic on a *different* slot → exclude.
-/// - An exotic is already held or picked for another weapon row → exclude.
-/// - This row is the build's exotic weapon slot and none used yet → allow.
+/// [FillInBuildResult.slots] is built in the same order as
+/// [FillInBuildRequirement.slots], so indices align.
+List<FillInSlotMatch> _dedupeSlotMatches(
+  FillInBuildResult match,
+  FillInBuildRequirement requirement,
+) {
+  if (match.slots.length != requirement.slots.length) {
+    final seen = <EquipmentSlot>{};
+    return [
+      for (final s in match.slots)
+        if (seen.add(s.slot)) s,
+    ];
+  }
+  final chosenIndex = <EquipmentSlot, int>{};
+  for (var i = 0; i < requirement.slots.length; i++) {
+    final need = requirement.slots[i];
+    final prev = chosenIndex[need.slot];
+    if (prev == null || need.isExotic) {
+      chosenIndex[need.slot] = i;
+    }
+  }
+  final seen = <EquipmentSlot>{};
+  return [
+    for (var i = 0; i < requirement.slots.length; i++)
+      if (chosenIndex[requirement.slots[i].slot] == i &&
+          seen.add(requirement.slots[i].slot))
+        match.slots[i],
+  ];
+}
+
+FillInSlotRequirement? _preferredNeed(
+  Map<EquipmentSlot, FillInSlotRequirement> bySlot,
+  List<FillInSlotRequirement> all,
+  EquipmentSlot slot,
+) {
+  FillInSlotRequirement? exotic;
+  FillInSlotRequirement? any;
+  for (final need in all) {
+    if (need.slot != slot) continue;
+    any ??= need;
+    if (need.isExotic) exotic = need;
+  }
+  return exotic ?? any ?? bySlot[slot];
+}
+
 bool _shouldExcludeExoticWeapon({
   required EquipmentSlot forSlot,
   required Set<EquipmentSlot> exoticWeaponSlots,
@@ -222,61 +326,411 @@ bool _shouldExcludeExoticWeapon({
   return false;
 }
 
-FillInSimilarWeapon? _suggestWeaponForMissingSlot({
-  required EquipmentSlot slot,
-  required String currentLabel,
+String? _resolveExoticWeaponType({
+  required FillInBuildRequirement requirement,
   required List<FillInInventoryItem> inventory,
+  required Map<EquipmentSlot, String> currentLabels,
   required FillInWeaponNeed? weaponNeed,
-  required bool excludeExotic,
 }) {
-  // Prefer host-provided exotic need attrs when this is that slot.
-  if (weaponNeed != null && weaponNeed.slot == slot) {
-    return suggestSimilarWeapon(
-      need: weaponNeed,
-      heldWeapons: inventory,
-      excludeExotic: excludeExotic,
-    );
+  if (weaponNeed != null && weaponNeed.weaponType.trim().isNotEmpty) {
+    return weaponNeed.weaponType.trim();
   }
+  for (final need in requirement.slots) {
+    if (!need.isExotic || !_isWeaponSlot(need.slot)) continue;
+    final label = (currentLabels[need.slot] ?? '').trim().toLowerCase();
+    if (need.exoticItemHash != null) {
+      for (final item in inventory) {
+        if (item.itemHash == need.exoticItemHash &&
+            (item.weaponType ?? '').trim().isNotEmpty) {
+          return item.weaponType!.trim();
+        }
+      }
+    }
+    if (label.isNotEmpty) {
+      for (final item in inventory) {
+        if ((item.name ?? '').trim().toLowerCase() != label) continue;
+        if ((item.weaponType ?? '').trim().isNotEmpty) {
+          return item.weaponType!.trim();
+        }
+      }
+    }
+  }
+  return null;
+}
 
-  // Derive damage/type from a held inventory row with the same display name.
-  final wantName = currentLabel.trim().toLowerCase();
-  if (wantName.isNotEmpty &&
-      wantName != kFillInNoWeaponInDimLink.toLowerCase() &&
-      !_isWireName(wantName)) {
-    for (final item in inventory) {
-      if (!_isWeaponSlot(item.slot)) continue;
-      if ((item.name ?? '').trim().toLowerCase() != wantName) continue;
-      final type = (item.weaponType ?? '').trim();
-      final damage = (item.damageType ?? '').trim();
-      return suggestSimilarWeapon(
-        need: FillInWeaponNeed(
-          name: currentLabel.trim(),
-          slot: slot,
-          weaponType: type,
-          damageType: damage,
-        ),
-        heldWeapons: inventory,
-        excludeExotic: excludeExotic,
-      );
+class _WeaponPick {
+  const _WeaponPick({this.item, this.note});
+  final FillInInventoryItem? item;
+  final String? note;
+}
+
+_WeaponPick _pickWeaponSubstitute({
+  required EquipmentSlot slot,
+  required List<FillInInventoryItem> inventory,
+  required String? subclassDamage,
+  required Set<String> usedWeaponTypes,
+  required FillInWeaponRangeClass? preferredRange,
+  required bool excludeExotic,
+  required Random random,
+}) {
+  final bucket = <FillInInventoryItem>[
+    for (final item in inventory)
+      if (_isWeaponSlot(item.slot) &&
+          item.slot == slot &&
+          !(excludeExotic && item.isExotic) &&
+          _hasRealWeaponName(item))
+        item,
+  ];
+  if (bucket.isEmpty) return const _WeaponPick();
+
+  String? note;
+  var pool = bucket;
+  if (subclassDamage != null) {
+    final want = subclassDamage.toLowerCase();
+    final matched = [
+      for (final item in bucket)
+        if ((item.damageType ?? '').trim().toLowerCase() == want) item,
+    ];
+    if (matched.isNotEmpty) {
+      pool = matched;
+    } else {
+      note = kFillInWeaponElementFallbackNote;
     }
   }
 
-  // Empty / "No weapon in DIM link" — same-bucket held pick (slot-only).
-  return suggestSimilarWeapon(
-    need: FillInWeaponNeed(
-      slot: slot,
-      weaponType: '',
-      damageType: '',
-      name: currentLabel.trim().isEmpty ? null : currentLabel.trim(),
-    ),
-    heldWeapons: inventory,
-    excludeExotic: excludeExotic,
-  );
+  final typed = _filterDistinctTypes(pool, usedWeaponTypes);
+  final candidates = typed.isNotEmpty ? typed : pool;
+
+  List<FillInInventoryItem> ranged = candidates;
+  if (preferredRange != null) {
+    final opposite = [
+      for (final item in candidates)
+        if (fillInWeaponRangeClass(item.weaponType) == preferredRange) item,
+    ];
+    if (opposite.isNotEmpty) ranged = opposite;
+  }
+
+  final pick = ranged[random.nextInt(ranged.length)];
+  return _WeaponPick(item: pick, note: note);
 }
 
-/// Never surface equipment wire names (`primary` / `helmet` / …) as item
-/// labels. Empty weapon rows use [kFillInNoWeaponInDimLink]; empty armor rows
-/// stay blank (display-only — never saved as pieceName).
+List<FillInInventoryItem> _filterDistinctTypes(
+  List<FillInInventoryItem> pool,
+  Set<String> usedWeaponTypes,
+) {
+  return [
+    for (final item in pool)
+      if (!_typeBlocked(item, usedWeaponTypes)) item,
+  ];
+}
+
+bool _typeBlocked(FillInInventoryItem item, Set<String> usedWeaponTypes) {
+  final type = (item.weaponType ?? '').trim().toLowerCase();
+  if (type.isEmpty) return false;
+  return usedWeaponTypes.contains(type);
+}
+
+bool _hasRealWeaponName(FillInInventoryItem item) {
+  final name = (item.name ?? '').trim();
+  if (name.isEmpty) return false;
+  if (name == kFillInNoWeaponInDimLink) return false;
+  return !_isWireName(name.toLowerCase());
+}
+
+/// Armor set rule for helmet/arms/chest/legs (class item excluded).
+///
+/// Held / DIM pieces stay. Exotic armor counts as no set. Remaining free
+/// slots are filled so the four form either one 4-piece set or two 2-piece
+/// sets. With an exotic occupying one slot, the other three form a 2-piece
+/// plus one leftover (leftover prefers the same set as the 2-piece when held
+/// inventory allows).
+Map<EquipmentSlot, FillInInventoryItem?> _planArmorSetSubstitutes({
+  required FillInBuildResult match,
+  required FillInBuildRequirement requirement,
+  required List<FillInInventoryItem> inventory,
+  required Map<EquipmentSlot, FillInSlotRequirement> needBySlot,
+  required Random random,
+}) {
+  final heldBySlot = <EquipmentSlot, FillInInventoryItem?>{};
+  final lockedSetBySlot = <EquipmentSlot, int?>{};
+  EquipmentSlot? exoticSlot;
+
+  for (final slot in kFillInTwoPlusTwoSlotOrder) {
+    final need = _preferredNeed(needBySlot, requirement.slots, slot);
+    final isHeld = match.slots.any((s) => s.slot == slot && s.isHeld);
+    if (need != null && need.isExotic) {
+      exoticSlot = slot;
+      if (isHeld) {
+        heldBySlot[slot] = _findHeldMatch(
+          inventory: inventory,
+          guardianClass: requirement.guardianClass,
+          need: need,
+          currentLabel: '',
+        );
+      }
+      lockedSetBySlot[slot] = null; // set-neutral
+      continue;
+    }
+    if (isHeld) {
+      final held = _findHeldMatch(
+        inventory: inventory,
+        guardianClass: requirement.guardianClass,
+        need: need,
+        currentLabel: '',
+      );
+      heldBySlot[slot] = held;
+      lockedSetBySlot[slot] = held?.armorSetHash;
+    }
+  }
+
+  final freeSlots = [
+    for (final slot in kFillInTwoPlusTwoSlotOrder)
+      if (!heldBySlot.containsKey(slot) && slot != exoticSlot) slot,
+  ];
+  final picks = <EquipmentSlot, FillInInventoryItem?>{
+    for (final e in heldBySlot.entries) e.key: e.value,
+  };
+
+  if (freeSlots.isEmpty) return picks;
+
+  final lockedSets = <int>[
+    for (final h in lockedSetBySlot.values)
+      if (h != null) h,
+  ];
+
+  final legendaryBySlot = <EquipmentSlot, List<FillInInventoryItem>>{};
+  for (final slot in freeSlots) {
+    legendaryBySlot[slot] = [
+      for (final item in inventory)
+        if (!item.isExotic &&
+            item.guardianClass == requirement.guardianClass &&
+            item.slot == slot &&
+            item.armorSetHash != null &&
+            (item.name ?? '').trim().isNotEmpty)
+          item,
+    ];
+  }
+
+  // With exotic: need 2-piece + leftover among the (up to) 3 non-exotic slots.
+  if (exoticSlot != null) {
+    _assignWithExotic(
+      freeSlots: freeSlots,
+      lockedSets: lockedSets,
+      legendaryBySlot: legendaryBySlot,
+      picks: picks,
+      random: random,
+    );
+    return picks;
+  }
+
+  _assignFourPieceOrTwoPlusTwo(
+    freeSlots: freeSlots,
+    lockedSets: lockedSets,
+    legendaryBySlot: legendaryBySlot,
+    picks: picks,
+    random: random,
+  );
+  return picks;
+}
+
+void _assignWithExotic({
+  required List<EquipmentSlot> freeSlots,
+  required List<int> lockedSets,
+  required Map<EquipmentSlot, List<FillInInventoryItem>> legendaryBySlot,
+  required Map<EquipmentSlot, FillInInventoryItem?> picks,
+  required Random random,
+}) {
+  // Count locked legendary sets among non-exotic held slots.
+  final setCounts = <int, int>{};
+  for (final h in lockedSets) {
+    setCounts[h] = (setCounts[h] ?? 0) + 1;
+  }
+
+  // Prefer completing a 2-piece for an already-held set.
+  int? pairSet;
+  for (final entry in setCounts.entries) {
+    if (entry.value == 1) {
+      pairSet = entry.key;
+      break;
+    }
+  }
+  pairSet ??= setCounts.isEmpty ? null : setCounts.keys.first;
+
+  if (pairSet != null) {
+    final needPair = 2 - (setCounts[pairSet] ?? 0);
+    var paired = 0;
+    for (final slot in freeSlots) {
+      if (paired >= needPair) break;
+      final pool = [
+        for (final item in legendaryBySlot[slot] ?? const <FillInInventoryItem>[])
+          if (item.armorSetHash == pairSet) item,
+      ];
+      if (pool.isEmpty) continue;
+      picks[slot] = pool[random.nextInt(pool.length)];
+      paired += 1;
+    }
+  }
+
+  // Leftover free slots: prefer same set as the pair when possible.
+  for (final slot in freeSlots) {
+    if (picks.containsKey(slot)) continue;
+    final prefer = pairSet;
+    final preferred = prefer == null
+        ? const <FillInInventoryItem>[]
+        : [
+            for (final item
+                in legendaryBySlot[slot] ?? const <FillInInventoryItem>[])
+              if (item.armorSetHash == prefer) item,
+          ];
+    final pool = preferred.isNotEmpty
+        ? preferred
+        : (legendaryBySlot[slot] ?? const <FillInInventoryItem>[]);
+    if (pool.isEmpty) {
+      picks[slot] = null;
+      continue;
+    }
+    picks[slot] = pool[random.nextInt(pool.length)];
+  }
+}
+
+void _assignFourPieceOrTwoPlusTwo({
+  required List<EquipmentSlot> freeSlots,
+  required List<int> lockedSets,
+  required Map<EquipmentSlot, List<FillInInventoryItem>> legendaryBySlot,
+  required Map<EquipmentSlot, FillInInventoryItem?> picks,
+  required Random random,
+}) {
+  final setCounts = <int, int>{};
+  for (final h in lockedSets) {
+    setCounts[h] = (setCounts[h] ?? 0) + 1;
+  }
+
+  // Try 4-piece when a held set can be completed, else 2+2.
+  int? fourSet;
+  for (final entry in setCounts.entries) {
+    if (entry.value >= 1 && entry.value < 4) {
+      fourSet = entry.key;
+      break;
+    }
+  }
+
+  if (fourSet != null && freeSlots.length + (setCounts[fourSet] ?? 0) >= 4) {
+    var ok = true;
+    final trial = <EquipmentSlot, FillInInventoryItem>{};
+    for (final slot in freeSlots) {
+      final pool = [
+        for (final item in legendaryBySlot[slot] ?? const <FillInInventoryItem>[])
+          if (item.armorSetHash == fourSet) item,
+      ];
+      if (pool.isEmpty) {
+        ok = false;
+        break;
+      }
+      trial[slot] = pool[random.nextInt(pool.length)];
+    }
+    if (ok) {
+      picks.addAll(trial);
+      return;
+    }
+  }
+
+  // 2+2: pick two set hashes and assign.
+  final availableSets = <int>{
+    for (final slot in freeSlots)
+      for (final item in legendaryBySlot[slot] ?? const <FillInInventoryItem>[])
+        if (item.armorSetHash != null) item.armorSetHash!,
+    ...setCounts.keys,
+  }.toList()
+    ..sort();
+
+  int? first = setCounts.keys.isEmpty ? null : setCounts.keys.first;
+  int? second;
+  for (final s in availableSets) {
+    if (s != first) {
+      second = s;
+      break;
+    }
+  }
+  first ??= availableSets.isEmpty ? null : availableSets.first;
+  if (first != null && second == null && availableSets.length > 1) {
+    second = availableSets[1];
+  }
+
+  // Walk free slots: fill first set to 2, then second to 2, then leftovers.
+  var needFirst = 2 - (setCounts[first] ?? 0);
+  var needSecond = second == null ? 0 : 2 - (setCounts[second] ?? 0);
+  if (needFirst < 0) needFirst = 0;
+  if (needSecond < 0) needSecond = 0;
+
+  for (final slot in freeSlots) {
+    final items = legendaryBySlot[slot] ?? const <FillInInventoryItem>[];
+    if (items.isEmpty) {
+      picks[slot] = null;
+      continue;
+    }
+    FillInInventoryItem? chosen;
+    if (needFirst > 0 && first != null) {
+      final pool = [for (final i in items) if (i.armorSetHash == first) i];
+      if (pool.isNotEmpty) {
+        chosen = pool[random.nextInt(pool.length)];
+        needFirst -= 1;
+      }
+    }
+    if (chosen == null && needSecond > 0 && second != null) {
+      final pool = [for (final i in items) if (i.armorSetHash == second) i];
+      if (pool.isNotEmpty) {
+        chosen = pool[random.nextInt(pool.length)];
+        needSecond -= 1;
+      }
+    }
+    chosen ??= items[random.nextInt(items.length)];
+    picks[slot] = chosen;
+  }
+}
+
+FillInInventoryItem? _suggestClassItemOrExoticArmor({
+  required List<FillInInventoryItem> inventory,
+  required GuardianClass guardianClass,
+  required FillInSlotRequirement? need,
+  required EquipmentSlot slot,
+  required Random random,
+}) {
+  if (need != null && need.isExotic) {
+    // Exotic armor never on Class Item — only exact exotic hash match.
+    if (slot == EquipmentSlot.classItem) return null;
+    final wantHash = need.exoticItemHash;
+    if (wantHash == null) return null;
+    final pool = [
+      for (final item in inventory)
+        if (item.isExotic &&
+            item.guardianClass == guardianClass &&
+            item.itemHash == wantHash &&
+            (slot == EquipmentSlot.exoticArmor || item.slot == slot))
+          item,
+    ];
+    if (pool.isEmpty) return null;
+    return pool[random.nextInt(pool.length)];
+  }
+
+  final pool = [
+    for (final item in inventory)
+      if (!item.isExotic &&
+          item.guardianClass == guardianClass &&
+          item.slot == slot &&
+          (item.name ?? '').trim().isNotEmpty)
+        item,
+  ];
+  if (pool.isEmpty) return null;
+  if (need?.armorSetHash != null) {
+    final same = [
+      for (final item in pool)
+        if (item.armorSetHash == need!.armorSetHash) item,
+    ];
+    if (same.isNotEmpty) return same[random.nextInt(same.length)];
+  }
+  return pool[random.nextInt(pool.length)];
+}
+
 String _displayCurrentLabel(EquipmentSlot slot, String current) {
   if (current.isNotEmpty) {
     final lower = current.toLowerCase();
@@ -320,46 +774,6 @@ FillInInventoryItem? _findHeldMatch({
     }
   }
   return byName ?? byNeed;
-}
-
-FillInInventoryItem? _suggestArmorSubstitute({
-  required List<FillInInventoryItem> inventory,
-  required GuardianClass guardianClass,
-  required FillInSlotRequirement? need,
-  required EquipmentSlot slot,
-}) {
-  // Exotic needs never fall back to a legendary cover.
-  if (need != null && need.isExotic) {
-    final wantHash = need.exoticItemHash;
-    if (wantHash == null) return null;
-    for (final item in inventory) {
-      if (!item.isExotic) continue;
-      if (item.guardianClass != guardianClass) continue;
-      if (item.itemHash != wantHash) continue;
-      if (slot == EquipmentSlot.exoticArmor || item.slot == slot) {
-        return item;
-      }
-    }
-    return null;
-  }
-
-  FillInInventoryItem? sameSet;
-  FillInInventoryItem? anySlot;
-
-  for (final item in inventory) {
-    if (item.slot != slot) continue;
-    if (item.guardianClass != guardianClass) continue;
-    if (_isWeaponSlot(item.slot)) continue;
-    if (item.isExotic) continue;
-
-    anySlot ??= item;
-    if (need != null &&
-        need.armorSetHash != null &&
-        item.armorSetHash == need.armorSetHash) {
-      sameSet ??= item;
-    }
-  }
-  return sameSet ?? anySlot;
 }
 
 bool _matchesNeed(
