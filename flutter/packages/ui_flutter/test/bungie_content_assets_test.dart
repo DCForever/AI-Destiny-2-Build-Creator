@@ -3,6 +3,83 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('BungieContentIcon.resolveUrl allowlist', () {
+    test('accepts relative paths and https://www.bungie.net absolute URLs', () {
+      expect(
+        BungieContentIcon.resolveUrl(
+          '/common/destiny2_content/icons/abc.png',
+        ),
+        'https://www.bungie.net/common/destiny2_content/icons/abc.png',
+      );
+      expect(
+        BungieContentIcon.resolveUrl('common/destiny2_content/icons/abc.png'),
+        'https://www.bungie.net/common/destiny2_content/icons/abc.png',
+      );
+      expect(
+        BungieContentIcon.resolveUrl(
+          'https://www.bungie.net/common/destiny2_content/icons/abc.png',
+        ),
+        'https://www.bungie.net/common/destiny2_content/icons/abc.png',
+      );
+      expect(
+        BungieContentIcon.resolveUrl(
+          'HTTPS://WWW.BUNGIE.NET/common/destiny2_content/icons/abc.png',
+        ),
+        'https://www.bungie.net/common/destiny2_content/icons/abc.png',
+      );
+    });
+
+    test('rejects hostile absolute / scheme / host inputs', () {
+      const hostile = <String>[
+        'https://evil.example/x.png',
+        'http://www.bungie.net/common/destiny2_content/icons/abc.png',
+        'http://evil.example/x.png',
+        'https://bungie.net/common/destiny2_content/icons/abc.png',
+        'https://cdn.bungie.net/common/destiny2_content/icons/abc.png',
+        'https://www.bungie.net.evil.example/x.png',
+        'https://www.bungie.net@evil.example/x.png',
+        'https://user@www.bungie.net/common/x.png',
+        'https://www.bungie.net:8443/common/x.png',
+        '//evil.example/x.png',
+        'data:image/png;base64,aaaa',
+        'file:///tmp/x.png',
+        'ftp://www.bungie.net/x.png',
+      ];
+      for (final input in hostile) {
+        expect(
+          BungieContentIcon.resolveUrl(input),
+          isNull,
+          reason: 'expected null for $input',
+        );
+      }
+      expect(BungieContentIcon.resolveUrl(null), isNull);
+      expect(BungieContentIcon.resolveUrl(''), isNull);
+      expect(BungieContentIcon.resolveUrl('   '), isNull);
+    });
+
+    testWidgets('hostile absolute URL never builds Image.network', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: BungieContentIcon(
+              pathOrUrl: 'https://evil.example/x.png',
+              size: 24,
+              fallback: ColoredBox(
+                key: Key('bungie_icon_hostile_fallback'),
+                color: Color(0xFF123456),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(Image), findsNothing);
+      expect(find.byKey(const Key('bungie_icon_hostile_fallback')), findsOneWidget);
+      final images = tester.widgetList<Image>(find.byType(Image));
+      expect(images.any((i) => i.image is NetworkImage), isFalse);
+    });
+  });
+
   group('bungieContentPackageAsset', () {
     test('resolves shipped damage-type basename', () {
       const path =

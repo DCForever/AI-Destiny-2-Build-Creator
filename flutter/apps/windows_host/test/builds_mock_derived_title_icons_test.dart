@@ -113,6 +113,39 @@ void main() {
   });
 
   testWidgets(
+    'hostile superIconPath never hits network Image; shows BungieContentIcon fallback',
+    (tester) async {
+      await pumpTitle(
+        tester,
+        derived: name,
+        // Only Super is hostile — keep other segments empty so the tree has
+        // no unrelated AssetImage→errorBuilder→NetworkImage noise.
+        superIconPath: 'https://evil.example/x.png',
+      );
+
+      final superFinder = find.byKey(const Key('builds_mock_title_super_icon'));
+      expect(superFinder, findsOneWidget);
+      expect(
+        BungieContentIcon.resolveUrl('https://evil.example/x.png'),
+        isNull,
+      );
+      // resolveUrl rejected → default DecoratedBox fallback, never Image.network.
+      expect(
+        find.descendant(of: superFinder, matching: find.byType(Image)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: superFinder, matching: find.byType(DecoratedBox)),
+        findsWidgets,
+      );
+      final superImages = tester.widgetList<Image>(
+        find.descendant(of: superFinder, matching: find.byType(Image)),
+      );
+      expect(superImages.any((i) => i.image is NetworkImage), isFalse);
+    },
+  );
+
+  testWidgets(
     'loadout card name line uses icons; exotic boxes keep name beside icon',
     (tester) async {
       const build = MockBuild(
