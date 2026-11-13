@@ -343,7 +343,8 @@ void main() {
     );
     expect(find.byKey(const Key('fill_in_diff_special')), findsOneWidget);
     expect(find.byKey(const Key('fill_in_similar_weapon')), findsOneWidget);
-    expect(find.textContaining("Zaouli's Bane"), findsWidgets);
+    // Diff row ("Sunshot → Zaouli's Bane") + Similar line both show the name.
+    expect(find.textContaining("Zaouli's Bane"), findsNWidgets(2));
   });
 
   testWidgets('Save missing list calls saver with missing labels',

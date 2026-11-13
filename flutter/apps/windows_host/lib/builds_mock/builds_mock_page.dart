@@ -67,6 +67,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       <String, ApplyToCharacterProgress>{};
   final Map<String, String> _applyErrorByBuild = <String, String>{};
   String? _applyingBuildId;
+  String? _applyTargetLabel;
 
   @override
   void initState() {
@@ -84,6 +85,16 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       _loadDimLoadouts(root);
       _loadFillInPlans(root);
     }
+    _refreshApplyTargetLabel();
+  }
+
+  BuildsMockApplyPorts get _applyPorts =>
+      widget.applyPorts ?? BuildsMockApplyPorts(services: widget.services);
+
+  Future<void> _refreshApplyTargetLabel() async {
+    final label = await resolveBuildsMockApplyTargetLabel(_applyPorts);
+    if (!mounted) return;
+    setState(() => _applyTargetLabel = label);
   }
 
   Future<void> _loadFillInPlans(StorageRoot root) async {
@@ -125,8 +136,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
 
   Future<void> _applyToCharacter(MockBuild build) async {
     if (_applyingBuildId != null) return;
-    final ports = widget.applyPorts ??
-        BuildsMockApplyPorts(services: widget.services);
+    final ports = _applyPorts;
 
     setState(() {
       _applyingBuildId = build.id;
@@ -154,6 +164,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
         _applyErrorByBuild[build.id] = outcome.error!;
       }
     });
+    // Refresh label in case memberships/characters changed mid-session.
+    await _refreshApplyTargetLabel();
   }
 
   @override

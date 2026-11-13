@@ -57,6 +57,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   FilledButton.tonal(
                     key: Key('builds_mock_fill_in_${build.id}'),
@@ -79,6 +80,12 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                           : 'Apply to character',
                     ),
                   ),
+                  if (_applyTargetLabel != null)
+                    Text(
+                      'Applies to: $_applyTargetLabel',
+                      key: Key('builds_mock_apply_target_${build.id}'),
+                      style: neonMono(color: palette.muted, fontSize: 11),
+                    ),
                 ],
               ),
               if (applyProgress != null) ...[
@@ -118,8 +125,9 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               _buildReoptimize(context, forBuild: build),
               const SizedBox(height: 12),
               Text(
-                'Fill In updates this app copy. Apply to character equips '
-                'one item at a time. Optimize stays disabled.',
+                'Fill In updates this app copy; Undo fill in restores it. '
+                'Apply to character equips one item at a time and has no undo — '
+                're-apply another build to change gear. Optimize stays disabled.',
                 style: neonMono(color: palette.muted, fontSize: 11),
               ),
             ],

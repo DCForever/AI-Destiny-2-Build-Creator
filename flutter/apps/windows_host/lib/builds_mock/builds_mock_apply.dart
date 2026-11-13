@@ -47,6 +47,48 @@ class BuildsMockApplyOutcome {
   final bool finished;
 }
 
+/// Display label for the auto-picked Apply target (no picker yet).
+///
+/// Example: `Warlock 2010`. Apply itself cannot be undone — only Fill In has
+/// Undo (app build copy).
+String formatBuildsMockApplyTargetLabel(CharacterSummary character) {
+  return '${character.classType} ${character.light}';
+}
+
+/// Resolve the same target Apply uses: `memberships.first` + first Warlock.
+///
+/// Returns null when signed out / no memberships / no Warlock.
+Future<CharacterSummary?> resolveBuildsMockApplyTarget(
+  BuildsMockApplyPorts ports,
+) async {
+  final oauth = ports.resolvedOauth;
+  final profile = ports.resolvedProfile;
+  if (oauth == null || profile == null) return null;
+  if (!oauth.isSignedIn || oauth.tokens == null) return null;
+  try {
+    final token = oauth.tokens!.accessToken;
+    final memberships = await profile.getMemberships(token);
+    if (memberships.isEmpty) return null;
+    final characters =
+        await profile.getCharacters(token, memberships.first);
+    for (final c in characters) {
+      if (c.classType.toLowerCase() == 'warlock') return c;
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Convenience: `Applies to: Warlock 2010` or null when unresolved.
+Future<String?> resolveBuildsMockApplyTargetLabel(
+  BuildsMockApplyPorts ports,
+) async {
+  final target = await resolveBuildsMockApplyTarget(ports);
+  if (target == null) return null;
+  return formatBuildsMockApplyTargetLabel(target);
+}
+
 /// Runs sequential equip for [build] using saved Fill In applied pins.
 ///
 /// Calls [onUpdate] as progress changes. Returns a final outcome (never throws

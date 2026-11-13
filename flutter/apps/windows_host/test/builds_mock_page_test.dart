@@ -1,13 +1,21 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:destiny2_bungie/destiny2_bungie.dart';
+import 'package:destiny2_windows_host/auth/browser_launcher.dart';
+import 'package:destiny2_windows_host/auth/token_store.dart';
+import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
+import 'package:destiny2_windows_host/builds_mock/builds_mock_apply.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_controller.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_page.dart';
+import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:destiny2_windows_host/theme/flap_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'inventory_sync_test_fakes.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +23,7 @@ void main() {
   Future<void> pumpMock(
     WidgetTester tester, {
     BuildsMockController? controller,
+    BuildsMockApplyPorts? applyPorts,
     Size size = const Size(1440, 900),
   }) async {
     await tester.binding.setSurfaceSize(size);
@@ -28,6 +37,7 @@ void main() {
             body: BuildsMockPage(
               // Synthetic fixture for widget previews / existing mock tests.
               controller: controller ?? BuildsMockController(),
+              applyPorts: applyPorts,
             ),
           ),
         ),
@@ -320,4 +330,77 @@ void main() {
       isTrue,
     );
   }, timeout: const Timeout(Duration(minutes: 2)));
+
+  testWidgets('Apply to character shows Applies to: Warlock light label',
+      (tester) async {
+    final tokenStore = MemoryTokenStore();
+    await seedSignedIn(tokenStore);
+    final session = WindowsOAuthSession(
+      clientId: 'test-client',
+      redirectUri: kDefaultWindowsRedirectUri,
+      tokenStore: tokenStore,
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
+      ),
+      browserLauncher: FakeBrowserLauncher(),
+    );
+    await session.restore();
+
+    final profile = FakeProfileClient(
+      characters: const [
+        CharacterSummary(
+          characterId: 'char-hunter',
+          classType: 'Hunter',
+          light: 1800,
+        ),
+        CharacterSummary(
+          characterId: 'char-warlock',
+          classType: 'Warlock',
+          light: 2010,
+        ),
+      ],
+    );
+
+    final controller = BuildsMockController();
+    await pumpMock(
+      tester,
+      controller: controller,
+      applyPorts: BuildsMockApplyPorts(
+        oauthSession: session,
+        profileClient: profile,
+        writeClient: createMockWriteClient(),
+      ),
+    );
+    // Allow async target resolve.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const Key('builds_mock_apply_character_b01')), findsOneWidget);
+    expect(
+      find.byKey(const Key('builds_mock_apply_target_b01')),
+      findsOneWidget,
+    );
+    expect(find.text('Applies to: Warlock 2010'), findsOneWidget);
+
+    // Caption is below the fold; scroll to confirm Undo wording (Fill In only).
+    await tester.scrollUntilVisible(
+      find.textContaining('has no undo'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('builds_mock_build_detail')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pump();
+    expect(find.textContaining('has no undo'), findsOneWidget);
+    expect(find.textContaining('Undo fill in restores it'), findsOneWidget);
+  });
 }
