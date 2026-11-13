@@ -1,11 +1,14 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:destiny2_storage/destiny2_storage.dart';
+
 import '../dim_loadouts/dim_loadout_details_panel.dart';
 import 'builds_mock_fixture.dart';
 import 'builds_mock_logic.dart';
 import 'builds_mock_matrix.dart';
 import 'builds_mock_models.dart';
+import 'builds_mock_presentation.dart';
 
 enum BuildsMockTab { detail, pool, reoptimize }
 
@@ -59,6 +62,7 @@ class BuildsMockController extends ChangeNotifier {
   BuildsMockCardLayout _cardLayout = BuildsMockCardLayout.grid;
   bool _showingBuildDetail = false;
   final Map<String, MockSwapDecision> _swapDecisions = {};
+  Set<String> _filledInBuildIds = const {};
 
   String? _matrixError;
   bool _matrixLoading = false;
@@ -179,7 +183,19 @@ class BuildsMockController extends ChangeNotifier {
         setId: _filterSetId,
         readiness: _filterReadiness,
         readinessRows: _readiness,
+        filledInBuildIds: _filledInBuildIds,
       );
+
+  /// Rebuild the Fill In id set used by the Readiness → Filled In filter.
+  ///
+  /// Proposed rows count (same rule as [buildsMockHasFillIn] / card badge).
+  void adoptFillInPlans(Map<String, FillInSavedBuildPlan> plans) {
+    _filledInBuildIds = {
+      for (final e in plans.entries)
+        if (buildsMockHasFillIn(e.value)) e.key,
+    };
+    notifyListeners();
+  }
 
   MockBuild? get selected {
     final id = _selectedId;

@@ -73,9 +73,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
                 if (_controller.filterReadiness != null)
                   _activeChip(
                     key: const Key('builds_mock_chip_readiness'),
-                    label: _controller.filterReadiness == MockReadiness.ready
-                        ? 'Ready'
-                        : 'Not ready',
+                    label: _readinessChipLabel(_controller.filterReadiness!),
                     onDeleted: () => _controller.setFilterReadiness(null),
                   ),
               ],
@@ -308,13 +306,53 @@ extension _BuildsMockRail on _BuildsMockPageState {
     );
   }
 
+  String _readinessChipLabel(MockReadiness value) {
+    switch (value) {
+      case MockReadiness.ready:
+        return 'Ready';
+      case MockReadiness.notReady:
+        return 'Not ready';
+      case MockReadiness.filledIn:
+        return 'Filled In';
+      case MockReadiness.optimized:
+        return 'Optimized';
+    }
+  }
+
+  String _readinessWire(MockReadiness? current) {
+    if (current == null) return '';
+    switch (current) {
+      case MockReadiness.ready:
+        return 'ready';
+      case MockReadiness.notReady:
+        return 'not_ready';
+      case MockReadiness.filledIn:
+        return 'filled_in';
+      case MockReadiness.optimized:
+        return 'optimized';
+    }
+  }
+
+  MockReadiness? _readinessFromWire(String? v) {
+    switch (v) {
+      case null:
+      case '':
+        return null;
+      case 'ready':
+        return MockReadiness.ready;
+      case 'not_ready':
+        return MockReadiness.notReady;
+      case 'filled_in':
+        return MockReadiness.filledIn;
+      case 'optimized':
+        return MockReadiness.optimized;
+      default:
+        return null;
+    }
+  }
+
   Widget _readinessFilter() {
-    final current = _controller.filterReadiness;
-    final wire = current == null
-        ? ''
-        : current == MockReadiness.ready
-            ? 'ready'
-            : 'not_ready';
+    final wire = _readinessWire(_controller.filterReadiness);
     return DropdownButtonFormField<String>(
       key: const Key('builds_mock_filter_readiness'),
       // ignore: deprecated_member_use
@@ -331,15 +369,11 @@ extension _BuildsMockRail on _BuildsMockPageState {
         DropdownMenuItem(value: '', child: Text('Any')),
         DropdownMenuItem(value: 'ready', child: Text('Ready')),
         DropdownMenuItem(value: 'not_ready', child: Text('Not ready')),
+        DropdownMenuItem(value: 'filled_in', child: Text('Filled In')),
+        DropdownMenuItem(value: 'optimized', child: Text('Optimized')),
       ],
       onChanged: (v) {
-        if (v == null || v.isEmpty) {
-          _controller.setFilterReadiness(null);
-        } else if (v == 'ready') {
-          _controller.setFilterReadiness(MockReadiness.ready);
-        } else {
-          _controller.setFilterReadiness(MockReadiness.notReady);
-        }
+        _controller.setFilterReadiness(_readinessFromWire(v));
       },
     );
   }

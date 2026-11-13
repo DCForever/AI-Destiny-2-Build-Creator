@@ -44,6 +44,21 @@ List<MockSetReadiness> computeAllReadiness(BuildsMockFixture fixture) {
   ];
 }
 
+/// Read [MockBuild.isOptimized]. No Optimize producer yet → always false.
+bool isMockBuildOptimized(MockBuild build) => build.isOptimized;
+
+/// Whether [build] counts as Fill In "Filled In" for the readiness filter.
+///
+/// Includes `proposed` rows (via [filledInBuildIds] from [buildsMockHasFillIn])
+/// and any slot with [MockSlotAssignment.filledIn], matching the card badge.
+bool buildMatchesFilledInReadiness(
+  MockBuild build, {
+  Set<String> filledInBuildIds = const {},
+}) {
+  if (filledInBuildIds.contains(build.id)) return true;
+  return build.slots.any((s) => s.filledIn);
+}
+
 List<MockBuild> filterMockBuilds({
   required List<MockBuild> builds,
   String query = '',
@@ -53,6 +68,7 @@ List<MockBuild> filterMockBuilds({
   String? setId,
   MockReadiness? readiness,
   List<MockSetReadiness> readinessRows = const [],
+  Set<String> filledInBuildIds = const {},
 }) {
   final q = query.trim().toLowerCase();
   return [
@@ -66,6 +82,7 @@ List<MockBuild> filterMockBuilds({
         setId: setId,
         readiness: readiness,
         readinessRows: readinessRows,
+        filledInBuildIds: filledInBuildIds,
       ))
         b,
   ];
@@ -80,6 +97,7 @@ bool _matches(
   String? setId,
   MockReadiness? readiness,
   required List<MockSetReadiness> readinessRows,
+  required Set<String> filledInBuildIds,
 }) {
   if (q.isNotEmpty) {
     final hay = '${b.name} ${b.exoticArmor} ${b.exoticWeapon} ${b.subclass}'
@@ -103,12 +121,23 @@ bool _matches(
     return false;
   }
   if (readiness != null) {
-    final rows = readinessRows.where((r) => b.setIds.contains(r.setId));
-    if (rows.isEmpty) return readiness == MockReadiness.notReady;
-    if (readiness == MockReadiness.ready) {
-      return rows.any((r) => r.status == MockReadiness.ready);
+    switch (readiness) {
+      case MockReadiness.filledIn:
+        return buildMatchesFilledInReadiness(
+          b,
+          filledInBuildIds: filledInBuildIds,
+        );
+      case MockReadiness.optimized:
+        return isMockBuildOptimized(b);
+      case MockReadiness.ready:
+      case MockReadiness.notReady:
+        final rows = readinessRows.where((r) => b.setIds.contains(r.setId));
+        if (rows.isEmpty) return readiness == MockReadiness.notReady;
+        if (readiness == MockReadiness.ready) {
+          return rows.any((r) => r.status == MockReadiness.ready);
+        }
+        return rows.every((r) => r.status == MockReadiness.notReady);
     }
-    return rows.every((r) => r.status == MockReadiness.notReady);
   }
   return true;
 }
