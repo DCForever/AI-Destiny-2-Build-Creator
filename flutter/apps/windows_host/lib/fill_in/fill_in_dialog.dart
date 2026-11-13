@@ -97,8 +97,6 @@ class _FillInDialogState extends State<FillInDialog> {
   FillInBuildResult? _result;
   List<FillInSlotMatch> _missing = const [];
   List<FillInSlotDiff> _diffs = const [];
-  FillInSimilarWeapon? _similar;
-  String? _missingWeaponName;
   late MockBuild _build;
   FillInSavedBuildPlan? _plan;
 
@@ -127,8 +125,6 @@ class _FillInDialogState extends State<FillInDialog> {
         _result = null;
         _missing = const [];
         _diffs = const [];
-        _similar = null;
-        _missingWeaponName = null;
       });
       return;
     }
@@ -154,11 +150,8 @@ class _FillInDialogState extends State<FillInDialog> {
         if (!slot.isHeld) slot,
     ];
 
-    FillInSimilarWeapon? similar;
-    String? missingWeaponName;
+    // Exotic weapon need attrs (damage/type) for that slot's similar pick.
     FillInWeaponNeed? weaponNeed;
-    // Similar-weapon only when the exotic's own combat bucket is genuinely
-    // missing — never for a held exotic mis-labeled onto another row.
     final exoticWeaponNeed = fillInWeaponNeedForBuild(
       build: _build,
       inventory: loaded.items,
@@ -166,11 +159,6 @@ class _FillInDialogState extends State<FillInDialog> {
     if (exoticWeaponNeed != null &&
         missing.any((m) => m.slot == exoticWeaponNeed.slot)) {
       weaponNeed = exoticWeaponNeed;
-      missingWeaponName = weaponNeed.name ?? _build.exoticWeapon.trim();
-      similar = suggestSimilarWeapon(
-        need: weaponNeed,
-        heldWeapons: loaded.items,
-      );
     }
 
     final currentLabels = _currentLabelsForBuild(
@@ -193,9 +181,6 @@ class _FillInDialogState extends State<FillInDialog> {
       _result = result;
       _missing = missing;
       _diffs = diffs;
-      _similar = similar;
-      _missingWeaponName =
-          missingWeaponName?.isEmpty ?? true ? null : missingWeaponName;
     });
   }
 
@@ -225,25 +210,38 @@ class _FillInDialogState extends State<FillInDialog> {
       _saveMessage = null;
     });
     try {
-      final similar = _similar;
       final exoticSlots = {
         for (final d in _diffs)
           if (d.isExotic) d.slot,
       };
       final exoticName = _build.exoticArmor.trim();
+      final missingLabels = [
+        for (final slot in _missing)
+          fillInMissingSlotLabel(
+            slot: slot.slot,
+            isExotic: exoticSlots.contains(slot.slot),
+            exoticArmorName: exoticName,
+          ),
+      ].where((s) => s.trim().isNotEmpty).toList();
+      final filledWires = {
+        for (final a in (_plan?.applied ?? const <FillInAppliedSlot>[]))
+          if (a.label.trim().isNotEmpty) a.slotWire,
+      };
       final plan = FillInSavedBuildPlan(
         buildId: _build.id,
-        missing: [
-          for (final slot in _missing)
-            fillInMissingSlotLabel(
-              slot: slot.slot,
-              isExotic: exoticSlots.contains(slot.slot),
-              exoticArmorName: exoticName,
-            ),
+        missing: missingLabels,
+        applied: [
+          for (final a in (_plan?.applied ?? const <FillInAppliedSlot>[]))
+            if (a.label.trim().isNotEmpty ||
+                (a.instanceId != null && a.instanceId!.trim().isNotEmpty))
+              a,
         ],
-        similarWeaponName: similar?.item.name,
-        similarForName: _missingWeaponName,
-        applied: _plan?.applied ?? const [],
+        rows: buildFillInSavedSlotRows(
+          diffs: _diffs,
+          exoticArmorName: exoticName,
+          filledSlotWires: filledWires,
+        ),
+        updatedAt: DateTime.now().toUtc().toIso8601String(),
       );
       await save(plan);
       widget.onMissingListSaved?.call();
@@ -291,16 +289,20 @@ class _FillInDialogState extends State<FillInDialog> {
       final realLabel = _isRealItemLabel(label);
       final realOriginal = _isRealItemLabel(original);
 
-      // Never persist wire placeholders or "No weapon in DIM link" in the store.
-      applied.add(
-        FillInAppliedSlot(
-          slotWire: diff.slot.wireName,
-          label: realLabel ? label : '',
-          originalLabel: realOriginal ? original : '',
-          instanceId: instanceId,
-          itemHash: itemHash,
-        ),
-      );
+      // Never persist wire placeholders, "No weapon in DIM link", or blank
+      // names in the store. Keep equip pins that still have an instance id.
+      if (realLabel ||
+          (instanceId != null && instanceId.trim().isNotEmpty)) {
+        applied.add(
+          FillInAppliedSlot(
+            slotWire: diff.slot.wireName,
+            label: realLabel ? label.trim() : '',
+            originalLabel: realOriginal ? original.trim() : '',
+            instanceId: instanceId,
+            itemHash: itemHash,
+          ),
+        );
+      }
 
       if (_isWeaponSlot(diff.slot)) {
         if (realLabel &&
@@ -368,14 +370,22 @@ class _FillInDialogState extends State<FillInDialog> {
             isExotic: _diffs.any((d) => d.slot == slot.slot && d.isExotic),
             exoticArmorName: exoticName,
           ),
-    ];
+    ].where((s) => s.trim().isNotEmpty).toList();
 
+    final filledWires = {
+      for (final a in applied)
+        if (a.label.trim().isNotEmpty) a.slotWire,
+    };
     final plan = FillInSavedBuildPlan(
       buildId: next.id,
       missing: missingLabels,
-      similarWeaponName: _similar?.item.name,
-      similarForName: _missingWeaponName,
       applied: List<FillInAppliedSlot>.unmodifiable(applied),
+      rows: buildFillInSavedSlotRows(
+        diffs: _diffs,
+        exoticArmorName: exoticName,
+        filledSlotWires: filledWires,
+      ),
+      updatedAt: DateTime.now().toUtc().toIso8601String(),
     );
 
     final save = widget.saveMissingList;
@@ -417,7 +427,12 @@ class _FillInDialogState extends State<FillInDialog> {
     // Exact restore — do not reconstruct from per-slot originalLabel entries.
     final next = _snapshotBuild(baseline);
 
-    final restored = plan.copyWith(clearApplied: true);
+    // Clear applied pins; rows rebuilt after rematch without filled wires.
+    var restored = plan.copyWith(
+      clearApplied: true,
+      rows: const [],
+      updatedAt: DateTime.now().toUtc().toIso8601String(),
+    );
     final save = widget.saveMissingList;
     try {
       if (save != null) await save(restored);
@@ -432,6 +447,26 @@ class _FillInDialogState extends State<FillInDialog> {
         _saveMessage = 'Fill in undone.';
       });
       await _runMatch();
+      // Persist structured rows for the restored (pre-Apply) state.
+      if (mounted && widget.saveMissingList != null) {
+        restored = restored.copyWith(
+          rows: buildFillInSavedSlotRows(
+            diffs: _diffs,
+            exoticArmorName: _build.exoticArmor,
+          ),
+          missing: [
+            for (final slot in _missing)
+              fillInMissingSlotLabel(
+                slot: slot.slot,
+                isExotic: _diffs.any((d) => d.slot == slot.slot && d.isExotic),
+                exoticArmorName: _build.exoticArmor,
+              ),
+          ].where((s) => s.trim().isNotEmpty).toList(),
+        );
+        await widget.saveMissingList!(restored);
+        widget.onMissingListSaved?.call();
+        if (mounted) setState(() => _plan = restored);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -512,6 +547,39 @@ class _FillInDialogState extends State<FillInDialog> {
     if (result == null) {
       return const Text('No Fill In result.', key: Key('fill_in_empty'));
     }
+    final armorDiffs = [
+      for (final slot in kFillInArmorSectionOrder)
+        ..._diffs.where((d) => d.slot == slot),
+      ..._diffs.where((d) => d.slot == EquipmentSlot.exoticArmor),
+    ];
+    final weaponDiffs = [
+      for (final slot in kFillInWeaponSectionOrder)
+        ..._diffs.where((d) => d.slot == slot),
+    ];
+
+    Widget diffRows(List<FillInSlotDiff> diffs) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final diff in diffs) ...[
+            _DiffRow(
+              diff: diff,
+              match: _matchForSlot(result.slots, diff.slot),
+              exoticArmorName: _build.exoticArmor,
+              filledIn: _build.slots.any(
+                (s) =>
+                    s.filledIn &&
+                    (_slotFromMockWire(s.slot) == diff.slot ||
+                        s.slot == diff.slot.wireName),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ],
+      );
+    }
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -527,34 +595,28 @@ class _FillInDialogState extends State<FillInDialog> {
             ),
             const SizedBox(height: 12),
           ],
-          for (final diff in _diffs) ...[
-            _DiffRow(
-              diff: diff,
-              match: _matchForSlot(result.slots, diff.slot),
-              exoticArmorName: _build.exoticArmor,
-              filledIn: _build.slots.any(
-                (s) =>
-                    s.filledIn &&
-                    (_slotFromMockWire(s.slot) == diff.slot ||
-                        s.slot == diff.slot.wireName),
-              ),
+          if (_diffs.isNotEmpty) ...[
+            Text(
+              'Armor',
+              key: const Key('fill_in_section_armor'),
+              style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
+            diffRows(armorDiffs),
+            const SizedBox(height: 4),
+            Text(
+              'Weapons',
+              key: const Key('fill_in_section_weapons'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            diffRows(weaponDiffs),
           ],
           if (_diffs.isEmpty)
             for (final slot in result.slots) ...[
               _SlotRow(match: slot),
               const SizedBox(height: 8),
             ],
-          if (_similar != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Similar: ${_similar!.item.name}'
-              '${_missingWeaponName == null ? '' : ' (for $_missingWeaponName)'}',
-              key: const Key('fill_in_similar_weapon'),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
           if (_saveMessage != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -603,6 +665,9 @@ class _DiffRow extends StatelessWidget {
         : (diff.isHeld
             ? 'held'
             : (diff.wouldSubstitute ? 'substitute' : 'missing'));
+    final showSimilarPick = _isWeaponSlot(diff.slot) &&
+        diff.wouldSubstitute &&
+        (diff.substituteLabel?.trim().isNotEmpty ?? false);
     return Row(
       key: Key('fill_in_diff_${diff.slot.wireName}'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,6 +682,12 @@ class _DiffRow extends StatelessWidget {
                 key: Key('fill_in_diff_text_${diff.slot.wireName}'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              if (showSimilarPick)
+                Text(
+                  'Similar pick: ${diff.substituteLabel}',
+                  key: Key('fill_in_similar_pick_${diff.slot.wireName}'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
             ],
           ),
         ),

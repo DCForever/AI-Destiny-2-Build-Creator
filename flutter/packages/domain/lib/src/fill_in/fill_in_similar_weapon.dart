@@ -9,6 +9,9 @@ enum FillInSimilarWeaponTier {
   /// Same slot + same damage type (weapon type may differ).
   slotDamage,
 
+  /// Same combat bucket only (no known damage/type profile on the need).
+  slotOnly,
+
   /// No qualifying held candidate.
   none,
 }
@@ -26,9 +29,11 @@ class FillInWeaponNeed {
   final EquipmentSlot slot;
 
   /// Desired damage element (DIM `Element`), compared case-insensitively.
+  /// Empty when the build has no known profile (e.g. empty DIM weapon row).
   final String damageType;
 
   /// Desired weapon type (DIM `Type`), compared case-insensitively.
+  /// Empty when the build has no known profile.
   final String weaponType;
 
   /// Optional display name of the missing weapon (for UI only).
@@ -51,34 +56,55 @@ class FillInSimilarWeapon {
 /// Ranking (deterministic):
 /// 1. Same [FillInWeaponNeed.slot] + damage type + weapon type
 /// 2. Same slot + damage type
+/// 3. Same slot only — when the need has no damage/type profile (empty row)
 ///
 /// Tie-break within a tier: lower [FillInInventoryItem.itemHash], then
-/// [FillInInventoryItem.instanceId]. Legendary and exotic held copies both
-/// qualify. Returns null when no candidate meets tier 1 or 2.
+/// [FillInInventoryItem.instanceId].
+///
+/// When [excludeExotic] is true, exotic held copies are skipped (build already
+/// has a different exotic weapon). Returns null when no candidate qualifies.
 FillInSimilarWeapon? suggestSimilarWeapon({
   required FillInWeaponNeed need,
   required Iterable<FillInInventoryItem> heldWeapons,
+  bool excludeExotic = false,
 }) {
+  if (!_isWeaponSlot(need.slot)) return null;
+
   final wantDamage = _norm(need.damageType);
   final wantType = _norm(need.weaponType);
-  if (wantDamage.isEmpty || wantType.isEmpty) return null;
-  if (!_isWeaponSlot(need.slot)) return null;
+  final hasProfile = wantDamage.isNotEmpty && wantType.isNotEmpty;
+  final hasDamageOnly = wantDamage.isNotEmpty;
 
   FillInInventoryItem? bestTier1;
   FillInInventoryItem? bestTier2;
+  FillInInventoryItem? bestTier3;
 
   for (final item in heldWeapons) {
     if (!_isWeaponSlot(item.slot)) continue;
     if (item.slot != need.slot) continue;
-    final damage = _norm(item.damageType ?? '');
-    if (damage.isEmpty || damage != wantDamage) continue;
+    if (excludeExotic && item.isExotic) continue;
 
+    final damage = _norm(item.damageType ?? '');
     final type = _norm(item.weaponType ?? '');
-    if (type.isNotEmpty && type == wantType) {
-      bestTier1 = _better(bestTier1, item);
-    } else {
-      bestTier2 = _better(bestTier2, item);
+
+    if (hasProfile) {
+      if (damage.isEmpty || damage != wantDamage) continue;
+      if (type.isNotEmpty && type == wantType) {
+        bestTier1 = _better(bestTier1, item);
+      } else {
+        bestTier2 = _better(bestTier2, item);
+      }
+      continue;
     }
+
+    if (hasDamageOnly) {
+      if (damage.isEmpty || damage != wantDamage) continue;
+      bestTier2 = _better(bestTier2, item);
+      continue;
+    }
+
+    // No damage/type on the need — any held copy in this bucket.
+    bestTier3 = _better(bestTier3, item);
   }
 
   if (bestTier1 != null) {
@@ -93,10 +119,19 @@ FillInSimilarWeapon? suggestSimilarWeapon({
       tier: FillInSimilarWeaponTier.slotDamage,
     );
   }
+  if (bestTier3 != null) {
+    return FillInSimilarWeapon(
+      item: bestTier3,
+      tier: FillInSimilarWeaponTier.slotOnly,
+    );
+  }
   return null;
 }
 
-FillInInventoryItem? _better(FillInInventoryItem? current, FillInInventoryItem next) {
+FillInInventoryItem? _better(
+  FillInInventoryItem? current,
+  FillInInventoryItem next,
+) {
   if (current == null) return next;
   final byHash = current.itemHash.compareTo(next.itemHash);
   if (byHash != 0) return byHash < 0 ? current : next;

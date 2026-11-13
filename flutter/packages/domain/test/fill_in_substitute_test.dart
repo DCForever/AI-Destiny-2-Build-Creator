@@ -138,7 +138,7 @@ void main() {
       );
     });
 
-    test('similar weapon only proposed for the need slot', () {
+    test('no held weapon in energy bucket stays missing (not wrong-bucket)', () {
       final inventory = [
         const FillInInventoryItem(
           instanceId: 'w1',
@@ -190,9 +190,109 @@ void main() {
       final primary = diffs.singleWhere((d) => d.slot == EquipmentSlot.primary);
       final energy = diffs.singleWhere((d) => d.slot == EquipmentSlot.special);
       expect(primary.substituteLabel, 'Qua Nilus II');
+      // Kinetic-only inventory must never fill Energy from the wrong bucket.
       expect(energy.substituteLabel, isNull);
       expect(energy.currentLabel, kFillInNoWeaponInDimLink);
     });
+
+    test(
+      'held kinetic exotic + empty energy/power get same-bucket substitutes',
+      () {
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'kin-held',
+            itemHash: 8001,
+            name: 'Barrow-Dyad',
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'ene-1',
+            itemHash: 9001,
+            name: 'Funnelweb',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Void',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'pow-1',
+            itemHash: 9002,
+            name: 'Cataclysmic',
+            slot: EquipmentSlot.heavy,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Linear Fusion Rifle',
+            damageType: 'Solar',
+          ),
+          // Exotic energy — must NOT be picked while Kinetic already has exotic.
+          const FillInInventoryItem(
+            instanceId: 'ene-ex',
+            itemHash: 9003,
+            name: 'Riskrunner',
+            slot: EquipmentSlot.special,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Arc',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'strand',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.primary,
+              isExotic: true,
+              exoticItemHash: 8001,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.special,
+              isExotic: false,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.heavy,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {
+            EquipmentSlot.primary: 'Barrow-Dyad',
+          },
+        );
+
+        final kinetic =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.primary);
+        final energy =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.special);
+        final power = diffs.singleWhere((d) => d.slot == EquipmentSlot.heavy);
+
+        expect(kinetic.isHeld, isTrue);
+        expect(kinetic.wouldSubstitute, isFalse);
+        expect(energy.wouldSubstitute, isTrue);
+        expect(energy.substituteLabel, 'Funnelweb');
+        expect(energy.substituteLabel, isNot('Riskrunner'));
+        expect(power.wouldSubstitute, isTrue);
+        expect(power.substituteLabel, 'Cataclysmic');
+        // Labels are for their own slot — never re-attribute kinetic exotic.
+        expect(energy.currentLabel, kFillInNoWeaponInDimLink);
+        expect(power.currentLabel, kFillInNoWeaponInDimLink);
+      },
+    );
 
     test('empty armor current label is blank not helmet wire name', () {
       final requirement = const FillInBuildRequirement(

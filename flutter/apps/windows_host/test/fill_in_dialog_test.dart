@@ -436,8 +436,13 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('fill_in_diff_special')), findsOneWidget);
-    expect(find.byKey(const Key('fill_in_similar_weapon')), findsOneWidget);
-    // Diff row ("Sunshot → Zaouli's Bane") + Similar line both show the name.
+    expect(
+      find.byKey(const Key('fill_in_similar_pick_special')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('fill_in_section_armor')), findsOneWidget);
+    expect(find.byKey(const Key('fill_in_section_weapons')), findsOneWidget);
+    // Diff row ("Sunshot → Zaouli's Bane") + Similar pick line both show name.
     expect(find.textContaining("Zaouli's Bane"), findsNWidgets(2));
   });
 

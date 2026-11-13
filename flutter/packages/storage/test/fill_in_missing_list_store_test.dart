@@ -285,6 +285,110 @@ void main() {
     expect(await store.loadForBuild('missing'), isNull);
   });
 
+  test('old flat missing/applied with blanks drops empty names on read',
+      () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    await File(path).writeAsString(
+      jsonEncode(<String, dynamic>{
+        'schemaVersion': 2,
+        'builds': <String, dynamic>{
+          'legacy': <String, dynamic>{
+            'missing': <String>['Helmet', '', '  ', 'Energy'],
+            'applied': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'slot': 'helmet',
+                'label': 'AION Renewal Hood',
+                'originalLabel': '',
+              },
+              <String, dynamic>{
+                'slot': 'arms',
+                'label': '',
+                'originalLabel': '',
+              },
+              <String, dynamic>{
+                'slot': 'chest',
+                'label': '  ',
+                'originalLabel': '',
+              },
+            ],
+            'rows': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'slot': 'primary',
+                'slotLabel': 'Kinetic',
+                'state': 'held',
+                'itemName': 'Barrow-Dyad',
+              },
+              <String, dynamic>{
+                'slot': 'special',
+                'slotLabel': 'Energy',
+                'state': 'filled',
+                'itemName': '',
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    final plan = await store.loadForBuild('legacy');
+    expect(plan, isNotNull);
+    expect(plan!.missing, <String>['Helmet', 'Energy']);
+    expect(plan.applied, hasLength(1));
+    expect(plan.applied.single.label, 'AION Renewal Hood');
+    expect(plan.rows, hasLength(1));
+    expect(plan.rows.single.itemName, 'Barrow-Dyad');
+    expect(plan.rows.single.state, 'held');
+  });
+
+  test('save never writes empty missing or blank applied labels', () async {
+    await store.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'b01',
+        missing: <String>['Helmet', '', '  '],
+        applied: <FillInAppliedSlot>[
+          FillInAppliedSlot(
+            slotWire: 'helmet',
+            label: 'Hood',
+            originalLabel: '',
+          ),
+          FillInAppliedSlot(
+            slotWire: 'arms',
+            label: '',
+            originalLabel: '',
+          ),
+        ],
+        rows: <FillInSavedSlotRow>[
+          FillInSavedSlotRow(
+            slotWire: 'helmet',
+            slotLabel: 'Helmet',
+            state: 'held',
+            itemName: 'Hood',
+          ),
+          FillInSavedSlotRow(
+            slotWire: 'arms',
+            slotLabel: 'Gauntlets',
+            state: 'filled',
+            itemName: '',
+          ),
+          FillInSavedSlotRow(
+            slotWire: 'special',
+            slotLabel: 'Energy',
+            state: 'missing',
+            itemName: '',
+          ),
+        ],
+      ),
+    );
+    final plan = await store.loadForBuild('b01');
+    expect(plan!.missing, <String>['Helmet']);
+    expect(plan.applied, hasLength(1));
+    expect(plan.applied.single.label, 'Hood');
+    expect(plan.rows, hasLength(2));
+    expect(plan.rows.map((r) => r.slotWire).toList(), ['helmet', 'special']);
+    expect(plan.updatedAt, isNotNull);
+  });
+
   test('v1 store migrates to v2 with exclusive bak and correct v2 payload',
       () async {
     final path = root.fillInMissingByBuildPath;

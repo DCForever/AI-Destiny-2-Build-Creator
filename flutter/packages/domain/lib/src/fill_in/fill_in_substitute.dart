@@ -64,10 +64,18 @@ class FillInSlotDiff {
 
 /// Build current→substitute diffs from a Fill In match + inventory.
 ///
-/// - Held slots: keep current label; pin the held instance for equip.
-/// - Missing weapon slots: use [suggestSimilarWeapon] when a need is given.
+/// - Held slots: keep current label (or held item name when current is blank);
+///   pin the held instance for equip.
+/// - Missing weapon slots: pick a similar held weapon in the **same** bucket
+///   for every empty/unowned row (damage + type when known; bucket-only when
+///   the row is blank / "No weapon in DIM link"). Never pick an exotic when
+///   the build already names a different exotic weapon.
 /// - Missing armor slots: pick a held copy in the same slot + class
 ///   (prefer same [FillInSlotRequirement.armorSetHash] when set).
+///
+/// [weaponNeed] supplies damage/type for the exotic weapon's own slot when the
+/// host knows them; other weapon rows derive a need from inventory name match
+/// or fall back to slot-only.
 List<FillInSlotDiff> planFillInSubstitutes({
   required FillInBuildResult match,
   required FillInBuildRequirement requirement,
@@ -78,6 +86,10 @@ List<FillInSlotDiff> planFillInSubstitutes({
   final inv = inventory.toList(growable: false);
   final needBySlot = <EquipmentSlot, FillInSlotRequirement>{
     for (final s in requirement.slots) s.slot: s,
+  };
+  final exoticWeaponSlots = <EquipmentSlot>{
+    for (final s in requirement.slots)
+      if (s.isExotic && _isWeaponSlot(s.slot)) s.slot,
   };
   final diffs = <FillInSlotDiff>[];
 
@@ -95,10 +107,14 @@ List<FillInSlotDiff> planFillInSubstitutes({
         need: need,
         currentLabel: current,
       );
+      final heldName = (held?.name ?? '').trim();
+      final label = displayCurrent.isNotEmpty
+          ? displayCurrent
+          : (heldName.isNotEmpty ? heldName : displayCurrent);
       diffs.add(
         FillInSlotDiff(
           slot: slot,
-          currentLabel: displayCurrent,
+          currentLabel: label,
           isHeld: true,
           isExotic: isExotic,
           heldInstanceId: held?.instanceId,
@@ -110,11 +126,17 @@ List<FillInSlotDiff> planFillInSubstitutes({
 
     // Missing — propose a substitute when possible.
     if (_isWeaponSlot(slot)) {
-      // Similar-weapon suggestion applies only to the need's own slot, not
-      // every empty combat weapon row under total fill.
-      final similar = weaponNeed != null && weaponNeed.slot == slot
-          ? suggestSimilarWeapon(need: weaponNeed, heldWeapons: inv)
-          : null;
+      final excludeExotic = _shouldExcludeExoticWeapon(
+        forSlot: slot,
+        exoticWeaponSlots: exoticWeaponSlots,
+      );
+      final similar = _suggestWeaponForMissingSlot(
+        slot: slot,
+        currentLabel: current,
+        inventory: inv,
+        weaponNeed: weaponNeed,
+        excludeExotic: excludeExotic,
+      );
       final item = similar?.item;
       diffs.add(
         FillInSlotDiff(
@@ -152,13 +174,77 @@ List<FillInSlotDiff> planFillInSubstitutes({
   return List<FillInSlotDiff>.unmodifiable(diffs);
 }
 
+/// Never pick an exotic for a non-exotic weapon row when the build already
+/// names a different exotic weapon (one exotic weapon per build).
+bool _shouldExcludeExoticWeapon({
+  required EquipmentSlot forSlot,
+  required Set<EquipmentSlot> exoticWeaponSlots,
+}) {
+  for (final exoticSlot in exoticWeaponSlots) {
+    if (exoticSlot != forSlot) return true;
+  }
+  return false;
+}
+
+FillInSimilarWeapon? _suggestWeaponForMissingSlot({
+  required EquipmentSlot slot,
+  required String currentLabel,
+  required List<FillInInventoryItem> inventory,
+  required FillInWeaponNeed? weaponNeed,
+  required bool excludeExotic,
+}) {
+  // Prefer host-provided exotic need attrs when this is that slot.
+  if (weaponNeed != null && weaponNeed.slot == slot) {
+    return suggestSimilarWeapon(
+      need: weaponNeed,
+      heldWeapons: inventory,
+      excludeExotic: excludeExotic,
+    );
+  }
+
+  // Derive damage/type from a held inventory row with the same display name.
+  final wantName = currentLabel.trim().toLowerCase();
+  if (wantName.isNotEmpty &&
+      wantName != kFillInNoWeaponInDimLink.toLowerCase() &&
+      !_isWireName(wantName)) {
+    for (final item in inventory) {
+      if (!_isWeaponSlot(item.slot)) continue;
+      if ((item.name ?? '').trim().toLowerCase() != wantName) continue;
+      final type = (item.weaponType ?? '').trim();
+      final damage = (item.damageType ?? '').trim();
+      return suggestSimilarWeapon(
+        need: FillInWeaponNeed(
+          name: currentLabel.trim(),
+          slot: slot,
+          weaponType: type,
+          damageType: damage,
+        ),
+        heldWeapons: inventory,
+        excludeExotic: excludeExotic,
+      );
+    }
+  }
+
+  // Empty / "No weapon in DIM link" — same-bucket held pick (slot-only).
+  return suggestSimilarWeapon(
+    need: FillInWeaponNeed(
+      slot: slot,
+      weaponType: '',
+      damageType: '',
+      name: currentLabel.trim().isEmpty ? null : currentLabel.trim(),
+    ),
+    heldWeapons: inventory,
+    excludeExotic: excludeExotic,
+  );
+}
+
 /// Never surface equipment wire names (`primary` / `helmet` / …) as item
 /// labels. Empty weapon rows use [kFillInNoWeaponInDimLink]; empty armor rows
 /// stay blank (display-only — never saved as pieceName).
 String _displayCurrentLabel(EquipmentSlot slot, String current) {
   if (current.isNotEmpty) {
     final lower = current.toLowerCase();
-    if (EquipmentSlot.values.any((s) => s.wireName == lower)) {
+    if (_isWireName(lower)) {
       if (_isWeaponSlot(slot)) return kFillInNoWeaponInDimLink;
       return '';
     }
@@ -167,6 +253,13 @@ String _displayCurrentLabel(EquipmentSlot slot, String current) {
   }
   if (_isWeaponSlot(slot)) return kFillInNoWeaponInDimLink;
   return '';
+}
+
+bool _isWireName(String lower) {
+  for (final slot in EquipmentSlot.values) {
+    if (slot.wireName == lower) return true;
+  }
+  return false;
 }
 
 FillInInventoryItem? _findHeldMatch({
