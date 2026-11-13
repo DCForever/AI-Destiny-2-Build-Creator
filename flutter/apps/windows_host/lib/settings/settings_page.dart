@@ -5,18 +5,23 @@ import 'package:flutter/material.dart';
 
 
 import '../host_bootstrap.dart';
+import 'dim_csv_import_card.dart';
+import 'dim_csv_import_controller.dart';
 import 'inventory_sync_card.dart';
 import 'inventory_sync_controller.dart';
 import 'legacy_db_import_card.dart';
 import 'legacy_db_import_controller.dart';
 import 'oauth_account_card.dart';
 
-/// Settings: account (OAuth) + inventory sync + legacy DB import + manifest (DART-019/023/025/048).
+/// Settings: account (OAuth) + inventory sync + DIM CSV / legacy DB import +
+/// manifest (DART-019/023/025/048).
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
     required this.services,
     this.legacyImportController,
+    this.dimArmorImportController,
+    this.dimWeaponsImportController,
     this.themeMode = ThemeMode.light,
     this.onThemeModeChanged,
   });
@@ -25,6 +30,12 @@ class SettingsPage extends StatefulWidget {
 
   /// Optional injectable importer controller (tests).
   final LegacyDbImportController? legacyImportController;
+
+  /// Optional injectable DIM Armor CSV import controller (tests).
+  final DimCsvImportController? dimArmorImportController;
+
+  /// Optional injectable DIM Weapons CSV import controller (tests).
+  final DimCsvImportController? dimWeaponsImportController;
 
   /// Appearance preference (Cold Graphite dark / Paper Ledger light).
   final ThemeMode themeMode;
@@ -44,7 +55,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Object? _refreshError;
   String? _refreshMessage;
   late final LegacyDbImportController _legacyImport;
+  late final DimCsvImportController _dimArmorImport;
+  late final DimCsvImportController _dimWeaponsImport;
   var _ownsLegacyImport = false;
+  var _ownsDimArmorImport = false;
+  var _ownsDimWeaponsImport = false;
 
   @override
   void initState() {
@@ -57,6 +72,22 @@ class _SettingsPageState extends State<SettingsPage> {
       );
       _ownsLegacyImport = true;
     }
+    if (widget.dimArmorImportController != null) {
+      _dimArmorImport = widget.dimArmorImportController!;
+    } else {
+      _dimArmorImport = DimCsvImportController.armor(
+        storageRoot: widget.services.storageRoot,
+      );
+      _ownsDimArmorImport = true;
+    }
+    if (widget.dimWeaponsImportController != null) {
+      _dimWeaponsImport = widget.dimWeaponsImportController!;
+    } else {
+      _dimWeaponsImport = DimCsvImportController.weapons(
+        storageRoot: widget.services.storageRoot,
+      );
+      _ownsDimWeaponsImport = true;
+    }
     _loadStatus();
   }
 
@@ -64,6 +95,12 @@ class _SettingsPageState extends State<SettingsPage> {
   void dispose() {
     if (_ownsLegacyImport) {
       _legacyImport.dispose();
+    }
+    if (_ownsDimArmorImport) {
+      _dimArmorImport.dispose();
+    }
+    if (_ownsDimWeaponsImport) {
+      _dimWeaponsImport.dispose();
     }
     super.dispose();
   }
@@ -225,6 +262,16 @@ class _SettingsPageState extends State<SettingsPage> {
           LegacyDbImportCard(
             key: const Key('settings_legacy_db_import_card'),
             controller: _legacyImport,
+          ),
+          const SizedBox(height: 12),
+          DimCsvImportCard(
+            key: const Key('settings_dim_armor_csv_import_card'),
+            controller: _dimArmorImport,
+          ),
+          const SizedBox(height: 12),
+          DimCsvImportCard(
+            key: const Key('settings_dim_weapons_csv_import_card'),
+            controller: _dimWeaponsImport,
           ),
           const SizedBox(height: 24),
           Text(

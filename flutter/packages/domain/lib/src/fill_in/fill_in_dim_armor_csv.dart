@@ -194,7 +194,7 @@ _RowParse _itemFromRow({
 
   final instanceId = _normalizeInstanceId(idRaw);
   if (instanceId.isEmpty) {
-    return _RowParse(error: 'row $rowNumber has an unparseable Id');
+    return _RowParse(error: 'row $rowNumber has an empty Id');
   }
 
   final itemHash = int.tryParse(hashRaw.trim());
