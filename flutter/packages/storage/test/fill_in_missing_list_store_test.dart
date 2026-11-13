@@ -209,6 +209,44 @@ void main() {
     );
   });
 
+  test('exclusive backup create fails when bak path already exists', () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    final prior = jsonEncode(<String, dynamic>{
+      'schemaVersion': 0,
+      'builds': <String, dynamic>{
+        'old': <String, dynamic>{
+          'missing': <String>['Chest'],
+        },
+      },
+    });
+    await File(path).writeAsString(prior);
+    final beforeHash = sha256.convert(utf8.encode(prior));
+
+    const stamp = 'fixedstamp';
+    final taken = File('$path.bak-v0-$stamp');
+    await taken.writeAsString('already taken', flush: true);
+
+    final storeFixed = FillInMissingListStore(
+      root: root,
+      backupStampForTest: stamp,
+    );
+    await expectLater(
+      storeFixed.saveBuildPlan(
+        const FillInSavedBuildPlan(
+          buildId: 'new',
+          missing: <String>['Arms'],
+        ),
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+
+    final after = await File(path).readAsBytes();
+    expect(sha256.convert(after).toString(), beforeHash.toString());
+    expect(await taken.readAsString(), 'already taken');
+    expect(File('$path.tmp').existsSync(), isFalse);
+  });
+
   test('failed rename cleans up .tmp and leaves the original intact', () async {
     await store.saveBuildPlan(
       const FillInSavedBuildPlan(
@@ -245,5 +283,99 @@ void main() {
 
   test('loadForBuild returns null when store missing', () async {
     expect(await store.loadForBuild('missing'), isNull);
+  });
+
+  test('v1 store migrates to v2 with exclusive bak and correct v2 payload',
+      () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    final v1 = jsonEncode(<String, dynamic>{
+      'schemaVersion': 1,
+      'builds': <String, dynamic>{
+        'legacy': <String, dynamic>{
+          'missing': <String>['Helmet', 'Gauntlets'],
+          'similarWeaponName': "Zaouli's Bane",
+          'similarForName': 'Sunshot',
+        },
+      },
+    });
+    await File(path).writeAsString(v1, flush: true);
+
+    const stamp = 'v1migrate';
+    final migrating = FillInMissingListStore(
+      root: root,
+      backupStampForTest: stamp,
+    );
+    await migrating.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'fresh',
+        missing: <String>['Chest'],
+        applied: <FillInAppliedSlot>[
+          FillInAppliedSlot(
+            slotWire: 'arms',
+            label: 'Spare Arms',
+            originalLabel: 'Needed Arms',
+            instanceId: 'i-arms',
+            itemHash: 7,
+          ),
+        ],
+      ),
+    );
+
+    final bak = File('$path.bak-v1-$stamp');
+    expect(bak.existsSync(), isTrue);
+    expect(await bak.readAsString(), v1);
+
+    final decoded = jsonDecode(await File(path).readAsString())
+        as Map<String, dynamic>;
+    expect(decoded['schemaVersion'], 2);
+    expect(decoded['schemaVersion'], kFillInMissingListSchemaVersion);
+    final builds = decoded['builds'] as Map<String, dynamic>;
+    expect(
+      (builds['legacy'] as Map<String, dynamic>)['missing'],
+      <String>['Helmet', 'Gauntlets'],
+    );
+    expect(
+      (builds['legacy'] as Map<String, dynamic>)['similarWeaponName'],
+      "Zaouli's Bane",
+    );
+    final fresh = builds['fresh'] as Map<String, dynamic>;
+    expect(fresh['missing'], <String>['Chest']);
+    expect(fresh['applied'], isA<List>());
+    expect((fresh['applied'] as List).single['label'], 'Spare Arms');
+    expect(File('$path.tmp').existsSync(), isFalse);
+  });
+
+  test('save/load preserves applied substitutes and clears on undo copy',
+      () async {
+    await store.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'b01',
+        missing: <String>['Helmet'],
+        applied: <FillInAppliedSlot>[
+          FillInAppliedSlot(
+            slotWire: 'arms',
+            label: 'Spare Arms',
+            originalLabel: 'Needed Arms',
+            instanceId: 'i-arms',
+            itemHash: 42,
+          ),
+        ],
+      ),
+    );
+    final loaded = await store.loadForBuild('b01');
+    expect(loaded!.hasAppliedSubstitutes, isTrue);
+    expect(loaded.applied.single.label, 'Spare Arms');
+    expect(loaded.applied.single.originalLabel, 'Needed Arms');
+    expect(loaded.missing, <String>['Helmet']);
+
+    await store.saveBuildPlan(loaded.copyWith(clearApplied: true));
+    final undone = await store.loadForBuild('b01');
+    expect(undone!.hasAppliedSubstitutes, isFalse);
+    expect(undone.missing, <String>['Helmet']);
+
+    final decoded = jsonDecode(await File(store.storePath).readAsString())
+        as Map<String, dynamic>;
+    expect(decoded['schemaVersion'], kFillInMissingListSchemaVersion);
   });
 }

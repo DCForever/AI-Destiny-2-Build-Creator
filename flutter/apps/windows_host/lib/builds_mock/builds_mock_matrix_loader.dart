@@ -15,28 +15,35 @@ Future<void> loadBuildsMatrixIntoController({
   required BuildsMockController controller,
   required String? path,
   int maxBytes = kCachedDimLoadoutsMaxBytes,
+  bool Function()? shouldApply,
 }) async {
   final trimmed = path?.trim() ?? '';
   if (trimmed.isEmpty) {
+    if (shouldApply != null && !shouldApply()) return;
     controller.failMatrixLoad(
       'No matrix file path. Set it in Settings (Warlock matrix file) '
       'or WARLOCK_MATRIX_PATH.',
     );
     return;
   }
+  if (shouldApply != null && !shouldApply()) return;
   controller.beginMatrixLoad();
   try {
     final bytes = await readOnlyFileBytes(trimmed, maxBytes: maxBytes);
     final decoded = jsonDecode(utf8.decode(bytes));
     final rows = parseWarlockMatrix(decoded);
+    if (shouldApply != null && !shouldApply()) return;
     controller.adoptFixture(buildsMockFixtureFromMatrix(rows));
   } on ReadOnlyFileException catch (error) {
+    if (shouldApply != null && !shouldApply()) return;
     controller.failMatrixLoad(error.message);
   } on FormatException catch (error) {
+    if (shouldApply != null && !shouldApply()) return;
     controller.failMatrixLoad(
       'Matrix file is not valid JSON (${error.message}).',
     );
   } catch (error) {
+    if (shouldApply != null && !shouldApply()) return;
     controller.failMatrixLoad('Could not read matrix: $error');
   }
 }

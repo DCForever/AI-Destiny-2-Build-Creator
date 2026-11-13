@@ -317,6 +317,24 @@ class _DetailCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (loadout.slots.any((s) => s.filledIn)) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    for (final s in loadout.slots)
+                      if (s.filledIn)
+                        Chip(
+                          key: Key(
+                            'builds_mock_filled_in_${loadout.id}_${s.slot}',
+                          ),
+                          label: Text('Filled in · ${s.pieceName}'),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 8),
               _PrioritiesRow(priorities: priorities),
               const SizedBox(height: 6),

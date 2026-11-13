@@ -1,3 +1,4 @@
+import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/material.dart';
 import '../dim_loadouts/dim_loadout_details_panel.dart';
 import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
+import '../host_bootstrap.dart';
+import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
@@ -27,6 +30,8 @@ class BuildsMockPage extends StatefulWidget {
     this.storageRoot,
     this.warlockMatrixPath,
     this.matrixMaxBytes = kCachedDimLoadoutsMaxBytes,
+    this.services,
+    this.applyPorts,
   });
 
   /// Injectable for tests / widget previews. Page does not dispose it.
@@ -42,6 +47,12 @@ class BuildsMockPage extends StatefulWidget {
   /// Size cap for the matrix file read (same helper as DIM loadouts reader).
   final int matrixMaxBytes;
 
+  /// Host services (oauth + write client) for Apply to character.
+  final AppServices? services;
+
+  /// Test inject: overrides [services] for Apply to character ports.
+  final BuildsMockApplyPorts? applyPorts;
+
   @override
   State<BuildsMockPage> createState() => _BuildsMockPageState();
 }
@@ -52,6 +63,11 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   late final TextEditingController _search;
   Map<String, FillInSavedBuildPlan> _savedFillInPlans =
       const <String, FillInSavedBuildPlan>{};
+  final Map<String, ApplyToCharacterProgress> _applyProgressByBuild =
+      <String, ApplyToCharacterProgress>{};
+  final Map<String, String> _applyErrorByBuild = <String, String>{};
+  String? _applyingBuildId;
+  String? _applyTargetLabel;
 
   @override
   void initState() {
@@ -69,6 +85,16 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       _loadDimLoadouts(root);
       _loadFillInPlans(root);
     }
+    _refreshApplyTargetLabel();
+  }
+
+  BuildsMockApplyPorts get _applyPorts =>
+      widget.applyPorts ?? BuildsMockApplyPorts(services: widget.services);
+
+  Future<void> _refreshApplyTargetLabel() async {
+    final label = await resolveBuildsMockApplyTargetLabel(_applyPorts);
+    if (!mounted) return;
+    setState(() => _applyTargetLabel = label);
   }
 
   Future<void> _loadFillInPlans(StorageRoot root) async {
@@ -88,6 +114,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       controller: _controller,
       path: path,
       maxBytes: widget.matrixMaxBytes,
+      shouldApply: () => mounted,
     );
   }
 
@@ -105,6 +132,40 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
           loadouts: result.loadouts,
         );
     }
+  }
+
+  Future<void> _applyToCharacter(MockBuild build) async {
+    if (_applyingBuildId != null) return;
+    final ports = _applyPorts;
+
+    setState(() {
+      _applyingBuildId = build.id;
+      _applyErrorByBuild.remove(build.id);
+    });
+
+    final outcome = await runBuildsMockApplyToCharacter(
+      build: build,
+      plan: _savedFillInPlans[build.id],
+      ports: ports,
+      isMounted: () => mounted,
+      onProgress: (progress) {
+        if (!mounted) return;
+        setState(() => _applyProgressByBuild[build.id] = progress);
+      },
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _applyingBuildId = null;
+      if (outcome.progress != null) {
+        _applyProgressByBuild[build.id] = outcome.progress!;
+      }
+      if (outcome.error != null) {
+        _applyErrorByBuild[build.id] = outcome.error!;
+      }
+    });
+    // Refresh label in case memberships/characters changed mid-session.
+    await _refreshApplyTargetLabel();
   }
 
   @override

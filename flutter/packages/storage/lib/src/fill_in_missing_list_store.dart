@@ -5,7 +5,10 @@ import 'dart:typed_data';
 import 'storage_root.dart';
 
 /// Current on-disk schema for [FillInMissingListStore].
-const int kFillInMissingListSchemaVersion = 1;
+///
+/// v1: missing list + similar weapon plan.
+/// v2: adds applied substitutions (+ originals) for Apply to build / Undo.
+const int kFillInMissingListSchemaVersion = 2;
 
 /// Soft cap for `{StorageRoot}/fill_in/missing_by_build.json` reads.
 ///
@@ -22,13 +25,51 @@ class FillInMissingListStoreException implements Exception {
   String toString() => message;
 }
 
-/// One build's saved Fill In missing list (+ optional similar weapon plan).
+/// One applied Fill In substitution stored on a build (app-local).
+class FillInAppliedSlot {
+  const FillInAppliedSlot({
+    required this.slotWire,
+    required this.label,
+    required this.originalLabel,
+    this.instanceId,
+    this.itemHash,
+  });
+
+  final String slotWire;
+  final String label;
+  final String originalLabel;
+  final String? instanceId;
+  final int? itemHash;
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'slot': slotWire,
+      'label': label,
+      'originalLabel': originalLabel,
+      if (instanceId != null) 'instanceId': instanceId,
+      if (itemHash != null) 'itemHash': itemHash,
+    };
+  }
+
+  factory FillInAppliedSlot.fromJson(Map<String, dynamic> json) {
+    return FillInAppliedSlot(
+      slotWire: (json['slot'] as String? ?? '').trim(),
+      label: (json['label'] as String? ?? '').trim(),
+      originalLabel: (json['originalLabel'] as String? ?? '').trim(),
+      instanceId: json['instanceId'] as String?,
+      itemHash: json['itemHash'] is int ? json['itemHash'] as int : null,
+    );
+  }
+}
+
+/// One build's saved Fill In missing list (+ optional similar weapon + applied).
 class FillInSavedBuildPlan {
   const FillInSavedBuildPlan({
     required this.buildId,
     required this.missing,
     this.similarWeaponName,
     this.similarForName,
+    this.applied = const [],
     this.updatedAt,
   });
 
@@ -36,18 +77,29 @@ class FillInSavedBuildPlan {
   final List<String> missing;
   final String? similarWeaponName;
   final String? similarForName;
+
+  /// Substitutions written into the app build copy (empty when not applied).
+  final List<FillInAppliedSlot> applied;
+
   final String? updatedAt;
+
+  bool get hasAppliedSubstitutes => applied.isNotEmpty;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'missing': missing,
       if (similarWeaponName != null) 'similarWeaponName': similarWeaponName,
       if (similarForName != null) 'similarForName': similarForName,
+      if (applied.isNotEmpty)
+        'applied': [for (final a in applied) a.toJson()],
       if (updatedAt != null) 'updatedAt': updatedAt,
     };
   }
 
-  factory FillInSavedBuildPlan.fromJson(String buildId, Map<String, dynamic> json) {
+  factory FillInSavedBuildPlan.fromJson(
+    String buildId,
+    Map<String, dynamic> json,
+  ) {
     final rawMissing = json['missing'];
     final missing = <String>[];
     if (rawMissing is List) {
@@ -57,12 +109,43 @@ class FillInSavedBuildPlan {
         }
       }
     }
+    final applied = <FillInAppliedSlot>[];
+    final rawApplied = json['applied'];
+    if (rawApplied is List) {
+      for (final entry in rawApplied) {
+        if (entry is Map<String, dynamic>) {
+          final slot = FillInAppliedSlot.fromJson(entry);
+          if (slot.slotWire.isNotEmpty) applied.add(slot);
+        }
+      }
+    }
     return FillInSavedBuildPlan(
       buildId: buildId,
       missing: List<String>.unmodifiable(missing),
       similarWeaponName: json['similarWeaponName'] as String?,
       similarForName: json['similarForName'] as String?,
+      applied: List<FillInAppliedSlot>.unmodifiable(applied),
       updatedAt: json['updatedAt'] as String?,
+    );
+  }
+
+  FillInSavedBuildPlan copyWith({
+    List<String>? missing,
+    String? similarWeaponName,
+    String? similarForName,
+    List<FillInAppliedSlot>? applied,
+    String? updatedAt,
+    bool clearApplied = false,
+  }) {
+    return FillInSavedBuildPlan(
+      buildId: buildId,
+      missing: missing ?? this.missing,
+      similarWeaponName: similarWeaponName ?? this.similarWeaponName,
+      similarForName: similarForName ?? this.similarForName,
+      applied: clearApplied
+          ? const []
+          : (applied ?? this.applied),
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -90,12 +173,14 @@ class _ParsedMissingList {
 ///
 /// When an existing file's `schemaVersion` is missing or differs from
 /// [kFillInMissingListSchemaVersion], the prior file is copied to a
-/// timestamped `.bak-…` sibling with exclusive-create before rewrite.
+/// timestamped `.bak-…` sibling via [File.create] (`exclusive: true`)
+/// before rewrite.
 class FillInMissingListStore {
   FillInMissingListStore({
     required StorageRoot root,
     this.maxBytes = kFillInMissingListMaxBytes,
     this.beforeRename,
+    this.backupStampForTest,
   }) : _root = root;
 
   final StorageRoot _root;
@@ -106,6 +191,9 @@ class FillInMissingListStore {
   /// Test hook: invoked after the `.tmp` is flushed, before rename.
   /// Throw to simulate a mid-write failure without truncating the store.
   final Future<void> Function()? beforeRename;
+
+  /// Test hook: fixed backup timestamp suffix (skips [DateTime.now]).
+  final String? backupStampForTest;
 
   String get storePath => _root.fillInMissingByBuildPath;
 
@@ -158,6 +246,7 @@ class FillInMissingListStore {
       missing: plan.missing,
       similarWeaponName: plan.similarWeaponName,
       similarForName: plan.similarForName,
+      applied: plan.applied,
       updatedAt: plan.updatedAt ?? DateTime.now().toUtc().toIso8601String(),
     );
     builds[id] = stamped;
@@ -279,24 +368,23 @@ class FillInMissingListStore {
     }
   }
 
-  /// Timestamped sibling backup with exclusive-create (fails if name exists).
+  /// Timestamped sibling backup via [File.create] with `exclusive: true`.
   ///
-  /// Dart's portable [FileMode] has no writeOnlyExclusive on all SDKs — we
-  /// refuse an existing path, then open [FileMode.writeOnly].
+  /// Fails with [PathExistsException] (or [FileSystemException]) if the
+  /// backup path already exists — never opens/truncates an existing file.
   Future<File> _backupExclusive(
     File source, {
     required String fromVersionLabel,
   }) async {
-    final stamp = DateTime.now()
-        .toUtc()
-        .toIso8601String()
-        .replaceAll(':', '')
-        .replaceAll('.', '');
+    final stamp = backupStampForTest ??
+        DateTime.now()
+            .toUtc()
+            .toIso8601String()
+            .replaceAll(':', '')
+            .replaceAll('.', '');
     final bakPath = '$storePath.bak-v$fromVersionLabel-$stamp';
     final bak = File(bakPath);
-    if (await bak.exists()) {
-      throw StateError('backup already exists: $bakPath');
-    }
+    await bak.create(exclusive: true);
     final bytes = await source.readAsBytes();
     final handle = await bak.open(mode: FileMode.writeOnly);
     try {

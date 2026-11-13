@@ -167,6 +167,24 @@ void main() {
     expect(controller.matrixError, contains('64 > 8'));
     expect(controller.showMockBanner, isFalse);
   });
+
+  test('shouldApply false after await skips adopt and failMatrixLoad', () async {
+    final controller = BuildsMockController.forMatrixLoad();
+    var gates = 0;
+    await loadBuildsMatrixIntoController(
+      controller: controller,
+      path: _fixturePath(),
+      // Allow beginMatrixLoad, then refuse adopt/fail after the async read.
+      shouldApply: () {
+        gates += 1;
+        return gates == 1;
+      },
+    );
+    expect(gates, greaterThanOrEqualTo(2));
+    expect(controller.matrixLoading, isTrue);
+    expect(controller.matrixError, isNull);
+    expect(controller.fixture.builds, isEmpty);
+  });
 }
 
 String _fixturePath() {

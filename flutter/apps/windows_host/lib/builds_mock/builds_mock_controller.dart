@@ -313,6 +313,24 @@ class BuildsMockController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Replace one build in the fixture after Fill In Apply to build / Undo.
+  ///
+  /// Display-only mutation of the in-memory app copy — never writes matrix
+  /// files or Bungie inventory.
+  void replaceBuild(MockBuild build) {
+    final next = <MockBuild>[
+      for (final b in _fixture.builds) b.id == build.id ? build : b,
+    ];
+    _fixture = BuildsMockFixture(
+      sets: _fixture.sets,
+      builds: List<MockBuild>.unmodifiable(next),
+      held: _fixture.held,
+      swaps: _fixture.swaps,
+    );
+    _readiness = computeAllReadiness(_fixture);
+    notifyListeners();
+  }
+
   void _pruneFilters() {
     if (_filterExoticArmor != null &&
         !exoticArmorOptions.contains(_filterExoticArmor)) {
