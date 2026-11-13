@@ -380,4 +380,39 @@ void main() {
     expect(savedPlan!.missing, contains('Helmet'));
     expect(savedPlan!.missing, contains('Exotic weapon (energy)'));
   });
+
+  testWidgets(
+    'open and close without Save does not call the missing-list saver',
+    (tester) async {
+      var saveCalls = 0;
+
+      final build = _build(
+        exoticArmor: '',
+        exoticWeapon: 'Sunshot',
+        slots: const [
+          MockSlotAssignment(
+            slot: 'helmet',
+            setId: 'set_techsec',
+            pieceName: 'Techsec Helmet',
+          ),
+        ],
+      );
+
+      await _pumpDialog(
+        tester,
+        build: build,
+        loadCaches: () async => FillInCacheLoadResult.ok(const []),
+        saveMissingList: (plan) async {
+          saveCalls += 1;
+        },
+      );
+
+      expect(find.byKey(const Key('fill_in_save_missing')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('fill_in_close')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('fill_in_dialog_b01')), findsNothing);
+      expect(saveCalls, 0);
+    },
+  );
 }

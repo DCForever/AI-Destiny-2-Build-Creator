@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
@@ -88,6 +89,158 @@ void main() {
     final decoded = jsonDecode(await File(path).readAsString())
         as Map<String, dynamic>;
     expect(decoded['schemaVersion'], kFillInMissingListSchemaVersion);
+  });
+
+  test('missing schemaVersion is treated as unknown and backed up before save',
+      () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    final prior = jsonEncode(<String, dynamic>{
+      'builds': <String, dynamic>{
+        'legacy': <String, dynamic>{
+          'missing': <String>['Helmet'],
+        },
+      },
+    });
+    await File(path).writeAsString(prior);
+
+    await store.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'fresh',
+        missing: <String>['Arms'],
+      ),
+    );
+
+    final backups = Directory(root.fillInCacheDir)
+        .listSync()
+        .whereType<File>()
+        .where(
+          (f) => p.basename(f.path).startsWith(
+                'missing_by_build.json.bak-vunknown-',
+              ),
+        )
+        .toList();
+    expect(backups, hasLength(1));
+    expect(await backups.single.readAsString(), prior);
+
+    final decoded = jsonDecode(await File(path).readAsString())
+        as Map<String, dynamic>;
+    expect(decoded['schemaVersion'], kFillInMissingListSchemaVersion);
+    final builds = decoded['builds'] as Map<String, dynamic>;
+    expect(builds.keys, containsAll(<String>['legacy', 'fresh']));
+  });
+
+  test('oversize file is rejected before parse and never overwritten', () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    final prior = List<int>.filled(64, 0x41);
+    await File(path).writeAsBytes(prior, flush: true);
+    final beforeHash = sha256.convert(prior);
+
+    final capped = FillInMissingListStore(root: root, maxBytes: 8);
+    await expectLater(
+      capped.loadAll(),
+      throwsA(
+        isA<FillInMissingListStoreException>().having(
+          (e) => e.message,
+          'message',
+          allOf(contains('size limit'), contains('64 > 8')),
+        ),
+      ),
+    );
+    await expectLater(
+      capped.saveBuildPlan(
+        const FillInSavedBuildPlan(
+          buildId: 'b01',
+          missing: <String>['Helmet'],
+        ),
+      ),
+      throwsA(isA<FillInMissingListStoreException>()),
+    );
+
+    final after = await File(path).readAsBytes();
+    expect(sha256.convert(after).toString(), beforeHash.toString());
+    expect(File('$path.tmp').existsSync(), isFalse);
+    expect(
+      Directory(root.fillInCacheDir)
+          .listSync()
+          .whereType<File>()
+          .where((f) => p.basename(f.path).contains('.bak-'))
+          .toList(),
+      isEmpty,
+    );
+  });
+
+  test('non-object builds entries are preserved on save', () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    await File(path).writeAsString(
+      jsonEncode(<String, dynamic>{
+        'schemaVersion': kFillInMissingListSchemaVersion,
+        'builds': <String, dynamic>{
+          'ok': <String, dynamic>{
+            'missing': <String>['Helmet'],
+          },
+          'odd': <String>['not', 'an', 'object'],
+          'num': 42,
+        },
+      }),
+    );
+
+    await store.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'new',
+        missing: <String>['Arms'],
+      ),
+    );
+
+    final decoded = jsonDecode(await File(path).readAsString())
+        as Map<String, dynamic>;
+    final builds = decoded['builds'] as Map<String, dynamic>;
+    expect(builds['odd'], <String>['not', 'an', 'object']);
+    expect(builds['num'], 42);
+    expect(
+      (builds['ok'] as Map<String, dynamic>)['missing'],
+      <String>['Helmet'],
+    );
+    expect(
+      (builds['new'] as Map<String, dynamic>)['missing'],
+      <String>['Arms'],
+    );
+  });
+
+  test('failed rename cleans up .tmp and leaves the original intact', () async {
+    await store.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'b01',
+        missing: <String>['Helmet'],
+      ),
+    );
+    final path = store.storePath;
+    final before = await File(path).readAsBytes();
+    final beforeHash = sha256.convert(before);
+
+    final failing = FillInMissingListStore(
+      root: root,
+      beforeRename: () async {
+        throw StateError('simulated rename failure');
+      },
+    );
+    await expectLater(
+      failing.saveBuildPlan(
+        const FillInSavedBuildPlan(
+          buildId: 'b02',
+          missing: <String>['Arms'],
+        ),
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    final after = await File(path).readAsBytes();
+    expect(sha256.convert(after).toString(), beforeHash.toString());
+    expect(File('$path.tmp').existsSync(), isFalse);
+    expect(await store.loadForBuild('b02'), isNull);
+    expect((await store.loadForBuild('b01'))!.missing, <String>['Helmet']);
   });
 
   test('loadForBuild returns null when store missing', () async {

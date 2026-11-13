@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
@@ -98,6 +99,67 @@ void main() {
       await setting.save(matrix.path);
       expect(matrix.existsSync(), isFalse);
       expect(File(setting.settingPath).existsSync(), isTrue);
+    });
+
+    test('load uses only the first line of the settings file', () async {
+      await File(setting.settingPath).writeAsString(
+        'D:\\matrix\\first.json\nD:\\matrix\\second.json\ntrail\n',
+      );
+      expect(await setting.load(), r'D:\matrix\first.json');
+    });
+
+    test('oversize settings file is rejected before use', () async {
+      await File(setting.settingPath).writeAsBytes(
+        List<int>.filled(64, 0x41),
+        flush: true,
+      );
+      final capped = WarlockMatrixPathSetting(root: root, maxBytes: 8);
+      await expectLater(
+        capped.load(),
+        throwsA(
+          isA<WarlockMatrixPathSettingException>().having(
+            (e) => e.message,
+            'message',
+            allOf(contains('size limit'), contains('64 > 8')),
+          ),
+        ),
+      );
+    });
+
+    test('failed rename cleans up .tmp and leaves the original intact', () async {
+      await setting.save(r'D:\matrix\original.json');
+      final before = await File(setting.settingPath).readAsBytes();
+      final beforeHash = sha256.convert(before);
+
+      final failing = WarlockMatrixPathSetting(
+        root: root,
+        beforeRename: () async {
+          throw StateError('simulated rename failure');
+        },
+      );
+      await expectLater(
+        failing.save(r'D:\matrix\new.json'),
+        throwsA(isA<StateError>()),
+      );
+
+      final after = await File(setting.settingPath).readAsBytes();
+      expect(sha256.convert(after).toString(), beforeHash.toString());
+      expect(File('${setting.settingPath}.tmp').existsSync(), isFalse);
+      expect(await setting.load(), r'D:\matrix\original.json');
+    });
+
+    test('stale .tmp is ignored on load and cleared by a successful save',
+        () async {
+      await setting.save(r'D:\matrix\keep.json');
+      final tmp = File('${setting.settingPath}.tmp');
+      await tmp.writeAsString(r'D:\matrix\stale.json', flush: true);
+      expect(tmp.existsSync(), isTrue);
+
+      expect(await setting.load(), r'D:\matrix\keep.json');
+
+      await setting.save(r'D:\matrix\next.json');
+      expect(await setting.load(), r'D:\matrix\next.json');
+      expect(tmp.existsSync(), isFalse);
     });
   });
 }
