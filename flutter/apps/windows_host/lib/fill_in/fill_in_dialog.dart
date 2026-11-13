@@ -14,15 +14,18 @@ typedef FillInClipboardWriter = Future<void> Function(String text);
 /// Injectable missing-list saver (tests avoid real StorageRoot IO).
 typedef FillInMissingListSaver = Future<void> Function(FillInSavedBuildPlan plan);
 
+/// Called after Apply to build / Undo updates the app build copy.
+typedef FillInBuildMutator = void Function(MockBuild updated);
+
 Future<void> defaultFillInClipboardWriter(String text) async {
   await Clipboard.setData(ClipboardData(text: text));
 }
 
-/// Opens the read-only Fill In pop-up for [build].
+/// Opens the Fill In pop-up for [build].
 ///
 /// Loads DIM armor + weapons caches, runs [matchFillIn], shows held / missing /
-/// over-cap chips and a Similar weapon suggestion. Persists the missing list
-/// only when the user presses **Save missing list**.
+/// substitute diffs. **Apply to build** writes substitutes into the app copy;
+/// missing list stays saved. Never writes Bungie inventory.
 Future<void> showFillInDialog({
   required BuildContext context,
   required MockBuild build,
@@ -30,6 +33,8 @@ Future<void> showFillInDialog({
   FillInClipboardWriter? clipboardWriter,
   FillInMissingListSaver? saveMissingList,
   VoidCallback? onMissingListSaved,
+  FillInBuildMutator? onBuildUpdated,
+  FillInSavedBuildPlan? existingPlan,
   GuardianClass guardianClass = GuardianClass.warlock,
 }) {
   return showDialog<void>(
@@ -41,13 +46,15 @@ Future<void> showFillInDialog({
         clipboardWriter: clipboardWriter ?? defaultFillInClipboardWriter,
         saveMissingList: saveMissingList,
         onMissingListSaved: onMissingListSaved,
+        onBuildUpdated: onBuildUpdated,
+        existingPlan: existingPlan,
         guardianClass: guardianClass,
       );
     },
   );
 }
 
-/// Read-only Fill In results dialog (armor + exotic weapons).
+/// Fill In results dialog with Apply to build / Undo fill in.
 class FillInDialog extends StatefulWidget {
   const FillInDialog({
     super.key,
@@ -56,6 +63,8 @@ class FillInDialog extends StatefulWidget {
     this.clipboardWriter = defaultFillInClipboardWriter,
     this.saveMissingList,
     this.onMissingListSaved,
+    this.onBuildUpdated,
+    this.existingPlan,
     this.guardianClass = GuardianClass.warlock,
   });
 
@@ -64,6 +73,8 @@ class FillInDialog extends StatefulWidget {
   final FillInClipboardWriter clipboardWriter;
   final FillInMissingListSaver? saveMissingList;
   final VoidCallback? onMissingListSaved;
+  final FillInBuildMutator? onBuildUpdated;
+  final FillInSavedBuildPlan? existingPlan;
   final GuardianClass guardianClass;
 
   @override
@@ -73,16 +84,22 @@ class FillInDialog extends StatefulWidget {
 class _FillInDialogState extends State<FillInDialog> {
   var _loading = true;
   var _saving = false;
+  var _applying = false;
   String? _error;
   String? _saveMessage;
   FillInBuildResult? _result;
   List<FillInSlotMatch> _missing = const [];
+  List<FillInSlotDiff> _diffs = const [];
   FillInSimilarWeapon? _similar;
   String? _missingWeaponName;
+  late MockBuild _build;
+  FillInSavedBuildPlan? _plan;
 
   @override
   void initState() {
     super.initState();
+    _build = widget.build;
+    _plan = widget.existingPlan;
     _runMatch();
   }
 
@@ -95,6 +112,7 @@ class _FillInDialogState extends State<FillInDialog> {
         _error = loaded.errorMessage;
         _result = null;
         _missing = const [];
+        _diffs = const [];
         _similar = null;
         _missingWeaponName = null;
       });
@@ -102,7 +120,7 @@ class _FillInDialogState extends State<FillInDialog> {
     }
 
     final mapped = mapMockBuildForFillIn(
-      build: widget.build,
+      build: _build,
       inventory: loaded.items,
       guardianClass: widget.guardianClass,
     );
@@ -118,20 +136,43 @@ class _FillInDialogState extends State<FillInDialog> {
 
     FillInSimilarWeapon? similar;
     String? missingWeaponName;
+    FillInWeaponNeed? weaponNeed;
     final weaponMissing = missing.any(_isWeaponMatch);
     if (weaponMissing) {
-      final need = fillInWeaponNeedForBuild(
-        build: widget.build,
+      weaponNeed = fillInWeaponNeedForBuild(
+        build: _build,
         inventory: loaded.items,
       );
-      missingWeaponName = need?.name ?? widget.build.exoticWeapon.trim();
-      if (need != null) {
+      missingWeaponName = weaponNeed?.name ?? _build.exoticWeapon.trim();
+      if (weaponNeed != null) {
         similar = suggestSimilarWeapon(
-          need: need,
+          need: weaponNeed,
           heldWeapons: loaded.items,
         );
       }
     }
+
+    final currentLabels = <EquipmentSlot, String>{};
+    for (final assignment in _build.slots) {
+      final slot = EquipmentSlot.tryParse(assignment.slot) ??
+          _slotFromMockWire(assignment.slot);
+      if (slot != null) currentLabels[slot] = assignment.pieceName;
+    }
+    if (_build.exoticWeapon.trim().isNotEmpty) {
+      final weaponSlot = _build.exoticWeaponSlot == null
+          ? null
+          : EquipmentSlot.tryParse(_build.exoticWeaponSlot!);
+      currentLabels[weaponSlot ?? EquipmentSlot.special] =
+          _build.exoticWeapon.trim();
+    }
+
+    final diffs = planFillInSubstitutes(
+      match: result,
+      requirement: mapped.requirement,
+      inventory: mapped.inventory,
+      currentLabels: currentLabels,
+      weaponNeed: weaponNeed,
+    );
 
     if (!mounted) return;
     setState(() {
@@ -139,6 +180,7 @@ class _FillInDialogState extends State<FillInDialog> {
       _error = null;
       _result = result;
       _missing = missing;
+      _diffs = diffs;
       _similar = similar;
       _missingWeaponName =
           missingWeaponName?.isEmpty ?? true ? null : missingWeaponName;
@@ -162,20 +204,21 @@ class _FillInDialogState extends State<FillInDialog> {
     });
     try {
       final similar = _similar;
-      await save(
-        FillInSavedBuildPlan(
-          buildId: widget.build.id,
-          missing: [
-            for (final slot in _missing) fillInSlotLabel(slot.slot),
-          ],
-          similarWeaponName: similar?.item.name,
-          similarForName: _missingWeaponName,
-        ),
+      final plan = FillInSavedBuildPlan(
+        buildId: _build.id,
+        missing: [
+          for (final slot in _missing) fillInSlotLabel(slot.slot),
+        ],
+        similarWeaponName: similar?.item.name,
+        similarForName: _missingWeaponName,
+        applied: _plan?.applied ?? const [],
       );
+      await save(plan);
       widget.onMissingListSaved?.call();
       if (!mounted) return;
       setState(() {
         _saving = false;
+        _plan = plan;
         _saveMessage = 'Missing list saved on this build.';
       });
     } catch (e) {
@@ -187,17 +230,183 @@ class _FillInDialogState extends State<FillInDialog> {
     }
   }
 
+  Future<void> _applyToBuild() async {
+    if (_applying) return;
+    final substitutable = [
+      for (final d in _diffs)
+        if (d.wouldSubstitute) d,
+    ];
+    if (substitutable.isEmpty &&
+        _diffs.every((d) => d.applyInstanceId == null)) {
+      setState(() => _saveMessage = 'Nothing to apply.');
+      return;
+    }
+    setState(() {
+      _applying = true;
+      _saveMessage = null;
+    });
+
+    var next = _build;
+    final applied = <FillInAppliedSlot>[];
+
+    for (final diff in _diffs) {
+      final label = diff.applyLabel;
+      final original = diff.currentLabel;
+      final instanceId = diff.applyInstanceId;
+      final itemHash = diff.applyItemHash;
+      if (instanceId == null && !diff.wouldSubstitute) continue;
+
+      applied.add(
+        FillInAppliedSlot(
+          slotWire: diff.slot.wireName,
+          label: label,
+          originalLabel: original,
+          instanceId: instanceId,
+          itemHash: itemHash,
+        ),
+      );
+
+      if (!diff.wouldSubstitute) continue;
+
+      if (_isWeaponSlot(diff.slot)) {
+        next = next.copyWith(exoticWeapon: label);
+      } else {
+        final slots = [
+          for (final s in next.slots)
+            if (s.slot == diff.slot.wireName ||
+                _slotFromMockWire(s.slot) == diff.slot)
+              s.copyWith(pieceName: label, filledIn: true)
+            else
+              s,
+        ];
+        next = next.copyWith(slots: slots);
+        if (diff.slot == EquipmentSlot.classItem ||
+            next.exoticArmor.trim().toLowerCase() ==
+                original.trim().toLowerCase()) {
+          // Keep exoticArmor display in sync when the exotic armor slot changes.
+          if (next.slots.any((s) => s.isExoticSlot && s.filledIn)) {
+            final exotic = next.slots.where((s) => s.isExoticSlot);
+            if (exotic.isNotEmpty) {
+              next = next.copyWith(exoticArmor: exotic.first.pieceName);
+            }
+          }
+        }
+      }
+    }
+
+    final missingLabels = [
+      for (final slot in _missing)
+        if (!_diffs.any(
+          (d) => d.slot == slot.slot && d.wouldSubstitute,
+        ))
+          fillInSlotLabel(slot.slot),
+    ];
+
+    final plan = FillInSavedBuildPlan(
+      buildId: next.id,
+      missing: missingLabels,
+      similarWeaponName: _similar?.item.name,
+      similarForName: _missingWeaponName,
+      applied: applied,
+    );
+
+    final save = widget.saveMissingList;
+    try {
+      if (save != null) await save(plan);
+      widget.onBuildUpdated?.call(next);
+      widget.onMissingListSaved?.call();
+      if (!mounted) return;
+      setState(() {
+        _applying = false;
+        _build = next;
+        _plan = plan;
+        _saveMessage = 'Applied to build.';
+      });
+      await _runMatch();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _applying = false;
+        _saveMessage = 'Could not apply to build: $e';
+      });
+    }
+  }
+
+  Future<void> _undoFillIn() async {
+    final plan = _plan;
+    if (plan == null || !plan.hasAppliedSubstitutes || _applying) return;
+    setState(() {
+      _applying = true;
+      _saveMessage = null;
+    });
+
+    var next = _build;
+    for (final slot in plan.applied) {
+      final equipmentSlot = EquipmentSlot.tryParse(slot.slotWire);
+      if (equipmentSlot != null && _isWeaponSlot(equipmentSlot)) {
+        next = next.copyWith(exoticWeapon: slot.originalLabel);
+        continue;
+      }
+      final slots = [
+        for (final s in next.slots)
+          if (s.slot == slot.slotWire ||
+              _slotFromMockWire(s.slot)?.wireName == slot.slotWire)
+            s.copyWith(pieceName: slot.originalLabel, filledIn: false)
+          else
+            s,
+      ];
+      next = next.copyWith(slots: slots);
+    }
+
+    final restored = plan.copyWith(clearApplied: true);
+    final save = widget.saveMissingList;
+    try {
+      if (save != null) await save(restored);
+      widget.onBuildUpdated?.call(next);
+      widget.onMissingListSaved?.call();
+      if (!mounted) return;
+      setState(() {
+        _applying = false;
+        _build = next;
+        _plan = restored;
+        _saveMessage = 'Fill in undone.';
+      });
+      await _runMatch();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _applying = false;
+        _saveMessage = 'Could not undo: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final build = widget.build;
+    final build = _build;
+    final hasApplied = _plan?.hasAppliedSubstitutes ?? false;
+    final canApply = _diffs.any((d) => d.wouldSubstitute) ||
+        _diffs.any((d) => d.applyInstanceId != null);
     return AlertDialog(
       key: Key('fill_in_dialog_${build.id}'),
       title: Text('Fill In — ${build.name}'),
       content: SizedBox(
-        width: 420,
+        width: 440,
         child: _buildBody(context),
       ),
       actions: [
+        if (hasApplied)
+          TextButton(
+            key: const Key('fill_in_undo'),
+            onPressed: _applying ? null : _undoFillIn,
+            child: const Text('Undo fill in'),
+          ),
+        if (canApply && widget.onBuildUpdated != null)
+          FilledButton(
+            key: const Key('fill_in_apply_to_build'),
+            onPressed: (_applying || _loading) ? null : _applyToBuild,
+            child: Text(_applying ? 'Applying…' : 'Apply to build'),
+          ),
         if (_missing.isNotEmpty && widget.saveMissingList != null)
           TextButton(
             key: const Key('fill_in_save_missing'),
@@ -256,10 +465,24 @@ class _FillInDialogState extends State<FillInDialog> {
             ),
             const SizedBox(height: 12),
           ],
-          for (final slot in result.slots) ...[
-            _SlotRow(match: slot),
+          for (final diff in _diffs) ...[
+            _DiffRow(
+              diff: diff,
+              match: _matchForSlot(result.slots, diff.slot),
+              filledIn: _build.slots.any(
+                (s) =>
+                    s.filledIn &&
+                    (_slotFromMockWire(s.slot) == diff.slot ||
+                        s.slot == diff.slot.wireName),
+              ),
+            ),
             const SizedBox(height: 8),
           ],
+          if (_diffs.isEmpty)
+            for (final slot in result.slots) ...[
+              _SlotRow(match: slot),
+              const SizedBox(height: 8),
+            ],
           if (_similar != null) ...[
             const SizedBox(height: 4),
             Text(
@@ -267,11 +490,6 @@ class _FillInDialogState extends State<FillInDialog> {
               '${_missingWeaponName == null ? '' : ' (for $_missingWeaponName)'}',
               key: const Key('fill_in_similar_weapon'),
               style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            Text(
-              'Plan only — never moves, equips, or transfers in-game items.',
-              key: const Key('fill_in_similar_plan_note'),
-              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
           if (_saveMessage != null) ...[
@@ -289,6 +507,87 @@ class _FillInDialogState extends State<FillInDialog> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _DiffRow extends StatelessWidget {
+  const _DiffRow({
+    required this.diff,
+    required this.filledIn,
+    this.match,
+  });
+
+  final FillInSlotDiff diff;
+  final bool filledIn;
+  final FillInSlotMatch? match;
+
+  @override
+  Widget build(BuildContext context) {
+    final slotLabel = fillInSlotLabel(diff.slot);
+    final overCap = match?.exceedsCap ?? false;
+    final right = diff.wouldSubstitute
+        ? diff.substituteLabel!
+        : (diff.isHeld ? 'held' : 'missing');
+    final chipState = overCap
+        ? 'over cap'
+        : (diff.isHeld
+            ? 'held'
+            : (diff.wouldSubstitute ? 'substitute' : 'missing'));
+    return Row(
+      key: Key('fill_in_diff_${diff.slot.wireName}'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(slotLabel, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                '${diff.currentLabel} → $right',
+                key: Key('fill_in_diff_text_${diff.slot.wireName}'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        if (match != null && !_isWeaponSlot(diff.slot) && match!.isHeld)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              '${match!.poolHeldCount}/${match!.cap}',
+              key: Key('fill_in_held_count_${diff.slot.wireName}'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        if (match?.overCapLabel != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              match!.overCapLabel!,
+              key: Key('fill_in_over_cap_${diff.slot.wireName}'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+            ),
+          ),
+        if (filledIn)
+          Chip(
+            key: Key('fill_in_filled_badge_${diff.slot.wireName}'),
+            label: const Text('Filled in'),
+            visualDensity: VisualDensity.compact,
+            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          )
+        else
+          Chip(
+            key: Key('fill_in_chip_${diff.slot.wireName}_$chipState'),
+            label: Text(chipState),
+            visualDensity: VisualDensity.compact,
+            backgroundColor: overCap
+                ? Theme.of(context).colorScheme.errorContainer
+                : null,
+          ),
+      ],
     );
   }
 }
@@ -342,9 +641,40 @@ class _SlotRow extends StatelessWidget {
   }
 }
 
+FillInSlotMatch? _matchForSlot(
+  List<FillInSlotMatch> slots,
+  EquipmentSlot slot,
+) {
+  for (final match in slots) {
+    if (match.slot == slot) return match;
+  }
+  return null;
+}
+
 bool _isWeaponMatch(FillInSlotMatch match) {
-  return EquipmentSlot.weaponSlots.contains(match.slot) ||
-      match.slot == EquipmentSlot.exoticWeapon;
+  return _isWeaponSlot(match.slot);
+}
+
+bool _isWeaponSlot(EquipmentSlot slot) {
+  return EquipmentSlot.weaponSlots.contains(slot) ||
+      slot == EquipmentSlot.exoticWeapon;
+}
+
+EquipmentSlot? _slotFromMockWire(String wire) {
+  switch (wire) {
+    case 'helmet':
+      return EquipmentSlot.helmet;
+    case 'arms':
+      return EquipmentSlot.arms;
+    case 'chest':
+      return EquipmentSlot.chest;
+    case 'legs':
+      return EquipmentSlot.legs;
+    case 'class_item':
+      return EquipmentSlot.classItem;
+    default:
+      return EquipmentSlot.tryParse(wire);
+  }
 }
 
 String _stateLabel(FillInSlotMatch match) {

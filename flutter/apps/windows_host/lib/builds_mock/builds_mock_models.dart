@@ -72,6 +72,7 @@ class MockSlotAssignment {
     this.heldCopies = 1,
     this.isExoticSlot = false,
     this.statTotal = 64,
+    this.filledIn = false,
   });
 
   final String slot;
@@ -82,6 +83,29 @@ class MockSlotAssignment {
 
   /// Sum of the six armor stats on this piece (fake fixture value).
   final int statTotal;
+
+  /// True when Fill In Apply to build substituted this slot.
+  final bool filledIn;
+
+  MockSlotAssignment copyWith({
+    String? slot,
+    String? setId,
+    String? pieceName,
+    int? heldCopies,
+    bool? isExoticSlot,
+    int? statTotal,
+    bool? filledIn,
+  }) {
+    return MockSlotAssignment(
+      slot: slot ?? this.slot,
+      setId: setId ?? this.setId,
+      pieceName: pieceName ?? this.pieceName,
+      heldCopies: heldCopies ?? this.heldCopies,
+      isExoticSlot: isExoticSlot ?? this.isExoticSlot,
+      statTotal: statTotal ?? this.statTotal,
+      filledIn: filledIn ?? this.filledIn,
+    );
+  }
 }
 
 class MockSetBonus {
@@ -184,6 +208,45 @@ class MockBuild {
         for (final s in slots)
           if (!s.isExoticSlot) s.setId,
       };
+
+  MockBuild copyWith({
+    String? id,
+    String? name,
+    String? subclass,
+    String? exoticArmor,
+    String? exoticWeapon,
+    List<MockSlotAssignment>? slots,
+    String? loop,
+    MockArtifact? artifact,
+    List<MockSetBonus>? setBonuses,
+    List<MockStatTotal>? stats,
+    String? splitWhy,
+    String? creator,
+    String? dimLink,
+    String? exoticWeaponType,
+    String? exoticWeaponDamageType,
+    String? exoticWeaponSlot,
+  }) {
+    return MockBuild(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      subclass: subclass ?? this.subclass,
+      exoticArmor: exoticArmor ?? this.exoticArmor,
+      exoticWeapon: exoticWeapon ?? this.exoticWeapon,
+      slots: slots ?? this.slots,
+      loop: loop ?? this.loop,
+      artifact: artifact ?? this.artifact,
+      setBonuses: setBonuses ?? this.setBonuses,
+      stats: stats ?? this.stats,
+      splitWhy: splitWhy ?? this.splitWhy,
+      creator: creator ?? this.creator,
+      dimLink: dimLink ?? this.dimLink,
+      exoticWeaponType: exoticWeaponType ?? this.exoticWeaponType,
+      exoticWeaponDamageType:
+          exoticWeaponDamageType ?? this.exoticWeaponDamageType,
+      exoticWeaponSlot: exoticWeaponSlot ?? this.exoticWeaponSlot,
+    );
+  }
 }
 
 class MockHeldCell {

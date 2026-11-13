@@ -336,9 +336,14 @@ void main() {
       loadCaches: () async => FillInCacheLoadResult.ok(inventory),
     );
 
-    expect(find.byKey(const Key('fill_in_chip_special_missing')), findsOneWidget);
+    // Missing weapon with a held similar copy shows substitute preview.
+    expect(
+      find.byKey(const Key('fill_in_chip_special_substitute')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('fill_in_diff_special')), findsOneWidget);
     expect(find.byKey(const Key('fill_in_similar_weapon')), findsOneWidget);
-    expect(find.textContaining("Zaouli's Bane"), findsOneWidget);
+    expect(find.textContaining("Zaouli's Bane"), findsWidgets);
   });
 
   testWidgets('Save missing list calls saver with missing labels',

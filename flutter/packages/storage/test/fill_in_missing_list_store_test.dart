@@ -284,4 +284,37 @@ void main() {
   test('loadForBuild returns null when store missing', () async {
     expect(await store.loadForBuild('missing'), isNull);
   });
+
+  test('save/load preserves applied substitutes and clears on undo copy',
+      () async {
+    await store.saveBuildPlan(
+      const FillInSavedBuildPlan(
+        buildId: 'b01',
+        missing: <String>['Helmet'],
+        applied: <FillInAppliedSlot>[
+          FillInAppliedSlot(
+            slotWire: 'arms',
+            label: 'Spare Arms',
+            originalLabel: 'Needed Arms',
+            instanceId: 'i-arms',
+            itemHash: 42,
+          ),
+        ],
+      ),
+    );
+    final loaded = await store.loadForBuild('b01');
+    expect(loaded!.hasAppliedSubstitutes, isTrue);
+    expect(loaded.applied.single.label, 'Spare Arms');
+    expect(loaded.applied.single.originalLabel, 'Needed Arms');
+    expect(loaded.missing, <String>['Helmet']);
+
+    await store.saveBuildPlan(loaded.copyWith(clearApplied: true));
+    final undone = await store.loadForBuild('b01');
+    expect(undone!.hasAppliedSubstitutes, isFalse);
+    expect(undone.missing, <String>['Helmet']);
+
+    final decoded = jsonDecode(await File(store.storePath).readAsString())
+        as Map<String, dynamic>;
+    expect(decoded['schemaVersion'], kFillInMissingListSchemaVersion);
+  });
 }
