@@ -207,12 +207,13 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
 
   Future<void> _openFillIn(BuildContext context, MockBuild build) async {
     final root = widget.storageRoot;
-    final FillInCacheLoader loader = root != null
-        ? defaultFillInCacheLoader(root)
-        : () async => FillInCacheLoadResult.missing(
-              'DIM Armor/Weapons inventory cache is missing or unreadable. '
-              'Import both CSVs in Settings, then try Fill In again.',
-            );
+    final FillInCacheLoader loader = widget.fillInCacheLoader ??
+        (root != null
+            ? defaultFillInCacheLoader(root)
+            : () async => FillInCacheLoadResult.missing(
+                  'DIM Armor/Weapons inventory cache is missing or unreadable. '
+                  'Import both CSVs in Settings, then try Fill In again.',
+                ));
     final store =
         root == null ? null : FillInMissingListStore(root: root);
     final dimLoadout = _controller.dimLoadoutFor(build);

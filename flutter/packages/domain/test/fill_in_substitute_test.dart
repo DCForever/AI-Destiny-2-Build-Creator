@@ -497,6 +497,97 @@ void main() {
       },
     );
 
+    test(
+      'pre-scan: held exotic in Power + empty Kinetic → Kinetic not exotic',
+      () {
+        // Held exotic in Power (later bucket) must still count as the one
+        // exotic in use so empty Kinetic cannot pick another exotic.
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'kin-ex',
+            itemHash: 501,
+            name: 'Qua Nilus II',
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'kin-leg',
+            itemHash: 502,
+            name: 'Funnelweb',
+            slot: EquipmentSlot.primary,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Void',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'pow-ex',
+            itemHash: 504,
+            name: 'Parasite',
+            slot: EquipmentSlot.heavy,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Grenade Launcher',
+            damageType: 'Solar',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'solar',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.primary,
+              isExotic: false,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.heavy,
+              isExotic: false,
+              exoticItemHash: 504,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {
+            EquipmentSlot.heavy: 'Parasite',
+          },
+        );
+
+        final exoticSubs = [
+          for (final d in diffs)
+            if (d.wouldSubstitute &&
+                (d.substituteLabel == 'Qua Nilus II' ||
+                    d.substituteLabel == 'Parasite'))
+              d.substituteLabel,
+        ];
+        expect(
+          exoticSubs,
+          isEmpty,
+          reason: 'at most one exotic weapon; Power already holds Parasite',
+        );
+        final power =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.heavy);
+        expect(power.isHeld, isTrue);
+        expect(power.heldInstanceId, 'pow-ex');
+        final kinetic =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.primary);
+        expect(kinetic.wouldSubstitute, isTrue);
+        expect(kinetic.substituteLabel, 'Funnelweb');
+        expect(kinetic.substituteLabel, isNot('Qua Nilus II'));
+      },
+    );
+
     test('exotic armor never substitutes a legendary cover', () {
       final inventory = [
         const FillInInventoryItem(

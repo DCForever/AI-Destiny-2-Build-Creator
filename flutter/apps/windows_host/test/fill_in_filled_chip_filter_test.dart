@@ -9,7 +9,7 @@ import 'test_material_theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('filled slots never surface blank item names on the detail card',
+  testWidgets('chip list never contains an empty-name filled-in chip',
       (tester) async {
     const build = MockBuild(
       id: 'chip_filter',
@@ -58,10 +58,20 @@ void main() {
       ),
     );
 
-    expect(find.text('Qua Nilus II'), findsWidgets);
-    expect(find.text('Filled in'), findsWidgets);
-    // Blank / whitespace piece names must never appear as a titled chip.
-    expect(find.textContaining('Filled in ·'), findsNothing);
-    expect(find.text('None'), findsNothing);
+    expect(
+      find.byKey(const Key('builds_mock_filled_in_chip_filter_primary')),
+      findsOneWidget,
+    );
+    expect(find.text('Filled in · Qua Nilus II'), findsOneWidget);
+    // Empty / whitespace Energy + Power must never render a chip.
+    expect(find.textContaining('Filled in ·'), findsOneWidget);
+    expect(
+      find.byKey(const Key('builds_mock_filled_in_chip_filter_special')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('builds_mock_filled_in_chip_filter_heavy')),
+      findsNothing,
+    );
   });
 }

@@ -375,6 +375,26 @@ class _DetailBody extends StatelessWidget {
                   ),
                 ],
               ),
+              if (loadout.slots.any(
+                (s) => s.filledIn && s.pieceName.trim().isNotEmpty,
+              )) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    for (final s in loadout.slots)
+                      if (s.filledIn && s.pieceName.trim().isNotEmpty)
+                        Chip(
+                          key: Key(
+                            'builds_mock_filled_in_${loadout.id}_${s.slot}',
+                          ),
+                          label: Text('Filled in · ${s.pieceName.trim()}'),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 14),
               Row(
                 children: [

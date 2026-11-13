@@ -22,7 +22,11 @@ BuildsMockSlotStatus _statusForSlot({
   required MockSlotAssignment? assignment,
   FillInSavedBuildPlan? plan,
 }) {
-  if (assignment?.filledIn == true) return BuildsMockSlotStatus.filled;
+  // Never treat blank / whitespace names as a filled chip/status.
+  if (assignment?.filledIn == true &&
+      (assignment!.pieceName.trim().isNotEmpty)) {
+    return BuildsMockSlotStatus.filled;
+  }
   if (plan != null) {
     for (final row in plan.rows) {
       if (row.slotWire == slotWire) {
@@ -173,16 +177,21 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
 }
 
 /// Lazy enrichment cache keyed by build id + loadout shareId.
+///
+/// A hit is valid only when the **source** [MockBuild] is the same object
+/// ([identical]). Fill In Apply / Undo call [BuildsMockController.replaceBuild]
+/// with a new instance that keeps the same id + DIM share id — identity
+/// guards against returning a stale pre-Apply enrichment.
 class BuildsMockEnrichmentCache {
-  final Map<String, MockBuild> _cache = {};
+  final Map<String, ({MockBuild source, MockBuild enriched})> _cache = {};
 
   MockBuild enrich(MockBuild build, CachedDimLoadout? loadout) {
     final share = loadout?.shareId ?? '';
     final key = '${build.id}::$share';
     final hit = _cache[key];
-    if (hit != null) return hit;
+    if (hit != null && identical(hit.source, build)) return hit.enriched;
     final next = enrichMockBuildFromDimLoadout(build, loadout: loadout);
-    _cache[key] = next;
+    _cache[key] = (source: build, enriched: next);
     return next;
   }
 

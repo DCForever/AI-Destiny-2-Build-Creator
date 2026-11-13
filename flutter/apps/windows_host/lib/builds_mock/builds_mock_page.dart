@@ -35,6 +35,7 @@ class BuildsMockPage extends StatefulWidget {
     this.matrixMaxBytes = kCachedDimLoadoutsMaxBytes,
     this.services,
     this.applyPorts,
+    this.fillInCacheLoader,
   });
 
   /// Injectable for tests / widget previews. Page does not dispose it.
@@ -42,6 +43,9 @@ class BuildsMockPage extends StatefulWidget {
 
   /// When set, read-only load of `{StorageRoot}/dim_loadouts/dim-loadouts.json`.
   final StorageRoot? storageRoot;
+
+  /// Test inject: overrides DIM Armor/Weapons cache load for Fill In.
+  final FillInCacheLoader? fillInCacheLoader;
 
   /// Path source: Settings saved path → `WARLOCK_MATRIX_PATH`.
   /// Ignored when [controller] is injected.
@@ -166,6 +170,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   Future<void> _loadDimLoadouts(StorageRoot root) async {
     final result = await DimLoadoutsReader(root: root).load();
     if (!mounted) return;
+    // DIM catalog changed — drop enrichment keyed to prior shareIds.
+    _enrichmentCache.invalidate();
     switch (result.status) {
       case DimLoadoutsReadStatus.notLoaded:
         _controller.adoptDimLoadouts(status: DimLoadoutsPanelStatus.notLoaded);
@@ -225,6 +231,9 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   }
 
   void _onController() {
+    // replaceBuild / adoptDimLoadouts keep build id + share id; clear so
+    // identity-aware enrich cannot briefly reuse a prior entry either.
+    _enrichmentCache.invalidate();
     if (mounted) setState(() {});
   }
 
