@@ -169,6 +169,7 @@ class MockBuild {
     this.exoticWeaponType,
     this.exoticWeaponDamageType,
     this.exoticWeaponSlot,
+    this.isOptimized = false,
   });
 
   final String id;
@@ -200,6 +201,9 @@ class MockBuild {
   /// Weapon slot wire name (`primary` / `special` / `heavy`) when known.
   final String? exoticWeaponSlot;
 
+  /// Optimize readiness hook. No producer yet — stays false (filter empty).
+  final bool isOptimized;
+
   bool get usesSolipsism =>
       exoticArmor.toLowerCase().contains('solipsism') ||
       slots.any((s) => s.pieceName.toLowerCase().contains('solipsism'));
@@ -229,6 +233,7 @@ class MockBuild {
     String? exoticWeaponType,
     String? exoticWeaponDamageType,
     String? exoticWeaponSlot,
+    bool? isOptimized,
   }) {
     return MockBuild(
       id: id ?? this.id,
@@ -248,6 +253,7 @@ class MockBuild {
       exoticWeaponDamageType:
           exoticWeaponDamageType ?? this.exoticWeaponDamageType,
       exoticWeaponSlot: exoticWeaponSlot ?? this.exoticWeaponSlot,
+      isOptimized: isOptimized ?? this.isOptimized,
     );
   }
 }
@@ -282,7 +288,12 @@ class MockSwapProposal {
 
 enum MockSwapDecision { pending, accepted, rejected }
 
-enum MockReadiness { ready, notReady }
+/// Browse readiness filter values.
+///
+/// [ready] / [notReady] are set-level armor readiness (build count + slot uses).
+/// [filledIn] matches builds with Fill In activity (see filter docs).
+/// [optimized] is a future Optimize hook — no producer yet, so it matches nothing.
+enum MockReadiness { ready, notReady, filledIn, optimized }
 
 /// Browse layout for the Builds main pane (Detail is a separate screen).
 enum BuildsMockCardLayout { grid, list }

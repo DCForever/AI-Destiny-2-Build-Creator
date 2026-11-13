@@ -190,10 +190,12 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       final plans = await FillInMissingListStore(root: root).loadAll();
       if (!mounted) return;
       setState(() => _savedFillInPlans = plans);
+      _controller.adoptFillInPlans(plans);
     } on FillInMissingListStoreException {
       // Oversized / unsafe store: fail closed (no plans), never rewrite.
       if (!mounted) return;
       setState(() => _savedFillInPlans = const <String, FillInSavedBuildPlan>{});
+      _controller.adoptFillInPlans(const <String, FillInSavedBuildPlan>{});
     }
   }
 

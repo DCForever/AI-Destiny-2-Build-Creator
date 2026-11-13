@@ -203,7 +203,7 @@ class _FillInDialogState extends State<FillInDialog> {
         for (final a in _plan!.applied)
           if (a.label.trim().isNotEmpty) a.label.trim().toLowerCase(),
     };
-    diffs = _enforceAtMostOneExoticWeapon(
+    diffs = enforceAtMostOneExoticWeapon(
       diffs: diffs,
       inventory: mapped.inventory,
       preferLabels: preferExoticLabels,
@@ -1034,7 +1034,10 @@ List<FillInSavedSlotRow> _proposedRowsAfterUndo(FillInSavedBuildPlan plan) {
 ///
 /// When several exotic substitutes remain and none are held, keep one whose
 /// label is in [preferLabels] (saved plan) when possible.
-List<FillInSlotDiff> _enforceAtMostOneExoticWeapon({
+///
+/// Public for unit tests (cleared extras must set [FillInSlotDiff.isExotic]
+/// false so copy/save labels stay legendary).
+List<FillInSlotDiff> enforceAtMostOneExoticWeapon({
   required List<FillInSlotDiff> diffs,
   required List<FillInInventoryItem> inventory,
   Set<String> preferLabels = const {},
@@ -1103,12 +1106,14 @@ List<FillInSlotDiff> _enforceAtMostOneExoticWeapon({
       continue;
     }
     if (usedExotic || (keepSlot != null && d.slot != keepSlot)) {
+      // Cleared exotic substitute → legendary missing row. Must clear
+      // isExotic so copy/save labels do not say "Exotic <slot>".
       out.add(
         FillInSlotDiff(
           slot: d.slot,
           currentLabel: d.currentLabel,
           isHeld: false,
-          isExotic: d.isExotic,
+          isExotic: false,
           note: d.note,
         ),
       );

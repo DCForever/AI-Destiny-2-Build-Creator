@@ -53,4 +53,114 @@ void main() {
       isTrue,
     );
   });
+
+  test('readiness filter: Ready / Not ready still work', () {
+    final rows = computeAllReadiness(fixture);
+    final ready = filterMockBuilds(
+      builds: fixture.builds,
+      readiness: MockReadiness.ready,
+      readinessRows: rows,
+    );
+    final notReady = filterMockBuilds(
+      builds: fixture.builds,
+      readiness: MockReadiness.notReady,
+      readinessRows: rows,
+    );
+    expect(ready, isNotEmpty);
+    expect(notReady, isNotEmpty);
+    expect(
+      ready.every(
+        (b) => rows
+            .where((r) => b.setIds.contains(r.setId))
+            .any((r) => r.status == MockReadiness.ready),
+      ),
+      isTrue,
+    );
+    expect(
+      notReady.every(
+        (b) {
+          final linked = rows.where((r) => b.setIds.contains(r.setId));
+          if (linked.isEmpty) return true;
+          return linked.every((r) => r.status == MockReadiness.notReady);
+        },
+      ),
+      isTrue,
+    );
+  });
+
+  test('readiness filter: Filled In matches slot.filledIn and plan ids', () {
+    // Decision: proposed counts — filledInBuildIds come from
+    // buildsMockHasFillIn (proposed + filled + applied).
+    final withSlot = MockBuild(
+      id: 'filled_slot',
+      name: 'Slot filled',
+      subclass: 'Strand',
+      exoticArmor: '',
+      exoticWeapon: '',
+      slots: const [
+        MockSlotAssignment(
+          slot: 'helmet',
+          setId: 'set_a',
+          pieceName: 'Helm',
+          filledIn: true,
+        ),
+      ],
+      loop: 'loop',
+      artifact: const MockArtifact(name: '—', season: '—'),
+      setBonuses: const [],
+      stats: const [],
+    );
+    final proposedOnly = MockBuild(
+      id: 'proposed_plan',
+      name: 'Proposed only',
+      subclass: 'Strand',
+      exoticArmor: '',
+      exoticWeapon: '',
+      slots: const [],
+      loop: 'loop',
+      artifact: const MockArtifact(name: '—', season: '—'),
+      setBonuses: const [],
+      stats: const [],
+    );
+    final plain = MockBuild(
+      id: 'plain',
+      name: 'Plain',
+      subclass: 'Strand',
+      exoticArmor: '',
+      exoticWeapon: '',
+      slots: const [],
+      loop: 'loop',
+      artifact: const MockArtifact(name: '—', season: '—'),
+      setBonuses: const [],
+      stats: const [],
+    );
+
+    final filtered = filterMockBuilds(
+      builds: [withSlot, proposedOnly, plain],
+      readiness: MockReadiness.filledIn,
+      filledInBuildIds: {'proposed_plan'},
+    );
+    expect(filtered.map((b) => b.id), ['filled_slot', 'proposed_plan']);
+    expect(
+      buildMatchesFilledInReadiness(
+        proposedOnly,
+        filledInBuildIds: {'proposed_plan'},
+      ),
+      isTrue,
+    );
+    expect(buildMatchesFilledInReadiness(plain), isFalse);
+  });
+
+  test('readiness filter: Optimized matches nothing without a producer', () {
+    expect(
+      fixture.builds.every((b) => !isMockBuildOptimized(b)),
+      isTrue,
+    );
+    final filtered = filterMockBuilds(
+      builds: fixture.builds,
+      readiness: MockReadiness.optimized,
+      readinessRows: computeAllReadiness(fixture),
+    );
+    expect(filtered, isEmpty);
+  });
 }
