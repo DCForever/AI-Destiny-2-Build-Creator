@@ -11,6 +11,27 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+/// No-op picker so field taps during enterText never hit the real plugin.
+Future<String?> _noopPicker({
+  required List<String> extensions,
+  String? label,
+}) async =>
+    null;
+
+Widget _card(DimCsvImportController controller) {
+  return MaterialApp(
+    theme: testMaterialTheme(),
+    home: Scaffold(
+      body: SingleChildScrollView(
+        child: DimCsvImportCard(
+          controller: controller,
+          openFilePicker: _noopPicker,
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -24,16 +45,7 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       expect(find.byKey(const Key('dim_armor_csv_import_card')), findsOneWidget);
@@ -41,6 +53,7 @@ void main() {
         find.byKey(const Key('dim_armor_csv_import_source_field')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('dim_armor_csv_import_browse')), findsOneWidget);
       expect(find.text('not imported yet'), findsOneWidget);
       expect(
         find.textContaining(r'fill_in\dim_armor_inventory.csv'),
@@ -58,16 +71,7 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       expect(find.text('Cached: 7 items'), findsOneWidget);
@@ -85,16 +89,7 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       await tester.enterText(
@@ -119,16 +114,7 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       await tester.enterText(
@@ -152,20 +138,15 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       expect(
         find.byKey(const Key('dim_weapons_csv_import_card')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('dim_weapons_csv_import_browse')),
         findsOneWidget,
       );
       expect(find.text('not imported yet'), findsOneWidget);
@@ -180,16 +161,7 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       await tester.enterText(
@@ -214,16 +186,7 @@ void main() {
       );
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: testMaterialTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DimCsvImportCard(controller: controller),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_card(controller));
       await _pumpFrames(tester);
 
       await tester.enterText(

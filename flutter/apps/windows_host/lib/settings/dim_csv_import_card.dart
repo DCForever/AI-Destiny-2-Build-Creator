@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 
 import 'dim_csv_import_controller.dart';
+import 'open_file_path_picker.dart';
+import 'path_file_field.dart';
 
-/// Settings card: path TextField + Import for DIM Armor or Weapons CSV.
+/// Settings card: path TextField + Browse + Import for DIM Armor or Weapons CSV.
 ///
-/// Matches [LegacyDbImportCard] pattern — no file picker dependency.
+/// Browse / field tap opens a native open-file picker (.csv). Picking fills the
+/// path only — Import is still required (no auto-import).
 class DimCsvImportCard extends StatefulWidget {
   const DimCsvImportCard({
     super.key,
     required this.controller,
+    this.openFilePicker,
   });
 
   final DimCsvImportController controller;
+
+  /// Injectable open-file picker (tests). Defaults to [defaultOpenFilePathPicker].
+  final OpenFilePathPicker? openFilePicker;
 
   @override
   State<DimCsvImportCard> createState() => _DimCsvImportCardState();
@@ -101,14 +108,15 @@ class _DimCsvImportCardState extends State<DimCsvImportCard> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            TextField(
-              key: Key('${_keyPrefix}_source_field'),
+            PathFileField(
+              fieldKey: Key('${_keyPrefix}_source_field'),
+              browseKey: Key('${_keyPrefix}_browse'),
               controller: _pathController,
               enabled: !busy,
-              decoration: InputDecoration(
-                labelText: _fieldLabel,
-                border: const OutlineInputBorder(),
-              ),
+              labelText: _fieldLabel,
+              typeLabel: 'CSV',
+              extensions: const <String>['csv'],
+              openFilePicker: widget.openFilePicker,
               onChanged: c.setSourcePath,
             ),
             const SizedBox(height: 12),

@@ -36,6 +36,8 @@ dependencies:
   destiny2_ui_flutter:
     path: ../../packages/ui_flutter
   flutter_secure_storage: ^10.3.1
+  # Native open-file dialogs for Settings path fields (Windows).
+  file_selector: ^1.1.0
   path: ^1.9.0
   path_provider: ^2.1.5
   # sqlite3 3.x bundles native SQLite via build hooks — no sqlite3_flutter_libs.
