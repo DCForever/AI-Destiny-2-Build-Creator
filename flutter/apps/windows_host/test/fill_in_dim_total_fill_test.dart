@@ -809,6 +809,149 @@ void main() {
     },
   );
 
+  testWidgets(
+    'empty exotic Kinetic substitute saves as filled with name; Apply chips named',
+    (tester) async {
+      FillInSavedBuildPlan? saved;
+      MockBuild? updated;
+
+      // Exotic Kinetic slot on the build with blank pieceName and no kinetic in
+      // the DIM link → "No weapon in DIM link" + Similar pick Qua Nilus II.
+      // Inventory must NOT also hold Barrow-Dyad (would mark the slot held).
+      const loadout = CachedDimLoadout(
+        shareId: 'syn-empty-exotic-kin',
+        name: 'Empty exotic kinetic',
+        classType: 2,
+        items: [
+          CachedDimItem(
+            hash: 7001,
+            name: 'Swarmers',
+            itemType: 'Leg Armor',
+            tier: 'Exotic',
+          ),
+          // No kinetic weapon in the DIM link.
+        ],
+        subclassPlugs: [],
+        mods: [],
+        artifactPerks: [],
+        exotic: CachedDimExotic(
+          hash: 7001,
+          name: 'Swarmers',
+          description: '',
+        ),
+      );
+      const build = MockBuild(
+        id: 'matrix_empty_ex_kin',
+        name: 'Empty exotic kinetic',
+        subclass: 'Strand',
+        exoticArmor: '',
+        exoticWeapon: '',
+        slots: [
+          MockSlotAssignment(
+            slot: 'primary',
+            setId: 'exotic_weapon',
+            pieceName: '',
+            isExoticSlot: true,
+          ),
+        ],
+        loop: 'loop',
+        artifact: MockArtifact(name: '—', season: '—'),
+        setBonuses: [],
+        stats: [],
+        dimLink: 'https://dim.gg/syn-empty-exotic-kin',
+      );
+      final inventory = [
+        const FillInInventoryItem(
+          instanceId: 'qua-1',
+          itemHash: 9101,
+          name: 'Qua Nilus II',
+          slot: EquipmentSlot.primary,
+          isExotic: false,
+          guardianClass: null,
+          weaponType: 'Sidearm',
+          damageType: 'Strand',
+        ),
+        const FillInInventoryItem(
+          instanceId: 'legs-1',
+          itemHash: 7001,
+          name: 'Swarmers',
+          slot: EquipmentSlot.legs,
+          isExotic: true,
+          guardianClass: GuardianClass.warlock,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: testMaterialTheme(),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  key: const Key('open_fill_in'),
+                  onPressed: () {
+                    showFillInDialog(
+                      context: context,
+                      build: build,
+                      dimLoadout: loadout,
+                      loadCaches: () async =>
+                          FillInCacheLoadResult.ok(inventory),
+                      saveMissingList: (plan) async => saved = plan,
+                      onBuildUpdated: (b) => updated = b,
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('open_fill_in')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.textContaining(kFillInNoWeaponInDimLink), findsWidgets);
+      expect(find.textContaining('Similar pick: Qua Nilus II'), findsOneWidget);
+      expect(find.textContaining('Exotic Kinetic'), findsWidgets);
+
+      await tester.tap(find.byKey(const Key('fill_in_save_missing')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(saved, isNotNull);
+      final kinRow = saved!.rows.singleWhere((r) => r.slotWire == 'primary');
+      expect(kinRow.state, 'filled');
+      expect(kinRow.itemName, 'Qua Nilus II');
+      expect(kinRow.slotLabel, 'Exotic Kinetic');
+      expect(
+        saved!.rows.any(
+          (r) =>
+              r.slotWire == 'primary' &&
+              r.state == 'missing' &&
+              r.itemName.trim().isEmpty,
+        ),
+        isFalse,
+      );
+
+      await tester.tap(find.byKey(const Key('fill_in_apply_to_build')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(updated, isNotNull);
+      final primary = updated!.slots.where((s) => s.slot == 'primary');
+      expect(primary, isNotEmpty);
+      expect(primary.first.pieceName, 'Qua Nilus II');
+      expect(primary.first.filledIn, isTrue);
+      expect(
+        updated!.slots
+            .where((s) => s.filledIn)
+            .every((s) => s.pieceName.trim().isNotEmpty),
+        isTrue,
+      );
+    },
+  );
+
   testWidgets('Save missing list never writes empty names', (tester) async {
     FillInSavedBuildPlan? saved;
     const loadout = CachedDimLoadout(

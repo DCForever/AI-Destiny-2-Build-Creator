@@ -320,6 +320,104 @@ void main() {
       expect(diffs.single.currentLabel.toLowerCase(), isNot('helmet'));
     });
 
+    test(
+      'no exotic on build: at most one exotic weapon substitute across slots',
+      () {
+        // Skeptic: empty exoticWeaponSlots used to leave excludeExotic=false
+        // for every bucket, so held exotics could fill Kinetic+Energy+Power.
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'ex-kin',
+            itemHash: 501,
+            name: 'Qua Nilus II',
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'ex-ene',
+            itemHash: 502,
+            name: 'Riskrunner',
+            slot: EquipmentSlot.special,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Submachine Gun',
+            damageType: 'Arc',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'leg-pow',
+            itemHash: 503,
+            name: 'Cataclysmic',
+            slot: EquipmentSlot.heavy,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Linear Fusion Rifle',
+            damageType: 'Solar',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'ex-pow',
+            itemHash: 504,
+            name: 'Parasite',
+            slot: EquipmentSlot.heavy,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Grenade Launcher',
+            damageType: 'Solar',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'strand',
+          slots: [
+            // No isExotic weapon need — build has no exotic weapon.
+            FillInSlotRequirement(
+              slot: EquipmentSlot.primary,
+              isExotic: false,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.special,
+              isExotic: false,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.heavy,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {},
+        );
+
+        final exoticSubs = [
+          for (final d in diffs)
+            if (d.wouldSubstitute &&
+                (d.substituteLabel == 'Qua Nilus II' ||
+                    d.substituteLabel == 'Riskrunner' ||
+                    d.substituteLabel == 'Parasite'))
+              d.substituteLabel,
+        ];
+        expect(
+          exoticSubs,
+          hasLength(1),
+          reason: 'at most one exotic weapon pick when build has none',
+        );
+        final power = diffs.singleWhere((d) => d.slot == EquipmentSlot.heavy);
+        expect(power.substituteLabel, 'Cataclysmic');
+        expect(power.substituteLabel, isNot('Parasite'));
+      },
+    );
+
     test('exotic armor never substitutes a legendary cover', () {
       final inventory = [
         const FillInInventoryItem(
