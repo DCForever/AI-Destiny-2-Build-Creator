@@ -24,6 +24,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       loadout: loadout,
       duplicateIndexWithinClass: dupes[build.id] ?? 1,
     );
+    final icons = _segmentIcons(build: displayBuild, loadout: loadout);
     final plan = _savedFillInPlans[build.id];
     final plugs = splitSubclassPlugs(loadout?.subclassPlugs ?? const []);
     final placed = placeDimMods(
@@ -60,7 +61,9 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                   name: derived,
                   iconSize: 16,
                   fontSize: 14,
-                  superIconPath: dimLoadoutSuperIconPath(loadout),
+                  superIconPath: icons.superIconPath,
+                  exoticArmorIconPath: icons.exoticArmorIconPath,
+                  exoticWeaponIconPath: icons.exoticWeaponIconPath,
                 ),
               ),
             ],
@@ -180,7 +183,9 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                 density: BuildsMockCardDensity.detail,
                 priorities: _controller.statPrioritiesFor(build),
                 fillInPlan: plan,
-                superIconPath: dimLoadoutSuperIconPath(loadout),
+                superIconPath: icons.superIconPath,
+                exoticArmorIconPath: icons.exoticArmorIconPath,
+                exoticWeaponIconPath: icons.exoticWeaponIconPath,
                 showMods: true,
                 modsBySlot: placed.bySlot,
                 unplacedMods: placed.unplaced,

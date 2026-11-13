@@ -299,10 +299,46 @@ const Map<String, String> _kWeaponTypeAliases = {
 
 String _norm(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
+/// Dedicated subclass display names → damage-type keys in [kElementOfficial].
+///
+/// Catalog / Sets already render element icons via [officialElementVisual];
+/// Builds identity titles often carry subclass labels (Stormcaller, etc.)
+/// instead of Arc/Solar/…. Map those to the same official element art.
+const Map<String, String> kSubclassElementAliases = {
+  'sunbreaker': 'solar',
+  'striker': 'arc',
+  'behemoth': 'stasis',
+  'sentinel': 'void',
+  'berserker': 'strand',
+  'prismatic titan': 'prismatic',
+  'gunslinger': 'solar',
+  'arcstrider': 'arc',
+  'revenant': 'stasis',
+  'nightstalker': 'void',
+  'threadrunner': 'strand',
+  'prismatic hunter': 'prismatic',
+  'dawnblade': 'solar',
+  'stormcaller': 'arc',
+  'shadebinder': 'stasis',
+  'voidwalker': 'void',
+  'broodweaver': 'strand',
+  'prismatic warlock': 'prismatic',
+};
+
 /// Official element visual, or null if unknown.
+///
+/// Accepts damage-type names (`Arc`) and dedicated subclass labels
+/// (`Stormcaller` → Arc). Bare `Prismatic` / `Prismatic Warlock` map to
+/// the Prismatic glyph.
 DestinyOfficialVisual? officialElementVisual(String? element) {
   if (element == null || element.trim().isEmpty) return null;
-  return kElementOfficial[element.trim().toLowerCase()];
+  final key = element.trim().toLowerCase();
+  final direct = kElementOfficial[key];
+  if (direct != null) return direct;
+  final alias = kSubclassElementAliases[key];
+  if (alias != null) return kElementOfficial[alias];
+  if (key.contains('prismatic')) return kElementOfficial['prismatic'];
+  return null;
 }
 
 /// Official ammo visual, or null if unknown.

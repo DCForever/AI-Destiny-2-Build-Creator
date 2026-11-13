@@ -30,6 +30,10 @@ class BungieContentIcon extends StatelessWidget {
   });
 
   /// Relative `/common/…` path or absolute `https://www.bungie.net/…` URL.
+  ///
+  /// Absolute URLs are allowlisted: scheme must be `https` and host must be
+  /// exactly `www.bungie.net` (see [resolveUrl]). Other hosts / schemes never
+  /// reach [Image.network].
   final String? pathOrUrl;
   final double size;
 
@@ -44,12 +48,46 @@ class BungieContentIcon extends StatelessWidget {
   /// When true, skip package assets and load CDN only (debug / refresh check).
   final bool preferNetwork;
 
+  static const String _kAllowedHost = 'www.bungie.net';
+
+  /// Resolve [pathOrUrl] to a network URL, or null when unsafe / empty.
+  ///
+  /// - Absolute / host-bearing inputs: only `https://www.bungie.net/…`
+  ///   (no `http`, other hosts, ports, userinfo, `data:`, `file:`, or
+  ///   protocol-relative `//host`).
+  /// - Relative paths: prefixed with `https://www.bungie.net`.
+  ///
+  /// Uses [Uri] parsing — never string-prefix checks for scheme/host.
   static String? resolveUrl(String? pathOrUrl) {
-    if (pathOrUrl == null || pathOrUrl.trim().isEmpty) return null;
+    if (pathOrUrl == null) return null;
     final t = pathOrUrl.trim();
-    if (t.startsWith('http://') || t.startsWith('https://')) return t;
+    if (t.isEmpty) return null;
+    final uri = Uri.tryParse(t);
+    if (uri == null) return null;
+
+    final hasScheme = uri.scheme.isNotEmpty;
+    final hasHost = uri.host.isNotEmpty;
+    if (hasScheme || hasHost) {
+      if (!_isAllowedBungieAbsolute(uri)) return null;
+      return Uri(
+        scheme: 'https',
+        host: _kAllowedHost,
+        path: uri.path.isEmpty ? '/' : uri.path,
+        query: uri.hasQuery ? uri.query : null,
+      ).toString();
+    }
+
+    // Relative path (no scheme/host) — CDN prefix only.
     final p = t.startsWith('/') ? t : '/$t';
-    return 'https://www.bungie.net$p';
+    return 'https://$_kAllowedHost$p';
+  }
+
+  static bool _isAllowedBungieAbsolute(Uri uri) {
+    if (uri.scheme.toLowerCase() != 'https') return false;
+    if (uri.host.toLowerCase() != _kAllowedHost) return false;
+    if (uri.hasPort) return false;
+    if (uri.userInfo.isNotEmpty) return false;
+    return true;
   }
 
   @override
