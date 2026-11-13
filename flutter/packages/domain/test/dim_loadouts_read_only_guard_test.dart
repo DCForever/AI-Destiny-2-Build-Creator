@@ -28,11 +28,12 @@ const List<String> kDimLoadoutsBannedPatterns = <String>[
 ///
 /// - `**/dim_loadouts/**/*.dart` (domain:4 + storage:1 + windows_host panel:1)
 /// - builds_mock reader-callers / DIM-link pipeline:
-///   page + controller + detail + matrix mapper (=4)
+///   page + controller + browse detail + build detail + matrix mapper (=5)
 ///
 /// Bump when adding a real library file (not tests). Was 5 → 9 (PR #21
-/// Skeptic), then 9 → 10 when Builds started mapping real matrix `dim` links.
-const int kExpectedDimLoadoutsSourceFileCount = 10;
+/// Skeptic), 9 → 10 when Builds mapped real matrix `dim` links, then 10 → 11
+/// when the per-build detail screen (DIM panel host) was split out.
+const int kExpectedDimLoadoutsSourceFileCount = 11;
 
 /// Relative paths (posix) of builds_mock files that call the DIM loadouts
 /// reader / matcher / panel / supply dim links — included in the exact-count
@@ -41,6 +42,7 @@ const List<String> kDimLoadoutsBuildsMockCallerRelativePaths = <String>[
   'apps/windows_host/lib/builds_mock/builds_mock_page.dart',
   'apps/windows_host/lib/builds_mock/builds_mock_controller.dart',
   'apps/windows_host/lib/builds_mock/builds_mock_page_detail.dart',
+  'apps/windows_host/lib/builds_mock/builds_mock_page_build_detail.dart',
   'apps/windows_host/lib/builds_mock/builds_mock_matrix.dart',
 ];
 

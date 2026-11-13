@@ -1,33 +1,34 @@
 part of 'builds_mock_page.dart';
 
 extension _BuildsMockPool on _BuildsMockPageState {
-  Widget _buildPool(BuildContext context) {
+  Widget _buildPool(BuildContext context, {MockBuild? forBuild}) {
     final palette = FlapPalette.of(context);
     final cap = _controller.inventoryCap;
-    final sets = _controller.fixture.sets;
-    return SingleChildScrollView(
+    final sets = forBuild == null
+        ? _controller.fixture.sets
+        : [
+            for (final set in _controller.fixture.sets)
+              if (forBuild.setIds.contains(set.id)) set,
+          ];
+    if (sets.isEmpty) {
+      return Text(
+        forBuild == null
+            ? 'No armor pool data loaded.'
+            : 'No armor pool data for this build.',
+        key: const Key('builds_mock_pool_empty'),
+        style: neonMono(color: palette.muted, fontSize: 12),
+      );
+    }
+    return Container(
       key: const Key('builds_mock_pool'),
-      padding: const EdgeInsets.all(kPanelPadMd),
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.line, width: kFlapRuleThickness),
+        borderRadius: BorderRadius.circular(kFlapRadius),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Armor pool (set × slot) — held vs cap $cap',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: palette.line, width: kFlapRuleThickness),
-              borderRadius: BorderRadius.circular(kFlapRadius),
-            ),
-            child: Column(
-              children: [
-                _poolHeader(palette),
-                for (final set in sets) _poolRow(set, palette, cap),
-              ],
-            ),
-          ),
+          _poolHeader(palette),
+          for (final set in sets) _poolRow(set, palette, cap),
         ],
       ),
     );

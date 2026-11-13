@@ -15,6 +15,7 @@ import 'builds_mock_models.dart';
 
 part 'builds_mock_page_rail.dart';
 part 'builds_mock_page_detail.dart';
+part 'builds_mock_page_build_detail.dart';
 part 'builds_mock_page_pool.dart';
 part 'builds_mock_page_reoptimize.dart';
 
@@ -26,6 +27,7 @@ class BuildsMockPage extends StatefulWidget {
     this.controller,
     this.storageRoot,
     this.warlockMatrixPath,
+    this.matrixMaxBytes = kCachedDimLoadoutsMaxBytes,
   });
 
   /// Injectable for tests / widget previews. Page does not dispose it.
@@ -37,6 +39,9 @@ class BuildsMockPage extends StatefulWidget {
   /// Same path source as Warlocks ([warlockMatrixPath] / `WARLOCK_MATRIX_PATH`).
   /// Ignored when [controller] is injected.
   final String? warlockMatrixPath;
+
+  /// Size cap for the matrix file read (same helper as DIM loadouts reader).
+  final int matrixMaxBytes;
 
   @override
   State<BuildsMockPage> createState() => _BuildsMockPageState();
@@ -75,7 +80,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     }
     _controller.beginMatrixLoad();
     try {
-      final bytes = await readOnlyFileBytes(trimmed);
+      final bytes = await readOnlyFileBytes(
+        trimmed,
+        maxBytes: widget.matrixMaxBytes,
+      );
       final decoded = jsonDecode(utf8.decode(bytes));
       final rows = parseWarlockMatrix(decoded);
       if (!mounted) return;
@@ -164,31 +172,13 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
         ),
       );
     }
+    if (_controller.showingBuildDetail) {
+      return _buildBuildDetail(context);
+    }
     return LibraryWorkspace(
       rail: _buildRail(context),
-      detail: _buildDetailPane(context),
+      detail: _buildBrowse(context),
     );
-  }
-
-  Widget _buildDetailPane(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _TabBar(controller: _controller),
-        Expanded(child: _tabBody(context)),
-      ],
-    );
-  }
-
-  Widget _tabBody(BuildContext context) {
-    switch (_controller.tab) {
-      case BuildsMockTab.detail:
-        return _buildDetail(context);
-      case BuildsMockTab.pool:
-        return _buildPool(context);
-      case BuildsMockTab.reoptimize:
-        return _buildReoptimize(context);
-    }
   }
 }
 
@@ -247,41 +237,6 @@ class _CapControl extends StatelessWidget {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TabBar extends StatelessWidget {
-  const _TabBar({required this.controller});
-
-  final BuildsMockController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: SegmentedButton<BuildsMockTab>(
-        key: const Key('builds_mock_tabs'),
-        segments: const [
-          ButtonSegment(
-            value: BuildsMockTab.detail,
-            label: Text('Detail'),
-            icon: Icon(Icons.view_agenda_outlined, size: 16),
-          ),
-          ButtonSegment(
-            value: BuildsMockTab.pool,
-            label: Text('Armor pool'),
-            icon: Icon(Icons.grid_view_outlined, size: 16),
-          ),
-          ButtonSegment(
-            value: BuildsMockTab.reoptimize,
-            label: Text('Re-optimize'),
-            icon: Icon(Icons.tune, size: 16),
-          ),
-        ],
-        selected: {controller.tab},
-        onSelectionChanged: (s) => controller.setTab(s.first),
       ),
     );
   }

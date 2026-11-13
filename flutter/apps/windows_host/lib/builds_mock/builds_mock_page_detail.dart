@@ -1,7 +1,9 @@
 part of 'builds_mock_page.dart';
 
 extension _BuildsMockDetail on _BuildsMockPageState {
-  Widget _buildDetail(BuildContext context) {
+  static const double _kGridTwoColBreakpoint = 900;
+
+  Widget _buildBrowse(BuildContext context) {
     final builds = _controller.visibleBuilds;
     return Column(
       key: const Key('builds_mock_detail'),
@@ -22,11 +24,6 @@ extension _BuildsMockDetail on _BuildsMockPageState {
                 label: Text('List'),
                 icon: Icon(Icons.view_list_outlined, size: 16),
               ),
-              ButtonSegment(
-                value: BuildsMockCardLayout.detail,
-                label: Text('Detail'),
-                icon: Icon(Icons.view_agenda_outlined, size: 16),
-              ),
             ],
             selected: {_controller.cardLayout},
             onSelectionChanged: (s) => _controller.setCardLayout(s.first),
@@ -43,31 +40,33 @@ extension _BuildsMockDetail on _BuildsMockPageState {
         return _buildGrid(builds);
       case BuildsMockCardLayout.list:
         return _buildList(builds);
-      case BuildsMockCardLayout.detail:
-        return _buildSelectedDetail(context, builds);
     }
   }
 
   Widget _buildGrid(List<MockBuild> builds) {
-    return GridView.builder(
-      key: const Key('builds_mock_card_grid'),
-      padding: const EdgeInsets.all(kPanelPadMd),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        mainAxisExtent: 620,
-      ),
-      itemCount: builds.length,
-      itemBuilder: (context, i) {
-        final build = builds[i];
-        return SingleChildScrollView(
-          child: BuildsMockLoadoutCard(
-            loadout: build,
-            selected: build.id == _controller.selectedId,
-            density: BuildsMockCardDensity.tile,
-            onSelect: () => _controller.selectBuild(build.id),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = constraints.maxWidth < _kGridTwoColBreakpoint ? 2 : 3;
+        return GridView.builder(
+          key: Key('builds_mock_card_grid_$cols'),
+          padding: const EdgeInsets.all(kPanelPadSm),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            mainAxisSpacing: kPanelPadSm,
+            crossAxisSpacing: kPanelPadSm,
+            mainAxisExtent: 176,
           ),
+          itemCount: builds.length,
+          itemBuilder: (context, i) {
+            final build = builds[i];
+            return BuildsMockLoadoutCard(
+              loadout: build,
+              selected: build.id == _controller.selectedId,
+              density: BuildsMockCardDensity.tile,
+              priorities: _controller.statPrioritiesFor(build),
+              onSelect: () => _controller.openBuildDetail(build.id),
+            );
+          },
         );
       },
     );
@@ -83,17 +82,16 @@ extension _BuildsMockDetail on _BuildsMockPageState {
           color: palette.surfaceRaised,
           child: Row(
             children: [
-              _listHeader('BUILD / LOOP', flex: 3),
-              _listHeader('EXOTICS / ARTIFACT', flex: 2),
-              _listHeader('SET BONUSES', flex: 3),
-              _listHeader('ARMOR Σ', flex: 2),
-              const SizedBox(width: 120, child: Text('')),
-              const SizedBox(width: 100, child: Text('')),
+              _listHeader('BUILD', flex: 3),
+              _listHeader('EXOTICS', flex: 2),
+              _listHeader('STATS', flex: 2),
+              _listHeader('ARTIFACT', flex: 1),
             ],
           ),
         ),
         Expanded(
           child: ListView.builder(
+            key: const Key('builds_mock_list'),
             itemCount: builds.length,
             itemBuilder: (context, i) {
               final build = builds[i];
@@ -101,7 +99,8 @@ extension _BuildsMockDetail on _BuildsMockPageState {
                 loadout: build,
                 selected: build.id == _controller.selectedId,
                 density: BuildsMockCardDensity.list,
-                onSelect: () => _controller.selectBuild(build.id),
+                priorities: _controller.statPrioritiesFor(build),
+                onSelect: () => _controller.openBuildDetail(build.id),
               );
             },
           ),
@@ -121,38 +120,6 @@ extension _BuildsMockDetail on _BuildsMockPageState {
           fontSize: 9,
           letterSpacing: 0.8,
         ),
-      ),
-    );
-  }
-
-  Widget _buildSelectedDetail(BuildContext context, List<MockBuild> builds) {
-    MockBuild? build = _controller.selected;
-    if (build != null && builds.every((b) => b.id != build!.id)) {
-      build = builds.isEmpty ? null : builds.first;
-    }
-    if (build == null) {
-      return const Center(
-        child: Text(
-          'Select a build',
-          key: Key('builds_mock_detail_empty'),
-        ),
-      );
-    }
-    final binding = _controller.dimBindingFor(build);
-    return SingleChildScrollView(
-      key: const Key('builds_mock_card_detail'),
-      padding: const EdgeInsets.all(kPanelPadMd),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BuildsMockLoadoutCard(
-            loadout: build,
-            selected: true,
-            density: BuildsMockCardDensity.detail,
-          ),
-          const SizedBox(height: 12),
-          DimLoadoutDetailsPanel.fromBinding(binding),
-        ],
       ),
     );
   }

@@ -15,8 +15,9 @@ void main() {
   Future<void> pumpMock(
     WidgetTester tester, {
     BuildsMockController? controller,
+    Size size = const Size(1440, 900),
   }) async {
-    await tester.binding.setSurfaceSize(const Size(1440, 900));
+    await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
@@ -36,19 +37,63 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  testWidgets('renders mock banner, list, and hybrid card', (tester) async {
+  testWidgets('default view is grid with count and no page tabs', (
+    tester,
+  ) async {
     await pumpMock(tester);
 
     expect(find.byKey(const Key('builds_mock_banner')), findsOneWidget);
     expect(find.text('MOCK-UP — example data'), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_list')), findsOneWidget);
     expect(find.byKey(const Key('builds_mock_detail')), findsOneWidget);
-    expect(find.text('Techsec Prismatic core'), findsWidgets);
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_card_list')), findsNothing);
+    expect(find.byKey(const Key('builds_mock_tabs')), findsNothing);
+    expect(find.text('Detail'), findsNothing);
+    expect(find.text('Armor pool'), findsNothing);
+    expect(find.text('Re-optimize'), findsNothing);
+    expect(find.text('New build'), findsNothing);
+    expect(
+      find.byKey(const Key('builds_mock_count')),
+      findsOneWidget,
+    );
+    expect(find.text('Showing 15 of 15 builds'), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_card_b01')), findsWidgets);
+  });
 
-    // Default layout is detail hybrid card for the selected build.
-    expect(find.byKey(const Key('builds_mock_card_b01')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_fill_in_b01')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_optimize_b01')), findsOneWidget);
+  testWidgets('grid/list toggle switches layout', (tester) async {
+    final controller = BuildsMockController();
+    await pumpMock(tester, controller: controller);
+
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
+
+    await tester.tap(find.text('List'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('builds_mock_card_list')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_list')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsNothing);
+    expect(controller.cardLayout, BuildsMockCardLayout.list);
+
+    await tester.tap(find.text('Grid'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
+    expect(controller.cardLayout, BuildsMockCardLayout.grid);
+  });
+
+  testWidgets('card tap opens detail and Back returns', (tester) async {
+    final controller = BuildsMockController();
+    await pumpMock(tester, controller: controller);
+
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const Key('builds_mock_build_detail')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_detail_back')), findsOneWidget);
+    expect(find.byKey(const Key('dim_loadout_details_panel')), findsOneWidget);
+    expect(find.text('Armor pool'), findsOneWidget);
+    expect(find.text('Re-optimize'), findsOneWidget);
     expect(find.text('Fill In'), findsOneWidget);
     expect(find.text('Optimize'), findsOneWidget);
 
@@ -61,71 +106,20 @@ void main() {
     expect(fillIn.onPressed, isNull);
     expect(optimize.onPressed, isNull);
 
-    // Hybrid card content from B + E.
-    expect(find.text('EXOTIC ARMOR'), findsOneWidget);
-    expect(find.text('EXOTIC WEAPON'), findsOneWidget);
-    expect(find.text('Osmiomancy Gloves'), findsWidgets);
-    expect(find.text('Osteo Striga'), findsWidgets);
-    expect(find.textContaining('Osmiomancy grenade regen'), findsOneWidget);
-    expect(find.textContaining('2pc Techsec'), findsWidgets);
-    expect(find.text('Heretical Path'), findsOneWidget);
-    expect(find.text('ARMOR'), findsOneWidget);
-    expect(find.text('STATS'), findsOneWidget);
-    expect(find.text('DIM link details not loaded'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('builds_mock_detail_back')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const Key('builds_mock_build_detail')), findsNothing);
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
+    expect(controller.showingBuildDetail, isFalse);
   });
 
-  testWidgets('grid and list layouts show cards with disabled actions', (
-    tester,
-  ) async {
+  testWidgets('count text updates on search filter', (tester) async {
     final controller = BuildsMockController();
     await pumpMock(tester, controller: controller);
 
-    await tester.tap(find.text('Grid'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('builds_mock_card_grid')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_card_b01')), findsWidgets);
-    expect(
-      tester
-          .widget<FilledButton>(
-            find.byKey(const Key('builds_mock_fill_in_b01')).first,
-          )
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<OutlinedButton>(
-            find.byKey(const Key('builds_mock_optimize_b01')).first,
-          )
-          .onPressed,
-      isNull,
-    );
-
-    await tester.tap(find.text('List'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('builds_mock_card_list')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_card_b01')), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(
-            find.byKey(const Key('builds_mock_fill_in_b01')),
-          )
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<OutlinedButton>(
-            find.byKey(const Key('builds_mock_optimize_b01')),
-          )
-          .onPressed,
-      isNull,
-    );
-  });
-
-  testWidgets('search filter narrows the list', (tester) async {
-    final controller = BuildsMockController();
-    await pumpMock(tester, controller: controller);
+    expect(find.text('Showing 15 of 15 builds'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('builds_mock_search')),
@@ -133,35 +127,75 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('Showing 2 of 15 builds'), findsOneWidget);
     expect(find.text('Solipsism Strand mismatch'), findsWidgets);
     expect(find.text('Starfire Solar battery'), findsNothing);
   });
 
-  testWidgets('cap setting toggles More than X held flags', (tester) async {
+  testWidgets('grid uses 3 columns wide and 2 when narrow', (tester) async {
+    final controller = BuildsMockController();
+    await pumpMock(tester, controller: controller, size: const Size(1440, 900));
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
+
+    await pumpMock(tester, controller: controller, size: const Size(900, 900));
+    // Pane width after library chrome is under ~900 → 2 columns.
+    expect(find.byKey(const Key('builds_mock_card_grid_2')), findsOneWidget);
+  });
+
+  testWidgets('filters render two per row without overflow', (tester) async {
+    final errors = <FlutterErrorDetails>[];
+    final old = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (details.toString().contains('OVERFLOWED')) {
+        errors.add(details);
+      }
+      old?.call(details);
+    };
+    addTearDown(() => FlutterError.onError = old);
+
+    await pumpMock(tester, size: const Size(1280, 900));
+
+    expect(find.byKey(const Key('builds_mock_filter_row_0')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_filter_row_1')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_filter_row_2')), findsOneWidget);
+
+    final row0 = tester.getSize(
+      find.byKey(const Key('builds_mock_filter_row_0')),
+    );
+    // Two Expanded children + 6px gap must fit inside the ~296px rail content.
+    expect(row0.width, lessThanOrEqualTo(320));
+    expect(errors, isEmpty);
+  });
+
+  testWidgets('detail pool shows More than X held flags with Cap', (
+    tester,
+  ) async {
     final controller = BuildsMockController();
     await pumpMock(tester, controller: controller);
 
-    // Default cap 2: Techsec helmet held=4 → over.
-    await tester.tap(find.text('Armor pool'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
     expect(find.text('More than 2 held'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('builds_mock_cap')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     await tester.tap(find.text('4').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('More than 2 held'), findsNothing);
     expect(find.text('More than 4 held'), findsNothing);
   });
 
-  testWidgets('readiness shows Ready for Techsec (10 builds / 3 uses)', (
-    tester,
-  ) async {
+  testWidgets('detail readiness shows Ready for Techsec', (tester) async {
     await pumpMock(tester);
 
-    await tester.tap(find.text('Re-optimize'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('builds_mock_ready_set_techsec')), findsOneWidget);
     expect(
@@ -169,32 +203,38 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Ready'), findsWidgets);
-    expect(
-      find.byKey(const Key('builds_mock_ready_badge_set_walk')),
-      findsOneWidget,
-    );
   });
 
-  testWidgets('Accept/Reject swaps only change local UI state', (tester) async {
+  testWidgets('Accept/Reject swap buttons stay disabled on detail', (
+    tester,
+  ) async {
     await pumpMock(tester);
-    await tester.tap(find.text('Re-optimize'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('builds_mock_swap_accept_swap1')));
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
     await tester.pump();
-    expect(find.text('Accepted (mock)'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 50));
 
-    await tester.tap(find.byKey(const Key('builds_mock_swap_reject_swap2')));
-    await tester.pump();
-    expect(find.text('Rejected (mock)'), findsOneWidget);
+    final accept = tester.widget<FilledButton>(
+      find.byKey(const Key('builds_mock_swap_accept_swap1')),
+    );
+    final reject = tester.widget<OutlinedButton>(
+      find.byKey(const Key('builds_mock_swap_reject_swap1')),
+    );
+    expect(accept.onPressed, isNull);
+    expect(reject.onPressed, isNull);
   });
 
-  testWidgets('Solipsism non-Prismatic shows review flag', (tester) async {
+  testWidgets('Solipsism non-Prismatic shows review flag on grid card', (
+    tester,
+  ) async {
     final controller = BuildsMockController();
     await pumpMock(tester, controller: controller);
 
-    controller.selectBuild('b11');
+    await tester.enterText(
+      find.byKey(const Key('builds_mock_search')),
+      'Solipsism Strand',
+    );
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(
       find.text('Solipsism only works with Prismatic'),
@@ -202,25 +242,25 @@ void main() {
     );
   });
 
-  testWidgets('optional desktop screenshots when env dir is set', (tester) async {
+  testWidgets('optional desktop screenshots when env dir is set', (
+    tester,
+  ) async {
     final controller = BuildsMockController();
     await pumpMock(tester, controller: controller);
 
-    final configured = Platform.environment['BUILDS_MOCK_SCREENSHOT_DIR']?.trim();
+    final configured =
+        Platform.environment['BUILDS_MOCK_SCREENSHOT_DIR']?.trim();
     if (configured == null || configured.isEmpty) {
-      // Off by default: no filesystem writes. Still visit each main state.
-      expect(find.byKey(const Key('builds_mock_detail')), findsOneWidget);
-      controller.setCardLayout(BuildsMockCardLayout.grid);
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('builds_mock_card_grid')), findsOneWidget);
+      expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
       controller.setCardLayout(BuildsMockCardLayout.list);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.byKey(const Key('builds_mock_card_list')), findsOneWidget);
-      await tester.tap(find.text('Armor pool'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.byKey(const Key('builds_mock_build_detail')), findsOneWidget);
       expect(find.byKey(const Key('builds_mock_pool')), findsOneWidget);
-      await tester.tap(find.text('Re-optimize'));
-      await tester.pumpAndSettle();
       expect(find.byKey(const Key('builds_mock_reoptimize')), findsOneWidget);
       return;
     }
@@ -243,30 +283,26 @@ void main() {
       });
     }
 
-    controller.setCardLayout(BuildsMockCardLayout.detail);
-    await tester.pumpAndSettle();
-    await shot('builds_mock_list_detail');
-
     controller.setCardLayout(BuildsMockCardLayout.grid);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     await shot('builds_mock_card_grid');
 
     controller.setCardLayout(BuildsMockCardLayout.list);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     await shot('builds_mock_card_list');
 
-    await tester.tap(find.text('Armor pool'));
-    await tester.pumpAndSettle();
-    await shot('builds_mock_pool_grid');
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await shot('builds_mock_build_detail');
 
-    await tester.tap(find.text('Re-optimize'));
-    await tester.pumpAndSettle();
-    await shot('builds_mock_reoptimize');
-
-    expect(File('${outDir.path}/builds_mock_list_detail.png').existsSync(), isTrue);
     expect(File('${outDir.path}/builds_mock_card_grid.png').existsSync(), isTrue);
     expect(File('${outDir.path}/builds_mock_card_list.png').existsSync(), isTrue);
-    expect(File('${outDir.path}/builds_mock_pool_grid.png').existsSync(), isTrue);
-    expect(File('${outDir.path}/builds_mock_reoptimize.png').existsSync(), isTrue);
+    expect(
+      File('${outDir.path}/builds_mock_build_detail.png').existsSync(),
+      isTrue,
+    );
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

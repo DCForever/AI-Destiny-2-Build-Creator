@@ -14,11 +14,15 @@ class WarlockBuildsController extends ChangeNotifier {
   WarlockBuildsController({
     GetOnlyHttpClient? http,
     String? initialPath,
+    this.matrixMaxBytes = kCachedDimLoadoutsMaxBytes,
   })  : _injected = http,
         path = initialPath?.trim() ?? '';
 
   final GetOnlyHttpClient? _injected;
   GetOnlyHttpClient? _owned;
+
+  /// Size cap for the matrix file read (same helper as DIM loadouts reader).
+  final int matrixMaxBytes;
 
   String path;
   String? selectedExotic;
@@ -73,7 +77,10 @@ class WarlockBuildsController extends ChangeNotifier {
 
   Future<void> _read(String trimmed) async {
     try {
-      final bytes = await readOnlyFileBytes(trimmed);
+      final bytes = await readOnlyFileBytes(
+        trimmed,
+        maxBytes: matrixMaxBytes,
+      );
       final decoded = jsonDecode(utf8.decode(bytes));
       adoptBuilds(parseWarlockMatrix(decoded));
     } on ReadOnlyFileException catch (error) {

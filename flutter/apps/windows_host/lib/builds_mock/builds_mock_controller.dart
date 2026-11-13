@@ -56,7 +56,8 @@ class BuildsMockController extends ChangeNotifier {
   String? _selectedId;
   int _inventoryCap = kMockDefaultInventoryCap;
   BuildsMockTab _tab = BuildsMockTab.detail;
-  BuildsMockCardLayout _cardLayout = BuildsMockCardLayout.detail;
+  BuildsMockCardLayout _cardLayout = BuildsMockCardLayout.grid;
+  bool _showingBuildDetail = false;
   final Map<String, MockSwapDecision> _swapDecisions = {};
 
   String? _matrixError;
@@ -73,11 +74,18 @@ class BuildsMockController extends ChangeNotifier {
   int get inventoryCap => _inventoryCap;
   BuildsMockTab get tab => _tab;
   BuildsMockCardLayout get cardLayout => _cardLayout;
+  bool get showingBuildDetail => _showingBuildDetail;
   String? get selectedId => _selectedId;
   DimLoadoutsPanelStatus get dimStatus => _dimStatus;
   bool get showMockBanner => _showMockBanner;
   String? get matrixError => _matrixError;
   bool get matrixLoading => _matrixLoading;
+
+  /// Total loaded builds (Y in "Showing X of Y").
+  int get totalBuildCount => _fixture.builds.length;
+
+  /// Visible after search/filters (X in "Showing X of Y").
+  int get visibleBuildCount => visibleBuilds.length;
 
   /// Replace the build list after a read-only matrix parse (display only).
   void adoptFixture(
@@ -238,7 +246,19 @@ class BuildsMockController extends ChangeNotifier {
 
   void selectBuild(String id) {
     _selectedId = id;
+    notifyListeners();
+  }
+
+  /// Open the per-build detail screen (DIM panel + scoped pool / re-optimize).
+  void openBuildDetail(String id) {
+    _selectedId = id;
+    _showingBuildDetail = true;
     _tab = BuildsMockTab.detail;
+    notifyListeners();
+  }
+
+  void closeBuildDetail() {
+    _showingBuildDetail = false;
     notifyListeners();
   }
 
@@ -253,8 +273,34 @@ class BuildsMockController extends ChangeNotifier {
   }
 
   void setCardLayout(BuildsMockCardLayout layout) {
+    if (layout == _cardLayout) return;
     _cardLayout = layout;
     notifyListeners();
+  }
+
+  /// Top stat priorities for browse cards (DIM ranking when matched, else fixture).
+  List<BuildsMockStatPriority> statPrioritiesFor(MockBuild build) {
+    final binding = dimBindingFor(build);
+    final loadout = binding.loadout;
+    if (binding.status == DimLoadoutsPanelStatus.loaded && loadout != null) {
+      final ranking = rankDimLoadoutStats(loadout);
+      if (ranking.entries.isNotEmpty) {
+        return [
+          for (final e in ranking.entries.take(3))
+            BuildsMockStatPriority(
+              label: e.stat.wireName,
+              inferred: e.source == DimStatRankingSource.inferred,
+            ),
+        ];
+      }
+    }
+    if (build.stats.isEmpty) return const [];
+    final sorted = [...build.stats]
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return [
+      for (final s in sorted.take(3))
+        BuildsMockStatPriority(label: s.label),
+    ];
   }
 
   void acceptSwap(String id) {

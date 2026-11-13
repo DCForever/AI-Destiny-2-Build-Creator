@@ -206,8 +206,19 @@ enum MockSwapDecision { pending, accepted, rejected }
 
 enum MockReadiness { ready, notReady }
 
-/// How hybrid loadout cards are laid out in the Detail tab.
-enum BuildsMockCardLayout { grid, list, detail }
+/// Browse layout for the Builds main pane (Detail is a separate screen).
+enum BuildsMockCardLayout { grid, list }
+
+/// One display-only stat priority row for compact browse cards / list rows.
+class BuildsMockStatPriority {
+  const BuildsMockStatPriority({
+    required this.label,
+    this.inferred = false,
+  });
+
+  final String label;
+  final bool inferred;
+}
 
 class MockSetReadiness {
   const MockSetReadiness({
