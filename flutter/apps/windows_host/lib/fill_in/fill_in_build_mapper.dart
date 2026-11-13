@@ -257,6 +257,11 @@ FillInMappedBuild mapMockBuildForFillIn({
               name: assignment.pieceName,
             ) ??
             preferredExoticArmorHash;
+        // 2+2 walk already covered this combat slot with a legendary need.
+        // Replace it — otherwise Gauntlets shows Briarbinds labeled against
+        // the legendary pool (e.g. 3/2 over-cap) instead of the exotic 1/2.
+        slots.removeWhere((s) => s.slot == slot);
+        covered.remove(slot);
         slots.add(
           FillInSlotRequirement(
             slot: slot,

@@ -110,6 +110,19 @@ FillInSlotMatch _matchSlot(
       overCapLabel: null,
     );
   }
+  // Exotic armor: held count only — the 2-copy cap is legendary-set farming.
+  // Applying it to exotics falsely flags held Briarbinds / Vesper as over-cap
+  // when duplicate legendary needs or multiple exotic copies inflate the pool.
+  if (need.isExotic) {
+    return FillInSlotMatch(
+      slot: need.slot,
+      isHeld: count > 0,
+      poolHeldCount: count,
+      cap: cap,
+      exceedsCap: false,
+      overCapLabel: null,
+    );
+  }
   final exceeds = count > cap;
   return FillInSlotMatch(
     slot: need.slot,

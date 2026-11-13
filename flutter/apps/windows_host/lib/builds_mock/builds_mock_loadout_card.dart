@@ -160,7 +160,7 @@ class _BrowseCard extends StatelessWidget {
               children: [
                 BuildsMockDerivedTitle(
                   name: derivedName,
-                  iconSize: compact ? 13 : 15,
+                  iconSize: compact ? 16 : 18,
                   fontSize: compact ? 12 : 13,
                   superIconPath: superIconPath,
                   exoticArmorIconPath: exoticArmorIconPath,
@@ -365,7 +365,7 @@ class _DetailBody extends StatelessWidget {
             children: [
               BuildsMockDerivedTitle(
                 name: derivedName,
-                iconSize: 18,
+                iconSize: 22,
                 fontSize: 16,
                 superIconPath: superIconPath,
                 exoticArmorIconPath: exoticArmorIconPath,

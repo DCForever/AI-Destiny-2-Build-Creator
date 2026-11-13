@@ -62,7 +62,10 @@ void main() {
       expect(FlapColorTokens.light.accent, 0xFF1A1A1A);
       expect(FlapColorTokens.light.accentStrong, 0xFF000000);
       expect(FlapColorTokens.light.accentDim, 0x1F1A1A1A);
-      expect(FlapColorTokens.light.success, 0xFF2EE6A6);
+      expect(FlapColorTokens.light.success, 0xFF166534);
+      // Dark success lamp unchanged.
+      expect(FlapColorTokens.dark.success, 0xFF2EE6A6);
+      expect(FlapColorTokens.light.success, isNot(FlapColorTokens.dark.success));
       expect(FlapColorTokens.light.danger, 0xFFFF003C);
       expect(FlapColorTokens.light.warning, 0xFFF5C542);
       expect(FlapColorTokens.light.background, isNot(kFlapBackgroundDark));

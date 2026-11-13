@@ -13,7 +13,7 @@ class BuildsMockDerivedTitle extends StatelessWidget {
   const BuildsMockDerivedTitle({
     super.key,
     required this.name,
-    this.iconSize = 15,
+    this.iconSize = 18,
     this.fontSize = 13,
     this.superIconPath,
     this.exoticArmorIconPath,

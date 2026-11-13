@@ -185,7 +185,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
               children: [
                 BuildsMockDerivedTitle(
                   name: derived,
-                  iconSize: 13,
+                  iconSize: 16,
                   fontSize: 12,
                   superIconPath: icons.superIconPath,
                   exoticArmorIconPath: icons.exoticArmorIconPath,

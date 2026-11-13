@@ -1,6 +1,85 @@
 import '../models/equipment.dart';
 import 'fill_in_inventory.dart';
 
+/// Coarse range band for Fill In weapon substitutes (Daniel, Nov 13 2026).
+enum FillInWeaponRangeClass {
+  /// Shotgun, SMG, sidearm, fusion, sword, glaive, trace, grenade launcher…
+  short,
+
+  /// Scout, pulse, hand cannon, auto, sniper, linear fusion, bow, rocket…
+  long,
+
+  /// Unknown / unmapped type — never preferred by the opposite-range rule.
+  unknown,
+}
+
+/// Explicit DIM `Type` → range-class table (lowercase keys).
+const Map<String, FillInWeaponRangeClass> kFillInWeaponRangeByType =
+    <String, FillInWeaponRangeClass>{
+  // Short range
+  'shotgun': FillInWeaponRangeClass.short,
+  'submachine gun': FillInWeaponRangeClass.short,
+  'smg': FillInWeaponRangeClass.short,
+  'sidearm': FillInWeaponRangeClass.short,
+  'fusion rifle': FillInWeaponRangeClass.short,
+  'sword': FillInWeaponRangeClass.short,
+  'glaive': FillInWeaponRangeClass.short,
+  'trace rifle': FillInWeaponRangeClass.short,
+  'grenade launcher': FillInWeaponRangeClass.short,
+  // Long range
+  'scout rifle': FillInWeaponRangeClass.long,
+  'pulse rifle': FillInWeaponRangeClass.long,
+  'hand cannon': FillInWeaponRangeClass.long,
+  'auto rifle': FillInWeaponRangeClass.long,
+  'sniper rifle': FillInWeaponRangeClass.long,
+  'linear fusion rifle': FillInWeaponRangeClass.long,
+  'bow': FillInWeaponRangeClass.long,
+  'rocket launcher': FillInWeaponRangeClass.long,
+  'machine gun': FillInWeaponRangeClass.long,
+};
+
+/// Resolve [weaponType] (DIM `Type`) to a range class.
+FillInWeaponRangeClass fillInWeaponRangeClass(String? weaponType) {
+  final key = (weaponType ?? '').trim().toLowerCase();
+  if (key.isEmpty) return FillInWeaponRangeClass.unknown;
+  return kFillInWeaponRangeByType[key] ?? FillInWeaponRangeClass.unknown;
+}
+
+/// Opposite range class, or null when [band] is unknown.
+FillInWeaponRangeClass? fillInOppositeWeaponRange(
+  FillInWeaponRangeClass band,
+) {
+  switch (band) {
+    case FillInWeaponRangeClass.short:
+      return FillInWeaponRangeClass.long;
+    case FillInWeaponRangeClass.long:
+      return FillInWeaponRangeClass.short;
+    case FillInWeaponRangeClass.unknown:
+      return null;
+  }
+}
+
+/// Subclass key → damage element for Fill In weapon filtering.
+///
+/// Prismatic and unknown subclasses return null (= any element).
+String? fillInDamageTypeForSubclass(String subclassKey) {
+  switch (subclassKey.trim().toLowerCase()) {
+    case 'arc':
+      return 'Arc';
+    case 'solar':
+      return 'Solar';
+    case 'void':
+      return 'Void';
+    case 'stasis':
+      return 'Stasis';
+    case 'strand':
+      return 'Strand';
+    case 'prismatic':
+    default:
+      return null;
+  }
+}
+
 /// Rank of a similar-weapon suggestion (lower is better).
 enum FillInSimilarWeaponTier {
   /// Same slot + same damage type + same weapon type.

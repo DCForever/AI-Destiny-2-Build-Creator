@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +42,8 @@ Future<void> showFillInDialog({
   FillInSavedBuildPlan? existingPlan,
   GuardianClass guardianClass = GuardianClass.warlock,
   CachedDimLoadout? dimLoadout,
+  /// Injectable RNG for deterministic tests; production leaves null (fresh).
+  Random? random,
 }) {
   return showDialog<void>(
     context: context,
@@ -54,6 +58,7 @@ Future<void> showFillInDialog({
         existingPlan: existingPlan,
         guardianClass: guardianClass,
         dimLoadout: dimLoadout,
+        random: random,
       );
     },
   );
@@ -72,6 +77,7 @@ class FillInDialog extends StatefulWidget {
     this.existingPlan,
     this.guardianClass = GuardianClass.warlock,
     this.dimLoadout,
+    this.random,
   });
 
   final MockBuild build;
@@ -83,6 +89,9 @@ class FillInDialog extends StatefulWidget {
   final FillInSavedBuildPlan? existingPlan;
   final GuardianClass guardianClass;
   final CachedDimLoadout? dimLoadout;
+
+  /// When set, used for every [planFillInSubstitutes] call (tests).
+  final Random? random;
 
   @override
   State<FillInDialog> createState() => _FillInDialogState();
@@ -166,12 +175,38 @@ class _FillInDialogState extends State<FillInDialog> {
       dimLoadout: widget.dimLoadout,
     );
 
-    final diffs = planFillInSubstitutes(
+    var diffs = planFillInSubstitutes(
       match: result,
       requirement: mapped.requirement,
       inventory: mapped.inventory,
       currentLabels: currentLabels,
       weaponNeed: weaponNeed,
+      // Fresh RNG each open → re-roll when there is no saved/applied plan.
+      random: widget.random ?? Random(),
+    );
+    // Saved / applied picks stay stable until the user re-runs Fill In.
+    diffs = _stabilizeDiffsFromPlan(
+      diffs: diffs,
+      plan: _plan,
+      inventory: mapped.inventory,
+    );
+    // Stabilize can re-introduce a second exotic weapon from a saved pick
+    // while a fresh roll still proposed another exotic — cap again.
+    // Prefer labels already named on the saved plan when demoting extras.
+    final preferExoticLabels = <String>{
+      if (_plan != null)
+        for (final r in _plan!.rows)
+          if ((r.state == 'proposed' || r.state == 'filled') &&
+              r.itemName.trim().isNotEmpty)
+            r.itemName.trim().toLowerCase(),
+      if (_plan != null)
+        for (final a in _plan!.applied)
+          if (a.label.trim().isNotEmpty) a.label.trim().toLowerCase(),
+    };
+    diffs = _enforceAtMostOneExoticWeapon(
+      diffs: diffs,
+      inventory: mapped.inventory,
+      preferLabels: preferExoticLabels,
     );
 
     if (!mounted) return;
@@ -439,10 +474,11 @@ class _FillInDialogState extends State<FillInDialog> {
     // Exact restore — do not reconstruct from per-slot originalLabel entries.
     final next = _snapshotBuild(baseline);
 
-    // Clear applied pins; rows rebuilt after rematch without filled wires.
+    // Keep pre-Apply picks: demote filled → proposed (and fold applied labels
+    // into proposed rows) so _runMatch / reopen stabilize instead of re-roll.
     var restored = plan.copyWith(
       clearApplied: true,
-      rows: const [],
+      rows: _proposedRowsAfterUndo(plan),
       updatedAt: DateTime.now().toUtc().toIso8601String(),
     );
     final save = widget.saveMissingList;
@@ -700,6 +736,12 @@ class _DiffRow extends StatelessWidget {
                   key: Key('fill_in_similar_pick_${diff.slot.wireName}'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+              if (diff.note != null && diff.note!.trim().isNotEmpty)
+                Text(
+                  diff.note!,
+                  key: Key('fill_in_note_${diff.slot.wireName}'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
             ],
           ),
         ),
@@ -943,6 +985,215 @@ bool _isWirePlaceholderName(String name) {
     if (slot.wireName == lower) return true;
   }
   return false;
+}
+
+/// Convert post-Apply rows back to proposed, folding applied labels so Undo
+/// rematch / reopen keep the same substitute names (no re-roll).
+List<FillInSavedSlotRow> _proposedRowsAfterUndo(FillInSavedBuildPlan plan) {
+  final byWire = <String, FillInSavedSlotRow>{};
+  for (final row in plan.rows) {
+    final name = row.itemName.trim();
+    final state = row.state == 'filled' ? 'proposed' : row.state;
+    if (state != 'proposed' &&
+        state != 'held' &&
+        state != 'missing') {
+      byWire[row.slotWire] = row;
+      continue;
+    }
+    if (state != 'missing' && name.isEmpty) continue;
+    byWire[row.slotWire] = FillInSavedSlotRow(
+      slotWire: row.slotWire,
+      slotLabel: row.slotLabel,
+      state: state,
+      itemName: name,
+    );
+  }
+  for (final applied in plan.applied) {
+    final name = applied.label.trim();
+    if (name.isEmpty) continue;
+    final existing = byWire[applied.slotWire];
+    byWire[applied.slotWire] = FillInSavedSlotRow(
+      slotWire: applied.slotWire,
+      slotLabel: existing?.slotLabel.isNotEmpty == true
+          ? existing!.slotLabel
+          : applied.slotWire,
+      state: 'proposed',
+      itemName: name,
+    );
+  }
+  return List<FillInSavedSlotRow>.unmodifiable(byWire.values);
+}
+
+/// Drop extra exotic weapon substitutes so a saved exotic + a fresh exotic
+/// roll never leave two exotics after [_stabilizeDiffsFromPlan].
+///
+/// When several exotic substitutes remain and none are held, keep one whose
+/// label is in [preferLabels] (saved plan) when possible.
+List<FillInSlotDiff> _enforceAtMostOneExoticWeapon({
+  required List<FillInSlotDiff> diffs,
+  required List<FillInInventoryItem> inventory,
+  Set<String> preferLabels = const {},
+}) {
+  final exoticByHash = <int, bool>{
+    for (final item in inventory)
+      if (_isWeaponSlot(item.slot) && item.isExotic) item.itemHash: true,
+  };
+  final exoticByName = <String, bool>{
+    for (final item in inventory)
+      if (_isWeaponSlot(item.slot) && item.isExotic)
+        (item.name ?? '').trim().toLowerCase(): true,
+  };
+
+  bool isExoticWeaponDiff(FillInSlotDiff d) {
+    if (!_isWeaponSlot(d.slot)) return false;
+    if (d.isHeld) {
+      final hash = d.heldItemHash;
+      if (hash != null && exoticByHash[hash] == true) return true;
+      final name = d.currentLabel.trim().toLowerCase();
+      if (name.isNotEmpty && exoticByName[name] == true) return true;
+      return d.isExotic;
+    }
+    if (!d.wouldSubstitute) return false;
+    final hash = d.substituteItemHash;
+    if (hash != null && exoticByHash[hash] == true) return true;
+    final name = (d.substituteLabel ?? '').trim().toLowerCase();
+    if (name.isNotEmpty && exoticByName[name] == true) return true;
+    return false;
+  }
+
+  var usedExotic = false;
+  for (final d in diffs) {
+    if (d.isHeld && isExoticWeaponDiff(d)) {
+      usedExotic = true;
+      break;
+    }
+  }
+
+  EquipmentSlot? keepSlot;
+  if (!usedExotic) {
+    for (final d in diffs) {
+      if (!d.wouldSubstitute || !isExoticWeaponDiff(d)) continue;
+      final label = (d.substituteLabel ?? '').trim().toLowerCase();
+      if (preferLabels.contains(label)) {
+        keepSlot = d.slot;
+        break;
+      }
+    }
+    keepSlot ??= () {
+      for (final d in diffs) {
+        if (d.wouldSubstitute && isExoticWeaponDiff(d)) return d.slot;
+      }
+      return null;
+    }();
+  }
+
+  final out = <FillInSlotDiff>[];
+  for (final d in diffs) {
+    if (!_isWeaponSlot(d.slot) || d.isHeld || !d.wouldSubstitute) {
+      out.add(d);
+      continue;
+    }
+    if (!isExoticWeaponDiff(d)) {
+      out.add(d);
+      continue;
+    }
+    if (usedExotic || (keepSlot != null && d.slot != keepSlot)) {
+      out.add(
+        FillInSlotDiff(
+          slot: d.slot,
+          currentLabel: d.currentLabel,
+          isHeld: false,
+          isExotic: d.isExotic,
+          note: d.note,
+        ),
+      );
+      continue;
+    }
+    usedExotic = true;
+    out.add(d);
+  }
+  return List<FillInSlotDiff>.unmodifiable(out);
+}
+
+/// When a saved/applied plan already names substitutes, keep those picks
+/// instead of the fresh random roll from [planFillInSubstitutes].
+List<FillInSlotDiff> _stabilizeDiffsFromPlan({
+  required List<FillInSlotDiff> diffs,
+  required FillInSavedBuildPlan? plan,
+  required List<FillInInventoryItem> inventory,
+}) {
+  if (plan == null) return diffs;
+  final byWire = <String, ({String label, String? instanceId, int? itemHash})>{};
+  for (final row in plan.rows) {
+    if (row.state != 'proposed' && row.state != 'filled') continue;
+    final name = row.itemName.trim();
+    if (name.isEmpty) continue;
+    byWire[row.slotWire] = (label: name, instanceId: null, itemHash: null);
+  }
+  for (final applied in plan.applied) {
+    final name = applied.label.trim();
+    if (name.isEmpty &&
+        (applied.instanceId == null || applied.instanceId!.trim().isEmpty)) {
+      continue;
+    }
+    byWire[applied.slotWire] = (
+      label: name.isNotEmpty
+          ? name
+          : (byWire[applied.slotWire]?.label ?? ''),
+      instanceId: applied.instanceId,
+      itemHash: applied.itemHash,
+    );
+  }
+  if (byWire.isEmpty) return diffs;
+
+  final out = <FillInSlotDiff>[];
+  for (final diff in diffs) {
+    final saved = byWire[diff.slot.wireName];
+    if (diff.isHeld || saved == null) {
+      out.add(diff);
+      continue;
+    }
+    final label = saved.label.trim().isNotEmpty
+        ? saved.label.trim()
+        : (diff.substituteLabel ?? '');
+    if (label.isEmpty && saved.instanceId == null) {
+      out.add(diff);
+      continue;
+    }
+    FillInInventoryItem? invMatch;
+    final savedId = saved.instanceId?.trim() ?? '';
+    if (savedId.isNotEmpty) {
+      for (final item in inventory) {
+        if (item.instanceId == savedId) {
+          invMatch = item;
+          break;
+        }
+      }
+    }
+    if (invMatch == null && label.isNotEmpty) {
+      final want = label.toLowerCase();
+      for (final item in inventory) {
+        if (item.slot != diff.slot) continue;
+        if ((item.name ?? '').trim().toLowerCase() == want) {
+          invMatch = item;
+          break;
+        }
+      }
+    }
+    out.add(
+      FillInSlotDiff(
+        slot: diff.slot,
+        currentLabel: diff.currentLabel,
+        isHeld: false,
+        isExotic: diff.isExotic,
+        substituteLabel: label.isNotEmpty ? label : invMatch?.name,
+        substituteInstanceId: saved.instanceId ?? invMatch?.instanceId,
+        substituteItemHash: saved.itemHash ?? invMatch?.itemHash,
+        note: diff.note,
+      ),
+    );
+  }
+  return List<FillInSlotDiff>.unmodifiable(out);
 }
 
 /// Deep-ish copy used for Apply/Undo baselines (exact row list restore).

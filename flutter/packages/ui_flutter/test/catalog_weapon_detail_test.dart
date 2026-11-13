@@ -1796,11 +1796,11 @@ void main() {
       expect(find.text('1/3'), findsOneWidget);
       expect(find.text('Av 2'), findsOneWidget);
 
-      // Perfect preferred uses success color.
+      // Perfect preferred uses success color (_wrap uses light flap theme).
       final pref = tester.widget<Text>(
         find.byKey(const Key('instance_score_pref_perfect')),
       );
-      final palette = FlapPalette.forBrightness(Brightness.dark);
+      final palette = FlapPalette.forBrightness(Brightness.light);
       expect(pref.style?.color, palette.success);
     });
 

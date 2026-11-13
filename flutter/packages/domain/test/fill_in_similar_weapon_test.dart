@@ -234,4 +234,90 @@ void main() {
       expect(suggestion.tier, FillInSimilarWeaponTier.slotDamageType);
     });
   });
+
+  group('fillInWeaponRangeClass', () {
+    test('maps short and long DIM types via the explicit table', () {
+      expect(fillInWeaponRangeClass('Shotgun'), FillInWeaponRangeClass.short);
+      expect(
+        fillInWeaponRangeClass('Submachine Gun'),
+        FillInWeaponRangeClass.short,
+      );
+      expect(fillInWeaponRangeClass('Sidearm'), FillInWeaponRangeClass.short);
+      expect(
+        fillInWeaponRangeClass('Fusion Rifle'),
+        FillInWeaponRangeClass.short,
+      );
+      expect(fillInWeaponRangeClass('Sword'), FillInWeaponRangeClass.short);
+      expect(fillInWeaponRangeClass('Glaive'), FillInWeaponRangeClass.short);
+      expect(
+        fillInWeaponRangeClass('Trace Rifle'),
+        FillInWeaponRangeClass.short,
+      );
+      expect(
+        fillInWeaponRangeClass('Grenade Launcher'),
+        FillInWeaponRangeClass.short,
+      );
+      expect(
+        fillInWeaponRangeClass('Scout Rifle'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInWeaponRangeClass('Pulse Rifle'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInWeaponRangeClass('Hand Cannon'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInWeaponRangeClass('Auto Rifle'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInWeaponRangeClass('Sniper Rifle'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInWeaponRangeClass('Linear Fusion Rifle'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(fillInWeaponRangeClass('Bow'), FillInWeaponRangeClass.long);
+      expect(
+        fillInWeaponRangeClass('Rocket Launcher'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInWeaponRangeClass('Machine Gun'),
+        FillInWeaponRangeClass.long,
+      );
+      expect(fillInWeaponRangeClass('Mystery'), FillInWeaponRangeClass.unknown);
+      expect(fillInWeaponRangeClass(null), FillInWeaponRangeClass.unknown);
+    });
+
+    test('opposite range flips short↔long and leaves unknown null', () {
+      expect(
+        fillInOppositeWeaponRange(FillInWeaponRangeClass.short),
+        FillInWeaponRangeClass.long,
+      );
+      expect(
+        fillInOppositeWeaponRange(FillInWeaponRangeClass.long),
+        FillInWeaponRangeClass.short,
+      );
+      expect(
+        fillInOppositeWeaponRange(FillInWeaponRangeClass.unknown),
+        isNull,
+      );
+    });
+
+    test('subclass damage map: elements vs Prismatic/unknown', () {
+      expect(fillInDamageTypeForSubclass('solar'), 'Solar');
+      expect(fillInDamageTypeForSubclass('Arc'), 'Arc');
+      expect(fillInDamageTypeForSubclass('void'), 'Void');
+      expect(fillInDamageTypeForSubclass('stasis'), 'Stasis');
+      expect(fillInDamageTypeForSubclass('strand'), 'Strand');
+      expect(fillInDamageTypeForSubclass('prismatic'), isNull);
+      expect(fillInDamageTypeForSubclass(''), isNull);
+      expect(fillInDamageTypeForSubclass('unknown'), isNull);
+    });
+  });
 }
