@@ -80,23 +80,21 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('navLabels are Catalog, Sets, Warlocks, Builds, and Settings', () {
+  test('navLabels are Catalog, Sets, Builds, and Settings', () {
     expect(Destiny2WindowsApp.navLabels, [
       'Catalog',
       'Sets',
-      'Warlocks',
       'Builds',
       'Settings',
     ]);
     expect(Destiny2WindowsApp.catalogNavIndex, 0);
     expect(Destiny2WindowsApp.setsNavIndex, 1);
-    expect(Destiny2WindowsApp.warlockBuildsNavIndex, 2);
-    expect(Destiny2WindowsApp.buildsMockNavIndex, 3);
-    expect(Destiny2WindowsApp.settingsNavIndex, 4);
+    expect(Destiny2WindowsApp.buildsMockNavIndex, 2);
+    expect(Destiny2WindowsApp.settingsNavIndex, 3);
   });
 
   testWidgets(
-      'NavigationRail shows Catalog, Sets, Warlocks, Builds, Settings',
+      'NavigationRail shows Catalog, Sets, Builds, Settings',
       (
     tester,
   ) async {
@@ -110,9 +108,9 @@ void main() {
     expect(find.byKey(const Key('host_nav_rail')), findsOneWidget);
     expect(find.text('Catalog'), findsWidgets);
     expect(find.text('Sets'), findsWidgets);
-    expect(find.text('Warlocks'), findsWidgets);
     expect(find.text('Builds'), findsWidgets);
     expect(find.text('Settings'), findsWidgets);
+    expect(find.text('Warlocks'), findsNothing);
     expect(
       find.byKey(const Key('catalog_page'), skipOffstage: false),
       findsOneWidget,
@@ -122,12 +120,12 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const Key('warlock_builds_page'), skipOffstage: false),
+      find.byKey(const Key('builds_mock_page_host'), skipOffstage: false),
       findsOneWidget,
     );
     expect(
-      find.byKey(const Key('builds_mock_page_host'), skipOffstage: false),
-      findsOneWidget,
+      find.byKey(const Key('warlock_builds_page'), skipOffstage: false),
+      findsNothing,
     );
 
     expect(find.text('Loadouts'), findsNothing);

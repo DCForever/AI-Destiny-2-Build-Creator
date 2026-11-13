@@ -1,7 +1,7 @@
 {
   "app": "Destiny 2 Build Creator",
   "version": 4,
-  "generatedAt": "2026-10-31",
+  "generatedAt": "2026-11-13",
   "generatedFrom": "docs/product-map",
   "baseUrlDefault": "https://127.0.0.1:3000",
   "description": "Structure SSoT for surfaces, flows, and rule attachments across platforms. Rule wording lives in specs/domain-*.md and business-rules.md.\n",
@@ -3945,68 +3945,50 @@
     },
     {
       "id": "flow-catalog-warlock-matrix",
-      "title": "Warlock community build list",
+      "title": "Warlock community build list (deferred — Builds supersedes)",
       "priority": "P2",
       "type": "catalog",
-      "description": "Load a local matrix file, filter by exotic, flag Solipsism off Prismatic.",
+      "description": "Historical Warlocks-tab flow. Flutter Windows host now uses the Builds tab for matrix list; offline pilot UI removed. Domain rules still apply to Builds matrix load.\n",
       "steps": [
         {
           "screenId": "catalog-warlock-matrix",
-          "label": "Open the list",
+          "label": "Open the list (deferred)",
           "kind": "step"
         },
         {
           "screenId": "catalog-warlock-matrix",
-          "label": "Filter by exotic",
+          "label": "Filter by exotic (deferred)",
           "kind": "step"
         },
         {
           "screenId": "catalog-warlock-matrix",
-          "label": "Flag Solipsism off Prismatic",
-          "kind": "step"
-        },
-        {
-          "screenId": "catalog-warlock-pilot",
-          "label": "Open the offline contrasting-build pilot",
+          "label": "Flag Solipsism off Prismatic (deferred)",
           "kind": "step"
         }
       ],
       "phases": [
         {
           "id": "open",
-          "title": "Open the list",
+          "title": "Open the list (deferred)",
           "kind": "step",
           "surfaceId": "catalog.warlock-matrix",
           "screenId": "catalog-warlock-matrix"
         },
         {
           "id": "filter",
-          "title": "Filter by exotic",
+          "title": "Filter by exotic (deferred)",
           "kind": "step",
           "surfaceId": "catalog.warlock-matrix",
           "screenId": "catalog-warlock-matrix"
         },
         {
           "id": "flag",
-          "title": "Flag Solipsism off Prismatic",
+          "title": "Flag Solipsism off Prismatic (deferred)",
           "kind": "step",
           "surfaceId": "catalog.warlock-matrix",
           "screenId": "catalog-warlock-matrix",
           "rules": [
             "DAC-DST-016"
-          ]
-        },
-        {
-          "id": "pilot",
-          "title": "Open the offline contrasting-build pilot",
-          "kind": "step",
-          "surfaceId": "catalog.warlock-pilot",
-          "screenId": "catalog-warlock-pilot",
-          "rules": [
-            "DBR-PLT-001",
-            "DBR-PLT-002",
-            "DBR-PLT-003",
-            "DAC-PLT-001"
           ]
         }
       ],
@@ -4380,16 +4362,6 @@
       "from": "loadouts-signed-in",
       "to": "loadouts-slot-expanded",
       "action": "Expand slot"
-    },
-    {
-      "from": "shell",
-      "to": "catalog-warlock-matrix",
-      "action": "Nav → Warlock builds"
-    },
-    {
-      "from": "catalog-warlock-matrix",
-      "to": "catalog-warlock-pilot",
-      "action": "Offline pilot"
     }
   ]
 }

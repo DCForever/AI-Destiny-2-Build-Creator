@@ -10,13 +10,12 @@ import 'host_bootstrap.dart';
 import 'sets/sets_library_page.dart';
 import 'settings/settings_page.dart';
 import 'theme/flap_theme.dart';
-import 'warlock/warlock_builds_page.dart';
 
 /// Root Flutter app for the Windows host.
 ///
-/// **UX rebuild shell:** Catalog + **Sets** (Armor MVP implement) + read-only
-/// Warlock builds + Builds (Warlock matrix list) + Settings.
-/// Loadouts / Build / Synergy return via the area UX redesign loop.
+/// **UX rebuild shell:** Catalog + **Sets** (Armor MVP implement) + Builds
+/// (Warlock matrix list) + Settings. Loadouts / Build / Synergy return via
+/// the area UX redesign loop.
 /// Appearance: **Neutral stage** light (default) + **Neutral charcoal** dark.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({
@@ -35,16 +34,14 @@ class Destiny2WindowsApp extends StatefulWidget {
   static const List<String> navLabels = [
     'Catalog',
     'Sets',
-    'Warlocks',
     'Builds',
     'Settings',
   ];
 
   static const int catalogNavIndex = 0;
   static const int setsNavIndex = 1;
-  static const int warlockBuildsNavIndex = 2;
-  static const int buildsMockNavIndex = 3;
-  static const int settingsNavIndex = 4;
+  static const int buildsMockNavIndex = 2;
+  static const int settingsNavIndex = 3;
 
   @override
   State<Destiny2WindowsApp> createState() => _Destiny2WindowsAppState();
@@ -57,7 +54,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   /// Bumped when Catalog is re-selected so IndexedStack reloads after Settings sync.
   int _catalogReloadToken = 0;
 
-  /// Bumped when the Warlock matrix path is saved so Builds/Warlocks remount.
+  /// Bumped when the Warlock matrix path is saved so Builds remounts.
   int _matrixReloadToken = 0;
 
   /// Path from `{StorageRoot}/settings/warlock_matrix_path.txt`, if any.
@@ -140,11 +137,6 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                     label: Text('Sets'),
                   ),
                   NavigationRailDestination(
-                    icon: Icon(Icons.auto_awesome_outlined),
-                    selectedIcon: Icon(Icons.auto_awesome),
-                    label: Text('Warlocks'),
-                  ),
-                  NavigationRailDestination(
                     icon: Icon(Icons.construction_outlined),
                     selectedIcon: Icon(Icons.construction),
                     label: Text('Builds'),
@@ -172,15 +164,6 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                     SetsLibraryPage(
                       key: const Key('sets_library_page'),
                       services: widget.services,
-                    ),
-                    KeyedSubtree(
-                      key: ValueKey<String>(
-                        'warlock_builds_matrix_$_matrixReloadToken',
-                      ),
-                      child: WarlockBuildsPage(
-                        key: const Key('warlock_builds_page'),
-                        initialPath: _matrixPath,
-                      ),
                     ),
                     KeyedSubtree(
                       key: ValueKey<String>(

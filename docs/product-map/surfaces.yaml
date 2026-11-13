@@ -28,7 +28,10 @@ surfaces:
     kind: surface
     area: shell
     parent: shell
-    notes: Loadouts · Build · Synergy · Sets · Catalog · Warlocks · Settings
+    notes: >
+      Loadouts · Build · Synergy · Sets · Catalog · Builds · Settings.
+      Flutter Windows primary rail today is Catalog · Sets · Builds · Settings;
+      Warlocks removed (superseded by Builds).
     rules:
       - DBR-PUR-003
     status: active
@@ -98,7 +101,25 @@ surfaces:
     kind: field
     area: shell
     parent: shell.nav
-    notes: Read-only community matrix. No equip, move, or OAuth.
+    notes: >
+      Removed from Flutter Windows host — superseded by Builds tab.
+      Read-only community matrix historically. No equip, move, or OAuth.
+    rules:
+      - DBR-SUB-011
+      - DAC-DST-016
+      - BR-WXM-001
+    status: deferred
+    platforms:
+      flutter-windows:
+        status: deferred
+        route: /warlock-builds
+        notes: "Superseded by shell.nav.builds / BuildsMockPage"
+  - id: shell.nav.builds
+    title: Nav → Builds
+    kind: field
+    area: shell
+    parent: shell.nav
+    notes: Warlock matrix list + Fill In mock. Supersedes Warlocks tab.
     rules:
       - DBR-SUB-011
       - DAC-DST-016
@@ -107,7 +128,8 @@ surfaces:
     platforms:
       flutter-windows:
         status: done
-        route: /warlock-builds
+        route: /builds
+        notes: "BuildsMockPage mounted in shell rail"
   - id: shell.nav.settings
     title: Nav → Settings
     kind: field
@@ -1171,16 +1193,19 @@ surfaces:
     area: catalog
     auth: any
     parent: null
-    notes: Read-only list loaded from a local matrix file. Filter by exotic. Flag Solipsism off Prismatic.
+    notes: >
+      Historical Warlocks-tab list UI removed; matrix loading now lives under
+      Builds (BuildsMockPage). Domain parse/filter rules still apply.
     rules:
       - DBR-SUB-011
       - DAC-DST-016
       - BR-WXM-001
-    status: active
+    status: deferred
     platforms:
       flutter-windows:
-        status: done
+        status: deferred
         route: /warlock-builds
+        notes: "UI removed; use /builds"
   - id: catalog.warlock-pilot
     title: Offline contrasting-build pilot
     kind: screen
@@ -1188,8 +1213,9 @@ surfaces:
     auth: any
     parent: catalog.warlock-matrix
     notes: >
-      Local review of five trimmed community rows. Preserves source links and
-      blanks. Synthetic inventory and DIM JSON are labeled and are not ownership.
+      Offline pilot entry and page removed from Windows host (Nov 2026).
+      Domain pilot_review package + assets/pilot fixtures kept for unit tests;
+      package cleanup is a follow-up.
     rules:
       - DBR-PLT-001
       - DBR-PLT-002
@@ -1199,11 +1225,12 @@ surfaces:
       - DAC-PLT-002
       - DAC-PLT-003
       - BR-WXM-002
-    status: active
+    status: deferred
     platforms:
       flutter-windows:
-        status: done
+        status: deferred
         route: /warlock-builds
+
   - id: catalog.signed-out.weapons
     title: Catalog weapons (signed-out / Manifest)
     kind: screen

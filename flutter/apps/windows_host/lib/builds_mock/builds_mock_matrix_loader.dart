@@ -8,7 +8,7 @@ import 'builds_mock_matrix.dart';
 
 /// Read-only Warlock matrix load into [controller] (Builds page production path).
 ///
-/// Same [readOnlyFileBytes] + [maxBytes] gate as Warlocks. Never writes the
+/// Same [readOnlyFileBytes] + [maxBytes] gate as Settings matrix probe. Never writes the
 /// matrix file. On size-limit / IO / JSON failure, sets [BuildsMockController]
 /// matrix error and leaves the build list empty (no sample fixture).
 Future<void> loadBuildsMatrixIntoController({

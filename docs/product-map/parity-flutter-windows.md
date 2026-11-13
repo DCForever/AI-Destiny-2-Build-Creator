@@ -1,12 +1,12 @@
 # Parity: flutter-windows
 
-Generated: 2026-08-04
+Generated: 2026-11-13
 
 | Metric | Value |
 |--------|-------|
 | Platform status | planned |
-| Stubs | 57 |
-| Deferred | 7 |
+| Stubs | 49 |
+| Deferred | 9 |
 | Missing platform block | 0 |
 | Captures on disk | 0 |
 
@@ -22,8 +22,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `shell.nav.loadouts` | stub | /loadouts | — | no | 0 |
 | `shell.nav.build` | stub | /build | — | no | 0 |
 | `shell.nav.synergy` | stub | /synergy | — | no | 0 |
-| `shell.nav.sets` | stub | /sets | — | no | 0 |
-| `shell.nav.settings` | stub | /settings | — | no | 0 |
 | `shell.signed-out-gate` | stub | / | — | no | 2 |
 | `build.signed-out` | stub | /build | build-signed-out | no | 2 |
 | `build.library` | stub | /build | build-library | no | 8 |
@@ -47,17 +45,11 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `build.finish.equip-gate` | stub | /build | — | no | 4 |
 | `build.conflicts` | stub | /build | — | no | 6 |
 | `catalog.signed-out.armor` | stub | /catalog | catalog-signed-out-armor | no | 3 |
-| `catalog.armor.owned` | stub | /catalog | catalog-armor-owned | no | 4 |
-| `catalog.armor.manifest` | stub | /catalog | catalog-armor-manifest | no | 2 |
-| `catalog.armor.detail` | stub | /catalog | catalog-armor-detail | no | 3 |
 | `catalog.universal` | stub | /catalog | catalog-universal | no | 4 |
 | `sets.signed-out` | stub | /sets | sets-signed-out | no | 2 |
 | `sets.library` | stub | /sets | sets-library | no | 8 |
-| `sets.create` | stub | /sets | sets-create | no | 7 |
 | `sets.detail` | stub | /sets | sets-detail | no | 15 |
 | `sets.edit` | stub | /sets | sets-edit | no | 3 |
-| `sets.fill-slot` | stub | /sets | sets-fill-slot | no | 6 |
-| `sets.fill-slot.exotic-block` | stub | /sets | — | no | 4 |
 | `synergy.signed-out` | stub | /synergy | synergy-signed-out | no | 1 |
 | `synergy.library` | stub | /synergy | synergy-library | no | 6 |
 | `synergy.create` | stub | /synergy | synergy-create | no | 8 |

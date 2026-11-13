@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" agent="d2bc-ui-rules" version="22.1.0" type="device" compressed="false">
   <diagram id="overview" name="Overview">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1917" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="2308" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -87,26 +87,16 @@ sets and synergies." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;f
         <mxCell id="30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="28" target="29"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="31" value="Nav → Build
 /build" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="782" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="32" value="Nav → Catalog
-/catalog" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="852" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="33" value="Nav → In-Game Loadouts
-/loadouts" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="922" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="34" value="Nav → Sets
-/sets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="992" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="35" value="Nav → Settings
-/settings" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1062" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="36" value="Nav → Synergy
-/synergy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1132" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="37" value="Nav → Warlock builds" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1202" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="38" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
+        <mxCell id="32" value="Nav → Builds" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="852" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="33" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
 class item **Solipsism** works only on the
 **Prismatic** subclass. A read-only
 community-matrix build that pairs Solipsism
 with any other subclass is **flagged** in the
 list. The flag does not rewrite the source
-file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1202" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="38"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="40" value="DAC-DST-016 — Solipsism requires Prismatic
+file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="852" width="300" height="91" as="geometry"/></mxCell>
+        <mxCell id="34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="32" target="33"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="35" value="DAC-DST-016 — Solipsism requires Prismatic
 **Given** a read-only Warlock community build
 whose exotic is Solipsism and whose subclass
 is not Prismatic **When** the build appears in
@@ -114,9 +104,9 @@ the matrix list **Then** the row is flagged
 that Solipsism only works with Prismatic
 **And** a Prismatic Solipsism build is not
 flagged **And** loading the matrix does not
-modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1301" width="300" height="113" as="geometry"/></mxCell>
-        <mxCell id="41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="40"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="42" value="BR-WXM-001 — BR-WXM-001 The Warlock community
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="951" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="32" target="35"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="37" value="BR-WXM-001 — BR-WXM-001 The Warlock community
 matrix is a read-only list loaded from a local
 file path. Rows are exotic-armor builds
 (including overflow), weapon-cell builds, and
@@ -126,25 +116,66 @@ exotic names present in that file. Builds that
 use Solipsism on a subclass other than
 Prismatic are flagged. The list does not
 equip, move, or delete items and does not
-start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1422" width="300" height="135" as="geometry"/></mxCell>
-        <mxCell id="43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="37" target="42"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="44" value="SignedOutGate (shared)
-[signed-out]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3d0000;fontColor=#ffcccc;strokeColor=#ff6b6b;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="1593" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="45" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
-Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1593" width="300" height="36" as="geometry"/></mxCell>
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1072" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="32" target="37"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="39" value="Nav → Catalog
+/catalog" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1243" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="40" value="Nav → In-Game Loadouts
+/loadouts" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1313" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="41" value="Nav → Sets
+/sets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1383" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="42" value="Nav → Settings
+/settings" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1453" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="43" value="Nav → Synergy
+/synergy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1523" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="44" value="Nav → Warlock builds" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="1593" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="45" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
+class item **Solipsism** works only on the
+**Prismatic** subclass. A read-only
+community-matrix build that pairs Solipsism
+with any other subclass is **flagged** in the
+list. The flag does not rewrite the source
+file, change inventory, or equip gear." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1593" width="300" height="91" as="geometry"/></mxCell>
         <mxCell id="46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="44" target="45"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="47" value="003:SC-005 — 003-owned-inventory-instances
+        <mxCell id="47" value="DAC-DST-016 — Solipsism requires Prismatic
+**Given** a read-only Warlock community build
+whose exotic is Solipsism and whose subclass
+is not Prismatic **When** the build appears in
+the matrix list **Then** the row is flagged
+that Solipsism only works with Prismatic
+**And** a Prismatic Solipsism build is not
+flagged **And** loading the matrix does not
+modify the source file" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1692" width="300" height="113" as="geometry"/></mxCell>
+        <mxCell id="48" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="44" target="47"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="49" value="BR-WXM-001 — BR-WXM-001 The Warlock community
+matrix is a read-only list loaded from a local
+file path. Rows are exotic-armor builds
+(including overflow), weapon-cell builds, and
+Solipsism perk-combo builds. Removed rows are
+not listed. The exotic filter offers only
+exotic names present in that file. Builds that
+use Solipsism on a subclass other than
+Prismatic are flagged. The list does not
+equip, move, or delete items and does not
+start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="380" y="1813" width="300" height="135" as="geometry"/></mxCell>
+        <mxCell id="50" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="44" target="49"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="51" value="SignedOutGate (shared)
+[signed-out]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3d0000;fontColor=#ffcccc;strokeColor=#ff6b6b;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="1984" width="220" height="42" as="geometry"/></mxCell>
+        <mxCell id="52" value="BR-AUTH-001 — BR-AUTH-001 Sets, Synergies,
+Builds APIs require authenticated user." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1984" width="300" height="36" as="geometry"/></mxCell>
+        <mxCell id="53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="51" target="52"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="54" value="003:SC-005 — 003-owned-inventory-instances
 SC-005 Unauthenticated or never-synced users
 receive a clear, actionable response (auth
 error or sync prompt) with zero instance data
 leaked in 100% of unauthorized or empty-state
-test cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="1637" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="48" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="44" target="47"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="49" value="Theme toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="1753" width="220" height="36" as="geometry"/></mxCell>
-        <mxCell id="50" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1837" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="51" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1837" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="52" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1837" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="53" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1837" width="140" height="32" as="geometry"/></mxCell>
+test cases." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="350" y="2028" width="300" height="80" as="geometry"/></mxCell>
+        <mxCell id="55" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="51" target="54"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="56" value="Theme toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1b262c;fontColor=#bbe1fa;strokeColor=#3282b8;fontSize=10;" vertex="1" parent="1"><mxGeometry x="80" y="2144" width="220" height="36" as="geometry"/></mxCell>
+        <mxCell id="57" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="2228" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="58" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="2228" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="59" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="2228" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="60" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="2228" width="140" height="32" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
@@ -11965,14 +11996,16 @@ only—not Build kit attach." style="rounded=0;whiteSpace=wrap;html=1;fillColor=
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram id="flow-flow-catalog-warlock-matrix" name="Warlock community build list">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1742" math="0" shadow="0">
+  <diagram id="flow-flow-catalog-warlock-matrix" name="Warlock community build list (deferred — Builds supersedes)">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1373" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="2" value="Warlock community build list" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e2b714;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="320" height="48" as="geometry"/></mxCell>
-        <mxCell id="3" value="Load a local matrix file, filter by exotic, flag Solipsism off Prismatic." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#666;" vertex="1" parent="1"><mxGeometry x="380" y="24" width="480" height="40" as="geometry"/></mxCell>
-        <mxCell id="4" value="Open the list
+        <mxCell id="2" value="Warlock community build list (deferred — Builds supersedes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e2b714;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="320" height="48" as="geometry"/></mxCell>
+        <mxCell id="3" value="Historical Warlocks-tab flow. Flutter Windows host now uses the Builds tab for
+matrix list; offline pilot UI removed. Domain rules still apply to Builds matrix
+load." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#666;" vertex="1" parent="1"><mxGeometry x="380" y="24" width="480" height="40" as="geometry"/></mxCell>
+        <mxCell id="4" value="Open the list (deferred)
 [any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="100" width="220" height="42" as="geometry"/></mxCell>
         <mxCell id="5" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
 class item **Solipsism** works only on the
@@ -12004,7 +12037,7 @@ Prismatic are flagged. The list does not
 equip, move, or delete items and does not
 start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="320" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="4" target="9"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="11" value="Filter by exotic
+        <mxCell id="11" value="Filter by exotic (deferred)
 [any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="491" width="220" height="42" as="geometry"/></mxCell>
         <mxCell id="12" value="DBR-SUB-011 — DBR-SUB-011 The Warlock exotic
 class item **Solipsism** works only on the
@@ -12036,7 +12069,7 @@ Prismatic are flagged. The list does not
 equip, move, or delete items and does not
 start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="711" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="11" target="16"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="18" value="Flag Solipsism off Prismatic
+        <mxCell id="18" value="Flag Solipsism off Prismatic (deferred)
 [any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="882" width="220" height="42" as="geometry"/></mxCell>
         <mxCell id="19" value="DAC-DST-016 — Solipsism requires Prismatic
 **Given** a read-only Warlock community build
@@ -12068,81 +12101,10 @@ Prismatic are flagged. The list does not
 equip, move, or delete items and does not
 start Bungie OAuth." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1102" width="300" height="135" as="geometry"/></mxCell>
         <mxCell id="24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="18" target="23"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="25" value="Open the offline contrasting-build pilot
-[any]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222831;fontColor=#eeeeee;strokeColor=#00adb5;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="1273" width="220" height="42" as="geometry"/></mxCell>
-        <mxCell id="26" value="DBR-PLT-001 — DBR-PLT-001 The offline pilot
-keeps each selected source row&apos;s original DIM
-link, Does text, Loop text, Solipsism perk
-pair, Ergo Sum trait/element/frame, set
-proposal, blanks, and creator/title. A title
-is a label. It is not copied into a blank Does
-or Loop." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1273" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="26"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="28" value="DBR-PLT-002 — DBR-PLT-002 Unknown perk text
-(`perk not specified`), a missing element, a
-blank loop, and disagreements between source
-rows stay unresolved. The pilot does not
-invent a default and does not let an optimizer
-result fill those fields." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1372" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="28"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="30" value="DBR-PLT-003 — DBR-PLT-003 A pilot row whose
-exotic is Solipsism and whose stated subclass
-is not Prismatic is **invalid**. An unstated
-subclass is not treated as Prismatic. Perk
-labels that differ (`Spirit of Apotheosis`
-versus `Apotheosis`) are not aliased." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1460" width="300" height="80" as="geometry"/></mxCell>
-        <mxCell id="31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="30"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="32" value="DAC-PLT-001 — Pilot rows keep source text
-**Given** a selected community row in the
-offline pilot **When** the review is shown
-**Then** the original DIM link, Does, Loop,
-stated perk fields, and set proposal are the
-source strings, including blanks **And** the
-title is not copied into a blank Does or Loop" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1548" width="300" height="91" as="geometry"/></mxCell>
-        <mxCell id="33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="32"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="34" value="DBR-PLT-004 — DBR-PLT-004 Armor proposals and
-DIM JSON in the pilot use **synthetic**
-fixtures. They are labeled synthetic in the UI
-and in JSON notes. They are not an
-account-verified loadout. An invalid or
-unresolved case produces no personal DIM
-output. Parsing a row or showing a proposal
-does not write the source file or equip gear.
-Round-trip of the JSON shape is not DIM
-acceptance." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="320" y="1647" width="300" height="124" as="geometry"/></mxCell>
-        <mxCell id="35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="34"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="36" value="DAC-PLT-002 — Unknowns and conflicts stay open
-**Given** a row with `perk not specified`, a
-blank loop, or two set proposals for the same
-identity **When** proposals are calculated
-**Then** those fields stay unresolved and no
-personal DIM document is produced **And**
-synthetic armor results are labeled synthetic
-and are not equipped" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="1273" width="300" height="102" as="geometry"/></mxCell>
-        <mxCell id="37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="36"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="38" value="DAC-PLT-003 — Solipsism off Prismatic is
-invalid **Given** a pilot row whose exotic is
-Solipsism and whose stated subclass is solar
-**When** the row is reviewed **Then** it is
-invalid and has no personal DIM output **And**
-a perk match requires the exotic name and the
-exact perk strings, not the name alone --- ##
-Naming &amp; browsing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="1383" width="300" height="102" as="geometry"/></mxCell>
-        <mxCell id="39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="38"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="40" value="BR-WXM-002 — BR-WXM-002 The offline pilot
-reviews five trimmed community rows from local
-files. It preserves source links and blanks,
-rejects Solipsism off Prismatic, and shows
-synthetic stat/set/reuse proposals without
-writing sources or equipping gear. Unresolved
-rows get no personal DIM output. DIM JSON
-shape checks are labeled synthetic and are not
-DIM acceptance." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="636" y="1493" width="300" height="113" as="geometry"/></mxCell>
-        <mxCell id="41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#bbb;dashed=1;endArrow=none;opacity=60;" edge="1" parent="1" source="25" target="40"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="42" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1662" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="43" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1662" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="44" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1662" width="140" height="32" as="geometry"/></mxCell>
-        <mxCell id="45" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1662" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="25" value="DAC (acceptance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8e7;fontColor=#333;strokeColor=#e2b714;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="40" y="1293" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="26" value="DBR (domain BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;fontColor=#222;strokeColor=#43a047;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="190" y="1293" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="27" value="BR (feature BR)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;fontColor=#222;strokeColor=#1e88e5;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="340" y="1293" width="140" height="32" as="geometry"/></mxCell>
+        <mxCell id="28" value="Slice AC/SC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;fontColor=#222;strokeColor=#8e24aa;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fontSize=9;" vertex="1" parent="1"><mxGeometry x="490" y="1293" width="140" height="32" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>

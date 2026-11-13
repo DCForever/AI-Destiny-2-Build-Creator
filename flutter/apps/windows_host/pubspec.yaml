@@ -55,7 +55,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/pilot/contrast_matrix.json
-    - assets/pilot/contrast_queue.csv
     # Offline fallback for google_fonts (widget tests / screenshot capture).
     - assets/google_fonts/
+    # assets/pilot/*.json|csv kept on disk for domain pilot unit tests only;
+    # not bundled — Offline pilot UI removed (Builds supersedes Warlocks).

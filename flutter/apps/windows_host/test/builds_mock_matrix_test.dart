@@ -128,7 +128,7 @@ void main() {
     tester,
   ) async {
     // Injected-message path (no dart:io). Real Builds loader over-cap IO is
-    // covered by the sibling non-widget test below (mirrors Warlocks).
+    // covered by the sibling non-widget test below (matrix loader).
     final controller = BuildsMockController.forMatrixLoad()
       ..failMatrixLoad('file exceeds size limit (64 > 8 bytes)');
 
