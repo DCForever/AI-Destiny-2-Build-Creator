@@ -8,7 +8,7 @@ import 'open_file_path_picker.dart';
 /// fills the field via [onChanged]; cancel leaves text unchanged. Typing a
 /// path still works (field stays editable). Does not import/save — callers
 /// keep their existing action buttons.
-class PathFileField extends StatelessWidget {
+class PathFileField extends StatefulWidget {
   const PathFileField({
     super.key,
     required this.controller,
@@ -32,16 +32,23 @@ class PathFileField extends StatelessWidget {
   final String? typeLabel;
   final OpenFilePathPicker? openFilePicker;
 
+  @override
+  State<PathFileField> createState() => _PathFileFieldState();
+}
+
+class _PathFileFieldState extends State<PathFileField> {
   Future<void> _browse() async {
-    if (!enabled) return;
-    final pick = openFilePicker ?? defaultOpenFilePathPicker;
+    if (!widget.enabled) return;
+    final pick = widget.openFilePicker ?? defaultOpenFilePathPicker;
     final path = await pick(
-      extensions: extensions,
-      label: typeLabel ?? labelText,
+      extensions: widget.extensions,
+      label: widget.typeLabel ?? widget.labelText,
     );
     if (path == null) return;
-    controller.text = path;
-    onChanged(path);
+    // Picker is async — widget may have been disposed before the result.
+    if (!mounted) return;
+    widget.controller.text = path;
+    widget.onChanged(path);
   }
 
   @override
@@ -51,24 +58,22 @@ class PathFileField extends StatelessWidget {
       children: [
         Expanded(
           child: TextField(
-            key: fieldKey,
-            controller: controller,
-            enabled: enabled,
+            key: widget.fieldKey,
+            controller: widget.controller,
+            enabled: widget.enabled,
             decoration: InputDecoration(
-              labelText: labelText,
+              labelText: widget.labelText,
               border: const OutlineInputBorder(),
             ),
-            onChanged: onChanged,
-            onTap: enabled ? _browse : null,
+            onChanged: widget.onChanged,
+            onTap: widget.enabled ? _browse : null,
           ),
         ),
-
-
         const SizedBox(width: 8),
         IconButton(
-          key: browseKey,
+          key: widget.browseKey,
           tooltip: 'Browse',
-          onPressed: enabled ? _browse : null,
+          onPressed: widget.enabled ? _browse : null,
           icon: const Icon(Icons.folder_open),
         ),
       ],

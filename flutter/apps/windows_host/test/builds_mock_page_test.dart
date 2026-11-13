@@ -103,8 +103,18 @@ void main() {
     final optimize = tester.widget<OutlinedButton>(
       find.byKey(const Key('builds_mock_optimize_b01')),
     );
-    expect(fillIn.onPressed, isNull);
+    // Fill In opens the read-only inventory pop-up; Optimize stays disabled.
+    expect(fillIn.onPressed, isNotNull);
     expect(optimize.onPressed, isNull);
+
+    await tester.tap(find.byKey(const Key('builds_mock_fill_in_b01')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('fill_in_dialog_b01')), findsOneWidget);
+    expect(find.byKey(const Key('fill_in_cache_error')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('fill_in_close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('fill_in_dialog_b01')), findsNothing);
 
     await tester.tap(find.byKey(const Key('builds_mock_detail_back')));
     await tester.pump();

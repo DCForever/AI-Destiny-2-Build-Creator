@@ -23,22 +23,46 @@ const List<String> kFillInBannedPatterns = <String>[
   'package:http',
 ];
 
-/// Exact count of production Fill In Dart sources under `**/fill_in/`.
+/// Exact production Fill In Dart source counts (exclude `test/`).
 ///
-/// Bump when adding a real fill_in library file (not tests).
-/// PR2b added `fill_in_dim_weapons_csv.dart` (was 6 → now 7).
-const int kExpectedFillInSourceFileCount = 7;
+/// Exact counts so the guard cannot pass vacuously or silently drop files.
+const int kDomainFillInSourceFileCount = 9;
+const int kWindowsHostFillInSourceFileCount = 4;
 
 void main() {
   test('Fill In sources never import write/transfer/equip/io/http', () {
     final roots = _fillInDartFiles();
+    final domain = roots
+        .where((f) => _normalized(f).contains('/packages/domain/lib/src/fill_in/'))
+        .toList();
+    final host = roots
+        .where(
+          (f) => _normalized(f).contains('/apps/windows_host/lib/fill_in/'),
+        )
+        .toList();
+
     expect(
-      roots,
-      hasLength(kExpectedFillInSourceFileCount),
+      domain,
+      hasLength(kDomainFillInSourceFileCount),
       reason:
-          'expected exactly $kExpectedFillInSourceFileCount fill_in Dart '
-          'sources under flutter/ (got ${roots.length}: '
-          '${roots.map((f) => f.path).join(', ')})',
+          'expected exactly $kDomainFillInSourceFileCount domain fill_in '
+          'sources (got ${domain.length}: '
+          '${domain.map((f) => f.path).join(', ')})',
+    );
+    expect(
+      host,
+      hasLength(kWindowsHostFillInSourceFileCount),
+      reason:
+          'expected exactly $kWindowsHostFillInSourceFileCount windows_host '
+          'fill_in sources (got ${host.length}: '
+          '${host.map((f) => f.path).join(', ')})',
+    );
+    expect(
+      roots.length,
+      domain.length + host.length,
+      reason:
+          'guard must scan only domain + windows_host fill_in folders; '
+          'extra: ${roots.where((f) => !domain.contains(f) && !host.contains(f)).map((f) => f.path).join(', ')}',
     );
 
     final violations = <String>[];
@@ -58,6 +82,8 @@ void main() {
     );
   });
 }
+
+String _normalized(File file) => file.path.replaceAll('\\', '/');
 
 List<File> _fillInDartFiles() {
   final flutterRoot = _findFlutterRoot();

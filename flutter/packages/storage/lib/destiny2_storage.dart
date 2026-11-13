@@ -8,6 +8,7 @@ library;
 export 'src/dim_armor_csv_import.dart';
 export 'src/dim_weapons_csv_import.dart';
 export 'src/dim_loadouts/dim_loadouts_reader.dart';
+export 'src/fill_in_missing_list_store.dart';
 export 'src/read_only_file.dart';
 export 'src/storage_root.dart';
 export 'src/version_dir.dart';

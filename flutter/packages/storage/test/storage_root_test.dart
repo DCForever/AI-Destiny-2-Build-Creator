@@ -47,6 +47,10 @@ void main() {
         root.dimWeaponsInventoryCachePath,
         p.join(fakeBase, 'fill_in', 'dim_weapons_inventory.csv'),
       );
+      expect(
+        root.fillInMissingByBuildPath,
+        p.join(fakeBase, 'fill_in', 'missing_by_build.json'),
+      );
       expect(root.dimLoadoutsDir, p.join(fakeBase, 'dim_loadouts'));
       expect(
         root.dimLoadoutsCachePath,

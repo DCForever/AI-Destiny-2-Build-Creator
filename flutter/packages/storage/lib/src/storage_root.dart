@@ -21,6 +21,7 @@ import 'version_dir.dart';
 /// users/<membershipId>/preferences.json
 /// fill_in/dim_armor_inventory.csv
 /// fill_in/dim_weapons_inventory.csv
+/// fill_in/missing_by_build.json
 /// dim_loadouts/dim-loadouts.json
 /// settings/warlock_matrix_path.txt
 /// ```
@@ -87,6 +88,13 @@ class StorageRoot {
   /// Exact path: `{basePath}/fill_in/dim_weapons_inventory.csv`
   String get dimWeaponsInventoryCachePath =>
       p.join(fillInCacheDir, 'dim_weapons_inventory.csv');
+
+  /// Per-build Fill In missing lists (+ similar weapon plan).
+  ///
+  /// Exact path: `{basePath}/fill_in/missing_by_build.json`
+  /// Additive JSON map keyed by build id — not Mario data, not SQLite.
+  String get fillInMissingByBuildPath =>
+      p.join(fillInCacheDir, 'missing_by_build.json');
 
   /// Directory for the compiled DIM share-link loadouts cache (read-only).
   ///

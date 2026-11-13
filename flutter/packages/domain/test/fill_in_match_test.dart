@@ -446,5 +446,108 @@ void main() {
       );
       expect(report.builds.single.solipsismNotPrismatic, isTrue);
     });
+
+    test('Titan null exotic / unknown subclass is not fail-closed flagged', () {
+      final report = matchFillIn(
+        inventory: const [],
+        builds: [
+          build(
+            id: 'titan-null',
+            cls: GuardianClass.titan,
+            subclass: 'prismatic',
+            exoticName: null,
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.helmet,
+                isExotic: false,
+                armorSetHash: techsec,
+              ),
+            ],
+          ),
+          build(
+            id: 'titan-unknown-sub',
+            cls: GuardianClass.titan,
+            subclass: 'not-a-subclass',
+            exoticName: 'Synthoceps',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.arms,
+                isExotic: true,
+                exoticItemHash: 42,
+              ),
+            ],
+          ),
+        ],
+      );
+      expect(report.builds[0].solipsismNotPrismatic, isFalse);
+      expect(report.builds[1].solipsismNotPrismatic, isFalse);
+    });
+
+    test('Hunter null exotic / unknown subclass is not fail-closed flagged', () {
+      final report = matchFillIn(
+        inventory: const [],
+        builds: [
+          build(
+            id: 'hunter-null',
+            cls: GuardianClass.hunter,
+            subclass: 'solar',
+            exoticName: null,
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.legs,
+                isExotic: false,
+                armorSetHash: techsec,
+              ),
+            ],
+          ),
+          build(
+            id: 'hunter-unknown-sub',
+            cls: GuardianClass.hunter,
+            subclass: '',
+            exoticName: 'Lucky Pants',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.legs,
+                isExotic: true,
+                exoticItemHash: 99,
+              ),
+            ],
+          ),
+        ],
+      );
+      expect(report.builds[0].solipsismNotPrismatic, isFalse);
+      expect(report.builds[1].solipsismNotPrismatic, isFalse);
+    });
+
+    test('exotic weapons never get an over-cap label', () {
+      final inventory = [
+        for (var i = 0; i < 3; i++)
+          exoticWeapon(id: 'gun-$i', hash: sunshotHash),
+      ];
+      final report = matchFillIn(
+        inventory: inventory,
+        inventoryCap: 2,
+        builds: [
+          build(
+            id: 'b',
+            cls: GuardianClass.warlock,
+            exoticName: 'Aeon Soul',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.special,
+                isExotic: true,
+                exoticItemHash: sunshotHash,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final slot = report.builds.single.slots.single;
+      expect(slot.poolHeldCount, 3);
+      expect(slot.isHeld, isTrue);
+      expect(slot.exceedsCap, isFalse);
+      expect(slot.overCapLabel, isNull);
+    });
   });
 }

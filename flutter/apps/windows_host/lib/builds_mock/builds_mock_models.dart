@@ -139,6 +139,9 @@ class MockBuild {
     this.splitWhy,
     this.creator,
     this.dimLink,
+    this.exoticWeaponType,
+    this.exoticWeaponDamageType,
+    this.exoticWeaponSlot,
   });
 
   final String id;
@@ -160,6 +163,15 @@ class MockBuild {
 
   /// Optional dim.gg share URL (`dim.gg/<shareId>` or `dim.gg/<shareId>/…`).
   final String? dimLink;
+
+  /// DIM `Type` for [exoticWeapon] when known from build data (similar suggest).
+  final String? exoticWeaponType;
+
+  /// DIM `Element` for [exoticWeapon] when known from build data.
+  final String? exoticWeaponDamageType;
+
+  /// Weapon slot wire name (`primary` / `special` / `heavy`) when known.
+  final String? exoticWeaponSlot;
 
   bool get usesSolipsism =>
       exoticArmor.toLowerCase().contains('solipsism') ||

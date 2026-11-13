@@ -7,6 +7,8 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
 import '../dim_loadouts/dim_loadout_details_panel.dart';
+import '../fill_in/fill_in_cache_loader.dart';
+import '../fill_in/fill_in_dialog.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
@@ -51,6 +53,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   late final BuildsMockController _controller;
   late final bool _ownsController;
   late final TextEditingController _search;
+  Map<String, FillInSavedBuildPlan> _savedFillInPlans =
+      const <String, FillInSavedBuildPlan>{};
 
   @override
   void initState() {
@@ -66,7 +70,14 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final root = widget.storageRoot;
     if (root != null) {
       _loadDimLoadouts(root);
+      _loadFillInPlans(root);
     }
+  }
+
+  Future<void> _loadFillInPlans(StorageRoot root) async {
+    final plans = await FillInMissingListStore(root: root).loadAll();
+    if (!mounted) return;
+    setState(() => _savedFillInPlans = plans);
   }
 
   Future<void> _loadMatrix(String? path) async {
