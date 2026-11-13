@@ -209,6 +209,44 @@ void main() {
     );
   });
 
+  test('exclusive backup create fails when bak path already exists', () async {
+    final path = root.fillInMissingByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    final prior = jsonEncode(<String, dynamic>{
+      'schemaVersion': 0,
+      'builds': <String, dynamic>{
+        'old': <String, dynamic>{
+          'missing': <String>['Chest'],
+        },
+      },
+    });
+    await File(path).writeAsString(prior);
+    final beforeHash = sha256.convert(utf8.encode(prior));
+
+    const stamp = 'fixedstamp';
+    final taken = File('$path.bak-v0-$stamp');
+    await taken.writeAsString('already taken', flush: true);
+
+    final storeFixed = FillInMissingListStore(
+      root: root,
+      backupStampForTest: stamp,
+    );
+    await expectLater(
+      storeFixed.saveBuildPlan(
+        const FillInSavedBuildPlan(
+          buildId: 'new',
+          missing: <String>['Arms'],
+        ),
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+
+    final after = await File(path).readAsBytes();
+    expect(sha256.convert(after).toString(), beforeHash.toString());
+    expect(await taken.readAsString(), 'already taken');
+    expect(File('$path.tmp').existsSync(), isFalse);
+  });
+
   test('failed rename cleans up .tmp and leaves the original intact', () async {
     await store.saveBuildPlan(
       const FillInSavedBuildPlan(

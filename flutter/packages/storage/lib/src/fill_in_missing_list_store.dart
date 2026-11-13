@@ -90,12 +90,14 @@ class _ParsedMissingList {
 ///
 /// When an existing file's `schemaVersion` is missing or differs from
 /// [kFillInMissingListSchemaVersion], the prior file is copied to a
-/// timestamped `.bak-…` sibling with exclusive-create before rewrite.
+/// timestamped `.bak-…` sibling via [File.create] (`exclusive: true`)
+/// before rewrite.
 class FillInMissingListStore {
   FillInMissingListStore({
     required StorageRoot root,
     this.maxBytes = kFillInMissingListMaxBytes,
     this.beforeRename,
+    this.backupStampForTest,
   }) : _root = root;
 
   final StorageRoot _root;
@@ -106,6 +108,9 @@ class FillInMissingListStore {
   /// Test hook: invoked after the `.tmp` is flushed, before rename.
   /// Throw to simulate a mid-write failure without truncating the store.
   final Future<void> Function()? beforeRename;
+
+  /// Test hook: fixed backup timestamp suffix (skips [DateTime.now]).
+  final String? backupStampForTest;
 
   String get storePath => _root.fillInMissingByBuildPath;
 
@@ -279,24 +284,23 @@ class FillInMissingListStore {
     }
   }
 
-  /// Timestamped sibling backup with exclusive-create (fails if name exists).
+  /// Timestamped sibling backup via [File.create] with `exclusive: true`.
   ///
-  /// Dart's portable [FileMode] has no writeOnlyExclusive on all SDKs — we
-  /// refuse an existing path, then open [FileMode.writeOnly].
+  /// Fails with [PathExistsException] (or [FileSystemException]) if the
+  /// backup path already exists — never opens/truncates an existing file.
   Future<File> _backupExclusive(
     File source, {
     required String fromVersionLabel,
   }) async {
-    final stamp = DateTime.now()
-        .toUtc()
-        .toIso8601String()
-        .replaceAll(':', '')
-        .replaceAll('.', '');
+    final stamp = backupStampForTest ??
+        DateTime.now()
+            .toUtc()
+            .toIso8601String()
+            .replaceAll(':', '')
+            .replaceAll('.', '');
     final bakPath = '$storePath.bak-v$fromVersionLabel-$stamp';
     final bak = File(bakPath);
-    if (await bak.exists()) {
-      throw StateError('backup already exists: $bakPath');
-    }
+    await bak.create(exclusive: true);
     final bytes = await source.readAsBytes();
     final handle = await bak.open(mode: FileMode.writeOnly);
     try {

@@ -88,6 +88,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       controller: _controller,
       path: path,
       maxBytes: widget.matrixMaxBytes,
+      shouldApply: () => mounted,
     );
   }
 
