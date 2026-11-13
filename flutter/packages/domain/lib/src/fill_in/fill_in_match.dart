@@ -12,7 +12,9 @@ import 'fill_in_result.dart';
 /// Each [FillInInventoryItem.instanceId] counts toward at most one pool cell.
 ///
 /// Matching rules:
-/// - Exotic **weapons** match by item hash only (weapons have no class).
+/// - **Weapons** match by item hash only (weapons have no class). Exotic and
+///   legendary weapons share the same hash pool so total-fill can mark held
+///   copies for every combat weapon slot.
 /// - Exotic **armor** matches by item hash **and** guardian class (no
 ///   cross-class).
 /// - Legendary armor matches by set + slot + class (no cross-class).
@@ -37,7 +39,7 @@ FillInBuildResult _matchBuild(
   _HeldPools pools,
   int cap,
 ) {
-  final flagged = _fillInSolipsismNotPrismatic(
+  final flag = resolveFillInSolipsismFlag(
     guardianClass: build.guardianClass,
     exoticName: build.exoticArmorName,
     subclassKey: build.subclassKey,
@@ -48,29 +50,46 @@ FillInBuildResult _matchBuild(
   ];
   return FillInBuildResult(
     buildId: build.buildId,
-    solipsismNotPrismatic: flagged,
+    solipsismFlag: flag,
     slots: List<FillInSlotMatch>.unmodifiable(slots),
   );
 }
 
 /// Fill In Solipsism gate — fail closed vs silent OK.
 ///
-/// Fail-closed (null exotic name / unknown subclass → flagged) applies only
-/// to [GuardianClass.warlock]. Titan and Hunter never get a false Solipsism
-/// flag from those missing fields; they still flag when the exotic name is
-/// literally Solipsism on a known non-Prismatic subclass.
-bool _fillInSolipsismNotPrismatic({
+/// - [FillInSolipsismFlag.notPrismatic]: exotic name is literally Solipsism on
+///   a known non-Prismatic subclass (any guardian class).
+/// - [FillInSolipsismFlag.exoticArmorUnknown]: Warlock only — null exotic name
+///   or unknown subclass, so Solipsism/Prismatic cannot be confirmed.
+/// - Titan / Hunter: null exotic / unknown subclass → [FillInSolipsismFlag.none]
+///   (never a false Solipsism warning from missing fields).
+FillInSolipsismFlag resolveFillInSolipsismFlag({
   required GuardianClass guardianClass,
   required String? exoticName,
   required String subclassKey,
 }) {
-  final failClosed = guardianClass == GuardianClass.warlock;
-  if (exoticName == null) return failClosed;
-  if (!isKnownWarlockSubclass(subclassKey)) return failClosed;
-  return isSolipsismNotPrismatic(
-    exoticName: exoticName,
-    subclassKey: subclassKey,
-  );
+  final trimmed = exoticName?.trim();
+  final hasExotic = trimmed != null && trimmed.isNotEmpty;
+  final knownSubclass = isKnownWarlockSubclass(subclassKey);
+
+  if (hasExotic && knownSubclass) {
+    if (isSolipsismNotPrismatic(
+      exoticName: trimmed,
+      subclassKey: subclassKey,
+    )) {
+      return FillInSolipsismFlag.notPrismatic;
+    }
+    return FillInSolipsismFlag.none;
+  }
+
+  // Fail-closed unknown only for Warlock.
+  if (guardianClass != GuardianClass.warlock) {
+    return FillInSolipsismFlag.none;
+  }
+  if (!hasExotic || !knownSubclass) {
+    return FillInSolipsismFlag.exoticArmorUnknown;
+  }
+  return FillInSolipsismFlag.none;
 }
 
 FillInSlotMatch _matchSlot(
@@ -105,21 +124,23 @@ FillInSlotMatch _matchSlot(
 class _HeldPools {
   _HeldPools(
     this._exoticArmorByKey,
-    this._exoticWeaponByHash,
+    this._weaponByHash,
     this._legendaryByKey,
   );
 
   final Map<_ExoticArmorKey, int> _exoticArmorByKey;
-  final Map<int, int> _exoticWeaponByHash;
+  final Map<int, int> _weaponByHash;
   final Map<_LegendaryKey, int> _legendaryByKey;
 
   int countFor(GuardianClass guardianClass, FillInSlotRequirement need) {
+    if (_isWeaponNeedSlot(need.slot)) {
+      final hash = need.exoticItemHash;
+      if (hash == null) return 0;
+      return _weaponByHash[hash] ?? 0;
+    }
     if (need.isExotic) {
       final hash = need.exoticItemHash;
       if (hash == null) return 0;
-      if (_isWeaponNeedSlot(need.slot)) {
-        return _exoticWeaponByHash[hash] ?? 0;
-      }
       final key = _ExoticArmorKey(
         itemHash: hash,
         guardianClass: guardianClass,
@@ -188,7 +209,7 @@ bool _isWeaponNeedSlot(EquipmentSlot slot) {
 _HeldPools _buildPools(Iterable<FillInInventoryItem> inventory) {
   final seenIds = <String>{};
   final exoticArmorByKey = <_ExoticArmorKey, int>{};
-  final exoticWeaponByHash = <int, int>{};
+  final weaponByHash = <int, int>{};
   final legendaryByKey = <_LegendaryKey, int>{};
 
   for (final item in inventory) {
@@ -196,9 +217,7 @@ _HeldPools _buildPools(Iterable<FillInInventoryItem> inventory) {
 
     if (EquipmentSlot.weaponSlots.contains(item.slot) ||
         item.slot == EquipmentSlot.exoticWeapon) {
-      if (!item.isExotic) continue;
-      exoticWeaponByHash[item.itemHash] =
-          (exoticWeaponByHash[item.itemHash] ?? 0) + 1;
+      weaponByHash[item.itemHash] = (weaponByHash[item.itemHash] ?? 0) + 1;
       continue;
     }
 
@@ -224,5 +243,5 @@ _HeldPools _buildPools(Iterable<FillInInventoryItem> inventory) {
     legendaryByKey[key] = (legendaryByKey[key] ?? 0) + 1;
   }
 
-  return _HeldPools(exoticArmorByKey, exoticWeaponByHash, legendaryByKey);
+  return _HeldPools(exoticArmorByKey, weaponByHash, legendaryByKey);
 }

@@ -15,6 +15,100 @@ class FillInMappedBuild {
   final List<FillInInventoryItem> inventory;
 }
 
+/// Combat slots Fill In always covers (5 armor + 3 weapons).
+const List<EquipmentSlot> kFillInTotalArmorSlots = EquipmentSlot.armorSlots;
+const List<EquipmentSlot> kFillInTotalWeaponSlots = EquipmentSlot.weaponSlots;
+
+/// Overlay compiled DIM loadout exotic + items onto a matrix/mock build.
+///
+/// Matrix rows that only name an exotic **weapon** leave [MockBuild.exoticArmor]
+/// empty even when the matched DIM link lists exotic armor (e.g. Swarmers).
+/// This keeps display + Fill In aligned with the details panel EXOTIC line.
+MockBuild enrichMockBuildFromDimLoadout(
+  MockBuild build, {
+  CachedDimLoadout? loadout,
+}) {
+  if (loadout == null) return build;
+
+  final pieces = extractFillInPiecesFromDimLoadout(loadout);
+  var exoticArmor = build.exoticArmor.trim();
+  if (exoticArmor.isEmpty && pieces.exoticArmorName != null) {
+    exoticArmor = pieces.exoticArmorName!;
+  }
+
+  var exoticWeapon = build.exoticWeapon.trim();
+  var exoticWeaponSlot = build.exoticWeaponSlot;
+  final slots = <MockSlotAssignment>[...build.slots];
+
+  if (slots.isEmpty) {
+    for (final entry in pieces.armorBySlot.entries) {
+      final piece = entry.value;
+      slots.add(
+        MockSlotAssignment(
+          slot: piece.slot.wireName,
+          setId: piece.isExotic ? 'exotic' : 'dim_${piece.hash}',
+          pieceName: piece.name,
+          isExoticSlot: piece.isExotic,
+        ),
+      );
+    }
+    for (final entry in pieces.weaponsBySlot.entries) {
+      final piece = entry.value;
+      slots.add(
+        MockSlotAssignment(
+          slot: piece.slot.wireName,
+          setId: piece.isExotic ? 'exotic_weapon' : 'dim_weapon_${piece.hash}',
+          pieceName: piece.name,
+          isExoticSlot: piece.isExotic,
+        ),
+      );
+      if (piece.isExotic && exoticWeapon.isEmpty) {
+        exoticWeapon = piece.name;
+        exoticWeaponSlot = piece.slot.wireName;
+      }
+    }
+  } else {
+    // Fill gaps only — never overwrite an existing assignment.
+    for (final entry in pieces.armorBySlot.entries) {
+      final wire = entry.value.slot.wireName;
+      if (slots.any((s) => s.slot == wire)) continue;
+      slots.add(
+        MockSlotAssignment(
+          slot: wire,
+          setId: entry.value.isExotic ? 'exotic' : 'dim_${entry.value.hash}',
+          pieceName: entry.value.name,
+          isExoticSlot: entry.value.isExotic,
+        ),
+      );
+    }
+    for (final entry in pieces.weaponsBySlot.entries) {
+      final wire = entry.value.slot.wireName;
+      if (slots.any((s) => s.slot == wire)) continue;
+      slots.add(
+        MockSlotAssignment(
+          slot: wire,
+          setId: entry.value.isExotic
+              ? 'exotic_weapon'
+              : 'dim_weapon_${entry.value.hash}',
+          pieceName: entry.value.name,
+          isExoticSlot: entry.value.isExotic,
+        ),
+      );
+      if (entry.value.isExotic && exoticWeapon.isEmpty) {
+        exoticWeapon = entry.value.name;
+        exoticWeaponSlot = entry.value.slot.wireName;
+      }
+    }
+  }
+
+  return build.copyWith(
+    exoticArmor: exoticArmor,
+    exoticWeapon: exoticWeapon,
+    exoticWeaponSlot: exoticWeaponSlot,
+    slots: List<MockSlotAssignment>.unmodifiable(slots),
+  );
+}
+
 /// Build-data (+ optional inventory) profile for similar-weapon suggestion.
 FillInWeaponNeed? fillInWeaponNeedForBuild({
   required MockBuild build,
@@ -55,15 +149,19 @@ FillInWeaponNeed? fillInWeaponNeedForBuild({
 
 /// Resolve exotic armor/weapons by display name and stamp legendary set hashes
 /// from the mock build's slot assignments.
+///
+/// Always emits needs for all 5 armor + 3 weapon combat slots (total fill).
 FillInMappedBuild mapMockBuildForFillIn({
   required MockBuild build,
   required List<FillInInventoryItem> inventory,
   GuardianClass guardianClass = GuardianClass.warlock,
+  CachedDimLoadout? dimLoadout,
 }) {
-  final subclassKey = build.subclass.trim().toLowerCase();
-  final exoticArmorName = build.exoticArmor.trim().isEmpty
+  final enriched = enrichMockBuildFromDimLoadout(build, loadout: dimLoadout);
+  final subclassKey = enriched.subclass.trim().toLowerCase();
+  final exoticArmorName = enriched.exoticArmor.trim().isEmpty
       ? null
-      : build.exoticArmor.trim();
+      : enriched.exoticArmor.trim();
 
   final setHashBySetId = <String, int>{};
   final stampedById = <String, FillInInventoryItem>{
@@ -71,21 +169,25 @@ FillInMappedBuild mapMockBuildForFillIn({
   };
 
   final slots = <FillInSlotRequirement>[];
+  final covered = <EquipmentSlot>{};
 
-  if (build.slots.isEmpty) {
+  if (enriched.slots.isEmpty) {
     _addExoticArmorNeed(
       slots: slots,
       inventory: inventory,
       guardianClass: guardianClass,
       exoticName: exoticArmorName,
+      covered: covered,
     );
     _addExoticWeaponNeed(
       slots: slots,
       inventory: inventory,
-      exoticWeaponName: build.exoticWeapon,
+      exoticWeaponName: enriched.exoticWeapon,
+      preferredSlot: enriched.exoticWeaponSlot,
+      covered: covered,
     );
   } else {
-    final twoPlusTwo = _twoPlusTwoSetIds(build.slots);
+    final twoPlusTwo = _twoPlusTwoSetIds(enriched.slots);
     if (twoPlusTwo != null) {
       final firstHash = setHashBySetId.putIfAbsent(
         twoPlusTwo.$1,
@@ -96,7 +198,7 @@ FillInMappedBuild mapMockBuildForFillIn({
         () => _stableSetHash(twoPlusTwo.$2),
       );
       _stampLegendarySetsForTwoPlusTwo(
-        build: build,
+        build: enriched,
         stampedById: stampedById,
         guardianClass: guardianClass,
         setHashBySetId: <String, int>{
@@ -104,18 +206,36 @@ FillInMappedBuild mapMockBuildForFillIn({
           twoPlusTwo.$2: secondHash,
         },
       );
-      slots.addAll(
-        assignFillInTwoPlusTwoSlots(
-          firstSetHash: firstHash,
-          secondSetHash: secondHash,
-          guardianClass: guardianClass,
-          inventory: stampedById.values,
-        ),
-      );
-      for (final assignment in build.slots) {
-        if (!assignment.isExoticSlot) continue;
+      for (final need in assignFillInTwoPlusTwoSlots(
+        firstSetHash: firstHash,
+        secondSetHash: secondHash,
+        guardianClass: guardianClass,
+        inventory: stampedById.values,
+      )) {
+        slots.add(need);
+        covered.add(need.slot);
+      }
+      for (final assignment in enriched.slots) {
         final slot = _slotFromWire(assignment.slot);
         if (slot == null) continue;
+        if (_isWeaponSlot(slot)) {
+          if (covered.contains(slot)) continue;
+          final hash = _weaponHash(
+            inventory: inventory,
+            name: assignment.pieceName,
+          );
+          slots.add(
+            FillInSlotRequirement(
+              slot: slot,
+              isExotic: assignment.isExoticSlot,
+              exoticItemHash: hash,
+            ),
+          );
+          covered.add(slot);
+          continue;
+        }
+        if (!assignment.isExoticSlot) continue;
+        if (!EquipmentSlot.armorSlots.contains(slot)) continue;
         final hash = _exoticArmorHash(
           inventory: inventory,
           guardianClass: guardianClass,
@@ -128,11 +248,28 @@ FillInMappedBuild mapMockBuildForFillIn({
             exoticItemHash: hash,
           ),
         );
+        covered.add(slot);
       }
     } else {
-      for (final assignment in build.slots) {
+      for (final assignment in enriched.slots) {
         final slot = _slotFromWire(assignment.slot);
         if (slot == null) continue;
+        if (_isWeaponSlot(slot)) {
+          final hash = _weaponHash(
+            inventory: inventory,
+            name: assignment.pieceName,
+          );
+          slots.add(
+            FillInSlotRequirement(
+              slot: slot,
+              isExotic: assignment.isExoticSlot,
+              exoticItemHash: hash,
+            ),
+          );
+          covered.add(slot);
+          continue;
+        }
+        if (!EquipmentSlot.armorSlots.contains(slot)) continue;
         if (assignment.isExoticSlot) {
           final hash = _exoticArmorHash(
             inventory: inventory,
@@ -166,25 +303,97 @@ FillInMappedBuild mapMockBuildForFillIn({
             ),
           );
         }
+        covered.add(slot);
       }
     }
     _addExoticWeaponNeed(
       slots: slots,
       inventory: inventory,
-      exoticWeaponName: build.exoticWeapon,
+      exoticWeaponName: enriched.exoticWeapon,
+      preferredSlot: enriched.exoticWeaponSlot,
+      covered: covered,
     );
   }
 
+  _ensureTotalFillSlots(
+    slots: slots,
+    covered: covered,
+    inventory: inventory,
+    guardianClass: guardianClass,
+    exoticArmorName: exoticArmorName,
+  );
+
   return FillInMappedBuild(
     requirement: FillInBuildRequirement(
-      buildId: build.id,
+      buildId: enriched.id,
       guardianClass: guardianClass,
       subclassKey: subclassKey,
       exoticArmorName: exoticArmorName,
-      slots: slots,
+      slots: List<FillInSlotRequirement>.unmodifiable(slots),
     ),
     inventory: List<FillInInventoryItem>.unmodifiable(stampedById.values),
   );
+}
+
+/// Pad to all 5 armor + 3 weapon slots so Fill In is always a total fill.
+void _ensureTotalFillSlots({
+  required List<FillInSlotRequirement> slots,
+  required Set<EquipmentSlot> covered,
+  required List<FillInInventoryItem> inventory,
+  required GuardianClass guardianClass,
+  required String? exoticArmorName,
+}) {
+  for (final slot in kFillInTotalArmorSlots) {
+    if (covered.contains(slot)) continue;
+    if (exoticArmorName != null &&
+        exoticArmorName.isNotEmpty &&
+        !_slotsContainExoticArmor(slots)) {
+      final match = _findExoticArmor(
+        inventory: inventory,
+        guardianClass: guardianClass,
+        name: exoticArmorName,
+      );
+      final exoticSlot = match?.slot ?? EquipmentSlot.classItem;
+      if (exoticSlot == slot) {
+        slots.add(
+          FillInSlotRequirement(
+            slot: slot,
+            isExotic: true,
+            exoticItemHash: match?.itemHash,
+          ),
+        );
+        covered.add(slot);
+        continue;
+      }
+    }
+    // Unspecified legendary need — missing unless a later substitute finds
+    // any held piece in this slot (planFillInSubstitutes).
+    slots.add(
+      FillInSlotRequirement(
+        slot: slot,
+        isExotic: false,
+      ),
+    );
+    covered.add(slot);
+  }
+
+  for (final slot in kFillInTotalWeaponSlots) {
+    if (covered.contains(slot)) continue;
+    slots.add(
+      FillInSlotRequirement(
+        slot: slot,
+        isExotic: true,
+      ),
+    );
+    covered.add(slot);
+  }
+}
+
+bool _slotsContainExoticArmor(List<FillInSlotRequirement> slots) {
+  for (final s in slots) {
+    if (s.isExotic && EquipmentSlot.armorSlots.contains(s.slot)) return true;
+  }
+  return false;
 }
 
 void _addExoticArmorNeed({
@@ -192,6 +401,7 @@ void _addExoticArmorNeed({
   required List<FillInInventoryItem> inventory,
   required GuardianClass guardianClass,
   required String? exoticName,
+  required Set<EquipmentSlot> covered,
 }) {
   if (exoticName == null || exoticName.isEmpty) return;
   final match = _findExoticArmor(
@@ -199,30 +409,43 @@ void _addExoticArmorNeed({
     guardianClass: guardianClass,
     name: exoticName,
   );
+  final slot = match?.slot ?? EquipmentSlot.classItem;
   slots.add(
     FillInSlotRequirement(
-      slot: match?.slot ?? EquipmentSlot.classItem,
+      slot: slot,
       isExotic: true,
       exoticItemHash: match?.itemHash,
     ),
   );
+  covered.add(slot);
 }
 
 void _addExoticWeaponNeed({
   required List<FillInSlotRequirement> slots,
   required List<FillInInventoryItem> inventory,
   required String exoticWeaponName,
+  String? preferredSlot,
+  required Set<EquipmentSlot> covered,
 }) {
   final name = exoticWeaponName.trim();
   if (name.isEmpty) return;
   final match = _findExoticWeapon(inventory: inventory, name: name);
+  final preferred = preferredSlot == null
+      ? null
+      : EquipmentSlot.tryParse(preferredSlot);
+  final slot = match?.slot ??
+      (preferred != null && _isWeaponSlot(preferred)
+          ? preferred
+          : EquipmentSlot.special);
+  if (covered.contains(slot)) return;
   slots.add(
     FillInSlotRequirement(
-      slot: match?.slot ?? EquipmentSlot.special,
+      slot: slot,
       isExotic: true,
       exoticItemHash: match?.itemHash,
     ),
   );
+  covered.add(slot);
 }
 
 void _stampLegendaryByName({
@@ -249,7 +472,10 @@ void _stampLegendaryByName({
 (String, String)? _twoPlusTwoSetIds(List<MockSlotAssignment> slots) {
   final legendary = [
     for (final s in slots)
-      if (!s.isExoticSlot) s,
+      if (!s.isExoticSlot && EquipmentSlot.armorSlots.contains(
+            _slotFromWire(s.slot) ?? EquipmentSlot.helmet,
+          ))
+        s,
   ];
   final order = <String>[];
   final counts = <String, int>{};
@@ -345,6 +571,18 @@ FillInInventoryItem? _findExoticWeapon({
     if (!item.isExotic) continue;
     if (!_isWeaponSlot(item.slot)) continue;
     if ((item.name ?? '').trim().toLowerCase() == want) return item;
+  }
+  return null;
+}
+
+int? _weaponHash({
+  required List<FillInInventoryItem> inventory,
+  required String name,
+}) {
+  final want = name.trim().toLowerCase();
+  for (final item in inventory) {
+    if (!_isWeaponSlot(item.slot)) continue;
+    if ((item.name ?? '').trim().toLowerCase() == want) return item.itemHash;
   }
   return null;
 }

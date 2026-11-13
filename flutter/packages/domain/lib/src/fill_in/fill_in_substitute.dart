@@ -100,9 +100,11 @@ List<FillInSlotDiff> planFillInSubstitutes({
 
     // Missing — propose a substitute when possible.
     if (_isWeaponSlot(slot)) {
-      final similar = weaponNeed == null
-          ? null
-          : suggestSimilarWeapon(need: weaponNeed, heldWeapons: inv);
+      // Similar-weapon suggestion applies only to the need's own slot, not
+      // every empty combat weapon row under total fill.
+      final similar = weaponNeed != null && weaponNeed.slot == slot
+          ? suggestSimilarWeapon(need: weaponNeed, heldWeapons: inv)
+          : null;
       final item = similar?.item;
       diffs.add(
         FillInSlotDiff(

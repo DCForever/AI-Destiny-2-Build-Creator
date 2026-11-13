@@ -6,6 +6,7 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
 import '../dim_loadouts/dim_loadout_details_panel.dart';
+import '../fill_in/fill_in_build_mapper.dart';
 import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
 import '../host_bootstrap.dart';

@@ -148,6 +148,33 @@ void main() {
           setId: 'set_techsec',
           pieceName: 'Techsec Helmet',
         ),
+        MockSlotAssignment(
+          slot: 'arms',
+          setId: 'set_techsec',
+          pieceName: 'Techsec Gauntlets',
+        ),
+        MockSlotAssignment(
+          slot: 'chest',
+          setId: 'set_aion',
+          pieceName: 'Aion Chest',
+        ),
+        MockSlotAssignment(
+          slot: 'legs',
+          setId: 'set_aion',
+          pieceName: 'Aion Legs',
+        ),
+        MockSlotAssignment(
+          slot: 'primary',
+          setId: 'exotic_weapon',
+          pieceName: 'Outbreak Perfected',
+          isExoticSlot: true,
+        ),
+        MockSlotAssignment(
+          slot: 'heavy',
+          setId: 'exotic_weapon',
+          pieceName: 'Gjallarhorn',
+          isExoticSlot: true,
+        ),
       ],
     );
     final inventory = [
@@ -165,8 +192,45 @@ void main() {
         name: 'Techsec Helmet',
         slot: EquipmentSlot.helmet,
         cls: GuardianClass.warlock,
+        setHash: 'set_techsec'.hashCode & 0x7fffffff,
+      ),
+      _armor(
+        id: 'a3',
+        hash: 111002,
+        name: 'Techsec Gauntlets',
+        slot: EquipmentSlot.arms,
+        cls: GuardianClass.warlock,
+        setHash: 'set_techsec'.hashCode & 0x7fffffff,
+      ),
+      _armor(
+        id: 'a4',
+        hash: 111003,
+        name: 'Aion Chest',
+        slot: EquipmentSlot.chest,
+        cls: GuardianClass.warlock,
+        setHash: 'set_aion'.hashCode & 0x7fffffff,
+      ),
+      _armor(
+        id: 'a5',
+        hash: 111004,
+        name: 'Aion Legs',
+        slot: EquipmentSlot.legs,
+        cls: GuardianClass.warlock,
+        setHash: 'set_aion'.hashCode & 0x7fffffff,
       ),
       _weapon(id: 'w1', hash: 3118677280, name: 'Sunshot'),
+      _weapon(
+        id: 'w2',
+        hash: 1,
+        name: 'Outbreak Perfected',
+        slot: EquipmentSlot.primary,
+      ),
+      _weapon(
+        id: 'w3',
+        hash: 2,
+        name: 'Gjallarhorn',
+        slot: EquipmentSlot.heavy,
+      ),
     ];
 
     await _pumpDialog(
@@ -199,7 +263,8 @@ void main() {
           pieceName: 'Techsec Gauntlets',
         ),
       ],
-      exoticArmor: '',
+      // Known non-Solipsism exotic so total-fill does not fail-closed warn.
+      exoticArmor: 'Sunbracers',
     );
     final inventory = [
       _armor(
@@ -222,6 +287,7 @@ void main() {
     expect(find.byKey(const Key('fill_in_chip_arms_missing')), findsOneWidget);
     expect(find.byKey(const Key('fill_in_chip_special_missing')), findsOneWidget);
     expect(find.byKey(const Key('fill_in_copy_missing')), findsOneWidget);
+    expect(find.byKey(const Key('fill_in_solipsism_flag')), findsNothing);
 
     await tester.tap(find.byKey(const Key('fill_in_copy_missing')));
     await tester.pump();
@@ -232,7 +298,7 @@ void main() {
 
   testWidgets('over-cap armor shows over cap chip and label', (tester) async {
     final build = _build(
-      exoticArmor: '',
+      exoticArmor: 'Sunbracers',
       exoticWeapon: '',
       slots: const [
         MockSlotAssignment(
@@ -250,6 +316,7 @@ void main() {
           name: 'Techsec Helmet',
           slot: EquipmentSlot.helmet,
           cls: GuardianClass.warlock,
+          setHash: 'set_techsec'.hashCode & 0x7fffffff,
         ),
     ];
 
@@ -264,7 +331,8 @@ void main() {
     expect(find.text('More than 2 held'), findsOneWidget);
   });
 
-  testWidgets('Solipsism on non-Prismatic shows flag', (tester) async {
+  testWidgets('Solipsism on non-Prismatic shows Prismatic flag text',
+      (tester) async {
     final build = _build(
       subclass: 'Solar',
       exoticArmor: 'Solipsism',
@@ -296,7 +364,33 @@ void main() {
     );
 
     expect(find.byKey(const Key('fill_in_solipsism_flag')), findsOneWidget);
+    expect(
+      find.text('Solipsism is flagged: subclass is not Prismatic.'),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('fill_in_chip_class_item_held')), findsOneWidget);
+  });
+
+  testWidgets('null exotic Warlock shows unknown exotic flag text',
+      (tester) async {
+    final build = _build(
+      subclass: 'Strand',
+      exoticArmor: '',
+      exoticWeapon: 'Barrow-Dyad',
+      slots: const [],
+    );
+
+    await _pumpDialog(
+      tester,
+      build: build,
+      loadCaches: () async => FillInCacheLoadResult.ok(const []),
+    );
+
+    expect(find.byKey(const Key('fill_in_solipsism_flag')), findsOneWidget);
+    expect(
+      find.text("Exotic armor unknown: can't confirm Solipsism/Prismatic."),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Close dismisses the dialog', (tester) async {
@@ -314,7 +408,7 @@ void main() {
   testWidgets('missing weapon shows Similar suggestion from held CSV',
       (tester) async {
     final build = _build(
-      exoticArmor: '',
+      exoticArmor: 'Sunbracers',
       exoticWeapon: 'Sunshot',
       slots: const [],
     );
@@ -353,7 +447,7 @@ void main() {
     var savedCallbacks = 0;
 
     final build = _build(
-      exoticArmor: '',
+      exoticArmor: 'Sunbracers',
       exoticWeapon: 'Sunshot',
       slots: const [
         MockSlotAssignment(
@@ -393,7 +487,7 @@ void main() {
       var saveCalls = 0;
 
       final build = _build(
-        exoticArmor: '',
+        exoticArmor: 'Sunbracers',
         exoticWeapon: 'Sunshot',
         slots: const [
           MockSlotAssignment(
