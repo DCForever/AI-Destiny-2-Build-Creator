@@ -96,6 +96,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
                   value: _controller.filterExoticArmor,
                   options: _controller.exoticArmorOptions,
                   onChanged: _controller.setFilterExoticArmor,
+                  iconKind: _FilterIconKind.exoticArmor,
                 ),
                 right: _filterDropdown(
                   key: const Key('builds_mock_filter_exotic_weapon'),
@@ -103,6 +104,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
                   value: _controller.filterExoticWeapon,
                   options: _controller.exoticWeaponOptions,
                   onChanged: _controller.setFilterExoticWeapon,
+                  iconKind: _FilterIconKind.exoticWeapon,
                 ),
               ),
               const SizedBox(height: 6),
@@ -114,7 +116,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
                   value: _controller.filterSubclass,
                   options: _controller.subclassOptions,
                   onChanged: _controller.setFilterSubclass,
-                  subclassOptions: true,
+                  iconKind: _FilterIconKind.subclass,
                 ),
                 right: _setFilter(),
               ),
@@ -255,7 +257,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
     required String? value,
     required List<String> options,
     required ValueChanged<String?> onChanged,
-    bool subclassOptions = false,
+    _FilterIconKind iconKind = _FilterIconKind.none,
   }) {
     return DropdownButtonFormField<String>(
       key: key,
@@ -274,7 +276,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
         for (final o in options)
           DropdownMenuItem(
             value: o,
-            child: _optionLabel(o, subclass: subclassOptions),
+            child: _optionLabel(o, iconKind: iconKind),
           ),
       ],
       onChanged: onChanged,
@@ -299,7 +301,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
         for (final s in _controller.fixture.sets)
           DropdownMenuItem(
             value: s.id,
-            child: _optionLabel(s.name),
+            child: _optionLabel(s.name, iconKind: _FilterIconKind.set),
           ),
       ],
       onChanged: _controller.setFilterSetId,
@@ -342,11 +344,17 @@ extension _BuildsMockRail on _BuildsMockPageState {
     );
   }
 
-  Widget _optionLabel(String label, {bool subclass = false, String? iconPath}) {
+  Widget _optionLabel(
+    String label, {
+    _FilterIconKind iconKind = _FilterIconKind.none,
+  }) {
+    final leading = _leadingIcon(label, iconKind: iconKind);
     return Row(
       children: [
-        _leadingIcon(label, subclass: subclass, iconPath: iconPath),
-        const SizedBox(width: 6),
+        if (leading != null) ...[
+          leading,
+          const SizedBox(width: 6),
+        ],
         Expanded(
           child: Text(
             label,
@@ -359,85 +367,54 @@ extension _BuildsMockRail on _BuildsMockPageState {
     );
   }
 
-  Widget _leadingIcon(
+  /// Leading filter icon, or null when nothing resolves (no letter badge).
+  Widget? _leadingIcon(
     String label, {
-    bool subclass = false,
-    String? iconPath,
+    required _FilterIconKind iconKind,
   }) {
-    final path = iconPath?.trim();
-    // Prefer existing icon widgets only when a concrete path is supplied
-    // (no new network client). Subclass options without a path use the
-    // colored initial badge (Prismatic / Solar / Void / Arc / Stasis / Strand).
-    if (path != null && path.isNotEmpty) {
-      return BungieContentIcon(
-        pathOrUrl: path,
-        size: 14,
-        fallback: _InitialBadge(
-          label: label,
-          color: FlapPalette.of(context).muted,
+    switch (iconKind) {
+      case _FilterIconKind.none:
+        return null;
+      case _FilterIconKind.subclass:
+        final visual = officialElementVisual(label);
+        if (visual == null) return null;
+        return DestinyOfficialIcon(
+          visual: visual,
           size: 14,
-        ),
-      );
+          semanticLabel: label,
+        );
+      case _FilterIconKind.exoticArmor:
+      case _FilterIconKind.exoticWeapon:
+        final path = resolveCatalogExoticIconPath(
+          name: label,
+          catalogItems: _catalogItems,
+          armor: iconKind == _FilterIconKind.exoticArmor,
+        );
+        if (path == null || path.isEmpty) return null;
+        return BungieContentIcon(
+          pathOrUrl: path,
+          size: 14,
+          fallback: const SizedBox.shrink(),
+        );
+      case _FilterIconKind.set:
+        final path = resolveSetFilterIconPath(
+          setName: label,
+          iconByLowerName: _setIconByLowerName,
+        );
+        if (path == null || path.isEmpty) return null;
+        return BungieContentIcon(
+          pathOrUrl: path,
+          size: 14,
+          fallback: const SizedBox.shrink(),
+        );
     }
-    final palette = FlapPalette.of(context);
-    final color = subclass
-        ? _subclassColor(palette, label)
-        : palette.muted;
-    return _InitialBadge(label: label, color: color, size: 14);
   }
 }
 
-class _InitialBadge extends StatelessWidget {
-  const _InitialBadge({
-    required this.label,
-    required this.color,
-    this.size = 14,
-  });
-
-  final String label;
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final trimmed = label.trim();
-    final initial = trimmed.isEmpty ? '?' : trimmed[0].toUpperCase();
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.28),
-        borderRadius: BorderRadius.circular(2),
-      ),
-      child: Text(
-        initial,
-        style: TextStyle(
-          color: color,
-          fontSize: size * 0.7,
-          fontWeight: FontWeight.w700,
-          height: 1,
-        ),
-      ),
-    );
-  }
-}
-
-Color _subclassColor(FlapPalette palette, String subclass) {
-  switch (subclass.toLowerCase()) {
-    case 'solar':
-      return palette.elementSolar;
-    case 'arc':
-      return palette.elementArc;
-    case 'void':
-      return palette.elementVoid;
-    case 'stasis':
-      return palette.elementStasis;
-    case 'strand':
-      return palette.elementStrand;
-    case 'prismatic':
-      return palette.elementPrismatic;
-    default:
-      return palette.muted;
-  }
+enum _FilterIconKind {
+  none,
+  exoticArmor,
+  exoticWeapon,
+  subclass,
+  set,
 }

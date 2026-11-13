@@ -242,7 +242,13 @@ class BuildsMockStatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
-    if (stats.isEmpty) return const SizedBox.shrink();
+    if (stats.isEmpty) {
+      return Text(
+        'Stats unavailable',
+        key: const Key('builds_mock_stats_unavailable'),
+        style: neonMono(color: palette.muted, fontSize: 11),
+      );
+    }
     return Wrap(
       key: const Key('builds_mock_stats_row'),
       spacing: 12,

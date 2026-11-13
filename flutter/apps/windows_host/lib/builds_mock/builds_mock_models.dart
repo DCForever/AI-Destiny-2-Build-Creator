@@ -71,7 +71,7 @@ class MockSlotAssignment {
     required this.pieceName,
     this.heldCopies = 1,
     this.isExoticSlot = false,
-    this.statTotal = 64,
+    this.statTotal,
     this.filledIn = false,
   });
 
@@ -81,8 +81,11 @@ class MockSlotAssignment {
   final int heldCopies;
   final bool isExoticSlot;
 
-  /// Sum of the six armor stats on this piece (fake fixture value).
-  final int statTotal;
+  /// Sum of the six armor stats on this piece when known.
+  ///
+  /// Null when inventory / DIM data has no per-piece totals — never invent a
+  /// placeholder (the old default of 64 was a fake fixture value).
+  final int? statTotal;
 
   /// True when Fill In Apply to build substituted this slot.
   final bool filledIn;

@@ -346,15 +346,18 @@ class _FillInDialogState extends State<FillInDialog> {
       }
 
       if (_isWeaponSlot(diff.slot)) {
+        final existingWeapon = slotByWire[diff.slot.wireName];
+        // Mirror armor Apply: keep exotic once known (diff or prior slot).
+        final isExotic = diff.isExotic ||
+            (existingWeapon?.isExoticSlot ?? false);
         if (realLabel &&
-            diff.isExotic &&
+            isExotic &&
             (diff.wouldSubstitute || next.exoticWeapon.trim().isEmpty)) {
           next = next.copyWith(
             exoticWeapon: label,
             exoticWeaponSlot: diff.slot.wireName,
           );
         }
-        final existingWeapon = slotByWire[diff.slot.wireName];
         final pieceName = realLabel
             ? label.trim()
             : (existingWeapon?.pieceName ?? '').trim();
@@ -363,9 +366,10 @@ class _FillInDialogState extends State<FillInDialog> {
         slotByWire[diff.slot.wireName] = MockSlotAssignment(
           slot: diff.slot.wireName,
           setId: existingWeapon?.setId ??
-              (diff.isExotic ? 'exotic_weapon' : 'weapon'),
+              (isExotic ? 'exotic_weapon' : 'weapon'),
           pieceName: pieceName,
-          isExoticSlot: diff.isExotic,
+          isExoticSlot: isExotic,
+          statTotal: existingWeapon?.statTotal,
           filledIn: markFilled,
         );
         continue;
@@ -394,6 +398,7 @@ class _FillInDialogState extends State<FillInDialog> {
         setId: existing?.setId ?? (isExotic ? 'exotic' : 'fill_in'),
         pieceName: pieceName,
         isExoticSlot: isExotic,
+        statTotal: existing?.statTotal,
         filledIn: markFilled,
       );
 
@@ -1185,7 +1190,7 @@ List<FillInSlotDiff> _stabilizeDiffsFromPlan({
         slot: diff.slot,
         currentLabel: diff.currentLabel,
         isHeld: false,
-        isExotic: diff.isExotic,
+        isExotic: diff.isExotic || (invMatch?.isExotic ?? false),
         substituteLabel: label.isNotEmpty ? label : invMatch?.name,
         substituteInstanceId: saved.instanceId ?? invMatch?.instanceId,
         substituteItemHash: saved.itemHash ?? invMatch?.itemHash,

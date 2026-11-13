@@ -45,7 +45,10 @@ class FillInSlotDiff {
   /// True when inventory already holds a matching copy of [currentLabel].
   final bool isHeld;
 
-  /// Whether this row's requirement is the exotic piece for its bucket.
+  /// Exotic identity for presentation / Apply (need **or** picked item).
+  ///
+  /// True when the slot requirement is exotic, or when Fill In held/picked an
+  /// inventory exotic into a legendary need (opportunistic exotic).
   final bool isExotic;
 
   /// Proposed substitute display name (null when none / already held as-is).
@@ -161,7 +164,7 @@ List<FillInSlotDiff> planFillInSubstitutes({
     final slot = slotMatch.slot;
     final current = (currentLabels[slot] ?? '').trim();
     final need = _preferredNeed(needBySlot, requirement.slots, slot);
-    final isExotic = need?.isExotic ?? false;
+    final needIsExotic = need?.isExotic ?? false;
     final displayCurrent = _displayCurrentLabel(slot, current);
 
     if (slotMatch.isHeld) {
@@ -175,7 +178,10 @@ List<FillInSlotDiff> planFillInSubstitutes({
       final label = displayCurrent.isNotEmpty
           ? displayCurrent
           : (heldName.isNotEmpty ? heldName : displayCurrent);
-      if (_isWeaponSlot(slot) && (held?.isExotic ?? isExotic)) {
+      // Carry inventory exotic identity even when the slot need is legendary
+      // (opportunistic exotic held / name→hash stamp).
+      final isExotic = needIsExotic || (held?.isExotic ?? false);
+      if (_isWeaponSlot(slot) && isExotic) {
         usedExoticWeapon = true;
       }
       final heldType = (held?.weaponType ?? '').trim().toLowerCase();
@@ -211,6 +217,10 @@ List<FillInSlotDiff> planFillInSubstitutes({
         random: rng,
       );
       final item = pick.item;
+      // Stamp exotic from the picked item so presentation (gold / EXOTIC
+      // WEAPON tile / Exotic set tag) survives Apply when Fill In places an
+      // exotic into a legendary need (e.g. Gjallarhorn in Power).
+      final isExotic = needIsExotic || (item?.isExotic ?? false);
       if (item != null && item.isExotic) {
         usedExoticWeapon = true;
       }
@@ -233,6 +243,7 @@ List<FillInSlotDiff> planFillInSubstitutes({
 
     if (kFillInTwoPlusTwoSlotOrder.contains(slot)) {
       final armor = armorPicks[slot];
+      final isExotic = needIsExotic || (armor?.isExotic ?? false);
       diffs.add(
         FillInSlotDiff(
           slot: slot,
@@ -255,6 +266,7 @@ List<FillInSlotDiff> planFillInSubstitutes({
       slot: slot,
       random: rng,
     );
+    final isExotic = needIsExotic || (armorSub?.isExotic ?? false);
     diffs.add(
       FillInSlotDiff(
         slot: slot,
