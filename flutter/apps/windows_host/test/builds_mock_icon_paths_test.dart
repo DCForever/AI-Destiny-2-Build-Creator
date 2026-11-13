@@ -98,6 +98,52 @@ void main() {
     expect(fromHash.exoticWeaponIconPath, '/common/destiny2_content/icons/weapon.png');
   });
 
+  test('resolveCatalogExoticIconPath prefers store then any exotic', () {
+    expect(
+      resolveCatalogExoticIconPath(
+        name: 'Vesper of Radius',
+        catalogItems: catalog,
+        armor: true,
+      ),
+      '/common/destiny2_content/icons/armor.png',
+    );
+    expect(
+      resolveCatalogExoticIconPath(
+        name: 'Barrow-Dyad',
+        catalogItems: catalog,
+        armor: false,
+      ),
+      '/common/destiny2_content/icons/weapon.png',
+    );
+    expect(
+      resolveCatalogExoticIconPath(
+        name: 'Unknown Exotic',
+        catalogItems: catalog,
+        armor: true,
+      ),
+      isNull,
+    );
+  });
+
+  test('resolveSetFilterIconPath matches case-insensitively', () {
+    expect(
+      resolveSetFilterIconPath(
+        setName: 'Techsec',
+        iconByLowerName: const {
+          'techsec': '/common/destiny2_content/icons/set.png',
+        },
+      ),
+      '/common/destiny2_content/icons/set.png',
+    );
+    expect(
+      resolveSetFilterIconPath(
+        setName: 'Missing',
+        iconByLowerName: const {},
+      ),
+      isNull,
+    );
+  });
+
   test('omits super path when unresolvable', () {
     final icons = resolveBuildsMockSegmentIcons(
       build: build,

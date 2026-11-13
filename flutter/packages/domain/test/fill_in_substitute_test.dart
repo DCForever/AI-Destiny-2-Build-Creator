@@ -414,9 +414,66 @@ void main() {
           hasLength(1),
           reason: 'at most one exotic weapon pick when build has none',
         );
+        final exoticDiff = diffs.singleWhere(
+          (d) => d.substituteLabel == exoticSubs.single,
+        );
+        expect(
+          exoticDiff.isExotic,
+          isTrue,
+          reason:
+              'opportunistic exotic pick must stamp isExotic so Apply can '
+              'fill EXOTIC WEAPON / gold styling',
+        );
         final power = diffs.singleWhere((d) => d.slot == EquipmentSlot.heavy);
         expect(power.substituteLabel, 'Cataclysmic');
         expect(power.substituteLabel, isNot('Parasite'));
+        expect(power.isExotic, isFalse);
+      },
+    );
+
+    test(
+      'Gjallarhorn into legendary Power stamps isExotic on the substitute',
+      () {
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'ghorn',
+            itemHash: 2214409820,
+            name: 'Gjallarhorn',
+            slot: EquipmentSlot.heavy,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Rocket Launcher',
+            damageType: 'Solar',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'solar',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.heavy,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {},
+        );
+        final heavy = diffs.singleWhere((d) => d.slot == EquipmentSlot.heavy);
+        expect(heavy.substituteLabel, 'Gjallarhorn');
+        expect(
+          heavy.isExotic,
+          isTrue,
+          reason: 'item.isExotic must ride on the diff, not only need.isExotic',
+        );
       },
     );
 

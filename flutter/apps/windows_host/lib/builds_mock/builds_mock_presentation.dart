@@ -6,6 +6,13 @@ import 'builds_mock_gear_tables.dart';
 import 'builds_mock_models.dart';
 import '../fill_in/fill_in_build_mapper.dart';
 
+bool _nameMatchesExotic(String? pieceName, String exoticName) {
+  final piece = (pieceName ?? '').trim();
+  final exotic = exoticName.trim();
+  if (piece.isEmpty || exotic.isEmpty) return false;
+  return piece.toLowerCase() == exotic.toLowerCase();
+}
+
 /// Whether a build has any saved Fill In apply / proposed / filled rows.
 bool buildsMockHasFillIn(FillInSavedBuildPlan? plan) {
   if (plan == null) return false;
@@ -41,6 +48,13 @@ BuildsMockSlotStatus _statusForSlot({
 
 String _setNameFor(MockBuild build, MockSlotAssignment slot) {
   if (slot.isExoticSlot) return 'Exotic';
+  final piece = slot.pieceName.trim().toLowerCase();
+  final exoticArmor = build.exoticArmor.trim();
+  if (piece.isNotEmpty &&
+      exoticArmor.isNotEmpty &&
+      piece == exoticArmor.toLowerCase()) {
+    return 'Exotic';
+  }
   for (final b in build.setBonuses) {
     if (b.setId == slot.setId) return b.setName;
   }
@@ -75,8 +89,10 @@ List<BuildsMockArmorRow> buildsMockArmorRows({
         slotLabel: entry.$2,
         itemName: display,
         setName: slot == null ? '' : _setNameFor(build, slot),
+        // Null when unknown — never invent a placeholder total.
         statTotal: slot?.statTotal,
-        isExotic: slot?.isExoticSlot ?? false,
+        isExotic: (slot?.isExoticSlot ?? false) ||
+            _nameMatchesExotic(slot?.pieceName, build.exoticArmor),
         status: _statusForSlot(
           slotWire: entry.$1,
           assignment: slot,
@@ -111,9 +127,8 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
           slotLabel: entry.$2,
           itemName: empty ? 'Not in DIM link' : name,
           note: '',
-          isExotic: slot?.isExoticSlot ??
-              (build.exoticWeapon.trim().isNotEmpty &&
-                  name.toLowerCase() == build.exoticWeapon.trim().toLowerCase()),
+          isExotic: (slot?.isExoticSlot ?? false) ||
+              _nameMatchesExotic(name, build.exoticWeapon),
           status: _statusForSlot(
             slotWire: entry.$1,
             assignment: slot,

@@ -105,6 +105,28 @@ String? _resolveExoticIcon({
     }
   }
 
+  return resolveCatalogExoticIconPath(
+    name: cleaned,
+    catalogItems: catalogItems,
+    armor: armor,
+  );
+}
+
+/// OfflineCatalog exotic icon by display name (filter dropdowns + titles).
+///
+/// Prefers the exotic-armor / exotic-weapons store, then any exotic match.
+/// Returns null when no catalog row has an icon — callers show no badge.
+String? resolveCatalogExoticIconPath({
+  required String name,
+  required Iterable<CatalogItem> catalogItems,
+  required bool armor,
+}) {
+  final cleaned = name.trim();
+  if (cleaned.isEmpty ||
+      cleaned == '—' ||
+      cleaned.toLowerCase() == 'none') {
+    return null;
+  }
   final preferStore = armor
       ? MvpStoreName.exoticArmor.fileStem
       : MvpStoreName.exoticWeapons.fileStem;
@@ -116,6 +138,20 @@ String? _resolveExoticIcon({
   );
   if (preferred != null) return preferred;
   return _iconFromName(catalogItems, cleaned, exoticOnly: true);
+}
+
+/// Set-bonus family icon by display name (Builds Set filter).
+///
+/// [iconByLowerName] is typically built from [SetBonusCatalogRecord.icon].
+String? resolveSetFilterIconPath({
+  required String setName,
+  required Map<String, String> iconByLowerName,
+}) {
+  final key = setName.trim().toLowerCase();
+  if (key.isEmpty) return null;
+  final path = iconByLowerName[key]?.trim();
+  if (path == null || path.isEmpty) return null;
+  return path;
 }
 
 /// Super plug hash: subclass.superName match among plugs, else socket index 2.

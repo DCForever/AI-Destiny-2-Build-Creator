@@ -12,6 +12,7 @@ import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
 import '../fill_in/fill_in_saved_plan_card.dart';
 import '../host_bootstrap.dart';
+import '../sets/set_bonus_families.dart';
 import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_derived_name.dart';
@@ -89,6 +90,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   String? _applyDisabledReason;
   int _matrixLoadGeneration = 0;
   List<CatalogItem> _catalogItems = const [];
+  Map<String, String> _setIconByLowerName = const {};
 
   @override
   void initState() {
@@ -111,11 +113,13 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   }
 
   /// OfflineCatalog rows already carry `displayProperties.icon` — reuse for
-  /// Super / exotic segments (same path Catalog grids use).
+  /// Super / exotic segments / filter exotic badges (same path Catalog grids
+  /// use). Set-bonus catalog icons feed the Set filter when available.
   Future<void> _ensureCatalogIcons() async {
-    final catalog = widget.services?.offlineCatalog;
-    if (catalog == null) return;
+    final services = widget.services;
+    if (services == null) return;
     try {
+      final catalog = services.offlineCatalog;
       if (catalog.baseItems.isEmpty) {
         await catalog.loadBase();
       }
@@ -123,6 +127,21 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       setState(() => _catalogItems = List<CatalogItem>.from(catalog.baseItems));
     } catch (_) {
       // Icon enrichment is best-effort; titles still render without paths.
+    }
+    try {
+      final rows = await loadArmorSetBonusCatalogRecords(services);
+      if (!mounted) return;
+      final map = <String, String>{};
+      for (final r in rows) {
+        final icon = r.icon?.trim();
+        if (icon == null || icon.isEmpty) continue;
+        final name = r.name.trim().toLowerCase();
+        if (name.isEmpty) continue;
+        map.putIfAbsent(name, () => icon);
+      }
+      setState(() => _setIconByLowerName = map);
+    } catch (_) {
+      // Set filter falls back to text-only (no letter badge).
     }
   }
 
