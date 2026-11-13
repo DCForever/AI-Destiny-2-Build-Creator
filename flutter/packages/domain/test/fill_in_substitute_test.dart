@@ -93,6 +93,105 @@ void main() {
       expect(diffs.single.wouldSubstitute, isTrue);
       expect(diffs.single.substituteLabel, "Zaouli's Bane");
       expect(diffs.single.substituteInstanceId, 'w1');
+      expect(diffs.single.isExotic, isTrue);
+    });
+
+    test('empty weapon current label is No weapon in DIM link not wire name', () {
+      final inventory = <FillInInventoryItem>[];
+      final requirement = const FillInBuildRequirement(
+        buildId: 'b1',
+        guardianClass: GuardianClass.warlock,
+        subclassKey: 'strand',
+        slots: [
+          FillInSlotRequirement(
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            exoticItemHash: 1,
+          ),
+          FillInSlotRequirement(
+            slot: EquipmentSlot.heavy,
+            isExotic: false,
+          ),
+        ],
+      );
+      final match = matchFillIn(
+        inventory: inventory,
+        builds: [requirement],
+      ).builds.single;
+
+      final diffs = planFillInSubstitutes(
+        match: match,
+        requirement: requirement,
+        inventory: inventory,
+        currentLabels: const {},
+      );
+
+      expect(diffs, hasLength(2));
+      expect(
+        diffs.map((d) => d.currentLabel).toSet(),
+        {kFillInNoWeaponInDimLink},
+      );
+      expect(
+        diffs.every((d) => !const {'primary', 'special', 'heavy'}
+            .contains(d.currentLabel.toLowerCase())),
+        isTrue,
+      );
+    });
+
+    test('similar weapon only proposed for the need slot', () {
+      final inventory = [
+        const FillInInventoryItem(
+          instanceId: 'w1',
+          itemHash: 99,
+          name: 'Qua Nilus II',
+          slot: EquipmentSlot.primary,
+          isExotic: false,
+          guardianClass: null,
+          weaponType: 'Sidearm',
+          damageType: 'Strand',
+        ),
+      ];
+      final requirement = const FillInBuildRequirement(
+        buildId: 'b1',
+        guardianClass: GuardianClass.warlock,
+        subclassKey: 'strand',
+        slots: [
+          FillInSlotRequirement(
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            exoticItemHash: 8001,
+          ),
+          FillInSlotRequirement(
+            slot: EquipmentSlot.special,
+            isExotic: false,
+          ),
+        ],
+      );
+      final match = matchFillIn(
+        inventory: inventory,
+        builds: [requirement],
+      ).builds.single;
+
+      final diffs = planFillInSubstitutes(
+        match: match,
+        requirement: requirement,
+        inventory: inventory,
+        currentLabels: const {
+          EquipmentSlot.primary: 'Barrow-Dyad',
+        },
+        weaponNeed: const FillInWeaponNeed(
+          name: 'Barrow-Dyad',
+          slot: EquipmentSlot.primary,
+          weaponType: 'Sidearm',
+          damageType: 'Strand',
+        ),
+      );
+
+      final primary = diffs.singleWhere((d) => d.slot == EquipmentSlot.primary);
+      final energy = diffs.singleWhere((d) => d.slot == EquipmentSlot.special);
+      expect(primary.substituteLabel, 'Qua Nilus II');
+      expect(energy.substituteLabel, isNull);
+      expect(energy.currentLabel, kFillInNoWeaponInDimLink);
     });
 
     test('missing armor proposes same-slot held substitute', () {

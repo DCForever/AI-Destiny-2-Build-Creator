@@ -62,9 +62,13 @@ MockBuild enrichMockBuildFromDimLoadout(
           isExoticSlot: piece.isExotic,
         ),
       );
-      if (piece.isExotic && exoticWeapon.isEmpty) {
-        exoticWeapon = piece.name;
-        exoticWeaponSlot = piece.slot.wireName;
+      if (piece.isExotic) {
+        if (exoticWeapon.isEmpty) exoticWeapon = piece.name;
+        final slotWire = exoticWeaponSlot?.trim() ?? '';
+        if (slotWire.isEmpty &&
+            exoticWeapon.toLowerCase() == piece.name.toLowerCase()) {
+          exoticWeaponSlot = piece.slot.wireName;
+        }
       }
     }
   } else {
@@ -82,21 +86,26 @@ MockBuild enrichMockBuildFromDimLoadout(
       );
     }
     for (final entry in pieces.weaponsBySlot.entries) {
-      final wire = entry.value.slot.wireName;
+      final piece = entry.value;
+      final wire = piece.slot.wireName;
       if (slots.any((s) => s.slot == wire)) continue;
       slots.add(
         MockSlotAssignment(
           slot: wire,
-          setId: entry.value.isExotic
+          setId: piece.isExotic
               ? 'exotic_weapon'
-              : 'dim_weapon_${entry.value.hash}',
-          pieceName: entry.value.name,
-          isExoticSlot: entry.value.isExotic,
+              : 'dim_weapon_${piece.hash}',
+          pieceName: piece.name,
+          isExoticSlot: piece.isExotic,
         ),
       );
-      if (entry.value.isExotic && exoticWeapon.isEmpty) {
-        exoticWeapon = entry.value.name;
-        exoticWeaponSlot = entry.value.slot.wireName;
+      if (piece.isExotic) {
+        if (exoticWeapon.isEmpty) exoticWeapon = piece.name;
+        final slotWire = exoticWeaponSlot?.trim() ?? '';
+        if (slotWire.isEmpty &&
+            exoticWeapon.toLowerCase() == piece.name.toLowerCase()) {
+          exoticWeaponSlot = piece.slot.wireName;
+        }
       }
     }
   }
@@ -353,13 +362,13 @@ void _ensureTotalFillSlots({
         guardianClass: guardianClass,
         name: exoticArmorName,
       );
-      final exoticSlot = match?.slot ?? EquipmentSlot.classItem;
-      if (exoticSlot == slot) {
+      // Only the exotic's real bucket — never invent class_item for Swarmers.
+      if (match != null && match.slot == slot) {
         slots.add(
           FillInSlotRequirement(
             slot: slot,
             isExotic: true,
-            exoticItemHash: match?.itemHash,
+            exoticItemHash: match.itemHash,
           ),
         );
         covered.add(slot);
@@ -379,10 +388,11 @@ void _ensureTotalFillSlots({
 
   for (final slot in kFillInTotalWeaponSlots) {
     if (covered.contains(slot)) continue;
+    // Unknown weapon — not exotic. Matching still needs a hash to mark held.
     slots.add(
       FillInSlotRequirement(
         slot: slot,
-        isExotic: true,
+        isExotic: false,
       ),
     );
     covered.add(slot);
@@ -409,15 +419,17 @@ void _addExoticArmorNeed({
     guardianClass: guardianClass,
     name: exoticName,
   );
-  final slot = match?.slot ?? EquipmentSlot.classItem;
+  // Only place exotic armor in its real bucket — never invent class_item.
+  if (match == null) return;
+  if (covered.contains(match.slot)) return;
   slots.add(
     FillInSlotRequirement(
-      slot: slot,
+      slot: match.slot,
       isExotic: true,
-      exoticItemHash: match?.itemHash,
+      exoticItemHash: match.itemHash,
     ),
   );
-  covered.add(slot);
+  covered.add(match.slot);
 }
 
 void _addExoticWeaponNeed({
@@ -433,10 +445,10 @@ void _addExoticWeaponNeed({
   final preferred = preferredSlot == null
       ? null
       : EquipmentSlot.tryParse(preferredSlot);
-  final slot = match?.slot ??
-      (preferred != null && _isWeaponSlot(preferred)
-          ? preferred
-          : EquipmentSlot.special);
+  final EquipmentSlot? slot = match?.slot ??
+      (preferred != null && _isWeaponSlot(preferred) ? preferred : null);
+  // No known combat bucket — leave the row to total-fill padding (not Energy).
+  if (slot == null) return;
   if (covered.contains(slot)) return;
   slots.add(
     FillInSlotRequirement(

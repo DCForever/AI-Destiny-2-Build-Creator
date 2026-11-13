@@ -4,6 +4,9 @@ import 'fill_in_requirement.dart';
 import 'fill_in_result.dart';
 import 'fill_in_similar_weapon.dart';
 
+/// Display when a weapon combat slot has no known piece from the DIM link.
+const String kFillInNoWeaponInDimLink = 'No weapon in DIM link';
+
 /// One slot's Fill In preview: current build label → proposed substitute.
 ///
 /// Pure / read-only — never mutates inventory or Bungie state. Hosts persist
@@ -13,6 +16,7 @@ class FillInSlotDiff {
     required this.slot,
     required this.currentLabel,
     required this.isHeld,
+    this.isExotic = false,
     this.substituteLabel,
     this.substituteInstanceId,
     this.substituteItemHash,
@@ -27,6 +31,9 @@ class FillInSlotDiff {
 
   /// True when inventory already holds a matching copy of [currentLabel].
   final bool isHeld;
+
+  /// Whether this row's requirement is the exotic piece for its bucket.
+  final bool isExotic;
 
   /// Proposed substitute display name (null when none / already held as-is).
   final String? substituteLabel;
@@ -78,6 +85,8 @@ List<FillInSlotDiff> planFillInSubstitutes({
     final slot = slotMatch.slot;
     final current = (currentLabels[slot] ?? '').trim();
     final need = needBySlot[slot];
+    final isExotic = need?.isExotic ?? false;
+    final displayCurrent = _displayCurrentLabel(slot, current);
 
     if (slotMatch.isHeld) {
       final held = _findHeldMatch(
@@ -89,8 +98,9 @@ List<FillInSlotDiff> planFillInSubstitutes({
       diffs.add(
         FillInSlotDiff(
           slot: slot,
-          currentLabel: current.isEmpty ? slot.wireName : current,
+          currentLabel: displayCurrent,
           isHeld: true,
+          isExotic: isExotic,
           heldInstanceId: held?.instanceId,
           heldItemHash: held?.itemHash,
         ),
@@ -109,8 +119,9 @@ List<FillInSlotDiff> planFillInSubstitutes({
       diffs.add(
         FillInSlotDiff(
           slot: slot,
-          currentLabel: current.isEmpty ? slot.wireName : current,
+          currentLabel: displayCurrent,
           isHeld: false,
+          isExotic: isExotic,
           substituteLabel: item?.name,
           substituteInstanceId: item?.instanceId,
           substituteItemHash: item?.itemHash,
@@ -128,8 +139,9 @@ List<FillInSlotDiff> planFillInSubstitutes({
     diffs.add(
       FillInSlotDiff(
         slot: slot,
-        currentLabel: current.isEmpty ? slot.wireName : current,
+        currentLabel: displayCurrent,
         isHeld: false,
+        isExotic: isExotic,
         substituteLabel: armorSub?.name,
         substituteInstanceId: armorSub?.instanceId,
         substituteItemHash: armorSub?.itemHash,
@@ -138,6 +150,21 @@ List<FillInSlotDiff> planFillInSubstitutes({
   }
 
   return List<FillInSlotDiff>.unmodifiable(diffs);
+}
+
+/// Never surface equipment wire names (`primary` / `special` / `heavy`) as
+/// item labels. Empty weapon rows use [kFillInNoWeaponInDimLink].
+String _displayCurrentLabel(EquipmentSlot slot, String current) {
+  if (current.isNotEmpty) {
+    final lower = current.toLowerCase();
+    if (_isWeaponSlot(slot) &&
+        EquipmentSlot.weaponSlots.any((s) => s.wireName == lower)) {
+      return kFillInNoWeaponInDimLink;
+    }
+    return current;
+  }
+  if (_isWeaponSlot(slot)) return kFillInNoWeaponInDimLink;
+  return slot.wireName;
 }
 
 FillInInventoryItem? _findHeldMatch({

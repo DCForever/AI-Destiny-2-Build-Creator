@@ -83,16 +83,20 @@ FillInDimLoadoutPieces extractFillInPiecesFromDimLoadout(
         break;
       }
     }
-    exoticArmorSlot ??= EquipmentSlot.classItem;
-    armorBySlot.putIfAbsent(
-      exoticArmorSlot,
-      () => FillInDimNamedPiece(
-        name: exoticArmorName!,
-        hash: exotic.hash,
-        slot: exoticArmorSlot!,
-        isExotic: true,
-      ),
-    );
+    // Never invent a class-item (or any) slot for an unknown exotic — Swarmers
+    // legs must not appear as Class Item when the item row is missing/unmapped.
+    final knownExoticSlot = exoticArmorSlot;
+    if (knownExoticSlot != null) {
+      armorBySlot.putIfAbsent(
+        knownExoticSlot,
+        () => FillInDimNamedPiece(
+          name: exoticArmorName!,
+          hash: exotic.hash,
+          slot: knownExoticSlot,
+          isExotic: true,
+        ),
+      );
+    }
   }
 
   return FillInDimLoadoutPieces(
@@ -132,16 +136,19 @@ EquipmentSlot? equipmentSlotFromDimItemType(String itemType) {
     case 'kinetic':
     case 'kineticslot':
     case 'kineticweapon':
+    case 'kineticweapons':
     case 'primary':
     case 'primaryweapon':
       return EquipmentSlot.primary;
     case 'energy':
     case 'energyweapon':
+    case 'energyweapons':
     case 'special':
     case 'specialweapon':
       return EquipmentSlot.special;
     case 'power':
     case 'powerweapon':
+    case 'powerweapons':
     case 'heavy':
     case 'heavyweapon':
       return EquipmentSlot.heavy;

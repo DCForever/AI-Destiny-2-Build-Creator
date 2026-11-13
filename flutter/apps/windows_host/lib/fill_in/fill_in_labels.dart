@@ -1,7 +1,10 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
 
 /// Human label for a Fill In equipment slot (dialog + saved missing list).
-String fillInSlotLabel(EquipmentSlot slot) {
+///
+/// Weapon rows are [Kinetic] / [Energy] / [Power]. Only the exotic combat
+/// weapon row gets an [Exotic] prefix — never label all three as exotic.
+String fillInSlotLabel(EquipmentSlot slot, {bool isExotic = false}) {
   switch (slot) {
     case EquipmentSlot.helmet:
       return 'Helmet';
@@ -14,11 +17,11 @@ String fillInSlotLabel(EquipmentSlot slot) {
     case EquipmentSlot.classItem:
       return 'Class Item';
     case EquipmentSlot.primary:
-      return 'Exotic weapon (kinetic)';
+      return isExotic ? 'Exotic Kinetic' : 'Kinetic';
     case EquipmentSlot.special:
-      return 'Exotic weapon (energy)';
+      return isExotic ? 'Exotic Energy' : 'Energy';
     case EquipmentSlot.heavy:
-      return 'Exotic weapon (power)';
+      return isExotic ? 'Exotic Power' : 'Power';
     case EquipmentSlot.exoticWeapon:
       return 'Exotic weapon';
     case EquipmentSlot.exoticArmor:
