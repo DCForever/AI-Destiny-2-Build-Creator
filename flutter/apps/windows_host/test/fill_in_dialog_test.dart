@@ -293,7 +293,7 @@ void main() {
     await tester.pump();
     expect(copied, hasLength(1));
     expect(copied.single, contains('Gauntlets'));
-    expect(copied.single, contains('Exotic weapon'));
+    expect(copied.single, contains('Exotic Energy'));
   });
 
   testWidgets('over-cap armor shows over cap chip and label', (tester) async {
@@ -478,7 +478,7 @@ void main() {
     expect(savedPlan, isNotNull);
     expect(savedPlan!.buildId, 'b01');
     expect(savedPlan!.missing, contains('Helmet'));
-    expect(savedPlan!.missing, contains('Exotic weapon (energy)'));
+    expect(savedPlan!.missing, contains('Exotic Energy'));
   });
 
   testWidgets(

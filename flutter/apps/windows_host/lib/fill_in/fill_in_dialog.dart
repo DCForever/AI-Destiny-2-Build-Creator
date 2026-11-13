@@ -157,49 +157,26 @@ class _FillInDialogState extends State<FillInDialog> {
     FillInSimilarWeapon? similar;
     String? missingWeaponName;
     FillInWeaponNeed? weaponNeed;
-    final weaponMissing = missing.any(_isWeaponMatch);
-    if (weaponMissing) {
-      weaponNeed = fillInWeaponNeedForBuild(
-        build: _build,
-        inventory: loaded.items,
+    // Similar-weapon only when the exotic's own combat bucket is genuinely
+    // missing — never for a held exotic mis-labeled onto another row.
+    final exoticWeaponNeed = fillInWeaponNeedForBuild(
+      build: _build,
+      inventory: loaded.items,
+    );
+    if (exoticWeaponNeed != null &&
+        missing.any((m) => m.slot == exoticWeaponNeed.slot)) {
+      weaponNeed = exoticWeaponNeed;
+      missingWeaponName = weaponNeed.name ?? _build.exoticWeapon.trim();
+      similar = suggestSimilarWeapon(
+        need: weaponNeed,
+        heldWeapons: loaded.items,
       );
-      missingWeaponName = weaponNeed?.name ?? _build.exoticWeapon.trim();
-      if (weaponNeed != null) {
-        similar = suggestSimilarWeapon(
-          need: weaponNeed,
-          heldWeapons: loaded.items,
-        );
-      }
     }
 
-    final currentLabels = <EquipmentSlot, String>{};
-    for (final assignment in _build.slots) {
-      final slot = EquipmentSlot.tryParse(assignment.slot) ??
-          _slotFromMockWire(assignment.slot);
-      if (slot != null) currentLabels[slot] = assignment.pieceName;
-    }
-    if (_build.exoticArmor.trim().isNotEmpty) {
-      for (final assignment in _build.slots) {
-        if (!assignment.isExoticSlot) continue;
-        final slot = _slotFromMockWire(assignment.slot);
-        if (slot != null && EquipmentSlot.armorSlots.contains(slot)) {
-          currentLabels.putIfAbsent(slot, () => _build.exoticArmor.trim());
-        }
-      }
-      currentLabels.putIfAbsent(
-        EquipmentSlot.classItem,
-        () => _build.exoticArmor.trim(),
-      );
-    }
-    if (_build.exoticWeapon.trim().isNotEmpty) {
-      final weaponSlot = _build.exoticWeaponSlot == null
-          ? null
-          : EquipmentSlot.tryParse(_build.exoticWeaponSlot!);
-      currentLabels.putIfAbsent(
-        weaponSlot ?? EquipmentSlot.special,
-        () => _build.exoticWeapon.trim(),
-      );
-    }
+    final currentLabels = _currentLabelsForBuild(
+      build: _build,
+      dimLoadout: widget.dimLoadout,
+    );
 
     final diffs = planFillInSubstitutes(
       match: result,
@@ -224,8 +201,18 @@ class _FillInDialogState extends State<FillInDialog> {
 
   Future<void> _copyMissing() async {
     if (_missing.isEmpty) return;
+    final exoticSlots = {
+      for (final d in _diffs)
+        if (d.isExotic) d.slot,
+    };
+    final exoticName = _build.exoticArmor.trim();
     final lines = <String>[
-      for (final slot in _missing) fillInSlotLabel(slot.slot),
+      for (final slot in _missing)
+        fillInMissingSlotLabel(
+          slot: slot.slot,
+          isExotic: exoticSlots.contains(slot.slot),
+          exoticArmorName: exoticName,
+        ),
     ];
     await widget.clipboardWriter(lines.join('\n'));
   }
@@ -239,10 +226,20 @@ class _FillInDialogState extends State<FillInDialog> {
     });
     try {
       final similar = _similar;
+      final exoticSlots = {
+        for (final d in _diffs)
+          if (d.isExotic) d.slot,
+      };
+      final exoticName = _build.exoticArmor.trim();
       final plan = FillInSavedBuildPlan(
         buildId: _build.id,
         missing: [
-          for (final slot in _missing) fillInSlotLabel(slot.slot),
+          for (final slot in _missing)
+            fillInMissingSlotLabel(
+              slot: slot.slot,
+              isExotic: exoticSlots.contains(slot.slot),
+              exoticArmorName: exoticName,
+            ),
         ],
         similarWeaponName: similar?.item.name,
         similarForName: _missingWeaponName,
@@ -291,51 +288,67 @@ class _FillInDialogState extends State<FillInDialog> {
       final instanceId = diff.applyInstanceId;
       final itemHash = diff.applyItemHash;
       final filled = diff.isHeld || diff.wouldSubstitute;
+      final realLabel = _isRealItemLabel(label);
+      final realOriginal = _isRealItemLabel(original);
 
+      // Never persist wire placeholders or "No weapon in DIM link" in the store.
       applied.add(
         FillInAppliedSlot(
           slotWire: diff.slot.wireName,
-          label: label,
-          originalLabel: original,
+          label: realLabel ? label : '',
+          originalLabel: realOriginal ? original : '',
           instanceId: instanceId,
           itemHash: itemHash,
         ),
       );
 
       if (_isWeaponSlot(diff.slot)) {
-        // Never write wire placeholders (e.g. "heavy") as the exotic name.
-        if (_isRealItemLabel(label) &&
+        if (realLabel &&
+            diff.isExotic &&
             (diff.wouldSubstitute || next.exoticWeapon.trim().isEmpty)) {
           next = next.copyWith(
             exoticWeapon: label,
             exoticWeaponSlot: diff.slot.wireName,
           );
         }
+        final existingWeapon = slotByWire[diff.slot.wireName];
         slotByWire[diff.slot.wireName] = MockSlotAssignment(
           slot: diff.slot.wireName,
-          setId: slotByWire[diff.slot.wireName]?.setId ?? 'weapon',
-          pieceName: label,
-          isExoticSlot: true,
+          setId: existingWeapon?.setId ??
+              (diff.isExotic ? 'exotic_weapon' : 'weapon'),
+          pieceName: realLabel
+              ? label
+              : (existingWeapon?.pieceName ?? ''),
+          isExoticSlot: diff.isExotic,
           filledIn: filled,
         );
         continue;
       }
 
+      if (diff.slot == EquipmentSlot.exoticArmor) {
+        // Slot-unknown exotic row is missing-list only — no combat pieceName.
+        if (realLabel) {
+          next = next.copyWith(exoticArmor: label);
+        }
+        continue;
+      }
+
       final existing = slotByWire[diff.slot.wireName];
-      final isExotic = existing?.isExoticSlot ??
-          (next.exoticArmor.trim().isNotEmpty &&
-              _isRealItemLabel(label) &&
+      final isExotic = diff.isExotic ||
+          (existing?.isExoticSlot ?? false) ||
+          (realLabel &&
+              next.exoticArmor.trim().isNotEmpty &&
               label.trim().toLowerCase() ==
                   next.exoticArmor.trim().toLowerCase());
       slotByWire[diff.slot.wireName] = MockSlotAssignment(
         slot: diff.slot.wireName,
         setId: existing?.setId ?? (isExotic ? 'exotic' : 'fill_in'),
-        pieceName: label,
+        pieceName: realLabel ? label : (existing?.pieceName ?? ''),
         isExoticSlot: isExotic,
         filledIn: filled,
       );
 
-      if (isExotic && _isRealItemLabel(label)) {
+      if (isExotic && realLabel) {
         next = next.copyWith(exoticArmor: label);
       }
     }
@@ -344,12 +357,17 @@ class _FillInDialogState extends State<FillInDialog> {
       slots: List<MockSlotAssignment>.unmodifiable(slotByWire.values),
     );
 
+    final exoticName = next.exoticArmor.trim();
     final missingLabels = [
       for (final slot in _missing)
         if (!_diffs.any(
           (d) => d.slot == slot.slot && (d.wouldSubstitute || d.isHeld),
         ))
-          fillInSlotLabel(slot.slot),
+          fillInMissingSlotLabel(
+            slot: slot.slot,
+            isExotic: _diffs.any((d) => d.slot == slot.slot && d.isExotic),
+            exoticArmorName: exoticName,
+          ),
     ];
 
     final plan = FillInSavedBuildPlan(
@@ -513,6 +531,7 @@ class _FillInDialogState extends State<FillInDialog> {
             _DiffRow(
               diff: diff,
               match: _matchForSlot(result.slots, diff.slot),
+              exoticArmorName: _build.exoticArmor,
               filledIn: _build.slots.any(
                 (s) =>
                     s.filledIn &&
@@ -560,15 +579,21 @@ class _DiffRow extends StatelessWidget {
     required this.diff,
     required this.filledIn,
     this.match,
+    this.exoticArmorName,
   });
 
   final FillInSlotDiff diff;
   final bool filledIn;
   final FillInSlotMatch? match;
+  final String? exoticArmorName;
 
   @override
   Widget build(BuildContext context) {
-    final slotLabel = fillInSlotLabel(diff.slot);
+    final slotLabel = fillInMissingSlotLabel(
+      slot: diff.slot,
+      isExotic: diff.isExotic,
+      exoticArmorName: exoticArmorName,
+    );
     final overCap = match?.exceedsCap ?? false;
     final right = diff.wouldSubstitute
         ? diff.substituteLabel!
@@ -654,7 +679,9 @@ class _SlotRow extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ),
-        if (!_isWeaponMatch(match) && match.isHeld)
+        if (!_isWeaponMatch(match) &&
+            match.slot != EquipmentSlot.exoticArmor &&
+            match.isHeld)
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Text(
@@ -704,6 +731,82 @@ bool _isWeaponSlot(EquipmentSlot slot) {
       slot == EquipmentSlot.exoticWeapon;
 }
 
+/// Build per-slot current labels from DIM buckets + assignments.
+///
+/// Never invent Class Item = exotic armor, never park the exotic weapon on
+/// Energy when its bucket is unknown, and never use wire placeholders as names.
+Map<EquipmentSlot, String> _currentLabelsForBuild({
+  required MockBuild build,
+  CachedDimLoadout? dimLoadout,
+}) {
+  final labels = <EquipmentSlot, String>{};
+
+  if (dimLoadout != null) {
+    final pieces = extractFillInPiecesFromDimLoadout(dimLoadout);
+    for (final entry in pieces.armorBySlot.entries) {
+      labels[entry.key] = entry.value.name;
+    }
+    for (final entry in pieces.weaponsBySlot.entries) {
+      labels[entry.key] = entry.value.name;
+    }
+  }
+
+  for (final assignment in build.slots) {
+    final slot = EquipmentSlot.tryParse(assignment.slot) ??
+        _slotFromMockWire(assignment.slot);
+    if (slot == null) continue;
+    final name = assignment.pieceName.trim();
+    if (name.isEmpty) continue;
+    if (_isWeaponSlot(slot) && _isWirePlaceholderName(name)) continue;
+    labels.putIfAbsent(slot, () => name);
+  }
+
+  // Exotic armor label only on its real assignment slot — never class_item.
+  final exoticArmor = build.exoticArmor.trim();
+  if (exoticArmor.isNotEmpty) {
+    var placedOnCombatSlot = false;
+    for (final assignment in build.slots) {
+      if (!assignment.isExoticSlot) continue;
+      final slot = _slotFromMockWire(assignment.slot);
+      if (slot != null && EquipmentSlot.armorSlots.contains(slot)) {
+        labels.putIfAbsent(slot, () => exoticArmor);
+        placedOnCombatSlot = true;
+      }
+    }
+    if (!placedOnCombatSlot && dimLoadout != null) {
+      final pieces = extractFillInPiecesFromDimLoadout(dimLoadout);
+      if (pieces.exoticArmorSlot != null) {
+        labels.putIfAbsent(pieces.exoticArmorSlot!, () => exoticArmor);
+        placedOnCombatSlot = true;
+      }
+    }
+    if (!placedOnCombatSlot) {
+      labels.putIfAbsent(EquipmentSlot.exoticArmor, () => exoticArmor);
+    }
+  }
+
+  // Exotic weapon only when we know the combat bucket (DIM / inventory / meta).
+  final exoticWeapon = build.exoticWeapon.trim();
+  if (exoticWeapon.isNotEmpty && !_isWirePlaceholderName(exoticWeapon)) {
+    final weaponSlot = build.exoticWeaponSlot == null
+        ? null
+        : EquipmentSlot.tryParse(build.exoticWeaponSlot!);
+    if (weaponSlot != null && _isWeaponSlot(weaponSlot)) {
+      labels.putIfAbsent(weaponSlot, () => exoticWeapon);
+    }
+  }
+
+  return labels;
+}
+
+bool _isWirePlaceholderName(String name) {
+  final lower = name.trim().toLowerCase();
+  for (final slot in EquipmentSlot.values) {
+    if (slot.wireName == lower) return true;
+  }
+  return false;
+}
+
 /// Deep-ish copy used for Apply/Undo baselines (exact row list restore).
 MockBuild _snapshotBuild(MockBuild build) {
   return MockBuild(
@@ -729,10 +832,11 @@ MockBuild _snapshotBuild(MockBuild build) {
 }
 
 /// True when [label] is a real item name, not an equipment wire placeholder
-/// such as `heavy` / `primary` / `helmet` used when a slot has no piece yet.
+/// such as `heavy` / `primary` / `helmet`, and not the empty-weapon display.
 bool _isRealItemLabel(String label) {
   final trimmed = label.trim();
   if (trimmed.isEmpty) return false;
+  if (trimmed == kFillInNoWeaponInDimLink) return false;
   final lower = trimmed.toLowerCase();
   for (final slot in EquipmentSlot.values) {
     if (slot.wireName == lower) return false;
