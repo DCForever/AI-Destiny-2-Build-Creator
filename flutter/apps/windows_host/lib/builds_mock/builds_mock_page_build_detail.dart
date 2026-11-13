@@ -12,6 +12,10 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       );
     }
     final binding = _controller.dimBindingFor(build);
+    final displayBuild = enrichMockBuildFromDimLoadout(
+      build,
+      loadout: binding.loadout,
+    );
     final palette = FlapPalette.of(context);
     final applyProgress = _applyProgressByBuild[build.id];
     return Column(
@@ -31,13 +35,13 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  build.name,
+                  displayBuild.name,
                   style: Theme.of(context).textTheme.titleMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Text(
-                build.subclass,
+                displayBuild.subclass,
                 style: neonDisplay(fontSize: 11, letterSpacing: 0.6),
               ),
             ],
@@ -48,7 +52,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
             padding: const EdgeInsets.all(kPanelPadSm),
             children: [
               BuildsMockLoadoutCard(
-                loadout: build,
+                loadout: displayBuild,
                 selected: true,
                 density: BuildsMockCardDensity.detail,
                 priorities: _controller.statPrioritiesFor(build),
@@ -154,6 +158,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
             );
     final store =
         root == null ? null : FillInMissingListStore(root: root);
+    final dimLoadout = _controller.dimLoadoutFor(build);
     await showFillInDialog(
       context: context,
       build: build,
@@ -162,6 +167,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
           store == null ? null : (plan) => store.saveBuildPlan(plan),
       onMissingListSaved: root == null ? null : () => _loadFillInPlans(root),
       existingPlan: _savedFillInPlans[build.id],
+      dimLoadout: dimLoadout,
       onBuildUpdated: (updated) {
         _controller.replaceBuild(updated);
       },

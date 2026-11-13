@@ -397,7 +397,8 @@ void main() {
       expect(ok.slots.single.isHeld, isTrue);
     });
 
-    test('null exotic name is flagged instead of silent OK', () {
+    test('null exotic Warlock is exoticArmorUnknown, not Prismatic text flag',
+        () {
       final report = matchFillIn(
         inventory: const [],
         builds: [
@@ -416,10 +417,64 @@ void main() {
           ),
         ],
       );
-      expect(report.builds.single.solipsismNotPrismatic, isTrue);
+      final result = report.builds.single;
+      expect(result.solipsismFlag, FillInSolipsismFlag.exoticArmorUnknown);
+      expect(result.solipsismNotPrismatic, isFalse);
+      expect(result.exoticArmorUnknown, isTrue);
+      expect(result.hasSolipsismWarning, isTrue);
     });
 
-    test('unknown subclass is flagged instead of silent OK', () {
+    test('Swarmers + Strand is not flagged', () {
+      final report = matchFillIn(
+        inventory: const [],
+        builds: [
+          build(
+            id: 'swarmers-strand',
+            cls: GuardianClass.warlock,
+            subclass: 'strand',
+            exoticName: 'Swarmers',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.legs,
+                isExotic: true,
+                exoticItemHash: 42,
+              ),
+            ],
+          ),
+        ],
+      );
+      final result = report.builds.single;
+      expect(result.solipsismFlag, FillInSolipsismFlag.none);
+      expect(result.solipsismNotPrismatic, isFalse);
+      expect(result.exoticArmorUnknown, isFalse);
+    });
+
+    test('Solipsism + Strand is flagged notPrismatic', () {
+      final report = matchFillIn(
+        inventory: const [],
+        builds: [
+          build(
+            id: 'sol-strand',
+            cls: GuardianClass.warlock,
+            subclass: 'strand',
+            exoticName: 'Solipsism',
+            slots: const [
+              FillInSlotRequirement(
+                slot: EquipmentSlot.classItem,
+                isExotic: true,
+                exoticItemHash: solipsismHash,
+              ),
+            ],
+          ),
+        ],
+      );
+      final result = report.builds.single;
+      expect(result.solipsismFlag, FillInSolipsismFlag.notPrismatic);
+      expect(result.solipsismNotPrismatic, isTrue);
+    });
+
+    test('unknown subclass Warlock is exoticArmorUnknown, not Prismatic flag',
+        () {
       final report = matchFillIn(
         inventory: [
           exoticArmor(
@@ -444,7 +499,10 @@ void main() {
           ),
         ],
       );
-      expect(report.builds.single.solipsismNotPrismatic, isTrue);
+      final result = report.builds.single;
+      expect(result.solipsismFlag, FillInSolipsismFlag.exoticArmorUnknown);
+      expect(result.solipsismNotPrismatic, isFalse);
+      expect(result.exoticArmorUnknown, isTrue);
     });
 
     test('Titan null exotic / unknown subclass is not fail-closed flagged', () {
@@ -479,6 +537,8 @@ void main() {
           ),
         ],
       );
+      expect(report.builds[0].solipsismFlag, FillInSolipsismFlag.none);
+      expect(report.builds[1].solipsismFlag, FillInSolipsismFlag.none);
       expect(report.builds[0].solipsismNotPrismatic, isFalse);
       expect(report.builds[1].solipsismNotPrismatic, isFalse);
     });
@@ -515,6 +575,8 @@ void main() {
           ),
         ],
       );
+      expect(report.builds[0].solipsismFlag, FillInSolipsismFlag.none);
+      expect(report.builds[1].solipsismFlag, FillInSolipsismFlag.none);
       expect(report.builds[0].solipsismNotPrismatic, isFalse);
       expect(report.builds[1].solipsismNotPrismatic, isFalse);
     });
