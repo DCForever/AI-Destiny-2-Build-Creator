@@ -11,6 +11,7 @@ import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:destiny2_windows_host/settings/dim_csv_import_controller.dart';
 import 'package:destiny2_windows_host/settings/inventory_sync_controller.dart';
 import 'package:destiny2_windows_host/settings/settings_page.dart';
+import 'package:destiny2_windows_host/settings/warlock_matrix_path_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'test_material_theme.dart';
@@ -101,15 +102,42 @@ DimCsvImportController _fakeDimWeapons() {
   );
 }
 
+WarlockMatrixPathController _fakeMatrixPath(AppServices services) {
+  return WarlockMatrixPathController(
+    storageRoot: services.storageRoot,
+    environment: const {},
+    setting: _MemoryMatrixPathSetting(),
+  );
+}
+
+class _MemoryMatrixPathSetting implements WarlockMatrixPathSettingStore {
+  String? _value;
+
+  @override
+  String get settingPath => 'memory://warlock_matrix_path.txt';
+
+  @override
+  Future<String?> load() async => _value;
+
+  @override
+  Future<void> save(String path) async {
+    final trimmed = path.trim();
+    _value = trimmed.isEmpty ? null : trimmed;
+  }
+}
+
 Widget _settingsUnderTest(AppServices services) {
   final armor = _fakeDimArmor();
   final weapons = _fakeDimWeapons();
+  final matrix = _fakeMatrixPath(services);
   addTearDown(armor.dispose);
   addTearDown(weapons.dispose);
+  addTearDown(matrix.dispose);
   return SettingsPage(
     services: services,
     dimArmorImportController: armor,
     dimWeaponsImportController: weapons,
+    warlockMatrixPathController: matrix,
   );
 }
 
@@ -163,8 +191,8 @@ void main() {
 
   testWidgets('shows OAuth card + inventory sync + manifest status',
       (tester) async {
-    // Tall surface so ListView builds account + inventory + DIM CSV + manifest.
-    await tester.binding.setSurfaceSize(const Size(800, 2400));
+    // Tall surface so ListView builds account + inventory + matrix + DIM + manifest.
+    await tester.binding.setSurfaceSize(const Size(800, 2800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -180,6 +208,10 @@ void main() {
     expect(find.byKey(const Key('no_oauth_note')), findsNothing);
     expect(find.byKey(const Key('inventory_sync_card')), findsOneWidget);
     expect(find.byKey(const Key('inventory_sync_signed_out')), findsOneWidget);
+    expect(
+      find.byKey(const Key('settings_warlock_matrix_path_card')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const Key('settings_dim_armor_csv_import_card')),
       findsOneWidget,

@@ -70,6 +70,23 @@ void main() {
       isNull,
     );
   });
+
+  test('resolveWarlockMatrixPath prefers saved setting over env', () {
+    expect(
+      resolveWarlockMatrixPath(
+        savedSetting: '/saved.json',
+        environment: {warlockMatrixPathEnv: '/env.json'},
+      ),
+      '/saved.json',
+    );
+    expect(
+      resolveWarlockMatrixPath(
+        environment: {warlockMatrixPathEnv: '/env.json'},
+      ),
+      '/env.json',
+    );
+    expect(resolveWarlockMatrixPath(), isNull);
+  });
 }
 
 String _fixturePath() {

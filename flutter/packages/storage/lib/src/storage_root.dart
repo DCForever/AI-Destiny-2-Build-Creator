@@ -22,6 +22,7 @@ import 'version_dir.dart';
 /// fill_in/dim_armor_inventory.csv
 /// fill_in/dim_weapons_inventory.csv
 /// dim_loadouts/dim-loadouts.json
+/// settings/warlock_matrix_path.txt
 /// ```
 class StorageRoot {
   /// Absolute or root-relative base directory for all app storage.
@@ -99,6 +100,18 @@ class StorageRoot {
   String get dimLoadoutsCachePath =>
       p.join(dimLoadoutsDir, 'dim-loadouts.json');
 
+  /// App-private settings directory (path preferences only — not SQLite).
+  ///
+  /// Exact path: `{basePath}/settings`
+  String get settingsDir => p.join(basePath, 'settings');
+
+  /// Saved Warlock matrix file path (plain text, one path).
+  ///
+  /// Exact path: `{basePath}/settings/warlock_matrix_path.txt`
+  /// Written via `.tmp` + rename; does not store builds or credentials.
+  String get warlockMatrixPathSettingPath =>
+      p.join(settingsDir, 'warlock_matrix_path.txt');
+
   /// Raw table JSON path: `manifest/<versionDir>/<table>.json`.
   String rawTablePath(String version, String table) {
     return p.join(
@@ -150,6 +163,7 @@ class StorageRoot {
       entitiesDir,
       usersDir,
       fillInCacheDir,
+      settingsDir,
     ]);
   }
 }

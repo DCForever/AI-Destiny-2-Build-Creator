@@ -12,9 +12,11 @@ import 'inventory_sync_controller.dart';
 import 'legacy_db_import_card.dart';
 import 'legacy_db_import_controller.dart';
 import 'oauth_account_card.dart';
+import 'warlock_matrix_path_card.dart';
+import 'warlock_matrix_path_controller.dart';
 
 /// Settings: account (OAuth) + inventory sync + DIM CSV / legacy DB import +
-/// manifest (DART-019/023/025/048).
+/// Warlock matrix path + manifest (DART-019/023/025/048).
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
@@ -22,6 +24,8 @@ class SettingsPage extends StatefulWidget {
     this.legacyImportController,
     this.dimArmorImportController,
     this.dimWeaponsImportController,
+    this.warlockMatrixPathController,
+    this.onWarlockMatrixPathSaved,
     this.themeMode = ThemeMode.light,
     this.onThemeModeChanged,
   });
@@ -36,6 +40,12 @@ class SettingsPage extends StatefulWidget {
 
   /// Optional injectable DIM Weapons CSV import controller (tests).
   final DimCsvImportController? dimWeaponsImportController;
+
+  /// Optional injectable Warlock matrix path controller (tests).
+  final WarlockMatrixPathController? warlockMatrixPathController;
+
+  /// Invoked after a successful matrix path Save (null when cleared).
+  final ValueChanged<String?>? onWarlockMatrixPathSaved;
 
   /// Appearance preference (Cold Graphite dark / Paper Ledger light).
   final ThemeMode themeMode;
@@ -57,9 +67,11 @@ class _SettingsPageState extends State<SettingsPage> {
   late final LegacyDbImportController _legacyImport;
   late final DimCsvImportController _dimArmorImport;
   late final DimCsvImportController _dimWeaponsImport;
+  late final WarlockMatrixPathController _matrixPath;
   var _ownsLegacyImport = false;
   var _ownsDimArmorImport = false;
   var _ownsDimWeaponsImport = false;
+  var _ownsMatrixPath = false;
 
   @override
   void initState() {
@@ -88,6 +100,14 @@ class _SettingsPageState extends State<SettingsPage> {
       );
       _ownsDimWeaponsImport = true;
     }
+    if (widget.warlockMatrixPathController != null) {
+      _matrixPath = widget.warlockMatrixPathController!;
+    } else {
+      _matrixPath = WarlockMatrixPathController(
+        storageRoot: widget.services.storageRoot,
+      );
+      _ownsMatrixPath = true;
+    }
     _loadStatus();
   }
 
@@ -101,6 +121,9 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     if (_ownsDimWeaponsImport) {
       _dimWeaponsImport.dispose();
+    }
+    if (_ownsMatrixPath) {
+      _matrixPath.dispose();
     }
     super.dispose();
   }
@@ -252,6 +275,17 @@ class _SettingsPageState extends State<SettingsPage> {
             key: const Key('settings_inventory_sync_card'),
             controller: widget.services.inventorySync,
             session: widget.services.oauthSession,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Warlock matrix',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          WarlockMatrixPathCard(
+            key: const Key('settings_warlock_matrix_path_card'),
+            controller: _matrixPath,
+            onSaved: widget.onWarlockMatrixPathSaved,
           ),
           const SizedBox(height: 24),
           Text(

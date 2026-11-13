@@ -132,7 +132,8 @@ class _PathBar extends StatelessWidget {
       controller: controller,
       decoration: const InputDecoration(
         labelText: 'Matrix file',
-        helperText: 'Read-only local path (WARLOCK_MATRIX_PATH)',
+        helperText:
+            'Read-only local path (Settings saved path or WARLOCK_MATRIX_PATH)',
       ),
     );
   }

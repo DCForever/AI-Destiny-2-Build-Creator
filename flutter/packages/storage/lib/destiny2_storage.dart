@@ -12,3 +12,4 @@ export 'src/read_only_file.dart';
 export 'src/storage_root.dart';
 export 'src/version_dir.dart';
 export 'src/warlock_matrix_path.dart';
+export 'src/warlock_matrix_path_setting.dart';

@@ -63,6 +63,7 @@ void main() {
 
     expect(find.byKey(const Key('builds_mock_matrix_error')), findsOneWidget);
     expect(find.textContaining('WARLOCK_MATRIX_PATH'), findsOneWidget);
+    expect(find.textContaining('Settings'), findsOneWidget);
     expect(find.text('MOCK-UP — example data'), findsNothing);
     expect(find.text('Techsec Prismatic core'), findsNothing);
     expect(find.byKey(const Key('builds_mock_list')), findsNothing);
