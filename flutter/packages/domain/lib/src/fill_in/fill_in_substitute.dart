@@ -14,6 +14,11 @@ const String kFillInNoWeaponInDimLink = 'No weapon in DIM link';
 const String kFillInWeaponElementFallbackNote =
     'No subclass-element match; any held in bucket';
 
+/// Note when distinct-type filtering found no candidate and a duplicate type
+/// was picked instead.
+const String kFillInWeaponTypeDuplicateNote =
+    'Duplicate weapon type; no distinct-type candidate in bucket';
+
 /// One slot's Fill In preview: current build label → proposed substitute.
 ///
 /// Pure / read-only — never mutates inventory or Bungie state. Hosts persist
@@ -411,6 +416,12 @@ _WeaponPick _pickWeaponSubstitute({
   }
 
   final pick = ranged[random.nextInt(ranged.length)];
+  final pickType = (pick.weaponType ?? '').trim().toLowerCase();
+  if (pickType.isNotEmpty && usedWeaponTypes.contains(pickType)) {
+    note = note == null
+        ? kFillInWeaponTypeDuplicateNote
+        : '$note. $kFillInWeaponTypeDuplicateNote';
+  }
   return _WeaponPick(item: pick, note: note);
 }
 

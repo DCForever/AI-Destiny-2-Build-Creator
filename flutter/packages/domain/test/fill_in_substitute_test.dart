@@ -911,6 +911,73 @@ void main() {
       },
     );
 
+    test(
+      'duplicate weapon type after distinct-type relax sets row note',
+      () {
+        // Exotic Sidearm held; only Sidearm left in Energy → must pick Sidearm
+        // and note the distinct-type relaxation.
+        final inventory = [
+          const FillInInventoryItem(
+            instanceId: 'ex',
+            itemHash: 1,
+            name: 'Barrow-Dyad',
+            slot: EquipmentSlot.primary,
+            isExotic: true,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'ene-side',
+            itemHash: 2,
+            name: 'Drang',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            guardianClass: null,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+        ];
+        final requirement = const FillInBuildRequirement(
+          buildId: 'b1',
+          guardianClass: GuardianClass.warlock,
+          subclassKey: 'strand',
+          slots: [
+            FillInSlotRequirement(
+              slot: EquipmentSlot.primary,
+              isExotic: true,
+              exoticItemHash: 1,
+            ),
+            FillInSlotRequirement(
+              slot: EquipmentSlot.special,
+              isExotic: false,
+            ),
+          ],
+        );
+        final match = matchFillIn(
+          inventory: inventory,
+          builds: [requirement],
+        ).builds.single;
+        final diffs = planFillInSubstitutes(
+          match: match,
+          requirement: requirement,
+          inventory: inventory,
+          currentLabels: const {EquipmentSlot.primary: 'Barrow-Dyad'},
+          weaponNeed: const FillInWeaponNeed(
+            name: 'Barrow-Dyad',
+            slot: EquipmentSlot.primary,
+            weaponType: 'Sidearm',
+            damageType: 'Strand',
+          ),
+          random: Random(0),
+        );
+        final energy =
+            diffs.singleWhere((d) => d.slot == EquipmentSlot.special);
+        expect(energy.substituteLabel, 'Drang');
+        expect(energy.note, contains(kFillInWeaponTypeDuplicateNote));
+      },
+    );
+
     test('seeded Random is deterministic across calls', () {
       final inventory = [
         const FillInInventoryItem(
