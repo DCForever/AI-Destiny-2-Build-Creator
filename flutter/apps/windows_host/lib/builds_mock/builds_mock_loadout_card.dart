@@ -24,6 +24,8 @@ class BuildsMockLoadoutCard extends StatelessWidget {
     this.priorities = const [],
     this.fillInPlan,
     this.superIconPath,
+    this.exoticArmorIconPath,
+    this.exoticWeaponIconPath,
     this.showMods = false,
     this.modsBySlot = const {},
     this.unplacedMods = const [],
@@ -43,6 +45,8 @@ class BuildsMockLoadoutCard extends StatelessWidget {
   final List<BuildsMockStatPriority> priorities;
   final FillInSavedBuildPlan? fillInPlan;
   final String? superIconPath;
+  final String? exoticArmorIconPath;
+  final String? exoticWeaponIconPath;
   final bool showMods;
   final Map<String, List<String>> modsBySlot;
   final List<String> unplacedMods;
@@ -64,6 +68,8 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           onSelect: onSelect,
           fillInPlan: fillInPlan,
           superIconPath: superIconPath,
+          exoticArmorIconPath: exoticArmorIconPath,
+          exoticWeaponIconPath: exoticWeaponIconPath,
           compact: true,
         );
       case BuildsMockCardDensity.tile:
@@ -74,6 +80,8 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           onSelect: onSelect,
           fillInPlan: fillInPlan,
           superIconPath: superIconPath,
+          exoticArmorIconPath: exoticArmorIconPath,
+          exoticWeaponIconPath: exoticWeaponIconPath,
           compact: false,
         );
       case BuildsMockCardDensity.detail:
@@ -84,6 +92,8 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           onSelect: onSelect,
           fillInPlan: fillInPlan,
           superIconPath: superIconPath,
+          exoticArmorIconPath: exoticArmorIconPath,
+          exoticWeaponIconPath: exoticWeaponIconPath,
           showMods: showMods,
           modsBySlot: modsBySlot,
           unplacedMods: unplacedMods,
@@ -107,6 +117,8 @@ class _BrowseCard extends StatelessWidget {
     required this.onSelect,
     required this.fillInPlan,
     required this.superIconPath,
+    required this.exoticArmorIconPath,
+    required this.exoticWeaponIconPath,
     required this.compact,
   });
 
@@ -116,6 +128,8 @@ class _BrowseCard extends StatelessWidget {
   final VoidCallback? onSelect;
   final FillInSavedBuildPlan? fillInPlan;
   final String? superIconPath;
+  final String? exoticArmorIconPath;
+  final String? exoticWeaponIconPath;
   final bool compact;
 
   @override
@@ -149,6 +163,8 @@ class _BrowseCard extends StatelessWidget {
                   iconSize: compact ? 13 : 15,
                   fontSize: compact ? 12 : 13,
                   superIconPath: superIconPath,
+                  exoticArmorIconPath: exoticArmorIconPath,
+                  exoticWeaponIconPath: exoticWeaponIconPath,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -176,6 +192,7 @@ class _BrowseCard extends StatelessWidget {
                       child: _ExoticTile(
                         label: 'EXOTIC ARMOR',
                         name: loadout.exoticArmor,
+                        iconPath: exoticArmorIconPath,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -183,6 +200,7 @@ class _BrowseCard extends StatelessWidget {
                       child: _ExoticTile(
                         label: 'EXOTIC WEAPON',
                         name: loadout.exoticWeapon,
+                        iconPath: exoticWeaponIconPath,
                       ),
                     ),
                   ],
@@ -283,6 +301,8 @@ class _DetailBody extends StatelessWidget {
     required this.onSelect,
     required this.fillInPlan,
     required this.superIconPath,
+    required this.exoticArmorIconPath,
+    required this.exoticWeaponIconPath,
     required this.showMods,
     required this.modsBySlot,
     required this.unplacedMods,
@@ -301,6 +321,8 @@ class _DetailBody extends StatelessWidget {
   final VoidCallback? onSelect;
   final FillInSavedBuildPlan? fillInPlan;
   final String? superIconPath;
+  final String? exoticArmorIconPath;
+  final String? exoticWeaponIconPath;
   final bool showMods;
   final Map<String, List<String>> modsBySlot;
   final List<String> unplacedMods;
@@ -346,6 +368,8 @@ class _DetailBody extends StatelessWidget {
                 iconSize: 18,
                 fontSize: 16,
                 superIconPath: superIconPath,
+                exoticArmorIconPath: exoticArmorIconPath,
+                exoticWeaponIconPath: exoticWeaponIconPath,
               ),
               const SizedBox(height: 3),
               Text(
@@ -402,6 +426,7 @@ class _DetailBody extends StatelessWidget {
                     child: _ExoticTile(
                       label: 'EXOTIC ARMOR',
                       name: loadout.exoticArmor,
+                      iconPath: exoticArmorIconPath,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -409,6 +434,7 @@ class _DetailBody extends StatelessWidget {
                     child: _ExoticTile(
                       label: 'EXOTIC WEAPON',
                       name: loadout.exoticWeapon,
+                      iconPath: exoticWeaponIconPath,
                     ),
                   ),
                 ],
@@ -555,10 +581,15 @@ class _DetailBody extends StatelessWidget {
 }
 
 class _ExoticTile extends StatelessWidget {
-  const _ExoticTile({required this.label, required this.name});
+  const _ExoticTile({
+    required this.label,
+    required this.name,
+    this.iconPath,
+  });
 
   final String label;
   final String name;
+  final String? iconPath;
 
   @override
   Widget build(BuildContext context) {
@@ -567,6 +598,7 @@ class _ExoticTile extends StatelessWidget {
     final show = display.isNotEmpty &&
         display != '—' &&
         display.toLowerCase() != 'none';
+    final path = iconPath?.trim();
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 7),
       decoration: BoxDecoration(
@@ -585,16 +617,31 @@ class _ExoticTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            show ? display : '—',
-            key: Key('builds_mock_exotic_tile_$label'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: show ? palette.warning : palette.muted,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
+          Row(
+            children: [
+              if (show && path != null && path.isNotEmpty) ...[
+                BungieContentIcon(
+                  key: Key('builds_mock_exotic_tile_icon_$label'),
+                  pathOrUrl: path,
+                  size: 18,
+                  semanticLabel: display,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Expanded(
+                child: Text(
+                  show ? display : '—',
+                  key: Key('builds_mock_exotic_tile_$label'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: show ? palette.warning : palette.muted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

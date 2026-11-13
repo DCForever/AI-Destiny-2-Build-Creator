@@ -1,5 +1,6 @@
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -15,6 +16,7 @@ import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_derived_name.dart';
 import 'builds_mock_derived_title.dart';
+import 'builds_mock_icon_paths.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_matrix_loader.dart';
 import 'builds_mock_models.dart';
@@ -86,6 +88,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   String? _applyTargetLabel;
   String? _applyDisabledReason;
   int _matrixLoadGeneration = 0;
+  List<CatalogItem> _catalogItems = const [];
 
   @override
   void initState() {
@@ -104,6 +107,34 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       _loadFillInPlans(root);
     }
     _refreshApplyTarget();
+    _ensureCatalogIcons();
+  }
+
+  /// OfflineCatalog rows already carry `displayProperties.icon` — reuse for
+  /// Super / exotic segments (same path Catalog grids use).
+  Future<void> _ensureCatalogIcons() async {
+    final catalog = widget.services?.offlineCatalog;
+    if (catalog == null) return;
+    try {
+      if (catalog.baseItems.isEmpty) {
+        await catalog.loadBase();
+      }
+      if (!mounted) return;
+      setState(() => _catalogItems = List<CatalogItem>.from(catalog.baseItems));
+    } catch (_) {
+      // Icon enrichment is best-effort; titles still render without paths.
+    }
+  }
+
+  BuildsMockSegmentIcons _segmentIcons({
+    required MockBuild build,
+    CachedDimLoadout? loadout,
+  }) {
+    return resolveBuildsMockSegmentIcons(
+      build: build,
+      loadout: loadout,
+      catalogItems: _catalogItems,
+    );
   }
 
   @override

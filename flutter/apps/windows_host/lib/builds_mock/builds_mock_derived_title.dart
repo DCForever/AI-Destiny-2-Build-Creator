@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 
 import 'builds_mock_derived_name.dart';
 
-/// Title row: Class / Element / Super as icons, exotic names as text.
+/// Title row: Class / Element / Super / Exotics as icons (015 identity).
+///
+/// Convention for the name line: **icon with name as tooltip** for Class,
+/// Element/Subclass, Super, Exotic Armor, and Exotic Weapon. Synergy and
+/// duplicate suffix stay text. Missing Super (no resolvable icon path) omits
+/// the segment — never a star placeholder.
 class BuildsMockDerivedTitle extends StatelessWidget {
   const BuildsMockDerivedTitle({
     super.key,
@@ -11,12 +16,16 @@ class BuildsMockDerivedTitle extends StatelessWidget {
     this.iconSize = 15,
     this.fontSize = 13,
     this.superIconPath,
+    this.exoticArmorIconPath,
+    this.exoticWeaponIconPath,
   });
 
   final BuildsMockDerivedName name;
   final double iconSize;
   final double fontSize;
   final String? superIconPath;
+  final String? exoticArmorIconPath;
+  final String? exoticWeaponIconPath;
 
   @override
   Widget build(BuildContext context) {
@@ -52,13 +61,15 @@ class BuildsMockDerivedTitle extends StatelessWidget {
     }
     if (name.elementLabel != null) {
       addJoiner();
-      final visual = officialElementVisual(name.elementLabel!);
+      final label = name.elementLabel!;
+      final visual = officialElementVisual(label);
       children.add(
         Tooltip(
-          message: name.elementLabel!,
+          message: label,
           child: visual == null
               ? Text(
-                  name.elementLabel!,
+                  label,
+                  key: const Key('builds_mock_title_element_text'),
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: fontSize,
@@ -66,52 +77,56 @@ class BuildsMockDerivedTitle extends StatelessWidget {
                   ),
                 )
               : DestinyOfficialIcon(
+                  key: const Key('builds_mock_title_element_icon'),
                   visual: visual,
                   size: iconSize,
-                  semanticLabel: name.elementLabel,
+                  semanticLabel: label,
                 ),
         ),
       );
     }
-    if (name.superLabel != null) {
+    final superPath = superIconPath?.trim();
+    if (name.superLabel != null &&
+        superPath != null &&
+        superPath.isNotEmpty) {
       addJoiner();
-      final path = superIconPath?.trim();
-      final local = path == null || path.isEmpty
-          ? null
-          : bungieContentPackageAsset(path);
-      if (local != null) {
-        children.add(
-          Tooltip(
-            message: name.superLabel!,
-            child: BungieContentIcon(
-              pathOrUrl: path,
-              size: iconSize,
-              semanticLabel: name.superLabel,
-              fallback: DestinySuperGlyph(
-                size: iconSize,
-                label: name.superLabel!,
-                color: palette.foreground,
-              ),
-            ),
-          ),
-        );
-      } else {
-        children.add(
-          DestinySuperGlyph(
+      children.add(
+        Tooltip(
+          message: name.superLabel!,
+          child: BungieContentIcon(
+            key: const Key('builds_mock_title_super_icon'),
+            pathOrUrl: superPath,
             size: iconSize,
-            label: name.superLabel!,
-            color: palette.foreground,
+            semanticLabel: name.superLabel,
           ),
-        );
-      }
+        ),
+      );
     }
     if (name.exoticArmor != null) {
       addJoiner();
-      children.add(_textSeg(name.exoticArmor!, fontSize, palette));
+      children.add(
+        _exoticSeg(
+          label: name.exoticArmor!,
+          iconPath: exoticArmorIconPath,
+          fontSize: fontSize,
+          iconSize: iconSize,
+          palette: palette,
+          keySuffix: 'armor',
+        ),
+      );
     }
     if (name.exoticWeapon != null) {
       addJoiner();
-      children.add(_textSeg(name.exoticWeapon!, fontSize, palette));
+      children.add(
+        _exoticSeg(
+          label: name.exoticWeapon!,
+          iconPath: exoticWeaponIconPath,
+          fontSize: fontSize,
+          iconSize: iconSize,
+          palette: palette,
+          keySuffix: 'weapon',
+        ),
+      );
     }
     if (name.synergy != null) {
       addJoiner();
@@ -140,6 +155,29 @@ class BuildsMockDerivedTitle extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: children,
     );
+  }
+
+  Widget _exoticSeg({
+    required String label,
+    required String? iconPath,
+    required double fontSize,
+    required double iconSize,
+    required FlapPalette palette,
+    required String keySuffix,
+  }) {
+    final path = iconPath?.trim();
+    if (path != null && path.isNotEmpty) {
+      return Tooltip(
+        message: label,
+        child: BungieContentIcon(
+          key: Key('builds_mock_title_exotic_${keySuffix}_icon'),
+          pathOrUrl: path,
+          size: iconSize,
+          semanticLabel: label,
+        ),
+      );
+    }
+    return _textSeg(label, fontSize, palette);
   }
 
   Widget _textSeg(String text, double fontSize, FlapPalette palette) {

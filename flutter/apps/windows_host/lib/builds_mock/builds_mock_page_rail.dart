@@ -167,6 +167,7 @@ extension _BuildsMockRail on _BuildsMockPageState {
           loadout: loadout,
           duplicateIndexWithinClass: dupes[build.id] ?? 1,
         );
+        final icons = _segmentIcons(build: enriched, loadout: loadout);
         final selected = build.id == _controller.selectedId;
         return InkWell(
           key: Key('builds_mock_sidebar_${build.id}'),
@@ -186,7 +187,9 @@ extension _BuildsMockRail on _BuildsMockPageState {
                   name: derived,
                   iconSize: 13,
                   fontSize: 12,
-                  superIconPath: dimLoadoutSuperIconPath(loadout),
+                  superIconPath: icons.superIconPath,
+                  exoticArmorIconPath: icons.exoticArmorIconPath,
+                  exoticWeaponIconPath: icons.exoticWeaponIconPath,
                 ),
                 const SizedBox(height: 2),
                 Text(

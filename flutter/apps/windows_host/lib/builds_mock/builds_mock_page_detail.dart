@@ -141,6 +141,7 @@ extension _BuildsMockDetail on _BuildsMockPageState {
       loadout: loadout,
       duplicateIndexWithinClass: duplicateIndex,
     );
+    final icons = _segmentIcons(build: enriched, loadout: loadout);
     return BuildsMockLoadoutCard(
       loadout: enriched,
       derivedName: derived,
@@ -148,7 +149,9 @@ extension _BuildsMockDetail on _BuildsMockPageState {
       density: density,
       priorities: _controller.statPrioritiesFor(build),
       fillInPlan: _savedFillInPlans[build.id],
-      superIconPath: dimLoadoutSuperIconPath(loadout),
+      superIconPath: icons.superIconPath,
+      exoticArmorIconPath: icons.exoticArmorIconPath,
+      exoticWeaponIconPath: icons.exoticWeaponIconPath,
       onSelect: () => _controller.openBuildDetail(build.id),
     );
   }

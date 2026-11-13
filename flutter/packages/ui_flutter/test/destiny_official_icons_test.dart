@@ -32,6 +32,20 @@ void main() {
       expect(officialElementVisual('ARC')?.color.toARGB32(), 0xFF85C5EC);
     });
 
+    test('subclass labels map to official element icons', () {
+      expect(officialElementVisual('Stormcaller')?.iconPath,
+          officialElementVisual('Arc')?.iconPath);
+      expect(officialElementVisual('Voidwalker')?.iconPath,
+          officialElementVisual('Void')?.iconPath);
+      expect(officialElementVisual('Broodweaver')?.iconPath,
+          officialElementVisual('Strand')?.iconPath);
+      expect(officialElementVisual('Prismatic Warlock')?.iconPath,
+          officialElementVisual('Prismatic')?.iconPath);
+      expect(officialElementVisual('Sunbreaker')?.iconPath,
+          officialElementVisual('Solar')?.iconPath);
+      expect(officialElementVisual('Unknown Subclass XYZ'), isNull);
+    });
+
     test('kWeaponTypeOfficial maps known types; unknown → null', () {
       expect(officialWeaponTypeVisual('Pulse Rifle'), isNotNull);
       expect(
