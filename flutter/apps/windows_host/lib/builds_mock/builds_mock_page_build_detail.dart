@@ -59,7 +59,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                 children: [
                   FilledButton.tonal(
                     key: Key('builds_mock_fill_in_${build.id}'),
-                    onPressed: null,
+                    onPressed: () => _openFillIn(context, build),
                     child: const Text('Fill In'),
                   ),
                   OutlinedButton(
@@ -87,13 +87,28 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               _buildReoptimize(context, forBuild: build),
               const SizedBox(height: 12),
               Text(
-                'Actions stay disabled until a live OK — read-only.',
+                'Fill In is read-only (DIM caches). Optimize stays disabled.',
                 style: neonMono(color: palette.muted, fontSize: 11),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _openFillIn(BuildContext context, MockBuild build) async {
+    final root = widget.storageRoot;
+    final FillInCacheLoader loader = root != null
+        ? defaultFillInCacheLoader(root)
+        : () async => FillInCacheLoadResult.missing(
+              'DIM Armor/Weapons inventory cache is missing or unreadable. '
+              'Import both CSVs in Settings, then try Fill In again.',
+            );
+    await showFillInDialog(
+      context: context,
+      build: build,
+      loadCaches: loader,
     );
   }
 }

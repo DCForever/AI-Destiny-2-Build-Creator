@@ -1,5 +1,7 @@
 import 'package:destiny2_windows_host/settings/dim_csv_import_card.dart';
 import 'package:destiny2_windows_host/settings/dim_csv_import_controller.dart';
+import 'package:destiny2_windows_host/settings/legacy_db_import_card.dart';
+import 'package:destiny2_windows_host/settings/legacy_db_import_controller.dart';
 import 'package:destiny2_windows_host/settings/path_file_field.dart';
 import 'package:destiny2_windows_host/settings/warlock_matrix_path_card.dart';
 import 'package:destiny2_windows_host/settings/warlock_matrix_path_controller.dart';
@@ -262,6 +264,49 @@ void main() {
       expect(controller.pathField, r'D:\matrix\warlock.json');
       expect(await setting.load(), isNull);
       expect(find.text('No path set'), findsOneWidget);
+    });
+  });
+
+  group('Legacy DB import card picker', () {
+    testWidgets('browse uses .db filter and does not dry-run or apply',
+        (tester) async {
+      // No ensureLayout / sqlite — picker must only fill the path field.
+      final pick = _FakePicker(r'D:\legacy\app.db');
+      final controller = LegacyDbImportController(
+        storageRoot: StorageRoot(basePath: '/tmp/legacy-picker-fake'),
+      );
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: testMaterialTheme(),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: LegacyDbImportCard(
+                controller: controller,
+                openFilePicker: pick.call,
+              ),
+            ),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+
+      await tester.tap(find.byKey(const Key('legacy_db_import_browse')));
+      await _pumpFrames(tester);
+
+      expect(pick.calls, 1);
+      expect(pick.lastExtensions, <String>['db']);
+      expect(controller.sourcePath, r'D:\legacy\app.db');
+      expect(find.text(r'D:\legacy\app.db'), findsOneWidget);
+      // Picking a path must not dry-run or apply — only fills the field.
+      expect(controller.phase, LegacyDbImportPhase.idle);
+      expect(controller.plan, isNull);
+      expect(controller.result, isNull);
+      final apply = tester.widget<FilledButton>(
+        find.byKey(const Key('legacy_db_import_apply')),
+      );
+      expect(apply.onPressed, isNull);
     });
   });
 }
