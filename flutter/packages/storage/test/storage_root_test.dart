@@ -52,6 +52,11 @@ void main() {
         root.dimLoadoutsCachePath,
         p.join(fakeBase, 'dim_loadouts', 'dim-loadouts.json'),
       );
+      expect(root.settingsDir, p.join(fakeBase, 'settings'));
+      expect(
+        root.warlockMatrixPathSettingPath,
+        p.join(fakeBase, 'settings', 'warlock_matrix_path.txt'),
+      );
     });
 
     test('rawTablePath uses sanitized version', () {
@@ -139,6 +144,7 @@ void main() {
       expect(Directory(root.entitiesDir).existsSync(), isTrue);
       expect(Directory(root.usersDir).existsSync(), isTrue);
       expect(Directory(root.fillInCacheDir).existsSync(), isTrue);
+      expect(Directory(root.settingsDir).existsSync(), isTrue);
     });
   });
 }

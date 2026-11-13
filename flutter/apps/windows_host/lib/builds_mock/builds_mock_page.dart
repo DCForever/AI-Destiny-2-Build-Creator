@@ -36,7 +36,7 @@ class BuildsMockPage extends StatefulWidget {
   /// When set, read-only load of `{StorageRoot}/dim_loadouts/dim-loadouts.json`.
   final StorageRoot? storageRoot;
 
-  /// Same path source as Warlocks ([warlockMatrixPath] / `WARLOCK_MATRIX_PATH`).
+  /// Same path source as Warlocks (Settings saved path → `WARLOCK_MATRIX_PATH`).
   /// Ignored when [controller] is injected.
   final String? warlockMatrixPath;
 
@@ -73,8 +73,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final trimmed = path?.trim() ?? '';
     if (trimmed.isEmpty) {
       _controller.failMatrixLoad(
-        'No matrix file path. Set WARLOCK_MATRIX_PATH '
-        '(same path the Warlocks page uses).',
+        'No matrix file path. Set it in Settings (Warlock matrix file) '
+        'or WARLOCK_MATRIX_PATH.',
       );
       return;
     }

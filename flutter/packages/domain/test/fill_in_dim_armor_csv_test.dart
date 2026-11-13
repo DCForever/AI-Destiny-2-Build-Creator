@@ -159,6 +159,25 @@ void main() {
       expect(result.items, isNull);
     });
 
+    test('fails closed on an empty Id', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
+          'X,1,"",Warlock,Helmet,Legendary\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isFalse);
+      expect(result.error, startsWith("Couldn't read file:"));
+      expect(result.error, contains('empty Id'));
+      expect(result.items, isNull);
+    });
+
+    test('fails closed on an empty Id that is only quotes/whitespace', () {
+      const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
+          'X,1,"   ",Warlock,Helmet,Legendary\n';
+      final result = parseDimArmorCsv(csv);
+      expect(result.isOk, isFalse);
+      expect(result.error, contains('empty Id'));
+      expect(result.items, isNull);
+    });
+
     test('fails closed on an unparseable Hash', () {
       const csv = 'Name,Hash,Id,Equippable,Type,Rarity\n'
           'X,not-a-hash,"1",Warlock,Helmet,Legendary\n';

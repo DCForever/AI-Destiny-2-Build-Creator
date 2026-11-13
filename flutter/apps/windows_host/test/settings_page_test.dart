@@ -8,8 +8,10 @@ import 'package:destiny2_windows_host/auth/browser_launcher.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
+import 'package:destiny2_windows_host/settings/dim_csv_import_controller.dart';
 import 'package:destiny2_windows_host/settings/inventory_sync_controller.dart';
 import 'package:destiny2_windows_host/settings/settings_page.dart';
+import 'package:destiny2_windows_host/settings/warlock_matrix_path_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'test_material_theme.dart';
@@ -81,6 +83,64 @@ WindowsOAuthSession _emptySession() {
   );
 }
 
+/// Fake DIM CSV controllers so Settings widget tests avoid dart:io on mount.
+DimCsvImportController _fakeDimArmor() {
+  return DimCsvImportController.forTest(
+    kind: DimCsvImportKind.armor,
+    cachePath: 'fill_in/dim_armor_inventory.csv',
+    loadCache: () async => (count: null, error: 'no cached'),
+    importFromPath: (_) async => (count: null, error: 'unused'),
+  );
+}
+
+DimCsvImportController _fakeDimWeapons() {
+  return DimCsvImportController.forTest(
+    kind: DimCsvImportKind.weapons,
+    cachePath: 'fill_in/dim_weapons_inventory.csv',
+    loadCache: () async => (count: null, error: 'no cached'),
+    importFromPath: (_) async => (count: null, error: 'unused'),
+  );
+}
+
+WarlockMatrixPathController _fakeMatrixPath(AppServices services) {
+  return WarlockMatrixPathController(
+    storageRoot: services.storageRoot,
+    environment: const {},
+    setting: _MemoryMatrixPathSetting(),
+  );
+}
+
+class _MemoryMatrixPathSetting implements WarlockMatrixPathSettingStore {
+  String? _value;
+
+  @override
+  String get settingPath => 'memory://warlock_matrix_path.txt';
+
+  @override
+  Future<String?> load() async => _value;
+
+  @override
+  Future<void> save(String path) async {
+    final trimmed = path.trim();
+    _value = trimmed.isEmpty ? null : trimmed;
+  }
+}
+
+Widget _settingsUnderTest(AppServices services) {
+  final armor = _fakeDimArmor();
+  final weapons = _fakeDimWeapons();
+  final matrix = _fakeMatrixPath(services);
+  addTearDown(armor.dispose);
+  addTearDown(weapons.dispose);
+  addTearDown(matrix.dispose);
+  return SettingsPage(
+    services: services,
+    dimArmorImportController: armor,
+    dimWeaponsImportController: weapons,
+    warlockMatrixPathController: matrix,
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -131,12 +191,15 @@ void main() {
 
   testWidgets('shows OAuth card + inventory sync + manifest status',
       (tester) async {
-    // Tall surface so ListView builds account + inventory + manifest sections.
-    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    // Tall surface so ListView builds account + inventory + matrix + DIM + manifest.
+    await tester.binding.setSurfaceSize(const Size(800, 2800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: services)),
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: _settingsUnderTest(services),
+      ),
     );
     await _pumpFrames(tester);
 
@@ -145,6 +208,18 @@ void main() {
     expect(find.byKey(const Key('no_oauth_note')), findsNothing);
     expect(find.byKey(const Key('inventory_sync_card')), findsOneWidget);
     expect(find.byKey(const Key('inventory_sync_signed_out')), findsOneWidget);
+    expect(
+      find.byKey(const Key('settings_warlock_matrix_path_card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('settings_dim_armor_csv_import_card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('settings_dim_weapons_csv_import_card')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('manifest_status_card')), findsOneWidget);
     expect(find.byKey(const Key('cached_version')), findsOneWidget);
     expect(find.text('v1'), findsWidgets);
@@ -165,7 +240,7 @@ void main() {
 
 
   testWidgets('missing cached version shows none without crash', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    await tester.binding.setSurfaceSize(const Size(800, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     refresh.setStatus(
@@ -178,7 +253,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: services)),
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: _settingsUnderTest(services),
+      ),
     );
     await _pumpFrames(tester);
 
@@ -205,7 +283,7 @@ void main() {
 
   testWidgets('Refresh manifest calls API and shows success message',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 2200));
+    await tester.binding.setSurfaceSize(const Size(800, 2800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     refresh.setStatus(
@@ -222,7 +300,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: services)),
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: _settingsUnderTest(services),
+      ),
     );
     await _pumpFrames(tester);
 
@@ -247,7 +328,7 @@ void main() {
   });
 
   testWidgets('Refresh manifest surfaces refresh errors', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 2200));
+    await tester.binding.setSurfaceSize(const Size(800, 2800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final session = _emptySession();
@@ -278,7 +359,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: errServices)),
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: _settingsUnderTest(errServices),
+      ),
     );
     await _pumpFrames(tester);
 
@@ -301,7 +385,7 @@ void main() {
   });
 
   testWidgets('status error surfaces message', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    await tester.binding.setSurfaceSize(const Size(800, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     // Reuse the single open DB (second NativeDatabase.memory can hang on some hosts).
@@ -332,7 +416,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(theme: testMaterialTheme(), home: SettingsPage(services: errServices)),
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: _settingsUnderTest(errServices),
+      ),
     );
     await _pumpFrames(tester);
 

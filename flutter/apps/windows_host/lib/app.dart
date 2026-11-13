@@ -27,7 +27,8 @@ class Destiny2WindowsApp extends StatefulWidget {
 
   final AppServices services;
 
-  /// Overrides [warlockMatrixPathEnv]. Null reads the process environment.
+  /// Test inject: when non-null, used as the matrix path (skips saved/env).
+  /// Production leaves this null so Settings saved path → env → none applies.
   final String? warlockMatrixPath;
 
   /// Primary nav labels (product order subset until full shell returns).
@@ -56,6 +57,39 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
   /// Bumped when Catalog is re-selected so IndexedStack reloads after Settings sync.
   int _catalogReloadToken = 0;
 
+  /// Bumped when the Warlock matrix path is saved so Builds/Warlocks remount.
+  int _matrixReloadToken = 0;
+
+  /// Path from `{StorageRoot}/settings/warlock_matrix_path.txt`, if any.
+  String? _savedMatrixPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedMatrixPath();
+  }
+
+  Future<void> _loadSavedMatrixPath() async {
+    try {
+      final saved = await WarlockMatrixPathSetting(
+        root: widget.services.storageRoot,
+      ).load();
+      if (!mounted) return;
+      setState(() => _savedMatrixPath = saved);
+    } catch (_) {
+      // Prefer env / none when the preference file is unreadable.
+      if (!mounted) return;
+      setState(() => _savedMatrixPath = null);
+    }
+  }
+
+  void _onMatrixPathSaved(String? path) {
+    setState(() {
+      _savedMatrixPath = path;
+      _matrixReloadToken++;
+    });
+  }
+
   void _onDestinationSelected(int i) {
     setState(() {
       if (i == Destiny2WindowsApp.catalogNavIndex &&
@@ -66,10 +100,14 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
     });
   }
 
+  /// Precedence: test inject → saved Settings path → WARLOCK_MATRIX_PATH → none.
   String? get _matrixPath {
     final override = widget.warlockMatrixPath;
     if (override != null) return override;
-    return warlockMatrixPathFromEnvironment(Platform.environment);
+    return resolveWarlockMatrixPath(
+      savedSetting: _savedMatrixPath,
+      environment: Platform.environment,
+    );
   }
 
   @override
@@ -135,20 +173,31 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                       key: const Key('sets_library_page'),
                       services: widget.services,
                     ),
-                    WarlockBuildsPage(
-                      key: const Key('warlock_builds_page'),
-                      initialPath: _matrixPath,
+                    KeyedSubtree(
+                      key: ValueKey<String>(
+                        'warlock_builds_matrix_$_matrixReloadToken',
+                      ),
+                      child: WarlockBuildsPage(
+                        key: const Key('warlock_builds_page'),
+                        initialPath: _matrixPath,
+                      ),
                     ),
-                    BuildsMockPage(
-                      key: const Key('builds_mock_page_host'),
-                      storageRoot: widget.services.storageRoot,
-                      warlockMatrixPath: _matrixPath,
+                    KeyedSubtree(
+                      key: ValueKey<String>(
+                        'builds_mock_matrix_$_matrixReloadToken',
+                      ),
+                      child: BuildsMockPage(
+                        key: const Key('builds_mock_page_host'),
+                        storageRoot: widget.services.storageRoot,
+                        warlockMatrixPath: _matrixPath,
+                      ),
                     ),
                     SettingsPage(
                       key: const Key('settings_page'),
                       services: widget.services,
                       themeMode: _themeMode,
                       onThemeModeChanged: (m) => setState(() => _themeMode = m),
+                      onWarlockMatrixPathSaved: _onMatrixPathSaved,
                     ),
                   ],
                 ),
