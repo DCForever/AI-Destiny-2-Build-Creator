@@ -45,7 +45,8 @@ pages:
           - id: shell.nav
             kind: surface
             title: Main navigation
-            notes: Loadouts · Build · Synergy · Sets · Catalog · Warlocks · Settings
+            notes: |
+              Loadouts · Build · Synergy · Sets · Catalog · Builds · Settings. Flutter Windows primary rail today is Catalog · Sets · Builds · Settings; Warlocks removed (superseded by Builds).
             rules:
               - DBR-PUR-003
             children:
@@ -54,6 +55,14 @@ pages:
                 title: Nav → Build
                 path: /build
                 rules: []
+              - id: shell.nav.builds
+                kind: field
+                title: Nav → Builds
+                notes: Warlock matrix list + Fill In mock. Supersedes Warlocks tab.
+                rules:
+                  - DBR-SUB-011
+                  - DAC-DST-016
+                  - BR-WXM-001
               - id: shell.nav.catalog
                 kind: field
                 title: Nav → Catalog
@@ -82,7 +91,8 @@ pages:
               - id: shell.nav.warlock-builds
                 kind: field
                 title: Nav → Warlock builds
-                notes: Read-only community matrix. No equip, move, or OAuth.
+                notes: |
+                  Removed from Flutter Windows host — superseded by Builds tab. Read-only community matrix historically. No equip, move, or OAuth.
                 rules:
                   - DBR-SUB-011
                   - DAC-DST-016
@@ -977,7 +987,8 @@ pages:
         kind: screen
         title: Warlock community builds
         auth: any
-        notes: Read-only list loaded from a local matrix file. Filter by exotic. Flag Solipsism off Prismatic.
+        notes: |
+          Historical Warlocks-tab list UI removed; matrix loading now lives under Builds (BuildsMockPage). Domain parse/filter rules still apply.
         rules:
           - DBR-SUB-011
           - DAC-DST-016
@@ -988,7 +999,7 @@ pages:
             title: Offline contrasting-build pilot
             auth: any
             notes: |
-              Local review of five trimmed community rows. Preserves source links and blanks. Synthetic inventory and DIM JSON are labeled and are not ownership.
+              Offline pilot entry and page removed from Windows host (Nov 2026). Domain pilot_review package + assets/pilot fixtures kept for unit tests; package cleanup is a follow-up.
             rules:
               - DBR-PLT-001
               - DBR-PLT-002
@@ -4673,12 +4684,13 @@ pages:
         atlas:
           - catalog-universal
   - id: flow-flow-catalog-warlock-matrix
-    label: Warlock community build list
-    description: Load a local matrix file, filter by exotic, flag Solipsism off Prismatic.
+    label: Warlock community build list (deferred — Builds supersedes)
+    description: |
+      Historical Warlocks-tab flow. Flutter Windows host now uses the Builds tab for matrix list; offline pilot UI removed. Domain rules still apply to Builds matrix load.
     nodes:
       - id: flow.catalog.warlock-matrix.open
         kind: surface
-        title: Open the list
+        title: Open the list (deferred)
         rules:
           - DBR-SUB-011
           - DAC-DST-016
@@ -4688,7 +4700,7 @@ pages:
           - catalog-warlock-matrix
       - id: flow.catalog.warlock-matrix.filter
         kind: surface
-        title: Filter by exotic
+        title: Filter by exotic (deferred)
         rules:
           - DBR-SUB-011
           - DAC-DST-016
@@ -4698,7 +4710,7 @@ pages:
           - catalog-warlock-matrix
       - id: flow.catalog.warlock-matrix.flag
         kind: surface
-        title: Flag Solipsism off Prismatic
+        title: Flag Solipsism off Prismatic (deferred)
         rules:
           - DAC-DST-016
           - DBR-SUB-011
@@ -4707,25 +4719,6 @@ pages:
         auth: any
         atlas:
           - catalog-warlock-matrix
-      - id: flow.catalog.warlock-matrix.pilot
-        kind: surface
-        title: Open the offline contrasting-build pilot
-        rules:
-          - DBR-PLT-001
-          - DBR-PLT-002
-          - DBR-PLT-003
-          - DAC-PLT-001
-          - DBR-PLT-001
-          - DBR-PLT-002
-          - DBR-PLT-003
-          - DBR-PLT-004
-          - DAC-PLT-001
-          - DAC-PLT-002
-          - DAC-PLT-003
-          - BR-WXM-002
-        auth: any
-        atlas:
-          - catalog-warlock-pilot
   - id: flow-flow-loadouts
     label: In-game loadouts
     description: Flow flow.loadouts

@@ -35,7 +35,7 @@ class BuildsMockPage extends StatefulWidget {
   /// When set, read-only load of `{StorageRoot}/dim_loadouts/dim-loadouts.json`.
   final StorageRoot? storageRoot;
 
-  /// Same path source as Warlocks (Settings saved path → `WARLOCK_MATRIX_PATH`).
+  /// Path source: Settings saved path → `WARLOCK_MATRIX_PATH`.
   /// Ignored when [controller] is injected.
   final String? warlockMatrixPath;
 

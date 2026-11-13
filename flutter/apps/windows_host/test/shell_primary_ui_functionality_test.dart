@@ -244,23 +244,21 @@ void main() {
   });
 
   group('shell.nav primary destinations', () {
-    test('navLabels are Catalog, Sets, Warlocks, Builds, and Settings', () {
+    test('navLabels are Catalog, Sets, Builds, and Settings', () {
       expect(Destiny2WindowsApp.navLabels, [
         'Catalog',
         'Sets',
-        'Warlocks',
         'Builds',
         'Settings',
       ]);
       expect(Destiny2WindowsApp.catalogNavIndex, 0);
       expect(Destiny2WindowsApp.setsNavIndex, 1);
-      expect(Destiny2WindowsApp.warlockBuildsNavIndex, 2);
-      expect(Destiny2WindowsApp.buildsMockNavIndex, 3);
-      expect(Destiny2WindowsApp.settingsNavIndex, 4);
+      expect(Destiny2WindowsApp.buildsMockNavIndex, 2);
+      expect(Destiny2WindowsApp.settingsNavIndex, 3);
     });
 
     testWidgets(
-        'rail mounts Catalog, Sets, Warlocks, Builds, and Settings', (
+        'rail mounts Catalog, Sets, Builds, and Settings', (
       tester,
     ) async {
       await _surface(tester);
@@ -271,6 +269,7 @@ void main() {
       for (final label in Destiny2WindowsApp.navLabels) {
         expect(find.text(label), findsWidgets, reason: 'nav label $label');
       }
+      expect(find.text('Warlocks'), findsNothing);
 
       expect(
         find.byKey(const Key('catalog_page'), skipOffstage: false),
@@ -286,7 +285,7 @@ void main() {
       );
       expect(
         find.byKey(const Key('warlock_builds_page'), skipOffstage: false),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         find.byKey(const Key('settings_page'), skipOffstage: false),

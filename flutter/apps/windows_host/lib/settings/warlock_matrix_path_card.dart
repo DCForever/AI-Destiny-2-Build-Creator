@@ -91,8 +91,7 @@ class _WarlockMatrixPathCardState extends State<WarlockMatrixPathCard> {
             const SizedBox(height: 8),
             Text(
               'Path to the local Warlock matrix JSON. The file is read only. '
-              'Saved path wins over WARLOCK_MATRIX_PATH. Used by Builds and '
-              'Warlocks.',
+              'Saved path wins over WARLOCK_MATRIX_PATH. Used by Builds.',
               key: const Key('warlock_matrix_path_help'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
