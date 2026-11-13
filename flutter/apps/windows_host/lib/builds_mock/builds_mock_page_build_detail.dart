@@ -13,6 +13,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     }
     final binding = _controller.dimBindingFor(build);
     final palette = FlapPalette.of(context);
+    final applyProgress = _applyProgressByBuild[build.id];
     return Column(
       key: const Key('builds_mock_build_detail'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,8 +68,34 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                     onPressed: null,
                     child: const Text('Optimize'),
                   ),
+                  FilledButton(
+                    key: Key('builds_mock_apply_character_${build.id}'),
+                    onPressed: _applyingBuildId == build.id
+                        ? null
+                        : () => _applyToCharacter(build),
+                    child: Text(
+                      _applyingBuildId == build.id
+                          ? 'Applying…'
+                          : 'Apply to character',
+                    ),
+                  ),
                 ],
               ),
+              if (applyProgress != null) ...[
+                const SizedBox(height: 12),
+                _ApplyProgressPanel(
+                  buildId: build.id,
+                  progress: applyProgress,
+                ),
+              ],
+              if (_applyErrorByBuild[build.id] != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _applyErrorByBuild[build.id]!,
+                  key: Key('builds_mock_apply_error_${build.id}'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
               const SizedBox(height: 12),
               DimLoadoutDetailsPanel.fromBinding(binding),
               if (_savedFillInPlans[build.id] != null) ...[
@@ -91,7 +118,8 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               _buildReoptimize(context, forBuild: build),
               const SizedBox(height: 12),
               Text(
-                'Fill In is read-only (DIM caches). Optimize stays disabled.',
+                'Fill In updates this app copy. Apply to character equips '
+                'one item at a time. Optimize stays disabled.',
                 style: neonMono(color: palette.muted, fontSize: 11),
               ),
             ],
@@ -118,7 +146,102 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       saveMissingList:
           store == null ? null : (plan) => store.saveBuildPlan(plan),
       onMissingListSaved: root == null ? null : () => _loadFillInPlans(root),
+      existingPlan: _savedFillInPlans[build.id],
+      onBuildUpdated: (updated) {
+        _controller.replaceBuild(updated);
+      },
     );
+  }
+}
+
+class _ApplyProgressPanel extends StatelessWidget {
+  const _ApplyProgressPanel({
+    required this.buildId,
+    required this.progress,
+  });
+
+  final String buildId;
+  final ApplyToCharacterProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: Key('builds_mock_apply_progress_$buildId'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              progress.running
+                  ? progress.applyingLine
+                  : (progress.summary ?? ''),
+              key: Key('builds_mock_apply_summary_$buildId'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            for (final item in progress.items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  key: Key('builds_mock_apply_item_${item.id}'),
+                  children: [
+                    _ApplyStateIcon(state: item.state),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item.reason == null
+                            ? item.label
+                            : '${item.label} — ${item.reason}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ApplyStateIcon extends StatelessWidget {
+  const _ApplyStateIcon({required this.state});
+
+  final ApplyItemState state;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (state) {
+      case ApplyItemState.waiting:
+        return Icon(
+          Icons.circle_outlined,
+          size: 16,
+          key: const Key('apply_state_waiting'),
+          color: Theme.of(context).disabledColor,
+        );
+      case ApplyItemState.applying:
+        return const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      case ApplyItemState.done:
+        return Icon(
+          Icons.check_circle,
+          size: 16,
+          key: const Key('apply_state_done'),
+          color: Theme.of(context).colorScheme.primary,
+        );
+      case ApplyItemState.failed:
+        return Icon(
+          Icons.cancel,
+          size: 16,
+          key: const Key('apply_state_failed'),
+          color: Theme.of(context).colorScheme.error,
+        );
+    }
   }
 }
 
@@ -154,6 +277,13 @@ class _SavedFillInPlan extends StatelessWidget {
                 'Similar: ${plan.similarWeaponName}'
                 '${plan.similarForName == null ? '' : ' (for ${plan.similarForName})'}',
                 key: const Key('fill_in_saved_similar'),
+              ),
+            ],
+            if (plan.hasAppliedSubstitutes) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Filled in: ${plan.applied.map((a) => a.label).join(', ')}',
+                key: const Key('fill_in_saved_applied'),
               ),
             ],
           ],

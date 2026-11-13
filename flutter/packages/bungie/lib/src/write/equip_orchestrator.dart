@@ -135,18 +135,41 @@ Future<EquipStepResult> _runStep(
   }
 }
 
+/// Optional listener for sequential equip progress (DIM-style one-at-a-time).
+///
+/// Called once with [result] == null before a step runs, then again with the
+/// completed [EquipStepResult]. Hosts use this for inline per-item UI.
+typedef EquipPlanProgressListener = Future<void> Function({
+  required int index,
+  required int total,
+  required PlannedEquipStep step,
+  EquipStepResult? result,
+});
+
 /// Best-effort: run [plan] in order; never roll back prior ok steps.
 ///
 /// Continues after failures so partial status reports every step.
+/// Only transfer / equip / artifact / fashion write kinds.
 Future<EquipStatus> executeEquipPlan(
   BungieWriteClient client,
   WriteClientContext ctx,
   String characterId,
-  List<PlannedEquipStep> plan,
-) async {
+  List<PlannedEquipStep> plan, {
+  EquipPlanProgressListener? onProgress,
+}) async {
   final results = <EquipStepResult>[];
-  for (final step in plan) {
-    results.add(await _runStep(client, ctx, characterId, step));
+  final total = plan.length;
+  for (var i = 0; i < plan.length; i++) {
+    final step = plan[i];
+    final listener = onProgress;
+    if (listener != null) {
+      await listener(index: i, total: total, step: step, result: null);
+    }
+    final result = await _runStep(client, ctx, characterId, step);
+    results.add(result);
+    if (listener != null) {
+      await listener(index: i, total: total, step: step, result: result);
+    }
   }
   return _summarize(results);
 }

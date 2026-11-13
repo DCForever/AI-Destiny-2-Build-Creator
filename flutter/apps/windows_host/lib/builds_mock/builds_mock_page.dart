@@ -1,12 +1,16 @@
+import 'package:destiny2_app/destiny2_app.dart';
+import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
+import '../auth/windows_oauth_session.dart';
 import '../dim_loadouts/dim_loadout_details_panel.dart';
 import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
+import '../host_bootstrap.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
@@ -27,6 +31,10 @@ class BuildsMockPage extends StatefulWidget {
     this.storageRoot,
     this.warlockMatrixPath,
     this.matrixMaxBytes = kCachedDimLoadoutsMaxBytes,
+    this.services,
+    this.writeClient,
+    this.oauthSession,
+    this.profileClient,
   });
 
   /// Injectable for tests / widget previews. Page does not dispose it.
@@ -42,6 +50,18 @@ class BuildsMockPage extends StatefulWidget {
   /// Size cap for the matrix file read (same helper as DIM loadouts reader).
   final int matrixMaxBytes;
 
+  /// Host services (oauth + write client) for Apply to character.
+  final AppServices? services;
+
+  /// Test inject: overrides [services.writeClient].
+  final BungieWriteClient? writeClient;
+
+  /// Test inject: overrides [services.oauthSession].
+  final WindowsOAuthSession? oauthSession;
+
+  /// Test inject: overrides [services.profileClient].
+  final BungieProfileClient? profileClient;
+
   @override
   State<BuildsMockPage> createState() => _BuildsMockPageState();
 }
@@ -52,6 +72,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   late final TextEditingController _search;
   Map<String, FillInSavedBuildPlan> _savedFillInPlans =
       const <String, FillInSavedBuildPlan>{};
+  final Map<String, ApplyToCharacterProgress> _applyProgressByBuild =
+      <String, ApplyToCharacterProgress>{};
+  final Map<String, String> _applyErrorByBuild = <String, String>{};
+  String? _applyingBuildId;
 
   @override
   void initState() {
@@ -106,6 +130,136 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
           loadouts: result.loadouts,
         );
     }
+  }
+
+  Future<void> _applyToCharacter(MockBuild build) async {
+    if (_applyingBuildId != null) return;
+    final services = widget.services;
+    final writeClient = widget.writeClient ?? services?.writeClient;
+    final oauth = widget.oauthSession ?? services?.oauthSession;
+    final profile = widget.profileClient ?? services?.profileClient;
+
+    if (writeClient == null || oauth == null || profile == null) {
+      setState(() {
+        _applyErrorByBuild[build.id] =
+            'Apply to character needs host services (sign-in + write client).';
+      });
+      return;
+    }
+    if (!oauth.isSignedIn || oauth.tokens == null) {
+      setState(() {
+        _applyErrorByBuild[build.id] =
+            'Sign in from Settings to apply this build to a character.';
+      });
+      return;
+    }
+
+    final plan = _savedFillInPlans[build.id];
+    final items = _itemsForApply(build, plan);
+    if (items.isEmpty) {
+      setState(() {
+        _applyErrorByBuild[build.id] =
+            'No equippable items. Run Fill In → Apply to build first '
+            '(needs inventory instance ids).';
+      });
+      return;
+    }
+
+    setState(() {
+      _applyingBuildId = build.id;
+      _applyErrorByBuild.remove(build.id);
+      _applyProgressByBuild[build.id] = ApplyToCharacterProgress(
+        items: [
+          for (final item in items)
+            ApplyItemProgress(
+              id: item.id,
+              label: item.label,
+              state: ApplyItemState.waiting,
+              itemHash: item.itemHash,
+              instanceId: item.instanceId,
+              slot: item.slot,
+            ),
+        ],
+        currentIndex: 0,
+        total: items.length,
+        running: true,
+      );
+    });
+
+    try {
+      final token = oauth.tokens!.accessToken;
+      final memberships = await profile.getMemberships(token);
+      if (!mounted) return;
+      if (memberships.isEmpty) {
+        setState(() {
+          _applyingBuildId = null;
+          _applyErrorByBuild[build.id] = 'No Destiny memberships found';
+        });
+        return;
+      }
+      final membership = memberships.first;
+      final characters = await profile.getCharacters(token, membership);
+      if (!mounted) return;
+      final matching = [
+        for (final c in characters)
+          if (c.classType.toLowerCase() == 'warlock') c,
+      ];
+      if (matching.isEmpty) {
+        setState(() {
+          _applyingBuildId = null;
+          _applyErrorByBuild[build.id] =
+              'No Warlock character on this account.';
+        });
+        return;
+      }
+      final characterId = matching.first.characterId;
+
+      final result = await applyToCharacter(
+        writeClient: writeClient,
+        ctx: WriteClientContext(
+          accessToken: token,
+          membershipType: membership.membershipType,
+        ),
+        characterId: characterId,
+        items: items,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() => _applyProgressByBuild[build.id] = progress);
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        _applyingBuildId = null;
+        _applyProgressByBuild[build.id] = result;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _applyingBuildId = null;
+        _applyErrorByBuild[build.id] = e.toString();
+      });
+    }
+  }
+
+  List<ApplyToCharacterItem> _itemsForApply(
+    MockBuild build,
+    FillInSavedBuildPlan? plan,
+  ) {
+    final applied = plan?.applied ?? const <FillInAppliedSlot>[];
+    if (applied.isEmpty) return const [];
+    return [
+      for (final slot in applied)
+        if (slot.instanceId != null &&
+            slot.instanceId!.isNotEmpty &&
+            slot.itemHash != null)
+          ApplyToCharacterItem(
+            id: '${build.id}-${slot.slotWire}',
+            label: slot.label.isEmpty ? slot.slotWire : slot.label,
+            itemHash: slot.itemHash!,
+            instanceId: slot.instanceId!,
+            slot: slot.slotWire,
+          ),
+    ];
   }
 
   @override

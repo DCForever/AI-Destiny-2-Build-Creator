@@ -29,6 +29,7 @@ export 'src/optimizer_isolate.dart';
 export 'src/optimizer_use_cases.dart';
 export 'src/builds/builds_compose_session.dart';
 export 'src/dim_export/dim_export_session.dart';
+export 'src/equip/apply_to_character.dart';
 export 'src/equip/equip_session.dart';export 'src/presentation/dim_export_format.dart';export 'src/presentation/equip_format.dart';
 export 'src/presentation/finish_gaps_format.dart';
 export 'src/presentation/soft_guidance_format.dart';

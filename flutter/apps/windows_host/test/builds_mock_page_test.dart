@@ -96,6 +96,7 @@ void main() {
     expect(find.text('Re-optimize'), findsOneWidget);
     expect(find.text('Fill In'), findsOneWidget);
     expect(find.text('Optimize'), findsOneWidget);
+    expect(find.text('Apply to character'), findsOneWidget);
 
     final fillIn = tester.widget<FilledButton>(
       find.byKey(const Key('builds_mock_fill_in_b01')),
@@ -103,9 +104,13 @@ void main() {
     final optimize = tester.widget<OutlinedButton>(
       find.byKey(const Key('builds_mock_optimize_b01')),
     );
-    // Fill In opens the read-only inventory pop-up; Optimize stays disabled.
+    final apply = tester.widget<FilledButton>(
+      find.byKey(const Key('builds_mock_apply_character_b01')),
+    );
+    // Fill In + Apply to character enabled; Optimize stays disabled.
     expect(fillIn.onPressed, isNotNull);
     expect(optimize.onPressed, isNull);
+    expect(apply.onPressed, isNotNull);
 
     await tester.tap(find.byKey(const Key('builds_mock_fill_in_b01')));
     await tester.pump();

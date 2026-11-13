@@ -190,6 +190,7 @@ class _Destiny2WindowsAppState extends State<Destiny2WindowsApp> {
                         key: const Key('builds_mock_page_host'),
                         storageRoot: widget.services.storageRoot,
                         warlockMatrixPath: _matrixPath,
+                        services: widget.services,
                       ),
                     ),
                     SettingsPage(
