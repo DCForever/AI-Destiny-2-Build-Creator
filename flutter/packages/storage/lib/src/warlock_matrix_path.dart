@@ -11,14 +11,17 @@ String? warlockMatrixPathFromEnvironment(Map<String, String> environment) {
 }
 
 /// Resolve the Warlock matrix path with fixed precedence:
-/// saved Settings path → [warlockMatrixPathEnv] → none.
+/// [testInject] → saved Settings path → [warlockMatrixPathEnv] → none.
 ///
 /// Does not touch the matrix file. Blank/whitespace [savedSetting] is ignored
-/// so the environment can still apply.
+/// so the environment can still apply. [testInject] is for host test overrides
+/// only (production passes null).
 String? resolveWarlockMatrixPath({
+  String? testInject,
   String? savedSetting,
   Map<String, String> environment = const <String, String>{},
 }) {
+  if (testInject != null) return testInject;
   final saved = savedSetting?.trim();
   if (saved != null && saved.isNotEmpty) return saved;
   return warlockMatrixPathFromEnvironment(environment);

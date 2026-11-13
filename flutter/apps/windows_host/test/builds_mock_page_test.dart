@@ -117,10 +117,14 @@ void main() {
     final apply = tester.widget<FilledButton>(
       find.byKey(const Key('builds_mock_apply_character_b01')),
     );
-    // Fill In + Apply to character enabled; Optimize stays disabled.
+    // Fill In enabled; Optimize stays disabled; Apply disabled with no target.
     expect(fillIn.onPressed, isNotNull);
     expect(optimize.onPressed, isNull);
-    expect(apply.onPressed, isNotNull);
+    expect(apply.onPressed, isNull);
+    expect(
+      find.byKey(const Key('builds_mock_apply_disabled_reason_b01')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('builds_mock_fill_in_b01')));
     await tester.pump();
@@ -331,7 +335,8 @@ void main() {
     );
   }, timeout: const Timeout(Duration(minutes: 2)));
 
-  testWidgets('Apply to character shows Applies to: Warlock light label',
+  testWidgets(
+      'Apply to character shows unique Applies to label and enables button',
       (tester) async {
     final tokenStore = MemoryTokenStore();
     await seedSignedIn(tokenStore);
@@ -356,7 +361,12 @@ void main() {
           light: 1800,
         ),
         CharacterSummary(
-          characterId: 'char-warlock',
+          characterId: 'char-warlock-4821',
+          classType: 'Warlock',
+          light: 2010,
+        ),
+        CharacterSummary(
+          characterId: 'char-warlock-9999',
           classType: 'Warlock',
           light: 2010,
         ),
@@ -386,7 +396,18 @@ void main() {
       find.byKey(const Key('builds_mock_apply_target_b01')),
       findsOneWidget,
     );
-    expect(find.text('Applies to: Warlock 2010'), findsOneWidget);
+    // First Warlock wins; last-4 disambiguates same-light twins.
+    expect(find.text('Applies to: Warlock 2010 · …4821'), findsOneWidget);
+    expect(find.textContaining('…9999'), findsNothing);
+
+    final apply = tester.widget<FilledButton>(
+      find.byKey(const Key('builds_mock_apply_character_b01')),
+    );
+    expect(apply.onPressed, isNotNull);
+    expect(
+      find.byKey(const Key('builds_mock_apply_disabled_reason_b01')),
+      findsNothing,
+    );
 
     // Caption is below the fold; scroll to confirm Undo wording (Fill In only).
     await tester.scrollUntilVisible(
@@ -402,5 +423,45 @@ void main() {
     await tester.pump();
     expect(find.textContaining('has no undo'), findsOneWidget);
     expect(find.textContaining('Undo fill in restores it'), findsOneWidget);
+  });
+
+  testWidgets('Apply disabled with reason when not signed in', (tester) async {
+    final controller = BuildsMockController();
+    await pumpMock(
+      tester,
+      controller: controller,
+      applyPorts: BuildsMockApplyPorts(
+        oauthSession: WindowsOAuthSession(
+          clientId: 'test-client',
+          redirectUri: kDefaultWindowsRedirectUri,
+          tokenStore: MemoryTokenStore(),
+          oauthClient: BungieOAuthClient(
+            clientId: 'test-client',
+            redirectUri: kDefaultWindowsRedirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+        ),
+        profileClient: FakeProfileClient(),
+        writeClient: createMockWriteClient(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final apply = tester.widget<FilledButton>(
+      find.byKey(const Key('builds_mock_apply_character_b01')),
+    );
+    expect(apply.onPressed, isNull);
+    expect(
+      find.byKey(const Key('builds_mock_apply_disabled_reason_b01')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Sign in'), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_apply_target_b01')), findsNothing);
   });
 }

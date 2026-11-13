@@ -29,6 +29,7 @@ class BuildsMockPage extends StatefulWidget {
     this.controller,
     this.storageRoot,
     this.warlockMatrixPath,
+    this.matrixPathSettingResolved = true,
     this.matrixMaxBytes = kCachedDimLoadoutsMaxBytes,
     this.services,
     this.applyPorts,
@@ -43,6 +44,13 @@ class BuildsMockPage extends StatefulWidget {
   /// Path source: Settings saved path → `WARLOCK_MATRIX_PATH`.
   /// Ignored when [controller] is injected.
   final String? warlockMatrixPath;
+
+  /// False while the host is still loading `{StorageRoot}/settings/…`.
+  ///
+  /// When false, the page stays on the matrix loading indicator instead of
+  /// flashing "No matrix file path" before the saved preference arrives.
+  /// Defaults to true so direct/test construction still fails closed on null.
+  final bool matrixPathSettingResolved;
 
   /// Size cap for the matrix file read (same helper as DIM loadouts reader).
   final int matrixMaxBytes;
@@ -67,7 +75,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       <String, ApplyToCharacterProgress>{};
   final Map<String, String> _applyErrorByBuild = <String, String>{};
   String? _applyingBuildId;
+  BuildsMockApplyTarget? _applyTarget;
   String? _applyTargetLabel;
+  String? _applyDisabledReason;
+  int _matrixLoadGeneration = 0;
 
   @override
   void initState() {
@@ -78,23 +89,43 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     _controller.addListener(_onController);
     _search = TextEditingController(text: _controller.query);
     if (_ownsController) {
-      _loadMatrix(widget.warlockMatrixPath);
+      _startOrHoldMatrixLoad();
     }
     final root = widget.storageRoot;
     if (root != null) {
       _loadDimLoadouts(root);
       _loadFillInPlans(root);
     }
-    _refreshApplyTargetLabel();
+    _refreshApplyTarget();
+  }
+
+  @override
+  void didUpdateWidget(BuildsMockPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_ownsController) return;
+    final pathChanged =
+        oldWidget.warlockMatrixPath != widget.warlockMatrixPath;
+    final resolvedNow = !oldWidget.matrixPathSettingResolved &&
+        widget.matrixPathSettingResolved;
+    if (pathChanged || resolvedNow) {
+      _startOrHoldMatrixLoad();
+    }
   }
 
   BuildsMockApplyPorts get _applyPorts =>
       widget.applyPorts ?? BuildsMockApplyPorts(services: widget.services);
 
-  Future<void> _refreshApplyTargetLabel() async {
-    final label = await resolveBuildsMockApplyTargetLabel(_applyPorts);
+  Future<void> _refreshApplyTarget() async {
+    final resolution = await resolveBuildsMockApplyTarget(_applyPorts);
     if (!mounted) return;
-    setState(() => _applyTargetLabel = label);
+    final target = resolution.target;
+    setState(() {
+      _applyTarget = target;
+      _applyTargetLabel = target == null
+          ? null
+          : formatBuildsMockApplyTargetLabel(target.character);
+      _applyDisabledReason = target == null ? resolution.reason : null;
+    });
   }
 
   Future<void> _loadFillInPlans(StorageRoot root) async {
@@ -109,12 +140,23 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     }
   }
 
+  /// Hold on the loading indicator until the host finishes reading the saved
+  /// path preference; otherwise load [widget.warlockMatrixPath].
+  void _startOrHoldMatrixLoad() {
+    if (!widget.matrixPathSettingResolved) {
+      _controller.beginMatrixLoad();
+      return;
+    }
+    _loadMatrix(widget.warlockMatrixPath);
+  }
+
   Future<void> _loadMatrix(String? path) async {
+    final generation = ++_matrixLoadGeneration;
     await loadBuildsMatrixIntoController(
       controller: _controller,
       path: path,
       maxBytes: widget.matrixMaxBytes,
-      shouldApply: () => mounted,
+      shouldApply: () => mounted && generation == _matrixLoadGeneration,
     );
   }
 
@@ -136,6 +178,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
 
   Future<void> _applyToCharacter(MockBuild build) async {
     if (_applyingBuildId != null) return;
+    final target = _applyTarget;
+    if (target == null) return;
     final ports = _applyPorts;
 
     setState(() {
@@ -147,6 +191,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       build: build,
       plan: _savedFillInPlans[build.id],
       ports: ports,
+      target: target,
       isMounted: () => mounted,
       onProgress: (progress) {
         if (!mounted) return;
@@ -164,8 +209,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
         _applyErrorByBuild[build.id] = outcome.error!;
       }
     });
-    // Refresh label in case memberships/characters changed mid-session.
-    await _refreshApplyTargetLabel();
+    // Refresh in case memberships/characters changed mid-session.
+    await _refreshApplyTarget();
   }
 
   @override

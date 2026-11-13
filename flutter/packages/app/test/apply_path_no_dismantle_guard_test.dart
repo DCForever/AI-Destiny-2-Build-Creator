@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// Apply-to-character path must never reference dismantle/delete/destroy.
+/// Apply-to-character path must never reference dismantle/delete/destroy
+/// or transfer-to-delete style APIs. Equip + vault transfer for equip remain OK.
 const List<String> kBannedApplyPatterns = <String>[
   'dismantleItem',
   'DismantleItem',
@@ -12,21 +13,37 @@ const List<String> kBannedApplyPatterns = <String>[
   'DestroyItem',
   'deleteItem(',
   'DeleteItem',
+  'transferToDelete',
+  'TransferToDelete',
+  'transfer_to_delete',
+  'TransferToVaultToDelete',
 ];
 
+/// Exact apply-path sources (posix-ish relative to packages/app).
+///
+/// Includes the host Builds mock Apply wiring — the only non-package caller of
+/// a Bungie write. Exact list (not a glob) so a missing file fails loudly.
 const List<String> kApplyPathRelativeFiles = <String>[
   'lib/src/equip/apply_to_character.dart',
   '../bungie/lib/src/write/equip_orchestrator.dart',
   '../bungie/lib/src/write/write_client.dart',
+  '../../apps/windows_host/lib/builds_mock/builds_mock_apply.dart',
 ];
 
 void main() {
   test('apply path sources never reference dismantle/delete/destroy', () {
     final appRoot = _findAppPackageRoot();
     final violations = <String>[];
+    final scanned = <String>[];
     for (final rel in kApplyPathRelativeFiles) {
       final file = File('${appRoot.path}/$rel');
-      expect(file.existsSync(), isTrue, reason: 'missing ${file.path}');
+      expect(
+        file.existsSync(),
+        isTrue,
+        reason: 'apply-path guard file missing (must exist + be scanned): '
+            '${file.path}',
+      );
+      scanned.add(file.path.replaceAll('\\', '/'));
       final text = file.readAsStringSync();
       for (final pattern in kBannedApplyPatterns) {
         if (text.contains(pattern)) {
@@ -34,6 +51,16 @@ void main() {
         }
       }
     }
+    expect(
+      scanned,
+      hasLength(kApplyPathRelativeFiles.length),
+      reason: 'expected every listed apply-path file to be scanned',
+    );
+    expect(
+      scanned.any((p) => p.endsWith('builds_mock_apply.dart')),
+      isTrue,
+      reason: 'builds_mock_apply.dart must be on the exact scan list',
+    );
     expect(
       violations,
       isEmpty,
@@ -56,6 +83,7 @@ void main() {
     expect(text.contains('DismantleItem'), isFalse);
     expect(text.contains('destroyItem'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/Dismantle'), isFalse);
+    expect(text.contains('transferToDelete'), isFalse);
   });
 }
 
