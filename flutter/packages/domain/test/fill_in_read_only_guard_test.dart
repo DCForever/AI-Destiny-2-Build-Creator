@@ -26,7 +26,7 @@ const List<String> kFillInBannedPatterns = <String>[
 /// Exact production Fill In Dart source counts (exclude `test/`).
 ///
 /// Exact counts so the guard cannot pass vacuously or silently drop files.
-const int kDomainFillInSourceFileCount = 9;
+const int kDomainFillInSourceFileCount = 10;
 const int kWindowsHostFillInSourceFileCount = 4;
 
 void main() {
