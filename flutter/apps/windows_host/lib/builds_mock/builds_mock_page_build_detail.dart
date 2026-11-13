@@ -71,7 +71,8 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                   ),
                   FilledButton(
                     key: Key('builds_mock_apply_character_${build.id}'),
-                    onPressed: _applyingBuildId == build.id
+                    onPressed: _applyingBuildId == build.id ||
+                            _applyTarget == null
                         ? null
                         : () => _applyToCharacter(build),
                     child: Text(
@@ -84,6 +85,12 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                     Text(
                       'Applies to: $_applyTargetLabel',
                       key: Key('builds_mock_apply_target_${build.id}'),
+                      style: neonMono(color: palette.muted, fontSize: 11),
+                    )
+                  else if (_applyDisabledReason != null)
+                    Text(
+                      _applyDisabledReason!,
+                      key: Key('builds_mock_apply_disabled_reason_${build.id}'),
                       style: neonMono(color: palette.muted, fontSize: 11),
                     ),
                 ],
