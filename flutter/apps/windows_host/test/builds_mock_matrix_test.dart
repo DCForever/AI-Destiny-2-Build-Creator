@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_controller.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_matrix.dart';
+import 'package:destiny2_windows_host/builds_mock/builds_mock_matrix_loader.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_page.dart';
 import 'package:destiny2_windows_host/theme/flap_theme.dart';
 import 'package:flutter/material.dart';
@@ -126,9 +127,8 @@ void main() {
   testWidgets('matrix over-cap error copy is shown (no sample builds)', (
     tester,
   ) async {
-    // Real dart:io maxBytes enforcement is covered by
-    // warlock_builds_get_only_test (controller.load). Widget tests must not
-    // start uncapped async IO from initState — inject the surfaced message.
+    // Injected-message path (no dart:io). Real Builds loader over-cap IO is
+    // covered by the sibling non-widget test below (mirrors Warlocks).
     final controller = BuildsMockController.forMatrixLoad()
       ..failMatrixLoad('file exceeds size limit (64 > 8 bytes)');
 
@@ -146,6 +146,26 @@ void main() {
     expect(find.textContaining('file exceeds size limit'), findsOneWidget);
     expect(find.textContaining('64 > 8'), findsOneWidget);
     expect(find.text('Techsec Prismatic core'), findsNothing);
+  });
+
+  test('Builds matrix load over maxBytes surfaces a clear size-limit error',
+      () async {
+    final dir = await Directory.systemTemp.createTemp('builds_matrix_cap_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final file = File('${dir.path}/huge.json')
+      ..writeAsBytesSync(List<int>.filled(64, 0x20));
+
+    final controller = BuildsMockController.forMatrixLoad();
+    await loadBuildsMatrixIntoController(
+      controller: controller,
+      path: file.path,
+      maxBytes: 8,
+    );
+
+    expect(controller.fixture.builds, isEmpty);
+    expect(controller.matrixError, contains('file exceeds size limit'));
+    expect(controller.matrixError, contains('64 > 8'));
+    expect(controller.showMockBanner, isFalse);
   });
 }
 

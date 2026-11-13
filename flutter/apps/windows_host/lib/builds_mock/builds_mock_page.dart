@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
@@ -12,9 +10,8 @@ import '../fill_in/fill_in_dialog.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_loadout_card.dart';
 import 'builds_mock_logic.dart';
-import 'builds_mock_matrix.dart';
+import 'builds_mock_matrix_loader.dart';
 import 'builds_mock_models.dart';
-
 part 'builds_mock_page_rail.dart';
 part 'builds_mock_page_detail.dart';
 part 'builds_mock_page_build_detail.dart';
@@ -75,42 +72,23 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   }
 
   Future<void> _loadFillInPlans(StorageRoot root) async {
-    final plans = await FillInMissingListStore(root: root).loadAll();
-    if (!mounted) return;
-    setState(() => _savedFillInPlans = plans);
+    try {
+      final plans = await FillInMissingListStore(root: root).loadAll();
+      if (!mounted) return;
+      setState(() => _savedFillInPlans = plans);
+    } on FillInMissingListStoreException {
+      // Oversized / unsafe store: fail closed (no plans), never rewrite.
+      if (!mounted) return;
+      setState(() => _savedFillInPlans = const <String, FillInSavedBuildPlan>{});
+    }
   }
 
   Future<void> _loadMatrix(String? path) async {
-    final trimmed = path?.trim() ?? '';
-    if (trimmed.isEmpty) {
-      _controller.failMatrixLoad(
-        'No matrix file path. Set it in Settings (Warlock matrix file) '
-        'or WARLOCK_MATRIX_PATH.',
-      );
-      return;
-    }
-    _controller.beginMatrixLoad();
-    try {
-      final bytes = await readOnlyFileBytes(
-        trimmed,
-        maxBytes: widget.matrixMaxBytes,
-      );
-      final decoded = jsonDecode(utf8.decode(bytes));
-      final rows = parseWarlockMatrix(decoded);
-      if (!mounted) return;
-      _controller.adoptFixture(buildsMockFixtureFromMatrix(rows));
-    } on ReadOnlyFileException catch (error) {
-      if (!mounted) return;
-      _controller.failMatrixLoad(error.message);
-    } on FormatException catch (error) {
-      if (!mounted) return;
-      _controller.failMatrixLoad(
-        'Matrix file is not valid JSON (${error.message}).',
-      );
-    } catch (error) {
-      if (!mounted) return;
-      _controller.failMatrixLoad('Could not read matrix: $error');
-    }
+    await loadBuildsMatrixIntoController(
+      controller: _controller,
+      path: path,
+      maxBytes: widget.matrixMaxBytes,
+    );
   }
 
   Future<void> _loadDimLoadouts(StorageRoot root) async {
