@@ -12,6 +12,12 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+Future<String?> _noopPicker({
+  required List<String> extensions,
+  String? label,
+}) async =>
+    null;
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -28,7 +34,10 @@ void main() {
         theme: testMaterialTheme(),
         home: Scaffold(
           body: SingleChildScrollView(
-            child: WarlockMatrixPathCard(controller: controller),
+            child: WarlockMatrixPathCard(
+              controller: controller,
+              openFilePicker: _noopPicker,
+            ),
           ),
         ),
       ),
@@ -37,6 +46,7 @@ void main() {
 
     expect(find.byKey(const Key('warlock_matrix_path_card')), findsOneWidget);
     expect(find.byKey(const Key('warlock_matrix_path_field')), findsOneWidget);
+    expect(find.byKey(const Key('warlock_matrix_path_browse')), findsOneWidget);
     expect(find.byKey(const Key('warlock_matrix_path_save')), findsOneWidget);
     expect(find.text('No path set'), findsOneWidget);
   });
@@ -59,6 +69,7 @@ void main() {
             child: WarlockMatrixPathCard(
               controller: controller,
               onSaved: (p) => saved = p,
+              openFilePicker: _noopPicker,
             ),
           ),
         ),

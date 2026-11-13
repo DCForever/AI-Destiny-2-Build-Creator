@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
 
+import 'open_file_path_picker.dart';
+import 'path_file_field.dart';
 import 'warlock_matrix_path_controller.dart';
 
-/// Settings card: Warlock matrix file path + Save + status.
+/// Settings card: Warlock matrix file path + Browse + Save + status.
 ///
-/// Path TextField only (no file picker). Matrix file stays read-only.
+/// Browse / field tap opens a native open-file picker (.json). Picking fills
+/// the path only — Save is still required. Matrix file stays read-only.
 class WarlockMatrixPathCard extends StatefulWidget {
   const WarlockMatrixPathCard({
     super.key,
     required this.controller,
     this.onSaved,
+    this.openFilePicker,
   });
 
   final WarlockMatrixPathController controller;
 
   /// Called after a successful Save with the persisted path (null if cleared).
   final ValueChanged<String?>? onSaved;
+
+  /// Injectable open-file picker (tests). Defaults to [defaultOpenFilePathPicker].
+  final OpenFilePathPicker? openFilePicker;
 
   @override
   State<WarlockMatrixPathCard> createState() => _WarlockMatrixPathCardState();
@@ -96,14 +103,15 @@ class _WarlockMatrixPathCardState extends State<WarlockMatrixPathCard> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            TextField(
-              key: const Key('warlock_matrix_path_field'),
+            PathFileField(
+              fieldKey: const Key('warlock_matrix_path_field'),
+              browseKey: const Key('warlock_matrix_path_browse'),
               controller: _pathController,
               enabled: !busy,
-              decoration: const InputDecoration(
-                labelText: 'Matrix file path',
-                border: OutlineInputBorder(),
-              ),
+              labelText: 'Matrix file path',
+              typeLabel: 'JSON',
+              extensions: const <String>['json'],
+              openFilePicker: widget.openFilePicker,
               onChanged: c.setPathField,
             ),
             const SizedBox(height: 12),

@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
 import 'legacy_db_import_controller.dart';
+import 'open_file_path_picker.dart';
+import 'path_file_field.dart';
 
 /// Settings card: dry-run + apply import of Next `.cache/app.db` (DART-048).
 class LegacyDbImportCard extends StatefulWidget {
   const LegacyDbImportCard({
     super.key,
     required this.controller,
+    this.openFilePicker,
   });
 
   final LegacyDbImportController controller;
+
+  /// Injectable open-file picker (tests). Defaults to [defaultOpenFilePathPicker].
+  final OpenFilePathPicker? openFilePicker;
 
   @override
   State<LegacyDbImportCard> createState() => _LegacyDbImportCardState();
@@ -83,14 +89,15 @@ class _LegacyDbImportCardState extends State<LegacyDbImportCard> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            TextField(
-              key: const Key('legacy_db_import_source_field'),
+            PathFileField(
+              fieldKey: const Key('legacy_db_import_source_field'),
+              browseKey: const Key('legacy_db_import_browse'),
               controller: _pathController,
               enabled: !busy,
-              decoration: const InputDecoration(
-                labelText: 'Source path (.cache/app.db)',
-                border: OutlineInputBorder(),
-              ),
+              labelText: 'Source path (.cache/app.db)',
+              typeLabel: 'SQLite DB',
+              extensions: const <String>['db'],
+              openFilePicker: widget.openFilePicker,
               onChanged: c.setSourcePath,
             ),
             const SizedBox(height: 12),
