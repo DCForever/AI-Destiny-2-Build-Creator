@@ -116,6 +116,11 @@ void main() {
       );
       await pumpPage(tester, controller);
 
+      // Browse defaults to grid; open the build detail to see DIM notes.
+      await tester.tap(find.byKey(const Key('builds_mock_card_bind_01')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
       expect(find.text('NOTES_FOR_SHARE_BBB'), findsOneWidget);
       expect(find.text('NOTES_FOR_SHARE_AAA'), findsNothing);
       expect(find.textContaining('ambiguous'), findsNothing);
@@ -137,6 +142,10 @@ void main() {
       );
       await pumpPage(tester, controller);
 
+      await tester.tap(find.byKey(const Key('builds_mock_card_bind_01')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
       expect(find.text('NOTES_FOR_SHARE_AAA'), findsOneWidget);
       expect(find.text('NOTES_FOR_SHARE_BBB'), findsNothing);
     },
@@ -152,6 +161,10 @@ void main() {
         dimLoadouts: twins,
       );
       await pumpPage(tester, controller);
+
+      await tester.tap(find.byKey(const Key('builds_mock_card_bind_01')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       expect(find.text('ambiguous (2 loadouts)'), findsOneWidget);
       expect(find.byKey(const Key('dim_loadout_details_ambiguous')), findsOneWidget);

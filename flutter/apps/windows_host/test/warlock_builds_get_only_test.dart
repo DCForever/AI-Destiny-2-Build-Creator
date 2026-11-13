@@ -53,6 +53,25 @@ void main() {
     await _until(() => methods.contains('GET'));
     expect(methods, ['GET']);
   });
+
+  test('matrix load over maxBytes surfaces a clear size-limit error', () async {
+    final dir = await Directory.systemTemp.createTemp('warlock_matrix_cap_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final file = File('${dir.path}/huge.json')
+      ..writeAsBytesSync(List<int>.filled(64, 0x20));
+
+    final controller = WarlockBuildsController(
+      http: GetOnlyHttpClient(HttpClient()),
+      initialPath: file.path,
+      matrixMaxBytes: 8,
+    );
+    addTearDown(controller.dispose);
+    await controller.load();
+
+    expect(controller.builds, isEmpty);
+    expect(controller.error, contains('file exceeds size limit'));
+    expect(controller.error, contains('64 > 8'));
+  });
 }
 
 Future<void> _until(bool Function() ready) async {

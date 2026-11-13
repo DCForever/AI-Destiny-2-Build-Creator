@@ -91,10 +91,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('builds_mock_matrix_error')), findsNothing);
-    expect(find.byKey(const Key('builds_mock_list')), findsOneWidget);
+    expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
     expect(find.text('Aeon solar sample'), findsWidgets);
     expect(find.text('Solipsism only works with Prismatic'), findsWidgets);
     expect(find.text('MOCK-UP — example data'), findsNothing);
+    expect(find.byKey(const Key('builds_mock_count')), findsOneWidget);
   });
 
   testWidgets('matrix read failure shows error, not sample builds', (
@@ -119,6 +120,31 @@ void main() {
     expect(find.textContaining('File not found'), findsOneWidget);
     expect(find.text('Techsec Prismatic core'), findsNothing);
     expect(find.text('MOCK-UP — example data'), findsNothing);
+  });
+
+  testWidgets('matrix over-cap error copy is shown (no sample builds)', (
+    tester,
+  ) async {
+    // Real dart:io maxBytes enforcement is covered by
+    // warlock_builds_get_only_test (controller.load). Widget tests must not
+    // start uncapped async IO from initState — inject the surfaced message.
+    final controller = BuildsMockController.forMatrixLoad()
+      ..failMatrixLoad('file exceeds size limit (64 > 8 bytes)');
+
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFlapTheme(brightness: Brightness.light),
+        home: Scaffold(body: BuildsMockPage(controller: controller)),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('builds_mock_matrix_error')), findsOneWidget);
+    expect(find.textContaining('file exceeds size limit'), findsOneWidget);
+    expect(find.textContaining('64 > 8'), findsOneWidget);
+    expect(find.text('Techsec Prismatic core'), findsNothing);
   });
 }
 
