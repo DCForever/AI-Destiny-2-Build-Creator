@@ -24,6 +24,7 @@ export 'src/catalog/catalog_weapons_workspace.dart';
 export 'src/catalog/neon_facet_chip.dart';
 export 'src/bungie_content_assets.dart';
 export 'src/bungie_content_icon.dart';
+export 'src/destiny_class_icons.dart';
 export 'src/destiny_official_icons.dart';
 export 'src/flap_board.dart';
 export 'src/flap_column_flex.dart';

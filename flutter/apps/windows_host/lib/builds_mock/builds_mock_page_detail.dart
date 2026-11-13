@@ -5,10 +5,15 @@ extension _BuildsMockDetail on _BuildsMockPageState {
 
   Widget _buildBrowse(BuildContext context) {
     final builds = _controller.visibleBuilds;
+    final palette = FlapPalette.of(context);
     return Column(
       key: const Key('builds_mock_detail'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: _disabledOptimizeTabs(palette),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
           child: SegmentedButton<BuildsMockCardLayout>(
@@ -29,8 +34,41 @@ extension _BuildsMockDetail on _BuildsMockPageState {
             onSelectionChanged: (s) => _controller.setCardLayout(s.first),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+          child: Text(
+            'Armor pool and Re-optimize are disabled — coming with Optimize '
+            '(no inventory data yet).',
+            key: const Key('builds_mock_optimize_tabs_hint'),
+            style: neonMono(color: palette.muted, fontSize: 10),
+          ),
+        ),
         Expanded(child: _cardLayoutBody(context, builds)),
       ],
+    );
+  }
+
+  Widget _disabledOptimizeTabs(FlapPalette palette) {
+    return IgnorePointer(
+      child: SegmentedButton<String>(
+        key: const Key('builds_mock_optimize_tabs'),
+        segments: const [
+          ButtonSegment(value: 'detail', label: Text('Detail')),
+          ButtonSegment(
+            value: 'pool',
+            label: Text('Armor pool'),
+            enabled: false,
+          ),
+          ButtonSegment(
+            value: 'reopt',
+            label: Text('Re-optimize'),
+            enabled: false,
+          ),
+        ],
+        selected: const {'detail'},
+        onSelectionChanged: (_) {},
+        emptySelectionAllowed: false,
+      ),
     );
   }
 
@@ -44,6 +82,7 @@ extension _BuildsMockDetail on _BuildsMockPageState {
   }
 
   Widget _buildGrid(List<MockBuild> builds) {
+    final dupes = _derivedNameDupes(builds);
     return LayoutBuilder(
       builder: (context, constraints) {
         final cols = constraints.maxWidth < _kGridTwoColBreakpoint ? 2 : 3;
@@ -54,17 +93,15 @@ extension _BuildsMockDetail on _BuildsMockPageState {
             crossAxisCount: cols,
             mainAxisSpacing: kPanelPadSm,
             crossAxisSpacing: kPanelPadSm,
-            mainAxisExtent: 176,
+            mainAxisExtent: 420,
           ),
           itemCount: builds.length,
           itemBuilder: (context, i) {
             final build = builds[i];
-            return BuildsMockLoadoutCard(
-              loadout: build,
-              selected: build.id == _controller.selectedId,
+            return _browseCardFor(
+              build,
               density: BuildsMockCardDensity.tile,
-              priorities: _controller.statPrioritiesFor(build),
-              onSelect: () => _controller.openBuildDetail(build.id),
+              duplicateIndex: dupes[build.id] ?? 1,
             );
           },
         );
@@ -73,54 +110,54 @@ extension _BuildsMockDetail on _BuildsMockPageState {
   }
 
   Widget _buildList(List<MockBuild> builds) {
-    final palette = FlapPalette.of(context);
-    return Column(
+    final dupes = _derivedNameDupes(builds);
+    return ListView.builder(
       key: const Key('builds_mock_card_list'),
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          color: palette.surfaceRaised,
-          child: Row(
-            children: [
-              _listHeader('BUILD', flex: 3),
-              _listHeader('EXOTICS', flex: 2),
-              _listHeader('STATS', flex: 2),
-              _listHeader('ARTIFACT', flex: 1),
-            ],
+      padding: const EdgeInsets.all(kPanelPadSm),
+      itemCount: builds.length,
+      itemBuilder: (context, i) {
+        final build = builds[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _browseCardFor(
+            build,
+            density: BuildsMockCardDensity.list,
+            duplicateIndex: dupes[build.id] ?? 1,
           ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            key: const Key('builds_mock_list'),
-            itemCount: builds.length,
-            itemBuilder: (context, i) {
-              final build = builds[i];
-              return BuildsMockLoadoutCard(
-                loadout: build,
-                selected: build.id == _controller.selectedId,
-                density: BuildsMockCardDensity.list,
-                priorities: _controller.statPrioritiesFor(build),
-                onSelect: () => _controller.openBuildDetail(build.id),
-              );
-            },
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _listHeader(String label, {required int flex}) {
-    final palette = FlapPalette.of(context);
-    return Expanded(
-      flex: flex,
-      child: Text(
-        label,
-        style: neonDisplay(
-          color: palette.muted,
-          fontSize: 9,
-          letterSpacing: 0.8,
-        ),
-      ),
+  Widget _browseCardFor(
+    MockBuild build, {
+    required BuildsMockCardDensity density,
+    required int duplicateIndex,
+  }) {
+    final loadout = _controller.dimLoadoutFor(build);
+    final enriched = _enrichmentCache.enrich(build, loadout);
+    final derived = deriveBuildsMockName(
+      build: enriched,
+      loadout: loadout,
+      duplicateIndexWithinClass: duplicateIndex,
+    );
+    return BuildsMockLoadoutCard(
+      loadout: enriched,
+      derivedName: derived,
+      selected: build.id == _controller.selectedId,
+      density: density,
+      priorities: _controller.statPrioritiesFor(build),
+      fillInPlan: _savedFillInPlans[build.id],
+      superIconPath: dimLoadoutSuperIconPath(loadout),
+      onSelect: () => _controller.openBuildDetail(build.id),
+    );
+  }
+
+  Map<String, int> _derivedNameDupes(List<MockBuild> builds) {
+    return buildsMockDerivedNameDuplicateIndices(
+      builds: builds,
+      enrich: (b) => _enrichmentCache.enrich(b, _controller.dimLoadoutFor(b)),
+      loadoutFor: _controller.dimLoadoutFor,
     );
   }
 }

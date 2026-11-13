@@ -47,7 +47,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  testWidgets('default view is grid with count and no page tabs', (
+  testWidgets('default view is grid with disabled Optimize tabs', (
     tester,
   ) async {
     await pumpMock(tester);
@@ -57,10 +57,10 @@ void main() {
     expect(find.byKey(const Key('builds_mock_detail')), findsOneWidget);
     expect(find.byKey(const Key('builds_mock_card_grid_3')), findsOneWidget);
     expect(find.byKey(const Key('builds_mock_card_list')), findsNothing);
-    expect(find.byKey(const Key('builds_mock_tabs')), findsNothing);
-    expect(find.text('Detail'), findsNothing);
-    expect(find.text('Armor pool'), findsNothing);
-    expect(find.text('Re-optimize'), findsNothing);
+    expect(find.byKey(const Key('builds_mock_optimize_tabs')), findsOneWidget);
+    expect(find.text('Armor pool'), findsWidgets);
+    expect(find.text('Re-optimize'), findsWidgets);
+    expect(find.textContaining('coming with Optimize'), findsOneWidget);
     expect(find.text('New build'), findsNothing);
     expect(
       find.byKey(const Key('builds_mock_count')),
@@ -80,7 +80,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('builds_mock_card_list')), findsOneWidget);
-    expect(find.byKey(const Key('builds_mock_list')), findsOneWidget);
     expect(find.byKey(const Key('builds_mock_card_grid_3')), findsNothing);
     expect(controller.cardLayout, BuildsMockCardLayout.list);
 
@@ -101,11 +100,13 @@ void main() {
 
     expect(find.byKey(const Key('builds_mock_build_detail')), findsOneWidget);
     expect(find.byKey(const Key('builds_mock_detail_back')), findsOneWidget);
-    expect(find.byKey(const Key('dim_loadout_details_panel')), findsOneWidget);
-    expect(find.text('Armor pool'), findsOneWidget);
-    expect(find.text('Re-optimize'), findsOneWidget);
+    expect(find.byKey(const Key('dim_loadout_details_panel')), findsNothing);
+    expect(find.text('Armor pool'), findsWidgets);
+    expect(find.text('Re-optimize'), findsWidgets);
+    expect(find.textContaining('coming with Optimize'), findsWidgets);
+    expect(find.text('Proposed swaps (dry-run — local UI only)'), findsNothing);
     expect(find.text('Fill In'), findsOneWidget);
-    expect(find.text('Optimize'), findsOneWidget);
+    expect(find.text('Optimize'), findsWidgets);
     expect(find.text('Apply to character'), findsOneWidget);
 
     final fillIn = tester.widget<FilledButton>(
@@ -196,7 +197,7 @@ void main() {
     expect(errors, isEmpty);
   });
 
-  testWidgets('detail pool shows More than X held flags with Cap', (
+  testWidgets('detail no longer shows Armor pool / Re-optimize sections', (
     tester,
   ) async {
     final controller = BuildsMockController();
@@ -206,50 +207,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('More than 2 held'), findsWidgets);
-
-    await tester.tap(find.byKey(const Key('builds_mock_cap')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(find.text('4').last);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
+    expect(find.byKey(const Key('builds_mock_pool')), findsNothing);
+    expect(find.byKey(const Key('builds_mock_reoptimize')), findsNothing);
     expect(find.text('More than 2 held'), findsNothing);
-    expect(find.text('More than 4 held'), findsNothing);
-  });
-
-  testWidgets('detail readiness shows Ready for Techsec', (tester) async {
-    await pumpMock(tester);
-
-    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    expect(find.byKey(const Key('builds_mock_ready_set_techsec')), findsOneWidget);
-    expect(
-      find.byKey(const Key('builds_mock_ready_badge_set_techsec')),
-      findsOneWidget,
-    );
-    expect(find.text('Ready'), findsWidgets);
-  });
-
-  testWidgets('Accept/Reject swap buttons stay disabled on detail', (
-    tester,
-  ) async {
-    await pumpMock(tester);
-    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    final accept = tester.widget<FilledButton>(
-      find.byKey(const Key('builds_mock_swap_accept_swap1')),
-    );
-    final reject = tester.widget<OutlinedButton>(
-      find.byKey(const Key('builds_mock_swap_reject_swap1')),
-    );
-    expect(accept.onPressed, isNull);
-    expect(reject.onPressed, isNull);
+    expect(find.text('Proposed swaps (dry-run — local UI only)'), findsNothing);
+    expect(find.byKey(const Key('builds_mock_optimize_tabs')), findsOneWidget);
   });
 
   testWidgets('Solipsism non-Prismatic shows review flag on grid card', (
@@ -289,8 +251,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.byKey(const Key('builds_mock_build_detail')), findsOneWidget);
-      expect(find.byKey(const Key('builds_mock_pool')), findsOneWidget);
-      expect(find.byKey(const Key('builds_mock_reoptimize')), findsOneWidget);
+      expect(find.byKey(const Key('builds_mock_pool')), findsNothing);
+      expect(find.byKey(const Key('builds_mock_reoptimize')), findsNothing);
+      expect(find.byKey(const Key('builds_mock_optimize_tabs')), findsOneWidget);
       return;
     }
 

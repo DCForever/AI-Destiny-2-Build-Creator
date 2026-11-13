@@ -127,8 +127,79 @@ extension _BuildsMockRail on _BuildsMockPageState {
             ],
           ),
         ),
-        const Spacer(),
+        const SizedBox(height: kSpace8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: kPanelPadSm),
+          child: Text(
+            'BUILDS',
+            style: neonDisplay(
+              color: FlapPalette.of(context).muted,
+              fontSize: 9,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+        Expanded(
+          child: _sidebarBuildList(context),
+        ),
       ],
+    );
+  }
+
+  Widget _sidebarBuildList(BuildContext context) {
+    final builds = _controller.visibleBuilds;
+    final dupes = buildsMockDerivedNameDuplicateIndices(
+      builds: builds,
+      enrich: (b) => _enrichmentCache.enrich(b, _controller.dimLoadoutFor(b)),
+      loadoutFor: _controller.dimLoadoutFor,
+    );
+    final palette = FlapPalette.of(context);
+    return ListView.builder(
+      key: const Key('builds_mock_sidebar_list'),
+      padding: const EdgeInsets.symmetric(horizontal: kPanelPadSm),
+      itemCount: builds.length,
+      itemBuilder: (context, i) {
+        final build = builds[i];
+        final loadout = _controller.dimLoadoutFor(build);
+        final enriched = _enrichmentCache.enrich(build, loadout);
+        final derived = deriveBuildsMockName(
+          build: enriched,
+          loadout: loadout,
+          duplicateIndexWithinClass: dupes[build.id] ?? 1,
+        );
+        final selected = build.id == _controller.selectedId;
+        return InkWell(
+          key: Key('builds_mock_sidebar_${build.id}'),
+          onTap: () => _controller.openBuildDetail(build.id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? palette.accentDim : Colors.transparent,
+              border: Border(
+                bottom: BorderSide(color: palette.line, width: kFlapRuleThickness),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BuildsMockDerivedTitle(
+                  name: derived,
+                  iconSize: 13,
+                  fontSize: 12,
+                  superIconPath: dimLoadoutSuperIconPath(loadout),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  derived.sourceName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: neonMono(color: palette.muted, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

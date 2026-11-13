@@ -12,12 +12,34 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       );
     }
     final binding = _controller.dimBindingFor(build);
-    final displayBuild = enrichMockBuildFromDimLoadout(
-      build,
-      loadout: binding.loadout,
+    final loadout = binding.loadout;
+    final displayBuild = _enrichmentCache.enrich(build, loadout);
+    final dupes = buildsMockDerivedNameDuplicateIndices(
+      builds: _controller.visibleBuilds,
+      enrich: (b) => _enrichmentCache.enrich(b, _controller.dimLoadoutFor(b)),
+      loadoutFor: _controller.dimLoadoutFor,
+    );
+    final derived = deriveBuildsMockName(
+      build: displayBuild,
+      loadout: loadout,
+      duplicateIndexWithinClass: dupes[build.id] ?? 1,
+    );
+    final plan = _savedFillInPlans[build.id];
+    final plugs = splitSubclassPlugs(loadout?.subclassPlugs ?? const []);
+    final placed = placeDimMods(
+      mods: loadout?.mods ?? const [],
+      build: displayBuild,
     );
     final palette = FlapPalette.of(context);
     final applyProgress = _applyProgressByBuild[build.id];
+    // Prefer DIM artifact perk names; fall back to mock artifact.perks.
+    final perkNames = (loadout?.artifactPerks.isNotEmpty ?? false)
+        ? [
+            for (final p in loadout!.artifactPerks)
+              if (p.name.trim().isNotEmpty) p.name.trim(),
+          ]
+        : artifactPerksFromBuild(displayBuild);
+
     return Column(
       key: const Key('builds_mock_build_detail'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,30 +56,50 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  displayBuild.name,
-                  style: Theme.of(context).textTheme.titleMedium,
-                  overflow: TextOverflow.ellipsis,
+                child: BuildsMockDerivedTitle(
+                  name: derived,
+                  iconSize: 16,
+                  fontSize: 14,
+                  superIconPath: dimLoadoutSuperIconPath(loadout),
                 ),
               ),
-              Text(
-                displayBuild.subclass,
-                style: neonDisplay(fontSize: 11, letterSpacing: 0.6),
-              ),
             ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: IgnorePointer(
+            child: SegmentedButton<String>(
+              key: const Key('builds_mock_optimize_tabs'),
+              segments: const [
+                ButtonSegment(value: 'detail', label: Text('Detail')),
+                ButtonSegment(
+                  value: 'pool',
+                  label: Text('Armor pool'),
+                  enabled: false,
+                ),
+                ButtonSegment(
+                  value: 'reopt',
+                  label: Text('Re-optimize'),
+                  enabled: false,
+                ),
+              ],
+              selected: const {'detail'},
+              onSelectionChanged: (_) {},
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+          child: Text(
+            'Armor pool and Re-optimize are disabled — coming with Optimize.',
+            style: neonMono(color: palette.muted, fontSize: 10),
           ),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.all(kPanelPadSm),
             children: [
-              BuildsMockLoadoutCard(
-                loadout: displayBuild,
-                selected: true,
-                density: BuildsMockCardDensity.detail,
-                priorities: _controller.statPrioritiesFor(build),
-              ),
-              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -99,6 +141,14 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                     ),
                 ],
               ),
+              if (plan != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  fillInSavedPlanTitle(plan),
+                  key: const Key('fill_in_saved_title'),
+                  style: neonMono(color: palette.muted, fontSize: 12),
+                ),
+              ],
               if (applyProgress != null) ...[
                 const SizedBox(height: 12),
                 _ApplyProgressPanel(
@@ -114,26 +164,33 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
-              if (_savedFillInPlans[build.id] != null) ...[
-                const SizedBox(height: 12),
-                FillInSavedPlanCard(plan: _savedFillInPlans[build.id]!),
+              if (binding.status == DimLoadoutsPanelStatus.ambiguous) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'ambiguous (${binding.ambiguousCount} loadouts)',
+                  key: const Key('dim_loadout_details_ambiguous'),
+                  style: neonMono(color: palette.muted, fontSize: 12),
+                ),
               ],
-              const SizedBox(height: 12),
-              DimLoadoutDetailsPanel.fromBinding(binding),
-              const SizedBox(height: 16),
-              Text(
-                'Armor pool',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
               const SizedBox(height: 8),
-              _buildPool(context, forBuild: build),
-              const SizedBox(height: 16),
-              Text(
-                'Re-optimize',
-                style: Theme.of(context).textTheme.titleMedium,
+              BuildsMockLoadoutCard(
+                loadout: displayBuild,
+                derivedName: derived,
+                selected: true,
+                density: BuildsMockCardDensity.detail,
+                priorities: _controller.statPrioritiesFor(build),
+                fillInPlan: plan,
+                superIconPath: dimLoadoutSuperIconPath(loadout),
+                showMods: true,
+                modsBySlot: placed.bySlot,
+                unplacedMods: placed.unplaced,
+                subclassAbilities: plugs.abilities,
+                subclassAspects: plugs.aspects,
+                subclassFragments: plugs.fragments,
+                artifactPerks: perkNames,
+                notes: loadout?.notes,
+                showDetailExtras: true,
               ),
-              const SizedBox(height: 8),
-              _buildReoptimize(context, forBuild: build),
               const SizedBox(height: 12),
               Text(
                 'Fill In updates this app copy; Undo fill in restores it. '
@@ -173,6 +230,13 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       },
     );
   }
+}
+
+List<String> artifactPerksFromBuild(MockBuild build) {
+  return [
+    for (final p in build.artifact.perks)
+      if (p.trim().isNotEmpty && p.trim() != '—') p.trim(),
+  ];
 }
 
 class _ApplyProgressPanel extends StatelessWidget {
@@ -265,4 +329,3 @@ class _ApplyStateIcon extends StatelessWidget {
     }
   }
 }
-

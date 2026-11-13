@@ -46,14 +46,27 @@ class CachedDimExotic {
 }
 
 /// Optional subclass summary.
+///
+/// [superName] / [superIconPath] are additive optional fields from the
+/// compiled cache when present. Older catalogs omit them.
 class CachedDimSubclass {
   const CachedDimSubclass({
     required this.hash,
     required this.name,
+    this.superName,
+    this.superIconPath,
   });
 
   final int hash;
+
+  /// Element / subclass display name (e.g. Strand).
   final String name;
+
+  /// Super ability display name when the compiler included it.
+  final String? superName;
+
+  /// Relative Bungie icon path for the Super when present.
+  final String? superIconPath;
 }
 
 /// One DIM optimizer constraint row (order = priority).

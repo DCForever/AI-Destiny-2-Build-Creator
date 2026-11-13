@@ -1,3 +1,4 @@
+import 'package:destiny2_windows_host/builds_mock/builds_mock_derived_name.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_loadout_card.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'test_material_theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('chip list never contains an empty-name filled-in chip',
+  testWidgets('filled slots never surface blank item names on the detail card',
       (tester) async {
     const build = MockBuild(
       id: 'chip_filter',
@@ -42,33 +43,25 @@ void main() {
       setBonuses: [],
       stats: [],
     );
+    final derived = deriveBuildsMockName(build: build);
 
     await tester.pumpWidget(
       MaterialApp(
         theme: testMaterialTheme(),
-        home: const Scaffold(
+        home: Scaffold(
           body: BuildsMockLoadoutCard(
             loadout: build,
+            derivedName: derived,
             density: BuildsMockCardDensity.detail,
           ),
         ),
       ),
     );
 
-    expect(
-      find.byKey(const Key('builds_mock_filled_in_chip_filter_primary')),
-      findsOneWidget,
-    );
-    expect(find.text('Filled in · Qua Nilus II'), findsOneWidget);
-    // Empty / whitespace names must never render a chip.
-    expect(find.textContaining('Filled in ·'), findsOneWidget);
-    expect(
-      find.byKey(const Key('builds_mock_filled_in_chip_filter_special')),
-      findsNothing,
-    );
-    expect(
-      find.byKey(const Key('builds_mock_filled_in_chip_filter_heavy')),
-      findsNothing,
-    );
+    expect(find.text('Qua Nilus II'), findsWidgets);
+    expect(find.text('Filled in'), findsWidgets);
+    // Blank / whitespace piece names must never appear as a titled chip.
+    expect(find.textContaining('Filled in ·'), findsNothing);
+    expect(find.text('None'), findsNothing);
   });
 }

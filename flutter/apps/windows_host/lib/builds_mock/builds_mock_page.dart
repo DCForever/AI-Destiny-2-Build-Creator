@@ -5,23 +5,23 @@ import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
-import '../dim_loadouts/dim_loadout_details_panel.dart';
-import '../fill_in/fill_in_build_mapper.dart';
+import '../dim_loadouts/dim_loadout_details_panel.dart'
+    show DimLoadoutsPanelStatus;
 import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
 import '../fill_in/fill_in_saved_plan_card.dart';
 import '../host_bootstrap.dart';
 import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
+import 'builds_mock_derived_name.dart';
+import 'builds_mock_derived_title.dart';
 import 'builds_mock_loadout_card.dart';
-import 'builds_mock_logic.dart';
 import 'builds_mock_matrix_loader.dart';
 import 'builds_mock_models.dart';
+import 'builds_mock_presentation.dart';
 part 'builds_mock_page_rail.dart';
 part 'builds_mock_page_detail.dart';
 part 'builds_mock_page_build_detail.dart';
-part 'builds_mock_page_pool.dart';
-part 'builds_mock_page_reoptimize.dart';
 
 /// Builds list page — production feeds the Warlock matrix; tests inject a
 /// controller with the synthetic fixture.
@@ -71,6 +71,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   late final BuildsMockController _controller;
   late final bool _ownsController;
   late final TextEditingController _search;
+  final BuildsMockEnrichmentCache _enrichmentCache = BuildsMockEnrichmentCache();
   Map<String, FillInSavedBuildPlan> _savedFillInPlans =
       const <String, FillInSavedBuildPlan>{};
   final Map<String, ApplyToCharacterProgress> _applyProgressByBuild =

@@ -31,4 +31,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/destiny-icons/weapons/
+    - assets/destiny-icons/general/
     - assets/bungie-content/icons/
