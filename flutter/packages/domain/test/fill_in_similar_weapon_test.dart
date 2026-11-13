@@ -141,18 +141,74 @@ void main() {
       expect(suggestion.item.itemHash, 100);
     });
 
-    test('returns null when need type or damage is blank', () {
+    test('returns null when need blank and inventory empty', () {
       expect(
         suggestSimilarWeapon(
           need: const FillInWeaponNeed(
             slot: EquipmentSlot.special,
             damageType: '',
-            weaponType: 'Hand Cannon',
+            weaponType: '',
           ),
           heldWeapons: const [],
         ),
         isNull,
       );
+    });
+
+    test('slot-only pick when need has no damage/type profile', () {
+      final held = [
+        gun(
+          id: 'any',
+          hash: 5,
+          name: 'Funnelweb',
+          slot: EquipmentSlot.special,
+          type: 'Submachine Gun',
+          element: 'Void',
+        ),
+      ];
+      final suggestion = suggestSimilarWeapon(
+        need: const FillInWeaponNeed(
+          slot: EquipmentSlot.special,
+          damageType: '',
+          weaponType: '',
+        ),
+        heldWeapons: held,
+      );
+      expect(suggestion, isNotNull);
+      expect(suggestion!.tier, FillInSimilarWeaponTier.slotOnly);
+      expect(suggestion.item.name, 'Funnelweb');
+    });
+
+    test('excludeExotic skips exotic candidates', () {
+      final held = [
+        gun(
+          id: 'ex',
+          hash: 1,
+          name: 'Riskrunner',
+          slot: EquipmentSlot.special,
+          type: 'Submachine Gun',
+          element: 'Arc',
+          exotic: true,
+        ),
+        gun(
+          id: 'leg',
+          hash: 2,
+          name: 'Funnelweb',
+          slot: EquipmentSlot.special,
+          type: 'Submachine Gun',
+          element: 'Void',
+        ),
+      ];
+      final suggestion = suggestSimilarWeapon(
+        need: const FillInWeaponNeed(
+          slot: EquipmentSlot.special,
+          damageType: '',
+          weaponType: '',
+        ),
+        heldWeapons: held,
+        excludeExotic: true,
+      );
+      expect(suggestion!.item.name, 'Funnelweb');
     });
 
     test('comparison is case-insensitive for type and damage', () {

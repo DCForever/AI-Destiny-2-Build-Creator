@@ -62,6 +62,70 @@ class FillInAppliedSlot {
   }
 }
 
+/// One Armor/Weapons row on a saved Fill In plan (detail card).
+///
+/// [state] is `held`, `filled`, or `missing`. [itemName] is never blank for
+/// held/filled; missing rows may omit a name (UI shows slot + missing only).
+class FillInSavedSlotRow {
+  const FillInSavedSlotRow({
+    required this.slotWire,
+    required this.slotLabel,
+    required this.state,
+    this.itemName = '',
+  });
+
+  final String slotWire;
+  final String slotLabel;
+
+  /// `held` | `filled` | `missing`
+  final String state;
+  final String itemName;
+
+  bool get isArmor {
+    switch (slotWire) {
+      case 'helmet':
+      case 'arms':
+      case 'chest':
+      case 'legs':
+      case 'class_item':
+      case 'exotic_armor':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  bool get isWeapon {
+    switch (slotWire) {
+      case 'primary':
+      case 'special':
+      case 'heavy':
+      case 'exotic_weapon':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'slot': slotWire,
+      'slotLabel': slotLabel,
+      'state': state,
+      if (itemName.trim().isNotEmpty) 'itemName': itemName.trim(),
+    };
+  }
+
+  factory FillInSavedSlotRow.fromJson(Map<String, dynamic> json) {
+    return FillInSavedSlotRow(
+      slotWire: (json['slot'] as String? ?? '').trim(),
+      slotLabel: (json['slotLabel'] as String? ?? '').trim(),
+      state: (json['state'] as String? ?? 'missing').trim().toLowerCase(),
+      itemName: (json['itemName'] as String? ?? '').trim(),
+    );
+  }
+}
+
 /// One build's saved Fill In missing list (+ optional similar weapon + applied).
 class FillInSavedBuildPlan {
   const FillInSavedBuildPlan({
@@ -70,6 +134,7 @@ class FillInSavedBuildPlan {
     this.similarWeaponName,
     this.similarForName,
     this.applied = const [],
+    this.rows = const [],
     this.updatedAt,
   });
 
@@ -80,6 +145,9 @@ class FillInSavedBuildPlan {
 
   /// Substitutions written into the app build copy (empty when not applied).
   final List<FillInAppliedSlot> applied;
+
+  /// Structured Armor/Weapons rows for the detail card (additive; optional).
+  final List<FillInSavedSlotRow> rows;
 
   final String? updatedAt;
 
@@ -92,6 +160,7 @@ class FillInSavedBuildPlan {
       if (similarForName != null) 'similarForName': similarForName,
       if (applied.isNotEmpty)
         'applied': [for (final a in applied) a.toJson()],
+      if (rows.isNotEmpty) 'rows': [for (final r in rows) r.toJson()],
       if (updatedAt != null) 'updatedAt': updatedAt,
     };
   }
@@ -115,8 +184,34 @@ class FillInSavedBuildPlan {
       for (final entry in rawApplied) {
         if (entry is Map<String, dynamic>) {
           final slot = FillInAppliedSlot.fromJson(entry);
-          if (slot.slotWire.isNotEmpty) applied.add(slot);
+          // Drop blank-name applied rows from old saves; keep equip pins that
+          // still have a non-empty label or an instance id.
+          if (slot.slotWire.isEmpty) continue;
+          if (slot.label.trim().isEmpty &&
+              (slot.instanceId == null || slot.instanceId!.trim().isEmpty)) {
+            continue;
+          }
+          if (slot.label.trim().isEmpty) {
+            // Equip pin with blank display name — keep for Apply, but callers
+            // must never render the empty name.
+            applied.add(slot);
+            continue;
+          }
+          applied.add(slot);
         }
+      }
+    }
+    final rows = <FillInSavedSlotRow>[];
+    final rawRows = json['rows'];
+    if (rawRows is List) {
+      for (final entry in rawRows) {
+        if (entry is! Map<String, dynamic>) continue;
+        final row = FillInSavedSlotRow.fromJson(entry);
+        if (row.slotWire.isEmpty) continue;
+        if (row.slotLabel.trim().isEmpty) continue;
+        // Never keep blank item names for held/filled; missing may omit name.
+        if (row.state != 'missing' && row.itemName.trim().isEmpty) continue;
+        rows.add(row);
       }
     }
     return FillInSavedBuildPlan(
@@ -125,6 +220,7 @@ class FillInSavedBuildPlan {
       similarWeaponName: json['similarWeaponName'] as String?,
       similarForName: json['similarForName'] as String?,
       applied: List<FillInAppliedSlot>.unmodifiable(applied),
+      rows: List<FillInSavedSlotRow>.unmodifiable(rows),
       updatedAt: json['updatedAt'] as String?,
     );
   }
@@ -134,6 +230,7 @@ class FillInSavedBuildPlan {
     String? similarWeaponName,
     String? similarForName,
     List<FillInAppliedSlot>? applied,
+    List<FillInSavedSlotRow>? rows,
     String? updatedAt,
     bool clearApplied = false,
   }) {
@@ -145,6 +242,7 @@ class FillInSavedBuildPlan {
       applied: clearApplied
           ? const []
           : (applied ?? this.applied),
+      rows: rows ?? this.rows,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -243,10 +341,37 @@ class FillInMissingListStore {
 
     final stamped = FillInSavedBuildPlan(
       buildId: id,
-      missing: plan.missing,
+      missing: [
+        for (final m in plan.missing)
+          if (m.trim().isNotEmpty) m.trim(),
+      ],
       similarWeaponName: plan.similarWeaponName,
       similarForName: plan.similarForName,
-      applied: plan.applied,
+      applied: [
+        for (final a in plan.applied)
+          if (a.slotWire.trim().isNotEmpty &&
+              (a.label.trim().isNotEmpty ||
+                  (a.instanceId != null && a.instanceId!.trim().isNotEmpty)))
+            FillInAppliedSlot(
+              slotWire: a.slotWire,
+              label: a.label.trim(),
+              originalLabel: a.originalLabel.trim(),
+              instanceId: a.instanceId,
+              itemHash: a.itemHash,
+            ),
+      ],
+      rows: [
+        for (final r in plan.rows)
+          if (r.slotWire.trim().isNotEmpty &&
+              r.slotLabel.trim().isNotEmpty &&
+              (r.state == 'missing' || r.itemName.trim().isNotEmpty))
+            FillInSavedSlotRow(
+              slotWire: r.slotWire.trim(),
+              slotLabel: r.slotLabel.trim(),
+              state: r.state,
+              itemName: r.itemName.trim(),
+            ),
+      ],
       updatedAt: plan.updatedAt ?? DateTime.now().toUtc().toIso8601String(),
     );
     builds[id] = stamped;

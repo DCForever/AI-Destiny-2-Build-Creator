@@ -29,7 +29,9 @@ const List<String> kFillInBannedPatterns = <String>[
 /// Domain was 10 → 11 when `fill_in_dim_loadout.dart` was added (DIM loadout
 /// → Fill In piece extraction; still pure / no IO / no writes).
 const int kDomainFillInSourceFileCount = 11;
-const int kWindowsHostFillInSourceFileCount = 4;
+/// Was 4 → 5 when `fill_in_saved_plan_card.dart` was added (detail-card
+/// Armor/Weapons saved-plan UI; still read-only / no IO / no writes).
+const int kWindowsHostFillInSourceFileCount = 5;
 
 void main() {
   test('Fill In sources never import write/transfer/equip/io/http', () {

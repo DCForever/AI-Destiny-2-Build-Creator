@@ -510,6 +510,8 @@ void main() {
     }
     expect(find.textContaining(kFillInNoWeaponInDimLink), findsNothing);
     expect(find.byKey(const Key('fill_in_similar_weapon')), findsNothing);
+    expect(find.byKey(const Key('fill_in_section_armor')), findsOneWidget);
+    expect(find.byKey(const Key('fill_in_section_weapons')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('fill_in_apply_to_build')));
     await tester.pump();
@@ -633,8 +635,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(saved, isNotNull);
+    // Lowercase so toLowerCase() comparisons can actually fail (Skeptic).
     final banned = {
-      kFillInNoWeaponInDimLink,
+      kFillInNoWeaponInDimLink.toLowerCase(),
       'primary',
       'special',
       'heavy',
@@ -661,5 +664,221 @@ void main() {
     expect(updated!.exoticWeapon.toLowerCase(), isNot('special'));
     expect(updated!.exoticWeapon.toLowerCase(), isNot('heavy'));
     expect(updated!.exoticWeapon, isNot(kFillInNoWeaponInDimLink));
+  });
+
+  testWidgets(
+    'empty Energy/Power get same-bucket Similar picks; Apply writes weapons; Undo restores',
+    (tester) async {
+      MockBuild? updated;
+      FillInSavedBuildPlan? saved;
+
+      // Kinetic exotic held; Energy/Power absent from DIM + build.
+      const loadout = CachedDimLoadout(
+        shareId: 'syn-empty-weapons',
+        name: 'Empty energy/power',
+        classType: 2,
+        items: [
+          CachedDimItem(
+            hash: 7001,
+            name: 'Swarmers',
+            itemType: 'Leg Armor',
+            tier: 'Exotic',
+          ),
+          CachedDimItem(
+            hash: 8001,
+            name: 'Barrow-Dyad',
+            itemType: 'Kinetic Weapons',
+            tier: 'Exotic',
+          ),
+        ],
+        subclassPlugs: [],
+        mods: [],
+        artifactPerks: [],
+        exotic: CachedDimExotic(
+          hash: 7001,
+          name: 'Swarmers',
+          description: '',
+        ),
+      );
+      const build = MockBuild(
+        id: 'matrix_empty_weps',
+        name: 'Empty weapons',
+        subclass: 'Strand',
+        exoticArmor: '',
+        exoticWeapon: 'Barrow-Dyad',
+        slots: [],
+        loop: 'loop',
+        artifact: MockArtifact(name: '—', season: '—'),
+        setBonuses: [],
+        stats: [],
+        dimLink: 'https://dim.gg/syn-empty-weapons',
+      );
+      final inventory = [
+        ..._inventory(),
+        // Ensure Energy/Power held copies exist for substitutes.
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: testMaterialTheme(),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  key: const Key('open_fill_in'),
+                  onPressed: () {
+                    showFillInDialog(
+                      context: context,
+                      build: build,
+                      dimLoadout: loadout,
+                      loadCaches: () async =>
+                          FillInCacheLoadResult.ok(inventory),
+                      saveMissingList: (plan) async => saved = plan,
+                      onBuildUpdated: (b) => updated = b,
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('open_fill_in')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.byKey(const Key('fill_in_section_armor')), findsOneWidget);
+      expect(find.byKey(const Key('fill_in_section_weapons')), findsOneWidget);
+      expect(find.textContaining('Barrow-Dyad → held'), findsOneWidget);
+      expect(
+        find.byKey(const Key('fill_in_similar_pick_special')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('fill_in_similar_pick_heavy')),
+        findsOneWidget,
+      );
+      // Similar pick is labeled for its own slot — never "for Barrow-Dyad".
+      expect(find.textContaining('(for Barrow-Dyad)'), findsNothing);
+      expect(find.textContaining('Similar pick: Funnelweb'), findsOneWidget);
+      expect(find.textContaining('Similar pick: Cataclysmic'), findsOneWidget);
+
+      final beforeApply = enrichMockBuildFromDimLoadout(build, loadout: loadout);
+
+      await tester.tap(find.byKey(const Key('fill_in_apply_to_build')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(saved, isNotNull);
+      expect(saved!.applied, isNotEmpty);
+      expect(
+        saved!.applied.any((a) => a.label.trim().isEmpty),
+        isFalse,
+        reason: 'applied must never write empty names',
+      );
+      expect(updated, isNotNull);
+      final energy = updated!.slots.where((s) => s.slot == 'special');
+      final power = updated!.slots.where((s) => s.slot == 'heavy');
+      expect(energy, isNotEmpty);
+      expect(energy.first.pieceName, 'Funnelweb');
+      expect(power, isNotEmpty);
+      expect(power.first.pieceName, 'Cataclysmic');
+      expect(updated!.exoticWeapon, 'Barrow-Dyad');
+      // Structured rows: Kinetic held, Energy/Power filled.
+      expect(saved!.rows, isNotEmpty);
+      final kinRow = saved!.rows.singleWhere((r) => r.slotWire == 'primary');
+      expect(kinRow.state, 'held');
+      expect(kinRow.itemName, 'Barrow-Dyad');
+      final eneRow = saved!.rows.singleWhere((r) => r.slotWire == 'special');
+      expect(eneRow.state, 'filled');
+      expect(eneRow.itemName, 'Funnelweb');
+
+      await tester.tap(find.byKey(const Key('fill_in_undo')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+
+      expect(updated, isNotNull);
+      expect(
+        updated!.slots.map((s) => '${s.slot}:${s.pieceName}').toList()..sort(),
+        beforeApply.slots.map((s) => '${s.slot}:${s.pieceName}').toList()
+          ..sort(),
+      );
+      expect(updated!.exoticWeapon, beforeApply.exoticWeapon);
+      expect(saved!.hasAppliedSubstitutes, isFalse);
+    },
+  );
+
+  testWidgets('Save missing list never writes empty names', (tester) async {
+    FillInSavedBuildPlan? saved;
+    const loadout = CachedDimLoadout(
+      shareId: 'syn-save-blanks',
+      name: 'Save blanks',
+      classType: 2,
+      items: [],
+      subclassPlugs: [],
+      mods: [],
+      artifactPerks: [],
+      exotic: CachedDimExotic(
+        hash: 7001,
+        name: 'Swarmers',
+        description: '',
+      ),
+    );
+    const build = MockBuild(
+      id: 'matrix_save',
+      name: 'Save',
+      subclass: 'Strand',
+      exoticArmor: '',
+      exoticWeapon: '',
+      slots: [],
+      loop: 'loop',
+      artifact: MockArtifact(name: '—', season: '—'),
+      setBonuses: [],
+      stats: [],
+      dimLink: 'https://dim.gg/syn-save-blanks',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: testMaterialTheme(),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return TextButton(
+                key: const Key('open_fill_in'),
+                onPressed: () {
+                  showFillInDialog(
+                    context: context,
+                    build: build,
+                    dimLoadout: loadout,
+                    loadCaches: () async => FillInCacheLoadResult.ok(const []),
+                    saveMissingList: (plan) async => saved = plan,
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('open_fill_in')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.tap(find.byKey(const Key('fill_in_save_missing')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(saved, isNotNull);
+    expect(saved!.missing.every((m) => m.trim().isNotEmpty), isTrue);
+    expect(
+      saved!.rows.every(
+        (r) => r.state == 'missing' || r.itemName.trim().isNotEmpty,
+      ),
+      isTrue,
+    );
+    expect(saved!.updatedAt, isNotNull);
   });
 }
