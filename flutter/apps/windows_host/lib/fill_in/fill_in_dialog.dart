@@ -102,6 +102,10 @@ class _FillInDialogState extends State<FillInDialog> {
   late MockBuild _build;
   FillInSavedBuildPlan? _plan;
 
+  /// Exact pre-Apply build snapshot for Undo (exotic weapon + slot + rows).
+  /// Never reconstruct Undo from per-slot [FillInAppliedSlot.originalLabel]s.
+  MockBuild? _undoBaseline;
+
   @override
   void initState() {
     super.initState();
@@ -272,6 +276,9 @@ class _FillInDialogState extends State<FillInDialog> {
       _saveMessage = null;
     });
 
+    // Snapshot exact pre-Apply build for Undo (weapon + slot + full row list).
+    final baseline = _snapshotBuild(_build);
+
     var next = _build;
     final applied = <FillInAppliedSlot>[];
     final slotByWire = <String, MockSlotAssignment>{
@@ -296,8 +303,9 @@ class _FillInDialogState extends State<FillInDialog> {
       );
 
       if (_isWeaponSlot(diff.slot)) {
-        if (diff.wouldSubstitute ||
-            (next.exoticWeapon.trim().isEmpty && label.trim().isNotEmpty)) {
+        // Never write wire placeholders (e.g. "heavy") as the exotic name.
+        if (_isRealItemLabel(label) &&
+            (diff.wouldSubstitute || next.exoticWeapon.trim().isEmpty)) {
           next = next.copyWith(
             exoticWeapon: label,
             exoticWeaponSlot: diff.slot.wireName,
@@ -316,6 +324,7 @@ class _FillInDialogState extends State<FillInDialog> {
       final existing = slotByWire[diff.slot.wireName];
       final isExotic = existing?.isExoticSlot ??
           (next.exoticArmor.trim().isNotEmpty &&
+              _isRealItemLabel(label) &&
               label.trim().toLowerCase() ==
                   next.exoticArmor.trim().toLowerCase());
       slotByWire[diff.slot.wireName] = MockSlotAssignment(
@@ -326,7 +335,7 @@ class _FillInDialogState extends State<FillInDialog> {
         filledIn: filled,
       );
 
-      if (isExotic && label.trim().isNotEmpty) {
+      if (isExotic && _isRealItemLabel(label)) {
         next = next.copyWith(exoticArmor: label);
       }
     }
@@ -361,6 +370,7 @@ class _FillInDialogState extends State<FillInDialog> {
         _applying = false;
         _build = next;
         _plan = plan;
+        _undoBaseline = baseline;
         _saveMessage = 'Applied to build.';
       });
       await _runMatch();
@@ -375,29 +385,19 @@ class _FillInDialogState extends State<FillInDialog> {
 
   Future<void> _undoFillIn() async {
     final plan = _plan;
+    final baseline = _undoBaseline;
     if (plan == null || !plan.hasAppliedSubstitutes || _applying) return;
+    if (baseline == null) {
+      setState(() => _saveMessage = 'Nothing to undo.');
+      return;
+    }
     setState(() {
       _applying = true;
       _saveMessage = null;
     });
 
-    var next = _build;
-    for (final slot in plan.applied) {
-      final equipmentSlot = EquipmentSlot.tryParse(slot.slotWire);
-      if (equipmentSlot != null && _isWeaponSlot(equipmentSlot)) {
-        next = next.copyWith(exoticWeapon: slot.originalLabel);
-        continue;
-      }
-      final slots = [
-        for (final s in next.slots)
-          if (s.slot == slot.slotWire ||
-              _slotFromMockWire(s.slot)?.wireName == slot.slotWire)
-            s.copyWith(pieceName: slot.originalLabel, filledIn: false)
-          else
-            s,
-      ];
-      next = next.copyWith(slots: slots);
-    }
+    // Exact restore — do not reconstruct from per-slot originalLabel entries.
+    final next = _snapshotBuild(baseline);
 
     final restored = plan.copyWith(clearApplied: true);
     final save = widget.saveMissingList;
@@ -410,6 +410,7 @@ class _FillInDialogState extends State<FillInDialog> {
         _applying = false;
         _build = next;
         _plan = restored;
+        _undoBaseline = null;
         _saveMessage = 'Fill in undone.';
       });
       await _runMatch();
@@ -425,7 +426,8 @@ class _FillInDialogState extends State<FillInDialog> {
   @override
   Widget build(BuildContext context) {
     final build = _build;
-    final hasApplied = _plan?.hasAppliedSubstitutes ?? false;
+    final hasApplied =
+        (_plan?.hasAppliedSubstitutes ?? false) && _undoBaseline != null;
     final canApply = _diffs.isNotEmpty;
     return AlertDialog(
       key: Key('fill_in_dialog_${build.id}'),
@@ -700,6 +702,42 @@ bool _isWeaponMatch(FillInSlotMatch match) {
 bool _isWeaponSlot(EquipmentSlot slot) {
   return EquipmentSlot.weaponSlots.contains(slot) ||
       slot == EquipmentSlot.exoticWeapon;
+}
+
+/// Deep-ish copy used for Apply/Undo baselines (exact row list restore).
+MockBuild _snapshotBuild(MockBuild build) {
+  return MockBuild(
+    id: build.id,
+    name: build.name,
+    subclass: build.subclass,
+    exoticArmor: build.exoticArmor,
+    exoticWeapon: build.exoticWeapon,
+    slots: List<MockSlotAssignment>.unmodifiable([
+      for (final s in build.slots) s.copyWith(),
+    ]),
+    loop: build.loop,
+    artifact: build.artifact,
+    setBonuses: build.setBonuses,
+    stats: build.stats,
+    splitWhy: build.splitWhy,
+    creator: build.creator,
+    dimLink: build.dimLink,
+    exoticWeaponType: build.exoticWeaponType,
+    exoticWeaponDamageType: build.exoticWeaponDamageType,
+    exoticWeaponSlot: build.exoticWeaponSlot,
+  );
+}
+
+/// True when [label] is a real item name, not an equipment wire placeholder
+/// such as `heavy` / `primary` / `helmet` used when a slot has no piece yet.
+bool _isRealItemLabel(String label) {
+  final trimmed = label.trim();
+  if (trimmed.isEmpty) return false;
+  final lower = trimmed.toLowerCase();
+  for (final slot in EquipmentSlot.values) {
+    if (slot.wireName == lower) return false;
+  }
+  return true;
 }
 
 EquipmentSlot? _slotFromMockWire(String wire) {

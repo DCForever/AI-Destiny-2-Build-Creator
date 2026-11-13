@@ -147,6 +147,7 @@ void main() {
     FillInSavedBuildPlan? saved;
     final build = _matrixStyleBuild();
     final loadout = _swarmersDimLoadout();
+    final original = enrichMockBuildFromDimLoadout(build, loadout: loadout);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -197,5 +198,27 @@ void main() {
     expect(updated, isNotNull);
     expect(updated!.exoticArmor, 'Swarmers');
     expect(updated!.slots, hasLength(8));
+    // Placeholder wire names must never become the exotic weapon.
+    expect(updated!.exoticWeapon.toLowerCase(), isNot('heavy'));
+    expect(updated!.exoticWeapon.toLowerCase(), isNot('primary'));
+    expect(updated!.exoticWeapon.toLowerCase(), isNot('special'));
+    expect(updated!.exoticWeapon, 'Barrow-Dyad');
+
+    await tester.tap(find.byKey(const Key('fill_in_undo')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(updated, isNotNull);
+    expect(updated!.exoticWeapon, original.exoticWeapon);
+    expect(updated!.exoticWeaponSlot, original.exoticWeaponSlot);
+    expect(updated!.exoticArmor, original.exoticArmor);
+    expect(updated!.slots, hasLength(original.slots.length));
+    expect(
+      updated!.slots.map((s) => '${s.slot}:${s.pieceName}').toList()..sort(),
+      original.slots.map((s) => '${s.slot}:${s.pieceName}').toList()..sort(),
+    );
+    expect(saved, isNotNull);
+    expect(saved!.hasAppliedSubstitutes, isFalse);
+    expect(saved!.applied, isEmpty);
   });
 }
