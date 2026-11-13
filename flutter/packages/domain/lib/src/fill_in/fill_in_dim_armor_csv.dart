@@ -180,12 +180,14 @@ _RowParse _itemFromRow({
 }) {
   final idRaw = _cell(row, indexByName, 'Id');
   final hashRaw = _cell(row, indexByName, 'Hash');
+  final nameRaw = _cell(row, indexByName, 'Name');
   final equippable = _cell(row, indexByName, 'Equippable');
   final typeName = _cell(row, indexByName, 'Type');
   final rarity = _cell(row, indexByName, 'Rarity');
   // Width already checked; missing map index would be a programmer error.
   if (idRaw == null ||
       hashRaw == null ||
+      nameRaw == null ||
       equippable == null ||
       typeName == null ||
       rarity == null) {
@@ -210,11 +212,13 @@ _RowParse _itemFromRow({
 
   final isExotic = rarity.trim().toLowerCase() == 'exotic';
   final setHash = isExotic ? null : armorSetHashByItemHash[itemHash];
+  final displayName = nameRaw.trim();
 
   return _RowParse(
     item: FillInInventoryItem(
       instanceId: instanceId,
       itemHash: itemHash,
+      name: displayName.isEmpty ? null : displayName,
       guardianClass: guardianClass,
       slot: slot,
       isExotic: isExotic,

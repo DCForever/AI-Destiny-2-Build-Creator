@@ -38,6 +38,7 @@ FillInBuildResult _matchBuild(
   int cap,
 ) {
   final flagged = _fillInSolipsismNotPrismatic(
+    guardianClass: build.guardianClass,
     exoticName: build.exoticArmorName,
     subclassKey: build.subclassKey,
   );
@@ -54,15 +55,18 @@ FillInBuildResult _matchBuild(
 
 /// Fill In Solipsism gate — fail closed vs silent OK.
 ///
-/// A null exotic name or unknown/empty subclass is flagged. Otherwise
-/// delegates to [isSolipsismNotPrismatic] (Solipsism on a known non-Prismatic
-/// subclass).
+/// Fail-closed (null exotic name / unknown subclass → flagged) applies only
+/// to [GuardianClass.warlock]. Titan and Hunter never get a false Solipsism
+/// flag from those missing fields; they still flag when the exotic name is
+/// literally Solipsism on a known non-Prismatic subclass.
 bool _fillInSolipsismNotPrismatic({
+  required GuardianClass guardianClass,
   required String? exoticName,
   required String subclassKey,
 }) {
-  if (exoticName == null) return true;
-  if (!isKnownWarlockSubclass(subclassKey)) return true;
+  final failClosed = guardianClass == GuardianClass.warlock;
+  if (exoticName == null) return failClosed;
+  if (!isKnownWarlockSubclass(subclassKey)) return failClosed;
   return isSolipsismNotPrismatic(
     exoticName: exoticName,
     subclassKey: subclassKey,
@@ -76,6 +80,17 @@ FillInSlotMatch _matchSlot(
   int cap,
 ) {
   final count = pools.countFor(guardianClass, need);
+  // Weapons: held count only — no 2-copy cap label (Daniel, Nov 12 2026).
+  if (_isWeaponNeedSlot(need.slot)) {
+    return FillInSlotMatch(
+      slot: need.slot,
+      isHeld: count > 0,
+      poolHeldCount: count,
+      cap: cap,
+      exceedsCap: false,
+      overCapLabel: null,
+    );
+  }
   final exceeds = count > cap;
   return FillInSlotMatch(
     slot: need.slot,
