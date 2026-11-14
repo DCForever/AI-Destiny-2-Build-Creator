@@ -28,7 +28,10 @@ const List<String> kFillInBannedPatterns = <String>[
 /// Exact counts so the guard cannot pass vacuously or silently drop files.
 /// Domain was 10 → 11 when `fill_in_dim_loadout.dart` was added (DIM loadout
 /// → Fill In piece extraction; still pure / no IO / no writes).
-const int kDomainFillInSourceFileCount = 11;
+/// Domain 11 → 13 when Optimize added `armor_pool_set_coverage.dart` +
+/// `candidates_from_dim_armor.dart` (pure set-coverage + CSV→candidates;
+/// still no IO / no writes).
+const int kDomainFillInSourceFileCount = 13;
 /// Was 4 → 5 when `fill_in_saved_plan_card.dart` was added (detail-card
 /// Armor/Weapons saved-plan UI; still read-only / no IO / no writes).
 const int kWindowsHostFillInSourceFileCount = 5;
