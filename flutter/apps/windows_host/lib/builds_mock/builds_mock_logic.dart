@@ -44,7 +44,7 @@ List<MockSetReadiness> computeAllReadiness(BuildsMockFixture fixture) {
   ];
 }
 
-/// Read [MockBuild.isOptimized]. No Optimize producer yet → always false.
+/// Read [MockBuild.isOptimized] (set by Optimize → Use this result / Fill In).
 bool isMockBuildOptimized(MockBuild build) => build.isOptimized;
 
 /// Whether [build] counts as Fill In "Filled In" for the readiness filter.

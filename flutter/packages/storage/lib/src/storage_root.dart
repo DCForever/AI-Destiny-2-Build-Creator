@@ -22,6 +22,7 @@ import 'version_dir.dart';
 /// fill_in/dim_armor_inventory.csv
 /// fill_in/dim_weapons_inventory.csv
 /// fill_in/missing_by_build.json
+/// fill_in/optimize_by_build.json
 /// dim_loadouts/dim-loadouts.json
 /// settings/warlock_matrix_path.txt
 /// ```
@@ -95,6 +96,13 @@ class StorageRoot {
   /// Additive JSON map keyed by build id — not Mario data, not SQLite.
   String get fillInMissingByBuildPath =>
       p.join(fillInCacheDir, 'missing_by_build.json');
+
+  /// Per-build Optimize overlays (armor slots / stats / Optimized flag).
+  ///
+  /// Exact path: `{basePath}/fill_in/optimize_by_build.json`
+  /// Additive JSON map keyed by build id — never Mario / warlock matrix.
+  String get optimizeByBuildPath =>
+      p.join(fillInCacheDir, 'optimize_by_build.json');
 
   /// Directory for the compiled DIM share-link loadouts cache (read-only).
   ///

@@ -60,7 +60,7 @@ void main() {
     expect(find.byKey(const Key('builds_mock_optimize_tabs')), findsOneWidget);
     expect(find.text('Armor pool'), findsWidgets);
     expect(find.text('Re-optimize'), findsWidgets);
-    expect(find.textContaining('coming with Optimize'), findsOneWidget);
+    expect(find.textContaining("Daniel's call"), findsOneWidget);
     expect(find.text('New build'), findsNothing);
     expect(
       find.byKey(const Key('builds_mock_count')),
@@ -103,7 +103,7 @@ void main() {
     expect(find.byKey(const Key('dim_loadout_details_panel')), findsNothing);
     expect(find.text('Armor pool'), findsWidgets);
     expect(find.text('Re-optimize'), findsWidgets);
-    expect(find.textContaining('coming with Optimize'), findsWidgets);
+    expect(find.textContaining("Daniel's call"), findsWidgets);
     expect(find.text('Proposed swaps (dry-run — local UI only)'), findsNothing);
     expect(find.text('Fill In'), findsOneWidget);
     expect(find.text('Optimize'), findsWidgets);
@@ -118,10 +118,11 @@ void main() {
     final apply = tester.widget<FilledButton>(
       find.byKey(const Key('builds_mock_apply_character_b01')),
     );
-    // Fill In enabled; Optimize stays disabled; Apply disabled with no target.
+    // Fill In enabled (legacy dialog without CSV); Optimize disabled until CSV.
     expect(fillIn.onPressed, isNotNull);
     expect(optimize.onPressed, isNull);
     expect(apply.onPressed, isNull);
+    expect(find.byKey(const Key('builds_optimize_disabled_reason')), findsOneWidget);
     expect(
       find.byKey(const Key('builds_mock_apply_disabled_reason_b01')),
       findsOneWidget,
@@ -372,7 +373,7 @@ void main() {
       findsNothing,
     );
 
-    // Caption is below the fold; scroll to confirm Undo wording (Fill In only).
+    // Caption is below the fold; scroll to confirm Apply has no undo.
     await tester.scrollUntilVisible(
       find.textContaining('has no undo'),
       200,
@@ -385,6 +386,7 @@ void main() {
     );
     await tester.pump();
     expect(find.textContaining('has no undo'), findsOneWidget);
+    expect(find.textContaining('never Mario files'), findsOneWidget);
     expect(find.textContaining('Undo fill in restores it'), findsOneWidget);
   });
 

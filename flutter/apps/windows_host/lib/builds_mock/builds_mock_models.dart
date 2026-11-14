@@ -201,7 +201,7 @@ class MockBuild {
   /// Weapon slot wire name (`primary` / `special` / `heavy`) when known.
   final String? exoticWeaponSlot;
 
-  /// Optimize readiness hook. No producer yet — stays false (filter empty).
+  /// Optimize readiness hook — set when a confirmed Optimize result is applied.
   final bool isOptimized;
 
   bool get usesSolipsism =>
@@ -292,7 +292,7 @@ enum MockSwapDecision { pending, accepted, rejected }
 ///
 /// [ready] / [notReady] are set-level armor readiness (build count + slot uses).
 /// [filledIn] matches builds with Fill In activity (see filter docs).
-/// [optimized] is a future Optimize hook — no producer yet, so it matches nothing.
+/// [optimized] matches builds with [MockBuild.isOptimized] after Optimize apply.
 enum MockReadiness { ready, notReady, filledIn, optimized }
 
 /// Browse layout for the Builds main pane (Detail is a separate screen).

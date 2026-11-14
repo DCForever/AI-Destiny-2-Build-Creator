@@ -1,4 +1,5 @@
 import '../models/equipment.dart';
+import '../models/soft_stats.dart';
 
 /// One physical inventory copy held for Fill In matching.
 ///
@@ -7,7 +8,8 @@ import '../models/equipment.dart';
 /// [guardianClass] (armor only; weapons leave this null), Type/Category →
 /// [slot] (armor Type → slot; weapons Category → slot), weapons `Type` →
 /// [weaponType], weapons `Element` → [damageType], set membership →
-/// [armorSetHash] (armor legendaries only).
+/// [armorSetHash] (armor legendaries only). Optional Optimize fields:
+/// `Owner` → [location], armor stat columns → [statValues].
 class FillInInventoryItem {
   const FillInInventoryItem({
     required this.instanceId,
@@ -19,6 +21,8 @@ class FillInInventoryItem {
     this.name,
     this.weaponType,
     this.damageType,
+    this.location,
+    this.statValues = const <ArmorStatName, int>{},
   });
 
   /// Stable id of this physical copy (DIM `Id` / instance id).
@@ -48,6 +52,12 @@ class FillInInventoryItem {
   /// DIM Weapons `Element` / damage type (e.g. Solar). Null for armor.
   final String? damageType;
 
+  /// Inventory location wire: `vault` / `character` / `postmaster` when known.
+  final String? location;
+
+  /// Per-piece Armor 3.0 stats from DIM CSV columns when present.
+  final Map<ArmorStatName, int> statValues;
+
   /// Copy with selected fields replaced (host-side set-hash stamping).
   FillInInventoryItem copyWith({
     String? instanceId,
@@ -60,6 +70,9 @@ class FillInInventoryItem {
     bool clearArmorSetHash = false,
     String? weaponType,
     String? damageType,
+    String? location,
+    bool clearLocation = false,
+    Map<ArmorStatName, int>? statValues,
   }) {
     return FillInInventoryItem(
       instanceId: instanceId ?? this.instanceId,
@@ -72,6 +85,8 @@ class FillInInventoryItem {
           clearArmorSetHash ? null : (armorSetHash ?? this.armorSetHash),
       weaponType: weaponType ?? this.weaponType,
       damageType: damageType ?? this.damageType,
+      location: clearLocation ? null : (location ?? this.location),
+      statValues: statValues ?? this.statValues,
     );
   }
 }

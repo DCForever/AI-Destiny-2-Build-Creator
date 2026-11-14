@@ -315,6 +315,37 @@ class FillInMissingListStore {
   /// Other build entries in the file are preserved (including non-object
   /// values). Never writes outside [storePath] / its `.tmp` / schema backup
   /// siblings. Oversized existing files are never overwritten.
+  /// Remove Fill In plan for [buildId] only (Undo when none existed before).
+  ///
+  /// Other builds are preserved. No-op when the store or entry is absent.
+  Future<void> clearBuild(String buildId) async {
+    final id = buildId.trim();
+    if (id.isEmpty) return;
+    final existingFile = File(storePath);
+    if (!await existingFile.exists()) return;
+
+    final parsed = await _parseFile(existingFile);
+    if (!parsed.builds.containsKey(id) &&
+        !parsed.preservedRawBuilds.containsKey(id)) {
+      return;
+    }
+    final builds = Map<String, FillInSavedBuildPlan>.from(parsed.builds)
+      ..remove(id);
+    final preserved = Map<String, dynamic>.from(parsed.preservedRawBuilds)
+      ..remove(id);
+    if (parsed.schemaVersion != kFillInMissingListSchemaVersion) {
+      await _backupExclusive(
+        existingFile,
+        fromVersionLabel: parsed.schemaVersion?.toString() ?? 'unknown',
+      );
+    }
+    await _writeAtomic(
+      schemaVersion: kFillInMissingListSchemaVersion,
+      builds: builds,
+      preservedRawBuilds: preserved,
+    );
+  }
+
   Future<void> saveBuildPlan(FillInSavedBuildPlan plan) async {
     final id = plan.buildId.trim();
     if (id.isEmpty) {
