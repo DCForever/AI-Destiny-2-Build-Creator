@@ -199,4 +199,38 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'weapon persist failure keeps armor-only build (unsaved weapons off screen)',
+    () {
+      final armorOnly = baseline.copyWith(isOptimized: true);
+      final withWeapons = baseline.copyWith(
+        isOptimized: true,
+        slots: [
+          ...baseline.slots,
+          const MockSlotAssignment(
+            slot: 'primary',
+            setId: 'weapon',
+            pieceName: 'Unsaved Gun',
+            filledIn: true,
+          ),
+        ],
+      );
+      final kept = buildAfterWeaponMergePersist(
+        armorOnly: armorOnly,
+        weaponMerged: withWeapons,
+        persistOk: false,
+      );
+      expect(identical(kept, armorOnly), isTrue);
+      expect(kept.slots.any((s) => s.pieceName == 'Unsaved Gun'), isFalse);
+
+      final shown = buildAfterWeaponMergePersist(
+        armorOnly: armorOnly,
+        weaponMerged: withWeapons,
+        persistOk: true,
+      );
+      expect(identical(shown, withWeapons), isTrue);
+      expect(shown.slots.any((s) => s.pieceName == 'Unsaved Gun'), isTrue);
+    },
+  );
 }

@@ -382,11 +382,18 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     );
     if (!mounted) return;
     var persistOk = true;
+    MockBuild? weaponMerged;
     if (weaponResult != null) {
-      updated = weaponResult.build;
       persistOk =
           await _optimize.persistMergedFillInPlan(weaponResult.plan);
+      weaponMerged = weaponResult.build;
     }
+    // Persist failed → keep armor-only build on screen (matches store).
+    updated = buildAfterWeaponMergePersist(
+      armorOnly: updated,
+      weaponMerged: weaponMerged,
+      persistOk: persistOk,
+    );
 
     _controller.replaceBuild(updated);
     if (root != null) await _loadFillInPlans(root);
