@@ -425,4 +425,254 @@ void main() {
       expect(await File(root.fillInMissingByBuildPath).readAsString(), '{not-json}');
     },
   );
+
+  test(
+    'apply A then failing apply B leaves A undo intact; Undo restores A priors',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_atomic_prior_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      final fiStore = FillInMissingListStore(root: root);
+      // Fail on 2nd optimize load (apply B) while Fill In load still succeeds.
+      final optStore = _FailOnNthOptimizeLoadStore(
+        root: root,
+        failOnLoadCall: 2,
+      );
+      final b = build();
+
+      // Seed priors so Undo has something concrete to restore (not clearBuild).
+      final priorPlan = FillInSavedBuildPlan(
+        buildId: b.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'primary',
+            label: 'Seed Primary',
+            originalLabel: '',
+            instanceId: 'seed-w',
+            itemHash: 11,
+          ),
+        ],
+        rows: const [
+          FillInSavedSlotRow(
+            slotWire: 'primary',
+            slotLabel: 'Primary',
+            state: 'filled',
+            itemName: 'Seed Primary',
+          ),
+        ],
+      );
+      await fiStore.saveBuildPlan(priorPlan);
+      await optStore.saveBuildRecord(
+        OptimizedBuildRecord(
+          buildId: b.id,
+          isOptimized: true,
+          resultIndexOneBased: 7,
+          slots: const [
+            OptimizedArmorSlot(
+              slotWire: 'helmet',
+              pieceName: 'Seed Helm',
+              setId: 'seed',
+              isExotic: false,
+            ),
+          ],
+          stats: const [],
+          setBonuses: const [],
+        ),
+      );
+      final fillBeforeA =
+          await File(root.fillInMissingByBuildPath).readAsString();
+      final optBeforeA = await File(root.optimizeByBuildPath).readAsString();
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: optStore,
+        fillInStore: fiStore,
+      );
+      await c.refreshArmorCsv();
+
+      // Apply A — undoable.
+      final appliedA = await c.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(appliedA, isNotNull);
+      expect(c.canUndo, isTrue);
+      final fillAfterA =
+          await File(root.fillInMissingByBuildPath).readAsString();
+      final optAfterA = await File(root.optimizeByBuildPath).readAsString();
+      expect(jsonDecode(fillAfterA), isNot(jsonDecode(fillBeforeA)));
+      expect(jsonDecode(optAfterA), isNot(jsonDecode(optBeforeA)));
+
+      // Apply B — second store load fails; must not clobber A's undo priors.
+      final appliedB = await c.runOptimize(
+        build: appliedA!,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(appliedB, isNull);
+      expect(c.error, isNotNull);
+      expect(c.canUndo, isTrue);
+      // Failed B must not have rewritten stores past A's apply.
+      expect(
+        jsonDecode(await File(root.fillInMissingByBuildPath).readAsString()),
+        jsonDecode(fillAfterA),
+      );
+      expect(
+        jsonDecode(await File(root.optimizeByBuildPath).readAsString()),
+        jsonDecode(optAfterA),
+      );
+
+      // Undo restores A's prior file state exactly.
+      final restored = await c.undoLastApply();
+      expect(restored, isNotNull);
+      expect(c.canUndo, isFalse);
+      expect(
+        jsonDecode(await File(root.fillInMissingByBuildPath).readAsString()),
+        jsonDecode(fillBeforeA),
+      );
+      expect(
+        jsonDecode(await File(root.optimizeByBuildPath).readAsString()),
+        jsonDecode(optBeforeA),
+      );
+      final restoredPlan = await fiStore.loadForBuild(b.id);
+      expect(restoredPlan!.applied.single.label, 'Seed Primary');
+      final restoredOpt = await OptimizeBuildStore(root: root).loadForBuild(b.id);
+      expect(restoredOpt!.resultIndexOneBased, 7);
+      expect(restoredOpt.slots.single.pieceName, 'Seed Helm');
+    },
+  );
+
+  test(
+    'armor auto-apply then weapon merge then Undo restores both store files',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_fill_in_path_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      final optStore = OptimizeBuildStore(root: root);
+      final fiStore = FillInMissingListStore(root: root);
+      final b = build();
+
+      final priorPlan = FillInSavedBuildPlan(
+        buildId: b.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'primary',
+            label: 'Pre Primary',
+            originalLabel: '',
+            instanceId: 'pre-w',
+            itemHash: 55,
+          ),
+        ],
+        rows: const [
+          FillInSavedSlotRow(
+            slotWire: 'primary',
+            slotLabel: 'Primary',
+            state: 'filled',
+            itemName: 'Pre Primary',
+          ),
+        ],
+      );
+      await fiStore.saveBuildPlan(priorPlan);
+      final fillBefore =
+          await File(root.fillInMissingByBuildPath).readAsString();
+      final optExistsBefore = File(root.optimizeByBuildPath).existsSync();
+      final optBefore = optExistsBefore
+          ? await File(root.optimizeByBuildPath).readAsString()
+          : null;
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: optStore,
+        fillInStore: fiStore,
+      );
+      await c.refreshArmorCsv();
+
+      // Armor auto-apply (Fill In path step 1).
+      final armorApplied = await c.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(armorApplied, isNotNull);
+      expect(c.canUndo, isTrue);
+
+      // Weapon auto-apply merge (Fill In path step 2) — merge plan without
+      // touching armor pins; persist via the same controller Undo snapshot.
+      final weaponPlan = FillInSavedBuildPlan(
+        buildId: b.id,
+        missing: const [],
+        applied: [
+          ...?((await fiStore.loadForBuild(b.id))?.applied),
+          const FillInAppliedSlot(
+            slotWire: 'special',
+            label: 'Filled Special',
+            originalLabel: '',
+            instanceId: 'sp-1',
+            itemHash: 99,
+          ),
+        ],
+        rows: [
+          ...?((await fiStore.loadForBuild(b.id))?.rows),
+          const FillInSavedSlotRow(
+            slotWire: 'special',
+            slotLabel: 'Special',
+            state: 'filled',
+            itemName: 'Filled Special',
+          ),
+        ],
+      );
+      final persisted = await c.persistMergedFillInPlan(weaponPlan);
+      expect(persisted, isTrue);
+      final midPlan = await fiStore.loadForBuild(b.id);
+      expect(
+        midPlan!.applied.any((a) => a.label == 'Filled Special'),
+        isTrue,
+      );
+
+      // Undo must restore both store files to pre-apply bytes.
+      await c.undoLastApply();
+      expect(
+        jsonDecode(await File(root.fillInMissingByBuildPath).readAsString()),
+        jsonDecode(fillBefore),
+      );
+      if (optBefore == null) {
+        expect(await optStore.loadForBuild(b.id), isNull);
+      } else {
+        expect(
+          jsonDecode(await File(root.optimizeByBuildPath).readAsString()),
+          jsonDecode(optBefore),
+        );
+      }
+      final restoredPlan = await fiStore.loadForBuild(b.id);
+      expect(restoredPlan!.applied.single.label, 'Pre Primary');
+    },
+  );
+}
+
+/// Optimize store that throws on the Nth [loadForBuild] (1-based).
+class _FailOnNthOptimizeLoadStore extends OptimizeBuildStore {
+  _FailOnNthOptimizeLoadStore({
+    required super.root,
+    required this.failOnLoadCall,
+  });
+
+  final int failOnLoadCall;
+  int _loadCalls = 0;
+
+  @override
+  Future<OptimizedBuildRecord?> loadForBuild(String buildId) async {
+    _loadCalls += 1;
+    if (_loadCalls >= failOnLoadCall) {
+      throw OptimizeBuildStoreException(
+        'forced optimize load failure on call $_loadCalls',
+      );
+    }
+    return super.loadForBuild(buildId);
+  }
 }

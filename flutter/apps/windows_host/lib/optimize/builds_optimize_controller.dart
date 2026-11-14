@@ -248,14 +248,16 @@ class BuildsOptimizeController extends ChangeNotifier {
       final fiStore = fillInStore;
 
       // Snapshot prior file records BEFORE any write (Undo restores files).
-      // Fill In load first: corrupt missing_by_build → throw → no writes.
-      // Baseline only after both loads succeed so Undo never clearBuild's an
-      // entry that was never replaced.
-      _priorFillInPlan =
+      // Load both into locals first: if the second load fails, an earlier
+      // undoable apply's priors + baseline stay intact (never half-updated).
+      // Assign all four fields + baseline together only after both succeed.
+      final loadedFillIn =
           fiStore == null ? null : await fiStore.loadForBuild(build.id);
-      _priorFillInCaptured = fiStore != null;
-      _priorOptimizeRecord =
+      final loadedOptimize =
           optStore == null ? null : await optStore.loadForBuild(build.id);
+      _priorFillInPlan = loadedFillIn;
+      _priorFillInCaptured = fiStore != null;
+      _priorOptimizeRecord = loadedOptimize;
       _priorOptimizeCaptured = optStore != null;
       _undoBaseline = snapshotMockBuild(build);
 

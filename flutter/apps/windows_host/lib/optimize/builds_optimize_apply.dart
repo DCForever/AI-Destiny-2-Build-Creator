@@ -313,6 +313,19 @@ FillInSavedBuildPlan fillInPlanFromCombination({
   );
 }
 
+/// After armor Optimize + optional weapon merge, choose the in-memory build.
+///
+/// When weapon persist fails, keep [armorOnly] so the UI matches the store
+/// (armor pins written; unsaved weapon picks stay off screen).
+MockBuild buildAfterWeaponMergePersist({
+  required MockBuild armorOnly,
+  required MockBuild? weaponMerged,
+  required bool persistOk,
+}) {
+  if (weaponMerged != null && persistOk) return weaponMerged;
+  return armorOnly;
+}
+
 /// Toast copy after confirm apply (Undo is SnackBar-lifetime only).
 String optimizeAppliedToastMessage(int resultIndexOneBased) =>
     'Optimized with result #$resultIndexOneBased · Undo available briefly';
