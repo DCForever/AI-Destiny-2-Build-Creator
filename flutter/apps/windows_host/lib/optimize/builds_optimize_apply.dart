@@ -261,54 +261,72 @@ MockBuild applyOptimizedRecordToBuild({
   );
 }
 
-/// Fill In applied pins from an optimizer combination (Apply to character).
+/// Real item name from an optimizer piece, or null when unset (never invent
+/// `Armor <hash>` placeholders for persistence).
+String? optimizePieceDisplayName(ArmorOptimizePiece piece) {
+  final name = piece.itemName?.trim();
+  if (name == null || name.isEmpty) return null;
+  return name;
+}
+
+/// Merge optimizer armor pins into an existing Fill In plan.
+///
+/// Replaces only slots covered by [combination]; keeps every other applied
+/// entry and row (weapons, uncovered class item, etc.) exactly as they were.
+/// Labels use the real item name when present; otherwise leave the name unset
+/// (empty) — never persist `Armor <hash>` placeholders.
 FillInSavedBuildPlan fillInPlanFromCombination({
   required String buildId,
   required ArmorCombination combination,
   FillInSavedBuildPlan? existing,
 }) {
-  final applied = <FillInAppliedSlot>[
-    for (final p in combination.pieces)
-      FillInAppliedSlot(
-        slotWire: p.slot.wireName,
-        label: (p.itemName != null && p.itemName!.trim().isNotEmpty)
-            ? p.itemName!.trim()
-            : 'Armor ${p.itemHash}',
-        originalLabel: '',
-        instanceId: p.instanceId,
-        itemHash: p.itemHash,
-      ),
-  ];
-  final rows = <FillInSavedSlotRow>[
-    for (final p in combination.pieces)
-      FillInSavedSlotRow(
-        slotWire: p.slot.wireName,
-        slotLabel: p.slot.wireName,
+  final appliedByWire = <String, FillInAppliedSlot>{
+    if (existing != null)
+      for (final a in existing.applied)
+        if (a.slotWire.trim().isNotEmpty) a.slotWire: a,
+  };
+  final rowsByWire = <String, FillInSavedSlotRow>{
+    if (existing != null)
+      for (final r in existing.rows)
+        if (r.slotWire.trim().isNotEmpty) r.slotWire: r,
+  };
+
+  for (final p in combination.pieces) {
+    final wire = p.slot.wireName;
+    final name = optimizePieceDisplayName(p) ?? '';
+    final prior = appliedByWire[wire];
+    appliedByWire[wire] = FillInAppliedSlot(
+      slotWire: wire,
+      label: name,
+      originalLabel: prior?.originalLabel ?? '',
+      instanceId: p.instanceId,
+      itemHash: p.itemHash,
+    );
+    if (name.isNotEmpty) {
+      rowsByWire[wire] = FillInSavedSlotRow(
+        slotWire: wire,
+        slotLabel: wire,
         state: 'filled',
-        itemName: (p.itemName != null && p.itemName!.trim().isNotEmpty)
-            ? p.itemName!.trim()
-            : 'Armor ${p.itemHash}',
-      ),
-  ];
+        itemName: name,
+      );
+    }
+    // No real name → leave any prior row as-is; do not invent a placeholder.
+  }
+
   return FillInSavedBuildPlan(
     buildId: buildId,
     missing: existing?.missing ?? const [],
     similarWeaponName: existing?.similarWeaponName,
     similarForName: existing?.similarForName,
-    applied: List<FillInAppliedSlot>.unmodifiable(applied),
-    rows: List<FillInSavedSlotRow>.unmodifiable([
-      ...rows,
-      if (existing != null)
-        for (final r in existing.rows)
-          if (!EquipmentSlot.armorSlots.any((a) => a.wireName == r.slotWire)) r,
-    ]),
+    applied: List<FillInAppliedSlot>.unmodifiable(appliedByWire.values),
+    rows: List<FillInSavedSlotRow>.unmodifiable(rowsByWire.values),
     updatedAt: DateTime.now().toUtc().toIso8601String(),
   );
 }
 
-/// Toast copy after confirm apply.
+/// Toast copy after confirm apply (Undo is SnackBar-lifetime only).
 String optimizeAppliedToastMessage(int resultIndexOneBased) =>
-    'Optimized with result #$resultIndexOneBased · Undo';
+    'Optimized with result #$resultIndexOneBased · Undo available briefly';
 
 /// Caption kept on the results panel.
 const String kBuildsOptimizeAdvisoryCaption =
@@ -317,3 +335,11 @@ const String kBuildsOptimizeAdvisoryCaption =
 /// Disabled Optimize reason when DIM armor CSV cache is missing.
 const String kBuildsOptimizeNoCsvReason =
     'Import a DIM Armor CSV in Settings before Optimize.';
+
+/// Detail caption: Fill In undo + Apply has no undo (covered by page tests).
+const String kBuildsMockDetailUndoCaption =
+    'Fill In updates this app copy; Undo fill in restores it. '
+    'Fill In auto-applies Optimize result #1 then fills weapons; Optimize '
+    'opens the results panel. Use this result / Undo only change this app '
+    'copy — never Mario files or Bungie inventory. Apply to character equips '
+    'one item at a time and has no undo.';

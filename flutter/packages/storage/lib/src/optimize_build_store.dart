@@ -231,8 +231,11 @@ class OptimizeBuildStore {
       return (await _parseFile(file)).builds;
     } on OptimizeBuildStoreException {
       rethrow;
-    } catch (_) {
-      return const <String, OptimizedBuildRecord>{};
+    } catch (e) {
+      // Corrupt / unreadable: surface to UI — never pretend empty and rewrite.
+      throw OptimizeBuildStoreException(
+        'optimize_by_build unreadable: $e',
+      );
     }
   }
 
@@ -249,6 +252,7 @@ class OptimizeBuildStore {
     final preservedRaw = <String, dynamic>{};
 
     if (await existingFile.exists()) {
+      // Parse first — corrupt files throw and are never overwritten.
       final parsed = await _parseFile(existingFile);
       builds.addAll(parsed.builds);
       preservedRaw.addAll(parsed.preservedRawBuilds);
@@ -280,7 +284,9 @@ class OptimizeBuildStore {
     );
   }
 
-  /// Remove Optimize overlay for [buildId] (Undo cleared). Other builds kept.
+  /// Remove Optimize overlay for [buildId] (Undo when none existed). Other builds kept.
+  ///
+  /// Corrupt files throw [OptimizeBuildStoreException] and are never rewritten.
   Future<void> clearBuild(String buildId) async {
     final id = buildId.trim();
     if (id.isEmpty) return;
@@ -319,7 +325,14 @@ class OptimizeBuildStore {
         preservedRawBuilds: <String, dynamic>{},
       );
     }
-    final decoded = jsonDecode(text);
+    late final Object? decoded;
+    try {
+      decoded = jsonDecode(text);
+    } catch (e) {
+      throw OptimizeBuildStoreException(
+        'optimize_by_build corrupt JSON: $e',
+      );
+    }
     if (decoded is! Map<String, dynamic>) {
       throw OptimizeBuildStoreException(
         'optimize_by_build root must be an object',

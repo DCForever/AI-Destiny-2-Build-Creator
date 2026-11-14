@@ -1,4 +1,5 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_fixture.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_logic.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
@@ -102,10 +103,100 @@ void main() {
     expect(filtered.single.id, applied.id);
   });
 
-  test('toast message includes result index', () {
+  test('toast message includes result index and brief Undo', () {
     expect(
       optimizeAppliedToastMessage(3),
-      'Optimized with result #3 · Undo',
+      'Optimized with result #3 · Undo available briefly',
+    );
+  });
+
+  test('fillInPlanFromCombination merges armor and keeps weapon pins', () {
+    const existing = FillInSavedBuildPlan(
+      buildId: 'b01',
+      missing: ['Heavy'],
+      applied: [
+        FillInAppliedSlot(
+          slotWire: 'primary',
+          label: 'Kept Primary',
+          originalLabel: 'Old Primary',
+          instanceId: 'w-primary',
+          itemHash: 9001,
+        ),
+        FillInAppliedSlot(
+          slotWire: 'helmet',
+          label: 'Old Helmet',
+          originalLabel: '',
+          instanceId: 'old-helm',
+          itemHash: 1,
+        ),
+      ],
+      rows: [
+        FillInSavedSlotRow(
+          slotWire: 'primary',
+          slotLabel: 'Primary',
+          state: 'filled',
+          itemName: 'Kept Primary',
+        ),
+        FillInSavedSlotRow(
+          slotWire: 'helmet',
+          slotLabel: 'helmet',
+          state: 'filled',
+          itemName: 'Old Helmet',
+        ),
+      ],
+    );
+    final combo = ArmorCombination(
+      pieces: [
+        const ArmorOptimizePiece(
+          slot: EquipmentSlot.helmet,
+          itemHash: 42,
+          instanceId: 'new-helm',
+          itemName: 'New Helmet',
+          isExotic: false,
+          setBonusKey: 'Techsec',
+        ),
+        const ArmorOptimizePiece(
+          slot: EquipmentSlot.arms,
+          itemHash: 43,
+          instanceId: 'new-arms',
+          // No itemName — must not invent Armor <hash>.
+          isExotic: true,
+        ),
+      ],
+      estimatedStats: const {},
+      incompleteEstimate: false,
+      setBonusSummary: const [],
+      reusePieceCount: 0,
+      score: 1,
+      meetsSoftThresholds: false,
+    );
+    final merged = fillInPlanFromCombination(
+      buildId: 'b01',
+      combination: combo,
+      existing: existing,
+    );
+    expect(
+      merged.applied.any((a) => a.slotWire == 'primary' && a.label == 'Kept Primary'),
+      isTrue,
+    );
+    expect(
+      merged.applied.any(
+        (a) =>
+            a.slotWire == 'helmet' &&
+            a.label == 'New Helmet' &&
+            a.instanceId == 'new-helm',
+      ),
+      isTrue,
+    );
+    final arms = merged.applied.singleWhere((a) => a.slotWire == 'arms');
+    expect(arms.label, isEmpty);
+    expect(arms.instanceId, 'new-arms');
+    expect(merged.applied.any((a) => a.label.startsWith('Armor ')), isFalse);
+    expect(
+      merged.rows.any(
+        (r) => r.slotWire == 'primary' && r.itemName == 'Kept Primary',
+      ),
+      isTrue,
     );
   });
 }

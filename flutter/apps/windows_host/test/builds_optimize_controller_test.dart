@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_fixture.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:destiny2_windows_host/optimize/builds_optimize_apply.dart';
@@ -182,4 +186,116 @@ void main() {
       before.slots.map((s) => s.pieceName),
     );
   });
+
+  test(
+    'Apply then Undo restores Fill In + optimize store files (absent and present)',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_undo_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      final optStore = OptimizeBuildStore(root: root);
+      final fiStore = FillInMissingListStore(root: root);
+      final b = build();
+
+      // Case A: no prior records — Undo clears only this build's new entries.
+      final cAbsent = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: optStore,
+        fillInStore: fiStore,
+      );
+      await cAbsent.refreshArmorCsv();
+      final appliedA = await cAbsent.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(appliedA, isNotNull);
+      expect(await optStore.loadForBuild(b.id), isNotNull);
+      expect(await fiStore.loadForBuild(b.id), isNotNull);
+
+      final undoneA = await cAbsent.undoLastApply();
+      expect(undoneA, isNotNull);
+      expect(await optStore.loadForBuild(b.id), isNull);
+      expect(await fiStore.loadForBuild(b.id), isNull);
+
+      // Case B: prior Fill In plan + prior Optimize record exist — restore both.
+      final priorPlan = FillInSavedBuildPlan(
+        buildId: b.id,
+        missing: const [],
+        applied: [
+          FillInAppliedSlot(
+            slotWire: 'primary',
+            label: 'Prior Primary',
+            originalLabel: '',
+            instanceId: 'prior-w',
+            itemHash: 77,
+          ),
+        ],
+        rows: [
+          FillInSavedSlotRow(
+            slotWire: 'primary',
+            slotLabel: 'Primary',
+            state: 'filled',
+            itemName: 'Prior Primary',
+          ),
+        ],
+      );
+      await fiStore.saveBuildPlan(priorPlan);
+      final priorOpt = OptimizedBuildRecord(
+        buildId: b.id,
+        isOptimized: true,
+        resultIndexOneBased: 9,
+        slots: const [
+          OptimizedArmorSlot(
+            slotWire: 'helmet',
+            pieceName: 'Prior Helm',
+            setId: 'prior',
+            isExotic: false,
+          ),
+        ],
+        stats: const [],
+        setBonuses: const [],
+      );
+      await optStore.saveBuildRecord(priorOpt);
+
+      final fillBefore = await File(root.fillInMissingByBuildPath).readAsString();
+      final optBefore = await File(root.optimizeByBuildPath).readAsString();
+
+      final cPresent = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: optStore,
+        fillInStore: fiStore,
+      );
+      await cPresent.refreshArmorCsv();
+      final appliedB = await cPresent.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(appliedB, isNotNull);
+      expect(await optStore.loadForBuild(b.id), isNotNull);
+      final midPlan = await fiStore.loadForBuild(b.id);
+      expect(midPlan, isNotNull);
+      // Weapon pin from prior must survive merge (B1).
+      expect(
+        midPlan!.applied.any(
+          (a) => a.slotWire == 'primary' && a.label == 'Prior Primary',
+        ),
+        isTrue,
+      );
+
+      await cPresent.undoLastApply();
+      final fillAfter = await File(root.fillInMissingByBuildPath).readAsString();
+      final optAfter = await File(root.optimizeByBuildPath).readAsString();
+      expect(jsonDecode(fillAfter), jsonDecode(fillBefore));
+      expect(jsonDecode(optAfter), jsonDecode(optBefore));
+      final restoredOpt = await optStore.loadForBuild(b.id);
+      expect(restoredOpt!.resultIndexOneBased, 9);
+      expect(restoredOpt.slots.single.pieceName, 'Prior Helm');
+      final restoredPlan = await fiStore.loadForBuild(b.id);
+      expect(restoredPlan!.applied.single.label, 'Prior Primary');
+    },
+  );
 }

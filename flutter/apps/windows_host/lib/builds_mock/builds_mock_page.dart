@@ -11,6 +11,7 @@ import '../dim_loadouts/dim_loadout_details_panel.dart'
 import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
 import '../fill_in/fill_in_saved_plan_card.dart';
+import '../fill_in/fill_in_weapon_apply.dart';
 import '../host_bootstrap.dart';
 import '../optimize/builds_armor_pool_panel.dart';
 import '../optimize/builds_optimize_apply.dart';
@@ -98,6 +99,8 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   BuildsMockApplyTarget? _applyTarget;
   String? _applyTargetLabel;
   String? _applyDisabledReason;
+  /// Visible when optimize_by_build.json is corrupt (never overwritten).
+  String? _optimizeStoreError;
   int _matrixLoadGeneration = 0;
   List<CatalogItem> _catalogItems = const [];
   Map<String, String> _setIconByLowerName = const {};
@@ -238,7 +241,9 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   Future<void> _loadOptimizeOverlays(StorageRoot root) async {
     try {
       final records = await OptimizeBuildStore(root: root).loadAll();
-      if (!mounted || records.isEmpty) return;
+      if (!mounted) return;
+      setState(() => _optimizeStoreError = null);
+      if (records.isEmpty) return;
       for (final entry in records.entries) {
         if (!entry.value.isOptimized) continue;
         MockBuild? build;
@@ -253,8 +258,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
           applyOptimizedRecordToBuild(build: build, record: entry.value),
         );
       }
-    } on OptimizeBuildStoreException {
-      // Fail closed — leave fixture builds unchanged.
+    } on OptimizeBuildStoreException catch (e) {
+      // Fail closed — leave fixture builds unchanged; never rewrite corrupt file.
+      if (!mounted) return;
+      setState(() => _optimizeStoreError = e.message);
     }
   }
 

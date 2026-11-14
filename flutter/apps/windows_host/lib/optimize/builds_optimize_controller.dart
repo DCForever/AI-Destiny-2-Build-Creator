@@ -55,6 +55,15 @@ class BuildsOptimizeController extends ChangeNotifier {
 
   MockBuild? _undoBaseline;
   int? _appliedResultIndex;
+
+  /// Prior Fill In plan for this build at apply time (null = absent).
+  FillInSavedBuildPlan? _priorFillInPlan;
+  bool _priorFillInCaptured = false;
+
+  /// Prior Optimize overlay for this build at apply time (null = absent).
+  OptimizedBuildRecord? _priorOptimizeRecord;
+  bool _priorOptimizeCaptured = false;
+
   List<FillInInventoryItem> _armorItems = const [];
   DateTime? _csvImportedAt;
 
@@ -237,6 +246,16 @@ class BuildsOptimizeController extends ChangeNotifier {
       _appliedResultIndex = i + 1;
 
       final optStore = optimizeStore;
+      final fiStore = fillInStore;
+
+      // Snapshot prior file records before any write (Undo restores files).
+      _priorOptimizeRecord =
+          optStore == null ? null : await optStore.loadForBuild(build.id);
+      _priorOptimizeCaptured = optStore != null;
+      _priorFillInPlan =
+          fiStore == null ? null : await fiStore.loadForBuild(build.id);
+      _priorFillInCaptured = fiStore != null;
+
       if (optStore != null) {
         await optStore.saveBuildRecord(
           optimizedRecordFromBuild(
@@ -245,14 +264,12 @@ class BuildsOptimizeController extends ChangeNotifier {
           ),
         );
       }
-      final fiStore = fillInStore;
       if (fiStore != null) {
-        final existing = await fiStore.loadForBuild(build.id);
         await fiStore.saveBuildPlan(
           fillInPlanFromCombination(
             buildId: build.id,
             combination: combo,
-            existing: existing,
+            existing: _priorFillInPlan,
           ),
         );
       }
@@ -269,7 +286,17 @@ class BuildsOptimizeController extends ChangeNotifier {
     }
   }
 
-  /// Undo last Optimize apply. Returns restored build or null.
+  /// Persist a Fill In plan merged after weapon Fill In (same Undo snapshot).
+  ///
+  /// Does not refresh the Undo baseline — Undo still restores the pre-Optimize
+  /// Fill In + optimize file snapshots captured in [applySelectedResult].
+  Future<void> persistMergedFillInPlan(FillInSavedBuildPlan plan) async {
+    final fiStore = fillInStore;
+    if (fiStore == null) return;
+    await fiStore.saveBuildPlan(plan);
+  }
+
+  /// Undo last Optimize apply. Restores memory + both store files.
   Future<MockBuild?> undoLastApply() async {
     final baseline = _undoBaseline;
     if (baseline == null) return null;
@@ -278,12 +305,34 @@ class BuildsOptimizeController extends ChangeNotifier {
     notifyListeners();
     try {
       final restored = undoOptimizeOnBuild(baseline);
+
       final optStore = optimizeStore;
-      if (optStore != null) {
-        await optStore.clearBuild(baseline.id);
+      if (optStore != null && _priorOptimizeCaptured) {
+        final prior = _priorOptimizeRecord;
+        if (prior != null) {
+          // Restore earlier Optimize record — never clear it away.
+          await optStore.saveBuildRecord(prior);
+        } else {
+          await optStore.clearBuild(baseline.id);
+        }
       }
+
+      final fiStore = fillInStore;
+      if (fiStore != null && _priorFillInCaptured) {
+        final prior = _priorFillInPlan;
+        if (prior != null) {
+          await fiStore.saveBuildPlan(prior);
+        } else {
+          await fiStore.clearBuild(baseline.id);
+        }
+      }
+
       _undoBaseline = null;
       _appliedResultIndex = null;
+      _priorFillInPlan = null;
+      _priorFillInCaptured = false;
+      _priorOptimizeRecord = null;
+      _priorOptimizeCaptured = false;
       _applying = false;
       notifyListeners();
       return restored;

@@ -34,7 +34,10 @@ const List<String> kFillInBannedPatterns = <String>[
 const int kDomainFillInSourceFileCount = 13;
 /// Was 4 → 5 when `fill_in_saved_plan_card.dart` was added (detail-card
 /// Armor/Weapons saved-plan UI; still read-only / no IO / no writes).
-const int kWindowsHostFillInSourceFileCount = 5;
+/// Was 5 → 6 when Optimize Fill In added `fill_in_weapon_apply.dart`
+/// (headless weapon substitutes after armor auto-apply; still no IO /
+/// no Bungie writes — caller persists the merged plan).
+const int kWindowsHostFillInSourceFileCount = 6;
 
 void main() {
   test('Fill In sources never import write/transfer/equip/io/http', () {

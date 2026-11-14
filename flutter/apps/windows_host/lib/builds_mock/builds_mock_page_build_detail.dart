@@ -179,6 +179,18 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                         style: neonMono(color: palette.muted, fontSize: 11),
                       ),
                     ],
+                    if (_optimizeStoreError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Optimize store unreadable — fix or remove '
+                        'optimize_by_build.json ($_optimizeStoreError). '
+                        'The corrupt file was not overwritten.',
+                        key: const Key('builds_optimize_store_error'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ],
                     if (_optimize.error != null) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -260,11 +272,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Fill In auto-applies Optimize result #1; Optimize opens '
-                      'the results panel. Use this result / Undo only change '
-                      'this app copy — never Mario files or Bungie inventory. '
-                      'Apply to character equips one item at a time and has no '
-                      'undo.',
+                      kBuildsMockDetailUndoCaption,
                       style: neonMono(color: palette.muted, fontSize: 11),
                     ),
                   ],
@@ -288,13 +296,36 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       return;
     }
     final messenger = ScaffoldMessenger.of(context);
-    final updated = await _optimize.runOptimize(
+    var updated = await _optimize.runOptimize(
       build: build,
       mode: BuildsOptimizeMode.autoApplyFirst,
     );
     if (!mounted || updated == null) return;
-    _controller.replaceBuild(updated);
+
+    // Same action: after armor #1, fill weapons the existing substitute way
+    // and merge pins (B1) — not opt-in.
     final root = widget.storageRoot;
+    final FillInCacheLoader loader = widget.fillInCacheLoader ??
+        (root != null
+            ? defaultFillInCacheLoader(root)
+            : () async => FillInCacheLoadResult.missing(
+                  'DIM Armor/Weapons inventory cache is missing or unreadable.',
+                ));
+    final weaponResult = await applyWeaponFillInAfterOptimize(
+      build: updated,
+      loadCaches: loader,
+      existingPlan: root == null
+          ? null
+          : await FillInMissingListStore(root: root).loadForBuild(build.id),
+      dimLoadout: _controller.dimLoadoutFor(updated),
+    );
+    if (!mounted) return;
+    if (weaponResult != null) {
+      updated = weaponResult.build;
+      await _optimize.persistMergedFillInPlan(weaponResult.plan);
+    }
+
+    _controller.replaceBuild(updated);
     if (root != null) await _loadFillInPlans(root);
     if (!mounted) return;
     final idx = _optimize.appliedResultIndex ?? 1;

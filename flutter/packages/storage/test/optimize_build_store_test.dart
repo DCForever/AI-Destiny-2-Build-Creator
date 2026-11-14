@@ -136,4 +136,32 @@ void main() {
     expect(all.containsKey('a'), isFalse);
     expect(all.containsKey('b'), isTrue);
   });
+
+  test('corrupt JSON throws and save never overwrites', () async {
+    final path = root.optimizeByBuildPath;
+    await Directory(root.fillInCacheDir).create(recursive: true);
+    const corrupt = '{not-json';
+    await File(path).writeAsString(corrupt);
+
+    await expectLater(
+      store.loadAll(),
+      throwsA(isA<OptimizeBuildStoreException>()),
+    );
+
+    await expectLater(
+      store.saveBuildRecord(
+        const OptimizedBuildRecord(
+          buildId: 'x',
+          isOptimized: true,
+          resultIndexOneBased: 1,
+          slots: [],
+          stats: [],
+          setBonuses: [],
+        ),
+      ),
+      throwsA(isA<OptimizeBuildStoreException>()),
+    );
+
+    expect(await File(path).readAsString(), corrupt);
+  });
 }

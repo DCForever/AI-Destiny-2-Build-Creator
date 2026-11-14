@@ -387,6 +387,7 @@ void main() {
     await tester.pump();
     expect(find.textContaining('has no undo'), findsOneWidget);
     expect(find.textContaining('never Mario files'), findsOneWidget);
+    expect(find.textContaining('Undo fill in restores it'), findsOneWidget);
   });
 
   testWidgets('Apply disabled with reason when not signed in', (tester) async {
