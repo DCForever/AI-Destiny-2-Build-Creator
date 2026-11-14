@@ -236,7 +236,6 @@ class BuildsOptimizeController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _undoBaseline = snapshotMockBuild(build);
       final combo = combos[i];
       final next = applyOptimizeCombinationToBuild(
         build: build,
@@ -250,12 +249,15 @@ class BuildsOptimizeController extends ChangeNotifier {
 
       // Snapshot prior file records BEFORE any write (Undo restores files).
       // Fill In load first: corrupt missing_by_build → throw → no writes.
+      // Baseline only after both loads succeed so Undo never clearBuild's an
+      // entry that was never replaced.
       _priorFillInPlan =
           fiStore == null ? null : await fiStore.loadForBuild(build.id);
       _priorFillInCaptured = fiStore != null;
       _priorOptimizeRecord =
           optStore == null ? null : await optStore.loadForBuild(build.id);
       _priorOptimizeCaptured = optStore != null;
+      _undoBaseline = snapshotMockBuild(build);
 
       if (optStore != null) {
         await optStore.saveBuildRecord(
@@ -291,10 +293,20 @@ class BuildsOptimizeController extends ChangeNotifier {
   ///
   /// Does not refresh the Undo baseline — Undo still restores the pre-Optimize
   /// Fill In + optimize file snapshots captured in [applySelectedResult].
-  Future<void> persistMergedFillInPlan(FillInSavedBuildPlan plan) async {
+  ///
+  /// Returns false when save fails; sets [error] so the host can show a toast
+  /// instead of an uncaught async error.
+  Future<bool> persistMergedFillInPlan(FillInSavedBuildPlan plan) async {
     final fiStore = fillInStore;
-    if (fiStore == null) return;
-    await fiStore.saveBuildPlan(plan);
+    if (fiStore == null) return true;
+    try {
+      await fiStore.saveBuildPlan(plan);
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Undo last Optimize apply. Restores memory + both store files.
