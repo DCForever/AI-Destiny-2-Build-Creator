@@ -248,13 +248,14 @@ class BuildsOptimizeController extends ChangeNotifier {
       final optStore = optimizeStore;
       final fiStore = fillInStore;
 
-      // Snapshot prior file records before any write (Undo restores files).
-      _priorOptimizeRecord =
-          optStore == null ? null : await optStore.loadForBuild(build.id);
-      _priorOptimizeCaptured = optStore != null;
+      // Snapshot prior file records BEFORE any write (Undo restores files).
+      // Fill In load first: corrupt missing_by_build → throw → no writes.
       _priorFillInPlan =
           fiStore == null ? null : await fiStore.loadForBuild(build.id);
       _priorFillInCaptured = fiStore != null;
+      _priorOptimizeRecord =
+          optStore == null ? null : await optStore.loadForBuild(build.id);
+      _priorOptimizeCaptured = optStore != null;
 
       if (optStore != null) {
         await optStore.saveBuildRecord(

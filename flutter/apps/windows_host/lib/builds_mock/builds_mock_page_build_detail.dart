@@ -30,7 +30,16 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     final placed = placeDimMods(
       mods: loadout?.mods ?? const [],
       build: displayBuild,
+      slotCategoryByModHash: _modSlotCategoryByHash,
     );
+    final statsResolution = resolveBuildsMockStats(
+      build: displayBuild,
+      armorItems: _optimize.armorItems,
+      fillInPlan: plan,
+    );
+    final displayWithStats = statsResolution.isAvailable
+        ? displayBuild.copyWith(stats: statsResolution.stats)
+        : displayBuild;
     final palette = FlapPalette.of(context);
     final applyProgress = _applyProgressByBuild[build.id];
     // Prefer DIM artifact perk names; fall back to mock artifact.perks.
@@ -191,6 +200,18 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                         ),
                       ),
                     ],
+                    if (_fillInStoreError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Fill In store unreadable — fix or remove '
+                        'missing_by_build.json ($_fillInStoreError). '
+                        'The corrupt file was not overwritten.',
+                        key: const Key('builds_fill_in_store_error'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ],
                     if (_optimize.error != null) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -251,7 +272,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                     ],
                     const SizedBox(height: 8),
                     BuildsMockLoadoutCard(
-                      loadout: displayBuild,
+                      loadout: displayWithStats,
                       derivedName: derived,
                       selected: true,
                       density: BuildsMockCardDensity.detail,
@@ -262,13 +283,15 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                       exoticWeaponIconPath: icons.exoticWeaponIconPath,
                       showMods: true,
                       modsBySlot: placed.bySlot,
-                      unplacedMods: placed.unplaced,
+                      unplacedMods: const [],
                       subclassAbilities: plugs.abilities,
                       subclassAspects: plugs.aspects,
                       subclassFragments: plugs.fragments,
                       artifactPerks: perkNames,
                       notes: loadout?.notes,
                       showDetailExtras: true,
+                      statsUnavailableReason:
+                          statsResolution.unavailableReason,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -296,6 +319,32 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       return;
     }
     final messenger = ScaffoldMessenger.of(context);
+    final root = widget.storageRoot;
+
+    // Read Fill In plan BEFORE any Optimize/Fill In write. Corrupt file →
+    // visible error, stop, never overwrite.
+    FillInSavedBuildPlan? priorPlan = _savedFillInPlans[build.id];
+    if (root != null) {
+      try {
+        priorPlan =
+            await FillInMissingListStore(root: root).loadForBuild(build.id);
+        _clearFillInStoreError();
+      } on FillInMissingListStoreException catch (e) {
+        if (!mounted) return;
+        _reportFillInStoreError(e.message);
+        messenger.showSnackBar(
+          SnackBar(
+            key: const Key('builds_fill_in_store_error_toast'),
+            content: Text(
+              'Fill In store unreadable — fix or remove missing_by_build.json '
+              '(${e.message}). Nothing was written.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     var updated = await _optimize.runOptimize(
       build: build,
       mode: BuildsOptimizeMode.autoApplyFirst,
@@ -303,20 +352,32 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     if (!mounted || updated == null) return;
 
     // Same action: after armor #1, fill weapons the existing substitute way
-    // and merge pins (B1) — not opt-in.
-    final root = widget.storageRoot;
+    // and merge pins (B1) — not opt-in. Merge armor onto the pre-checked
+    // plan in memory (do not re-read the store for corrupt handling).
     final FillInCacheLoader loader = widget.fillInCacheLoader ??
         (root != null
             ? defaultFillInCacheLoader(root)
             : () async => FillInCacheLoadResult.missing(
                   'DIM Armor/Weapons inventory cache is missing or unreadable.',
                 ));
+    final appliedCombo = _optimize.combinations.isNotEmpty
+        ? _optimize.combinations[
+            ((_optimize.appliedResultIndex ?? 1) - 1).clamp(
+              0,
+              _optimize.combinations.length - 1,
+            )]
+        : null;
+    final planForWeapons = appliedCombo == null
+        ? priorPlan
+        : fillInPlanFromCombination(
+            buildId: build.id,
+            combination: appliedCombo,
+            existing: priorPlan,
+          );
     final weaponResult = await applyWeaponFillInAfterOptimize(
       build: updated,
       loadCaches: loader,
-      existingPlan: root == null
-          ? null
-          : await FillInMissingListStore(root: root).loadForBuild(build.id),
+      existingPlan: planForWeapons,
       dimLoadout: _controller.dimLoadoutFor(updated),
     );
     if (!mounted) return;

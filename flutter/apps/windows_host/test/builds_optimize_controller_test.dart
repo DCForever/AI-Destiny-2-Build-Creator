@@ -298,4 +298,37 @@ void main() {
       expect(restoredPlan!.applied.single.label, 'Prior Primary');
     },
   );
+
+  test(
+    'corrupt Fill In store stops before any write; corrupt bytes untouched',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_corrupt_fi_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      await Directory(root.fillInCacheDir).create(recursive: true);
+      const corrupt = '{not-json';
+      final fiPath = root.fillInMissingByBuildPath;
+      await File(fiPath).writeAsString(corrupt);
+      final optPath = root.optimizeByBuildPath;
+      expect(File(optPath).existsSync(), isFalse);
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: OptimizeBuildStore(root: root),
+        fillInStore: FillInMissingListStore(root: root),
+      );
+      await c.refreshArmorCsv();
+      final applied = await c.runOptimize(
+        build: build(),
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(applied, isNull);
+      expect(c.error, isNotNull);
+      expect(await File(fiPath).readAsString(), corrupt);
+      expect(File(optPath).existsSync(), isFalse);
+    },
+  );
 }
