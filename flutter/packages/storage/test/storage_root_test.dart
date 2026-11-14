@@ -51,6 +51,10 @@ void main() {
         root.fillInMissingByBuildPath,
         p.join(fakeBase, 'fill_in', 'missing_by_build.json'),
       );
+      expect(
+        root.optimizeByBuildPath,
+        p.join(fakeBase, 'fill_in', 'optimize_by_build.json'),
+      );
       expect(root.dimLoadoutsDir, p.join(fakeBase, 'dim_loadouts'));
       expect(
         root.dimLoadoutsCachePath,

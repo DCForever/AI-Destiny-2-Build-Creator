@@ -103,6 +103,8 @@ export 'src/dim_loadouts/parse_cached_dim_loadouts.dart';
 export 'src/dim_loadouts/rank_dim_loadout_stats.dart';
 
 // Read-only Fill In matcher (inventory snapshot → held slots; no writes)
+export 'src/fill_in/armor_pool_set_coverage.dart';
+export 'src/fill_in/candidates_from_dim_armor.dart';
 export 'src/fill_in/fill_in_cap.dart';
 export 'src/fill_in/fill_in_dim_armor_csv.dart';
 export 'src/fill_in/fill_in_dim_loadout.dart';

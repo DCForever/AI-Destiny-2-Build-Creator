@@ -12,6 +12,10 @@ import '../fill_in/fill_in_cache_loader.dart';
 import '../fill_in/fill_in_dialog.dart';
 import '../fill_in/fill_in_saved_plan_card.dart';
 import '../host_bootstrap.dart';
+import '../optimize/builds_armor_pool_panel.dart';
+import '../optimize/builds_optimize_apply.dart';
+import '../optimize/builds_optimize_controller.dart';
+import '../optimize/builds_optimize_results_panel.dart';
 import '../sets/set_bonus_families.dart';
 import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
@@ -39,6 +43,7 @@ class BuildsMockPage extends StatefulWidget {
     this.services,
     this.applyPorts,
     this.fillInCacheLoader,
+    this.optimizeController,
   });
 
   /// Injectable for tests / widget previews. Page does not dispose it.
@@ -49,6 +54,9 @@ class BuildsMockPage extends StatefulWidget {
 
   /// Test inject: overrides DIM Armor/Weapons cache load for Fill In.
   final FillInCacheLoader? fillInCacheLoader;
+
+  /// Test inject: Builds Optimize controller (CSV pool + results).
+  final BuildsOptimizeController? optimizeController;
 
   /// Path source: Settings saved path → `WARLOCK_MATRIX_PATH`.
   /// Ignored when [controller] is injected.
@@ -77,6 +85,8 @@ class BuildsMockPage extends StatefulWidget {
 class _BuildsMockPageState extends State<BuildsMockPage> {
   late final BuildsMockController _controller;
   late final bool _ownsController;
+  late final BuildsOptimizeController _optimize;
+  late final bool _ownsOptimize;
   late final TextEditingController _search;
   final BuildsMockEnrichmentCache _enrichmentCache = BuildsMockEnrichmentCache();
   Map<String, FillInSavedBuildPlan> _savedFillInPlans =
@@ -91,6 +101,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   int _matrixLoadGeneration = 0;
   List<CatalogItem> _catalogItems = const [];
   Map<String, String> _setIconByLowerName = const {};
+  String _detailTab = 'detail';
 
   @override
   void initState() {
@@ -99,6 +110,21 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     _ownsController = injected == null;
     _controller = injected ?? BuildsMockController.forMatrixLoad();
     _controller.addListener(_onController);
+    _ownsOptimize = widget.optimizeController == null;
+    _optimize = widget.optimizeController ??
+        BuildsOptimizeController(
+          loadArmorItems: _defaultArmorCsvLoader,
+          optimizeStore: widget.storageRoot == null
+              ? null
+              : OptimizeBuildStore(root: widget.storageRoot!),
+          fillInStore: widget.storageRoot == null
+              ? null
+              : FillInMissingListStore(root: widget.storageRoot!),
+          knownSetKeys: {
+            for (final s in _controller.fixture.sets) s.id,
+          },
+        );
+    _optimize.addListener(_onOptimize);
     _search = TextEditingController(text: _controller.query);
     if (_ownsController) {
       _startOrHoldMatrixLoad();
@@ -107,9 +133,19 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     if (root != null) {
       _loadDimLoadouts(root);
       _loadFillInPlans(root);
+      _loadOptimizeOverlays(root);
     }
+    _optimize.refreshArmorCsv();
     _refreshApplyTarget();
     _ensureCatalogIcons();
+  }
+
+  Future<List<FillInInventoryItem>?> _defaultArmorCsvLoader() async {
+    final root = widget.storageRoot;
+    if (root == null) return null;
+    final result = await DimArmorCsvImporter(root: root).loadCache();
+    if (!result.isOk) return null;
+    return result.items;
   }
 
   /// OfflineCatalog rows already carry `displayProperties.icon` — reuse for
@@ -199,6 +235,29 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     }
   }
 
+  Future<void> _loadOptimizeOverlays(StorageRoot root) async {
+    try {
+      final records = await OptimizeBuildStore(root: root).loadAll();
+      if (!mounted || records.isEmpty) return;
+      for (final entry in records.entries) {
+        if (!entry.value.isOptimized) continue;
+        MockBuild? build;
+        for (final b in _controller.fixture.builds) {
+          if (b.id == entry.key) {
+            build = b;
+            break;
+          }
+        }
+        if (build == null) continue;
+        _controller.replaceBuild(
+          applyOptimizedRecordToBuild(build: build, record: entry.value),
+        );
+      }
+    } on OptimizeBuildStoreException {
+      // Fail closed — leave fixture builds unchanged.
+    }
+  }
+
   /// Hold on the loading indicator until the host finishes reading the saved
   /// path preference; otherwise load [widget.warlockMatrixPath].
   void _startOrHoldMatrixLoad() {
@@ -277,8 +336,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   @override
   void dispose() {
     _controller.removeListener(_onController);
+    _optimize.removeListener(_onOptimize);
     _search.dispose();
     if (_ownsController) _controller.dispose();
+    if (_ownsOptimize) _optimize.dispose();
     super.dispose();
   }
 
@@ -286,7 +347,18 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     // replaceBuild / adoptDimLoadouts keep build id + share id; clear so
     // identity-aware enrich cannot briefly reuse a prior entry either.
     _enrichmentCache.invalidate();
+    _optimize.knownSetKeys = {
+      for (final s in _controller.fixture.sets) s.id,
+    };
     if (mounted) setState(() {});
+  }
+
+  void _onOptimize() {
+    if (mounted) setState(() {});
+  }
+
+  void _selectDetailTab(String tab) {
+    setState(() => _detailTab = tab);
   }
 
   @override

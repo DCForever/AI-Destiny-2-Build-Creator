@@ -37,8 +37,8 @@ extension _BuildsMockDetail on _BuildsMockPageState {
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
           child: Text(
-            'Armor pool and Re-optimize are disabled — coming with Optimize '
-            '(no inventory data yet).',
+            'Open a build for Armor pool (set coverage) and Optimize. '
+            'Re-optimize stays greyed — hide-vs-grey is still Daniel\'s call.',
             key: const Key('builds_mock_optimize_tabs_hint'),
             style: neonMono(color: palette.muted, fontSize: 10),
           ),

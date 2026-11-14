@@ -151,7 +151,7 @@ void main() {
     expect(buildMatchesFilledInReadiness(plain), isFalse);
   });
 
-  test('readiness filter: Optimized matches nothing without a producer', () {
+  test('readiness filter: Optimized empty until producer sets the flag', () {
     expect(
       fixture.builds.every((b) => !isMockBuildOptimized(b)),
       isTrue,
@@ -162,5 +162,12 @@ void main() {
       readinessRows: computeAllReadiness(fixture),
     );
     expect(filtered, isEmpty);
+
+    final marked = fixture.builds.first.copyWith(isOptimized: true);
+    final matched = filterMockBuilds(
+      builds: [marked],
+      readiness: MockReadiness.optimized,
+    );
+    expect(matched, hasLength(1));
   });
 }

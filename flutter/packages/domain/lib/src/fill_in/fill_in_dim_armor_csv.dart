@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import '../models/equipment.dart';
+import '../models/soft_stats.dart';
 import '../pilot_review/pilot_csv.dart' show parseCsvTable;
+import 'armor_pool_set_coverage.dart' show armorLocationFromDimOwner;
 import 'fill_in_inventory.dart';
 
 /// Max DIM Armor CSV payload accepted by [parseDimArmorCsv].
@@ -213,6 +215,9 @@ _RowParse _itemFromRow({
   final isExotic = rarity.trim().toLowerCase() == 'exotic';
   final setHash = isExotic ? null : armorSetHashByItemHash[itemHash];
   final displayName = nameRaw.trim();
+  final ownerRaw = _cell(row, indexByName, 'Owner');
+  final location = armorLocationFromDimOwner(ownerRaw);
+  final stats = _parseArmorStats(row, indexByName);
 
   return _RowParse(
     item: FillInInventoryItem(
@@ -223,8 +228,27 @@ _RowParse _itemFromRow({
       slot: slot,
       isExotic: isExotic,
       armorSetHash: setHash,
+      location: location,
+      statValues: stats,
     ),
   );
+}
+
+Map<ArmorStatName, int> _parseArmorStats(
+  List<String> row,
+  Map<String, int> indexByName,
+) {
+  final out = <ArmorStatName, int>{};
+  for (final stat in ArmorStatName.all) {
+    // Prefer base columns when present; else the tuned Total columns.
+    final base = _cell(row, indexByName, '${stat.wireName} (Base)');
+    final tuned = _cell(row, indexByName, stat.wireName);
+    final raw = (base != null && base.trim().isNotEmpty) ? base : tuned;
+    if (raw == null || raw.trim().isEmpty) continue;
+    final n = int.tryParse(raw.trim());
+    if (n != null) out[stat] = n;
+  }
+  return out;
 }
 
 String? _cell(List<String> row, Map<String, int> indexByName, String name) {

@@ -154,7 +154,7 @@ void main() {
     },
   );
 
-  testWidgets('Optimize tabs disabled with coming with Optimize label',
+  testWidgets('browse Optimize tabs stay greyed; Re-optimize decision pending',
       (tester) async {
     final controller = BuildsMockController(
       fixture: BuildsMockFixture(
@@ -166,7 +166,7 @@ void main() {
     );
     await pumpPage(tester, controller: controller);
     expect(find.byKey(const Key('builds_mock_optimize_tabs')), findsOneWidget);
-    expect(find.textContaining('coming with Optimize'), findsOneWidget);
+    expect(find.textContaining("Daniel's call"), findsOneWidget);
 
     final tabs = tester.widget<SegmentedButton<String>>(
       find.byKey(const Key('builds_mock_optimize_tabs')),
