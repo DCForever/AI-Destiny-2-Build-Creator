@@ -381,14 +381,42 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
       dimLoadout: _controller.dimLoadoutFor(updated),
     );
     if (!mounted) return;
+    var persistOk = true;
     if (weaponResult != null) {
       updated = weaponResult.build;
-      await _optimize.persistMergedFillInPlan(weaponResult.plan);
+      persistOk =
+          await _optimize.persistMergedFillInPlan(weaponResult.plan);
     }
 
     _controller.replaceBuild(updated);
     if (root != null) await _loadFillInPlans(root);
     if (!mounted) return;
+    if (!persistOk) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          key: const Key('builds_fill_in_persist_error_toast'),
+          content: Text(
+            _optimize.error ??
+                'Could not save Fill In plan. Armor apply was kept; '
+                'weapon merge was not written.',
+          ),
+          action: SnackBarAction(
+            key: const Key('builds_optimize_toast_undo'),
+            label: 'Undo',
+            onPressed: () async {
+              final restored = await _optimize.undoLastApply();
+              if (!mounted || restored == null) return;
+              _controller.replaceBuild(restored);
+              final r = widget.storageRoot;
+              if (r != null) await _loadFillInPlans(r);
+            },
+          ),
+          duration: const Duration(seconds: 8),
+        ),
+      );
+      return;
+    }
     final idx = _optimize.appliedResultIndex ?? 1;
     _showOptimizeToast(messenger, idx);
   }

@@ -327,8 +327,102 @@ void main() {
       );
       expect(applied, isNull);
       expect(c.error, isNotNull);
+      expect(c.canUndo, isFalse);
       expect(await File(fiPath).readAsString(), corrupt);
       expect(File(optPath).existsSync(), isFalse);
+    },
+  );
+
+  test(
+    'failed apply on corrupt Fill In leaves canUndo false; store files unchanged',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_baseline_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      await Directory(root.fillInCacheDir).create(recursive: true);
+
+      final b = build();
+      final optStore = OptimizeBuildStore(root: root);
+      await optStore.saveBuildRecord(
+        OptimizedBuildRecord(
+          buildId: b.id,
+          isOptimized: true,
+          resultIndexOneBased: 3,
+          slots: const [
+            OptimizedArmorSlot(
+              slotWire: 'helmet',
+              pieceName: 'Prior Helm',
+              setId: 'prior',
+              isExotic: false,
+            ),
+          ],
+          stats: const [],
+          setBonuses: const [],
+        ),
+      );
+      const corrupt = '{not-json}';
+      final fiPath = root.fillInMissingByBuildPath;
+      await File(fiPath).writeAsString(corrupt);
+      final optBefore = await File(root.optimizeByBuildPath).readAsString();
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: optStore,
+        fillInStore: FillInMissingListStore(root: root),
+      );
+      await c.refreshArmorCsv();
+      final applied = await c.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(applied, isNull);
+      expect(c.canUndo, isFalse);
+      expect(c.error, isNotNull);
+      expect(await File(fiPath).readAsString(), corrupt);
+      expect(await File(root.optimizeByBuildPath).readAsString(), optBefore);
+      // Prior optimize entry still loadable — Undo never cleared it.
+      final prior = await optStore.loadForBuild(b.id);
+      expect(prior, isNotNull);
+      expect(prior!.resultIndexOneBased, 3);
+    },
+  );
+
+  test(
+    'persistMergedFillInPlan save failure sets error and returns false',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_persist_fail_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      await Directory(root.fillInCacheDir).create(recursive: true);
+      // Corrupt file → saveBuildPlan fails closed without overwriting.
+      await File(root.fillInMissingByBuildPath).writeAsString('{not-json}');
+
+      final c = BuildsOptimizeController(
+        fillInStore: FillInMissingListStore(root: root),
+      );
+      final ok = await c.persistMergedFillInPlan(
+        FillInSavedBuildPlan(
+          buildId: build().id,
+          missing: const [],
+          applied: const [
+            FillInAppliedSlot(
+              slotWire: 'primary',
+              label: 'Gun',
+              originalLabel: '',
+              instanceId: 'i1',
+              itemHash: 1,
+            ),
+          ],
+        ),
+      );
+      expect(ok, isFalse);
+      expect(c.error, isNotNull);
+      expect(await File(root.fillInMissingByBuildPath).readAsString(), '{not-json}');
     },
   );
 }
