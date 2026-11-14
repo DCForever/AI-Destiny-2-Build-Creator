@@ -126,4 +126,120 @@ void main() {
       );
     },
   );
+
+  test(
+    'demoted exotic-need slot keeps isExotic so label is Exotic Kinetic',
+    () {
+      // Build needs exotic Kinetic; held exotic Energy uses the one exotic
+      // weapon. Kinetic's exotic substitute is dropped, but the need stays
+      // exotic → copy/save must say "Exotic Kinetic".
+      const heldEnergy = FillInSlotDiff(
+        slot: EquipmentSlot.special,
+        currentLabel: 'Riskrunner',
+        isHeld: true,
+        isExotic: true,
+        heldInstanceId: 'held-ene',
+        heldItemHash: 502,
+      );
+      const kineticExoticNeedSub = FillInSlotDiff(
+        slot: EquipmentSlot.primary,
+        currentLabel: 'Qua Nilus II',
+        isHeld: false,
+        isExotic: true,
+        substituteLabel: 'Qua Nilus II',
+        substituteInstanceId: 'sub-kin',
+        substituteItemHash: 501,
+      );
+      const inventory = <FillInInventoryItem>[
+        FillInInventoryItem(
+          instanceId: 'held-ene',
+          itemHash: 502,
+          name: 'Riskrunner',
+          slot: EquipmentSlot.special,
+          isExotic: true,
+          weaponType: 'Submachine Gun',
+          damageType: 'Arc',
+        ),
+        FillInInventoryItem(
+          instanceId: 'sub-kin',
+          itemHash: 501,
+          name: 'Qua Nilus II',
+          slot: EquipmentSlot.primary,
+          isExotic: true,
+          weaponType: 'Sidearm',
+          damageType: 'Strand',
+        ),
+      ];
+
+      final out = enforceAtMostOneExoticWeapon(
+        diffs: const [heldEnergy, kineticExoticNeedSub],
+        inventory: inventory,
+        exoticWeaponNeedSlots: {EquipmentSlot.primary},
+      );
+
+      final kinetic = out.singleWhere((d) => d.slot == EquipmentSlot.primary);
+      expect(kinetic.wouldSubstitute, isFalse);
+      expect(kinetic.isExotic, isTrue);
+      expect(
+        fillInMissingSlotLabel(slot: kinetic.slot, isExotic: kinetic.isExotic),
+        'Exotic Kinetic',
+      );
+    },
+  );
+
+  test(
+    'demoted legendary-need exotic substitute stays Kinetic not Exotic Kinetic',
+    () {
+      // Legendary Kinetic need; opportunistic exotic substitute dropped
+      // because Energy already holds an exotic → label must stay "Kinetic".
+      const heldEnergy = FillInSlotDiff(
+        slot: EquipmentSlot.special,
+        currentLabel: 'Riskrunner',
+        isHeld: true,
+        isExotic: true,
+        heldInstanceId: 'held-ene',
+        heldItemHash: 502,
+      );
+      const kineticLegendaryNeedSub = FillInSlotDiff(
+        slot: EquipmentSlot.primary,
+        currentLabel: '',
+        isHeld: false,
+        isExotic: true,
+        substituteLabel: 'Qua Nilus II',
+        substituteInstanceId: 'sub-kin',
+        substituteItemHash: 501,
+      );
+      const inventory = <FillInInventoryItem>[
+        FillInInventoryItem(
+          instanceId: 'held-ene',
+          itemHash: 502,
+          name: 'Riskrunner',
+          slot: EquipmentSlot.special,
+          isExotic: true,
+        ),
+        FillInInventoryItem(
+          instanceId: 'sub-kin',
+          itemHash: 501,
+          name: 'Qua Nilus II',
+          slot: EquipmentSlot.primary,
+          isExotic: true,
+        ),
+      ];
+
+      final out = enforceAtMostOneExoticWeapon(
+        diffs: const [heldEnergy, kineticLegendaryNeedSub],
+        inventory: inventory,
+        // No primary in exoticWeaponNeedSlots — legendary need.
+        exoticWeaponNeedSlots: const {},
+      );
+
+      final kinetic = out.singleWhere((d) => d.slot == EquipmentSlot.primary);
+      expect(kinetic.wouldSubstitute, isFalse);
+      expect(kinetic.isExotic, isFalse);
+      expect(
+        fillInMissingSlotLabel(slot: kinetic.slot, isExotic: kinetic.isExotic),
+        'Kinetic',
+      );
+    },
+  );
 }

@@ -203,10 +203,15 @@ class _FillInDialogState extends State<FillInDialog> {
         for (final a in _plan!.applied)
           if (a.label.trim().isNotEmpty) a.label.trim().toLowerCase(),
     };
+    final exoticWeaponNeedSlots = {
+      for (final s in mapped.requirement.slots)
+        if (s.isExotic && _isWeaponSlot(s.slot)) s.slot,
+    };
     diffs = enforceAtMostOneExoticWeapon(
       diffs: diffs,
       inventory: mapped.inventory,
       preferLabels: preferExoticLabels,
+      exoticWeaponNeedSlots: exoticWeaponNeedSlots,
     );
 
     if (!mounted) return;
@@ -1035,12 +1040,18 @@ List<FillInSavedSlotRow> _proposedRowsAfterUndo(FillInSavedBuildPlan plan) {
 /// When several exotic substitutes remain and none are held, keep one whose
 /// label is in [preferLabels] (saved plan) when possible.
 ///
-/// Public for unit tests (cleared extras must set [FillInSlotDiff.isExotic]
-/// false so copy/save labels stay legendary).
+/// [exoticWeaponNeedSlots] is the build's exotic weapon needs (from
+/// [FillInSlotRequirement.isExotic]). Cleared extras keep
+/// [FillInSlotDiff.isExotic] only when that slot's need is exotic so
+/// copy/save labels stay "Exotic Kinetic"; opportunistic exotic picks on
+/// legendary needs clear the flag ("Kinetic").
+///
+/// Public for unit tests.
 List<FillInSlotDiff> enforceAtMostOneExoticWeapon({
   required List<FillInSlotDiff> diffs,
   required List<FillInInventoryItem> inventory,
   Set<String> preferLabels = const {},
+  Set<EquipmentSlot> exoticWeaponNeedSlots = const {},
 }) {
   final exoticByHash = <int, bool>{
     for (final item in inventory)
@@ -1106,14 +1117,14 @@ List<FillInSlotDiff> enforceAtMostOneExoticWeapon({
       continue;
     }
     if (usedExotic || (keepSlot != null && d.slot != keepSlot)) {
-      // Cleared exotic substitute → legendary missing row. Must clear
-      // isExotic so copy/save labels do not say "Exotic <slot>".
+      // Cleared exotic substitute → missing row. Keep isExotic only when
+      // the slot's recorded need is exotic (not opportunistic pick).
       out.add(
         FillInSlotDiff(
           slot: d.slot,
           currentLabel: d.currentLabel,
           isHeld: false,
-          isExotic: false,
+          isExotic: exoticWeaponNeedSlots.contains(d.slot),
           note: d.note,
         ),
       );
