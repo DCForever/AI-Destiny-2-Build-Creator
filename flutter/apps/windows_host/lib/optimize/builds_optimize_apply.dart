@@ -2,6 +2,7 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 
 import '../builds_mock/builds_mock_models.dart';
+import '../builds_mock/builds_mock_set_bonuses_from_combo.dart';
 
 /// Snapshot a [MockBuild] for Optimize Undo (exact restore).
 MockBuild snapshotMockBuild(MockBuild build) {
@@ -143,20 +144,8 @@ MockBuild applyOptimizeCombinationToBuild({
     stats.add(MockStatTotal(id: id, value: v));
   }
 
-  final bonuses = <MockSetBonus>[];
-  for (final e in combination.setBonusSummary) {
-    if (!e.active2pc && !e.active4pc && e.pieceCount < 2) continue;
-    final tier = e.active4pc ? '4pc' : '2pc';
-    bonuses.add(
-      MockSetBonus(
-        setId: e.setBonusKey,
-        setName: e.setBonusKey,
-        pieces: e.pieceCount,
-        tier: tier,
-        text: '$tier ${e.setBonusKey}',
-      ),
-    );
-  }
+  // One combined 4pc box, or two boxes for 2+2 (never separate 2pc+4pc).
+  final bonuses = mockSetBonusesFromCombination(combination);
 
   return build.copyWith(
     exoticArmor: exoticArmor,

@@ -59,18 +59,26 @@ void main() {
     expect(rows.singleWhere((r) => r.slotLabel == 'Gauntlets').statTotal, 68);
   });
 
-  testWidgets('STATS shows Stats unavailable when build has no totals',
+  testWidgets('STATS shows specific reason when build has no totals',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildFlapTheme(brightness: Brightness.light),
         home: const Scaffold(
-          body: BuildsMockStatsRow(stats: []),
+          body: BuildsMockStatsRow(
+            stats: [],
+            unavailableReason:
+                'Import a DIM Armor CSV in Settings to see armor stats.',
+          ),
         ),
       ),
     );
     expect(find.byKey(const Key('builds_mock_stats_unavailable')), findsOneWidget);
-    expect(find.text('Stats unavailable'), findsOneWidget);
+    expect(
+      find.text('Import a DIM Armor CSV in Settings to see armor stats.'),
+      findsOneWidget,
+    );
+    expect(find.text('Stats unavailable'), findsNothing);
     expect(find.byKey(const Key('builds_mock_stats_row')), findsNothing);
   });
 

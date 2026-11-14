@@ -229,7 +229,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('builds_mock_build_detail')), findsOneWidget);
-    expect(find.text('Harmonic Siphon'), findsWidgets);
+    // No Unplaced group — unknown mods land under an armor slot with a note.
+    expect(find.text('Unplaced mods'), findsNothing);
+    expect(find.textContaining('Harmonic Siphon'), findsWidgets);
+    expect(find.textContaining('slot guessed'), findsWidgets);
     expect(find.text('Strand notes'), findsOneWidget);
     expect(find.text('DIM LINK DETAILS'), findsNothing);
     expect(find.text('Proposed swaps (dry-run — local UI only)'), findsNothing);

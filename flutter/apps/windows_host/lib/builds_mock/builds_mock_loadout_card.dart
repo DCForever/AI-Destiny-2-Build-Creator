@@ -28,13 +28,14 @@ class BuildsMockLoadoutCard extends StatelessWidget {
     this.exoticWeaponIconPath,
     this.showMods = false,
     this.modsBySlot = const {},
-    this.unplacedMods = const [],
+    this.unplacedMods = const [], // ignored — mods live under armor rows only
     this.subclassAbilities = const [],
     this.subclassAspects = const [],
     this.subclassFragments = const [],
     this.artifactPerks = const [],
     this.notes,
     this.showDetailExtras = false,
+    this.statsUnavailableReason,
   });
 
   final MockBuild loadout;
@@ -56,6 +57,7 @@ class BuildsMockLoadoutCard extends StatelessWidget {
   final List<String> artifactPerks;
   final String? notes;
   final bool showDetailExtras;
+  final String? statsUnavailableReason;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +106,7 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           notes: notes,
           showDetailExtras: showDetailExtras,
           priorities: priorities,
+          statsUnavailableReason: statsUnavailableReason,
         );
     }
   }
@@ -313,6 +316,7 @@ class _DetailBody extends StatelessWidget {
     required this.notes,
     required this.showDetailExtras,
     required this.priorities,
+    this.statsUnavailableReason,
   });
 
   final MockBuild loadout;
@@ -326,6 +330,7 @@ class _DetailBody extends StatelessWidget {
   final bool showMods;
   final Map<String, List<String>> modsBySlot;
   final List<String> unplacedMods;
+  final String? statsUnavailableReason;
   final List<String> subclassAbilities;
   final List<String> subclassAspects;
   final List<String> subclassFragments;
@@ -399,26 +404,8 @@ class _DetailBody extends StatelessWidget {
                   ),
                 ],
               ),
-              if (loadout.slots.any(
-                (s) => s.filledIn && s.pieceName.trim().isNotEmpty,
-              )) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    for (final s in loadout.slots)
-                      if (s.filledIn && s.pieceName.trim().isNotEmpty)
-                        Chip(
-                          key: Key(
-                            'builds_mock_filled_in_${loadout.id}_${s.slot}',
-                          ),
-                          label: Text('Filled in · ${s.pieceName.trim()}'),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                  ],
-                ),
-              ],
+              // Filled-in item chips removed — Armor / Weapons tables already
+              // show fill status per row.
               const SizedBox(height: 14),
               Row(
                 children: [
@@ -483,16 +470,13 @@ class _DetailBody extends StatelessWidget {
               BuildsMockWeaponTable(
                 rows: buildsMockWeaponRows(build: loadout, plan: fillInPlan),
               ),
-              if (showMods) ...[
+              if (showMods &&
+                  modsBySlot.values.every((m) => m.isEmpty)) ...[
                 _section('Mods'),
-                if (unplacedMods.isNotEmpty)
-                  _plugBlock(palette, 'Unplaced mods', unplacedMods),
-                if (unplacedMods.isEmpty &&
-                    modsBySlot.values.every((m) => m.isEmpty))
-                  Text(
-                    'No mods',
-                    style: neonMono(color: palette.muted, fontSize: 12),
-                  ),
+                Text(
+                  'No mods',
+                  style: neonMono(color: palette.muted, fontSize: 12),
+                ),
               ],
               if (artifactPerks.isNotEmpty) ...[
                 _section('Artifact perks'),
@@ -503,7 +487,10 @@ class _DetailBody extends StatelessWidget {
                 ),
               ],
               _section('Stats'),
-              BuildsMockStatsRow(stats: loadout.stats),
+              BuildsMockStatsRow(
+                stats: loadout.stats,
+                unavailableReason: statsUnavailableReason,
+              ),
               if (priorities.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),

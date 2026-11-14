@@ -9,7 +9,8 @@ import 'test_material_theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('chip list never contains an empty-name filled-in chip',
+  testWidgets(
+      'detail card no longer shows Filled in · item chips (tables cover status)',
       (tester) async {
     const build = MockBuild(
       id: 'chip_filter',
@@ -58,19 +59,10 @@ void main() {
       ),
     );
 
+    // Chip row removed — Armor/Weapons tables already show fill status.
+    expect(find.textContaining('Filled in ·'), findsNothing);
     expect(
       find.byKey(const Key('builds_mock_filled_in_chip_filter_primary')),
-      findsOneWidget,
-    );
-    expect(find.text('Filled in · Qua Nilus II'), findsOneWidget);
-    // Empty / whitespace Energy + Power must never render a chip.
-    expect(find.textContaining('Filled in ·'), findsOneWidget);
-    expect(
-      find.byKey(const Key('builds_mock_filled_in_chip_filter_special')),
-      findsNothing,
-    );
-    expect(
-      find.byKey(const Key('builds_mock_filled_in_chip_filter_heavy')),
       findsNothing,
     );
   });

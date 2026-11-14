@@ -136,19 +136,28 @@ extension _BuildsMockDetail on _BuildsMockPageState {
   }) {
     final loadout = _controller.dimLoadoutFor(build);
     final enriched = _enrichmentCache.enrich(build, loadout);
-    final derived = deriveBuildsMockName(
+    final plan = _savedFillInPlans[build.id];
+    final statsResolution = resolveBuildsMockStats(
       build: enriched,
+      armorItems: _optimize.armorItems,
+      fillInPlan: plan,
+    );
+    final withStats = statsResolution.isAvailable
+        ? enriched.copyWith(stats: statsResolution.stats)
+        : enriched;
+    final derived = deriveBuildsMockName(
+      build: withStats,
       loadout: loadout,
       duplicateIndexWithinClass: duplicateIndex,
     );
-    final icons = _segmentIcons(build: enriched, loadout: loadout);
+    final icons = _segmentIcons(build: withStats, loadout: loadout);
     return BuildsMockLoadoutCard(
-      loadout: enriched,
+      loadout: withStats,
       derivedName: derived,
       selected: build.id == _controller.selectedId,
       density: density,
       priorities: _controller.statPrioritiesFor(build),
-      fillInPlan: _savedFillInPlans[build.id],
+      fillInPlan: plan,
       superIconPath: icons.superIconPath,
       exoticArmorIconPath: icons.exoticArmorIconPath,
       exoticWeaponIconPath: icons.exoticWeaponIconPath,

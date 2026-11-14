@@ -8,6 +8,7 @@ import 'fill_in_build_mapper.dart';
 import 'fill_in_cache_loader.dart';
 import 'fill_in_dialog.dart' show enforceAtMostOneExoticWeapon;
 import 'fill_in_labels.dart';
+import 'fill_in_plan_stabilize.dart';
 
 /// Result of headless weapon Fill In after Optimize auto-apply.
 class WeaponFillInApplyResult {
@@ -78,6 +79,12 @@ Future<WeaponFillInApplyResult?> applyWeaponFillInAfterOptimize({
     currentLabels: currentLabels,
     weaponNeed: weaponNeed,
     random: random ?? Random(),
+  );
+  // Keep saved weapon pins (same as Fill In dialog) instead of re-rolling.
+  diffs = stabilizeFillInDiffsFromPlan(
+    diffs: diffs,
+    plan: existingPlan,
+    inventory: mapped.inventory,
   );
   diffs = enforceAtMostOneExoticWeapon(
     diffs: diffs,
